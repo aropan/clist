@@ -1,0 +1,90 @@
+.swagger-ui-wrap {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.icon-btn {
+    cursor: pointer;
+}
+
+#message-bar {
+    min-height: 30px;
+    text-align: center;
+    padding-top: 10px;
+}
+
+.message-success {
+    color: #89BF04;
+}
+
+.message-fail {
+    color: #cc0000;
+}
+
+#swagger-ui-container {
+    max-width: inherit;
+}
+
+#resources_container.container {
+    width: inherit;
+    padding: 0px;
+}
+
+#resources_container.container .endpoints, #resources {
+    padding-left: 0px;
+}
+
+#resources_container.container .footer {
+    visibility: hidden;
+}
+
+.info {
+    font-size: 1.1em;
+    line-height: 1.1em;
+    font-family: "Droid Sans", sans-serif;
+}
+
+.info:hover .title {
+    color: #000;
+}
+
+.info .title {
+    font-weight: bold;
+    color: #999;
+    padding-top: 12px;
+    padding-bottom: 3px;
+}
+
+.info .text {
+    padding: 4px 10px;
+    color: #000;
+    border-radius: 3px;
+    background-color: #E7F0F7;
+    border: 1px solid #C3D9EC;
+    box-sizing: border-box;
+}
+
+#show-api-key {
+    color: #0F6AB4;
+    text-decoration: none;
+    font-size: 0.75em;
+    outline: none !important;
+}
+
+.popover .title, .popover .or {
+    padding-top: 3px;
+}
+
+.popover .info {
+    font-size: 0.9em;
+}
+
+.popover-title, .popover .or {
+    font-weight: bold;
+}
+
+.popover {
+    font-family: "Droid Sans", sans-serif;
+    min-width: 500px;
+}

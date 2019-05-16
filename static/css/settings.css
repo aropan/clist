@@ -1,0 +1,76 @@
+.key {
+    font-weight: bold;
+}
+
+.value {
+    min-height: 30px;
+}
+
+.editable-error-block {
+    padding: 10px;
+}
+
+.checkbox label {
+    color: #333 !important;
+}
+
+.filter-field {
+    margin-top: 7px;
+}
+
+.filter-field-resources {
+    margin-top: 3px;
+}
+
+.tooltip.right .tooltip-inner {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #000;
+}
+
+.tooltip.right > .tooltip-arrow {
+    border-right-color: #000;
+}
+
+.has-error .input-group-addon {
+    color: #555;
+    background-color: #EEE;
+    border: 1px solid #CCC;
+}
+
+.has-error .form-control {
+    border: 1px solid #CCC;
+}
+
+.has-error .form-control:focus {
+    border-color: #66AFE9;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 8px rgba(102, 175, 233, 0.6);
+}
+
+.tab-content {
+    padding: 10px;
+}
+
+.notification {
+    line-height: 2.5;
+}
+
+#accounts-tab>div {
+    margin-top: 7px;
+}
+
+#error-account-tab {
+    display: none;
+}
+
+.tab-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    border-radius: 0px 0px 5px 5px;
+    padding: 10px;
+}
+
+.nav-tabs {
+    margin-bottom: 0;
+}

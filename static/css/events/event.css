@@ -1,0 +1,15 @@
+#requests-to-join button {
+  border: none !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: -3px !important;
+}
+
+#information-tab {
+  padding: 10px;
+}
+
+#website-url a,
+#website-url i {
+  padding-left: 5px;
+}

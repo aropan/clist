@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load extras %}
+
+{% block title %}Ranking - {{ party.name }}{% endblock %}
+
+{% block end-head %}
+    <link href="{% static_ts 'css/party/ranking.css' %}" rel="stylesheet">
+    <script>page_load = $.now();</script>
+    <script src="{% static_ts 'js/countdown.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<h3 id="name"><a href="{% url 'coder:party' party.slug %}">{{ party.name }}</a></h3>
+
+{% if user and user.is_authenticated %}{% if not user.first_name or not user.last_name %}
+<div class="alert alert-warning text-center">
+    Fill in your first last and last name in <a href="{% url 'coder:settings' %}#social-tab">social settings</a>.
+</div>
+{% endif %}{% endif %}
+
+<script>
+$(function () {
+    $('li.disabled').click(function(e) { window.open($(this).find('a').attr('data-href'), '_blank'); });
+});
+</script>
+
+{% if results|length > 1 %}
+<div class="tabbable tabs-left">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#total" data-toggle="tab">Total</a></li>
+        {% for f in future %}
+            <li class="disabled">
+                <a class="small" href="#" data-href="{{ f.contest.url }}" data-toggle="tab">
+                    <div>{{ f.contest.title|truncatechars:33 }}</div>
+                    <div>starts in <span class="timeleft countdown" data-timestamp="{{ f.contest.next_time }}">{{ f.contest.next_time|countdown }}</span></div>
+                </a>
+            </li>
+        {% endfor %}
+        {% for r in results %}
+            {% if not forloop.first %}
+            <li><a title="{{ r.contest.title }}" href="#{{ r.contest.id }}" data-toggle="tab">{{ r.contest.title|truncatechars:33 }}</a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    <div class="tab-content">
+    {% for r in results %}
+        <div id="{% if forloop.first %}total{% else %}{{ r.contest.id }}{% endif %}" class="tab-pane{% if forloop.first %} active{% endif %}">
+            <div class="standings col-md-8 col-sm-10 col-xs-12">
+                <h4 class="name-stand">
+                    {% if forloop.first %}
+                        Total ranking
+                    {% else %}
+                        <a href="{{ r.contest.standings_url|default:r.contest.url }}">{{ r.contest.title }}</a>
+                        <a href="http://{{ r.contest.host }}" class="small">{{ r.contest.host }}</a>
+                    {% endif %}
+                </h4>
+                {% if r.standings %}
+                <div class="table col-md-6 col-sm-8 col-xs-10">
+                    <div class="head-stand">
+                        {% for h in header %}
+                        <div class="col-xs-{% cycle '1' '5' '3' '3' %}">{{ h }}</div>
+                        {% endfor %}
+                    </div>
+                {% for s in r.standings %}
+                    <div class="row-stand">
+                        <div class="col-xs-1">{{ s.place }}</div>
+                        <div class="col-xs-5" title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.user.username }}{% endif %}">
+                            <a href="{% url 'coder:profile' s.coder.user.username %}{% if forloop.parentloop.counter0 %}#cid-{{ r.contest.id }}{% endif %}">
+                            {% if s.coder.user.first_name and s.coder.user.last_name %}
+                                {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
+                            {% else %}
+                                {{ s.coder.user.username }}
+                            {% endif %}
+                            </a>
+                        </div>
+                        <div class="col-xs-3">{{ s.score|floatformat:2 }}</div>
+                        <div class="col-xs-3">{{ s.stat.solving }} ({{ s.stat.upsolving }})</div>
+                    </div>
+                {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+{% else %}
+    <div class="alert alert-warning">Rating list is empty</div>
+{% endif %}
+{% endblock %}

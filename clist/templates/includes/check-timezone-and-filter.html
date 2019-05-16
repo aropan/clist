@@ -1,0 +1,24 @@
+{% load extras %}
+<link href="{% static_ts 'css/contest/check-timezone-and-filter.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/contest/check-timezone-and-filter.js' %}"></script>
+
+<div id="timezone-and-filter" class="row">
+    {% if not request.GET.timezone %}
+    {% if not request.user.is_authenticated or request.user.coder.settings.check_timezone != 0 %}
+    {% include "check_timezone.js" %}
+    <div class="hidden incorrect-tz-alert label label-warning">
+        Warning! Timezone is set incorrectly. Please reload page.
+    </div>
+    {% endif %}
+    {% endif %}
+    <div>
+        <div id="time" class="small text-muted">{{ now|timezone:timezone|format_time:"%A, %H:%M:%S%z" }}</div>
+        <div id="switch" class="small text-muted col-xs-offset-4"><a href="{% url 'clist:main' %}?view={{ switch_to }}">switch to {{ switch_to }}</a></div>
+        <div id="filter" class="input-group input-group-xs pull-right">
+            <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
+            <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
+                <i class="fa fa-search"></i>
+            </span>
+        </div>
+    </div>
+</div>

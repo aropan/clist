@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+    <title>Contests list on {$smarty.server.HTTP_HOST}</title>
+    <link>http://{$smarty.server.HTTP_HOST}/</link>
+    <description>List of the competition for sports programming from the following resources: {$data.resources|join:", "}</description>
+    <managingEditor>aropan@clist.by (Aleksey Ropan)</managingEditor>
+    <webMaster>aropan@clist.by (Aleksey Ropan)</webMaster>
+    <pubDate>{$smarty.now|date_format:"%a, %e %b %G %T %Z"}</pubDate>
+    <docs>http://blogs.law.harvard.edu/tech/rss</docs>
+    <atom:link href="http://{$smarty.server.HTTP_HOST}{$smarty.server.REQUEST_URI|escape}" rel="self" type="application/rss+xml" />
+{foreach from=$data.contests item=contest}
+    <item>
+      <title>{$contest.title}</title>
+      <link>{$contest.url|escape}</link>
+      <description><![CDATA[
+        <font size="+1"><b>{$contest.title}</b></font><br>
+        <br>
+        Start: <b>{$contest.date.start.time}</b> <a href="{$contest.date.start.url|escape}">#</a><br>
+        Finish: <b>{$contest.date.end.time}</b> <a href="{$contest.date.end.url|escape}">#</a><br>
+        Duratinon: {$contest.duration}<br>
+        Resource: <a href="http://{$contest.resource}">{$contest.resource}</a><br>
+      ]]></description>
+      <author>{$contest.resource}</author>
+      <atom:author>
+        <atom:name>{$contest.resource}</atom:name>
+        <atom:uri>http://{$contest.resource}/</atom:uri>
+      </atom:author>
+      <guid isPermaLink="false">{$contest.guid}</guid>
+    </item>
+{/foreach}
+  </channel>
+</rss>

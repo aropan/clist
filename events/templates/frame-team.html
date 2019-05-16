@@ -1,0 +1,80 @@
+{% load extras %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <style type="text/css">a:hover { text-decoration: none; }</style>
+</head>
+<body>
+  <div class="container">
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Country', 'Team count', 'Translit'],
+                {% for country, count in countries %}['{% language 'ru' %}{% trans country %}{% endlanguage %}', {{ count }} , '{{ country|slugify }}'],{% endfor %}
+            ]);
+
+            var options = {
+                title: "Распределение по странам (всего {{ teams.count }})",
+                pieSliceText: 'value',
+                tooltip: { trigger: 'selection' },
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+            chart.draw(data, options);
+            google.visualization.events.addListener(chart, 'select', function(entry) {
+                var selectedItem = chart.getSelection()[0];
+                if (selectedItem) {
+                    $('.team .index').hide();
+                    $('.team').hide();
+                    hash = data.getValue(selectedItem.row, 2);
+                    $('.team.country-' + hash).show();
+                } else {
+                    $('.team .index').show();
+                    $('.team').show();
+                }
+            });
+        }
+    </script>
+    <div id="piechart" class="text-center center-block" style="height: 400px; width: 500px"></div>
+
+
+    <div class="list-group">
+      {% for team in teams %}
+      <div class="team list-group-item country-{{ team.country|slugify }}">
+        <strong class="name">
+          {{ team.title }}
+        </strong>
+        <span class="label label-{{ team_status.classes|get_item:team.status }}">{{ team_status.frame_labels|get_item:team.status }}</span>
+        <span class="badge alert-info index">{{ forloop.revcounter }}</span>
+
+        <div class="small">
+          {% for o in team.organizations %}{{ o.name_ru }}{% if forloop.revcounter0 %} + {% endif %}{% endfor %}, {% language 'ru' %}{% trans team.country %}{% endlanguage %}
+          <div class="text-muted">
+            Состав:
+            {% for p in team.ordered_participants %}{{ p.first_name_native }} {{ p.last_name_native }}{% if forloop.revcounter0 %}, {%endif %}{% endfor %}
+          </div>
+          {% if team.coach %}
+          <div class="text-muted">
+            Тренер:
+            {{ team.coach.first_name_native }} {{ team.coach.middle_name_native }} {{ team.coach.last_name_native }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <script>
+      window.parent.postMessage(document.body.scrollHeight, '*');
+    </script>
+  </div>
+</body>
+</html>
+

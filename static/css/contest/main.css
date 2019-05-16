@@ -1,0 +1,100 @@
+.badge {
+    font-size: 80%;
+}
+
+.start-time {
+    font-family: monospace;
+}
+
+#contests>tbody>tr>td {
+    vertical-align: middle;
+}
+
+#contests .running {
+    background: #CFC;
+}
+
+#contests>div:hover.coming {
+    background: #f3f3f3;
+}
+
+#contests>div:hover.running {
+    background: #b7ffb7;
+}
+
+#contests .past * {
+    color: #CCC;
+}
+
+.header-start-time,
+.header-duration,
+.header-timeleft,
+.header-event {
+    /*font-weight: bold;*/
+}
+
+.header-start-time,
+.header-duration,
+.header-timeleft,
+.start-time,
+.duration,
+.timeleft {
+    text-align: center;
+}
+
+#contests>div:first-child {
+    border-top: 1px solid #c9c9c9;
+}
+
+#contests>div {
+    border-bottom: 1px solid #c9c9c9;
+    border-left: 1px solid #c9c9c9;
+    border-right: 1px solid #c9c9c9;
+}
+
+#contests>div {
+    padding: 4px 0px;
+}
+
+#contests a {
+    outline: none;
+}
+
+.addtocalendar a:hover {
+    text-decoration: none;
+}
+
+.event:hover .addtocalendar i {
+    color: inherit;
+}
+
+.event .addtocalendar i {
+    color: #8be;
+}
+
+.contest.nofilter {
+    display: none;
+}
+
+.contest.onfilter {
+    display: block !important;
+}
+
+@media(max-width:767px) {
+    #contests>div:nth-child(2) {
+        border-top: 1px solid #c9c9c9;
+    }
+    .event {
+        text-align: center;
+    }
+    #switch {
+        position: absolute;
+        visibility: hidden;
+    }
+}
+
+@media(min-width:1200px) {
+    .event .resource{
+        float: right;
+    }
+}

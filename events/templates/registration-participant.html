@@ -1,0 +1,77 @@
+{% load extras %}
+<form method="post">{% csrf_token %}
+    <div class="form-group">
+        <label for="first-name">First name in English</label>
+        <input {% if not disable %}id="first-name"{% endif %} name="first-name" class="form-control" type="text" placeholder="Enter first name in English" value="{{ user.first_name }}" required {% if disable %}disabled{% endif %}>
+    </div>
+    <div class="form-group">
+        <label for="last-name">Last name in English</label>
+        <input {% if not disable %}id="last-name"{% endif %} name="last-name" class="form-control" type="text" placeholder="Enter last name in English" value="{{ user.last_name }}" required {% if disable %}disabled{% endif %}>
+    </div>
+    <div class="form-group">
+        <label for="first-name-native">First name in native language</label>
+        <input {% if not disable %}id="first-name-native"{% endif %} name="first-name-native" class="form-control" type="text" placeholder="Enter first name in native language" value="{{ coder.first_name_native }}" required {% if disable %}disabled{% endif %}>
+    </div>
+    <div class="form-group">
+        <label for="middle-name-native">Middle name in native language</label>
+        <input {% if not disable %}id="middle-name-native"{% endif %} name="middle-name-native" class="form-control" type="text" placeholder="Enter middle name in native language" value="{{ coder.middle_name_native }}" {% if disable %}disabled{% endif %}>
+    </div>
+    <div class="form-group">
+        <label for="last-name-native">Last name in native language</label>
+        <input {% if not disable %}id="last-name-native"{% endif %} name="last-name-native" class="form-control" type="text" placeholder="Enter last name in native language" value="{{ coder.last_name_native }}" required {% if disable %}disabled{% endif %}>
+    </div>
+    <div class="form-group">
+        <label for="email">Email address</label>
+        {% if coder and not disable %}
+        <select {% if not disable %}id="email"{% endif %} name="email" class="form-control" required {% if disable %}disabled{% endif %}>
+            {% for email in coder.token_set|values_list_distinct:'email' %}
+            <option{% if email == user.email %} selected{% endif %}>{{ email }}</option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <input name="email" class="form-control" type="email" placeholder="Enter email address" value="{{ user.email }}" required {% if disable %}disabled{% endif %}>
+        {% endif %}
+    </div>
+    <div class="form-group">
+        <label for="phone-number">Phone number</label>
+        <input {% if not disable %}id="phone-number"{% endif %} name="phone-number" class="form-control" type="tel" placeholder="Enter phone number" type="tel" pattern="^\+\d{7,15}$" value="{{ coder.phone_number }}" required {% if disable %}disabled{% endif %}>
+        <small class="form-text text-muted">It starts with + and contains only digits</small>
+    </div>
+{% if not for_coach %}
+    <div class="form-group">
+        <label for="organization">Educational Institution</label>
+        <select {% if not disable %}id="organization"{% endif %} name="organization" class="form-control" required {% if disable %}disabled{% endif %}>
+        {% if coder.organization %}
+            <option value="{{ coder.organization }}" selected>{{ coder.organization }}</option>
+        {% endif %}
+        </select>
+        <small class="form-text text-muted">If your educational institution is not listed, then enter its full name in Russian or English</small>
+    </div>
+    <div class="form-group">
+        <label for="country">Country</label>
+        <select {% if not disable %}id="country"{% endif %} name="country" class="form-control" required {% if disable %}disabled{% endif %}>
+        {% if coder.country %}
+            <option value="{{ coder.country.code }}" selected>{{ coder.country.name }}</option>
+        {% else %}
+            <option value="{{ defaults.country.code }}" selected>{{ defaults.country.name }}</option>
+        {% endif %}
+        </select>
+    </div>
+{% endif %}
+    <div class="form-group">
+        <label for="tshirt-size">T-shirt size</label>
+        <select {% if not disable %}id="tshirt-size"{% endif %} name="tshirt-size" class="form-control" required {% if disable %}disabled{% endif %}>
+        {% for k, v in tshirt_size.labels.items %}
+        <option value="{{ k }}" {% if k ==  coder.tshirt_size %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+        </select>
+    </div>
+{% if not disable %}
+    {% if not for_coach %}
+        <button type="submit" name="query" class="btn btn-primary" value="join">Join the event</button>
+    {% else %}
+        <button type="submit" name="query" class="btn btn-primary" value="add-coach">Add coach</button>
+        <a href="?query=skip-coach" class="btn btn-primary">Skip</a>
+    {% endif %}
+{% endif %}
+</form>

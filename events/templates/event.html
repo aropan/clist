@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load extras %}
+{% load jsonify %}
+{% load el_pagination_tags %}
+
+
+{% block end-head %}
+<script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
+
+<link href="{% static_ts 'css/select2.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/select2.full.min.js' %}"></script>
+<link href="{% static_ts 'css/select2-bootstrap.min.css' %}" rel="stylesheet">
+
+<script src="{% static_ts 'js/bootbox.min.js' %}"></script>
+
+<link href="{% static_ts 'css/events/event.css' %}" rel="stylesheet">
+
+<script src="{% static_ts 'js/events/event.js' %}"></script>
+
+<link href="{% static_ts 'flags/flags.min.css' %}" rel=stylesheet type="text/css">
+
+<script src="{% static_ts 'el-pagination/js/el-pagination.js' %}"></script>
+
+{% endblock %}
+
+{% block title %}{{ event.name }} event{% endblock %}
+
+{% block content %}
+    <h3 id="name">{{ event.name }}</h3>
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
+        {% if not registration.over %}
+            <li><a href="#registration-tab" data-toggle="tab">Registration</a></li>
+        {% endif %}
+        <li><a href="#participants-tab" data-toggle="tab">Participants</a></li>
+{% if perms.events.change_team %}
+        <li><a href="#admin-teams-view-tab" data-toggle="tab">Admin</a></li>
+{% endif %}
+    </ul>
+    <div class="tab-content">
+        <div id="information-tab" class="tab-pane active col-sm-offset-2 col-sm-8">
+            {% if event.standings_urls %}
+            <div>
+                <label>Standings:</label>
+                {% for name in event.standings_urls %}
+                    <a href="{% url 'events:result' slug name %}">{{ name }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if event.website_url %}
+            <div id="website-url">
+                <label>Website url</label><a href="{{ event.website_url }}">{{ event.host_website_url }}<i class="fa fa-external-link"></i></a>
+            </div>
+            {% endif %}
+            <div>
+                <label>Registration deadline</label>&nbsp;<i class="fa fa-clock-o"></i>&nbsp;{{ event.registration_deadline}}{% if not registration.over %} ({{ registration.timeleft }}){% endif %}
+            </div>
+            <div>
+                {{ event.information|safe }}
+            </div>
+        </div>
+
+        <div id="registration-tab" class="tab-pane col-sm-offset-3 col-sm-6">
+
+            {% if participant %}
+            {% if participant.is_coach or not team and not join_requests %}
+
+            <h3>Team name</h3>
+            <form method="post">{% csrf_token %}
+                <div class="form-group">
+                    <select id="team" name="team" class="form-control" required></select>
+                </div>
+                <button id="create-team" type="submit" name="query" class="btn btn-primary" value="create-team" disabled>Create a new team</button>
+                <button id="join-team" type="submit" name="query" class="btn btn-primary" value="join-team" disabled>Join the team</button>
+            </form>
+            <hr/>
+
+            {% endif %}
+            {% endif %}
+
+            {% if team and not participant.is_coach %}
+            {% if team.author == participant and team.status == team_status.ADD_COACH %}
+                <h3>Coach information</h3>
+                {% include "registration-participant.html" with for_coach=True user=None coder=None %}
+            {% else %}
+                {% include "registration-team.html" with team=team %}
+            {% endif %}
+            {% elif join_requests %}
+
+            <h3>Request to join</h3>
+            {% for join_request in join_requests %}
+            {% with join_request.team as team %}
+            <p>Wait for your confirmation in <strong>{{ team.name }}</strong> team by <strong>{{ team.author.first_name }} {{ team.author.last_name }}</strong></p>
+            <p>Please submit a repeat request after {{ join_request.repeat_request_timedelta|hr_timedelta }} or you can <a class="label label-danger" href="?query=cancel-request&request_id={{ join_request.id }}">cancel request</a></p>
+            {% endwith %}
+            <hr/>
+            {% endfor %}
+            {% endif %}
+
+            {% if participant and participant.is_coach %}
+            {% for team in participant.team_coach_set.all %}
+            {% include "registration-team.html" with team=team %}
+            <hr/>
+            {% endfor %}
+            {% endif %}
+
+            {% if user.is_anonymous %}
+            <h3>Registration</h3>
+            <a href="{% url 'auth:login' %}?next={% url 'events:event' slug %}" class="btn btn-primary">Go to registration</a>
+            {% else %}
+            <h3>Personal information</h3>
+            {% if not participant %}
+            {% include "registration-participant.html" %}
+            {% else %}
+            {% include "registration-participant.html" with user=participant coder=participant disable=True %}
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <div id="participants-tab"  class="tab-pane col-sm-offset-2 col-sm-8">
+            <script>$.endlessPaginate({paginateOnScroll: true});</script>
+            <hr/>
+            <div class="list-group">
+            {% include page_template %}
+            </div>
+        </div>
+
+{% if perms.events.change_team %}
+        <div id="admin-teams-view-tab" class="tab-pane col-sm-offset-2 col-sm-8">
+            <h3>Teams</h3>
+            <div class="btn-group">
+                {% for status in team_status.labels %}
+                <button title="{{ team_status.labels|get_item:status|title }}" type="submit" value="status-{{ status }}" class="button-status btn btn-{{ team_status.classes|get_item:status }}" {% if status == team.status %} disabled{% endif %}>{{ team_status.labels|get_item:status|title|make_list|first }}</button>
+                {% endfor %}
+            </div>
+            <hr/>
+            <div class="list-group">
+            {% for team in teams %}
+            {% include "inline-team.html" with team=team %}
+            {% endfor %}
+            </div>
+        </div>
+{% endif %}
+    </div>
+{% endblock %}

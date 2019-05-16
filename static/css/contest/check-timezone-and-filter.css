@@ -1,0 +1,29 @@
+#timezone-and-filter>div {
+    margin-bottom: 12px;
+}
+
+#time {
+    display: inline;
+}
+
+#switch {
+    display: inline;
+}
+
+#switch a, #switch a:link, #switch a:hover {
+    color: inherit;
+    text-decoration: inherit;
+}
+
+#filter {
+    max-width: 200px;
+}
+
+#filter .tooltip.top .tooltip-inner {
+    background-color: #555;
+    min-width: 200px;
+}
+
+#filter .tooltip.top .tooltip-arrow {
+    border-top-color: #555;
+}

@@ -1,0 +1,18 @@
+{% load extras %}
+<div style="width: 400px; margin: auto">
+    {% for c in contests %}
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid black;">
+        <div>
+            <span>{{ c.next_time|hr_timedelta }}</span>
+            <span><a style="text-decoration: none; color: #337ab7" href="{{ c.start_time|get_timeanddate_href }}&msg={{ c.title|iriencode }}{% if c.duration|less_24_hours %}&ah={{ c.duration|hours }}&am={{ c.duration|minutes }}{% endif %}">{{ c.start_time|timezone:coder.timezone|format_time:"%b %d, %a %H:%M" }}</a></span>
+            <span>{{ c.hr_duration }}</span>
+        </div>
+        <div>
+            <span title="{{ c.title }}">
+                <a style="text-decoration: none; color: #337ab7" href="{{ c.url }}">{{ c.title|truncatechars:35 }}</a>
+            </span>
+            <span>{{ c.host }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>

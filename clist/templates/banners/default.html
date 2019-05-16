@@ -1,0 +1,45 @@
+<script src="{% static_ts 'js/jquery.countdown.min.js' %}"></script>
+<div id="banner{{banner.id}}" align="center">
+    <a href="{{ banner.url }}" title="{{ banner.name }}" target="_blank">
+        <div class="digits">
+            <div class="text">{{ banner.data.text }}</div>
+        </div>
+    </a>
+</div>
+
+<style>
+#banner{{ banner.id }} {
+    margin-bottom: 30px;
+}
+
+#banner{{ banner.id }} a {
+    text-decoration: none;
+    font-weight: bold;
+    color: white;
+}
+
+#banner{{ banner.id }} .digits {
+    padding: 20px;
+    height: 120px;
+    background: url("{% static_ts banner.data.image %}");
+    background-size: 100%;
+    background-repeat: no-repeat;
+    text-align: left;
+}
+
+#banner{{ banner.id }} .cntSeparator {
+    margin: 5px !important;
+}
+</style>
+
+<script>
+$(function(){
+    $("#banner{{ banner.id }} .digits").countdown({
+        image: "{% static_ts 'img/digits-min.png' %}",
+        format: "dd hh mm ss",
+        digitWidth: 34,
+        digitHeight: 45,
+        endTime: new Date(Date.parse("{{ banner.data.date }}")),
+    });
+});
+</script>

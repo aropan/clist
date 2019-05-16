@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ resource.host }} - Resource{% endblock %}
+
+{% block content %}
+<style>
+    .list {
+        line-height: 2;
+    }
+</style>
+
+<h2><a href="http://{{ resource.host }}">{{ resource.host }}</a></h2>
+
+<a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
+    <i class="fa fa-calendar"></i> Google calendar
+</a>
+
+<div class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
+    updating {% if resource.enable %}auto{% else %}manually{% endif %}
+</div>
+
+{% if resource.module %}
+<span class="badge progress-bar-warning">
+    parse statistic
+</span>
+{% endif %}
+<span class="badge progress-bar-info">{{ resource.contest_set.all.count }} contest(s)</span>
+
+<h3>Coders</h3>
+{% if accounts %}
+    <div class="coders list">
+    {% for a in accounts|slice:":42" %}
+        {% for c in a.coders.all %}
+            <a class="badge" href="{% url 'coder:profile' c.user.username %}">{{ a.key }}</a>
+        {% endfor %}
+    {% endfor %}
+    {% if accounts.count > 42 %}
+        and {{ accounts.count|add:-42 }} other(s)
+    {% endif %}
+    </div>
+{% else %}
+    <div class="alert alert-warning">Not found</div>
+{% endif %}
+
+<h3>Contests</h3>
+{% if resource.contest_set.all.count %}
+{% for name, set in contests %}
+    {% if set %}
+    <h4>{{ name|title }}</h4>
+    <div class="contests list">
+    {% for c in set|slice:":42" %}
+        <a class="badge progress-bar-info" href="{{ c.standings_url|default:c.url }}">{{ c.title }}</a>
+    {% endfor %}
+    {% if set.count > 42 %}
+        and {{ set.count|add:-42 }} other(s)
+    {% endif %}
+    </div>
+    {% endif %}
+{% endfor %}
+{% else %}
+    <div class="alert alert-warning">Not found</div>
+{% endif %}
+{% endblock %}

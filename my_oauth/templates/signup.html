@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="col-md-offset-4 col-md-4 col-xs-offset-3 col-xs-6">
+    <div class="panel panel-primary">
+        <div class="panel-heading">Sign Up</div>
+        <div class="panel-body">
+            {% if error %}
+            <div class="alert alert-danger">
+                <i class="fa fa-exclamation-triangle"></i>
+                {{ error }}
+            </div>
+            {% endif %}
+            <form href="{% url 'auth:signup' %}" method="post">{% csrf_token %}
+                <div class="form-group">
+                    <h4><span class="label label-success"><i class="fa fa-envelope-o"></i> {{ token.email }}</span></h4>
+                </div>
+                <div class="form-group">
+                    <input name="username" type="text" class="form-control" placeholder="Username"{% if request.POST.username %} value="{{ request.POST.username }}"{% endif %} autofocus>
+                </div>
+                {% if tokens %}
+                    {% if limit_tokens_view %}
+                <div class="alert alert-warning">Too many requests for authorization hints. Wait a while.</div>
+                    {% else %}
+                <div class="alert alert-warning">
+                    Email or username used in another service(s). Login with
+                    {% for t in tokens%}<a href="{% url 'auth:query' t.service.name %}?next={% url 'coder:settings' %}">{{ t.service.title }}</a>{% if forloop.revcounter0 %} or {% endif %}{% endfor %}, and connect {{ token.service.title }} in settings.
+                </div>
+                    {% endif %}
+                {% endif %}
+                <div class="text-right">
+                    <button name="signup" type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

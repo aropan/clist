@@ -1,0 +1,109 @@
+server {
+  access_log /var/log/nginx/clist-legacy-access.log;
+  error_log /var/log/nginx/clist-legacy-error.log;
+  server_name legacy.clist.by;
+
+  charset utf-8;
+
+  include acme;
+
+  location = /favicon.ico { access_log off; log_not_found off; }
+
+  root $PROJECT_DIR/legacy/;
+
+  rewrite ^/(calendar|list)/?(.*)?${DOLLAR} /${DOLLAR}2?view=${DOLLAR}1;
+  rewrite ^/resources/(.*)/?${DOLLAR} /?byhosts=${DOLLAR}1;
+
+  location / {
+    index index.php index.html;
+  }
+
+  location ~ /logs/.*${DOLLAR} {
+    index index.txt index.html;
+  }
+
+  location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)${DOLLAR} {
+    try_files ${DOLLAR}uri = 404;
+  }
+
+  location ~ ^/module/ {
+    deny all;
+  }
+
+  location ~ (exchange-code|index)\.php {
+    try_files ${DOLLAR}uri = 404;
+    include fastcgi_params;
+    fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
+    fastcgi_index index.php;
+
+    fastcgi_param  SCRIPT_FILENAME  ${DOLLAR}document_root${DOLLAR}fastcgi_script_name;
+  }
+
+  location ~ ((index|google[a-z0-9]+|yandex_[a-z0-9]+)\.html|robots.txt)${DOLLAR} {
+    allow all;
+  }
+
+  location ~ [^\/]${DOLLAR} {
+    deny all;
+  }
+
+  listen 443 ssl; # managed by Certbot
+  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
+  access_log /var/log/nginx/clist-access.log;
+  error_log /var/log/nginx/clist-error.log;
+
+  server_name clist.by dev.clist.by;
+
+  charset utf-8;
+
+  include acme;
+
+  location = /favicon.ico { access_log off; log_not_found off; }
+
+  rewrite ^/api/v([0-9]+)/(json|jsonp|yaml|xml|plist)/(.*)${DOLLAR} /api/v${DOLLAR}1/${DOLLAR}3?format=${DOLLAR}2&${DOLLAR}args last;
+
+  location /static/ {
+    root $PROJECT_DIR;
+  }
+
+  location / {
+    include uwsgi_params;
+    uwsgi_pass unix:$PROJECT_DIR/uwsgi.sock;
+  }
+
+  listen 443 ssl; # managed by Certbot
+  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
+  if (${DOLLAR}host = dev.clist.by) {
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  } # managed by Certbot
+
+  if (${DOLLAR}host = clist.by) {
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  } # managed by Certbot
+
+  listen 80;
+  server_name clist.by dev.clist.by;
+  return 404; # managed by Certbot
+}
+
+server {
+  if (${DOLLAR}host = legacy.clist.by) {
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  } # managed by Certbot
+
+  listen 80;
+  server_name legacy.clist.by;
+  return 404; # managed by Certbot
+}

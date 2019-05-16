@@ -1,0 +1,46 @@
+#name {
+    margin-top: 0px;
+    margin-bottom: 20px;
+}
+
+.standings {
+    text-align: center;
+}
+
+.table>*>div {
+    padding: 4px 0px;
+}
+
+.table>.row-stand:nth-of-type(even)>div {
+    background: #f5f5f5;
+}
+
+.table>.row-stand>div {
+    border-top: 1px solid #c9c9c9;
+}
+
+.table {
+    padding: 0px;
+    border: 1px solid #c9c9c9;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+}
+
+.coders, .contests, .participates {
+    line-height: 1.6180339887;
+}
+
+.larger {
+    font-size: 130%;
+}
+
+.nav-tabs {
+    height: 85%;
+    position: fixed;
+    z-index: 1;
+    overflow-x: hidden;
+}
+
+.tab-content {
+    margin-left: 25%;
+}

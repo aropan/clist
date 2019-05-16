@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load extras %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/profile.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block title %}
+{{ coder.user.username }} - Coder
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if coder.user.first_name or coder.user.last_name %}
+            {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+        {% endif %}
+        {{ coder.user.username }}
+    </h2>
+    <h3>Accounts</h3>
+    {% for account in coder.account_set.all %}
+    <span class="account badge progress-bar-info">{{ account.key }} <a href="http://{{ account.resource.host }}"><small class="text-muted">{{ account.resource.host }}</small></a></span>
+    {% endfor %}
+    <h3>Contests</h3>
+    {% if statistic %}
+    <div class="container statistic" id="contests">
+        <div class="row contest header">
+            <div class="rank col-xs-1">Rank</div>
+            <div class="solving col-xs-1">Score</div>
+            <div class="title col-xs-10">Event</div>
+        </div>
+    {% for s in statistic %}
+        <div class="row contest" id="cid-{{ s.contest.id }}">
+            <div class="rank col-xs-1" data-toggle="tooltip" data-placement="top" data-html="true" title="
+                Handle: {{ s.account.key }}<br/>
+                {% for k, v in s.addition.items|sort %}
+                    {% if k not in "problems,hack,solved" %}
+                        {{ k|title }}: {{ v }}<br/>
+                    {% endif %}
+                {% endfor %}
+            ">{{ s.place|default:"-" }}</div>
+            <div class="solving col-xs-1" {% if s.addition.score %}data-toggle="tooltip" data-placement="top" title="{{ s.addition.score}}"{% endif %}>{{ s.solving }}</div>
+            <div class="title col-xs-10">
+                <a href="{{ s.contest.standings_url|default:s.contest.url }}">{{ s.contest.title }}</a>
+                <a href="http://{{ s.contest.resource.host }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
+                {% if s.addition.hack %}
+                {% with hack=s.addition.hack %}
+                    <span class="badge progress-bar-warning" data-toggle="tooltip" data-placement="top" title="Hacks">
+                        {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
+                    </span>
+                {% endwith %}
+                {% endif %}
+                {% for k, v in s.addition.problems.items|sort %}
+                <span
+                    {% if v %}data-toggle="tooltip" data-placement="top" title="
+{% if v.name %}Name: {{ v.name }}<br/>{% endif %}
+{% if v.result != None %}Result: {{ v.result }}{% endif %}
+{% if v.upsolving.result %}{% if v.result != None %}</br>{% endif %}Upsolving: {{ v.upsolving.result }}{% endif %}
+{% if v.time %}<br/>Time: {{ v.time }}{% endif %}
+{% if v.penalty %}<br/>Penalty: {{ v.penalty }}{% endif %}
+" data-html="true"{% endif %}
+  class="badge progress-bar-{% if v %}{% if v.result|slice:":1" == "+" or v.result|asfloat:0 > 0 %}{% if v.partial %}info{% else %}success{% endif %}{% else %}{% if v.upsolving %}info{% else %}danger{% endif %}{% endif %}{% else %}info{% endif %}"
+                >
+                {{ k }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+    {% else %}
+        <div class="alert alert-warning">Not found</div>
+    {% endif %}
+{% endblock %}
+

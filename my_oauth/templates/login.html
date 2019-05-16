@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="col-md-offset-4 col-md-4 col-xs-offset-3 col-xs-6">
+    <div class="panel panel-primary">
+        <div class="panel-heading">Login</div>
+        <div class="panel-body">
+        {% for service in services %}
+            <div class="btn-block btn-group">
+                <a class="col-xs-2 btn btn-default active icon service-icon-btn"><i class="fa {{ service.fa_icon }}"></i></a>
+                <a href="{% url 'auth:query' service.name %}" class="col-xs-10 btn btn-default"><div class="text-left">with {{ service.title }}</div></a>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

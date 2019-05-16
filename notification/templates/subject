@@ -1,0 +1,7 @@
+{% autoescape off %}
+{% if contests.count < 7 %}
+    {% if prefix %}{{ prefix }}. {% endif %}{% for c in contests %}{% if forloop.counter0 %}{% if forloop.revcounter0 %},{% else %} and{% endif %} {% endif %}{{ c.title }}{% endfor %}
+{% else %}
+    {% if prefix %}{{ prefix }}. {% endif %}{% for c in contests|slice:":4" %}{% if forloop.counter0 %}, {% endif %}{{ c.title }}{% endfor %} and {{ contests.count|add:-4 }} other events
+{% endif %}
+{% endautoescape %}

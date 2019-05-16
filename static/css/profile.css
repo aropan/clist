@@ -1,0 +1,33 @@
+#contests {
+    text-align: center;
+}
+
+#contests .title {
+    text-align: left;
+}
+
+#contests>div:first-child {
+    border-top: 1px solid #c9c9c9;
+}
+
+#contests>div {
+    border-bottom: 1px solid #c9c9c9;
+    border-left: 1px solid #c9c9c9;
+    border-right: 1px solid #c9c9c9;
+}
+
+.contest>div {
+    padding: 3px;
+}
+
+.account {
+    background-color: gray;
+}
+
+.account a {
+    text-decoration: none;
+}
+
+.account a small {
+    color: white;
+}

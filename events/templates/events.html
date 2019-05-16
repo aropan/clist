@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load extras %}
+
+{% block title %}Events{% endblock %}
+
+{% block content %}
+
+<h4>Events</h4>
+<div class="events">
+    {% for event in events %}
+    <div class="event">
+        <a class="lead" href="{% url 'events:event' event.slug %}">{{ event.name }}</a>
+        <a href="{{ event.website_url }}"><i class="fa fa-external-link"></i></a>
+        <span class="label label-primary">{{ event.participant_set.all.count }} participant(s)</span>
+        <span class="label label-primary">{{ event.team_set.all.count }} team(s)</span>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

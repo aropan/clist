@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>{% block title %}{% endblock %} - Contest List</title>
+        {% block begin-head %}{% endblock %}
+
+        <script src="{% static_ts 'js/jquery-2.2.0.min.js' %}"></script>
+        <script src="{% static_ts 'js/ie-emulation-modes-warning.js' %}"></script>
+
+        <link href="{% static_ts 'css/base.css' %}" rel="stylesheet">
+        <script src="{% static_ts 'js/base.js' %}"></script>
+
+        <link href="{% static_ts 'css/bootstrap.min.css' %}" rel="stylesheet">
+        <script src="{% static_ts 'js/bootstrap.min.js' %}"></script>
+        <link href="{% static_ts 'css/BootstrapXL.css' %}" rel="stylesheet">
+        <link href="{% static_ts 'css/bootstrap-left-right-below-tabs.css' %}" rel="stylesheet">
+
+        <link href="{% static_ts 'css/font-awesome.css' %}" rel="stylesheet">
+
+        <script src="{% static_ts 'js/notify.js' %}"></script>
+        <script src="{% static_ts 'js/notify-config.js' %}"></script>
+        {% block end-head %}{% endblock %}
+    </head>
+    <body>
+        {% include 'counter/base.html' %}
+        {% block navbar %}{% include 'navbar.html' %}{% endblock %}
+        <div class="container">
+        {% block banner %}
+            {% for b in banners %}
+                {% include b.template with banner=b %}
+            {% endfor %}
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+        </div>
+        {% include 'messages.html' %}
+    </body>
+</html>

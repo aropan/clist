@@ -1,0 +1,8 @@
+{% load extras %}
+{% autoescape off %}
+{% if prefix %}{{ prefix }}
+{% endif %}{% for c in contests %}
+{% if c.is_over %}over{% else %}{{ c.next_time|hr_timedelta }}{% endif %} - {{ c.start_time|timezone:coder.timezone|format_time:"%b %d, %a %H:%M" }} - {{ c.hr_duration }}
+{{ c.title }} - {{ c.url }} - {{ c.host }}
+{% endfor %}
+{% endautoescape %}

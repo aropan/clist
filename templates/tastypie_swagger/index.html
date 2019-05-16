@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% load extras %}
+
+{% block title %}API Documentation{% endblock %}
+
+{% block begin-head %}
+    <link href="{% static_ts 'tastypie_swagger/css/highlight.default.css' %}" media='screen' rel='stylesheet' type='text/css'/>
+    <link href="{% static_ts 'tastypie_swagger/css/screen.css' %}" media='screen' rel='stylesheet' type='text/css'/>
+    <link href="{% static_ts 'css/tastypie_swagger.css' %}" media='screen' rel='stylesheet' type='text/css'/>
+{% endblock %}
+
+{% block end-head %}
+    <title>Swagger UI</title>
+    <link href='https://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'/>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/shred.bundle.js' %}" type="text/javascript"></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/jquery.slideto.min.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/jquery.wiggle.min.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/jquery.ba-bbq.min.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/handlebars-1.0.0.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/underscore-min.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/backbone-min.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/swagger.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/swagger-ui.js' %}" type='text/javascript'></script>
+    <script src="{% static_ts 'tastypie_swagger/js/lib/highlight.7.3.pack.js' %}" type='text/javascript'></script>
+
+    <script type="text/javascript">
+        $(function () {
+            window.swaggerUi = new SwaggerUi({
+                url:"{{ discovery_url }}",
+                apiKey:"special-key",
+                dom_id:"swagger-ui-container",
+                supportHeaderParams: false,
+                supportedSubmitMethods: ['get'],
+                onComplete: function(swaggerApi, swaggerUi){
+                    $("img[src$='throbber.gif']").attr("src", "{% static_ts 'tastypie_swagger/images/throbber.gif' %}");
+                    if(console) {
+                        console.log("Loaded SwaggerUI")
+                        console.log(swaggerApi);
+                        console.log(swaggerUi);
+                    }
+                    $('pre code').each(function(i, e) {hljs.highlightBlock(e)});
+                },
+                onFailure: function(data) {
+                    if(console) {
+                        console.log("Unable to Load SwaggerUI");
+                        console.log(data);
+                    }
+                },
+                docExpansion: "list"
+            });
+
+            window.swaggerUi.load();
+        });
+
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="info">
+    <div class="title">authentication</div>
+    <div class="text">To access need api-key. There is also access without api-key through session on this website.
+    {% if user.is_authenticated %}
+    <a href="#" id="show-api-key" class="pull-right">Show api-key</a>
+    <script>
+        $(function() {
+            $('a#show-api-key').click(function() {
+                var $this = $(this)
+                $this.html('<i class="fa fa-refresh fa-lg fa-pulse"></i>')
+                $.get('{% url 'coder:api-key' %}')
+                    .done(function (api_key) {
+                        $this.html(api_key)
+                        $this.removeAttr('href').unbind('click')
+                        $this.popover({
+                            placement: 'bottom',
+                            container: 'body',
+                            html: true,
+                            delay: {
+                                'show': 300,
+                                'hide': 100,
+                            },
+content: '<div class="info"><div class="title">Request header</div><div class="text">Authorization: ApiKey {{user.username}}:' + api_key + '</div></div><div class="or text-center">or</div><div class="info"><div class="title">Param query</div><div class="text">/?username={{user.username}}&api_key=' + api_key + '</div></div>',
+                            title: 'How to use?',
+                        }).popover('show')
+                    })
+                    .fail(function (data) {
+                        $this.html('<span class="label label-danger">Something went wrong</span>')
+                        $this.removeAttr('href').unbind('click')
+                    })
+                return false;
+            })
+        })
+    </script>
+    {% else %}
+    <a href="{% url 'auth:login' %}" class="pull-right" id="show-api-key">Log in to view api-key</a>
+    {% endif %}
+    </div>
+</div>
+<div class="info">
+    {% get_api_formats as formats %}
+    <div class="title">format</div>
+    <div class="text">Supported {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}. Set format in url <samp>/api/v1/json/...</samp> or use param in get query <samp>/?format=json</samp>.</div>
+</div>
+<div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
+
+<div id="swagger-ui-container" class="swagger-ui-wrap"></div>
+{% endblock %}

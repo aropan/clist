@@ -1,0 +1,65 @@
+{% load extras %}
+<h3>{{ team.name }}</h3>
+<div>
+    <label>Status</label>
+    <span class="label label-{{ team_status.classes|get_item:team.status }}">{{ team_status.descriptions|get_item:team.status }}</span>
+</div>
+{% if team.coach %}
+<div>
+<label>Coach</label>
+{{ team.coach.first_name }}
+{{ team.coach.last_name }}
+</div>
+{% endif %}
+{% if team.participants.count %}
+<label>Participants</label>
+<ul>
+    {% for p in team.participants.all %}
+    <li>
+        {{ p.first_name }}
+        <a href="{% url 'coder:profile' p.coder.user.username %}">{{ p.coder.user.username }}</a>
+        {{ p.last_name }}
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% if team.joinrequest_set.count %}
+<div id="requests-to-join">
+<label>Join requests</label>
+<ul>
+    {% for r in team.joinrequest_set.all %}
+    <li>
+        <form method="post" class="form-inline">{% csrf_token %}
+            {{ r.participant.first_name }}
+            <a href="{% url 'coder:profile' r.participant.coder.user.username %}">{{ r.participant.coder.user.username }}</a>
+            {{ r.participant.last_name }}
+            {% if team.author == participant %}
+            <input type="hidden" name="request_id" value="{{ r.id }}">
+            <div class="btn-group">
+                <button type="submit" name="query" class="btn btn-sm btn-success" value="accept-team">accept{% if r.participant.is_coach %} as coach{% endif %}</button>
+                <button type="submit" name="query" class="btn btn-sm btn-primary" value="reject-team">reject</button>
+            </div>
+            {% endif %}
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+</div>
+{% endif %}
+{% if team.author == participant and team.status == team_status.NEW %}
+<form method="post" class="form-inline">{% csrf_token %}
+<input type="hidden" name="team_id" value="{{ team.id }}">
+<button type="submit" name="query" value="register" class="btn btn-primary"{% if team.joinrequest_set.count or team.participants.count < 3 or team.participants.count > 3 %} disabled{% endif %}>Register the team</button>
+<button type="submit" name="query" value="delete-team"  class="btn btn-default"{% if team.joinrequest_set.count %} disabled{% endif %}>Delete the team</button>
+{% if team.joinrequest_set.count %}<div><small class="form-text text-muted">Register and delete the team are possible only when there are no requests</small></div>{% endif %}
+{% if team.participants.count < 1 or team.participants.count > 3 %}<div><small class="form-text text-muted">Register is possible only when the team consists of one to three participants</small></div>{% endif %}
+{% if team.participants.count < 3 %}
+<div>
+    <small class="form-text text-muted text-danger">Before register the team add all the participants to the team</small>
+    <button type="button" id="enable-register" class="close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endif %}
+</form>
+{% endif %}

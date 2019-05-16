@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load extras %}
+{% load jsonify %}
+{% load crispy_forms_tags %}
+
+{% block title %}Settings{% endblock %}
+
+{% block end-head %}
+<script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
+
+<link href="{% static_ts 'css/select2.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/select2.full.min.js' %}"></script>
+<link href="{% static_ts 'css/select2-bootstrap.min.css' %}" rel="stylesheet">
+
+<link href="{% static_ts 'css/bootstrap-editable.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/bootstrap-editable.min.js' %}"></script>
+
+<script src="{% static_ts 'js/bootbox.min.js' %}"></script>
+
+<link href="{% static_ts 'css/settings.css' %}" rel="stylesheet">
+
+<script>
+    $.fn.editable.defaults.pk = {{ coder.id }}
+    emails = [ {{ coder.token_set|get_emails }} ]
+
+    RESOURCES = [ {% for r in resources %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ r.id }}', 'text': '{{ r.host }}'}{% endfor %} ]
+    CATEGORIES = [ {% for c in categories %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ c }}', 'text': '{{ c }}'}{% endfor %} ]
+
+    ACCOUNTS_RESOURCES = [ {% for m in modules %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ m.resource.id }}', 'text': '{{ m.resource.host }}'}{% endfor %} ]
+    ACCOUNTS = [ {% for a in coder.account_set_order_by_pk %}{% if forloop.counter0 %}, {% endif %}{{ a.dict|jsonify }}{% endfor %} ]
+</script>
+
+<script src="{% static_ts 'js/settings/main.js' %}"></script>
+
+<link href="{% static_ts 'css/awesome-bootstrap-checkbox.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#preferences-tab" data-toggle="tab">Preferences</a></li>
+        <li><a href="#social-tab" data-toggle="tab">Social</a></li>
+        <li><a href="#accounts-tab" data-toggle="tab">Accounts</a></li>
+        <li><a href="#filters-tab" data-toggle="tab">Filters</a></li>
+        <li><a href="#notifications-tab" data-toggle="tab">Notifications</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div id="preferences-tab" class="tab-pane active">
+            <div class="key">Timezone
+                <i rel="tooltip" title="For a single viewing in another timezone using /?timezone=..."></i>
+            </div>
+            <div class="value"><a href="#" id="timezone" data-value="{{ coder.timezone }}"></a></div>
+
+            <div class="key">Check timezone
+                <i rel="tooltip" title="Check user timezone and display warning in case of differences."></i>
+            </div>
+            <div class="value"><a href="#" id="check-timezone" data-value="{{ coder.settings.check_timezone }}"></a></div>
+
+            <div class="key">Time format
+                <i rel="tooltip" title="Format start time. Default: '%d.%m %a %H:%M'"></i>
+            </div>
+            <div class="value"><a href="#" id="time-format" data-value="{{ coder.settings.time_format }}"></a></div>
+
+            <div class="key">Default import calendar</div>
+            <div class="value"><a href="#" id="add-to-calendar" data-value="{{ coder.settings.add_to_calendar }}"></a></div>
+
+            <div class="key">View mode
+                <i rel="tooltip" title="For a single viewing in another mode using /?view=..."></i>
+            </div>
+            <div class="value"><a href="#" id="view-mode" data-value="{{ coder.settings.view_mode }}"></a></div>
+
+            <div class="key">Group in list mode view</div>
+            <div class="value"><a href="#" id="group-in-list" data-value="{{ coder.settings.group_in_list }}"></a></div>
+
+            <div class="key">Open events in new tab</div>
+            <div class="value"><a href="#" id="open-new-tab" data-value="{{ coder.settings.open_new_tab }}"></a></div>
+        </div>
+        <div id="filters-tab" class="tab-pane">
+            <div class="key">
+                <a href="#" id="add-filter" class="btn btn-primary btn-sm">Create</a>
+                <i rel="tooltip" title="Filters of events that you want to show or hide."></i>
+                <span class="small">
+                    Resulting filter looks like <span class="badge alert-success">not (hide<sub>1</sub> or hide<sub>2</sub> or ... hide<sub>n</sub>) and (show<sub>1</sub> or show<sub>2</sub> or ... or show<sub>m</sub>)</span>
+                </span>
+                <div id="add-filter-error" class="label label-danger hidden"></div>
+            </div>
+
+            <div id="filters" class="value">
+                {% for filter in coder.filter_set.all %}
+                <div>
+                    <a href="#" data-name="filter" data-value='{{ filter.dict|jsonify }}' class="filter"></a>
+                    <a href="#" data-id="{{ filter.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"><i class="fa fa-trash-o"></i></a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="notifications-tab" class="tab-pane">
+            <div class="alert alert-danger text-center bold"><strong>WARNING</strong>: Notification with email is disabled (will be fix in the near future).</div>
+            <div id="notifications" class="value">
+                {% if not notification_form.errors %}
+                <a id="add-filter" class="btn btn-primary btn-sm" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>
+                {% endif %}
+                <div id="notification-form"{% if not notification_form.errors %} class="collapse"{% endif %}>
+                    {% crispy notification_form %}
+                </div>
+                {% for n in coder.notification_set.all %}
+                <div class="notification">
+                    <span class="label label-info">{{ n.method }}</span>
+                    before <span class="label label-info">{{ n.before }}</span> minute(s)
+                    once a <span class="label label-info">{{ n.get_period_display|lower }}</span>
+                    <span class="checkin">
+                    {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}
+                    </span>
+                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-default btn-sm"><i class="fa fa-trash-o"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-default btn-sm"><i class="fa fa-repeat"></i></a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="social-tab" class="tab-pane">
+            <div class="key">First name in English</div>
+            <div class="value"><a href="#" id="first-name" data-value="{{ user.first_name }}"></a></div>
+            <div class="key">Last name in English</div>
+            <div class="value"><a href="#" id="last-name" data-value="{{ user.last_name }}"></a></div>
+            <div class="key">First name in native language</div>
+            <div class="value"><a href="#" id="first-name-native" data-value="{{ coder.first_name_native }}"></a></div>
+            <div class="key">Last name in native language</div>
+            <div class="value"><a href="#" id="last-name-native" data-value="{{ coder.last_name_native }}"></a></div>
+
+            <div class="key">Email
+                <i rel="tooltip" title="Selected from connected oauth accounts."></i>
+            </div>
+            <div class="value"><a href="#" id="email" data-value="{{ coder.user.email }}"></a></div>
+
+            <div class="key">OAuth</div>
+            <div class="value">
+            {% for service in services %}
+            {% with token=coder.token_set|get_token:service %}
+                <div class="btn-block btn-group">
+                    <a class="btn btn-default active service-icon-btn"><i class="fa {{ service.fa_icon }}"></i></a>
+                    <a href="{% if token %}{{ token.href }}{% else %}{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}{% endif %}" class="btn btn-default"><div class="text-left">{% if token %}{{ token.user_id }}{% else %}connect{% endif %}</div></a>
+                </div>
+            {% endwith %}
+            {% endfor %}
+            </div>
+        </div>
+        <div id="accounts-tab" class="tab-pane">
+            <div class="key">Resource</div>
+            <div class="value"><select class="form-control" id="add-account-resource"></select></div>
+            <div class="key">User Id</div>
+            <div class="value"><select class="form-control" id="add-account-search"></select></div>
+            <div class="text-left">
+                <button class="btn btn-primary" id="add-account">Add</button>
+            </div>
+            <div id="error-account-tab" class="alert alert-danger"></div>
+            <div id="list-accounts">
+            </div>
+        </div>
+    </div>
+{% endblock %}

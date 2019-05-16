@@ -1,0 +1,21 @@
+{% load extras %}
+<{% if without_detail_url %}div{% else %}a{% endif %} class="team list-group-item status-{{ team.status }}"{% if not without_detail_url %} href="{% url 'events:team-details' slug=slug team_id=team.id %}"{% endif %}>
+  <strong class="name">
+    {{ team.title }}
+  </strong>
+  <span class="badge progress-bar-{{ team_status.classes|get_item:team.status }}">{{ team_status.labels|get_item:team.status }}</span>
+
+  <div class="small">
+    {% for o in team.organizations %}{{ o.name }}{% if forloop.revcounter0 %} + {% endif %}{% endfor %}, {{ team.country }}
+    <div class="text-muted">
+      {% for p in team.ordered_participants %}
+        {% if with_profile_url %}<a href="{% url 'coder:profile' p.coder %}">{% endif %}{{ p.first_name }} {{ p.last_name }}{% if with_profile_url %}</a>{% endif %}{% if forloop.revcounter0 %}, {% endif %}
+      {% endfor %}
+    </div>
+    {% if team.coach %}
+    <div class="text-muted">
+      Coach: <strong>{{ team.coach.first_name }} {{ team.coach.last_name }}</strong>
+    </div>
+    {% endif %}
+  </div>
+</{% if without_detail_url %}div{% else %}a{% endif %}>

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /calendar
+Disallow: /calendar?*
+Allow: /list
+Disallow: /list?*
+Disallow: /

@@ -1,0 +1,279 @@
+body {
+    background-image: url('/images/bg.jpg');
+    font: 14px / 18px "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+div.body {
+    margin: 0px auto 20px auto;
+    padding-top: 30px;
+    width: 70%;
+}
+
+
+.container {
+    position: relative;
+    height: 23px;
+}
+
+.menu {
+    font-size: small;
+    overflow: visible;
+    position: absolute;
+    text-align:center;
+    right: 50px;
+}
+
+.menu div {
+    position: relative;
+}
+
+.menu > div > a {
+    border-radius: 10px 10px 0 0;
+    color: lightgray;
+}
+
+.menu > div {
+    float: left;
+}
+
+.menu a:hover, .menu div.hidediv:hover > a {
+    font-weight: bold;
+    color: #4369AC;
+}
+
+.menu > div.hidediv:hover > a {
+    color: black;
+    z-index: 1;
+}
+
+.menu > div:hover {
+    top: -2px;
+}
+
+.menu div.hidediv > div {
+    display: none;
+}
+
+.menu div.hidediv:hover > div {
+    display: block;
+}
+
+.menu div.right {
+    box-shadow: 0.2em 0.2em 1em -2px #000;
+    position: absolute;
+    left: 100%;
+    top: 0px;
+}
+
+.menu > div > div {
+    box-shadow: 0em 0.3em 1em -4px #000;
+}
+
+.menu div.left {
+    box-shadow: -0.2em 0.2em 1em -2px #000;
+    position: absolute;
+    right: 100%;
+    top: 0px;
+}
+
+.menu > div > a {
+    z-index: -1;
+}
+
+.menu a {
+    position: relative;
+    padding: 4px 15px;
+    background: white;
+    border: 1px solid lightgray;
+    text-decoration: none;
+    cursor: pointer;
+    display: block;
+    margin-bottom: -1px;
+    color: gray;
+}
+
+.menu .w1 {
+    width: 100px;
+}
+
+.menu .w2 {
+    width: 450px;
+}
+
+.leftalign {
+    text-align: left;
+}
+
+.centeralign {
+    text-align: center;
+}
+
+.menu .hidden a {
+    border: 0;
+    text-decoration: none;
+    display: inline;
+    font-weight: normal;
+}
+
+.menu .hidden {
+    border: 1px solid lightgray;
+    width: 440px;
+    text-align: left;
+    background: white;
+}
+
+input[type=submit] {
+    background: white;
+    border: 1px solid lightgray;
+    padding: 3px 15px;
+    border-radius: 7px;
+}
+
+input[type=submit]:hover {
+    border-color: gray;
+    background: #F5F5F5;
+}
+
+input[type=submit]:active {
+    box-shadow: inset 0 0 3px 3px #E0E0E0;
+}
+
+
+div.mainbox {
+    margin: 0 auto 0 auto;
+    border: 1px solid lightgray;
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0px 5px 1.5em -5px navy;
+    background: #fcfcfc;
+}
+
+table {
+    width: 100%;
+    padding: 5px;
+    border-radius: 10px;
+    border-collapse: collapse;
+    text-align:center;
+}
+
+tr.header {
+    font-weight: bold;
+    border-radius: 10px;
+    border-bottom: 1px solid lightgray;
+}
+
+tr.contest {
+    color: black;
+    border-bottom: 1px solid lightgray;
+}
+
+tr.even {
+    background: #f8f8f8;
+}
+
+tr.over {
+    color: lightgray;
+}
+
+tr.running {
+    background: #DFD;
+}
+
+tr.running.even {
+    background: #CFC;
+}
+
+td {
+    padding: 7px;
+}
+
+footer {
+    text-align: center;
+    color: gray;
+}
+
+.mainbox a {
+    text-decoration:none;
+    color: #4369AC;
+    font: inherit;
+}
+
+tr.over * {
+    color: inherit;
+}
+
+.mainbox a:hover {
+    color: #4369AC;
+    text-decoration:underline;
+}
+
+td.datetime {
+    font-size: 12px;
+    width: 150px;
+    font-family: monospace;
+}
+
+td.duration {
+    width: 60px;
+}
+
+td.countdown {
+    width: 80px;
+}
+
+
+td.title {
+    text-align: left;
+}
+
+tr.running td.title {
+    font-weight: bold;
+}
+
+div.resource {
+    font: 11px serif;
+    font-style: italic;
+    font-weight: normal;
+}
+
+#calendar
+{
+    padding: 5px;
+}
+
+.plusone
+{
+    text-align: right;
+    padding-top: 30px;
+}
+
+.reformal
+{
+    text-align: left;
+    font-weight: bold;
+    width: 100%;
+}
+
+.informer
+{
+    text-align: center;
+    padding-top: 20px;
+}
+
+.add
+{
+    margin-bottom: 10px;
+    width: 300px;
+}
+
+a.action
+{
+    font-weight: bold;
+    color: black;
+}
+
+#author
+{
+    text-align: right;
+    padding: 10px;
+}

@@ -1,0 +1,27 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Clist Api Mini-doc</title>
+</head>
+<body style="font-family: 'Courier New', Courier, monospace">
+<h2>Objects</h2>
+<h3>Resources</h3>
+<div><b>Schema: </b> <a href="/api/v1/resource/schema">/api/v1/resource/schema</a></div>
+<div><b>Url: </b> <a href="/api/v1/resource">/api/v1/resource</a></div>
+<h3>Events</h3>
+<div><b>Schema: </b> <a href="/api/v1/contest/schema">/api/v1/contest/schema</a></div>
+<div><b>Url: </b> <a href="/api/v1/contest">/api/v1/contest</a></div>
+
+<h2>Parametres</h2>
+<div><b>format: </b>json, jsonp, yaml, xml, plist</div>
+<div><b>limit: </b><i>integer</i></div>
+<div><b>offset: </b><i>integer</i></div>
+<div><b>operators: </b>exact, iexact, contains, icontains, in, gt, gte, lt, lte, startswith, istartswith, endswith, iendswith, range, year, month, day, week_day, isnull, search, regex, iregex</div>
+<div><b>order_by: </b><i>-?field</i></div>
+
+<h2>Examples</h2>
+<div><a href="/api/v1/contest/?format=json&duration__lte=3h&start__gte=2015-02-03&event__iregex=div\.%201">/api/v1/contest/?format=json&duration__lte=3h&start__gte=2015-02-03&event__iregex=div\. 1</a></div>
+<div><a href="/api/v1/contest/?format=json&resource__name=topcoder.com">/api/v1/contest/?format=json&resource__name=topcoder.com</a></div>
+<div><a href="/api/v1/resource/?format=json&order_by=-name">/api/v1/resource/?format=json&order_by=-name</a></div>
+</body>
+</html>

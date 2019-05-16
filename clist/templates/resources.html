@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Resources{% endblock %}
+
+{% block content %}
+<style>
+    .resource {
+        margin-top: 5px;
+    }
+</style>
+<div id="resources">
+    {% for resource in resources %}
+    <div class="resource">
+        <a class="host lead" href="http://{{ resource.host }}">{{ resource.host }}</a>
+        {% if resource.uid %}
+            <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
+                <i class="fa fa-calendar"></i> Google calendar
+            </a>
+        {% endif %}
+
+        <span class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
+            updating {% if resource.enable %}auto{% else %}manually{% endif %}
+        </span>
+
+        {% if resource.module %}
+        <span class="badge progress-bar-warning">
+            parse statistic
+        </span>
+        {% endif %}
+        <span class="badge progress-bar-info">{{ resource.contest_set.all.count }} contest(s)</span>
+        <span class="badge">{{ resource.account_set.all.count }} accounts(s)</span>
+        <a href="{% url 'clist:resource' resource.host %}"><i class="fa fa-external-link"></i></a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
