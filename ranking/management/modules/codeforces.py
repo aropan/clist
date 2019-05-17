@@ -19,15 +19,6 @@ class Statistic(BaseModule):
     PREV_TIME_QUERIES = {}
 
     API_KEYS = conf.CODEFORCES_API_KEYS
-    """
-    API_KEYS = {
-        'username_1': ('key_1', 'secret_1'),
-        'username_2': ('key_2', 'secret_2'),
-        ...
-        'username_n': ('key_n', 'secret_n'),
-        '__default__': 'username_i',
-    }
-    """
 
     DEFAULT_API_KEY = API_KEYS[API_KEYS['__default__']]
 
