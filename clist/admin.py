@@ -52,13 +52,8 @@ class ContestAdmin(BaseModelAdmin):
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'invisible', 'key']
     search_fields = ['title', 'standings_url']
-    list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'host']
+    list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'resource__host']
     date_hierarchy = 'start_time'
-
-    def get_readonly_fields(self, request, obj=None):
-        result = list(super(ContestAdmin, self).get_readonly_fields(request, obj))
-        result.append('duration_in_secs')
-        return result
 
     @transaction.atomic
     def create_timing(self, request, queryset):

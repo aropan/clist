@@ -29,7 +29,7 @@ class Contest(models.Model):
     title = models.CharField(max_length=255)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    duration_in_secs = models.IntegerField(editable=False, null=False, blank=True)
+    duration_in_secs = models.IntegerField(null=False, blank=True)
     url = models.CharField(max_length=255)
     key = models.CharField(max_length=255)
     host = models.CharField(max_length=255)
@@ -50,7 +50,8 @@ class Contest(models.Model):
         unique_together = ('resource', 'key', )
 
     def save(self, *args, **kwargs):
-        self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
+        if self.duration_in_secs is None:
+            self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
         return super(Contest, self).save(*args, **kwargs)
 
     def is_over(self):
