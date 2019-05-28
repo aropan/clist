@@ -80,26 +80,18 @@ class Command(BaseCommand):
                 filt = notify.coder.get_contest_filter(category)
 
                 before = timedelta(minutes=notify.before)
-                last = before + Notification.DELTAS[notify.period]
-
-                if updates:
-                    qs = updates.filter(start_time__gte=now + before).filter(filt)
-                    first = qs.first()
-                    if first:
-                        if not notify.last_time:
-                            notify.last_time = first.start_time - before - timedelta(minutes=1)
-                            notify.save()
-                        elif notify.last_time + before > first.start_time:
-                            self.process(
-                                notify,
-                                qs.filter(start_time__lt=notify.last_time + before),
-                                'UPD',
-                            )
-
-                if not notify.last_time or notify.last_time > now:
-                    continue
 
                 qs = Contest.visible.filter(start_time__gte=now)
+
+                if updates and notify.last_time:
+                    qs_updates = updates.filter(
+                        filt,
+                        start_time__gte=now + before,
+                        start_time__lt=notify.last_time + before,
+                    )
+                    self.process(notify, qs_updates, 'UPD')
+                    qs = qs.filter(~Q(pk__in=[c.pk for c in qs_updates]))
+
                 if notify.last_time:
                     qs = qs.filter(start_time__gte=notify.last_time + before)
                 qs = qs.filter(filt).order_by('start_time')
@@ -118,6 +110,8 @@ class Command(BaseCommand):
 
                 if notify.period == Notification.EVENT:
                     last = first.start_time - now + timedelta(seconds=1)
+                else:
+                    last = before + Notification.DELTAS[notify.period]
                 qs = qs.filter(start_time__lt=now + last)
 
                 self.process(notify, qs)

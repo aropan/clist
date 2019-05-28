@@ -1,5 +1,4 @@
 from pyclist.admin import BaseModelAdmin, admin_register
-from django.contrib import admin
 from notification.models import Notification, Task
 
 
@@ -8,6 +7,9 @@ class NotificationAdmin(BaseModelAdmin):
     list_display = ['coder', 'method', 'before', 'period', 'last_time', 'modified']
     list_filter = ['method']
     search_fields = ['coder__user__username', 'method', 'period']
+
+    def get_readonly_fields(self, request, obj=None):
+        return ['last_time', ] + super().get_readonly_fields(request, obj)
 
 
 @admin_register(Task)

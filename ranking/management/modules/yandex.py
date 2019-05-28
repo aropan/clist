@@ -3,6 +3,7 @@
 from common import REQ, BaseModule, parsed_table
 
 import re
+import os
 
 
 class Statistic(BaseModule):
@@ -13,6 +14,9 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None):
         result = {}
+
+        if not re.search('/[0-9]+/', self.standings_url):
+            return {}
 
         page = REQ.get(self.standings_url)
 
@@ -68,7 +72,6 @@ class Statistic(BaseModule):
 if __name__ == "__main__":
     from pprint import pprint
     import sys
-    import os
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'
 
@@ -87,4 +90,4 @@ if __name__ == "__main__":
         start_time=contest.start_time,
     )
     pprint(statistic.get_standings())
-    pprint(Statistic(standings_url=None, url='https://contest.yandex.ru/algorithm2018/contest/8254/').get_result())
+    pprint(Statistic(standings_url=None, url='https://contest.yandex.ru/algorithm2018/contest/8254/').get_standings())
