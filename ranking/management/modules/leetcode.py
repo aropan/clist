@@ -19,7 +19,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
 
-        api_ranking_url_format = self.API = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
+        api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
         url = api_ranking_url_format.format(1)
         content = REQ.get(url)
         data = json.loads(content)
@@ -28,14 +28,14 @@ class Statistic(BaseModule):
         n_page = (data['user_num'] - 1) // len(data['total_rank']) + 1
 
         def fetch_page(page):
-            url = api_ranking_url_format.format(page)
+            url = api_ranking_url_format.format(page + 1)
             content = REQ.get(url)
             return json.loads(content)
 
         start_time = self.start_time.replace(tzinfo=None)
         result = {}
         with PoolExecutor(max_workers=8) as executor:
-            for data in executor.map(fetch_page, range(1, n_page)):
+            for data in executor.map(fetch_page, range(n_page)):
                 problem_infos = {d['question_id']: d for d in data['questions']}
                 for row, submissions in zip(data['total_rank'], data['submissions']):
                     if not submissions:
