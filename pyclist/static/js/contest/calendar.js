@@ -14,12 +14,13 @@ $(function() {
     });
 
     calendar = new FullCalendar.Calendar($('#calendar')[0], {
-        plugins: ['dayGrid', 'timeGrid', 'list'],
+        plugins: ['dayGrid', 'timeGrid', 'list', 'moment', 'momentTimezone'],
         header: {
             left: 'title',
             center: '',
             right: 'today dayGridMonth,timeGridWeek,listWeek prev,next'
         },
+        titleFormat: '{MMMM {D}}, YYYY',
         firstDay: 1,
         timezone: timezone,
         events: {
@@ -40,7 +41,8 @@ $(function() {
         eventRender: function (info) {
             var event = info.event
             var element = info.el
-            console.log(event)
+            var start = FullCalendarMoment.toMoment(event.start, calendar)
+            var end = FullCalendarMoment.toMoment(event.end, calendar)
             $(element).tooltip({
                 placement: 'top',
                 container: 'body',
@@ -51,8 +53,8 @@ $(function() {
                 },
                 title:
                     event.title +
-                    '</br>Start: ' + event.start +
-                    (event.end? '</br>End: ' + event.end : '')
+                    '</br>Start: ' + start.format('YYYY-MM-DD HH:mm') +
+                    (event.end? '</br>End: ' + end.format('YYYY-MM-DD HH:mm') : '')
             })
         },
         eventClick: function (data, event, view) {

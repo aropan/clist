@@ -6,15 +6,19 @@
 {% block end-head %}
 <script>page_load = $.now();</script>
 
-<link href="{% static_ts 'fullcalendar/core/main.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/core/main.js' %}"></script>
-<link href="{% static_ts 'fullcalendar/daygrid/main.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/daygrid/main.js' %}"></script>
-<link href="{% static_ts 'fullcalendar/timegrid/main.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/timegrid/main.js' %}"></script>
-<link href="{% static_ts 'fullcalendar/list/main.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/list/main.js' %}"></script>
-<script src="{% static_ts 'fullcalendar/bootstrap/main.js' %}"></script>
+<script src="{% static_ts 'js/moment.min.js' %}"></script>
+<script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
+
+<link href="{% static_ts 'fullcalendar/core/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/core/main.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/daygrid/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/daygrid/main.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/timegrid/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/timegrid/main.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/list/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/list/main.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment/main.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment-timezone/main.min.js' %}"></script>
 
 <link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/calendar.js' %}"></script>

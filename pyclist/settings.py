@@ -176,8 +176,6 @@ STATICFILES_DIRS = [
     path.join(BASE_DIR, 'third_party/x-editable/dist/bootstrap3-editable'),
     path.join(BASE_DIR, 'third_party/bootstrap/dist'),
     path.join(BASE_DIR, 'third_party/select2/dist'),
-    path.join(BASE_DIR, 'third_party/select2-bootstrap-theme/dist'),
-    path.join(BASE_DIR, 'third_party/bootbox/dist'),
 ]
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']

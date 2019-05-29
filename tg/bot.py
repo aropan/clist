@@ -122,11 +122,11 @@ class Bot(telegram.Bot):
 
     def help(self, args):
         yield 'Here\'s what I can do:\n' + ';\n'.join(
-            '%s\t%s' % escape(choice, subparser.description)
+            '%s _%s_' % escape(choice, subparser.description)
             for s in self.parser._subparsers._actions
             if isinstance(s, argparse._SubParsersAction)
             for choice, subparser in list(s.choices.items())
-        ) + '.' + '\n\n' + 'You can also use command with "--help" for more information.'
+        ) + '.' + '\n\n' + '*You can also use command with --help for more information.*'
         if self.chat.chat_id == str(self.ADMIN_CHAT_ID):
             yield self.get_commands()
 
@@ -329,6 +329,7 @@ class Bot(telegram.Bot):
 
             args = self.parser.parse_args(shlex.split(query))
 
+            self.logger.info('args = %s' % args)
             if args.command in ['/prev', '/next', '/repeat']:
                 if not self.chat or not self.chat.last_command:
                     yield 'Sorry, not found previous command'
@@ -337,7 +338,7 @@ class Bot(telegram.Bot):
                 dargs = vars(args)
                 dargs.update(self.chat.last_command)
 
-                self.chat_id = dargs.pop('chat_id__')
+                self.chat_id = dargs.pop('chat_id__', self.chat.chat_id)
                 if hasattr(self, 'group_'):
                     delattr(self, 'group_')
 

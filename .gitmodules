@@ -25,3 +25,9 @@
 [submodule "third_party/fullcalendar"]
 	path = third_party/fullcalendar
 	url = git@github.com:fullcalendar/fullcalendar.git
+[submodule "third_party/moment"]
+	path = third_party/moment
+	url = git@github.com:moment/moment.git
+[submodule "third_party/moment-timezone"]
+	path = third_party/moment-timezone
+	url = git@github.com:moment/moment-timezone.git
