@@ -8,6 +8,7 @@ django-markdown-app
 django_enumfield
 django-countries
 django-el-pagination
+django-static-fontawesome
 
 django-phonenumber-field
 phonenumbers

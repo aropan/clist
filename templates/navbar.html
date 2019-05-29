@@ -27,7 +27,7 @@
                         <li><a href="{% url 'coder:settings' %}#social-tab"><i class="fa fa-users"></i>&nbsp;Social</a></li>
                         <li><a href="{% url 'coder:settings' %}#accounts-tab"><i class="fa fa-globe"></i>&nbsp;Accounts</a></li>
                         <li><a href="{% url 'coder:settings' %}#filters-tab"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
-                        <li><a href="{% url 'coder:settings' %}#notifications-tab"><i class="fa fa-bell-o"></i>&nbsp;Notifications</a></li>
+                        <li><a href="{% url 'coder:settings' %}#notifications-tab"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
                     </ul>
                 </li>
                 <li>
@@ -37,17 +37,17 @@
                         <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
                         {% endif %}
                         <li><a href="{% url 'coder:profile' user.username %}"><i class="fa fa-user"></i> Profile</a></li>
-                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out"></i> Logout</a></li>
+                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
                     </ul>
                 </li>
                 {% else %}
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i>&nbsp;Login / Sign Up&nbsp;<i class="fa fa-caret-down"></i></a>
                     <ul class="dropdown-menu signup">
-                        <li><a href="{% url 'auth:query' "vk" %}"><i class="fa fa-vk"></i> vkontakte</a></li>
-                        <li><a href="{% url 'auth:query' "yandex" %}"><i class="fa fa-yahoo"></i> yandex</a></li>
-                        <li><a href="{% url 'auth:query' "google" %}"><i class="fa fa-google"></i> google</a></li>
-                        <li><a href="{% url 'auth:query' "facebook" %}"><i class="fa fa-facebook"></i> facebook</a></li>
+                        <li><a href="{% url 'auth:query' "vk" %}"><i class="fab fa-vk"></i> vkontakte</a></li>
+                        <li><a href="{% url 'auth:query' "yandex" %}"><i class="fab fa-yahoo"></i> yandex</a></li>
+                        <li><a href="{% url 'auth:query' "google" %}"><i class="fab fa-google"></i> google</a></li>
+                        <li><a href="{% url 'auth:query' "facebook" %}"><i class="fab fa-facebook"></i> facebook</a></li>
                     </ul>
                 </li>
                 {% endif %}

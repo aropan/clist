@@ -1,0 +1,24 @@
+[submodule "third_party/x-editable"]
+	path = third_party/x-editable
+	url = git@github.com:vitalets/x-editable.git
+[submodule "third_party/bootstrap"]
+	path = third_party/bootstrap
+	url = git@github.com:twbs/bootstrap.git
+[submodule "third_party/select2"]
+	path = third_party/select2
+	url = git@github.com:select2/select2.git
+[submodule "third_party/select2-bootstrap-theme"]
+	path = third_party/select2-bootstrap-theme
+	url = git@github.com:select2/select2-bootstrap-theme.git
+[submodule "third_party/BootstrapXL"]
+	path = third_party/BootstrapXL
+	url = git@github.com:marcvannieuwenhuijzen/BootstrapXL.git
+[submodule "third_party/awesome-bootstrap-checkbox"]
+	path = third_party/awesome-bootstrap-checkbox
+	url = git@github.com:flatlogic/awesome-bootstrap-checkbox.git
+[submodule "bootbox"]
+	path = bootbox
+	url = git@github.com:makeusabrew/bootbox.git
+[submodule "third_party/bootbox"]
+	path = third_party/bootbox
+	url = git@github.com:makeusabrew/bootbox.git

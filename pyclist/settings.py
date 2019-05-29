@@ -76,6 +76,7 @@ INSTALLED_APPS = (
     'django_countries',
     'el_pagination',
     'easy_select2',
+    'django_static_fontawesome',
 )
 
 MIDDLEWARE = (
@@ -171,22 +172,19 @@ STATIC_ROOT = path.join(BASE_DIR, "static/")
 STATIC_JSON_TIMEZONES = path.join(STATIC_ROOT, 'json', 'timezones.json')
 
 STATICFILES_DIRS = [
-    # path.join(BASE_DIR, "static/external/x-editable/dist/bootstrap3-editable"),
-    # path.join(BASE_DIR, "static/external/font-awesome-4.3.0"),
-    # path.join(BASE_DIR, "static/external/bootstrap-3.3.4-dist"),
-    # path.join(BASE_DIR, "static/external/select2/dist"),
-    # path.join(BASE_DIR, "static/external/select2-bootstrap-css/dist"),
-    # path.join(BASE_DIR, "static/external/BootstrapXL/dist"),
-    # path.join(BASE_DIR, "static/external/fullcalendar-2.3.2/dist"),
-    # path.join(BASE_DIR, "static/external/awesome-bootstrap-checkbox/dist"),
-    # path.join(BASE_DIR, "static/external/bootboxjs"),
+    path.join(BASE_DIR, 'pyclist/static'),
+    path.join(BASE_DIR, 'third_party/x-editable/dist/bootstrap3-editable'),
+    path.join(BASE_DIR, 'third_party/bootstrap/dist'),
+    path.join(BASE_DIR, 'third_party/select2/dist'),
+    path.join(BASE_DIR, 'third_party/select2-bootstrap-theme/dist'),
+    path.join(BASE_DIR, 'third_party/bootbox/dist'),
+
+    # path.join(BASE_DIR, "third_party/fullcalendar-2.3.2/dist"),
 ]
 
 if DEBUG:
     STATICFILES_DIRS.append(STATIC_ROOT)
     STATIC_ROOT = None
-# else:
-    # STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
 

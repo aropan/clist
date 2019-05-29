@@ -15,7 +15,7 @@
 <link href="{% static_ts 'css/bootstrap-editable.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/bootstrap-editable.min.js' %}"></script>
 
-<script src="{% static_ts 'js/bootbox.min.js' %}"></script>
+<script src="{% static_ts 'bootbox.min.js' %}"></script>
 
 <link href="{% static_ts 'css/settings.css' %}" rel="stylesheet">
 
@@ -90,7 +90,7 @@
                 {% for filter in coder.filter_set.all %}
                 <div>
                     <a href="#" data-name="filter" data-value='{{ filter.dict|jsonify }}' class="filter"></a>
-                    <a href="#" data-id="{{ filter.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"><i class="fa fa-trash-o"></i></a>
+                    <a href="#" data-id="{{ filter.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"><i class="far fa-trash-alt"></i></a>
                 </div>
                 {% endfor %}
             </div>
@@ -112,8 +112,8 @@
                     <span class="checkin">
                     {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}
                     </span>
-                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-default btn-sm"><i class="fa fa-trash-o"></i></a>
-                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-default btn-sm"><i class="fa fa-repeat"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-default btn-sm"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-default btn-sm"><i class="fas fa-redo-alt"></i></a>
                 </div>
                 {% endfor %}
             </div>
@@ -138,7 +138,7 @@
             {% for service in services %}
             {% with token=coder.token_set|get_token:service %}
                 <div class="btn-block btn-group">
-                    <a class="btn btn-default active service-icon-btn"><i class="fa {{ service.fa_icon }}"></i></a>
+                    <a class="btn btn-default active service-icon-btn"><i class="fab {{ service.fa_icon }}"></i></a>
                     <a href="{% if token %}{{ token.href }}{% else %}{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}{% endif %}" class="btn btn-default"><div class="text-left">{% if token %}{{ token.user_id }}{% else %}connect{% endif %}</div></a>
                 </div>
             {% endwith %}

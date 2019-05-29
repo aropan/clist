@@ -9,7 +9,7 @@
         <div class="panel-body">
         {% for service in services %}
             <div class="btn-block btn-group">
-                <a class="col-xs-2 btn btn-default active icon service-icon-btn"><i class="fa {{ service.fa_icon }}"></i></a>
+                <a class="col-xs-2 btn btn-default active icon service-icon-btn"><i class="fab {{ service.fa_icon }}"></i></a>
                 <a href="{% url 'auth:query' service.name %}" class="col-xs-10 btn btn-default"><div class="text-left">with {{ service.title }}</div></a>
             </div>
         {% endfor %}

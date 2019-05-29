@@ -66,7 +66,7 @@
         $(function() {
             $('a#show-api-key').click(function() {
                 var $this = $(this)
-                $this.html('<i class="fa fa-refresh fa-lg fa-pulse"></i>')
+                $this.html('<i class="fas fa-sync-alt fa-lg fa-pulse"></i>')
                 $.get('{% url 'coder:api-key' %}')
                     .done(function (api_key) {
                         $this.html(api_key)

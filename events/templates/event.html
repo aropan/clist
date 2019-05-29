@@ -11,7 +11,7 @@
 <script src="{% static_ts 'js/select2.full.min.js' %}"></script>
 <link href="{% static_ts 'css/select2-bootstrap.min.css' %}" rel="stylesheet">
 
-<script src="{% static_ts 'js/bootbox.min.js' %}"></script>
+<script src="{% static_ts 'bootbox.min.js' %}"></script>
 
 <link href="{% static_ts 'css/events/event.css' %}" rel="stylesheet">
 
@@ -49,11 +49,11 @@
             {% endif %}
             {% if event.website_url %}
             <div id="website-url">
-                <label>Website url</label><a href="{{ event.website_url }}">{{ event.host_website_url }}<i class="fa fa-external-link"></i></a>
+                <label>Website url</label><a href="{{ event.website_url }}">{{ event.host_website_url }}<i class="fas fa-external-link-alt"></i></a>
             </div>
             {% endif %}
             <div>
-                <label>Registration deadline</label>&nbsp;<i class="fa fa-clock-o"></i>&nbsp;{{ event.registration_deadline}}{% if not registration.over %} ({{ registration.timeleft }}){% endif %}
+                <label>Registration deadline</label>&nbsp;<i class="far fa-clock"></i>&nbsp;{{ event.registration_deadline}}{% if not registration.over %} ({{ registration.timeleft }}){% endif %}
             </div>
             <div>
                 {{ event.information|safe }}
