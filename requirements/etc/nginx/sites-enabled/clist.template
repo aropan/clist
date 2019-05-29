@@ -55,10 +55,31 @@ server {
 }
 
 server {
+  access_log /var/log/nginx/clist-dev-access.log;
+  error_log /var/log/nginx/clist-dev-error.log;
+
+  server_name dev.clist.by;
+
+  charset utf-8;
+
+  location / {
+    proxy_set_header Host ${DOLLAR}host;
+    proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+    proxy_pass http://localhost:8042;
+  }
+
+  listen 443 ssl; # managed by Certbot
+  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
   access_log /var/log/nginx/clist-access.log;
   error_log /var/log/nginx/clist-error.log;
 
-  server_name clist.by dev.clist.by;
+  server_name clist.by;
 
   charset utf-8;
 
