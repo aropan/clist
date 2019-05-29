@@ -5,12 +5,21 @@
 
 {% block end-head %}
 <script>page_load = $.now();</script>
-<link href="{% static_ts 'css/fullcalendar.css' %}" rel="stylesheet">
+
+<link href="{% static_ts 'fullcalendar/core/main.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/core/main.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/daygrid/main.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/daygrid/main.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/timegrid/main.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/timegrid/main.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/list/main.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/list/main.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/bootstrap/main.js' %}"></script>
+
 <link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
-<link href="{% static_ts 'css/bootstrap-input-xs.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/lib/moment.min.js' %}"></script>
-<script src="{% static_ts 'js/fullcalendar.js' %}"></script>
 <script src="{% static_ts 'js/contest/calendar.js' %}"></script>
+
+<link href="{% static_ts 'css/bootstrap-input-xs.css' %}" rel="stylesheet">
 <script>var timezone = '{{ timezone }}'</script>
 {% endblock %}
 
@@ -21,14 +30,13 @@
 <div class="container">
     <div class="row">
         {% if ignore_filters %}
-            <div class="ignore-filters">
+            <div class="ignore-filters text-right">
             {% for i in ignore_filters %}
                 <button class="btn btn-default btn-xs ignore-filters" data-id="{{ i.id }}" data-value="0">{{ i.name }}</button>
             {% endfor %}
             </div>
         {% endif %}
-        <div id="calendar">
-        </div>
+        <div id="calendar"></div>
         <div id="loading">loading...</div>
     </div>
 

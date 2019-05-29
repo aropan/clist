@@ -1,11 +1,10 @@
-import json
 from datetime import datetime, timedelta
 
 import pytz
 from django.conf import settings
 from django.contrib import messages
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 
@@ -101,15 +100,18 @@ def get_events(request):
 
     query = Q()
     if request.user.is_authenticated:
-        query = request.user.coder.get_contest_filter(
-            request.GET.getlist('cs[]'),
-            request.GET.getlist('if[]', None),
-        )
+        cats, ifs = [request.GET.get(k).split(',') if request.GET.get(k, None) else None for k in ('cs', 'if',)]
+        query = request.user.coder.get_contest_filter(cats, ifs)
 
     for f in ("start", "end", ):
         time = request.GET.get(f, None)
         if time:
-            time = datetime.strptime(time, "%Y-%m-%d").replace(tzinfo=tz)
+            parts = time.split(':')
+            if len(parts) == 4:
+                p = parts.pop(-1)
+                parts[-1] += p
+                time = ':'.join(parts)
+            time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S%z").replace(tzinfo=tz)
             query = query & (Q(end_time__gte=time) if f == "start" else Q(start_time__lte=time))
     filter_ = request.GET.get('f', None)
     if filter_:
@@ -118,18 +120,15 @@ def get_events(request):
     result = []
     for contest in Contest.visible.filter(query):
         c = {
+            'id': contest.pk,
             'title': contest.title,
-            'host': contest.host,
             'url': contest.url,
             'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
             'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
             'color': contest.resource.color,
         }
         result.append(c)
-    return HttpResponse(
-        json.dumps(result),
-        content_type="application/json"
-    )
+    return JsonResponse(result, safe=False)
 
 
 def main_calendar(request):

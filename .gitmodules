@@ -22,3 +22,6 @@
 [submodule "third_party/bootbox"]
 	path = third_party/bootbox
 	url = git@github.com:makeusabrew/bootbox.git
+[submodule "third_party/fullcalendar"]
+	path = third_party/fullcalendar
+	url = git@github.com:fullcalendar/fullcalendar.git

@@ -178,13 +178,7 @@ STATICFILES_DIRS = [
     path.join(BASE_DIR, 'third_party/select2/dist'),
     path.join(BASE_DIR, 'third_party/select2-bootstrap-theme/dist'),
     path.join(BASE_DIR, 'third_party/bootbox/dist'),
-
-    # path.join(BASE_DIR, "third_party/fullcalendar-2.3.2/dist"),
 ]
-
-if DEBUG:
-    STATICFILES_DIRS.append(STATIC_ROOT)
-    STATIC_ROOT = None
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
 

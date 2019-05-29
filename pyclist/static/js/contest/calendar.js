@@ -1,7 +1,7 @@
 filterTimeoutUpdate = 2000
 
 function filterCallback(value) {
-    $('#calendar').fullCalendar('refetchEvents')
+    calendar.refetchEvents()
 }
 
 $(function() {
@@ -10,21 +10,22 @@ $(function() {
     }
 
     $(window).resize(function() {
-        $('#calendar').fullCalendar('option', 'height', get_calendar_height());
+        calendar.setOption('height', get_calendar_height())
     });
 
-    $('#calendar').fullCalendar({
+    calendar = new FullCalendar.Calendar($('#calendar')[0], {
+        plugins: ['dayGrid', 'timeGrid', 'list'],
         header: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'month,basicWeek,basicDay'
+            left: 'title',
+            center: '',
+            right: 'today dayGridMonth,timeGridWeek,listWeek prev,next'
         },
         firstDay: 1,
         timezone: timezone,
         events: {
             url: '/get/events/',
-            type: 'GET',
-            data: function() {
+            method: 'GET',
+            extraParams: function() {
                 var hide = []
                 $('.ignore-filters')
                     .filter(function () { return $(this).attr('data-value') == '1' })
@@ -32,15 +33,14 @@ $(function() {
                 return {
                     'cs': ['calendar'],
                     'if': hide,
-                    'f': $('#filter [type="text"]').val(),
+                    'f': $('#filter [type="text"]').val()
                 }
-            },
-            error: function() {
-                alert('there was an error while fetching events!');
-            },
-            cache: true
+            }
         },
-        eventRender: function (event, element) {
+        eventRender: function (info) {
+            var event = info.event
+            var element = info.el
+            console.log(event)
             $(element).tooltip({
                 placement: 'top',
                 container: 'body',
@@ -50,9 +50,9 @@ $(function() {
                     'hide': 100,
                 },
                 title:
-                    event.title + ', ' + event.host +
-                    '</br>Start: ' + event.start.format() +
-                    (event.end? '</br>End: ' + event.end.format() : '')
+                    event.title +
+                    '</br>Start: ' + event.start +
+                    (event.end? '</br>End: ' + event.end : '')
             })
         },
         eventClick: function (data, event, view) {
@@ -65,12 +65,15 @@ $(function() {
         height: get_calendar_height()
     })
 
+    calendar.render()
+
+
     $('.ignore-filters').click(function (e) {
         var $btn = $(this)
         var value = $btn.attr('data-value')
         $btn.attr('data-value', 1 - value)
         $btn.css('background-color', value == '0'? '#5BC0DE' : '#fff')
-        $('#calendar').fullCalendar('refetchEvents')
+        calendar.refetchEvents()
         e.preventDefault()
         return false
     })
