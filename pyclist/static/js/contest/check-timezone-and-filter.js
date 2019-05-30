@@ -1,4 +1,6 @@
 $(function() {
+    filterTimeoutUpdate = 500
+
     $('[rel=tooltip]').tooltip({
         placement: 'top',
     })
@@ -18,10 +20,18 @@ $(function() {
         }
         timeoutId = setTimeout(function() {
             $('#filter .input-group-addon.icon').html('<i class="fa fa-search"></i>')
-            filterCallback(value)
+            filterCallbackList(value)
+            filterCallbackCalendar(value)
         }, filterTimeoutUpdate);
     })
     if (filterInput.val() && !$('#calendar').length) {
         filterInput.keyup()
     }
+
+    $('#toggle-view').change(function() {
+        var target = $(this).prop('checked')? '#list-view' : '#calendar-view'
+        $('.list-calendar-views .active').toggleClass('active')
+        $(target).toggleClass('active')
+        $(window).resize()  // to collapse list day events in calendar
+    })
 })

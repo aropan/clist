@@ -169,7 +169,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = path.join(BASE_DIR, "static/")
-STATIC_JSON_TIMEZONES = path.join(STATIC_ROOT, 'json', 'timezones.json')
+STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'pyclist', 'static', 'json', 'timezones.json')
 
 STATICFILES_DIRS = [
     path.join(BASE_DIR, 'pyclist/static'),

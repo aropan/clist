@@ -109,6 +109,11 @@ def change(request):
             return HttpResponseBadRequest("invalid view mode")
         coder.settings["view_mode"] = value
         coder.save()
+    elif name == "calendar-filter-long":
+        if value not in ["0", "1", ]:
+            return HttpResponseBadRequest("invalid group in list view mode value")
+        coder.settings["calendar_filter_long"] = int(value)
+        coder.save()
     elif name == "group-in-list":
         if value not in ["0", "1", ]:
             return HttpResponseBadRequest("invalid group in list view mode value")

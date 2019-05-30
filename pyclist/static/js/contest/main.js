@@ -1,6 +1,4 @@
-filterTimeoutUpdate = 100
-
-function filterCallback(regex) {
+function filterCallbackList(regex) {
     if (regex) {
         try {
             regex = new RegExp(regex, 'i')
@@ -15,7 +13,7 @@ function filterCallback(regex) {
         })
         var count = 0
         $('.contest').each(function() {
-            var title = $(this).find('.title a').attr('title')
+            var title = $(this).find('.event a[title]:first').attr('title')
             var host = $(this).find('.resource a:first').text()
             if (regex.test(title) || regex.test(host)) {
                 $(this).addClass('onfilter').removeClass('nofilter')

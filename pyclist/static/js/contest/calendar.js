@@ -1,12 +1,10 @@
-filterTimeoutUpdate = 2000
-
-function filterCallback(value) {
+function filterCallbackCalendar(value) {
     calendar.refetchEvents()
 }
 
 $(function() {
     function get_calendar_height() {
-        return $(window).height() - 200;
+        return $(window).height() - 150;
     }
 
     $(window).resize(function() {
@@ -15,10 +13,10 @@ $(function() {
 
     calendar = new FullCalendar.Calendar($('#calendar')[0], {
         plugins: ['dayGrid', 'timeGrid', 'list', 'moment', 'momentTimezone'],
+        customButtons: customButtonDesc,
         header: {
             left: 'title',
-            center: '',
-            right: 'today dayGridMonth,timeGridWeek,listWeek prev,next'
+            right: customButtonGroup + ' today dayGridMonth,timeGridWeek,listWeek prev,next'
         },
         titleFormat: '{MMMM {D}}, YYYY',
         firstDay: 1,
@@ -28,7 +26,7 @@ $(function() {
             method: 'GET',
             extraParams: function() {
                 var hide = []
-                $('.ignore-filters')
+                $('.ignore-filter')
                     .filter(function () { return $(this).attr('data-value') == '1' })
                     .each(function () { hide.push($(this).attr('data-id')) })
                 return {
@@ -69,14 +67,47 @@ $(function() {
 
     calendar.render()
 
+    $('.fc-button').addClass('btn btn-default btn-sm').removeClass('fc-button fc-button-primary')
+    $('.fc-button-group').addClass('btn-group').removeClass('fc-button-group')
 
-    $('.ignore-filters').click(function (e) {
-        var $btn = $(this)
-        var value = $btn.attr('data-value')
-        $btn.attr('data-value', 1 - value)
-        $btn.css('background-color', value == '0'? '#5BC0DE' : '#fff')
-        calendar.refetchEvents()
+    for (var name in customButtonDesc) {
+        var desc = customButtonDesc[name]
+        $('.fc-' + name + '-button').attr('data-id', desc.data)
+    }
+
+    if (customButtonSelector) {
+        $(customButtonSelector).toggleClass('ignore-filter')
+        $(customButtonSelector).click(function (e) {
+            var $btn = $(this)
+            var value = $btn.attr('data-value') || '0';
+            $btn.attr('data-value', 1 - value)
+            $btn.toggleClass('active')
+            $btn.blur();
+            e.preventDefault()
+            calendar.refetchEvents()
+            return false
+        })
+    }
+
+    $('.fc-cb0-button').attr('id', 'spam-filter');
+    $spam_filter = $('#spam-filter')
+    $spam_filter.toggleClass('ignore-filter')
+    $spam_filter.prop('checked', true)
+    $spam_filter.bootstrapToggle({
+        on: 'Filtered long',
+        off: 'Disabled fitler',
+        onstyle: 'info',
+        offstyle: 'default',
+        size: 'small',
+        width: 106,
+        height: 30,
+    })
+    $('.toggle:has(#spam-filter) .btn').click(function (e) {
+        var value = $spam_filter.attr('data-value') || '0';
+        $spam_filter.attr('data-value', 1 - value)
+        $spam_filter.bootstrapToggle(parseInt(value)? 'on' : 'off')
         e.preventDefault()
+        calendar.refetchEvents()
         return false
     })
-});
+})

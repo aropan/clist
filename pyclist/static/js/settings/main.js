@@ -43,6 +43,12 @@ $(function() {
         source: {'list': 'List', 'calendar': 'Calendar'},
     })
 
+    $('#calendar-filter-long').editable({
+        type: 'select',
+        showbuttons: false,
+        source: {1: 'Enable', 0: 'Disable'},
+    })
+
     $('#group-in-list').editable({
         type: 'select',
         showbuttons: false,

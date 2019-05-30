@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load extras %}
+
+{% block title %}Main{% endblock %}
+
+{% block end-head %}
+<script>page_load = $.now();</script>
+<link href="{% static_ts 'css/contest/main.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/contest/main.js' %}"></script>
+<link href="{% static_ts 'css/bootstrap-input-xs.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/countdown.js' %}"></script>
+<script src="{% static_ts 'js/contest/toggle.js' %}"></script>
+<link href="{% static_ts 'css/atc-style-menu-wb.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/atc.min.js' %}"></script>
+
+<script src="{% static_ts 'js/moment.min.js' %}"></script>
+<script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
+
+<link href="{% static_ts 'fullcalendar/core/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/core/main.min.js' %}"></script>
+
+<link href="{% static_ts 'fullcalendar/daygrid/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/daygrid/main.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/timegrid/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/timegrid/main.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/list/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/list/main.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment/main.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment-timezone/main.min.js' %}"></script>
+
+<link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/contest/calendar.js' %}"></script>
+
+<link href="{% static_ts 'css/contest/check-timezone-and-filter.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/contest/check-timezone-and-filter.js' %}"></script>
+
+<script>var timezone = '{{ timezone }}'</script>
+{% endblock %}
+
+{% block content %}
+
+<div id="timezone-and-filter" class="row">
+  {% if not request.GET.timezone %}
+    {% if not request.user.is_authenticated or request.user.coder.settings.check_timezone != 0 %}
+      {% include "check_timezone.js" %}
+  <div class="hidden incorrect-tz-alert label label-warning">
+    Warning! Timezone is set incorrectly. Please reload page.
+  </div>
+    {% endif %}
+  {% endif %}
+  <div id="time-view-search">
+    <div id="time" class="small text-muted">{{ now|timezone:timezone|format_time:"%A, %H:%M:%S%z" }}</div>
+    <div class="btn-group">
+      <input
+        id="toggle-view"
+        type="checkbox"
+        data-toggle="toggle"
+        data-on="List"
+        data-off="Calendar"
+        data-onstyle="info"
+        data-offstyle="info"
+        data-size="mini"{% if viewmode == 'list' %} checked{% endif %}
+      >
+    </div>
+    <div id="filter" class="input-group input-group-xs">
+      <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
+      <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
+        <i class="fa fa-search"></i>
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content list-calendar-views">
+  <div class="tab-pane{% if viewmode == "list" %} active{% endif %}" id="list-view">
+    {% if contests %}
+    <div id="contests">
+        <div class="row hidden-xs">
+            <div class="col-md-5 col-sm-4">
+                <div class="col-md-5 col-sm-12 header-start-time">Start/End Time</div>
+                <div class="col-md-3 col-sm-6 header-duration">Duration</div>
+                <div class="col-md-4 col-sm-6 header-timeleft">Time Left</div>
+            </div>
+            <div class="col-md-7 col-sm-8 header-event">
+                Event
+                {% if contests|total_sub_contest > 0 %}
+                <a href="#" id="toggle-all" class="badge progress-bar-info">{{ contests|total_sub_contest }}&nbsp;<i class="fa fa-caret-down"></i></a>
+                {% endif %}
+                <span id="filter-count-matches" class="badge progress-bar-info hidden"></span>
+            </div>
+        </div>
+    {% for contest in contests %}
+        {% with rid=contest.resource.id|stringformat:"s"  %}
+        {% with group=contest.state|add:"-"|add:rid %}
+        <div class="row contest {{ contest.state }}{% if contest.sub_contest %} {{ group }} subcontest hidden{% endif %}">
+            <div class="col-md-5 col-sm-4">
+                <div class="col-md-5 col-sm-12 start-time">
+                    {% if contest.state == 'coming' %}
+                    <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.start_time|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}">
+                        {{ contest.start_time|timezone:timezone|format_time:time_format }}
+                    </a>
+                    {% else %}
+                    <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}">
+                        {{ contest.end_time|timezone:timezone|format_time:time_format }}
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 col-sm-6 duration">{{ contest.hr_duration }}</div>
+                <div class="col-md-4 col-sm-6 timeleft{% if contest.next_time %} countdown{% endif %}"{% if contest.next_time %} data-timestamp="{{ contest.next_time }}"{% endif %}>
+                    {% if contest.is_over %}over{% else %}{{ contest.next_time|countdown }}{% endif %}
+                </div>
+            </div>
+            <div class="col-md-7 col-sm-8 event">
+                {% if party.id %}
+                <i class="party-check fa-fw fa {% if contest.id in party.contest_ids %}fa-check-square-o{% else %}fa-square-o{% endif %}" {% if party.owner == user.coder %}data-contest-id="{{ contest.id}}"{% endif %}></i>
+                {% endif %}
+                {% if contest.sub_contest %}
+                    <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
+                {% endif %}
+                <a href="{{ contest.url }}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
+                {% if contest.state != "past" and add_to_calendar != "disable" %}
+                <div class="addtocalendar atc-style-menu-wb"{% if add_to_calendar != "enable" %} data-calendars="{{ add_to_calendar }}"{% endif %}>
+                    <var class="atc_event">
+                        <var class="atc_date_start">{{ contest.start_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</var>
+                        <var class="atc_date_end">{{ contest.end_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</var>
+                        <var class="atc_timezone">{{ timezone }}</var>
+                        <var class="atc_title">{{ contest.title|pass_arg:"#"|replace:"" }} @ {{ contest.host }}</var>
+                        <var class="atc_location">{{ contest.host }}</var>
+                        <var class="atc_description">{{ contest.url }}</var>
+                    </var>
+                    <a class="atcb-link"><i class="far fa-calendar-alt"></i></a>
+                </div>
+                {% endif %}
+                {% if contest.group_size %}
+                    <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
+                {% endif %}
+                <div class="resource">
+                    <a href="http://{{ contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endwith %}
+    {% endfor %}
+    </div>
+    {% else %}
+    <div class="row alert alert-info text-center">List of competitions is empty</div>
+    {% endif %}
+  </div>
+  <div class="tab-pane{% if viewmode == "calendar" %} active{% endif %}" id="calendar-view">
+    <div class="row">
+      <script>
+        customButtonDesc = { {% for i in ignore_filters %}cb{{ i.id }}: { text: '{{ i.name }}', data: '{{ i.id }}' }{% if forloop.revcounter0 %}, {% endif %}{% endfor %} }
+        customButtonGroup = "{% for i in ignore_filters %}cb{{ i.id }}{% if forloop.revcounter0 %},{% endif %}{% endfor %}"
+        customButtonSelector = "{% for i in ignore_filters|slice:':-1' %}.fc-cb{{ i.id }}-button{% if forloop.revcounter0 %},{% endif %}{% endfor %}"
+      </script>
+        <div id="calendar"></div>
+        <div id="loading">loading...</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

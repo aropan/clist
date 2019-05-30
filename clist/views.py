@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 import pytz
 from django.conf import settings
-from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -93,15 +92,18 @@ def get_timezone_offset(tzname):
 
 
 def get_events(request):
-
     tzname = get_timezone(request)
     offset = get_timezone_offset(tzname)
     tz = pytz.timezone(tzname)
 
     query = Q()
+    cats, ifs = [request.GET.get(k).split(',') if request.GET.get(k, None) else [] for k in ('cs', 'if',)]
     if request.user.is_authenticated:
-        cats, ifs = [request.GET.get(k).split(',') if request.GET.get(k, None) else None for k in ('cs', 'if',)]
         query = request.user.coder.get_contest_filter(cats, ifs)
+
+    if not request.user.is_authenticated or request.user.coder.settings.get('calendar_filter_long', True):
+        if cats == ['calendar'] and '0' not in ifs:
+            query &= Q(duration_in_secs__lt=timedelta(days=1).total_seconds())
 
     for f in ("start", "end", ):
         time = request.GET.get(f, None)
@@ -131,17 +133,6 @@ def get_events(request):
     return JsonResponse(result, safe=False)
 
 
-def main_calendar(request):
-    ignore_filters = \
-        request.user.coder.filter_set.filter(categories__contains='calendar').order_by('created') \
-        if request.user.is_authenticated else []
-    return ("calendar.html", {"ignore_filters": ignore_filters})
-
-
-def main_list(request):
-    return ("main.html", {"contests": get_view_contests(request)})
-
-
 def main(request):
     viewmode = settings.VIEWMODE_
     open_new_tab = settings.OPEN_NEW_TAB_
@@ -169,19 +160,24 @@ def main(request):
         return HttpResponse("accepted")
 
     viewmode = request.GET.get("view", viewmode)
-    funcs = {
-        "list": main_list,
-        "calendar": main_calendar,
-    }
-    if viewmode not in funcs:
-        messages.error(request, 'Incorrect set view = \'%s\'' % viewmode)
-        viewmode = settings.VIEWMODE_
-
-    template, context = funcs[viewmode](request)
 
     tzname = get_timezone(request)
     if tzname is None:
         return HttpResponse("accepted")
+
+    if request.user.is_authenticated:
+        ignore_filters = request.user.coder.filter_set.filter(categories__contains='calendar').order_by('created')
+        ignore_filters = list(ignore_filters.values('id', 'name'))
+    else:
+        ignore_filters = []
+
+    if not request.user.is_authenticated or request.user.coder.settings.get('calendar_filter_long', True):
+        ignore_filters = ignore_filters + [{'id': 0, 'name': 'Disabled fitler'}]
+
+    context = {
+        "ignore_filters": ignore_filters,
+        "contests": get_view_contests(request),
+    }
 
     party_slug = request.GET.get("party")
     if party_slug is not None:
@@ -196,14 +192,15 @@ def main(request):
     context.update({
         "offset": get_timezone_offset(tzname),
         "now": now,
-        "switch_to": [k for k in list(funcs.keys()) if k != viewmode][0],
+        "viewmode": viewmode,
         "timezone": tzname,
         "time_format": time_format,
         "open_new_tab": open_new_tab,
         "add_to_calendar": add_to_calendar,
         "banners": Banner.objects.filter(start_time__lte=now, end_time__gt=now),
     })
-    return render(request, template, context)
+
+    return render(request, "main.html", context)
 
 
 def resources(request):
