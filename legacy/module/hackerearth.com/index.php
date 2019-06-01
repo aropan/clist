@@ -16,7 +16,10 @@
     $data = $data['response'];
     foreach ($data as $item) {
         $title = $item['title'];
+
         $url = $item['url'];
+        $url = str_replace('/ru/', '/', $url);
+
         if (!preg_match('#/([^/]*)/?$#', $url, $match)) {
             trigger_error("No set id for event '$title', url = '$url'", E_USER_WARNING);
             continue;
