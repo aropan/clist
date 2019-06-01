@@ -31,6 +31,8 @@
 <link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/calendar.js' %}"></script>
 
+<script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
+
 <link href="{% static_ts 'css/contest/check-timezone-and-filter.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/check-timezone-and-filter.js' %}"></script>
 
@@ -152,10 +154,10 @@
       <script>
         customButtonDesc = { {% for i in ignore_filters %}cb{{ i.id }}: { text: '{{ i.name }}', data: '{{ i.id }}' }{% if forloop.revcounter0 %}, {% endif %}{% endfor %} }
         customButtonGroup = "{% for i in ignore_filters %}cb{{ i.id }}{% if forloop.revcounter0 %},{% endif %}{% endfor %}"
-        customButtonSelector = "{% for i in ignore_filters|slice:':-1' %}.fc-cb{{ i.id }}-button{% if forloop.revcounter0 %},{% endif %}{% endfor %}"
+        customButtonSelector = "{{ custom_button_selector }}"
       </script>
-        <div id="calendar"></div>
-        <div id="loading">loading...</div>
+      <div id="calendar"></div>
+      <div id="loading">loading...</div>
     </div>
   </div>
 </div>

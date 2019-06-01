@@ -21,20 +21,32 @@ $(function() {
         titleFormat: '{MMMM {D}}, YYYY',
         firstDay: 1,
         timezone: timezone,
-        events: {
-            url: '/get/events/',
-            method: 'GET',
-            extraParams: function() {
-                var hide = []
-                $('.ignore-filter')
-                    .filter(function () { return $(this).attr('data-value') == '1' })
-                    .each(function () { hide.push($(this).attr('data-id')) })
-                return {
-                    'cs': ['calendar'],
-                    'if': hide,
-                    'f': $('#filter [type="text"]').val()
+        events: function (fetchInfo, successCallback, failureCallback) {
+            $.ajax({
+                url: '/get/events/',
+                type: 'POST',
+                traditional: true,
+                headers: {
+                    'X-CSRF-TOKEN': $('[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    start: fetchInfo.startStr,
+                    end: fetchInfo.endStr,
+                    categories: ['calendar'],
+                    search_query: $('#filter [type="text"]').val(),
+                    ignore_filters:
+                        $('.ignore-filter')
+                        .filter(function () { return $(this).attr('data-value') == '1' })
+                        .map(function () { return $(this).attr('data-id') })
+                        .toArray(),
+                },
+                success: function (response) {
+                    successCallback(response)
+                },
+                error: function() {
+                    failureCallback({message: 'there was an error while fetching events!'})
                 }
-            }
+            });
         },
         eventRender: function (info) {
             var event = info.event

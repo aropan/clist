@@ -15,6 +15,7 @@ phonenumbers
 
 psycopg2-binary
 
+arrow
 tqdm
 attrdict
 requests

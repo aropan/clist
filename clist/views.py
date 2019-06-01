@@ -1,11 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
+import arrow
 import pytz
 from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_protect
+
 
 from clist.templatetags.extras import get_timezones
 from clist.models import Resource, Contest, Banner
@@ -91,39 +94,35 @@ def get_timezone_offset(tzname):
     return now.astimezone(pytz.timezone(tzname)).utcoffset().total_seconds() // 60
 
 
+@csrf_protect
 def get_events(request):
     tzname = get_timezone(request)
     offset = get_timezone_offset(tzname)
-    tz = pytz.timezone(tzname)
 
     query = Q()
-    cats, ifs = [request.GET.get(k).split(',') if request.GET.get(k, None) else [] for k in ('cs', 'if',)]
+    categories = request.POST.getlist('categories')
+    ignore_filters = request.POST.getlist('ignore_filters')
     if request.user.is_authenticated:
-        query = request.user.coder.get_contest_filter(cats, ifs)
+        query = request.user.coder.get_contest_filter(categories, ignore_filters)
 
     if not request.user.is_authenticated or request.user.coder.settings.get('calendar_filter_long', True):
-        if cats == ['calendar'] and '0' not in ifs:
+        if categories == ['calendar'] and '0' not in ignore_filters:
             query &= Q(duration_in_secs__lt=timedelta(days=1).total_seconds())
 
-    for f in ("start", "end", ):
-        time = request.GET.get(f, None)
-        if time:
-            parts = time.split(':')
-            if len(parts) == 4:
-                p = parts.pop(-1)
-                parts[-1] += p
-                time = ':'.join(parts)
-            time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S%z").replace(tzinfo=tz)
-            query = query & (Q(end_time__gte=time) if f == "start" else Q(start_time__lte=time))
-    filter_ = request.GET.get('f', None)
-    if filter_:
-        query &= Q(host__iregex=filter_) | Q(title__iregex=filter_)
+    start_time = arrow.get(request.POST.get('start', timezone.now())).datetime
+    end_time = arrow.get(request.POST.get('end', timezone.now() + timedelta(days=31))).datetime
+    query = query & Q(end_time__gte=start_time) & Q(end_time__lte=end_time)
+
+    search_query = request.POST.get('search_query', None)
+    if search_query:
+        query &= Q(host__iregex=search_query) | Q(title__iregex=search_query)
 
     result = []
     for contest in Contest.visible.filter(query):
         c = {
             'id': contest.pk,
             'title': contest.title,
+            'host': contest.host,
             'url': contest.url,
             'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
             'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
@@ -170,12 +169,14 @@ def main(request):
         ignore_filters = list(ignore_filters.values('id', 'name'))
     else:
         ignore_filters = []
+    custom_button_selector = ','.join([f'.fc-cb{r["id"]}-button' for r in ignore_filters])
 
     if not request.user.is_authenticated or request.user.coder.settings.get('calendar_filter_long', True):
         ignore_filters = ignore_filters + [{'id': 0, 'name': 'Disabled fitler'}]
 
     context = {
         "ignore_filters": ignore_filters,
+        "custom_button_selector": custom_button_selector,
         "contests": get_view_contests(request),
     }
 

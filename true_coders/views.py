@@ -151,6 +151,7 @@ def change(request):
             regex = request.POST.get("value[regex]", None)
             if regex:
                 re.compile(regex)
+                Contest.objects.filter(title__regex=regex).first()
             filter_.regex = regex if regex else None
 
             field = "Inverse regex"
