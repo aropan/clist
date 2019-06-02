@@ -168,11 +168,11 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = path.join(BASE_DIR, "static/")
-STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'pyclist', 'static', 'json', 'timezones.json')
+STATIC_ROOT = path.join(BASE_DIR, 'nginx/static/')
+STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
 
 STATICFILES_DIRS = [
-    path.join(BASE_DIR, 'pyclist/static'),
+    path.join(BASE_DIR, 'static'),
     path.join(BASE_DIR, 'third_party/x-editable/dist/bootstrap3-editable'),
     path.join(BASE_DIR, 'third_party/bootstrap/dist'),
     path.join(BASE_DIR, 'third_party/select2/dist'),

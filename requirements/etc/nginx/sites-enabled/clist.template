@@ -90,7 +90,7 @@ server {
   rewrite ^/api/v([0-9]+)/(json|jsonp|yaml|xml|plist)/(.*)${DOLLAR} /api/v${DOLLAR}1/${DOLLAR}3?format=${DOLLAR}2&${DOLLAR}args last;
 
   location /static/ {
-    root $PROJECT_DIR;
+    root $PROJECT_DIR/nginx/;
   }
 
   location / {
