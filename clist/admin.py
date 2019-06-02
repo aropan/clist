@@ -83,7 +83,7 @@ class ContestAdmin(BaseModelAdmin):
 class ResourceAdmin(BaseModelAdmin):
     fieldsets = [
         [None, {'fields': ['host', 'enable', 'url']}],
-        ['Parse information', {'fields': ['regexp', 'path', 'timezone']}],
+        ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
     ]
     list_display = ['host', 'enable', 'url', 'timezone']

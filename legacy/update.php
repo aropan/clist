@@ -47,11 +47,12 @@
 
     foreach ($resources as $resource)
     {
+        $parse_url = empty($resource['parse_url'])? $resource['url'] : $resource['parse_url'];
         echo "<b>{$resource['host']}</b>";
         $preCountContests = count($contests);
         if ($resource['path'])
         {
-            $URL = $resource['url'];
+            $URL = $parse_url;
             $HOST = $resource['host'];
             $RID = $resource['id'];
             $TIMEZONE = $resource['timezone'];
@@ -69,7 +70,7 @@
             $variables = array(
                 '${YEAR}' => date('Y')
             );
-            $url = strtr($resource['url'], $variables);
+            $url = strtr($parse_url, $variables);
 
             $page = curlexec($url);
 
@@ -143,6 +144,7 @@
 
                 if (!parse_url($contest['url'], PHP_URL_HOST))
                 {
+                    $url = empty($resource['parse_url'])? $url : $resource['url'];
                     if ($contest['url'][0] == '/')
                         $contest['url'] = 'http://' . parse_url($url, PHP_URL_HOST) . $contest['url'];
                     else

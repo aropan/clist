@@ -11,6 +11,7 @@ class Resource(BaseModel):
     url = models.CharField(max_length=255)
     regexp = models.CharField(max_length=1024, null=True, blank=True)
     path = models.CharField(max_length=255, null=True, blank=True)
+    parse_url = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=30, null=True, blank=True)
     color = models.CharField(max_length=20, null=True, blank=True)
     uid = models.CharField(max_length=100, null=True, blank=True)
