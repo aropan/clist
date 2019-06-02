@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule
+from common import REQ, LOG, BaseModule
 import conf
 
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+import tqdm
 
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import json
 import time
 
@@ -19,23 +20,35 @@ class Statistic(BaseModule):
     def get_standings(self, users=None):
         api_ranking_url = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
 
+        quit = False
+
         def fetch_page(page_index):
-            time.sleep(1)
+            if quit:
+                return
+            time.sleep(3)
             payload = {
                 'client_id': conf.HACKEREARTH_CLIENT_ID,
                 'client_secret': conf.HACKEREARTH_CLIENT_SECRET,
                 'challenge_slug': self.key,
                 'page_index': page_index + 1,
             }
-            content = REQ.get(api_ranking_url, post=json.dumps(payload).encode('utf-8'), time_out=30)
-            return json.loads(content)
+            for attempt in range(3):
+                try:
+                    content = REQ.get(api_ranking_url, post=json.dumps(payload).encode('utf-8'), time_out=30)
+                    return json.loads(content)
+                except Exception as e:
+                    if quit:
+                        return
+                    LOG.error(f'page index = {page_index} with error = {e}')
 
         data = fetch_page(0)
         max_page_index = data['max_page_index']
 
         result = {}
         with PoolExecutor(max_workers=8) as executor:
-            for data in executor.map(fetch_page, range(max_page_index)):
+            for data in tqdm.tqdm(executor.map(fetch_page, range(max_page_index)), total=max_page_index):
+                if not data:
+                    continue
                 n_skip = 0
                 n_row = 0
                 for row in data['leaderboard']:
@@ -53,8 +66,9 @@ class Statistic(BaseModule):
                     r['penalty'] = row.pop('time_taken')
                     r.update(row)
                 if n_row == n_skip:
+                    quit = True
                     break
-        print(self.name, self.url, len(result))
+        LOG.info(f'{self.name} = {len(result)}')
         standings = {
             'result': result,
             'url': self.url + 'leaderboard/',
@@ -67,7 +81,7 @@ if __name__ == "__main__":
 
     statictic = Statistic(
         name='HourStorm #11',
-        url='https://www.hackerearth.com/challenges/competitive/hourstorm-11/',
-        key='hourstorm-11',
+        url='https://www.hackerearth.com/challenges/competitive/deep-learning-challenge-1/',
+        key='deep-learning-challenge-1',
     )
     pprint(statictic.get_standings())
