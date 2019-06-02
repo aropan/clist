@@ -1,3 +1,4 @@
 certificate
 cache
 uwsgi.sock
+nginx/static/
