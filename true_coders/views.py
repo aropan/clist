@@ -67,6 +67,9 @@ def change(request):
     name = request.POST.get("name", None)
     value = request.POST.get("value", None)
 
+    if value in ["true", "false"]:
+        value = "1" if value == "true" else "0"
+
     user = request.user
     coder = user.coder
 
@@ -105,6 +108,8 @@ def change(request):
         coder.settings["add_to_calendar"] = value
         coder.save()
     elif name == "view-mode":
+        if value in ["0", "1"]:
+            value = "list" if value == "1" else "calendar"
         if value not in ["list", "calendar", ]:
             return HttpResponseBadRequest("invalid view mode")
         coder.settings["view_mode"] = value

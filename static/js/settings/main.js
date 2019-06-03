@@ -12,13 +12,50 @@ $(function() {
             type: 'select',
             source: timezones,
             showbuttons: false,
-        })
+        }).on('shown', function(e, editable){
+            editable.input.$input.select2({
+                width: 250,
+                placeholder: 'Select timezone',
+                val: editable.input.$input.val(),
+
+            });
+            setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+        });
     })
 
-    $('#check-timezone').editable({
-        type: 'select',
-        showbuttons: false,
-        source: {1: 'Enable', 0: 'Disable'},
+    $('.value [type="checkbox"]:not([data-on])').each(function() {
+        $(this).attr('data-on', 'Enabled')
+        $(this).attr('data-off', 'Disabled')
+    })
+    $('.value [type="checkbox"]').each(function() {
+        $(this).attr('checked', $(this).attr('data-value') == '1')
+    }).bootstrapToggle({
+        size: 'mini',
+        width: 100,
+        height: 20,
+    }).change(function() {
+        var $parent = $(this).parent().parent();
+        if ($parent.find('.alert-danger').length == 0) {
+            $parent.append('<div class="badge alert-danger" style="margin-left: 10px"></div>')
+        }
+        var $alert = $parent.find('.alert-danger')
+        $alert.hide()
+        $.ajax({
+            type: 'POST',
+            url: $.fn.editable.defaults.url,
+            data: {
+                pk: $.fn.editable.defaults.pk,
+                name: $(this).attr('id'),
+                value: $(this).prop('checked'),
+            },
+            success: function() {
+                $alert.hide()
+            },
+            error: function (xhr, status, errorThrown) {
+                $alert.text(xhr.responseText)
+                $alert.show()
+            },
+        })
     })
 
     $('#time-format').editable({ type: 'text', })
@@ -35,30 +72,20 @@ $(function() {
             'Outlook Online': 'Outlook Online',
             'Yahoo! Calendar': 'Yahoo! Calendar',
         }
-    })
+    }).on('shown', function(e, editable){
+        editable.input.$input.select2({
+            width: 250,
+            placeholder: 'Select calendar type',
+            val: editable.input.$input.val(),
+
+        });
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+    });
 
     $('#view-mode').editable({
         type: 'select',
         showbuttons: false,
         source: {'list': 'List', 'calendar': 'Calendar'},
-    })
-
-    $('#calendar-filter-long').editable({
-        type: 'select',
-        showbuttons: false,
-        source: {1: 'Enable', 0: 'Disable'},
-    })
-
-    $('#group-in-list').editable({
-        type: 'select',
-        showbuttons: false,
-        source: {1: 'Enable', 0: 'Disable'},
-    })
-
-    $('#open-new-tab').editable({
-        type: 'select',
-        showbuttons: false,
-        source: {1: 'Enable', 0: 'Disable'},
     })
 
     $('#email').editable({

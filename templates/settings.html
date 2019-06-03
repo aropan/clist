@@ -55,7 +55,7 @@
             <div class="key">Check timezone
                 <i rel="tooltip" title="Check user timezone and display warning in case of differences."></i>
             </div>
-            <div class="value"><a href="#" id="check-timezone" data-value="{{ coder.settings.check_timezone }}"></a></div>
+            <div class="value"><input type="checkbox" id="check-timezone" data-value="{{ coder.settings.check_timezone }}"/></div>
 
             <div class="key">Time format
                 <i rel="tooltip" title="Format start time. Default: '%d.%m %a %H:%M'"></i>
@@ -68,16 +68,16 @@
             <div class="key">View mode
                 <i rel="tooltip" title="For a single viewing in another mode using /?view=..."></i>
             </div>
-            <div class="value"><a href="#" id="view-mode" data-value="{{ coder.settings.view_mode }}"></a></div>
+            <div class="value"><input type="checkbox" id="view-mode" data-on="List" data-off="Calendar" data-onstyle="info" data-offstyle="info" data-value="{% if coder.settings.view_mode == "list" %}1{% else %}0{% endif %}"/></div>
 
             <div class="key">Filter long contest for calendar</div>
-            <div class="value"><a href="#" id="calendar-filter-long" data-value="{{ coder.settings.calendar_filter_long}}"></a></div>
+            <div class="value"><input type="checkbox" id="calendar-filter-long" data-value="{{ coder.settings.calendar_filter_long}}"/></div>
 
             <div class="key">Group in list mode view</div>
-            <div class="value"><a href="#" id="group-in-list" data-value="{{ coder.settings.group_in_list }}"></a></div>
+            <div class="value"><input type="checkbox" id="group-in-list" data-value="{{ coder.settings.group_in_list }}"/></div>
 
             <div class="key">Open events in new tab</div>
-            <div class="value"><a href="#" id="open-new-tab" data-value="{{ coder.settings.open_new_tab }}"></a></div>
+            <div class="value"><input type="checkbox" id="open-new-tab" data-value="{{ coder.settings.open_new_tab }}"/></div>
         </div>
         <div id="filters-tab" class="tab-pane">
             <div class="key">
