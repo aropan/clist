@@ -117,6 +117,11 @@ def get_events(request):
     if search_query:
         query &= Q(host__iregex=search_query) | Q(title__iregex=search_query)
 
+    party_slug = request.POST.get('party')
+    if party_slug:
+        party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
+        query = Q(rating__party=party) & query
+
     result = []
     for contest in Contest.visible.filter(query):
         c = {
@@ -169,14 +174,12 @@ def main(request):
         ignore_filters = list(ignore_filters.values('id', 'name'))
     else:
         ignore_filters = []
-    custom_button_selector = ','.join([f'.fc-cb{r["id"]}-button' for r in ignore_filters])
 
     if not request.user.is_authenticated or request.user.coder.settings.get('calendar_filter_long', True):
         ignore_filters = ignore_filters + [{'id': 0, 'name': 'Disabled fitler'}]
 
     context = {
         "ignore_filters": ignore_filters,
-        "custom_button_selector": custom_button_selector,
         "contests": get_view_contests(request),
     }
 

@@ -1,75 +1,165 @@
 {% extends "base.html" %}
 {% load extras %}
 
-{% block title %}{{ party.name }}{% endblock %}
+{% block title %}Ranking - {{ party.name }}{% endblock %}
 
 {% block end-head %}
     <link href="{% static_ts 'css/party/ranking.css' %}" rel="stylesheet">
+    <script>page_load = $.now();</script>
+    <script src="{% static_ts 'js/countdown.js' %}"></script>
+    {% include "calendar.html" %}
 {% endblock %}
 
 {% block content %}
 
-<small>
-{% if party.author == request.user.coder %}
-[<a href="{% url 'coder:party-action' party.secret_key 'join' %}">Join</a>]
-[<a href="{% url 'coder:party-action' party.secret_key 'leave' %}">Leave</a>]
-{% endif %}
-</small>
+<h3 id="party-name" data-slug="{{ party.slug }}">{{ party.name }}</h3>
 
-<h3 id="name">{{ party.name }}</h3>
-
-<h4><a href="{% url 'ranking:party' party.slug %}">Ranking</a></h4>
-
-<h4>Coders
-{% if party.coders.all.count %}
-<span class="badge progress-bar-default">{{ party.coders.all.count }}</span>
-{% endif %}
-</h4>
-<div class="coders">
-    {% for c in party.coders.all %}
-    <a href="{% url 'coder:profile' c.user.username %}" class="label label-default">{{ c.user.username }}</a>
-    {% empty %}
-    <div class="alert alert-warning">Not set coders for party</div>
-    {% endfor %}
-</div>
-
-<h4><a href="/?party={{ party.slug }}&view=list">Contests</a>
-{% if party.rating_set.all %}
-<span class="badge progress-bar-default">{{ party.rating_set.all.count }}</span>
-{% endif %}
-</h4>
-<div class="contests">
-    {% for r in party.rating_set.all %}
-    <a href="{{ r.contest.url }}" class="label label-{% if r.contest.statistics_set.count %}primary{% else %}warning{% endif %}">{{ r.contest.title}}</a>
-    {% empty %}
-    <div class="alert alert-warning">Not set contest for party</div>
-    {% endfor %}
-</div>
-
-<h4>Unparsed
-<span class="badge progress-bar-default">{{ unparsed.count }}</span>
-</h4>
-<div class="unparsed">
-    {% for r in unparsed %}
-    <a href="{{ r.url }}" class="label label-warning">{{ r.host }}</a>
-    {% empty %}
-    <div class="alert alert-warning">Not set unparsed for party</div>
-    {% endfor %}
-</div>
-
-<h4>Participates</h4>
-<div class="participates">
-    {% for stat in statistics %}
-        <div class="{% if stat.coder == request.user.coder %}larger {% endif %}participate">
-        <a href="{% url 'coder:profile' stat.coder %}" class="label label-default">{{ stat.coder.user.username }}</a>
-        {% for p in stat.participate %}
-            <a href="http://{{ p.host }}/" class="label label-{% if p.count == -1 %}danger{% elif p.count == 0 %}warning{% else %}primary{% endif %}">{{ p.host }}{% if p.count > 0 %} | {{ p.count }}{% endif %}</a>
-        {% endfor %}
+<ul class="nav nav-tabs">
+    <li><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
+    <li class="active"><a href="#ranking-tab" data-toggle="tab">Ranking</a></li>
+    <li><a href="#calendar-tab" data-toggle="tab">Calendar</a></li>
+</ul>
+<div class="tab-content">
+    <div id="information-tab" class="tab-pane">
+        <h4>Coders
+        {% if party.coders.all.count %}
+        <span class="badge progress-bar-default">{{ party.coders.all.count }}</span>
+        {% endif %}
+        </h4>
+        <div class="coders">
+            {% for c in party.coders.all %}
+            <a href="{% url 'coder:profile' c.user.username %}" class="label label-default">{{ c.user.username }}</a>
+            {% empty %}
+            <div class="alert alert-warning">Not set coders for party</div>
+            {% endfor %}
         </div>
-    {% empty %}
-    <div class="alert alert-warning">Not set statistic participates for party</div>
-    {% endfor %}
+
+        <h4><a href="/?party={{ party.slug }}&view=list">Contests</a>
+        {% if party.rating_set.all %}
+        <span class="badge progress-bar-default">{{ party.rating_set.all.count }}</span>
+        {% endif %}
+        </h4>
+        <div class="contests">
+            {% for r in party.rating_set.all %}
+            <a href="{{ r.contest.url }}" class="label label-{% if r.contest.statistics_set.count %}primary{% else %}warning{% endif %}">{{ r.contest.title}}</a>
+            {% empty %}
+            <div class="alert alert-warning">Not set contest for party</div>
+            {% endfor %}
+        </div>
+
+        <h4>Unparsed
+        <span class="badge progress-bar-default">{{ unparsed.count }}</span>
+        </h4>
+        <div class="unparsed">
+            {% for r in unparsed %}
+            <a href="{{ r.url }}" class="label label-warning">{{ r.host }}</a>
+            {% empty %}
+            <div class="alert alert-warning">Not set unparsed for party</div>
+            {% endfor %}
+        </div>
+
+        <h4>Participates</h4>
+        <div class="participates">
+            {% for stat in statistics %}
+                <div class="{% if stat.coder == request.user.coder %}larger {% endif %}participate">
+                <a href="{% url 'coder:profile' stat.coder %}" class="label label-default">{{ stat.coder.user.username }}</a>
+                {% for p in stat.participate %}
+                    <a href="http://{{ p.host }}/" class="label label-{% if p.count == -1 %}danger{% elif p.count == 0 %}warning{% else %}primary{% endif %}">{{ p.host }}{% if p.count > 0 %} | {{ p.count }}{% endif %}</a>
+                {% endfor %}
+                </div>
+            {% empty %}
+            <div class="alert alert-warning">Not set statistic participates for party</div>
+            {% endfor %}
+        </div>
+
+        <small>
+        {% if party.author == request.user.coder %}
+        [<a href="{% url 'coder:party-action' party.secret_key 'join' %}">Join</a>]
+        [<a href="{% url 'coder:party-action' party.secret_key 'leave' %}">Leave</a>]
+        {% endif %}
+        </small>
+    </div>
+    <div id="ranking-tab" class="tab-pane active">
+        {% if user and user.is_authenticated %}{% if not user.first_name or not user.last_name %}
+        <div class="alert alert-warning text-center">
+            Fill in your first last and last name in <a href="{% url 'coder:settings' %}#social-tab">social settings</a>.
+        </div>
+        {% endif %}{% endif %}
+
+        <script>
+        $(function () {
+            $('li.disabled').click(function(e) { window.open($(this).find('a').attr('data-href'), '_blank'); });
+        });
+        </script>
+
+        {% if results|length > 1 %}
+        <div class="tabbable tabs-left">
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#total" data-toggle="tab">Total</a></li>
+                {% for f in future %}
+                    <li class="disabled">
+                        <a class="small" href="#" data-href="{{ f.contest.url }}" data-toggle="tab">
+                            <div>{{ f.contest.title|truncatechars:33 }}</div>
+                            <div>starts in <span class="timeleft countdown" data-timestamp="{{ f.contest.next_time }}">{{ f.contest.next_time|countdown }}</span></div>
+                        </a>
+                    </li>
+                {% endfor %}
+                {% for r in results %}
+                    {% if not forloop.first %}
+                    <li><a title="{{ r.contest.title }}" href="#{{ r.contest.id }}" data-toggle="tab">{{ r.contest.title|truncatechars:33 }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            <div class="tab-content">
+            {% for r in results %}
+                <div id="{% if forloop.first %}total{% else %}{{ r.contest.id }}{% endif %}" class="tab-pane{% if forloop.first %} active{% endif %}">
+                    <div class="standings col-lg-offset-2 col-lg-8">
+                        <h4 class="name-stand">
+                            {% if forloop.first %}
+                                Total ranking
+                            {% else %}
+                                <a href="{{ r.contest.standings_url|default:r.contest.url }}">{{ r.contest.title }}</a>
+                                <a href="http://{{ r.contest.host }}" class="small">{{ r.contest.host }}</a>
+                            {% endif %}
+                        </h4>
+                        {% if r.standings %}
+                        <div class="table col-xs-12">
+                            <div class="head-stand">
+                                {% for h in header %}
+                                <div class="col-xs-{% cycle '1' '5' '3' '3' %}">{{ h }}</div>
+                                {% endfor %}
+                            </div>
+                        {% for s in r.standings %}
+                            <div class="row-stand">
+                                <div class="col-xs-1">{{ s.place }}</div>
+                                <div class="col-xs-5" title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.user.username }}{% endif %}">
+                                    <a href="{% url 'coder:profile' s.coder.user.username %}{% if forloop.parentloop.counter0 %}#cid-{{ r.contest.id }}{% endif %}">
+                                    {% if s.coder.user.first_name and s.coder.user.last_name %}
+                                        {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
+                                    {% else %}
+                                        {{ s.coder.user.username }}
+                                    {% endif %}
+                                    </a>
+                                </div>
+                                <div class="col-xs-3">{{ s.score|floatformat:2 }}</div>
+                                <div class="col-xs-3">{{ s.stat.solving }} ({{ s.stat.upsolving }})</div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+        {% else %}
+            <div class="alert alert-warning">Rating list is empty</div>
+        {% endif %}
+    </div>
+    <script>$('a[href="#calendar-tab"]').mouseup(function() { setTimeout(function() { $(window).resize() }, 0) } )</script>
+    <div id="calendar-tab" class="tab-pane">
+      <div id="calendar"></div>
+      <div id="loading">loading...</div>
+    </div>
 </div>
-
 {% endblock %}
-

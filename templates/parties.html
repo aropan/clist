@@ -13,7 +13,7 @@
 <div class="parties">
     {% for party in parties %}
     <div class="party">
-        <a class="lead" href="{% url 'ranking:party' party.slug %}">{{ party.name }}</a>
+        <a class="lead" href="{% url 'coder:party' party.slug %}">{{ party.name }}</a>
         <span class="label label-default">{{ party.coders.all.count }} accounts(s)</span>
         <span class="label label-primary">{{ party.rating_set.all.count }} contest(s)</span>
         {% if party.is_hidden %}

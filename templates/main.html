@@ -13,25 +13,7 @@
 <link href="{% static_ts 'css/atc-style-menu-wb.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/atc.min.js' %}"></script>
 
-<script src="{% static_ts 'js/moment.min.js' %}"></script>
-<script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
-
-<link href="{% static_ts 'fullcalendar/core/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/core/main.min.js' %}"></script>
-
-<link href="{% static_ts 'fullcalendar/daygrid/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/daygrid/main.min.js' %}"></script>
-<link href="{% static_ts 'fullcalendar/timegrid/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/timegrid/main.min.js' %}"></script>
-<link href="{% static_ts 'fullcalendar/list/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/list/main.min.js' %}"></script>
-<script src="{% static_ts 'fullcalendar/moment/main.min.js' %}"></script>
-<script src="{% static_ts 'fullcalendar/moment-timezone/main.min.js' %}"></script>
-
-<link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/contest/calendar.js' %}"></script>
-
-<script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
+{% include "calendar.html" %}
 
 <link href="{% static_ts 'css/contest/check-timezone-and-filter.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/check-timezone-and-filter.js' %}"></script>
@@ -114,7 +96,7 @@
             </div>
             <div class="col-md-7 col-sm-8 event">
                 {% if party.id %}
-                <i class="party-check fa-fw fa {% if contest.id in party.contest_ids %}fa-check-square-o{% else %}fa-square-o{% endif %}" {% if party.owner == user.coder %}data-contest-id="{{ contest.id}}"{% endif %}></i>
+                <i class="party-check fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" {% if party.owner == user.coder %}data-contest-id="{{ contest.id}}"{% endif %}></i>
                 {% endif %}
                 {% if contest.sub_contest %}
                     <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
@@ -151,11 +133,6 @@
   </div>
   <div class="tab-pane{% if viewmode == "calendar" %} active{% endif %}" id="calendar-view">
     <div class="row">
-      <script>
-        customButtonDesc = { {% for i in ignore_filters %}cb{{ i.id }}: { text: '{{ i.name }}', data: '{{ i.id }}' }{% if forloop.revcounter0 %}, {% endif %}{% endfor %} }
-        customButtonGroup = "{% for i in ignore_filters %}cb{{ i.id }}{% if forloop.revcounter0 %},{% endif %}{% endfor %}"
-        customButtonSelector = "{{ custom_button_selector }}"
-      </script>
       <div id="calendar"></div>
       <div id="loading">loading...</div>
     </div>

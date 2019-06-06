@@ -1,0 +1,26 @@
+<script>
+  customButtonDesc = { {% for i in ignore_filters %}cb{{ i.id }}: { text: '{{ i.name }}', data: '{{ i.id }}' }{% if forloop.revcounter0 %}, {% endif %}{% endfor %} }
+  customButtonGroup = '{% for i in ignore_filters %}cb{{ i.id }}{% if forloop.revcounter0 %},{% endif %}{% endfor %}'
+  customButtonSelector = [{% for i in ignore_filters %}{% if i.id > 0 %}'.fc-cb{{ i.id }}-button',{% endif %}{% endfor %}].join(',')
+  timezone = '{{ timezone }}'
+</script>
+
+<script src="{% static_ts 'js/moment.min.js' %}"></script>
+<script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
+
+<link href="{% static_ts 'fullcalendar/core/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/core/main.min.js' %}"></script>
+
+<link href="{% static_ts 'fullcalendar/daygrid/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/daygrid/main.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/timegrid/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/timegrid/main.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/list/main.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'fullcalendar/list/main.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment/main.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment-timezone/main.min.js' %}"></script>
+
+<link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/contest/calendar.js' %}"></script>
+
+<script src="{% static_ts 'js/ajax-csrf.js' %}"></script>

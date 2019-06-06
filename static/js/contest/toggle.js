@@ -27,8 +27,8 @@ $(function() {
                 action: "party-contest-toggle",
             },
             success: function(data) {
-                icon.toggleClass("fa-check-square-o");
-                icon.toggleClass("fa-square-o");
+                icon.toggleClass("fa-check-square");
+                icon.toggleClass("fa-square");
             },
         })
     })

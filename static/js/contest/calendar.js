@@ -4,7 +4,7 @@ function filterCallbackCalendar(value) {
 
 $(function() {
     function get_calendar_height() {
-        return $(window).height() - 150;
+        return $(window).height() - ($('#calendar').closest('.tab-content').position().top + 30)
     }
 
     $(window).resize(function() {
@@ -33,6 +33,7 @@ $(function() {
                     start: fetchInfo.startStr,
                     end: fetchInfo.endStr,
                     categories: ['calendar'],
+                    party: $('#party-name').attr('data-slug'),
                     search_query: $('#filter [type="text"]').val(),
                     ignore_filters:
                         $('.ignore-filter')
@@ -63,6 +64,7 @@ $(function() {
                 },
                 title:
                     event.title +
+                    '</br>' + event.extendedProps.host +
                     '</br>Start: ' + start.format('YYYY-MM-DD HH:mm') +
                     (event.end? '</br>End: ' + end.format('YYYY-MM-DD HH:mm') : '')
             })
