@@ -41,6 +41,7 @@ DEFAULT_FROM_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ['clist.by', 'dev.clist.by', 'localhost']
+INTERNAL_IPS = ['dev.clist.by', 'localhost', '127.0.0.1', '::1']
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
@@ -77,6 +78,7 @@ INSTALLED_APPS = (
     'el_pagination',
     'easy_select2',
     'django_static_fontawesome',
+    'debug_toolbar',
 )
 
 MIDDLEWARE = (
@@ -88,6 +90,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 ROOT_URLCONF = 'pyclist.urls'
@@ -278,6 +281,14 @@ TELEGRAM_NAME = '@ClistBot'
 TELEGRAM_ADMIN_CHAT_ID = conf.TELEGRAM_ADMIN_CHAT_ID
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+# DJANGO DEBUG TOOLBAR
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: (
+        request.user.is_authenticated
+        and request.user.has_perm('view_django_debug_toolbar')
+    )
+}
 
 # CONSTANTS
 VIEWMODE_ = 'list'

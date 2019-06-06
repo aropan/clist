@@ -1,7 +1,9 @@
 from django.conf.urls import include, url
+from django.conf import settings
 from django.views.generic import TemplateView
-
 from django.contrib import admin
+
+
 admin.autodiscover()
 
 
@@ -20,3 +22,10 @@ urlpatterns = [
 
     url(r'^debug/', TemplateView.as_view(template_name='debug.html'), name='debug'),
 ]
+
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
