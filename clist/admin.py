@@ -48,7 +48,7 @@ class ContestAdmin(BaseModelAdmin):
         [None, {'fields': ['title', 'resource', 'host', 'url', 'standings_url', 'invisible']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
-        ['Access time', {'fields': ['created', 'modified']}],
+        ['Access time', {'fields': ['created', 'modified', 'updated']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'invisible', 'key']
     search_fields = ['title', 'standings_url']
@@ -72,6 +72,10 @@ class ContestAdmin(BaseModelAdmin):
     parse_statistic.short_description = 'Parse statistic'
 
     actions = [create_timing, parse_statistic]
+
+    def get_readonly_fields(self, request, obj=None):
+        return ['updated', ] + \
+            list(super().get_readonly_fields(request, obj))
 
     class RatingSet(admin.TabularInline):
         model = Rating
@@ -99,7 +103,7 @@ class TimingContestAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return ['notification', 'statistic', ] + \
-            list(super(TimingContestAdmin, self).get_readonly_fields(request, obj))
+            list(super().get_readonly_fields(request, obj))
 
 
 @admin_register(Banner)

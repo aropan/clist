@@ -326,13 +326,10 @@
         $query =
             'was_auto_added = true'
             . ' AND resource_id IN (' . implode(',', array_keys($updated_resources)) . ')'
-            . " AND end_time - interval '1 day' > now() AND now() - interval '1 day' > updated";
+            . " AND start_time > now() AND now() - interval '1 day' > updated";
         $to_be_removed = $db->select("clist_contest", "*", $query);
         if ($to_be_removed) {
-            $dir = 'logs/removed/';
-            mkdir($dir);
-            chmod($dir, 0775);
-            $filename_log =  $dir . date("Y-m-d_H-i-s", time()) . '.txt';
+            $filename_log =  LOGREMOVEDDIR . date("Y-m-d_H-i-s", time()) . '.txt';
             file_put_contents($filename_log, print_r($to_be_removed, true));
 
             echo "<br><br><b><font color='red'>To be removed</font></b>:<br>\n";

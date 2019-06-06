@@ -32,8 +32,9 @@
 
     define("LOGFILE", dirname(__FILE__) . "/logs/working/index.txt");
     define("COUNTLINEINLOGFILE", 512);
+    define("LOGREMOVEDDIR", dirname(__FILE__) . '/logs/removed/');
 
-    foreach (array(CACHEDIR, dirname(LOGFILE)) as $dir) {
+    foreach (array(CACHEDIR, dirname(LOGFILE), LOGREMOVEDDIR) as $dir) {
         if (!file_exists($dir)) {
             mkdir($dir);
             chmod($dir, 0777);
