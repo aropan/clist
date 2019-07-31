@@ -23,7 +23,10 @@ import json
 
 def profile(request, username):
     coder = get_object_or_404(Coder, user__username=username)
-    statistic = Statistics.objects.filter(account__in=coder.account_set.all()).order_by('-contest__end_time')
+    statistic = Statistics.objects \
+        .filter(account__in=coder.account_set.all()) \
+        .select_related('contest', 'contest__resource', 'account') \
+        .order_by('-contest__end_time')
     context = {
         "coder": coder,
         "statistic": statistic,
@@ -362,30 +365,21 @@ def party_action(request, secret_key, action):
 
 def party(request, slug):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
+    party_contests = Contest.objects \
+        .filter(rating__party=party) \
+        .annotate(Count('statistics')) \
+        .order_by('-end_time')
 
-    contests = party.rating_set.values('contest')
-    contests = Contest.objects.filter(pk__in=contests)
-    resources = party.rating_set.order_by('contest__host').distinct('contest__host').values('contest__resource')
-    resources = Resource.objects.filter(pk__in=resources)
-    statistics = []
-    for coder in party.coders.all():
-        rs = coder.account_set.values('resource')
-        ps = Statistics.objects.filter(
-            contest__in=contests,
-            account__in=coder.account_set.all(),
-        ).annotate(host=F('contest__host')).values('host')
-        result = []
-        for r in resources.exclude(pk__in=rs):
-            result.append({'count': -1, 'host': r.host})
-        for r in Resource.objects.filter(pk__in=resources).exclude(host__in=ps).filter(pk__in=rs):
-            result.append({'count': 0, 'host': r.host})
-        result.extend(ps.annotate(count=Count('host')).order_by('count').all())
+    coders = party.coders.filter(
+        account__resource__contest__rating__party=party,
+        account__resource__contest__statistics__account=F('account')
+    ).annotate(
+        n_participations=Count('account__resource')
+    ).order_by(
+        '-n_participations'
+    )
+    set_coders = set(coders)
 
-        statistics.append({
-            'coder': coder,
-            # 'missed': rs,
-            'participate': result,
-        })
     rs = party.rating_set \
         .filter(contest__statistics__isnull=True, contest__end_time__lt=timezone.now()) \
         .values_list('contest__resource', flat=True) \
@@ -401,24 +395,31 @@ def party(request, slug):
     contests = []
     results = []
     total = {}
-    contest_set = party.rating_set.order_by('-contest__end_time')
-    future = contest_set.filter(contest__start_time__gt=timezone.now())
-    for r in contest_set.filter(contest__start_time__lt=timezone.now()):
-        c = r.contest
-        standings = [
-            {
-                'solving': s.solving,
-                'upsolving': s.upsolving,
-                'stat': s,
-                'coder': coder,
-            }
-            for s in Statistics.objects.filter(
-                account__coders__in=party.coders.all(), contest=c
-            ).distinct()
-            for coder in s.account.coders.all()
-            if party.coders.filter(pk=coder.id).first()
-        ]
 
+    future = party.rating_set.filter(contest__start_time__gt=timezone.now()).order_by('-contest__end_time')
+
+    statistics = Statistics.objects.filter(
+        account__coders__in=party.coders.all(),
+        contest__in=party_contests.filter(start_time__lt=timezone.now()),
+    ) \
+        .order_by('-contest__end_time') \
+        .select_related('contest', 'account') \
+        .prefetch_related('account__coders', 'account__coders__user')
+
+    contests_standings = dict()
+    for statistic in statistics:
+        contest = statistic.contest
+        contests_standings.setdefault(contest, [])
+        for coder in statistic.account.coders.all():
+            if coder in set_coders:
+                contests_standings[contest].append({
+                    'solving': statistic.solving,
+                    'upsolving': statistic.upsolving,
+                    'stat': statistic,
+                    'coder': coder,
+                })
+
+    for contest, standings in contests_standings.items():
         if standings:
             max_solving = max([s['solving'] for s in standings]) or 1
             max_total = max([s['solving'] + s['upsolving'] for s in standings]) or 1
@@ -427,10 +428,12 @@ def party(request, slug):
                 solving = s['solving']
                 upsolving = s['upsolving']
                 s['score'] = 4. * (solving + upsolving) / max_total + 1. * solving / max_solving
+                s['interpretation'] = f'4 * ({solving} + {upsolving}) / {max_total} + {solving} / {max_solving}'
 
             max_score = max([s['score'] for s in standings]) or 1
             for s in standings:
                 s['score'] = 100. * s['score'] / max_score
+                s['interpretation'] = [f'100 * ({s["interpretation"]}) / {max_score}']
 
             standings.sort(key=lambda s: s['score'], reverse=True)
 
@@ -447,10 +450,10 @@ def party(request, slug):
                 d['upsolving'] = solved.get('upsolving', s.upsolving) + d.get('upsolving', 0)
 
         results.append({
-            'contest': c,
+            'contest': contest,
             'standings': standings,
         })
-        contests.append(c)
+        contests.append(contest)
 
     total = sorted(list(total.values()), key=lambda d: d['score'], reverse=True)
     results.insert(0, {
@@ -475,10 +478,11 @@ def party(request, slug):
             'future': future,
             'header': ['#', 'Coder', 'Score', 'Solving'],
             'party': party,
+            'party_contests': party_contests,
             'contests': contests,
             'results': results,
             'unparsed': unparsed,
-            'statistics': statistics,
+            'coders': coders,
         },
     )
 

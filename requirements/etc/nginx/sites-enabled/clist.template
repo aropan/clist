@@ -54,6 +54,10 @@ server {
   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 }
 
+upstream devclist {
+  server localhost:8042 max_fails=0 fail_timeout=0;
+}
+
 server {
   access_log /var/log/nginx/clist-dev-access.log;
   error_log /var/log/nginx/clist-dev-error.log;
@@ -65,7 +69,7 @@ server {
   location / {
     proxy_set_header Host ${DOLLAR}host;
     proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
-    proxy_pass http://localhost:8042;
+    proxy_pass http://devclist;
   }
 
   listen 443 ssl; # managed by Certbot

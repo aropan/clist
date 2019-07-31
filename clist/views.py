@@ -58,12 +58,13 @@ def get_view_contests(request):
     now = timezone.now()
     result = []
     for group, query, order, limit in (
-        ("past", Q(end_time__lt=now), "-end_time", settings.COUNT_PAST_),
+        ("past", Q(start_time__gt=now - timedelta(days=1), end_time__lt=now), "-end_time", settings.COUNT_PAST_),
         ("running", Q(start_time__lte=now, end_time__gte=now), "end_time", None),
         ("coming", Q(start_time__gt=now), "start_time", None),
     ):
         group_by_resource = {}
         contests = Contest.visible.filter(query).filter(user_contest_filter).order_by(order)
+        contests = contests.prefetch_related('resource')
         if limit:
             contests = contests[:limit]
         if order.startswith('-'):

@@ -22,13 +22,11 @@
 <div class="tab-content">
     <div id="information-tab" class="tab-pane">
         <h4>Coders
-        {% if party.coders.all.count %}
         <span class="badge progress-bar-default">{{ party.coders.all.count }}</span>
-        {% endif %}
         </h4>
         <div class="coders">
-            {% for c in party.coders.all %}
-            <a href="{% url 'coder:profile' c.user.username %}" class="label label-default">{{ c.user.username }}</a>
+            {% for coder in coders %}
+                <a href="{% url 'coder:profile' coder %}" class="label label-default">{{ coder.user.username }} | {{ coder.n_participations }}</a>
             {% empty %}
             <div class="alert alert-warning">Not set coders for party</div>
             {% endfor %}
@@ -40,8 +38,8 @@
         {% endif %}
         </h4>
         <div class="contests">
-            {% for r in party.rating_set.all %}
-            <a href="{{ r.contest.url }}" class="label label-{% if r.contest.statistics_set.count %}primary{% else %}warning{% endif %}">{{ r.contest.title}}</a>
+            {% for c in party_contests %}
+            <a href="{{ c.url }}" class="label label-{% if c.statistics__count %}primary{% else %}warning{% endif %}">{{ c.title }}</a>
             {% empty %}
             <div class="alert alert-warning">Not set contest for party</div>
             {% endfor %}
@@ -57,21 +55,6 @@
             <div class="alert alert-warning">Not set unparsed for party</div>
             {% endfor %}
         </div>
-
-        <h4>Participates</h4>
-        <div class="participates">
-            {% for stat in statistics %}
-                <div class="{% if stat.coder == request.user.coder %}larger {% endif %}participate">
-                <a href="{% url 'coder:profile' stat.coder %}" class="label label-default">{{ stat.coder.user.username }}</a>
-                {% for p in stat.participate %}
-                    <a href="http://{{ p.host }}/" class="label label-{% if p.count == -1 %}danger{% elif p.count == 0 %}warning{% else %}primary{% endif %}">{{ p.host }}{% if p.count > 0 %} | {{ p.count }}{% endif %}</a>
-                {% endfor %}
-                </div>
-            {% empty %}
-            <div class="alert alert-warning">Not set statistic participates for party</div>
-            {% endfor %}
-        </div>
-
         <small>
         {% if party.author == request.user.coder %}
         [<a href="{% url 'coder:party-action' party.secret_key 'join' %}">Join</a>]
@@ -141,7 +124,7 @@
                                     {% endif %}
                                     </a>
                                 </div>
-                                <div class="col-xs-3">{{ s.score|floatformat:2 }}</div>
+                                <div class="col-xs-3" data-toggle="tooltip" data-placement="top" title="{{ s.interpretation|join:' + ' }}">{{ s.score|floatformat:2 }}</div>
                                 <div class="col-xs-3">{{ s.stat.solving }} ({{ s.stat.upsolving }})</div>
                             </div>
                         {% endfor %}
