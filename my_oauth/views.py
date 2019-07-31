@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.contrib import auth
+from django.contrib import messages
 from django.contrib.auth.models import User
 from my_oauth.models import Service, Token
 from true_coders.models import Coder
@@ -76,26 +76,27 @@ def process_access_token(request, service, response):
 def response(request, name):
     service = get_object_or_404(Service, name=name)
     state = request.session.get(service.state_field, None)
-    if state is None or state != request.GET['state']:
-        return HttpResponseBadRequest()
-    del request.session['state']
-    args = model_to_dict(service)
-    args.update(dict(list(request.GET.items())))
-    args['redirect_uri'] = request.build_absolute_uri(reverse('auth:response', args=(name, )))
-    if 'code' not in args:
-        return HttpResponseForbidden()
-
-    if service.token_post:
-        post = json.loads(service.token_post % args)
-        response = requests.post(service.token_uri, data=post)
-    else:
-        url = re.sub('[\n\r]', '', service.token_uri % args)
-        response = requests.get(url)
-
     try:
+        if state is None or state != request.GET.get('state'):
+            raise KeyError('Not found state')
+        del request.session['state']
+        args = model_to_dict(service)
+        args.update(dict(list(request.GET.items())))
+        args['redirect_uri'] = request.build_absolute_uri(reverse('auth:response', args=(name, )))
+        if 'code' not in args:
+            raise ValueError('Not found code')
+
+        if service.token_post:
+            post = json.loads(service.token_post % args)
+            response = requests.post(service.token_uri, data=post)
+        else:
+            url = re.sub('[\n\r]', '', service.token_uri % args)
+            response = requests.get(url)
+
         return process_access_token(request, service, response)
     except Exception as e:
-        return HttpResponseBadRequest(e)
+        messages.error(request, "ERROR: {}".format(str(e).strip("'")))
+        return signup(request)
 
 
 def login(request):
