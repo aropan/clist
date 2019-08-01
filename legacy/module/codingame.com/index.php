@@ -10,14 +10,28 @@
 
     $prefix_contest = parse_url($URL, PHP_URL_SCHEME) . '://' . parse_url($URL, PHP_URL_HOST) . '/contests/';
 
-    $url = 'https://www.codingame.com/services/ChallengeRemoteService/findNextVisibleChallenge';
-    $json = curlexec($url, "[]", array('json_output' => true));
-    foreach ($json as $a) {
-        if (!isset($a['publicId'])) {
-            continue;
+    $http_header = array('http_header' => array('content-type: application/json'), 'json_output' => true);
+
+    $datas = array();
+    $url = 'https://www.codingame.com/services/Challenge/findXNextVisibleChallenges';
+    $data = curlexec($url, '[2]', $http_header);
+    $datas = array_merge($datas, $data);
+    $url = 'https://www.codingame.com/services/Challenge/findPastChallenges';
+    $data = curlexec($url, '[null]', $http_header);
+    $datas = array_merge($datas, $data);
+
+    $pids = array();
+    foreach ($datas as $a) {
+        if (isset($a['publicId'])) {
+            $pids[] = $a['publicId'];
         }
+    }
+    $pids = array_slice($pids, 0, 3);
+    $pids = array_unique($pids);
+
+    foreach ($pids as $pid) {
         $u = 'https://www.codingame.com/services/ChallengeRemoteService/findWorldCupByPublicId';
-        $j = curlexec($u, $postfields='["' . $a['publicId'] . '", null]', array('json_output' => true));
+        $j = curlexec($u, $postfields='["' . $pid . '", null]', $http_header);
         if (!isset($j['success']) || !isset($j['success']['challenge'])) {
             continue;
         }
@@ -32,10 +46,9 @@
         if (!$ok) {
             continue;
         }
-        if (isset($data['lateTimeMax'])) {
-            $duration = $data['lateTimeMax'] / 60.0;
-        } else {
-            $duration = '00:00';
+
+        $duration = NULL;
+        if (isset($data['descriptionJson'])) {
             $description = json_decode($data['descriptionJson'], true);
             if (isset($description['challengeOptions'])) {
                 foreach ($description['challengeOptions'] as $options) {
@@ -46,6 +59,14 @@
                 }
             }
         }
+        if (!isset($duration)) {
+            if (isset($data['lateTimeMax']) && $data['lateTimeMax']) {
+                $duration = $data['lateTimeMax'] / 60.0;
+            } else {
+                $duration = '00:00';
+            }
+        }
+
         $contests[] = array(
             'start_time' => $data['date'] / 1000,
             'duration' => $duration,
@@ -59,6 +80,6 @@
     }
 
     if ($RID === -1) {
-        print_r($contests);
+        // print_r($contests);
     }
 ?>

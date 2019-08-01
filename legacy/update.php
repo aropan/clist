@@ -201,7 +201,7 @@
             }
         }
 
-        if (isset($contest['duration']) && $contest['duration'])
+        if (isset($contest['duration']) && ($contest['duration'] || is_numeric($contest['duration'])))
         {
             if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+)hr)?(?:\s*(?<min>\d+)min)?#', $contest['duration'], $match) && $match[0])
             {
