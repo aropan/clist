@@ -75,7 +75,7 @@
         });
         </script>
 
-        {% if results|length > 1 %}
+        {% if results|length > 1 or future %}
         <div class="tabbable tabs-left">
             <ul class="nav nav-tabs">
                 <li class="active"><a href="#total" data-toggle="tab">Total</a></li>
@@ -143,6 +143,7 @@
     <div id="calendar-tab" class="tab-pane">
       <div id="calendar"></div>
       <div id="loading">loading...</div>
+      <input class="ignore-filter" data-value="1" data-id="0" type="hidden">
     </div>
 </div>
 {% endblock %}

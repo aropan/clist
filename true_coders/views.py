@@ -396,7 +396,7 @@ def party(request, slug):
     results = []
     total = {}
 
-    future = party.rating_set.filter(contest__start_time__gt=timezone.now()).order_by('-contest__end_time')
+    future = party.rating_set.filter(contest__start_time__gt=timezone.now()).order_by('-contest__start_time')
 
     statistics = Statistics.objects.filter(
         account__coders__in=party.coders.all(),
