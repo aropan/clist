@@ -131,7 +131,7 @@ class Bot(telegram.Bot):
             yield self.get_commands()
 
     def list(self, args):
-        if not args.ignore_filters:
+        if not getattr(args, 'ignore_filters', False):
             if self.group:
                 filter_ = self.group.coder.get_contest_filter(self.group.get_group_name())
             else:
