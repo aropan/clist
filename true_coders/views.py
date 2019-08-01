@@ -391,6 +391,7 @@ def party(request, slug):
         ignore_filters = list(ignore_filters.values('id', 'name'))
     else:
         ignore_filters = []
+    ignore_filters.append({'id': 0, 'name': 'disable long'})
 
     contests = []
     results = []
@@ -473,7 +474,8 @@ def party(request, slug):
         request,
         'party.html',
         {
-            'ignore_filters': ignore_filters,
+            'ignore_filters': [],
+            'fixed_ignore_filters': ignore_filters,
             'timezone': get_timezone(request),
             'future': future,
             'header': ['#', 'Coder', 'Score', 'Solving'],

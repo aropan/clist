@@ -143,7 +143,9 @@
     <div id="calendar-tab" class="tab-pane">
       <div id="calendar"></div>
       <div id="loading">loading...</div>
-      <input class="ignore-filter" data-value="1" data-id="0" type="hidden">
+      {% for x in fixed_ignore_filters %}
+      <input class="ignore-filter" data-value="1" data-id="{{ x.id }}" type="hidden">
+      {% endfor %}
     </div>
 </div>
 {% endblock %}
