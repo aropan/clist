@@ -356,7 +356,7 @@ def party_action(request, secret_key, action):
             messages.success(request, 'You leave party %s.' % party.name)
     else:
         if action == 'join':
-            coder.party_set.add(party)
+            party.coders.add(coder)
             messages.success(request, 'You join to %s.' % party.name)
         elif action == 'leave':
             messages.warning(request, 'You are not there in %s.' % party.name)
