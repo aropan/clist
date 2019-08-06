@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load el_pagination_tags %}
+
+{% block title %}Standings{% endblock %}
+
+{% block end-head %}
+<script src="{% static_ts 'el-pagination/js/el-pagination.js' %}"></script>
+<link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<div class="col-md-12 col-md-offset-0 col-lg-10 col-lg-offset-1">
+  <form method="get" action="">
+  <div class="input-group">
+    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to username" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %}>
+    <span class="input-group-btn">
+      <button class="btn btn-default" type="submit">
+        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+        Search
+      </button>
+    </span>
+  </div>
+  </form>
+  <br/>
+
+  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  <div class="css-table">
+    <div class="css-table-header">
+      <div>Rank</div>
+      <div style="width: 100%;">Handle</div>
+      <div>Score</div>
+    </div>
+    <div class="css-table-body">
+    {% include page_template %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

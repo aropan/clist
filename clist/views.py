@@ -16,6 +16,13 @@ from true_coders.models import Party
 from ranking.models import Rating
 
 
+def get_timeformat(request):
+    ret = settings.TIME_FORMAT_
+    if request.user.is_authenticated:
+        ret = request.user.coder.settings.get("time_format", ret)
+    return ret
+
+
 def get_timezone(request):
     tz = request.GET.get("timezone", None)
     if tz:
@@ -142,14 +149,14 @@ def main(request):
     viewmode = settings.VIEWMODE_
     open_new_tab = settings.OPEN_NEW_TAB_
     add_to_calendar = settings.ADD_TO_CALENDAR_
-    time_format = settings.TIME_FORMAT_
 
     if request.user.is_authenticated:
         coder = request.user.coder
         viewmode = coder.settings.get("view_mode", viewmode)
         open_new_tab = coder.settings.get("open_new_tab", open_new_tab)
         add_to_calendar = coder.settings.get("add_to_calendar", add_to_calendar)
-        time_format = coder.settings.get("time_format", time_format)
+
+    time_format = get_timeformat(request)
 
     action = request.GET.get("action")
     if action is not None:

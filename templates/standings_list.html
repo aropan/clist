@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Standings{% endblock %}
+
+{% block end-head %}
+<script src="{% static_ts 'el-pagination/js/el-pagination.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<style>
+.contest {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: searchfield-cancel-button;
+}
+</style>
+
+<div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
+  <form method="get" action="">
+  <div class="input-group">
+    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %}/>
+    <span class="input-group-btn">
+      <button class="btn btn-default" type="submit">
+        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+        Search
+      </button>
+    </span>
+  </div>
+  </form>
+  <br/>
+
+  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  <div class="list-group">
+  {% include page_template %}
+  </div>
+</div>
+
+{% endblock %}

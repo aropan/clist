@@ -60,6 +60,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
+    'django.contrib.humanize',
     'clist',
     'ranking',
     'tastypie',
@@ -95,9 +96,7 @@ ROOT_URLCONF = 'pyclist.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            path.join(BASE_DIR, 'templates'),
-        ],
+        'DIRS': [path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

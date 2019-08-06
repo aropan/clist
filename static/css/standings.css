@@ -1,0 +1,26 @@
+.css-table {
+    display: table;
+}
+
+.css-table-header {
+    display: table-header-group;
+    font-weight: bold;
+}
+
+.css-table-body {
+    display: table-row-group;
+}
+
+.css-table-row {
+    display: table-row;
+}
+
+.css-table-header div,
+.css-table-row div {
+    display: table-cell;
+    padding: 0 6px;
+}
+
+.css-table-header div {
+    text-align: center;
+}

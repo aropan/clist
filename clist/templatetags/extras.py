@@ -1,15 +1,17 @@
-from django import template
-from django.urls import reverse
-from django.conf import settings
-from django.utils.safestring import mark_safe
-from django.template.defaultfilters import stringfilter
 from datetime import timedelta
 from os import path
 from collections import OrderedDict
 from collections.abc import Iterable
+from unidecode import unidecode
 import json
-import pytz
 import re
+
+from django import template
+from django.urls import reverse
+from django.conf import settings
+from django.utils.safestring import mark_safe
+from django.template.defaultfilters import stringfilter, slugify
+import pytz
 
 
 register = template.Library()
@@ -173,3 +175,8 @@ def asfloat(value, default):
         return float(value)
     except ValueError:
         return default
+
+
+@register.filter
+def slug(value):
+    return slugify(unidecode(value))

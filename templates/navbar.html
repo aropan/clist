@@ -17,6 +17,7 @@
                 <li><a href="https://bitbucket.org/aropan/clist/issues/" target="_blank">Issues</a></li>
                 <li><a href="{% url 'coder:parties' %}">Parties</a></li>
                 <li><a href="{% url 'events:events' %}">Events</a></li>
+                <li><a href="{% url 'ranking:standings_list' %}">Standings</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 {% if user.is_authenticated %}

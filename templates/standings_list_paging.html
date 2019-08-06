@@ -1,0 +1,10 @@
+{% load humanize %}
+{% load extras %}
+{% load el_pagination_tags %}
+{% paginate 50 contests %}
+{% for contest in contests %}
+<a href="{% url 'ranking:standings' contest.title|slug contest.pk %}" class="contest list-group-item list-group-item-action{% if contest.is_running %} list-group-item-success{% endif %}">
+    {{ contest.title }} <small class="pull-right">{{ contest.end_time|naturaltime }}</small>
+</a>
+{% endfor %}
+{% show_more %}
