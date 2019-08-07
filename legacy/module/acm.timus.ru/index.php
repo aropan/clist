@@ -24,11 +24,26 @@
 
     $page = curlexec($URL);
 
-    preg_match_all('#<LI>[^<]*<A HREF="(?<url>[^"]+)">[^<]*</A></LI>#', $page, $urls);
+    preg_match_all('#<LI>[^<]*<A HREF="(?<url>[^"]+)">[^<]*</A></LI>#', $page, $matches);
+    $urls = array();
+    foreach ($matches['url'] as $url) {
+        $url = url_merge($URL, $url);
+        $urls[] = $url;
+    }
 
-    foreach ($urls['url'] as $url)
-    {
-        $url = parse_url($URL, PHP_URL_SCHEME) . '://' . $HOST . '/' . trim($url);
+    if (isset($_GET['parse_full_list'])) {
+        preg_match('#<A[^>]*HREF="(?P<href>[^"]*)"[^>]*>Past contests</A>#i', $page, $match);
+        $page = curlexec($match['href']);
+        preg_match_all('#<A[^>]*HREF="(?P<href>[^"]*)"[^>]*>Final standings</A>#i', $page, $matches);
+        foreach ($matches['href'] as $url) {
+            $url = str_replace('monitor.aspx', 'contest.aspx', $url);
+            $url = url_merge($match['href'], $url);
+            $urls[] = $url;
+        }
+    }
+
+    foreach ($urls as $url) {
+        $url = str_replace('locale=en&', '', $url);
         $page = curlexec($url);
 
         preg_match('#<H2 CLASS="title">(?<title>.*?)</H2>.*?Contest starts at <B>(?<start_time>.*?)</B>.*?\((?<utc_start_time>UTC[^\)]+)\).*?Contest finishes at <B>(?<end_time>.*?)</B>.*?\((?<utc_end_time>UTC[^\)]+)\)#s', $page, $match);

@@ -10,7 +10,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
         if not self.standings_url:
-            self.standings_url = os.path.join(self.url, 'standings')
+            self.standings_url = os.path.join(re.sub('enter/?', '', self.url), 'standings')
 
     def get_standings(self, users=None):
         result = {}
@@ -79,8 +79,9 @@ if __name__ == "__main__":
     setup()
 
     from clist.models import Contest
+    from django.utils.timezone import now
 
-    contest = Contest.objects.filter(host='contest.yandex.ru').last()
+    contest = Contest.objects.filter(host='contests.snarknews.info', end_time__lte=now()).last()
 
     statistic = Statistic(
         name=contest.title,
@@ -90,4 +91,3 @@ if __name__ == "__main__":
         start_time=contest.start_time,
     )
     pprint(statistic.get_standings())
-    pprint(Statistic(standings_url=None, url='https://contest.yandex.ru/algorithm2018/contest/8254/').get_standings())

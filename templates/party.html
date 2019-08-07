@@ -39,7 +39,7 @@
         </h4>
         <div class="contests">
             {% for c in party_contests %}
-            <a href="{{ c.url }}" class="label label-{% if c.statistics__count %}primary{% else %}warning{% endif %}">{{ c.title }}</a>
+            <a href="{{ c.url }}" class="label label-{% if c.statistics__count %}success{% elif c.is_coming %}warning{% elif c.is_running %}primary{% else %}danger{% endif %}">{{ c.title }}</a>
             {% empty %}
             <div class="alert alert-warning">Not set contest for party</div>
             {% endfor %}
