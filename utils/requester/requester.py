@@ -193,7 +193,8 @@ class requester():
         else:
             self.cookiejar = MozillaCookieJar()
 
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookiejar))
+        self.http_cookie_processor = urllib.request.HTTPCookieProcessor(self.cookiejar)
+        self.opener = urllib.request.build_opener(self.http_cookie_processor)
         self.proxer = None
         if proxy:
             if proxy is True:
@@ -213,7 +214,7 @@ class requester():
 
         self.opener.addheaders = self.headers
 
-    def get(self, url, post=None, caching=None, is_ref_url=True, md5_file_cache=None, time_out=None):
+    def get(self, url, post=None, caching=None, is_ref_url=True, md5_file_cache=None, time_out=None, headers=None):
         prefix = "local-file:"
         if url.startswith(prefix):
             with open(url[len(prefix):], "r") as fo:
@@ -243,8 +244,7 @@ class requester():
         except Exception:
             file_cache = None
 
-        if caching is not None:
-            caching = file_cache and caching and self.cache_timeout > 0
+        caching = file_cache and caching and self.cache_timeout > 0
 
         from_cache = caching
         if caching:
@@ -263,15 +263,23 @@ class requester():
             if self.time_sleep:
                 v_time_sleep = min(1, abs(gauss(0, 1)) * self.time_sleep)
                 sleep(v_time_sleep)
-            if self.ref_url:
+            if not headers:
+                headers = {}
+            if self.ref_url and 'Referer' not in headers:
+                headers.update({"Referer": self.ref_url})
+            if headers:
                 h = dict(self.opener.addheaders)
-                h.update({"Referer": self.ref_url})
+                h.update(headers)
                 self.opener.addheaders = list(h.items())
 
             try:
+                if headers:
+                    request = urllib.request.Request(url, headers=headers)
+                else:
+                    request = url
                 time_start = datetime.utcnow()
                 self.response = self.opener.open(
-                    url,
+                    request,
                     post if post else None,
                     timeout=time_out or self.time_out
                 )
@@ -285,15 +293,16 @@ class requester():
                     raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
             except Exception as err:
                 self.error = err
-                traceback.print_exc()
                 if self.assert_on_fail:
                     if self.proxer:
                         self.proxer.fail()
                     raise FailOnGetResponse(err)
+                else:
+                    traceback.print_exc()
                 return
 
             try:
-                if file_cache and caching is not None:
+                if file_cache and caching:
                     cookie_write = True
                     if self.response.info().get("Content-Type").startswith("application/json"):
                         page = dumps(loads(page), indent=4)
@@ -314,13 +323,20 @@ class requester():
                 else:
                     self.proxer.fail()
 
-        match = re.search(r'charset=["\']?(?P<charset>[^"\'\s>]*)', str(page), re.IGNORECASE)
-        if match:
-            charset = match.group('charset').lower()
-            if charset in ('utf-8', 'utf8'):
-                page = page.decode('utf-8', 'replace')
-            if charset in ('windows-1251', 'cp1251'):
-                page = page.decode('cp1251', 'replace')
+        matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s>]*)', str(page), re.IGNORECASE)
+        if matches:
+            charsets = [c.lower() for c in matches]
+            if len(charsets) > 1 and len(set(charsets)) > 1:
+                self.print(f'[WARNING] set multi charset values: {charsets}')
+            charset = charsets[-1].lower()
+        else:
+            charset = 'utf-8'
+        if charset in ('utf-8', 'utf8'):
+            page = page.decode('utf-8', 'replace')
+        elif charset in ('windows-1251', 'cp1251'):
+            page = page.decode('cp1251', 'replace')
+        else:
+            page = page.decode(charset, 'replace')
 
         self.last_page = page
         self.last_url = self.response.geturl() if self.response else url
@@ -375,7 +391,7 @@ class requester():
                 type=["'](?P<type>[^"']*)["']\s*|
                 value=["'](?P<value>[^"']*)["']\s*|
                 name=["'](?P<name>[^"']*)["']\s*|
-                [a-z]+=["'][^"']*["']\s*|
+                [-a-z]+=["'][^"']*["']\s*|
                 (?P<checked>checked)\s*
             ){2,}''',
             page,
@@ -421,6 +437,10 @@ class requester():
             for atime, file_cache in file_list[self.limit_file_cache:]:
                 remove(self.dir_cache + file_cache)
         self.counter_file_cache += 1
+
+    def get_raw_cookies(self):
+        for c in self.cookiejar:
+            yield c
 
     def get_cookies(self):
         return dict(((i.name, i.value) for i in self.cookiejar))
