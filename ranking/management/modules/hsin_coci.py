@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import re
+import urllib.parse
+from pprint import pprint  # noqa
+from collections import defaultdict, OrderedDict
+
 from common import REQ, BaseModule
 from excepts import InitModuleException, ExceptionParseStandings
-
-import re
-from pprint import pprint  # noqa
-from collections import defaultdict
 
 
 class Statistic(BaseModule):
@@ -22,6 +23,16 @@ class Statistic(BaseModule):
         self.year = int(match.group())
 
     def get_standings(self, users=None):
+        ret = {}
+        if 'archive' not in self.url:
+            page = REQ.get(self.url)
+            season = self.key.split()[0]
+            match = re.search(f'<a[^>]*href="(?P<href>[^"]*)"[^>]*>[^/]*{season}<', page)
+            if match:
+                self.url = urllib.parse.urljoin(REQ.last_url, match.group('href'))
+                self.standings_url = None
+                ret['action'] = ('url', self.url)
+
         if self.standings_url:
             standings_url = self.standings_url
         else:
@@ -37,7 +48,8 @@ class Statistic(BaseModule):
 
         result = {}
         header = None
-        problems_max_score = defaultdict(int)
+        problems_info = OrderedDict()
+        problems_max_score = defaultdict(float)
         for match in re.findall(r'<tr[^>]*>.*?<\/tr>', page, re.DOTALL):
             match = match.replace('&nbsp;', ' ')
 
@@ -45,13 +57,15 @@ class Statistic(BaseModule):
             fields = []
             problem_names = []
 
-            tds = re.finditer(r'<t[hd][^>]*>(?P<td>.*?)<\/t[hd]>', match)
+            tds = re.findall(r'<t[hd][^>]*>(?P<td>.*?)<\/t[hd]>', match)
+            idx = 0
             for i, td in enumerate(tds):
-                td = td.group('td')
                 value = re.sub('<[^>]*>', '', td)
 
                 attrs = dict(m.group('key', 'value') for m in re.finditer('(?P<key>[a-z]*)="(?P<value>[^"]*)"', td))
-                value = attrs.get('title', value)
+                if 'title' in attrs:
+                    idx += 1
+                    value = (f'{idx}', attrs.get('title', value))
 
                 if 'href' in attrs:
                     match = re.search('solutions/(?P<member>[^/]*)/', attrs['href'])
@@ -62,9 +76,10 @@ class Statistic(BaseModule):
 
             if not header:
                 header = fields
+                problems_info = [{'short': v[0], 'name': v[1]} for v in header if isinstance(v, tuple)]
                 continue
             if not member:
-                raise ExceptionParseStandings('Not found member')
+                continue
 
             row = dict(list(zip(header, fields)))
 
@@ -72,36 +87,40 @@ class Statistic(BaseModule):
             r['member'] = member
             r['place'] = row['RANK']
             r['country'] = row['COUNTRY']
-            r['solving'] = row['SCORE']
+            r['solving'] = int(float(row['SCORE']))
 
             problems = r.setdefault('problems', {})
-            for k in problem_names:
-                k = header[k]
-                if re.match('^[0-9]+$', row[k]):
-                    p = problems.setdefault(k, {})
-                    p['result'] = row[k]
-                    problems_max_score[k] = max(problems_max_score[k], int(row[k]))
-            if not problems:
-                r.pop('problems')
+            for pn in problem_names:
+                short = header[pn][0]
+                value = row[header[pn]]
+                if re.match('^[0-9.]+$', value):
+                    p = problems.setdefault(short, {})
+                    p['result'] = value
+                    problems_max_score[short] = max(problems_max_score[short], float(p['result']))
 
+        problems_max_score = dict(problems_max_score)
         for v in result.values():
             solving = 0
             for k, r in v['problems'].items():
-                if problems_max_score[k] == int(r.get('result', -1)):
+                s = float(r.get('result', -1))
+                if abs(problems_max_score[k] - s) < 1e-9:
                     solving += 1
+                elif s > 1e-9:
+                    r['partial'] = True
             v['solved'] = {'solving': solving}
 
-        standings = {
+        ret.update({
             'result': result,
             'url': standings_url,
-        }
-        return standings
+            'problems': problems_info,
+        })
+        return ret
 
 
 if __name__ == '__main__':
     pprint(Statistic(
-        name='CONTEST #5',
-        url='http://hsin.hr/coci/',
-        key='2018-2019 CO',
+        name='CROATIAN OLYMPIAD IN INFORMATICS',
+        url='http://hsin.hr/coci/archive/2013_2014/',
+        key='2013-2014 CO',
         standings_url=None,
     ).get_standings())

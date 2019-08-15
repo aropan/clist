@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-from common import REQ, BaseModule, parsed_table
-from excepts import InitModuleException
-
 import re
 from pprint import pprint
+from collections import OrderedDict
+
+from common import REQ, BaseModule, parsed_table
+from excepts import InitModuleException
 
 
 class Statistic(BaseModule):
@@ -18,6 +19,7 @@ class Statistic(BaseModule):
         season = self.key.split()[0]
 
         result = {}
+        problems_info = OrderedDict()
 
         page = REQ.get(self.standings_url)
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
@@ -31,9 +33,9 @@ class Statistic(BaseModule):
                 if k == 'Total' or k == '=':
                     row['solving'] = int(v.value)
                 elif len(k) == 1:
+                    problems_info[k] = {'short': k, 'name': v.attrs['title']}
                     if '-' in v.value or '+' in v.value:
                         p = problems.setdefault(k, {})
-                        p['name'] = v.attrs['title']
                         if ' ' in v.value:
                             point, time = v.value.split()
                             p['time'] = time
@@ -53,6 +55,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': self.standings_url,
+            'problems': list(problems_info.values()),
         }
         return standings
 
@@ -63,4 +66,5 @@ if __name__ == "__main__":
         standings_url='http://neerc.ifmo.ru/archive/2018/standings.html',
         key='2018-2019 NEERC',
     )
+    pprint(statictic.get_standings()['problems'])
     pprint(statictic.get_result('Tbilisi Free U 5 (Emnadze, Kotoreishvili, Grdzelishvili) 2018-2019'))

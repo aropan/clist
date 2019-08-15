@@ -8,7 +8,7 @@ from jsonfield import JSONField
 class Account(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    key = models.CharField(max_length=128, null=False, blank=False)
+    key = models.CharField(max_length=1024, null=False, blank=False)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource))
@@ -35,8 +35,8 @@ class Statistics(BaseModel):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
     place = models.CharField(max_length=17, default=None, null=True, blank=True)
-    solving = models.IntegerField(default=0, blank=True)
-    upsolving = models.IntegerField(default=0, blank=True)
+    solving = models.FloatField(default=0, blank=True)
+    upsolving = models.FloatField(default=0, blank=True)
     addition = JSONField(default={}, blank=True)
     url = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)

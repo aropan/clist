@@ -3,6 +3,7 @@
 
 import sys
 import os
+import json
 
 from random import shuffle
 from tqdm import tqdm
@@ -41,6 +42,7 @@ class Command(BaseCommand):
         parser.add_argument('-o', '--only-new', action='store_true', default=False, help='parse without statistics')
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
+        parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
 
     def get_plugin_(self, module):
         sys.path.append(os.path.dirname(module.path))
@@ -52,7 +54,8 @@ class Command(BaseCommand):
                         limit=None,
                         with_check=True,
                         stop_on_error=False,
-                        random_order=False):
+                        random_order=False,
+                        no_update_results=False):
         now = timezone.now()
 
         if with_check:
@@ -114,36 +117,49 @@ class Command(BaseCommand):
                     if 'url' in standings and standings['url'] != contest.standings_url:
                         contest.standings_url = standings['url']
                         contest.save()
+                    if standings.get('problems') and (
+                        json.dumps(standings['problems'], sort_keys=True) !=
+                        json.dumps(contest.info.get('problems'), sort_keys=True)
+                    ):
+                        contest.info['problems'] = standings['problems']
+                        contest.save()
 
-                    result = standings.get('result', {})
-                    for r in list(result.values()):
-                        account, _ = Account.objects.get_or_create(
-                            resource=resource,
-                            key=r.pop('member'),
-                        )
+                    if not no_update_results:
+                        result = standings.get('result', {})
+                        for r in tqdm(list(result.values()), desc='update results'):
+                            account, _ = Account.objects.get_or_create(
+                                resource=resource,
+                                key=r.pop('member'),
+                            )
 
-                        defaults = {
-                            'place': r.pop('place', None),
-                            'solving': r.pop('solving', 0),
-                            'upsolving': r.pop('upsolving', 0),
-                            'addition': r,
-                        }
+                            defaults = {
+                                'place': r.pop('place', None),
+                                'solving': r.pop('solving', 0),
+                                'upsolving': r.pop('upsolving', 0),
+                                'addition': r,
+                            }
 
-                        stat, _ = Statistics.objects.update_or_create(
-                            account=account,
-                            contest=contest,
-                            defaults=defaults,
-                        )
+                            Statistics.objects.update_or_create(
+                                account=account,
+                                contest=contest,
+                                defaults=defaults,
+                            )
 
                     action = standings.get('action')
                     if action is not None:
+                        args = []
+                        if isinstance(action, tuple):
+                            action, *args = action
+                        self.logger.info(f'Action {action} with {args}')
                         if action == 'delete':
-                            self.logger.info(f'Delete {contest}')
                             contest.delete()
+                        elif action == 'url':
+                            contest.url = args[0]
+                            contest.save()
                 if 'result' in standings:
                     count += 1
             except Exception:
-                self.logger.error(f'contest = {contest}')
+                self.logger.error(f'contest = {contest}, url = {contest.url}')
                 self.logger.error(format_exc())
                 TimingContest.objects \
                     .filter(contest=contest) \
@@ -175,4 +191,5 @@ class Command(BaseCommand):
                 with_check=not args.no_check_timing,
                 stop_on_error=args.stop_on_error,
                 random_order=args.random_order,
+                no_update_results=args.no_update_results,
             )

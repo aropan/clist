@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule
-
 import json
 import time
+
+from common import REQ, BaseModule
 
 
 class Statistic(BaseModule):
@@ -23,6 +23,8 @@ class Statistic(BaseModule):
             return {'action': 'delete'} if e.args[0].code == 404 else {}
 
         data = json.loads(page)
+
+        problems_info = [{'short': p['code'], 'name': p['name']} for p in data['problems']]
 
         result = {}
         prev = None
@@ -60,7 +62,6 @@ class Statistic(BaseModule):
                 t = sol.pop('time')
                 if t:
                     p['time'] = self.to_time(t)
-                p['name'] = prob['name']
 
             row.update({k: v for k, v in r.items() if k not in row})
             row['solved'] = {'solving': solved}
@@ -69,6 +70,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': standings_url,
+            'problems': problems_info,
         }
         return standings
 

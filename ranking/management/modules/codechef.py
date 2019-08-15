@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ
-from common import BaseModule
-from excepts import ExceptionParseStandings
-import conf
-
+import sys
 import time
 import json
+import traceback
+from pprint import pprint
+
+from common import REQ, LOG
+from common import BaseModule
+from excepts import ExceptionParseStandings
+
+import conf
 
 
 class Statistic(BaseModule):
@@ -53,32 +57,45 @@ class Statistic(BaseModule):
 
         result = {}
 
+        problems_info = dict() if len(contest_infos) > 1 else list()
+
         for key, contest_info in contest_infos.items():
             n_page = 0
             per_page = 150
             total = None
             while total is None or n_page * per_page < total:
                 n_page += 1
-                time.sleep(3)
+                time.sleep(2)
                 url = self.API_RANKING_URL_FORMAT_.format(key=key, page=n_page, per_page=per_page)
 
-                delay = 30
-                while True:
+                delay = 10
+                for _ in range(10):
                     try:
                         page = REQ.get(url)
-                        data = json.loads(REQ.get(url))
+                        data = json.loads(page)
                         break
                     except Exception:
-                        delay *= 2
-                        print('Sleep:', delay, end='. ')
+                        traceback.print_exc()
+                        delay = min(300, delay * 2)
+                        sys.stdout.write(f'Sleep {delay}... ')
+                        sys.stdout.flush()
                         time.sleep(delay)
-                        print('Done')
+                        sys.stdout.write('Done\n')
+                else:
+                    raise ExceptionParseStandings(f'Failed getting {n_page} by url {url}')
 
                 if 'status' in data and data['status'] != 'success':
                     raise ExceptionParseStandings(json.dumps(data))
 
                 if total is None:
+                    for p in data['problems']:
+                        d = problems_info
+                        if 'division' in contest_info:
+                            d = d.setdefault('division', {})
+                            d = d.setdefault(contest_info['division'], [])
+                        d.append(p)
                     total = data['totalItems']
+
                 problem_info = {}
                 for p in data['problems']:
                     code = p.pop('code')
@@ -87,18 +104,15 @@ class Statistic(BaseModule):
 
                 for d in data['list']:
                     handle = d.pop('user_handle')
+                    d.pop('html_handle', None)
                     if d['score'] < 1e-9:
+                        LOG.warning(f'Skip handle = {handle}: {d}')
                         continue
                     row = result.setdefault(handle, {})
 
                     row['member'] = handle
                     row['place'] = d.pop('rank')
-                    row['solving'] = int(round(d['score']))
-                    score = d.pop('score')
-                    if not isinstance(score, int):
-                        row['score'] = score
-
-                    d.pop('html_handle')
+                    row['solving'] = d.pop('score')
 
                     problems = row.setdefault('problems', {})
                     solved, upsolved = 0, 0
@@ -118,6 +132,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': self.url,
+            'problems': problems_info,
         }
         return standings
 
@@ -130,5 +145,4 @@ if __name__ == "__main__":
         key='APRIL19',
         standings_url=None,
     )
-    from pprint import pprint
-    pprint(statictic.get_standings())
+    pprint(statictic.get_standings()['problems'])

@@ -46,4 +46,4 @@ class ModuleAdmin(BaseModelAdmin):
                     'delay_on_error',
                     'delay_on_success',
                     'path']
-    search_fields = ['resource']
+    search_fields = ['resource__host']

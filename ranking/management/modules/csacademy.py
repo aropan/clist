@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from common import BaseModule, requester, LOG
-
 import json
 from pprint import pprint
+from collections import OrderedDict
+
+from common import BaseModule, requester, LOG
 
 
 class Statistic(BaseModule):
@@ -13,9 +14,13 @@ class Statistic(BaseModule):
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
-        self.cid = int(self.key)
 
     def get_standings(self, users=None):
+        if not self.key.isdigit():
+            return {'action': 'delete'}
+
+        self.cid = int(self.key)
+
         req = requester.requester(headers=[('X-Requested-With', 'XMLHttpRequest')])
         req.caching = None
         req.time_out = 17
@@ -23,8 +28,10 @@ class Statistic(BaseModule):
         url = self.CONTEST_STATE_.format(self)
         state = json.loads(req.get(url))['state']
         tasks = {}
+        problems_info = OrderedDict()
         for task in state['contesttask']:
-            tasks[task['id']] = task
+            problems_info[task['evalTaskId']] = {'short': task['name'], 'name': task['longName']}
+            tasks[task['evalTaskId']] = task
 
         url = self.SCOREBOARD_STATE_URL_.format(self)
         state = json.loads(req.get(url))['state']
@@ -36,7 +43,6 @@ class Statistic(BaseModule):
         n_total = 0
         rows = state['contestuser']
         for row in rows:
-            users[user['id']] = user
             if row['contestId'] != self.cid or 'rank' not in row:
                 continue
             u = users[row['userId']]
@@ -47,29 +53,29 @@ class Statistic(BaseModule):
             r = result.setdefault(handle, {})
             r['member'] = handle
             r['place'] = row['rank']
-            r['penalty'] = int(round(row['penalty']))
+            r['penalty'] = row['penalty']
             r['solving'] = row['totalScore']
             problems = r.setdefault('problems', {})
             solving = 0
             for k, v in row['scores'].items():
                 task = tasks[int(k)]
-                letter = chr(64 + task['contestIndex'])
-                p = problems.setdefault(letter, {})
-                p['name'] = task['longName']
+                p = problems.setdefault(task['name'], {})
                 p['result'] = v['score']
                 if v['score'] > 0:
                     solving += 1
             r['solved'] = {'solving': solving}
+
         n_skip = len(rows) - n_total
         LOG.info('skip = %d, total = %d (%.2f)' % (n_skip, n_total, n_total * 100. / len(rows)))
 
         standings = {
             'result': result,
             'url': self.STANDING_URL_.format(self),
+            'problems': list(problems_info.values()),
         }
         return standings
 
 
 if __name__ == '__main__':
-    statistic = Statistic(url='https://csacademy.com/contest/round-49/', key='26759')
-    pprint(statistic.get_standings(['aropan']))
+    statistic = Statistic(url='https://csacademy.com/contest/ejoi-2017-day-2/', key='26569')
+    pprint(statistic.get_standings()['problems'])

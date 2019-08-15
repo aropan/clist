@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-from common import REQ, BaseModule, parsed_table
-from excepts import InitModuleException
-
 import re
 from pprint import pprint
+from collections import OrderedDict
+
+from common import REQ, BaseModule, parsed_table
+from excepts import InitModuleException
 
 
 class Statistic(BaseModule):
@@ -18,6 +19,7 @@ class Statistic(BaseModule):
         season = self.key.split()[0]
 
         result = {}
+        problems_info = OrderedDict()
 
         page = REQ.get(self.standings_url)
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
@@ -29,9 +31,12 @@ class Statistic(BaseModule):
             for k, v in list(r.items()):
                 k = k.split()[0]
                 if len(k) == 1:
+                    d = {'short': k}
+                    if v.attrs['title']:
+                        d['name'] = v.attrs['title']
+                    problems_info[k] = d
                     if ' ' in v.value:
                         p = problems.setdefault(k, {})
-                        p['name'] = v.attrs['title']
                         point, time = v.value.split()
                         p['time'] = time
                         p['result'] = point
@@ -50,6 +55,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': self.standings_url,
+            'problems': list(problems_info.values()),
         }
         return standings
 
@@ -57,13 +63,8 @@ class Statistic(BaseModule):
 if __name__ == "__main__":
     statictic = Statistic(
         name='42',
-        standings_url='http://opentrains.snarknews.info/~ejudge/res/res10391',
-        key='2017-2018 Grand Prix of Romania',
+        url='http://official.contest.yandex.ru/opencupXIX/contest/9552/enter?data=ocj%2Fschedule&menu=index&head=index',
+        standings_url='http://opencup.ru/index.cgi?data=macros%2Fstage&menu=index&head=index&stg=13&region=main&ncup=ocj&class=ocj',  # noqa
+        key='2018-2019 Grand Prix of Bytedance',
     )
-    pprint(statictic.get_result('spb27 : Sayranov 2017-2018'))
-    statictic = Statistic(
-        name='42',
-        standings_url='http://opentrains.snarknews.info/~ejudge/res/res10435',
-        key='2018-2019 Grand Prix of Korea',
-    )
-    pprint(statictic.get_result('Belarusian SUIR #3 anti_bsuir_1 : Vishneuski, Shavel, Udovin 2018-2019'))
+    pprint(statictic.get_standings()['problems'])

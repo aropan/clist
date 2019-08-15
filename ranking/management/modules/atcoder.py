@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule
-
+import collections
 import json
 from pprint import pprint
+
+from common import REQ, BaseModule
 
 
 class Statistic(BaseModule):
@@ -20,11 +21,11 @@ class Statistic(BaseModule):
 
         data = json.loads(page)
 
-        task_info = {}
+        task_info = collections.OrderedDict()
         for t in data['TaskInfo']:
             k = t['TaskScreenName']
             task_info[k] = {
-                'letter': t['Assignment'],
+                'short': t['Assignment'],
                 'name': t['TaskName'],
             }
 
@@ -39,17 +40,15 @@ class Statistic(BaseModule):
             r['member'] = handle
             r['place'] = row['Rank']
             r['penalty'] = row['TotalResult']['Elapsed'] // 10**9
-            r['score'] = row['TotalResult']['Score'] / 100.
-            r['solving'] = int(round(r['score']))
+            r['solving'] = row['TotalResult']['Score'] / 100.
 
             problems = r.setdefault('problems', {})
             solving = 0
             for k, v in row['TaskResults'].items():
                 if 'Score' not in v:
                     continue
-                letter = task_info[k]['letter']
+                letter = task_info[k]['short']
                 p = problems.setdefault(letter, {})
-                p['name'] = task_info[k]['name']
 
                 if v['Score'] > 0:
                     solving += 1
@@ -68,6 +67,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': self.STANDING_URL_.format(self),
+            'problems': list(task_info.values()),
         }
         return standings
 

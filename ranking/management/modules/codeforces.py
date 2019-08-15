@@ -90,6 +90,7 @@ class Statistic(BaseModule):
         LOG.info('rows = %d' % len(data['result']['rows']))
 
         result_problems = data['result']['problems']
+        problems_info = [{'short': p['index'], 'name': p['name']} for p in result_problems]
         result = {}
         for row in data['result']['rows']:
             for member in row['party']['members']:
@@ -162,9 +163,10 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': (self.url + '/standings').replace('contests', 'contest'),
+            'problems': problems_info,
         }
         return standings
 
 
 if __name__ == '__main__':
-    pprint(Statistic(url='http://codeforces.com/contests/1121', key='1121').get_standings())
+    pprint(Statistic(url='http://codeforces.com/contests/1121', key='1121').get_standings()['problems'])

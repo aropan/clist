@@ -38,7 +38,7 @@
                     {% endif %}
                 {% endfor %}
             ">{{ s.place|default:"-" }}</div>
-            <div class="solving col-xs-1" {% if s.addition.score %}data-toggle="tooltip" data-placement="top" title="{{ s.addition.score}}"{% endif %}>{{ s.solving }}</div>
+            <div class="solving col-xs-1" {% if s.addition.score %}data-toggle="tooltip" data-placement="top" title="{{ s.addition.score}}"{% endif %}>{{ s.solving|floatformat }}</div>
             <div class="title col-xs-10">
                 <a href="{{ s.contest.standings_url|default:s.contest.url }}">{{ s.contest.title }}</a>
                 <a href="http://{{ s.contest.resource.host }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
@@ -57,6 +57,7 @@
 {% if v.upsolving.result %}{% if v.result != None %}</br>{% endif %}Upsolving: {{ v.upsolving.result }}{% endif %}
 {% if v.time %}<br/>Time: {{ v.time }}{% endif %}
 {% if v.penalty %}<br/>Penalty: {{ v.penalty }}{% endif %}
+{% if v.status %}<br/>Status: {{ v.status }}{% endif %}
 " data-html="true"{% endif %}
   class="badge progress-bar-{% if v %}{% if v.result|slice:":1" == "+" or v.result|asfloat:0 > 0 %}{% if v.partial %}info{% else %}success{% endif %}{% else %}{% if v.upsolving %}info{% else %}danger{% endif %}{% endif %}{% else %}info{% endif %}"
                 >

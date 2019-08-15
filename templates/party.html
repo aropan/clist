@@ -71,7 +71,7 @@
 
         <script>
         $(function () {
-            $('li.disabled').click(function(e) { window.open($(this).find('a').attr('data-href'), '_blank'); });
+            $('li a[data-href]').click(function(e) { window.open($(this).attr('data-href'), '_blank'); });
         });
         </script>
 
@@ -79,22 +79,25 @@
         <div class="tabbable tabs-left">
             <ul class="nav nav-tabs">
                 <li class="active"><a href="#total" data-toggle="tab">Total</a></li>
-                {% for f in future %}
-                    <li class="disabled">
-                        <a class="small" href="#" data-href="{{ f.contest.url }}" data-toggle="tab">
-                            <div>{{ f.contest.title|truncatechars:33 }}</div>
-                            <div>starts in <span class="timeleft countdown" data-timestamp="{{ f.contest.next_time }}">{{ f.contest.next_time|countdown }}</span></div>
+                {% for contest in future %}
+                    <li{% if contest.is_coming %} class="disabled"{% endif %}>
+                        <a class="small" href="#" data-href="{{ contest.url }}" data-toggle="tab">
+                            <div>{{ contest.title|truncatechars:33 }}</div>
+                            <div>{% if contest.is_coming %}starts{% else %}ends{% endif %} in <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span></div>
                         </a>
                     </li>
                 {% endfor %}
                 {% for r in results %}
                     {% if not forloop.first %}
-                    <li><a title="{{ r.contest.title }}" href="#{{ r.contest.id }}" data-toggle="tab">{{ r.contest.title|truncatechars:33 }}</a></li>
+                    <li{% if not r.standings %} class="disabled"{% endif %}>
+                        <a title="{{ r.contest.title }}" href="#{{ r.contest.id }}" data-toggle="tab"{% if not r.standings %} data-href="{{ r.contest.url }}"{% endif %}>{{ r.contest.title|truncatechars:33 }}</a>
+                    </li>
                     {% endif %}
                 {% endfor %}
             </ul>
             <div class="tab-content">
             {% for r in results %}
+                {% if r.standings %}
                 <div id="{% if forloop.first %}total{% else %}{{ r.contest.id }}{% endif %}" class="tab-pane{% if forloop.first %} active{% endif %}">
                     <div class="standings col-lg-offset-2 col-lg-8">
                         <h4 class="name-stand">
@@ -125,13 +128,14 @@
                                     </a>
                                 </div>
                                 <div class="col-xs-3" data-toggle="tooltip" data-placement="top" title="{{ s.interpretation|join:' + ' }}">{{ s.score|floatformat:2 }}</div>
-                                <div class="col-xs-3">{{ s.stat.solving }} ({{ s.stat.upsolving }})</div>
+                                <div class="col-xs-3">{{ s.stat.solving|floatformat }} ({{ s.stat.upsolving|floatformat }})</div>
                             </div>
                         {% endfor %}
                         </div>
                         {% endif %}
                     </div>
                 </div>
+                {% endif %}
             {% endfor %}
             </div>
         </div>

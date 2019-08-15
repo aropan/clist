@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule, parsed_table
-
 import re
 import os
+from collections import OrderedDict
+from urllib.parse import urljoin
+
+
+from common import REQ, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):
@@ -14,57 +17,77 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None):
         result = {}
+        problems_info = OrderedDict()
 
         if not re.search('/[0-9]+/', self.standings_url):
             return {}
 
-        page = REQ.get(self.standings_url)
+        url = self.standings_url
+        n_page = 1
+        while True:
+            page = REQ.get(url)
 
-        html_table = re.search(
-            '<table[^>]*class="[^"]*standings[^>]*>.*?</table>',
-            page,
-            re.MULTILINE | re.DOTALL
-        ).group(0)
+            html_table = re.search(
+                '<table[^>]*class="[^"]*standings[^>]*>.*?</table>',
+                page,
+                re.MULTILINE | re.DOTALL
+            ).group(0)
 
-        table = parsed_table.ParsedTable(html_table)
+            table = parsed_table.ParsedTable(html_table)
 
-        for r in table:
-            row = {}
-            problems = row.setdefault('problems', {})
-            solved = 0
-            for k, v in list(r.items()):
-                if 'table__cell_role_result' in v.attrs['class']:
-                    n = v.column.node
-                    if n.xpath('img[contains(@class,"image_type_success")]'):
-                        res = '+'
-                    elif n.xpath('img[contains(@class,"image_type_fail")]'):
-                        res = '-'
-                    else:
-                        if ' ' not in v.value:
+            for r in table:
+                row = {}
+                problems = row.setdefault('problems', {})
+                solved = 0
+                for k, v in list(r.items()):
+                    if 'table__cell_role_result' in v.attrs['class']:
+                        letter = k.split(' ', 1)[0]
+                        if letter == 'X':
                             continue
-                        res = v.value.split(' ', 1)[0]
-                    letter = k.split(' ', 1)[0]
-                    p = problems.setdefault(letter, {})
-                    names = v.header.node.xpath('.//span/@title')
-                    p['name'] = names[0] if len(names) == 1 else letter
-                    p['result'] = res
-                    p['time'] = v.value.split(' ', 1)[-1]
-                    if '+' in res or res.startswith('100'):
-                        solved += 1
-                elif 'table__cell_role_participant' in v.attrs['class']:
-                    row['member'] = v.value.replace(' ', '', 1)
-                elif 'table__cell_role_place' in v.attrs['class']:
-                    row['place'] = v.value
-                elif 'table__header_type_penalty' in v.attrs['class']:
-                    row['penalty'] = v.value
-                elif 'table__header_type_score' in v.attrs['class']:
-                    row['solving'] = int(round(float(v.value)))
-            row['solved'] = {'solving': solved}
-            result[row['member']] = row
+
+                        p = problems_info.setdefault(letter, {'short': letter})
+                        names = v.header.node.xpath('.//span/@title')
+                        if len(names) == 1:
+                            p['name'] = names[0]
+
+                        p = problems.setdefault(letter, {})
+                        n = v.column.node
+                        if n.xpath('img[contains(@class,"image_type_success")]'):
+                            res = '+'
+                            p['binary'] = True
+                        elif n.xpath('img[contains(@class,"image_type_fail")]'):
+                            res = '-'
+                            p['binary'] = False
+                        else:
+                            if ' ' not in v.value:
+                                problems.pop(letter)
+                                continue
+                            res = v.value.split(' ', 1)[0]
+                        p['result'] = res
+                        p['time'] = v.value.split(' ', 1)[-1]
+                        if '+' in res or res.startswith('100'):
+                            solved += 1
+                    elif 'table__cell_role_participant' in v.attrs['class']:
+                        row['member'] = v.value.replace(' ', '', 1)
+                    elif 'table__cell_role_place' in v.attrs['class']:
+                        row['place'] = v.value
+                    elif 'table__header_type_penalty' in v.attrs['class']:
+                        row['penalty'] = v.value
+                    elif 'table__header_type_score' in v.attrs['class']:
+                        row['solving'] = int(round(float(v.value)))
+                row['solved'] = {'solving': solved}
+                result[row['member']] = row
+
+            n_page += 1
+            match = re.search(f'<a[^>]*href="(?P<href>[^"]*standings[^"]*p[^"]*={n_page})"[^>]*>', page)
+            if not match:
+                break
+            url = urljoin(url, match.group('href'))
 
         standings = {
             'result': result,
             'url': self.standings_url,
+            'problems': list(problems_info.values()),
         }
         return standings
 
@@ -90,4 +113,6 @@ if __name__ == "__main__":
         standings_url=contest.standings_url,
         start_time=contest.start_time,
     )
-    pprint(statistic.get_standings())
+    s = statistic.get_standings()
+    pprint(len(s['result']))
+    pprint(s['problems'])

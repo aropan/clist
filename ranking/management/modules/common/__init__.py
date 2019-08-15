@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 from datetime import timedelta
 from abc import ABCMeta, abstractmethod
 import logging
 
 import requester
-REQ = requester.requester()
-REQ.caching = None
-REQ.time_out = 17
-REQ.debug_output = False
+REQ = requester.requester(cookie_filename=None)
+REQ.caching = 'REQUESTER_CACHING' in os.environ
+REQ.time_out = 23
+REQ.debug_output = 'REQUESTER_DEBUG' in os.environ
 
 SPACE = ' '
 DOT = '.'

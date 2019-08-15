@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule
-from excepts import ExceptionParseStandings
-
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-
 import base64
 import re
 import json
-import tqdm
+from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime
+
+import tqdm
+
+from common import REQ, BaseModule
+from excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -33,14 +34,25 @@ class Statistic(BaseModule):
             base64_query = base64.b64encode(query.encode())
             url = api_ranking_url_format + base64_query.decode()
             content = REQ.get(url)
-            content = content.replace(b'-', b'+')
-            content = content.replace(b'_', b'/')
-            content = re.sub(rb'[^A-Za-z0-9\+\/]', b'', content)
-            content += b'=' * ((4 - len(content) % 4) % 4)
+            content = content.replace('-', '+')
+            content = content.replace('_', '/')
+            content = re.sub(r'[^A-Za-z0-9\+\/]', '', content)
+            content += '=' * ((4 - len(content) % 4) % 4)
             data = json.loads(base64.b64decode(content).decode())
             return data
 
         data = get(1, 1)
+        problems_info = OrderedDict([
+            (
+                task['id'],
+                {
+                    'code': task['id'],
+                    'name': task['title'],
+                    'full_score': sum([test['value'] for test in task['tests']])
+                }
+            )
+            for task in data['challenge']['tasks']
+        ])
 
         num_consecutive_users = 200
         n_page = (data['full_scoreboard_size'] - 1) // num_consecutive_users + 1
@@ -51,7 +63,6 @@ class Statistic(BaseModule):
         result = {}
         with PoolExecutor(max_workers=8) as executor:
             for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page):
-                problem_infos = {d['id']: d for d in data['challenge']['tasks']}
                 for row in data['user_scores']:
                     if not row['task_info']:
                         continue
@@ -66,13 +77,11 @@ class Statistic(BaseModule):
                     solved = 0
                     problems = r.setdefault('problems', {})
                     for task_info in row['task_info']:
-                        problem_info = problem_infos[task_info['task_id']]
-                        full_score = sum([t['value'] for t in problem_info['tests']])
-
-                        p = problems.setdefault(problem_info['title'], {})
+                        tid = task_info['task_id']
+                        p = problems.setdefault(tid, {})
                         p['time'] = self.to_time(task_info['penalty_micros'] / 10**6)
                         p['result'] = task_info['score']
-                        if p['result'] and p['result'] != full_score:
+                        if p['result'] and p['result'] != problems_info[tid]['full_score']:
                             p['partial'] = True
                         if task_info['penalty_attempts']:
                             p['penalty'] = task_info['penalty_attempts']
@@ -82,6 +91,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': standings_url,
+            'problems': list(problems_info.values()),
         }
         return standings
 

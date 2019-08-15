@@ -1,6 +1,7 @@
-from clist.models import Resource, Contest
-from clist.templatetags.extras import get_timezones, format_time
-from clist.views import get_timezone
+import collections
+import re
+import json
+
 from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -10,15 +11,17 @@ from django.db.models import Case, When, Value, BooleanField
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from tastypie.models import ApiKey
+from django_countries import countries
+
+from clist.models import Resource, Contest
+from clist.templatetags.extras import get_timezones, format_time
+from clist.views import get_timezone
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
 from ranking.models import Statistics, Module, Account
-from tastypie.models import ApiKey
 from true_coders.models import Filter, Party, Coder, Organization
 from events.models import Team, TeamStatus
-from django_countries import countries
-import re
-import json
 
 
 def profile(request, username):
@@ -377,6 +380,8 @@ def party(request, slug):
         n_participations=Count('account__resource')
     ).order_by(
         '-n_participations'
+    ).select_related(
+        'user'
     )
     set_coders = set(coders)
 
@@ -393,11 +398,11 @@ def party(request, slug):
         ignore_filters = []
     ignore_filters.append({'id': 0, 'name': 'disable long'})
 
-    contests = []
     results = []
     total = {}
 
-    future = party.rating_set.filter(contest__start_time__gt=timezone.now()).order_by('-contest__start_time')
+    contests = Contest.objects.filter(rating__party=party)
+    future = contests.filter(end_time__gt=timezone.now()).order_by('start_time')
 
     statistics = Statistics.objects.filter(
         account__coders__in=party.coders.all(),
@@ -407,7 +412,9 @@ def party(request, slug):
         .select_related('contest', 'account') \
         .prefetch_related('account__coders', 'account__coders__user')
 
-    contests_standings = dict()
+    contests_standings = collections.OrderedDict(
+        (c, []) for c in contests.filter(end_time__lt=timezone.now()).order_by('-end_time')
+    )
     for statistic in statistics:
         contest = statistic.contest
         contests_standings.setdefault(contest, [])
@@ -454,7 +461,6 @@ def party(request, slug):
             'contest': contest,
             'standings': standings,
         })
-        contests.append(contest)
 
     total = sorted(list(total.values()), key=lambda d: d['score'], reverse=True)
     results.insert(0, {
@@ -481,7 +487,6 @@ def party(request, slug):
             'header': ['#', 'Coder', 'Score', 'Solving'],
             'party': party,
             'party_contests': party_contests,
-            'contests': contests,
             'results': results,
             'unparsed': unparsed,
             'coders': coders,

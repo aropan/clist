@@ -304,8 +304,8 @@
         }
 
         $now = date("Y-m-d H:i:s", time());
-        //$fields .= ",created";
-        //$values .= ",'$now'";
+        $fields .= ",info";
+        $values .= ",'{}'";
         //$fields .= ",modified";
         //$values .= ",'$now'";
         if (!DEBUG) {

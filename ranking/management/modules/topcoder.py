@@ -1,19 +1,62 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule, parsed_table
-from excepts import InitModuleException
-
 import re
+import json
+import html
 from urllib.parse import urljoin, parse_qs
 from lxml import etree
 from datetime import timedelta, datetime
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from pprint import pprint
+from time import sleep, time
+
+import tqdm
+
+from common import LOG, REQ, BaseModule, parsed_table
+from excepts import InitModuleException
+
+import conf
 
 
 class Statistic(BaseModule):
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
+        self._handle = conf.TOPCODER_HANDLE
+        self._password = conf.TOPCODER_PASSWORD
+
+        cookies = {
+            cookie.name for cookie in REQ.get_raw_cookies()
+            if 'topcoder.com' in cookie.domain and (cookie.expires is None or cookie.expires > time())
+        }
+        if 'tcjwt' not in cookies or 'tcsso' not in cookies:
+            page = REQ.get('https://accounts.topcoder.com/')
+            match = re.search(r'src="(app\.[^"]*.js)"', page)
+            url = urljoin(REQ.last_url, match.group(1))
+            page = REQ.get(url)
+            match = re.search('clientId:"([^"]*)"', page)
+            client_id = match.group(1)
+            params = {
+                "client_id": client_id,
+                "connection": "TC-User-Database",
+                "device": "Browser",
+                "grant_type": "password",
+                "password": self._password,
+                "response_type": "token",
+                "scope": "openid profile offline_access",
+                "sso": False,
+                "username": self._handle,
+            }
+            page = REQ.get('https://topcoder.auth0.com/oauth/ro', post=params)
+            data = json.loads(page)
+
+            params = {"param": {"externalToken": data['id_token'], "refreshToken": data['refresh_token']}}
+            page = REQ.get(
+                'https://api.topcoder.com/v3/authorizations',
+                post=json.dumps(params).encode('utf-8'),
+                headers={'Content-Type': 'application/json;charset=UTF-8'}
+            )
 
     @staticmethod
     def _dict_as_number(d):
@@ -24,7 +67,7 @@ class Statistic(BaseModule):
                 continue
             if ',' in v:
                 v = float(v.replace(',', '.'))
-            elif re.match('-?[0-9]+', v):
+            elif re.match('^-?[0-9]+$', v):
                 v = int(v)
             ret[k] = v
         return ret
@@ -47,22 +90,22 @@ class Statistic(BaseModule):
                 re.VERBOSE,
             )
             for url in [
-                'https://www.topcoder.com/tc?module=MatchList',
-                'https://community.topcoder.com/longcontest/stats/?module=MatchList',
+                'https://www.topcoder.com/tc?module=MatchList&nr=100500',
+                'https://community.topcoder.com/longcontest/stats/?module=MatchList&nr=100500',
             ]:
                 page = REQ.get(url)
                 matches = re_round_overview.finditer(str(page))
+                opt = 0.61803398875
                 for match in matches:
                     date = datetime.strptime(match.group('date'), '%m.%d.%Y')
                     if abs(date - start_time) < timedelta(days=2):
                         title = match.group('title')
                         intersection = len(set(title.split()) & set(self.name.split()))
                         union = len(set(title.split()) | set(self.name.split()))
-                        if intersection / union > 0.61803398875:
+                        iou = intersection / union
+                        if iou > opt:
+                            opt = iou
                             self.standings_url = urljoin(url, match.group('url'))
-                            break
-                if not self.standings_url:
-                    break
 
         if not self.standings_url:
             raise InitModuleException('Not set standings url for %s' % self.name)
@@ -72,6 +115,12 @@ class Statistic(BaseModule):
         result_urls = re.findall(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>Results</a>', str(page), re.I)
 
         if not result_urls:  # marathon match
+            match = re.search('<[^>]*>Problem:[^<]*<a[^>]*href="(?P<href>[^"]*)"[^>]*>(?P<name>[^<]*)<', page)
+            problem_name = match.group('name').strip()
+            problems_info = [{
+                'short': problem_name,
+                'url': urljoin(url, match.group('href').replace('&amp;', '&'))
+            }]
             rows = etree.HTML(page).xpath("//table[contains(@class, 'stat')]//tr")
             header = None
             for row in rows:
@@ -84,9 +133,9 @@ class Statistic(BaseModule):
                     continue
 
                 d = dict(list(zip(header, values)))
-                handle = d.pop('Handle')
+                handle = d.pop('Handle').strip()
                 d = self._dict_as_number(d)
-                if 'rank' not in d:
+                if 'rank' not in d or users is not None and handle not in users:
                     continue
                 row = result.setdefault(handle, {})
                 row.update(d)
@@ -94,17 +143,51 @@ class Statistic(BaseModule):
                 score = row.pop('final_score' if 'final_score' in row else 'provisional_score')
                 row['member'] = handle
                 row['place'] = row.pop('rank')
-                row['solving'] = int(round(score))
+                row['solving'] = score
                 row['solved'] = {'solving': 1 if score > 0 else 0}
-                row['score'] = score
+
+                problems = row.setdefault('problems', {})
+                problem = problems.setdefault(problem_name, {})
+                problem['result'] = score
+
+                history_index = values.index('submission history')
+                if history_index:
+                    column = r.columns[history_index]
+                    href = column.node.xpath('a/@href')
+                    if href:
+                        problem['url'] = urljoin(url, href[0])
         else:  # single round match
-            for result_url in result_urls:
+            matches = re.finditer('<table[^>]*>.*?</table>', page, re.DOTALL)
+            problems_sets = []
+            for match in matches:
+                problems = re.findall(
+                    '<a[^>]*href="(?P<href>[^"]*c=problem_statement[^"]*)"[^>]*>(?P<name>[^/]*)</a>',
+                    match.group(),
+                    re.IGNORECASE,
+                )
+                if problems:
+                    problems_sets.append([
+                        {'short': n, 'url': urljoin(url, u)}
+                        for u, n in problems
+                    ])
+
+            problems_info = dict() if len(problems_sets) > 1 else list()
+            for problems_set, result_url in zip(problems_sets, result_urls):
                 url = urljoin(self.standings_url, result_url + '&em=1000000042')
                 url = url.replace('&amp;', '&')
                 division = int(parse_qs(url)['dn'][0])
+
+                for p in problems_set:
+                    d = problems_info
+                    if len(problems_sets) > 1:
+                        d = d.setdefault('division', {})
+                        d = d.setdefault('I' * division, [])
+                    d.append(p)
+
                 page = REQ.get(url)
                 rows = etree.HTML(page).xpath("//tr[@valign='middle']")
                 header = None
+                url_infos = []
                 for row in rows:
                     r = parsed_table.ParsedTableRow(row)
                     if len(r.columns) < 10:
@@ -115,22 +198,66 @@ class Statistic(BaseModule):
                         continue
 
                     d = dict(list(zip(header, values)))
-                    handle = d.pop('Coders')
+                    handle = d.pop('Coders').strip()
                     d = self._dict_as_number(d)
-                    if 'division_placed' not in d:
+                    if 'division_placed' not in d or users is not None and handle not in users:
                         continue
+
                     row = result.setdefault(handle, {})
                     row.update(d)
 
                     row['member'] = handle
                     row['place'] = row.pop('division_placed')
-                    row['solving'] = int(round(row['point_total']))
-                    row['score'] = row.pop('point_total')
+                    row['solving'] = row['point_total']
                     row['solved'] = {'solving': 0}
                     row['division'] = 'I' * division
+
+                    url_info = urljoin(url, r.columns[0].node.xpath('a/@href')[0])
+                    url_infos.append(url_info)
+
+                def fetch_info(url):
+                    delay = 3
+                    for _ in range(5):
+                        try:
+                            page = REQ.get(url)
+                            break
+                        except Exception:
+                            sleep(delay)
+                            delay *= 2
+                    else:
+                        return None, None, None
+
+                    match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE)
+                    handle = html.unescape(match.group('handle').strip())
+                    matches = re.finditer(r'''
+                        <td[^>]*>[^<]*<a[^>]*href="(?P<url>[^"]*c=problem_solution[^"]*)"[^>]*>(?P<short>[^<]*)</a>[^<]*</td>[^<]*
+                        <td[^>]*>[^<]*</td>[^<]*
+                        <td[^>]*>[^<]*</td>[^<]*
+                        <td[^>]*>(?P<time>[^<]*)</td>[^<]*
+                        <td[^>]*>(?P<status>[^<]*)</td>[^<]*
+                        <td[^>]*>(?P<result>[^<]*)</td>[^<]*
+                    ''', page, re.VERBOSE | re.IGNORECASE)
+                    problems = {}
+                    for match in matches:
+                        d = match.groupdict()
+                        short = d.pop('short')
+                        d['url'] = urljoin(url, d['url'])
+                        problems[short] = self._dict_as_number(d)
+                    return url, handle, problems
+
+                with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(url_infos)) as pbar:
+                    for url, handle, problems in executor.map(fetch_info, url_infos):
+                        pbar.set_description(f'div{division} {url}')
+                        pbar.update()
+                        if handle is not None:
+                            if handle not in result:
+                                LOG.error(f'{handle} not in result, url = {url}')
+                            result[handle]['problems'] = problems
+
         standings = {
             'result': result,
             'url': self.standings_url,
+            'problems': problems_info,
         }
         return standings
 
@@ -140,20 +267,35 @@ if __name__ == "__main__":
     #     name='TCO19 SRM 752',
     #     standings_url='https://www.topcoder.com/stat?module=MatchList&nr=200&sr=1&c=round_overview&er=5&rd=17420',
     #     key='TCO19 SRM 752. 06.03.2019',
+    #     start_time=datetime.strptime('06.03.2019', '%d.%m.%Y'),
     # )
-    # pprint(statictic.get_result('tourist'))
-    # statictic = Statistic(
-    #     name='TCO19 Algorithm Round 1B',
-    #     standings_url='https://www.topcoder.com/stat?module=MatchList&nr=200&sr=1&c=round_overview&er=5&rd=17509',
-    #     key='TCO19 Algorithm Round 1B. 01.05.2019',
-    # )
-    # pprint(statictic.get_result('aropan'))
+    # pprint(statictic.get_standings()['problems'])
+    # pprint(statictic.get_standings())
     statictic = Statistic(
-        name='TCO19 SRM 752',
-        # standings_url='https://community.topcoder.com/longcontest/stats/?module=ViewOverview&rd=17427',
-        standings_url=None,
-        key='TCO19 SRM 752. 06.03.2019',
-        start_time=datetime.strptime('06.03.2019', '%d.%m.%Y'),
+        name='TCO19 Algorithm Round 1B',
+        standings_url='https://www.topcoder.com/stat?module=MatchList&nr=200&sr=1&c=round_overview&er=5&rd=17509',
+        key='TCO19 Algorithm Round 1B. 01.05.2019',
+        start_time=datetime.strptime('01.05.2019', '%d.%m.%Y'),
     )
-    from pprint import pprint
-    pprint(statictic.get_standings())
+    pprint(statictic.get_result('aropan'))
+    statictic = Statistic(
+        name='TCO19 Algorithm Round 1B',
+        standings_url='https://www.topcoder.com/stat?module=MatchList&nr=200&sr=1&c=round_overview&er=5&rd=17509',
+        key='TCO19 Algorithm Round 1B. 01.05.2019',
+        start_time=datetime.strptime('01.05.2019', '%d.%m.%Y'),
+    )
+    pprint(statictic.get_result('aropan'))
+    # statictic = Statistic(
+    #     name='Marathon Match Beta',
+    #     standings_url='https://community.topcoder.com/longcontest/stats/?module=ViewOverview&rd=9874',
+    #     key='Marathon Match Beta. 15.12.2005',
+    #     start_time=datetime.strptime('15.12.2005', '%d.%m.%Y'),
+    # )
+    # statictic.get_standings()
+    # statictic = Statistic(
+    #     name='2',
+    #     standings_url='https://community.topcoder.com/longcontest/stats/?module=ViewOverview&rd=9874',
+    #     key='Marathon Match Beta. 15.12.2005',
+    #     start_time=datetime.strptime('15.12.2005', '%d.%m.%Y'),
+    # )
+    # pprint(statictic.get_standings()['problems'])

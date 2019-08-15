@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, DOT, SPACE, BaseModule, parsed_table
-
 import re
+from datetime import datetime
+from pprint import pprint
+from collections import OrderedDict
+
+from common import REQ, DOT, SPACE, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):
@@ -31,12 +34,14 @@ class Statistic(BaseModule):
             'solved': 'solving',
         }
         result = {}
+        problems_info = OrderedDict()
         for r in table:
             row = {}
             problems = row.setdefault('problems', {})
             for k, v in list(r.items()):
                 c = v.attrs['class'].split()[0]
                 if c in ['problem', 'ioiprob']:
+                    problems_info[k] = {'short': k, 'name': v.attrs['title']}
                     v = v.value
                     if v != DOT:
                         p = problems.setdefault(k, {})
@@ -54,5 +59,17 @@ class Statistic(BaseModule):
             result[row['member']] = row
         standings = {
             'result': result,
+            'problems': list(problems_info.values()),
         }
         return standings
+
+
+if __name__ == "__main__":
+    statictic = Statistic(
+        name='Личная олимпиада. Условия по фильму «Капитан Марвел»',
+        url='http://neerc.ifmo.ru/school/io/2018-2019.html',
+        standings_url='http://neerc.ifmo.ru/school/io/archive/20190324/standings-20190324-individual.html',
+        key='20190324',
+        start_time=datetime.strptime('2019-03-24', '%Y-%m-%d'),
+    )
+    pprint(statictic.get_standings()['problems'])

@@ -5,7 +5,7 @@
 <div class="css-table-row">
     <div>{{ statistic.place }}</div>
     <div>{{ statistic.account.key }}</div>
-    <div>{{ statistic.solving }}</div>
+    <div>{{ statistic.solving|floatformat }}</div>
 </div>
 {% endfor %}
 {% show_more %}

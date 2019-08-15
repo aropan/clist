@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule
-
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-
 import json
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from pprint import pprint
+
+from common import REQ, BaseModule
 
 
 class Statistic(BaseModule):
@@ -27,6 +27,8 @@ class Statistic(BaseModule):
             return {'result': {}, 'url': standings_url}
         n_page = (data['user_num'] - 1) // len(data['total_rank']) + 1
 
+        problems_info = [{'short': f'Q{i + 1}', 'name': p['title']} for i, p in enumerate(data['questions'])]
+
         def fetch_page(page):
             url = api_ranking_url_format.format(page + 1)
             content = REQ.get(url)
@@ -36,7 +38,6 @@ class Statistic(BaseModule):
         result = {}
         with PoolExecutor(max_workers=8) as executor:
             for data in executor.map(fetch_page, range(n_page)):
-                problem_infos = {d['question_id']: d for d in data['questions']}
                 for row, submissions in zip(data['total_rank'], data['submissions']):
                     if not submissions:
                         continue
@@ -61,7 +62,6 @@ class Statistic(BaseModule):
                             p['result'] = '+' + str(s['fail_count'] or '')
                         else:
                             p['result'] = f'-{s["fail_count"]}'
-                        p['name'] = problem_infos[int(k)]['title']
                     r['solved'] = {'solving': solved}
                     finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
                     r['penalty'] = self.to_time(finish_time)
@@ -70,6 +70,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': standings_url,
+            'problems': problems_info,
         }
         return standings
 
@@ -82,5 +83,4 @@ if __name__ == "__main__":
         start_time=datetime.now(),
         standings_url=None,
     )
-    from pprint import pprint
     pprint(statictic.get_standings())

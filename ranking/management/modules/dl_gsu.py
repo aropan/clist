@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule, parsed_table
-from excepts import InitModuleException, ExceptionParseStandings
-
 import re
 from urllib.parse import urljoin
 from pprint import pprint  # noqa
+from collections import OrderedDict
+
+from common import REQ, BaseModule, parsed_table
+from excepts import InitModuleException, ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -51,6 +52,8 @@ class Statistic(BaseModule):
         html_table = re.search('<table[^>]*bgcolor="silver"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL).group(0)
         table = parsed_table.ParsedTable(html_table)
 
+        problems_info = OrderedDict()
+
         result = {}
         for r in table:
             row = {}
@@ -68,18 +71,20 @@ class Statistic(BaseModule):
                     row['place'] = v.value
                 elif k == 'Сумма':
                     row['solving'] = v.value
-                elif len(k) == 1 and v.value:
-                    p = problems.setdefault(k, {})
-                    p['name'] = k
-                    p['result'] = v.value
-                    if '+' in v.value or v.value == '100':
-                        solved += 1
+                elif len(k) == 1 or k.isdigit():
+                    problems_info[k] = {'short': k}
+                    if v.value:
+                        p = problems.setdefault(k, {})
+                        p['result'] = v.value
+                        if '+' in v.value or v.value == '100':
+                            solved += 1
             row['solved'] = {'solving': solved}
             result[row['member']] = row
 
         standings = {
             'result': result,
             'url': self.standings_url,
+            'problems': list(problems_info.values()),
         }
 
         return standings

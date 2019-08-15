@@ -30,26 +30,23 @@
         <li>[^<]*
             <a[^>]*>(?<title>[^<]*GP[^<]*)\s\&\#
         .*?
-        <li><a[^>]*href="(?<url>[^"]*)">1st\sDiv\sResults</a></li>
-        #xs', $page, $matches
+        <li><a[^>]*href="(?<url>[^"]*)"[^>]*>[^<]*</a></li>[^<]*
+        <li><a[^>]*href="(?<standings_url>[^"]*)"[^>]*>1st\sDiv\sResults</a></li>
+        #xs', $page, $matches, PREG_SET_ORDER
     );
     $results = array();
-    foreach ($matches[0] as $i => $value)
-    {
-        $url = $matches['url'][$i];
-        if (parse_url($url, PHP_URL_HOST) == "")
-        {
-            $url = parse_url($URL, PHP_URL_SCHEME) . "://" . "$HOST" . "/$url";
+    foreach ($matches as $match) {
+        foreach (array('url', 'standings_url') as $k) {
+            $match[$k] = url_merge($URL, $match[$k]);
         }
-        $title = $matches['title'][$i];
+        $title = $match['title'];
         $title = str_replace('GP', 'Grand Prix', $title);
-        $results[$title] = $url;
+        $results[$title] = $match;
     }
 
     preg_match_all('#</td><td>(?<date>\d\d\.\d\d\.\d\d\d\d)</td><td>[^0-9]*(?<date_start_time>\d\d:\d\d).*?</td><td>(?<title>.*?)</td></tr>#s', $page, $matches, PREG_SET_ORDER);
     $year = "";
-    foreach ($matches as $match)
-    {
+    foreach ($matches as $match) {
         $title = trim(strip_tags($match['title']));
         $words = explode(" ", $title);
         $opt = strlen($title);
@@ -61,14 +58,16 @@
             $res = levenshtein($p, $q);
             if ($res < $opt) {
                 $opt = $res;
-                $url = $u;
                 $tit = $t;
             }
         }
         if ($opt < 4) {
+            $url = $results[$tit]['url'];
+            $standings_url = $results[$tit]['standings_url'];
             unset($results[$tit]);
         } else {
             $url = $URL;
+            $standings_url = null;
         }
         $start_time = trim(strip_tags($match['date'])) . " " . trim(strip_tags($match['date_start_time']));
         if (empty($year)) {
@@ -82,6 +81,7 @@
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
+            'standings_url' => $standings_url,
             'key' => $year . '-' . ($year + 1) . ' ' . $title
         );
     }

@@ -151,7 +151,6 @@ class requester():
     debug_output = True
     dir_cache = path.dirname(path.realpath(__file__)) + "/cache/"
     cookie_filename = path.abspath(path.realpath(__file__)) + ".cookie"
-    cookie_filename = None
     last_page = None
     last_url = None
     ref_url = None

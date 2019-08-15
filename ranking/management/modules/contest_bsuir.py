@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, LOG, BaseModule
-from excepts import ExceptionParseStandings
-
 import re
-from traceback import format_exc
 from pprint import pprint
 from functools import partial
+from collections import OrderedDict
+
+from common import REQ, BaseModule
+from excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -26,17 +26,20 @@ class Statistic(BaseModule):
     def get_standings(self, users=None):
         result = {}
         standings_url = None
+        problems_info = OrderedDict()
         for url, upsolve in (
             (self.url, False),
             (self.url.replace(".html", "-upsolving.html"), True),
             (self.url.replace("-training-", "-practice-"), True),
+            (self.key, False),
+            (self.key.replace(".html", "-upsolving.html"), True),
+            (self.key.replace("-training-", "-practice-"), True),
         ):
-            if upsolve and url == self.url:
+            if upsolve and url in [self.url, self.key]:
                 continue
             try:
                 page = REQ.get(url)
             except Exception:
-                LOG.debug(format_exc())
                 continue
             if standings_url is None:
                 standings_url = url
@@ -59,7 +62,7 @@ class Statistic(BaseModule):
                 place = get_value('Место', 'Place')
                 if not place:
                     continue
-                member = get_value('Логин', 'Login', 'User')
+                member = get_value('Логин', 'Login', 'User', 'Участник')
                 row = result.setdefault(member, {'member': member})
 
                 type_ = ('up' if upsolve else '') + 'solving'
@@ -68,6 +71,7 @@ class Statistic(BaseModule):
                 problems = row.setdefault('problems', {})
                 for k in sorted(fields.keys()):
                     if re.match('^(?:[A-Z]|[0-9]{,2})$', k):
+                        problems_info[k] = {'short': k}
                         v = fields[k].split()
                         if len(v) > 0:
                             p = {'result': v[0]}
@@ -98,6 +102,7 @@ class Statistic(BaseModule):
 
         standings = {
             'result': result,
+            'problems': list(problems_info.values()),
         }
         if standings_url is not None:
             standings['url'] = standings_url
