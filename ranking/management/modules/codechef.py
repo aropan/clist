@@ -161,12 +161,12 @@ class Statistic(BaseModule):
 
 if __name__ == "__main__":
     statictic = Statistic(
-        name='April Challenge 2019',
-        url='http://www.codechef.com/APRIL19?utm_source=contest_listing&utm_medium=link&utm_campaign=APRIL19',
-        key='APRIL19',
+        name='August Challenge 2019',
+        url='https://www.codechef.com/AUG19?utm_source=contest_listing&utm_medium=link&utm_campaign=AUG19',
+        key='AUG19',
         standings_url=None,
     )
-    pprint(statictic.get_result('krismaz'))
+    pprint(statictic.get_result('luma'))
     # statictic = Statistic(
     #     name='February Cook-Off 2015',
     #     url='https://www.codechef.com/COOK55?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK55',

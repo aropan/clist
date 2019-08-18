@@ -14,7 +14,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     contests = Contest.objects \
         .annotate(has_statistics=Exists(Statistics.objects.filter(contest=OuterRef('pk')))) \
         .filter(has_statistics=True) \
-        .order_by('-end_time')
+        .order_by('-end_time', 'title')
     search = request.GET.get('search')
     if search is not None:
         contests = contests.filter(Q(title__iregex=search) | Q(resource__host__iregex=search))
@@ -44,10 +44,17 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     }).order_by('place_as_int', '-solving', '-upsolving')
 
     params = {}
-    if 'division' in contest.info.get('problems'):
-        division = sorted(contest.info['problems']['division'].keys())[0]
+    if 'division' in contest.info.get('problems', {}):
+        division = request.GET.get(
+            'division',
+            sorted(contest.info['problems']['division'].keys())[0],
+        )
         params['division'] = division
         statistics = statistics.filter(addition__division=division)
+
+    search = request.GET.get('search')
+    if search:
+        statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
 
     context = {
         'contest': contest,

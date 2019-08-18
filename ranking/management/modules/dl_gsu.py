@@ -3,7 +3,7 @@
 import re
 from urllib.parse import urljoin
 from pprint import pprint  # noqa
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from common import REQ, BaseModule, parsed_table
 from excepts import InitModuleException, ExceptionParseStandings
@@ -24,10 +24,23 @@ class Statistic(BaseModule):
             for name in (
                 'Соревнования',
                 'Тренировочные олимпиады',
-                'Результаты прошедших тренировок',
             ):
                 match = re.search('<a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<'.format(name), page)
                 page = REQ.get(match.group('url'))
+
+            match = re.search(
+                '{}.*?<a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<'.format(
+                    re.escape(self.name),
+                    'Результаты прошедших тренировок'
+                ),
+                page,
+                re.DOTALL,
+            )
+            if not match:
+                raise ExceptionParseStandings('Not found standing url')
+
+            url = match.group('url')
+            page = REQ.get(url)
 
             date = self.start_time.strftime('%Y-%m-%d')
             matches = re.findall(r'''
@@ -37,14 +50,30 @@ class Statistic(BaseModule):
             '''.format(date), page, re.MULTILINE | re.VERBOSE)
 
             urls = [
-                url for title, url in matches
+                (title, urljoin(url, u)) for title, u in matches
                 if not re.search(r'[0-9]\s*-\s*[0-9].*[0-9]\s*-\s*[0-9].*\bкл\b', title)
             ]
 
-            if not urls or len(urls) > 1:
-                raise ExceptionParseStandings('Not found or too much standing url')
+            if not urls:
+                raise ExceptionParseStandings('Not found standing url')
 
-            page = REQ.get(urls[0])
+            if len(urls) > 1:
+                ok = True
+                urls_set = set()
+                for _, u in urls:
+                    page = REQ.get(u)
+                    path = re.findall('<td[^>]*nowrap><a[^>]*href="(?P<href>[^"]*)"', page)
+                    if len(path) < 2:
+                        ok = False
+                    parent = urljoin(u, path[-2])
+                    urls_set.add(parent)
+                if len(urls_set) > 1 or not ok:
+                    raise ExceptionParseStandings('Too much standing url')
+                url = urls_set.pop()
+            else:
+                _, url = urls[0]
+
+            page = REQ.get(url)
             self.standings_url = REQ.last_url
         else:
             page = REQ.get(self.standings_url)
@@ -53,6 +82,7 @@ class Statistic(BaseModule):
         table = parsed_table.ParsedTable(html_table)
 
         problems_info = OrderedDict()
+        max_score = defaultdict(float)
 
         result = {}
         for r in table:
@@ -69,17 +99,34 @@ class Statistic(BaseModule):
                     row['name'] = v.value
                 elif k == 'Место':
                     row['place'] = v.value
-                elif k == 'Сумма':
-                    row['solving'] = v.value
-                elif len(k) == 1 or k.isdigit():
+                elif k == 'Время':
+                    row['penalty'] = int(v.value)
+                elif k in ['Сумма', 'Задачи']:
+                    row['solving'] = float(v.value)
+                elif re.match('^[a-zA-Z0-9]+$', k):
                     problems_info[k] = {'short': k}
                     if v.value:
                         p = problems.setdefault(k, {})
                         p['result'] = v.value
-                        if '+' in v.value or v.value == '100':
-                            solved += 1
-            row['solved'] = {'solving': solved}
+                        try:
+                            max_score[k] = max(max_score[k], float(v.value))
+                        except ValueError:
+                            pass
             result[row['member']] = row
+        for r in result.values():
+            solved = 0
+            for k, p in r['problems'].items():
+                score = p['result']
+                if score.startswith('+'):
+                    solved += 1
+                else:
+                    try:
+                        score = float(score)
+                    except ValueError:
+                        pass
+                    if abs(max_score[k] - score) < 1e-9 and score > 0:
+                        solved += 1
+            r['solved'] = {'solving': solved}
 
         standings = {
             'result': result,
@@ -107,6 +154,7 @@ if __name__ == '__main__':
         .filter(host='dl.gsu.by', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('start_time') \
         .last()
+    contest.standings_url = None
 
     statistic = Statistic(
         name=contest.title,
