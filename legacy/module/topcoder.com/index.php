@@ -196,6 +196,8 @@
                 if (!isset($c['_calendar'])) {
                     continue;
                 }
+                $opt = $iou_treshhold;
+                $t = null;
                 foreach (array(0, -1, 1) as $shift_day) {
                     $date = date('m.d.Y', strtotime($c['start_time']) + $shift_day * 24 * 60 * 60);
                     foreach ($round_overview as $k => $ro) {
@@ -203,13 +205,16 @@
                             $w1 = explode(" ", $c["title"]);
                             $w2 = explode(" ", $ro["title"]);
                             $iou = count(array_intersect($w1, $w2)) / count(array_unique(array_merge($w1, $w2)));;
-                            if ($iou > $iou_treshhold) {
-                                $c['standings_url'] = $ro['url'];
-                                unset($ro[$k]);
-                                break;
+                            if ($iou > $opt) {
+                                $opt = $iou;
+                                $t = $k;
                             }
                         }
                     }
+                }
+                if ($t !== null) {
+                    $c['standings_url'] = $round_overview[$t]['url'];
+                    unset($round_overview[$t]);
                 }
             }
         }
@@ -239,7 +244,7 @@
     }
 
     if ($RID === -1) {
-        //print_r($_contests);
+        // print_r($_contests);
         echo "Total contests: " . count($_contests) . "\n";
     }
 ?>
