@@ -392,7 +392,7 @@ def party(request, slug):
     unparsed = Resource.objects.filter(pk__in=rs)
 
     if request.user.is_authenticated:
-        ignore_filters = request.user.coder.filter_set.filter(categories__contains='calendar').order_by('created')
+        ignore_filters = request.user.coder.filter_set.filter(categories__contains=['calendar']).order_by('created')
         ignore_filters = list(ignore_filters.values('id', 'name'))
     else:
         ignore_filters = []
