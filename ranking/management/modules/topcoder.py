@@ -242,7 +242,12 @@ class Statistic(BaseModule):
                         d = match.groupdict()
                         short = d.pop('short')
                         d['url'] = urljoin(url, d['url'])
-                        problems[short] = self._dict_as_number(d)
+                        d = self._dict_as_number(d)
+                        if d['status'] != 'Passed System Test':
+                            d['result'] = -d['result']
+                        if abs(d['result']) < 1e-9:
+                            d.pop('result')
+                        problems[short] = d
                     return url, handle, problems
 
                 with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(url_infos)) as pbar:
@@ -279,12 +284,12 @@ if __name__ == "__main__":
     )
     pprint(statictic.get_result('aropan'))
     statictic = Statistic(
-        name='TCO19 Algorithm Round 1B',
-        standings_url='https://www.topcoder.com/stat?module=MatchList&nr=200&sr=1&c=round_overview&er=5&rd=17509',
-        key='TCO19 Algorithm Round 1B. 01.05.2019',
-        start_time=datetime.strptime('01.05.2019', '%d.%m.%Y'),
+        name='Mathmania - Codefest 18',
+        standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17259',
+        key='Mathmania - Codefest 18. 01.09.2018',
+        start_time=datetime.strptime('01.09.2018', '%d.%m.%Y'),
     )
-    pprint(statictic.get_result('aropan'))
+    pprint(statictic.get_result('tourist'))
     # statictic = Statistic(
     #     name='Marathon Match Beta',
     #     standings_url='https://community.topcoder.com/longcontest/stats/?module=ViewOverview&rd=9874',

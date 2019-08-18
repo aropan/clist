@@ -1,0 +1,25 @@
+<span
+    {% if stat %}data-toggle="tooltip" data-placement="top" title="
+{% if name != short %}
+  <div>Name: {{ name }}</div>
+{% endif %}
+{% if stat.result != None %}
+  <div>Result: {{ stat.result }}</div>
+{% endif %}
+{% if stat.upsolving.result %}
+  <div>{% if stat.result != None %}</br>{% endif %}Upsolving: {{ stat.upsolving.result }}</div>
+{% endif %}
+{% if stat.time %}
+  <div>Time: {{ stat.time }}</div>
+{% endif %}
+{% if stat.penalty %}
+  <div>Penalty: {{ stat.penalty }}</div>
+{% endif %}
+{% if stat.status %}
+  <div>Status: {{ stat.status }}</div>
+{% endif %}
+" data-html="true"{% endif %}
+class="badge progress-bar-{% if stat and stat.result is not None %}{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}{% if stat.partial %}info{% else %}success{% endif %}{% else %}{% if stat.upsolving %}info{% else %}danger{% endif %}{% endif %}{% else %}default{% endif %}"
+>
+{{ short }}
+</span>

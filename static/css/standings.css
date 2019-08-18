@@ -1,26 +1,9 @@
-.css-table {
-    display: table;
+.contest {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.css-table-header {
-    display: table-header-group;
-    font-weight: bold;
-}
-
-.css-table-body {
-    display: table-row-group;
-}
-
-.css-table-row {
-    display: table-row;
-}
-
-.css-table-header div,
-.css-table-row div {
-    display: table-cell;
-    padding: 0 6px;
-}
-
-.css-table-header div {
-    text-align: center;
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: searchfield-cancel-button;
 }

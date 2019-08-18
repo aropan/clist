@@ -40,6 +40,7 @@ class Statistic(BaseModule):
         params.update({
             'time': int(time()),
             'apiKey': key,
+            'lang': 'en',
         })
 
         url_encode = '&'.join(('%s=%s' % (k, v) for k, v in sorted(params.items())))
@@ -89,8 +90,16 @@ class Statistic(BaseModule):
         LOG.info('contest = %s' % data['result']['contest']['name'])
         LOG.info('rows = %d' % len(data['result']['rows']))
 
+        contest_type = data['result']['contest']['type'].upper()
+
         result_problems = data['result']['problems']
-        problems_info = [{'short': p['index'], 'name': p['name']} for p in result_problems]
+        problems_info = []
+        for p in result_problems:
+            d = {'short': p['index'], 'name': p['name']}
+            if 'points' in p:
+                d['full_score'] = p['points']
+            problems_info.append(d)
+
         result = {}
         for row in data['result']['rows']:
             for member in row['party']['members']:
@@ -98,9 +107,8 @@ class Statistic(BaseModule):
                 r = result.setdefault(handle, {})
                 r['member'] = handle
 
-                hack, unhack = 0, 0
-                hack += row['successfulHackCount']
-                unhack += row['unsuccessfulHackCount']
+                hack = row['successfulHackCount']
+                unhack = row['unsuccessfulHackCount']
 
                 upsolve = \
                     row['party']['participantType'] == 'PRACTICE' or \
@@ -110,9 +118,10 @@ class Statistic(BaseModule):
                 for i, s in enumerate(row['problemResults']):
                     k = result_problems[i]['index']
                     points = float(s['points'])
-                    if 'rejectedAttemptCount' in s and abs(points) < 2 and points + s['rejectedAttemptCount'] > 0:
-                        v = (points * 2 - 1) * s['rejectedAttemptCount']
-                        points = '+' if v == 0 and points > 0 else "%+d" % v
+
+                    n = s.get('rejectedAttemptCount')
+                    if n is not None and contest_type == 'ICPC' and points + n > 0:
+                        points = f'+{"" if n == 0 else n}' if points > 0 else f'-{n}'
 
                     if s['type'] == 'FINAL' and points:
                         p = {'result': points}
@@ -129,6 +138,8 @@ class Statistic(BaseModule):
                     r['place'] = row['rank']
                     r['penalty'] = row['penalty']
                     r['solving'] = row['points']
+                    if contest_type == 'ICPC':
+                        r['solving'] = int(round(r['solving']))
 
                 if hack or unhack:
                     r['hack'] = {
@@ -137,16 +148,16 @@ class Statistic(BaseModule):
                     }
 
         def to_score(x):
-            return (1 if x == '+' or int(x) >= 0 else 0) if isinstance(x, str) else x
+            return (1 if x == '+' or float(x) > 0 else 0) if isinstance(x, str) else x
 
         def to_solve(x):
             return to_score(x) > 0
 
-        for r in list(result.values()):
+        for r in result.values():
             upsolving = 0
             solving = 0
             upsolving_score = 0
-            for a in list(r['problems'].values()):
+            for a in r['problems'].values():
                 if 'upsolving' in a and to_solve(a['upsolving']['result']) > to_solve(a.get('result', 0)):
                     upsolving_score += to_score(a['upsolving']['result'])
                     upsolving += to_solve(a['upsolving']['result'])
@@ -154,7 +165,7 @@ class Statistic(BaseModule):
                     solving += to_solve(a.get('result', 0))
             r.setdefault('solving', 0)
             r['upsolving'] = upsolving_score
-            if solving + upsolving != r['solving'] + r['upsolving']:
+            if abs(solving - r['solving']) > 1e-9 or abs(upsolving - r['upsolving']) > 1e-9:
                 r['solved'] = {
                     'solving': solving,
                     'upsolving': upsolving,
@@ -169,4 +180,9 @@ class Statistic(BaseModule):
 
 
 if __name__ == '__main__':
-    pprint(Statistic(url='http://codeforces.com/contests/1121', key='1121').get_standings()['problems'])
+    pprint(Statistic(url='https://codeforces.com/contest/1164/', key='1164').get_result('abisheka'))
+    pprint(Statistic(url='https://codeforces.com/contest/1202', key='1202').get_result('kmjp'))
+    pprint(Statistic(url='https://codeforces.com/contest/1198', key='1198').get_result('yosupo'))
+    pprint(Statistic(url='https://codeforces.com/contest/1198', key='1198').get_result('tourist'))
+    pprint(Statistic(url='https://codeforces.com/contest/1160/', key='1160').get_result('Rafbill'))
+    pprint(Statistic(url='https://codeforces.com/contest/1/', key='1').get_result('spartac'))

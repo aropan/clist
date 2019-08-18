@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load el_pagination_tags %}
 
-{% block title %}Standings{% endblock %}
+{% block title %}Standings {{ contest.title }}{% endblock %}
 
 {% block end-head %}
 <script src="{% static_ts 'el-pagination/js/el-pagination.js' %}"></script>
@@ -9,6 +9,8 @@
 {% endblock %}
 
 {% block content %}
+
+<h3 class="text-center"><a href="{{ contest.standings_url }}">{{ contest.title }}</a></h3>
 
 <div class="col-md-12 col-md-offset-0 col-lg-10 col-lg-offset-1">
   <form method="get" action="">
@@ -25,16 +27,21 @@
   <br/>
 
   <script>$.endlessPaginate({paginateOnScroll: true});</script>
-  <div class="css-table">
-    <div class="css-table-header">
-      <div>Rank</div>
-      <div style="width: 100%;">Handle</div>
-      <div>Score</div>
-    </div>
-    <div class="css-table-body">
+  <table class="table">
+    <tr>
+      <th>Rank</th>
+      <th style="width: 100%;">Handle</th>
+      <th>Score</th>
+      {% for problem in contest.info.problems|get_division_problems:params %}
+      <th title="{{ problem|get_problem_name }}">
+        {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
+        {{ problem|get_problem_short }}
+        {% if problem.url %}</a>{% endif %}
+      </th>
+      {% endfor %}
+    </tr>
     {% include page_template %}
-    </div>
-  </div>
+  </table>
 </div>
 
 {% endblock %}

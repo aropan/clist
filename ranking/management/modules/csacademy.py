@@ -30,14 +30,20 @@ class Statistic(BaseModule):
         tasks = {}
         problems_info = OrderedDict()
         for task in state['contesttask']:
-            problems_info[task['evalTaskId']] = {'short': task['name'], 'name': task['longName']}
-            tasks[task['evalTaskId']] = task
+            if task.get('contestId') != self.cid:
+                continue
+            tasks[task['id']] = task
+
+            d = {'short': task['name'], 'name': task['longName']}
+            if 'pointsWorth' in task:
+                d['full_score'] = task['pointsWorth']
+            problems_info[task['id']] = d
 
         url = self.SCOREBOARD_STATE_URL_.format(self)
         state = json.loads(req.get(url))['state']
-        users = {}
+        handles = {}
         for user in state['publicuser']:
-            users[user['id']] = user
+            handles[user['id']] = user
 
         result = {}
         n_total = 0
@@ -45,9 +51,9 @@ class Statistic(BaseModule):
         for row in rows:
             if row['contestId'] != self.cid or 'rank' not in row:
                 continue
-            u = users[row['userId']]
+            u = handles[row['userId']]
             handle = u['username']
-            if not handle:
+            if not handle or users is not None and handle not in users:
                 continue
             n_total += 1
             r = result.setdefault(handle, {})
@@ -58,11 +64,21 @@ class Statistic(BaseModule):
             problems = r.setdefault('problems', {})
             solving = 0
             for k, v in row['scores'].items():
-                task = tasks[int(k)]
+                k = int(k)
+                if k not in tasks:
+                    continue
+                task = tasks[k]
                 p = problems.setdefault(task['name'], {})
                 p['result'] = v['score']
                 if v['score'] > 0:
                     solving += 1
+
+                n = v.get('numSubmissions')
+                if task.get('scoreTypeName', '').lower() == 'acm-style' and n:
+                    if v['score'] > 0:
+                        p['result'] = f'+{"" if n == 1 else n - 1}'
+                    else:
+                        p['result'] = f'-{n}'
             r['solved'] = {'solving': solving}
 
         n_skip = len(rows) - n_total
@@ -77,5 +93,6 @@ class Statistic(BaseModule):
 
 
 if __name__ == '__main__':
-    statistic = Statistic(url='https://csacademy.com/contest/ejoi-2017-day-2/', key='26569')
-    pprint(statistic.get_standings()['problems'])
+    statistic = Statistic(url='https://csacademy.com/contest/round-67/', key='33089')
+    pprint(statistic.get_result('Aeon'))
+    # pprint(statistic.get_standings()['problems'])

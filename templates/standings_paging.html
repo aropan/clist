@@ -2,10 +2,22 @@
 
 {% paginate 50 statistics %}
 {% for statistic in statistics %}
-<div class="css-table-row">
-    <div>{{ statistic.place }}</div>
-    <div>{{ statistic.account.key }}</div>
-    <div>{{ statistic.solving|floatformat }}</div>
-</div>
+<tr>
+  <td>{{ statistic.place }}</td>
+  <td>{{ statistic.account.key }}</td>
+  <td>{{ statistic.solving|floatformat }}</td>
+  {% for problem in contest.info.problems|get_division_problems:params %}
+    {% with key=problem|get_problem_key  %}
+    {% with stat=statistic.addition.problems|get_item:key %}
+    <td>
+      {% if stat and stat.result is not None %}
+        {{ stat.result|floatformat }}
+      {% else %}
+      {% endif %}
+    </td>
+    {% endwith %}
+    {% endwith %}
+  {% endfor %}
+</tr>
 {% endfor %}
-{% show_more %}
+{% show_more_table %}

@@ -4,21 +4,10 @@
 
 {% block end-head %}
 <script src="{% static_ts 'el-pagination/js/el-pagination.js' %}"></script>
+<link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-
-<style>
-.contest {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-input[type="search"]::-webkit-search-cancel-button {
-  -webkit-appearance: searchfield-cancel-button;
-}
-</style>
 
 <div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
   <form method="get" action="">

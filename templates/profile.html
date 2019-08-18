@@ -49,21 +49,21 @@
                     </span>
                 {% endwith %}
                 {% endif %}
-                {% for k, v in s.addition.problems.items|sort %}
-                <span
-                    {% if v %}data-toggle="tooltip" data-placement="top" title="
-{% if v.name %}Name: {{ v.name }}<br/>{% endif %}
-{% if v.result != None %}Result: {{ v.result }}{% endif %}
-{% if v.upsolving.result %}{% if v.result != None %}</br>{% endif %}Upsolving: {{ v.upsolving.result }}{% endif %}
-{% if v.time %}<br/>Time: {{ v.time }}{% endif %}
-{% if v.penalty %}<br/>Penalty: {{ v.penalty }}{% endif %}
-{% if v.status %}<br/>Status: {{ v.status }}{% endif %}
-" data-html="true"{% endif %}
-  class="badge progress-bar-{% if v %}{% if v.result|slice:":1" == "+" or v.result|asfloat:0 > 0 %}{% if v.partial %}info{% else %}success{% endif %}{% else %}{% if v.upsolving %}info{% else %}danger{% endif %}{% endif %}{% else %}info{% endif %}"
-                >
-                {{ k }}
-                </span>
-                {% endfor %}
+                {% if not s.addition.problems %}
+                    <span class="badge progress-bar-warning">missing problems information</span>
+                {% elif s.contest.info.problems %}
+                  {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
+                    {% with key=problem|get_problem_key  %}
+                    {% with stat=s.addition.problems|get_item:key %}
+                      {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat %}
+                    {% endwith %}
+                    {% endwith %}
+                  {% endfor %}
+                {% else %}
+                  {% for k, v in s.addition.problems.items|sort %}
+                  {% include 'problem_stat.html' with short=k name=k stat=v %}
+                  {% endfor %}
+                {% endif %}
             </div>
         </div>
     {% endfor %}

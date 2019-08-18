@@ -106,7 +106,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
             ],
             'builtins': [
-                'pyclist.templatetags.staticfiles'
+                'pyclist.templatetags.staticfiles',
+                'clist.templatetags.extras',
             ]
         },
     },

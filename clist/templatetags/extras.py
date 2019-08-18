@@ -169,7 +169,7 @@ def listsort(value):
     listsort.is_safe = True
 
 
-@register.filter()
+@register.filter
 def asfloat(value, default):
     try:
         return float(value)
@@ -180,3 +180,32 @@ def asfloat(value, default):
 @register.filter
 def slug(value):
     return slugify(unidecode(value))
+
+
+@register.filter
+def get_division_problems(problem, info):
+    division = info.get('division')
+    if division and 'division' in problem:
+        return problem['division'][division]
+    return problem
+
+
+@register.filter
+def get_problem_key(problem):
+    for k in ['short', 'code', 'name']:
+        if k in problem:
+            return problem[k]
+
+
+@register.filter
+def get_problem_name(problem):
+    for k in ['name', 'short', 'code']:
+        if k in problem:
+            return problem[k]
+
+
+@register.filter
+def get_problem_short(problem):
+    for k in ['short', 'name', 'code']:
+        if k in problem:
+            return problem[k]

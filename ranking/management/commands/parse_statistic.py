@@ -174,7 +174,10 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         if args.resources:
-            modules = Module.objects.filter(resource__host__in=args.resources)
+            if len(args.resources) == 1:
+                modules = Module.objects.filter(resource__host__iregex=args.resources[0])
+            else:
+                modules = Module.objects.filter(resource__host__in=args.resources)
         else:
             modules = Module.objects.filter(min_delay_after_end__gt=timedelta())
 

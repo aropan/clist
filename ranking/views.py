@@ -46,6 +46,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     context = {
         'contest': contest,
         'statistics': statistics,
+        'params': {},
     }
 
     if extra_context is not None:
