@@ -27,16 +27,21 @@
   <br/>
 
   <script>$.endlessPaginate({paginateOnScroll: true});</script>
-  <table class="table">
-    <tr>
+  <table class="standings table table-hover table-striped table-condensed">
+    <tr class="header-row">
       <th>Rank</th>
-      <th style="width: 100%;">Handle</th>
+      <th class="handle-cell">Handle</th>
       <th>Score</th>
       {% for problem in contest.info.problems|get_division_problems:params %}
-      <th title="{{ problem|get_problem_name }}">
+      <th title="{{ problem|get_problem_name }}" class="problem-cell">
+        <div>
         {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
         {{ problem|get_problem_short }}
         {% if problem.url %}</a>{% endif %}
+        </div>
+        {% if problem.full_score %}
+          <small>{{ problem.full_score|floatformat }}</small>
+        {% endif %}
       </th>
       {% endfor %}
     </tr>

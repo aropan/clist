@@ -4,14 +4,21 @@
 {% for statistic in statistics %}
 <tr>
   <td>{{ statistic.place }}</td>
-  <td>{{ statistic.account.key }}</td>
+  <td class="handle-cell">{{ statistic.account.key }}</td>
   <td>{{ statistic.solving|floatformat }}</td>
   {% for problem in contest.info.problems|get_division_problems:params %}
     {% with key=problem|get_problem_key  %}
     {% with stat=statistic.addition.problems|get_item:key %}
-    <td>
+    <td class="problem-cell">
       {% if stat and stat.result is not None %}
-        {{ stat.result|floatformat }}
+        <div class="{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}acc{% else %}rej{% endif %}">
+          {% if stat.result|slice:":1" == "+" %}
+            {{ stat.result }}
+          {% else %}
+            {{ stat.result|floatformat }}
+          {% endif %}
+        </div>
+        {% if stat.time %}<small class="text-muted">{{ stat.time }}</small>{% endif %}
       {% else %}
       {% endif %}
     </td>
