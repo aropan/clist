@@ -178,7 +178,7 @@ def main(request):
         return HttpResponse("accepted")
 
     if request.user.is_authenticated:
-        ignore_filters = request.user.coder.filter_set.filter(categories__contains='calendar').order_by('created')
+        ignore_filters = request.user.coder.filter_set.filter(categories__contains=['calendar']).order_by('created')
         ignore_filters = list(ignore_filters.values('id', 'name'))
     else:
         ignore_filters = []

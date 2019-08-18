@@ -3,7 +3,7 @@ import re
 from pyclist.models import BaseModel
 from django.db import models
 from true_coders.models import Coder
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField
 
 
 class Service(BaseModel):

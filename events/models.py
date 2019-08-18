@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField
 
 from collections import Counter
 
@@ -28,9 +28,9 @@ class Event(BaseModel):
     registration_deadline = models.DateTimeField()
     website_url = models.URLField(null=True, blank=True)
     information = models.CharField(max_length=4096)
-    email_conf = JSONField(default={}, blank=True)
-    logins_paths = JSONField(default={}, blank=True)
-    standings_urls = JSONField(default={}, blank=True)
+    email_conf = JSONField(default=dict, blank=True)
+    logins_paths = JSONField(default=dict, blank=True)
+    standings_urls = JSONField(default=dict, blank=True)
 
     def email_backend(self):
         return EmailBackend(**self.email_conf['connection'])

@@ -43,10 +43,16 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'place_as_int': "CAST(SPLIT_PART(place, '-', 1) AS INTEGER)"
     }).order_by('place_as_int', '-solving', '-upsolving')
 
+    params = {}
+    if 'division' in contest.info.get('problems'):
+        division = sorted(contest.info['problems']['division'].keys())[0]
+        params['division'] = division
+        statistics = statistics.filter(addition__division=division)
+
     context = {
         'contest': contest,
         'statistics': statistics,
-        'params': {},
+        'params': params,
     }
 
     if extra_context is not None:

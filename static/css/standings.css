@@ -30,3 +30,7 @@ table.standings .handle-cell {
   position: sticky;
   top: 0;
 }
+
+.standings a {
+  text-decoration: none;
+}

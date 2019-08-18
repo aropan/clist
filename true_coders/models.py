@@ -2,11 +2,10 @@ from pyclist.models import BaseModel, BaseManager
 from django.db import models
 from django.db.models import Q
 from django.contrib.auth.models import User
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField, ArrayField
 from datetime import timedelta
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
-from json import dumps
 
 
 class Coder(BaseModel):
@@ -16,7 +15,7 @@ class Coder(BaseModel):
     middle_name_native = models.CharField(max_length=255, blank=True)
     organization = models.ForeignKey('Organization', null=True, blank=True, on_delete=models.SET_NULL)
     timezone = models.CharField(max_length=32, default="UTC")
-    settings = JSONField(default={}, blank=True)
+    settings = JSONField(default=dict, blank=True)
     country = CountryField(null=True, blank=True)
     phone_number = PhoneNumberField(blank=True)
 
@@ -32,7 +31,7 @@ class Coder(BaseModel):
         if not isinstance(categories, (list, tuple)):
             categories = (categories, )
         for c in categories:
-            filter_categories |= Q(categories__contains=dumps(c))
+            filter_categories |= Q(categories__contains=[c])
         if ignores:
             filter_categories &= ~Q(id__in=ignores)
 
@@ -98,6 +97,10 @@ class Party(BaseModel):
     objects = PartyManager()
 
 
+def _get_default_categories():
+    return ['list', 'calendar', 'email', 'telegram', 'api']
+
+
 class Filter(BaseModel):
     CATEGORIES = ['list', 'calendar', 'email', 'telegram', 'api']
 
@@ -108,8 +111,8 @@ class Filter(BaseModel):
     regex = models.CharField(max_length=1000, null=True, blank=True)
     inverse_regex = models.BooleanField(default=False)
     to_show = models.BooleanField(default=True)
-    resources = JSONField(default=[], blank=True)
-    categories = JSONField(default=CATEGORIES, blank=True)
+    resources = JSONField(default=list, blank=True)
+    categories = ArrayField(models.CharField(max_length=20), blank=True, default=_get_default_categories)
 
     def __str__(self):
         result = '' if not self.name else '{0.name}: '.format(self)

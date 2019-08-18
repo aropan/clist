@@ -2,7 +2,7 @@ from pyclist.models import BaseModel, BaseManager
 from django.db import models
 from datetime import timedelta
 from django.utils import timezone
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField
 
 
 class Resource(BaseModel):
@@ -38,7 +38,7 @@ class Contest(models.Model):
     edit = models.CharField(max_length=100, null=True, blank=True)
     invisible = models.BooleanField(default=False)
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
-    info = JSONField(default={}, blank=True)
+    info = JSONField(default=dict, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -113,7 +113,7 @@ class Banner(BaseModel):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     template = models.CharField(max_length=255)
-    data = JSONField(default={}, blank=True)
+    data = JSONField(default=dict, blank=True)
 
     def __str__(self):
         return 'Banner %s' % self.name

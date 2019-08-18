@@ -2,7 +2,7 @@ from pyclist.models import BaseModel
 from django.db import models
 from true_coders.models import Coder, Party
 from clist.models import Contest, Resource
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField
 
 
 class Account(BaseModel):
@@ -37,7 +37,7 @@ class Statistics(BaseModel):
     place = models.CharField(max_length=17, default=None, null=True, blank=True)
     solving = models.FloatField(default=0, blank=True)
     upsolving = models.FloatField(default=0, blank=True)
-    addition = JSONField(default={}, blank=True)
+    addition = JSONField(default=dict, blank=True)
     url = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
 

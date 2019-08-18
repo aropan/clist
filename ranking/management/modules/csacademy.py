@@ -4,7 +4,7 @@ import json
 from pprint import pprint
 from collections import OrderedDict
 
-from common import BaseModule, requester, LOG
+from common import BaseModule, requester
 
 
 class Statistic(BaseModule):
@@ -80,9 +80,6 @@ class Statistic(BaseModule):
                     else:
                         p['result'] = f'-{n}'
             r['solved'] = {'solving': solving}
-
-        n_skip = len(rows) - n_total
-        LOG.info('skip = %d, total = %d (%.2f)' % (n_skip, n_total, n_total * 100. / len(rows)))
 
         standings = {
             'result': result,

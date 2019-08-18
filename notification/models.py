@@ -3,7 +3,7 @@ from django.db import models
 from true_coders.models import Coder
 from datetime import timedelta
 from django.core.validators import MinValueValidator
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField
 
 
 class Notification(BaseModel):
@@ -53,7 +53,7 @@ class Task(BaseModel):
     notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
     subject = models.CharField(max_length=4096)
     message = models.TextField(null=False)
-    addition = JSONField(default={}, blank=True)
+    addition = JSONField(default=dict, blank=True)
     is_sent = models.BooleanField(default=False)
 
     class UnsentManager(models.Manager):
