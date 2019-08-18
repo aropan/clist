@@ -38,17 +38,21 @@
   </div>
   <br/>
 
+  {% if statistics %}
   <script>$.endlessPaginate({paginateOnScroll: true});</script>
   <table class="standings table table-hover table-striped table-condensed">
     <tr class="header-row">
       <th>Rank</th>
       <th class="handle-cell">Handle</th>
       <th>Score</th>
+      {% for _, field in fields %}
+      <th>{{ field|title }}</th>
+      {% endfor %}
       {% for problem in contest.info.problems|get_division_problems:params %}
       <th title="{{ problem|get_problem_name }}" class="problem-cell">
         <div>
         {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
-        {{ problem|get_problem_short }}
+        {{ problem|get_problem_short|truncatechars:10 }}
         {% if problem.url %}</a>{% endif %}
         </div>
         {% if problem.full_score %}
@@ -59,7 +63,9 @@
     </tr>
     {% include page_template %}
   </table>
+  {% else %}
+  <div class="alert alert-info">Empty results.</div>
+  {% endif %}
 </div>
 
 {% endblock %}
-

@@ -3,7 +3,7 @@
 {% paginate 50 statistics %}
 {% for statistic in statistics %}
 <tr>
-  <td>{{ statistic.place }}</td>
+  <td>{% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}</td>
   <td class="handle-cell">
   {% if statistic.addition.name %}
     <div title="{{ statistic.account.key }}">{{ statistic.addition.name }}</div>
@@ -11,28 +11,55 @@
     {{ statistic.account.key }}
   {% endif %}
   </td>
-  <td>{{ statistic.solving|floatformat:'-3' }}</td>
+  <td>
+    <div>{{ statistic.solving|floatformat:'-2' }}</div>
+    <small>
+    {% if 'hack' in statistic.addition %}
+      {% if statistic.addition.hack.successful %}<div class="inline acc">+{{ statistic.addition.hack.successful }}</div>{% endif %}
+      {% if statistic.addition.hack.unsuccessful %}<div class="inline rej">-{{ statistic.addition.hack.unsuccessful }}</div>{% endif %}
+    {% endif %}
+    </small>
+  </td>
+  {% for field, _ in fields %}
+  <td>{% if field in statistic.addition %}{{ statistic.addition|get_item:field }}{% endif %}</td>
+  {% endfor %}
   {% for problem in contest.info.problems|get_division_problems:params %}
     {% with key=problem|get_problem_key  %}
     {% with stat=statistic.addition.problems|get_item:key %}
     <td class="problem-cell">
-      {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
       {% if stat and stat.result is not None %}
-        <div
-          class="{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}acc{% else %}rej{% endif %}"
-          {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}title="{{ stat.status }}"{% endif %}
-        >
-          {% if stat.result|slice:":1" == "+" %}
-            {{ stat.result }}
-          {% else %}
-            {{ stat.result|floatformat:'-3' }}
+        <div>
+          <div
+            class="inline {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}acc{% else %}rej{% endif %}"
+            {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}title="{{ stat.status }}"{% endif %}
+          >
+            {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
+              {% if stat.binary is not None %}
+              <i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i>
+              {% elif stat.result|slice:":1" == "+" %}
+                {{ stat.result }}
+              {% else %}
+                {{ stat.result|floatformat:'-2' }}
+              {% endif %}
+            {% if stat.url %}</a>{% endif %}
+          </div>
+          {% if stat.extra_score is not None %}
+          <div class="inline">{% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}</div>
           {% endif %}
         </div>
         {% if stat.time %}<small class="text-muted">{{ stat.time }}</small>{% endif %}
       {% else %}
+        {% if 'upsolving' in stat %}
+        <small class="text-muted">
+          {% if stat.upsolving.result|slice:":1" == "+" %}
+            {{ stat.upsolving.result }}
+          {% else %}
+            {{ stat.upsolving.result|floatformat:'-2' }}
+          {% endif %}
+        </small>
+        {% endif %}
         {% if stat.status %}<small class="text-muted">{{ stat.status }}</small>{% endif %}
       {% endif %}
-      {% if stat.url %}</a>{% endif %}
     </td>
     {% endwith %}
     {% endwith %}

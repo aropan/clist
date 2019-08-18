@@ -48,6 +48,7 @@ class Statistic(BaseModule):
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():
                     row['member'] = v.value + ' ' + season
+                    row['name'] = v.value
                 else:
                     row[k] = v.value
             result[row['member']] = row

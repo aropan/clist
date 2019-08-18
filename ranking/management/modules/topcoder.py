@@ -229,6 +229,7 @@ class Statistic(BaseModule):
 
                     match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE)
                     handle = html.unescape(match.group('handle').strip())
+
                     matches = re.finditer(r'''
                         <td[^>]*>[^<]*<a[^>]*href="(?P<url>[^"]*c=problem_solution[^"]*)"[^>]*>(?P<short>[^<]*)</a>[^<]*</td>[^<]*
                         <td[^>]*>[^<]*</td>[^<]*
@@ -250,16 +251,42 @@ class Statistic(BaseModule):
                         if re.match('^[0.:]+$', d['time']):
                             d.pop('time')
                         problems[short] = d
-                    return url, handle, problems
+
+                    challenges = []
+                    matches = re.finditer(r'''
+                        <td[^>]*>[^<]*<a[^>]*href="[^"]*module=MemberProfile[^"]*"[^>]*>(?P<target>[^<]*)</a>[^<]*</td>[^<]*
+                        <td[^>]*>(?P<problem>[^<]*)</td>[^<]*
+                        <td[^>]*>(?P<status>[^<]*)</td>[^<]*
+                        <td[^>]*>(?P<time>[^<]*)</td>[^<]*
+                        <td[^>]*>(?P<result>[^<]*)</td>[^<]*
+                        <td[^>]*>[^<]*<a[^>]*href="(?P<url>[^"]*)"[^>]*>\s*details\s*</a>[^<]*</td>[^<]*
+                    ''', page, re.VERBOSE | re.IGNORECASE)
+                    for match in matches:
+                        d = match.groupdict()
+                        d = {k: v.strip() for k, v in d.items()}
+                        d['result'] = float(d['result'].replace(',', '.'))
+                        d['url'] = urljoin(url, d['url'])
+
+                        p = problems.setdefault(d['problem'], {})
+                        p.setdefault('extra_score', 0)
+                        p['extra_score'] += d['result']
+                        challenges.append(d)
+
+                    return url, handle, problems, challenges
 
                 with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(url_infos)) as pbar:
-                    for url, handle, problems in executor.map(fetch_info, url_infos):
+                    for url, handle, problems, challenges in executor.map(fetch_info, url_infos):
                         pbar.set_description(f'div{division} {url}')
                         pbar.update()
                         if handle is not None:
                             if handle not in result:
                                 LOG.error(f'{handle} not in result, url = {url}')
                             result[handle]['problems'] = problems
+                            result[handle]['challenges'] = challenges
+                            if challenges:
+                                h = result[handle].setdefault('hack', {'successful': 0, 'unsuccessful': 0})
+                                for c in challenges:
+                                    h['successful' if c['status'].lower() == 'yes' else 'unsuccessful'] += 1
 
         standings = {
             'result': result,
@@ -279,12 +306,12 @@ if __name__ == "__main__":
     # pprint(statictic.get_standings()['problems'])
     # pprint(statictic.get_standings())
     statictic = Statistic(
-        name='TCO19 Algorithm Round 1B',
-        standings_url='https://community.topcoder.com/stat?module=MatchList&nr=200&sr=1&c=round_overview&er=5&rd=17420',
-        key='TCO19 Algorithm Round 1B. 01.05.2019',
+        name='Single Round Match 763',
+        standings_url='https://community.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17608',
+        key='Single Round Match 763. 01.05.2019',
         start_time=datetime.strptime('01.05.2019', '%d.%m.%Y'),
     )
-    pprint(statictic.get_result('VICHITR'))
+    pprint(statictic.get_result('anrieff'))
     # statictic = Statistic(
     #     name='Mathmania - Codefest 18',
     #     standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17259',

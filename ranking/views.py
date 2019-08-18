@@ -39,9 +39,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     statistics = Statistics.objects.filter(contest=contest)
 
-    statistics = statistics.extra(select={
-        'place_as_int': "CAST(SPLIT_PART(place, '-', 1) AS INTEGER)"
-    }).order_by('place_as_int', '-solving', '-upsolving')
+    statistics = statistics \
+        .extra(select={'place_as_int': "CAST(SPLIT_PART(place, '-', 1) AS INTEGER)"}) \
+        .select_related('account') \
+        .order_by('place_as_int', '-solving', '-upsolving')
 
     params = {}
     if 'division' in contest.info.get('problems', {}):
@@ -56,10 +57,19 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     if search:
         statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
 
+    fields = []
+    for k, v in (
+        ('penalty', 'penalty'),
+        ('total_time', 'time'),
+    ):
+        if k in contest.info.get('fields', []):
+            fields.append((k, v))
+
     context = {
         'contest': contest,
         'statistics': statistics,
         'params': params,
+        'fields': fields,
     }
 
     if extra_context is not None:

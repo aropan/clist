@@ -120,7 +120,9 @@ class Statistic(BaseModule):
                     if n is not None and contest_type == 'ICPC' and points + n > 0:
                         points = f'+{"" if n == 0 else n}' if points > 0 else f'-{n}'
 
-                    if s['type'] == 'FINAL' and points:
+                    if s['type'] == 'FINAL' and (points or n):
+                        if not points:
+                            points = f'-{n}'
                         p = {'result': points}
                         if 'bestSubmissionTimeSeconds' in s:
                             time = s['bestSubmissionTimeSeconds'] / 60
@@ -133,9 +135,9 @@ class Statistic(BaseModule):
 
                 if row['rank'] and not upsolve:
                     r['place'] = row['rank']
-                    r['penalty'] = row['penalty']
                     r['solving'] = row['points']
                     if contest_type == 'ICPC':
+                        r['penalty'] = row['penalty']
                         r['solving'] = int(round(r['solving']))
 
                 if hack or unhack:

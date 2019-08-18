@@ -4,23 +4,20 @@
 import sys
 import os
 import json
-
 from random import shuffle
 from tqdm import tqdm
-
 from attrdict import AttrDict
 from traceback import format_exc
+from datetime import timedelta
+from logging import getLogger
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.db import transaction
+from django.db.models import Q, F, Count
 
 from ranking.models import Module, Statistics, Account
 from clist.models import Contest, TimingContest
-
-from datetime import timedelta
-from logging import getLogger
-from django.db import transaction
-from django.db.models import Q, F, Count
 
 
 class Command(BaseCommand):
@@ -44,9 +41,14 @@ class Command(BaseCommand):
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
 
-    def get_plugin_(self, module):
+    @staticmethod
+    def _get_plugin(module):
         sys.path.append(os.path.dirname(module.path))
         return __import__(module.path.replace('/', '.'), fromlist=['Statistic'])
+
+    @staticmethod
+    def _canonize(data):
+        return json.dumps(data, sort_keys=True)
 
     def parse_statistic(self,
                         contests,
@@ -101,7 +103,7 @@ class Command(BaseCommand):
                 continue
             progress_bar.set_description(f'contest = {contest.title}')
             progress_bar.refresh()
-            plugin = self.get_plugin_(resource.module)
+            plugin = self._get_plugin(resource.module)
             total += 1
             try:
                 statistic = plugin.Statistic(
@@ -117,15 +119,15 @@ class Command(BaseCommand):
                     if 'url' in standings and standings['url'] != contest.standings_url:
                         contest.standings_url = standings['url']
                         contest.save()
-                    if standings.get('problems') and (
-                        json.dumps(standings['problems'], sort_keys=True) !=
-                        json.dumps(contest.info.get('problems'), sort_keys=True)
-                    ):
+
+                    if standings.get('problems') \
+                       and self._canonize(standings['problems']) != self._canonize(contest.info.get('problems')):
                         contest.info['problems'] = standings['problems']
                         contest.save()
 
                     if not no_update_results:
                         result = standings.get('result', {})
+                        fields = set()
                         for r in tqdm(list(result.values()), desc='update results'):
                             account, _ = Account.objects.get_or_create(
                                 resource=resource,
@@ -144,6 +146,15 @@ class Command(BaseCommand):
                                 contest=contest,
                                 defaults=defaults,
                             )
+
+                            for k in r:
+                                fields.add(k)
+
+                        fields = list(fields)
+                        fields.sort()
+                        if self._canonize(fields) != self._canonize(contest.info.get('fields')):
+                            contest.info['fields'] = fields
+                            contest.save()
 
                     action = standings.get('action')
                     if action is not None:

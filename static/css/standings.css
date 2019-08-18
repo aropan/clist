@@ -34,3 +34,11 @@ table.standings .handle-cell {
 .standings a {
   text-decoration: none;
 }
+
+.standings td a {
+  color: inherit;
+}
+
+.inline {
+  display: inline;
+}

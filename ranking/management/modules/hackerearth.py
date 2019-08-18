@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from common import REQ, LOG, BaseModule
+from excepts import ExceptionParseStandings
 import conf
 
 import tqdm
@@ -32,14 +33,23 @@ class Statistic(BaseModule):
                 'challenge_slug': self.key,
                 'page_index': page_index + 1,
             }
-            for attempt in range(3):
+            attemps = 3
+            while attemps:
                 try:
-                    content = REQ.get(api_ranking_url, post=json.dumps(payload).encode('utf-8'), time_out=30)
+                    content = REQ.get(
+                        api_ranking_url,
+                        post=json.dumps(payload).encode('utf-8'),
+                        time_out=30,
+                    )
                     return json.loads(content)
                 except Exception as e:
                     if quit:
                         return
                     LOG.error(f'page index = {page_index} with error = {e}')
+
+                    attemps -= 1
+                    if attemps == 0:
+                        raise ExceptionParseStandings(e)
 
         data = fetch_page(0)
         max_page_index = data['max_page_index']
@@ -68,7 +78,7 @@ class Statistic(BaseModule):
                 if n_row == n_skip:
                     quit = True
                     break
-        LOG.info(f'{self.name} = {len(result)}')
+
         standings = {
             'result': result,
             'url': self.url + 'leaderboard/',

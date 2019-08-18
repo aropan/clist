@@ -167,6 +167,12 @@ if __name__ == "__main__":
         standings_url=None,
     )
     pprint(statictic.get_result('luma'))
+    statictic = Statistic(
+        url='https://www.codechef.com/COOK109?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK109',
+        key='COOK109',
+        standings_url=None,
+    )
+    pprint(statictic.get_result('uwi'))
     # statictic = Statistic(
     #     name='February Cook-Off 2015',
     #     url='https://www.codechef.com/COOK55?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK55',

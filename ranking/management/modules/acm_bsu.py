@@ -30,6 +30,7 @@ class Statistic(BaseModule):
                 classes = v.attrs['class'].split()
                 if 'ir-column-contestant' in classes:
                     row['member'] = v.value + ' ' + season
+                    row['name'] = v.value
                 elif 'ir-column-place' in classes:
                     row['place'] = v.value
                 elif 'ir-column-penalty' in classes:

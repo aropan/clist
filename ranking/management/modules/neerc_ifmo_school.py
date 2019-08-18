@@ -53,7 +53,8 @@ class Statistic(BaseModule):
                     c = mapping_key.get(c, c)
                     row[c] = v.value
             if 'penalty' not in row:
-                row['member'] = re.sub(r'\s*\([^\)]*\)\s*$', '', row['member']) + ' ' + season
+                row['name'] = re.sub(r'\s*\([^\)]*\)\s*$', '', row['member'])
+                row['member'] = row['name'] + ' ' + season
                 solved = [p for p in list(problems.values()) if p['result'] == '100']
                 row['solved'] = {'solving': len(solved)}
             result[row['member']] = row
@@ -72,4 +73,4 @@ if __name__ == "__main__":
         key='20190324',
         start_time=datetime.strptime('2019-03-24', '%Y-%m-%d'),
     )
-    pprint(statictic.get_standings()['problems'])
+    pprint(statictic.get_standings())
