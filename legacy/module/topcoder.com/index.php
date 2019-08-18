@@ -164,6 +164,9 @@
             $page = curlexec($url);
             preg_match_all('#(?:<td[^>]*>(?:[^<]*<a[^>]*href="(?P<url>[^"]*/stat[^"]*rd=(?P<rd>[0-9]+)[^"]*)"[^>]*>(?P<title>[^<]*)</a>[^<]*|(?P<date>[0-9]+\.[0-9]+\.[0-9]+))</td>[^<]*){2}#', $page, $matches, PREG_SET_ORDER);
             foreach ($matches as $match) {
+                if (in_array('Fun', explode(" ", $match['title']))) {
+                    continue;
+                }
                 $round_overview[$match['rd']] = array(
                     'url' => url_merge($base_url, htmlspecialchars_decode($match['url'])),
                     'title' => $match['title'],
@@ -204,7 +207,11 @@
                         if ($ro['date'] == $date) {
                             $w1 = explode(" ", $c["title"]);
                             $w2 = explode(" ", $ro["title"]);
-                            $iou = count(array_intersect($w1, $w2)) / count(array_unique(array_merge($w1, $w2)));;
+                            $intersect = count(array_intersect($w1, $w2));
+                            $iou = $intersect / count(array_unique(array_merge($w1, $w2)));
+                            if ($intersect == count($w2)) {
+                                $iou = 0.9 + $iou * 0.1;
+                            }
                             if ($iou > $opt) {
                                 $opt = $iou;
                                 $t = $k;
