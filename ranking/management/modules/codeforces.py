@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from common import REQ, LOG, BaseModule
+from common import REQ, BaseModule
 from excepts import ExceptionParseStandings
 import conf
 
@@ -86,9 +86,6 @@ class Statistic(BaseModule):
 
         if data['status'] != 'OK':
             raise ExceptionParseStandings(data['status'])
-
-        LOG.info('contest = %s' % data['result']['contest']['name'])
-        LOG.info('rows = %d' % len(data['result']['rows']))
 
         contest_type = data['result']['contest']['type'].upper()
 
