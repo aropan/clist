@@ -33,7 +33,7 @@
             <div class="rank col-xs-1" data-toggle="tooltip" data-placement="top" data-html="true" title="
                 Handle: {{ s.account.key }}<br/>
                 {% for k, v in s.addition.items|sort %}
-                    {% if k not in "problems,hack,solved" %}
+                    {% if k not in "problems,hack,solved,challenges" %}
                         {{ k|title }}: {{ v }}<br/>
                     {% endif %}
                 {% endfor %}
