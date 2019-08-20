@@ -1,55 +1,52 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import REQ, LOG, BaseModule
-from excepts import ExceptionParseStandings
-import conf
-
-import tqdm
-
+import re
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import json
 import time
+import urllib.parse
+
+import tqdm
+
+from common import REQ, LOG, BaseModule, parsed_table
+from excepts import ExceptionParseStandings
+import conf
 
 
 class Statistic(BaseModule):
-    API_RANKING_URL_FORMAT_ = 'https://api.hackerearth.com/challenges/v1/leaderboard/'
+    RANKING_URL_FORMAT_ = 'https://www.hackerearth.com/AJAX/feed/newsfeed/icpc-leaderboard/event/{event_id}/{page}/'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
     def get_standings(self, users=None):
-        api_ranking_url = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
+        standings_url = urllib.parse.urljoin(self.url, 'leaderboard/')
+
+        page = REQ.get(standings_url)
+        match = re.search('<div[^>]*class="event-id hidden"[^>]*>(?P<id>[0-9]*)</div>', page)
+        if not match:
+            return ExceptionParseStandings('Not found event id')
+
+        event_id = match.group('id')
 
         quit = False
 
         def fetch_page(page_index):
-            if quit:
-                return
-            time.sleep(3)
-            payload = {
-                'client_id': conf.HACKEREARTH_CLIENT_ID,
-                'client_secret': conf.HACKEREARTH_CLIENT_SECRET,
-                'challenge_slug': self.key,
-                'page_index': page_index + 1,
-            }
-            attemps = 3
-            while attemps:
-                try:
-                    content = REQ.get(
-                        api_ranking_url,
-                        post=json.dumps(payload).encode('utf-8'),
-                        time_out=30,
-                    )
-                    return json.loads(content)
-                except Exception as e:
-                    if quit:
-                        return
-                    LOG.error(f'page index = {page_index} with error = {e}')
+            url = self.RANKING_URL_FORMAT_.format(event_id=event_id, page=page_index)
+            page = REQ.get(url)
+            page = re.sub('<!--.*?-->', '', page)
+            with open('page.heml', 'w') as fo:
+                fo.write(page)
+            table = parsed_table.ParsedTable(page)
+            for r in table:
+                for k, v in r.items():
+                    print(k, v)
+                break
 
-                    attemps -= 1
-                    if attemps == 0:
-                        raise ExceptionParseStandings(e)
+        fetch_page(1)
+
+        exit(0)
 
         data = fetch_page(0)
         max_page_index = data['max_page_index']
@@ -91,7 +88,7 @@ if __name__ == "__main__":
 
     statictic = Statistic(
         name='HourStorm #11',
-        url='https://www.hackerearth.com/challenges/competitive/deep-learning-challenge-1/',
+        url='https://www.hackerearth.com/challenges/competitive/hourstorm-14/',
         key='deep-learning-challenge-1',
     )
     pprint(statictic.get_standings())
