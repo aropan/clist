@@ -58,7 +58,15 @@ class ParsedTable(object):
             row = ParsedTableRow(nxt)
             if len(row.columns) == len(self.header.columns):
                 break
-        return OrderedDict((
-            (h.value, ParsedTableValue(row, r, h))
-            for h, r in zip(self.header.columns, row.columns)
-        ))
+
+        ret = OrderedDict()
+        for h, r in zip(self.header.columns, row.columns):
+            k = h.value
+            v = ParsedTableValue(row, r, h)
+            if k in ret:
+                if not isinstance(ret[k], list):
+                    ret[k] = [ret[k]]
+                ret[k].append(v)
+            else:
+                ret[k] = v
+        return ret
