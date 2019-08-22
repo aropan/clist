@@ -44,7 +44,8 @@ $(function() {
                 success: function (response) {
                     successCallback(response)
                 },
-                error: function() {
+                error: function(response) {
+                    $.notify(response.responseJSON.message, 'error')
                     failureCallback({message: 'there was an error while fetching events!'})
                 }
             });

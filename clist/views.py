@@ -130,18 +130,21 @@ def get_events(request):
         party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
         query = Q(rating__party=party) & query
 
-    result = []
-    for contest in Contest.visible.filter(query):
-        c = {
-            'id': contest.pk,
-            'title': contest.title,
-            'host': contest.host,
-            'url': contest.url,
-            'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
-            'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
-            'color': contest.resource.color,
-        }
-        result.append(c)
+    try:
+        result = []
+        for contest in Contest.visible.filter(query):
+            c = {
+                'id': contest.pk,
+                'title': contest.title,
+                'host': contest.host,
+                'url': contest.url,
+                'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
+                'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
+                'color': contest.resource.color,
+            }
+            result.append(c)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, safe=False, status=400)
     return JsonResponse(result, safe=False)
 
 
