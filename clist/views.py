@@ -144,7 +144,7 @@ def get_events(request):
             }
             result.append(c)
     except Exception as e:
-        return JsonResponse({'message': str(e)}, safe=False, status=400)
+        return JsonResponse({'message': f'query = `{search_query}`, error = {e}'}, safe=False, status=400)
     return JsonResponse(result, safe=False)
 
 
