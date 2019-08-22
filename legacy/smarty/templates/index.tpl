@@ -7,10 +7,10 @@
         <link rel="icon" href="/images/favicon.png" type="image/x-icon" />
         <link rel="shortcut icon" href="/images/favicon.png" type="image/x-icon"/>
 
-        <link rel="stylesheet" href="{version file='/style.css'}" type="text/css" />
+        <link rel="stylesheet" href="/style.css" type="text/css" />
 
         <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
-        <script type="text/javascript" src="{version file='/js/countdown.js'}"></script>
+        <script type="text/javascript" src="/js/countdown.js"></script>
         <script type="text/javascript" src="/js/yepnope.1.5.4-min.js"></script>
         <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
 {include file="{$smarty.server.DOCUMENT_ROOT}/js/helper.js"}
