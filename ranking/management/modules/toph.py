@@ -51,7 +51,7 @@ class Statistic(BaseModule):
                             row['member'] = hrefs[0].split('/')[-1]
                         else:
                             to_get_handle = True
-                            row['member'] = f'{row["name"]}, {self.start_time.year}'
+                            row['member'] = f'{row["name"]}, {row["place"]}, {self.start_time.year}'
 
                         title = score.column.node.xpath('.//div[@title]/@title')[0]
                         row['solving'], row['penalty'] = title.replace(',', '').split()

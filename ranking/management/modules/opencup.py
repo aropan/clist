@@ -16,7 +16,8 @@ class Statistic(BaseModule):
             raise InitModuleException('Not set standings url for %s' % self.name)
 
     def get_standings(self, users=None):
-        season = self.key.split()[0]
+        if not hasattr(self, 'season'):
+            self.season = self.key.split()[0]
 
         result = {}
         problems_info = OrderedDict()
@@ -43,11 +44,15 @@ class Statistic(BaseModule):
                 elif k == 'Total':
                     row['solving'] = int(v.value)
                 elif k == 'Time':
-                    row['penalty'] = int(v.value)
+                    if "'" in v.value and '"' in v.value:
+                        minute, seconds = map(int, re.findall('[0-9]+', v.value))
+                        row['penalty'] = f'{minute + seconds / 60:.2f}'
+                    else:
+                        row['penalty'] = int(v.value)
                 elif k == 'Place':
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():
-                    row['member'] = v.value + ' ' + season
+                    row['member'] = v.value + ' ' + self.season
                     row['name'] = v.value
                 else:
                     row[k] = v.value

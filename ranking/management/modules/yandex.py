@@ -22,6 +22,9 @@ class Statistic(BaseModule):
         if not re.search('/[0-9]+/', self.standings_url):
             return {}
 
+        year = self.start_time.year - 1 + (self.start_time.month + 3) // 12
+        season = f'{year}-{year + 1}'
+
         url = self.standings_url
         n_page = 1
         while True:
@@ -68,7 +71,9 @@ class Statistic(BaseModule):
                         if '+' in res or res.startswith('100'):
                             solved += 1
                     elif 'table__cell_role_participant' in v.attrs['class']:
-                        row['member'] = v.value.replace(' ', '', 1)
+                        name = v.value.replace(' ', '', 1)
+                        row['name'] = name
+                        row['member'] = name if ' ' not in name else f'{name}, {season}'
                     elif 'table__cell_role_place' in v.attrs['class']:
                         row['place'] = v.value
                     elif 'table__header_type_penalty' in v.attrs['class']:

@@ -1,14 +1,34 @@
+from django.contrib import admin
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.models import Account, Rating, Statistics, Module
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from clist.models import Contest
 
 
+class HasCoders(admin.SimpleListFilter):
+    title = 'has coders'
+    parameter_name = 'has_coders'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == 'yes':
+            return queryset.exclude(coders=None)
+        elif value == 'no':
+            return queryset.filter(coders=None)
+        return queryset
+
+
 @admin_register(Account)
 class AccountAdmin(BaseModelAdmin):
     list_display = ['resource', 'key', '_num_coders']
-    search_fields = ['key']
-    list_filter = ['resource__host']
+    search_fields = ['key__regex']
+    list_filter = [HasCoders, 'resource__host']
 
     def _num_coders(self, obj):
         return obj.coders.count()
