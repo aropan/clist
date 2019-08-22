@@ -17,11 +17,9 @@ class EventAdmin(BaseModelAdmin):
 
     def participants_count(self, inst):
         return inst.participant_set.count()
-    participants_count.admin_order_field = 'participants_count'
 
     def teams_count(self, inst):
         return inst.team_set.count()
-    teams_count.admin_order_field = 'teams_count'
 
 
 @admin_register(Participant)

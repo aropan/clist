@@ -50,7 +50,7 @@
         usort($matches, function ($a, $b) { return intval($a['id']) < intval($b['id'])? -1 : 1; });
         $urls = [];
         foreach ($matches as $m) {
-            $urls[] = $m['url'];
+            $urls[] = str_replace('contest2.yandex', 'contest.yandex', $m['url']);
         }
         $urls = array_unique($urls);
 
