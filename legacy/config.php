@@ -5,7 +5,7 @@
 //    ini_set("max_execution_time", 0);
 
     require_once "db.class.php";
-    require_once "libs/Smarty.class.php";
+    require_once "libs/smarty/libs/Smarty.class.php";
     date_default_timezone_set("UTC");
 //    var_dump(setlocale(LC_ALL,"ru_RU.UTF8"));
 

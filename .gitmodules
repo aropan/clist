@@ -31,3 +31,6 @@
 [submodule "third_party/moment-timezone"]
 	path = third_party/moment-timezone
 	url = git@github.com:moment/moment-timezone.git
+[submodule "legacy/libs/smarty"]
+	path = legacy/libs/smarty
+	url = git@github.com:smarty-php/smarty.git
