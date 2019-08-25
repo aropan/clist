@@ -9,6 +9,7 @@ class Account(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     key = models.CharField(max_length=1024, null=False, blank=False)
+    name = models.CharField(max_length=1024, null=True, blank=True)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource))
@@ -17,6 +18,7 @@ class Account(BaseModel):
         return {
             'account': self.key,
             'resource': self.resource.host,
+            'name': self.name,
         }
 
     class Meta:

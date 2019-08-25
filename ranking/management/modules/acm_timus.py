@@ -3,6 +3,7 @@
 
 import collections
 import urllib.parse
+import re
 
 from common import REQ
 from common import BaseModule, parsed_table
@@ -19,7 +20,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None):
         result = {}
 
-        page = REQ.get(self.standings_url)
+        page = REQ.get(self.standings_url + ('&' if '?' in self.standings_url else '?') + 'locale=en')
         table = parsed_table.ParsedTable(html=page, xpath="//table[@class='monitor']//tr")
         problems_info = collections.OrderedDict()
         for r in table:
@@ -28,7 +29,9 @@ class Statistic(BaseModule):
             for k, v in list(r.items()):
                 title = first(v.header.node.xpath('a[@title]/@title'))
                 if k in ['Участник', 'Participant']:
-                    row['member'] = v.value
+                    url = first(v.column.node.xpath('a[@href]/@href'))
+                    row['member'] = re.search('([0-9]+)/?$', url).group(1)
+                    row['name'] = v.value
                 elif k in ['Место', 'Rank']:
                     row['place'] = v.value
                 elif k in ['Время', 'Time']:

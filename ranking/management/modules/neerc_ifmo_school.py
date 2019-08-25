@@ -30,7 +30,7 @@ class Statistic(BaseModule):
         mapping_key = {
             'rank': 'place',
             'rankl': 'place',
-            'party': 'member',
+            'party': 'name',
             'solved': 'solving',
         }
         result = {}
@@ -53,10 +53,10 @@ class Statistic(BaseModule):
                     c = mapping_key.get(c, c)
                     row[c] = v.value
             if 'penalty' not in row:
-                row['name'] = re.sub(r'\s*\([^\)]*\)\s*$', '', row['member'])
-                row['member'] = row['name'] + ' ' + season
+                row['name'] = re.sub(r'\s*\([^\)]*\)\s*$', '', row['name'])
                 solved = [p for p in list(problems.values()) if p['result'] == '100']
                 row['solved'] = {'solving': len(solved)}
+            row['member'] = row['name'] + ' ' + season
             result[row['member']] = row
         standings = {
             'result': result,
@@ -67,10 +67,12 @@ class Statistic(BaseModule):
 
 if __name__ == "__main__":
     statictic = Statistic(
-        name='Личная олимпиада. Условия по фильму «Капитан Марвел»',
-        url='http://neerc.ifmo.ru/school/io/2018-2019.html',
         standings_url='http://neerc.ifmo.ru/school/io/archive/20190324/standings-20190324-individual.html',
-        key='20190324',
-        start_time=datetime.strptime('2019-03-24', '%Y-%m-%d'),
+        start_time=datetime.strptime('20190324', '%Y%m%d'),
+    )
+    pprint(statictic.get_standings())
+    statictic = Statistic(
+        standings_url='http://neerc.ifmo.ru/school/io/archive/20080510/standings-20080510-advanced.html',
+        start_time=datetime.strptime('20080510', '%Y%m%d'),
     )
     pprint(statictic.get_standings())

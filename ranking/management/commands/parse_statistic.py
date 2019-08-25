@@ -129,10 +129,11 @@ class Command(BaseCommand):
                         result = standings.get('result', {})
                         fields = set()
                         for r in tqdm(list(result.values()), desc='update results'):
-                            account, _ = Account.objects.get_or_create(
-                                resource=resource,
-                                key=r.pop('member'),
-                            )
+                            member = r.pop('member')
+                            account, _ = Account.objects.get_or_create(resource=resource, key=member)
+                            if r.get('name') and account.name != r['name'] and member.find(r['name']) == -1:
+                                account.name = r['name']
+                                account.save()
 
                             defaults = {
                                 'place': r.pop('place', None),

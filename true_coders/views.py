@@ -283,11 +283,14 @@ def search(request, **kwargs):
         qs = Account.objects.filter(resource__id=resource_id)
         if 'user' in request.GET:
             user = request.GET.get('user')
-            qs = qs.filter(key__icontains=user)
+            qs = qs.filter(Q(key__icontains=user) | Q(name__icontains=user))
 
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': a.key, 'text': a.key} for a in qs]
+        ret = [
+            {'id': a.key, 'text': f'{a.key} - {a.name}' if a.name and a.key.find(a.name) == -1 else a.key}
+            for a in qs
+        ]
     elif query == 'organization':
         qs = Organization.objects.all()
 

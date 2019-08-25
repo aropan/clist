@@ -418,15 +418,14 @@ $(function() {
     $errorAccountTab = $('#error-account-tab')
     var $listAccount = $('#list-accounts')
     function addAccount(index, element) {
-        var $block =
-            $('<div class="account">')
-                .append($('<h4>')
-                    .append($('<a>', {class: 'delete-account btn btn-default btn-xs'}).append($('<i>', {class: 'far fa-trash-alt'})))
-                    .append($('<span>', {text: ' '}))
-                    .append($('<a>', {class: 'small', href: 'http://' + element.resource, text: element.resource}))
-                    .append($('<span>', {text: ' '}))
-                    .append($('<span>', {text: element.account}))
-                )
+        var h4 = $('<h4>')
+            .append($('<a>', {class: 'delete-account btn btn-default btn-xs'}).append($('<i>', {class: 'far fa-trash-alt'})))
+            .append($('<span>', {text: ' '}))
+            .append($('<a>', {class: 'small', href: 'http://' + element.resource, text: element.resource}))
+            .append($('<span>', {text: ' '}))
+            .append($('<span>', {text: element.account + (element.name && element.account.indexOf(element.name) == -1? ' | ' + element.name : '')}))
+
+        var $block = $('<div class="account">').append(h4)
 
         $block.find('.delete-account').click(function() {
             var $this = $(this)
