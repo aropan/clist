@@ -283,6 +283,9 @@ class Statistic(BaseModule):
                                 LOG.error(f'{handle} not in result, url = {url}')
                             result[handle]['problems'] = problems
                             result[handle]['challenges'] = challenges
+                            for p in problems.values():
+                                if p['result'] > 1e-9:
+                                    result[handle]['solved']['solving'] += 1
                             if challenges:
                                 h = result[handle].setdefault('hack', {'successful': 0, 'unsuccessful': 0})
                                 for c in challenges:

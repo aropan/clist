@@ -5,8 +5,10 @@
 class InitModuleException(Exception):
     pass
 
+
 class ExceptionParseStandings(Exception):
     pass
+
 
 class NotImplemented(Exception):
     pass

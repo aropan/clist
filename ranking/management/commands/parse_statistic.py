@@ -7,7 +7,7 @@ import json
 from random import shuffle
 from tqdm import tqdm
 from attrdict import AttrDict
-from traceback import format_exc
+# from traceback import format_exc
 from datetime import timedelta
 from logging import getLogger
 
@@ -169,9 +169,9 @@ class Command(BaseCommand):
                             contest.save()
                 if 'result' in standings:
                     count += 1
-            except Exception:
-                self.logger.error(f'contest = {contest}, url = {contest.url}')
-                self.logger.error(format_exc())
+            except Exception as e:
+                self.logger.error(f'contest = {contest}, url = {contest.url}, error = {e}')
+                # self.logger.error(format_exc())
                 TimingContest.objects \
                     .filter(contest=contest) \
                     .update(statistic=timezone.now() + resource.module.delay_on_error)

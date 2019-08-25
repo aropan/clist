@@ -21,7 +21,7 @@ class Statistic(BaseModule):
 
         self.cid = int(self.key)
 
-        req = requester.requester(headers=[('X-Requested-With', 'XMLHttpRequest')])
+        req = requester(headers=[('X-Requested-With', 'XMLHttpRequest')])
         req.caching = None
         req.time_out = 17
 
