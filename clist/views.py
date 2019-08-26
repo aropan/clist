@@ -62,6 +62,10 @@ def get_view_contests(request):
         user_contest_filter = coder.get_contest_filter(['list'])
         group_list = bool(coder.settings.get("group_in_list", group_list))
 
+    group = request.GET.get('group')
+    if group is not None:
+        group_list = bool(group)
+
     now = timezone.now()
     result = []
     for group, query, order, limit in (

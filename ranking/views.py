@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponseNotFound
+from django.shortcuts import get_object_or_404
 from django.db.models import Q, Exists, OuterRef
 from el_pagination.decorators import page_template
 
@@ -33,7 +34,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
 @page_template('standings_paging.html')
 def standings(request, title_slug, contest_id, template='standings.html', extra_context=None):
-    contest = Contest.objects.get(pk=contest_id)
+    contest = get_object_or_404(Contest, pk=contest_id)
     if slug(contest.title) != title_slug:
         return HttpResponseNotFound(f'Not found {slug(contest.title)} slug')
 

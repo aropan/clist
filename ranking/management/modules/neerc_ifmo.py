@@ -16,14 +16,21 @@ class Statistic(BaseModule):
             raise InitModuleException('Not set standings url for %s' % self.name)
 
     def get_standings(self, users=None):
-        season = self.key.split()[0]
+        year = self.start_time.year
+        year = year if self.start_time.month >= 9 else year - 1
+        season = '%d-%d' % (year, year + 1)
 
         result = {}
         problems_info = OrderedDict()
 
         page = REQ.get(self.standings_url)
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
-        html_table = re.search(regex, page, re.DOTALL).group(0)
+        match = re.search(regex, page, re.DOTALL)
+        if not match:
+            page = re.sub('<table[^>]*wrapper[^>]*>', '', page)
+            regex = '<table[^>]*>.*?</table>'
+            match = re.search(regex, page, re.DOTALL)
+        html_table = match.group(0)
         table = parsed_table.ParsedTable(html_table)
         for r in table:
             row = {}
@@ -32,8 +39,11 @@ class Statistic(BaseModule):
                 k = k.split()[0]
                 if k == 'Total' or k == '=':
                     row['solving'] = int(v.value)
-                elif len(k) == 1:
-                    problems_info[k] = {'short': k, 'name': v.attrs['title']}
+                elif len(k) <= 3:
+                    problems_info[k] = {'short': k}
+                    if 'title' in v.attrs:
+                        problems_info[k]['name'] = v.attrs['title']
+
                     if '-' in v.value or '+' in v.value:
                         p = problems.setdefault(k, {})
                         if ' ' in v.value:
@@ -44,7 +54,7 @@ class Statistic(BaseModule):
                         p['result'] = point
                 elif k == 'Time':
                     row['penalty'] = int(v.value)
-                elif k == 'Place' or k == 'Rank':
+                elif k.lower() in ['place', 'rank']:
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():
                     row['member'] = v.value + ' ' + season
@@ -62,10 +72,11 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
+    from datetime import datetime
     statictic = Statistic(
         name='ICPC 2018-2019, NEERC - Northern Eurasia Finals',
-        standings_url='http://neerc.ifmo.ru/archive/2018/standings.html',
+        standings_url='http://neerc.ifmo.ru/archive/2005/eastern/standings.html',
         key='2018-2019 NEERC',
+        start_time=datetime.strptime('2005-09-02', '%Y-%m-%d'),
     )
-    pprint(statictic.get_standings()['problems'])
-    pprint(statictic.get_result('Tbilisi Free U 5 (Emnadze, Kotoreishvili, Grdzelishvili) 2018-2019'))
+    pprint(statictic.get_standings())
