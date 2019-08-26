@@ -278,16 +278,17 @@ class requester():
                 else:
                     request = url
                 time_start = datetime.utcnow()
-                self.response = self.opener.open(
+                response = self.opener.open(
                     request,
                     post if post else None,
                     timeout=time_out or self.time_out
                 )
-                if self.response.info().get("Content-Encoding", None) == "gzip":
-                    buf = BytesIO(self.response.read())
+                if response.info().get("Content-Encoding", None) == "gzip":
+                    buf = BytesIO(response.read())
                     page = GzipFile(fileobj=buf).read()
                 else:
-                    page = self.response.read()
+                    page = response.read()
+                self.response = response
                 self.time_response = datetime.utcnow() - time_start
                 if self.verify_word and self.verify_word not in page:
                     raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
