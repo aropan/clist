@@ -1,3 +1,5 @@
+import re
+
 from pyclist.models import BaseModel, BaseManager
 from django.db import models
 from django.db.models import Q
@@ -46,7 +48,11 @@ class Coder(BaseModel):
                 seconds = timedelta(minutes=filter_.duration_to).total_seconds()
                 query &= Q(duration_in_secs__lte=seconds)
             if filter_.regex:
-                query_regex = Q(title__regex=filter_.regex)
+                match = re.search(r'^(?P<field>[a-z]+):(?P<sep>.)(?P<regex>.+)(?P=sep)$', filter_.regex)
+                if match:
+                    query_regex = Q(**{f'{match.group("field")}__regex': match.group('regex')})
+                else:
+                    query_regex = Q(title__regex=filter_.regex)
                 if filter_.inverse_regex:
                     query_regex = ~query_regex
                 query &= query_regex
