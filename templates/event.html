@@ -42,8 +42,8 @@
             {% if event.standings_urls %}
             <div>
                 <label>Standings:</label>
-                {% for name in event.standings_urls %}
-                    <a href="{% url 'events:result' slug name %}">{{ name }}</a>
+                {% for s in event.standings_urls %}
+                    <a href="{% url 'events:result' slug s.name|lower %}">{{ s.name }}</a>
                 {% endfor %}
             </div>
             {% endif %}

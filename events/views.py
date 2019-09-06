@@ -247,7 +247,8 @@ def event(request, slug, template='event.html', extra_context=None):
 
 def result(request, slug, name):
     event = get_object_or_404(Event, slug=slug)
-    url = event.standings_urls[name]
+    standings_urls = {s['name'].lower(): s['url'] for s in event.standings_urls}
+    url = standings_urls[name]
     if url.startswith('http'):
         return redirect(url)
     template = get_template(url)

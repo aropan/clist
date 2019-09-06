@@ -10,7 +10,9 @@
     {% for event in events %}
     <div class="event">
         <a class="lead" href="{% url 'events:event' event.slug %}">{{ event.name }}</a>
-        <a href="{{ event.website_url }}"><i class="fas fa-external-link-alt"></i></a>
+        {% if event.website_url %}
+            <a href="{{ event.website_url }}"><i class="fas fa-external-link-alt"></i></a>
+        {% endif %}
         <span class="label label-primary">{{ event.participant_set.all.count }} participant(s)</span>
         <span class="label label-primary">{{ event.team_set.all.count }} team(s)</span>
     </div>
