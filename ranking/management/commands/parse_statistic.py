@@ -128,6 +128,8 @@ class Command(BaseCommand):
                     if not no_update_results:
                         result = standings.get('result', {})
                         fields = set()
+
+                        ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc='update results'):
                             member = r.pop('member')
                             account, _ = Account.objects.get_or_create(resource=resource, key=member)
@@ -142,14 +144,21 @@ class Command(BaseCommand):
                                 'addition': r,
                             }
 
-                            Statistics.objects.update_or_create(
+                            statistic, created = Statistics.objects.update_or_create(
                                 account=account,
                                 contest=contest,
                                 defaults=defaults,
                             )
 
+                            if not created:
+                                ids.remove(statistic.pk)
+
                             for k in r:
                                 fields.add(k)
+
+                        if ids:
+                            delete_info = Statistics.objects.filter(pk__in=ids).delete()
+                            self.logger.info(f'Delete info: {delete_info}')
 
                         fields = list(fields)
                         fields.sort()

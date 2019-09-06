@@ -96,7 +96,7 @@ class Statistic(BaseModule):
                             p['partial'] = True
                         else:
                             r['solved']['solving'] += 1
-                if r['solving'] < 1e-9:
+                if r['solving'] < 1e-9 or 'problems' not in r:
                     continue
 
                 results[r['member']] = r
