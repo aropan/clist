@@ -24,7 +24,8 @@ $(function() {
             filterCallbackCalendar(value)
         }, filterTimeoutUpdate);
     })
-    if (filterInput.val() && !$('#calendar').length) {
+
+    if (filterInput.val()) {
         filterInput.keyup()
     }
 
