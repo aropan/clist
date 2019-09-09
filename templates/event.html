@@ -32,10 +32,10 @@
         {% if not registration.over %}
             <li><a href="#registration-tab" data-toggle="tab">Registration</a></li>
         {% endif %}
-        <li><a href="#teams-tab" data-toggle="tab">Teams</a></li>
-        <li><a href="#participants-tab" data-toggle="tab">Participants</a></li>
+        <li><a href="#teams-tab" data-toggle="tab">Teams <span class="badge progress-bar-info">{{ team_participants.count }}</span></a></li>
+        <li><a href="#participants-tab" data-toggle="tab">Participants <span class="badge progress-bar-info">{{ participants.count }}</span></a></li>
 {% if perms.events.change_team %}
-        <li><a href="#admin-teams-view-tab" data-toggle="tab">Admin</a></li>
+        <li><a href="#admin-teams-view-tab" data-toggle="tab">Admin <span class="badge progress-bar-info">{{ teams.count }}</span></a></li>
 {% endif %}
     </ul>
     <div class="tab-content">
@@ -139,7 +139,7 @@
             <h3>Teams</h3>
             <div class="btn-group">
                 {% for status in team_status.labels %}
-                <button title="{{ team_status.labels|get_item:status|title }}" type="submit" value="status-{{ status }}" class="button-status btn btn-{{ team_status.classes|get_item:status }}" {% if status == team.status %} disabled{% endif %}>{{ team_status.labels|get_item:status|title|make_list|first }}</button>
+                <a href="{% url 'events:event' event.slug %}{% if request.GET.status != status|slugify %}?status={{ status }}{% endif %}#admin-teams-view-tab" title="{{ team_status.labels|get_item:status|title }}" class="btn btn-{{ team_status.classes|get_item:status }}">{{ team_status.labels|get_item:status|title|make_list|first }}</a>
                 {% endfor %}
             </div>
             <hr/>

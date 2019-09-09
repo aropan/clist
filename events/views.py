@@ -244,6 +244,10 @@ def event(request, slug, template='event.html', extra_context=None):
         'coder__user',
     ).all()
 
+    status = request.GET.get('status')
+    if status is not None:
+        teams = teams.filter(status=status)
+
     context = {
         'slug': slug,
         'event': event,
