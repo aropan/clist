@@ -1,6 +1,6 @@
 {% load el_pagination_tags %}
-{% paginate 20 team_participants %}
+{% paginate 20 team_participants using "teams" %}
 {% for team in team_participants %}
-{% include "inline-team.html" with team=team without_detail_url=True with_profile_url=True %}
+  {% include "inline-team.html" with team=team without_detail_url=True with_profile_url=True %}
 {% endfor %}
 {% show_more %}

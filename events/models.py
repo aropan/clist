@@ -63,6 +63,7 @@ class TshirtSize(Enum):
 class Participant(BaseModel):
     coder = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    team = models.ForeignKey('Team', related_name='participants', null=True, blank=True, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
     first_name_native = models.CharField(max_length=255, blank=True)
@@ -166,10 +167,14 @@ class TeamStatus(Enum):
 class Team(BaseModel):
     name = models.CharField(max_length=255)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    participants = models.ManyToManyField(Participant, blank=True)
-    author = models.ForeignKey(Participant, related_name='team_author_set', on_delete=models.CASCADE)
+    author = models.ForeignKey(Participant,
+                               related_name='team_author_set',
+                               on_delete=models.CASCADE)
     coach = models.ForeignKey(Participant,
-                              related_name='team_coach_set', null=True, blank=True, on_delete=models.CASCADE)
+                              related_name='team_coach_set',
+                              null=True,
+                              blank=True,
+                              on_delete=models.CASCADE)
     status = EnumField(TeamStatus, default=TeamStatus.NEW)
 
     def __str__(self):

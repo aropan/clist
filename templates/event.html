@@ -32,6 +32,7 @@
         {% if not registration.over %}
             <li><a href="#registration-tab" data-toggle="tab">Registration</a></li>
         {% endif %}
+        <li><a href="#teams-tab" data-toggle="tab">Teams</a></li>
         <li><a href="#participants-tab" data-toggle="tab">Participants</a></li>
 {% if perms.events.change_team %}
         <li><a href="#admin-teams-view-tab" data-toggle="tab">Admin</a></li>
@@ -117,13 +118,21 @@
             {% endif %}
         </div>
 
-        <div id="participants-tab"  class="tab-pane col-sm-offset-2 col-sm-8">
-            <script>$.endlessPaginate({paginateOnScroll: true});</script>
+        <div id="teams-tab"  class="tab-pane col-sm-offset-2 col-sm-8">
             <hr/>
-            <div class="list-group">
-            {% include page_template %}
+            <div class="list-group endless_page_template">
+            {% include "team-participants.html" %}
             </div>
         </div>
+
+        <div id="participants-tab"  class="tab-pane col-sm-offset-2 col-sm-8">
+            <hr/>
+            <div class="list-group endless_page_template">
+            {% include "participants.html" %}
+            </div>
+        </div>
+
+        <script>$.endlessPaginate({paginateOnScroll: true});</script>
 
 {% if perms.events.change_team %}
         <div id="admin-teams-view-tab" class="tab-pane col-sm-offset-2 col-sm-8">
@@ -135,9 +144,7 @@
             </div>
             <hr/>
             <div class="list-group">
-            {% for team in teams %}
-            {% include "inline-team.html" with team=team %}
-            {% endfor %}
+            {% include "team-participants-admin.html" %}
             </div>
         </div>
 {% endif %}

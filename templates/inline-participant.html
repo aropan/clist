@@ -1,0 +1,10 @@
+<div class="list-group-item">
+  <strong class="name">
+    {{ participant.first_name }}
+    <a href="{% url 'coder:profile' participant.coder.user.username %}">{{ participant.coder.user.username }}</a>
+    {{ participant.last_name }}
+  </strong>
+  {% if participant.team %}
+  <small class="text-muted">{{ participant.team.title }}</small>
+  {% endif %}
+</div>

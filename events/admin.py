@@ -65,7 +65,7 @@ class TeamHasLoginFilter(admin.SimpleListFilter):
 
 @admin_register(Team)
 class TeamAdmin(BaseModelAdmin):
-    list_display = ['name', 'status', 'coach', 'participants_count', 'author']
+    list_display = ['name', 'event', 'status', 'coach', 'participants_count', 'author']
     search_fields = ['name', 'coach__last_name']
     list_filter = [TeamHasLoginFilter, 'status', 'event']
 

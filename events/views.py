@@ -13,7 +13,7 @@ from django.template.loader import get_template
 from django_countries import countries
 from django.views.decorators.cache import cache_page
 
-from el_pagination.decorators import page_template
+from el_pagination.decorators import page_templates
 
 from events.models import Event, Participant, Team, JoinRequest, TeamStatus, TshirtSize
 from true_coders.models import Organization
@@ -32,7 +32,11 @@ def events(request):
     )
 
 
-@page_template('team-participants.html')
+@page_templates((
+    ('team-participants.html', 'teams'),
+    ('participants.html', 'participants'),
+    ('team-participants-admin.html', 'teams-admin'),
+))
 def event(request, slug, template='event.html', extra_context=None):
     event = get_object_or_404(Event, slug=slug)
     user = request.user
@@ -40,7 +44,10 @@ def event(request, slug, template='event.html', extra_context=None):
     participant = event.participant_set.filter(coder=coder, coder__isnull=False).first()
     if participant:
         join_requests = participant.joinrequest_set.all()
-        team = event.team_set.filter(participants__pk=participant.pk).first()
+        team = event.team_set \
+            .filter(participants__pk=participant.pk) \
+            .prefetch_related('joinrequest_set', 'participants') \
+            .first()
     else:
         join_requests = None
         team = None
@@ -214,9 +221,28 @@ def event(request, slug, template='event.html', extra_context=None):
         return redirect('{}#registration-tab'.format(resolve_url('events:event', slug=event.slug)))
 
     teams = Team.objects.filter(event=event).order_by('-created')
+    teams = teams.prefetch_related(
+        'participants__coder__user',
+        'participants__organization',
+    )
+    teams = teams.select_related(
+        'author__coder__user',
+        'author__organization',
+        'coach__coder__user',
+        'coach__organization',
+    )
 
     approved_statuses = {k for k, v in TeamStatus.descriptions.items() if v == 'approved'}
     team_participants = teams.filter(status__in=approved_statuses)
+
+    participants = Participant.objects.filter(
+        event=event,
+        is_coach=False,
+    ).filter(
+        Q(team=None) | Q(team__status=TeamStatus.NEW),
+    ).select_related(
+        'coder__user',
+    ).all()
 
     context = {
         'slug': slug,
@@ -224,6 +250,7 @@ def event(request, slug, template='event.html', extra_context=None):
         'coder': coder,
         'participant': participant,
         'team_participants': team_participants,
+        'participants': participants,
         'team': team,
         'join_requests': join_requests,
         'team_status': TeamStatus,
