@@ -353,6 +353,16 @@ def frame(request, slug, status):
             if TeamStatus.labels[s] == status:
                 break
     teams = Team.objects.filter(event=event, status__in=statuses).order_by('-created')
+    teams = teams.prefetch_related(
+        'participants__coder__user',
+        'participants__organization',
+    )
+    teams = teams.select_related(
+        'author__coder__user',
+        'author__organization',
+        'coach__coder__user',
+        'coach__organization',
+    )
     countries = Counter(t.country for t in teams)
 
     return render(

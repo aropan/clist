@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q, Exists, OuterRef
 from el_pagination.decorators import page_template
 
+
 from clist.models import Contest
 from ranking.models import Statistics
 from clist.templatetags.extras import slug
@@ -57,6 +58,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     search = request.GET.get('search')
     if search:
         statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
+        statistics = statistics.extra(select={'row_num': 'ROW_NUMBER() OVER (ORDER BY "ranking_statistics"."id")'})
 
     fields = []
     for k, v in (
@@ -71,6 +73,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'statistics': statistics,
         'params': params,
         'fields': fields,
+        'with_row_num': bool(search),
     }
 
     if extra_context is not None:

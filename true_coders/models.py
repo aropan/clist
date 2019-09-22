@@ -1,6 +1,5 @@
 import re
 
-from pyclist.models import BaseModel, BaseManager
 from django.db import models
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -8,6 +7,8 @@ from django.contrib.postgres.fields import JSONField, ArrayField
 from datetime import timedelta
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
+
+from pyclist.models import BaseModel, BaseManager
 
 
 class Coder(BaseModel):
@@ -68,6 +69,10 @@ class Coder(BaseModel):
         for chat in self.chat_set.filter(secret_key__isnull=True):
             categories.append(chat.get_group_name())
         return categories
+
+    def get_tshirt_size(self):
+        p = self.participant_set.order_by('-modified').first()
+        return p.tshirt_size_value if p is not None else None
 
     def account_set_order_by_pk(self):
         return self.account_set.order_by('pk')

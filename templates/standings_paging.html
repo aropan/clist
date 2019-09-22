@@ -3,7 +3,10 @@
 {% paginate 50 statistics %}
 {% for statistic in statistics %}
 <tr>
-  <td>{% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}</td>
+  <td>
+    {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
+    {% if with_row_num %}({{ statistic.row_num }}){% endif %}
+  </td>
   <td class="handle-cell">
   {% if statistic.addition.name %}
     <div title="{{ statistic.account.key }}">{{ statistic.addition.name }}</div>
