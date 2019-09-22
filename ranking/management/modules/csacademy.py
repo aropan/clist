@@ -53,7 +53,7 @@ class Statistic(BaseModule):
                 continue
             u = handles[row['userId']]
             handle = u['username']
-            if not handle or users is not None and handle not in users:
+            if not handle or users and handle not in users:
                 continue
             n_total += 1
             r = result.setdefault(handle, {})

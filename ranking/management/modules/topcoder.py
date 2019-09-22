@@ -135,7 +135,7 @@ class Statistic(BaseModule):
                 d = dict(list(zip(header, values)))
                 handle = d.pop('Handle').strip()
                 d = self._dict_as_number(d)
-                if 'rank' not in d or users is not None and handle not in users:
+                if 'rank' not in d or users and handle not in users:
                     continue
                 row = result.setdefault(handle, {})
                 row.update(d)
@@ -200,7 +200,7 @@ class Statistic(BaseModule):
                     d = dict(list(zip(header, values)))
                     handle = d.pop('Coders').strip()
                     d = self._dict_as_number(d)
-                    if 'division_placed' not in d or users is not None and handle not in users:
+                    if 'division_placed' not in d or users and handle not in users:
                         continue
 
                     row = result.setdefault(handle, {})
@@ -284,7 +284,7 @@ class Statistic(BaseModule):
                             result[handle]['problems'] = problems
                             result[handle]['challenges'] = challenges
                             for p in problems.values():
-                                if p['result'] > 1e-9:
+                                if p.get('result', 0) > 1e-9:
                                     result[handle]['solved']['solving'] += 1
                             if challenges:
                                 h = result[handle].setdefault('hack', {'successful': 0, 'unsuccessful': 0})
@@ -309,12 +309,12 @@ if __name__ == "__main__":
     # pprint(statictic.get_standings()['problems'])
     # pprint(statictic.get_standings())
     statictic = Statistic(
-        name='Single Round Match 763',
-        standings_url='https://community.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17608',
-        key='Single Round Match 763. 01.05.2019',
-        start_time=datetime.strptime('01.05.2019', '%d.%m.%Y'),
+        name='SRM 767',
+        standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17684',
+        key='SRM 767. 18.09.2019',
+        start_time=datetime.strptime('18.09.2019', '%d.%m.%Y'),
     )
-    pprint(statictic.get_result('anrieff'))
+    pprint(statictic.get_result())
     # statictic = Statistic(
     #     name='Mathmania - Codefest 18',
     #     standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17259',

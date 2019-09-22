@@ -71,7 +71,7 @@ class Statistic(BaseModule):
                 time.sleep(2)
                 url = self.API_RANKING_URL_FORMAT_.format(key=key, page=n_page, per_page=per_page)
 
-                if users is not None:
+                if users:
                     urls = [f'{url}&search={user}' for user in users]
                 else:
                     urls = [url]
