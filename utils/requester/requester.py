@@ -368,21 +368,22 @@ class requester():
             self.get(url)
         return self.last_page
 
-    def form(self, page=None, action=''):
+    def form(self, page=None, action='', limit=2, fid=None):
         if page is None:
             page = self.last_page
-        match = re.search(
-            f'''
-            <form(
-                [^>]*method="(?P<method>post|get)"|
-                [^>]*action="(?P<url>[^"]*{action}[^"]*)"
-            ){{2}}[^>]*>
+        selectors = [
+            'method="(?P<method>post|get)"',
+            f'action="(?P<url>[^"]*{action}[^"]*)"',
+        ]
+        if fid is not None:
+            selectors.append(f'id="{fid}"')
+        selector = '|[^>]*'.join(selectors)
+        regex = f'''
+            <form([^>]*{selector}){{{limit}}}[^>]*>
             .*?
             </form>
-            ''',
-            page,
-            re.DOTALL | re.VERBOSE | re.IGNORECASE
-        )
+        '''
+        match = re.search(regex, page, re.DOTALL | re.VERBOSE | re.IGNORECASE)
         page = match.group()
         result = match.groupdict()
         post = {}
@@ -418,14 +419,15 @@ class requester():
             result['unchecked'] = unchecked
         return result
 
-    def submit_form(self, data, *args, **kwargs):
+    def submit_form(self, data, *args, url=None, **kwargs):
         form = self.form(*args, **kwargs)
         form['post'].update(data)
         data = urllib.parse.urlencode(form['post']).encode('utf-8')
+        url = url or form['url']
         ret = {
-            'get': lambda: self.get(urllib.parse.urljoin(form['url'], f'?{data}')),
-            'post': lambda: self.get(form['url'], data),
-        }[form['method']]()
+            'get': lambda: self.get(urllib.parse.urljoin(url, f'?{data}')),
+            'post': lambda: self.get(url, data),
+        }[form['method'].lower()]()
         return ret
 
     def file_cache_clear(self):
