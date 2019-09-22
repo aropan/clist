@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db.models import Count
+
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.models import Account, Rating, Statistics, Module
 from ranking.management.commands.parse_statistic import Command as parse_stat
@@ -31,7 +33,10 @@ class AccountAdmin(BaseModelAdmin):
     list_filter = [HasCoders, 'resource__host']
 
     def _num_coders(self, obj):
-        return obj.coders.count()
+        return obj.num_coders
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(num_coders=Count('coders'))
 
 
 @admin_register(Rating)

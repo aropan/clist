@@ -42,7 +42,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     statistics = Statistics.objects.filter(contest=contest)
 
     statistics = statistics \
-        .extra(select={'place_as_int': "CAST(SPLIT_PART(place, '-', 1) AS INTEGER)"}) \
+        .extra(select={'place_as_int': "CAST(NULLIF(SPLIT_PART(place, '-', 1), '') AS INTEGER)"}) \
         .select_related('account') \
         .order_by('place_as_int', '-solving', '-upsolving')
 

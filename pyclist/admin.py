@@ -14,7 +14,6 @@ def admin_register(*args, **kwargs):
 class BaseModelAdmin(admin.ModelAdmin):
     readonly_fields = ['created', 'modified']
     save_as = True
-    ordering = ['-modified']
 
     class Meta:
         abstract = True
