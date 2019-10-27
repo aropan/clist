@@ -22,6 +22,10 @@ table.standings th {
   color: #B00;
 }
 
+.hid {
+  color: #DA4;
+}
+
 table.standings .handle-cell {
   text-align: left;
 }

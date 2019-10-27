@@ -38,10 +38,10 @@ class Statistic(BaseModule):
                 elif 'ir-problem-count' in classes:
                     row['solving'] = int(v.value)
                 else:
-                    if v.value == DOT:
-                        continue
                     letter = k.split()[0]
                     problems_info[letter] = {'short': letter}
+                    if v.value == DOT:
+                        continue
                     p = problems.setdefault(letter, {})
                     values = v.value.replace('−', '-').split(' ')
                     p['result'] = values[0]
