@@ -97,19 +97,27 @@ class Statistic(BaseModule):
                 d['full_score'] = p['points']
             problems_info.append(d)
 
+        grouped = any('teamId' in row['party'] for row in data['result']['rows'])
         result = {}
         for row in data['result']['rows']:
-            for member in row['party']['members']:
+            party = row['party']
+            for member in party['members']:
                 handle = member['handle']
                 r = result.setdefault(handle, {})
                 r['member'] = handle
 
+                upsolve = \
+                    party['participantType'] == 'PRACTICE' or \
+                    party['participantType'] == 'VIRTUAL' and 'place' in r
+
+                if grouped and (not upsolve or 'name' not in r):
+                    r['name'] = ', '.join(m['handle'] for m in party['members'])
+                    if 'teamId' in party:
+                        r['team_id'] = party['teamId']
+                        r['name'] = f"{party['teamName']}: {r['name']}"
+
                 hack = row['successfulHackCount']
                 unhack = row['unsuccessfulHackCount']
-
-                upsolve = \
-                    row['party']['participantType'] == 'PRACTICE' or \
-                    row['party']['participantType'] == 'VIRTUAL' and 'place' in r
 
                 problems = r.setdefault('problems', {})
                 for i, s in enumerate(row['problemResults']):
@@ -185,3 +193,5 @@ if __name__ == '__main__':
     pprint(Statistic(url='https://codeforces.com/contest/1198', key='1198').get_result('tourist'))
     pprint(Statistic(url='https://codeforces.com/contest/1160/', key='1160').get_result('Rafbill'))
     pprint(Statistic(url='https://codeforces.com/contest/1/', key='1').get_result('spartac'))
+    pprint(Statistic(url='https://codeforces.com/contest/1250/', key='1250').get_result('maroonrk'))
+    pprint(Statistic(url='https://codeforces.com/contest/1250/', key='1250').get_result('sigma425'))

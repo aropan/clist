@@ -15,15 +15,18 @@ table.standings th {
 }
 
 .acc {
-  color: #070;
+  color: #090;
+  font-weight: bold;
 }
 
 .rej {
-  color: #B00;
+  color: #d22;
+  font-weight: bold;
 }
 
 .hid {
-  color: #DA4;
+  color: #da2;
+  font-weight: bold;
 }
 
 table.standings .handle-cell {

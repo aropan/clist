@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Exists, OuterRef
+from django.db.models.expressions import RawSQL
 from el_pagination.decorators import page_template
 
 
@@ -41,10 +42,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     statistics = Statistics.objects.filter(contest=contest)
 
+    order = ['place_as_int', '-solving']
     statistics = statistics \
-        .extra(select={'place_as_int': "CAST(NULLIF(SPLIT_PART(place, '-', 1), '') AS INTEGER)"}) \
-        .select_related('account') \
-        .order_by('place_as_int', '-solving', '-upsolving')
+        .annotate(place_as_int=RawSQL("CAST(NULLIF(SPLIT_PART(place, '-', 1), '') AS INTEGER)", ())) \
+        .select_related('account')
 
     params = {}
     if 'division' in contest.info.get('problems', {}):
@@ -58,14 +59,21 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     search = request.GET.get('search')
     if search:
         statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
-        statistics = statistics.extra(select={'row_num': 'ROW_NUMBER() OVER (ORDER BY "ranking_statistics"."id")'})
+
+    contest_fields = contest.info.get('fields', [])
+
+    if 'team_id' in contest_fields:
+        order.append('addition__name')
+        statistics = statistics.distinct(*[f.lstrip('-') for f in order])
+
+    statistics = statistics.order_by(*order)
 
     fields = []
     for k, v in (
         ('penalty', 'penalty'),
         ('total_time', 'time'),
     ):
-        if k in contest.info.get('fields', []):
+        if k in contest_fields:
             fields.append((k, v))
 
     context = {

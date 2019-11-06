@@ -162,6 +162,7 @@ class Command(BaseCommand):
 
                         fields = list(fields)
                         fields.sort()
+                        self.logger.info(f'Fields: {fields}')
                         if self._canonize(fields) != self._canonize(contest.info.get('fields')):
                             contest.info['fields'] = fields
                             contest.save()
