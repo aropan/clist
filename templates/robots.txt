@@ -1,0 +1,8 @@
+User-agent: *
+
+Disallow: /api/
+Allow: /api/v1/doc
+Disallow: /telegram/me/
+Disallow: /admin/
+
+Clean-param: timezone&durationlimit&viewmode&tabs&q&search
