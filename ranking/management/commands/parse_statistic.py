@@ -162,10 +162,11 @@ class Command(BaseCommand):
 
                         fields = list(fields)
                         fields.sort()
-                        self.logger.info(f'Fields: {fields}')
                         if self._canonize(fields) != self._canonize(contest.info.get('fields')):
                             contest.info['fields'] = fields
                             contest.save()
+
+                        progress_bar.set_postfix(fields=str(fields), refresh=True)
 
                     action = standings.get('action')
                     if action is not None:
