@@ -31,7 +31,10 @@
         $title = $match['title'];
 
         $page = curlexec($url);
-        preg_match('#will start <[^>]*data-time=(?P<start_time>[0-9]+)[^>]*>.*?will run for <strong>(?P<duration>[^<]*)</strong>#', $page, $match);
+        echo $url . "\n";
+        if (!preg_match('#will start [^<]*<[^>]*data-time=(?P<start_time>[0-9]+)[^>]*>.*?will run for <[^>]*>(?P<duration>[^<]*)</#', $page, $match)) {
+            continue;
+        }
 
         $path = explode('/', trim($url, '/'));
 

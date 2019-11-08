@@ -158,6 +158,7 @@ class Command(BaseCommand):
 
                         if ids:
                             delete_info = Statistics.objects.filter(pk__in=ids).delete()
+                            progress_bar.set_postfix(deleted=str(delete_info))
                             self.logger.info(f'Delete info: {delete_info}')
 
                         fields = list(fields)
@@ -166,7 +167,7 @@ class Command(BaseCommand):
                             contest.info['fields'] = fields
                             contest.save()
 
-                        progress_bar.set_postfix(fields=str(fields), refresh=True)
+                        progress_bar.set_postfix(fields=str(fields))
 
                     action = standings.get('action')
                     if action is not None:
