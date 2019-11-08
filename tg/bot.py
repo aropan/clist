@@ -402,6 +402,9 @@ class Bot(telegram.Bot):
             ret = self.sendMessage(**msg)
         return ret
 
+    def admin_message(self, msg):
+        return self.send_message(msg, chat_id=self.ADMIN_CHAT_ID)
+
     def incoming(self, raw_data):
         try:
             data = json.loads(raw_data)
