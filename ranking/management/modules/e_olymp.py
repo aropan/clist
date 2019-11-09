@@ -60,7 +60,7 @@ class Statistic(BaseModule):
                                 title = first(v.header.node.xpath('a[@title]/@title'))
                                 url = first(v.header.node.xpath('a[@href]/@href'))
                                 if title:
-                                    problems_info[k]['title'] = title
+                                    problems_info[k]['name'] = title
                                 if url:
                                     problems_info[k]['url'] = url
 
