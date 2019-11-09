@@ -1,72 +1,73 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "http://www.e-olimp.com/competitions";
+    if (!isset($URL)) $URL = "https://www.e-olymp.com/en/contests";
     if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
     if (!isset($RID)) $RID = -1;
     if (!isset($LANG)) $LANG = 'RU';
     if (!isset($TIMEZONE)) $TIMEZONE = 'Europe/Kiev';
     if (!isset($contests)) $contests = array();
 
-    $page = curlexec($URL);
-    preg_match_all('#<li>\s*<a[^>]*href="(?<url>[^"]+)"[^>]*>\d+</a>\s*</li>#', $page, $urls);
+    $page_url = $URL;
 
-    $urls = $urls["url"] or array();
+    $set_urls = array();
+    $set_urls[$page_url] = true;
 
-    if (!in_array($URL, $urls)) {
-        $urls[] = $URL;
-    }
+    for (;;) {
+        $page = curlexec($page_url);
 
-    $timezone_offset = timezone_offset_get(new DateTimeZone($TIMEZONE), new DateTime("now"));
-    foreach ($urls as $url)
-    {
-        $page = curlexec($url);
         preg_match_all('#
-            <td[^>]*>\s*
-                <a[^>]*href="(?<url>[^"]+)">
-                    (?<title>[^<]+)
-                </a>\s*
-                <div[^<]*>(?:<small[^>]*>[^<]*</small>)?[^<]*</div>\s*
-            </td>\s*
-            <td[^>]*>\s*
+            <a[^>]*href="(?<url>[^"]+/contests/(?P<key>[0-9]+))">(?<title>[^<]+)
+            <span[^>]*>[^<]*<i[^>]*>[^<]*</i>[^<]*</span>[^<]*</a>[^<]*
+            <div[^>]*class="eo-competition-row__dates">[^<]*
             (?:
-                (?<start_time>[^<]+)(?:</?br/?>)+(?<end_time>[^<]+)|
-                <b>(?<date>[^<]+)</b>(?:</?br/?>)+(?<date_start_time>[^\-]+)-(?<date_end_time>[^<]+)
+                <div>(?<start_time>[^<]+)</div>[^<]*<div>(?<end_time>[^<]+)</div>[^<]*|
+                <div><b>(?<date>[^<]+)</b></div><div>(?<date_start_time>[^\-]+)-(?<date_end_time>[^<]+)</div>
             )
             #xs',
             $page,
-            $matches
+            $matches,
+            PREG_SET_ORDER
         );
 
-        foreach ($matches[0] as $i => $value)
+        $parsed_url = parse_url($page_url);
+        if (isset($parsed_url['query'])) {
+            unset($parsed_url['query']);
+        }
+
+        foreach ($matches as $match)
         {
-            $matches['date'][$i] = trim($matches['date'][$i]);
-
-            if ($matches['date'][$i] == "Сегодня") $matches['date'][$i] = date("Y-m-d", time() + $timezone_offset);
-            if ($matches['date'][$i] == "Завтра") $matches['date'][$i] = date("Y-m-d", time() + 24 * 60 * 60 + $timezone_offset);
-
-            $url = parse_url($URL, PHP_URL_SCHEME) . '://' . $HOST . '/' . trim(trim($matches['url'][$i]), '/');
-            $url = preg_replace('#/(ru|en)/#', '/', $url);
-
-            if (!preg_match("/[0-9]+$/", $url, $match)) {
-                continue;
-            }
-            $key = $match[0];
+            $url = url_merge($parsed_url, $match['url']);
 
             $contests[] = array(
-                'start_time' => $matches['date'][$i]? $matches['date'][$i] . ' ' . trim($matches['date_start_time'][$i]) : trim($matches['start_time'][$i]),
-                'end_time' => $matches['date'][$i]? $matches['date'][$i] . ' ' . trim($matches['date_end_time'][$i]) : trim($matches['end_time'][$i]),
-                'title' => trim($matches['title'][$i]),
+                'start_time' => isset($match['date'])? $match['date'] . ' ' . trim($match['date_start_time']) : trim($match['start_time']),
+                'end_time' => isset($match['date'])? $match['date'] . ' ' . trim($match['date_end_time']) : trim($match['end_time']),
+                'title' => trim($match['title']),
                 'url' => $url,
                 'rid' => $RID,
                 'host' => $HOST,
                 'timezone' => $TIMEZONE,
-                'key' => $key
+                'key' => $match['key']
             );
+        }
 
-            $i = count($contests) - 1;
-            $contests[$i]['start_time'] = preg_replace("#\.(\d\d)\s#", '.' . (int)(date('Y', time()) / 100) . '\1 ', $contests[$i]['start_time']);
-            $contests[$i]['end_time'] = preg_replace("#\.(\d\d)\s#", '.' . (int)(date('Y', time()) / 100) . '\1 ', $contests[$i]['end_time']);
+        if (!isset($_GET['parse_full_list'])) {
+            break;
+        }
+
+        preg_match_all('#<li>\s*<a[^>]*href="(?<href>[^"]+)"[^>]*>\d+</a>\s*</li>#', $page, $urls, PREG_SET_ORDER);
+        $page_url = false;
+        foreach ($urls as $match) {
+            $url = url_merge($parsed_url, $match['href']);
+            if (!isset($set_urls[$url])) {
+                $set_urls[$url] = true;
+                $page_url = $url;
+                break;
+            }
+        }
+
+        if ($page_url === false) {
+            break;
         }
     }
 ?>
