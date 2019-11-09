@@ -4,6 +4,7 @@ import re
 from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from first import first
 
 import tqdm
 
@@ -54,9 +55,14 @@ class Statistic(BaseModule):
                             if a:
                                 row['penalty'] = int(re.sub(r'[\(\)]', '', a[0]))
                         elif len(k) == 1:
-                            problems_info[k] = {'short': k}
-                            if 'title' in v.attrs:
-                                problems_info[k]['name'] = v.attrs['title']
+                            if k not in problems_info:
+                                problems_info[k] = {'short': k}
+                                title = first(v.header.node.xpath('a[@title]/@title'))
+                                url = first(v.header.node.xpath('a[@href]/@href'))
+                                if title:
+                                    problems_info[k]['title'] = title
+                                if url:
+                                    problems_info[k]['url'] = url
 
                             if '-' in v.value or '+' in v.value:
                                 p = problems.setdefault(k, {})
@@ -97,7 +103,7 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    statictic = Statistic(url='https://www.e-olymp.com/en/contests/13532', standings_url=None)
-    pprint(statictic.get_result('chportko'))
+    # statictic = Statistic(url='https://www.e-olymp.com/en/contests/13532', standings_url=None)
+    # pprint(statictic.get_standings()['problems'])
     statictic = Statistic(url='https://www.e-olymp.com/en/contests/13745', standings_url=None)
-    pprint(statictic.get_result('Ivan_Z'))
+    pprint(statictic.get_standings()['problems'])
