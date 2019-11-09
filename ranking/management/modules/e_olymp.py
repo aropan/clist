@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import re
+import urllib.parse
 from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -62,7 +63,7 @@ class Statistic(BaseModule):
                                 if title:
                                     problems_info[k]['name'] = title
                                 if url:
-                                    problems_info[k]['url'] = url
+                                    problems_info[k]['url'] = urllib.parse.urljoin(self.standings_url, url)
 
                             if '-' in v.value or '+' in v.value:
                                 p = problems.setdefault(k, {})
