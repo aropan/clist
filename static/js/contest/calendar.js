@@ -66,7 +66,7 @@ $(function() {
                         '<div class="countdown">'
                         + (start < now? "Ends in " : "Starts in ")
                         + '<span class="countdown-timestamp hidden">'  + countdown + '</span>'
-                        + '<span class="countdown-format">' + getFormatTime(countdown) + '</span>'
+                        + '<span class="countdown-format">' + getFormatTime() + '</span>'
                         + '</div>' : '')
             $(element).tooltip({
                 title: title,
@@ -77,6 +77,12 @@ $(function() {
                     'show': 300,
                     'hide': 100,
                 }
+            })
+            $(element).on('inserted.bs.tooltip', function() {
+                $('.countdown-format').each(function(idx, val) {
+                    var countdown = parseInt($(val).parent().find('.countdown-timestamp').html())
+                    $(val).html(getFormatTime(countdown - ($.now() - page_load) / 1000))
+                })
             })
         },
         eventClick: function (data, event, view) {
