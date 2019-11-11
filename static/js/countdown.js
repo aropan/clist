@@ -29,7 +29,15 @@ function countdown()
     var now = $.now();
 
     $(".countdown").each(function () {
-        var timer = parseInt($(this).attr('data-timestamp')) - (now - page_load) / 1000;
+        var el = $(this)
+        var timer
+        if (el.is('[data-timestamp]')) {
+            timer = parseInt($(this).attr('data-timestamp'))
+        } else {
+            timer = parseInt(el.find('.countdown-timestamp').html())
+            el = $(el.find('.countdown-format')[0])
+        }
+        timer = timer - (now - page_load) / 1000
         var value;
         if (timer < 0) {
             need_reload = true;
@@ -37,7 +45,7 @@ function countdown()
         } else {
             value = getFormatTime(timer);
         }
-        $(this).html(value);
+        el.html(value);
     });
 
     if (need_reload) {

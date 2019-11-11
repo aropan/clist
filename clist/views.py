@@ -144,6 +144,7 @@ def get_events(request):
                 'url': contest.url,
                 'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
+                'countdown': contest.next_time,
                 'color': contest.resource.color,
             }
             result.append(c)

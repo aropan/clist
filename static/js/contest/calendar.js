@@ -55,19 +55,28 @@ $(function() {
             var element = info.el
             var start = FullCalendarMoment.toMoment(event.start, calendar)
             var end = FullCalendarMoment.toMoment(event.end, calendar)
+            var now = FullCalendarMoment.toMoment($.now(), calendar)
+            var countdown = event.extendedProps.countdown;
+            var title =
+                    event.title
+                    + '<div>' + event.extendedProps.host + '</div>'
+                    + '<div>Start: ' + start.format('YYYY-MM-DD HH:mm') + '</div>'
+                    + (event.end? '<div>End: ' + end.format('YYYY-MM-DD HH:mm') + '</div>' : '')
+                    + (countdown?
+                        '<div class="countdown">'
+                        + (start < now? "Ends in " : "Starts in ")
+                        + '<span class="countdown-timestamp hidden">'  + countdown + '</span>'
+                        + '<span class="countdown-format">' + getFormatTime(countdown) + '</span>'
+                        + '</div>' : '')
             $(element).tooltip({
+                title: title,
                 placement: 'top',
                 container: 'body',
                 html: true,
                 delay: {
                     'show': 300,
                     'hide': 100,
-                },
-                title:
-                    event.title +
-                    '</br>' + event.extendedProps.host +
-                    '</br>Start: ' + start.format('YYYY-MM-DD HH:mm') +
-                    (event.end? '</br>End: ' + end.format('YYYY-MM-DD HH:mm') : '')
+                }
             })
         },
         eventClick: function (data, event, view) {
