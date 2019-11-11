@@ -29,7 +29,7 @@ class Command(BaseCommand):
         else:
             cache = {}
 
-        filepath = './legacy/logs/update/index.txt'
+        filepath = './legacy/logs/update/index.html'
         if os.path.exists(filepath):
             with open(filepath) as fo:
                 errors = []
