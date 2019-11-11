@@ -13,6 +13,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from tastypie.models import ApiKey
 from django_countries import countries
+from el_pagination.decorators import page_template
 
 from clist.models import Resource, Contest
 from clist.templatetags.extras import get_timezones, format_time
@@ -24,17 +25,34 @@ from true_coders.models import Filter, Party, Coder, Organization
 from events.models import Team, TeamStatus
 
 
-def profile(request, username):
+@page_template('profile_contests_paging.html')
+def profile(request, username, template='profile.html', extra_context=None):
     coder = get_object_or_404(Coder, user__username=username)
-    statistic = Statistics.objects \
+    statistics = Statistics.objects \
         .filter(account__in=coder.account_set.all()) \
         .select_related('contest', 'contest__resource', 'account') \
         .order_by('-contest__end_time')
+
+    search = request.GET.get('search')
+    if search is not None:
+        if search.startswith('problem:'):
+            _, search = search.split(':', 1)
+            statistics = statistics.filter(addition__problems__iregex=f'"[^"]*{search}[^"]*"')
+        elif search.startswith('contest:'):
+            _, search = search.split(':', 1)
+            statistics = statistics.filter(contest__id=search)
+        else:
+            query = Q(contest__resource__host__iregex=search) | Q(contest__title__iregex=search)
+            statistics = statistics.filter(query)
+
     context = {
-        "coder": coder,
-        "statistic": statistic,
+        'coder': coder,
+        'statistics': statistics,
     }
-    return render(request, "profile.html", context)
+
+    if extra_context is not None:
+        context.update(extra_context)
+    return render(request, template, context)
 
 
 @login_required

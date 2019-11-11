@@ -4,7 +4,6 @@
 {% block title %}Standings {{ contest.title }}{% endblock %}
 
 {% block end-head %}
-<script src="{% static_ts 'el-pagination/js/el-pagination.js' %}"></script>
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
 {% endblock %}
 
@@ -28,7 +27,7 @@
 <div class="col-md-12 col-md-offset-0 col-lg-10 col-lg-offset-1">
   <form method="get" action="">
   <div class="input-group">
-    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to username" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %}>
+    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to username" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
     <div class="input-group-btn">
       <button class="btn btn-default" type="submit">
         <span class="glyphicon glyphicon-search" aria-hidden="true"></span>

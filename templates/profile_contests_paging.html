@@ -1,0 +1,44 @@
+{% load el_pagination_tags %}
+
+{% paginate 50 statistics %}
+
+{% for s in statistics %}
+<div class="row contest" id="cid-{{ s.contest.id }}">
+    <div class="rank col-xs-1" data-toggle="tooltip" data-placement="top" data-html="true" title="
+        Handle: {{ s.account.key }}<br/>
+        {% for k, v in s.addition.items|sort %}
+            {% if k not in "problems,hack,solved,challenges" %}
+                {{ k|title }}: {{ v }}<br/>
+            {% endif %}
+        {% endfor %}
+    ">{{ s.place|default:"-" }}</div>
+    <div class="solving col-xs-1" {% if s.addition.score %}data-toggle="tooltip" data-placement="top" title="{{ s.addition.score}}"{% endif %}>{{ s.solving|floatformat }}</div>
+    <div class="title col-xs-10">
+        <a href="{{ s.contest.standings_url|default:s.contest.url }}">{{ s.contest.title }}</a>
+        <a href="http://{{ s.contest.resource.host }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
+        {% if s.addition.hack %}
+        {% with hack=s.addition.hack %}
+            <span class="badge progress-bar-warning" data-toggle="tooltip" data-placement="top" title="Hacks">
+                {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
+            </span>
+        {% endwith %}
+        {% endif %}
+        {% if not s.addition.problems %}
+            <span class="badge progress-bar-warning">missing problems information</span>
+        {% elif s.contest.info.problems %}
+          {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
+            {% with key=problem|get_problem_key  %}
+            {% with stat=s.addition.problems|get_item:key %}
+              {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat %}
+            {% endwith %}
+            {% endwith %}
+          {% endfor %}
+        {% else %}
+          {% for k, v in s.addition.problems.items|sort %}
+          {% include 'problem_stat.html' with short=k name=k stat=v %}
+          {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% show_more %}

@@ -10,66 +10,44 @@
 {% endblock %}
 
 {% block content %}
-    <h2>
-        {% if coder.user.first_name or coder.user.last_name %}
-            {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
-        {% endif %}
-        {{ coder.user.username }}
-    </h2>
-    <h3>Accounts</h3>
-    {% for account in coder.account_set.all %}
-    <span class="account badge progress-bar-info">{{ account.key }} <a href="http://{{ account.resource.host }}"><small class="text-muted">{{ account.resource.host }}</small></a></span>
-    {% endfor %}
-    <h3>Contests</h3>
-    {% if statistic %}
-    <div class="container statistic" id="contests">
-        <div class="row contest header">
-            <div class="rank col-xs-1">Rank</div>
-            <div class="solving col-xs-1">Score</div>
-            <div class="title col-xs-10">Event</div>
-        </div>
-    {% for s in statistic %}
-        <div class="row contest" id="cid-{{ s.contest.id }}">
-            <div class="rank col-xs-1" data-toggle="tooltip" data-placement="top" data-html="true" title="
-                Handle: {{ s.account.key }}<br/>
-                {% for k, v in s.addition.items|sort %}
-                    {% if k not in "problems,hack,solved,challenges" %}
-                        {{ k|title }}: {{ v }}<br/>
-                    {% endif %}
-                {% endfor %}
-            ">{{ s.place|default:"-" }}</div>
-            <div class="solving col-xs-1" {% if s.addition.score %}data-toggle="tooltip" data-placement="top" title="{{ s.addition.score}}"{% endif %}>{{ s.solving|floatformat }}</div>
-            <div class="title col-xs-10">
-                <a href="{{ s.contest.standings_url|default:s.contest.url }}">{{ s.contest.title }}</a>
-                <a href="http://{{ s.contest.resource.host }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
-                {% if s.addition.hack %}
-                {% with hack=s.addition.hack %}
-                    <span class="badge progress-bar-warning" data-toggle="tooltip" data-placement="top" title="Hacks">
-                        {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
-                    </span>
-                {% endwith %}
-                {% endif %}
-                {% if not s.addition.problems %}
-                    <span class="badge progress-bar-warning">missing problems information</span>
-                {% elif s.contest.info.problems %}
-                  {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
-                    {% with key=problem|get_problem_key  %}
-                    {% with stat=s.addition.problems|get_item:key %}
-                      {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat %}
-                    {% endwith %}
-                    {% endwith %}
-                  {% endfor %}
-                {% else %}
-                  {% for k, v in s.addition.problems.items|sort %}
-                  {% include 'problem_stat.html' with short=k name=k stat=v %}
-                  {% endfor %}
-                {% endif %}
-            </div>
-        </div>
-    {% endfor %}
-    </div>
-    {% else %}
-        <div class="alert alert-warning">Not found</div>
+  <h2>
+    {% if coder.user.first_name or coder.user.last_name %}
+      {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
     {% endif %}
+    {{ coder.user.username }}
+  </h2>
+  <h3>Accounts</h3>
+  {% for account in coder.account_set.all %}
+  <span class="account badge progress-bar-info">{{ account.key }} <a href="http://{{ account.resource.host }}"><small class="text-muted">{{ account.resource.host }}</small></a></span>
+  {% endfor %}
+  <h3>Contests</h3>
+  <div class="container">
+    <form method="get" action="">
+    <div class="row input-group">
+      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host. Also you can use contest:{ID} or problem:{NAME}" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="submit">
+          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+          Search
+        </button>
+      </span>
+    </div>
+    </form>
+    <br/>
+  </div>
+
+  {% if statistics %}
+  <div class="container" id="contests">
+    <div class="row contest header">
+      <div class="rank col-xs-1">Rank</div>
+      <div class="solving col-xs-1">Score</div>
+      <div class="title col-xs-10">Event</div>
+    </div>
+    {% include page_template %}
+  </div>
+  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  {% else %}
+  <div class="alert alert-warning">Empty statistics</div>
+  {% endif %}
 {% endblock %}
 

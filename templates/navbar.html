@@ -22,22 +22,19 @@
             <ul class="nav navbar-nav navbar-right">
                 {% if user.is_authenticated %}
                 <li>
-                    <a href="{% url 'coder:settings' %}" class="dropdown-toggle" data-toggle="dropdown">Settings&nbsp;<i class="fa fa-caret-down"></i></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user.username }}&nbsp;<i class="fa fa-caret-down"></i></a>
                     <ul class="dropdown-menu">
+                        <li><a href="{% url 'coder:profile' user.username %}"><i class="fa fa-user"></i> Profile</a></li>
+                        {% if user.is_staff %}
+                        <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
+                        {% endif %}
+                        <li role="separator" class="divider"></li>
                         <li><a href="{% url 'coder:settings' %}#preferences-tab"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
                         <li><a href="{% url 'coder:settings' %}#social-tab"><i class="fa fa-users"></i>&nbsp;Social</a></li>
                         <li><a href="{% url 'coder:settings' %}#accounts-tab"><i class="fa fa-globe"></i>&nbsp;Accounts</a></li>
                         <li><a href="{% url 'coder:settings' %}#filters-tab"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
                         <li><a href="{% url 'coder:settings' %}#notifications-tab"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user.username }}&nbsp;<i class="fa fa-caret-down"></i></a>
-                    <ul class="dropdown-menu">
-                        {% if user.is_staff %}
-                        <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'coder:profile' user.username %}"><i class="fa fa-user"></i> Profile</a></li>
+                        <li role="separator" class="divider"></li>
                         <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
                     </ul>
                 </li>

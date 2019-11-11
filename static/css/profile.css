@@ -6,6 +6,11 @@
     text-align: left;
 }
 
+#contests .endless_container {
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
 #contests>div:first-child {
     border-top: 1px solid #c9c9c9;
 }

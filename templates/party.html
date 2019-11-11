@@ -119,7 +119,7 @@
                             <div class="row-stand">
                                 <div class="col-xs-1">{{ s.place }}</div>
                                 <div class="col-xs-5" title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.user.username }}{% endif %}">
-                                    <a href="{% url 'coder:profile' s.coder.user.username %}{% if forloop.parentloop.counter0 %}#cid-{{ r.contest.id }}{% endif %}">
+                                    <a href="{% url 'coder:profile' s.coder.user.username %}{% if forloop.parentloop.counter0 %}?search=contest:{{ r.contest.id }}{% endif %}">
                                     {% if s.coder.user.first_name and s.coder.user.last_name %}
                                         {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
                                     {% else %}

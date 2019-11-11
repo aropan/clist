@@ -35,6 +35,7 @@ class Statistic(BaseModule):
             return REQ.get(url), url
 
         place = 0
+        idx = 0
         prev = None
         with PoolExecutor(max_workers=8) as executor, tqdm.tqdm(total=n_page, desc='fetch pages') as pbar:
             for page, url in executor.map(fetch_page, range(n_page)):
@@ -46,6 +47,7 @@ class Statistic(BaseModule):
                 html_table = match.group(0)
                 table = parsed_table.ParsedTable(html_table)
                 for r in table:
+                    idx += 1
                     row = {}
                     problems = row.setdefault('problems', {})
                     for k, v in list(r.items()):
@@ -89,7 +91,7 @@ class Statistic(BaseModule):
 
                     curr = (row['solving'], row.get('penalty'))
                     if prev is None or prev != curr:
-                        place += 1
+                        place = idx
                         prev = curr
                     row['place'] = place
 
