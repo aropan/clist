@@ -30,6 +30,7 @@ class Command(BaseCommand):
             cache = {}
 
         filepath = './legacy/logs/update/index.html'
+        key = 'update-file-error-hash'
         if os.path.exists(filepath):
             with open(filepath) as fo:
                 errors = []
@@ -40,10 +41,11 @@ class Command(BaseCommand):
                     msg = f'https://legacy.clist.by/logs/update/: ```\n{errors}\n```'
 
                     h = hashlib.md5(msg.encode('utf8')).hexdigest()
-                    k = 'update-file-error-hash'
-                    if cache.get(k) != h:
-                        cache[k] = h
+                    if cache.get(key) != h:
+                        cache[key] = h
                         bot.admin_message(msg)
+                else:
+                    cache.pop(key, None)
 
         cache = yaml.dump(cache, default_flow_style=False)
         with open(cache_filepath, 'w') as fo:
