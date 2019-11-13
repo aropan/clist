@@ -25,13 +25,22 @@
         return strtr($page, $replace_pairs);
     }
 
-    preg_match_all('#<td class="date">(?<date>\d+\s[^\s]+(?:\s\d+)?).*?</td><td class="time">(?<date_start_time>[^\s]*).*?</td><td[^>]*>(?<title>[^<]*)</td>#', $page, $matches, PREG_SET_ORDER);
+    preg_match_all('#<td class="date">(?<date>\d+\s[^\s]+(?:\s\d+)?)[^<]*</td><td class="time">(?<date_start_time>[^\s<]*)[^<]*</td><td[^>]*>(?<durations>[^<]*)</td><td[^>]*>(?<title>[^<]*)</td>\s*</tr>#', $page, $matches, PREG_SET_ORDER);
     $_contests = [];
     foreach ($matches as $match)
     {
         $title = 'Интернет-олимпиада';
         $match['date'] = replace_months($match['date']);
         $match['date_start_time'] = str_replace('-', ':', $match['date_start_time']);
+
+        $duration = '05:00';
+        foreach (explode(',', $match['durations']) as $d) {
+            if (strpos($d, "базовая") !== false) {
+                continue;
+            }
+            $duration = explode(' ', trim($d))[0];
+            $duration = sprintf("%02d:00", $duration);
+        }
 
         $key = date("Ymd", strtotime($match['date']));
 

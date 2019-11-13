@@ -23,15 +23,20 @@
     }
     $page = strtr($page, $replace_pairs);
 
+    preg_match('#<h4\s*align="center">(?<title>[^<]*)</h4>\s*<p\s*class="header">#', $page, $match);
+    list($main_title, $season) = explode(",", $match['title']);
+    $main_title = trim($main_title);
+    $season = str_replace("/", "-20", explode(" ", trim($season))[0]);
+
     preg_match_all("#
-        [^0-9\.]+(?P<start_time>(?:(?:[0-9]+\.){2}[0-9]+|[0-9]+(?=-)))
+        [^0-9\.]+(?P<start_time>(?:(?:[0-9]+\.){2}[0-9]+|[0-9]+(?=-|\s*по)))
         [^0-9\.,]+(?P<end_time>(?:[0-9]+\.){2}[0-9]+)
         #x",
         $page,
         $matches
     );
 
-    $titles = ["Заочный этап", "Заключительный этап"];
+    $titles = ["Заочный длинный этап", "Заочный короткий тур", "Заключительный очный этап"];
     foreach ($matches[0] as $i => $value)
     {
         $start_time = $matches["start_time"][$i];
@@ -44,16 +49,13 @@
         $duration = strtotime($end_time) - strtotime($start_time) + 24 * 60 * 60;
         $title = $titles[$i];
 
-        $year = explode(".", $start_time);
-        $year = end($year);
-
         $contests[] = array(
             "start_time" => $start_time,
             "duration" => $duration / 60,
-            "title" => $title,
+            "title" => $title . ". " . $main_title,
             "url" => $URL,
             "host" => $HOST,
-            "key" => $year . ". " . $title,
+            "key" => $season . ". " . $title,
             "rid" => $RID,
             "timezone" => $TIMEZONE
         );

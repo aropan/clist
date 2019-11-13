@@ -1,7 +1,7 @@
 {% load el_pagination_tags %}
 
 {% paginate 50 statistics %}
-
+<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
 {% for s in statistics %}
 <div class="row contest" id="cid-{{ s.contest.id }}">
     <div class="rank col-xs-1" data-toggle="tooltip" data-placement="top" data-html="true" title="
@@ -14,7 +14,7 @@
     ">{{ s.place|default:"-" }}</div>
     <div class="solving col-xs-1" {% if s.addition.score %}data-toggle="tooltip" data-placement="top" title="{{ s.addition.score}}"{% endif %}>{{ s.solving|floatformat }}</div>
     <div class="title col-xs-10">
-        <a href="{{ s.contest.standings_url|default:s.contest.url }}">{{ s.contest.title }}</a>
+        <a href="{% url 'ranking:standings' s.contest.title|slug s.contest.pk %}">{{ s.contest.title }}</a>
         <a href="http://{{ s.contest.resource.host }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
         {% if s.addition.hack %}
         {% with hack=s.addition.hack %}

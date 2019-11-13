@@ -123,7 +123,7 @@ def get_events(request):
 
     start_time = arrow.get(request.POST.get('start', timezone.now())).datetime
     end_time = arrow.get(request.POST.get('end', timezone.now() + timedelta(days=31))).datetime
-    query = query & Q(end_time__gte=start_time) & Q(end_time__lte=end_time)
+    query = query & Q(end_time__gte=start_time) & Q(start_time__lte=end_time)
 
     search_query = request.POST.get('search_query', None)
     if search_query:
