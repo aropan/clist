@@ -31,6 +31,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-d', '--days', type=int, help='how previous days for update')
+        parser.add_argument('-f', '--freshness_days', type=int, help='how previous days skip by modified date')
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-e', '--event', help='regex event name')
         parser.add_argument('-l', '--limit', type=int, help='limit count parse contest by resource', default=None)
@@ -52,6 +53,7 @@ class Command(BaseCommand):
     def parse_statistic(self,
                         contests,
                         previous_days=None,
+                        freshness_days=None,
                         limit=None,
                         with_check=True,
                         stop_on_error=False,
@@ -60,11 +62,8 @@ class Command(BaseCommand):
         now = timezone.now()
 
         if with_check:
-
             if previous_days is not None:
-                contests = contests.filter(
-                    end_time__gt=now - timedelta(days=previous_days),
-                )
+                contests = contests.filter(end_time__gt=now - timedelta(days=previous_days))
             else:
                 contests = contests.distinct('id')
                 contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
@@ -77,6 +76,9 @@ class Command(BaseCommand):
                 ended = contests.filter(query)
 
                 contests = started.union(ended)
+
+        if freshness_days is not None:
+            contests = contests.filter(modified__lt=now - timedelta(days=freshness_days))
 
         if limit:
             contests = contests.order_by('-start_time')[:limit]
@@ -226,4 +228,5 @@ class Command(BaseCommand):
             stop_on_error=args.stop_on_error,
             random_order=args.random_order,
             no_update_results=args.no_update_results,
+            freshness_days=args.freshness_days,
         )
