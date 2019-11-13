@@ -209,3 +209,8 @@ def get_problem_short(problem):
     for k in ['short', 'name', 'code']:
         if k in problem:
             return problem[k]
+
+
+@register.simple_tag
+def define(val=None):
+    return val

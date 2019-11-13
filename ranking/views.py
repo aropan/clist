@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.shortcuts import render
 from django.http import HttpResponseNotFound
 from django.shortcuts import get_object_or_404
@@ -45,7 +47,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     order = ['place_as_int', '-solving']
     statistics = statistics \
         .annotate(place_as_int=RawSQL("CAST(NULLIF(SPLIT_PART(place, '-', 1), '') AS INTEGER)", ())) \
-        .select_related('account')
+        .select_related('account') \
+        .prefetch_related('account__coders')
 
     params = {}
     if 'division' in contest.info.get('problems', {}):
@@ -66,15 +69,25 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         order.append('addition__name')
         statistics = statistics.distinct(*[f.lstrip('-') for f in order])
 
+    order.append('pk')
     statistics = statistics.order_by(*order)
 
-    fields = []
+    fields = OrderedDict()
     for k, v in (
         ('penalty', 'penalty'),
         ('total_time', 'time'),
     ):
         if k in contest_fields:
-            fields.append((k, v))
+            fields[k] = v
+
+    has_detail = False
+    for k in contest_fields:
+        if k not in fields and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges']:
+            has_detail = True
+            if request.GET.get('detail'):
+                fields[k] = ' '.join(k.split('_'))
+            else:
+                break
 
     context = {
         'contest': contest,
@@ -82,6 +95,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'params': params,
         'fields': fields,
         'with_row_num': bool(search),
+        'has_detail': has_detail,
     }
 
     if extra_context is not None:

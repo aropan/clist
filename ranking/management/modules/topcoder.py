@@ -4,6 +4,7 @@
 import re
 import json
 import html
+from collections import OrderedDict
 from urllib.parse import urljoin, parse_qs
 from lxml import etree
 from datetime import timedelta, datetime
@@ -60,7 +61,7 @@ class Statistic(BaseModule):
 
     @staticmethod
     def _dict_as_number(d):
-        ret = {}
+        ret = OrderedDict()
         for k, v in d.items():
             k = k.strip().lower().replace(' ', '_')
             if not k or not v or v == 'N/A':
@@ -132,12 +133,12 @@ class Statistic(BaseModule):
                     header = values
                     continue
 
-                d = dict(list(zip(header, values)))
+                d = OrderedDict(list(zip(header, values)))
                 handle = d.pop('Handle').strip()
                 d = self._dict_as_number(d)
                 if 'rank' not in d or users and handle not in users:
                     continue
-                row = result.setdefault(handle, {})
+                row = result.setdefault(handle, OrderedDict())
                 row.update(d)
 
                 score = row.pop('final_score' if 'final_score' in row else 'provisional_score')
@@ -197,13 +198,13 @@ class Statistic(BaseModule):
                         header = values
                         continue
 
-                    d = dict(list(zip(header, values)))
+                    d = OrderedDict(list(zip(header, values)))
                     handle = d.pop('Coders').strip()
                     d = self._dict_as_number(d)
                     if 'division_placed' not in d or users and handle not in users:
                         continue
 
-                    row = result.setdefault(handle, {})
+                    row = result.setdefault(handle, OrderedDict())
                     row.update(d)
 
                     row['member'] = handle
@@ -270,6 +271,7 @@ class Statistic(BaseModule):
                         p = problems.setdefault(d['problem'], {})
                         p.setdefault('extra_score', 0)
                         p['extra_score'] += d['result']
+                        p.setdefault('extra_info', []).append(f'{d["target"]}: {d["result"]}')
                         challenges.append(d)
 
                     return url, handle, problems, challenges

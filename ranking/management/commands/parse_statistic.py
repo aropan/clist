@@ -4,10 +4,10 @@
 import sys
 import os
 import json
+from collections import OrderedDict
 from random import shuffle
 from tqdm import tqdm
 from attrdict import AttrDict
-# from traceback import format_exc
 from datetime import timedelta
 from logging import getLogger
 
@@ -33,7 +33,6 @@ class Command(BaseCommand):
         parser.add_argument('-d', '--days', type=int, help='how previous days for update')
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-e', '--event', help='regex event name')
-        # parser.add_argument('-p', '--parties', metavar='PARTY', nargs='*', help='party name for update')
         parser.add_argument('-l', '--limit', type=int, help='limit count parse contest by resource', default=None)
         parser.add_argument('-c', '--no-check-timing', action='store_true', help='no check timing statistic')
         parser.add_argument('-o', '--only-new', action='store_true', default=False, help='parse without statistics')
@@ -124,28 +123,32 @@ class Command(BaseCommand):
                         contest.standings_url = standings['url']
                         contest.save()
 
-                    if standings.get('problems') \
-                       and self._canonize(standings['problems']) != self._canonize(contest.info.get('problems')):
-                        contest.info['problems'] = standings['problems']
+                    problems = standings.pop('problems', None)
+                    if problems \
+                       and self._canonize(problems) != self._canonize(contest.info.get('problems')):
+                        contest.info['problems'] = problems
                         contest.save()
 
                     if not no_update_results:
                         result = standings.get('result', {})
-                        fields = set()
+                        fields_set = set()
+                        fields = list()
 
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc='update results'):
                             member = r.pop('member')
                             account, _ = Account.objects.get_or_create(resource=resource, key=member)
-                            if r.get('name') and account.name != r['name'] and member.find(r['name']) == -1:
-                                account.name = r['name']
+
+                            name = r.get('name')
+                            if name and account.name != name and member.find(name) == -1:
+                                account.name = name
                                 account.save()
 
                             defaults = {
                                 'place': r.pop('place', None),
                                 'solving': r.pop('solving', 0),
                                 'upsolving': r.pop('upsolving', 0),
-                                'addition': r,
+                                'addition': dict(r),
                             }
 
                             statistic, created = Statistics.objects.update_or_create(
@@ -158,15 +161,17 @@ class Command(BaseCommand):
                                 ids.remove(statistic.pk)
 
                             for k in r:
-                                fields.add(k)
+                                if k not in fields_set:
+                                    fields_set.add(k)
+                                    fields.append(k)
+                        if fields_set and not isinstance(r, OrderedDict):
+                            fields.sort()
 
                         if ids:
                             delete_info = Statistics.objects.filter(pk__in=ids).delete()
                             progress_bar.set_postfix(deleted=str(delete_info))
                             self.logger.info(f'Delete info: {delete_info}')
 
-                        fields = list(fields)
-                        fields.sort()
                         if self._canonize(fields) != self._canonize(contest.info.get('fields')):
                             contest.info['fields'] = fields
                             contest.save()

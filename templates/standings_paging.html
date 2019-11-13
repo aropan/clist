@@ -8,11 +8,29 @@
     {% if with_row_num %}({{ forloop.counter }}){% endif %}
   </td>
   <td class="handle-cell">
-  {% if statistic.addition.name %}
-    <div title="{{ statistic.account.key }}">{{ statistic.addition.name }}</div>
-  {% else %}
-    {{ statistic.account.key }}
-  {% endif %}
+    {% with coders=statistic.account.coders.all %}
+      {% if coders|length == 1 %}
+        <a href="{% url 'coder:profile' coders.first.user.username %}" class="coder">
+      {% endif %}
+
+      {% if statistic.addition.name %}
+        <div title="{{ statistic.account.key }}">{{ statistic.addition.name }}</div>
+      {% else %}
+        {{ statistic.account.key }}
+      {% endif %}
+
+      {% if coders|length == 1 %}
+        </a>
+      {% endif %}
+
+      {% if coders|length > 1 %}
+      <small>
+        {% for c in coders %}
+          <a href="{% url 'coder:profile' c.user.username %}" class="coder">{{ c.user.username }}</a>
+        {% endfor %}
+      </small>
+      {% endif %}
+    {% endwith %}
   </td>
   <td>
     <div>{{ statistic.solving|floatformat:'-2' }}</div>
@@ -23,7 +41,7 @@
     {% endif %}
     </small>
   </td>
-  {% for field, _ in fields %}
+  {% for field in fields.keys %}
   <td>{% if field in statistic.addition %}{{ statistic.addition|get_item:field }}{% endif %}</td>
   {% endfor %}
   {% for problem in contest.info.problems|get_division_problems:params %}
@@ -51,7 +69,19 @@
             {% if stat.url %}</a>{% endif %}
           </div>
           {% if stat.extra_score is not None %}
-          <div class="inline">{% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}</div>
+            <div class="inline"
+              {% if stat.extra_info %}
+                data-toggle="tooltip"
+                data-placement="top"
+                data-html="true"
+                title="{% for info in stat.extra_info %}{{ info }}<br/>{% endfor %}"
+              {% endif %}
+            >
+            {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
+            </div>
+            {% if stat.extra_info %}
+              <script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
+            {% endif %}
           {% endif %}
         </div>
         {% if stat.time %}<small class="text-muted">{{ stat.time }}</small>{% endif %}

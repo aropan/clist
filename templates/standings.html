@@ -11,30 +11,73 @@
 
 <h3 class="text-center">
   <a href="{{ contest.standings_url }}">{{ contest.title }}</a>
-  {% if 'division' in contest.info.problems %}
-  {% with division=contest.info.problems|get_item:'division' %}
-  {% if division %}
-  <div class="btn-group">
-    {% for d in division %}
-    <a href="?division={{ d }}" class="btn btn-xs btn-default{% if params.division == d %} active disabled{% endif %}">Division {{ d }}</a>
-    {% endfor %}
-  </div>
-  {% endif %}
-  {% endwith %}
-  {% endif %}
 </h3>
 
 <div class="col-md-12 col-md-offset-0 col-lg-10 col-lg-offset-1">
-  <form method="get" action="">
-  <div class="input-group">
-    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to username" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-    <div class="input-group-btn">
-      <button class="btn btn-default" type="submit">
-        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-        Search
-      </button>
+  <form class="form-inline" method="get" action="">
+    <div class="form-group">
+
+      {% if 'division' in contest.info.problems %}
+      {% with division=contest.info.problems|get_item:'division' %}
+      {% if division %}
+      <div class="input-group input-group-sm">
+        <div class="input-group-addon">Division</div>
+        <select name="division" id="division" onchange="this.form.submit()">
+          {% for d in division %}
+          <option value="{{ d }}" {% if d == params.division %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <script>
+        $(function() {
+          $('#division').select2({
+            minimumResultsForSearch: -1,
+            theme: 'bootstrap',
+            width: 'auto',
+          })
+        })
+      </script>
+      {% endif %}
+      {% endwith %}
+      {% endif %}
+
+      <div class="input-group input-group-sm">
+        <input
+          type="search"
+          name="search"
+          value="{{ request.GET.search }}"
+          placeholder="Regex filter to username"
+          {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %}
+          autocomplete="off"
+          class="form-control"
+          style="min-width: 400px"
+        />
+
+        <div class="input-group-btn">
+          <button class="btn btn-default" type="submit">
+            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+            Search
+          </button>
+          {% if has_detail %}
+          <input
+            name="detail"
+            type="checkbox"
+            data-size="small"
+            data-toggle="toggle"
+            data-on="Detail"
+            data-off="Short"
+            data-onstyle="default"
+            data-offstyle="default"
+            onchange="this.form.submit()"
+            {% if request.GET.detail %}checked{% endif %}
+          >
+          {% endif %}
+        </div>
+      </div>
+
     </div>
-  </div>
+  </form>
+
   <br/>
 
   {% if statistics %}
@@ -45,7 +88,7 @@
         <th>Rank</th>
         <th class="handle-cell">Handle</th>
         <th>Score</th>
-        {% for _, field in fields %}
+        {% for field in fields.values %}
         <th>{{ field|title }}</th>
         {% endfor %}
         {% for problem in contest.info.problems|get_division_problems:params %}

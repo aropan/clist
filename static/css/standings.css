@@ -49,3 +49,8 @@ table.standings .handle-cell {
 .inline {
   display: inline;
 }
+
+.standings a.coder {
+  text-decoration: underline;
+  font-weight: bold;
+}

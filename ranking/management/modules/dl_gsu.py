@@ -86,7 +86,7 @@ class Statistic(BaseModule):
 
         result = {}
         for r in table:
-            row = {}
+            row = OrderedDict()
             problems = row.setdefault('problems', {})
             solved = 0
             for k, v in list(r.items()):
