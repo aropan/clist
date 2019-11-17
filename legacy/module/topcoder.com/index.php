@@ -227,19 +227,25 @@
         }
     }
 
-    if ($add_from_stats) {
-        foreach ($round_overview as $ro) {
-            $ds = explode('.', $ro['date']);
-            list($ds[0], $ds[1]) = array($ds[1], $ds[0]);
-            $date = implode('.', $ds);
-            $_contests[] = array(
-                "start_time" => $date,
-                "end_time" => $date,
-                "title" => $ro['title'],
-                "url" => $ro['url'],
-                "standings_url" => $ro['url']
-            );
+    foreach ($round_overview as $ro) {
+        $ds = explode('.', $ro['date']);
+        list($ds[0], $ds[1]) = array($ds[1], $ds[0]);
+        $date_str = implode('.', $ds);
+        if (!$add_from_stats) {
+            $now = time();
+            $date = strtotime($date_str);
+            if ($date < $now - 5 * 24 * 60 * 60 || $now - 1 * 24 * 60 * 60 < $date) {
+                continue;
+            }
         }
+
+        $_contests[] = array(
+            "start_time" => $date_str,
+            "end_time" => $date_str,
+            "title" => $ro['title'],
+            "url" => $ro['url'],
+            "standings_url" => $ro['url']
+        );
     }
 
     foreach ($_contests as $c) {
