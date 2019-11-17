@@ -50,40 +50,45 @@
     <td class="problem-cell">
       {% if not stat %}
         <small class="text-muted">—</small>
-      {% elif stat and stat.result is not None %}
-        <div>
-          <div
-            class="inline {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}acc{% elif stat.result|slice:":1" == "?" %}hid{% else %}rej{% endif %}"
-            {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}title="{{ stat.status }}"{% endif %}
-          >
-            {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
+      {% endif %}
+      <div>
+      {% if stat and stat.result is not None %}
+        <div
+          class="inline {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}acc{% elif stat.result|slice:":1" == "?" %}hid{% else %}rej{% endif %}"
+          {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}title="{{ stat.status }}"{% endif %}
+        >
+          {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
 
-            {% if stat.binary is not None %}
-              <i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i>
-            {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
-              {{ stat.result }}
-            {% else %}
-              {{ stat.result|floatformat:'-2' }}
-            {% endif %}
-
-            {% if stat.url %}</a>{% endif %}
-          </div>
-          {% if stat.extra_score is not None %}
-            <div class="inline"
-              {% if stat.extra_info %}
-                data-toggle="tooltip"
-                data-placement="top"
-                data-html="true"
-                title="{% for info in stat.extra_info %}{{ info }}<br/>{% endfor %}"
-              {% endif %}
-            >
-            {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
-            </div>
-            {% if stat.extra_info %}
-              <script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
-            {% endif %}
+          {% if stat.binary is not None %}
+            <i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i>
+          {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
+            {{ stat.result }}
+          {% else %}
+            {{ stat.result|floatformat:'-2' }}
           {% endif %}
+
+          {% if stat.url %}</a>{% endif %}
         </div>
+      {% endif %}
+
+      {% if stat and stat.extra_score is not None %}
+        <div class="inline"
+          {% if stat.extra_info %}
+            data-toggle="tooltip"
+            data-placement="top"
+            data-html="true"
+            title="{% for info in stat.extra_info %}{{ info }}<br/>{% endfor %}"
+          {% endif %}
+        >
+        {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
+        </div>
+        {% if stat.extra_info %}
+          <script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
+        {% endif %}
+      {% endif %}
+      </div>
+
+      {% if stat and stat.result is not None %}
         {% if stat.time %}<small class="text-muted">{{ stat.time }}</small>{% endif %}
       {% else %}
         {% if 'upsolving' in stat %}

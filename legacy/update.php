@@ -308,7 +308,9 @@
         $values .= ",'{}'";
         //$fields .= ",modified";
         //$values .= ",'$now'";
-        if (!DEBUG) {
+
+        $to_update = !DEBUG && (!isset($_GET['title']) || preg_match($_GET['title'], $contest['title']));
+        if ($to_update) {
             $db->query("INSERT INTO clist_contest ($fields) values ($values) ON CONFLICT (resource_id, key) DO UPDATE SET $update");
         }
 
@@ -320,6 +322,7 @@
         $duration_human = secs_to_h($contest['duration_in_secs']);
         echo "\t<span style='padding-left: 50px'>" .
             ($duplicate? "<i>duplicate</i> " : "") .
+            ($to_update? "" : "<i>skip</i> ") .
             "{$contest['title']} ({$contest['start_time']} | $duration_human) [{$contest['key']}]</span><br>\n";
     }
     if (count($updated_resources)) {
