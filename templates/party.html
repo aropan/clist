@@ -104,8 +104,8 @@
                             {% if forloop.first %}
                                 Total ranking
                             {% else %}
-                                <a href="{{ r.contest.standings_url|default:r.contest.url }}">{{ r.contest.title }}</a>
-                                <a href="http://{{ r.contest.host }}" class="small">{{ r.contest.host }}</a>
+                                <a href="{% url 'ranking:standings' r.contest.title|slug r.contest.pk %}?search=party:{{ party.slug }}">{{ r.contest.title }}</a>
+                                <a href="{{ r.contest.standings_url|default:r.contest.url }}" class="small">{{ r.contest.host }}</a>
                             {% endif %}
                         </h4>
                         {% if r.standings %}
