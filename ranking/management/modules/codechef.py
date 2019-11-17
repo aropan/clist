@@ -6,6 +6,7 @@ import time
 import json
 import traceback
 import tqdm
+import re
 from pprint import pprint
 
 from common import REQ, LOG
@@ -16,6 +17,7 @@ import conf
 
 
 class Statistic(BaseModule):
+    STANDINGS_URL_FORMAT_ = 'https://www.codechef.com/rankings/{key}'
     API_CONTEST_URL_FORMAT_ = 'https://www.codechef.com/api/contests/{key}'
     API_RANKING_URL_FORMAT_ = 'https://www.codechef.com/api/rankings/{key}?sortBy=rank&order=asc&page={page}&itemsPerPage={per_page}'  # noqa
 
@@ -25,23 +27,23 @@ class Statistic(BaseModule):
         self._password = conf.CODECHEF_PASSWORD
 
     def get_standings(self, users=None):
-        REQ.get('https://www.codechef.com/')
+        # REQ.get('https://www.codechef.com/')
 
-        try:
-            form = REQ.form()
-            form['post'].update({
-                'name': self._username,
-                'pass': self._password,
-            })
-            page = REQ.get(form['url'], post=form['post'])
+        # try:
+        #     form = REQ.form()
+        #     form['post'].update({
+        #         'name': self._username,
+        #         'pass': self._password,
+        #     })
+        #     page = REQ.get(form['url'], post=form['post'])
 
-            form = REQ.form()
-            if form['url'] == '/session/limit':
-                for field in form['unchecked'][:-1]:
-                    form['post'][field['name']] = field['value'].encode('utf8')
-                page = REQ.get(form['url'], post=form['post'])
-        except Exception:
-            pass
+        #     form = REQ.form()
+        #     if form['url'] == '/session/limit':
+        #         for field in form['unchecked'][:-1]:
+        #             form['post'][field['name']] = field['value'].encode('utf8')
+        #         page = REQ.get(form['url'], post=form['post'])
+        # except Exception:
+        #     pass
 
         url = self.API_CONTEST_URL_FORMAT_.format(**self.__dict__)
         page = REQ.get(url)
@@ -61,6 +63,11 @@ class Statistic(BaseModule):
         problems_info = dict() if len(contest_infos) > 1 else list()
 
         for key, contest_info in contest_infos.items():
+            url = self.STANDINGS_URL_FORMAT_.format(key=key)
+            page = REQ.get(url)
+            match = re.search('<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"', page)
+            csrf_token = match.group(1)
+
             n_page = 0
             per_page = 150
             n_total_page = None
@@ -80,12 +87,17 @@ class Statistic(BaseModule):
                     delay = 10
                     for _ in range(10):
                         try:
-                            page = REQ.get(url)
+                            headers = {
+                                'x-csrf-token': csrf_token,
+                                'x-requested-with': 'XMLHttpRequest',
+                            }
+                            page = REQ.get(url, headers=headers)
                             data = json.loads(page)
                             break
                         except Exception:
                             traceback.print_exc()
                             delay = min(300, delay * 2)
+                            sys.stdout.write(f'url = {url}\n')
                             sys.stdout.write(f'Sleep {delay}... ')
                             sys.stdout.flush()
                             time.sleep(delay)
@@ -161,6 +173,13 @@ class Statistic(BaseModule):
 
 if __name__ == "__main__":
     statictic = Statistic(
+        name='November Cook-Off 2019',
+        url='http://www.codechef.com/COOK112?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK112	',
+        key='COOK112',
+        standings_url=None,
+    )
+    pprint(statictic.get_result('vladik'))
+    statictic = Statistic(
         name='August Challenge 2019',
         url='https://www.codechef.com/AUG19?utm_source=contest_listing&utm_medium=link&utm_campaign=AUG19',
         key='AUG19',
@@ -173,10 +192,10 @@ if __name__ == "__main__":
         standings_url=None,
     )
     pprint(statictic.get_result('uwi'))
-    # statictic = Statistic(
-    #     name='February Cook-Off 2015',
-    #     url='https://www.codechef.com/COOK55?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK55',
-    #     key='COOK55',
-    #     standings_url=None,
-    # )
-    # pprint(statictic.get_result('aropan', 'mateusz95', 'ridowan007'))
+    statictic = Statistic(
+        name='February Cook-Off 2015',
+        url='https://www.codechef.com/COOK55?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK55',
+        key='COOK55',
+        standings_url=None,
+    )
+    pprint(statictic.get_result('aropan', 'mateusz95', 'ridowan007'))
