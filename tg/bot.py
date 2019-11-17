@@ -127,7 +127,7 @@ class Bot(telegram.Bot):
             if isinstance(s, argparse._SubParsersAction)
             for choice, subparser in list(s.choices.items())
         ) + '.' + '\n\n' + '*You can also use command with --help for more information.*'
-        if self.chat.chat_id == str(self.ADMIN_CHAT_ID):
+        if self.chat and self.chat.chat_id == str(self.ADMIN_CHAT_ID):
             yield self.get_commands()
 
     def list(self, args):
