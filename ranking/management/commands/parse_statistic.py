@@ -126,8 +126,7 @@ class Command(BaseCommand):
                         contest.save()
 
                     problems = standings.pop('problems', None)
-                    if problems \
-                       and self._canonize(problems) != self._canonize(contest.info.get('problems')):
+                    if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
                         contest.info['problems'] = problems
                         contest.save()
 
@@ -142,7 +141,8 @@ class Command(BaseCommand):
                             account, _ = Account.objects.get_or_create(resource=resource, key=member)
 
                             name = r.get('name')
-                            if name and account.name != name and member.find(name) == -1:
+                            no_update_name = r.pop('_no_update_name', False)
+                            if not no_update_name and name and account.name != name and member.find(name) == -1:
                                 account.name = name
                                 account.save()
 

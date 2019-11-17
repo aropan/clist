@@ -115,6 +115,7 @@ class Statistic(BaseModule):
                     if 'teamId' in party:
                         r['team_id'] = party['teamId']
                         r['name'] = f"{party['teamName']}: {r['name']}"
+                    r['_no_update_name'] = True
 
                 hack = row['successfulHackCount']
                 unhack = row['unsuccessfulHackCount']
