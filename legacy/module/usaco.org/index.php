@@ -8,36 +8,70 @@
     if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
     if (!isset($contests)) $contests = array();
 
+    $url = 'http://usaco.org/index.php?page=contests';
+    $page = curlexec($url);
+
+    preg_match_all('#<a[^>]*href="(?<url>[^"]*)"[^>]*>(?<name>[^<]*[0-9]{4}[^<]*Results)</a>#', $page, $matches, PREG_SET_ORDER);
+    $results = array();
+    foreach ($matches as $match) {
+        $k = implode(' ', array_slice(explode(' ', $match['name']), 0, 3));
+        $results[$k] = url_merge($url, $match['url']);
+    }
+
     $page = curlexec($URL);
 
     if (!preg_match('#(\d{4})-(\d{4}) Schedule#', $page, $match)) return;
     list(, $start_year, $end_year) = $match;
 
-    preg_match_all("#(?<month>[^\s]+)\s(?<start_date>\d+)-(?<end_date>\d+):(?<title>[^<]*)#", $page, $matches);
+    preg_match_all("#(?<start_time>[^\s]+\s\d+)-(?<end_time>(?:[^\s]+\s)?\d+):(?<title>[^<]*)#", $page, $matches, PREG_SET_ORDER);
 
-    if (count($matches[0]))
-        $mindate = strtotime("{$matches['month'][0]} {$matches['start_date'][0]}, $start_year");
+    if (count($matches)) {
+        $mindate = strtotime("{$matches[0]['start_time']}, $start_year");
+    }
 
-    foreach ($matches[0] as $i => $value)
+    foreach ($matches as $match)
     {
-        $year =
-            $mindate <= strtotime("{$matches['month'][$i]} {$matches['start_date'][$i]}, $start_year")?
-                $start_year : $end_year;
+        $date = strtotime("{$match['start_time']}, $start_year");
+        $year = $mindate <= $date? $start_year : $end_year;
 
-        $matches['end_date'][$i]++;
-        $start_time = "{$matches['month'][$i]} {$matches['start_date'][$i]}, $year";
-        $end_time = "{$matches['month'][$i]} {$matches['end_date'][$i]}, $year";
+        if (strpos($match['end_time'], ' ') === false) {
+            list($month, ) = explode(' ', $match['start_time']);
+            $match['end_time'] = $month . ' ' . $match['end_time'];
+        }
 
-        $contests[] = array(
+        $start_time = "{$match['start_time']}, $year";
+        $end_time = date('M j, Y', strtotime("{$match['end_time']}, $year") + 24 * 60 * 60);
+
+        $title = trim($match['title']);
+
+        $c = array(
             'start_time' => $start_time,
             'end_time' => $end_time,
             'duration_in_secs' => 4 * 60 * 60,
-            'title' => trim($matches['title'][$i]),
+            'title' => $title,
             'host' => $HOST,
             'url' => $URL,
             'timezone' => $TIMEZONE,
-            'key' => trim($matches['title'][$i]) . " $year",
+            'key' => $title . " " . $year,
             'rid' => $RID
         );
+
+        $keys = array(
+            date('Y F', strtotime($start_time)) . ' Contest',
+            date('Y', strtotime($start_time)) . ' ' . $title,
+        );
+        foreach ($keys as $k) {
+            if (isset($results[$k])) {
+                $c['standings_url'] = $results[$k];
+                unset($results[$k]);
+                break;
+            }
+        }
+
+        $contests[] = $c;
+    }
+
+    if ($RID == -1) {
+        print_r($contests);
     }
 ?>

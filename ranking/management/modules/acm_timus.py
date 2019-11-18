@@ -5,9 +5,10 @@ import collections
 import urllib.parse
 import re
 
+from first import first
+
 from common import REQ
 from common import BaseModule, parsed_table
-from first import first
 
 
 class Statistic(BaseModule):

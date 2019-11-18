@@ -22,6 +22,9 @@ class ParsedTableValue(object):
         self.row = row
         self.header = header
 
+    def __str__(self):
+        return self.value
+
 
 class ParsedTableCol(object):
 
@@ -33,6 +36,9 @@ class ParsedTableCol(object):
         self.value = ' '.join(texts)
         self.node = col
 
+    def __str__(self):
+        return f'attrs = {self.attrs}, value = {self.value}'
+
 
 class ParsedTableRow(object):
 
@@ -41,6 +47,9 @@ class ParsedTableRow(object):
         self.columns = list(map(ParsedTableCol, iter(row)))
         self.node = row
 
+    def __str__(self):
+        return f'attrs = {self.attrs}, columns = {list(map(str, self.columns))}'
+
 
 class ParsedTable(object):
 
@@ -48,6 +57,30 @@ class ParsedTable(object):
         self.table = etree.HTML(html).xpath(xpath)
         self.iter_table = iter(self.table)
         self.header = ParsedTableRow(next(self.iter_table))
+
+        rowspan = 1
+        for c in self.header.columns:
+            rowspan = max(rowspan, int(c.attrs.get('rowspan', 0)))
+
+        for rs in range(2, rowspan + 1):
+            nxt = next(self.iter_table)
+            row = ParsedTableRow(nxt)
+            iter_row = iter(row.columns)
+
+            columns = []
+            for c in self.header.columns:
+                if rs > int(c.attrs.get('rowspan', 0)):
+                    for cs in range(int(c.attrs.get('colspan', 1))):
+                        columns.append(next(iter_row))
+                else:
+                    columns.append(c)
+            self.header.columns = columns
+
+        columns = []
+        for c in self.header.columns:
+            for cs in range(int(c.attrs.get('colspan', 1))):
+                columns.append(c)
+        self.header.columns = columns
 
     def __iter__(self):
         return self

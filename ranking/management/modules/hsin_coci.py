@@ -55,7 +55,7 @@ class Statistic(BaseModule):
 
             member = None
             fields = []
-            problem_names = []
+            problems_data = []
 
             tds = re.findall(r'<t[hd][^>]*>(?P<td>.*?)<\/t[hd]>', match)
             idx = 0
@@ -71,7 +71,7 @@ class Statistic(BaseModule):
                     match = re.search('solutions/(?P<member>[^/]*)/', attrs['href'])
                     if match:
                         member = match.group('member')
-                        problem_names.append(i)
+                        problems_data.append((i, urllib.parse.urljoin(standings_url, attrs['href'])))
                 fields.append(value)
 
             if not header:
@@ -90,12 +90,13 @@ class Statistic(BaseModule):
             r['solving'] = int(float(row['SCORE']))
 
             problems = r.setdefault('problems', {})
-            for pn in problem_names:
+            for pn, url in problems_data:
                 short = header[pn][0]
                 value = row[header[pn]]
                 if re.match('^[0-9.]+$', value):
                     p = problems.setdefault(short, {})
                     p['result'] = value
+                    p['url'] = url
                     problems_max_score[short] = max(problems_max_score[short], float(p['result']))
 
         problems_max_score = dict(problems_max_score)

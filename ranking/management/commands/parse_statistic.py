@@ -10,6 +10,7 @@ from tqdm import tqdm
 from attrdict import AttrDict
 from datetime import timedelta
 from logging import getLogger
+from traceback import format_exc
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -195,11 +196,11 @@ class Command(BaseCommand):
                     count += 1
             except Exception as e:
                 self.logger.error(f'contest = {contest}, url = {contest.url}, error = {e}')
-                # self.logger.error(format_exc())
                 TimingContest.objects \
                     .filter(contest=contest) \
                     .update(statistic=timezone.now() + resource.module.delay_on_error)
                 if stop_on_error:
+                    self.logger.error(format_exc())
                     break
         self.logger.info(f'Parse statistic: {count} of {total}')
         return count, total

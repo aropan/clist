@@ -54,7 +54,15 @@
       <div>
       {% if stat and stat.result is not None %}
         <div
-          class="inline {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}acc{% elif stat.result|slice:":1" == "?" %}hid{% else %}rej{% endif %}"
+          class="inline
+          {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}
+            {% if stat.partial %}par{% else %}acc{% endif %}
+          {% elif stat.result|slice:":1" == "?" %}
+            hid
+          {% else %}
+            rej
+          {% endif %}
+          "
           {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}title="{{ stat.status }}"{% endif %}
         >
           {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
@@ -100,6 +108,8 @@
           {% endif %}
         </small>
         {% endif %}
+      {% endif %}
+      {% if not stat.time or not stat.result %}
         {% if stat.status %}<small class="text-muted">{{ stat.status }}</small>{% endif %}
       {% endif %}
     </td>

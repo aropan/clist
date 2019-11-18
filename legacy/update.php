@@ -240,7 +240,7 @@
         }
 
         foreach(
-            array('start_time', 'end_time', 'duration', 'url', 'title', 'key')
+            array('start_time', 'end_time', 'duration', 'url', 'title', 'key', 'standings_url')
             as $param
         ) {
             if (isset($contest[$param])) $contests[$i][$param] = trim($contest[$param]);

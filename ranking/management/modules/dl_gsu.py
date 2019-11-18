@@ -112,6 +112,8 @@ class Statistic(BaseModule):
                             max_score[k] = max(max_score[k], float(v.value))
                         except ValueError:
                             pass
+                elif k:
+                    row[k.strip()] = v.value.strip()
             result[row['member']] = row
         for r in result.values():
             solved = 0
@@ -150,18 +152,21 @@ if __name__ == '__main__':
 
     from django.utils import timezone
 
-    contest = Contest.objects \
+    qs = Contest.objects \
         .filter(host='dl.gsu.by', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
-        .order_by('start_time') \
-        .last()
-    contest.standings_url = None
+        .order_by('-start_time')
+    for contest in qs[:10]:
+        contest.standings_url = None
 
-    statistic = Statistic(
-        name=contest.title,
-        url=contest.url,
-        key=contest.key,
-        standings_url=contest.standings_url,
-        start_time=contest.start_time,
-    )
+        statistic = Statistic(
+            name=contest.title,
+            url=contest.url,
+            key=contest.key,
+            standings_url=contest.standings_url,
+            start_time=contest.start_time,
+        )
 
-    pprint(statistic.get_standings())
+        try:
+            pprint(statistic.get_standings())
+        except Exception:
+            pass

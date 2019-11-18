@@ -29,6 +29,11 @@ table.standings th {
   font-weight: bold;
 }
 
+.par {
+  color: #07f;
+  font-weight: bold;
+}
+
 table.standings .handle-cell {
   text-align: left;
 }
