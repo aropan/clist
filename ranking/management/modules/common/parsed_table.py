@@ -53,7 +53,8 @@ class ParsedTableRow(object):
 
 class ParsedTable(object):
 
-    def __init__(self, html, xpath='//table//tr'):
+    def __init__(self, html, xpath='//table//tr', as_list=False):
+        self.as_list = as_list
         self.table = etree.HTML(html).xpath(xpath)
         self.iter_table = iter(self.table)
         self.header = ParsedTableRow(next(self.iter_table))
@@ -92,10 +93,17 @@ class ParsedTable(object):
             if len(row.columns) == len(self.header.columns):
                 break
 
-        ret = OrderedDict()
+        kv = []
         for h, r in zip(self.header.columns, row.columns):
             k = h.value
             v = ParsedTableValue(row, r, h)
+            kv.append((k, v))
+
+        if self.as_list:
+            return kv
+
+        ret = OrderedDict()
+        for k, v in kv:
             if k in ret:
                 if not isinstance(ret[k], list):
                     ret[k] = [ret[k]]

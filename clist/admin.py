@@ -50,7 +50,8 @@ class ContestAdmin(BaseModelAdmin):
         ['Secury information', {'fields': ['key']}],
         ['Access time', {'fields': ['created', 'modified', 'updated']}],
     ]
-    list_display = ['title', 'host', 'start_time', 'url', 'invisible', 'key', 'standings_url']
+    list_display = [
+        'title', 'host', 'start_time', 'url', 'invisible', 'key', 'standings_url', 'created', 'modified', 'updated']
     search_fields = ['title', 'standings_url']
     list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'resource__host']
     date_hierarchy = 'start_time'
