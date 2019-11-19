@@ -329,7 +329,7 @@
         $query =
             'was_auto_added = true'
             . ' AND resource_id IN (' . implode(',', array_keys($updated_resources)) . ')'
-            . " AND start_time > now() AND now() - interval '1 day' > updated";
+            . " AND start_time > now() AND now() - interval '4 hours' > updated";
         $to_be_removed = $db->select("clist_contest", "*", $query);
         if ($to_be_removed) {
             $filename_log =  LOGREMOVEDDIR . date("Y-m-d_H-i-s", time()) . '.txt';
