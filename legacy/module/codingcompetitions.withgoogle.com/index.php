@@ -10,6 +10,7 @@
 
     $authorization = get_calendar_authorization();
     if (!$authorization) {
+        trigger_error("Not get calendar credentials", E_USER_WARNING);
         return;
     }
 
