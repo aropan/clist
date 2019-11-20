@@ -51,6 +51,7 @@
       {% if not stat %}
         <small class="text-muted">—</small>
       {% endif %}
+
       <div>
       {% if stat and stat.result is not None %}
         <div
@@ -78,7 +79,6 @@
           {% if stat.url %}</a>{% endif %}
         </div>
       {% endif %}
-
       {% if stat and stat.extra_score is not None %}
         <div class="inline"
           {% if stat.extra_info %}
@@ -96,22 +96,19 @@
       {% endif %}
       </div>
 
-      {% if stat and stat.result is not None %}
-        {% if stat.time %}<small class="text-muted">{{ stat.time }}</small>{% endif %}
-      {% else %}
-        {% if 'upsolving' in stat %}
-        <small class="text-muted">
-          {% if stat.upsolving.result|slice:":1" == "+" %}
-            {{ stat.upsolving.result }}
-          {% else %}
-            {{ stat.upsolving.result|floatformat:'-2' }}
-          {% endif %}
-        </small>
+      <small class="text-muted">
+      {% if stat and stat.result is not None and stat.time %}
+        {{ stat.time }}
+      {% elif stat.status %}
+        {{ stat.status }}
+      {% elif 'upsolving' in stat %}
+        {% if stat.upsolving.result|slice:":1" == "+" %}
+          {{ stat.upsolving.result }}
+        {% else %}
+          {{ stat.upsolving.result|floatformat:'-2' }}
         {% endif %}
       {% endif %}
-      {% if not stat.time or not stat.result %}
-        {% if stat.status %}<small class="text-muted">{{ stat.status }}</small>{% endif %}
-      {% endif %}
+      </small>
     </td>
     {% endwith %}
     {% endwith %}
