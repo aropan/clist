@@ -45,8 +45,11 @@ def profile(request, username, template='profile.html', extra_context=None):
             query = Q(contest__resource__host__iregex=search) | Q(contest__title__iregex=search)
             statistics = statistics.filter(query)
 
+    accounts = coder.account_set.select_related('resource')
+
     context = {
         'coder': coder,
+        'accounts': accounts,
         'statistics': statistics,
     }
 
@@ -517,6 +520,5 @@ def party(request, slug):
 
 def parties(request):
     parties = Party.objects.for_user(request.user).order_by('-created')
-    return render(request, "parties.html", {
-        "parties": parties,
-    })
+    parties = parties.prefetch_related('coders', 'rating_set')
+    return render(request, 'parties.html', {'parties': parties})

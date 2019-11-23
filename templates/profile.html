@@ -17,7 +17,7 @@
     {{ coder.user.username }}
   </h2>
   <h3>Accounts</h3>
-  {% for account in coder.account_set.all %}
+  {% for account in accounts %}
   <span class="account badge progress-bar-info">{{ account.key }} <a href="http://{{ account.resource.host }}"><small class="text-muted">{{ account.resource.host }}</small></a></span>
   {% endfor %}
   <h3>Contests</h3>

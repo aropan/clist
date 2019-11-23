@@ -19,7 +19,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     contests = Contest.objects \
         .annotate(has_statistics=Exists(Statistics.objects.filter(contest=OuterRef('pk')))) \
         .filter(has_statistics=True) \
-        .order_by('-end_time', 'title')
+        .order_by('-end_time', 'pk')
     search = request.GET.get('search')
     if search is not None:
         contests = contests.filter(Q(title__iregex=search) | Q(resource__host__iregex=search))
