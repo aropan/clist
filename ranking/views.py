@@ -4,7 +4,6 @@ from django.shortcuts import render
 from django.http import HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Exists, OuterRef
-from django.db.models.expressions import RawSQL
 from el_pagination.decorators import page_template
 
 
@@ -47,7 +46,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     order = ['place_as_int', '-solving']
     statistics = statistics \
-        .annotate(place_as_int=RawSQL("CAST(NULLIF(SPLIT_PART(place, '-', 1), '') AS INTEGER)", ())) \
         .select_related('account') \
         .prefetch_related('account__coders')
 

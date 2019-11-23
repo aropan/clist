@@ -57,17 +57,14 @@ class Command(BaseCommand):
         while True:
             parser_command.parse_statistic([contest], with_check=False)
             statistics = Statistics.objects.filter(contest=contest)
-            for stat in statistics:
-                match = re.search('^[0-9]+', stat.place)
-                stat.addition['place_as_int'] = int(match.group(0)) if match else -1
 
             updated = False
             has_hidden = False
             numbered = 0
-            for stat in sorted(statistics, key=lambda s: s.addition['place_as_int']):
+            for stat in sorted(statistics, key=lambda s: s.place_as_int):
                 filtered = True
                 if args.query is not None and not re.search(args.query, stat.account.key, re.I):
-                    if args.top is None or stat.addition['place_as_int'] > args.top:
+                    if args.top is None or stat.place_as_int > args.top:
                         filtered = False
                 message_id = None
                 key = stat.account.id
