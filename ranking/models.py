@@ -59,6 +59,10 @@ class Statistics(BaseModel):
         verbose_name_plural = 'Statistics'
         unique_together = ('account', 'contest')
 
+        indexes = [
+            models.Index(fields=['place_as_int', '-solving'])
+        ]
+
 
 @receiver(models.signals.pre_save, sender=Statistics)
 def statistics_pre_save(sender, instance, *args, **kwargs):
