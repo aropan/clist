@@ -60,7 +60,7 @@ class Statistics(BaseModel):
         unique_together = ('account', 'contest')
 
         indexes = [
-            models.Index(fields=['place_as_int', '-solving'])
+            models.Index(fields=['place_as_int', '-solving']),
         ]
 
 

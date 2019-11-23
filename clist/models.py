@@ -51,6 +51,12 @@ class Contest(models.Model):
     class Meta:
         unique_together = ('resource', 'key', )
 
+        indexes = [
+            models.Index(fields=['start_time']),
+            models.Index(fields=['end_time']),
+        ]
+
+
     def save(self, *args, **kwargs):
         if self.duration_in_secs is None:
             self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
