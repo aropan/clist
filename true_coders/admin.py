@@ -6,8 +6,8 @@ from events.models import Participant
 
 @admin_register(Coder)
 class CoderAdmin(BaseModelAdmin):
-    search_fields = ['user__username', 'settings']
-    list_display = ['user', 'timezone', 'settings']
+    search_fields = ['username', 'settings']
+    list_display = ['username', 'timezone', 'settings']
     list_filter = ['party', 'account__resource']
 
     def clean_settings(self, request, queryset):

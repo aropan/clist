@@ -1,7 +1,7 @@
 <div class="list-group-item">
   <strong class="name">
     {{ participant.first_name }}
-    <a href="{% url 'coder:profile' participant.coder.user.username %}">{{ participant.coder.user.username }}</a>
+    <a href="{% url 'coder:profile' participant.coder.username %}">{{ participant.coder.username }}</a>
     {{ participant.last_name }}
   </strong>
   {% if participant.team %}

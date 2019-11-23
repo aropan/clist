@@ -17,7 +17,7 @@
     {% for p in team.participants.all %}
     <li>
         {{ p.first_name }}
-        <a href="{% url 'coder:profile' p.coder.user.username %}">{{ p.coder.user.username }}</a>
+        <a href="{% url 'coder:profile' p.coder.username %}">{{ p.coder.username }}</a>
         {{ p.last_name }}
     </li>
     {% endfor %}
@@ -31,7 +31,7 @@
     <li>
         <form method="post" class="form-inline">{% csrf_token %}
             {{ r.participant.first_name }}
-            <a href="{% url 'coder:profile' r.participant.coder.user.username %}">{{ r.participant.coder.user.username }}</a>
+            <a href="{% url 'coder:profile' r.participant.coder.username %}">{{ r.participant.coder.username }}</a>
             {{ r.participant.last_name }}
             {% if team.author == participant %}
             <input type="hidden" name="request_id" value="{{ r.id }}">

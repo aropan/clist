@@ -27,11 +27,11 @@
 <span class="badge progress-bar-info">{{ resource.contest_set.all.count }} contest(s)</span>
 
 <h3>Coders</h3>
-{% if accounts %}
+{% if accounts.exists %}
     <div class="coders list">
     {% for a in accounts|slice:":42" %}
         {% for c in a.coders.all %}
-            <a class="badge" href="{% url 'coder:profile' c.user.username %}">{{ a.key }}</a>
+            <a class="badge" href="{% url 'coder:profile' c.username %}">{{ a.key }}</a>
         {% endfor %}
     {% endfor %}
     {% if accounts.count > 42 %}

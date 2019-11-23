@@ -93,11 +93,14 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             else:
                 break
 
+    per_page = 50
+
     context = {
         'contest': contest,
         'statistics': statistics,
         'params': params,
         'fields': fields,
+        'per_page': per_page,
         'with_row_num': bool(search),
         'has_detail': has_detail,
     }

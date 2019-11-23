@@ -13,6 +13,7 @@ from pyclist.models import BaseModel, BaseManager
 
 class Coder(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    username = models.CharField(max_length=255, unique=True)
     first_name_native = models.CharField(max_length=255, blank=True)
     last_name_native = models.CharField(max_length=255, blank=True)
     middle_name_native = models.CharField(max_length=255, blank=True)
@@ -23,7 +24,11 @@ class Coder(BaseModel):
     phone_number = PhoneNumberField(blank=True)
 
     def __str__(self):
-        return "%s" % (self.user.username)
+        return "%s" % (self.username)
+
+    def save(self, *args, **kwargs):
+        self.username = self.user.username
+        return super().save(*args, **kwargs)
 
     @property
     def chat(self):
