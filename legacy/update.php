@@ -266,6 +266,15 @@
         //$contest['start_time'] -= $timezone_offset;
         //$contest['end_time'] -= $timezone_offset;
 
+        $contest['title'] = strip_tags(html_entity_decode($contest['title']));
+        $contest['title'] = preg_replace_callback(
+            "/(&#[0-9]+;)/",
+            function($m) {
+                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+            },
+            $contest['title']
+        );
+
         if (time() + 365 * 24 * 60 * 60 < $contest['end_time']) continue;
         if (!DEBUG && !isset($_GET['skip_check_time'])) {
             if ($contest['end_time'] < $contest['start_time']) continue;
