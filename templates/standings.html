@@ -78,6 +78,7 @@
         </div>
       </div>
 
+      {% if 'country' in contest.info.fields %}
       <div class="input-group input-group-sm">
         <div class="input-group-addon">Country</div>
         <select name="country" id="country" onchange="this.form.submit()" multiple>
@@ -121,6 +122,7 @@
           })
         })
       </script>
+      {% endif %}
 
     </div>
   </form>

@@ -279,6 +279,14 @@ TELEGRAM_ADMIN_CHAT_ID = conf.TELEGRAM_ADMIN_CHAT_ID
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
+COUNTRIES_OVERRIDE = {
+    'CZ': {'names': ['Czechia', 'Czech Republic']},
+    'MK': {'names': ['North Macedonia', 'Macedonia']},
+    'PS': {'names': ['Palestine, State of', 'Palestine']},
+    'KR': {'names': ['South Korea', 'Republic of Korea']},
+    'MO': {'names': ['Macao', 'Macau']},
+}
+
 # DJANGO DEBUG TOOLBAR
 if DEBUG:
     MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)

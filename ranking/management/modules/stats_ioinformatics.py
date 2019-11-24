@@ -50,6 +50,8 @@ class Statistic(BaseModule):
                     member = url.strip('/').split('/')[-1]
                     row['member'] = member
                     row['name'] = v.value
+                elif k == 'Country':
+                    row['country'] = re.sub('\s*[0-9]+$', '', v.value)
                 else:
                     row[k] = v.value
             result[row['member']] = row

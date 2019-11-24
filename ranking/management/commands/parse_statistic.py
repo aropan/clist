@@ -100,7 +100,9 @@ class Command(BaseCommand):
             contests = list(contests)
             shuffle(contests)
 
-        countries_name = {name: code for code, name in countries}
+        countries_name = {name.lower(): code for code, name in countries}
+        countries_name.update({countries.alpha3(code): code for code, name in countries})
+        missed_countries = set()
 
         count = 0
         total = 0
@@ -115,6 +117,8 @@ class Command(BaseCommand):
             plugin = self._get_plugin(resource.module)
             total += 1
             try:
+                r = {}
+
                 statistic = plugin.Statistic(
                     name=contest.title,
                     url=contest.url,
@@ -150,9 +154,12 @@ class Command(BaseCommand):
                                 account.name = name
                                 account.save()
 
-                            country = r.pop('country', None)
-                            if country and len(country) > 3:
-                                country = countries_name.get(country)
+                            country = r.get('country', None)
+                            if country and len(country) > 2:
+                                c = countries_name.get(country.lower())
+                                if not c:
+                                    missed_countries.add(country)
+                                country = c
                             if country and country != account.country:
                                 account.country = country
                                 account.save()
@@ -205,13 +212,16 @@ class Command(BaseCommand):
                 if 'result' in standings:
                     count += 1
             except Exception as e:
-                self.logger.error(f'contest = {contest}, url = {contest.url}, error = {e}')
+                url = contest.standings_url or contest.url
+                self.logger.error(f'contest = {contest}, url = {url}, error = {e}, row = {r}')
                 TimingContest.objects \
                     .filter(contest=contest) \
                     .update(statistic=timezone.now() + resource.module.delay_on_error)
                 if stop_on_error:
                     self.logger.error(format_exc())
                     break
+        if missed_countries:
+            self.logger.warning(f'Missed countries = {missed_countries}')
         self.logger.info(f'Parse statistic: {count} of {total}')
         return count, total
 

@@ -51,6 +51,7 @@ class Statistic(BaseModule):
                     r['member'] = handle
                     r['place'] = row.pop('rank')
                     r['solving'] = row.pop('score')
+                    r['country'] = row.pop('country_code', row.pop('country_name', None))
 
                     solved = 0
                     problems = r.setdefault('problems', {})
