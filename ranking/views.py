@@ -67,6 +67,12 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         else:
             statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
 
+    countries = request.GET.getlist('country')
+    countries = [c for c in countries if c]
+    if countries:
+        statistics = statistics.filter(account__country__in=countries)
+        params['countries'] = set(countries)
+
     contest_fields = contest.info.get('fields', [])
 
     if 'team_id' in contest_fields:
@@ -78,8 +84,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     fields = OrderedDict()
     for k, v in (
-        ('penalty', 'penalty'),
-        ('total_time', 'time'),
+        ('penalty', 'Penalty'),
+        ('total_time', 'Time'),
     ):
         if k in contest_fields:
             fields[k] = v
@@ -89,7 +95,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         if k not in fields and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges']:
             has_detail = True
             if request.GET.get('detail'):
-                fields[k] = ' '.join(k.split('_'))
+                field = ' '.join(k.split('_'))
+                if not field[0].isupper():
+                    field = field.title()
+                fields[k] = field
             else:
                 break
 
@@ -101,7 +110,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'params': params,
         'fields': fields,
         'per_page': per_page,
-        'with_row_num': bool(search),
+        'with_row_num': bool(search or countries),
+        'start_num': (int(request.GET.get('page', '1')) - 1) * per_page,
         'has_detail': has_detail,
     }
 

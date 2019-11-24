@@ -28,7 +28,7 @@ class HasCoders(admin.SimpleListFilter):
 
 @admin_register(Account)
 class AccountAdmin(BaseModelAdmin):
-    list_display = ['resource', 'key', 'name', '_num_coders']
+    list_display = ['resource', 'key', 'name', 'country', '_num_coders']
     search_fields = ['key__iregex', 'name__iregex']
     list_filter = [HasCoders, 'resource__host']
 

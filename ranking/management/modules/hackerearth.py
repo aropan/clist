@@ -135,6 +135,7 @@ if __name__ == "__main__":
     from django.utils import timezone
 
     contests = Contest.objects \
+        .filter(title__regex='CodeStar Contest #1') \
         .filter(host='hackerearth.com', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('-start_time') \
 

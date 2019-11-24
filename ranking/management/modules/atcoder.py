@@ -35,16 +35,19 @@ class Statistic(BaseModule):
         for row in rows:
             if not row['TaskResults']:
                 continue
-            handle = row['UserScreenName']
+            handle = row.pop('UserScreenName')
             r = result.setdefault(handle, {})
             r['member'] = handle
-            r['place'] = row['Rank']
-            r['penalty'] = row['TotalResult']['Elapsed'] // 10**9
-            r['solving'] = row['TotalResult']['Score'] / 100.
+            r['place'] = row.pop('Rank')
+            total_result = row.pop('TotalResult')
+            r['penalty'] = total_result['Elapsed'] // 10**9
+            r['solving'] = total_result['Score'] / 100.
+            r['country'] = row.pop('Country')
 
             problems = r.setdefault('problems', {})
             solving = 0
-            for k, v in row['TaskResults'].items():
+            task_results = row.pop('TaskResults', {})
+            for k, v in task_results.items():
                 if 'Score' not in v:
                     continue
                 letter = task_info[k]['short']
@@ -63,6 +66,8 @@ class Statistic(BaseModule):
                 else:
                     p['result'] = f"-{v['Failure']}"
             r['solved'] = {'solving': solving}
+            row.update(r)
+            r.update(row)
 
         standings = {
             'result': result,

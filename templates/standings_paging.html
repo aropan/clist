@@ -7,9 +7,16 @@
 <tr>
   <td>
     {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
-    {% if with_row_num %}({{ forloop.counter }}){% endif %}
+    {% if with_row_num %}({{ forloop.counter|add:start_num }}){% endif %}
   </td>
   <td class="handle-cell">
+    {% with country=statistic.account.country %}
+      {% if country %}
+      <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}">
+        <img class="flag flag-{{ country.code|lower }}"/>
+      </a>
+      {% endif %}
+    {% endwith %}
     {% with coders=statistic.account.coders.all %}
       {% if coders|length == 1 %}
         {% for c in coders %}
@@ -18,7 +25,7 @@
       {% endif %}
 
       {% if statistic.addition.name %}
-        <div title="{{ statistic.account.key }}">{{ statistic.addition.name }}</div>
+        <span title="{{ statistic.account.key }}">{{ statistic.addition.name }}</span>
       {% else %}
         {{ statistic.account.key }}
       {% endif %}
@@ -28,11 +35,11 @@
       {% endif %}
 
       {% if coders|length > 1 %}
-      <small>
+      <div class="small">
         {% for c in coders %}
           <a href="{% url 'coder:profile' c.username %}" class="coder">{{ c.username }}</a>
         {% endfor %}
-      </small>
+      </div>
       {% endif %}
     {% endwith %}
   </td>
@@ -101,7 +108,7 @@
       </div>
 
       <small class="text-muted">
-      {% if stat and stat.result is not None and stat.time %}
+      {% if stat and stat.result is not None and stat.result|asfloat:0 >= 0 and stat.time %}
         {{ stat.time }}
       {% elif stat.status %}
         {{ stat.status }}

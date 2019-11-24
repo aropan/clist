@@ -162,6 +162,9 @@ def change(request):
             return HttpResponseBadRequest("invalid email")
         user.email = value
         user.save()
+    elif name == "country":
+        coder.country = value
+        coder.save()
     elif name == "filter":
         try:
             field = "Filter id"

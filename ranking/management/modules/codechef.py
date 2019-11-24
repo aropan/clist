@@ -155,7 +155,9 @@ class Statistic(BaseModule):
                                         v[t] = f'-{penalty}'
 
                                 problems[k] = v
-
+                        country = d.pop('country_code')
+                        if country:
+                            d['country'] = country
                         row.update(d)
                         row.update(contest_info)
                     pbar.set_description(f'key={key} url={url}')
@@ -185,7 +187,7 @@ if __name__ == "__main__":
         key='AUG19',
         standings_url=None,
     )
-    pprint(statictic.get_result('luma'))
+    pprint(statictic.get_result('lumc_'))
     statictic = Statistic(
         url='https://www.codechef.com/COOK109?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK109',
         key='COOK109',

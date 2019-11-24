@@ -2,6 +2,7 @@
 {% load extras %}
 {% load jsonify %}
 {% load crispy_forms_tags %}
+{% load countries %}
 
 {% block title %}Settings{% endblock %}
 
@@ -15,6 +16,8 @@
 
 <link href="{% static_ts 'css/settings.css' %}" rel="stylesheet">
 
+<link href="{% static_ts 'flags/flags.min.css' %}" rel=stylesheet type="text/css">
+
 <script>
     $.fn.editable.defaults.pk = {{ coder.id }}
     emails = [ {{ coder.token_set|get_emails }} ]
@@ -24,6 +27,9 @@
 
     ACCOUNTS_RESOURCES = [ {% for m in modules %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ m.resource.id }}', 'text': '{{ m.resource.host }}'}{% endfor %} ]
     ACCOUNTS = [ {% for a in coder.account_set_order_by_pk %}{% if forloop.counter0 %}, {% endif %}{{ a.dict|jsonify }}{% endfor %} ]
+
+    {% get_countries as countries %}
+    COUNTRIES = { {% for c in countries %}{% if forloop.counter0 %}, {% endif %} '{{ c.code }}': '{{ c.name }}' {% endfor %} }
 </script>
 
 <script src="{% static_ts 'js/settings/main.js' %}"></script>
@@ -131,6 +137,9 @@
                 <i rel="tooltip" title="Selected from connected oauth accounts."></i>
             </div>
             <div class="value"><a href="#" id="email" data-value="{{ coder.user.email }}"></a></div>
+
+            <div class="key">Country</div>
+            <div class="value"><a href="#" id="country" data-value="{{ coder.country.code }}"></a></div>
 
             <div class="key">OAuth</div>
             <div class="value">

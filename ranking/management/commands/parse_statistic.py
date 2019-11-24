@@ -16,6 +16,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q, F, Count
+from django_countries import countries
 
 from ranking.models import Statistics, Account
 from clist.models import Contest, TimingContest
@@ -64,7 +65,7 @@ class Command(BaseCommand):
 
         if with_check:
             if previous_days is not None:
-                contests = contests.filter(end_time__gt=now - timedelta(days=previous_days))
+                contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
             else:
                 contests = contests.distinct('id')
                 contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
@@ -98,6 +99,8 @@ class Command(BaseCommand):
         if random_order:
             contests = list(contests)
             shuffle(contests)
+
+        countries_name = {name: code for code, name in countries}
 
         count = 0
         total = 0
@@ -145,6 +148,13 @@ class Command(BaseCommand):
                             no_update_name = r.pop('_no_update_name', False)
                             if not no_update_name and name and account.name != name and member.find(name) == -1:
                                 account.name = name
+                                account.save()
+
+                            country = r.pop('country', None)
+                            if country and len(country) > 3:
+                                country = countries_name.get(country)
+                            if country and country != account.country:
+                                account.country = country
                                 account.save()
 
                             defaults = {

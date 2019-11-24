@@ -94,6 +94,29 @@ $(function() {
         showbuttons: false,
     })
 
+    $('#country').editable({
+        type: 'select',
+        source: COUNTRIES,
+        showbuttons: false,
+    }).on('shown', function(e, editable){
+        editable.input.$input.select2({
+            width: 300,
+            placeholder: 'Select country',
+            val: editable.input.$input.val(),
+            templateResult: function (data) {
+                var $result = $('<span></span>')
+                $result.text(data.text)
+                if (data.id) {
+                    var code = data.id.toLowerCase()
+                    $result.prepend('<img class="flag flag-' + code + '"/>&nbsp;')
+                }
+                return $result
+            },
+            minimumInputLength: 0
+        });
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+    })
+
     var Filter = function (options) {
         this.init('filter', options, Filter.defaults)
     }

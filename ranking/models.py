@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from true_coders.models import Coder, Party
 from clist.models import Contest, Resource
 from django.contrib.postgres.fields import JSONField
+from django_countries.fields import CountryField
 
 
 class Account(BaseModel):
@@ -13,6 +14,7 @@ class Account(BaseModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     key = models.CharField(max_length=1024, null=False, blank=False)
     name = models.CharField(max_length=1024, null=True, blank=True)
+    country = CountryField(null=True, blank=True)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource))
@@ -67,7 +69,7 @@ class Statistics(BaseModel):
 @receiver(models.signals.pre_save, sender=Statistics)
 def statistics_pre_save(sender, instance, *args, **kwargs):
     if instance.place is not None:
-        match = re.search('[0-9]+', instance.place)
+        match = re.search('[0-9]+', str(instance.place))
         if match:
             instance.place_as_int = int(match.group(0))
 
