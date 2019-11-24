@@ -52,6 +52,8 @@ class Statistic(BaseModule):
                     row['member'] = member
                 else:
                     row[k.lower()] = v.value
+            if 'member' not in row:
+                continue
             result[row['member']] = row
 
         standings = {
