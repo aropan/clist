@@ -19,7 +19,7 @@ from django.db.models import Q, F, Count
 from django_countries import countries
 
 from ranking.models import Statistics, Account
-from clist.models import Contest, TimingContest
+from clist.models import Contest, Resource, TimingContest
 
 
 class Command(BaseCommand):
@@ -233,7 +233,8 @@ class Command(BaseCommand):
             if len(args.resources) == 1:
                 contests = Contest.objects.filter(resource__module__resource__host__iregex=args.resources[0])
             else:
-                contests = Contest.objects.filter(resource__module__resource__host__in=args.resources)
+                resources = [Resource.objects.get(host__iregex=r) for r in args.resources]
+                contests = Contest.objects.filter(resource__module__resource__host__in=resources)
         else:
             contests = Contest.objects.filter(resource__module__min_delay_after_end__gt=timedelta())
 
