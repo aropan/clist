@@ -38,9 +38,12 @@ table.standings .handle-cell {
   text-align: left;
 }
 
-.standings .header-row th {
-  position: sticky;
-  top: 0;
+.standings th {
+  border: none !important;
+}
+
+.standings th.header-score {
+  border-left: 1px solid #d0d0d0 !important;
 }
 
 .standings a {

@@ -285,6 +285,7 @@ COUNTRIES_OVERRIDE = {
     'PS': {'names': ['Palestine, State of', 'Palestine']},
     'KR': {'names': ['South Korea', 'Republic of Korea']},
     'MO': {'names': ['Macao', 'Macau']},
+    'US': {'names': ['United States of America', 'United States', 'America']},
 }
 
 # DJANGO DEBUG TOOLBAR

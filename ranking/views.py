@@ -50,13 +50,25 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         .prefetch_related('account__coders')
 
     params = {}
-    if 'division' in contest.info.get('problems', {}):
+    problems = contest.info.get('problems', {})
+    if 'division' in problems:
         division = request.GET.get(
             'division',
             sorted(contest.info['problems']['division'].keys())[0],
         )
         params['division'] = division
         statistics = statistics.filter(addition__division=division)
+        problems = problems[division]
+
+    last = None
+    merge_problems = False
+    for p in problems:
+        if last and 'name' in last and last.get('name') == p.get('name') and last.get('full_score'):
+            merge_problems = True
+            last['colspan'] = last.get('colspan', 1) + 1
+            p['skip'] = True
+        else:
+            last = p
 
     search = request.GET.get('search')
     if search:
@@ -107,12 +119,15 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     context = {
         'contest': contest,
         'statistics': statistics,
+        'problems': problems,
         'params': params,
         'fields': fields,
         'per_page': per_page,
         'with_row_num': bool(search or countries),
         'start_num': (int(request.GET.get('page', '1')) - 1) * per_page,
         'has_detail': has_detail,
+        'merge_problems': merge_problems,
+        'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
     }
 
     if extra_context is not None:

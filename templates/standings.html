@@ -12,7 +12,7 @@
 {% block content %}
 
 <h3 class="text-center">
-  <a href="{{ contest.standings_url }}">{{ contest.title }}</a>
+  Standings <a href="{{ contest.standings_url }}">{{ contest.title }}</a>
 </h3>
 
 <div class="col-md-12 col-md-offset-0 col-lg-10 col-lg-offset-1">
@@ -134,25 +134,36 @@
   <div class="panel panel-default table-responsive">
     <table class="standings table table-hover table-striped table-condensed">
       <tr class="header-row">
-        <th>Rank</th>
-        <th class="handle-cell">Handle</th>
-        <th>Score</th>
+        <th{% if merge_problems %} rowspan="2"{% endif %}>Rank</th>
+        <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">Handle</th>
+        <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
         {% for field in fields.values %}
-        <th>{{ field }}</th>
+        <th{% if merge_problems %} rowspan="2"{% endif %}>{{ field }}</th>
         {% endfor %}
-        {% for problem in contest.info.problems|get_division_problems:params %}
-        <th title="{{ problem|get_problem_name }}" class="problem-cell">
+
+        {% for problem in problems %}
+        {% if not problem.skip %}
+        <th title="{{ problem|get_problem_name }}" class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
           <div>
           {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
-          {{ problem|get_problem_short|truncatechars:10 }}
+          {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
           {% if problem.url %}</a>{% endif %}
           </div>
-          {% if problem.full_score %}
+          {% if not merge_problems and problem.full_score %}
             <small>{{ problem.full_score|floatformat }}</small>
           {% endif %}
         </th>
+        {% endif %}
         {% endfor %}
       </tr>
+      {% if merge_problems %}
+      <tr style="background: #f9f9f9">
+        {% for problem in problems %}
+        <th{% if problem.colspan %} class="header-score"{% endif %}><small>{{ problem.full_score|floatformat }}</small></th>
+        {% endfor %}
+      </tr>
+      <tr></tr>
+      {% endif %}
       {% include page_template %}
     </table>
   </div>

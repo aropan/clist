@@ -55,7 +55,7 @@
   {% for field in fields.keys %}
   <td>{% if field in statistic.addition %}{{ statistic.addition|get_item:field }}{% endif %}</td>
   {% endfor %}
-  {% for problem in contest.info.problems|get_division_problems:params %}
+  {% for problem in problems %}
     {% with key=problem|get_problem_key  %}
     {% with stat=statistic.addition.problems|get_item:key %}
     <td class="problem-cell">

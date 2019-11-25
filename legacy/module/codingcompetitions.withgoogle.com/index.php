@@ -26,6 +26,9 @@
         }
     }
     $js_urls = array_unique($js_urls);
+    if ($RID == -1) {
+        print_r($js_urls);
+    }
 
     $calendar_ids = array();
     $competitions = array();
@@ -42,8 +45,64 @@
                 $calendar_ids[] = base64_decode($m['cid']);
             }
         }
+
+        if (isset($_GET['parse_full_list_2019'])) {
+            preg_match_all("/{title:'(?P<title>[^']*)',([^{\[]*year:'(?!2019)[0-9]+'.*?)?rounds:(?P<rounds>\[{[^\]]*}\])}/s", $page, $matches, PREG_SET_ORDER);
+            foreach ($matches as $match) {
+                $title = $match['title'];
+                $title = preg_replace('/[0-9]{4}/', '', $title);
+                $title = preg_replace('/google/i', '', $title);
+                $title = trim($title);
+                $rounds = $match['rounds'];
+                $rounds = strtr($rounds, "'", '"');
+                $rounds = preg_replace('/([{,])([a-z]+):/', '\1"\2":', $rounds);
+                $rounds = json_decode($rounds, true);
+                foreach ($rounds as $r) {
+                    if (isset($r['id'])) {
+                        $key = $r['id'];
+                        if (strlen($key) == 16) {
+                            $u = strtolower(implode('', explode(' ', $title)));
+                            $r['problems'] = "https://codingcompetitions.withgoogle.com/$u/round/$key";
+                            $r['scores'] = "https://codingcompetitions.withgoogle.com/$u/round/$key";
+                        }
+                    } else {
+                        preg_match('/[0-9]+[0-9a-z]*/', $r['scores'], $m);
+                        $key = $m[0];
+                    }
+
+                    $t = $r['title'];
+                    $t = preg_replace('/[0-9]{4}/', '', $t);
+                    $t = preg_replace('/Distributed/i', '', $t);
+                    foreach (explode(' ', $title) as $w) {
+                        $t = preg_replace("#$w#i", '', $t);
+                    }
+                    $t = trim($t);
+                    if (empty($t)) {
+                        $t = $title;
+                    } else {
+                        $t = "$title. $t";
+                    }
+
+                    $contests[] = array(
+                        'start_time' => $r['date'],
+                        'duration' => $r['duration'],
+                        'title' => $t,
+                        'url' => $r['problems'],
+                        'host' => $HOST,
+                        'rid' => $RID,
+                        'standings_url' => $r['scores'],
+                        'timezone' => $TIMEZONE,
+                        'key' => $key,
+                    );
+                }
+            }
+        }
     }
+
     $calendar_ids = array_unique($calendar_ids);
+    if ($RID == -1) {
+        print_r($calendar_ids);
+    }
 
     $url = 'https://codejam.googleapis.com/poll?p=e30';
     $page = curlexec($url, NULL, array('no_header' => true));
