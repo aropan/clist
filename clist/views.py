@@ -3,7 +3,7 @@ from datetime import timedelta
 import arrow
 import pytz
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import F, Q, Count, OuterRef, Subquery, IntegerField
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -224,11 +224,15 @@ def main(request):
 
 
 def resources(request):
-    resources = Resource.objects.all()
-    context = {
-        'resources': resources,
-    }
-    return render(request, 'resources.html', context)
+    contests = Resource.objects.annotate(n_contests=Count('contest')).filter(pk=OuterRef('pk'))
+    accounts = Resource.objects.annotate(n_accounts=Count('account')).filter(pk=OuterRef('pk'))
+    resources = Resource.objects.select_related('module').annotate(
+        n_contests=Subquery(contests.values('n_contests'), output_field=IntegerField()),
+        n_accounts=Subquery(accounts.values('n_accounts'), output_field=IntegerField()),
+    )
+    resources = resources.annotate(priority=F('n_accounts') + F('n_contests'))
+    resources = resources.order_by('-priority')
+    return render(request, 'resources.html', {'resources': resources})
 
 
 def resource(request, host):

@@ -28,8 +28,8 @@
             parse statistic
         </span>
         {% endif %}
-        <span class="badge progress-bar-info">{{ resource.contest_set.all.count }} contest(s)</span>
-        <span class="badge">{{ resource.account_set.all.count }} accounts(s)</span>
+        <span class="badge progress-bar-info">{{ resource.n_contests }} contest(s)</span>
+        <span class="badge">{{ resource.n_accounts }} accounts(s)</span>
     </div>
     {% endfor %}
 </div>
