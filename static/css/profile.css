@@ -1,5 +1,7 @@
-#contests {
-    text-align: center;
+#contests td,
+#contests th {
+  text-align: center;
+  vertical-align: middle !important;
 }
 
 #contests .title {
@@ -9,16 +11,6 @@
 #contests .endless_container {
     margin-right: -15px;
     margin-left: -15px;
-}
-
-#contests>div:first-child {
-    border-top: 1px solid #c9c9c9;
-}
-
-#contests>div {
-    border-bottom: 1px solid #c9c9c9;
-    border-left: 1px solid #c9c9c9;
-    border-right: 1px solid #c9c9c9;
 }
 
 .contest>div {

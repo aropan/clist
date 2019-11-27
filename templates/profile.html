@@ -37,13 +37,16 @@
   </div>
 
   {% if statistics.exists %}
-  <div class="container" id="contests">
-    <div class="row contest header">
-      <div class="rank col-xs-1">Rank</div>
-      <div class="solving col-xs-1">Score</div>
-      <div class="title col-xs-10">Event</div>
-    </div>
-    {% include page_template %}
+  <div class="panel panel-default table-responsive">
+    <table id="contests" class="table table-hover table-striped table-condensed">
+      <tr>
+        <th>Rank</th>
+        <th>Score</th>
+        <th>Time</th>
+        <th class="title">Event</th>
+      </tr>
+      {% include page_template %}
+    </table>
   </div>
   <script>$.endlessPaginate({paginateOnScroll: true});</script>
   {% else %}
