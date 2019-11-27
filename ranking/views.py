@@ -58,7 +58,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         )
         params['division'] = division
         statistics = statistics.filter(addition__division=division)
-        problems = problems[division]
+        problems = problems['division'][division]
 
     last = None
     merge_problems = False

@@ -1,8 +1,9 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "http://russianaicup.ru/";
+    if (!isset($URL)) $URL = "https://russianaicup.ru/?locale=en";
     if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
+    if (!isset($HOST_URL)) $HOST_URL = $URL;
     if (!isset($RID)) $RID = -1;
     if (!isset($LANG)) $LANG = 'RU';
     if (!isset($TIMEZONE)) $TIMEZONE = 'Europe/Moscow';
@@ -15,23 +16,7 @@
     }
     list($title, $year) = explode(" ", $match[1], 2);
 
-    $amonths = array("января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря");
-    $replace_pairs = array();
-    foreach ($amonths as $ind => $month)
-    {
-        $ind = sprintf("%02d", $ind + 1);
-        $replace_pairs[" $month"] = ".$ind." . (intval($year) + ($ind < 3? 1 : 0));
-    }
-    $page = strtr($page, $replace_pairs);
-
-    preg_match_all("#
-        <strong>(?P<title>[^<]*)</strong>:
-        [^0-9\.]+(?P<start_time>[0-9\.]*[0-9])
-        #xi",
-        $page,
-        $matches,
-        PREG_SET_ORDER
-    );
+    preg_match_all("#<strong>(?P<title>[^<]*)</strong>:\s*(?P<start_time>[^.]*)\.<#xi", $page, $matches, PREG_SET_ORDER);
 
     if (preg_match('#<h[^>]*class="[^"]*alignRight[^"]*"[^>]*>(?<title>[^:]*)#', $page, $match)) {
         $rtitle = $match['title'];
@@ -45,11 +30,22 @@
         $round = $match['title'];
         $start_time = isset($rtitle) && $round == $rtitle? $rtime : $match['start_time'];
 
+        if (preg_match('#[0-9]+\s*-\s*[0-9]+#', $start_time)) {
+            $end_time = preg_replace('#[0-9]+\s*-\s*([0-9]+)#', '\1', $start_time);
+            $start_time = preg_replace('#([0-9]+)\s*-\s*[0-9]+#', '\1', $start_time);
+        } else {
+            $end_time = $start_time;
+        }
+
+        if (substr_count($start_time, " ") > 5) {
+            continue;
+        }
+
         $contests[] = array(
             'start_time' => $start_time,
-            'duration' => '00:00',
+            'end_time' => $end_time,
             'title' => $title . '. ' . $round,
-            'url' => $URL,
+            'url' => $HOST_URL,
             'host' => $HOST,
             'key' => $title . '. ' . $round,
             'rid' => $RID,

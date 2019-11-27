@@ -52,6 +52,7 @@
         $preCountContests = count($contests);
         if ($resource['path'])
         {
+            $HOST_URL = $resource['url'];
             $URL = $parse_url;
             $HOST = $resource['host'];
             $RID = $resource['id'];
@@ -59,6 +60,7 @@
 
             include $resource['path'];
 
+            unset($HOST_URL);
             unset($URL);
             unset($HOST);
             unset($RID);
