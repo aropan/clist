@@ -108,10 +108,12 @@
       </div>
 
       <small class="text-muted">
-      {% if stat and stat.result is not None and stat.result|asfloat:0 >= 0 and stat.time %}
-        {{ stat.time }}
-      {% elif stat.status %}
+      {% if stat and stat.status and stat.time %}
+        {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
+      {% elif stat and stat.status %}
         {{ stat.status }}
+      {% elif stat and stat.time %}
+        {{ stat.time }}
       {% elif 'upsolving' in stat %}
         {% if stat.upsolving.result|slice:":1" == "+" %}
           {{ stat.upsolving.result }}

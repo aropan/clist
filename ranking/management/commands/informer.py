@@ -53,7 +53,7 @@ class Command(BaseCommand):
 
         parser_command = ParserCommand()
 
-        iteration = 0
+        iteration = 1 if args.dump else 0
         while True:
             parser_command.parse_statistic([contest], with_check=False)
             statistics = Statistics.objects.filter(contest=contest)
@@ -67,7 +67,7 @@ class Command(BaseCommand):
                     if args.top is None or stat.place_as_int > args.top:
                         filtered = False
                 message_id = None
-                key = stat.account.id
+                key = str(stat.account.id)
                 if key in standings:
                     problems = standings[key]['problems']
                     message_id = standings[key].get('messageId')
