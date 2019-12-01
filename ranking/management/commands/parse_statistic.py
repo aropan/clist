@@ -167,10 +167,7 @@ class Command(BaseCommand):
                                 account.save()
 
                             problems = r.get('problems', {})
-                            calc_time = (
-                                (contest.calculate_time or contest.start_time <= now < contest.end_time)
-                                and 'division' not in problems
-                            )
+                            calc_time = contest.calculate_time or contest.start_time <= now < contest.end_time
 
                             defaults = {
                                 'place': r.pop('place', None),

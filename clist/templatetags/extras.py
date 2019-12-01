@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from os import path
 from collections import OrderedDict
 from collections.abc import Iterable
@@ -10,6 +10,7 @@ from django import template
 from django.urls import reverse
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.utils.timezone import now
 from django.template.defaultfilters import stringfilter, slugify
 import pytz
 
@@ -86,6 +87,8 @@ def hr_timedelta(delta):
 
 @register.filter
 def countdown(timer):
+    if isinstance(timer, datetime):
+        timer = (timer - now()).total_seconds()
     timer = int(timer)
     h = timer // 3600
     m = timer % 3600 // 60
