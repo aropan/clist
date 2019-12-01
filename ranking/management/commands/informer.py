@@ -49,12 +49,11 @@ class Command(BaseCommand):
 
         problems_info = standings.setdefault('__problems_info', {})
 
-        contest = Contest.objects.get(pk=args.cid)
-
         parser_command = ParserCommand()
 
         iteration = 1 if args.dump else 0
         while True:
+            contest = Contest.objects.get(pk=args.cid)
             parser_command.parse_statistic([contest], with_check=False)
             statistics = Statistics.objects.filter(contest=contest)
 
@@ -62,10 +61,11 @@ class Command(BaseCommand):
             has_hidden = False
             numbered = 0
             for stat in sorted(statistics, key=lambda s: s.place_as_int):
-                filtered = True
-                if args.query is not None and not re.search(args.query, stat.account.key, re.I):
-                    if args.top is None or stat.place_as_int > args.top:
-                        filtered = False
+                filtered = False
+                if args.query is not None and re.search(args.query, stat.account.key, re.I):
+                    filtered = True
+
+                to_save = False
                 message_id = None
                 key = str(stat.account.id)
                 if key in standings:
@@ -74,21 +74,27 @@ class Command(BaseCommand):
                     p = []
                     has_update = False
                     has_first_ac = False
-                    for k, v in list(stat.addition.get('problems', {}).items()):
+                    for k, v in stat.addition.get('problems', {}).items():
                         p_info = problems_info.setdefault(k, {})
-                        r = problems.get(k, {}).get('result')
+                        p_result = problems.get(k, {}).get('result')
                         result = v['result']
                         is_hidden = result.startswith('?')
-                        is_accepted = result.startswith('+')
-                        if r != result or is_hidden:
+                        try:
+                            is_accepted = result.startswith('+')
+                            is_accepted = is_accepted or float(result) > 0
+                        except Exception:
+                            pass
+                        if p_result != result or is_hidden:
                             m = '%s%s %s' % (k, ('. ' + v['name']) if 'name' in v else '', result)
 
-                            if r != result:
+                            if p_result != result:
                                 m = '*%s*' % m
                                 has_update = True
                                 if iteration and is_accepted and not p_info.get('accepted'):
                                     m += ' FIRST ACCEPTED'
                                     has_first_ac = True
+                                if is_accepted and args.top and stat.place_as_int <= args.top:
+                                    filtered = True
                             p.append(m)
                         if result.startswith('+'):
                             p_info['accepted'] = True
@@ -116,6 +122,10 @@ class Command(BaseCommand):
                                 bot.delete_message(chat_id=args.tid, message_id=message_id)
                             message = bot.send_message(msg=msg, chat_id=args.tid)
                             message_id = message.message_id
+
+                    if to_save:
+                        stat.save()
+
                 standings[key] = {
                     'solving': stat.solving,
                     'problems': stat.addition.get('problems', {}),

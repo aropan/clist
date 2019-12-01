@@ -125,6 +125,7 @@ class Command(BaseCommand):
                     key=contest.key,
                     standings_url=contest.standings_url,
                     start_time=contest.start_time,
+                    end_time=contest.end_time,
                 )
                 standings = statistic.get_standings()
 
@@ -163,6 +164,11 @@ class Command(BaseCommand):
                             if country and country != account.country:
                                 account.country = country
                                 account.save()
+
+                            # problems = r.get('problems', {})
+                            # if 'division' not in problems and contest.start_time <= now < contest.end_time:
+                            #     total_seconds = (now - contest.start_time).total_seconds
+                            #     for k, v in problems.items():
 
                             defaults = {
                                 'place': r.pop('place', None),

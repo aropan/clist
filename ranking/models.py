@@ -50,12 +50,7 @@ class Statistics(BaseModel):
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return '%d on $d = %d + %d' % (
-            self.account_id,
-            self.contest_id,
-            self.solving,
-            self.upsolving,
-        )
+        return f'{self.account_id} on {self.contest_id} = {self.solving} + {self.upsolving}'
 
     class Meta:
         verbose_name_plural = 'Statistics'
