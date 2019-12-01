@@ -9,6 +9,11 @@
     {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
     {% if with_row_num %}({{ forloop.counter|add:start_num }}){% endif %}
   </td>
+  {% if only_first %}
+  {% with info=only_first|get_item:statistic.id %}
+  <td>{% if info %}{{ info.n }}{% else %}<small class="text-muted">—</small>{% endif %}</td>
+  {% endwith %}
+  {% endif %}
   <td class="handle-cell">
     {% with country=statistic.account.country %}
       {% if country %}

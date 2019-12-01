@@ -139,6 +139,9 @@
     <table class="standings table table-hover table-striped table-condensed">
       <tr class="header-row">
         <th{% if merge_problems %} rowspan="2"{% endif %}>Rank</th>
+        {% if only_first %}
+        <th{% if merge_problems %} rowspan="2"{% endif %}>1st U</th>
+        {% endif %}
         <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">Handle</th>
         <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
         {% for field in fields.values %}

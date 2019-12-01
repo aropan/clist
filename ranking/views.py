@@ -1,3 +1,4 @@
+import re
 from collections import OrderedDict
 
 from django.shortcuts import render
@@ -70,15 +71,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         else:
             last = p
 
-    search = request.GET.get('search')
-    if search:
-        if search.startswith('party:'):
-            _, party_slug = search.split(':')
-            party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
-            statistics = statistics.filter(account__coders__party__pk=party.pk)
-        else:
-            statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
-
     countries = request.GET.getlist('country')
     countries = [c for c in countries if c]
     if countries:
@@ -114,9 +106,32 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             else:
                 break
 
-    per_page = 50
+    options = contest.info.get('standings', {})
+    per_page = options.get('per_page', 50)
+
+    only_first_regex = options.get('only_first_regex')
+    only_first = {}
+    if only_first_regex:
+        seen = set()
+        for s in statistics:
+            match = re.search(only_first_regex, s.account.key)
+            k = match.group('key')
+            if k in seen:
+                continue
+            seen.add(k)
+            only_first[s.id] = {'n': len(seen)}
+
+    search = request.GET.get('search')
+    if search:
+        if search.startswith('party:'):
+            _, party_slug = search.split(':')
+            party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
+            statistics = statistics.filter(account__coders__party__pk=party.pk)
+        else:
+            statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
 
     context = {
+        'only_first': only_first,
         'contest': contest,
         'statistics': statistics,
         'problems': problems,

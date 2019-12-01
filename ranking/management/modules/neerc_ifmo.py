@@ -44,7 +44,7 @@ class Statistic(BaseModule):
                     if 'title' in v.attrs:
                         problems_info[k]['name'] = v.attrs['title']
 
-                    if '-' in v.value or '+' in v.value:
+                    if '-' in v.value or '+' in v.value or '?' in v.value:
                         p = problems.setdefault(k, {})
                         if ' ' in v.value:
                             point, time = v.value.split()
@@ -74,9 +74,9 @@ class Statistic(BaseModule):
 if __name__ == "__main__":
     from datetime import datetime
     statictic = Statistic(
-        name='ICPC 2018-2019, NEERC - Northern Eurasia Finals',
-        standings_url='http://neerc.ifmo.ru/archive/2005/eastern/standings.html',
-        key='2018-2019 NEERC',
+        name='ICPC 2019-2020, NEERC - Northern Eurasia Finals',
+        standings_url='http://neerc.ifmo.ru/archive/2019/standings.html',
+        key='2019-2020 NEERC',
         start_time=datetime.strptime('2005-09-02', '%Y-%m-%d'),
     )
     pprint(statictic.get_standings())
