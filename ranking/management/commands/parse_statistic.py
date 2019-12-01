@@ -40,6 +40,7 @@ class Command(BaseCommand):
         parser.add_argument('-c', '--no-check-timing', action='store_true', help='no check timing statistic')
         parser.add_argument('-o', '--only-new', action='store_true', default=False, help='parse without statistics')
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
+        parser.add_argument('--calculate_time', action='store_true', default=False, help='calculate time')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
 
@@ -60,7 +61,8 @@ class Command(BaseCommand):
                         with_check=True,
                         stop_on_error=False,
                         random_order=False,
-                        no_update_results=False):
+                        no_update_results=False,
+                        calculate_time=False):
         now = timezone.now()
 
         if with_check:
@@ -165,17 +167,17 @@ class Command(BaseCommand):
                                 account.country = country
                                 account.save()
 
-                            # problems = r.get('problems', {})
-                            # if 'division' not in problems and contest.start_time <= now < contest.end_time:
-                            #     total_seconds = (now - contest.start_time).total_seconds
-                            #     for k, v in problems.items():
+                            problems = r.get('problems', {})
+                            calc_time = calculate_time and 'division' not in problems
 
                             defaults = {
                                 'place': r.pop('place', None),
                                 'solving': r.pop('solving', 0),
                                 'upsolving': r.pop('upsolving', 0),
-                                'addition': dict(r),
                             }
+
+                            if not calc_time:
+                                defaults['addition'] = dict(r)
 
                             statistic, created = Statistics.objects.update_or_create(
                                 account=account,
@@ -185,6 +187,27 @@ class Command(BaseCommand):
 
                             if not created:
                                 ids.remove(statistic.pk)
+
+                                if calc_time:
+                                    p_problems = statistic.addition.get('problems', {})
+
+                                    ts = int((now - contest.start_time).total_seconds())
+                                    time = f'{ts // 60}:{ts % 60:02}'
+
+                                    for k, v in problems.items():
+                                        p = p_problems.get(k, {})
+                                        if 'time' in v:
+                                            continue
+                                        if contest.end_time < now:
+                                            if 'time' not in p:
+                                                continue
+                                            time = p['time']
+                                        if v['result'] != p.get('result'):
+                                            v['time'] = time
+
+                            if calc_time:
+                                statistic.addition = dict(r)
+                                statistic.save()
 
                             for k in r:
                                 if k not in fields_set:
@@ -257,4 +280,5 @@ class Command(BaseCommand):
             random_order=args.random_order,
             no_update_results=args.no_update_results,
             freshness_days=args.freshness_days,
+            calculate_time=args.calculate_time,
         )

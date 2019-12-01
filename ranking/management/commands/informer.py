@@ -54,7 +54,7 @@ class Command(BaseCommand):
         iteration = 1 if args.dump else 0
         while True:
             contest = Contest.objects.get(pk=args.cid)
-            parser_command.parse_statistic([contest], with_check=False)
+            parser_command.parse_statistic([contest], with_check=False, calculate_time=True)
             statistics = Statistics.objects.filter(contest=contest)
 
             updated = False
@@ -65,7 +65,6 @@ class Command(BaseCommand):
                 if args.query is not None and re.search(args.query, stat.account.key, re.I):
                     filtered = True
 
-                to_save = False
                 message_id = None
                 key = str(stat.account.id)
                 if key in standings:
@@ -122,9 +121,6 @@ class Command(BaseCommand):
                                 bot.delete_message(chat_id=args.tid, message_id=message_id)
                             message = bot.send_message(msg=msg, chat_id=args.tid)
                             message_id = message.message_id
-
-                    if to_save:
-                        stat.save()
 
                 standings[key] = {
                     'solving': stat.solving,
