@@ -5,6 +5,7 @@ import os
 import re
 import time
 import json
+import subprocess
 
 from attrdict import AttrDict
 
@@ -53,6 +54,8 @@ class Command(BaseCommand):
 
         iteration = 1 if args.dump else 0
         while True:
+            subprocess.call('clear', shell=True)
+
             contest = Contest.objects.get(pk=args.cid)
             parser_command.parse_statistic([contest], with_check=False, calculate_time=True)
             statistics = Statistics.objects.filter(contest=contest)
