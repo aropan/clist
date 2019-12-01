@@ -45,7 +45,7 @@ class ComingContestListFilter(SimpleListFilter):
 @admin_register(Contest)
 class ContestAdmin(BaseModelAdmin):
     fieldsets = [
-        [None, {'fields': ['title', 'resource', 'host', 'url', 'standings_url', 'info', 'invisible']}],
+        [None, {'fields': ['title', 'resource', 'host', 'url', 'standings_url', 'calculate_time', 'info', 'invisible']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
         ['Access time', {'fields': ['created', 'modified', 'updated']}],

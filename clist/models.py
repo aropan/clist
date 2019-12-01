@@ -38,6 +38,7 @@ class Contest(models.Model):
     edit = models.CharField(max_length=100, null=True, blank=True)
     invisible = models.BooleanField(default=False)
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
+    calculate_time = models.BooleanField(default=False)
     info = JSONField(default=dict, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -55,7 +56,6 @@ class Contest(models.Model):
             models.Index(fields=['start_time']),
             models.Index(fields=['end_time']),
         ]
-
 
     def save(self, *args, **kwargs):
         if self.duration_in_secs is None:

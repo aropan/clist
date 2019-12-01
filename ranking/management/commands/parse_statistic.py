@@ -40,7 +40,6 @@ class Command(BaseCommand):
         parser.add_argument('-c', '--no-check-timing', action='store_true', help='no check timing statistic')
         parser.add_argument('-o', '--only-new', action='store_true', default=False, help='parse without statistics')
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
-        parser.add_argument('--calculate_time', action='store_true', default=False, help='calculate time')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
 
@@ -61,8 +60,7 @@ class Command(BaseCommand):
                         with_check=True,
                         stop_on_error=False,
                         random_order=False,
-                        no_update_results=False,
-                        calculate_time=False):
+                        no_update_results=False):
         now = timezone.now()
 
         if with_check:
@@ -146,6 +144,7 @@ class Command(BaseCommand):
                         fields_set = set()
                         fields = list()
 
+                        calculate_time = False
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc='update results'):
                             member = r.pop('member')
@@ -168,7 +167,10 @@ class Command(BaseCommand):
                                 account.save()
 
                             problems = r.get('problems', {})
-                            calc_time = calculate_time and 'division' not in problems
+                            calc_time = (
+                                (contest.calculate_time or contest.start_time <= now < contest.end_time)
+                                and 'division' not in problems
+                            )
 
                             defaults = {
                                 'place': r.pop('place', None),
@@ -195,14 +197,17 @@ class Command(BaseCommand):
                                     time = f'{ts // 60}:{ts % 60:02}'
 
                                     for k, v in problems.items():
+                                        if '?' in v.get('result', ''):
+                                            calculate_time = True
                                         p = p_problems.get(k, {})
                                         if 'time' in v:
                                             continue
-                                        if contest.end_time < now:
+                                        has_change = v.get('result') != p.get('result')
+                                        if not has_change or contest.end_time < now:
                                             if 'time' not in p:
                                                 continue
-                                            time = p['time']
-                                        if v['result'] != p.get('result'):
+                                            v['time'] = p['time']
+                                        else:
                                             v['time'] = time
 
                             if calc_time:
@@ -226,6 +231,10 @@ class Command(BaseCommand):
                             contest.save()
 
                         progress_bar.set_postfix(fields=str(fields))
+
+                    if calculate_time and not contest.calculate_time:
+                        contest.calculate_time = True
+                        contest.save()
 
                     action = standings.get('action')
                     if action is not None:
@@ -280,5 +289,4 @@ class Command(BaseCommand):
             random_order=args.random_order,
             no_update_results=args.no_update_results,
             freshness_days=args.freshness_days,
-            calculate_time=args.calculate_time,
         )

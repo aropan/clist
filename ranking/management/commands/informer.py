@@ -57,7 +57,7 @@ class Command(BaseCommand):
             subprocess.call('clear', shell=True)
 
             contest = Contest.objects.get(pk=args.cid)
-            parser_command.parse_statistic([contest], with_check=False, calculate_time=True)
+            parser_command.parse_statistic([contest], with_check=False)
             statistics = Statistics.objects.filter(contest=contest)
 
             updated = False
