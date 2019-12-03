@@ -4,8 +4,11 @@ import re
 from pprint import pprint
 from collections import OrderedDict
 
+from requester import FailOnGetResponse
+
 from common import REQ, BaseModule, parsed_table
 from excepts import InitModuleException
+from neerc_ifmo_helper import parse_xml
 
 
 class Statistic(BaseModule):
@@ -22,6 +25,12 @@ class Statistic(BaseModule):
 
         result = {}
         problems_info = OrderedDict()
+
+        try:
+            standings_xml = REQ.get(self.standings_url.replace('.html', '.xml'), detect_charsets=False)
+            xml_result = parse_xml(standings_xml)
+        except FailOnGetResponse:
+            xml_result = {}
 
         page = REQ.get(self.standings_url)
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
@@ -61,6 +70,8 @@ class Statistic(BaseModule):
                 elif k.lower() in ['place', 'rank']:
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():
+                    if xml_result:
+                        problems.update(xml_result[v.value])
                     row['member'] = v.value + ' ' + season
                     row['name'] = v.value
                 else:

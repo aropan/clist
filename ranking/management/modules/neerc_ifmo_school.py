@@ -6,7 +6,10 @@ from datetime import datetime
 from pprint import pprint
 from collections import OrderedDict
 
+from requester import FailOnGetResponse
+
 from common import REQ, DOT, SPACE, BaseModule, parsed_table
+from neerc_ifmo_helper import parse_xml
 
 
 class Statistic(BaseModule):
@@ -21,6 +24,12 @@ class Statistic(BaseModule):
 
         if not self.standings_url:
             return {}
+
+        try:
+            standings_xml = REQ.get(self.standings_url.replace('.html', '.xml'), detect_charsets=False)
+            xml_result = parse_xml(standings_xml)
+        except FailOnGetResponse:
+            xml_result = {}
 
         page = REQ.get(self.standings_url)
 
@@ -57,6 +66,8 @@ class Statistic(BaseModule):
                 else:
                     c = mapping_key.get(c, c)
                     row[c] = v.value
+                    if xml_result and c == 'name':
+                        problems.update(xml_result[v.value])
             if 'penalty' not in row:
                 row['name'] = re.sub(r'\s*\([^\)]*\)\s*$', '', row['name'])
                 solved = [p for p in list(problems.values()) if p['result'] == '100']
@@ -84,6 +95,11 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
+    statictic = Statistic(
+        standings_url='http://neerc.ifmo.ru/school/io/archive/20120129/standings-20120129-individual.html',
+        start_time=datetime.strptime('20120129', '%Y%m%d'),
+    )
+    pprint(statictic.get_standings())
     statictic = Statistic(
         standings_url='http://neerc.ifmo.ru/school/io/archive/20190324/standings-20190324-individual.html',
         start_time=datetime.strptime('20190324', '%Y%m%d'),
