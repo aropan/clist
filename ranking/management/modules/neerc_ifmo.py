@@ -74,6 +74,7 @@ class Statistic(BaseModule):
                         row['medal'] = 'silver'
                     elif medal in ['Б', 'B']:
                         row['medal'] = 'bronze'
+                    break
             result[row['member']] = row
 
         standings = {
