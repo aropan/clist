@@ -6,9 +6,11 @@ import re
 import time
 import json
 import subprocess
+import logging
 
 from attrdict import AttrDict
 
+import coloredlogs
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 
@@ -16,8 +18,13 @@ from clist.models import Contest
 from ranking.models import Statistics
 
 from tg.bot import Bot
+from tg.bot import telegram
 
 from .parse_statistic import Command as ParserCommand
+
+
+logger = logging.getLogger(__name__)
+coloredlogs.install(logger=logger)
 
 
 class Command(BaseCommand):
@@ -120,10 +127,19 @@ class Command(BaseCommand):
 
                     if filtered and has_update or has_first_ac:
                         if not args.dryrun:
-                            if message_id:
-                                bot.delete_message(chat_id=args.tid, message_id=message_id)
-                            message = bot.send_message(msg=msg, chat_id=args.tid)
-                            message_id = message.message_id
+                            for _ in range(1, 5):
+                                try:
+                                    if message_id:
+                                        bot.delete_message(chat_id=args.tid, message_id=message_id)
+                                    message = bot.send_message(msg=msg, chat_id=args.tid)
+                                    message_id = message.message_id
+                                except telegram.error.TimedOut as e:
+                                    logger.warning(str(e))
+                                    time.sleep(_ * 3)
+                                    continue
+                                except telegram.error.BadRequest as e:
+                                    logger.error(str(e))
+                                    break
 
                 standings[key] = {
                     'solving': stat.solving,

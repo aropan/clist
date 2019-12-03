@@ -134,11 +134,7 @@ class Command(BaseCommand):
                         contest.standings_url = standings['url']
                         contest.save()
 
-                    problems = standings.pop('problems', None)
-                    if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
-                        contest.info['problems'] = problems
-                        contest.save()
-
+                    d_problems = {}
                     if not no_update_results:
                         result = standings.get('result', {})
                         fields_set = set()
@@ -167,6 +163,20 @@ class Command(BaseCommand):
                                 account.save()
 
                             problems = r.get('problems', {})
+                            for k, v in problems.items():
+                                if 'result' not in v:
+                                    continue
+                                ac = str(v['result']).startswith('+')
+                                try:
+                                    result = float(v['result'])
+                                    ac = ac or result > 0 and not v.get('partial', False)
+                                except Exception:
+                                    pass
+                                p = d_problems.setdefault(k, {})
+                                if ac:
+                                    p['n_accepted'] = p.get('n_accepted', 0) + 1
+                                p['n_teams'] = p.get('n_teams', 0) + 1
+
                             calc_time = contest.calculate_time or contest.start_time <= now < contest.end_time
 
                             defaults = {
@@ -228,6 +238,14 @@ class Command(BaseCommand):
                             contest.save()
 
                         progress_bar.set_postfix(fields=str(fields))
+
+                    problems = standings.pop('problems', None)
+                    for p in problems:
+                        if 'short' in p:
+                            p.update(d_problems.get(p['short'], {}))
+                    if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
+                        contest.info['problems'] = problems
+                        contest.save()
 
                     if calculate_time and not contest.calculate_time:
                         contest.calculate_time = True

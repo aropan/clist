@@ -1,9 +1,10 @@
 import re
 from collections import OrderedDict
+from itertools import accumulate
 
 from django.shortcuts import render
 from django.http import HttpResponseNotFound
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q, Exists, OuterRef
 from el_pagination.decorators import page_template
 
@@ -39,6 +40,13 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
 @page_template('standings_paging.html')
 def standings(request, title_slug, contest_id, template='standings.html', extra_context=None):
+    search = request.GET.get('search')
+    if search == '':
+        url = request.get_full_path()
+        url = re.sub('search=&?', '', url)
+        url = re.sub(r'\?$', '', url)
+        return redirect(url)
+
     contest = get_object_or_404(Contest, pk=contest_id)
     if slug(contest.title) != title_slug:
         return HttpResponseNotFound(f'Not found {slug(contest.title)} slug')
@@ -94,10 +102,9 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         if k in contest_fields:
             fields[k] = v
 
-    has_detail = False
+    has_detail = True
     for k in contest_fields:
         if k not in fields and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges']:
-            has_detail = True
             if request.GET.get('detail'):
                 field = ' '.join(k.split('_'))
                 if not field[0].isupper():
@@ -109,17 +116,31 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     options = contest.info.get('standings', {})
     per_page = options.get('per_page', 50)
 
-    only_first_regex = options.get('only_first_regex')
-    only_first = {}
-    if only_first_regex:
-        seen = set()
+    data_1st_u = options.get('1st_u')
+    if data_1st_u:
+        infos = data_1st_u.setdefault('infos', {})
+        seen = {}
         for s in statistics:
-            match = re.search(only_first_regex, s.account.key)
+            match = re.search(data_1st_u['regex'], s.account.key)
             k = match.group('key')
+
+            solving = s.solving
+            penalty = s.addition.get('penalty')
             if k in seen:
+                info = infos[seen[k]]
+                infos[s.id] = {
+                    'solving': info['solving'] - solving,
+                    'penalty': info['penalty'] - penalty if penalty is not None else None,
+                }
                 continue
-            seen.add(k)
-            only_first[s.id] = {'n': len(seen)}
+            seen[k] = s.id
+            infos[s.id] = {'n': len(seen), 'solving': solving, 'penalty': penalty}
+
+    medals = options.get('medals')
+    if medals:
+        names = [m['name'] for m in medals]
+        counts = [m['count'] for m in medals]
+        medals = list(zip(names, accumulate(counts)))
 
     search = request.GET.get('search')
     if search:
@@ -131,7 +152,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
 
     context = {
-        'only_first': only_first,
+        'data_1st_u': data_1st_u,
+        'medals': medals,
         'contest': contest,
         'statistics': statistics,
         'problems': problems,
@@ -143,6 +165,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'has_detail': has_detail,
         'merge_problems': merge_problems,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
+        'with_detail': 'detail' in request.GET,
     }
 
     if extra_context is not None:

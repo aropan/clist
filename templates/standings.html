@@ -20,9 +20,8 @@
 {% endif %}
 
 <div class="container">
-  <form class="form-inline" method="get" action="">
+  <form id="standings-form" class="form-inline" method="get" action="">
     <div class="form-group">
-
       {% if 'division' in contest.info.problems %}
       {% with division=contest.info.problems|get_item:'division' %}
       {% if division %}
@@ -52,7 +51,7 @@
         <input
           type="search"
           name="search"
-          value="{{ request.GET.search }}"
+          {% if request.GET.search %}value="{{ request.GET.search }}"{% endif %}
           placeholder="Regex filter to username"
           {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %}
           autocomplete="off"
@@ -76,7 +75,7 @@
             data-onstyle="default"
             data-offstyle="default"
             onchange="this.form.submit()"
-            {% if request.GET.detail %}checked{% endif %}
+            {% if with_detail %}checked{% endif %}
           >
           {% endif %}
         </div>
@@ -139,10 +138,15 @@
     <table class="standings table table-hover table-striped table-condensed">
       <tr class="header-row">
         <th{% if merge_problems %} rowspan="2"{% endif %}>Rank</th>
-        {% if only_first %}
+        {% if data_1st_u %}
         <th{% if merge_problems %} rowspan="2"{% endif %}>1st U</th>
         {% endif %}
-        <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">Handle</th>
+        <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">
+          Handle
+          {% if data_1st_u %}
+          <span class="bg-success nobold">{{ data_1st_u.help_message }}</span>
+          {% endif %}
+        </th>
         <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
         {% for field in fields.values %}
         <th{% if merge_problems %} rowspan="2"{% endif %}>{{ field }}</th>
@@ -150,14 +154,23 @@
 
         {% for problem in problems %}
         {% if not problem.skip %}
-        <th title="{{ problem|get_problem_name }}" class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
-          <div>
+        <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
+          <div title="{{ problem|get_problem_name }}">
           {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
           {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
           {% if problem.url %}</a>{% endif %}
           </div>
-          {% if not merge_problems and problem.full_score %}
-            <small>{{ problem.full_score|floatformat }}</small>
+          {% if not merge_problems %}
+            {% if problem.full_score %}
+              <div class="small" title="Full score">{{ problem.full_score|floatformat }}</div>
+            {% endif %}
+            {% if problem.n_teams is not None and with_detail %}
+              <div class="small text-muted nobold">
+                <span title="Number of accepted">{{ problem.n_accepted|default:0 }}</span>
+                /
+                <span title="Number of teams tried">{{ problem.n_teams }}</span>
+              </div>
+            {% endif %}
           {% endif %}
         </th>
         {% endif %}
@@ -178,5 +191,7 @@
   <div class="alert alert-info">Standings is empty</div>
   {% endif %}
 </div>
+
+<script>$(function() {$('[title]').tooltip()})</script>
 
 {% endblock %}

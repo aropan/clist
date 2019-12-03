@@ -5,16 +5,38 @@
 
 {% for statistic in statistics %}
 <tr>
-  <td>
+  <td
+    {% if medals and statistic.place_as_int %}
+      {% for medal, limit in medals %}
+        {% if statistic.place_as_int <= limit %}
+          {% ifchanged statistic.id %}
+            class="{{ medal }}-medal"
+          {% endifchanged %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  >
     {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
     {% if with_row_num %}({{ forloop.counter|add:start_num }}){% endif %}
   </td>
-  {% if only_first %}
-  {% with info=only_first|get_item:statistic.id %}
-  <td>{% if info %}{{ info.n }}{% else %}<small class="text-muted">—</small>{% endif %}</td>
+  {% if data_1st_u %}
+  {% with info=data_1st_u.infos|get_item:statistic.id %}
+  <td>
+    {% if info.n %}
+      {{ info.n }}
+    {% else %}
+    <small class="text-muted">{{ info.solving|floatformat:'-2' }}{% if info.penalty >= 0 %}+{% endif %}{{ info.penalty }}</small>
+    {% endif %}
+  </td>
   {% endwith %}
   {% endif %}
-  <td class="handle-cell">
+  <td class="handle-cell
+    {% if data_1st_u %}
+    {% with info=data_1st_u.infos|get_item:statistic.id %}
+    {% if info and info.n <= data_1st_u.n_highlight %}bg-success{% endif %}
+    {% endwith %}
+    {% endif %}
+">
     {% with country=statistic.account.country %}
       {% if country %}
       <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}">
@@ -22,6 +44,7 @@
       </a>
       {% endif %}
     {% endwith %}
+
     {% with coders=statistic.account.coders.all %}
       {% if coders|length == 1 %}
         {% for c in coders %}
@@ -30,7 +53,9 @@
       {% endif %}
 
       {% if statistic.addition.name %}
-        <span title="{{ statistic.account.key }}">{{ statistic.addition.name }}</span>
+        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}"{% endif %}">
+          {{ statistic.addition.name }}
+        </span>
       {% else %}
         {{ statistic.account.key }}
       {% endif %}
@@ -49,13 +74,13 @@
     {% endwith %}
   </td>
   <td>
-    <div>{{ statistic.solving|floatformat:'-2' }}</div>
-    <small>
+    <div{% if not with_detail %} style="display: inline;"{% endif %}>{{ statistic.solving|floatformat:'-2' }}</div>
     {% if 'hack' in statistic.addition %}
+      <small>
       {% if statistic.addition.hack.successful %}<div class="inline acc">+{{ statistic.addition.hack.successful }}</div>{% endif %}
       {% if statistic.addition.hack.unsuccessful %}<div class="inline rej">-{{ statistic.addition.hack.unsuccessful }}</div>{% endif %}
+      </small>
     {% endif %}
-    </small>
   </td>
   {% for field in fields.keys %}
   <td>{% if field in statistic.addition %}{{ statistic.addition|get_item:field }}{% endif %}</td>
@@ -63,7 +88,7 @@
   {% for problem in problems %}
     {% with key=problem|get_problem_key  %}
     {% with stat=statistic.addition.problems|get_item:key %}
-    <td class="problem-cell">
+    <td class="problem-cell{% if stat and stat.first_ac %} bg-info{% endif %}">
       {% if not stat %}
         <small class="text-muted">—</small>
       {% endif %}
@@ -112,21 +137,23 @@
       {% endif %}
       </div>
 
-      <small class="text-muted">
-      {% if stat and stat.status and stat.time %}
-        {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
-      {% elif stat and stat.status %}
-        {{ stat.status }}
-      {% elif stat and stat.time %}
-        {{ stat.time }}
-      {% elif 'upsolving' in stat %}
-        {% if stat.upsolving.result|slice:":1" == "+" %}
-          {{ stat.upsolving.result }}
-        {% else %}
-          {{ stat.upsolving.result|floatformat:'-2' }}
+      {% if with_detail %}
+        <small class="text-muted">
+        {% if stat and stat.status and stat.time %}
+          {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
+        {% elif stat and stat.status %}
+          {{ stat.status }}
+        {% elif stat and stat.time %}
+          {{ stat.time }}
+        {% elif 'upsolving' in stat %}
+          {% if stat.upsolving.result|slice:":1" == "+" %}
+            {{ stat.upsolving.result }}
+          {% else %}
+            {{ stat.upsolving.result|floatformat:'-2' }}
+          {% endif %}
         {% endif %}
+        </small>
       {% endif %}
-      </small>
     </td>
     {% endwith %}
     {% endwith %}

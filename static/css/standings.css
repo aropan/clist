@@ -34,6 +34,18 @@ table.standings th {
   font-weight: bold;
 }
 
+.gold-medal {
+  background: #f9d923;
+}
+
+.silver-medal {
+  background: silver;
+}
+
+.bronze-medal {
+  background: #c08e55;
+}
+
 table.standings .handle-cell {
   text-align: left;
 }
@@ -61,4 +73,13 @@ table.standings .handle-cell {
 .standings a.coder {
   text-decoration: underline;
   font-weight: bold;
+}
+
+.nobold {
+  font-weight:normal;
+}
+
+.tooltip-inner {
+  white-space:nowrap;
+  max-width:none;
 }

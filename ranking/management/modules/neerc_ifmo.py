@@ -52,6 +52,10 @@ class Statistic(BaseModule):
                         else:
                             point = v.value
                         p['result'] = point
+
+                        first_ac = v.column.node.xpath('.//*[@class="first-to-solve"]')
+                        if len(first_ac):
+                            p['first_ac'] = True
                 elif k == 'Time':
                     row['penalty'] = int(v.value)
                 elif k.lower() in ['place', 'rank']:
@@ -77,6 +81,6 @@ if __name__ == "__main__":
         name='ICPC 2019-2020, NEERC - Northern Eurasia Finals',
         standings_url='http://neerc.ifmo.ru/archive/2019/standings.html',
         key='2019-2020 NEERC',
-        start_time=datetime.strptime('2005-09-02', '%Y-%m-%d'),
+        start_time=datetime.strptime('2019-09-02', '%Y-%m-%d'),
     )
-    pprint(statictic.get_standings())
+    pprint(statictic.get_result('SPb SU: 25 (Belichenko, Bykov, Petrov) 2019-2020'))
