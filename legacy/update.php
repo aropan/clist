@@ -315,10 +315,6 @@
         }
 
         $now = date("Y-m-d H:i:s", time());
-        $fields .= ",info";
-        $values .= ",'{}'";
-        //$fields .= ",modified";
-        //$values .= ",'$now'";
 
         $to_update = !DEBUG && (!isset($_GET['title']) || preg_match($_GET['title'], $contest['title']));
         if ($to_update) {

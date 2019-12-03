@@ -26,12 +26,11 @@
 
     $start_time = time() + $eta;
     $start_time = round($start_time / 60) * 60;
-    $end_time = $start_time + 24 * 60 * 60;
     $title .= '. Day ' . $day;
 
     $contests[] = array(
         'start_time' => $start_time,
-        'end_time' => $end_time,
+        'duration' => '00:00',
         'title' => $title,
         'url' => $URL,
         'host' => $HOST,

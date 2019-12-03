@@ -32,10 +32,17 @@ class Command(BaseCommand):
         filepath = './legacy/logs/update/index.html'
         key = 'update-file-error-hash'
         if os.path.exists(filepath):
+            logger.info(f'log file is {filepath}')
             with open(filepath) as fo:
                 errors = []
-                for m in re.finditer('php.* in [^ ]* on line [0-9]+$', fo.read(), re.MULTILINE | re.IGNORECASE):
-                    errors.append(m.group(0))
+                for m in re.finditer(
+                    'php.*? in [^ ]* on line [0-9]+$',
+                    fo.read(),
+                    re.MULTILINE | re.IGNORECASE | re.DOTALL
+                ):
+                    error = m.group(0)
+                    logger.error(error)
+                    errors.append(error)
                 if errors:
                     errors = '\n'.join(errors)
                     msg = f'https://legacy.clist.by/logs/update/: ```\n{errors}\n```'
