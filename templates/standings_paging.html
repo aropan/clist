@@ -6,7 +6,9 @@
 {% for statistic in statistics %}
 <tr>
   <td
-    {% if medals and statistic.place_as_int %}
+    {% if statistic.addition.medal %}
+      class="{{ statistic.addition.medal }}-medal"
+    {% elif medals and statistic.place_as_int %}
       {% for medal, limit in medals %}
         {% if statistic.place_as_int <= limit %}
           {% ifchanged statistic.id %}
@@ -22,11 +24,18 @@
   {% if data_1st_u %}
   {% with info=data_1st_u.infos|get_item:statistic.id %}
   <td>
+    <a href="{{ request.path }}?{% query_transform request search=info.search %}">
     {% if info.n %}
-      {{ info.n }}
+      <div>{{ info.n }}</div>
     {% else %}
-    <small class="text-muted">{{ info.solving|floatformat:'-2' }}{% if info.penalty >= 0 %}+{% endif %}{{ info.penalty }}</small>
+      <div class="text-muted">—</div>
     {% endif %}
+    {% if with_detail and info.t_solving is not None %}
+    <small class="text-muted">
+      {{ info.t_solving|floatformat:'-2' }}<span class="text-{% if info.t_penalty >= 0 %}success{% else %}danger{% endif %}">{% if info.t_penalty >= 0 %}+{% endif %}{{ info.t_penalty }}</span>
+    </small>
+    {% endif %}
+    </a>
   </td>
   {% endwith %}
   {% endif %}
@@ -53,7 +62,7 @@
       {% endif %}
 
       {% if statistic.addition.name %}
-        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}"{% endif %}">
+        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}"{% endif %}>
           {{ statistic.addition.name }}
         </span>
       {% else %}
@@ -82,6 +91,9 @@
       </small>
     {% endif %}
   </td>
+  {% if with_detail and mod_penalty %}
+  <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=statistic.addition.penalty %}</td>
+  {% endif %}
   {% for field in fields.keys %}
   <td>{% if field in statistic.addition %}{{ statistic.addition|get_item:field }}{% endif %}</td>
   {% endfor %}
@@ -90,7 +102,7 @@
     {% with stat=statistic.addition.problems|get_item:key %}
     <td class="problem-cell{% if stat and stat.first_ac %} bg-info{% endif %}">
       {% if not stat %}
-        <small class="text-muted">—</small>
+        <div>&#183;</div>
       {% endif %}
 
       <div>

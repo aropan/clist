@@ -148,6 +148,9 @@
           {% endif %}
         </th>
         <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
+        {% if with_detail and mod_penalty %}
+        <th{% if merge_problems %} rowspan="2"{% endif %}><span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true">Gap</span></th>
+        {% endif %}
         {% for field in fields.values %}
         <th{% if merge_problems %} rowspan="2"{% endif %}>{{ field }}</th>
         {% endfor %}
@@ -166,9 +169,7 @@
             {% endif %}
             {% if problem.n_teams is not None and with_detail %}
               <div class="small text-muted nobold">
-                <span title="Number of accepted">{{ problem.n_accepted|default:0 }}</span>
-                /
-                <span title="Number of teams tried">{{ problem.n_teams }}</span>
+                <span title="Number of accepted">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of teams tried">{{ problem.n_teams }}</span>
               </div>
             {% endif %}
           {% endif %}

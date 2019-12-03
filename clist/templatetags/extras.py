@@ -180,6 +180,12 @@ def asfloat(value, default):
         return default
 
 
+@register.simple_tag
+def calc_mod_penalty(info, contest, solving, penalty):
+    time = min((now() - contest.start_time).total_seconds(), contest.duration_in_secs) // 60
+    return int(round(penalty + (info['solving'] - solving) * time - info['penalty']))
+
+
 @register.filter
 def slug(value):
     return slugify(unidecode(value))
@@ -217,3 +223,10 @@ def get_problem_short(problem):
 @register.simple_tag
 def define(val=None):
     return val
+
+
+@register.simple_tag
+def query_transform(request, **kwargs):
+    updated = request.GET.copy()
+    updated.update(kwargs)
+    return updated.urlencode()

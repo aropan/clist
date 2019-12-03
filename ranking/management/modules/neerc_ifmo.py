@@ -65,6 +65,15 @@ class Statistic(BaseModule):
                     row['name'] = v.value
                 else:
                     row[k] = v.value
+            for f in 'diploma', 'medal':
+                medal = row.pop(f, None) or row.pop(f.title(), None)
+                if medal:
+                    if medal in ['З', 'G']:
+                        row['medal'] = 'gold'
+                    elif medal in ['С', 'S']:
+                        row['medal'] = 'silver'
+                    elif medal in ['Б', 'B']:
+                        row['medal'] = 'bronze'
             result[row['member']] = row
 
         standings = {

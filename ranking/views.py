@@ -120,27 +120,48 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     if data_1st_u:
         infos = data_1st_u.setdefault('infos', {})
         seen = {}
+        last_hl = None
         for s in statistics:
             match = re.search(data_1st_u['regex'], s.account.key)
             k = match.group('key')
 
             solving = s.solving
             penalty = s.addition.get('penalty')
-            if k in seen:
-                info = infos[seen[k]]
-                infos[s.id] = {
-                    'solving': info['solving'] - solving,
-                    'penalty': info['penalty'] - penalty if penalty is not None else None,
-                }
-                continue
-            seen[k] = s.id
-            infos[s.id] = {'n': len(seen), 'solving': solving, 'penalty': penalty}
+
+            info = infos.setdefault(s.id, {})
+            info['search'] = rf'^{k}'
+
+            if k in seen or last_hl:
+                p_info = infos.get(seen.get(k))
+                if (
+                    not p_info or
+                    last_hl and (-last_hl['solving'], last_hl['penalty']) < (-p_info['solving'], p_info['penalty'])
+                ):
+                    p_info = last_hl
+
+                info.update({
+                    't_solving': p_info['solving'] - solving,
+                    't_penalty': p_info['penalty'] - penalty if penalty is not None else None,
+                })
+
+            if k not in seen:
+                seen[k] = s.id
+                info.update({'n': len(seen), 'solving': solving, 'penalty': penalty})
+                if len(seen) == data_1st_u.get('n_highlight'):
+                    last_hl = info
 
     medals = options.get('medals')
     if medals:
         names = [m['name'] for m in medals]
         counts = [m['count'] for m in medals]
         medals = list(zip(names, accumulate(counts)))
+
+    mod_penalty = {}
+    first = statistics.first()
+    if first:
+        penalty = first.addition.get('penalty')
+        if penalty and isinstance(penalty, int):
+            mod_penalty.update({'solving': first.solving, 'penalty': penalty})
 
     search = request.GET.get('search')
     if search:
@@ -154,6 +175,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     context = {
         'data_1st_u': data_1st_u,
         'medals': medals,
+        'mod_penalty': mod_penalty,
         'contest': contest,
         'statistics': statistics,
         'problems': problems,

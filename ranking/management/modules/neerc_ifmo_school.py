@@ -42,9 +42,14 @@ class Statistic(BaseModule):
                 c = v.attrs['class'].split()[0]
                 if c in ['problem', 'ioiprob']:
                     problems_info[k] = {'short': k, 'name': v.attrs['title']}
-                    v = v.value
-                    if v != DOT:
+                    if v.value != DOT:
                         p = problems.setdefault(k, {})
+
+                        first_ac = v.column.node.xpath('.//*[@class="first-to-solve"]')
+                        if len(first_ac):
+                            p['first_ac'] = True
+
+                        v = v.value
                         if SPACE in v:
                             v, t = v.split(SPACE, 1)
                             p['time'] = t
@@ -56,6 +61,18 @@ class Statistic(BaseModule):
                 row['name'] = re.sub(r'\s*\([^\)]*\)\s*$', '', row['name'])
                 solved = [p for p in list(problems.values()) if p['result'] == '100']
                 row['solved'] = {'solving': len(solved)}
+            elif re.match('^[0-9]+$', row['penalty']):
+                row['penalty'] = int(row['penalty'])
+
+            for f in 'diploma', 'medal':
+                medal = row.pop(f, None) or row.pop(f.title(), None)
+                if medal:
+                    if medal in ['З', 'G']:
+                        row['medal'] = 'gold'
+                    elif medal in ['С', 'S']:
+                        row['medal'] = 'silver'
+                    elif medal in ['Б', 'B']:
+                        row['medal'] = 'bronze'
             row['member'] = row['name'] + ' ' + season
             result[row['member']] = row
         standings = {
@@ -74,5 +91,10 @@ if __name__ == "__main__":
     statictic = Statistic(
         standings_url='http://neerc.ifmo.ru/school/io/archive/20080510/standings-20080510-advanced.html',
         start_time=datetime.strptime('20080510', '%Y%m%d'),
+    )
+    pprint(statictic.get_standings())
+    statictic = Statistic(
+        standings_url='https://nerc.itmo.ru/school/archive/2019-2020/ru-olymp-team-russia-2019-standings.html',
+        start_time=datetime.strptime('20191201', '%Y%m%d'),
     )
     pprint(statictic.get_standings())

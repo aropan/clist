@@ -6,6 +6,7 @@ django-crispy-forms
 django-markdown-app
 django_enumfield
 django-countries
+django-add-default-value
 git+https://github.com/aropan/django-el-pagination@loading-within-table-pr79
 django-static-fontawesome
 
