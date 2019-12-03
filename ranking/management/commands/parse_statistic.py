@@ -166,16 +166,21 @@ class Command(BaseCommand):
                             for k, v in problems.items():
                                 if 'result' not in v:
                                     continue
+
+                                p = d_problems
+                                if 'division' in r:
+                                    p = p.setdefault(r['division'], {})
+                                p = p.setdefault(k, {})
+                                p['n_teams'] = p.get('n_teams', 0) + 1
+
                                 ac = str(v['result']).startswith('+')
                                 try:
                                     result = float(v['result'])
                                     ac = ac or result > 0 and not v.get('partial', False)
                                 except Exception:
                                     pass
-                                p = d_problems.setdefault(k, {})
                                 if ac:
                                     p['n_accepted'] = p.get('n_accepted', 0) + 1
-                                p['n_teams'] = p.get('n_teams', 0) + 1
 
                             calc_time = contest.calculate_time or contest.start_time <= now < contest.end_time
 
@@ -240,9 +245,16 @@ class Command(BaseCommand):
                         progress_bar.set_postfix(fields=str(fields))
 
                     problems = standings.pop('problems', None)
-                    for p in problems:
-                        if 'short' in p:
-                            p.update(d_problems.get(p['short'], {}))
+                    if 'division' in problems:
+                        for d, ps in problems['division'].items():
+                            for p in ps:
+                                if 'short' in p:
+                                    p.update(d_problems.get(d, {}).get(p['short'], {}))
+                    else:
+                        for p in problems:
+                            if 'short' in p:
+                                p.update(d_problems.get(p['short'], {}))
+
                     if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
                         contest.info['problems'] = problems
                         contest.save()
