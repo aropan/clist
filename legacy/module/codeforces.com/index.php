@@ -1,7 +1,7 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'http://codeforces.com/contests';
+    if (!isset($URL)) $URL = 'https://codeforces.com/contests?locale=ru';
     if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
     if (!isset($RID)) $RID = -1;
     if (!isset($LANG)) $LANG = 'RU';
@@ -13,16 +13,21 @@
 #<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>[^<]*<td>(?<title>.*?)</td>(?:[^<]*<td[^>]*>(?P<authors>.*?)</td>)?[^<]*<td>[^<]*(?:-|<a href="http://timeanddate\.com/[^"]*" .*?>(?<start_time>[^<]*)</a>)[^<]*</td>[^<]*<td>(?<duration>[^<]*)</td>#s
      */
     preg_match_all(
-        '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>[^<]*<td>.*?</td>[^<]*<td[^>]*>(?P<authors>.*?)</td>#s',
+        '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>[^<]*<td>.*?</td>[^<]*<td[^>]*>(?P<authors>.*?)</td>.*?</tr>#s',
         $page,
         $matches,
         PREG_SET_ORDER
     );
     $authors = array();
+    $end_times = array();
     foreach ($matches as $match) {
+        $k = $match['key'];
         if (preg_match_all('#<a[^>]*>(?P<name>.*?)</a>#', $match['authors'], $m)) {
             $names = array_map(function($n) { return strip_tags($n); }, $m['name']);
-            $authors[$match['key']] = implode(', ', $names);
+            $authors[$k] = implode(', ', $names);
+        }
+        if (preg_match('#Вы можете начать соревнование в любой момент до\s*<[^>]*>(?P<end_time>[^<]*)<#', $match[0], $m)) {
+            $end_times[$k] = $m['end_time'];
         }
     }
 
@@ -35,7 +40,8 @@
         if (!isset($c['startTimeSeconds'])) {
             continue;
         }
-        $contests[] = array(
+
+        $contest = array(
             'start_time' => $c['startTimeSeconds'],
             'duration' => $c['durationSeconds'] / 60,
             'title' => $title,
@@ -45,9 +51,11 @@
             'rid' => $RID,
             'timezone' => $TIMEZONE
         );
-    }
 
-    if ($RID == -1) {
-        print_r($contests);
+        if (isset($end_times[$c['id']])) {
+            $contest['end_time'] = $end_times[$c['id']];
+        }
+
+        $contests[] = $contest;
     }
 ?>

@@ -67,8 +67,6 @@ class Statistic(BaseModule):
                             pass
                 elif k == 'Total':
                     row['solving'] = int(v.value)
-                elif k == 'Rating':
-                    row['solving'] = float(v.value)
                 elif k == 'Time':
                     if "'" in v.value and '"' in v.value:
                         minute, seconds = map(int, re.findall('[0-9]+', v.value))
@@ -82,6 +80,8 @@ class Statistic(BaseModule):
                     row['name'] = v.value
                 else:
                     row[key] = v.value
+            if 'solving' not in row:
+                row['solving'] = row.pop('Rating', 0)
             result[row['member']] = row
 
         standings = {

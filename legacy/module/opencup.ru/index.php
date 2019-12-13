@@ -44,7 +44,7 @@
         $results[$title] = $match;
     }
 
-    preg_match_all('#</td><td>(?<date>\d\d\.\d\d\.\d\d\d\d)</td><td>[^0-9]*(?<date_start_time>\d\d:\d\d).*?</td><td>(?<title>.*?)</td></tr>#s', $page, $matches, PREG_SET_ORDER);
+    preg_match_all('#</td><td>(?<date>\d?\d\.\d?\d\.\d\d\d\d)</td><td>[^0-9]*(?<date_start_time>\d\d:\d\d).*?</td><td>(?<title>.*?)</td></tr>#s', $page, $matches, PREG_SET_ORDER);
     $year = "";
     foreach ($matches as $match) {
         $title = trim(strip_tags($match['title']));
@@ -61,7 +61,7 @@
                 $tit = $t;
             }
         }
-        if ($opt < 4) {
+        if ($opt <= 6) {
             $url = $results[$tit]['url'];
             $standings_url = $results[$tit]['standings_url'];
             unset($results[$tit]);

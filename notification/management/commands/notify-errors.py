@@ -36,9 +36,9 @@ class Command(BaseCommand):
             with open(filepath) as fo:
                 errors = []
                 for m in re.finditer(
-                    'php.*? in [^ ]* on line [0-9]+$',
+                    'php.*:.*$',
                     fo.read(),
-                    re.MULTILINE | re.IGNORECASE | re.DOTALL
+                    re.MULTILINE | re.IGNORECASE
                 ):
                     error = m.group(0)
                     logger.error(error)

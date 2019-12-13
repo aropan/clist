@@ -214,7 +214,17 @@ class requester():
 
         self.opener.addheaders = self.headers
 
-    def get(self, url, post=None, caching=None, is_ref_url=True, md5_file_cache=None, time_out=None, headers=None):
+    def get(
+        self,
+        url,
+        post=None,
+        caching=None,
+        is_ref_url=True,
+        md5_file_cache=None,
+        time_out=None,
+        headers=None,
+        detect_charsets=True,
+    ):
         prefix = "local-file:"
         if url.startswith(prefix):
             with open(url[len(prefix):], "r") as fo:
@@ -324,20 +334,21 @@ class requester():
                 else:
                     self.proxer.fail()
 
-        matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s>]*)', str(page), re.IGNORECASE)
-        if matches:
-            charsets = [c.lower() for c in matches]
-            if len(charsets) > 1 and len(set(charsets)) > 1:
-                self.print(f'[WARNING] set multi charset values: {charsets}')
-            charset = charsets[-1].lower()
-        else:
-            charset = 'utf-8'
-        if charset in ('utf-8', 'utf8'):
-            page = page.decode('utf-8', 'replace')
-        elif charset in ('windows-1251', 'cp1251'):
-            page = page.decode('cp1251', 'replace')
-        else:
-            page = page.decode(charset, 'replace')
+        if detect_charsets:
+            matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s>]*)', str(page), re.IGNORECASE)
+            if matches:
+                charsets = [c.lower() for c in matches]
+                if len(charsets) > 1 and len(set(charsets)) > 1:
+                    self.print(f'[WARNING] set multi charset values: {charsets}')
+                charset = charsets[-1].lower()
+            else:
+                charset = 'utf-8'
+            if charset in ('utf-8', 'utf8'):
+                page = page.decode('utf-8', 'replace')
+            elif charset in ('windows-1251', 'cp1251'):
+                page = page.decode('cp1251', 'replace')
+            else:
+                page = page.decode(charset, 'replace')
 
         self.last_page = page
         self.last_url = self.response.geturl() if self.response else url

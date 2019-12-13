@@ -27,7 +27,7 @@ class VisibleContestManager(BaseManager):
 
 class Contest(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=2048)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     duration_in_secs = models.IntegerField(null=False, blank=True)

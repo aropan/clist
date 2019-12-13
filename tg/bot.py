@@ -387,7 +387,7 @@ class Bot(telegram.Bot):
         if not msg['text']:
             return
         if len(msg['text']) > self.MAX_LENGTH_MESSAGE:
-            msg = {'text': 'It is not easy.'}
+            msg['text'] = msg['text'][:self.MAX_LENGTH_MESSAGE - 3] + '...'
 
         msg['chat_id'] = chat_id or self.from_id
 
