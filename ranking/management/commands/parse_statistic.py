@@ -135,8 +135,8 @@ class Command(BaseCommand):
                         contest.save()
 
                     d_problems = {}
-                    if not no_update_results:
-                        result = standings.get('result', {})
+                    result = standings.get('result', {})
+                    if not no_update_results and result:
                         fields_set = set()
                         fields = list()
 
