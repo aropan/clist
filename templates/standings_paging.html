@@ -103,68 +103,82 @@
     <td class="problem-cell{% if stat and stat.first_ac %} bg-info{% endif %}">
       {% if not stat %}
         <div>&#183;</div>
-      {% endif %}
+      {% else %}
+        <div>
+        {% if stat.result is not None %}
+          <div
+            class="inline
+            {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}
+              {% if stat.partial %}par{% else %}acc{% endif %}
+            {% elif stat.result|slice:":1" == "?" %}
+              hid
+            {% else %}
+              rej
+            {% endif %}
+            "
+            {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}
+              title="{{ stat.status }}"
+              data-toggle="tooltip"
+              data-placement="top"
+            {% endif %}
+          >
+            {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
 
-      <div>
-      {% if stat and stat.result is not None %}
-        <div
-          class="inline
-          {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}
-            {% if stat.partial %}par{% else %}acc{% endif %}
-          {% elif stat.result|slice:":1" == "?" %}
-            hid
-          {% else %}
-            rej
-          {% endif %}
-          "
-          {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}title="{{ stat.status }}"{% endif %}
-        >
-          {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
+            {% if stat.binary is not None %}
+              <i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i>
+            {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
+              {{ stat.result }}
+            {% else %}
+              {{ stat.result|floatformat:'-2' }}
+            {% endif %}
 
-          {% if stat.binary is not None %}
-            <i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i>
-          {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
-            {{ stat.result }}
-          {% else %}
-            {{ stat.result|floatformat:'-2' }}
-          {% endif %}
-
-          {% if stat.url %}</a>{% endif %}
-        </div>
-      {% endif %}
-      {% if stat and stat.extra_score is not None %}
-        <div class="inline"
+            {% if stat.url %}</a>{% endif %}
+          </div>
+        {% elif not with_detail %}
+          <div class="inline">
+            <small class="text-muted">
+            {% if stat.status %}
+              {{ stat.status }}
+            {% elif stat.time %}
+              {{ stat.time }}
+            {% endif %}
+            </small>
+          </div>
+        {% endif %}
+        {% if stat.extra_score is not None %}
+          <div class="inline"
+            {% if stat.extra_info %}
+              data-toggle="tooltip"
+              data-placement="top"
+              data-html="true"
+              title="{% for info in stat.extra_info %}{{ info }}<br/>{% endfor %}"
+            {% endif %}
+          >
+          {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
+          </div>
           {% if stat.extra_info %}
-            data-toggle="tooltip"
-            data-placement="top"
-            data-html="true"
-            title="{% for info in stat.extra_info %}{{ info }}<br/>{% endfor %}"
+            <script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
           {% endif %}
-        >
-        {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
+        {% endif %}
         </div>
-        {% if stat.extra_info %}
-          <script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
-        {% endif %}
-      {% endif %}
-      </div>
 
-      {% if with_detail %}
-        <small class="text-muted">
-        {% if stat and stat.status and stat.time %}
-          {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
-        {% elif stat and stat.status %}
-          {{ stat.status }}
-        {% elif stat and stat.time %}
-          {{ stat.time }}
-        {% elif 'upsolving' in stat %}
-          {% if stat.upsolving.result|slice:":1" == "+" %}
-            {{ stat.upsolving.result }}
-          {% else %}
-            {{ stat.upsolving.result|floatformat:'-2' }}
+        {% if with_detail %}
+          <small class="text-muted">
+          {% if stat.status and stat.time %}
+            {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
+          {% elif stat.status %}
+            {{ stat.status }}
+          {% elif stat.time %}
+            {{ stat.time }}
+          {% elif 'upsolving' in stat %}
+            {% if stat.upsolving.result|slice:":1" == "+" %}
+              {{ stat.upsolving.result }}
+            {% else %}
+              {{ stat.upsolving.result|floatformat:'-2' }}
+            {% endif %}
           {% endif %}
+          </small>
         {% endif %}
-        </small>
       {% endif %}
     </td>
     {% endwith %}
