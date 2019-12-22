@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
+from django_print_sql import print_sql_decorator
 from logging import getLogger
 from notification.models import Notification, Task
 from traceback import format_exc
@@ -20,11 +21,11 @@ class Command(BaseCommand):
 
     def process(self, notify, contests, prefix=''):
         self.logger.info('notify = {}, #contests = {}'.format(notify, contests.count()))
-        if contests.count():
+        if contests.exists():
             context = {
-                "contests": contests,
-                "coder": notify.coder,
-                "prefix": prefix,
+                'contests': contests,
+                'coder': notify.coder,
+                'prefix': prefix,
             }
 
             subject = render_to_string('subject', context).strip()
@@ -49,6 +50,7 @@ class Command(BaseCommand):
         parser.add_argument('--coders', nargs='+')
         parser.add_argument('--dryrun', action='store_true', default=False)
 
+    @print_sql_decorator()
     def handle(self, *args, **options):
         coders = options.get('coders')
         dryrun = options.get('dryrun')
@@ -71,6 +73,8 @@ class Command(BaseCommand):
                 notifies.update(last_time=now)
         if not updates:
             notifies = notifies.filter(last_time__isnull=False, last_time__lte=now)
+
+        notifies = notifies.select_related('coder')
         for notify in tqdm(notifies, total=notifies.count()):
             try:
                 if ':' in notify.method:

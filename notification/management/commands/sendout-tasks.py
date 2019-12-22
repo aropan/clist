@@ -1,29 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from traceback import format_exc
+from logging import getLogger
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
-from logging import getLogger
+from django_print_sql import print_sql_decorator
+from django.db.models import Prefetch
+from django.db import transaction
 from notification.models import Task, Notification
-from tg.bot import Bot
 from telegram.error import Unauthorized
-from traceback import format_exc
 from django.urls import reverse
+
+from tg.bot import Bot
+from tg.models import Chat
 
 
 class Command(BaseCommand):
     help = 'Send out all unsent tasks'
     TELEGRAM_BOT = Bot()
 
+    @print_sql_decorator()
+    @transaction.atomic
     def handle(self, *args, **options):
         logger = getLogger('notification.sendout.tasks')
-        qs = Task.unsent
-        tasks = list(qs.all())
-        qs.update(is_sent=True)
+        qs = Task.unsent.all()
+        qs = qs.select_related('notification__coder')
+        qs = qs.prefetch_related(
+            Prefetch(
+                'notification__coder__chat_set',
+                queryset=Chat.objects.exclude(secret_key__isnull=True),
+                to_attr='cchat',
+            )
+        )
 
-        for task in tasks:
+        for task in qs:
             try:
+                task.is_sent = True
                 notification = task.notification
                 coder = notification.coder
                 if notification.method == Notification.TELEGRAM:
@@ -66,4 +81,4 @@ class Command(BaseCommand):
             except Exception:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
-                task.save()
+            task.save()
