@@ -101,7 +101,7 @@ class Command(BaseCommand):
             shuffle(contests)
 
         countries_name = {name.lower(): code for code, name in countries}
-        countries_name.update({countries.alpha3(code): code for code, name in countries})
+        countries_name.update({countries.alpha3(code).lower(): code for code, name in countries})
         missed_countries = set()
 
         count = 0

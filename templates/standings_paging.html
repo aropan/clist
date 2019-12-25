@@ -116,7 +116,7 @@
               rej
             {% endif %}
             "
-            {% if stat.status and stat.result and stat.result|asfloat:0 <= 0 %}
+            {% if stat.status and not with_detail %}
               title="{{ stat.status }}"
               data-toggle="tooltip"
               data-placement="top"
