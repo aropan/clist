@@ -47,7 +47,6 @@ class Statistic(BaseModule):
                                               f'name = {self.name}')
 
     def get_standings(self, users=None):
-        REQ.debug_output = True
         page = REQ.get(self.standings_url)
 
         result = {}
