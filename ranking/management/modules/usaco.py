@@ -21,17 +21,33 @@ class Statistic(BaseModule):
             page = REQ.get(url)
             matches = re.finditer('<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<name>[^<]*[0-9]{4}[^<]*Results)</a>', page)
             month = self.start_time.strftime('%B').lower()
-            year = str(self.start_time.year)
+            prev_standings_url = None
             for match in matches:
                 name = match.group('name').lower()
-                if (month in name or self.name.lower() in name) and year in name:
+                if (month in name or self.name.lower() in name) and str(self.start_time.year)in name:
                     self.standings_url = urllib.parse.urljoin(url, match.group('url'))
                     break
+                if (month in name or self.name.lower() in name) and str(self.start_time.year - 1) in name:
+                    prev_standings_url = urllib.parse.urljoin(url, match.group('url'))
             else:
-                raise InitModuleException(
-                    f'Not found standings url with month = {month}, year = {year}, name = {self.name}')
+                if prev_standings_url is not None:
+                    pred_standings_url = re.sub('[0-9]+', lambda m: str(int(m.group(0)) + 1), prev_standings_url)
+                    url = 'http://usaco.org/'
+                    page = REQ.get(url)
+                    matches = re.finditer('<a[^>]*href="?(?P<url>[^"]*)"?[^>]*>here</a>', page)
+                    for match in matches:
+                        standings_url = urllib.parse.urljoin(url, match.group('url'))
+                        if standings_url == pred_standings_url:
+                            self.standings_url = standings_url
+                            break
+                if not self.standings_url:
+                    raise InitModuleException(f'Not found standings url with'
+                                              f'month = {month}, '
+                                              f'year = {self.start_time.year}, '
+                                              f'name = {self.name}')
 
     def get_standings(self, users=None):
+        REQ.debug_output = True
         page = REQ.get(self.standings_url)
 
         result = {}
@@ -96,10 +112,10 @@ class Statistic(BaseModule):
 
 if __name__ == "__main__":
     statictic = Statistic(
-        name='US Open',
+        name='First Contest',
         url='http://usaco.org/',
-        key='US Open 2018',
-        start_time=datetime.strptime('Mar 23 2018', '%b %d %Y'),
+        key='First Contest 2019',
+        start_time=datetime.strptime('Dec 20 2019', '%b %d %Y'),
         standings_url=None,
     )
-    pprint(statictic.get_result('Daniel Bessonov, USA'))
+    pprint(statictic.get_standings())
