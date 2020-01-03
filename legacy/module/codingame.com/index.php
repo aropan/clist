@@ -53,7 +53,7 @@
             if (isset($description['challengeOptions'])) {
                 foreach ($description['challengeOptions'] as $options) {
                     if ($options['iconId'] == 1) {
-                        $duration = $options['title'];
+                        $duration = preg_replace('/<[^>]*>/', '', $options['title']);
                         break;
                     }
                 }
@@ -80,6 +80,6 @@
     }
 
     if ($RID === -1) {
-        // print_r($contests);
+        print_r($contests);
     }
 ?>
