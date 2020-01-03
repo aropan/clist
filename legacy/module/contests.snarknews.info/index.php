@@ -62,6 +62,7 @@
                 'title' => trim(strip_tags($matches['title'][$i])) . '. ' . $title,
                 'start_time' => trim(strip_tags($matches['start_time'][$i])),
                 'end_time' => trim(strip_tags($matches['end_time'][$i])),
+                'duration_in_secs' => (60 + 20) * 60,
                 'url' => $i < count($urls)? $urls[$i] : $url,
                 'host' => $HOST,
                 'rid' => $RID,
