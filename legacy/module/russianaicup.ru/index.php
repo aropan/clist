@@ -31,8 +31,8 @@
         $start_time = isset($rtitle) && $round == $rtitle? $rtime : $match['start_time'];
 
         if (preg_match('#[0-9]+\s*-\s*[0-9]+#', $start_time)) {
-            $end_time = preg_replace('#[0-9]+\s*-\s*([0-9]+)#', '\1', $start_time);
-            $start_time = preg_replace('#([0-9]+)\s*-\s*[0-9]+#', '\1', $start_time);
+            $end_time = preg_replace('#[0-9]+\s*-\s*([0-9]+)#', '\1', $start_time) . " " . $year;
+            $start_time = preg_replace('#([0-9]+)\s*-\s*[0-9]+#', '\1', $start_time) . " " . $year;
         } else {
             $end_time = $start_time;
         }
