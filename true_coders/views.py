@@ -307,7 +307,10 @@ def search(request, **kwargs):
         qs = Account.objects.filter(resource__id=resource_id)
         if 'user' in request.GET:
             user = request.GET.get('user')
-            qs = qs.filter(Q(key__icontains=user) | Q(name__icontains=user))
+            condition = Q()
+            for pattern in user.split():
+                condition = condition & (Q(key__iregex=pattern) | Q(name__iregex=pattern))
+            qs = qs.filter(condition)
 
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
