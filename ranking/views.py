@@ -114,7 +114,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 break
 
     options = contest.info.get('standings', {})
-    per_page = options.get('per_page', 50)
+    per_page = options.get('per_page', 200)
     if per_page is None:
         per_page = 100500
 
