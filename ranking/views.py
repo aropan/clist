@@ -115,6 +115,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     options = contest.info.get('standings', {})
     per_page = options.get('per_page', 50)
+    if per_page is None:
+        per_page = 100500
 
     data_1st_u = options.get('1st_u')
     if data_1st_u:

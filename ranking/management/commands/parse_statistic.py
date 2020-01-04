@@ -134,6 +134,15 @@ class Command(BaseCommand):
                         contest.standings_url = standings['url']
                         contest.save()
 
+                    if 'options' in standings:
+                        contest_options = contest.info.get('standings', {})
+                        standings_options = dict(contest_options)
+                        standings_options.update(standings.pop('options'))
+
+                        if self._canonize(standings_options) != self._canonize(contest_options):
+                            contest.info['standings'] = standings_options
+                            contest.save()
+
                     d_problems = {}
                     result = standings.get('result', {})
                     if not no_update_results and result:

@@ -100,7 +100,7 @@
   {% for problem in problems %}
     {% with key=problem|get_problem_key  %}
     {% with stat=statistic.addition.problems|get_item:key %}
-    <td class="problem-cell{% if stat and stat.first_ac %} bg-info{% endif %}">
+    <td class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% endif %}{% if stat.first_ac %} first-ac{% endif %}{% endif %}">
       {% if not stat %}
         <div>&#183;</div>
       {% else %}

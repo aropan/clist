@@ -34,6 +34,14 @@ table.standings th {
   font-weight: bold;
 }
 
+.first-ac {
+  background-color: #dff0d8;
+}
+
+.first-ac-of-all {
+  background-color: #ffe866;
+}
+
 .gold-medal {
   background: #f9d923;
 }
