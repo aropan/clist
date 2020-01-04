@@ -1,8 +1,11 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% load countries %}
 {% load el_pagination_tags %}
 
-{% block title %}Standings {{ contest.title }}{% endblock %}
+{% block title %}
+  Standings {{ contest.title }}
+{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
@@ -12,7 +15,7 @@
 {% block content %}
 
 <h3 class="text-center">
-  Standings <a href="{{ contest.standings_url }}">{{ contest.title }}</a>
+  Standings <a href="{{ contest.standings_url }}">{{ contest.title }}</a> <small>{{ contest.end_time|naturalday:'F j, Y' }}</small>
 </h3>
 
 {% if contest.is_running and not contest.is_over %}
