@@ -18,7 +18,7 @@
     $datas = array_merge($datas, $data);
     $url = 'https://www.codingame.com/services/Challenge/findPastChallenges';
     $data = curlexec($url, '[null]', $http_header);
-    $datas = array_merge($datas, $data);
+    $datas = array_merge($datas, array_slice($data, 0, 3));
 
     $pids = array();
     foreach ($datas as $a) {
@@ -26,7 +26,12 @@
             $pids[] = $a['publicId'];
         }
     }
-    $pids = array_slice($pids, 0, 3);
+
+    $url = 'https://forum.codingame.com/t/clash-wars-mini-clash-of-code-tournament/145336';
+    $page = curlexec($url);
+    preg_match_all('#href="[^"]*codingame.com/hackathon/(?P<id>[^/"]*)"#', $page, $matches);
+
+    $pids = array_merge($pids, array_slice($matches['id'], -3));
     $pids = array_unique($pids);
 
     foreach ($pids as $pid) {
@@ -65,6 +70,14 @@
             } else {
                 $duration = '00:00';
             }
+        } else if (strpos($duration, ' -> ')) {
+            list($start, $end) = explode(' -> ', $duration);
+            if (strpos($start, "  ")) {
+                list($_, $start) = explode('  ', $start);
+            }
+            $start = strtotime(preg_replace('#[A-Z]{3}#', '', $start));
+            $end = strtotime(preg_replace('#[A-Z]{3}#', '', $end));
+            $duration = ($end - $start) / 60;
         }
 
         $contests[] = array(
