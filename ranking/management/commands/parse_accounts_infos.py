@@ -6,6 +6,7 @@ import os
 from attrdict import AttrDict
 from datetime import timedelta
 from logging import getLogger
+from traceback import format_exc
 
 from tqdm import tqdm
 from django.core.management.base import BaseCommand
@@ -28,7 +29,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-q', '--query', default=None, help='regex account key')
-        parser.add_argument('-l', '--limit', default=10000, type=int, help='limit users for one resource')
+        parser.add_argument('-l', '--limit', default=1000, type=int, help='limit users for one resource')
 
     @staticmethod
     def _get_plugin(module):
@@ -49,32 +50,36 @@ class Command(BaseCommand):
 
         countrier = Countrier()
 
-        with transaction.atomic():
-            now = timezone.now()
-            for resource in resources:
-                plugin = self._get_plugin(resource.module)
-                accounts = resource.account_set.filter(Q(updated__isnull=True) | Q(updated__lte=now))
+        now = timezone.now()
+        for resource in resources:
+            try:
+                with transaction.atomic():
+                    plugin = self._get_plugin(resource.module)
+                    accounts = resource.account_set.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
-                if args.query:
-                    accounts = accounts.filter(key__iregex=args.query)
+                    if args.query:
+                        accounts = accounts.filter(key__iregex=args.query)
 
-                accounts = list(accounts[:args.limit])
-                users = [a.key for a in accounts]
+                    accounts = list(accounts[:args.limit])
+                    users = [a.key for a in accounts]
 
-                if not users:
-                    continue
-
-                with tqdm(total=len(accounts), desc=f'getting {resource.host}') as pbar:
-                    infos = plugin.Statistic.get_users_infos(users=users, pbar=pbar)
-
-                assert len(accounts) == len(infos)
-                for account, info in zip(accounts, infos):
-                    if info is None:
-                        self.logger.warning(f'Remove user = {account}')
-                        account.delete()
+                    if not users:
                         continue
-                    if 'country' in info:
-                        account.country = countrier.get(info['country'])
-                    account.info.update(info)
-                    account.updated = now + timedelta(days=365)
-                    account.save()
+
+                    with tqdm(total=len(accounts), desc=f'getting {resource.host}') as pbar:
+                        infos = plugin.Statistic.get_users_infos(users=users, pbar=pbar)
+
+                    assert len(accounts) == len(infos)
+                    for account, info in zip(accounts, infos):
+                        if info is None:
+                            self.logger.warning(f'Remove user = {account}')
+                            account.delete()
+                            continue
+                        if 'country' in info:
+                            account.country = countrier.get(info['country'])
+                        account.info.update(info)
+                        account.updated = now + timedelta(days=365)
+                        account.save()
+            except Exception:
+                self.logger.error(format_exc())
+                self.logger.error(f'resource = {resource}')
