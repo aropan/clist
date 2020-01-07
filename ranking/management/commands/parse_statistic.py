@@ -16,10 +16,11 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q, F, Count
-from django_countries import countries
 
 from ranking.models import Statistics, Account
 from clist.models import Contest, Resource, TimingContest
+
+from .countrier import Countrier
 
 
 class Command(BaseCommand):
@@ -100,9 +101,7 @@ class Command(BaseCommand):
             contests = list(contests)
             shuffle(contests)
 
-        countries_name = {name.lower(): code for code, name in countries}
-        countries_name.update({countries.alpha3(code).lower(): code for code, name in countries})
-        missed_countries = set()
+        countrier = Countrier()
 
         count = 0
         total = 0
@@ -155,6 +154,11 @@ class Command(BaseCommand):
                             member = r.pop('member')
                             account, _ = Account.objects.get_or_create(resource=resource, key=member)
 
+                            updated = now + timedelta(days=1)
+                            if updated < account.updated:
+                                account.updated = updated
+                                account.save()
+
                             name = r.get('name')
                             no_update_name = r.pop('_no_update_name', False)
                             if not no_update_name and name and account.name != name and member.find(name) == -1:
@@ -162,14 +166,11 @@ class Command(BaseCommand):
                                 account.save()
 
                             country = r.get('country', None)
-                            if country and len(country) > 2:
-                                c = countries_name.get(country.lower())
-                                if not c:
-                                    missed_countries.add(country)
-                                country = c
-                            if country and country != account.country:
-                                account.country = country
-                                account.save()
+                            if country:
+                                country = countrier.get(country)
+                                if country and country != account.country:
+                                    account.country = country
+                                    account.save()
 
                             problems = r.get('problems', {})
                             for k, v in problems.items():
@@ -294,8 +295,6 @@ class Command(BaseCommand):
                 if stop_on_error:
                     self.logger.error(format_exc())
                     break
-        if missed_countries:
-            self.logger.warning(f'Missed countries = {missed_countries}')
         self.logger.info(f'Parse statistic: {count} of {total}')
         return count, total
 

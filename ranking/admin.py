@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.utils.timezone import now
 
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.models import Account, Rating, Statistics, Module
@@ -26,11 +27,30 @@ class HasCoders(admin.SimpleListFilter):
         return queryset
 
 
+class HasInfo(admin.SimpleListFilter):
+    title = 'has info'
+    parameter_name = 'has_info'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == 'yes':
+            return queryset.filter(updated__gte=now())
+        elif value == 'no':
+            return queryset.filter(updated__lte=now())
+        return queryset
+
+
 @admin_register(Account)
 class AccountAdmin(BaseModelAdmin):
-    list_display = ['resource', 'key', 'name', 'country', '_num_coders']
+    list_display = ['resource', 'key', 'name', 'country', '_num_coders', 'updated']
     search_fields = ['key__iregex', 'name__iregex']
-    list_filter = [HasCoders, 'resource__host']
+    list_filter = [HasCoders, HasInfo, 'resource__host']
 
     def _num_coders(self, obj):
         return obj.num_coders
@@ -71,4 +91,5 @@ class ModuleAdmin(BaseModelAdmin):
                     'delay_on_error',
                     'delay_on_success',
                     'path']
+    list_filter = ['has_accounts_infos_update']
     search_fields = ['resource__host']

@@ -38,6 +38,10 @@ class BaseModule(object, metaclass=ABCMeta):
         pass
 
     @staticmethod
+    def get_users_infos(users, pbar):
+        raise NotImplementedError()
+
+    @staticmethod
     def to_time(delta):
         if isinstance(delta, timedelta):
             delta = delta.total_seconds()
