@@ -14,6 +14,7 @@ from ranking.models import Statistics
 from clist.templatetags.extras import slug
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
+from regex import verify_regex
 
 
 @page_template('standings_list_paging.html')
@@ -24,7 +25,8 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         .order_by('-end_time', 'pk')
     search = request.GET.get('search')
     if search is not None:
-        contests = contests.filter(Q(title__iregex=search) | Q(resource__host__iregex=search))
+        search_re = verify_regex(search)
+        contests = contests.filter(Q(title__iregex=search_re) | Q(resource__host__iregex=search_re))
 
     context = {
         'contests': contests,
@@ -172,7 +174,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
             statistics = statistics.filter(account__coders__party__pk=party.pk)
         else:
-            statistics = statistics.filter(Q(account__key__iregex=search) | Q(addition__name__iregex=search))
+            search_re = verify_regex(search)
+            statistics = statistics.filter(Q(account__key__iregex=search_re) | Q(addition__name__iregex=search_re))
 
     context = {
         'data_1st_u': data_1st_u,

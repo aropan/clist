@@ -23,6 +23,7 @@ from notification.forms import Notification, NotificationForm
 from ranking.models import Statistics, Module, Account
 from true_coders.models import Filter, Party, Coder, Organization
 from events.models import Team, TeamStatus
+from regex import verify_regex
 
 
 @page_template('profile_contests_paging.html')
@@ -37,12 +38,14 @@ def profile(request, username, template='profile.html', extra_context=None):
     if search is not None:
         if search.startswith('problem:'):
             _, search = search.split(':', 1)
-            statistics = statistics.filter(addition__problems__iregex=f'"[^"]*{search}[^"]*"')
+            search_re = verify_regex(search)
+            statistics = statistics.filter(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
         elif search.startswith('contest:'):
             _, search = search.split(':', 1)
             statistics = statistics.filter(contest__id=search)
         else:
-            query = Q(contest__resource__host__iregex=search) | Q(contest__title__iregex=search)
+            search_re = verify_regex(search)
+            query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
             statistics = statistics.filter(query)
 
     accounts = coder.account_set.select_related('resource')
@@ -309,7 +312,8 @@ def search(request, **kwargs):
             user = request.GET.get('user')
             condition = Q()
             for pattern in user.split():
-                condition = condition & (Q(key__iregex=pattern) | Q(name__iregex=pattern))
+                pattern_re = verify_regex(pattern)
+                condition = condition & (Q(key__iregex=pattern_re) | Q(name__iregex=pattern_re))
             qs = qs.filter(condition)
 
         total = qs.count()

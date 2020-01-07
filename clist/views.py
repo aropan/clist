@@ -14,6 +14,7 @@ from clist.templatetags.extras import get_timezones
 from clist.models import Resource, Contest, Banner
 from true_coders.models import Party
 from ranking.models import Rating
+from regex import verify_regex
 
 
 def get_timeformat(request):
@@ -127,7 +128,8 @@ def get_events(request):
 
     search_query = request.POST.get('search_query', None)
     if search_query:
-        query &= Q(host__iregex=search_query) | Q(title__iregex=search_query)
+        search_query_re = verify_regex(search_query)
+        query &= Q(host__iregex=search_query_re) | Q(title__iregex=search_query_re)
 
     party_slug = request.POST.get('party')
     if party_slug:
