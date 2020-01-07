@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import re
 from pprint import pprint
 from collections import OrderedDict
 from datetime import datetime
@@ -58,14 +59,14 @@ class Statistic(BaseModule):
             if not handle or users and handle not in users:
                 continue
             n_total += 1
-            r = result.setdefault(handle, {})
+            r = result.setdefault(handle, OrderedDict())
             r['member'] = handle
-            r['place'] = row['rank']
-            r['penalty'] = round(row['penalty'], 2)
-            r['solving'] = row['totalScore']
+            r['place'] = row.pop('rank')
+            r['penalty'] = round(row.pop('penalty'))
+            r['solving'] = row.pop('totalScore')
             problems = r.setdefault('problems', {})
             solving = 0
-            for k, v in row['scores'].items():
+            for k, v in row.pop('scores').items():
                 k = int(k)
                 if k not in tasks:
                     continue
@@ -86,6 +87,18 @@ class Statistic(BaseModule):
                     p['time'] = f'{time // 60:02}:{time % 60:02}'
 
             r['solved'] = {'solving': solving}
+
+            for f in ('userId', 'timeRegistered', 'numSubmissions', 'contestId', 'id'):
+                row.pop(f, None)
+            for f in ('oldRating', 'rating'):
+                if f in row:
+                    r[re.sub('[A-Z]', lambda m: '_' + m.group(0).lower(), f)] = round(row.pop(f))
+            if 'old_rating' in r and 'rating' in r:
+                r['delta'] = r['rating'] - r['old_rating']
+
+            for k, v in row.items():
+                if k not in r:
+                    r[k] = v
 
         standings = {
             'result': result,

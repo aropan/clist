@@ -179,6 +179,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     else:
         divisions_order = []
 
+    for p in problems:
+        if 'full_score' in p and abs(p['full_score'] - 1) > 1e-9:
+            mod_penalty = {}
+            break
+
     last = None
     merge_problems = False
     for p in problems:
