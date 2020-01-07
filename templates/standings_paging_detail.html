@@ -1,0 +1,15 @@
+<small class="text-muted">
+{% if stat.status and stat.time %}
+  {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
+{% elif stat.status %}
+  {{ stat.status }}
+{% elif stat.time %}
+  {{ stat.time }}
+{% elif 'upsolving' in stat %}
+  {% if stat.upsolving.result|slice:":1" == "+" %}
+    {{ stat.upsolving.result }}
+  {% else %}
+    {{ stat.upsolving.result|floatformat:'-2' }}
+  {% endif %}
+{% endif %}
+</small>
