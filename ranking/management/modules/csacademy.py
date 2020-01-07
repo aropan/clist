@@ -3,6 +3,7 @@
 import json
 from pprint import pprint
 from collections import OrderedDict
+from datetime import datetime
 
 from common import BaseModule, requester
 
@@ -48,6 +49,7 @@ class Statistic(BaseModule):
         result = {}
         n_total = 0
         rows = state['contestuser']
+        start_time = datetime.timestamp(self.start_time)
         for row in rows:
             if row['contestId'] != self.cid or 'rank' not in row:
                 continue
@@ -59,7 +61,7 @@ class Statistic(BaseModule):
             r = result.setdefault(handle, {})
             r['member'] = handle
             r['place'] = row['rank']
-            r['penalty'] = row['penalty']
+            r['penalty'] = round(row['penalty'], 2)
             r['solving'] = row['totalScore']
             problems = r.setdefault('problems', {})
             solving = 0
@@ -79,6 +81,10 @@ class Statistic(BaseModule):
                         p['result'] = f'+{"" if n == 1 else n - 1}'
                     else:
                         p['result'] = f'-{n}'
+                if 'scoreTime' in v:
+                    time = int((v['scoreTime'] - start_time) / 60)
+                    p['time'] = f'{time // 60:02}:{time % 60:02}'
+
             r['solved'] = {'solving': solving}
 
         standings = {
@@ -90,6 +96,10 @@ class Statistic(BaseModule):
 
 
 if __name__ == '__main__':
-    statistic = Statistic(url='https://csacademy.com/contest/round-67/', key='33089')
+    statistic = Statistic(
+        url='https://csacademy.com/contest/round-67/',
+        key='33089',
+        start_time=datetime.strptime('31.01.2018 18:35', '%d.%m.%Y %H:%M'),
+    )
     pprint(statistic.get_result('Aeon'))
     # pprint(statistic.get_standings()['problems'])
