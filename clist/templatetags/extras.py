@@ -12,6 +12,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.template.defaultfilters import stringfilter, slugify
+from django_countries.fields import countries
 import pytz
 
 
@@ -230,3 +231,8 @@ def query_transform(request, **kwargs):
     updated = request.GET.copy()
     updated.update(kwargs)
     return updated.urlencode()
+
+
+@register.simple_tag
+def get_countries():
+    return dict((c.code, c) for c in countries).values()

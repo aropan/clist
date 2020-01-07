@@ -56,38 +56,20 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     statistics = Statistics.objects.filter(contest=contest)
 
     order = ['place_as_int', '-solving']
+    fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time'))
+
     statistics = statistics \
         .select_related('account') \
         .prefetch_related('account__coders')
 
-    params = {}
-    problems = contest.info.get('problems', {})
-    if 'division' in problems:
-        division = request.GET.get(
-            'division',
-            sorted(contest.info['problems']['division'].keys())[0],
-        )
-        params['division'] = division
-        statistics = statistics.filter(addition__division=division)
-        problems = problems['division'][division]
-
-    last = None
-    merge_problems = False
-    for p in problems:
-        if last and 'name' in last and last.get('name') == p.get('name') and last.get('full_score'):
-            merge_problems = True
-            last['colspan'] = last.get('colspan', 1) + 1
-            p['skip'] = True
-        else:
-            last = p
-
-    countries = request.GET.getlist('country')
-    countries = [c for c in countries if c]
-    if countries:
-        statistics = statistics.filter(account__country__in=countries)
-        params['countries'] = set(countries)
-
     contest_fields = contest.info.get('fields', [])
+
+    has_country = 'country' in contest_fields or statistics.filter(account__country__isnull=False).exists()
+
+    division = request.GET.get('division')
+    if division == 'any':
+        order = ['-solving', 'place_as_int']
+        fixed_fields += (('division', 'Division'),)
 
     if 'team_id' in contest_fields:
         order.append('addition__name')
@@ -97,10 +79,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     statistics = statistics.order_by(*order)
 
     fields = OrderedDict()
-    for k, v in (
-        ('penalty', 'Penalty'),
-        ('total_time', 'Time'),
-    ):
+    for k, v in fixed_fields:
         if k in contest_fields:
             fields[k] = v
 
@@ -177,6 +156,36 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             search_re = verify_regex(search)
             statistics = statistics.filter(Q(account__key__iregex=search_re) | Q(addition__name__iregex=search_re))
 
+    params = {}
+    problems = contest.info.get('problems', {})
+    if 'division' in problems:
+        division = request.GET.get(
+            'division',
+            sorted(contest.info['problems']['division'].keys())[0],
+        )
+        params['division'] = division
+        if division == 'any':
+            problems = sum(problems['division'].values(), [])
+        else:
+            statistics = statistics.filter(addition__division=division)
+            problems = problems['division'][division]
+
+    last = None
+    merge_problems = False
+    for p in problems:
+        if last and 'name' in last and last.get('name') == p.get('name') and last.get('full_score'):
+            merge_problems = True
+            last['colspan'] = last.get('colspan', 1) + 1
+            p['skip'] = True
+        else:
+            last = p
+
+    countries = request.GET.getlist('country')
+    countries = set([c for c in countries if c])
+    if countries:
+        statistics = statistics.filter(account__country__in=countries)
+        params['countries'] = countries
+
     context = {
         'data_1st_u': data_1st_u,
         'medals': medals,
@@ -186,6 +195,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'problems': problems,
         'params': params,
         'fields': fields,
+        'has_country': has_country,
         'per_page': per_page,
         'with_row_num': bool(search or countries),
         'start_num': (int(request.GET.get('page', '1')) - 1) * per_page,

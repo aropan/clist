@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% load countries %}
+{% load extras %}
 {% load el_pagination_tags %}
 
 {% block title %}
@@ -23,7 +23,7 @@
 {% endif %}
 
 <div class="container">
-  <form id="standings-form" class="form-inline" method="get" action="">
+  <form id="standings-form" class="form-inline invisible" method="get" action="">
     <div class="form-group">
       {% if 'division' in contest.info.problems %}
       {% with division=contest.info.problems|get_item:'division' %}
@@ -32,8 +32,9 @@
         <div class="input-group-addon">Division</div>
         <select name="division" id="division" onchange="this.form.submit()">
           {% for d in division %}
-          <option value="{{ d }}" {% if d == params.division %}selected{% endif %}>{{ d }}</option>
+          <option value="{{ d }}" {% if params.division == d %}selected{% endif %}>{{ d }}</option>
           {% endfor %}
+          <option value="any" {% if params.division == 'any' %}selected{% endif %}>any</option>
         </select>
       </div>
       <script>
@@ -84,8 +85,8 @@
         </div>
       </div>
 
-      {% if 'country' in contest.info.fields %}
-      <div class="input-group input-group-sm">
+      {% if has_country %}
+      <div class="input-group input-group-sm hidden" id="country-hidden">
         <div class="input-group-addon">Country</div>
         <select name="country" id="country" onchange="this.form.submit()" multiple>
           <option></option>
@@ -96,12 +97,13 @@
             {% get_countries as countries %}
             {% for c in countries %}
               {% if country.code != c.code %}
-              <option value="{{ c.code }}"{% if c.code in params.countries %} selected{% endif %}>{{ c.name }}</option>
+                <option value="{{ c.code }}"{% if c.code in params.countries %} selected{% endif %}>{{ c.name }}</option>
               {% endif %}
             {% endfor %}
           {% endwith %}
         </select>
       </div>
+
       <script>
         $(function() {
           $('#country').select2({
@@ -126,12 +128,19 @@
               e.preventDefault();
             }
           })
+          $('#country-hidden').removeClass('hidden');
         })
       </script>
       {% endif %}
 
     </div>
   </form>
+
+  <script>
+  $(function() {
+    $('#standings-form').hide().removeClass('invisible').fadeIn();
+  })
+  </script>
 
   <br/>
 
