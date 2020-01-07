@@ -109,8 +109,12 @@ class Statistic(BaseModule):
                     if 'status' in data and data['status'] != 'success':
                         raise ExceptionParseStandings(json.dumps(data))
 
+                    unscored_problems = data['contest_info']['unscored_problems']
+
                     if n_total_page is None:
                         for p in data['problems']:
+                            if p['code'] in unscored_problems:
+                                continue
                             d = problems_info
                             if 'division' in contest_info:
                                 d = d.setdefault('division', OrderedDict())
@@ -122,8 +126,6 @@ class Statistic(BaseModule):
                         n_total_page = data['availablePages']
                         pbar = tqdm.tqdm(total=n_total_page * len(urls))
                         contest_type = data['contest_info'].get('type')
-
-                    unscored_problems = data['contest_info']['unscored_problems']
 
                     for d in data['list']:
                         handle = d.pop('user_handle')
@@ -146,7 +148,6 @@ class Statistic(BaseModule):
                                 v[t] = v.pop('score')
                                 solved += 1 if v.get('result', 0) > 0 else 0
                                 upsolved += 1 if v.get('upsolving', 0) > 0 else 0
-                                row['solved'] = {'solving': solved, 'upsolving': upsolved}
 
                                 if contest_type == '1' and 'penalty' in v:
                                     penalty = v.pop('penalty')
@@ -156,6 +157,7 @@ class Statistic(BaseModule):
                                         v[t] = f'-{penalty}'
 
                                 problems[k] = v
+                            row['solved'] = {'solving': solved, 'upsolving': upsolved}
                         country = d.pop('country_code')
                         if country:
                             d['country'] = country
@@ -176,12 +178,12 @@ class Statistic(BaseModule):
 
 if __name__ == "__main__":
     statictic = Statistic(
-        name='November Cook-Off 2019',
-        url='http://www.codechef.com/COOK112?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK112	',
-        key='COOK112',
+        name='December Cook-Off 2019',
+        url='https://www.codechef.com/COOK113?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK113',
+        key='COOK113',
         standings_url=None,
     )
-    pprint(statictic.get_result('vladik'))
+    pprint(statictic.get_result('lgm_1234'))
     statictic = Statistic(
         name='August Challenge 2019',
         url='https://www.codechef.com/AUG19?utm_source=contest_listing&utm_medium=link&utm_campaign=AUG19',

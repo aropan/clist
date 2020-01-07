@@ -142,12 +142,12 @@ class Command(BaseCommand):
                             contest.info['standings'] = standings_options
                             contest.save()
 
-                    d_problems = {}
                     result = standings.get('result', {})
                     if not no_update_results and result:
                         fields_set = set()
                         fields = list()
                         calculate_time = False
+                        d_problems = {}
 
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc='update results'):
@@ -256,24 +256,24 @@ class Command(BaseCommand):
                             contest.calculate_time = True
                             contest.save()
 
-                        progress_bar.set_postfix(fields=str(fields))
-
-                    problems = standings.pop('problems', None)
-                    if 'division' in problems:
-                        for d, ps in problems['division'].items():
-                            for p in ps:
+                        problems = standings.pop('problems', None)
+                        if 'division' in problems:
+                            for d, ps in problems['division'].items():
+                                for p in ps:
+                                    if 'short' in p:
+                                        p.update(d_problems.get(d, {}).get(p['short'], {}))
+                            if isinstance(problems['division'], OrderedDict):
+                                problems['divisions_order'] = list(problems['division'].keys())
+                        else:
+                            for p in problems:
                                 if 'short' in p:
-                                    p.update(d_problems.get(d, {}).get(p['short'], {}))
-                        if isinstance(problems['division'], OrderedDict):
-                            problems['divisions_order'] = list(problems['division'].keys())
-                    else:
-                        for p in problems:
-                            if 'short' in p:
-                                p.update(d_problems.get(p['short'], {}))
+                                    p.update(d_problems.get(p['short'], {}))
 
-                    if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
-                        contest.info['problems'] = problems
-                        contest.save()
+                        if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
+                            contest.info['problems'] = problems
+                            contest.save()
+
+                        progress_bar.set_postfix(fields=str(fields))
 
                     action = standings.get('action')
                     if action is not None:

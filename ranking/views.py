@@ -15,6 +15,7 @@ from clist.templatetags.extras import slug
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
 from regex import verify_regex
+from clist.templatetags.extras import get_problem_key
 
 
 @page_template('standings_list_paging.html')
@@ -165,13 +166,13 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             division = divisions_order[0]
         params['division'] = division
         if division == 'any':
-            _problems = []
-            for div, ps in problems['division'].items():
-                for p in ps:
-                    p = dict(p)
-                    p['division'] = div
-                    _problems.append(p)
-            problems = _problems
+            _problems = OrderedDict()
+            for div in reversed(divisions_order):
+                for p in problems['division'].get(div, []):
+                    k = get_problem_key(p)
+                    if k not in _problems:
+                        _problems[k] = p
+            problems = list(_problems.values())
         else:
             statistics = statistics.filter(addition__division=division)
             problems = problems['division'][division]
