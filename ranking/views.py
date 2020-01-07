@@ -159,16 +159,24 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     params = {}
     problems = contest.info.get('problems', {})
     if 'division' in problems:
-        division = request.GET.get(
-            'division',
-            sorted(contest.info['problems']['division'].keys())[0],
-        )
+        divisions_order = list(problems.get('divisions_order', sorted(contest.info['problems']['division'].keys())))
+        divisions_order.append('any')
+        if division not in divisions_order:
+            division = divisions_order[0]
         params['division'] = division
         if division == 'any':
-            problems = sum(problems['division'].values(), [])
+            _problems = []
+            for div, ps in problems['division'].items():
+                for p in ps:
+                    p = dict(p)
+                    p['division'] = div
+                    _problems.append(p)
+            problems = _problems
         else:
             statistics = statistics.filter(addition__division=division)
             problems = problems['division'][division]
+    else:
+        divisions_order = []
 
     last = None
     merge_problems = False
@@ -195,6 +203,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'problems': problems,
         'params': params,
         'fields': fields,
+        'divisions_order': divisions_order,
         'has_country': has_country,
         'per_page': per_page,
         'with_row_num': bool(search or countries),

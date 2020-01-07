@@ -25,16 +25,13 @@
 <div class="container">
   <form id="standings-form" class="form-inline invisible" method="get" action="">
     <div class="form-group">
-      {% if 'division' in contest.info.problems %}
-      {% with division=contest.info.problems|get_item:'division' %}
-      {% if division %}
+      {% if divisions_order %}
       <div class="input-group input-group-sm">
         <div class="input-group-addon">Division</div>
         <select name="division" id="division" onchange="this.form.submit()">
-          {% for d in division %}
+          {% for d in divisions_order %}
           <option value="{{ d }}" {% if params.division == d %}selected{% endif %}>{{ d }}</option>
           {% endfor %}
-          <option value="any" {% if params.division == 'any' %}selected{% endif %}>any</option>
         </select>
       </div>
       <script>
@@ -47,8 +44,6 @@
           })
         })
       </script>
-      {% endif %}
-      {% endwith %}
       {% endif %}
 
       <div class="input-group input-group-sm">

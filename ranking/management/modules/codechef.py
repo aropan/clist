@@ -8,6 +8,7 @@ import traceback
 import tqdm
 import re
 from pprint import pprint
+from collections import OrderedDict
 
 from common import REQ, LOG
 from common import BaseModule
@@ -112,7 +113,7 @@ class Statistic(BaseModule):
                         for p in data['problems']:
                             d = problems_info
                             if 'division' in contest_info:
-                                d = d.setdefault('division', {})
+                                d = d.setdefault('division', OrderedDict())
                                 d = d.setdefault(contest_info['division'], [])
                             d.append({
                                 'short': p['code'],

@@ -181,7 +181,7 @@ class Statistic(BaseModule):
                 for p in problems_set:
                     d = problems_info
                     if len(problems_sets) > 1:
-                        d = d.setdefault('division', {})
+                        d = d.setdefault('division', OrderedDict())
                         d = d.setdefault('I' * division, [])
                     d.append(p)
 

@@ -147,8 +147,8 @@ class Command(BaseCommand):
                     if not no_update_results and result:
                         fields_set = set()
                         fields = list()
-
                         calculate_time = False
+
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc='update results'):
                             member = r.pop('member')
@@ -252,6 +252,10 @@ class Command(BaseCommand):
                             contest.info['fields'] = fields
                             contest.save()
 
+                        if calculate_time and not contest.calculate_time:
+                            contest.calculate_time = True
+                            contest.save()
+
                         progress_bar.set_postfix(fields=str(fields))
 
                     problems = standings.pop('problems', None)
@@ -260,6 +264,8 @@ class Command(BaseCommand):
                             for p in ps:
                                 if 'short' in p:
                                     p.update(d_problems.get(d, {}).get(p['short'], {}))
+                        if isinstance(problems['division'], OrderedDict):
+                            problems['divisions_order'] = list(problems['division'].keys())
                     else:
                         for p in problems:
                             if 'short' in p:
@@ -267,10 +273,6 @@ class Command(BaseCommand):
 
                     if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
                         contest.info['problems'] = problems
-                        contest.save()
-
-                    if calculate_time and not contest.calculate_time:
-                        contest.calculate_time = True
                         contest.save()
 
                     action = standings.get('action')
