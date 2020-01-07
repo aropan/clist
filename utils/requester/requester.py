@@ -335,7 +335,7 @@ class requester():
                     self.proxer.fail()
 
         if detect_charsets:
-            matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s>]*)', str(page), re.IGNORECASE)
+            matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
             if matches:
                 charsets = [c.lower() for c in matches]
                 if len(charsets) > 1 and len(set(charsets)) > 1:
