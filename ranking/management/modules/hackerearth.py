@@ -36,10 +36,14 @@ class Statistic(BaseModule):
         standings_url = urllib.parse.urljoin(self.url, 'leaderboard/')
 
         try:
-            page = self._get(standings_url)
+            page = self._get(self.url)
         except ExceptionParseStandings as e:
             if e.args[0].code == 404:
                 return {'action': 'delete'}
+
+        try:
+            page = self._get(standings_url)
+        except ExceptionParseStandings as e:
             raise ExceptionParseStandings(e)
 
         match = re.search('<div[^>]*class="event-id hidden"[^>]*>(?P<id>[0-9]*)</div>', page)
@@ -82,7 +86,10 @@ class Statistic(BaseModule):
                             break
                         rank, name = v.value.split(' ', 1)
                         r['place'] = int(rank.strip('.'))
-                        name, member = name.rsplit(' ', 1)
+                        if ' ' in name:
+                            name, member = name.rsplit(' ', 1)
+                        else:
+                            member = name
                         r['name'] = name
                         r['member'] = member
                     elif 'балл' in f or 'score' in f or 'problems solved' in f:
@@ -152,7 +159,7 @@ if __name__ == "__main__":
     from django.utils import timezone
 
     contests = Contest.objects \
-        .filter(title__regex="SysCloud QA Hiring Challenge") \
+        .filter(title__regex="January Clash '15") \
         .filter(host='hackerearth.com', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('-start_time') \
 
