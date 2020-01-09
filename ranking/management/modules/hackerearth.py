@@ -29,7 +29,7 @@ class Statistic(BaseModule):
             except FailOnGetResponse as e:
                 LOG.error(str(e))
                 if attempt == 7 or e.args[0].code != 500:
-                    raise ExceptionParseStandings(e)
+                    raise ExceptionParseStandings(e.args[0])
                 sleep(2 ** attempt)
 
     def get_standings(self, users=None):
@@ -37,7 +37,9 @@ class Statistic(BaseModule):
 
         try:
             page = self._get(standings_url)
-        except Exception as e:
+        except ExceptionParseStandings as e:
+            if e.args[0].code == 404:
+                return {'action': 'delete'}
             raise ExceptionParseStandings(e)
 
         match = re.search('<div[^>]*class="event-id hidden"[^>]*>(?P<id>[0-9]*)</div>', page)
