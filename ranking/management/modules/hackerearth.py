@@ -91,12 +91,17 @@ class Statistic(BaseModule):
                         result = float(result)
                         p = r.setdefault('problems', {}).setdefault(short, {})
                         p['result'] = result
-                        p['penalty'] = penalty
+                        p['time'] = penalty
                         if problems_info[short]['full_score'] > result + 1e-9:
                             p['partial'] = True
                         else:
                             r['solved']['solving'] += 1
+                        if 'background-color: #d5e8d2' in v.column.attrs.get('style', ''):
+                            p['first_ac'] = True
                 if r['solving'] < 1e-9 or 'problems' not in r:
+                    continue
+
+                if users and r['member'] not in users:
                     continue
 
                 results[r['member']] = r
@@ -139,7 +144,7 @@ if __name__ == "__main__":
         .filter(host='hackerearth.com', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('-start_time') \
 
-    for contest in contests[:10]:
+    for contest in contests[:1]:
         try:
             statistic = Statistic(
                 name=contest.title,
@@ -148,9 +153,8 @@ if __name__ == "__main__":
                 standings_url=contest.standings_url,
                 start_time=contest.start_time,
             )
-            s = statistic.get_standings()
-            pprint(s)
-            s.pop('result')
+            s = statistic.get_standings(users=['victor152'])
+            pprint(s.pop('result'))
             pprint(s)
         except ExceptionParseStandings:
             continue

@@ -116,10 +116,11 @@
               rej
             {% endif %}
             "
-            {% if stat.status and not with_detail %}
-              title="{{ stat.status }}"
+            {% if not with_detail %}
+              title='{% include "standings_paging_detail.html" with stat=stat nosmall=True %}'
               data-toggle="tooltip"
               data-placement="top"
+              data-html="true"
             {% endif %}
           >
             {% if stat.url %}<a href="{{ stat.url }}">{% endif %}
@@ -148,9 +149,6 @@
           >
           {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
           </div>
-          {% if stat.extra_info %}
-            <script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
-          {% endif %}
         {% endif %}
         </div>
 
@@ -164,4 +162,7 @@
   {% endfor %}
 </tr>
 {% endfor %}
+
+<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
+
 {% show_more_table %}
