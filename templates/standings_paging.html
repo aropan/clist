@@ -117,10 +117,12 @@
             {% endif %}
             "
             {% if not with_detail %}
-              title='{% include "standings_paging_detail.html" with stat=stat nosmall=True %}'
-              data-toggle="tooltip"
-              data-placement="top"
-              data-html="true"
+              {% if stat.status or stat.time or stat.upsolving %}
+                title='{% include "standings_paging_detail.html" with stat=stat nosmall=True %}'
+                data-toggle="tooltip"
+                data-placement="top"
+                data-html="true"
+              {% endif %}
             {% endif %}
           >
             {% if stat.url %}<a href="{{ stat.url }}">{% endif %}

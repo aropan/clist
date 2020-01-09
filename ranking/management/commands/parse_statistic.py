@@ -244,6 +244,8 @@ class Command(BaseCommand):
                             fields.sort()
 
                         if ids:
+                            first = Statistics.objects.filter(pk__in=ids).first()
+                            self.logger.info(f'First deleted: {first}, account = {first.account}')
                             delete_info = Statistics.objects.filter(pk__in=ids).delete()
                             progress_bar.set_postfix(deleted=str(delete_info))
                             self.logger.info(f'Delete info: {delete_info}')

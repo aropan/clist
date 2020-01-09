@@ -89,17 +89,23 @@ class Statistic(BaseModule):
                         short = k.split()[0]
                         if v.value in ['N/A', 'Недоступно']:
                             continue
-                        result, penalty = v.value.split()
-                        result = float(result)
                         p = r.setdefault('problems', {}).setdefault(short, {})
-                        p['result'] = result
-                        p['time'] = penalty
-                        if problems_info[short]['full_score'] > result + 1e-9:
-                            p['partial'] = True
+
+                        if ' ' in v.value:
+                            result, penalty, *_ = v.value.split()
+                            p['time'] = penalty
                         else:
-                            r['solved']['solving'] += 1
-                        if 'background-color: #d5e8d2' in v.column.attrs.get('style', ''):
-                            p['first_ac'] = True
+                            result = v.value
+
+                        result = float(result)
+                        p['result'] = result
+                        if result > 1e-9:
+                            if problems_info[short]['full_score'] > result + 1e-9:
+                                p['partial'] = True
+                            else:
+                                r['solved']['solving'] += 1
+                            if 'background-color: #d5e8d2' in v.column.attrs.get('style', ''):
+                                p['first_ac'] = True
                 if r['solving'] < 1e-9 or 'problems' not in r:
                     continue
 
@@ -142,7 +148,7 @@ if __name__ == "__main__":
     from django.utils import timezone
 
     contests = Contest.objects \
-        .filter(title__regex='CodeStar Contest #1') \
+        .filter(title__regex="December Easy '17") \
         .filter(host='hackerearth.com', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('-start_time') \
 
@@ -155,7 +161,7 @@ if __name__ == "__main__":
                 standings_url=contest.standings_url,
                 start_time=contest.start_time,
             )
-            s = statistic.get_standings(users=['victor152'])
+            s = statistic.get_standings()
             pprint(s.pop('result'))
             pprint(s)
         except ExceptionParseStandings:
