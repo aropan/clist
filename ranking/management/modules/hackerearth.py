@@ -76,6 +76,10 @@ class Statistic(BaseModule):
                 for k, v in row.items():
                     f = k.lower()
                     if 'developers' in f or 'view only in network' in f:
+                        disq = v.column.node.xpath('.//*[@title="Disqualified from the challenge."]')
+                        if disq:
+                            r = {}
+                            break
                         rank, name = v.value.split(' ', 1)
                         r['place'] = int(rank.strip('.'))
                         name, member = name.rsplit(' ', 1)
@@ -106,7 +110,7 @@ class Statistic(BaseModule):
                                 r['solved']['solving'] += 1
                             if 'background-color: #d5e8d2' in v.column.attrs.get('style', ''):
                                 p['first_ac'] = True
-                if r['solving'] < 1e-9 or 'problems' not in r:
+                if not r or r['solving'] < 1e-9 or 'problems' not in r:
                     continue
 
                 if users and r['member'] not in users:
@@ -148,7 +152,7 @@ if __name__ == "__main__":
     from django.utils import timezone
 
     contests = Contest.objects \
-        .filter(title__regex="December Easy '17") \
+        .filter(title__regex="SysCloud QA Hiring Challenge") \
         .filter(host='hackerearth.com', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('-start_time') \
 
