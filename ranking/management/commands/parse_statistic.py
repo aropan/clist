@@ -282,7 +282,7 @@ class Command(BaseCommand):
                         args = []
                         if isinstance(action, tuple):
                             action, *args = action
-                        self.logger.info(f'Action {action} with {args}, contest = {contest}')
+                        self.logger.info(f'Action {action} with {args}, contest = {contest}, url = {contest.url}')
                         if action == 'delete':
                             if now < contest.end_time:
                                 self.logger.info(f'Skip. Try after = {contest.end_time - now}')
