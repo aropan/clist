@@ -284,7 +284,11 @@ class Command(BaseCommand):
                             action, *args = action
                         self.logger.info(f'Action {action} with {args}')
                         if action == 'delete':
-                            contest.delete()
+                            if now < contest.end_time:
+                                self.logger.info(f'Skip. Try after = {contest.end_time - now}')
+                            else:
+                                delete_info = contest.delete()
+                                self.logger.info(f'Delete info contest: {delete_info}')
                         elif action == 'url':
                             contest.url = args[0]
                             contest.save()
