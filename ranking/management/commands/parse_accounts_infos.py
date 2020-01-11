@@ -75,7 +75,7 @@ class Command(BaseCommand):
                             self.logger.warning(f'Remove user = {account}')
                             account.delete()
                             continue
-                        if 'country' in info:
+                        if info.get('country'):
                             account.country = countrier.get(info['country'])
                         account.info.update(info)
                         account.updated = now + timedelta(days=365)

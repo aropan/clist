@@ -300,6 +300,40 @@ class Statistic(BaseModule):
         }
         return standings
 
+    @staticmethod
+    def get_users_infos(users, pbar=None):
+
+        def fetch_profile(user):
+            url = f'http://api.topcoder.com/v2/users/{user}'
+            ret = {}
+            delay = 0
+            for _ in range(3):
+                try:
+                    page = REQ.get(url)
+                    ret = json.loads(page)
+                    if 'error' in ret:
+                        if isinstance(ret['error'], dict) and ret['error'].get('value') == 404:
+                            ret = {'action': 'remove'}
+                        else:
+                            continue
+                    break
+                except Exception:
+                    pass
+                delay += 2
+                sleep(delay)
+            if 'handle' not in ret:
+                ret['handle'] = user
+            return ret
+
+        ret = []
+        with PoolExecutor(max_workers=10) as executor:
+            for user, data in zip(users, executor.map(fetch_profile, users)):
+                assert user == data['handle']
+                if pbar:
+                    pbar.update(1)
+                ret.append(None if data.get('action') == 'remove' else data)
+        return ret
+
 
 if __name__ == "__main__":
     # statictic = Statistic(
@@ -310,6 +344,7 @@ if __name__ == "__main__":
     # )
     # pprint(statictic.get_standings()['problems'])
     # pprint(statictic.get_standings())
+    pprint(Statistic.get_users_infos(['aropan']))
     statictic = Statistic(
         name='SRM 767',
         standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17684',
