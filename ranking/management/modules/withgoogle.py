@@ -12,8 +12,8 @@ from datetime import datetime
 
 import tqdm
 
-from common import REQ, BaseModule
-from excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
 class Statistic(BaseModule):

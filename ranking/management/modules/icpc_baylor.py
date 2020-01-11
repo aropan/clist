@@ -7,10 +7,8 @@ from collections import OrderedDict, defaultdict
 from urllib.parse import urljoin
 import html
 
-from requester import FailOnGetResponse
-
-from common import REQ, BaseModule, parsed_table
-from excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule, parsed_table, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):

@@ -2,9 +2,8 @@
 
 import os
 
-from common import BaseModule
-import yandex
-# import opencup
+from ranking.management.modules.common import BaseModule
+from ranking.management.modules import yandex
 
 
 class Statistic(BaseModule):

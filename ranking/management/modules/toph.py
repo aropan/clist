@@ -9,8 +9,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import tqdm
 
-from common import REQ
-from common import BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):

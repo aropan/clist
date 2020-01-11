@@ -14,7 +14,7 @@ from clist.templatetags.extras import get_timezones
 from clist.models import Resource, Contest, Banner
 from true_coders.models import Party
 from ranking.models import Rating
-from regex import verify_regex
+from utils.regex import verify_regex
 
 
 def get_timeformat(request):

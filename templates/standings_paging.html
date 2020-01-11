@@ -62,7 +62,7 @@
       {% endif %}
 
       {% if statistic.addition.name %}
-        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}"{% endif %}>
+        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}" data-placement="right"{% endif %}>
           {{ statistic.addition.name }}
         </span>
       {% else %}

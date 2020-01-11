@@ -4,7 +4,8 @@ import collections
 import json
 from pprint import pprint
 
-from common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):
@@ -13,11 +14,18 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
         self.cid = self.key
+        self._username = conf.ATCODER_HANDLE
+        self._password = conf.ATCODER_PASSWORD
 
     def get_standings(self, users=None):
-
         url = f'{self.STANDING_URL_.format(self)}/json'
         page = REQ.get(url)
+        form = REQ.form(limit=3, selectors=['class="form-horizontal"'])
+        form['post'].update({
+            'username': self._username,
+            'password': self._password,
+        })
+        page = REQ.get(form['url'], post=form['post'])
 
         data = json.loads(page)
 

@@ -6,8 +6,8 @@ from collections import OrderedDict
 
 from first import first
 
-from common import REQ, BaseModule, parsed_table
-from excepts import InitModuleException
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import InitModuleException
 
 
 class Statistic(BaseModule):
@@ -51,7 +51,7 @@ class Statistic(BaseModule):
                     row['member'] = member
                     row['name'] = v.value
                 elif k == 'Country':
-                    row['country'] = re.sub('\s*[0-9]+$', '', v.value)
+                    row['country'] = re.sub(r'\s*[0-9]+$', '', v.value)
                 else:
                     row[k] = v.value
             result[row['member']] = row

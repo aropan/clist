@@ -65,6 +65,7 @@ class Statistics(BaseModel):
 
 @receiver(models.signals.pre_save, sender=Statistics)
 def statistics_pre_save(sender, instance, *args, **kwargs):
+    instance.place_as_int = None
     if instance.place is not None:
         match = re.search('[0-9]+', str(instance.place))
         if match:

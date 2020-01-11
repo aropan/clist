@@ -23,7 +23,7 @@ from notification.forms import Notification, NotificationForm
 from ranking.models import Statistics, Module, Account
 from true_coders.models import Filter, Party, Coder, Organization
 from events.models import Team, TeamStatus
-from regex import verify_regex
+from utils.regex import verify_regex
 
 
 @page_template('profile_contests_paging.html')

@@ -6,8 +6,8 @@ from pprint import pprint
 from functools import partial
 from collections import OrderedDict
 
-from common import REQ, BaseModule
-from excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):

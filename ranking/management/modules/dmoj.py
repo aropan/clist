@@ -4,7 +4,7 @@
 import json
 import time
 
-from common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule
 
 
 class Statistic(BaseModule):

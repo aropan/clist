@@ -1,1 +1,1 @@
-from .common import *
+from ranking.management.modules.common import *

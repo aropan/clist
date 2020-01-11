@@ -5,8 +5,8 @@ import urllib.parse
 from pprint import pprint  # noqa
 from collections import defaultdict, OrderedDict
 
-from common import REQ, BaseModule
-from excepts import InitModuleException, ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import InitModuleException, ExceptionParseStandings
 
 
 class Statistic(BaseModule):

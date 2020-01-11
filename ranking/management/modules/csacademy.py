@@ -6,7 +6,7 @@ from pprint import pprint
 from collections import OrderedDict
 from datetime import datetime
 
-from common import BaseModule, requester
+from ranking.management.modules.common import BaseModule, requester
 
 
 class Statistic(BaseModule):

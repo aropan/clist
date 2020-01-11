@@ -3,9 +3,9 @@
 
 import collections
 
-from common import REQ, DOT
-from common import BaseModule, parsed_table
-from excepts import InitModuleException
+from ranking.management.modules.common import REQ, DOT
+from ranking.management.modules.common import BaseModule, parsed_table
+from ranking.management.modules.excepts import InitModuleException
 
 
 class Statistic(BaseModule):

@@ -14,10 +14,10 @@ from time import sleep, time
 
 import tqdm
 
-from common import LOG, REQ, BaseModule, parsed_table
-from excepts import InitModuleException
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import InitModuleException
 
-import conf
+from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):

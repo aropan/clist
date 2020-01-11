@@ -6,7 +6,7 @@ from collections import OrderedDict
 from urllib.parse import urljoin
 
 
-from common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):

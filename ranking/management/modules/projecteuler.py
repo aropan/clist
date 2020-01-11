@@ -7,9 +7,8 @@ from datetime import timedelta
 
 from first import first
 
-from common import REQ, BaseModule, parsed_table
-
-import conf
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):

@@ -379,12 +379,12 @@ class requester():
             self.get(url)
         return self.last_page
 
-    def form(self, page=None, action='', limit=2, fid=None):
+    def form(self, page=None, action='', limit=2, fid=None, selectors=()):
         if page is None:
             page = self.last_page
-        selectors = [
-            'method="(?P<method>post|get)"',
-            f'action="(?P<url>[^"]*{action}[^"]*)"',
+        selectors = list(selectors) + [
+            '''method=["'](?P<method>post|get)"''',
+            f'''action=["'](?P<url>[^"']*{action}[^"']*)["']''',
         ]
         if fid is not None:
             selectors.append(f'id="{fid}"')

@@ -9,7 +9,7 @@ from first import first
 
 import tqdm
 
-from common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import json
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import urllib.parse
 from time import sleep
@@ -9,8 +10,8 @@ from collections import OrderedDict
 
 import tqdm
 
-from common import REQ, LOG, BaseModule, parsed_table, FailOnGetResponse
-from excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule, parsed_table, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -25,10 +26,16 @@ class Statistic(BaseModule):
         while True:
             attempt += 1
             try:
-                return REQ.get(url)
+                if 'AJAX' in url:
+                    headers = {'x-requested-with': 'XMLHttpRequest'}
+                    csrftoken = REQ.get_cookie('csrftoken')
+                    if csrftoken:
+                        headers['x-csrftoken'] = csrftoken
+                else:
+                    headers = {}
+                return REQ.get(url, headers=headers)
             except FailOnGetResponse as e:
-                LOG.error(str(e))
-                if attempt == 7 or e.args[0].code != 500:
+                if attempt == 7 or getattr(e.args[0], 'code', None) != 500:
                     raise ExceptionParseStandings(e.args[0])
                 sleep(2 ** attempt)
 
@@ -38,17 +45,17 @@ class Statistic(BaseModule):
         try:
             page = self._get(self.url)
         except ExceptionParseStandings as e:
-            if e.args[0].code == 404:
+            if getattr(e.args[0], 'code', None) == 404:
                 return {'action': 'delete'}
 
         try:
             page = self._get(standings_url)
         except ExceptionParseStandings as e:
-            raise ExceptionParseStandings(e)
+            raise ExceptionParseStandings(e.args[0])
 
         match = re.search('<div[^>]*class="event-id hidden"[^>]*>(?P<id>[0-9]*)</div>', page)
         if not match:
-            return ExceptionParseStandings('Not found event id')
+            raise ExceptionParseStandings('Not found event id')
 
         event_id = match.group('id')
 
@@ -79,20 +86,34 @@ class Statistic(BaseModule):
                 r['solved'] = {'solving': 0}
                 for k, v in row.items():
                     f = k.lower()
-                    if 'developers' in f or 'view only in network' in f:
+                    if ('developers' in f or 'view only in network' in f or 'team' in f) and 'place' not in r:
                         disq = v.column.node.xpath('.//*[@title="Disqualified from the challenge."]')
                         if disq:
                             r = {}
                             break
                         rank, name = v.value.split(' ', 1)
                         r['place'] = int(rank.strip('.'))
-                        if ' ' in name:
-                            name, member = name.rsplit(' ', 1)
+
+                        members_teams = v.column.node.xpath('.//a[contains(@ajax, "members-team")]/@ajax')
+                        if members_teams:
+                            r['members'] = []
+                            url = members_teams[0]
+                            r['team_id'] = re.search('(?P<team_id>[0-9]+)/?$', url).group('team_id')
+                            members_page = self._get(url)
+                            members_page = json.loads(members_page)['data']
+                            members_table = parsed_table.ParsedTable(members_page)
+                            for member_row in members_table:
+                                _, member = member_row['Developer'].value.strip().rsplit(' ', 1)
+                                r['members'].append(member)
+                            r['name'] = f'{name}: {", ".join(r["members"])}'
                         else:
-                            member = name
-                        r['name'] = name
-                        r['member'] = member
-                    elif 'балл' in f or 'score' in f or 'problems solved' in f:
+                            if ' ' in name:
+                                name, member = name.rsplit(' ', 1)
+                            else:
+                                member = name
+                            r['name'] = name
+                            r['members'] = [member]
+                    elif ('балл' in f or 'score' in f or 'problems solved' in f) and 'solving' not in r:
                         r['solving'] = float(v.value.split()[0])
                     elif 'total time' in f or 'hh:mm:ss' in f:
                         r['penalty'] = v.value.strip()
@@ -120,10 +141,12 @@ class Statistic(BaseModule):
                 if not r or r['solving'] < 1e-9 or 'problems' not in r:
                     continue
 
-                if users and r['member'] not in users:
-                    continue
-
-                results[r['member']] = r
+                members = r.pop('members')
+                for member in members:
+                    if users and member not in users:
+                        continue
+                    r['member'] = member
+                    results[member] = dict(r)
 
             return page, problems_info
 
@@ -159,7 +182,7 @@ if __name__ == "__main__":
     from django.utils import timezone
 
     contests = Contest.objects \
-        .filter(title__regex="January Clash '15") \
+        .filter(title="ACM ICPC Practice Contest") \
         .filter(host='hackerearth.com', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('-start_time') \
 

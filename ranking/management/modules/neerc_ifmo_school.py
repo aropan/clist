@@ -6,10 +6,8 @@ from datetime import datetime
 from pprint import pprint
 from collections import OrderedDict
 
-from requester import FailOnGetResponse
-
-from common import REQ, DOT, SPACE, BaseModule, parsed_table
-from neerc_ifmo_helper import parse_xml
+from ranking.management.modules.common import REQ, DOT, SPACE, BaseModule, parsed_table, FailOnGetResponse
+from ranking.management.modules.neerc_ifmo_helper import parse_xml
 
 
 class Statistic(BaseModule):

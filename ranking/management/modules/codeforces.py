@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule, FailOnGetResponse
-from excepts import ExceptionParseStandings
-import conf
-
 import re
 import json
 from time import time, sleep
@@ -13,6 +9,10 @@ from urllib.parse import urlencode
 from string import ascii_lowercase
 from random import choice
 import requests
+
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules import conf
 
 
 API_KEYS = conf.CODEFORCES_API_KEYS
@@ -254,6 +254,7 @@ class Statistic(BaseModule):
 
 
 if __name__ == '__main__':
+    pprint(Statistic(url='https://codeforces.com/contest/1270/', key='1270').get_result('CodeMazz'))
     pprint(Statistic(url='https://codeforces.com/contest/1200/', key='1200').get_result('hloya_ygrt'))
     pprint(Statistic(url='https://codeforces.com/contest/1200/', key='1200').get_result('rui-de'))
     pprint(Statistic(url='https://codeforces.com/contest/1164/', key='1164').get_result('abisheka'))

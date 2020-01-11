@@ -19,8 +19,9 @@ from django.db.models import Q, F, Count
 
 from ranking.models import Statistics, Account
 from clist.models import Contest, Resource, TimingContest
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
-from .countrier import Countrier
+from ranking.management.commands.countrier import Countrier
 
 
 class Command(BaseCommand):
@@ -79,9 +80,11 @@ class Command(BaseCommand):
                 ended = contests.filter(query)
 
                 contests = started.union(ended)
+        else:
+            contests = contests.filter(end_time__lt=now)
 
         if freshness_days is not None:
-            contests = contests.filter(modified__lt=now - timedelta(days=freshness_days))
+            contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
 
         if limit:
             contests = contests.order_by('-start_time')[:limit]
@@ -131,7 +134,6 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     if 'url' in standings and standings['url'] != contest.standings_url:
                         contest.standings_url = standings['url']
-                        contest.save()
 
                     if 'options' in standings:
                         contest_options = contest.info.get('standings', {})
@@ -140,7 +142,6 @@ class Command(BaseCommand):
 
                         if self._canonize(standings_options) != self._canonize(contest_options):
                             contest.info['standings'] = standings_options
-                            contest.save()
 
                     result = standings.get('result', {})
                     if not no_update_results and result:
@@ -148,6 +149,7 @@ class Command(BaseCommand):
                         fields = list()
                         calculate_time = False
                         d_problems = {}
+                        teams_viewed = set()
 
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc='update results'):
@@ -173,24 +175,28 @@ class Command(BaseCommand):
                                     account.save()
 
                             problems = r.get('problems', {})
-                            for k, v in problems.items():
-                                if 'result' not in v:
-                                    continue
 
-                                p = d_problems
-                                if 'division' in r:
-                                    p = p.setdefault(r['division'], {})
-                                p = p.setdefault(k, {})
-                                p['n_teams'] = p.get('n_teams', 0) + 1
+                            if 'team_id' not in r or r['team_id'] not in teams_viewed:
+                                if 'team_id' in r:
+                                    teams_viewed.add(r['team_id'])
+                                for k, v in problems.items():
+                                    if 'result' not in v:
+                                        continue
 
-                                ac = str(v['result']).startswith('+')
-                                try:
-                                    result = float(v['result'])
-                                    ac = ac or result > 0 and not v.get('partial', False)
-                                except Exception:
-                                    pass
-                                if ac:
-                                    p['n_accepted'] = p.get('n_accepted', 0) + 1
+                                    p = d_problems
+                                    if 'division' in r:
+                                        p = p.setdefault(r['division'], {})
+                                    p = p.setdefault(k, {})
+                                    p['n_teams'] = p.get('n_teams', 0) + 1
+
+                                    ac = str(v['result']).startswith('+')
+                                    try:
+                                        result = float(v['result'])
+                                        ac = ac or result > 0 and not v.get('partial', False)
+                                    except Exception:
+                                        pass
+                                    if ac:
+                                        p['n_accepted'] = p.get('n_accepted', 0) + 1
 
                             calc_time = contest.calculate_time or contest.start_time <= now < contest.end_time
 
@@ -252,11 +258,9 @@ class Command(BaseCommand):
 
                         if self._canonize(fields) != self._canonize(contest.info.get('fields')):
                             contest.info['fields'] = fields
-                            contest.save()
 
                         if calculate_time and not contest.calculate_time:
                             contest.calculate_time = True
-                            contest.save()
 
                         problems = standings.pop('problems', None)
                         if 'division' in problems:
@@ -273,7 +277,8 @@ class Command(BaseCommand):
 
                         if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
                             contest.info['problems'] = problems
-                            contest.save()
+
+                        contest.save()
 
                         progress_bar.set_postfix(fields=str(fields))
 
@@ -294,6 +299,8 @@ class Command(BaseCommand):
                             contest.save()
                 if 'result' in standings:
                     count += 1
+            except (ExceptionParseStandings, InitModuleException) as e:
+                progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 url = contest.standings_url or contest.url
                 self.logger.error(f'contest = {contest}, url = {url}, error = {e}, row = {r}')

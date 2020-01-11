@@ -5,12 +5,10 @@ import re
 import urllib.parse
 from pprint import pprint
 from collections import OrderedDict
-
-from common import REQ
-from common import BaseModule
-from common import parsed_table
-from excepts import InitModuleException
 from datetime import datetime
+
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import InitModuleException
 
 
 class Statistic(BaseModule):

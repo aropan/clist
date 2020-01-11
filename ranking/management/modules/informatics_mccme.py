@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from common import REQ, BaseModule
-from excepts import InitModuleException, ExceptionParseStandings
-
 import re
 from pprint import pprint
+
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import InitModuleException, ExceptionParseStandings
 
 
 class Statistic(BaseModule):

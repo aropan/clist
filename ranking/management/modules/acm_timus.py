@@ -7,8 +7,8 @@ import re
 
 from first import first
 
-from common import REQ
-from common import BaseModule, parsed_table
+from ranking.management.modules.common import REQ
+from ranking.management.modules.common import BaseModule, parsed_table
 
 
 class Statistic(BaseModule):

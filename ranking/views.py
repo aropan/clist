@@ -14,8 +14,8 @@ from ranking.models import Statistics
 from clist.templatetags.extras import slug
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
-from regex import verify_regex
 from clist.templatetags.extras import get_problem_key
+from utils.regex import verify_regex
 
 
 @page_template('standings_list_paging.html')

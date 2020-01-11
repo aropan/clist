@@ -10,11 +10,10 @@ import re
 from pprint import pprint
 from collections import OrderedDict
 
-from common import REQ, LOG
-from common import BaseModule
-from excepts import ExceptionParseStandings
-
-import conf
+from ranking.management.modules.common import REQ, LOG
+from ranking.management.modules.common import BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):

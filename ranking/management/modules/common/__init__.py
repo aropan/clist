@@ -6,8 +6,8 @@ from datetime import timedelta
 from abc import ABCMeta, abstractmethod
 import logging
 
-from requester import requester
-from requester import FailOnGetResponse  # noqa
+from utils.requester import requester
+from utils.requester import FailOnGetResponse  # noqa
 
 REQ = requester(cookie_filename=None)
 REQ.caching = 'REQUESTER_CACHING' in os.environ

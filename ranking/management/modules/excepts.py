@@ -8,7 +8,3 @@ class InitModuleException(Exception):
 
 class ExceptionParseStandings(Exception):
     pass
-
-
-class NotImplemented(Exception):
-    pass
