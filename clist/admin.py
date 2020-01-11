@@ -45,9 +45,10 @@ class ComingContestListFilter(SimpleListFilter):
 @admin_register(Contest)
 class ContestAdmin(BaseModelAdmin):
     fieldsets = [
-        [None, {'fields': ['title', 'resource', 'host', 'url', 'standings_url', 'calculate_time', 'info', 'invisible']}],
+        [None, {'fields': ['title', 'resource', 'host', 'url', 'standings_url']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
+        ['Addition information', {'fields': ['calculate_time', 'info', 'invisible']}],
         ['Access time', {'fields': ['created', 'modified', 'updated']}],
     ]
     list_display = [
@@ -91,9 +92,12 @@ class ResourceAdmin(BaseModelAdmin):
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
     ]
-    list_display = ['host', 'enable', 'url', 'timezone']
+    list_display = ['host', 'enable', 'url', 'timezone', '_num_contests']
     list_filter = ['timezone']
     search_fields = ['host']
+
+    def _num_contests(self, obj):
+        return obj.contest_set.count()
 
 
 @admin_register(TimingContest)
