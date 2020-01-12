@@ -328,7 +328,7 @@ class Statistic(BaseModule):
         ret = []
         with PoolExecutor(max_workers=10) as executor:
             for user, data in zip(users, executor.map(fetch_profile, users)):
-                assert user == data['handle']
+                assert user.lower() == data['handle'].lower()
                 if pbar:
                     pbar.update(1)
                 ret.append(None if data.get('action') == 'remove' else data)
