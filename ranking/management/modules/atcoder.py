@@ -20,12 +20,14 @@ class Statistic(BaseModule):
     def get_standings(self, users=None):
         url = f'{self.STANDING_URL_.format(self)}/json'
         page = REQ.get(url)
+
         form = REQ.form(limit=3, selectors=['class="form-horizontal"'])
-        form['post'].update({
-            'username': self._username,
-            'password': self._password,
-        })
-        page = REQ.get(form['url'], post=form['post'])
+        if form:
+            form['post'].update({
+                'username': self._username,
+                'password': self._password,
+            })
+            page = REQ.get(form['url'], post=form['post'])
 
         data = json.loads(page)
 
@@ -86,5 +88,7 @@ class Statistic(BaseModule):
 
 
 if __name__ == '__main__':
+    statistic = Statistic(url='https://atcoder.jp/contests/abc150', key='abc150')
+    pprint(statistic.get_result('Geothermal'))
     statistic = Statistic(url='https://atcoder.jp/contests/agc031', key='agc031')
     pprint(statistic.get_result('tourist'))

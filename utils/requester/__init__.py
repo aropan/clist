@@ -395,6 +395,8 @@ class requester():
             </form>
         '''
         match = re.search(regex, page, re.DOTALL | re.VERBOSE | re.IGNORECASE)
+        if not match:
+            return None
         page = match.group()
         result = match.groupdict()
         post = {}
