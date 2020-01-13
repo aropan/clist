@@ -160,6 +160,11 @@ def change(request):
             return HttpResponseBadRequest("invalid open events new tab value")
         coder.settings["open_new_tab"] = int(value)
         coder.save()
+    elif name == "all-standings":
+        if value not in ["0", "1", ]:
+            return HttpResponseBadRequest("invalid all standings value")
+        coder.settings["all_standings"] = int(value)
+        coder.save()
     elif name == "email":
         if value not in (token.email for token in coder.token_set.all()):
             return HttpResponseBadRequest("invalid email")

@@ -3,6 +3,7 @@ from collections import OrderedDict
 from itertools import accumulate
 
 from django.shortcuts import render
+from django.utils import timezone
 from django.http import HttpResponseNotFound
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q, Exists, OuterRef
@@ -10,7 +11,7 @@ from el_pagination.decorators import page_template
 
 
 from clist.models import Contest
-from ranking.models import Statistics
+from ranking.models import Statistics, Module
 from clist.templatetags.extras import slug
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
@@ -22,8 +23,12 @@ from utils.regex import verify_regex
 def standings_list(request, template='standings_list.html', extra_context=None):
     contests = Contest.objects \
         .annotate(has_statistics=Exists(Statistics.objects.filter(contest=OuterRef('pk')))) \
-        .filter(has_statistics=True) \
+        .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
+        .filter(Q(has_statistics=True) | Q(end_time__lte=timezone.now())) \
         .order_by('-end_time', 'pk')
+    if not request.user.is_authenticated or not request.user.coder.settings.get('all_standings'):
+        contests = contests.filter(has_statistics=True, has_module=True)
+
     search = request.GET.get('search')
     if search is not None:
         search_re = verify_regex(search)

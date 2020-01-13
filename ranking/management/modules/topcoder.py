@@ -328,6 +328,7 @@ class Statistic(BaseModule):
         ret = []
         with PoolExecutor(max_workers=10) as executor:
             for user, data in zip(users, executor.map(fetch_profile, users)):
+                data['handle'] = data['handle'].strip()
                 assert user.lower() == data['handle'].lower()
                 if pbar:
                     pbar.update(1)

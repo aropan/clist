@@ -49,7 +49,7 @@
     <h4>{{ name|title }}</h4>
     <div class="contests list">
     {% for c in set|slice:":42" %}
-        <a class="badge progress-bar-info" href="{{ c.standings_url|default:c.url }}">{{ c.title }}</a>
+    <a class="badge progress-bar-{% if c.has_statistics %}success{% elif name == "past" %}warning{% else %}info{% endif %}" href="{% if c.has_statistics %}{% url 'ranking:standings' c.title|slug c.pk %}{% else %}{{ c.standings_url|default:c.url }}{% endif %}">{{ c.title }}</a>
     {% endfor %}
     {% if set.count > 42 %}
         and {{ set.count|add:-42 }} other(s)

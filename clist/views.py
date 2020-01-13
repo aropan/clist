@@ -3,7 +3,7 @@ from datetime import timedelta
 import arrow
 import pytz
 from django.conf import settings
-from django.db.models import F, Q, Count, OuterRef, Subquery, IntegerField
+from django.db.models import F, Q, Count, OuterRef, Subquery, IntegerField, Exists
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_protect
 from clist.templatetags.extras import get_timezones
 from clist.models import Resource, Contest, Banner
 from true_coders.models import Party
-from ranking.models import Rating
+from ranking.models import Rating, Statistics
 from utils.regex import verify_regex
 
 
@@ -240,7 +240,8 @@ def resources(request):
 def resource(request, host):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
-    contests = resource.contest_set.filter(invisible=False)
+    has_statistics = Statistics.objects.filter(contest__resource=resource, contest_id=OuterRef('pk'))
+    contests = resource.contest_set.filter(invisible=False).annotate(has_statistics=Exists(has_statistics))
     context = {
         'resource': resource,
         'accounts': resource.account_set.filter(coders__isnull=False).order_by('-modified'),

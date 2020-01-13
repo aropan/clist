@@ -32,3 +32,7 @@ html {
 .modal-open .modal{
     overflow: hidden !important;
 }
+
+.flag-ch {
+   width: 11px !important;
+}

@@ -189,7 +189,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None):
         if '/codingcompetitions.withgoogle.com/' in self.url:
             return self._api_get_standings(users)
-        if '/code.google.com/' in self.url:
+        if '/code.google.com/' in self.url or '/codejam.withgoogle.com/' in self.url:
             return self._old_get_standings(users)
         raise InitModuleException(f'url = {self.url}')
 
@@ -197,6 +197,13 @@ class Statistic(BaseModule):
 if __name__ == "__main__":
     from pprint import pprint
     statistics = [
+        Statistic(
+            name='Kick Start. Round H',
+            url='https://codejam.withgoogle.com/codejam/contest/3324486/dashboard',
+            key='3324486',
+            start_time=datetime.now(),
+            standings_url=None,
+        ),
         Statistic(
             name='Code Jam. AMER Semifinal',
             url='https://code.google.com/codejam/contest/32008/dashboard',

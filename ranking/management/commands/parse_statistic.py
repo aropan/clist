@@ -153,6 +153,10 @@ class Command(BaseCommand):
 
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc='update results'):
+                            for k, v in r.items():
+                                if isinstance(v, str) and chr(0x00) in v:
+                                    r[k] = v.replace(chr(0x00), '')
+
                             member = r.pop('member')
                             account, _ = Account.objects.get_or_create(resource=resource, key=member)
 
