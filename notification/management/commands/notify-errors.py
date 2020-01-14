@@ -68,7 +68,7 @@ class Command(BaseCommand):
             )
 
         command_cache = cache.setdefault('command', {})
-        for log_file in glob.glob('/home/aropan/dev/clist/logs/command/**/*.log', recursive=True):
+        for log_file in glob.glob('./logs/command/**/*.log', recursive=True):
             key = os.path.basename(log_file)
             self._check(log_file, '^.*ERROR.*$', command_cache, key, flags=re.MULTILINE)
 

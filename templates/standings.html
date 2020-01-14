@@ -57,28 +57,29 @@
           class="form-control"
           style="min-width: 300px"
         />
-
         <div class="input-group-btn">
           <button class="btn btn-default" type="submit">
             <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
             Search
           </button>
-          {% if has_detail %}
-          <input
-            name="detail"
-            type="checkbox"
-            data-size="small"
-            data-toggle="toggle"
-            data-on="Detail"
-            data-off="Short"
-            data-onstyle="default"
-            data-offstyle="default"
-            onchange="this.form.submit()"
-            {% if with_detail %}checked{% endif %}
-          >
-          {% endif %}
         </div>
+
       </div>
+
+      {% if has_detail %}
+      <input
+        name="detail"
+        type="checkbox"
+        data-size="small"
+        data-toggle="toggle"
+        data-on="Detail"
+        data-off="Short"
+        data-onstyle="default"
+        data-offstyle="default"
+        onchange="this.form.submit()"
+        {% if with_detail %}checked{% endif %}
+      >
+      {% endif %}
 
       {% if has_country %}
       <div class="input-group input-group-sm hidden" id="country-hidden">
