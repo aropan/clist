@@ -21,20 +21,19 @@
   <span class="account badge progress-bar-info">{{ account.key }} <a href="http://{{ account.resource.host }}"><small class="text-muted">{{ account.resource.host }}</small></a></span>
   {% endfor %}
   <h3>Contests</h3>
-  <div class="container">
-    <form method="get" action="">
-    <div class="row input-group">
-      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host. Also you can use contest:{ID} or problem:{NAME}" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-      <span class="input-group-btn">
-        <button class="btn btn-default" type="submit">
-          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-          Search
-        </button>
-      </span>
-    </div>
-    </form>
-    <br/>
+
+  <form method="get" action="">
+  <div class="input-group">
+    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host. Also you can use contest:{ID} or problem:{NAME}" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+    <span class="input-group-btn">
+      <button class="btn btn-default" type="submit">
+        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+        Search
+      </button>
+    </span>
   </div>
+  </form>
+  <br/>
 
   {% if statistics.exists %}
   <div class="panel panel-default table-responsive">

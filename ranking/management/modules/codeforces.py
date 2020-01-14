@@ -254,6 +254,8 @@ class Statistic(BaseModule):
 
 
 if __name__ == '__main__':
+    pprint(Statistic(url='https://codeforces.com/contest/1287/', key='1287').get_result('isaf27'))
+    exit(0)
     pprint(Statistic(url='https://codeforces.com/contest/1270/', key='1270').get_result('CodeMazz'))
     pprint(Statistic(url='https://codeforces.com/contest/1200/', key='1200').get_result('hloya_ygrt'))
     pprint(Statistic(url='https://codeforces.com/contest/1200/', key='1200').get_result('rui-de'))

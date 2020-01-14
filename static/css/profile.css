@@ -29,6 +29,10 @@
     color: white;
 }
 
+.title .problems {
+    display: inline-block;
+}
+
 input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: searchfield-cancel-button;
 }

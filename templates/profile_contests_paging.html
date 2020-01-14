@@ -19,10 +19,10 @@
     </td>
     <td>{{ s.solving|floatformat }}</td>
     <td>{{ s.contest.end_time|naturalday }}</td>
-    <td class="title">
+    <td class="title col-md-9 col-sm-8">
         <a href="{% url 'ranking:standings' s.contest.title|slug s.contest.pk %}">{{ s.contest.title }}</a>
-        <a href="http://{{ s.contest.resource.host }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
-        <div>
+        <a href="{{ s.contest.resource.url }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
+        <div class="problems">
             {% if s.addition.hack %}
             {% with hack=s.addition.hack %}
                 <span class="badge progress-bar-warning" data-toggle="tooltip" data-placement="top" title="Hacks">
@@ -30,20 +30,20 @@
                 </span>
             {% endwith %}
             {% endif %}
-            {% if not s.addition.problems %}
-                <span class="badge progress-bar-warning">missing problems information</span>
-            {% elif s.contest.info.problems %}
-              {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
-                {% with key=problem|get_problem_key  %}
-                {% with stat=s.addition.problems|get_item:key %}
-                  {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat %}
-                {% endwith %}
-                {% endwith %}
-              {% endfor %}
-            {% else %}
-              {% for k, v in s.addition.problems.items|sort %}
-              {% include 'problem_stat.html' with short=k name=k stat=v %}
-              {% endfor %}
+            {% if 'problems' in s.addition %}
+                {% if s.contest.info.problems %}
+                  {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
+                    {% with key=problem|get_problem_key  %}
+                    {% with stat=s.addition.problems|get_item:key %}
+                      {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat %}
+                    {% endwith %}
+                    {% endwith %}
+                  {% endfor %}
+                {% else %}
+                  {% for k, v in s.addition.problems.items|sort %}
+                  {% include 'problem_stat.html' with short=k name=k stat=v %}
+                  {% endfor %}
+                {% endif %}
             {% endif %}
         </div>
     </td>
