@@ -47,11 +47,13 @@
     {% endif %}
 ">
     {% with country=statistic.account.country %}
+      <div class="flag-width-fixed">
       {% if country %}
       <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}">
         <img class="flag flag-{{ country.code|lower }}"/>
       </a>
       {% endif %}
+      </div>
     {% endwith %}
 
     {% with coders=statistic.account.coders.all %}

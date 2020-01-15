@@ -28,10 +28,25 @@
     }
 
     $url = 'https://forum.codingame.com/t/clash-wars-mini-clash-of-code-tournament/145336';
-    $page = curlexec($url);
-    preg_match_all('#href="[^"]*codingame.com/hackathon/(?P<id>[^/"]*)"#', $page, $matches);
+    $n_page = 0;
+    for (;;) {
+        $page = curlexec($url);
 
-    $pids = array_merge($pids, array_slice($matches['id'], -3));
+        preg_match_all('#href="[^"]*codingame.com/hackathon/(?P<id>[^/"]*)"#', $page, $matches);
+        $pids = array_merge($pids, array_slice($matches['id'], -3));
+
+        if (!preg_match_all('#<a[^>]*rel="next"[^>]*href="(?P<href>[^"]*page=(?P<page>[0-9]+))"#', $page, $matches, PREG_SET_ORDER)) {
+            break;
+        }
+        $match = end($matches);
+        $match_page = intval($match['page']);
+        if ($match_page < $n_page) {
+            break;
+        }
+        $n_page = $match_page;
+        $url = $match['href'];
+    }
+
     $pids = array_unique($pids);
 
     foreach ($pids as $pid) {
