@@ -16,7 +16,6 @@ import tqdm
 
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
-
 from ranking.management.modules import conf
 
 
@@ -306,27 +305,27 @@ class Statistic(BaseModule):
         def fetch_profile(user):
             url = f'http://api.topcoder.com/v2/users/{user}'
             ret = {}
-            delay = 0
-            for _ in range(3):
+            for _ in range(2):
                 try:
                     page = REQ.get(url)
                     ret = json.loads(page)
                     if 'error' in ret:
                         if isinstance(ret['error'], dict) and ret['error'].get('value') == 404:
-                            ret = {'action': 'remove'}
+                            ret = {'handle': user, 'action': 'remove'}
                         else:
                             continue
                     break
                 except Exception:
                     pass
-                delay += 2
-                sleep(delay)
+                sleep(1)
             if 'handle' not in ret:
+                if not ret:
+                    ret['delta'] = timedelta(days=30)
                 ret['handle'] = user
             return ret
 
         ret = []
-        with PoolExecutor(max_workers=10) as executor:
+        with PoolExecutor(max_workers=4) as executor:
             for user, data in zip(users, executor.map(fetch_profile, users)):
                 data['handle'] = data['handle'].strip()
                 assert user.lower() == data['handle'].lower()

@@ -55,10 +55,12 @@ class Command(BaseCommand):
             try:
                 with transaction.atomic():
                     plugin = self._get_plugin(resource.module)
-                    accounts = resource.account_set.filter(Q(updated__isnull=True) | Q(updated__lte=now))
+                    accounts = resource.account_set
 
                     if args.query:
                         accounts = accounts.filter(key__iregex=args.query)
+                    else:
+                        accounts = resource.account_set.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
                     accounts = list(accounts[:args.limit])
                     users = [a.key for a in accounts]
@@ -77,8 +79,9 @@ class Command(BaseCommand):
                             continue
                         if info.get('country'):
                             account.country = countrier.get(info['country'])
+                        delta = info.pop('delta', timedelta(days=365))
                         account.info.update(info)
-                        account.updated = now + timedelta(days=365)
+                        account.updated = now + delta
                         account.save()
             except Exception:
                 self.logger.error(format_exc())
