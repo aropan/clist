@@ -55,7 +55,6 @@ def process_data(request, service, access_token, response):
         user_id=user_id,
     )
     token.email = email
-    token.data = data
     token.save()
 
     request.session['token_id'] = token.id
