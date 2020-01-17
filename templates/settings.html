@@ -148,8 +148,10 @@
             {% for service in services %}
             {% with token=coder.token_set|get_token:service %}
                 <div class="btn-block btn-group">
-                    <a class="btn btn-default active service-icon-btn"><i class="fab {{ service.fa_icon }}"></i></a>
-                    <a {% if not token %}href="{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}"{% endif %} class="btn btn-default"><div class="text-left">{% if token %}{{ token.user_id }}{% else %}connect{% endif %}</div></a>
+                    <a class="btn btn-default active service-icon-btn{% if token %} disabled{% endif %}"><i class="fab {{ service.fa_icon }}"></i></a>
+                    <a {% if not token %}href="{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}"{% endif %} class="btn btn-default{% if token %} disabled{% endif %}">
+                        <div class="text-left">{% if token %}{{ token.user_id }}{% else %}connect{% endif %}</div>
+                    </a>
                 </div>
             {% endwith %}
             {% endfor %}
