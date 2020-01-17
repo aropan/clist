@@ -147,7 +147,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     mod_penalty = {}
     first = statistics.first()
-    if first:
+    if first and all('time' not in k for k in contest_fields):
         penalty = first.addition.get('penalty')
         if penalty and isinstance(penalty, int):
             mod_penalty.update({'solving': first.solving, 'penalty': penalty})
