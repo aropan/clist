@@ -60,6 +60,16 @@
     outline: none;
 }
 
+.hide-contest.fa-eye {
+    visibility: hidden;
+}
+
+:hover > .hide-contest {
+    cursor: pointer;
+    color: #fff;
+    visibility: visible;
+}
+
 .addtocalendar a:hover {
     text-decoration: none;
 }
@@ -68,6 +78,7 @@
     color: inherit;
 }
 
+.event .hide-contest,
 .event .addtocalendar i {
     color: #8be;
 }

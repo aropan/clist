@@ -84,6 +84,11 @@ $(function() {
                     $(val).html(getFormatTime(countdown - ($.now() - page_load) / 1000))
                 })
             })
+            if (hide_contest) {
+                var hide_contest_link=$('<i class="hide-contest fa fa-eye" data-contest-id="' + event.id + '">&nbsp;</i>');
+                hide_contest_link.click(toggle_hide_contest);
+                hide_contest_link.prependTo(element.querySelector('.fc-content'))
+            }
         },
         eventClick: function (data, event, view) {
             return true

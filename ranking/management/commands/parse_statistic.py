@@ -4,7 +4,7 @@
 import sys
 import os
 import json
-from html.parser import HTMLParser
+from html import unescape
 from collections import OrderedDict
 from random import shuffle
 from tqdm import tqdm
@@ -107,7 +107,6 @@ class Command(BaseCommand):
 
         countrier = Countrier()
 
-        html_parser = HTMLParser()
         count = 0
         total = 0
         progress_bar = tqdm(contests)
@@ -168,7 +167,11 @@ class Command(BaseCommand):
                                 account.save()
 
                             if r.get('name'):
-                                r['name'] = html_parser.unescape(r['name'])
+                                while True:
+                                    name = unescape(r['name'])
+                                    if name == r['name']:
+                                        break
+                                    r['name'] = name
                                 no_update_name = r.pop('_no_update_name', False)
                                 if not no_update_name and account.name != r['name'] and member.find(r['name']) == -1:
                                     account.name = r['name']

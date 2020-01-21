@@ -76,8 +76,11 @@ def settings(request):
                 notification.save()
                 return HttpResponseRedirect(reverse('coder:settings') + '#notifications-tab')
 
+    if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
+        coder = Coder.objects.get(user__username=request.GET['as_coder'])
+
     resources = Resource.objects.all()
-    coder.filter_set.filter(resources=[]).delete()
+    coder.filter_set.filter(resources=[], contest__isnull=True).delete()
 
     return render(
         request,
@@ -145,25 +148,11 @@ def change(request):
             return HttpResponseBadRequest("invalid view mode")
         coder.settings["view_mode"] = value
         coder.save()
-    elif name == "calendar-filter-long":
+    elif name in ["hide-contest", "all-standings", "open-new-tab", "group-in-list", "calendar-filter-long"]:
         if value not in ["0", "1", ]:
-            return HttpResponseBadRequest("invalid group in list view mode value")
-        coder.settings["calendar_filter_long"] = int(value)
-        coder.save()
-    elif name == "group-in-list":
-        if value not in ["0", "1", ]:
-            return HttpResponseBadRequest("invalid group in list view mode value")
-        coder.settings["group_in_list"] = int(value)
-        coder.save()
-    elif name == "open-new-tab":
-        if value not in ["0", "1", ]:
-            return HttpResponseBadRequest("invalid open events new tab value")
-        coder.settings["open_new_tab"] = int(value)
-        coder.save()
-    elif name == "all-standings":
-        if value not in ["0", "1", ]:
-            return HttpResponseBadRequest("invalid all standings value")
-        coder.settings["all_standings"] = int(value)
+            return HttpResponseBadRequest(f"invalid {name} value")
+        key = name.replace('-', '_')
+        coder.settings[key] = int(value)
         coder.save()
     elif name == "email":
         if value not in (token.email for token in coder.token_set.all()):
@@ -209,10 +198,19 @@ def change(request):
 
             field = "Resources"
             filter_.resources = list(map(int, request.POST.getlist("value[resources][]", [])))
-            if len(filter_.resources) == 0:
-                raise Exception("empty")
             if Resource.objects.filter(pk__in=filter_.resources).count() != len(filter_.resources):
                 raise Exception("invalid id")
+
+            field = "Contest"
+            contest_id = request.POST.get("value[contest]", None)
+            if contest_id:
+                filter_.contest = Contest.objects.get(pk=contest_id)
+            else:
+                filter_.contest = None
+
+            field = "Resources and contest"
+            if not filter_.resources and not filter_.contest:
+                raise Exception("empty")
 
             categories = coder.get_categories()
             field = "Categories"
@@ -365,6 +363,12 @@ def search(request, **kwargs):
         total = len(qs)
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c, 'text': n} for c, n in qs]
+    elif query == 'notpast':
+        title = request.GET.get('title')
+        qs = Contest.objects.filter(title__iregex=verify_regex(title), end_time__gte=timezone.now())
+        total = qs.count()
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': c.id, 'text': c.title} for c in qs]
     else:
         return HttpResponseBadRequest('invalid query')
 

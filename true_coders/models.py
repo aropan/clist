@@ -9,6 +9,7 @@ from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from pyclist.models import BaseModel, BaseManager
+from clist.models import Contest
 
 
 class Coder(BaseModel):
@@ -48,7 +49,9 @@ class Coder(BaseModel):
         hide = Q()
         show = Q()
         for filter_ in self.filter_set.filter(filter_categories):
-            query = Q(resource__id__in=filter_.resources)
+            query = Q()
+            if filter_.resources:
+                query &= Q(resource__id__in=filter_.resources)
             if filter_.duration_from:
                 seconds = timedelta(minutes=filter_.duration_from).total_seconds()
                 query &= Q(duration_in_secs__gte=seconds)
@@ -64,6 +67,9 @@ class Coder(BaseModel):
                 if filter_.inverse_regex:
                     query_regex = ~query_regex
                 query &= query_regex
+            if filter_.contest_id:
+                query &= Q(pk=filter_.contest_id)
+
             if filter_.to_show:
                 show |= query
             else:
@@ -83,6 +89,10 @@ class Coder(BaseModel):
 
     def account_set_order_by_pk(self):
         return self.account_set.order_by('pk')
+
+    @property
+    def ordered_filter_set(self):
+        return self.filter_set.order_by('created')
 
 
 class PartyManager(BaseManager):
@@ -130,11 +140,12 @@ class Filter(BaseModel):
     inverse_regex = models.BooleanField(default=False)
     to_show = models.BooleanField(default=True)
     resources = JSONField(default=list, blank=True)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, default=None, null=True, blank=True)
     categories = ArrayField(models.CharField(max_length=20), blank=True, default=_get_default_categories)
 
     def __str__(self):
         result = '' if not self.name else '{0.name}: '.format(self)
-        result += '{0.coder}, {0.resources} resources'.format(self)
+        result += '{0.coder}, {0.resources} resources, {0.contest} contest'.format(self)
         if self.duration_from is not None or self.duration_to is not None:
             result += ', duration'
             if self.duration_from is not None:
@@ -149,7 +160,7 @@ class Filter(BaseModel):
         return result
 
     def dict(self):
-        return {
+        ret = {
             "name": self.name,
             "id": self.id,
             "duration": {
@@ -158,10 +169,14 @@ class Filter(BaseModel):
             },
             "regex": self.regex or "",
             "resources": self.resources,
+            "contest": self.contest_id,
             "categories": self.categories,
             "inverse_regex": self.inverse_regex,
             "to_show": self.to_show,
         }
+        if self.contest_id:
+            ret['contest__title'] = self.contest.title
+        return ret
 
 
 class Organization(BaseModel):

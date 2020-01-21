@@ -3,6 +3,6 @@ Disallow: /api/
 Allow: /api/v1/doc
 Disallow: /telegram/me/
 Disallow: /admin/
-Clean-param: next&timezone&durationlimit&viewmode&tabs&q&search&page
+Clean-param: next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&page&as_coder
 Clean-param: division&detail&country /standings/
 Clean-param: participants&teams /event/

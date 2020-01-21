@@ -71,17 +71,30 @@
             </div>
             <div class="value"><input type="checkbox" id="view-mode" data-on="List" data-off="Calendar" data-onstyle="info" data-offstyle="info" data-value="{% if coder.settings.view_mode == "list" %}1{% else %}0{% endif %}"/></div>
 
-            <div class="key">Filter long contest for calendar</div>
+            <div class="key">Filter long contest for calendar
+                <i rel="tooltip" title="Hide contests with long duration and add button to view them."></i>
+            </div>
             <div class="value"><input type="checkbox" id="calendar-filter-long" data-value="{{ coder.settings.calendar_filter_long}}"/></div>
 
-            <div class="key">Group in list mode view</div>
+            <div class="key">Group in list mode view
+                <i rel="tooltip" title="Group contests by resource. Use GET query group=1 for once."></i>
+            </div>
             <div class="value"><input type="checkbox" id="group-in-list" data-value="{{ coder.settings.group_in_list }}"/></div>
 
-            <div class="key">Open events in new tab</div>
+            <div class="key">Open events in new tab
+                <i rel="tooltip" title="Use GET query open_new_tab=1 for once."></i>
+            </div>
             <div class="value"><input type="checkbox" id="open-new-tab" data-value="{{ coder.settings.open_new_tab }}"/></div>
 
-            <div class="key">All standings</div>
+            <div class="key">All standings
+                <i rel="tooltip" title="View all contests in standings page."></i>
+            </div>
             <div class="value"><input type="checkbox" id="all-standings" data-value="{{ coder.settings.all_standings }}"/></div>
+
+            <div class="key">Hide contest
+                <i rel="tooltip" title="Add button hide separate contest and to create contest filter. After end of contest filter will be removed. Use hide_contest=1 in GET query for once."></i>
+            </div>
+            <div class="value"><input type="checkbox" id="hide-contest" data-value="{{ coder.settings.hide_contest }}"/></div>
         </div>
         <div id="filters-tab" class="tab-pane">
             <div class="key">
@@ -94,9 +107,9 @@
             </div>
 
             <div id="filters" class="value">
-                {% for filter in coder.filter_set.all %}
+                {% for filter in coder.ordered_filter_set.all %}
                 <div>
-                    <a href="#" data-name="filter" data-value='{{ filter.dict|jsonify }}' class="filter"></a>
+                    <a href="#" data-name="filter" data-value='{{ filter.dict|jsonify|force_escape }}' class="filter"></a>
                     <a href="#" data-id="{{ filter.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"><i class="far fa-trash-alt"></i></a>
                 </div>
                 {% endfor %}

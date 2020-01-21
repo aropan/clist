@@ -3,6 +3,7 @@
   customButtonGroup = '{% for i in ignore_filters %}cb{{ i.id }}{% if forloop.revcounter0 %},{% endif %}{% endfor %}'
   customButtonSelector = [{% for i in ignore_filters %}{% if i.id > 0 %}'.fc-cb{{ i.id }}-button',{% endif %}{% endfor %}].join(',')
   timezone = '{{ timezone }}'
+  hide_contest = {{ hide_contest }}
 </script>
 
 <script src="{% static_ts 'js/moment.min.js' %}"></script>

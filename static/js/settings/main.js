@@ -128,6 +128,7 @@ $(function() {
         render: function() {
             this.$input = this.$tpl.find('input')
             this.$resources = this.$tpl.find('#resources')
+            this.$contest = this.$tpl.find('#contest')
             this.$categories = this.$tpl.find('#categories')
 
             this.$tpl.find("i[rel=tooltip]")
@@ -142,6 +143,35 @@ $(function() {
                 multiple: true,
                 width: '100%',
                 placeholder: 'Select resources',
+            })
+
+            this.$contest.select2({
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select contest',
+                ajax: {
+                    url: 'search/',
+                    dataType: 'json',
+                    delay: 314,
+                    data: function (params) {
+                        return {
+                            query: 'notpast',
+                            title: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function (data, params) {
+                        return {
+                            results: data.items,
+                            pagination: {
+                                more: data.more
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
             })
 
             this.$categories.select2({
@@ -187,17 +217,31 @@ $(function() {
                 html += value.name + ': '
             }
             html += value.to_show? 'show ' : 'hide '
-            html += value.resources.length + ' resource(s)'
-            if (value.duration.from || value.duration.to) {
+            if (value.resources && value.resources.length) {
+                html += value.resources.length + ' resource(s)'
+            }
+            if (value.contest) {
+                if (value.resources.length) {
+                    html += ','
+                }
+                if (value.contest__title) {
+                    html += ' contest ' + value.contest__title;
+                } else {
+                    html += ' contest_id ' + value.contest
+                }
+            }
+            if (value.duration && (value.duration.from || value.duration.to)) {
                 html +=
-                    ', duration' + 
-                    (value.duration.from? ' from ' + value.duration.from : '') +
-                    (value.duration.to? ' to ' + value.duration.to : '')
+                    ', duration'
+                    + (value.duration.from? ' from ' + value.duration.from : '')
+                    + (value.duration.to? ' to ' + value.duration.to : '')
             }
             if (value.regex) {
                 html += ', with ' + (value.inverse_regex? 'inverse ' : '') + 'regex ' + value.regex
             }
-            html += ', for ' + value.categories.length + ' categories';
+            if (value.categories && value.categories.length) {
+                html += ', for ' + value.categories.length + ' categories';
+            }
             $(element).html(html)
         },
 
@@ -217,16 +261,20 @@ $(function() {
             }
             this.$input.filter('[name="name"]').val(value.name)
             this.$input.filter('[name="id"]').val(value.id)
-            this.$input.filter('[name="duration-from"]').val(value.duration.from)
-            this.$input.filter('[name="duration-to"]').val(value.duration.to)
+            if (value.duration) {
+                this.$input.filter('[name="duration-from"]').val(value.duration.from)
+                this.$input.filter('[name="duration-to"]').val(value.duration.to)
+            }
             this.$input.filter('[name="regex"]').val(value.regex)
             this.$input.filter('[name="inverse-regex"]').attr('checked', value.inverse_regex)
             this.$input.filter('[name="to-show"]').attr('checked', value.to_show)
+            this.$contest.select2('trigger', 'select', {data: {id: value.contest, text: value.contest__title}})
             this.$resources.val(value.resources).trigger('change')
             this.$categories.val(value.categories).trigger('change')
         },
 
         input2value: function() {
+            contest_data = this.$contest.select2('data')
             result = {
                 name: this.$input.filter('[name="name"]').val(),
                 id: parseInt(this.$input.filter('[name="id"]').val()),
@@ -238,6 +286,8 @@ $(function() {
                 inverse_regex: this.$input.filter('[name="inverse-regex"]').prop('checked'),
                 to_show: this.$input.filter('[name="to-show"]').prop('checked'),
                 resources: $.map(this.$resources.val() || [], function (v) { return parseInt(v) }),
+                contest: contest_data.length? contest_data[0].id : null,
+                contest__title: contest_data.length? contest_data[0].text : null,
                 categories: this.$categories.val() || [],
             }
             return result
@@ -302,14 +352,22 @@ $(function() {
         <div class="input-group input-group-sm"> \
             <span class="input-group-addon">Resources</span> \
             <span class="input-group-btn"> \
-              <button id="select-all-resources" class="btn btn-default"><i class="fa fa-check"></i></button> \
-              <button id="deselect-all-resources" class="btn btn-default"><i class="fa fa-times"></i></button> \
-              <button id="inverse-resources" class="btn btn-default"><i class="fa fa-retweet"></i></button> \
+                <button id="select-all-resources" class="btn btn-default"><i class="fa fa-check"></i></button> \
+                <button id="deselect-all-resources" class="btn btn-default"><i class="fa fa-times"></i></button> \
+                <button id="inverse-resources" class="btn btn-default"><i class="fa fa-retweet"></i></button> \
             </span> \
         </div> \
         <div class="filter-field-resources"> \
-          <select id="resources" class="form-control" name="resources[]"></select> \
+            <select id="resources" class="form-control" name="resources[]"></select> \
         </div> \
+    </div> \
+    <div class="h5">OR</div> \
+    <div class="filter-field"> \
+        <div class="input-group input-group-sm"> \
+            <span class="input-group-addon">Contest</span> \
+            <select id="contest" class="form-control" name="contest"></select> \
+        </div> \
+        <i rel="tooltip" title="Use `Hide contest` option in preferences for a simple way to create contest filter"></i> \
     </div> \
 </div> \
         ',
@@ -335,7 +393,7 @@ $(function() {
 
     function filterEditableHidden(e, editable) {
         var $button = $('[data-id="{0}"]'.format($(this).data('editable').value.id))
-        if ($(this).data('editable').value.resources.length == 0) {
+        if ($(this).data('editable').value.resources.length == 0 && !$(this).data('editable').value.contest) {
             $button.click()
         } else {
             $button.removeClass('hidden')

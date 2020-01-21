@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_protect
 
 from clist.templatetags.extras import get_timezones
 from clist.models import Resource, Contest, Banner
-from true_coders.models import Party
+from true_coders.models import Party, Coder, Filter
 from ranking.models import Rating, Statistics
 from utils.regex import verify_regex
 
@@ -54,12 +54,11 @@ def get_timezone(request):
     return request.session.get("timezone", settings.DEFAULT_TIME_ZONE_)
 
 
-def get_view_contests(request):
+def get_view_contests(request, coder):
     user_contest_filter = Q()
     group_list = settings.GROUP_LIST_
 
-    if request.user.is_authenticated:
-        coder = request.user.coder
+    if coder:
         user_contest_filter = coder.get_contest_filter(['list'])
         group_list = bool(coder.settings.get("group_in_list", group_list))
 
@@ -159,46 +158,57 @@ def main(request):
     viewmode = settings.VIEWMODE_
     open_new_tab = settings.OPEN_NEW_TAB_
     add_to_calendar = settings.ADD_TO_CALENDAR_
+    hide_contest = settings.HIDE_CONTEST_
 
     if request.user.is_authenticated:
-        coder = request.user.coder
+        if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
+            coder = Coder.objects.get(user__username=request.GET['as_coder'])
+        else:
+            coder = request.user.coder
         viewmode = coder.settings.get("view_mode", viewmode)
+        hide_contest = coder.settings.get("hide_contest", hide_contest)
         open_new_tab = coder.settings.get("open_new_tab", open_new_tab)
         add_to_calendar = coder.settings.get("add_to_calendar", add_to_calendar)
+    else:
+        coder = None
+    viewmode = request.GET.get("view", viewmode)
+    hide_contest = request.GET.get("hide_contest", hide_contest)
 
     time_format = get_timeformat(request)
 
     action = request.GET.get("action")
     if action is not None:
-        if action == "party-contest-toggle":
-            if request.user.is_authenticated:
-                party = get_object_or_404(Party.objects.for_user(request.user), slug=request.GET.get("party"))
-                if party.author == coder:
-                    contest = get_object_or_404(Contest, pk=request.GET.get("pk"))
-                    rating, created = Rating.objects.get_or_create(contest=contest, party=party)
-                    if not created:
-                        rating.delete()
-                    return HttpResponse("ok")
+        if action == "party-contest-toggle" and request.user.is_authenticated:
+            party = get_object_or_404(Party.objects.for_user(request.user), slug=request.GET.get("party"), author=coder)
+            contest = get_object_or_404(Contest, pk=request.GET.get("pk"))
+            rating, created = Rating.objects.get_or_create(contest=contest, party=party)
+            if not created:
+                rating.delete()
+            return HttpResponse("ok")
+        if action == "hide-contest-toggle":
+            contest = get_object_or_404(Contest, pk=request.GET.get("pk"))
+            filt, created = Filter.objects.get_or_create(coder=coder, contest=contest, to_show=False)
+            if not created:
+                filt.delete()
         return HttpResponse("accepted")
-
-    viewmode = request.GET.get("view", viewmode)
 
     tzname = get_timezone(request)
     if tzname is None:
         return HttpResponse("accepted")
 
-    if request.user.is_authenticated:
-        ignore_filters = request.user.coder.filter_set.filter(categories__contains=['calendar']).order_by('created')
+    if coder:
+        ignore_filters = coder.ordered_filter_set.filter(categories__contains=['calendar'])
+        ignore_filters = ignore_filters.filter(name__isnull=False).exclude(name='')
         ignore_filters = list(ignore_filters.values('id', 'name'))
     else:
         ignore_filters = []
 
-    if not request.user.is_authenticated or request.user.coder.settings.get('calendar_filter_long', True):
+    if not coder or coder.settings.get('calendar_filter_long', True):
         ignore_filters = ignore_filters + [{'id': 0, 'name': 'Disabled fitler'}]
 
     context = {
         "ignore_filters": ignore_filters,
-        "contests": get_view_contests(request),
+        "contests": get_view_contests(request, coder),
     }
 
     party_slug = request.GET.get("party")
@@ -215,6 +225,7 @@ def main(request):
         "offset": get_timezone_offset(tzname),
         "now": now,
         "viewmode": viewmode,
+        "hide_contest": int(hide_contest),
         "timezone": tzname,
         "time_format": time_format,
         "open_new_tab": open_new_tab,

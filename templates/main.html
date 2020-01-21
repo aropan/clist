@@ -67,6 +67,9 @@
                 <div class="col-md-4 col-sm-6 header-timeleft">Time Left</div>
             </div>
             <div class="col-md-7 col-sm-8 header-event">
+                {% if hide_contest %}
+                <i class="fa fa-eye invisible"></i>
+                {% endif %}
                 Event
                 {% if contests|total_sub_contest > 0 %}
                 <a href="#" id="toggle-all" class="badge progress-bar-info">{{ contests|total_sub_contest }}&nbsp;<i class="fa fa-caret-down"></i></a>
@@ -96,13 +99,18 @@
                 </div>
             </div>
             <div class="col-md-7 col-sm-8 event">
+                {% if hide_contest %}
+                <i class="hide-contest fa fa-eye" data-contest-id="{{ contest.id }}"></i>
+                {% endif %}
                 {% if party.id %}
                 <i class="party-check fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" {% if party.owner == user.coder %}data-contest-id="{{ contest.id}}"{% endif %}></i>
                 {% endif %}
+                <span class="contest_title">
                 {% if contest.sub_contest %}
                     <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
                 {% endif %}
                 <a href="{{ contest.url }}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
+                </span>
                 {% if contest.state != "past" and add_to_calendar != "disable" %}
                 <div class="addtocalendar atc-style-menu-wb"{% if add_to_calendar != "enable" %} data-calendars="{{ add_to_calendar }}"{% endif %}>
                     <var class="atc_event">
@@ -120,6 +128,9 @@
                     <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
                 {% endif %}
                 <div class="resource">
+                    {% if hide_contest %}
+                    <i class="fa fa-eye invisible"></i>
+                    {% endif %}
                     <a href="http://{{ contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
                 </div>
             </div>
