@@ -174,6 +174,8 @@ def main(request):
     viewmode = request.GET.get("view", viewmode)
     hide_contest = request.GET.get("hide_contest", hide_contest)
 
+    hide_contest = int(str(hide_contest).lower() in settings.YES_)
+
     time_format = get_timeformat(request)
 
     action = request.GET.get("action")
@@ -225,7 +227,7 @@ def main(request):
         "offset": get_timezone_offset(tzname),
         "now": now,
         "viewmode": viewmode,
-        "hide_contest": int(hide_contest),
+        "hide_contest": hide_contest,
         "timezone": tzname,
         "time_format": time_format,
         "open_new_tab": open_new_tab,

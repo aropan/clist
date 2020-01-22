@@ -316,3 +316,4 @@ EMAIL_PREFIX_SUBJECT_ = '[Clist] '
 TIME_FORMAT_ = '%d.%m %a %H:%M'
 LIMIT_N_TOKENS_VIEW = 3
 LIMIT_TOKENS_VIEW_WAIT_IN_HOURS = 24
+YES_ = ['', '1', 'yes', 'true']
