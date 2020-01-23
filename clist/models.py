@@ -1,8 +1,11 @@
-from pyclist.models import BaseModel, BaseManager
-from django.db import models
+from urllib.parse import urlparse
 from datetime import timedelta
+
+from django.db import models
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
+
+from pyclist.models import BaseModel, BaseManager
 
 
 class Resource(BaseModel):
@@ -14,10 +17,14 @@ class Resource(BaseModel):
     parse_url = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=30, null=True, blank=True)
     color = models.CharField(max_length=20, null=True, blank=True)
+    profile_url = models.CharField(max_length=255, null=True, default=None)
     uid = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return "%s" % (self.host)
+
+    def href(self):
+        return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=self.host)
 
 
 class VisibleContestManager(BaseManager):

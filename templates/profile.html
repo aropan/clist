@@ -18,7 +18,13 @@
   </h2>
   <h3>Accounts</h3>
   {% for account in accounts %}
-  <span class="account badge progress-bar-info">{{ account.key }} <a href="http://{{ account.resource.host }}"><small class="text-muted">{{ account.resource.host }}</small></a></span>
+  <a
+    class="account badge progress-bar-{% if account.resource.profile_url %}info{% else %}default{% endif %}"
+    href="{% if account.resource.profile_url %}{{ account.resource.profile_url|format_dict:account.dict }}{% else %}{{ account.resource.href }}{% endif %}"
+  >
+    {{ account.key }}
+    <small class="text-muted">{{ account.resource.host }}</small>
+  </a>
   {% endfor %}
   <h3>Contests</h3>
 

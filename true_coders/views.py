@@ -48,7 +48,7 @@ def profile(request, username, template='profile.html', extra_context=None):
             query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
             statistics = statistics.filter(query)
 
-    accounts = coder.account_set.select_related('resource')
+    accounts = coder.account_set.select_related('resource').order_by('pk')
 
     context = {
         'coder': coder,
@@ -168,7 +168,7 @@ def change(request):
             id_ = int(request.POST.get("value[id]", -1))
             filter_ = Filter.objects.get(pk=id_, coder=coder)
 
-            filter_.name = request.POST.get("value[name]", "").strip() or None
+            filter_.name = request.POST.get("value[name]", "").strip().replace("'", "") or None
 
             field = "Duration"
             duration_from = request.POST.get("value[duration][from]", None)

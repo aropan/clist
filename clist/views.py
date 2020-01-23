@@ -8,6 +8,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
+from urllib.parse import urlparse, parse_qs
 
 
 from clist.templatetags.extras import get_timezones
@@ -108,16 +109,28 @@ def get_timezone_offset(tzname):
 
 @csrf_protect
 def get_events(request):
+    if request.user.is_authenticated:
+        coder = request.user.coder
+    else:
+        coder = None
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        parsed = urlparse(referer)
+        as_coder = parse_qs(parsed.query).get('as_coder')
+        if as_coder and request.user.has_perm('as_coder'):
+            coder = Coder.objects.get(user__username=as_coder[0])
+
     tzname = get_timezone(request)
     offset = get_timezone_offset(tzname)
 
     query = Q()
     categories = request.POST.getlist('categories')
     ignore_filters = request.POST.getlist('ignore_filters')
-    if request.user.is_authenticated:
-        query = request.user.coder.get_contest_filter(categories, ignore_filters)
+    if coder:
+        query = coder.get_contest_filter(categories, ignore_filters)
 
-    if not request.user.is_authenticated or request.user.coder.settings.get('calendar_filter_long', True):
+    if not coder or coder.settings.get('calendar_filter_long', True):
         if categories == ['calendar'] and '0' not in ignore_filters:
             query &= Q(duration_in_secs__lt=timedelta(days=1).total_seconds())
 

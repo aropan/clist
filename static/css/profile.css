@@ -17,15 +17,11 @@
     padding: 3px;
 }
 
-.account {
-    background-color: gray;
-}
-
 .account a {
     text-decoration: none;
 }
 
-.account a small {
+.account .text-muted {
     color: white;
 }
 

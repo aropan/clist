@@ -236,3 +236,8 @@ def query_transform(request, **kwargs):
 @register.simple_tag
 def get_countries():
     return dict((c.code, c) for c in countries).values()
+
+
+@register.filter
+def format_dict(format_, dict_values):
+    return format_.format(**dict_values)

@@ -45,7 +45,7 @@ class PartyAdmin(BaseModelAdmin):
 
 @admin_register(Filter)
 class FilterAdmin(BaseModelAdmin):
-    search_fields = ['coder__user__username']
+    search_fields = ['coder__user__username', 'name']
     list_display = [
         'coder',
         'name',
