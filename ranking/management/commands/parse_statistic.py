@@ -16,8 +16,7 @@ from traceback import format_exc
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q, F
-
+from django.db.models import Q, F, OuterRef, Exists
 from ranking.models import Statistics, Account
 from clist.models import Contest, Resource, TimingContest
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -344,7 +343,8 @@ class Command(BaseCommand):
         if args.event is not None:
             contests = contests.filter(title__iregex=args.event)
         if args.only_new:
-            contests = contests.filter(statistics__isnull=True)
+            has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
+            contests = contests.annotate(has_statistics=Exists(has_statistics)).filter(has_statistics=False)
         self.parse_statistic(
             contests=contests,
             previous_days=args.days,
