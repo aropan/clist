@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -16,26 +17,32 @@ class Statistic(BaseModule):
             self.standings_url = os.path.join(re.sub('enter/?', '', self.url), 'standings')
 
     def get_standings(self, users=None):
+        if not hasattr(self, 'season'):
+            year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
+            season = f'{year}-{year + 1}'
+        else:
+            season = self.season
+
         result = {}
         problems_info = OrderedDict()
 
         if not re.search('/[0-9]+/', self.standings_url):
             return {}
 
-        year = self.start_time.year - 1 + (self.start_time.month + 3) // 12
-        season = f'{year}-{year + 1}'
-
         url = self.standings_url
         n_page = 1
         while True:
             page = REQ.get(url)
 
-            html_table = re.search(
+            match = re.search(
                 '<table[^>]*class="[^"]*standings[^>]*>.*?</table>',
                 page,
                 re.MULTILINE | re.DOTALL
-            ).group(0)
+            )
+            if not match:
+                raise ExceptionParseStandings('Not found table standings')
 
+            html_table = match.group(0)
             table = parsed_table.ParsedTable(html_table)
 
             for r in table:

@@ -14,7 +14,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
         if not self.standings_url:
-            raise InitModuleException('Not set standings url for %s' % self.name)
+            raise InitModuleException('Not set standings url')
 
     def get_standings(self, users=None):
         if not hasattr(self, 'season'):
@@ -56,6 +56,8 @@ class Statistic(BaseModule):
                     if ' ' in v.value:
                         p = problems.setdefault(k, {})
                         point, time = v.value.split()
+                        if point in ['X', '0']:
+                            p['binary'] = point == 'X'
                         p['time'] = time
                         p['result'] = point
                     else:
@@ -93,15 +95,7 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    # statictic = Statistic(
-    #     name='42',
-    #     url='http://official.contest.yandex.ru/opencupXIX/contest/9552/enter?data=ocj%2Fschedule&menu=index&head=index',
-    #     standings_url='http://opencup.ru/index.cgi?data=macros%2Fstage&menu=index&head=index&stg=13&region=main&ncup=ocj&class=ocj',  # noqa
-    #     key='2018-2019 Grand Prix of Bytedance',
-    # )
-    # pprint(statictic.get_standings()['problems'])
     statictic = Statistic(
-        name='42',
         url='http://moscow2019.workshops.it-edu.mipt.ru/',
         standings_url='http://moscow2019.workshops.it-edu.mipt.ru/index.cgi?data=macros/amresults&menu=index&head=index&round=22&sbname=mipt2019n&class=mipt2019n&rid=1',  # noqa
         key='2019-2020 bla bla',

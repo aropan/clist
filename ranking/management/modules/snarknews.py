@@ -3,19 +3,19 @@
 import os
 
 from ranking.management.modules.common import BaseModule
-from ranking.management.modules import yandex
+from ranking.management.modules import yandex, opencup
 
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
         standings_url = kwargs.get('standings_url')
+        start_time = kwargs['start_time']
+        year = start_time.year - (0 if start_time.month > 8 else 1)
+        kwargs['season'] = f'{year}-{year + 1}'
         if not standings_url or 'yandex' in standings_url:
             self.module = yandex.Statistic(**kwargs)
-        # else:
-        #     start_time = kwargs['start_time']
-        #     year = start_time.year - 1 + (start_time.month + 3) // 12
-        #     season = f'{year}-{year + 1}'
-        #     self.module = opencup.Statistic(**kwargs)
+        else:
+            self.module = opencup.Statistic(**kwargs)
 
     def get_standings(self, users=None):
         return self.module.get_standings(users)

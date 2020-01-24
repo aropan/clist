@@ -90,6 +90,8 @@ class Command(BaseCommand):
         if limit:
             contests = contests.order_by('-start_time')[:limit]
 
+        contests = contests.select_related('timing')
+
         with transaction.atomic():
             for c in contests:
                 module = c.resource.module
@@ -119,6 +121,7 @@ class Command(BaseCommand):
             progress_bar.refresh()
             plugin = self._get_plugin(resource.module)
             total += 1
+            parsed = False
             try:
                 r = {}
 
@@ -309,17 +312,19 @@ class Command(BaseCommand):
                             contest.save()
                 if 'result' in standings:
                     count += 1
+                parsed = True
             except (ExceptionParseStandings, InitModuleException) as e:
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 url = contest.standings_url or contest.url
                 self.logger.error(f'contest = {contest}, url = {url}, error = {e}, row = {r}')
-                TimingContest.objects \
-                    .filter(contest=contest) \
-                    .update(statistic=timezone.now() + resource.module.delay_on_error)
                 if stop_on_error:
                     self.logger.error(format_exc())
                     break
+            if not parsed:
+                contest.timing.statistic = timezone.now() + resource.module.delay_on_error
+                contest.timing.save()
+
         self.logger.info(f'Parse statistic: {count} of {total}')
         return count, total
 
