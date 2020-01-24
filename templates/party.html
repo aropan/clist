@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load extras %}
+{% load humanize %}
 
 {% block title %}Ranking - {{ party.name }}{% endblock %}
 
@@ -93,7 +94,7 @@
                                 Total ranking
                             {% else %}
                                 <a href="{% url 'ranking:standings' r.contest.title|slug r.contest.pk %}?search=party:{{ party.slug }}">{{ r.contest.title }}</a>
-                                <a href="{{ r.contest.standings_url|default:r.contest.url }}" class="small">{{ r.contest.host }}</a>
+                                <a href="{{ r.contest.standings_url|default:r.contest.url }}" class="small">{{ r.contest.host }}</a><small>, {{ r.contest.end_time|naturalday:'F j, Y' }}</small>
                             {% endif %}
                         </h4>
                         {% if r.standings %}
