@@ -33,28 +33,16 @@
         </div>
 
         <h4><a href="/?party={{ party.slug }}&view=list">Contests</a>
-        {% if party.rating_set.all %}
         <span class="badge progress-bar-default">{{ party.rating_set.all.count }}</span>
-        {% endif %}
         </h4>
         <div class="contests">
             {% for c in party_contests %}
-            <a href="{{ c.url }}" class="label label-{% if c.statistics__count %}success{% elif c.is_coming %}warning{% elif c.is_running %}primary{% else %}danger{% endif %}">{{ c.title }}</a>
+            <a href="{{ c.url }}" class="label label-{% if c.has_statistics %}success{% elif c.is_coming %}warning{% elif c.is_running %}primary{% else %}danger{% endif %}">{{ c.title }}</a>
             {% empty %}
             <div class="alert alert-warning">Not set contest for party</div>
             {% endfor %}
         </div>
 
-        <h4>Unparsed
-        <span class="badge progress-bar-default">{{ unparsed.count }}</span>
-        </h4>
-        <div class="unparsed">
-            {% for r in unparsed %}
-            <a href="{{ r.url }}" class="label label-warning">{{ r.host }}</a>
-            {% empty %}
-            <div class="alert alert-warning">Not set unparsed for party</div>
-            {% endfor %}
-        </div>
         <small>
         {% if party.author == request.user.coder %}
         [<a href="{% url 'coder:party-action' party.secret_key 'join' %}">Join</a>]

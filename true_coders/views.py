@@ -6,8 +6,7 @@ from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
-from django.db.models import Count, F, Q
-from django.db.models import Case, When, Value, BooleanField
+from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -411,9 +410,11 @@ def party_action(request, secret_key, action):
 
 def party(request, slug):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
+
+    has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
     party_contests = Contest.objects \
         .filter(rating__party=party) \
-        .annotate(Count('statistics')) \
+        .annotate(has_statistics=Exists(has_statistics)) \
         .order_by('-end_time')
 
     coders = party.coders.filter(
@@ -427,12 +428,6 @@ def party(request, slug):
         'user'
     )
     set_coders = set(coders)
-
-    rs = party.rating_set \
-        .filter(contest__statistics__isnull=True, contest__end_time__lt=timezone.now()) \
-        .values_list('contest__resource', flat=True) \
-        .distinct()
-    unparsed = Resource.objects.filter(pk__in=rs)
 
     if request.user.is_authenticated:
         ignore_filters = request.user.coder.filter_set.filter(categories__contains=['calendar']).order_by('created')
@@ -472,6 +467,7 @@ def party(request, slug):
 
     for contest, standings in contests_standings.items():
         if standings:
+
             max_solving = max([s['solving'] for s in standings]) or 1
             max_total = max([s['solving'] + s['upsolving'] for s in standings]) or 1
 
@@ -531,7 +527,6 @@ def party(request, slug):
             'party': party,
             'party_contests': party_contests,
             'results': results,
-            'unparsed': unparsed,
             'coders': coders,
         },
     )
