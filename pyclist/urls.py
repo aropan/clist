@@ -22,6 +22,8 @@ urlpatterns = [
 
     url(r'^robots\.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
 
+    url(r'^googleee727737cf7b6a5a.html$', TemplateView.as_view(template_name='googleee727737cf7b6a5a.html')),
+
     url(r'^debug/', TemplateView.as_view(template_name='debug.html'), name='debug'),
 ]
 
