@@ -8,8 +8,8 @@ body {
     cursor: default !important;
 }
 
-.dropdown-menu.signup .fa {
-    width: 15px;
+.navbar-right .dropdown-menu i {
+    width: 20px;
     text-align: center;
 }
 
