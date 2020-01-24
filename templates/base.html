@@ -5,6 +5,9 @@
         <meta name="google-site-verification" content="_r9dKPi1upFgyN6EgdU2g6yNRC7aza6qHyhdIPGomkE" />
 
         <title>{% block full-title %}{% block title %}{% endblock %} - CLIST{% endblock %}</title>
+
+        {% include 'counter/base.html' %}
+
         {% block begin-head %}{% endblock %}
 
         <script src="{% static_ts 'js/jquery-2.2.0.min.js' %}"></script>
@@ -35,7 +38,6 @@
         {% block end-head %}{% endblock %}
     </head>
     <body>
-        {% include 'counter/base.html' %}
         {% block navbar %}{% include 'navbar.html' %}{% endblock %}
         <div class="container">
         {% block banner %}
