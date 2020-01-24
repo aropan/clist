@@ -16,7 +16,7 @@ from traceback import format_exc
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q, F, Count
+from django.db.models import Q, F
 
 from ranking.models import Statistics, Account
 from clist.models import Contest, Resource, TimingContest
@@ -344,7 +344,7 @@ class Command(BaseCommand):
         if args.event is not None:
             contests = contests.filter(title__iregex=args.event)
         if args.only_new:
-            contests = contests.annotate(n_stats=Count('statistics')).filter(n_stats=0)
+            contests = contests.filter(statistics__isnull=True)
         self.parse_statistic(
             contests=contests,
             previous_days=args.days,
