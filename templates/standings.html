@@ -150,7 +150,7 @@
         <th{% if merge_problems %} rowspan="2"{% endif %}>1st U</th>
         {% endif %}
         <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">
-          <div class="flag-width-fixed"></div>
+          {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
           Handle
           {% if data_1st_u %}
           <span class="bg-success nobold">{{ data_1st_u.help_message }}</span>

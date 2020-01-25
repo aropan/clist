@@ -1,5 +1,5 @@
 {% load el_pagination_tags %}
-
+{% load extras %}
 
 {% paginate per_page statistics %}
 
@@ -46,15 +46,17 @@
     {% endwith %}
     {% endif %}
 ">
-    {% with country=statistic.account.country %}
-      <div class="flag-width-fixed">
-      {% if country %}
-      <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}">
-        <img class="flag flag-{{ country.code|lower }}"/>
-      </a>
-      {% endif %}
-      </div>
-    {% endwith %}
+    {% if has_country %}
+      {% with country=statistic.account.country %}
+        <div class="flag-width-fixed">
+        {% if country %}
+        <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}">
+          <img class="flag flag-{{ country.code|lower }}"/>
+        </a>
+        {% endif %}
+        </div>
+      {% endwith %}
+    {% endif %}
 
     {% with coders=statistic.account.coders.all %}
       {% if coders|length == 1 %}
@@ -63,10 +65,10 @@
         {% endfor %}
       {% endif %}
 
-      {% if statistic.addition.name %}
-        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}" data-placement="right"{% endif %}>{{ statistic.addition.name }}</span>
+      {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name %}
+        <span>{{ statistic.addition.name }}</span>
       {% else %}
-        <span>{{ statistic.account.key }}</span>
+        <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %}>{{ statistic.account.key }}</span>
       {% endif %}
 
       {% if coders|length == 1 %}

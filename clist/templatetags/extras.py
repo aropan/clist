@@ -241,3 +241,8 @@ def get_countries():
 @register.filter
 def format_dict(format_, dict_values):
     return format_.format(**dict_values)
+
+
+@register.filter
+def has_season(key, name):
+    return key.startswith(name) and re.match(r'^[-,\s0-9]+$', key[len(name):])
