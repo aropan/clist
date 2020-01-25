@@ -28,6 +28,11 @@ class Account(BaseModel):
             'name': self.name,
         }
 
+    def dict_with_info(self):
+        ret = self.dict()
+        ret.update(self.info.get('profile_url', {}))
+        return ret
+
     class Meta:
         unique_together = ('resource', 'key')
 

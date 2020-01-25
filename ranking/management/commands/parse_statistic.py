@@ -184,6 +184,11 @@ class Command(BaseCommand):
                                     account.country = country
                                     account.save()
 
+                            info = r.pop('info', {})
+                            if info:
+                                account.info = {**account.info, **info}
+                                account.save()
+
                             problems = r.get('problems', {})
 
                             if 'team_id' not in r or r['team_id'] not in teams_viewed:

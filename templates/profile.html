@@ -20,7 +20,7 @@
   {% for account in accounts %}
   <a
     class="account badge progress-bar-{% if account.resource.profile_url %}info{% else %}default{% endif %}"
-    href="{% if account.resource.profile_url %}{{ account.resource.profile_url|format_dict:account.dict }}{% else %}{{ account.resource.href }}{% endif %}"
+    href="{% if account.resource.profile_url %}{{ account.resource.profile_url|format_dict:account.dict_with_info }}{% else %}{{ account.resource.href }}{% endif %}"
   >
     {{ account.key }}
     <small class="text-muted">{{ account.resource.host }}</small>

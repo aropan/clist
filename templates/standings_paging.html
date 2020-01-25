@@ -76,7 +76,7 @@
       {% endif %}
 
       {% if statistic.addition.url or contest.resource.profile_url %}
-      <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+      <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
       {% endif %}
 
       {% if coders|length > 1 %}

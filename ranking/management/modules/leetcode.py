@@ -47,12 +47,14 @@ class Statistic(BaseModule):
                     row.pop('contest_id')
                     row.pop('user_slug')
                     row.pop('global_ranking')
-                    row.pop('data_region')
 
                     r = result.setdefault(handle, {})
                     r['member'] = handle
                     r['place'] = row.pop('rank')
                     r['solving'] = row.pop('score')
+
+                    data_region = row.pop('data_region').lower()
+                    r['info'] = {'profile_url': {'_data_region': '' if data_region == 'us' else f'-{data_region}'}}
 
                     country = None
                     for field in 'country_code', 'country_name':
@@ -91,4 +93,4 @@ if __name__ == "__main__":
         start_time=datetime.now(),
         standings_url=None,
     )
-    pprint(statictic.get_standings()['problems'])
+    pprint(next(iter(statictic.get_standings()['result'].values())))
