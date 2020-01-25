@@ -89,8 +89,6 @@ class Command(BaseCommand):
         if limit:
             contests = contests.order_by('-start_time')[:limit]
 
-        contests = contests.select_related('timing')
-
         with transaction.atomic():
             for c in contests:
                 module = c.resource.module
@@ -265,8 +263,8 @@ class Command(BaseCommand):
                             first = Statistics.objects.filter(pk__in=ids).first()
                             self.logger.info(f'First deleted: {first}, account = {first.account}')
                             delete_info = Statistics.objects.filter(pk__in=ids).delete()
-                            progress_bar.set_postfix(deleted=str(delete_info))
                             self.logger.info(f'Delete info: {delete_info}')
+                            progress_bar.set_postfix(deleted=str(delete_info))
 
                         if self._canonize(fields) != self._canonize(contest.info.get('fields')):
                             contest.info['fields'] = fields

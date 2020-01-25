@@ -42,6 +42,8 @@ class Statistic(BaseModule):
                     if not submissions:
                         continue
                     handle = row.pop('username')
+                    if users and handle not in users:
+                        continue
                     row.pop('contest_id')
                     row.pop('user_slug')
                     row.pop('global_ranking')
@@ -51,7 +53,12 @@ class Statistic(BaseModule):
                     r['member'] = handle
                     r['place'] = row.pop('rank')
                     r['solving'] = row.pop('score')
-                    r['country'] = row.pop('country_code', row.pop('country_name', None))
+
+                    country = None
+                    for field in 'country_code', 'country_name':
+                        country = country or row.pop(field, None)
+                    if country:
+                        r['country'] = country
 
                     solved = 0
                     problems = r.setdefault('problems', {})
@@ -78,10 +85,10 @@ class Statistic(BaseModule):
 
 if __name__ == "__main__":
     statictic = Statistic(
-        name='Weekly Contest 135',
-        url='https://leetcode.com/contest/weekly-contest-135',
-        key='weekly-contest-135',
+        name='Biweekly Contest 18',
+        url='https://leetcode.com/contest/biweekly-contest-18/',
+        key='biweekly-contest-18',
         start_time=datetime.now(),
         standings_url=None,
     )
-    pprint(statictic.get_standings())
+    pprint(statictic.get_standings()['problems'])

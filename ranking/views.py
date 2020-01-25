@@ -55,7 +55,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         url = re.sub(r'\?$', '', url)
         return redirect(url)
 
-    contest = get_object_or_404(Contest, pk=contest_id)
+    contest = get_object_or_404(Contest.objects.select_related('resource'), pk=contest_id)
     if slug(contest.title) != title_slug:
         return HttpResponseNotFound(f'Not found {slug(contest.title)} slug')
 
@@ -91,7 +91,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     has_detail = True
     for k in contest_fields:
-        if k not in fields and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges']:
+        if k not in fields and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url']:
             if request.GET.get('detail'):
                 field = ' '.join(k.split('_'))
                 if not field[0].isupper():

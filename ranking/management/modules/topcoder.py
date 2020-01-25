@@ -230,6 +230,9 @@ class Statistic(BaseModule):
                     match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE)
                     handle = html.unescape(match.group('handle').strip())
 
+                    match = re.search(r'&nbsp;Room\s*(?P<room>[0-9]+)', page)
+                    room = match.group('room') if match else None
+
                     matches = re.finditer(r'''
                         <td[^>]*>[^<]*<a[^>]*href="(?P<url>[^"]*c=problem_solution[^"]*)"[^>]*>(?P<short>[^<]*)</a>[^<]*</td>[^<]*
                         <td[^>]*>[^<]*</td>[^<]*
@@ -244,7 +247,7 @@ class Statistic(BaseModule):
                         short = d.pop('short')
                         d['url'] = urljoin(url, d['url'])
                         d = self._dict_as_number(d)
-                        if d['status'] != 'Passed System Test':
+                        if d['status'] in ['Challenge Succeeded', 'Failed System Test']:
                             d['result'] = -d['result']
                         if abs(d['result']) < 1e-9:
                             d.pop('result')
@@ -273,15 +276,18 @@ class Statistic(BaseModule):
                         p.setdefault('extra_info', []).append(f'{d["target"]}: {d["result"]}')
                         challenges.append(d)
 
-                    return url, handle, problems, challenges
+                    return url, handle, room, problems, challenges
 
                 with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(url_infos)) as pbar:
-                    for url, handle, problems, challenges in executor.map(fetch_info, url_infos):
+                    for url, handle, room, problems, challenges in executor.map(fetch_info, url_infos):
                         pbar.set_description(f'div{division} {url}')
                         pbar.update()
                         if handle is not None:
                             if handle not in result:
                                 LOG.error(f'{handle} not in result, url = {url}')
+                            result[handle]['url'] = url
+                            if room:
+                                result[handle]['room'] = room
                             result[handle]['problems'] = problems
                             result[handle]['challenges'] = challenges
                             for p in problems.values():

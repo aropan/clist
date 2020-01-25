@@ -10,6 +10,7 @@ import yaml
 import hashlib
 
 
+from clist.templatetags.extras import md_escape
 from tg.bot import Bot
 from django.core.management.base import BaseCommand
 
@@ -31,7 +32,7 @@ class Command(BaseCommand):
                 errors.append(error)
             if errors:
                 errors = '\n'.join(errors)
-                msg = f'{href or key}\n```\n{errors}\n```'
+                msg = f'{md_escape(href or key)}\n```\n{errors}\n```'
 
                 h = hashlib.md5(msg.encode('utf8')).hexdigest()
                 if cache.get(key) != h:
@@ -47,7 +48,6 @@ class Command(BaseCommand):
         self._bot = Bot()
 
     def handle(self, *args, **options):
-
         cache_filepath = os.path.join(os.path.dirname(__file__), 'cache.yaml')
         if os.path.exists(cache_filepath):
             with open(cache_filepath, 'r') as fo:
@@ -70,7 +70,7 @@ class Command(BaseCommand):
         command_cache = cache.setdefault('command', {})
         for log_file in glob.glob('./logs/command/**/*.log', recursive=True):
             key = os.path.basename(log_file)
-            self._check(log_file, '^.*ERROR.*$', command_cache, key, flags=re.MULTILINE)
+            self._check(log_file, r'^[^\{\n]*error.*$', command_cache, key, flags=re.MULTILINE | re.IGNORECASE)
 
         cache = yaml.dump(cache, default_flow_style=False)
         with open(cache_filepath, 'w') as fo:

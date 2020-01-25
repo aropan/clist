@@ -85,9 +85,14 @@ table.standings .handle-cell {
   display: inline;
 }
 
-.standings a.coder {
+.standings a.coder span {
   text-decoration: underline;
   font-weight: bold;
+}
+
+.standings .handle-cell:hover .external-link {
+  color: #337ab7;
+  visibility: visible;
 }
 
 .nobold {

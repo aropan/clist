@@ -59,26 +59,28 @@
     {% with coders=statistic.account.coders.all %}
       {% if coders|length == 1 %}
         {% for c in coders %}
-          <a href="{% url 'coder:profile' c.username %}" class="coder">
+      <a href="{% url 'coder:profile' c.username %}" class="coder">
         {% endfor %}
       {% endif %}
 
       {% if statistic.addition.name %}
-        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}" data-placement="right"{% endif %}>
-          {{ statistic.addition.name }}
-        </span>
+        <span{% if statistic.addition.name not in statistic.account.key %} title="{{ statistic.account.key }}" data-placement="right"{% endif %}>{{ statistic.addition.name }}</span>
       {% else %}
-        {{ statistic.account.key }}
+        <span>{{ statistic.account.key }}</span>
       {% endif %}
 
       {% if coders|length == 1 %}
-        </a>
+      </a>
+      {% endif %}
+
+      {% if statistic.addition.url or contest.resource.profile_url %}
+      <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
       {% endif %}
 
       {% if coders|length > 1 %}
       <div class="small">
         {% for c in coders %}
-          <a href="{% url 'coder:profile' c.username %}" class="coder">{{ c.username }}</a>
+          <a href="{% url 'coder:profile' c.username %}" class="coder"><span>{{ c.username }}</span></a>
         {% endfor %}
       </div>
       {% endif %}

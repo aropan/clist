@@ -129,7 +129,8 @@ class Statistic(BaseModule):
                     for d in data['list']:
                         handle = d.pop('user_handle')
                         d.pop('html_handle', None)
-                        if d['score'] < 1e-9:
+                        problems_status = d.pop('problems_status')
+                        if d['score'] < 1e-9 and not problems_status:
                             LOG.warning(f'Skip handle = {handle}: {d}')
                             continue
                         row = result.setdefault(handle, {})
@@ -140,7 +141,6 @@ class Statistic(BaseModule):
 
                         problems = row.setdefault('problems', {})
                         solved, upsolved = 0, 0
-                        problems_status = d.pop('problems_status')
                         if problems_status:
                             for k, v in problems_status.items():
                                 t = 'upsolving' if k in unscored_problems else 'result'
