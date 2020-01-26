@@ -26,7 +26,14 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
         .filter(Q(has_statistics=True) | Q(end_time__lte=timezone.now())) \
         .order_by('-end_time', 'pk')
-    if not request.user.is_authenticated or not request.user.coder.settings.get('all_standings'):
+
+    if request.user.is_authenticated:
+        all_standings = request.user.coder.settings.get('all_standings')
+    else:
+        all_standings = False
+
+    switch = 'switch' in request.GET
+    if bool(all_standings) == bool(switch):
         contests = contests.filter(has_statistics=True, has_module=True)
 
     search = request.GET.get('search')
@@ -38,6 +45,8 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         'contests': contests,
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
+        'all_standings': all_standings,
+        'switch': switch,
     }
 
     if extra_context is not None:

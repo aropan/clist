@@ -17,7 +17,26 @@
         <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
         Search
       </button>
+
+      <input
+        {% if all_standings %}
+        data-on="Parsed"
+        data-off="All"
+        {% else %}
+        data-on="All"
+        data-off="Parsed"
+        {% endif %}
+
+        type="checkbox"
+        name="switch"
+        data-toggle="toggle"
+        data-onstyle="default"
+        data-offstyle="default"
+        onchange="this.form.submit()"
+        {% if switch %}checked{% endif %}
+      />
     </span>
+
   </div>
   </form>
   <br/>
