@@ -167,6 +167,7 @@ class Statistic(BaseModule):
 
                 if hack or unhack:
                     r['hack'] = {
+                        'title': 'hacks',
                         'successful': hack,
                         'unsuccessful': unhack,
                     }

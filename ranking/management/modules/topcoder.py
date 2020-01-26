@@ -294,7 +294,11 @@ class Statistic(BaseModule):
                                 if p.get('result', 0) > 1e-9:
                                     result[handle]['solved']['solving'] += 1
                             if challenges:
-                                h = result[handle].setdefault('hack', {'successful': 0, 'unsuccessful': 0})
+                                h = result[handle].setdefault('hack', {
+                                    'title': 'challenges',
+                                    'successful': 0,
+                                    'unsuccessful': 0,
+                                })
                                 for c in challenges:
                                     h['successful' if c['status'].lower() == 'yes' else 'unsuccessful'] += 1
 
