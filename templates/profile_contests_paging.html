@@ -25,7 +25,7 @@
         <div class="problems">
             {% if s.addition.hack %}
             {% with hack=s.addition.hack %}
-                <span class="badge progress-bar-warning" data-toggle="tooltip" data-placement="top" title="Hacks">
+                <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>
                     {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
                 </span>
             {% endwith %}
