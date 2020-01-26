@@ -287,6 +287,7 @@ COUNTRIES_OVERRIDE = {
     'MO': {'names': ['Macao', 'Macau']},
     'US': {'names': ['United States of America', 'United States', 'America']},
     'VN': {'names': ['Vietnam', 'Viet Nam']},
+    'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England']},
 }
 
 # DJANGO DEBUG TOOLBAR
