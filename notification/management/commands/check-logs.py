@@ -28,6 +28,8 @@ class Command(BaseCommand):
                 flags,
             ):
                 error = m.group(0)
+                if re.search('contest = ', error):
+                    continue
                 self._logger.error(error)
                 errors.append(error)
             if errors:

@@ -345,6 +345,7 @@ $(function() {
                 <input name="inverse-regex" type="checkbox" rel="tooltip" title="Inverse regex"> \
             </span> \
         </div> \
+        <i rel="tooltip" title="Use `url:#regex#` to filter by regex by url"></i> \
     </div> \
     <div class="filter-field"> \
     </div> \

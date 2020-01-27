@@ -29,6 +29,10 @@
     border-top-color: #555;
 }
 
-div.ignore-filters {
-    margin-bottom: 5px;
+.dropdown-menu .ignore-filter {
+    border: 0;
+    width: 100%;
+    text-align: left;
+    border-radius: 0px;
+    margin-left: 0 !important;
 }

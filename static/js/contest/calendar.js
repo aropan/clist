@@ -112,6 +112,13 @@ $(function() {
 
     if (customButtonSelector) {
         $(customButtonSelector).toggleClass('ignore-filter')
+
+        $btnGroup = $(customButtonSelector).first().parent()
+        $btnGroup.html(
+            '<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">Custom filters <span class="caret"></span></button><div class="dropdown-menu">'
+            + $btnGroup.html() + '</div>'
+        )
+
         $(customButtonSelector).click(function (e) {
             var $btn = $(this)
             var value = $btn.attr('data-value') || '0';
@@ -137,6 +144,8 @@ $(function() {
         width: 106,
         height: 30,
     })
+
+
     $('.toggle:has(#spam-filter) .btn').click(function (e) {
         var value = $spam_filter.attr('data-value') || '0';
         $spam_filter.attr('data-value', 1 - value)

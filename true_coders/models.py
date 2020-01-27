@@ -59,11 +59,16 @@ class Coder(BaseModel):
                 seconds = timedelta(minutes=filter_.duration_to).total_seconds()
                 query &= Q(duration_in_secs__lte=seconds)
             if filter_.regex:
+                field = 'title'
+                regex = filter_.regex
+
                 match = re.search(r'^(?P<field>[a-z]+):(?P<sep>.)(?P<regex>.+)(?P=sep)$', filter_.regex)
                 if match:
-                    query_regex = Q(**{f'{match.group("field")}__regex': match.group('regex')})
-                else:
-                    query_regex = Q(title__regex=filter_.regex)
+                    f = match.group('field')
+                    if f in ('url',):
+                        field = f
+                        regex = match.group('regex')
+                query_regex = Q(**{f'{field}__regex': regex})
                 if filter_.inverse_regex:
                     query_regex = ~query_regex
                 query &= query_regex
