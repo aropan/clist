@@ -1,12 +1,17 @@
 import re
+import collections
 
-from pyclist.models import BaseModel
-from django.db import models
+import tqdm
+from django.db import models, transaction
 from django.dispatch import receiver
-from true_coders.models import Coder, Party
-from clist.models import Contest, Resource
+from django.urls import reverse
 from django.contrib.postgres.fields import JSONField
 from django_countries.fields import CountryField
+
+from pyclist.models import BaseModel
+from true_coders.models import Coder, Party
+from clist.models import Contest, Resource
+from clist.templatetags.extras import slug
 
 
 class Account(BaseModel):
@@ -89,3 +94,132 @@ class Module(BaseModel):
 
     def __str__(self):
         return '%s: %s' % (self.resource.host, self.path)
+
+
+class Stage(BaseModel):
+    contest = models.OneToOneField(Contest, on_delete=models.CASCADE)
+    filter_params = JSONField(default=dict, blank=True)
+    score_params = JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return '%s' % (self.contest)
+
+    def update(self):
+        stage = self.contest
+
+        contests = Contest.objects.filter(
+            resource=self.contest.resource,
+            start_time__gte=self.contest.start_time,
+            end_time__lte=self.contest.end_time,
+            **self.filter_params,
+        ).exclude(pk=self.contest.pk)
+
+        contests = contests.order_by('start_time')
+
+        problems_infos = collections.OrderedDict()
+        for contest in tqdm.tqdm(contests, desc=f'getting contests for stage {stage}'):
+            problems_infos[contest.pk] = {
+                'code': str(contest.pk),
+                'name': contest.title,
+                'url': reverse(
+                    'ranking:standings',
+                    kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)}
+                ),
+                'n_accepted': 0,
+                'n_teams': 0,
+            }
+
+        statistics = Statistics.objects.filter(contest__in=contests)
+        statistics = statistics.select_related('account', 'contest')
+
+        filter_statistics = self.score_params.get('filter_statistics')
+        if filter_statistics:
+            statistics = statistics.filter(**filter_statistics)
+
+        placing = self.score_params.get('place')
+        n_best = self.score_params.get('n_best')
+
+        results = collections.defaultdict(dict)
+        for s in tqdm.tqdm(statistics.iterator(), desc=f'getting statistics for stage {stage}'):
+            row = results[s.account]
+            row['member'] = s.account
+
+            problems_infos[s.contest.pk]['n_teams'] += 1
+
+            status = None
+            if s.solving < 1e-9:
+                score = 0
+            else:
+                problems_infos[s.contest.pk]['n_accepted'] += 1
+                if placing:
+                    placing_ = placing['division'][s.addition['division']] if 'division' in placing else placing
+                    score = placing_.get(str(s.place_as_int), placing_['default'])
+                    status = s.place_as_int
+                else:
+                    score = 0
+
+            problems = row.setdefault('problems', {})
+            problem = problems.setdefault(str(s.contest.pk), {})
+            problem['result'] = score
+            url = s.addition.get('url')
+            if url:
+                problem['url'] = url
+            if status is not None:
+                problem['status'] = status
+
+            if n_best:
+                row.setdefault('scores', []).append((score, problem))
+            else:
+                row['score'] = row.get('score', 0) + score
+            row['points'] = round(row.get('points', 0) + s.solving, 2)
+
+        results = list(results.values())
+        if n_best:
+            for row in results:
+                scores = row.pop('scores')
+                for index, (score, problem) in enumerate(sorted(scores, key=lambda s: s[0], reverse=True)):
+                    if index < n_best:
+                        row['score'] = row.get('score', 0) + score
+                    else:
+                        problem['status'] = problem.pop('result')
+
+        order_by = self.score_params['order_by']
+        results = [r for r in results if r['score'] > 1e-9]
+        results = sorted(results, key=lambda r: tuple(r[k] for k in order_by), reverse=True)
+
+        with transaction.atomic():
+            fields = set()
+
+            pks = set()
+            last_score = None
+            place = None
+            for index, row in enumerate(tqdm.tqdm(results, desc=f'update statistics for stage {stage}'), start=1):
+                curr_score = tuple(row[k] for k in order_by)
+                if curr_score != last_score:
+                    last_score = curr_score
+                    place = index
+
+                account = row.pop('member')
+                solving = row.pop('score')
+                stat, created = Statistics.objects.update_or_create(
+                    account=account,
+                    contest=stage,
+                    defaults={
+                        'place': str(place),
+                        'place_as_int': place,
+                        'solving': solving,
+                        'addition': row,
+                    },
+                )
+                pks.add(stat.pk)
+
+                for k in row.keys():
+                    fields.add(k)
+            stage.statistics_set.exclude(pk__in=pks).delete()
+
+            stage.info['fields'] = list(fields)
+
+        if 'points' in order_by:
+            stage.info['fixed_fields'] = [('points', 'Points')]
+        stage.info['problems'] = list(problems_infos.values())
+        stage.save()

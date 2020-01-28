@@ -22,7 +22,7 @@
     {% if with_row_num %}({{ forloop.counter|add:start_num }}){% endif %}
   </td>
   {% if data_1st_u %}
-  {% with info=data_1st_u.infos|get_item:statistic.id %}
+  {% with info=participants_info|get_item:statistic.id %}
   <td>
     <a href="{{ request.path }}?{% query_transform request search=info.search %}">
     {% if info.n %}
@@ -40,11 +40,9 @@
   {% endwith %}
   {% endif %}
   <td class="handle-cell
-    {% if data_1st_u %}
-    {% with info=data_1st_u.infos|get_item:statistic.id %}
-    {% if info and info.n <= data_1st_u.n_highlight %}bg-success{% endif %}
+    {% with info=participants_info|get_item:statistic.id %}
+    {% if info and info.n <= standings_options.n_highlight %}bg-success{% endif %}
     {% endwith %}
-    {% endif %}
 ">
     {% if has_country %}
       {% with country=statistic.account.country %}

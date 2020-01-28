@@ -153,7 +153,7 @@ class Command(BaseCommand):
                         teams_viewed = set()
 
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
-                        for r in tqdm(list(result.values()), desc='update results'):
+                        for r in tqdm(list(result.values()), desc=f'update results {contest}'):
                             for k, v in r.items():
                                 if isinstance(v, str) and chr(0x00) in v:
                                     r[k] = v.replace(chr(0x00), '')

@@ -71,7 +71,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     statistics = Statistics.objects.filter(contest=contest)
 
     order = ['place_as_int', '-solving']
-    fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time'))
+    fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time')) + tuple(contest.info.get('fixed_fields', []))
 
     statistics = statistics \
         .select_related('account') \
@@ -115,8 +115,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         per_page = 100500
 
     data_1st_u = options.get('1st_u')
+    participants_info = {}
     if data_1st_u:
-        infos = data_1st_u.setdefault('infos', {})
         seen = {}
         last_hl = None
         for s in statistics:
@@ -126,11 +126,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             solving = s.solving
             penalty = s.addition.get('penalty')
 
-            info = infos.setdefault(s.id, {})
+            info = participants_info.setdefault(s.id, {})
             info['search'] = rf'^{k}'
 
             if k in seen or last_hl:
-                p_info = infos.get(seen.get(k))
+                p_info = participants_info.get(seen.get(k))
                 if (
                     not p_info or
                     last_hl and (-last_hl['solving'], last_hl['penalty']) < (-p_info['solving'], p_info['penalty'])
@@ -145,8 +145,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             if k not in seen:
                 seen[k] = s.id
                 info.update({'n': len(seen), 'solving': solving, 'penalty': penalty})
-                if len(seen) == data_1st_u.get('n_highlight'):
+                if len(seen) == options.get('n_highlight'):
                     last_hl = info
+    elif 'n_highlight' in options:
+        for idx, s in enumerate(statistics[:options['n_highlight']], 1):
+            participants_info[s.id] = {'n': idx}
 
     medals = options.get('medals')
     if medals:
@@ -216,6 +219,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     context = {
         'data_1st_u': data_1st_u,
+        'participants_info': participants_info,
+        'standings_options': options,
         'medals': medals,
         'mod_penalty': mod_penalty,
         'contest': contest,

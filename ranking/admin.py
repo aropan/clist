@@ -3,7 +3,7 @@ from django.db.models import Count
 from django.utils.timezone import now
 
 from pyclist.admin import BaseModelAdmin, admin_register
-from ranking.models import Account, Rating, Statistics, Module
+from ranking.models import Account, Rating, Statistics, Module, Stage
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from clist.models import Contest
 
@@ -81,6 +81,20 @@ class StatisticsAdmin(BaseModelAdmin):
     search_fields = ['account__key', 'contest__title']
     list_filter = ['contest__host']
     raw_id_fields = ['account', 'contest']
+
+
+@admin_register(Stage)
+class StageAdmin(BaseModelAdmin):
+    list_display = ['contest', 'filter_params', 'score_params']
+    search_fields = ['contest']
+    raw_id_fields = ['contest']
+
+    def parse_stage(self, request, queryset):
+        for stage in queryset:
+            stage.update()
+    parse_stage.short_description = 'Parse stages'
+
+    actions = [parse_stage]
 
 
 @admin_register(Module)

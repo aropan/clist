@@ -151,8 +151,8 @@
         <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">
           {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
           Handle
-          {% if data_1st_u %}
-          <span class="bg-success nobold">{{ data_1st_u.help_message }}</span>
+          {% if standings_options.help_message %}
+          <span class="bg-success nobold">{{ standings_options.help_message }}</span>
           {% endif %}
         </th>
         <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
