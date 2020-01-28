@@ -17,10 +17,10 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q, F, OuterRef, Exists
-from ranking.models import Statistics, Account
+
+from ranking.models import Statistics, Account, Stage
 from clist.models import Contest, Resource, TimingContest
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
-
 from ranking.management.commands.countrier import Countrier
 
 
@@ -121,6 +121,12 @@ class Command(BaseCommand):
             parsed = False
             try:
                 r = {}
+
+                if hasattr(contest, 'stage'):
+                    contest.stage.update()
+                    count += 1
+                    parsed = True
+                    continue
 
                 statistic = plugin.Statistic(
                     name=contest.title,
@@ -326,6 +332,15 @@ class Command(BaseCommand):
             if not parsed:
                 contest.timing.statistic = timezone.now() + resource.module.delay_on_error
                 contest.timing.save()
+            else:
+                stages = Stage.objects.filter(
+                    contest__start_time__lte=contest.start_time,
+                    contest__end_time__gte=contest.end_time,
+                    contest__resource=contest.resource,
+                )
+                for stage in stages:
+                    if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
+                        stage.update()
 
         self.logger.info(f'Parse statistic: {count} of {total}')
         return count, total
