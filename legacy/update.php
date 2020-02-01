@@ -263,6 +263,8 @@
     }
     unset($by_key);
 
+    echo "<br><br>Total number of contests: " . count($contests);
+
     foreach ($contests as $i => $contest)
     {
         //$timezone_offset = timezone_offset_get(new DateTimeZone($contest['timezone']), new DateTime("now"));
@@ -327,7 +329,7 @@
         }
 
         if ($lastresources != $contest['host']) {
-            echo "<br><br><b>{$contest['host']}</b>:<br>\n";
+            echo "<br><b>{$contest['host']}</b>:<br>\n";
             $lastresources = $contest['host'];
         }
 

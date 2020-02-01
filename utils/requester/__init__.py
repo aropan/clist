@@ -7,6 +7,7 @@ import re
 import urllib.request
 import urllib.parse
 import urllib.error
+import logging
 from os import path, makedirs, listdir, remove, stat, environ
 from os.path import isdir, getctime
 from json import loads, dumps, load
@@ -20,6 +21,11 @@ from datetime import datetime
 from string import ascii_letters, digits
 from random import choice, gauss
 from distutils.util import strtobool
+
+import chardet
+
+
+logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
 
 
 class FileWithProxiesNotFound(Exception):
@@ -343,6 +349,9 @@ class requester():
                 charset = charsets[-1].lower()
             else:
                 charset = 'utf-8'
+            charset_detect = chardet.detect(page)
+            if charset_detect and charset_detect['confidence'] > 0.98:
+                charset = charset_detect['encoding']
             if charset in ('utf-8', 'utf8'):
                 page = page.decode('utf-8', 'replace')
             elif charset in ('windows-1251', 'cp1251'):

@@ -129,49 +129,64 @@ class Stage(BaseModel):
                 'n_teams': 0,
             }
 
-        statistics = Statistics.objects.filter(contest__in=contests)
-        statistics = statistics.select_related('account', 'contest')
+        placing = self.score_params.get('place')
+        n_best = self.score_params.get('n_best')
+        fields = self.score_params.get('fields')
+        results = collections.defaultdict(dict)
 
+        statistics = Statistics.objects.select_related('account')
         filter_statistics = self.score_params.get('filter_statistics')
         if filter_statistics:
             statistics = statistics.filter(**filter_statistics)
 
-        placing = self.score_params.get('place')
-        n_best = self.score_params.get('n_best')
+        total = statistics.filter(contest__in=contests).count()
+        with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar:
+            for contest in contests:
+                pbar.set_postfix(contest=contest)
+                stats = statistics.filter(contest_id=contest.pk)
 
-        results = collections.defaultdict(dict)
-        for s in tqdm.tqdm(statistics.iterator(), desc=f'getting statistics for stage {stage}'):
-            row = results[s.account]
-            row['member'] = s.account
+                for s in stats.iterator():
+                    row = results[s.account]
+                    row['member'] = s.account
 
-            problems_infos[s.contest.pk]['n_teams'] += 1
+                    problems_infos[contest.pk]['n_teams'] += 1
 
-            status = None
-            if s.solving < 1e-9:
-                score = 0
-            else:
-                problems_infos[s.contest.pk]['n_accepted'] += 1
-                if placing:
-                    placing_ = placing['division'][s.addition['division']] if 'division' in placing else placing
-                    score = placing_.get(str(s.place_as_int), placing_['default'])
-                    status = s.place_as_int
-                else:
-                    score = 0
+                    status = None
+                    if s.solving < 1e-9:
+                        score = 0
+                    else:
+                        problems_infos[contest.pk]['n_accepted'] += 1
+                        if placing:
+                            placing_ = placing['division'][s.addition['division']] if 'division' in placing else placing
+                            score = placing_.get(str(s.place_as_int), placing_['default'])
+                            status = s.place_as_int
+                        else:
+                            score = 0
 
-            problems = row.setdefault('problems', {})
-            problem = problems.setdefault(str(s.contest.pk), {})
-            problem['result'] = score
-            url = s.addition.get('url')
-            if url:
-                problem['url'] = url
-            if status is not None:
-                problem['status'] = status
+                    problems = row.setdefault('problems', {})
+                    problem = problems.setdefault(str(contest.pk), {})
+                    problem['result'] = score
+                    url = s.addition.get('url')
+                    if url:
+                        problem['url'] = url
+                    if status is not None:
+                        problem['status'] = status
 
-            if n_best:
-                row.setdefault('scores', []).append((score, problem))
-            else:
-                row['score'] = row.get('score', 0) + score
-            row['points'] = round(row.get('points', 0) + s.solving, 2)
+                    if n_best:
+                        row.setdefault('scores', []).append((score, problem))
+                    else:
+                        row['score'] = row.get('score', 0) + score
+
+                    for field in fields:
+                        inp = field['field']
+                        out = field.get('out', inp)
+                        if field.get('first') and out in row:
+                            continue
+                        val = s.addition.get(inp, 0)
+                        if field.get('accumulate'):
+                            val = round(val + row.get(out, 0), 2)
+                        row[out] = val
+                    pbar.update()
 
         results = list(results.values())
         if n_best:
@@ -219,7 +234,6 @@ class Stage(BaseModel):
 
             stage.info['fields'] = list(fields)
 
-        if 'points' in order_by:
-            stage.info['fixed_fields'] = [('points', 'Points')]
+        stage.info['fixed_fields'] = [(f, f.title()) for f in order_by]
         stage.info['problems'] = list(problems_infos.values())
         stage.save()

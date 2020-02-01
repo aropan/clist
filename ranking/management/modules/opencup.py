@@ -47,6 +47,8 @@ class Statistic(BaseModule):
                 else:
                     k = key.split()[0]
                 if len(k) == 1 and 'A' <= k <= 'Z' or k.isdigit():
+                    if k >= 'X':
+                        continue
                     d = problems_info.setdefault(k, {})
                     d['short'] = k
                     if v.attrs.get('title'):
@@ -56,8 +58,14 @@ class Statistic(BaseModule):
                     if ' ' in v.value:
                         p = problems.setdefault(k, {})
                         point, time = v.value.split()
-                        if point in ['X', '0']:
-                            p['binary'] = point == 'X'
+                        if point == 'X':
+                            p['binary'] = True
+                            point = '+'
+                        elif point == '0':
+                            p['binary'] = False
+                            point = '-1'
+                        if 'opener' in v.attrs.get('class', '').split():
+                            p['first_ac'] = True
                         p['time'] = time
                         p['result'] = point
                     else:
@@ -68,17 +76,19 @@ class Statistic(BaseModule):
                         except Exception:
                             pass
                 elif k == 'Total':
-                    row['solving'] = int(v.value)
+                    row['solving'] = float(v.value)
                 elif k == 'Time':
                     if "'" in v.value and '"' in v.value:
-                        minute, seconds = map(int, re.findall('[0-9]+', v.value))
+                        minute, seconds = map(int, re.findall('-?[0-9]+', v.value))
+                        if minute < 0:
+                            seconds = -seconds
                         row['penalty'] = f'{minute + seconds / 60:.2f}'
                     else:
                         row['penalty'] = int(v.value)
                 elif k == 'Place':
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():
-                    row['member'] = v.value + ' ' + self.season
+                    row['member'] = v.value if ' ' not in v.value else v.value + ' ' + self.season
                     row['name'] = v.value
                 else:
                     row[key] = v.value

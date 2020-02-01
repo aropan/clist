@@ -217,6 +217,9 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         statistics = statistics.filter(account__country__in=countries)
         params['countries'] = countries
 
+    page = request.GET.get('page', '1')
+    start_num = (int(page) - 1 if page.isdigit() else 0) * per_page
+
     context = {
         'data_1st_u': data_1st_u,
         'participants_info': participants_info,
@@ -232,7 +235,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'has_country': has_country,
         'per_page': per_page,
         'with_row_num': bool(search or countries),
-        'start_num': (int(request.GET.get('page', '1')) - 1) * per_page,
+        'start_num': start_num,
         'has_detail': has_detail,
         'merge_problems': merge_problems,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
