@@ -91,6 +91,9 @@ MIDDLEWARE = (
     'django.middleware.security.SecurityMiddleware',
 )
 
+if DEBUG:
+    MIDDLEWARE += ('pyclist.middleware.DebugPermissionOnlyMiddleware',)
+
 ROOT_URLCONF = 'pyclist.urls'
 
 TEMPLATES = [
