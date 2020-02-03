@@ -1,4 +1,5 @@
 import re
+import copy
 from collections import OrderedDict
 from itertools import accumulate
 
@@ -68,22 +69,34 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     if slug(contest.title) != title_slug:
         return HttpResponseNotFound(f'Not found {slug(contest.title)} slug')
 
+    contest_fields = contest.info.get('fields', [])
+
     statistics = Statistics.objects.filter(contest=contest)
 
-    order = ['place_as_int', '-solving']
+    order = None
+    resource_standings = contest.resource.info.get('standings', {})
+    order = copy.copy(resource_standings.get('order'))
+    if order:
+        for f in order:
+            if f.startswith('addition__') and f.split('__', 1)[1] not in contest_fields:
+                order = None
+                break
+    if order is None:
+        order = ['place_as_int', '-solving']
+
     fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time')) + tuple(contest.info.get('fixed_fields', []))
 
     statistics = statistics \
         .select_related('account') \
         .prefetch_related('account__coders')
 
-    contest_fields = contest.info.get('fields', [])
-
     has_country = 'country' in contest_fields or statistics.filter(account__country__isnull=False).exists()
 
     division = request.GET.get('division')
     if division == 'any':
-        order = ['-solving', 'place_as_int']
+        if 'place_as_int' in order:
+            order.remove('place_as_int')
+            order.append('place_as_int')
         fixed_fields += (('division', 'Division'),)
 
     if 'team_id' in contest_fields:

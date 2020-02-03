@@ -18,7 +18,11 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None):
         if not hasattr(self, 'season'):
-            self.season = self.key.split()[0]
+            if not hasattr(self, 'start_time'):
+                self.season = self.key.split()[0]
+            else:
+                year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
+                self.season = f'{year}-{year + 1}'
 
         result = {}
         problems_info = OrderedDict()

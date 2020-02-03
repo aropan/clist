@@ -17,7 +17,7 @@ class Resource(BaseModel):
     parse_url = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=30, null=True, blank=True)
     color = models.CharField(max_length=20, null=True, blank=True)
-    profile_url = models.CharField(max_length=255, null=True, default=None)
+    profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     uid = models.CharField(max_length=100, null=True, blank=True)
     info = JSONField(default=dict, blank=True)
 

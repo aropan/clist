@@ -33,9 +33,15 @@
                 echo "schedule url = $schedule_url\n";
             }
             $page = curlexec($schedule_url);
-            preg_match_all('#<b>(?P<date>[^<]*)</b>([^<]*<(?:p|br)/?>)*\s*(?P<start_time>[0-9]+:[0-9]+)(\s*-\s*(?P<end_time>[0-9]+:[0-9]+))?\s*–\s*(?:<a[^>]*>)?[^<]*(?:Contest|[A-Za-z\s]*\sRound|[A-Za-z\s]*\scontest)#s', $page, $schedule, PREG_SET_ORDER);
+            preg_match_all('#<b>(?P<date>[^<]*)</b>([^<]*<(?:p|br)\s*/?>)*\s*(?:<span[^>]*>)?(?P<start_time>[0-9]+:[0-9]+)(\s*[-–]\s*(?P<end_time>[0-9]+:[0-9]+))?\s*[-–]\s*(?:<a[^>]*>)?[^<]*(?:Contest|[A-Za-z\s]*\sRound|[A-Za-z\s]*\scontest)\s*[0-9]+\s*[<\(]#s', $page, $schedule, PREG_SET_ORDER);
 
-            assert(preg_match('/[0-9]{4}/', $query['sbname'], $year));
+            if (!count($schedule)) {
+                return;
+            }
+
+            if (!preg_match('/[a-z]*[0-9]{4}[a-z]*/', $query['sbname'], $year)) {
+                return;
+            }
             $year = $year[0];
 
             foreach ($schedule as &$s) {
@@ -61,7 +67,7 @@
             $page = curlexec($url);
             $data = array();
             $data['url'] = $url;
-            if (preg_match('#<h2>(?P<title>[^,]*)(?:, (?P<date>[^<]*))?</h2>#', $page, $match)) {
+            if (preg_match('#<h2>(?P<title>[^,]*)(?:, (?P<date>[0-9]+\s+[^<]*))?</h2>#', $page, $match)) {
                 $data['title'] = $match['title'];
                 if (isset($match['date'])) {
                     $data['date'] = preg_replace('#^.*,\s*([^,]*,[^,]*)$#', '\1', $match['date']);
@@ -109,7 +115,7 @@
             }
 
             if ($RID == -1) {
-                echo $title . ' ' . $date . "\n";
+                echo $title . ' | ' . $date . "\n";
             }
 
             $contests[] = array(
@@ -118,6 +124,7 @@
                 'duration' => isset($data['end_time'])? '' : (isset($data['start_time'])? '05:00' : '00:00'),
                 'title' => $title,
                 'url' => $url,
+                'standings_url' => $url,
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
