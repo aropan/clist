@@ -6,16 +6,17 @@
 {% for s in statistics %}
 <tr class="contest" id="cid-{{ s.contest.id }}">
     <td>
+        {% if s.addition.url %}<a href="{{ s.addition.url }}">{% endif %}
         <div data-toggle="tooltip" data-placement="top" data-html="true" title="
             Handle: {{ s.account.key }}<br/>
             {% for k, v in s.addition.items|sort %}
-                {% if k not in "problems,hack,solved,challenges" %}
+                {% if k not in "problems,hack,solved,challenges,url" %}
                     {{ k|title }}: {{ v }}<br/>
                 {% endif %}
             {% endfor %}
         ">
             {{ s.place|default:"-" }}
-        </div>
+        </div>{% if s.addition.url %}</a>{% endif %}
     </td>
     <td>{{ s.solving|floatformat }}</td>
     <td>{{ s.contest.end_time|naturalday }}</td>

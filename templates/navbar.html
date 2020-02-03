@@ -16,41 +16,42 @@
                 <li><a href="https://github.com/aropan/clist/issues" target="_blank">Issues</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                {% if user.is_authenticated %}
                 <li>
+                    {% if user.is_authenticated %}
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user.username }}&nbsp;<i class="fa fa-caret-down"></i></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="{% url 'coder:profile' user.username %}"><i class="fa fa-user"></i> Profile</a></li>
-                        {% if user.is_staff %}
-                        <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
-                        {% endif %}
-                        <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'clist:tastypie_swagger:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
-                        <li><a href="{% url 'telegram:me' %}" target="_blank"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'coder:settings' %}#preferences-tab"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
-                        <li><a href="{% url 'coder:settings' %}#social-tab"><i class="fa fa-users"></i>&nbsp;Social</a></li>
-                        <li><a href="{% url 'coder:settings' %}#accounts-tab"><i class="fa fa-globe"></i>&nbsp;Accounts</a></li>
-                        <li><a href="{% url 'coder:settings' %}#filters-tab"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
-                        <li><a href="{% url 'coder:settings' %}#notifications-tab"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
-                        <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
-                    </ul>
-                </li>
-                {% else %}
-                <li class="dropdown">
+                    {% else %}
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i>&nbsp;Login / Sign Up&nbsp;<i class="fa fa-caret-down"></i></a>
-                    <ul class="dropdown-menu signup">
+                    {% endif %}
+                    <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
+                        {% if not user.is_authenticated %}
                         <li><a href="{% url 'auth:query' "vk" %}"><i class="fab fa-vk"></i> vkontakte</a></li>
                         <li><a href="{% url 'auth:query' "yandex" %}"><i class="fab fa-yahoo"></i> yandex</a></li>
                         <li><a href="{% url 'auth:query' "google" %}"><i class="fab fa-google"></i> google</a></li>
                         <li><a href="{% url 'auth:query' "facebook" %}"><i class="fab fa-facebook"></i> facebook</a></li>
+                        <li role="separator" class="divider"></li>
+                        {% endif %}
+                        <li><a href="{% url 'coder:profile' user.username %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
+                        {% if user.is_staff %}
+                        <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
+                        {% endif %}
+                        <li role="separator" class="divider"></li>
+                        <li><a href="{% url 'clist:tastypie_swagger:index' %}" class="authorized"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
+                        <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="{% url 'coder:settings' %}#preferences-tab" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
+                        <li><a href="{% url 'coder:settings' %}#social-tab" class="authorized"><i class="fa fa-users"></i>&nbsp;Social</a></li>
+                        <li><a href="{% url 'coder:settings' %}#accounts-tab" class="authorized"><i class="fa fa-globe"></i>&nbsp;Accounts</a></li>
+                        <li><a href="{% url 'coder:settings' %}#filters-tab" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
+                        <li><a href="{% url 'coder:settings' %}#notifications-tab" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
+                        <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>
+                        {% if user.is_authenticated %}
+                        <li role="separator" class="divider"></li>
+                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+                        {% endif %}
                     </ul>
                 </li>
-                {% endif %}
             </ul>
         </div>
     </div>

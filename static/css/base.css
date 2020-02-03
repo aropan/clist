@@ -8,9 +8,14 @@ body {
     cursor: default !important;
 }
 
-.navbar-right .dropdown-menu i {
+.navbar-static-top .navbar-right .dropdown-menu i {
     width: 20px;
     text-align: center;
+}
+
+.navbar-static-top .navbar-right .login-signup a.authorized {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 html * {
