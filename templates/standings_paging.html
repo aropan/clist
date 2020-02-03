@@ -65,6 +65,8 @@
 
       {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name %}
         <span>{{ statistic.addition.name }}</span>
+      {% elif statistic.addition.name and contest.resource.info.standings.name_instead_key %}
+        <span title="{{ statistic.account.key }}" data-placement="top">{{ statistic.addition.name }}</span>
       {% else %}
         <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %}>{{ statistic.account.key }}</span>
       {% endif %}

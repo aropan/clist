@@ -114,6 +114,10 @@ class Statistic(BaseModule):
                             pass
                 elif k:
                     row[k.strip()] = v.value.strip()
+                elif v.value.strip().lower() == 'log':
+                    href = v.column.node.xpath('.//a/@href')
+                    if href:
+                        row['url'] = urljoin(self.standings_url, href[0])
             result[row['member']] = row
         for r in result.values():
             solved = 0
@@ -155,7 +159,7 @@ if __name__ == '__main__':
     qs = Contest.objects \
         .filter(host='dl.gsu.by', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
         .order_by('-start_time')
-    for contest in qs[:10]:
+    for contest in qs[:3]:
         contest.standings_url = None
 
         statistic = Statistic(

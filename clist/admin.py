@@ -91,6 +91,7 @@ class ResourceAdmin(BaseModelAdmin):
         [None, {'fields': ['host', 'enable', 'url', 'profile_url']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
+        [None, {'fields': ['info']}],
     ]
     list_display = ['host', 'enable', 'url', 'profile_url', 'timezone', '_num_contests']
     list_filter = ['timezone']
