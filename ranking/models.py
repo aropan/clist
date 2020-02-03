@@ -131,7 +131,7 @@ class Stage(BaseModel):
 
         placing = self.score_params.get('place')
         n_best = self.score_params.get('n_best')
-        fields = self.score_params.get('fields')
+        fields = self.score_params.get('fields', [])
         results = collections.defaultdict(dict)
 
         statistics = Statistics.objects.select_related('account')
