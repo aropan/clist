@@ -368,6 +368,17 @@ def search(request, **kwargs):
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c.id, 'text': c.title} for c in qs]
+    elif query == 'field-to-select':
+        text = request.GET.get('text')
+        field = request.GET.get('field')
+        assert '__' not in field
+        field = f'addition__{field}'
+        contest = get_object_or_404(Contest, pk=request.GET.get('cid'))
+        qs = contest.statistics_set.filter(**{f'{field}__icontains': text}).distinct(field).values_list(field)
+
+        total = qs.count()
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': f[0], 'text': f[0]} for f in qs]
     else:
         return HttpResponseBadRequest('invalid query')
 

@@ -30,7 +30,7 @@
                         <li><a href="{% url 'auth:query' "facebook" %}"><i class="fab fa-facebook"></i> facebook</a></li>
                         <li role="separator" class="divider"></li>
                         {% endif %}
-                        <li><a href="{% url 'coder:profile' user.username %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
+                        <li><a{% if user.is_authenticated %} href="{% url 'coder:profile' user.username %}"{% endif %} class="authorized"><i class="fa fa-user"></i> Profile</a></li>
                         {% if user.is_staff %}
                         <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
                         {% endif %}

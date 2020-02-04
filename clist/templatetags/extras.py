@@ -227,9 +227,12 @@ def define(val=None):
 
 
 @register.simple_tag
-def query_transform(request, **kwargs):
+def query_transform(request, *args, **kwargs):
     updated = request.GET.copy()
-    updated.update(kwargs)
+    if kwargs:
+        updated.update(kwargs)
+    if args:
+        updated.update(dict(zip(args[::2], args[1::2])))
     return updated.urlencode()
 
 

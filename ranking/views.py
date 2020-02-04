@@ -84,6 +84,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     if order is None:
         order = ['place_as_int', '-solving']
 
+    # fixed fields
     fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time')) + tuple(contest.info.get('fixed_fields', []))
 
     statistics = statistics \
@@ -111,9 +112,24 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         if k in contest_fields:
             fields[k] = v
 
-    has_detail = True
+    # field to select
+    fields_to_select = {}
+    for f in ['institution', 'room']:
+        if f in contest_fields:
+            values = request.GET.getlist(f)
+            if values:
+                filt = Q()
+                for q in values:
+                    filt |= Q(**{f'addition__{f}': q})
+                statistics = statistics.filter(filt)
+            fields_to_select[f] = values
+
     for k in contest_fields:
-        if k not in fields and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url']:
+        if (
+            k not in fields
+            and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type']
+            and 'country' not in k
+        ):
             if request.GET.get('detail'):
                 field = ' '.join(k.split('_'))
                 if not field[0].isupper():
@@ -249,8 +265,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'per_page': per_page,
         'with_row_num': bool(search or countries),
         'start_num': start_num,
-        'has_detail': has_detail,
         'merge_problems': merge_problems,
+        'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': 'detail' in request.GET,
     }

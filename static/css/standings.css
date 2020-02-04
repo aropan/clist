@@ -81,6 +81,10 @@ table.standings .handle-cell {
   color: inherit;
 }
 
+.standings td a.field-to-select {
+  color: #337ab7;
+}
+
 .inline {
   display: inline;
 }

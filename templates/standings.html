@@ -65,7 +65,6 @@
         </div>
       </div>
 
-      {% if has_detail %}
       <input
         name="detail"
         type="checkbox"
@@ -78,7 +77,6 @@
         onchange="this.form.submit()"
         {% if with_detail %}checked{% endif %}
       >
-      {% endif %}
 
       {% if has_country %}
       <div class="input-group input-group-sm hidden" id="country-hidden">
@@ -128,6 +126,61 @@
       </script>
       {% endif %}
 
+      {% if fields_to_select %}
+        {% for field, values in fields_to_select.items %}
+          <div class="input-group input-group-sm field-to-select hidden">
+            <div class="input-group-addon">{{ field|title }}</div>
+            <select name="{{ field }}" id="{{ field }}" onchange="this.form.submit()" multiple>
+            {% for v in values %}
+              <option value="{{ v }}" selected>{{ v }}</option>
+            {% endfor %}
+            </select>
+          </div>
+        {% endfor %}
+        <script>
+          $(function() {
+            $('.field-to-select select').select2({
+              dropdownAutoWidth : true,
+              theme: 'bootstrap',
+              placeholder: '',
+              allowClear: true,
+              minimumInputLength: 1,
+              ajax: {
+                  url: '/settings/search/',
+                  dataType: 'json',
+                  delay: 314,
+                  data: function (params) {
+                      return {
+                          query: 'field-to-select',
+                          cid: {{ contest.pk }},
+                          division: '{{ request.GET.division }}',
+                          field: $(this).attr('name'),
+                          text: params.term,
+                          page: params.page || 1
+                      };
+                  },
+                  processResults: function (data, params) {
+                      return {
+                          results: data.items,
+                          pagination: {
+                              more: data.more
+                          }
+                      };
+                  },
+                  cache: true,
+              },
+            }).on('select2:unselecting', function() {
+              $(this).data('unselecting', true);
+            }).on('select2:opening', function(e) {
+              if ($(this).data('unselecting')) {
+                $(this).removeData('unselecting');
+                e.preventDefault();
+              }
+            })
+            $('.field-to-select').removeClass('hidden');
+          })
+        </script>
+      {% endif %}
     </div>
   </form>
 

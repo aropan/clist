@@ -101,7 +101,17 @@
   <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=statistic.addition.penalty|default:0 %}</td>
   {% endif %}
   {% for field in fields.keys %}
-  <td>{% if field in statistic.addition %}{{ statistic.addition|get_item:field }}{% endif %}</td>
+  <td>
+    {% if field in statistic.addition %}
+      {% with value=statistic.addition|get_item:field %}
+        {% if field in fields_to_select and value not in fields_to_select|get_item:field%}
+          <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">
+        {% endif %}
+        {{ value }}
+        {% if field in fields_to_select and value not in fields_to_select|get_item:field%}</a>{% endif %}
+      {% endwith %}
+    {% endif %}
+  </td>
   {% endfor %}
   {% for problem in problems %}
     {% with key=problem|get_problem_key  %}
