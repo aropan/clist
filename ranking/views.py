@@ -114,8 +114,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     # field to select
     fields_to_select = {}
-    for f in ['institution', 'room']:
-        if f in contest_fields:
+    for f in contest_fields:
+        if f.lower() in ['institution', 'room', 'affiliation']:
             values = request.GET.getlist(f)
             if values:
                 filt = Q()

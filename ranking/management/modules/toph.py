@@ -42,7 +42,7 @@ class Statistic(BaseModule):
                     if k == '#':
                         row['place'] = v.value
                     elif not k:
-                        name, score = v
+                        name, *_, score = v
 
                         row['name'] = name.value
                         hrefs = name.column.node.xpath('.//a[contains(@href,"/u/")]/@href')
@@ -51,6 +51,11 @@ class Statistic(BaseModule):
                         else:
                             to_get_handle = True
                             row['member'] = f'{row["name"]}, {row["place"]}, {self.start_time.year}'
+                        flag = score.row.node.xpath(".//span[contains(@class, 'flag')]/@class")
+                        if flag:
+                            for f in flag[0].split():
+                                if f.startswith('flag-'):
+                                    row['country'] = f[5:]
 
                         title = score.column.node.xpath('.//div[@title]/@title')[0]
                         row['solving'], row['penalty'] = title.replace(',', '').split()
@@ -81,6 +86,9 @@ class Statistic(BaseModule):
                                         to_get_handle = False
                 if not problems:
                     continue
+                if users and row['member'] not in users:
+                    continue
+
                 results[row['member']] = row
             n_page += 1
             match = re.search(f'<a[^>]*href="(?P<href>[^"]*standings[^"]*)"[^>]*>{n_page}</a>', page)
@@ -114,6 +122,13 @@ class Statistic(BaseModule):
 
 if __name__ == "__main__":
     statictic = Statistic(
+        name='Criterion 2020 Round 1 Standings',
+        url='https://toph.co/c/criterion-2020-round-1',
+        key='criterion-2020-round-1',
+        start_time=datetime.strptime('20.09.2019', '%d.%m.%Y'),
+    )
+    pprint(statictic.get_standings(['EgorKulikov']))
+    statictic = Statistic(
         name='DIU Intra University Programming Contest 2019 (Replay)',
         url='https://toph.co/c/diu-inter-section-summer-2019-preliminary-a',
         key='diu-inter-section-summer-2019-preliminary-a',
@@ -126,4 +141,4 @@ if __name__ == "__main__":
         key='diu-intra-2019-r',
         start_time=datetime.strptime('20.09.2019', '%d.%m.%Y'),
     )
-    pprint(statictic.get_standings())
+    pprint(statictic.get_standings(['salman.exe']))
