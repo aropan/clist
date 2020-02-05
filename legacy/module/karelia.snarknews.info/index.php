@@ -67,14 +67,18 @@
             $page = curlexec($url);
             $data = array();
             $data['url'] = $url;
+            if (isset($matches['title'][$i])) {
+                $data['title'] = $matches['title'][$i];
+            }
             if (preg_match('#<h2>(?P<title>[^,]*)(?:, (?P<date>[0-9]+\s+[^<]*))?</h2>#', $page, $match)) {
-                $data['title'] = $match['title'];
+                if (!isset($data['title'])) {
+                    $data['title'] = $match['title'];
+                }
                 if (isset($match['date'])) {
                     $data['date'] = preg_replace('#^.*,\s*([^,]*,[^,]*)$#', '\1', $match['date']);
                 }
-            } else if (isset($matches['title'][$i])) {
-                $data['title'] = $matches['title'][$i];
-            } else {
+            }
+            if (!isset($data['title'])) {
                 continue;
             }
 
