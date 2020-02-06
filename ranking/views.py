@@ -15,7 +15,7 @@ from clist.models import Contest
 from ranking.models import Statistics, Module
 from clist.templatetags.extras import slug
 from clist.views import get_timezone, get_timeformat
-from true_coders.models import Party, Filter
+from true_coders.models import Party
 from clist.templatetags.extras import get_problem_key
 from utils.regex import verify_regex
 
@@ -30,13 +30,13 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     if request.user.is_authenticated:
         all_standings = request.user.coder.settings.get('all_standings')
-        contests = contests.filter(request.user.coder.get_contest_filter(Filter.CATEGORIES))
     else:
         all_standings = False
 
     switch = 'switch' in request.GET
     if bool(all_standings) == bool(switch):
         contests = contests.filter(has_statistics=True, has_module=True)
+        contests = contests.filter(request.user.coder.get_contest_filter(['list']))
 
     search = request.GET.get('search')
     if search is not None:

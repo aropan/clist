@@ -39,7 +39,7 @@ class Coder(BaseModel):
 
     def get_contest_filter(self, categories, ignores=None):
         filter_categories = Q()
-        if not isinstance(categories, (list, tuple)):
+        if not isinstance(categories, (list, tuple, set)):
             categories = (categories, )
         for c in categories:
             filter_categories |= Q(categories__contains=[c])
