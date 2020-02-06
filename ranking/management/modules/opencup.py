@@ -68,8 +68,11 @@ class Statistic(BaseModule):
                         elif point == '0':
                             p['binary'] = False
                             point = '-1'
-                        if 'opener' in v.attrs.get('class', '').split():
+                        classes = v.attrs.get('class', '').split()
+                        if 'opener' in classes:
                             p['first_ac'] = True
+                        if 'frost' in classes and point and point[0] == '-':
+                            point[0] = '?'
                         p['time'] = time
                         p['result'] = point
                     else:

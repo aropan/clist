@@ -97,7 +97,7 @@
       </small>
     {% endif %}
   </td>
-  {% if with_detail and mod_penalty %}
+  {% if mod_penalty %}
   <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=statistic.addition.penalty|default:0 %}</td>
   {% endif %}
   {% for field in fields.keys %}

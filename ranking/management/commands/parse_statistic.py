@@ -54,22 +54,24 @@ class Command(BaseCommand):
     def _canonize(data):
         return json.dumps(data, sort_keys=True)
 
-    def parse_statistic(self,
-                        contests,
-                        previous_days=None,
-                        freshness_days=None,
-                        limit=None,
-                        with_check=True,
-                        stop_on_error=False,
-                        random_order=False,
-                        no_update_results=False):
+    def parse_statistic(
+        self,
+        contests,
+        previous_days=None,
+        freshness_days=None,
+        limit=None,
+        with_check=True,
+        stop_on_error=False,
+        random_order=False,
+        no_update_results=False,
+        limit_duration_in_secs=7 * 60 * 60,  # 7 hours
+    ):
         now = timezone.now()
 
         if with_check:
             if previous_days is not None:
                 contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
             else:
-                contests = contests.distinct('id')
                 contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
 
                 started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
@@ -80,8 +82,9 @@ class Command(BaseCommand):
                 ended = contests.filter(query)
 
                 contests = started.union(ended)
+                contests = contests.distinct('id')
         else:
-            contests = contests.filter(end_time__lt=now)
+            contests = contests.filter(Q(end_time__lt=now - F('resource__module__min_delay_after_end')))
 
         if freshness_days is not None:
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
@@ -93,8 +96,11 @@ class Command(BaseCommand):
             for c in contests:
                 module = c.resource.module
                 delay = module.delay_on_success or module.max_delay_after_end
-                if now < c.end_time and c.end_time < now + delay:
-                    delay = c.end_time - now + timedelta(seconds=1)
+                if now < c.end_time:
+                    if c.duration_in_secs <= limit_duration_in_secs:
+                        delay = timedelta(minutes=1)
+                    elif c.end_time < now + delay:
+                        delay = c.end_time - now + timedelta(seconds=5)
                 TimingContest.objects.update_or_create(
                     contest=c,
                     defaults={'statistic': now + delay}
@@ -267,6 +273,13 @@ class Command(BaseCommand):
                                 if k not in fields_set:
                                     fields_set.add(k)
                                     fields.append(k)
+
+                        if contest.start_time <= now:
+                            if now < contest.end_time:
+                                contest.info['last_parse_statistics'] = now.strftime('%Y-%m-%d %H:%M:%S.%f+%Z')
+                            elif 'last_parse_statistics' in contest.info:
+                                contest.info.pop('last_parse_statistics')
+
                         if fields_set and not isinstance(r, OrderedDict):
                             fields.sort()
 
@@ -330,7 +343,11 @@ class Command(BaseCommand):
                     self.logger.error(format_exc())
                     break
             if not parsed:
-                contest.timing.statistic = timezone.now() + resource.module.delay_on_error
+                if now < c.end_time and c.duration_in_secs <= limit_duration_in_secs:
+                    delay = timedelta(minutes=1)
+                else:
+                    delay = resource.module.delay_on_error
+                contest.timing.statistic = timezone() + delay
                 contest.timing.save()
             else:
                 stages = Stage.objects.filter(
@@ -341,6 +358,7 @@ class Command(BaseCommand):
                 for stage in stages:
                     if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
                         stage.update()
+        progress_bar.close()
 
         self.logger.info(f'Parse statistic: {count} of {total}')
         return count, total

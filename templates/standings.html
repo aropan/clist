@@ -19,7 +19,7 @@
 </h3>
 
 {% if contest.is_running and not contest.is_over %}
-<h4 class="text-center">Time remaining: {{ contest.next_time|countdown }}</h4>
+<h4 class="text-center">Time remaining: {{ contest.next_time|countdown }}{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|naturaltime }}</small>{% endif %}</h4>
 {% endif %}
 
 <div class="container">
@@ -209,7 +209,7 @@
           {% endif %}
         </th>
         <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
-        {% if with_detail and mod_penalty %}
+        {% if mod_penalty %}
         <th{% if merge_problems %} rowspan="2"{% endif %}><span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true">Gap</span></th>
         {% endif %}
         {% for field in fields.values %}
