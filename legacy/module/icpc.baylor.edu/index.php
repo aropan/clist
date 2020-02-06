@@ -43,7 +43,7 @@
     );
 
     $parse_full_list = isset($_GET['parse_full_list']);
-    for (;;) {
+    for (;$year > 1970;) {
         --$year;
         $path = "/community/history-icpc-$year";
 

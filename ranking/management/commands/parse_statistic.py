@@ -73,7 +73,6 @@ class Command(BaseCommand):
                 contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
             else:
                 contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
-
                 started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
 
                 query = Q()
@@ -95,15 +94,15 @@ class Command(BaseCommand):
         with transaction.atomic():
             for c in contests:
                 module = c.resource.module
-                delay = module.delay_on_success or module.max_delay_after_end
+                delay_on_success = module.delay_on_success or module.max_delay_after_end
                 if now < c.end_time:
                     if c.duration_in_secs <= limit_duration_in_secs:
-                        delay = timedelta(minutes=1)
-                    elif c.end_time < now + delay:
-                        delay = c.end_time - now + timedelta(seconds=5)
+                        delay_on_success = timedelta(minutes=0)
+                    elif c.end_time < now + delay_on_success:
+                        delay_on_success = c.end_time - now + timedelta(seconds=5)
                 TimingContest.objects.update_or_create(
                     contest=c,
-                    defaults={'statistic': now + delay}
+                    defaults={'statistic': now + delay_on_success}
                 )
 
         if random_order:
@@ -156,6 +155,8 @@ class Command(BaseCommand):
                         if self._canonize(standings_options) != self._canonize(contest_options):
                             contest.info['standings'] = standings_options
 
+                    problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
+
                     result = standings.get('result', {})
                     if not no_update_results and result:
                         fields_set = set()
@@ -163,6 +164,7 @@ class Command(BaseCommand):
                         calculate_time = False
                         d_problems = {}
                         teams_viewed = set()
+                        has_hidden = False
 
                         ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
                         for r in tqdm(list(result.values()), desc=f'update results {contest}'):
@@ -248,8 +250,17 @@ class Command(BaseCommand):
                                 if calc_time:
                                     p_problems = statistic.addition.get('problems', {})
 
-                                    ts = int((now - contest.start_time).total_seconds())
-                                    time = f'{ts // 60}:{ts % 60:02}'
+                                    ts = min(int((now - contest.start_time).total_seconds()), contest.duration_in_secs)
+                                    values = {
+                                        'D': ts // (24 * 60 * 60),
+                                        'H': ts // (60 * 60),
+                                        'h': ts // (60 * 60) % 24,
+                                        'M': ts // 60,
+                                        'm': ts // 60 % 60,
+                                        'S': ts,
+                                        's': ts % 60,
+                                    }
+                                    time = problems_time_format.format(**values)
 
                                     for k, v in problems.items():
                                         if '?' in v.get('result', ''):
@@ -258,12 +269,14 @@ class Command(BaseCommand):
                                         if 'time' in v:
                                             continue
                                         has_change = v.get('result') != p.get('result')
-                                        if not has_change or contest.end_time < now:
-                                            if 'time' not in p:
-                                                continue
+                                        if (not has_change or contest.end_time < now) and 'time' in p:
                                             v['time'] = p['time']
                                         else:
                                             v['time'] = time
+
+                            for p in problems.values():
+                                if '?' in p.get('result', ''):
+                                    has_hidden = True
 
                             if calc_time:
                                 statistic.addition = dict(r)
@@ -273,6 +286,10 @@ class Command(BaseCommand):
                                 if k not in fields_set:
                                     fields_set.add(k)
                                     fields.append(k)
+
+                        if has_hidden:
+                            contest.timing.statistic = timezone.now() + timedelta(minutes=30)
+                            contest.timing.save()
 
                         if contest.start_time <= now:
                             if now < contest.end_time:
@@ -344,10 +361,10 @@ class Command(BaseCommand):
                     break
             if not parsed:
                 if now < c.end_time and c.duration_in_secs <= limit_duration_in_secs:
-                    delay = timedelta(minutes=1)
+                    delay = timedelta(minutes=0)
                 else:
                     delay = resource.module.delay_on_error
-                contest.timing.statistic = timezone() + delay
+                contest.timing.statistic = timezone.now() + delay
                 contest.timing.save()
             else:
                 stages = Stage.objects.filter(
@@ -374,7 +391,7 @@ class Command(BaseCommand):
                 resources = [Resource.objects.get(host__iregex=r) for r in args.resources]
                 contests = Contest.objects.filter(resource__module__resource__host__in=resources)
         else:
-            contests = Contest.objects.filter(resource__module__min_delay_after_end__gt=timedelta())
+            contests = Contest.objects
 
         if args.event is not None:
             contests = contests.filter(title__iregex=args.event)

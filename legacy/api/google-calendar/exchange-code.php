@@ -26,4 +26,5 @@
 
     $file_code = dirname(__file__) . "/code";
     file_put_contents($file_code, $_GET["code"]);
+    chmod($file_code, 0666);
 ?>

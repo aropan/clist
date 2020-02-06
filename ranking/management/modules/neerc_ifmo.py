@@ -90,6 +90,7 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.standings_url,
             'problems': list(problems_info.values()),
+            'problems_time_format': '{M}:{s:02d}',
         }
         return standings
 

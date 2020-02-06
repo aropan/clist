@@ -59,6 +59,7 @@ class Statistic(BaseModule):
                         d['name'] = v.attrs['title']
                     if k.isdigit() and k in stages:
                         d['url'] = stages[k]
+                    classes = v.attrs.get('class', '').split()
                     if ' ' in v.value:
                         p = problems.setdefault(k, {})
                         point, time = v.value.split()
@@ -68,13 +69,17 @@ class Statistic(BaseModule):
                         elif point == '0':
                             p['binary'] = False
                             point = '-1'
-                        classes = v.attrs.get('class', '').split()
                         if 'opener' in classes:
                             p['first_ac'] = True
                         if 'frost' in classes and point and point[0] == '-':
-                            point[0] = '?'
-                        p['time'] = time
+                            point = '?' + point[1:]
+                            time = None
+                        if time:
+                            p['time'] = time
                         p['result'] = point
+                    elif 'frost' in classes:
+                        p = problems.setdefault(k, {})
+                        p['result'] = '?'
                     else:
                         try:
                             point = float(v.value)
@@ -107,6 +112,7 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.standings_url,
             'problems': list(problems_info.values()),
+            'problems_time_format': '{H}:{m:02d}',
         }
         return standings
 
