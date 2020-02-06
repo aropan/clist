@@ -36,7 +36,8 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     switch = 'switch' in request.GET
     if bool(all_standings) == bool(switch):
         contests = contests.filter(has_statistics=True, has_module=True)
-        contests = contests.filter(request.user.coder.get_contest_filter(['list']))
+        if request.user.is_authenticated:
+            contests = contests.filter(request.user.coder.get_contest_filter(['list']))
 
     search = request.GET.get('search')
     if search is not None:
