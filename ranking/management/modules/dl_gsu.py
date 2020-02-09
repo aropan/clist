@@ -49,10 +49,12 @@ class Statistic(BaseModule):
                 <td[^>]*>[^<]*<a[^>]*href\s*=["\s]*(?P<url>[^">]*)["\s]*[^>]*>
             '''.format(date), page, re.MULTILINE | re.VERBOSE)
 
-            urls = [
-                (title, urljoin(url, u)) for title, u in matches
-                if not re.search(r'[0-9]\s*-\s*[0-9].*[0-9]\s*-\s*[0-9].*\bкл\b', title)
-            ]
+            urls = [(title, urljoin(url, u)) for title, u in matches]
+            if len(urls) > 1:
+                urls = [
+                    (title, urljoin(url, u)) for title, u in matches
+                    if not re.search(r'[0-9]\s*-\s*[0-9].*[0-9]\s*-\s*[0-9].*\bкл\b', title)
+                ]
 
             if not urls:
                 raise ExceptionParseStandings('Not found standing url')
@@ -157,9 +159,9 @@ if __name__ == '__main__':
     from django.utils import timezone
 
     qs = Contest.objects \
-        .filter(host='dl.gsu.by', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
+        .filter(host='dl.gsu.by', end_time__lt=timezone.now()) \
         .order_by('-start_time')
-    for contest in qs[:3]:
+    for contest in qs[:1]:
         contest.standings_url = None
 
         statistic = Statistic(
