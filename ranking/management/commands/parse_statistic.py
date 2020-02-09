@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q, F, OuterRef, Exists
 
-from ranking.models import Statistics, Account, Stage
+from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.management.commands.countrier import Countrier
@@ -391,7 +391,8 @@ class Command(BaseCommand):
                 resources = [Resource.objects.get(host__iregex=r) for r in args.resources]
                 contests = Contest.objects.filter(resource__module__resource__host__in=resources)
         else:
-            contests = Contest.objects
+            has_module = Module.objects.filter(resource_id=OuterRef('resource__pk'))
+            contests = Contest.objects.annotate(has_module=Exists(has_module)).filter(has_module=True)
 
         if args.event is not None:
             contests = contests.filter(title__iregex=args.event)

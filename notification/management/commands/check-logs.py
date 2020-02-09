@@ -72,7 +72,7 @@ class Command(BaseCommand):
         command_cache = cache.setdefault('command', {})
         for log_file in glob.glob('./logs/command/**/*.log', recursive=True):
             key = os.path.basename(log_file)
-            self._check(log_file, r'^[^\{\n]*error.*$', command_cache, key, flags=re.MULTILINE | re.IGNORECASE)
+            self._check(log_file, r'^[^\{\n]*\berror\b.*$', command_cache, key, flags=re.MULTILINE | re.IGNORECASE)
 
         cache = yaml.dump(cache, default_flow_style=False)
         with open(cache_filepath, 'w') as fo:
