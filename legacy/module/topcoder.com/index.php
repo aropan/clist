@@ -8,69 +8,21 @@
     if (!isset($TIMEZONE)) $TIMEZONE = 'America/New_York';
     if (!isset($contests)) $contests = array();
 
-    $debug_ = $RID == -1;
+
+    function get_algorithm_key(&$title) {
+        $title = preg_replace('#single\s*round\s*match#i', 'SRM', $title);
+        $title = preg_replace('#marathon\s*match#i', 'MM', $title);
+        if (!preg_match('#(?P<key>(?:srm|mm)\s*[.0-9]*[0-9]|TCO[0-9]+\s*(?:algorithm|marathon)\s*round\s*[.0-9a-z]*[0-9a-z])#i', $title, $match)) {
+            return false;
+        }
+        return $match['key'];
+    }
+
+    $debug_ = $RID == -1 || DEBUG;
 
     $_DATE_FORMAT = 'm.d.Y';
 
     $url_scheme_host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
-
-    foreach (array("past", "upcoming", "active") as $type) {
-        $url = "https://api.topcoder.com/v2/data/marathon/challenges/?listType=" . $type;
-        if ($debug_) {
-            echo "url = $url\n";
-        }
-        $json = curlexec($url, null, array("json_output" => 1));
-        if (isset($json["data"])) {
-            foreach ($json["data"] as $c) {
-                $ok = true;
-                foreach (array("startDate", "endDate", "fullName", "roundId", "problemId") as $f) {
-                    if (!isset($c[$f])) {
-                        $ok = false;
-                        break;
-                    }
-                }
-                if ($ok) {
-                    $url = $url_scheme_host . "/longcontest/?module=ViewProblemStatement&rd=${c['roundId']}&pm=${c['problemId']}";
-                    $title = $c["fullName"];
-                    $date = date($_DATE_FORMAT, strtotime($c["startDate"]));
-                    $_contests[] = array(
-                        "start_time" => $c["startDate"],
-                        "end_time" => $c["endDate"],
-                        "title" => $title,
-                        "url" => $url
-                    );
-                }
-            }
-        }
-    }
-
-    $url = "https://api.topcoder.com/v2/challenges/active?challengeType=Code&technologies=Data+Science&type=develop";
-    if ($debug_) {
-        echo "url = $url\n";
-    }
-    $json = curlexec($url, NULL, array("json_output" => 1));
-    if (isset($json["data"])) {
-        foreach ($json["data"] as $c) {
-            $ok = true;
-            foreach (array("registrationStartDate", "submissionEndDate", "challengeName", "challengeId") as $f) {
-                if (!isset($c[$f])) {
-                    $ok = false;
-                    break;
-                }
-            }
-            if ($ok) {
-                $url = $url_scheme_host . "/challenge-details/${c["challengeId"]}/";
-                $title = $c["challengeName"];
-                $date = date($_DATE_FORMAT, strtotime($c["registrationStartDate"]));
-                $_contests[] = array(
-                    "start_time" => $c["registrationStartDate"],
-                    "end_time" => $c["submissionEndDate"],
-                    "title" => $title,
-                    "url" => $url
-                );
-            }
-        }
-    }
 
     $authorization = get_calendar_authorization();
     if ($authorization) {
@@ -81,7 +33,7 @@
         }
         $data = curlexec($url, NULL, array("http_header" => array("Authorization: $authorization"), "json_output" => 1));
         if (!isset($data["items"])) {
-            print_r($data);
+            echo $data['error']['message'] . "\n";
         } else {
             foreach ($data["items"] as $item)
             {
@@ -93,7 +45,11 @@
                 if (strpos($title, "Registration") !== false) {
                     continue;
                 }
-                $title = preg_replace("/ \(MM\)$/", "", $title);
+
+                $key = get_algorithm_key($title);
+                if (!$key) {
+                    continue;
+                }
 
                 $url = $URL;
                 foreach (array("description", "location") as $field) {
@@ -117,6 +73,7 @@
                     "end_time" => $end,
                     "title" => $title,
                     "url" => $url,
+                    "key" => $key,
                     "_calendar" => true
                 );
                 $_contests[] = $contest;
@@ -124,9 +81,72 @@
         }
     }
 
-    usort($_contests, function ($a, $b) {
-        return -(strlen($a["title"]) - strlen($b["title"]));
-    });
+    $limit = 50;
+    $ids = array();
+    foreach (array(
+        array("filter" => "status=ACTIVE"),
+        array("filter" => "status=COMPLETED"),
+        array("filter" => "status=ACTIVE", "filter[tracks][data_science]" => "true"),
+        array("filter" => "status=COMPLETED", "filter[tracks][data_science]" => "true"),
+    ) as $params) {
+        for ($offset = 0; ; $offset += $limit) {
+            $params["offset"] = $offset;
+            $params["limit"] = $limit;
+            $query = http_build_query($params);
+            $url = "https://api.topcoder.com/v4/challenges/?" . $query;
+            if ($debug_) {
+                echo "url = $url\n";
+            }
+            $json = curlexec($url, null, array("json_output" => 1));
+            if (isset($json["result"]) && isset($json["result"]['content'])) {
+                $stop = false;
+                foreach ($json["result"]['content'] as $c) {
+                    $ok = true;
+                    foreach (array("name", "id", "registrationStartDate", "submissionEndDate") as $f) {
+                        if (!isset($c[$f])) {
+                            $ok = false;
+                            break;
+                        }
+                    }
+
+                    if (!$ok) {
+                        continue;
+                    }
+
+                    if (isset($ids[$c['id']])) {
+                        continue;
+                    }
+                    $ids[$c['id']] = true;
+
+                    $title = $c["name"];
+                    $key = get_algorithm_key($title);
+                    if (!$key) {
+                        if (!isset($c['technologies']) || !in_array("Data Science", array_values($c['technologies']))) {
+                            continue;
+                        }
+                        $key = "challenge=" . $c['id'];
+                    }
+
+                    $_contests[] = array(
+                        "start_time" => $c["registrationStartDate"],
+                        "end_time" => $c["submissionEndDate"],
+                        "standings_url" => "https://www.topcoder.com/challenges/" . $c['id'] . "?tab=submissions",
+                        "title" => $c["name"],
+                        "url" => $url_scheme_host . "/challenges/" . $c['id'],
+                        "key" => $key,
+                    );
+                }
+                if (!count($json["result"]["content"]) || $stop) {
+                    break;
+                }
+                if (!isset($_GET['parse_full_list']) && $params['filter'] == 'status=COMPLETED') {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+    }
 
     $_ = array();
     foreach ($_contests as $v) {
@@ -153,7 +173,7 @@
     $iou_treshhold = 0.61803398875;
 
     $round_overview = array();
-    foreach (array('https://www.topcoder.com/tc?module=MatchList', 'https://community.topcoder.com/longcontest/stats/?module=MatchList') as $base_url) {
+    foreach (array('https://www.topcoder.com/tc?module=MatchList') as $base_url) {
         $nr = 200;
         $sr = 1;
         for (;;) {
@@ -184,7 +204,7 @@
     }
 
     for ($iter = 0; $iter < 2; ++$iter) {
-        foreach ($_contests as &$c) {
+        foreach ($_contests as $i => $c) {
             $ret = preg_match('/&rd=(?P<rd>[0-9]+)/', $c['url'], $match);
             if ($ret != ($iter == 0)) {
                 continue;
@@ -192,7 +212,7 @@
             if ($ret) {
                 $rd = $match['rd'];
                 if (isset($round_overview[$rd])) {
-                    $c['standings_url'] = $round_overview[$rd]['url'];
+                    $_contests[$i]['standings_url'] = $round_overview[$rd]['url'];
                     unset($round_overview[$rd]);
                 }
             } else {
@@ -220,7 +240,7 @@
                     }
                 }
                 if ($t !== null) {
-                    $c['standings_url'] = $round_overview[$t]['url'];
+                    $_contests[$i]['standings_url'] = $round_overview[$t]['url'];
                     unset($round_overview[$t]);
                 }
             }
@@ -239,12 +259,19 @@
             }
         }
 
+        $title = $ro['title'];
+        $key = get_algorithm_key($title);
+        if (!$key) {
+            $key = $title;
+        }
+
         $_contests[] = array(
             "start_time" => $date_str,
             "end_time" => $date_str,
-            "title" => $ro['title'],
+            "title" => $title,
             "url" => $ro['url'],
-            "standings_url" => $ro['url']
+            "key" => $key,
+            "standings_url" => $ro['url'],
         );
     }
 
@@ -257,7 +284,6 @@
     }
 
     if ($RID === -1) {
-        // print_r($_contests);
         echo "Total contests: " . count($_contests) . "\n";
     }
 ?>
