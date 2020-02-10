@@ -14,7 +14,6 @@ Before running server install all requirements:
 Now rename configs by:
 
     cp pyclist/conf.py.template pylcist/conf.py
-    cp .pgpass.template .pgpass
 
 Enter all information in configs
 
