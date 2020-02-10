@@ -6,8 +6,8 @@ First run
 
 Before running server install all requirements:
 
-    python3 -m venv clist_environment
-    source env/bin/activate
+    python3 -m venv environment
+    source environment/bin/activate
     pip install -r requirements/requirements.txt
     sudo ./requirements/packages.sh
 
