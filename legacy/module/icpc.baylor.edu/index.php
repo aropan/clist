@@ -9,24 +9,39 @@
     if (!isset($contests)) $contests = array();
 
     $page = curlexec($URL);
-    preg_match('#src="(?P<js>/static/js/main.[^"]*.js)"#', $page, $match);
+    if (!preg_match('#src="(?P<js>/static/js/main.[^"]*.js)"#', $page, $match)) {
+        trigger_error('Not found main.js', E_USER_WARNING);
+        return;
+    }
 
     $page = curlexec($match['js']);
-    preg_match('#XWIKI:"(?P<xwiki>[^"]*)"#', $page, $match);
+    if (!preg_match('#XWIKI:"(?P<xwiki>[^"]*)"#', $page, $match)) {
+        trigger_error('Not found xwiki', E_USER_WARNING);
+        return;
+    }
     $xwiki = url_merge($URL, '/' . trim($match['xwiki'], '/'));
     $url = "$xwiki/virtpublic/worldfinals/schedule";
 
     $page = curlexec($url);
 
-    preg_match("#>The (?P<year>[0-9]{4}) (?P<title>(?:ACM-)?ICPC World Finals)#i", $page, $match);
+    if (!preg_match("#>The (?P<year>[0-9]{4}) (?P<title>(?:ACM-)?ICPC World Finals)#i", $page, $match)) {
+        trigger_error('Not found year and title', E_USER_WARNING);
+        return;
+    }
 
     $year = $match['year'];
     $title = $match['title'];
 
-    preg_match("#>hosted by(?:[^,<]*,)?\s*(?P<where>[^<]*?)\s*<#i", $page, $match);
+    if (!preg_match("#>hosted by(?:[^,<]*,)?\s*(?P<where>[^<]*?)\s*<#i", $page, $match)) {
+        trigger_error('Not found where', E_USER_WARNING);
+        return;
+    }
     $title .= ". " . $match["where"];
 
-    preg_match("#held on (?P<date>[^,\.<]*)#", $page, $match);
+    if (!preg_match("#held on (?P<date>[^,\.<]*)#", $page, $match)) {
+        trigger_error('Not found date', E_USER_WARNING);
+        return;
+    }
 
     $start_time = $match['date'] . ' ' . $year;
 
