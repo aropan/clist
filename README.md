@@ -1,7 +1,7 @@
 Contributing
 ======
 
-* Clone fork and clone with `--recursive`
+* Clone fork with `--recursive`
 * Install all requirements:
 ```
 python3 -m venv environment
