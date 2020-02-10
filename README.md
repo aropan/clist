@@ -6,7 +6,7 @@ Contributing
 ```
 python3 -m venv environment
 source environment/bin/activate
-pip install -r requirements/requirements.txt
+pip3 install -r requirements/requirements.txt
 sudo ./requirements/packages.sh
 ```
 * Copy config from tempalte:
