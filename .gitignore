@@ -2,4 +2,4 @@ certificate
 cache
 uwsgi.sock
 nginx/static/
-clist_environment
+environment
