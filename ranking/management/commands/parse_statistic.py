@@ -263,7 +263,8 @@ class Command(BaseCommand):
                                     time = problems_time_format.format(**values)
 
                                     for k, v in problems.items():
-                                        if '?' in v.get('result', ''):
+                                        v_result = v.get('result', '')
+                                        if isinstance(v_result, str) and '?' in v_result:
                                             calculate_time = True
                                         p = p_problems.get(k, {})
                                         if 'time' in v:
@@ -275,7 +276,8 @@ class Command(BaseCommand):
                                             v['time'] = time
 
                             for p in problems.values():
-                                if '?' in p.get('result', ''):
+                                p_result = p.get('result', '')
+                                if isinstance(p_result, str) and '?' in p_result:
                                     has_hidden = True
 
                             if calc_time:
