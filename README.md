@@ -13,8 +13,8 @@ Before running server install all requirements:
 
 Now rename configs by:
 
-    mv pyclist/conf.py.template pylcist/conf.py
-    mv .pgpass.template .pgpass
+    cp pyclist/conf.py.template pylcist/conf.py
+    cp .pgpass.template .pgpass
 
 Enter all information in configs
 
