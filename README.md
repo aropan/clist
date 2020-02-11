@@ -4,10 +4,10 @@ Contributing
 * Clone fork with `--recursive`
 * Install all requirements:
 ```
+sudo ./requirements/packages.sh
 python3 -m venv environment
 source environment/bin/activate
 pip3 install -r requirements/requirements.txt
-sudo ./requirements/packages.sh
 ```
 * Copy config from tempalte:
 ```
