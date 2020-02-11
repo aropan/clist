@@ -1,5 +1,5 @@
 server {
-  server_name netdata.clist.by;
+  server_name netdata.${DOMAIN};
   access_log /var/log/nginx/clist-netdata-access.log;
 
   location / {
@@ -10,17 +10,13 @@ server {
     proxy_pass http://127.0.0.1:19999;
   }
 
-  listen 443;
-  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
-  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+  listen ${PORT};
 }
 
 server {
   access_log /var/log/nginx/clist-legacy-access.log;
   error_log /var/log/nginx/clist-legacy-error.log;
-  server_name legacy.clist.by;
+  server_name legacy.${DOMAIN};
 
   charset utf-8;
 
@@ -66,11 +62,7 @@ server {
     deny all;
   }
 
-  listen 443 ssl; # managed by Certbot
-  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
-  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+  listen ${PORT};
 }
 
 upstream devclist {
@@ -81,7 +73,7 @@ server {
   access_log /var/log/nginx/clist-dev-access.log;
   error_log /var/log/nginx/clist-dev-error.log;
 
-  server_name dev.clist.by;
+  server_name dev.${DOMAIN};
 
   charset utf-8;
 
@@ -93,18 +85,14 @@ server {
     proxy_pass http://devclist;
   }
 
-  listen 443 ssl; # managed by Certbot
-  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
-  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+  listen ${PORT};
 }
 
 server {
   access_log /var/log/nginx/clist-access.log;
   error_log /var/log/nginx/clist-error.log;
 
-  server_name clist.by;
+  server_name ${DOMAIN};
 
   charset utf-8;
 
@@ -123,37 +111,5 @@ server {
     uwsgi_pass unix:$PROJECT_DIR/uwsgi.sock;
   }
 
-  listen 443 ssl; # managed by Certbot
-  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
-  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-}
-
-server {
-  if (${DOLLAR}host = netdata.clist.by) {
-    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
-  } # managed by Certbot
-
-  if (${DOLLAR}host = dev.clist.by) {
-    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
-  } # managed by Certbot
-
-  if (${DOLLAR}host = clist.by) {
-    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
-  } # managed by Certbot
-
-  listen 80;
-  server_name clist.by dev.clist.by netdata.clist.by;
-  return 404; # managed by Certbot
-}
-
-server {
-  if (${DOLLAR}host = legacy.clist.by) {
-    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
-  } # managed by Certbot
-
-  listen 80;
-  server_name legacy.clist.by;
-  return 404; # managed by Certbot
+  listen ${PORT};
 }
