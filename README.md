@@ -10,9 +10,9 @@ source environment/bin/activate
 pip3 install wheel
 pip3 install -r requirements/requirements.txt
 ```
-* Copy config from tempalte:
+* Copy config from template:
 ```
 cp pyclist/conf.py.template pylcist/conf.py
 ```
-* Enter all information in `pylcist/conf.py`
+* Enter all information in `pyclist/conf.py`
 * Now run configure script by `sudo ./requirements/configure.sh`
