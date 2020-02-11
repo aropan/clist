@@ -20,8 +20,6 @@ server {
 
   charset utf-8;
 
-  include acme;
-
   location = /favicon.ico { access_log off; log_not_found off; }
 
   root $PROJECT_DIR/legacy/;
