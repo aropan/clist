@@ -1,4 +1,23 @@
 server {
+  server_name netdata.clist.by;
+  access_log /var/log/nginx/clist-netdata-access.log;
+
+  location / {
+    proxy_set_header Host ${DOLLAR}host;
+    proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+    proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+    proxy_pass http://127.0.0.1:19999;
+  }
+
+  listen 443;
+  ssl_certificate /etc/letsencrypt/live/clist.by/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/clist.by/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
   access_log /var/log/nginx/clist-legacy-access.log;
   error_log /var/log/nginx/clist-legacy-error.log;
   server_name legacy.clist.by;
@@ -66,6 +85,8 @@ server {
 
   charset utf-8;
 
+  proxy_read_timeout 500;
+
   location / {
     proxy_set_header Host ${DOLLAR}host;
     proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
@@ -110,6 +131,10 @@ server {
 }
 
 server {
+  if (${DOLLAR}host = netdata.clist.by) {
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  } # managed by Certbot
+
   if (${DOLLAR}host = dev.clist.by) {
     return 301 https://${DOLLAR}host${DOLLAR}request_uri;
   } # managed by Certbot
@@ -119,7 +144,7 @@ server {
   } # managed by Certbot
 
   listen 80;
-  server_name clist.by dev.clist.by;
+  server_name clist.by dev.clist.by netdata.clist.by;
   return 404; # managed by Certbot
 }
 
