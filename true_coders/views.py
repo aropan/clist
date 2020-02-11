@@ -500,6 +500,8 @@ def party(request, slug):
                 d = total.setdefault(coder.id, {})
                 d['score'] = s['score'] + d.get('score', 0)
                 d['coder'] = coder
+                d['num'] = d.setdefault('num', 0) + 1
+                d['avg'] = f"{(d['score'] / d['num']):.2f}"
 
                 d, s = d.setdefault('stat', {}), s['stat']
 
@@ -515,6 +517,7 @@ def party(request, slug):
     total = sorted(list(total.values()), key=lambda d: d['score'], reverse=True)
     results.insert(0, {
         'standings': total,
+        'fields': [('Num', 'num', 'Number contests'), ('Avg', 'avg', 'Average score')],
     })
 
     for result in results:
@@ -534,7 +537,6 @@ def party(request, slug):
             'fixed_ignore_filters': ignore_filters,
             'timezone': get_timezone(request),
             'future': future,
-            'header': ['#', 'Coder', 'Score', 'Solving'],
             'party': party,
             'party_contests': party_contests,
             'results': results,
