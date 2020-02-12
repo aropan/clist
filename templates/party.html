@@ -33,7 +33,7 @@
             {% endfor %}
         </div>
 
-        <h4><a href="/?party={{ party.slug }}&view=list">Contests</a>
+        <h4><a href="{% url 'coder:party-contests' party.slug %}">Contests</a>
         <span class="badge progress-bar-default">{{ party.rating_set.all.count }}</span>
         </h4>
         <div class="contests">

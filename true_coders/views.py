@@ -16,7 +16,8 @@ from el_pagination.decorators import page_template
 
 from clist.models import Resource, Contest
 from clist.templatetags.extras import get_timezones, format_time
-from clist.views import get_timezone
+from clist.views import get_timezone, main
+from ranking.models import Rating
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
 from ranking.models import Statistics, Module, Account
@@ -549,3 +550,18 @@ def parties(request):
     parties = Party.objects.for_user(request.user).order_by('-created')
     parties = parties.prefetch_related('coders', 'rating_set')
     return render(request, 'parties.html', {'parties': parties})
+
+
+def party_contests(request, slug):
+    party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
+
+    action = request.GET.get("action")
+    if action is not None:
+        if action == "party-contest-toggle" and request.user.is_authenticated:
+            contest = get_object_or_404(Contest, pk=request.GET.get("pk"))
+            rating, created = Rating.objects.get_or_create(contest=contest, party=party)
+            if not created:
+                rating.delete()
+            return HttpResponse("ok")
+
+    return main(request, party=party)

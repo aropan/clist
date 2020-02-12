@@ -167,7 +167,7 @@ def get_events(request):
     return JsonResponse(result, safe=False)
 
 
-def main(request):
+def main(request, party=None):
     viewmode = settings.VIEWMODE_
     open_new_tab = settings.OPEN_NEW_TAB_
     add_to_calendar = settings.ADD_TO_CALENDAR_
@@ -226,9 +226,7 @@ def main(request):
         "contests": get_view_contests(request, coder),
     }
 
-    party_slug = request.GET.get("party")
-    if party_slug is not None:
-        party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
+    if isinstance(party, Party):
         context["party"] = {
             "id": party.id,
             "owner": party.author,
