@@ -11,7 +11,7 @@ pip3 install -r requirements/requirements.txt
 ```
 * Copy config from template:
 ```
-cp pyclist/conf.py.template pylcist/conf.py
+cp pyclist/conf.py.template pyclist/conf.py
 ```
 * Enter all information in `pyclist/conf.py`
 * Run `sudo ./requirements/configure.sh` to configure postgresql database
