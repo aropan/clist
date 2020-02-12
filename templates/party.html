@@ -13,7 +13,7 @@
 
 {% block content %}
 
-<h3 id="party-name" data-slug="{{ party.slug }}">{{ party.name }}</h3>
+<h3 id="party-name" data-slug="{{ party.slug }}"><a href="{% url 'coder:parties' %}"><i class="fas fa-chevron-left"></i></a> {{ party.name }}</h3>
 
 <ul class="nav nav-tabs">
     <li><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
@@ -88,7 +88,7 @@
             {% for r in results %}
                 {% if r.standings %}
                 <div id="{% if forloop.first %}total{% else %}{{ r.contest.id }}{% endif %}" class="tab-pane{% if forloop.first %} active{% endif %}">
-                    <div class="standings col-lg-offset-2 col-lg-8">
+                    <div class="standings">
                         <h4 class="name-stand">
                             {% if forloop.first %}
                                 Total ranking
@@ -98,28 +98,43 @@
                             {% endif %}
                         </h4>
                         {% if r.standings %}
-                        <div class="table col-xs-12">
-                            <div class="head-stand">
-                                {% for h in header %}
-                                <div class="col-xs-{% cycle '1' '5' '3' '3' %}">{{ h }}</div>
+                        <div class="col-sm-offset-1 col-lg-10">
+                            <div class="panel panel-default table-responsive">
+                                <table class="standings table table-hover table-striped table-condensed">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Coder</th>
+                                        <th>Score</th>
+                                        <th>Solving</th>
+                                        {% for k, _, h in r.fields %}
+                                        <th><div data-toggle="tooltip" data-placement="top" title="{{ h }}">{{ k }}</div></th>
+                                        {% endfor %}
+                                    </tr>
+                                {% for s in r.standings %}
+                                    <tr>
+                                        <td>{{ s.place }}</td>
+                                        <td>
+                                            <div title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.username }}{% endif %}">
+                                                <a href="{% url 'coder:profile' s.coder.username %}{% if forloop.parentloop.counter0 %}?search=contest:{{ r.contest.id }}{% endif %}">
+                                                {% if s.coder.user.first_name and s.coder.user.last_name %}
+                                                    {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
+                                                {% else %}
+                                                    {{ s.coder.username }}
+                                                {% endif %}
+                                                </a>
+                                            <div>
+                                        </td>
+                                        <td>
+                                            <div data-toggle="tooltip" data-placement="top" title="{{ s.interpretation|join:' + ' }}">{{ s.score|floatformat:2 }}</div>
+                                        </td>
+                                        <td>{{ s.stat.solving|floatformat }} ({{ s.stat.upsolving|floatformat }})</td>
+                                        {% for _, v, _ in r.fields %}
+                                        <td>{{ s|get_item:v }}</td>
+                                        {% endfor %}
+                                    </tr>
                                 {% endfor %}
+                                </table>
                             </div>
-                        {% for s in r.standings %}
-                            <div class="row-stand">
-                                <div class="col-xs-1">{{ s.place }}</div>
-                                <div class="col-xs-5" title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.username }}{% endif %}">
-                                    <a href="{% url 'coder:profile' s.coder.username %}{% if forloop.parentloop.counter0 %}?search=contest:{{ r.contest.id }}{% endif %}">
-                                    {% if s.coder.user.first_name and s.coder.user.last_name %}
-                                        {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
-                                    {% else %}
-                                        {{ s.coder.username }}
-                                    {% endif %}
-                                    </a>
-                                </div>
-                                <div class="col-xs-3" data-toggle="tooltip" data-placement="top" title="{{ s.interpretation|join:' + ' }}">{{ s.score|floatformat:2 }}</div>
-                                <div class="col-xs-3">{{ s.stat.solving|floatformat }} ({{ s.stat.upsolving|floatformat }})</div>
-                            </div>
-                        {% endfor %}
                         </div>
                         {% endif %}
                     </div>

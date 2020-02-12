@@ -14,4 +14,7 @@ sudo ./requirements/packages.sh
 cp pyclist/conf.py.template pylcist/conf.py
 ```
 * Enter all information in `pyclist/conf.py`
-* Now run configure script by `sudo ./requirements/configure.sh`
+* Run `sudo ./requirements/configure.sh` to configure postgresql database
+* Run `env DOMAIN=${DOMAIN} PORT=${PORT} ./requirements/etc/generate.sh` to generate nginx and uwsgi configs (example `env DOMAIN=clist.by PORT=80 ./requirements/etc/generate.sh`)
+* Configure nginx by config file `requirements/etc/nginx/sites-enabled/clist`
+* Configure uwsgin by config file `requirements/etc/uwsgi/apps-enabled/clist.ini`
