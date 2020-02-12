@@ -18,3 +18,6 @@ cp pyclist/conf.py.template pyclist/conf.py
 * Run `env DOMAIN=${DOMAIN} PORT=${PORT} ./requirements/etc/generate.sh` to generate nginx and uwsgi configs (example `env DOMAIN=clist.by PORT=80 ./requirements/etc/generate.sh`)
 * Configure nginx by config file `requirements/etc/nginx/sites-enabled/clist`
 * Configure uwsgin by config file `requirements/etc/uwsgi/apps-enabled/clist.ini`
+* Run `./manage migrate` to migrate database
+* Run `./manage createsuperuser` to create admin user
+* Go to `${DOMAIN}/admin/true_coders/coder/` and create `Coder` for admin user
