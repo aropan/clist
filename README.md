@@ -7,7 +7,6 @@ Contributing
 sudo ./requirements/packages.sh
 python3 -m venv environment
 source environment/bin/activate
-pip3 install wheel
 pip3 install -r requirements/requirements.txt
 ```
 * Copy config from template:
