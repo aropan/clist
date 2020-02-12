@@ -25,3 +25,4 @@ apt install -y memcached
 update-rc.d memcached enable
 
 yes | pip3 install virtualenv
+yes | pip3 install wheel
