@@ -5,6 +5,9 @@ DAY = 24 * HOUR;
 
 function getFormatTime(timer)
 {
+    if (typeof(time_update) == "undefined") {
+        time_update = DAY;
+    }
     var h = parseInt(timer / 3600);
     var m = parseInt(timer % 3600 / 60);
     var s = parseInt(timer % 60);
@@ -25,7 +28,6 @@ function getFormatTime(timer)
 function countdown()
 {
     var need_reload = false;
-    time_update = DAY;
     var now = $.now();
 
     $(".countdown").each(function () {
