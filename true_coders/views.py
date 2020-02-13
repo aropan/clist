@@ -420,7 +420,7 @@ def party_action(request, secret_key, action):
     return HttpResponseRedirect(reverse('coder:party', args=[party.slug]))
 
 
-def party(request, slug):
+def party(request, slug, tab='ranking'):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
 
     has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
@@ -542,6 +542,7 @@ def party(request, slug):
             'party_contests': party_contests,
             'results': results,
             'coders': coders,
+            'tab': 'ranking' if tab is None else tab,
         },
     )
 

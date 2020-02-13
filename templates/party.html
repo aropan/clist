@@ -16,12 +16,12 @@
 <h3 id="party-name" data-slug="{{ party.slug }}"><a href="{% url 'coder:parties' %}"><i class="fas fa-chevron-left"></i></a> {{ party.name }}</h3>
 
 <ul class="nav nav-tabs">
-    <li><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
-    <li class="active"><a href="#ranking-tab" data-toggle="tab">Ranking</a></li>
-    <li><a href="#calendar-tab" data-toggle="tab">Calendar</a></li>
+    <li{% if tab == "information" %} class="active"{% endif %}><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
+    <li{% if tab == "ranking" %} class="active"{% endif %}><a href="#ranking-tab" data-toggle="tab">Ranking</a></li>
+    <li{% if tab == "calendar" %} class="active"{% endif %}><a href="#calendar-tab" data-toggle="tab">Calendar</a></li>
 </ul>
 <div class="tab-content">
-    <div id="information-tab" class="tab-pane">
+    <div id="information-tab" class="tab-pane{% if tab == "information" %} active{% endif %}">
         <h4>Coders
         <span class="badge progress-bar-default">{{ party.coders.all.count }}</span>
         </h4>
@@ -51,7 +51,7 @@
         {% endif %}
         </small>
     </div>
-    <div id="ranking-tab" class="tab-pane active">
+    <div id="ranking-tab" class="tab-pane{% if tab == "ranking" %} active{% endif %}">
         {% if user and user.is_authenticated %}{% if not user.first_name or not user.last_name %}
         <div class="alert alert-warning text-center">
             Fill in your first last and last name in <a href="{% url 'coder:settings' %}#social-tab">social settings</a>.
@@ -148,7 +148,7 @@
         {% endif %}
     </div>
     <script>$('a[href="#calendar-tab"]').mouseup(function() { setTimeout(function() { $(window).resize() }, 0) } )</script>
-    <div id="calendar-tab" class="tab-pane">
+    <div id="calendar-tab" class="tab-pane{% if tab == "calendar" %} active{% endif %}">
       <div id="calendar"></div>
       <div id="loading">loading...</div>
       {% for x in fixed_ignore_filters %}

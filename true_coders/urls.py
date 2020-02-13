@@ -12,6 +12,6 @@ urlpatterns = [
     url(r'^api/key/$', views.get_api_key, name='api-key'),
     url(r'^party/([^/]*)/(join|leave)/$', views.party_action, name='party-action'),
     url(r'^party/([^/]*)/contests/$', views.party_contests, name='party-contests'),
-    url(r'^party/([^/]*)/$', views.party, name='party'),
+    url(r'^party/([^/]*)/(?:(calendar|ranking|information)/)?$', views.party, name='party'),
     url(r'^parties/$', views.parties, name='parties'),
 ]
