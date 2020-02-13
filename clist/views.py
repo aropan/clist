@@ -4,7 +4,7 @@ import arrow
 import pytz
 from django.conf import settings
 from django.db.models import F, Q, Count, OuterRef, Subquery, IntegerField, Exists
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
@@ -205,7 +205,9 @@ def main(request, party=None):
             filt, created = Filter.objects.get_or_create(coder=coder, contest=contest, to_show=False)
             if not created:
                 filt.delete()
-        return HttpResponse("accepted")
+                return HttpResponse("deleted")
+            return HttpResponse("created")
+        return HttpResponseBadRequest("fail")
 
     tzname = get_timezone(request)
     if tzname is None:
@@ -229,7 +231,8 @@ def main(request, party=None):
     if isinstance(party, Party):
         context["party"] = {
             "id": party.id,
-            "owner": party.author,
+            "toggle_contest": 1,
+            "has_permission_toggle": int(party.has_permission_toggle_contests(coder)),
             "contest_ids": party.rating_set.values_list('contest__id', flat=True),
         }
 

@@ -124,6 +124,9 @@ class Party(BaseModel):
     def __str__(self):
         return self.name
 
+    def has_permission_toggle_contests(self, coder):
+        return self.author == coder
+
     class Meta:
         verbose_name_plural = 'Parties'
 

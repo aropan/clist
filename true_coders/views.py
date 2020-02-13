@@ -557,11 +557,17 @@ def party_contests(request, slug):
 
     action = request.GET.get("action")
     if action is not None:
-        if action == "party-contest-toggle" and request.user.is_authenticated:
+        if (
+            action == "party-contest-toggle"
+            and request.user.is_authenticated
+            and party.has_permission_toggle_contests(request.user.coder)
+        ):
             contest = get_object_or_404(Contest, pk=request.GET.get("pk"))
             rating, created = Rating.objects.get_or_create(contest=contest, party=party)
             if not created:
                 rating.delete()
-            return HttpResponse("ok")
+                return HttpResponse("deleted")
+            return HttpResponse("created")
+        return HttpResponseBadRequest("fail")
 
     return main(request, party=party)

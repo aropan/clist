@@ -9,16 +9,50 @@ function toggle_hide_contest(e) {
             action: "hide-contest-toggle",
         },
         success: function(data) {
-            icons = $('.hide-contest[data-contest-id="' + icon.attr("data-contest-id") + '"]');
-            if (icon.hasClass("fa-eye")) {
-                icons.parent().find('.contest_title>a').css({textDecoration: 'line-through'});
-                icons.parent().find('.fc-title').css({textDecoration: 'line-through'});
-            } else {
-                icons.parent().find('.contest_title>a').css({textDecoration: 'none'});
-                icons.parent().find('.fc-title').css({textDecoration: 'none'});
+            if (data != "created" && data != "deleted") {
+                return;
             }
-            icons.toggleClass("fa-eye");
-            icons.toggleClass("fa-eye-slash");
+            icons = $('.hide-contest[data-contest-id="' + icon.attr("data-contest-id") + '"]');
+            if (icon.hasClass("fa-eye") ^ (data == "deleted")) {
+                if (icon.hasClass("fa-eye")) {
+                    icons.parent().find('.contest_title>a').css({textDecoration: 'line-through'});
+                    icons.parent().find('.fc-title').css({textDecoration: 'line-through'});
+                } else {
+                    icons.parent().find('.contest_title>a').css({textDecoration: 'none'});
+                    icons.parent().find('.fc-title').css({textDecoration: 'none'});
+                }
+                icons.toggleClass("fa-eye");
+                icons.toggleClass("fa-eye-slash");
+            }
+        },
+    })
+}
+
+function toggle_party_contest(e) {
+    e.preventDefault();
+    var icon = $(this);
+    $.ajax({
+        type: 'GET',
+        url: document.URL,
+        data: {
+            pk: icon.attr("data-contest-id"),
+            action: "party-contest-toggle",
+        },
+        success: function(data) {
+            if (data != "created" && data != "deleted") {
+                return;
+            }
+            var id = parseInt(icon.attr("data-contest-id"));
+            if (party_contests_set.has(id) ^ (data == "created")) {
+                if (party_contests_set.has(id)) {
+                    party_contests_set.delete(id)
+                } else {
+                    party_contests_set.add(id)
+                }
+
+                $(".party-check[data-contest-id='" + id + "']").toggleClass("fa-check-square");
+                $(".party-check[data-contest-id='" + id + "']").toggleClass("fa-square");
+            }
         },
     })
 }
@@ -42,22 +76,6 @@ $(function() {
         e.preventDefault();
     })
 
-    $(".party-check[data-contest-id]").click(function (e) {
-        var icon = $(this);
-        $.ajax({
-            type: 'GET',
-            url: document.URL,
-            data: {
-                pk: icon.attr("data-contest-id"),
-                action: "party-contest-toggle",
-            },
-            success: function(data) {
-                icon.toggleClass("fa-check-square");
-                icon.toggleClass("fa-square");
-            },
-        })
-    })
-
-
+    $(".party-check.has-permission-toggle-party-contest[data-contest-id]").click(toggle_party_contest)
     $(".hide-contest[data-contest-id]").click(toggle_hide_contest)
 });
