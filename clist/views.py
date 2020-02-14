@@ -148,9 +148,10 @@ def get_events(request):
         party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
         query = Q(rating__party=party) & query
 
+    contests = Contest.objects if party_slug else Contest.visible
     try:
         result = []
-        for contest in Contest.visible.filter(query):
+        for contest in contests.filter(query):
             c = {
                 'id': contest.pk,
                 'title': contest.title,
