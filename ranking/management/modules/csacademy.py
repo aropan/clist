@@ -1,18 +1,19 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import re
-from pprint import pprint
+import json
+import itertools
 from collections import OrderedDict
-from datetime import datetime
+from pprint import pprint
 
-from ranking.management.modules.common import BaseModule, requester
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
-    CONTEST_STATE_ = '{0.url}'
-    STANDING_URL_ = '{0.url}scoreboard/'
-    SCOREBOARD_STATE_URL_ = 'https://csacademy.com/contest/scoreboard_state/?contestId={0.cid}'
+    API_RANKING_URL_FORMAT_ = 'https://csacademy.com/contest/scoreboard_state/?contestId={key}'
+    API_STANDINGS_URL_FORMAT_ = '{url}scoreboard/'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -23,96 +24,120 @@ class Statistic(BaseModule):
 
         self.cid = int(self.key)
 
-        req = requester(headers=[('X-Requested-With', 'XMLHttpRequest')])
-        req.caching = None
-        req.time_out = 17
+        standings_url = self.API_STANDINGS_URL_FORMAT_.format(**self.__dict__)
 
-        url = self.CONTEST_STATE_.format(self)
-        state = json.loads(req.get(url))['state']
-        tasks = {}
-        problems_info = OrderedDict()
-        for task in state['contesttask']:
-            if task.get('contestId') != self.cid:
-                continue
-            tasks[task['id']] = task
+        headers = {'x-requested-with': 'XMLHttpRequest'}
+        page = REQ.get(standings_url, headers=headers)
+        data = json.loads(page)
 
-            d = {'short': task['name'], 'name': task['longName']}
-            if 'pointsWorth' in task:
-                d['full_score'] = task['pointsWorth']
-            problems_info[task['id']] = d
+        if 'error' in data:
+            if data['error'].get('message') in ['Object not found', 'Invalid rights, not allowed']:
+                return {'action': 'delete'}
+            raise ExceptionParseStandings(page)
 
-        url = self.SCOREBOARD_STATE_URL_.format(self)
-        state = json.loads(req.get(url))['state']
-        handles = {}
-        for user in state['publicuser']:
-            handles[user['id']] = user
+        for contest in data['state']['Contest']:
+            if contest['id'] == self.cid:
+                break
+        else:
+            raise ExceptionParseStandings(f'Not found contest with id = {self.key}')
+
+        tasks = {
+            t['id']: {
+                'code': str(t['id']),
+                'name': str(t['longName']),
+                'full_score': t['pointsWorth'],
+            }
+            for t in data['state']['contesttask']
+        }
+        problems_info = OrderedDict([(str(tid), tasks[tid]) for tid in contest['taskIds']])
+
+        url = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
+        page = REQ.get(url, headers=headers)
+        data = json.loads(page)
+
+        users_by_id = {user['id']: user for user in data['state']['publicuser'] if user.get('username')}
+
+        page = REQ.get(self.url, headers={'x-requested-with': ''})
+        match = re.search('src="(?P<url>[^"]*PublicState[^"]*)"', page)
+        page = REQ.get(match.group('url'))
+        match = re.search(r'"country":\s*(?P<data>\[[^\]]*\])', page)
+        countries = json.loads(match.group('data'))
+        countries = {c['id']: c for c in countries}
 
         result = {}
-        n_total = 0
-        rows = state['contestuser']
-        start_time = datetime.timestamp(self.start_time)
-        for row in rows:
-            if row['contestId'] != self.cid or 'rank' not in row:
+        for r in data['state']['contestuser']:
+            user = users_by_id.get(r.pop('userId'))
+            if not r.pop('numSubmissions') or r.pop('contestId') != self.cid or not user:
                 continue
-            u = handles[row['userId']]
-            handle = u['username']
-            if not handle or users and handle not in users:
+            handle = user['username']
+            if users and handle not in users:
                 continue
-            n_total += 1
-            r = result.setdefault(handle, OrderedDict())
-            r['member'] = handle
-            r['place'] = row.pop('rank')
-            r['penalty'] = round(row.pop('penalty'))
-            r['solving'] = row.pop('totalScore')
-            problems = r.setdefault('problems', {})
+
+            row = result.setdefault(handle, {})
+
+            row['name'] = user['name']
+            if user.get('rating'):
+                row['rating'] = user['rating']
+            if user.get('countryId'):
+                row['country'] = countries[user['countryId']]['isoCode']
+                row['country_name'] = countries[user['countryId']]['name']
+
+            row['member'] = handle
+            if r.get('penalty'):
+                row['penalty'] = int(round(r.pop('penalty'), 0))
             solving = 0
-            for k, v in row.pop('scores').items():
-                k = int(k)
-                if k not in tasks:
-                    continue
-                task = tasks[k]
-                p = problems.setdefault(task['name'], {})
-                p['result'] = v['score']
-                if v['score'] > 0:
-                    solving += 1
 
-                n = v.get('numSubmissions')
-                if task.get('scoreTypeName', '').lower() == 'acm-style' and n:
-                    if v['score'] > 0:
-                        p['result'] = f'+{"" if n == 1 else n - 1}'
-                    else:
-                        p['result'] = f'-{n}'
-                if 'scoreTime' in v:
-                    time = int((v['scoreTime'] - start_time) / 60)
-                    p['time'] = f'{time // 60:02}:{time % 60:02}'
+            solved = 0
+            problems = row.setdefault('problems', {})
+            for k, prob in r.pop('scores').items():
+                k = str(k)
+                p = problems.setdefault(k, {})
 
-            r['solved'] = {'solving': solving}
+                n = prob['numSubmissions']
+                if contest['scoreType'] == 1 and prob['score']:
+                    p['result'] = prob['score'] * problems_info[k]['full_score']
+                    p['n_submissions'] = n
+                    p['partial'] = prob['score'] < 1
+                    solving += p['result']
+                    solved += 1
+                elif prob['score']:
+                    p['result'] = f'+{"" if n == 1 else n - 1}'
+                    solving += problems_info[k]['full_score']
+                    solved += 1
+                else:
+                    p['result'] = f'-{n}'
 
-            for f in ('userId', 'timeRegistered', 'numSubmissions', 'contestId', 'id'):
-                row.pop(f, None)
-            for f in ('oldRating', 'rating'):
-                if f in row:
-                    r[re.sub('[A-Z]', lambda m: '_' + m.group(0).lower(), f)] = round(row.pop(f))
-            if 'old_rating' in r and 'rating' in r:
-                r['delta'] = r['rating'] - r['old_rating']
+                if 'scoreTime' in prob:
+                    p['time'] = self.to_time(prob['scoreTime'] - contest['startTime'])
 
-            for k, v in row.items():
-                if k not in r:
-                    r[k] = v
+            row['solving'] = solving
+            row['solved'] = {'solving': solved}
+
+        ranks = [((-r['solving'], r.get('penalty')), r['member']) for r in result.values()]
+        prev = None
+        rank = None
+        for index, (s, k) in enumerate(sorted(ranks), start=1):
+            if not prev or prev != s:
+                rank = index
+                prev = s
+            result[k]['place'] = rank
 
         standings = {
             'result': result,
-            'url': self.STANDING_URL_.format(self),
+            'url': standings_url,
             'problems': list(problems_info.values()),
         }
         return standings
 
 
-if __name__ == '__main__':
-    statistic = Statistic(
-        url='https://csacademy.com/contest/round-67/',
-        key='33089',
-        start_time=datetime.strptime('31.01.2018 18:35', '%d.%m.%Y %H:%M'),
+if __name__ == "__main__":
+    statictic = Statistic(
+        name='42',
+        url='https://csacademy.com/contest/fii-code-2020-round-1/',
+        key='61564',
     )
-    pprint(statistic.get_result('Aeon'))
-    # pprint(statistic.get_standings()['problems'])
+
+    standings = statictic.get_standings()
+    result = standings.pop('result')
+    pprint(list(itertools.islice(result.items(), 0, 10)))
+    pprint(standings)
