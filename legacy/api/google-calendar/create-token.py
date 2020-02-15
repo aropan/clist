@@ -11,9 +11,12 @@ def main():
     storage = Storage(path.join(DIR_NAME, "credentials"))
     credentials = storage.get()
 
+    with open(path.join(path.dirname(__file__), 'client_secret'), 'r') as fo:
+        client_secret = fo.read().strip()
+
     flow = OAuth2WebServerFlow(
         client_id="47861026466-bv5lem6hchsi8ovk8nul45sr7b8d9i7n.apps.googleusercontent.com",
-        client_secret="NQbOWUOuIL7nMBUKY3_Rk-z1",
+        client_secret=client_secret,
         scope="https://www.googleapis.com/auth/calendar",
         redirect_uri="https://legacy.clist.by/api/google-calendar/exchange-code.php",
         access_type="offline",
