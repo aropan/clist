@@ -272,14 +272,13 @@ def change(request):
         try:
             resource_id = int(request.POST.get("resource"))
             resource = Resource.objects.get(pk=resource_id)
-            account, created = Account.objects.get_or_create(resource=resource, key=value)
-            if not created:
-                if account.coders.filter(pk=coder.id).first():
-                    raise Exception('Account is already connect to this coder')
-                if account.coders.count():
-                    module = Module.objects.filter(resource=resource).first()
-                    if not module or not module.multi_account_allowed:
-                        raise Exception('Account is already connect')
+            account = Account.objects.get(resource=resource, key=value)
+            if account.coders.filter(pk=coder.id).first():
+                raise Exception('Account is already connect to this coder')
+            if account.coders.count():
+                module = Module.objects.filter(resource=resource).first()
+                if not module or not module.multi_account_allowed:
+                    raise Exception('Account is already connect')
             account.coders.add(coder)
             account.save()
             return HttpResponse(json.dumps(account.dict()), content_type="application/json")
