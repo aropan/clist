@@ -57,6 +57,7 @@
             $HOST = $resource['host'];
             $RID = $resource['id'];
             $TIMEZONE = $resource['timezone'];
+            $INFO = json_decode($resource['info'], true);
 
             include $resource['path'];
 
@@ -66,6 +67,7 @@
             unset($RID);
             unset($LANG);
             unset($TIMEZONE);
+            unset($INFO);
         }
         if ($resource['regexp'])
         {

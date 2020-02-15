@@ -13,15 +13,15 @@
 
 {% block content %}
 
-<h3 id="party-name" data-slug="{{ party.slug }}">{{ party.name }}</h3>
+<h3 id="party-name" data-slug="{{ party.slug }}"><a href="{% url 'coder:parties' %}"><i class="fas fa-chevron-left"></i></a> {{ party.name }}</h3>
 
 <ul class="nav nav-tabs">
-    <li><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
-    <li class="active"><a href="#ranking-tab" data-toggle="tab">Ranking</a></li>
-    <li><a href="#calendar-tab" data-toggle="tab">Calendar</a></li>
+    <li{% if tab == "information" %} class="active"{% endif %}><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
+    <li{% if tab == "ranking" %} class="active"{% endif %}><a href="#ranking-tab" data-toggle="tab">Ranking</a></li>
+    <li{% if tab == "calendar" %} class="active"{% endif %}><a href="#calendar-tab" data-toggle="tab">Calendar</a></li>
 </ul>
 <div class="tab-content">
-    <div id="information-tab" class="tab-pane">
+    <div id="information-tab" class="tab-pane{% if tab == "information" %} active{% endif %}">
         <h4>Coders
         <span class="badge progress-bar-default">{{ party.coders.all.count }}</span>
         </h4>
@@ -33,7 +33,7 @@
             {% endfor %}
         </div>
 
-        <h4><a href="/?party={{ party.slug }}&view=list">Contests</a>
+        <h4><a href="{% url 'coder:party-contests' party.slug %}">Contests</a>
         <span class="badge progress-bar-default">{{ party.rating_set.all.count }}</span>
         </h4>
         <div class="contests">
@@ -51,7 +51,7 @@
         {% endif %}
         </small>
     </div>
-    <div id="ranking-tab" class="tab-pane active">
+    <div id="ranking-tab" class="tab-pane{% if tab == "ranking" %} active{% endif %}">
         {% if user and user.is_authenticated %}{% if not user.first_name or not user.last_name %}
         <div class="alert alert-warning text-center">
             Fill in your first last and last name in <a href="{% url 'coder:settings' %}#social-tab">social settings</a>.
@@ -88,7 +88,7 @@
             {% for r in results %}
                 {% if r.standings %}
                 <div id="{% if forloop.first %}total{% else %}{{ r.contest.id }}{% endif %}" class="tab-pane{% if forloop.first %} active{% endif %}">
-                    <div class="standings col-lg-offset-2 col-lg-8">
+                    <div class="standings">
                         <h4 class="name-stand">
                             {% if forloop.first %}
                                 Total ranking
@@ -98,28 +98,43 @@
                             {% endif %}
                         </h4>
                         {% if r.standings %}
-                        <div class="table col-xs-12">
-                            <div class="head-stand">
-                                {% for h in header %}
-                                <div class="col-xs-{% cycle '1' '5' '3' '3' %}">{{ h }}</div>
+                        <div class="col-sm-offset-1 col-lg-10">
+                            <div class="panel panel-default table-responsive">
+                                <table class="standings table table-hover table-striped table-condensed">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Coder</th>
+                                        <th>Score</th>
+                                        <th>Solving</th>
+                                        {% for k, _, h in r.fields %}
+                                        <th><div data-toggle="tooltip" data-placement="top" title="{{ h }}">{{ k }}</div></th>
+                                        {% endfor %}
+                                    </tr>
+                                {% for s in r.standings %}
+                                    <tr>
+                                        <td>{{ s.place }}</td>
+                                        <td>
+                                            <div title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.username }}{% endif %}">
+                                                <a href="{% url 'coder:profile' s.coder.username %}{% if forloop.parentloop.counter0 %}?search=contest:{{ r.contest.id }}{% endif %}">
+                                                {% if s.coder.user.first_name and s.coder.user.last_name %}
+                                                    {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
+                                                {% else %}
+                                                    {{ s.coder.username }}
+                                                {% endif %}
+                                                </a>
+                                            <div>
+                                        </td>
+                                        <td>
+                                            <div data-toggle="tooltip" data-placement="top" title="{{ s.interpretation|join:' + ' }}">{{ s.score|floatformat:2 }}</div>
+                                        </td>
+                                        <td>{{ s.stat.solving|floatformat }} ({{ s.stat.upsolving|floatformat }})</td>
+                                        {% for _, v, _ in r.fields %}
+                                        <td>{{ s|get_item:v }}</td>
+                                        {% endfor %}
+                                    </tr>
                                 {% endfor %}
+                                </table>
                             </div>
-                        {% for s in r.standings %}
-                            <div class="row-stand">
-                                <div class="col-xs-1">{{ s.place }}</div>
-                                <div class="col-xs-5" title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.username }}{% endif %}">
-                                    <a href="{% url 'coder:profile' s.coder.username %}{% if forloop.parentloop.counter0 %}?search=contest:{{ r.contest.id }}{% endif %}">
-                                    {% if s.coder.user.first_name and s.coder.user.last_name %}
-                                        {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
-                                    {% else %}
-                                        {{ s.coder.username }}
-                                    {% endif %}
-                                    </a>
-                                </div>
-                                <div class="col-xs-3" data-toggle="tooltip" data-placement="top" title="{{ s.interpretation|join:' + ' }}">{{ s.score|floatformat:2 }}</div>
-                                <div class="col-xs-3">{{ s.stat.solving|floatformat }} ({{ s.stat.upsolving|floatformat }})</div>
-                            </div>
-                        {% endfor %}
                         </div>
                         {% endif %}
                     </div>
@@ -133,7 +148,7 @@
         {% endif %}
     </div>
     <script>$('a[href="#calendar-tab"]').mouseup(function() { setTimeout(function() { $(window).resize() }, 0) } )</script>
-    <div id="calendar-tab" class="tab-pane">
+    <div id="calendar-tab" class="tab-pane{% if tab == "calendar" %} active{% endif %}">
       <div id="calendar"></div>
       <div id="loading">loading...</div>
       {% for x in fixed_ignore_filters %}

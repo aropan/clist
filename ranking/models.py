@@ -49,6 +49,18 @@ class Rating(BaseModel):
     def __str__(self):
         return 'rating %s by %s' % (str(self.party.name), str(self.contest.title))
 
+    class Meta:
+        unique_together = ('contest', 'party')
+
+
+class AutoRating(BaseModel):
+    party = models.ForeignKey(Party, on_delete=models.CASCADE)
+    info = JSONField(default=dict, blank=True)
+    deadline = models.DateTimeField()
+
+    def __str__(self):
+        return 'auto rating [%d] with party [%d]' % (self.pk, self.party_id)
+
 
 class Statistics(BaseModel):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)

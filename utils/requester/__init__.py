@@ -218,7 +218,7 @@ class requester():
                 'https': proxy,
             }))
 
-        self.opener.addheaders = self.headers
+        self._init_opener_headers = self.headers
 
     def get(
         self,
@@ -283,6 +283,8 @@ class requester():
                 headers = {}
             if self.ref_url and 'Referer' not in headers:
                 headers.update({"Referer": self.ref_url})
+            if not self.last_url or urllib.parse.urlparse(self.last_url).netloc != urllib.parse.urlparse(url).netloc:
+                self.opener.addheaders = self._init_opener_headers
             if headers:
                 h = dict(self.opener.addheaders)
                 h.update(headers)

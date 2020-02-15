@@ -4,7 +4,7 @@ import arrow
 import pytz
 from django.conf import settings
 from django.db.models import F, Q, Count, OuterRef, Subquery, IntegerField, Exists
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
@@ -148,9 +148,10 @@ def get_events(request):
         party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
         query = Q(rating__party=party) & query
 
+    contests = Contest.objects if party_slug else Contest.visible
     try:
         result = []
-        for contest in Contest.visible.filter(query):
+        for contest in contests.filter(query):
             c = {
                 'id': contest.pk,
                 'title': contest.title,
@@ -167,7 +168,7 @@ def get_events(request):
     return JsonResponse(result, safe=False)
 
 
-def main(request):
+def main(request, party=None):
     viewmode = settings.VIEWMODE_
     open_new_tab = settings.OPEN_NEW_TAB_
     add_to_calendar = settings.ADD_TO_CALENDAR_
@@ -205,7 +206,9 @@ def main(request):
             filt, created = Filter.objects.get_or_create(coder=coder, contest=contest, to_show=False)
             if not created:
                 filt.delete()
-        return HttpResponse("accepted")
+                return HttpResponse("deleted")
+            return HttpResponse("created")
+        return HttpResponseBadRequest("fail")
 
     tzname = get_timezone(request)
     if tzname is None:
@@ -226,12 +229,11 @@ def main(request):
         "contests": get_view_contests(request, coder),
     }
 
-    party_slug = request.GET.get("party")
-    if party_slug is not None:
-        party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
+    if isinstance(party, Party):
         context["party"] = {
             "id": party.id,
-            "owner": party.author,
+            "toggle_contest": 1,
+            "has_permission_toggle": int(party.has_permission_toggle_contests(coder)),
             "contest_ids": party.rating_set.values_list('contest__id', flat=True),
         }
 

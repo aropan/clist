@@ -4,6 +4,9 @@
   customButtonSelector = [{% for i in ignore_filters %}{% if i.id > 0 %}'.fc-cb{{ i.id }}-button',{% endif %}{% endfor %}].join(',')
   timezone = '{{ timezone }}'
   hide_contest = {{ hide_contest|default:0 }}
+  contest_toggle = {{ party.toggle_contest|default:0 }}
+  party_contests_set = new Set([{% for i in party.contest_ids %}{% if forloop.counter0 %},{% endif %}{{ i }}{% endfor %}])
+  has_permission_toggle_party_contests = {{ party.has_permission_toggle|default:0 }}
 </script>
 
 <script src="{% static_ts 'js/moment.min.js' %}"></script>

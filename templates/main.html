@@ -102,8 +102,8 @@
                 {% if hide_contest %}
                 <i class="hide-contest fa fa-eye" data-contest-id="{{ contest.id }}"></i>
                 {% endif %}
-                {% if party.id %}
-                <i class="party-check fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" {% if party.owner == user.coder %}data-contest-id="{{ contest.id}}"{% endif %}></i>
+                {% if party %}
+                <i class="party-check{% if party.has_permission_toggle %} has-permission-toggle-party-contest{% endif %} fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" data-contest-id="{{ contest.id }}"></i>
                 {% endif %}
                 <span class="contest_title">
                 {% if contest.sub_contest %}

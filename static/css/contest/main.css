@@ -70,6 +70,10 @@
     visibility: visible;
 }
 
+.party-check.has-permission-toggle-party-contest:hover {
+    cursor: pointer;
+}
+
 .addtocalendar a:hover {
     text-decoration: none;
 }

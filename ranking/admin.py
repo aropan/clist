@@ -3,7 +3,7 @@ from django.db.models import Count
 from django.utils.timezone import now
 
 from pyclist.admin import BaseModelAdmin, admin_register
-from ranking.models import Account, Rating, Statistics, Module, Stage
+from ranking.models import Account, Rating, AutoRating, Statistics, Module, Stage
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from clist.models import Contest
 
@@ -73,6 +73,13 @@ class RatingAdmin(BaseModelAdmin):
     parse_statistic.short_description = 'Parse statistic'
 
     actions = [parse_statistic]
+
+
+@admin_register(AutoRating)
+class AutoRatingAdmin(BaseModelAdmin):
+    list_display = ['party', 'deadline', 'info']
+    search_fields = ['party__name']
+    list_filter = ['party']
 
 
 @admin_register(Statistics)

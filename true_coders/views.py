@@ -16,7 +16,8 @@ from el_pagination.decorators import page_template
 
 from clist.models import Resource, Contest
 from clist.templatetags.extras import get_timezones, format_time
-from clist.views import get_timezone
+from clist.views import get_timezone, main
+from ranking.models import Rating
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
 from ranking.models import Statistics, Module, Account
@@ -271,14 +272,13 @@ def change(request):
         try:
             resource_id = int(request.POST.get("resource"))
             resource = Resource.objects.get(pk=resource_id)
-            account, created = Account.objects.get_or_create(resource=resource, key=value)
-            if not created:
-                if account.coders.filter(pk=coder.id).first():
-                    raise Exception('Account is already connect to this coder')
-                if account.coders.count():
-                    module = Module.objects.filter(resource=resource).first()
-                    if not module or not module.multi_account_allowed:
-                        raise Exception('Account is already connect')
+            account = Account.objects.get(resource=resource, key=value)
+            if account.coders.filter(pk=coder.id).first():
+                raise Exception('Account is already connect to this coder')
+            if account.coders.count():
+                module = Module.objects.filter(resource=resource).first()
+                if not module or not module.multi_account_allowed:
+                    raise Exception('Account is already connect')
             account.coders.add(coder)
             account.save()
             return HttpResponse(json.dumps(account.dict()), content_type="application/json")
@@ -419,7 +419,7 @@ def party_action(request, secret_key, action):
     return HttpResponseRedirect(reverse('coder:party', args=[party.slug]))
 
 
-def party(request, slug):
+def party(request, slug, tab='ranking'):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
 
     has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
@@ -500,6 +500,8 @@ def party(request, slug):
                 d = total.setdefault(coder.id, {})
                 d['score'] = s['score'] + d.get('score', 0)
                 d['coder'] = coder
+                d['num'] = d.setdefault('num', 0) + 1
+                d['avg'] = f"{(d['score'] / d['num']):.2f}"
 
                 d, s = d.setdefault('stat', {}), s['stat']
 
@@ -515,6 +517,7 @@ def party(request, slug):
     total = sorted(list(total.values()), key=lambda d: d['score'], reverse=True)
     results.insert(0, {
         'standings': total,
+        'fields': [('Num', 'num', 'Number contests'), ('Avg', 'avg', 'Average score')],
     })
 
     for result in results:
@@ -534,11 +537,11 @@ def party(request, slug):
             'fixed_ignore_filters': ignore_filters,
             'timezone': get_timezone(request),
             'future': future,
-            'header': ['#', 'Coder', 'Score', 'Solving'],
             'party': party,
             'party_contests': party_contests,
             'results': results,
             'coders': coders,
+            'tab': 'ranking' if tab is None else tab,
         },
     )
 
@@ -547,3 +550,24 @@ def parties(request):
     parties = Party.objects.for_user(request.user).order_by('-created')
     parties = parties.prefetch_related('coders', 'rating_set')
     return render(request, 'parties.html', {'parties': parties})
+
+
+def party_contests(request, slug):
+    party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
+
+    action = request.GET.get("action")
+    if action is not None:
+        if (
+            action == "party-contest-toggle"
+            and request.user.is_authenticated
+            and party.has_permission_toggle_contests(request.user.coder)
+        ):
+            contest = get_object_or_404(Contest, pk=request.GET.get("pk"))
+            rating, created = Rating.objects.get_or_create(contest=contest, party=party)
+            if not created:
+                rating.delete()
+                return HttpResponse("deleted")
+            return HttpResponse("created")
+        return HttpResponseBadRequest("fail")
+
+    return main(request, party=party)

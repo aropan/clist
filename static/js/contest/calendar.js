@@ -84,6 +84,14 @@ $(function() {
                     $(val).html(getFormatTime(countdown - ($.now() - page_load) / 1000))
                 })
             })
+            if (contest_toggle) {
+                var toggle_part_contest_link = $('<i class="party-check fa-fw far" data-contest-id="' + event.id + '">&nbsp;</i>');
+                toggle_part_contest_link.toggleClass(party_contests_set.has(parseInt(event.id))? 'fa-check-square' : 'fa-square')
+                if (has_permission_toggle_party_contests) {
+                    toggle_part_contest_link.click(toggle_party_contest);
+                }
+                toggle_part_contest_link.prependTo(element.querySelector('.fc-content'))
+            }
             if (hide_contest) {
                 var hide_contest_link=$('<i class="hide-contest fa fa-eye" data-contest-id="' + event.id + '">&nbsp;</i>');
                 hide_contest_link.click(toggle_hide_contest);

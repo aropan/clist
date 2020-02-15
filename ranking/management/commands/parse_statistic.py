@@ -378,8 +378,7 @@ class Command(BaseCommand):
                     if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
                         stage.update()
         progress_bar.close()
-
-        self.logger.info(f'Parse statistic: {count} of {total}')
+        self.logger.info(f'Parse statistic: {count} of {total}.')
         return count, total
 
     def handle(self, *args, **options):
