@@ -4,10 +4,13 @@ import arrow
 import pytz
 from django.conf import settings
 from django.db.models import F, Q, Count, OuterRef, Subquery, IntegerField, Exists
+from django.core.management.commands import dumpdata
+from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
+
 from urllib.parse import urlparse, parse_qs
 
 
@@ -280,3 +283,10 @@ def resource(request, host):
         ],
     }
     return render(request, 'resource.html', context)
+
+
+@permission_required('clist.resource.view_dump_data')
+def resources_dumpdata(request):
+    response = HttpResponse(content_type="application/json")
+    dumpdata.Command(stdout=response).run_from_argv(['manage.py', 'dumpdata', 'clist.resource', '--format', 'json'])
+    return response
