@@ -114,6 +114,7 @@ class Party(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True)
     secret_key = models.CharField(max_length=20, blank=True, null=True)
     author = models.ForeignKey(Coder, related_name='party_author_set', on_delete=models.CASCADE)
+    admins = models.ManyToManyField(Coder, blank=True, related_name='party_admin_set')
     is_hidden = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
@@ -125,7 +126,7 @@ class Party(BaseModel):
         return self.name
 
     def has_permission_toggle_contests(self, coder):
-        return self.author == coder
+        return self.author == coder or self.admins.filter(pk=coder.pk).exists()
 
     class Meta:
         verbose_name_plural = 'Parties'
