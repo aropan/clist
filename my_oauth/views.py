@@ -1,23 +1,29 @@
+
+import string
+import random
+import requests
+import json
+import re
+from io import StringIO
+from datetime import timedelta
+from urllib.parse import parse_qsl
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.contrib import auth
 from django.contrib import messages
 from django.contrib.auth.models import User
-from my_oauth.models import Service, Token
-from true_coders.models import Coder
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.conf import settings
-from urllib.parse import parse_qsl
+from django.contrib.auth.decorators import permission_required
+from django.core.management.commands import dumpdata
+from django.http import HttpResponse
 
-from datetime import timedelta
-import string
-import random
-import requests
-import json
-import re
+from my_oauth.models import Service, Token
+from true_coders.models import Coder
 
 
 def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
@@ -195,3 +201,19 @@ def logout(request):
     if request.user.is_authenticated:
         auth.logout(request)
     return redirect("/")
+
+
+@permission_required('my_oauth.view_services_dump_data')
+def services_dumpdata(request):
+    out = StringIO()
+    dumpdata.Command(stdout=out).run_from_argv([
+        'manage.py',
+        'dumpdata',
+        'my_oauth.service',
+        '--format', 'json'
+    ])
+    services = json.loads(out.getvalue())
+    for service in services:
+        service['fields']['secret'] = None
+        service['fields']['app_id'] = None
+    return HttpResponse(json.dumps(services), content_type="application/json")

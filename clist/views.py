@@ -285,8 +285,14 @@ def resource(request, host):
     return render(request, 'resource.html', context)
 
 
-@permission_required('clist.resource.view_dump_data')
+@permission_required('clist.view_resources_dump_data')
 def resources_dumpdata(request):
     response = HttpResponse(content_type="application/json")
-    dumpdata.Command(stdout=response).run_from_argv(['manage.py', 'dumpdata', 'clist.resource', '--format', 'json'])
+    dumpdata.Command(stdout=response).run_from_argv([
+        'manage.py',
+        'dumpdata',
+        'clist.resource',
+        'ranking.module',
+        '--format', 'json'
+    ])
     return response

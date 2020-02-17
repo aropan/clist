@@ -126,7 +126,7 @@ class Party(BaseModel):
         return self.name
 
     def has_permission_toggle_contests(self, coder):
-        return self.author == coder or self.admins.filter(pk=coder.pk).exists()
+        return bool(coder and (self.author == coder or self.admins.filter(pk=coder.pk).exists()))
 
     class Meta:
         verbose_name_plural = 'Parties'
