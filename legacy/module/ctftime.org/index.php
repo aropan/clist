@@ -10,7 +10,7 @@
 
     $authorization = get_calendar_authorization();
     if (!$authorization) {
-        die("no authorization");
+        return;
     }
     $calendar = "ctftime@gmail.com";
     $url = "https://www.googleapis.com/calendar/v3/calendars/" . urlencode($calendar) . "/events?timeMin=" . urlencode(date('c', time() - 3 * 24 * 60 * 60));

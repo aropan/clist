@@ -462,56 +462,64 @@ def party(request, slug, tab='ranking'):
         .prefetch_related('account__coders', 'account__coders__user')
 
     contests_standings = collections.OrderedDict(
-        (c, []) for c in contests.filter(end_time__lt=timezone.now()).order_by('-end_time')
+        (c, {}) for c in contests.filter(end_time__lt=timezone.now()).order_by('-end_time')
     )
     for statistic in statistics:
         contest = statistic.contest
-        contests_standings.setdefault(contest, [])
         for coder in statistic.account.coders.all():
             if coder in set_coders:
-                contests_standings[contest].append({
+                standings = contests_standings[contest].setdefault(statistic.addition.get('division', '__none__'), [])
+                standings.append({
                     'solving': statistic.solving,
                     'upsolving': statistic.upsolving,
                     'stat': statistic,
                     'coder': coder,
                 })
 
-    for contest, standings in contests_standings.items():
-        if standings:
+    for contest, divisions in contests_standings.items():
+        standings = []
+        fields = collections.OrderedDict()
+        if len(divisions) > 1 or '__none__' not in divisions:
+            fields['division'] = ('Div', 'division', 'Division')
+        for division, statistics in divisions.items():
+            if statistics:
+                max_solving = max([s['solving'] for s in statistics]) or 1
+                max_total = max([s['solving'] + s['upsolving'] for s in statistics]) or 1
 
-            max_solving = max([s['solving'] for s in standings]) or 1
-            max_total = max([s['solving'] + s['upsolving'] for s in standings]) or 1
+                for s in statistics:
+                    solving = s['solving']
+                    upsolving = s['upsolving']
+                    s['score'] = 4. * (solving + upsolving) / max_total + 1. * solving / max_solving
+                    s['interpretation'] = f'4 * ({solving} + {upsolving}) / {max_total} + {solving} / {max_solving}'
+                    s['division'] = s['stat'].addition.get('division', '').replace('_', ' ')
 
-            for s in standings:
-                solving = s['solving']
-                upsolving = s['upsolving']
-                s['score'] = 4. * (solving + upsolving) / max_total + 1. * solving / max_solving
-                s['interpretation'] = f'4 * ({solving} + {upsolving}) / {max_total} + {solving} / {max_solving}'
+                max_score = max([s['score'] for s in statistics]) or 1
+                for s in statistics:
+                    s['score'] = 100. * s['score'] / max_score
+                    s['interpretation'] = [f'100 * ({s["interpretation"]}) / {max_score}']
 
-            max_score = max([s['score'] for s in standings]) or 1
-            for s in standings:
-                s['score'] = 100. * s['score'] / max_score
-                s['interpretation'] = [f'100 * ({s["interpretation"]}) / {max_score}']
+                for s in statistics:
+                    coder = s['coder']
+                    d = total.setdefault(coder.id, {})
+                    d['score'] = s['score'] + d.get('score', 0)
+                    d['coder'] = coder
+                    d['num'] = d.setdefault('num', 0) + 1
+                    d['avg'] = f"{(d['score'] / d['num']):.2f}"
 
-            standings.sort(key=lambda s: s['score'], reverse=True)
+                    d, s = d.setdefault('stat', {}), s['stat']
 
-            for s in standings:
-                coder = s['coder']
-                d = total.setdefault(coder.id, {})
-                d['score'] = s['score'] + d.get('score', 0)
-                d['coder'] = coder
-                d['num'] = d.setdefault('num', 0) + 1
-                d['avg'] = f"{(d['score'] / d['num']):.2f}"
+                    solved = s.addition.get('solved', {})
+                    d['solving'] = solved.get('solving', s.solving) + d.get('solving', 0)
+                    d['upsolving'] = solved.get('upsolving', s.upsolving) + d.get('upsolving', 0)
 
-                d, s = d.setdefault('stat', {}), s['stat']
+                standings.extend(statistics)
 
-                solved = s.addition.get('solved', {})
-                d['solving'] = solved.get('solving', s.solving) + d.get('solving', 0)
-                d['upsolving'] = solved.get('upsolving', s.upsolving) + d.get('upsolving', 0)
+        standings.sort(key=lambda s: s['score'], reverse=True)
 
         results.append({
             'contest': contest,
             'standings': standings,
+            'fields': list(fields.values()),
         })
 
     total = sorted(list(total.values()), key=lambda d: d['score'], reverse=True)

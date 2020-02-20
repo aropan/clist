@@ -18,18 +18,19 @@
             <ul class="nav navbar-nav navbar-right">
                 <li>
                     {% if user.is_authenticated %}
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user.username }}&nbsp;<i class="fa fa-caret-down"></i></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user.username }}&nbsp;<i class="fa fa-caret-down"></i></a>
                     {% else %}
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-sign-in"></i>&nbsp;Login / Sign Up&nbsp;<i class="fa fa-caret-down"></i></a>
-                    {% endif %}
-                    <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
-                        {% if not user.is_authenticated %}
-                        <li><a href="{% url 'auth:query' "vk" %}"><i class="fab fa-vk"></i> vkontakte</a></li>
-                        <li><a href="{% url 'auth:query' "yandex" %}"><i class="fab fa-yahoo"></i> yandex</a></li>
-                        <li><a href="{% url 'auth:query' "google" %}"><i class="fab fa-google"></i> google</a></li>
-                        <li><a href="{% url 'auth:query' "facebook" %}"><i class="fab fa-facebook"></i> facebook</a></li>
-                        <li role="separator" class="divider"></li>
+                        {% url 'auth:login' as login_url %}
+
+                        {% if request.path != login_url %}
+                        <li><a href="{{ login_url }}"><i class="fa fa-sign-in-alt">&nbsp;</i>Login / Sign up</a></li>
                         {% endif %}
+
+                        <li>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>
+                    {% endif %}
+
+                    <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
                         <li><a{% if user.is_authenticated %} href="{% url 'coder:profile' user.username %}"{% endif %} class="authorized"><i class="fa fa-user"></i> Profile</a></li>
                         {% if user.is_staff %}
                         <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
@@ -51,6 +52,10 @@
                         <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
                         {% endif %}
                     </ul>
+
+                    {% if not user.is_authenticated %}
+                        </li>
+                    {% endif %}
                 </li>
             </ul>
         </div>
