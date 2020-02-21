@@ -86,8 +86,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     if order is None:
         order = ['place_as_int', '-solving']
 
+    options = contest.info.get('standings', {})
+
     # fixed fields
-    fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time')) + tuple(contest.info.get('fixed_fields', []))
+    fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time')) + tuple(options.get('fixed_fields', []))
 
     statistics = statistics \
         .select_related('account') \
@@ -140,7 +142,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             else:
                 break
 
-    options = contest.info.get('standings', {})
     per_page = options.get('per_page', 200)
     if per_page is None:
         per_page = 100500
@@ -192,7 +193,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     first = statistics.first()
     if first and all('time' not in k for k in contest_fields):
         penalty = first.addition.get('penalty')
-        if penalty and isinstance(penalty, int):
+        if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
             mod_penalty.update({'solving': first.solving, 'penalty': penalty})
 
     search = request.GET.get('search')
@@ -200,7 +201,9 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         if search.startswith('party:'):
             _, party_slug = search.split(':')
             party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
-            statistics = statistics.filter(account__coders__party__pk=party.pk)
+            statistics = statistics.filter(Q(account__coders__in=party.coders.all()) |
+                                           Q(account__coders__in=party.admins.all()) |
+                                           Q(account__coders=party.author))
         else:
             search_re = verify_regex(search)
             statistics = statistics.filter(Q(account__key__iregex=search_re) | Q(addition__name__iregex=search_re))

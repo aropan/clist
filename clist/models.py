@@ -20,12 +20,37 @@ class Resource(BaseModel):
     profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     uid = models.CharField(max_length=100, null=True, blank=True)
     info = JSONField(default=dict, blank=True)
+    ratings = JSONField(default=list, blank=True)
+
+    RATING_FIELDS = ('old_rating', 'OldRating', 'rating', 'Rating', 'new_rating')
 
     def __str__(self):
         return "%s" % (self.host)
 
     def href(self):
         return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=self.host)
+
+    def get_rating_color(self, value):
+        if not self.ratings or value is None:
+            return
+
+        if isinstance(value, (list, tuple)):
+            for v in value:
+                ret = self.get_rating_color(v)
+                if ret:
+                    return ret
+        elif isinstance(value, dict):
+            for field in self.RATING_FIELDS:
+                if field in value:
+                    ret = self.get_rating_color(value.get(field))
+                    if ret:
+                        return ret
+        else:
+            if isinstance(value, str):
+                value = int(value)
+            for rating in self.ratings:
+                if rating['low'] <= value <= rating['high']:
+                    return rating
 
 
 class VisibleContestManager(BaseManager):

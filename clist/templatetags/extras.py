@@ -254,3 +254,9 @@ def has_season(key, name):
 @register.filter
 def strptime(val, form):
     return datetime.strptime(val, form)
+
+
+@register.simple_tag
+def coder_color_class(resource, *values):
+    rating = resource.get_rating_color(values)
+    return f'coder-color coder-{rating["color"]}' if rating else ''

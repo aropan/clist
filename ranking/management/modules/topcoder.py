@@ -206,6 +206,10 @@ class Statistic(BaseModule):
                     row = result.setdefault(handle, OrderedDict())
                     row.update(d)
 
+                    if 'rating_change' in row:
+                        delta = row['rating_change']
+                        row['rating_change'] = f'{"+" if delta > 0 else ""}{delta}'
+
                     row['member'] = handle
                     row['place'] = row.pop('division_placed')
                     row['solving'] = row['point_total']
@@ -306,6 +310,9 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.standings_url,
             'problems': problems_info,
+            'options': {
+                'fixed_fields': [('hack', 'Challenges')],
+            },
         }
         return standings
 

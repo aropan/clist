@@ -164,6 +164,15 @@ class Statistic(BaseModule):
                         row.update(contest_info)
                     pbar.set_description(f'key={key} url={url}')
                     pbar.update()
+
+            has_penalty = False
+            for row in result.values():
+                p = row.get('penalty')
+                has_penalty = has_penalty or p and str(p) != "0"
+            if not has_penalty:
+                for row in result.values():
+                    row.pop('penalty', None)
+
             if pbar is not None:
                 pbar.close()
 

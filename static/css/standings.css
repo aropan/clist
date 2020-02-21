@@ -91,7 +91,6 @@ table.standings .handle-cell {
 
 .standings a.coder span {
   text-decoration: underline;
-  font-weight: bold;
 }
 
 .standings .handle-cell:hover .external-link {

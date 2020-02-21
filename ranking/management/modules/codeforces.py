@@ -2,13 +2,14 @@
 
 import re
 import json
+import requests
 from time import time, sleep
 from hashlib import sha512
 from pprint import pprint
 from urllib.parse import urlencode
 from string import ascii_lowercase
 from random import choice
-import requests
+from collections import OrderedDict
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -24,10 +25,11 @@ def _query(
     params,
     api_key=DEFAULT_API_KEY,
     prev_time_queries={},
-    api_url_format='http://codeforces.com/api/%s'
+    api_url_format='https://codeforces.com/api/%s'
 ):
     url = api_url_format % method
     key, secret = api_key
+    params = dict(params)
 
     params.update({
         'time': int(time()),
@@ -122,8 +124,10 @@ class Statistic(BaseModule):
                 party = row['party']
                 for member in party['members']:
                     handle = member['handle']
-                    r = result.setdefault(handle, {})
+                    r = result.setdefault(handle, OrderedDict())
                     r['member'] = handle
+                    if 'room' in party:
+                        r['room'] = str(party['room'])
 
                     upsolve = party['participantType'] != 'CONTESTANT'
                     if unofficial != upsolve:
@@ -177,6 +181,30 @@ class Statistic(BaseModule):
                             'unsuccessful': unhack,
                         }
 
+        try:
+            params.pop('showUnofficial')
+            data = _query(
+                method='contest.ratingChanges',
+                params=params,
+                api_key=self.api_key,
+            )
+            if data and data['status'] == 'OK':
+                for row in data['result']:
+                    if str(row.pop('contestId')) != self.key:
+                        continue
+                    handle = row.pop('handle')
+                    if handle not in result:
+                        continue
+                    r = result[handle]
+                    old_rating = row.pop('oldRating')
+                    new_rating = row.pop('newRating')
+                    delta = new_rating - old_rating
+                    r['old_rating'] = old_rating
+                    r['rating_change'] = f'{"+" if delta > 0 else ""}{delta}'
+                    r['new_rating'] = new_rating
+        except FailOnGetResponse:
+            pass
+
         def to_score(x):
             return (1 if x == '+' or float(x) > 0 else 0) if isinstance(x, str) else x
 
@@ -205,6 +233,9 @@ class Statistic(BaseModule):
             'result': result,
             'url': (self.url + '/standings').replace('contests', 'contest'),
             'problems': problems_info,
+            'options': {
+                'fixed_fields': [('hack', 'Hacks')],
+            },
         }
         return standings
 

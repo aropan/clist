@@ -4,7 +4,9 @@
 {% paginate per_page statistics %}
 
 {% for statistic in statistics %}
-<tr>
+{% with coders=statistic.account.coders.all %}
+<tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}>
+{% endwith %}
   <td
     {% if statistic.addition.medal %}
       class="{{ statistic.addition.medal }}-medal"
@@ -56,10 +58,11 @@
       {% endwith %}
     {% endif %}
 
+    <div class="{% coder_color_class contest.resource statistic.addition statistic.account.info %}" style="display: inline-block">
     {% with coders=statistic.account.coders.all %}
       {% if coders|length == 1 %}
         {% for c in coders %}
-      <a href="{% url 'coder:profile' c.username %}" class="coder">
+          <a href="{% url 'coder:profile' c.username %}" class="coder">
         {% endfor %}
       {% endif %}
 
@@ -72,11 +75,11 @@
       {% endif %}
 
       {% if coders|length == 1 %}
-      </a>
+        </a>
       {% endif %}
 
       {% if statistic.addition.url or contest.resource.profile_url %}
-      <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+        <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
       {% endif %}
 
       {% if coders|length > 1 %}
@@ -87,31 +90,37 @@
       </div>
       {% endif %}
     {% endwith %}
+    </div>
   </td>
   <td>
     <div{% if not with_detail %} style="display: inline;"{% endif %}>{{ statistic.solving|floatformat:'-2' }}</div>
-    {% if 'hack' in statistic.addition %}
-      <small>
-      {% if statistic.addition.hack.successful %}<div class="inline acc">+{{ statistic.addition.hack.successful }}</div>{% endif %}
-      {% if statistic.addition.hack.unsuccessful %}<div class="inline rej">-{{ statistic.addition.hack.unsuccessful }}</div>{% endif %}
-      </small>
-    {% endif %}
   </td>
   {% if mod_penalty %}
   <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=statistic.addition.penalty|default:0 %}</td>
   {% endif %}
+
   {% for field in fields.keys %}
-  <td>
-    {% if field in statistic.addition %}
-      {% with value=statistic.addition|get_item:field %}
-        {% if field in fields_to_select and value not in fields_to_select|get_item:field%}
-          <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">
+  {% with value=statistic.addition|get_item:field %}
+  <td{% if field in contest.resource.RATING_FIELDS %} class="{% coder_color_class contest.resource value %}"{% endif %}>
+    {% if field in statistic.addition and not value.empty %}
+      {% if field == 'hack' %}
+        <small>
+        {% if statistic.addition.hack.successful %}<div class="inline acc">+{{ statistic.addition.hack.successful }}</div>{% endif %}
+        {% if statistic.addition.hack.unsuccessful %}<div class="inline rej">-{{ statistic.addition.hack.unsuccessful }}</div>{% endif %}
+        </small>
+      {% else %}
+        {% if field in fields_to_select and value not in fields_to_select|get_item:field %}
+          <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
+        {% else %}
+          {{ value }}
         {% endif %}
-        {{ value }}
-        {% if field in fields_to_select and value not in fields_to_select|get_item:field%}</a>{% endif %}
-      {% endwith %}
+      {% endif %}
+    {% else %}
+      <small class='text-muted'>&#183;</small>
     {% endif %}
   </td>
+  {% endwith %}
+
   {% endfor %}
   {% for problem in problems %}
     {% with key=problem|get_problem_key  %}

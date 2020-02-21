@@ -213,7 +213,7 @@
         <th{% if merge_problems %} rowspan="2"{% endif %}><span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true">Gap</span></th>
         {% endif %}
         {% for field in fields.values %}
-        <th{% if merge_problems %} rowspan="2"{% endif %}>{{ field }}</th>
+        <th{% if merge_problems %} rowspan="2"{% endif %}>{% for f in field.split %}<div>{{ f }}</div>{% endfor %}</th>
         {% endfor %}
 
         {% for problem in problems %}

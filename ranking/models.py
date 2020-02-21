@@ -246,6 +246,6 @@ class Stage(BaseModel):
 
             stage.info['fields'] = list(fields)
 
-        stage.info['fixed_fields'] = [(f, f.title()) for f in order_by]
+        stage.info['standings'] = {'fixed_fields': [(f, f.title()) for f in order_by]}
         stage.info['problems'] = list(problems_infos.values())
         stage.save()
