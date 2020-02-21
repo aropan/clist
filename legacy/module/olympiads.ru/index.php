@@ -23,7 +23,9 @@
     }
     $page = strtr($page, $replace_pairs);
 
-    preg_match('#<h4\s*align="center">(?<title>[^<]*)</h4>\s*<p\s*class="header">#', $page, $match);
+    if (!preg_match('#<h4\s*align="center">(?<title>[^<]*)</h4>\s*<p\s*class="header">#', $page, $match)) {
+        return;
+    }
     list($main_title, $season) = explode(",", $match['title']);
     $main_title = trim($main_title);
     $season = str_replace("/", "-20", explode(" ", trim($season))[0]);
