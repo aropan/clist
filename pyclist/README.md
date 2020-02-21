@@ -1,6 +1,6 @@
 ## conf.py
 
-File `conf.py` contains the following secrets:
+File `conf.py` contains the following secrets (check `conf.py.template` file):
 ```
 EMAIL_HOST_PASSWORD = '{str}'
 SECRET_KEY = '{str}'
