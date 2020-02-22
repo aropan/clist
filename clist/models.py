@@ -1,3 +1,4 @@
+import colorsys
 from urllib.parse import urlparse
 from datetime import timedelta
 
@@ -51,6 +52,28 @@ class Resource(BaseModel):
             for rating in self.ratings:
                 if rating['low'] <= value <= rating['high']:
                     return rating
+
+    def save(self, *args, **kwargs):
+        if self.color is None:
+            values = []
+            for r in Resource.objects.filter(color__isnull=False):
+                color = [int(r.color[i:i + 2], 16) / 255. for i in range(1, 6, 2)]
+                h, _, _ = colorsys.rgb_to_hls(*color)
+                values.append(h)
+            values.sort()
+
+            if values:
+                prv = values[-1] - 1
+            opt = 0, 0
+            for val in values:
+                delta, middle, prv = val - prv, (val + prv) * .5, val
+                opt = max(opt, (delta, middle))
+            h = opt[1] % 1
+            color = colorsys.hls_to_rgb(h, .6, .5)
+
+            self.color = '#' + ''.join(f'{int(c * 255):02x}' for c in color).upper()
+
+        super().save(*args, **kwargs)
 
 
 class VisibleContestManager(BaseManager):
