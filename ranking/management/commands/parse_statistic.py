@@ -82,8 +82,6 @@ class Command(BaseCommand):
 
                 contests = started.union(ended)
                 contests = contests.distinct('id')
-        else:
-            contests = contests.filter(Q(end_time__lt=now - F('resource__module__min_delay_after_end')))
 
         if freshness_days is not None:
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))

@@ -128,9 +128,15 @@ class Stage(BaseModel):
 
         contests = contests.order_by('start_time')
 
+        placing = self.score_params.get('place')
+        n_best = self.score_params.get('n_best')
+        fields = self.score_params.get('fields', [])
+        order_by = self.score_params['order_by']
+        results = collections.defaultdict(dict)
+
         problems_infos = collections.OrderedDict()
         for contest in tqdm.tqdm(contests, desc=f'getting contests for stage {stage}'):
-            problems_infos[contest.pk] = {
+            info = {
                 'code': str(contest.pk),
                 'name': contest.title,
                 'url': reverse(
@@ -141,10 +147,29 @@ class Stage(BaseModel):
                 'n_teams': 0,
             }
 
-        placing = self.score_params.get('place')
-        n_best = self.score_params.get('n_best')
-        fields = self.score_params.get('fields', [])
-        results = collections.defaultdict(dict)
+            problems = contest.info.get('problems', [])
+            full_score = None
+            if placing:
+                if 'division' in placing:
+                    full_score = max([max(p.values()) for p in placing['division'].values()])
+                else:
+                    full_score = max(placing.values())
+            elif 'division' in problems:
+                full_scores = []
+                for ps in problems['division'].values():
+                    full = 0
+                    for problem in ps:
+                        full += problem.get('full_score', 1)
+                    full_scores.append(full)
+                info['full_score'] = max(full_scores)
+            else:
+                full_score = 0
+                for problem in problems:
+                    full_score += problem.get('full_score', 1)
+            if full_score is not None:
+                info['full_score'] = full_score
+
+            problems_infos[contest.pk] = info
 
         statistics = Statistics.objects.select_related('account')
         filter_statistics = self.score_params.get('filter_statistics')
@@ -163,7 +188,6 @@ class Stage(BaseModel):
 
                     problems_infos[contest.pk]['n_teams'] += 1
 
-                    status = None
                     if s.solving < 1e-9:
                         score = 0
                     else:
@@ -171,9 +195,8 @@ class Stage(BaseModel):
                         if placing:
                             placing_ = placing['division'][s.addition['division']] if 'division' in placing else placing
                             score = placing_.get(str(s.place_as_int), placing_['default'])
-                            status = s.place_as_int
                         else:
-                            score = 0
+                            score = s.solving
 
                     problems = row.setdefault('problems', {})
                     problem = problems.setdefault(str(contest.pk), {})
@@ -181,23 +204,39 @@ class Stage(BaseModel):
                     url = s.addition.get('url')
                     if url:
                         problem['url'] = url
-                    if status is not None:
-                        problem['status'] = status
 
                     if n_best:
                         row.setdefault('scores', []).append((score, problem))
                     else:
                         row['score'] = row.get('score', 0) + score
 
+                    field_values = {}
                     for field in fields:
                         inp = field['field']
                         out = field.get('out', inp)
                         if field.get('first') and out in row:
                             continue
                         val = s.addition.get(inp, 0)
+                        field_values[out] = val
                         if field.get('accumulate'):
                             val = round(val + row.get(out, 0), 2)
                         row[out] = val
+
+                    if 'solved' in s.addition:
+                        solved = row.setdefault('solved', {})
+                        for k, v in s.addition['solved'].items():
+                            solved[k] = solved.get(k, 0) + v
+
+                    for field in order_by:
+                        field = field.lstrip('-')
+                        if field == 'score':
+                            continue
+                        status = field_values.get(field, row.get(field))
+                        if status is None:
+                            continue
+                        problem['status'] = status
+                        break
+
                     pbar.update()
 
         results = list(results.values())
@@ -210,9 +249,12 @@ class Stage(BaseModel):
                     else:
                         problem['status'] = problem.pop('result')
 
-        order_by = self.score_params['order_by']
         results = [r for r in results if r['score'] > 1e-9]
-        results = sorted(results, key=lambda r: tuple(r[k] for k in order_by), reverse=True)
+        results = sorted(
+            results,
+            key=lambda r: tuple(r[k.lstrip('-')] * (-1 if k.startswith('-') else 1) for k in order_by),
+            reverse=True,
+        )
 
         with transaction.atomic():
             fields = set()
@@ -221,7 +263,7 @@ class Stage(BaseModel):
             last_score = None
             place = None
             for index, row in enumerate(tqdm.tqdm(results, desc=f'update statistics for stage {stage}'), start=1):
-                curr_score = tuple(row[k] for k in order_by)
+                curr_score = tuple(row[k.lstrip('-')] for k in order_by)
                 if curr_score != last_score:
                     last_score = curr_score
                     place = index
@@ -246,6 +288,6 @@ class Stage(BaseModel):
 
             stage.info['fields'] = list(fields)
 
-        stage.info['standings'] = {'fixed_fields': [(f, f.title()) for f in order_by]}
+        stage.info['standings'] = {'fixed_fields': [(f.lstrip('-'), f.lstrip('-').title()) for f in order_by]}
         stage.info['problems'] = list(problems_infos.values())
         stage.save()

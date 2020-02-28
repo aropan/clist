@@ -94,7 +94,6 @@ class StatisticsAdmin(BaseModelAdmin):
 class StageAdmin(BaseModelAdmin):
     list_display = ['contest', 'filter_params', 'score_params']
     search_fields = ['contest']
-    raw_id_fields = ['contest']
 
     def parse_stage(self, request, queryset):
         for stage in queryset:
