@@ -17,7 +17,7 @@ from clist.templatetags.extras import slug
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
 from clist.templatetags.extras import get_problem_key
-from utils.regex import verify_regex
+from utils.regex import get_iregex_filter, verify_regex
 
 
 @page_template('standings_list_paging.html')
@@ -41,8 +41,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     search = request.GET.get('search')
     if search is not None:
-        search_re = verify_regex(search)
-        contests = contests.filter(Q(title__iregex=search_re) | Q(resource__host__iregex=search_re))
+        contests = contests.filter(get_iregex_filter(search, 'title', 'resource__host'))
 
     context = {
         'contests': contests,
