@@ -90,6 +90,10 @@ class Statistic(BaseModule):
         self.cid = cid
 
     def get_standings(self, users=None):
+        year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
+        season = f'{year}-{year + 1}'
+
+        is_gym = '/gym/' in self.url
         result = {}
 
         for unofficial in [False, True]:
@@ -100,42 +104,68 @@ class Statistic(BaseModule):
             if users:
                 params['handles'] = ';'.join(users)
 
-            data = _query(
-                method='contest.standings',
-                params=params,
-                api_key=self.api_key,
-            )
+            try:
+                data = _query(
+                    method='contest.standings',
+                    params=params,
+                    api_key=self.api_key,
+                )
+            except FailOnGetResponse as e:
+                if getattr(e.args[0], 'code', None) == 400:
+                    return {'action': 'delete'}
+                raise ExceptionParseStandings(e.args[0])
 
             if data['status'] != 'OK':
                 raise ExceptionParseStandings(data['status'])
 
             contest_type = data['result']['contest']['type'].upper()
+            duration_seconds = data['result']['contest'].get('durationSeconds')
 
             result_problems = data['result']['problems']
-            problems_info = []
+            problems_info = OrderedDict()
             for p in result_problems:
                 d = {'short': p['index'], 'name': p['name']}
                 if 'points' in p:
                     d['full_score'] = p['points']
-                problems_info.append(d)
+                elif contest_type == 'IOI':
+                    d['full_score'] = 100
+                problems_info[d['short']] = d
 
             grouped = any('teamId' in row['party'] for row in data['result']['rows'])
             for row in data['result']['rows']:
                 party = row['party']
+
+                if is_gym and not party['members']:
+                    is_ghost_team = True
+                    name = party['teamName']
+                    party['members'] = [{
+                        'handle': f'{name} {season}',
+                        'name': name,
+                    }]
+                else:
+                    is_ghost_team = False
+
                 for member in party['members']:
+                    if is_gym:
+                        upsolve = False
+                    else:
+                        upsolve = party['participantType'] != 'CONTESTANT'
+                        if unofficial != upsolve:
+                            continue
+
                     handle = member['handle']
+
                     r = result.setdefault(handle, OrderedDict())
                     r['member'] = handle
                     if 'room' in party:
                         r['room'] = str(party['room'])
 
-                    upsolve = party['participantType'] != 'CONTESTANT'
-                    if unofficial != upsolve:
-                        continue
-
                     r.setdefault('participant_type', []).append(party['participantType'])
 
-                    if grouped and (not upsolve or 'name' not in r):
+                    if is_ghost_team:
+                        r['name'] = member['name']
+                        r['_no_update_name'] = True
+                    elif grouped and (not upsolve and not is_gym or 'name' not in r):
                         r['name'] = ', '.join(m['handle'] for m in party['members'])
                         if 'teamId' in party:
                             r['team_id'] = party['teamId']
@@ -154,15 +184,24 @@ class Statistic(BaseModule):
                         if n is not None and contest_type == 'ICPC' and points + n > 0:
                             points = f'+{"" if n == 0 else n}' if points > 0 else f'-{n}'
 
+                        u = upsolve
                         if s['type'] == 'FINAL' and (points or n):
                             if not points:
                                 points = f'-{n}'
                             p = {'result': points}
+                            if contest_type == 'IOI':
+                                full_score = problems_info[k].get('full_score')
+                                if full_score:
+                                    p['partial'] = points < full_score
                             if 'bestSubmissionTimeSeconds' in s:
-                                time = s['bestSubmissionTimeSeconds'] / 60
-                                p['time'] = '%02d:%02d' % (time / 60, time % 60)
+                                time = s['bestSubmissionTimeSeconds']
+                                if time > duration_seconds:
+                                    u = True
+                                else:
+                                    time /= 60
+                                    p['time'] = '%02d:%02d' % (time / 60, time % 60)
                             a = problems.setdefault(k, {})
-                            if upsolve:
+                            if u:
                                 a['upsolving'] = p
                             else:
                                 a.update(p)
@@ -206,21 +245,22 @@ class Statistic(BaseModule):
             pass
 
         def to_score(x):
-            return (1 if x == '+' or float(x) > 0 else 0) if isinstance(x, str) else x
+            return (1 if x.startswith('+') or float(x) > 0 else 0) if isinstance(x, str) else x
 
         def to_solve(x):
-            return to_score(x) > 0
+            return not x.get('partial', False) and to_score(x.get('result', 0)) > 0
 
         for r in result.values():
             upsolving = 0
             solving = 0
             upsolving_score = 0
+
             for a in r['problems'].values():
-                if 'upsolving' in a and to_solve(a['upsolving']['result']) > to_solve(a.get('result', 0)):
+                if 'upsolving' in a and to_solve(a['upsolving']) > to_solve(a):
                     upsolving_score += to_score(a['upsolving']['result'])
-                    upsolving += to_solve(a['upsolving']['result'])
+                    upsolving += to_solve(a['upsolving'])
                 else:
-                    solving += to_solve(a.get('result', 0))
+                    solving += to_solve(a)
             r.setdefault('solving', 0)
             r['upsolving'] = upsolving_score
             if abs(solving - r['solving']) > 1e-9 or abs(upsolving - r['upsolving']) > 1e-9:
@@ -232,7 +272,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': (self.url + '/standings').replace('contests', 'contest'),
-            'problems': problems_info,
+            'problems': list(problems_info.values()),
             'options': {
                 'fixed_fields': [('hack', 'Hacks')],
             },

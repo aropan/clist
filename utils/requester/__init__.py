@@ -351,9 +351,12 @@ class requester():
                 charset = charsets[-1].lower()
             else:
                 charset = 'utf-8'
-            charset_detect = chardet.detect(page)
-            if charset_detect and charset_detect['confidence'] > 0.98:
-                charset = charset_detect['encoding']
+            try:
+                charset_detect = chardet.detect(page)
+                if charset_detect and charset_detect['confidence'] > 0.98:
+                    charset = charset_detect['encoding']
+            except Exception as e:
+                self.print('exception on charset detect:', str(e))
             if charset in ('utf-8', 'utf8'):
                 page = page.decode('utf-8', 'replace')
             elif charset in ('windows-1251', 'cp1251'):
