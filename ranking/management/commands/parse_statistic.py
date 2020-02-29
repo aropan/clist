@@ -65,6 +65,7 @@ class Command(BaseCommand):
         random_order=False,
         no_update_results=False,
         limit_duration_in_secs=7 * 60 * 60,  # 7 hours
+        title_regex=None,
     ):
         now = timezone.now()
 
@@ -82,6 +83,10 @@ class Command(BaseCommand):
 
                 contests = started.union(ended)
                 contests = contests.distinct('id')
+        elif title_regex:
+            contests = contests.filter(title__iregex=title_regex)
+        else:
+            contests = contests.filter(end_time__lt=now - F('resource__module__min_delay_after_end'))
 
         if freshness_days is not None:
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
@@ -94,7 +99,7 @@ class Command(BaseCommand):
                 module = c.resource.module
                 delay_on_success = module.delay_on_success or module.max_delay_after_end
                 if now < c.end_time:
-                    if c.duration_in_secs <= limit_duration_in_secs:
+                    if c.end_time - c.start_time <= timedelta(seconds=limit_duration_in_secs):
                         delay_on_success = timedelta(minutes=0)
                     elif c.end_time < now + delay_on_success:
                         delay_on_success = c.end_time - now + timedelta(seconds=5)
@@ -395,8 +400,6 @@ class Command(BaseCommand):
             has_module = Module.objects.filter(resource_id=OuterRef('resource__pk'))
             contests = Contest.objects.annotate(has_module=Exists(has_module)).filter(has_module=True)
 
-        if args.event is not None:
-            contests = contests.filter(title__iregex=args.event)
         if args.only_new:
             has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
             contests = contests.annotate(has_statistics=Exists(has_statistics)).filter(has_statistics=False)
@@ -409,4 +412,5 @@ class Command(BaseCommand):
             random_order=args.random_order,
             no_update_results=args.no_update_results,
             freshness_days=args.freshness_days,
+            title_regex=args.event,
         )

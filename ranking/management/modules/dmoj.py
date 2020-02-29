@@ -3,6 +3,7 @@
 
 import json
 import time
+from pprint import pprint
 
 from ranking.management.modules.common import REQ, BaseModule
 
@@ -24,7 +25,12 @@ class Statistic(BaseModule):
 
         data = json.loads(page)
 
-        problems_info = [{'short': p['code'], 'name': p['name']} for p in data['problems']]
+        problems_info = []
+        for p in data['problems']:
+            info = {'short': p['code'], 'name': p['name']}
+            if p.get('points'):
+                info['full_score'] = p['points']
+            problems_info.append(info)
 
         result = {}
         prev = None
@@ -76,8 +82,6 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    from pprint import pprint
-
     statictic = Statistic(
         name='42',
         url='https://dmoj.ca/contest/dmopc18c2/',
