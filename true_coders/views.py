@@ -456,6 +456,7 @@ def party(request, slug, tab='ranking'):
     statistics = Statistics.objects.filter(
         account__coders__in=party.coders.all(),
         contest__in=party_contests.filter(start_time__lt=timezone.now()),
+        contest__end_time__lt=timezone.now(),
     ) \
         .order_by('-contest__end_time') \
         .select_related('contest', 'account') \
