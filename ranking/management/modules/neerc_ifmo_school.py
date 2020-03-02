@@ -110,7 +110,10 @@ class Statistic(BaseModule):
                                 locations[loc_info] = None
                         address = locations[loc_info]
                         if address:
-                            *_, row['country'] = map(str.strip, address['en'].split(','))
+                            *_, country = map(str.strip, address['en'].split(','))
+                            if country.startswith('The '):
+                                country = country[4:]
+                            row['country'] = country
                             if ', ' in address['ru']:
                                 row['city'], *_ = map(str.strip, address['ru'].split(','))
 
