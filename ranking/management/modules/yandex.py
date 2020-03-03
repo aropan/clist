@@ -14,7 +14,11 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
         if not self.standings_url:
-            self.standings_url = os.path.join(re.sub('enter/?', '', self.url), 'standings')
+            url = self.url
+            url = re.sub('enter/?', '', url)
+            url = re.sub(r'\?.*$', '', url)
+            url = re.sub('/?$', '', url)
+            self.standings_url = os.path.join(url, 'standings')
 
     def get_standings(self, users=None):
         if not hasattr(self, 'season'):
@@ -75,10 +79,17 @@ class Statistic(BaseModule):
                             res = v.value.split(' ', 1)[0]
                         p['result'] = res
                         p['time'] = v.value.split(' ', 1)[-1]
+                        if 'table__cell_firstSolved_true' in v.attrs['class']:
+                            p['first_ac'] = True
+
                         if '+' in res or res.startswith('100'):
                             solved += 1
                     elif 'table__cell_role_participant' in v.attrs['class']:
-                        name = v.value.replace(' ', '', 1)
+                        title = v.column.node.xpath('.//@title')
+                        if title:
+                            name = title[0]
+                        else:
+                            name = v.value.replace(' ', '', 1)
                         row['name'] = name
                         row['member'] = name if ' ' not in name else f'{name} {season}'
                     elif 'table__cell_role_place' in v.attrs['class']:
