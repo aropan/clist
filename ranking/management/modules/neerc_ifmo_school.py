@@ -97,7 +97,11 @@ class Statistic(BaseModule):
                     match = re.search(r'\s*\((?P<info>[^\)]*)\)\s*$', row['name'])
                     if match:
                         row['name'] = row['name'][:match.span()[0]]
-                        row['degree'], loc_info = map(str.strip, match.group('info').split(',', 1))
+                        group_info = match.group('info')
+                        if u'класс' in group_info:
+                            row['degree'], loc_info = map(str.strip, group_info.split(',', 1))
+                        else:
+                            loc_info = group_info
 
                         loc_info = re.sub(r'[.,\s]+', ' ', loc_info).strip().lower()
                         if loc_info not in locations:

@@ -76,6 +76,7 @@ class Statistic(BaseModule):
                 for r in table:
                     row = OrderedDict()
                     problems = row.setdefault('problems', {})
+                    solved = 0
                     for key, value in r.items():
                         key = key.replace('&nbsp', ' ').strip()
                         if not key:
@@ -85,6 +86,7 @@ class Statistic(BaseModule):
                             if not status:
                                 continue
                             partial = not bool(re.match(r'^[\*]+$', status))
+                            solved += not partial
                             problems[key] = {
                                 'partial': partial,
                                 'result': 1000 / len(already_added) * status.count('*') / len(status),
@@ -97,6 +99,7 @@ class Statistic(BaseModule):
                     row['member'] = f'{row["name"]}, {row["country"]}'
                     row['division'] = division
                     row['title'] = title.strip().strip(':')
+                    row['solved'] = {'solving': solved}
                     result[row['member']] = row
 
         standings = {
