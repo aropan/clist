@@ -6,7 +6,7 @@
     if (!isset($RID)) $RID = -1;
     if (!isset($LANG)) $LANG = 'RU';
     if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($TIMEZONE)) $INFO = array();
+    if (!isset($INFO)) $INFO = array('update' => array('default_fields' => array()));
     if (!isset($contests)) $contests = array();
 
     $page = curlexec($URL);
@@ -29,7 +29,7 @@
         if (!preg_match('#<div[^>]*class="[^"]*title">[^<]*<a[^>]*contest/[0-9]+[^>]*>(?P<title>[^<]*)</a>#', $page, $m)) {
             continue;
         }
-        $title = $m['title'];
+        $title = html_entity_decode($m['title']);
 
         $contest = array_merge(
             $INFO['update']['default_fields'],
@@ -54,7 +54,7 @@
             ) as $k => $v
         ) {
             if (!empty($values[$k]['value'])) {
-                $contest[$v] = $values[$k]['value'];
+                $contest[$v] = html_entity_decode($values[$k]['value']);
             } else if (!empty($values[$k]['ts'])) {
                 $contest[$v] = $values[$k]['ts'] / 1000;
             }
