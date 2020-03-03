@@ -53,6 +53,7 @@ class Statistic(BaseModule):
                 row = {}
                 problems = row.setdefault('problems', {})
                 solved = 0
+                has_solved = False
                 for k, v in list(r.items()):
                     if 'table__cell_role_result' in v.attrs['class']:
                         letter = k.split(' ', 1)[0]
@@ -84,6 +85,11 @@ class Statistic(BaseModule):
 
                         if '+' in res or res.startswith('100'):
                             solved += 1
+
+                        try:
+                            has_solved = has_solved or '+' not in res and float(res) > 0
+                        except ValueError:
+                            pass
                     elif 'table__cell_role_participant' in v.attrs['class']:
                         title = v.column.node.xpath('.//@title')
                         if title:
@@ -95,10 +101,11 @@ class Statistic(BaseModule):
                     elif 'table__cell_role_place' in v.attrs['class']:
                         row['place'] = v.value
                     elif 'table__header_type_penalty' in v.attrs['class']:
-                        row['penalty'] = v.value
+                        row['penalty'] = int(v.value) if v.value.isdigit() else v.value
                     elif 'table__header_type_score' in v.attrs['class']:
                         row['solving'] = int(round(float(v.value)))
-                row['solved'] = {'solving': solved}
+                if has_solved:
+                    row['solved'] = {'solving': solved}
                 result[row['member']] = row
 
             n_page += 1
