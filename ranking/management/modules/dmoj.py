@@ -10,6 +10,7 @@ from ranking.management.modules.common import REQ, BaseModule
 
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://dmoj.ca/api/contest/info/{key}'
+    PROBLEM_URL_ = 'https://dmoj.ca/problem/{short}'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -27,7 +28,11 @@ class Statistic(BaseModule):
 
         problems_info = []
         for p in data['problems']:
-            info = {'short': p['code'], 'name': p['name']}
+            info = {
+                'short': p['code'],
+                'name': p['name'],
+            }
+            info['url'] = self.PROBLEM_URL_.format(**info)
             if p.get('points'):
                 info['full_score'] = p['points']
             problems_info.append(info)
@@ -69,7 +74,9 @@ class Statistic(BaseModule):
                 if t:
                     p['time'] = self.to_time(t)
 
+            r.pop('is_disqualified', None)
             row.update({k: v for k, v in r.items() if k not in row})
+
             row['solved'] = {'solving': solved}
 
         standings_url = hasattr(self, 'standings_url') and self.standings_url or self.url.rstrip('/') + '/ranking/'
