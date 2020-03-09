@@ -34,3 +34,6 @@
 [submodule "legacy/libs/smarty"]
 	path = legacy/libs/smarty
 	url = git@github.com:smarty-php/smarty.git
+[submodule "third_party/Chart.js"]
+	path = third_party/Chart.js
+	url = git@github.com:chartjs/Chart.js.git

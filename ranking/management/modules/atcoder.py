@@ -53,6 +53,8 @@ class Statistic(BaseModule):
             r['penalty'] = total_result['Elapsed'] // 10**9
             r['solving'] = total_result['Score'] / 100.
             r['country'] = row.pop('Country')
+            if 'UserName' in row:
+                r['name'] = row.pop('UserName')
 
             problems = r.setdefault('problems', {})
             solving = 0
@@ -76,7 +78,9 @@ class Statistic(BaseModule):
                 else:
                     p['result'] = f"-{v['Failure']}"
             r['solved'] = {'solving': solving}
+
             row.update(r)
+            row.pop('UserIsDeleted', None)
             r.update(row)
 
         standings = {

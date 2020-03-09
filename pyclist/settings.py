@@ -78,6 +78,7 @@ INSTALLED_APPS = (
     'el_pagination',
     'easy_select2',
     'django_static_fontawesome',
+    'django_extensions',
 )
 
 MIDDLEWARE = (

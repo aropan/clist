@@ -51,19 +51,19 @@ html {
 }
 
 .coder-legendary {
-  color: red !important;
+  color: #FF0000 !important;
 }
 
 .coder-red {
-  color: red !important;
+  color: #FF0000 !important;
 }
 
 .coder-yellow {
-  color: #bb0 !important;
+  color: #BBBB00 !important;
 }
 
 .coder-violet {
-  color: #a0a !important;
+  color: #AA00AA !important;
 }
 
 .coder-orange {
@@ -71,7 +71,7 @@ html {
 }
 
 .coder-blue {
-  color: blue !important;
+  color: #0000FF !important;
 }
 
 .coder-cyan {
@@ -79,15 +79,15 @@ html {
 }
 
 .coder-green {
-  color: green !important;
+  color: #008000 !important;
 }
 
 .coder-brown {
-  color: brown !important;
+  color: #A52A2A !important;
 }
 
 .coder-gray {
-  color: gray !important;
+  color: #808080 !important;
 }
 
 .coder-tc-red {

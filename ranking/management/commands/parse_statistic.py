@@ -4,6 +4,7 @@
 import sys
 import os
 import json
+import re
 from html import unescape
 from collections import OrderedDict
 from random import shuffle
@@ -238,8 +239,16 @@ class Command(BaseCommand):
                                 'upsolving': r.pop('upsolving', 0),
                             }
 
+                            addition = type(r)()
+                            for k, v in r.items():
+                                k = k[0].upper() + k[1:]
+                                k = '_'.join(map(str.lower, re.findall('[A-Z][^A-Z]*', k)))
+                                addition[k] = v
+                            if 'is_rated' in addition and not addition['is_rated']:
+                                addition.pop('old_rating', None)
+
                             if not calc_time:
-                                defaults['addition'] = dict(r)
+                                defaults['addition'] = addition
 
                             statistic, created = Statistics.objects.update_or_create(
                                 account=account,
@@ -284,10 +293,10 @@ class Command(BaseCommand):
                                     has_hidden = True
 
                             if calc_time:
-                                statistic.addition = dict(r)
+                                statistic.addition = addition
                                 statistic.save()
 
-                            for k in r:
+                            for k in addition:
                                 if k not in fields_set:
                                     fields_set.add(k)
                                     fields.append(k)
@@ -302,7 +311,7 @@ class Command(BaseCommand):
                             elif 'last_parse_statistics' in contest.info:
                                 contest.info.pop('last_parse_statistics')
 
-                        if fields_set and not isinstance(r, OrderedDict):
+                        if fields_set and not isinstance(addition, OrderedDict):
                             fields.sort()
 
                         if ids:

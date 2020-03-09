@@ -4,6 +4,7 @@ django-countries==5.5
 django-crispy-forms==1.7.2
 django-easy-select2==1.5.5
 django-enumfield==1.5
+django-extensions==2.2.8
 django-jsonify==0.3.0
 django-markdown-app==0.9.6
 django-phonenumber-field==2.2.0
@@ -36,3 +37,4 @@ jsonfield==2.0.2
 git+https://github.com/piotrbilski/django-tastypie-swagger@dec9484d3ccb7c0bb00251a4ba67ca68dfa56ffc
 git+https://github.com/aropan/django-el-pagination@loading-within-table-pr79
 geopy==1.21.0
+cssutils==1.0.2

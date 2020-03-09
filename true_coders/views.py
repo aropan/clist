@@ -5,9 +5,11 @@ import json
 from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.urls import reverse
-from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField, IntegerField
+from django.db.models.functions import Cast
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from tastypie.models import ApiKey
@@ -48,17 +50,64 @@ def profile(request, username, template='profile.html', extra_context=None):
             query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
             statistics = statistics.filter(query)
 
-    accounts = coder.account_set.select_related('resource').order_by('pk')
+    history_resources = Statistics.objects \
+        .filter(account__coders=coder) \
+        .filter(contest__resource__has_rating_history=True) \
+        .annotate(host=F('contest__resource__host')) \
+        .values('host') \
+        .annotate(num_contests=Count('contest')) \
+        .order_by('-num_contests')
+
+    accounts = coder.account_set \
+        .select_related('resource') \
+        .annotate(num_stats=Count('statistics')) \
+        .order_by('-num_stats')
 
     context = {
         'coder': coder,
         'accounts': accounts,
         'statistics': statistics,
+        'history_resources': history_resources,
     }
 
     if extra_context is not None:
         context.update(extra_context)
     return render(request, template, context)
+
+
+def ratings(request, username):
+    coder = get_object_or_404(Coder, user__username=username)
+    qs = Statistics.objects \
+        .annotate(date=F('contest__end_time')) \
+        .annotate(name=F('contest__title')) \
+        .annotate(host=F('contest__resource__host')) \
+        .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
+        .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
+        .annotate(score=F('solving')) \
+        .annotate(cid=F('contest__pk')) \
+        .annotate(ratings=F('contest__resource__ratings')) \
+        .filter(new_rating__isnull=False) \
+        .filter(account__coders=coder) \
+        .filter(contest__resource__has_rating_history=True) \
+        .order_by('date') \
+        .values('cid', 'name', 'host', 'date', 'new_rating', 'old_rating', 'place', 'score', 'ratings')
+
+    ratings = {
+        'status': 'ok',
+        'data': {},
+    }
+
+    dates = list(sorted(set(r['date'] for r in qs)))
+    ratings['data']['dates'] = dates
+    ratings['data']['resources'] = {}
+
+    for r in qs:
+        colors = r.pop('ratings')
+        resource = ratings['data']['resources'].setdefault(r['host'], {})
+        resource['colors'] = colors
+        resource.setdefault('data', []).append(r)
+
+    return JsonResponse(ratings)
 
 
 @login_required

@@ -206,6 +206,12 @@ class Statistic(BaseModule):
                     row = result.setdefault(handle, OrderedDict())
                     row.update(d)
 
+                    if 'rating_change' not in row and 'new_rating' in row and 'old_rating' in row:
+                        row['rating_change'] = row['new_rating'] - row['old_rating']
+                    if not row.get('new_rating') and not row.get('old_rating') and not row.get('rating_change'):
+                        row.pop('new_rating', None)
+                        row.pop('old_rating', None)
+                        row.pop('rating_change', None)
                     if 'rating_change' in row:
                         delta = row['rating_change']
                         row['rating_change'] = f'{"+" if delta > 0 else ""}{delta}'
@@ -359,23 +365,23 @@ if __name__ == "__main__":
     #     key='TCO19 SRM 752. 06.03.2019',
     #     start_time=datetime.strptime('06.03.2019', '%d.%m.%Y'),
     # )
-    # pprint(statictic.get_standings()['problems'])
+    # pprint(statictic.get_standings(users=['tourist']))
     # pprint(statictic.get_standings())
-    pprint(Statistic.get_users_infos(['aropan']))
-    statictic = Statistic(
-        name='SRM 767',
-        standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17684',
-        key='SRM 767. 18.09.2019',
-        start_time=datetime.strptime('18.09.2019', '%d.%m.%Y'),
-    )
-    pprint(statictic.get_result())
+    # pprint(Statistic.get_users_infos(['aropan']))
     # statictic = Statistic(
-    #     name='Mathmania - Codefest 18',
-    #     standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17259',
-    #     key='Mathmania - Codefest 18. 01.09.2018',
-    #     start_time=datetime.strptime('01.09.2018', '%d.%m.%Y'),
+    #     name='SRM 767',
+    #     standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17684',
+    #     key='SRM 767. 18.09.2019',
+    #     start_time=datetime.strptime('18.09.2019', '%d.%m.%Y'),
     # )
-    # pprint(statictic.get_result('tourist'))
+    # pprint(statictic.get_result())
+    statictic = Statistic(
+        name='Mathmania - Codefest 18',
+        standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17259',
+        key='Mathmania - Codefest 18. 01.09.2018',
+        start_time=datetime.strptime('01.09.2018', '%d.%m.%Y'),
+    )
+    pprint(statictic.get_result('tourist'))
     # statictic = Statistic(
     #     name='Marathon Match Beta',
     #     standings_url='https://community.topcoder.com/longcontest/stats/?module=ViewOverview&rd=9874',

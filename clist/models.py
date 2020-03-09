@@ -22,6 +22,7 @@ class Resource(BaseModel):
     uid = models.CharField(max_length=100, null=True, blank=True)
     info = JSONField(default=dict, blank=True)
     ratings = JSONField(default=list, blank=True)
+    has_rating_history = models.BooleanField(default=False)
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'rating', 'Rating', 'new_rating')
 
