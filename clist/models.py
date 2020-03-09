@@ -24,7 +24,7 @@ class Resource(BaseModel):
     ratings = JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
 
-    RATING_FIELDS = ('old_rating', 'OldRating', 'rating', 'Rating', 'new_rating')
+    RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
     def __str__(self):
         return "%s" % (self.host)

@@ -89,6 +89,8 @@ $(function(){
         }
       }
     })
+    var rating_labels = new Set($.map(response['colors'], function(val) { return val['low']; }))
+    var max_rating_labels = Math.max(...$.map(response['colors'], function(val) { return val['low']; }))
 
     return {
       type: 'line',
@@ -123,7 +125,6 @@ $(function(){
             },
           }],
           yAxes: [{
-            rating_labels: new Set($.map(response['colors'], function(val) { return val['low']; })),
             gridLines: {
               display: false,
             },
@@ -133,7 +134,7 @@ $(function(){
               min: Math.floor((min_rating - 100) / 100) * 100,
               max: Math.ceil((max_rating + 100) / 100) * 100,
               callback: function(value, index, values) {
-                if (!this.options.rating_labels.has(value)) {
+                if ((value < max_rating_labels || value % 500) && !rating_labels.has(value)) {
                   return;
                 }
                 return value

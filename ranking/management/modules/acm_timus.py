@@ -18,7 +18,7 @@ class Statistic(BaseModule):
         if not self.standings_url:
             self.standings_url = self.url.replace('contest.aspx', 'monitor.aspx')
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         result = {}
 
         page = REQ.get(self.standings_url + ('&' if '?' in self.standings_url else '?') + 'locale=en')

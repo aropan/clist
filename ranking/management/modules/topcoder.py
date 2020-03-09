@@ -72,7 +72,7 @@ class Statistic(BaseModule):
             ret[k] = v
         return ret
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         result = {}
 
         start_time = self.start_time.replace(tzinfo=None)
@@ -206,15 +206,10 @@ class Statistic(BaseModule):
                     row = result.setdefault(handle, OrderedDict())
                     row.update(d)
 
-                    if 'rating_change' not in row and 'new_rating' in row and 'old_rating' in row:
-                        row['rating_change'] = row['new_rating'] - row['old_rating']
                     if not row.get('new_rating') and not row.get('old_rating') and not row.get('rating_change'):
                         row.pop('new_rating', None)
                         row.pop('old_rating', None)
                         row.pop('rating_change', None)
-                    if 'rating_change' in row:
-                        delta = row['rating_change']
-                        row['rating_change'] = f'{"+" if delta > 0 else ""}{delta}'
 
                     row['member'] = handle
                     row['place'] = row.pop('division_placed')

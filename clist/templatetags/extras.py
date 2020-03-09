@@ -260,3 +260,19 @@ def strptime(val, form):
 def coder_color_class(resource, *values):
     rating = resource.get_rating_color(values)
     return f'coder-color coder-{rating["color"]}' if rating else ''
+
+
+@register.filter
+def toint(val):
+    try:
+        return int(val)
+    except ValueError:
+        return None
+
+
+@register.filter(name='abs')
+def abs_filter(val):
+    try:
+        return abs(val)
+    except ValueError:
+        return None

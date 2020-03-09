@@ -22,7 +22,7 @@ class Statistic(BaseModule):
             raise InitModuleException('Not found year')
         self.year = int(match.group())
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         ret = {}
         if 'archive' not in self.url:
             page = REQ.get(self.url)

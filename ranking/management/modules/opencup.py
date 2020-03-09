@@ -16,7 +16,7 @@ class Statistic(BaseModule):
         if not self.standings_url:
             raise InitModuleException('Not set standings url')
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         if not hasattr(self, 'season'):
             if not hasattr(self, 'start_time'):
                 self.season = self.key.split()[0]

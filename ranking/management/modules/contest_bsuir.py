@@ -23,7 +23,7 @@ class Statistic(BaseModule):
                 return fields[k]
         raise ExceptionParseStandings('No found %s key in %s' % (keys, fields))
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         result = {}
         standings_url = None
         problems_info = OrderedDict()

@@ -186,7 +186,7 @@ class Statistic(BaseModule):
         }
         return standings
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         if '/codingcompetitions.withgoogle.com/' in self.url:
             return self._api_get_standings(users)
         if '/code.google.com/' in self.url or '/codejam.withgoogle.com/' in self.url:

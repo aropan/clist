@@ -67,7 +67,7 @@ class Statistic(BaseModule):
             return default
         return dict(medals)
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         year = self.start_time.year
         year = year + 1 if self.start_time.month >= 9 else year
         season = '%d-%d' % (year - 1, year)

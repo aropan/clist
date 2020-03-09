@@ -15,7 +15,7 @@ class Statistic(BaseModule):
         if not self.standings_url:
             raise InitModuleException('Not set standings url for %s' % self.name)
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         season = self.key.split()[0]
 
         result = {}

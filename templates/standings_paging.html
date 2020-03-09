@@ -112,7 +112,15 @@
         {% if field in fields_to_select and value not in fields_to_select|get_item:field %}
           <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
         {% else %}
-          {{ value }}
+          {% with intvalue=value|toint %}
+            <span{% if field == "rating_change" %} style="font-weight: bold;{% if intvalue %} color: {% if intvalue > 0 %}#0f0{% else %}#f00{% endif %}{% endif %}"{% endif %}>
+              {% if field == "rating_change" and intvalue %}
+                <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+              {% else %}
+                {{ value }}
+              {% endif %}
+            </span>
+          {% endwith %}
         {% endif %}
       {% endif %}
     {% else %}

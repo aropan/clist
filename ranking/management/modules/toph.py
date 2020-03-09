@@ -17,7 +17,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         page = REQ.get(self.url)
 
         page = REQ.get(self.url.strip('/') + '/statistics')

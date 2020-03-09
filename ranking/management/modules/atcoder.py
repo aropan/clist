@@ -2,7 +2,12 @@
 
 import collections
 import json
+from urllib.parse import urlparse
 from pprint import pprint
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from contextlib import ExitStack
+
+import tqdm
 
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules import conf
@@ -10,6 +15,7 @@ from ranking.management.modules import conf
 
 class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
+    HISTORY_URL_ = '{0.scheme}://{0.netloc}/users/{1}/history'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -17,8 +23,9 @@ class Statistic(BaseModule):
         self._username = conf.ATCODER_HANDLE
         self._password = conf.ATCODER_PASSWORD
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         url = f'{self.STANDING_URL_.format(self)}/json'
+
         page = REQ.get(url)
 
         form = REQ.form(limit=3, selectors=['class="form-horizontal"'])
@@ -41,12 +48,13 @@ class Statistic(BaseModule):
 
         rows = data['StandingsData']
 
+        handles_to_get_new_rating = []
         result = {}
         for row in rows:
             if not row['TaskResults']:
                 continue
             handle = row.pop('UserScreenName')
-            r = result.setdefault(handle, {})
+            r = result.setdefault(handle, collections.OrderedDict())
             r['member'] = handle
             r['place'] = row.pop('Rank')
             total_result = row.pop('TotalResult')
@@ -81,7 +89,47 @@ class Statistic(BaseModule):
 
             row.update(r)
             row.pop('UserIsDeleted', None)
+            row.pop('Additional')
+            rating = row.pop('Rating', None)
+            if rating is not None:
+                r['info'] = {'rating': rating}
+            old_rating = row.pop('OldRating', None)
             r.update(row)
+
+            if old_rating is not None:
+                r['OldRating'] = old_rating
+            if row['IsRated']:
+                if statistics is None or 'new_rating' not in statistics.get(handle, {}):
+                    handles_to_get_new_rating.append(handle)
+                else:
+                    r['OldRating'] = statistics[handle]['old_rating']
+                    r['NewRating'] = statistics[handle]['new_rating']
+
+        with ExitStack() as stack:
+            executor = stack.enter_context(PoolExecutor(max_workers=8))
+            pbar = stack.enter_context(tqdm.tqdm(total=len(handles_to_get_new_rating), desc='getting new rankings'))
+
+            def fetch_data(handle):
+                url = f'{self.HISTORY_URL_.format(urlparse(self.url), handle)}/json'
+                data = json.loads(REQ.get(url))
+                return handle, data
+
+            for handle, data in executor.map(fetch_data, handles_to_get_new_rating):
+                contest_addition_update = {}
+                for contest in data:
+                    if not contest.get('IsRated', True):
+                        continue
+                    key = contest['ContestScreenName'].split('.')[0]
+                    if key == self.key:
+                        result[handle]['OldRating'] = contest['OldRating']
+                        result[handle]['NewRating'] = contest['NewRating']
+                    else:
+                        contest_addition_update[key] = collections.OrderedDict((
+                            ('old_rating', contest['OldRating']),
+                            ('new_rating', contest['NewRating']),
+                        ))
+                result[handle]['contest_addition_update'] = contest_addition_update
+                pbar.update()
 
         standings = {
             'result': result,

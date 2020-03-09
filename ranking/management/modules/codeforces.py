@@ -89,7 +89,7 @@ class Statistic(BaseModule):
             raise InitModuleException(f'Contest id {cid} should be number')
         self.cid = cid
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
 
@@ -237,9 +237,7 @@ class Statistic(BaseModule):
                     r = result[handle]
                     old_rating = row.pop('oldRating')
                     new_rating = row.pop('newRating')
-                    delta = new_rating - old_rating
                     r['old_rating'] = old_rating
-                    r['rating_change'] = f'{"+" if delta > 0 else ""}{delta}'
                     r['new_rating'] = new_rating
         except FailOnGetResponse:
             pass

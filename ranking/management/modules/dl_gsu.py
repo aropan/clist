@@ -17,7 +17,7 @@ class Statistic(BaseModule):
         if not self.name or not self.start_time or not self.url:
             raise InitModuleException()
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         if not self.standings_url:
             page = REQ.get(urljoin(self.url, '/'))
 

@@ -14,7 +14,7 @@ class Statistic(BaseModule):
         else:
             self.module = opencup.Statistic(**kwargs)
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         return self.module.get_standings(users)
 
 

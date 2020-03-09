@@ -17,7 +17,7 @@ class Statistic(BaseModule):
         if not self.url.startswith('http://stats.ioinformatics.org/olympiads/'):
             raise InitModuleException(f'Url = {self.url} should be from stats.ioinformatics.org')
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         result = {}
         problems_info = OrderedDict()
 

@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-d', '--days', type=int, help='how previous days for update')
-        parser.add_argument('-f', '--freshness_days', type=int, help='how previous days skip by modified date')
+        parser.add_argument('-f', '--freshness_days', type=float, help='how previous days skip by modified date')
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-e', '--event', help='regex event name')
         parser.add_argument('-l', '--limit', type=int, help='limit count parse contest by resource', default=None)
@@ -137,7 +137,7 @@ class Command(BaseCommand):
                     parsed = True
                     continue
 
-                statistic = plugin.Statistic(
+                plugin = plugin.Statistic(
                     name=contest.title,
                     url=contest.url,
                     key=contest.key,
@@ -145,7 +145,11 @@ class Command(BaseCommand):
                     start_time=contest.start_time,
                     end_time=contest.end_time,
                 )
-                standings = statistic.get_standings()
+
+                statistics = Statistics.objects.filter(contest=contest).select_related('account')
+
+                statistics_by_key = {s.account.key: s.addition for s in statistics}
+                standings = plugin.get_standings(statistics=statistics_by_key)
 
                 with transaction.atomic():
                     if 'url' in standings and standings['url'] != contest.standings_url:
@@ -170,7 +174,7 @@ class Command(BaseCommand):
                         teams_viewed = set()
                         has_hidden = False
 
-                        ids = {s.pk for s in Statistics.objects.filter(contest=contest)}
+                        ids = {s.pk for s in statistics}
                         for r in tqdm(list(result.values()), desc=f'update results {contest}'):
                             for k, v in r.items():
                                 if isinstance(v, str) and chr(0x00) in v:
@@ -202,9 +206,33 @@ class Command(BaseCommand):
                                     account.country = country
                                     account.save()
 
+                            contest_addition_update = r.pop('contest_addition_update', {})
+                            if contest_addition_update:
+                                contest_keys = set(contest_addition_update.keys())
+                                qs = Statistics.objects \
+                                    .filter(account=account, contest__key__in=contest_keys) \
+                                    .select_related('contest')
+                                if with_check:
+                                    qs.filter(modified__lte=now - timedelta(days=31))
+
+                                for stat in qs:
+                                    addition = dict(stat.addition)
+                                    ordered_dict = contest_addition_update[stat.contest.key]
+                                    addition.update(dict(ordered_dict))
+                                    stat.addition = addition
+                                    stat.save()
+
+                                    to_save = False
+                                    for k in ordered_dict.keys():
+                                        if k not in stat.contest.info['fields']:
+                                            stat.contest.info['fields'].append(k)
+                                            to_save = True
+                                    if to_save:
+                                        stat.contest.save()
+
                             info = r.pop('info', {})
                             if info:
-                                account.info = {**account.info, **info}
+                                account.info.update(info)
                                 account.save()
 
                             problems = r.get('problems', {})
@@ -244,6 +272,17 @@ class Command(BaseCommand):
                                 k = k[0].upper() + k[1:]
                                 k = '_'.join(map(str.lower, re.findall('[A-Z][^A-Z]*', k)))
                                 addition[k] = v
+
+                                if (
+                                    'rating_change' not in addition
+                                    and 'new_rating' in addition
+                                    and 'old_rating' in addition
+                                ):
+                                    delta = addition['new_rating'] - addition['old_rating']
+                                    addition.pop(k)
+                                    addition['rating_change'] = f'{"+" if delta > 0 else ""}{delta}'
+                                    addition[k] = v
+
                             if 'is_rated' in addition and not addition['is_rated']:
                                 addition.pop('old_rating', None)
 

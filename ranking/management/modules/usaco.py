@@ -44,7 +44,7 @@ class Statistic(BaseModule):
                                               f'year = {self.start_time.year}, '
                                               f'name = {self.name}')
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         page = REQ.get(self.standings_url)
 
         result = {}

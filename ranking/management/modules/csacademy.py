@@ -18,7 +18,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         if not self.key.isdigit():
             return {'action': 'delete'}
 

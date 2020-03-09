@@ -16,7 +16,7 @@ class Statistic(BaseModule):
         if not self.key:
             raise InitModuleException()
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         standings_url = Statistic.STANDING_URL_FORMAT_.format(self)
         page = REQ.get(standings_url, time_out=12)
 

@@ -20,7 +20,7 @@ class Statistic(BaseModule):
             url = re.sub('/?$', '', url)
             self.standings_url = os.path.join(url, 'standings')
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         if not hasattr(self, 'season'):
             year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
             season = f'{year}-{year + 1}'

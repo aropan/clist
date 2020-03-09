@@ -16,7 +16,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
-    def get_standings(self, users=None):
+    def get_standings(self, users=None, statistics=None):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
 
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
