@@ -271,17 +271,27 @@ class Command(BaseCommand):
                             for k, v in r.items():
                                 k = k[0].upper() + k[1:]
                                 k = '_'.join(map(str.lower, re.findall('[A-Z][^A-Z]*', k)))
+
+                                if k not in fields_set:
+                                    fields_set.add(k)
+                                    fields.append(k)
+
+                                if k in Resource.RATING_FIELDS and v is None:
+                                    continue
+
                                 addition[k] = v
 
                                 if (
-                                    'rating_change' not in addition
-                                    and 'new_rating' in addition
-                                    and 'old_rating' in addition
+                                    addition.get('rating_change') is None
+                                    and addition.get('new_rating') is not None
+                                    and addition.get('old_rating') is not None
                                 ):
                                     delta = addition['new_rating'] - addition['old_rating']
-                                    addition.pop(k)
-                                    addition['rating_change'] = f'{"+" if delta > 0 else ""}{delta}'
-                                    addition[k] = v
+                                    f = 'rating_change'
+                                    addition[f] = f'{"+" if delta > 0 else ""}{delta}'
+                                    if f not in fields_set:
+                                        fields_set.add(f)
+                                        fields.insert(-1, f)
 
                             if 'is_rated' in addition and not addition['is_rated']:
                                 addition.pop('old_rating', None)
@@ -334,11 +344,6 @@ class Command(BaseCommand):
                             if calc_time:
                                 statistic.addition = addition
                                 statistic.save()
-
-                            for k in addition:
-                                if k not in fields_set:
-                                    fields_set.add(k)
-                                    fields.append(k)
 
                         if has_hidden:
                             contest.timing.statistic = timezone.now() + timedelta(minutes=30)

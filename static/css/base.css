@@ -54,6 +54,15 @@ html {
   color: #FF0000 !important;
 }
 
+.coder-legend {
+  background: -webkit-gradient(linear,left bottom,left top,from(#b00),color-stop(50%,#b00),color-stop(51%,#000));
+  background: -webkit-linear-gradient(bottom,#b00,#b00 50%,#000 51%);
+  background: linear-gradient(0deg,#b00,#b00 50%,#000 51%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #FF0000 !important;
+}
+
 .coder-red {
   color: #FF0000 !important;
 }
@@ -108,6 +117,10 @@ html {
 
 .coder-tc-gray {
   color: #999999 !important;
+}
+
+.coder-purple {
+  color: #7030a0 !important;
 }
 
 .coder-color {

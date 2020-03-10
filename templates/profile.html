@@ -168,7 +168,7 @@ $(function(){
               var color = data.datasets[tooltipItem.datasetIndex].pointBackgroundColor[tooltipItem.index]
               var hist = data.datasets[tooltipItem.datasetIndex].history[tooltipItem.index]
               var rating = '<span style="font-weight: bold; color: ' + color + '">' + hist['new_rating'] + '</span>'
-              if (typeof hist['old_rating'] != 'undefined') {
+              if (hist['old_rating']) {
                 var change = hist['new_rating'] - hist['old_rating']
                 if (change >= 0) {
                   rating += ' <span style="font-weight: bold; color: #0f0"><i class="fas fa-angle-up"></i>' + change + '</span>'
@@ -177,7 +177,7 @@ $(function(){
                 }
               }
               label = '<div>' + rating + '</div>'
-              if (typeof hist['place'] != 'undefined') {
+              if (hist['place']) {
                 label += '<div class="small">Rank: ' + hist['place'] + '</div>'
               }
               if (typeof hist['score'] != 'undefined') {

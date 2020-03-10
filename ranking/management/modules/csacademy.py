@@ -135,13 +135,13 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    statictic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-2/', key='62344')
-    standings = statictic.get_standings('aropan')
+    statistic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-2/', key='62344')
+    standings = statistic.get_standings('aropan')
     result = standings.pop('result')
     pprint(list(itertools.islice(result.items(), 0, 10)))
     pprint(standings)
-    statictic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-1/', key='61564')
-    standings = statictic.get_standings('aropan')
+    statistic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-1/', key='61564')
+    standings = statistic.get_standings('aropan')
     result = standings.pop('result')
     pprint(list(itertools.islice(result.items(), 0, 10)))
     pprint(standings)
