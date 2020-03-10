@@ -53,6 +53,8 @@ def profile(request, username, template='profile.html', extra_context=None):
     history_resources = Statistics.objects \
         .filter(account__coders=coder) \
         .filter(contest__resource__has_rating_history=True) \
+        .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
+        .filter(new_rating__isnull=False) \
         .annotate(host=F('contest__resource__host')) \
         .values('host') \
         .annotate(num_contests=Count('contest')) \

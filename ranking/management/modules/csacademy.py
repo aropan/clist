@@ -73,11 +73,11 @@ class Statistic(BaseModule):
             if users and handle not in users:
                 continue
 
-            row = result.setdefault(handle, {})
+            row = result.setdefault(handle, OrderedDict())
 
             row['name'] = user['name']
             if user.get('rating'):
-                row['rating'] = user['rating']
+                row['info'] = {'rating': int(user['rating'])}
             if user.get('countryId'):
                 row['country'] = countries[user['countryId']]['isoCode']
                 row['country_name'] = countries[user['countryId']]['name']
@@ -113,6 +113,10 @@ class Statistic(BaseModule):
             row['solving'] = solving
             row['solved'] = {'solving': solved}
 
+            if 'oldRating' in r:
+                row['old_rating'] = int(r['oldRating'])
+                row['new_rating'] = int(r['rating'])
+
         ranks = [((-r['solving'], r.get('penalty')), r['member']) for r in result.values()]
         prev = None
         rank = None
@@ -131,13 +135,13 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    statictic = Statistic(
-        name='42',
-        url='https://csacademy.com/contest/fii-code-2020-round-1/',
-        key='61564',
-    )
-
-    standings = statictic.get_standings()
+    statictic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-2/', key='62344')
+    standings = statictic.get_standings('aropan')
+    result = standings.pop('result')
+    pprint(list(itertools.islice(result.items(), 0, 10)))
+    pprint(standings)
+    statictic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-1/', key='61564')
+    standings = statictic.get_standings('aropan')
     result = standings.pop('result')
     pprint(list(itertools.islice(result.items(), 0, 10)))
     pprint(standings)
