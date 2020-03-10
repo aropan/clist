@@ -17,7 +17,7 @@ from django_countries import countries
 from el_pagination.decorators import page_template
 
 from clist.models import Resource, Contest
-from clist.templatetags.extras import get_timezones, format_time
+from clist.templatetags.extras import get_timezones, format_time, slug as slugify
 from clist.views import get_timezone, main
 from ranking.models import Rating
 from my_oauth.models import Service
@@ -107,6 +107,7 @@ def ratings(request, username):
         colors = r.pop('ratings')
         resource = ratings['data']['resources'].setdefault(r['host'], {})
         resource['colors'] = colors
+        r['slug'] = slugify(r['name'])
         resource.setdefault('data', []).append(r)
 
     return JsonResponse(ratings)

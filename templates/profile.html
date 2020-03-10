@@ -149,7 +149,7 @@ $(function(){
           }
           item = item[0]
           rating = item._chart.data.datasets[item._datasetIndex].history[item._index]
-          url = '/standings/' + slugify(rating['name']) + '-' + rating['cid']
+          url = '/standings/' + rating['slug'] + '-' + rating['cid'] + '/'
           window.open(url, '_blank');
         },
         onHover: (e, el) => {
