@@ -88,6 +88,8 @@ def ratings(request, username):
         .annotate(score=F('solving')) \
         .annotate(cid=F('contest__pk')) \
         .annotate(ratings=F('contest__resource__ratings')) \
+        .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField())) \
+        .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0)) \
         .filter(new_rating__isnull=False) \
         .filter(account__coders=coder) \
         .filter(contest__resource__has_rating_history=True) \
