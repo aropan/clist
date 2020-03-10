@@ -55,7 +55,8 @@ $(function() {
                 return { results: data.items, pagination: { more: data.more } }
             },
         },
-        minimumInputLength: 0
+        minimumInputLength: 0,
+        maximumInputLength: 42,
     })
     $team.on('select2:close', function (e) {
         data = $team.select2('data')[0]

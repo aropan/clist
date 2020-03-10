@@ -154,6 +154,8 @@ def event(request, slug, template='event.html', extra_context=None):
             team_name = request.POST.get('team')
             if not team_name:
                 messages.error(request, 'You must specify team name')
+            elif len(team_name) > 42:
+                messages.error(request, 'The team name is too long (limit is 42)')
             elif participant and participant.is_coach:
                 team = Team.objects.create(event=event, name=team_name, author=participant)
                 team.coach = participant
