@@ -266,7 +266,7 @@ def coder_color_class(resource, *values):
 def toint(val):
     try:
         return int(val)
-    except ValueError:
+    except Exception:
         return None
 
 
@@ -274,5 +274,5 @@ def toint(val):
 def abs_filter(val):
     try:
         return abs(val)
-    except ValueError:
+    except Exception:
         return None
