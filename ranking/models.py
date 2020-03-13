@@ -1,4 +1,5 @@
 import re
+import ast
 import collections
 
 import tqdm
@@ -132,7 +133,7 @@ class Stage(BaseModel):
         n_best = self.score_params.get('n_best')
         fields = self.score_params.get('fields', [])
         order_by = self.score_params['order_by']
-        results = collections.defaultdict(dict)
+        results = collections.defaultdict(collections.OrderedDict)
 
         problems_infos = collections.OrderedDict()
         for contest in tqdm.tqdm(contests, desc=f'getting contests for stage {stage}'):
@@ -214,12 +215,12 @@ class Stage(BaseModel):
                     for field in fields:
                         inp = field['field']
                         out = field.get('out', inp)
-                        if field.get('first') and out in row:
+                        if field.get('first') and out in row or inp not in s.addition:
                             continue
-                        val = s.addition.get(inp, 0)
+                        val = ast.literal_eval(str(s.addition[inp]))
                         field_values[out] = val
                         if field.get('accumulate'):
-                            val = round(val + row.get(out, 0), 2)
+                            val = round(val + ast.literal_eval(str(row.get(out, 0))), 2)
                         row[out] = val
 
                     if 'solved' in s.addition:
@@ -257,7 +258,8 @@ class Stage(BaseModel):
         )
 
         with transaction.atomic():
-            fields = set()
+            fields_set = set()
+            fields = list()
 
             pks = set()
             last_score = None
@@ -283,7 +285,9 @@ class Stage(BaseModel):
                 pks.add(stat.pk)
 
                 for k in row.keys():
-                    fields.add(k)
+                    if k not in fields_set:
+                        fields_set.add(k)
+                        fields.append(k)
             stage.statistics_set.exclude(pk__in=pks).delete()
 
             stage.info['fields'] = list(fields)
