@@ -2,6 +2,7 @@ import collections
 import re
 import json
 
+import pytz
 from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -86,6 +87,10 @@ def ratings(request, username):
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
         .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
         .annotate(score=F('solving')) \
+        .annotate(addition_solved=KeyTextTransform('solved', 'addition')) \
+        .annotate(solved=Cast(KeyTextTransform('solving', 'addition_solved'), IntegerField())) \
+        .annotate(problems=KeyTextTransform('problems', 'contest__info')) \
+        .annotate(division=KeyTextTransform('division', 'addition')) \
         .annotate(cid=F('contest__pk')) \
         .annotate(ratings=F('contest__resource__ratings')) \
         .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField())) \
@@ -94,7 +99,20 @@ def ratings(request, username):
         .filter(account__coders=coder) \
         .filter(contest__resource__has_rating_history=True) \
         .order_by('date') \
-        .values('cid', 'name', 'host', 'date', 'new_rating', 'old_rating', 'place', 'score', 'ratings')
+        .values(
+            'cid',
+            'name',
+            'host',
+            'date',
+            'new_rating',
+            'old_rating',
+            'place',
+            'score',
+            'ratings',
+            'solved',
+            'problems',
+            'division',
+        )
 
     ratings = {
         'status': 'ok',
@@ -107,6 +125,19 @@ def ratings(request, username):
 
     for r in qs:
         colors = r.pop('ratings')
+
+        division = r.pop('division')
+        problems = json.loads(r.pop('problems') or '{}')
+        if division and 'division' in problems:
+            problems = problems['division'][division]
+        r['n_problems'] = len(problems)
+
+        date = r['date']
+        print(date)
+        if request.user.is_authenticated and request.user.coder:
+            coder = request.user.coder
+            date = timezone.localtime(date, pytz.timezone(coder.timezone))
+        r['when'] = date.strftime('%b %-d, %Y')
         resource = ratings['data']['resources'].setdefault(r['host'], {})
         resource['colors'] = colors
         r['slug'] = slugify(r['name'])

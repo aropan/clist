@@ -162,7 +162,8 @@ $(function(){
           caretSize: 0,
           callbacks: {
             title: function(tooltipItem, data) {
-              return '<div style="font-weight: bold">' + data.datasets[tooltipItem[0].datasetIndex].history[tooltipItem[0].index]['name']
+              var hist = data.datasets[tooltipItem[0].datasetIndex].history[tooltipItem[0].index]
+              return '<div style="font-weight: bold">' + hist['name'] + '</div>'
             },
             label: function(tooltipItem, data) {
               var color = data.datasets[tooltipItem.datasetIndex].pointBackgroundColor[tooltipItem.index]
@@ -176,12 +177,17 @@ $(function(){
                   rating += ' <span style="font-weight: bold; color: #f00"><i class="fas fa-angle-down"></i>' + -change + '</span>'
                 }
               }
-              label = '<div>' + rating + '</div>'
+              var label = ''
+              label += '<div>' + hist['when'] + '</div>'
+              label += '<div>' + rating + '</div>'
               if (hist['place']) {
                 label += '<div class="small">Rank: ' + hist['place'] + '</div>'
               }
               if (typeof hist['score'] != 'undefined') {
                 label += '<div class="small">Score: ' + hist['score'] + '</div>'
+              }
+              if (hist['solved'] != null) {
+                label += '<div class="small">Solved: ' + hist['solved'] + ' of ' + hist['n_problems'] + '</div>'
               }
               return label
             },
