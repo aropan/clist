@@ -111,3 +111,13 @@ server {
 
   listen ${PORT};
 }
+
+server {
+  server_name www.${DOMAIN};
+  return 301 https://${DOMAIN}${DOLLAR}request_uri;
+}
+
+server {
+  server_name www.legacy.${DOMAIN};
+  return 301 https://legacy.${DOMAIN}${DOLLAR}request_uri;
+}
