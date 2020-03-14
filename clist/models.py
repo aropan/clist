@@ -37,13 +37,13 @@ class Resource(BaseModel):
             if isinstance(value, (list, tuple)):
                 for v in value:
                     ret = self.get_rating_color(v)
-                    if ret:
+                    if ret[0]:
                         return ret
             elif isinstance(value, dict):
                 for field in self.RATING_FIELDS:
                     if field in value:
                         ret = self.get_rating_color(value.get(field))
-                        if ret:
+                        if ret[0]:
                             return ret
             else:
                 if isinstance(value, str):

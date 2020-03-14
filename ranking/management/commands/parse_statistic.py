@@ -230,9 +230,11 @@ class Command(BaseCommand):
                                     if to_save:
                                         stat.contest.save()
 
-                            info = r.pop('info', {})
-                            if info:
-                                account.info.update(info)
+                            account_info = r.pop('info', {})
+                            if account_info:
+                                if 'rating' in account_info:
+                                    account_info['rating_ts'] = int(now.timestamp())
+                                account.info.update(account_info)
                                 account.save()
 
                             problems = r.get('problems', {})
@@ -298,6 +300,14 @@ class Command(BaseCommand):
 
                             if not calc_time:
                                 defaults['addition'] = addition
+
+                            rating_ts = int(min(contest.end_time, now).timestamp())
+                            if 'new_rating' in addition and (
+                                'rating_ts' not in account.info or account.info['rating_ts'] <= rating_ts
+                            ):
+                                account.info['rating_ts'] = rating_ts
+                                account.info['rating'] = addition['new_rating']
+                                account.save()
 
                             statistic, created = Statistics.objects.update_or_create(
                                 account=account,

@@ -79,6 +79,8 @@ class Command(BaseCommand):
                             continue
                         if info.get('country'):
                             account.country = countrier.get(info['country'])
+                        if info.get('rating'):
+                            info['rating_ts'] = int(now.timestamp())
                         delta = info.pop('delta', timedelta(days=365))
                         account.info.update(info)
                         account.updated = now + delta
