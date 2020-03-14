@@ -127,19 +127,23 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 statistics = statistics.filter(filt)
             fields_to_select[f] = values
 
-    for k in contest_fields:
-        if (
-            k not in fields
-            and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type']
-            and 'country' not in k
-        ):
-            if request.GET.get('detail'):
+    if 'detail' in request.GET:
+        with_detail = request.GET['detail'] == 'true'
+        request.session['standings_with_detail'] = with_detail
+    else:
+        with_detail = request.session.get('standings_with_detail', False)
+
+    if with_detail:
+        for k in contest_fields:
+            if (
+                k not in fields
+                and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type']
+                and 'country' not in k
+            ):
                 field = ' '.join(k.split('_'))
                 if not field[0].isupper():
                     field = field.title()
                 fields[k] = field
-            else:
-                break
 
     per_page = options.get('per_page', 200)
     if per_page is None:
@@ -272,7 +276,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'merge_problems': merge_problems,
         'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
-        'with_detail': 'detail' in request.GET,
+        'with_detail': with_detail,
     }
 
     if extra_context is not None:

@@ -58,38 +58,40 @@
       {% endwith %}
     {% endif %}
 
+    {% coder_color_circle contest.resource statistic.addition statistic.account.info %}
+
     <div class="{% coder_color_class contest.resource statistic.addition statistic.account.info %}" style="display: inline-block">
-    {% with coders=statistic.account.coders.all %}
-      {% if coders|length == 1 %}
-        {% for c in coders %}
-          <a href="{% url 'coder:profile' c.username %}" class="coder">
-        {% endfor %}
-      {% endif %}
+      {% with coders=statistic.account.coders.all %}
+        {% if coders|length == 1 %}
+          {% for c in coders %}
+            <a href="{% url 'coder:profile' c.username %}" class="coder">
+          {% endfor %}
+        {% endif %}
 
-      {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name %}
-        <span>{{ statistic.addition.name }}</span>
-      {% elif statistic.addition.name and contest.resource.info.standings.name_instead_key %}
-        <span title="{{ statistic.account.key }}" data-placement="top">{{ statistic.addition.name }}</span>
-      {% else %}
-        <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %}>{{ statistic.account.key }}</span>
-      {% endif %}
+        {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name %}
+          <span>{{ statistic.addition.name }}</span>
+        {% elif statistic.addition.name and contest.resource.info.standings.name_instead_key %}
+          <span title="{{ statistic.account.key }}" data-placement="top">{{ statistic.addition.name }}</span>
+        {% else %}
+          <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %}>{{ statistic.account.key }}</span>
+        {% endif %}
 
-      {% if coders|length == 1 %}
-        </a>
-      {% endif %}
+        {% if coders|length == 1 %}
+          </a>
+        {% endif %}
 
-      {% if statistic.addition.url or contest.resource.profile_url %}
-        <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-      {% endif %}
+        {% if statistic.addition.url or contest.resource.profile_url %}
+          <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+        {% endif %}
 
-      {% if coders|length > 1 %}
-      <div class="small">
-        {% for c in coders %}
-          <a href="{% url 'coder:profile' c.username %}" class="coder"><span>{{ c.username }}</span></a>
-        {% endfor %}
-      </div>
-      {% endif %}
-    {% endwith %}
+        {% if coders|length > 1 %}
+        <div class="small">
+          {% for c in coders %}
+            <a href="{% url 'coder:profile' c.username %}" class="coder"><span>{{ c.username }}</span></a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
     </div>
   </td>
   <td>
@@ -102,6 +104,7 @@
   {% for field in fields.keys %}
   {% with value=statistic.addition|get_item:field %}
   <td{% if field in contest.resource.RATING_FIELDS %} class="{% coder_color_class contest.resource value %}"{% endif %}>
+    {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     {% if field in statistic.addition and not value.empty %}
       {% if field == 'hack' %}
         <small>

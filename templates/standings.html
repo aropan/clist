@@ -74,7 +74,7 @@
         data-off="Short"
         data-onstyle="default"
         data-offstyle="default"
-        onchange="this.form.submit()"
+        onchange="this.setAttribute('value', this.checked? 'true' : 'false'); this.checked = true; this.form.submit()"
         {% if with_detail %}checked{% endif %}
       >
 

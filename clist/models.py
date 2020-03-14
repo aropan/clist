@@ -34,7 +34,7 @@ class Resource(BaseModel):
 
     def get_rating_color(self, value):
         if not self.ratings or value is None:
-            return
+            return None, None
 
         if isinstance(value, (list, tuple)):
             for v in value:
@@ -52,7 +52,7 @@ class Resource(BaseModel):
                 value = int(value)
             for rating in self.ratings:
                 if rating['low'] <= value <= rating['high']:
-                    return rating
+                    return rating, value
 
     def save(self, *args, **kwargs):
         if self.color is None:

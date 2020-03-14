@@ -46,6 +46,10 @@ html {
  * coder rating colors
  */
 
+.coder-circle {
+  vertical-align: middle;
+}
+
 .coder-legendary:first-letter {
   color: black !important;
 }
