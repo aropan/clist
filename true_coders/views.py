@@ -26,7 +26,7 @@ from notification.forms import Notification, NotificationForm
 from ranking.models import Statistics, Module, Account
 from true_coders.models import Filter, Party, Coder, Organization
 from events.models import Team, TeamStatus
-from utils.regex import verify_regex
+from utils.regex import verify_regex, get_iregex_filter
 
 
 @page_template('profile_contests_paging.html')
@@ -360,10 +360,14 @@ def change(request):
             account = Account.objects.get(resource=resource, key=value)
             if account.coders.filter(pk=coder.id).first():
                 raise Exception('Account is already connect to this coder')
-            if account.coders.count():
-                module = Module.objects.filter(resource=resource).first()
-                if not module or not module.multi_account_allowed:
+
+            module = Module.objects.filter(resource=resource).first()
+            if not module or not module.multi_account_allowed:
+                if coder.account_set.filter(resource=resource).exists():
+                    raise Exception('Allow only one account for this resource')
+                if account.coders.count():
                     raise Exception('Account is already connect')
+
             account.coders.add(coder)
             account.save()
             return HttpResponse(json.dumps(account.dict()), content_type="application/json")
@@ -392,23 +396,71 @@ def search(request, **kwargs):
 
     count = int(request.GET.get('count', 10))
     page = int(request.GET.get('page', 1))
-    if query == 'account':
-        resource_id = int(request.GET.get('resource', -1))
-        qs = Account.objects.filter(resource__id=resource_id)
-        if 'user' in request.GET:
-            user = request.GET.get('user')
-            condition = Q()
-            for pattern in user.split():
-                pattern_re = verify_regex(pattern)
-                condition = condition & (Q(key__iregex=pattern_re) | Q(name__iregex=pattern_re))
-            qs = qs.filter(condition)
+    if query == 'resources-for-add-account':
+        accounts = Account.objects.filter(resource=OuterRef('pk'))
+        coder = request.user.coder
+        coder_accounts = coder.account_set.filter(resource=OuterRef('pk'))
+
+        qs = Resource.objects \
+            .annotate(has_account=Exists(accounts)) \
+            .annotate(has_coder_account=Exists(coder_accounts)) \
+            .annotate(has_multi=F('module__multi_account_allowed')) \
+            .annotate(disabled=Case(
+                When(has_account=False, then=Value(True)),
+                When(has_coder_account=True, has_multi=False, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'host'))
+        qs = qs.order_by('disabled', 'pk')
 
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [
-            {'id': a.key, 'text': f'{a.key} - {a.name}' if a.name and a.key.find(a.name) == -1 else a.key}
-            for a in qs
+            {
+                'id': r.id,
+                'text': r.host,
+                'disabled': r.disabled,
+            }
+            for r in qs
         ]
+    elif query == 'accounts-for-add-account':
+        coder = request.user.coder
+
+        qs = Account.objects.all()
+        resource = request.GET.get('resource')
+        if resource:
+            qs = qs.filter(resource__id=int(resource))
+        else:
+            qs = qs.select_related('resource')
+        if 'user' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET.get('user'), 'key', 'name'))
+
+        qs = qs.annotate(has_multi=F('resource__module__multi_account_allowed')) \
+
+        qs = qs.annotate(disabled=Case(
+            When(coders=coder, then=Value(True)),
+            When(coders__isnull=False, has_multi=False, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField(),
+        ))
+
+        qs = qs.order_by('disabled')
+
+        total = qs.count()
+        qs = qs[(page - 1) * count:page * count]
+        ret = []
+        for r in qs:
+            fields = {
+                'id': r.key,
+                'text': f'{r.key} - {r.name}' if r.name and r.key.find(r.name) == -1 else r.key,
+                'disabled': r.disabled,
+            }
+            if not resource:
+                fields['text'] += f', {r.resource.host}'
+                fields['resource'] = {'id': r.resource.pk, 'text': r.resource.host}
+            ret.append(fields)
     elif query == 'organization':
         qs = Organization.objects.all()
 

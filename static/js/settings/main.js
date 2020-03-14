@@ -487,15 +487,32 @@ $(function() {
     $('#last-name-native').editable({ type: 'text', })
 
     var $resource = $('select#add-account-resource')
-    function updateDataResource(data) {
-        $resource.select2().empty()
-        $resource.select2({
-            data: data,
-            width: '50%',
-            placeholder: 'Select resource',
-        });
-    }
-    updateDataResource(ACCOUNTS_RESOURCES)
+    $resource.select2({
+        width: '50%',
+        allowClear: true,
+        placeholder: 'Search resource by regex',
+        ajax: {
+            url: 'search/',
+            dataType: 'json',
+            delay: 314,
+            data: function (params) {
+                return {
+                    query: 'resources-for-add-account',
+                    regex: params.term,
+                    page: params.page || 1
+                };
+            },
+            processResults: function (data, params) {
+                return {
+                    results: data.items,
+                    pagination: {
+                        more: data.more
+                    }
+                };
+            },
+        },
+        minimumInputLength: 0
+    })
 
     $errorAccountTab = $('#error-account-tab')
     var $listAccount = $('#list-accounts')
@@ -528,14 +545,6 @@ $(function() {
                             },
                             success: function(data) {
                                 $account.remove()
-
-                                // updateDataResource(ACCOUNTS_RESOURCES)
-                                // updateDataResource(
-                                //     $.map(ACCOUNTS_RESOURCES, function(r) {
-                                //         r.disabled = r.disabled && r.text != element.resource
-                                //         return r
-                                //     })
-                                // )
                             },
                             error: function(data) {
                                 $errorAccountTab.show().html(data.responseText)
@@ -554,13 +563,15 @@ $(function() {
     var $search = $('#add-account-search')
     $search.select2({
         width: '50%',
+        allowClear: true,
+        placeholder: 'Search handle by regex',
         ajax: {
             url: 'search/',
             dataType: 'json',
             delay: 314,
             data: function (params) {
                 return {
-                    query: 'account',
+                    query: 'accounts-for-add-account',
                     user: params.term,
                     resource: $resource.val(),
                     page: params.page || 1
@@ -574,22 +585,16 @@ $(function() {
                     }
                 };
             },
-            cache: true
         },
         minimumInputLength: 0
-    })
-    var $button = $('#add-account')
+    }).on('select2:select', function (e) {
+        var account = $search.select2('data')[0]
+        if (account.resource) {
+            $resource.append('<option selected="selected" value="' + account.resource.id + '">' + account.resource.text+ '</option>')
+        }
+    });
 
-    // $search.find('.select2-search__field').keyup(function(e) {
-    //     alert(42);
-        // var code = e.which
-        // var isEnter = code==32 || code==13 || code==188 || code==186
-        // if (isEnter && !$button.attr('disabled')) {
-        //     $button.click()
-        //     return false
-        // }
-        // $button.attr('disabled', $search.val().length == 0)
-    // })
+    var $button = $('#add-account')
 
     $button.click(function() {
         $.ajax({
@@ -603,7 +608,9 @@ $(function() {
             },
             success: function(data) {
                 addAccount(-1, data)
-                $search.select2('val', '')
+                $resource.val(null).trigger('change');
+                $search.val(null).trigger('change');
+
             },
             error: function(data) {
                 $errorAccountTab.show().html(data.responseText)
