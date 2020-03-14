@@ -133,7 +133,6 @@ def ratings(request, username):
         r['n_problems'] = len(problems)
 
         date = r['date']
-        print(date)
         if request.user.is_authenticated and request.user.coder:
             coder = request.user.coder
             date = timezone.localtime(date, pytz.timezone(coder.timezone))

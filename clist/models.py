@@ -33,26 +33,25 @@ class Resource(BaseModel):
         return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=self.host)
 
     def get_rating_color(self, value):
-        if not self.ratings or value is None:
-            return None, None
-
-        if isinstance(value, (list, tuple)):
-            for v in value:
-                ret = self.get_rating_color(v)
-                if ret:
-                    return ret
-        elif isinstance(value, dict):
-            for field in self.RATING_FIELDS:
-                if field in value:
-                    ret = self.get_rating_color(value.get(field))
+        if self.ratings and value is not None:
+            if isinstance(value, (list, tuple)):
+                for v in value:
+                    ret = self.get_rating_color(v)
                     if ret:
                         return ret
-        else:
-            if isinstance(value, str):
-                value = int(value)
-            for rating in self.ratings:
-                if rating['low'] <= value <= rating['high']:
-                    return rating, value
+            elif isinstance(value, dict):
+                for field in self.RATING_FIELDS:
+                    if field in value:
+                        ret = self.get_rating_color(value.get(field))
+                        if ret:
+                            return ret
+            else:
+                if isinstance(value, str):
+                    value = int(value)
+                for rating in self.ratings:
+                    if rating['low'] <= value <= rating['high']:
+                        return rating, value
+        return None, None
 
     def save(self, *args, **kwargs):
         if self.color is None:
