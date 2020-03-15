@@ -1,9 +1,10 @@
-import csv
+import unicodecsv as csv
 import time
 
 from django.contrib import admin
 from django.http import HttpResponse
 from django.utils import timezone
+from django.db.models import OuterRef, Exists
 
 from pyclist.admin import BaseModelAdmin, admin_register
 from events.models import Event, Participant, JoinRequest, Team, Login
@@ -52,14 +53,10 @@ class TeamHasLoginFilter(admin.SimpleListFilter):
         )
 
     def queryset(self, request, queryset):
-        ids = []
-        for team in queryset:
-            if Login.objects.filter(team=team, stage=team.status).exists():
-                ids.append(team.pk)
-        if self.value() == 'yes':
-            queryset = queryset.filter(pk__in=ids)
-        elif self.value() == 'no':
-            queryset = queryset.exclude(pk__in=ids)
+        if self.value() in ['yes', 'no']:
+            logins = Login.objects.filter(team=OuterRef('pk'), stage=OuterRef('status'))
+            queryset = queryset.annotate(has_login=Exists(logins))
+            queryset = queryset.filter(has_login=self.value() == 'yes')
         return queryset
 
 
@@ -70,7 +67,7 @@ class TeamAdmin(BaseModelAdmin):
     list_filter = [TeamHasLoginFilter, 'status', 'event']
 
     def participants_count(self, inst):
-        return inst.participants.count()
+        return inst.participants_count
     participants_count.admin_order_field = 'participants_count'
 
     def bind_login(self, request, queryset):
@@ -90,37 +87,26 @@ class TeamAdmin(BaseModelAdmin):
         filename = 'information-{}.csv'.format(timezone.now().strftime('%Y%m%d%H%M'))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        writer = csv.writer(response)
-        writer.writerow([s.replace('_', ' ').title() for s in [
-            'title',
+        encoding = 'cp1251' if request.user_agent.os.family == 'Windows' else 'utf8'
+        writer = csv.writer(response, delimiter=';', encoding=encoding)
+        fields = [
+            'email',
             'first_name',
             'last_name',
             'first_name_native',
             'last_name_native',
             'middle_name_native',
-            'email',
             'phone_number',
             'organization',
             'country',
-            'tshirt',
+            'tshirt_size_value',
             'is_coach',
-        ]])
+        ]
+        writer.writerow(['title'] + [f.replace('_', ' ').title() for f in fields])
         for team in queryset:
             for m in team.members:
-                writer.writerow([s.encode('utf8') for s in [
-                    team.title,
-                    m.first_name,
-                    m.last_name,
-                    m.first_name_native,
-                    m.last_name_native,
-                    m.middle_name_native,
-                    m.email,
-                    str(m.phone_number),
-                    m.organization.name_ru if m.organization else '-',
-                    m.country.name,
-                    m.tshirt_size_value,
-                    str(m.is_coach),
-                ]])
+                values = [team.title] + [str(getattr(m, f)) for f in fields]
+                writer.writerow(values)
         return response
     import_to_csv.short_description = 'Import to csv'
 

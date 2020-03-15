@@ -79,6 +79,7 @@ INSTALLED_APPS = (
     'easy_select2',
     'django_static_fontawesome',
     'django_extensions',
+    'django_user_agents',
 )
 
 MIDDLEWARE = (
@@ -90,6 +91,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'django_user_agents.middleware.UserAgentMiddleware',
 )
 
 if DEBUG:
@@ -147,6 +149,8 @@ CACHES = {
         'LOCATION': '127.0.0.1:11211',
     }
 }
+
+USER_AGENTS_CACHE = 'default'
 
 
 # Internationalization

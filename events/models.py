@@ -164,6 +164,17 @@ class TeamStatus(Enum):
     }
 
 
+class TeamManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset() \
+            .select_related(
+                'coach__organization',
+                'author__organization',
+                'event',
+            ) \
+            .annotate(participants_count=models.Count('participants'))
+
+
 class Team(BaseModel):
     name = models.CharField(max_length=255)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
@@ -176,6 +187,8 @@ class Team(BaseModel):
                               blank=True,
                               on_delete=models.CASCADE)
     status = EnumField(TeamStatus, default=TeamStatus.NEW)
+
+    objects = TeamManager()
 
     def __str__(self):
         return self.name
