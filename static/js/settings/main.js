@@ -66,11 +66,12 @@ $(function() {
         source: {
             'enable': 'Enable',
             'disable': 'Disable',
-            'iCalendar': 'iCalendar',
-            'Google Calendar': 'Google Calendar',
-            'Outlook': 'Outlook',
-            'Outlook Online': 'Outlook Online',
-            'Yahoo! Calendar': 'Yahoo! Calendar',
+            'apple': 'Apple',
+            'google': 'Google',
+            'office365': 'Office 365',
+            'outlook': 'Outlook',
+            'outlookcom': 'Outlook Online',
+            'yahoo': 'Yahoo',
         }
     }).on('shown', function(e, editable){
         editable.input.$input.select2({

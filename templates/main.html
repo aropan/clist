@@ -10,7 +10,8 @@
 <link href="{% static_ts 'css/bootstrap-input-xs.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script src="{% static_ts 'js/contest/toggle.js' %}"></script>
-<link href="{% static_ts 'css/atc-style-menu-wb.css' %}" rel="stylesheet">
+
+<link href="{% static_ts 'css/theme8.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/atc.min.js' %}"></script>
 
 {% include "calendar.html" %}
@@ -112,17 +113,15 @@
                 <a href="{{ contest.url }}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
                 </span>
                 {% if contest.state != "past" and add_to_calendar != "disable" %}
-                <div class="addtocalendar atc-style-menu-wb"{% if add_to_calendar != "enable" %} data-calendars="{{ add_to_calendar }}"{% endif %}>
-                    <var class="atc_event">
-                        <var class="atc_date_start">{{ contest.start_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</var>
-                        <var class="atc_date_end">{{ contest.end_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</var>
-                        <var class="atc_timezone">{{ timezone }}</var>
-                        <var class="atc_title">{{ contest.title|pass_arg:"#"|replace:"" }} @ {{ contest.host }}</var>
-                        <var class="atc_location">{{ contest.host }}</var>
-                        <var class="atc_description">{{ contest.url }}</var>
-                    </var>
-                    <a class="atcb-link"><i class="far fa-calendar-alt"></i></a>
-                </div>
+                  <div class="addeventatc" data-styling="none"{% if add_to_calendar != "enable" %} data-direct="{{ add_to_calendar }}"{% endif %}>
+                      <i class="far fa-calendar-alt"></i>
+                      <span class="start">{{ contest.start_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</span>
+                      <span class="end">{{ contest.end_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</span>
+                      <span class="timezone">{{ timezone }}</span>
+                      <span class="title">{{ contest.title|pass_arg:"#"|replace:"" }} @ {{ contest.host }}</span>
+                      <span class="location">{{ contest.host }}</span>
+                      <span class="description">{{ contest.url }}</span>
+                  </div>
                 {% endif %}
                 {% if contest.group_size %}
                     <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>

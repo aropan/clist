@@ -1,0 +1,29 @@
+/* Use Google's hosted "Open Sans" font as display font in button */
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600");
+
+/* The button */
+.addeventatc 							{display:inline-block;position:relative;font-family:"Open Sans",Roboto,Optima,Segoe,"Segoe UI",Candara,Calibri,Arial,sans-serif;font-weight:600;color:#333;text-decoration:none;font-size:16px;cursor:pointer;}
+.addeventatc:hover 						{color:#555;font-size:16px;text-decoration:underline;}
+.addeventatc:active 					{outline:0!important;}
+.addeventatc .start, .addeventatc .end, .addeventatc .timezone, .addeventatc .title, .addeventatc .description, .addeventatc .location, .addeventatc .organizer, .addeventatc .organizer_email, .addeventatc .facebook_event, .addeventatc .all_day_event, .addeventatc .date_format, .addeventatc .alarm_reminder, .addeventatc .recurring, .addeventatc .attendees, .addeventatc .calname, .addeventatc .uid, .addeventatc .status, .addeventatc .method, .addeventatc .client, .addeventatc .transp {display:none!important;}
+
+/* Drop down */
+.addeventatc_dropdown 					{width:230px;position:absolute;padding:6px 0px 0px 0px;font-family:"Open Sans",Roboto,"Helvetica Neue",Helvetica,Optima,Segoe,"Segoe UI",Candara,Calibri,Arial,sans-serif;color:#000!important;font-weight:600;line-height:100%;background:#fff;font-size:15px;text-decoration:none;text-align:left;margin-left:-1px;display:none;-moz-border-radius:3px;-webkit-border-radius:3px;-webkit-box-shadow:rgba(0,0,0,0.4) 0px 10px 26px;-moz-box-shadow:rgba(0,0,0,0.4) 0px 10px 26px;box-shadow:rgba(0,0,0,0.4) 0px 10px 26px;transform:scale(.98,.98) translateY(5px);z-index:-1;transition:transform .15s ease;-webkit-user-select:none;-webkit-tap-highlight-color:rgba(0,0,0,0);}
+.addeventatc_dropdown.topdown 			{transform:scale(.98,.98) translateY(-5px)!important;}
+.addeventatc_dropdown span 				{display:block;line-height:100%;background:#fff;text-decoration:none;cursor:pointer;font-size:15px;color:#333;font-weight:600;padding:14px 10px 14px 55px;margin:-2px 0px;}
+.addeventatc_dropdown span:hover 		{background-color:#f4f4f4;color:#000;text-decoration:none;font-size:15px;}
+.addeventatc_dropdown em 				{color:#999!important;font-size:12px!important;font-weight:400;}
+.addeventatc_dropdown .frs a 			{background:#fff;color:#cacaca!important;cursor:pointer;font-size:9px!important;font-style:normal!important;font-weight:400!important;line-height:110%!important;padding-left:10px;position:absolute;right:10px;text-align:right;text-decoration:none;top:5px;z-index:101;}
+.addeventatc_dropdown .frs a:hover 		{color:#999!important;}
+.addeventatc_dropdown .ateappleical 	{background:url(../gfx/icon-apple-t5.svg) 18px 40% no-repeat;background-size:22px 100%;}
+.addeventatc_dropdown .ategoogle 		{background:url(../gfx/icon-google-t5.svg) 18px 50% no-repeat;background-size:22px 100%;}
+.addeventatc_dropdown .ateoffice365 	{background:url(../gfx/icon-office365-t5.svg) 19px 50% no-repeat;background-size:18px 100%;}
+.addeventatc_dropdown .ateoutlook 		{background:url(../gfx/icon-outlook-t5.svg) 18px 50% no-repeat;background-size:22px 100%;}
+.addeventatc_dropdown .ateoutlookcom 	{background:url(../gfx/icon-outlookcom-t5.svg) 18px 50% no-repeat;background-size:22px 100%;}
+.addeventatc_dropdown .ateyahoo 		{background:url(../gfx/icon-yahoo-t5.svg) 18px 50% no-repeat;background-size:22px 100%;}
+.addeventatc_dropdown .atefacebook 		{background:url(../gfx/icon-facebook-t5.svg) 18px 50% no-repeat;background-size:22px 100%;}
+.addeventatc_dropdown .copyx 			{height:21px;display:block;position:relative;cursor:default;}
+.addeventatc_dropdown .brx 				{height:1px;overflow:hidden;background:#e8e8e8;position:absolute;z-index:100;left:10px;right:10px;top:9px;}
+.addeventatc_dropdown.addeventatc-selected {transform:scale(1,1) translateY(0px);z-index:99999999999;}
+.addeventatc_dropdown.topdown.addeventatc-selected {transform:scale(1,1) translateY(0px)!important;}
+.addeventatc_dropdown .drop_markup 		{background-color:#f4f4f4;}

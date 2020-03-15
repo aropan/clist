@@ -240,11 +240,12 @@ def change(request):
         if value not in [
             'enable',
             'disable',
-            'iCalendar',
-            'Google Calendar',
-            'Outlook',
-            'Outlook Online',
-            'Yahoo! Calendar',
+            'apple',
+            'google',
+            'office365',
+            'outlook',
+            'outlookcom',
+            'yahoo',
         ]:
             return HttpResponseBadRequest("invalid addtocalendar value")
         coder.settings["add_to_calendar"] = value
