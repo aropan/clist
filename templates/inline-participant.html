@@ -4,7 +4,12 @@
     <a href="{% url 'coder:profile' participant.coder.username %}">{{ participant.coder.username }}</a>
     {{ participant.last_name }}
   </strong>
+  {% if participant.organization %}
+  from <strong title="{{ participant.organization.name }}" data-toggle="tooltip">{{ participant.organization.abbreviation }}</strong>
+  {% endif %}
   {% if participant.team %}
-  <small class="text-muted">{{ participant.team.title }}</small>
+  in <strong>{{ participant.team.name }}</strong>
   {% endif %}
 </div>
+
+<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>

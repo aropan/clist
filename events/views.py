@@ -242,9 +242,7 @@ def event(request, slug, template='event.html', extra_context=None):
         is_coach=False,
     ).filter(
         Q(team=None) | Q(team__status=TeamStatus.NEW),
-    ).select_related(
-        'coder__user',
-    ).all()
+    )
 
     status = request.GET.get('status')
     if status is not None:

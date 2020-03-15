@@ -85,7 +85,7 @@ class TeamAdmin(BaseModelAdmin):
         self.message_user(request, '{} successfully created logins, {} skipped.'.format(done, skip))
     bind_login.short_description = 'Bind login with current status as stage'
 
-    @print_sql_decorator()
+    @print_sql_decorator(count_only=True)
     def import_to_csv(self, request, queryset):
         filename = 'information-{}.csv'.format(timezone.now().strftime('%Y%m%d%H%M'))
         response = HttpResponse(content_type='text/csv')

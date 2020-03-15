@@ -1,5 +1,8 @@
 import random
 import csv
+from datetime import timedelta
+from urllib.parse import urlparse
+from collections import Counter
 
 from django.db import models
 from django_enumfield.enum import Enum
@@ -7,19 +10,13 @@ from django_enumfield.db.fields import EnumField
 from django.template.loader import get_template
 from django.core.mail import EmailMultiAlternatives
 from django.core.mail.backends.smtp import EmailBackend
-
-from pyclist.models import BaseModel
-from true_coders.models import Coder, Organization
-from datetime import timedelta
+from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import now
-from urllib.parse import urlparse
-
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from django.contrib.postgres.fields import JSONField
-
-from collections import Counter
+from pyclist.models import BaseModel
+from true_coders.models import Coder, Organization
 
 
 class Event(BaseModel):
@@ -60,6 +57,12 @@ class TshirtSize(Enum):
     }
 
 
+class ParticipantManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset() \
+            .select_related('coder', 'event', 'team', 'organization')
+
+
 class Participant(BaseModel):
     coder = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
@@ -75,6 +78,8 @@ class Participant(BaseModel):
     country = CountryField(null=True, blank=True)
     tshirt_size = EnumField(TshirtSize, null=True, blank=True)
     is_coach = models.BooleanField(default=False)
+
+    objects = ParticipantManager()
 
     def __str__(self):
         return "%s %s" % (self.first_name, self.last_name)
@@ -172,7 +177,7 @@ class TeamManager(models.Manager):
                 'author__organization',
                 'event',
             ) \
-            .prefetch_related('participants__organization') \
+            .prefetch_related('participants') \
             .annotate(participants_count=models.Count('participants'))
 
 
@@ -200,7 +205,10 @@ class Team(BaseModel):
 
     @property
     def title(self):
-        organizations = '+'.join(sorted(set(p.organization.abbreviation or 'none' for p in self.participants.all())))
+        organizations = '+'.join(sorted(set(
+            p.organization.abbreviation or 'none'
+            for p in self.participants.all()
+        )))
         names = ', '.join(p.last_name for p in self.ordered_participants)
         return '[{}] {}: {}'.format(organizations, self.name, names)
 
