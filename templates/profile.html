@@ -105,6 +105,7 @@ $(function(){
     })
     var rating_labels = new Set($.map(response['colors'], function(val) { return val['low']; }))
     var max_rating_labels = Math.max(...$.map(response['colors'], function(val) { return val['low']; }))
+    var highest = response['highest']
 
     return {
       type: 'line',
@@ -285,20 +286,86 @@ $(function(){
           var rules = chart.chart.options.backgroundRules;
           var y_axis = chart.chart.scales["y-axis-0"];
           var x_axis = chart.chart.scales["x-axis-0"];
-          function get(value) {
+
+          function gety(value) {
             value = (y_axis.max - value) / (y_axis.max - y_axis.min)
             value = Math.min(Math.max(value, 0), 1)
             return value * (y_axis.bottom - y_axis.top) + y_axis.top
           }
+
+          function getx(value) {
+            value = (value - x_axis.min) / (x_axis.max - x_axis.min)
+            value = Math.min(Math.max(value, 0), 1)
+            return value * (x_axis.right - x_axis.left) + x_axis.left
+          }
+
           for (var i = 0; i < rating_colors.length; ++i) {
-            var to = get(rating_colors[i].low)
-            var from = get(rating_colors[i].high + 1)
+            var to = gety(rating_colors[i].low)
+            var from = gety(rating_colors[i].high + 1)
             hsl = rating_colors[i].hsl
             color = 'hsl(' + hsl[0] * 360 + ',' + hsl[1] * 100 + '%,' + (hsl[2] * 100 + 100) * 0.5 + '%)'
             ctx.fillStyle = color
             ctx.fillRect(x_axis.left, from, x_axis.width, to - from)
           }
+
+          var y = gety(highest['value'])
+          ctx.beginPath();
+          ctx.setLineDash([5, 15])
+          ctx.moveTo(x_axis.left, y)
+          ctx.lineTo(x_axis.right, y)
+          ctx.stroke()
+          ctx.setLineDash([])
+          ctx.closePath()
         },
+        beforeDatasetsDraw: function (chart) {
+          var ctx = chart.chart.ctx
+
+          var y_axis = chart.chart.scales["y-axis-0"];
+          var x_axis = chart.chart.scales["x-axis-0"];
+
+          function gety(value) {
+            value = (y_axis.max - value) / (y_axis.max - y_axis.min)
+            value = Math.min(Math.max(value, 0), 1)
+            return value * (y_axis.bottom - y_axis.top) + y_axis.top
+          }
+
+          function getx(value) {
+            value = (value - x_axis.min) / (x_axis.max - x_axis.min)
+            value = Math.min(Math.max(value, 0), 1)
+            return value * (x_axis.right - x_axis.left) + x_axis.left
+          }
+
+          var x = getx(highest['timestamp'] * 1000)
+          var y = gety(highest['value'])
+          var width = 40
+          var height = 20
+          var rx = Math.min(Math.max(x_axis.left + 10, x - width / 2), x_axis.right - width - 10)
+          var ry = y - (height + 10)
+          if (y_axis.top <= y && y <= y_axis.bottom) {
+            var cx = rx + width / 2
+            var cy = ry + height / 2
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(Math.min(Math.max(x, rx), rx + width - 1), ry + height - 1);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'black';
+            ctx.stroke();
+            ctx.closePath()
+
+            ctx.fillStyle = '#fff'
+            ctx.fillRect(rx, ry, width, height)
+            ctx.lineWidth = 1
+            ctx.strokeStyle = 'black'
+            ctx.strokeRect(rx, ry, width, height)
+
+
+            ctx.font = '12px Comic Sans MS';
+            ctx.textAlign = 'center'
+            ctx.fillStyle = 'black'
+            ctx.fillText(highest['value'], cx, cy + 4);
+          }
+        }
       }],
     }
   }
@@ -322,7 +389,7 @@ $(function(){
 
 <form method="get" action="">
 <div class="input-group">
-  <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host. Also you can use contest:{ID} or problem:{NAME}" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+  <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host. Also you can use contest:{ID}, problem:{NAME}, account:{NAME} or resource:{HOST}" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
   <span class="input-group-btn">
     <button class="btn btn-default" type="submit">
       <span class="glyphicon glyphicon-search" aria-hidden="true"></span>

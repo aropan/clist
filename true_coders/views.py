@@ -61,6 +61,7 @@ def profile(request, username, template='profile.html', extra_context=None):
     history_resources = Statistics.objects \
         .filter(account__coders=coder) \
         .filter(contest__resource__has_rating_history=True) \
+        .filter(contest__stage__isnull=True) \
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
         .filter(new_rating__isnull=False) \
         .annotate(host=F('contest__resource__host')) \
@@ -71,7 +72,10 @@ def profile(request, username, template='profile.html', extra_context=None):
     resources = Resource.objects \
         .prefetch_related(Prefetch(
             'account_set',
-            queryset=Account.objects.filter(coders=coder).annotate(num_stats=Count('statistics')).order_by('-num_stats'),
+            queryset=Account.objects
+            .filter(coders=coder)
+            .annotate(num_stats=Count('statistics'))
+            .order_by('-num_stats'),
             to_attr='coder_accounts',
         )) \
         .annotate(num_contests=Count(
@@ -112,6 +116,7 @@ def ratings(request, username):
         .filter(new_rating__isnull=False) \
         .filter(account__coders=coder) \
         .filter(contest__resource__has_rating_history=True) \
+        .filter(contest__stage__isnull=True) \
         .order_by('date') \
         .values(
             'cid',
@@ -153,6 +158,11 @@ def ratings(request, username):
         r['when'] = date.strftime('%b %-d, %Y')
         resource = ratings['data']['resources'].setdefault(r['host'], {})
         resource['colors'] = colors
+        if r['new_rating'] > resource.get('highest', {}).get('value', 0):
+            resource['highest'] = {
+                'value': r['new_rating'],
+                'timestamp': int(date.timestamp()),
+            }
         r['slug'] = slugify(r['name'])
         resource.setdefault('data', []).append(r)
 
