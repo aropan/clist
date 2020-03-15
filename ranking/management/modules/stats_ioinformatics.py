@@ -38,9 +38,11 @@ class Statistic(BaseModule):
                     problem_idx += 1
                     d = problems_info.setdefault(problem_idx, {})
                     d['short'] = str(problem_idx)
+                    d['full_score'] = 100
                     d['name'] = k
                     p = problems.setdefault(str(problem_idx), {})
                     p['result'] = v.value
+                    p['partial'] = float(v.value) < 100
                 elif k == 'Abs.':
                     row['solving'] = float(v.value)
                 elif k == 'Rank':

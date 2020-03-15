@@ -127,11 +127,14 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 statistics = statistics.filter(filt)
             fields_to_select[f] = values
 
-    if 'detail' in request.GET:
-        with_detail = request.GET['detail'] == 'true'
-        request.session['standings_with_detail'] = with_detail
-    else:
-        with_detail = request.session.get('standings_with_detail', False)
+    with_detail = request.GET.get('detail') == 'true'
+    if request.user.is_authenticated:
+        coder = request.user.coder
+        if 'detail' in request.GET:
+            coder.settings['standings_with_detail'] = with_detail
+            coder.save()
+        else:
+            with_detail = coder.settings.get('standings_with_detail', False)
 
     if with_detail:
         for k in contest_fields:

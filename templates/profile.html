@@ -26,15 +26,29 @@
 
 {% if not request.GET.search %}
 <h3>Accounts</h3>
-{% for account in accounts %}
-<a
-  class="account badge progress-bar-{% if account.resource.profile_url %}info{% else %}default{% endif %}"
-  href="{% if account.resource.profile_url %}{{ account.resource.profile_url|format_dict:account.dict_with_info }}{% else %}{{ account.resource.href }}{% endif %}"
->
-  {{ account.key }}
-  <small class="text-muted">{{ account.resource.host }}</small>
-</a>
+<div id="list-accounts">
+{% for resource in resources %}
+  {% with account=resource.coder_accounts.0 %}
+    <span class="btn-group btn-group-sm">
+      <a class="btn btn-default account">
+        {% coder_color_circle resource account.info %}
+        <span class="{% coder_color_class resource account.info %}">{{ account.key }}</span>
+        {% if resource.coder_accounts|length > 1 %}
+        <span class="badge"data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
+          +{{ resource.coder_accounts|length|add:-1 }}
+        </span>
+        {% endif %}
+      </a>
+      {% if resource.profile_url %}
+      <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" class="external-link" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+      {% endif %}
+      <a class="btn btn-default" href="?search=resource:{{ resource.host|urlencode }}">{{ resource.host }}</a>
+    </span>
+  {% for account in resource.coder_accounts %}
+  {% endfor %}
+  {% endwith %}
 {% endfor %}
+</div>
 {% endif %}
 
 {% if not request.GET.search %}

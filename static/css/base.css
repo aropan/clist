@@ -130,3 +130,13 @@ html {
 .coder-color {
   font-weight: bold;
 }
+
+
+/*
+ * tooltip nowrap
+ */
+
+.tooltip-inner {
+  white-space: nowrap !important;
+  max-width: none !important;
+}

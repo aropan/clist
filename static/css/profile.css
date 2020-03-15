@@ -5,30 +5,53 @@
 }
 
 #contests .title {
-    text-align: left;
+  text-align: left;
 }
 
 #contests .endless_container {
-    margin-right: -15px;
-    margin-left: -15px;
+  margin-right: -15px;
+  margin-left: -15px;
 }
 
 .contest>div {
-    padding: 3px;
+  padding: 3px;
 }
 
 .account a {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 .account .text-muted {
-    color: white;
+  color: white;
 }
 
 .title .problems {
-    display: inline-block;
+  display: inline-block;
 }
 
 input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: searchfield-cancel-button;
+}
+
+#list-accounts {
+  text-align: center;
+}
+
+#list-accounts a {
+  font-weight: bold;
+}
+
+#list-accounts .btn-group {
+  margin: 5px;
+}
+
+#list-accounts .btn.account:hover {
+  background-color: #fff;
+  border-color: #ccc;
+  cursor: default;
+}
+
+#list-accounts .badge {
+  font-size: 90%;
+  background-color: #ccc;
 }

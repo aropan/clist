@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.urls import reverse
-from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField, IntegerField
+from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField, IntegerField, Prefetch
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -33,23 +33,30 @@ from utils.regex import verify_regex, get_iregex_filter
 def profile(request, username, template='profile.html', extra_context=None):
     coder = get_object_or_404(Coder, user__username=username)
     statistics = Statistics.objects \
-        .filter(account__in=coder.account_set.all()) \
+        .filter(account__coders=coder) \
         .select_related('contest', 'contest__resource', 'account') \
         .order_by('-contest__end_time')
 
     search = request.GET.get('search')
-    if search is not None:
-        if search.startswith('problem:'):
-            _, search = search.split(':', 1)
-            search_re = verify_regex(search)
-            statistics = statistics.filter(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
-        elif search.startswith('contest:'):
-            _, search = search.split(':', 1)
-            statistics = statistics.filter(contest__id=search)
-        else:
-            search_re = verify_regex(search)
-            query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
-            statistics = statistics.filter(query)
+    if search:
+        for search in search.split(' && '):
+            if search.startswith('problem:'):
+                _, search = search.split(':', 1)
+                search_re = verify_regex(search)
+                statistics = statistics.filter(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
+            elif search.startswith('contest:'):
+                _, search = search.split(':', 1)
+                statistics = statistics.filter(contest__id=search)
+            elif search.startswith('account:'):
+                _, search = search.split(':', 1)
+                statistics = statistics.filter(account__key=search)
+            elif search.startswith('resource:'):
+                _, search = search.split(':', 1)
+                statistics = statistics.filter(contest__resource__host=search)
+            else:
+                search_re = verify_regex(search)
+                query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
+                statistics = statistics.filter(query)
 
     history_resources = Statistics.objects \
         .filter(account__coders=coder) \
@@ -61,14 +68,21 @@ def profile(request, username, template='profile.html', extra_context=None):
         .annotate(num_contests=Count('contest')) \
         .order_by('-num_contests')
 
-    accounts = coder.account_set \
-        .select_related('resource') \
-        .annotate(num_stats=Count('statistics')) \
-        .order_by('-num_stats')
+    resources = Resource.objects \
+        .prefetch_related(Prefetch(
+            'account_set',
+            queryset=Account.objects.filter(coders=coder).annotate(num_stats=Count('statistics')).order_by('-num_stats'),
+            to_attr='coder_accounts',
+        )) \
+        .annotate(num_contests=Count(
+            'contest',
+            filter=Q(contest__in=Statistics.objects.filter(account__coders=coder).values('contest'))
+        )) \
+        .filter(num_contests__gt=0).order_by('-num_contests')
 
     context = {
         'coder': coder,
-        'accounts': accounts,
+        'resources': resources,
         'statistics': statistics,
         'history_resources': history_resources,
     }

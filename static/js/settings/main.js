@@ -586,7 +586,7 @@ $(function() {
                 };
             },
         },
-        minimumInputLength: 0
+        minimumInputLength: 1
     }).on('select2:select', function (e) {
         var account = $search.select2('data')[0]
         if (account.resource) {
