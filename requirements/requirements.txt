@@ -10,6 +10,8 @@ django-markdown-app==0.9.6
 django-phonenumber-field==2.2.0
 django-static-fontawesome==5.0.8.1
 django-tastypie==0.14.2
+django-user-agents==0.4.0
+django-print-sql==2018.3.6
 pytest-django==3.8.0
 phonenumbers==8.10.6
 psycopg2==2.7.7
@@ -38,3 +40,4 @@ git+https://github.com/piotrbilski/django-tastypie-swagger@dec9484d3ccb7c0bb0025
 git+https://github.com/aropan/django-el-pagination@loading-within-table-pr79
 geopy==1.21.0
 cssutils==1.0.2
+unicodecsv==0.14.1

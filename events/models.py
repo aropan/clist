@@ -172,6 +172,7 @@ class TeamManager(models.Manager):
                 'author__organization',
                 'event',
             ) \
+            .prefetch_related('participants__organization') \
             .annotate(participants_count=models.Count('participants'))
 
 

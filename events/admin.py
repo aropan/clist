@@ -5,6 +5,8 @@ from django.contrib import admin
 from django.http import HttpResponse
 from django.utils import timezone
 from django.db.models import OuterRef, Exists
+from django_print_sql import print_sql_decorator
+
 
 from pyclist.admin import BaseModelAdmin, admin_register
 from events.models import Event, Participant, JoinRequest, Team, Login
@@ -83,12 +85,13 @@ class TeamAdmin(BaseModelAdmin):
         self.message_user(request, '{} successfully created logins, {} skipped.'.format(done, skip))
     bind_login.short_description = 'Bind login with current status as stage'
 
+    @print_sql_decorator()
     def import_to_csv(self, request, queryset):
         filename = 'information-{}.csv'.format(timezone.now().strftime('%Y%m%d%H%M'))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         encoding = 'cp1251' if request.user_agent.os.family == 'Windows' else 'utf8'
-        writer = csv.writer(response, delimiter=';', encoding=encoding)
+        writer = csv.writer(response, delimiter=';', encoding=encoding, errors='replace')
         fields = [
             'email',
             'first_name',
