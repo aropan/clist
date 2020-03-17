@@ -1,6 +1,8 @@
 import collections
 import re
 import json
+import logging
+
 
 import pytz
 from django.conf import settings as django_settings
@@ -27,6 +29,9 @@ from ranking.models import Statistics, Module, Account
 from true_coders.models import Filter, Party, Coder, Organization
 from events.models import Team, TeamStatus
 from utils.regex import verify_regex, get_iregex_filter
+
+
+logger = logging.getLogger(__name__)
 
 
 @page_template('profile_contests_paging.html')
@@ -153,8 +158,7 @@ def ratings(request, username):
 
         date = r['date']
         if request.user.is_authenticated and request.user.coder:
-            coder = request.user.coder
-            date = timezone.localtime(date, pytz.timezone(coder.timezone))
+            date = timezone.localtime(date, pytz.timezone(request.user.coder.timezone))
         r['when'] = date.strftime('%b %-d, %Y')
         resource = ratings['data']['resources'].setdefault(r['host'], {})
         resource['colors'] = colors
@@ -164,7 +168,13 @@ def ratings(request, username):
                 'timestamp': int(date.timestamp()),
             }
         r['slug'] = slugify(r['name'])
-        resource.setdefault('data', []).append(r)
+        resource.setdefault('data', [])
+        if resource['data'] and r['old_rating']:
+            last = resource['data'][-1]
+            if last['new_rating'] != r['old_rating']:
+                print(f"coder = {coder}: prev = {last}, curr = {r}")
+                logger.warning(f"coder = {coder}: prev = {last}, curr = {r}")
+        resource['data'].append(r)
 
     return JsonResponse(ratings)
 

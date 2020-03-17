@@ -6,7 +6,7 @@ import requests
 from time import time, sleep
 from hashlib import sha512
 from pprint import pprint
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 from string import ascii_lowercase
 from random import choice
 from collections import OrderedDict
@@ -93,6 +93,8 @@ class Statistic(BaseModule):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
 
+        standings_url = (self.url + '/standings').replace('contests', 'contest')
+
         is_gym = '/gym/' in self.url
         result = {}
 
@@ -129,6 +131,7 @@ class Statistic(BaseModule):
                     d['full_score'] = p['points']
                 elif contest_type == 'IOI':
                     d['full_score'] = 100
+                d['url'] = urljoin(standings_url.rstrip('/'), f"problem/{d['short']}")
                 problems_info[d['short']] = d
 
             grouped = any('teamId' in row['party'] for row in data['result']['rows'])
@@ -269,7 +272,7 @@ class Statistic(BaseModule):
 
         standings = {
             'result': result,
-            'url': (self.url + '/standings').replace('contests', 'contest'),
+            'url': standings_url,
             'problems': list(problems_info.values()),
             'options': {
                 'fixed_fields': [('hack', 'Hacks')],

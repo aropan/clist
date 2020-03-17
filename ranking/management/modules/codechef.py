@@ -93,6 +93,7 @@ class Statistic(BaseModule):
                             }
                             page = REQ.get(url, headers=headers)
                             data = json.loads(page)
+                            assert data.get('status') != 'rate_limit_exceeded'
                             break
                         except Exception:
                             traceback.print_exc()
@@ -121,6 +122,7 @@ class Statistic(BaseModule):
                             d.append({
                                 'short': p['code'],
                                 'name': p['name'],
+                                'url': f"https://www.codechef.com/problems/{p['code']}",
                             })
                         n_total_page = data['availablePages']
                         pbar = tqdm.tqdm(total=n_total_page * len(urls))

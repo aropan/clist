@@ -272,7 +272,7 @@ def coder_color_circle(resource, *values):
     color = rating['hex_rgb']
     if rating['high'] == 100500:
         fill = f'<circle cx="8" cy="8" r="3" style="fill: {color}"></circle>'
-        title = 'target'
+        title = 'Target'
     else:
         low = max(rating['low'], 0)
         percent = (value - low) / (rating['high'] - low)

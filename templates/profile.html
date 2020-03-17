@@ -89,6 +89,18 @@ canvas{
 
 <script>
 $(function(){
+    function get_y(value, y_axis) {
+      value = (y_axis.max - value) / (y_axis.max - y_axis.min)
+      value = Math.min(Math.max(value, 0), 1)
+      return value * (y_axis.bottom - y_axis.top) + y_axis.top
+    }
+
+    function get_x(value, x_axis) {
+      value = (value - x_axis.min) / (x_axis.max - x_axis.min)
+      value = Math.min(Math.max(value, 0), 1)
+      return value * (x_axis.right - x_axis.left) + x_axis.left
+    }
+
   function create_chart_config(resource, response, dates) {
     var min_rating = Math.min(...$.map(response['data'], function(val) { return val['new_rating']; }))
     var max_rating = Math.max(...$.map(response['data'], function(val) { return val['new_rating']; }))
@@ -287,28 +299,16 @@ $(function(){
           var y_axis = chart.chart.scales["y-axis-0"];
           var x_axis = chart.chart.scales["x-axis-0"];
 
-          function gety(value) {
-            value = (y_axis.max - value) / (y_axis.max - y_axis.min)
-            value = Math.min(Math.max(value, 0), 1)
-            return value * (y_axis.bottom - y_axis.top) + y_axis.top
-          }
-
-          function getx(value) {
-            value = (value - x_axis.min) / (x_axis.max - x_axis.min)
-            value = Math.min(Math.max(value, 0), 1)
-            return value * (x_axis.right - x_axis.left) + x_axis.left
-          }
-
           for (var i = 0; i < rating_colors.length; ++i) {
-            var to = gety(rating_colors[i].low)
-            var from = gety(rating_colors[i].high + 1)
+            var to = get_y(rating_colors[i].low, y_axis)
+            var from = get_y(rating_colors[i].high + 1, y_axis)
             hsl = rating_colors[i].hsl
             color = 'hsl(' + hsl[0] * 360 + ',' + hsl[1] * 100 + '%,' + (hsl[2] * 100 + 100) * 0.5 + '%)'
             ctx.fillStyle = color
             ctx.fillRect(x_axis.left, from, x_axis.width, to - from)
           }
 
-          var y = gety(highest['value'])
+          var y = get_y(highest['value'], y_axis)
           ctx.beginPath();
           ctx.setLineDash([5, 15])
           ctx.moveTo(x_axis.left, y)
@@ -319,24 +319,11 @@ $(function(){
         },
         beforeDatasetsDraw: function (chart) {
           var ctx = chart.chart.ctx
-
           var y_axis = chart.chart.scales["y-axis-0"];
           var x_axis = chart.chart.scales["x-axis-0"];
 
-          function gety(value) {
-            value = (y_axis.max - value) / (y_axis.max - y_axis.min)
-            value = Math.min(Math.max(value, 0), 1)
-            return value * (y_axis.bottom - y_axis.top) + y_axis.top
-          }
-
-          function getx(value) {
-            value = (value - x_axis.min) / (x_axis.max - x_axis.min)
-            value = Math.min(Math.max(value, 0), 1)
-            return value * (x_axis.right - x_axis.left) + x_axis.left
-          }
-
-          var x = getx(highest['timestamp'] * 1000)
-          var y = gety(highest['value'])
+          var x = get_x(highest['timestamp'] * 1000, x_axis)
+          var y = get_y(highest['value'], y_axis)
           var width = 40
           var height = 20
           var rx = Math.min(Math.max(x_axis.left + 10, x - width / 2), x_axis.right - width - 10)

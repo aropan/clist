@@ -12,7 +12,10 @@
     function get_algorithm_key(&$title) {
         $title = preg_replace('#single\s*round\s*match#i', 'SRM', $title);
         $title = preg_replace('#marathon\s*match#i', 'MM', $title);
-        if (!preg_match('#(?P<key>(?:srm|mm)\s*[.0-9]*[0-9]|TCO[0-9]+\s*(?:algorithm|marathon)\s*round\s*[.0-9a-z]*[0-9a-z])#i', $title, $match)) {
+        if (preg_match('#\s+(test|testing)$#i', $title)) {
+            return false;
+        }
+        if (!preg_match('#(?P<key>(?:srm|mm)\s*[-/.0-9]*[0-9]|TCO[0-9]+\s*(?:algorithm|marathon)\s*round\s*[.0-9a-z]*[0-9a-z])#i', $title, $match)) {
             return false;
         }
         return $match['key'];
@@ -184,9 +187,6 @@
             $page = curlexec($url);
             preg_match_all('#(?:<td[^>]*>(?:[^<]*<a[^>]*href="(?P<url>[^"]*/stat[^"]*rd=(?P<rd>[0-9]+)[^"]*)"[^>]*>(?P<title>[^<]*)</a>[^<]*|(?P<date>[0-9]+\.[0-9]+\.[0-9]+))</td>[^<]*){2}#', $page, $matches, PREG_SET_ORDER);
             foreach ($matches as $match) {
-                if (in_array('Fun', explode(" ", $match['title']))) {
-                    continue;
-                }
                 $round_overview[$match['rd']] = array(
                     'url' => url_merge($base_url, htmlspecialchars_decode($match['url'])),
                     'title' => $match['title'],
@@ -257,6 +257,11 @@
             if ($date < $now - 5 * 24 * 60 * 60 || $now - 1 * 24 * 60 * 60 < $date) {
                 continue;
             }
+        }
+
+        # FIX same name
+        if (abs(strtotime($date_str) - strtotime('06.03.2006')) < 4 * 24 * 60 * 60 && strpos($ro['title'], 'TCO06 Sponsor') === 0) {
+            $ro['title'] .= ' Track Round';
         }
 
         $title = $ro['title'];

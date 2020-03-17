@@ -27,6 +27,7 @@
 
     preg_match_all('#<td class="date">(?<date>\d+\s[^\s]+(?:\s\d+)?)[^<]*</td><td class="time">(?<date_start_time>[^\s<]*)[^<]*</td><td[^>]*>(?<durations>[^<]*)</td><td[^>]*>(?<title>[^<]*)</td>\s*</tr>#', $page, $matches, PREG_SET_ORDER);
     $_contests = [];
+    $_timings = [];
     foreach ($matches as $match)
     {
         $title = 'Интернет-олимпиада';
@@ -52,7 +53,11 @@
             'url' => $URL,
             'timezone' => $TIMEZONE,
             'key' => $key,
-            'rid' => $RID
+            'rid' => $RID,
+        );
+        $_timings[$key] = array(
+            'start_time' => trim($match['date']) . ' ' . trim($match['date_start_time']),
+            'duration' => '05:00',
         );
     }
 
@@ -66,19 +71,22 @@
             $u = url_merge($url, $match['url']);
             preg_match('#/(?P<key>20[0-9]{6})/#', $u, $m);
             $key = $m['key'];
+
+            $title = $match['title'];
+            list($date, $title) =  preg_split('#[.,] #', $title, 2);
+            $date = explode(' ', replace_months($date))[0];
+            $title = html_entity_decode($title);
+
             if (isset($_contests[$key]) && isset($_contests[$key]['standings_url'])) {
                 preg_match('#-(?P<subkey>[^-]*)\.[^.-]*$#', $_contests[$key]['standings_url'], $m);
                 $new_key = $key . '-' . $m['subkey'];
                 $_contests[$new_key] = $_contests[$key];
                 $_contests[$new_key]['key'] = $new_key;
             }
-            $title = $match['title'];
-            list($date, $title) =  preg_split('#[.,] #', $title, 2);
-            $date = explode(' ', replace_months($date))[0];
-            $title = html_entity_decode($title);
+
             $_contests[$key] = array(
-                'start_time' => $date,
-                'duration' => '00:00',
+                'start_time' => isset($_timings[$key])? $_timings[$key]['start_time'] : $date,
+                'duration' => isset($_timings[$key])? $_timings[$key]['duration'] : '05:00',
                 'title' => $title,
                 'host' => $HOST,
                 'url' => $url,
@@ -87,6 +95,7 @@
                 'key' => $key,
                 'rid' => $RID
             );
+
         }
         if (!$add_from_seasons) {
             break;

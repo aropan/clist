@@ -271,8 +271,9 @@ class Command(BaseCommand):
 
                             addition = type(r)()
                             for k, v in r.items():
-                                k = k[0].upper() + k[1:]
-                                k = '_'.join(map(str.lower, re.findall('[A-Z][^A-Z]*', k)))
+                                if k[0].isalpha():
+                                    k = k[0].upper() + k[1:]
+                                    k = '_'.join(map(str.lower, re.findall('[A-ZА-Я][^A-ZА-Я]*', k)))
 
                                 if k not in fields_set:
                                     fields_set.add(k)
@@ -399,7 +400,7 @@ class Command(BaseCommand):
 
                         contest.save()
 
-                        progress_bar.set_postfix(fields=str(fields))
+                        progress_bar.set_postfix(n_fields=len(fields))
 
                     action = standings.get('action')
                     if action is not None:
@@ -424,8 +425,7 @@ class Command(BaseCommand):
             except (ExceptionParseStandings, InitModuleException) as e:
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
-                url = contest.standings_url or contest.url
-                self.logger.error(f'contest = {contest}, url = {url}, error = {e}, row = {r}')
+                self.logger.error(f'contest = {contest.pk}, error = {e}, row = {r}')
                 if stop_on_error:
                     self.logger.error(format_exc())
                     break

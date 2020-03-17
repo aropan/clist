@@ -127,7 +127,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 statistics = statistics.filter(filt)
             fields_to_select[f] = values
 
-    with_detail = request.GET.get('detail') == 'true'
+    with_detail = request.GET.get('detail') in ['true', 'on']
     if request.user.is_authenticated:
         coder = request.user.coder
         if 'detail' in request.GET:
@@ -144,7 +144,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 and 'country' not in k
             ):
                 field = ' '.join(k.split('_'))
-                if not field[0].isupper():
+                if field and not field[0].isupper():
                     field = field.title()
                 fields[k] = field
 
@@ -229,6 +229,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                     k = get_problem_key(p)
                     if k not in _problems:
                         _problems[k] = p
+                    else:
+                        for f in 'n_accepted', 'n_teams':
+                            if f in p:
+                                _problems[k][f] = _problems[k].get(f, 0) + p[f]
+
             problems = list(_problems.values())
         else:
             statistics = statistics.filter(addition__division=division)
