@@ -1,11 +1,12 @@
-from pyclist.admin import BaseModelAdmin, admin_register
+from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
+from django.db import transaction
+from django.utils import timezone
+
+from pyclist.admin import BaseModelAdmin, admin_register
 from clist.models import Resource, Contest, TimingContest, Banner
 from ranking.models import Rating
-from django.db import transaction
 from ranking.management.commands.parse_statistic import Command as parse_stat
-from django.contrib.admin import SimpleListFilter
-from django.utils import timezone
 
 
 class PastContestListFilter(SimpleListFilter):
@@ -93,12 +94,16 @@ class ResourceAdmin(BaseModelAdmin):
         ['Calendar information', {'fields': ['color', 'uid']}],
         [None, {'fields': ['info', 'ratings', 'has_rating_history']}],
     ]
-    list_display = ['host', 'enable', 'url', 'profile_url', 'timezone', '_num_contests']
-    list_filter = ['timezone']
+    list_display = ['host', 'enable', '_has_rating', 'profile_url', 'timezone', '_num_contests']
+    list_filter = ['has_rating_history', 'enable', 'timezone']
     search_fields = ['host']
 
     def _num_contests(self, obj):
         return obj.contest_set.count()
+
+    def _has_rating(self, obj):
+        return bool(obj.ratings)
+    _has_rating.boolean = True
 
 
 @admin_register(TimingContest)

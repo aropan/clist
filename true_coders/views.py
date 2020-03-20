@@ -172,7 +172,6 @@ def ratings(request, username):
         if resource['data'] and r['old_rating']:
             last = resource['data'][-1]
             if last['new_rating'] != r['old_rating']:
-                print(f"coder = {coder}: prev = {last}, curr = {r}")
                 logger.warning(f"coder = {coder}: prev = {last}, curr = {r}")
         resource['data'].append(r)
 
