@@ -80,6 +80,7 @@ INSTALLED_APPS = (
     'django_static_fontawesome',
     'django_extensions',
     'django_user_agents',
+    'django_json_widget',
 )
 
 MIDDLEWARE = (

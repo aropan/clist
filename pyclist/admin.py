@@ -4,6 +4,8 @@ from easy_select2 import select2_modelform
 from django.db import connection, transaction
 from django.core.cache import cache
 from django.core.paginator import Paginator
+from django.contrib.postgres import fields
+from django_json_widget.widgets import JSONEditorWidget
 
 
 class CachingPaginator(Paginator):
@@ -58,6 +60,10 @@ class BaseModelAdmin(admin.ModelAdmin):
     save_as = True
     paginator = CachingPaginator
     show_full_result_count = False
+
+    formfield_overrides = {
+        fields.JSONField: {'widget': JSONEditorWidget},
+    }
 
     class Meta:
         abstract = True
