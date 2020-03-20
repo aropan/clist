@@ -4,9 +4,11 @@
 import json
 import time
 import collections
+from urllib.parse import quote_plus
 from pprint import pprint
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from contextlib import ExitStack
+from ratelimiter import RateLimiter
 
 import tqdm
 
@@ -98,14 +100,16 @@ class Statistic(BaseModule):
                 if f in row and row[f] is None:
                     row.pop(f)
 
-        if not has_rating:
+        if not has_rating and handles_to_get_new_rating:
             with ExitStack() as stack:
                 executor = stack.enter_context(PoolExecutor(max_workers=8))
                 pbar = stack.enter_context(tqdm.tqdm(total=len(handles_to_get_new_rating), desc='getting new rankings'))
 
+                @RateLimiter(max_calls=1, period=1)
                 def fetch_data(handle):
-                    url = self.FETCH_USER_INFO_URL_.format(handle)
-                    data = json.loads(REQ.get(url))
+                    url = self.FETCH_USER_INFO_URL_.format(quote_plus(handle))
+                    page = REQ.get(url)
+                    data = json.loads(page)
                     return handle, data
 
                 for handle, data in executor.map(fetch_data, handles_to_get_new_rating):

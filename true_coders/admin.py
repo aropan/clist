@@ -69,7 +69,7 @@ class OrganizationAdmin(BaseModelAdmin):
 
     class ParticipantInline(admin.StackedInline):
         model = Participant
-        fields = ['organization']
+        fields = ['is_coach']
         show_change_link = True
         can_delete = False
         extra = 0

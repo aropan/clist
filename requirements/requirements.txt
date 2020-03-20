@@ -41,3 +41,4 @@ git+https://github.com/aropan/django-el-pagination@loading-within-table-pr79
 geopy==1.21.0
 cssutils==1.0.2
 unicodecsv==0.14.1
+ratelimiter==1.2.0

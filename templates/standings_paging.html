@@ -116,7 +116,7 @@
           <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
         {% else %}
           {% with intvalue=value|toint %}
-            <span{% if field == "rating_change" %} style="font-weight: bold;{% if intvalue %} color: {% if intvalue > 0 %}#0f0{% else %}#f00{% endif %}{% endif %}"{% endif %}>
+            <span{% if field == "rating_change" %} class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}"{% endif %}>
               {% if field == "rating_change" and intvalue %}
                 <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
               {% else %}

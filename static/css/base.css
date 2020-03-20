@@ -131,6 +131,17 @@ html {
   font-weight: bold;
 }
 
+.rating-change {
+  font-weight: bold;
+}
+
+.rating-change-up {
+  color: #090;
+}
+
+.rating-change-down {
+  color: #f00;
+}
 
 /*
  * tooltip nowrap
