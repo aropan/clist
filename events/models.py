@@ -306,6 +306,7 @@ class Login(BaseModel):
         template = get_template(filepath)
         message = template.render({'login': self, 'team': self.team})
         subject, message = message.split('\n\n', 1)
+        message = message.replace('\n', '\n<br>')
         to = []
         for m in self.team.members:
             to.append(m.email)
@@ -326,4 +327,4 @@ class Login(BaseModel):
         return '%s in %s' % (self.username, TeamStatus.labels[self.stage])
 
     class Meta:
-        unique_together = (('team', 'stage'), )
+        unique_together = (('team', 'stage'), ('stage', 'username'))
