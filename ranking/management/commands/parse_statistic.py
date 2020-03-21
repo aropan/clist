@@ -279,7 +279,7 @@ class Command(BaseCommand):
                                     fields_set.add(k)
                                     fields.append(k)
 
-                                if k in Resource.RATING_FIELDS and v is None:
+                                if (k in Resource.RATING_FIELDS or k == 'rating_change') and v is None:
                                     continue
 
                                 addition[k] = v

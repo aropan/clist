@@ -48,6 +48,7 @@ class Statistic(BaseModule):
         result = {}
         prev = None
         handles_to_get_new_rating = []
+        has_rated = data.get('is_rated', True) or data.get('has_rating', True)
         has_rating = False
         rankings = sorted(data['rankings'], key=lambda x: (-x['points'], x['cumtime']))
         for index, r in enumerate(rankings, start=1):
@@ -55,7 +56,7 @@ class Statistic(BaseModule):
             if not any(solutions):
                 continue
             handle = r.pop('user')
-            row = result.setdefault(handle, {})
+            row = result.setdefault(handle, collections.OrderedDict())
 
             row['member'] = handle
             row['solving'] = r.pop('points')
@@ -85,22 +86,25 @@ class Statistic(BaseModule):
                     p['time'] = self.to_time(t)
 
             r.pop('is_disqualified', None)
+            if has_rated:
+                row['old_rating'] = r.pop('old_rating', None)
+                row['rating_change'] = None
+                row['new_rating'] = r.pop('new_rating', None)
+
             row.update({k: v for k, v in r.items() if k not in row})
 
             row['solved'] = {'solving': solved}
 
-            if 'new_rating' in row:
-                has_rating = True
-            elif statistics is None or 'new_rating' not in statistics.get(handle, {}):
-                handles_to_get_new_rating.append(handle)
-            else:
-                row['new_rating'] = statistics[handle]['new_rating']
-                row['old_rating'] = statistics[handle].get('old_rating')
-            for f in 'old_rating', 'new_rating':
-                if f in row and row[f] is None:
-                    row.pop(f)
+            if has_rated:
+                if row.get('new_rating') is not None:
+                    has_rating = True
+                elif statistics is None or 'new_rating' not in statistics.get(handle, {}):
+                    handles_to_get_new_rating.append(handle)
+                else:
+                    row['old_rating'] = statistics[handle].get('old_rating')
+                    row['new_rating'] = statistics[handle]['new_rating']
 
-        if not has_rating and handles_to_get_new_rating:
+        if has_rated and not has_rating and handles_to_get_new_rating:
             with ExitStack() as stack:
                 executor = stack.enter_context(PoolExecutor(max_workers=8))
                 pbar = stack.enter_context(tqdm.tqdm(total=len(handles_to_get_new_rating), desc='getting new rankings'))
