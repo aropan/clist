@@ -17,6 +17,7 @@ class EventAdmin(BaseModelAdmin):
     list_display = ['name', 'slug', 'participants_count', 'teams_count', 'registration_deadline']
     search_fields = ['name']
     prepopulated_fields = {'slug': ('name', )}
+    textarea_fields = ['information']
 
     def participants_count(self, inst):
         return inst.participant_set.count()

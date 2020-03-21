@@ -16,6 +16,7 @@ from django.views.decorators.cache import cache_page
 from el_pagination.decorators import page_templates
 
 from events.models import Event, Participant, Team, JoinRequest, TeamStatus, TshirtSize
+from clist.views import get_timezone, get_timeformat
 from true_coders.models import Organization
 import true_coders.views
 
@@ -260,6 +261,8 @@ def event(request, slug, template='event.html', extra_context=None):
         'team_status': TeamStatus,
         'tshirt_size': TshirtSize,
         'teams': teams,
+        'timezone': get_timezone(request),
+        'timeformat': get_timeformat(request),
         'defaults': {
             # 'organization': Organization.objects.get(abbreviation='BSUIR').name,
             'country': {'code': 'BY', 'name': dict(countries)['BY']},

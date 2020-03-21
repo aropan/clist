@@ -1,7 +1,8 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Permission
 from easy_select2 import select2_modelform
-from django.db import connection, transaction
+from django.db import connection, transaction, models
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.contrib.postgres import fields
@@ -64,6 +65,12 @@ class BaseModelAdmin(admin.ModelAdmin):
     formfield_overrides = {
         fields.JSONField: {'widget': JSONEditorWidget},
     }
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if isinstance(db_field, models.fields.CharField) and db_field.name in getattr(self, 'textarea_fields', []):
+            formfield.widget = forms.Textarea(attrs=formfield.widget.attrs)
+        return formfield
 
     class Meta:
         abstract = True

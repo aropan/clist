@@ -48,7 +48,9 @@
             </div>
             {% endif %}
             <div>
-                <label>Registration deadline</label>&nbsp;<i class="far fa-clock"></i>&nbsp;{{ event.registration_deadline}}{% if not registration.over %} ({{ registration.timeleft }}){% endif %}
+                <label>Registration deadline</label>&nbsp;<i class="far fa-clock"></i>
+                <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg=Registration%20deadline%20of%20{{ event.name }}&amp;iso={{ event.registration_deadline|format_time:"%Y%m%dT%H%M" }}">{{ event.registration_deadline|timezone:timezone|format_time:timeformat }}</a>
+                {% if not registration.over %} ({{ registration.timeleft }}){% endif %}
             </div>
             <div>
                 {{ event.information|safe }}
