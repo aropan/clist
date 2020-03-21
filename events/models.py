@@ -306,7 +306,7 @@ class Login(BaseModel):
         template = get_template(filepath)
         message = template.render({'login': self, 'team': self.team})
         subject, message = message.split('\n\n', 1)
-        message = message.replace('\n', '\n<br>')
+        message = message.replace('\n', '<br>\n')
         to = []
         for m in self.team.ordered_participants:
             to.append(m.email)

@@ -43,7 +43,8 @@ class Command(BaseCommand):
             for team, login in tqdm.tqdm(zip(teams, logins), total=len(logins)):
                 message = template.render({'team': team, 'login': login})
                 subject, message = message.split('\n\n', 1)
-                to = [settings.ADMINS[0][1]] if options['dryrun'] else [m.email for m in team.members]
+                message = message.replace('\n', '<br>\n')
+                to = [settings.ADMINS[0][1]] if options['dryrun'] else [m.email for m in team.ordered_participants]
 
                 msg = EmailMultiAlternatives(
                     subject,
