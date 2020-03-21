@@ -308,7 +308,7 @@ class Login(BaseModel):
         subject, message = message.split('\n\n', 1)
         message = message.replace('\n', '\n<br>')
         to = []
-        for m in self.team.members:
+        for m in self.team.ordered_participants:
             to.append(m.email)
         msg = EmailMultiAlternatives(
             subject,
