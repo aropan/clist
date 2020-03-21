@@ -12,6 +12,7 @@ from django.utils.timezone import now, timedelta
 from django.template.loader import get_template
 from django_countries import countries
 from django.views.decorators.cache import cache_page
+from phonenumber_field.phonenumber import PhoneNumber
 
 from el_pagination.decorators import page_templates
 
@@ -100,6 +101,14 @@ def event(request, slug, template='event.html', extra_context=None):
                     if not is_coach and not coder.token_set.filter(email=request.POST['email']).exists():
                         messages.error(request, 'Invalid email. Check that the account with this email is connected')
                         ok = False
+
+                try:
+                    phone_number = PhoneNumber.from_string(phone_number=request.POST.get('phone-number'))
+                    assert phone_number.is_valid()
+                except Exception:
+                    messages.error(request, 'Invalid phone number')
+                    ok = False
+
                 active_fields.append('middle-name-native')
             if ok:
                 if is_coach:
@@ -111,6 +120,11 @@ def event(request, slug, template='event.html', extra_context=None):
 
                 try:
                     data = dict(list(request.POST.items()))
+                    data['phone-number'] = phone_number.as_e164
+                    for field in active_fields:
+                        if data.get(field):
+                            data[field] = data[field].strip()
+
                     if 'organization' in data:
                         organization_name = data['organization']
                         organization, created = Organization.objects.get_or_create(name=organization_name)

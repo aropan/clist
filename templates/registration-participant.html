@@ -34,8 +34,8 @@
     </div>
     <div class="form-group">
         <label for="phone-number">Phone number</label>
-        <input {% if not disable %}id="phone-number"{% endif %} name="phone-number" class="form-control" type="tel" placeholder="Enter phone number" type="tel" pattern="^\+\d{7,15}$" value="{{ coder.phone_number }}" required {% if disable %}disabled{% endif %}>
-        <small class="form-text text-muted">It starts with + and contains only digits</small>
+        <input {% if not disable %}id="phone-number"{% endif %} name="phone-number" class="form-control" placeholder="Enter phone number" type="tel" pattern="^\+.*" value="{{ coder.phone_number }}" required {% if disable %}disabled{% endif %}>
+        <small class="form-text text-muted">In international format</small>
     </div>
 {% if not for_coach %}
     <div class="form-group">
