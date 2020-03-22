@@ -8,6 +8,9 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import logging
+import mimetypes
+import random
+import string
 from os import path, makedirs, listdir, remove, stat, environ
 from os.path import isdir, getctime
 from json import loads, dumps, load
@@ -149,6 +152,79 @@ class proxer():
         self.close()
 
 
+def encode_multipart(fields=None, files=None, boundary=None):
+    r"""Encode dict of form fields and dict of files as multipart/form-data.
+    Return tuple of (body_string, headers_dict). Each value in files is a dict
+    with required keys 'filename' and 'content', and optional 'mimetype' (if
+    not specified, tries to guess mime type or uses 'application/octet-stream').
+
+    >>> body, headers = encode_multipart({'FIELD': 'VALUE'},
+    ...                                  {'FILE': {'filename': 'F.TXT', 'content': 'CONTENT'}},
+    ...                                  boundary='BOUNDARY')
+    >>> print('\n'.join(repr(l) for l in body.split('\r\n')))
+    '--BOUNDARY'
+    'Content-Disposition: form-data; name="FIELD"'
+    ''
+    'VALUE'
+    '--BOUNDARY'
+    'Content-Disposition: form-data; name="FILE"; filename="F.TXT"'
+    'Content-Type: text/plain'
+    ''
+    'CONTENT'
+    '--BOUNDARY--'
+    ''
+    >>> print(sorted(headers.items()))
+    [('Content-Length', '193'), ('Content-Type', 'multipart/form-data; boundary=BOUNDARY')]
+    >>> len(body)
+    193
+    """
+    def escape_quote(s):
+        return s.replace('"', '\\"')
+
+    if boundary is None:
+        boundary = ''.join(random.choice(string.digits + string.ascii_letters) for i in range(30))
+    lines = []
+
+    fields = fields or {}
+    for name, value in fields.items():
+        lines.extend((
+            '--{0}'.format(boundary),
+            'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
+            '',
+            str(value),
+        ))
+
+    files = files or {}
+    for name, value in files.items():
+        filename = value['filename']
+        if 'mimetype' in value:
+            mimetype = value['mimetype']
+        else:
+            mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+        lines.extend((
+            '--{0}'.format(boundary),
+            'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
+                    escape_quote(name), escape_quote(filename)),
+            'Content-Type: {0}'.format(mimetype),
+            '',
+            value['content'],
+        ))
+
+    lines.extend((
+        '--{0}--'.format(boundary),
+        '',
+    ))
+    body = '\r\n'.join(lines)
+    body = body.encode('utf8')
+
+    headers = {
+        'Content-Type': 'multipart/form-data; boundary={0}'.format(boundary),
+        'Content-Length': len(body),
+    }
+
+    return body, headers
+
+
 class requester():
     cache_timeout = 10940
     caching = True
@@ -172,12 +248,15 @@ class requester():
     def __init__(self,
                  proxy=bool(strtobool(environ.get('REQUESTER_PROXY', '0'))),
                  cookie_filename=None,
+                 caching=None,
                  user_agent=None,
                  headers=None,
                  file_name_with_proxies=path.join(path.dirname(__file__), 'proxies.txt')):
         self.opened = None
         if cookie_filename:
             self.cookie_filename = cookie_filename
+        if caching is not None:
+            self.caching = caching
         if headers:
             self.headers = headers
         else:
@@ -193,6 +272,7 @@ class requester():
                 )
             ]
         if self.cookie_filename:
+            makedirs(path.dirname(self.cookie_filename), exist_ok=True)
             self.cookiejar = MozillaCookieJar(self.cookie_filename)
             if path.exists(self.cookie_filename):
                 self.cookiejar.load()
@@ -230,6 +310,8 @@ class requester():
         time_out=None,
         headers=None,
         detect_charsets=True,
+        content_type=None,
+        files=None,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -247,13 +329,12 @@ class requester():
 
         makedirs(self.dir_cache, mode=0o777, exist_ok=True)
 
-        if isinstance(post, dict):
-            post = urllib.parse.urlencode(post).encode('utf-8')
-
+        files = files or isinstance(post, dict) and post.pop('files__', None)
+        post_urlencoded = urllib.parse.urlencode(post).encode('utf-8') if post else None
         try:
             file_cache = ''.join((
                 self.dir_cache,
-                md5((md5_file_cache or url + (post if post else "")).encode()).hexdigest(),
+                md5((md5_file_cache or url + (post_urlencoded or "")).encode()).hexdigest(),
                 ("/" + url[url.find("//") + 2:].split("?", 2)[0]).replace("/", "_"),
                 ".html",
             ))
@@ -290,16 +371,21 @@ class requester():
                 h.update(headers)
                 self.opener.addheaders = list(h.items())
 
+            if content_type == 'multipart/form-data' and post or files:
+                post_urlencoded, multipart_headers = encode_multipart(fields=post, files=files)
+                headers.update(multipart_headers)
+
             try:
                 if headers:
                     request = urllib.request.Request(url, headers=headers)
                 else:
                     request = url
+
                 time_start = datetime.utcnow()
                 response = self.opener.open(
                     request,
-                    post if post else None,
-                    timeout=time_out or self.time_out
+                    post_urlencoded if post else None,
+                    timeout=time_out or self.time_out,
                 )
                 if response.info().get("Content-Encoding", None) == "gzip":
                     buf = BytesIO(response.read())
@@ -393,15 +479,21 @@ class requester():
             self.get(url)
         return self.last_page
 
-    def form(self, page=None, action='', limit=2, fid=None, selectors=()):
+    def form(self, page=None, action='', limit=1, fid=None, selectors=(), enctype=False):
         if page is None:
             page = self.last_page
-        selectors = list(selectors) + [
-            '''method=["'](?P<method>post|get)"''',
-            f'''action=["'](?P<url>[^"']*{action}[^"']*)["']''',
-        ]
+        selectors = list(selectors)
+        selectors += ['''method=["'](?P<method>post|get)"''']
+        if action is not None:
+            selectors += [f'''action=["'](?P<url>[^"']*{action}[^"']*)["']''']
+            limit += 1
         if fid is not None:
             selectors.append(f'id="{fid}"')
+            limit += 1
+        if enctype:
+            selectors.append('enctype="(?P<enctype>[^"]*)"')
+            limit += 1
+
         selector = '|[^>]*'.join(selectors)
         regex = f'''
             <form([^>]*{selector}){{{limit}}}[^>]*>
@@ -435,7 +527,7 @@ class requester():
             if field["type"] == "checkbox" and field["checked"] is None:
                 unchecked.append(field)
             else:
-                post[field['name']] = field['value'].encode('utf8')
+                post[field['name']] = field['value']
 
         fields = re.finditer(r'''<select[^>]*name="(?P<name>[^"]*)"[^>]*>''', page, re.VERBOSE)
         for field in fields:
@@ -446,14 +538,15 @@ class requester():
             result['unchecked'] = unchecked
         return result
 
-    def submit_form(self, data, *args, url=None, **kwargs):
-        form = self.form(*args, **kwargs)
+    def submit_form(self, data, *args, url=None, form=None, **kwargs):
+        form = form or self.form(*args, **kwargs)
         form['post'].update(data)
-        data = urllib.parse.urlencode(form['post']).encode('utf-8')
+        data_urlencoded = urllib.parse.urlencode(form['post']).encode('utf-8')
         url = url or form['url']
+        content_type = form.get('enctype')
         ret = {
-            'get': lambda: self.get(urllib.parse.urljoin(url, f'?{data}')),
-            'post': lambda: self.get(url, data),
+            'get': lambda: self.get(urllib.parse.urljoin(url, f'?{data_urlencoded}'), content_type=content_type),
+            'post': lambda: self.get(url, form['post'], content_type=content_type),
         }[form['method'].lower()]()
         return ret
 
