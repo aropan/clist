@@ -41,14 +41,3 @@ def change_names(contest_id, names):
             url='https://contest.yandex.ru/admin/contest-participants/change-names',
         )
         return page
-
-
-if __name__ == "__main__":
-    change_names(
-        contest_id=17436,
-        names=[
-            {'login': 'bsuir-open-2020-qual-951', 'name': '[KhNURE] Brainstorm: Rudenko, Yevtushenko, Kibenko'},
-            {'login': 'bsuir-open-2020-qual-686', 'name': '[BSUIR] Макан: Orlov, Krylov, Galagutskiy'},
-            {'login': 'bsuir-open-2020-qual-774', 'name': '[BSUIR] Cheeki Breeki: Kireev, Bushmanova, Dudich'},
-        ],
-    )
