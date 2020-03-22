@@ -153,6 +153,9 @@ class proxer():
 
 
 def encode_multipart(fields=None, files=None, boundary=None):
+    """Encode multipart form data to upload files via POST.
+    http://code.activestate.com/recipes/578668-encode-multipart-form-data-for-uploading-files-via/"""
+
     r"""Encode dict of form fields and dict of files as multipart/form-data.
     Return tuple of (body_string, headers_dict). Each value in files is a dict
     with required keys 'filename' and 'content', and optional 'mimetype' (if
