@@ -38,7 +38,7 @@ class Command(BaseCommand):
         event = Event.objects.order_by('-created').first()
         logins_subquery = Login.objects.filter(team=OuterRef('pk'))
         teams = Team.objects \
-            .filter(modified__lt=timezone.now() - timedelta(minutes=5), event=event, status=status) \
+            .filter(modified__lt=timezone.now() - timedelta(minutes=15), event=event, status=status) \
             .annotate(has_login=Exists(logins_subquery)) \
             .filter(has_login=False)
 
