@@ -111,7 +111,6 @@ class TimingContestAdmin(BaseModelAdmin):
     list_display = ['contest', 'notification', 'statistic', 'modified']
     list_filter = ['contest__host']
     search_fields = ['contest__title', 'contest__host']
-    raw_id_fields = ['contest']
 
     def get_readonly_fields(self, request, obj=None):
         return ['notification', 'statistic', ] + \

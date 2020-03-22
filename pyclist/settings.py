@@ -11,10 +11,16 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
 from os import path, environ
+import warnings
 
 from django.utils.translation import gettext_lazy as _
+from django.core.paginator import UnorderedObjectListWarning
 
 from pyclist import conf
+
+
+# disable UnorderedObjectListWarning when using autocomplete_fields
+warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
 
 
 # Build paths inside the project like this: path.join(BASE_DIR, ...)
@@ -76,7 +82,6 @@ INSTALLED_APPS = (
     'events',
     'django_countries',
     'el_pagination',
-    'easy_select2',
     'django_static_fontawesome',
     'django_extensions',
     'django_user_agents',

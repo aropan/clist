@@ -87,7 +87,6 @@ class StatisticsAdmin(BaseModelAdmin):
     list_display = ['account', 'contest', 'place', 'solving', 'upsolving']
     search_fields = ['account__key', 'contest__title']
     list_filter = ['contest__host']
-    raw_id_fields = ['account', 'contest']
 
 
 @admin_register(Stage)

@@ -2,7 +2,6 @@ Django==2.2.10
 django-add-default-value==0.3.2
 django-countries==5.5
 django-crispy-forms==1.7.2
-django-easy-select2==1.5.5
 django-enumfield==1.5
 django-extensions==2.2.8
 django-jsonify==0.3.0
