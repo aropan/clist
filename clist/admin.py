@@ -77,13 +77,19 @@ class ContestAdmin(BaseModelAdmin):
     actions = [create_timing, parse_statistic]
 
     def get_readonly_fields(self, request, obj=None):
-        return ['updated', ] + \
-            list(super().get_readonly_fields(request, obj))
+        return ['updated', ] + list(super().get_readonly_fields(request, obj))
 
     class RatingSet(admin.TabularInline):
         model = Rating
         extra = 0
-    inlines = [RatingSet]
+
+    class Timing(admin.TabularInline):
+        model = TimingContest
+        fields = ['statistic']
+        readonly_fields = ['modified']
+        extra = 0
+
+    inlines = [RatingSet, Timing]
 
 
 @admin_register(Resource)

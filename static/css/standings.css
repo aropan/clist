@@ -101,3 +101,14 @@ table.standings .handle-cell {
 .nobold {
   font-weight:normal;
 }
+
+.reset_timing_statistic {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  margin-left: 5px;
+}
+
+a.contest:hover > .reset_timing_statistic, .reset_timing_statistic:hover {
+  display: inline-block;
+}

@@ -3,13 +3,14 @@ import copy
 from collections import OrderedDict
 from itertools import accumulate
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
-from django.http import HttpResponseNotFound
+from django.http import HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q, Exists, OuterRef
+from django.views.decorators.clickjacking import xframe_options_exempt
 from el_pagination.decorators import page_template
-
 
 from clist.models import Contest
 from ranking.models import Statistics, Module
@@ -23,15 +24,17 @@ from utils.regex import get_iregex_filter, verify_regex
 @page_template('standings_list_paging.html')
 def standings_list(request, template='standings_list.html', extra_context=None):
     contests = Contest.objects \
+        .select_related('timing') \
         .annotate(has_statistics=Exists(Statistics.objects.filter(contest=OuterRef('pk')))) \
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
         .filter(Q(has_statistics=True) | Q(end_time__lte=timezone.now())) \
         .order_by('-end_time', 'pk')
 
+    has_perm_reset_statistic_timing = False
+    all_standings = False
     if request.user.is_authenticated:
         all_standings = request.user.coder.settings.get('all_standings')
-    else:
-        all_standings = False
+        has_perm_reset_statistic_timing = request.user.has_perm('reset_contest_statistic_timing')
 
     switch = 'switch' in request.GET
     if bool(all_standings) == bool(switch):
@@ -48,6 +51,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'all_standings': all_standings,
+        'has_perm_reset_statistic_timing': has_perm_reset_statistic_timing,
         'switch': switch,
     }
 
@@ -291,3 +295,33 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         context.update(extra_context)
 
     return render(request, template, context)
+
+
+@login_required
+@xframe_options_exempt
+def action(request):
+    user = request.user
+    error = None
+    message = None
+
+    try:
+        action = request.POST['action']
+        if action == 'reset_contest_statistic_timing':
+            contest_id = request.POST['cid']
+            contest = Contest.objects.get(pk=contest_id)
+            if not user.has_perm('reset_contest_statistic_timing'):
+                error = 'No permission.'
+            else:
+                message = f'Updated timing.statistic = {contest.timing.statistic}.'
+                contest.timing.statistic = None
+                contest.timing.save()
+        else:
+            error = 'Unknown action'
+    except Exception as e:
+        error = str(e)
+
+    if error is not None:
+        ret = {'status': 'error', 'message': error}
+    else:
+        ret = {'status': 'ok', 'message': message}
+    return JsonResponse(ret)

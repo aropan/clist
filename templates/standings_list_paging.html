@@ -4,7 +4,33 @@
 {% paginate 50 contests %}
 {% for contest in contests %}
 <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="contest list-group-item list-group-item-action list-group-item-{% if not contest.has_module %}info{% elif not contest.has_statistics %}danger{% elif contest.is_running %}success{% endif %}">
-    {{ contest.title }} <small class="pull-right">{{ contest.end_time|naturalday }}</small>
+    {{ contest.title }}
+    {% if has_perm_reset_statistic_timing %}
+    <button class="reset_timing_statistic reset_timing_statistic_tooltip btn btn-default btn-xs" data-contest-id="{{ contest.pk }}" title="timing.statistic = {{ contest.timing.statistic }}" data-toggle="tooltip">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+    {% endif %}
+    <small class="pull-right" title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+        {{ contest.end_time|timezone:timezone|naturalday }}
+    </small>
 </a>
 {% endfor %}
 {% show_more %}
+
+<script>
+    $(function(){
+        $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body'});
+{% if has_perm_reset_statistic_timing %}
+        $('.reset_timing_statistic').click(function(e) {
+            e.preventDefault()
+            var btn = $(this)
+            $.post(
+                '/standings/action/',
+                {action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')},
+            ).done(function(data) {
+                btn.attr('data-original-title', data.message).tooltip('show')
+            })
+        })
+{% endif %}
+    })
+</script>
