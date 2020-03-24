@@ -8,10 +8,10 @@
     <td>
         {% if s.addition.url %}<a href="{{ s.addition.url }}">{% endif %}
         <div data-toggle="tooltip" data-placement="top" data-html="true" title="
-            Handle: {{ s.account.key }}<br/>
+            handle: {{ s.account.key }}<br/>
             {% for k, v in s.addition.items|sort %}
                 {% if k not in "problems,hack,solved,challenges,url" %}
-                    {{ k|title }}: {{ v }}<br/>
+                    {{ k|lower }}: {{ v }}<br/>
                 {% endif %}
             {% endfor %}
         ">

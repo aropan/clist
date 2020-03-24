@@ -63,6 +63,7 @@ table.standings th {
 
 table.standings .handle-cell {
   text-align: left;
+  white-space: nowrap;
 }
 
 .standings th {

@@ -276,15 +276,15 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
         title = f'{value}'
     else:
         low = max(rating['low'], 0)
-        percent = (value - low) / (rating['high'] - low)
+        percent = (value - low) / (rating['high'] - low + 1)
         fill = f'''
 <path
     clip-path="url(#rating-clip)"
-    d="M 0 {size} v-{round(percent * size, 2)} h {size} 0 v{size} z"
+    d="M 0 {size} v-{round(percent * size, 3)} h {size} 0 v{size} z"
     style="fill: {color}">
 </path>
 '''
-        title = f'{value} ({percent * 100:.2f}%)'
+        title = f'{value} ({percent * 100:.1f}%)'
 
     return mark_safe(f'''
 <div title="{title}" style="display: inline-block" data-toggle="tooltip">

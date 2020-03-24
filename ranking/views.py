@@ -144,7 +144,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         for k in contest_fields:
             if (
                 k not in fields
-                and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type']
+                and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
+                              'division']
                 and 'country' not in k
             ):
                 field = ' '.join(k.split('_'))
