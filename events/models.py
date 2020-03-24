@@ -201,7 +201,13 @@ class Team(BaseModel):
 
     @property
     def ordered_participants(self):
-        return [self.author] + [p for p in self.participants.all() if p != self.author]
+        ret = []
+        for p in self.participants.all():
+            if p == self.author:
+                ret.insert(0, p)
+            else:
+                ret.append(p)
+        return ret
 
     @property
     def title(self):

@@ -99,6 +99,9 @@ class Coder(BaseModel):
     def ordered_filter_set(self):
         return self.filter_set.order_by('created')
 
+    def get_account(self, host):
+        return self.account_set.filter(resource__host=host).first()
+
 
 class PartyManager(BaseManager):
     def for_user(self, user):

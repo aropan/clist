@@ -57,6 +57,17 @@
         {% endif %}
         </select>
     </div>
+    {% if not disable %}
+    {% with account=coder|get_account:'codeforces.com' %}
+    {% if not account %}
+    <div class="form-group">
+        <label for="codeforces">Codeforces handle <small class="form-text text-muted">Optional. Other handles  can be added <a href="{% url 'coder:settings' %}#accounts-tab">here</a>.</small></label>
+        <select {% if not disable %}id="codeforces-handle"{% endif %} name="codeforces-handle" class="form-control" {% if disable %}disabled{% endif %}>
+        </select>
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endif %}
 {% endif %}
     <div class="form-group">
         <label for="tshirt-size">T-shirt size</label>

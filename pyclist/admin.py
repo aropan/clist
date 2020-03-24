@@ -41,7 +41,7 @@ class CachingPaginator(Paginator):
                                 cursor.execute('SET LOCAL statement_timeout TO 2000;')
                                 self._count = self.object_list.count()
                             except Exception:
-                                return 1
+                                return 0
                     cache.set(key, self._count, 3600)
             except Exception:
                 self._count = len(self.object_list)

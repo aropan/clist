@@ -1,11 +1,13 @@
 from collections import Counter
 
-from django.db.models import Q
+from django.db.models import Q, Prefetch
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect, resolve_url
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.mail import EmailMessage
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.utils.timezone import now, timedelta
@@ -14,11 +16,14 @@ from django_countries import countries
 from django.views.decorators.cache import cache_page
 from phonenumber_field.phonenumber import PhoneNumber
 
+
 from el_pagination.decorators import page_templates
 
 from events.models import Event, Participant, Team, JoinRequest, TeamStatus, TshirtSize
 from clist.views import get_timezone, get_timeformat
+from clist.models import Resource
 from true_coders.models import Organization
+from ranking.models import Account, Module
 import true_coders.views
 
 import humanfriendly
@@ -61,7 +66,7 @@ def event(request, slug, template='event.html', extra_context=None):
         end_registration = False
 
     query = request.POST.get('query') or request.GET.get('query')
-    if query is not None and not end_registration:
+    if query is not None and not end_registration and coder:
         if query == 'skip-coach':
             if not team or team.author != participant:
                 messages.error(request, 'First you need to create a team')
@@ -101,6 +106,7 @@ def event(request, slug, template='event.html', extra_context=None):
                     if not is_coach and not coder.token_set.filter(email=request.POST['email']).exists():
                         messages.error(request, 'Invalid email. Check that the account with this email is connected')
                         ok = False
+                active_fields.append('middle-name-native')
 
                 try:
                     phone_number = PhoneNumber.from_string(phone_number=request.POST.get('phone-number'))
@@ -109,7 +115,27 @@ def event(request, slug, template='event.html', extra_context=None):
                     messages.error(request, 'Invalid phone number')
                     ok = False
 
-                active_fields.append('middle-name-native')
+                handle = request.POST.get('codeforces-handle')
+                error = None
+                if handle:
+                    resource = Resource.objects.get(host='codeforces.com')
+                    account = Account.objects.filter(key=handle, resource=resource).first()
+                    if not account:
+                        error = f'Codeforces handle {handle} not found'
+                    elif coder.account_set.filter(resource=resource).exists():
+                        error = f'Codeforces handle {handle} is already connect'
+                    else:
+                        module = Module.objects.filter(resource=resource).first()
+                        if not module or not module.multi_account_allowed:
+                            if coder.account_set.filter(resource=resource).exists():
+                                error = 'Allow only one account for this resource'
+                            elif account.coders.count():
+                                error = 'Account is already connect'
+                        account.coders.add(coder)
+                        account.save()
+                if error:
+                    messages.error(request, error)
+                    ok = False
             if ok:
                 if is_coach:
                     participant = Participant.objects.create(event=event, is_coach=True)
@@ -344,7 +370,7 @@ def team_admin_view(request, slug, team_id):
     )
 
 
-@cache_page(30 * 60)
+@cache_page(1 if settings.DEBUG else 30 * 60)
 @xframe_options_exempt
 def frame(request, slug, status):
     event = get_object_or_404(Event, slug=slug)
@@ -369,10 +395,18 @@ def frame(request, slug, status):
             statuses.append(s)
             if TeamStatus.labels[s] == status:
                 break
+
+    codeforces_resource = Resource.objects.get(host='codeforces.com')
+
     teams = Team.objects.filter(event=event, status__in=statuses).order_by('-created')
     teams = teams.prefetch_related(
         'participants__coder__user',
         'participants__organization',
+        Prefetch(
+            'participants__coder__account_set',
+            queryset=Account.objects.filter(resource=codeforces_resource),
+        ),
+        'participants__coder__account_set__resource',
     )
     teams = teams.select_related(
         'author__coder__user',
@@ -382,6 +416,10 @@ def frame(request, slug, status):
     )
     countries = Counter(t.country for t in teams)
 
+    base_css_path = staticfiles_storage.path('css/base.css')
+    with open(base_css_path, 'r') as fo:
+        base_css = fo.read()
+
     return render(
         request,
         'frame-team.html',
@@ -389,6 +427,8 @@ def frame(request, slug, status):
             'teams': teams,
             'countries': countries.most_common(),
             'team_status': TeamStatus,
+            'base_css': base_css,
+            'codeforces_resource': codeforces_resource,
         },
     )
 

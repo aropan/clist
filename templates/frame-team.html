@@ -4,13 +4,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
   <style type="text/css">a:hover { text-decoration: none; }</style>
+  <style>{{ base_css }}</style>
 </head>
 <body>
+  <svg width="0" height="0" style="display: block"><defs><clipPath id="rating-clip"><circle cx="5" cy="5" r="4"/></clipPath></defs></svg>
+
   <div class="container">
     <script type="text/javascript">
         google.charts.load('current', {'packages':['corechart']});
@@ -45,7 +48,6 @@
     </script>
     <div id="piechart" class="text-center center-block" style="height: 400px; width: 500px"></div>
 
-
     <div class="list-group">
       {% for team in teams %}
       <div class="team list-group-item country-{{ team.country|slugify }}">
@@ -59,7 +61,14 @@
           {% for o in team.organizations %}{{ o.name_ru }}{% if forloop.revcounter0 %} + {% endif %}{% endfor %}, {% language 'ru' %}{% trans team.country %}{% endlanguage %}
           <div class="text-muted">
             Состав:
-            {% for p in team.ordered_participants %}{{ p.first_name_native }} {{ p.last_name_native }}{% if forloop.revcounter0 %}, {%endif %}{% endfor %}
+            {% for p in team.ordered_participants %}
+              {{ p.first_name_native }}
+              {% for a in p.coder.account_set.all %}
+              {% coder_color_circle codeforces_resource a.info size=10 %}
+              <a href="{{ codeforces_resource.profile_url|format_dict:a.dict_with_info }}" class="{% coder_color_class codeforces_resource a.info %}" target="_blank">{{ a.key }}</a>
+              {% endfor %}
+              {{ p.last_name_native }}{% if forloop.revcounter0 %}, {%endif %}
+            {% endfor %}
           </div>
           {% if team.coach %}
           <div class="text-muted">
@@ -75,6 +84,6 @@
       window.parent.postMessage(document.body.scrollHeight, '*');
     </script>
   </div>
+  <script>$(function(){$('[data-toggle="tooltip"]').tooltip()})</script>
 </body>
 </html>
-

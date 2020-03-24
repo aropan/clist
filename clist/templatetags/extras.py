@@ -265,30 +265,36 @@ def coder_color_class(resource, *values):
 
 
 @register.simple_tag
-def coder_color_circle(resource, *values):
+def coder_color_circle(resource, *values, size=16, **kwargs):
     rating, value = resource.get_rating_color(values)
     if not rating:
         return ''
     color = rating['hex_rgb']
+    radius = size // 2
     if rating['high'] == 100500:
-        fill = f'<circle cx="8" cy="8" r="3" style="fill: {color}"></circle>'
-        title = 'Target'
+        fill = f'<circle cx="{radius}" cy="{radius}" r="{size // 5}" style="fill: {color}"></circle>'
+        title = f'{value}'
     else:
         low = max(rating['low'], 0)
         percent = (value - low) / (rating['high'] - low)
         fill = f'''
 <path
     clip-path="url(#rating-clip)"
-    d="M 0 16 v-{round(percent * 16, 2)} h 16 0 v16 z"
+    d="M 0 {size} v-{round(percent * size, 2)} h {size} 0 v{size} z"
     style="fill: {color}">
 </path>
 '''
-        title = f'{percent * 100:.2f}%'
+        title = f'{value} ({percent * 100:.2f}%)'
 
     return mark_safe(f'''
 <div title="{title}" style="display: inline-block" data-toggle="tooltip">
-    <svg class="coder-circle" viewBox="0 0 16 16" width="16" height="16"">
-        <circle style="stroke: {color}; fill: none; stroke-width: 2px;" cx="8" cy="8" r="7"></circle>
+    <svg class="coder-circle" viewBox="0 0 {size} {size}" width="{size}" height="{size}"">
+        <circle
+            style="stroke: {color}; fill: none; stroke-width: {size // 6}px;"
+            cx="{radius}"
+            cy="{radius}"
+            r="{radius - 1}"
+        />
         {fill}
     </svg>
 </div>
@@ -309,3 +315,8 @@ def abs_filter(val):
         return abs(val)
     except Exception:
         return None
+
+
+@register.filter
+def get_account(coder, host):
+    return coder.get_account(host)
