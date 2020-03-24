@@ -3,4 +3,7 @@
 {% for team in team_participants %}
   {% include "inline-team.html" with team=team without_detail_url=True with_profile_url=True %}
 {% endfor %}
+
+<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
+
 {% show_more %}

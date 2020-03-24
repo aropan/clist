@@ -96,6 +96,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     statistics = statistics \
         .select_related('account') \
+        .select_related('account__resource') \
         .prefetch_related('account__coders')
 
     has_country = 'country' in contest_fields or statistics.filter(account__country__isnull=False).exists()

@@ -292,6 +292,14 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
             'coach__organization__abbreviation',
         )
         team_participants = team_participants.filter(team_search_filter)
+    codeforces_resource = Resource.objects.get(host='codeforces.com')
+    team_participants = team_participants.prefetch_related(
+        Prefetch(
+            'participants__coder__account_set',
+            queryset=Account.objects.filter(resource=codeforces_resource),
+        ),
+        'participants__coder__account_set__resource',
+    )
 
     participants = Participant.objects.filter(
         event=event,
@@ -319,6 +327,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
         'slug': slug,
         'event': event,
         'tab': tab,
+        'svg_r': 5,
         'coder': coder,
         'participant': participant,
         'team_participants': team_participants,
@@ -337,6 +346,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
             'over': end_registration,
             'timeleft': humanfriendly.format_timespan(registration_timeleft),
         },
+        'codeforces_resource': codeforces_resource,
     }
 
     if extra_context is not None:
