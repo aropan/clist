@@ -79,6 +79,7 @@ class Command(BaseCommand):
             if filter_time:
                 filter_time = arrow.get(filter_time).format()
                 logins = logins.filter(
+                    Q(modified__gte=filter_time) |
                     Q(team__modified__gte=filter_time) |
                     Q(team__participants__modified__gte=filter_time) |
                     Q(team__participants__organization__modified__gte=filter_time)
