@@ -5,10 +5,10 @@
     {{ participant.last_name }}
   </strong>
   {% if participant.organization %}
-  from <strong title="{{ participant.organization.name }}" data-toggle="tooltip">{{ participant.organization.abbreviation }}</strong>
+  from <abbr title="{{ participant.organization.name }}" data-toggle="tooltip">{{ participant.organization.abbreviation }}</abbr>
   {% endif %}
   {% if participant.team %}
-  in <strong>{{ participant.team.name }}</strong>
+  in <strong class="small">{{ participant.team.name }}</strong>
   {% endif %}
 </div>
 

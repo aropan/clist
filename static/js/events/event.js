@@ -11,7 +11,7 @@ $(function() {
         },
 
         ajax: {
-            url: 'search/',
+            url: search_url,
             dataType: 'json',
             delay: 314,
             data: function (params) {
@@ -45,7 +45,7 @@ $(function() {
         },
 
         ajax: {
-            url: 'search/',
+            url: search_url,
             dataType: 'json',
             delay: 314,
             data: function (params) {
@@ -96,7 +96,7 @@ $(function() {
         },
 
         ajax: {
-            url: 'search/',
+            url: search_url,
             dataType: 'json',
             delay: 314,
             data: function (params) {
@@ -115,7 +115,7 @@ $(function() {
         allowClear: true,
         placeholder: 'Search codeforces handle by regex',
         ajax: {
-            url: 'search/',
+            url: search_url,
             dataType: 'json',
             delay: 314,
             data: function (params) {

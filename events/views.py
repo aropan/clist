@@ -1,8 +1,9 @@
 from collections import Counter
 
+import humanfriendly
 from django.db.models import Q, Prefetch
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render, get_object_or_404, redirect, resolve_url
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -15,18 +16,15 @@ from django.template.loader import get_template
 from django_countries import countries
 from django.views.decorators.cache import cache_page
 from phonenumber_field.phonenumber import PhoneNumber
-
-
 from el_pagination.decorators import page_templates
 
+import true_coders.views
 from events.models import Event, Participant, Team, JoinRequest, TeamStatus, TshirtSize
 from clist.views import get_timezone, get_timeformat
 from clist.models import Resource
 from true_coders.models import Organization
 from ranking.models import Account, Module
-import true_coders.views
-
-import humanfriendly
+from utils.regex import get_iregex_filter
 
 
 def events(request):
@@ -44,8 +42,10 @@ def events(request):
     ('participants.html', 'participants'),
     ('team-participants-admin.html', 'teams-admin'),
 ))
-def event(request, slug, template='event.html', extra_context=None):
+def event(request, slug, tab=None, template='event.html', extra_context=None):
     event = get_object_or_404(Event, slug=slug)
+    if tab is not None and tab not in ['information', 'registration', 'teams', 'participants', 'admin']:
+        return HttpResponseNotFound()
     user = request.user
     coder = None if user.is_anonymous else user.coder
     participant = event.participant_set.filter(coder=coder, coder__isnull=False).first()
@@ -261,7 +261,7 @@ def event(request, slug, template='event.html', extra_context=None):
                     team.status = TeamStatus.ADD_COACH
                 team.save()
 
-        return redirect('{}#registration-tab'.format(resolve_url('events:event', slug=event.slug)))
+        return redirect(resolve_url('events:event-tab', slug=event.slug, tab='registration'))
 
     teams = Team.objects.filter(event=event).order_by('-created')
     teams = teams.prefetch_related(
@@ -277,6 +277,21 @@ def event(request, slug, template='event.html', extra_context=None):
 
     approved_statuses = {k for k, v in TeamStatus.descriptions.items() if v == 'approved'}
     team_participants = teams.filter(status__in=approved_statuses)
+    team_search = request.GET.get('team_search')
+    if team_search:
+        team_search_filter = get_iregex_filter(
+            team_search,
+            'name',
+            'participants__first_name',
+            'participants__last_name',
+            'participants__organization__name',
+            'participants__organization__abbreviation',
+            'coach__first_name',
+            'coach__last_name',
+            'coach__organization__name',
+            'coach__organization__abbreviation',
+        )
+        team_participants = team_participants.filter(team_search_filter)
 
     participants = Participant.objects.filter(
         event=event,
@@ -284,6 +299,17 @@ def event(request, slug, template='event.html', extra_context=None):
     ).filter(
         Q(team=None) | Q(team__status=TeamStatus.NEW),
     )
+    participant_search = request.GET.get('participant_search')
+    if participant_search:
+        participant_search_filter = get_iregex_filter(
+            participant_search,
+            'first_name',
+            'last_name',
+            'organization__name',
+            'organization__abbreviation',
+            'team__name',
+        )
+        participants = participants.filter(participant_search_filter)
 
     status = request.GET.get('status')
     if status is not None:
@@ -292,6 +318,7 @@ def event(request, slug, template='event.html', extra_context=None):
     context = {
         'slug': slug,
         'event': event,
+        'tab': tab,
         'coder': coder,
         'participant': participant,
         'team_participants': team_participants,
@@ -304,7 +331,6 @@ def event(request, slug, template='event.html', extra_context=None):
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'defaults': {
-            # 'organization': Organization.objects.get(abbreviation='BSUIR').name,
             'country': {'code': 'BY', 'name': dict(countries)['BY']},
         },
         'registration': {

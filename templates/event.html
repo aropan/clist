@@ -20,20 +20,19 @@
 {% block title %}{{ event.name }} event{% endblock %}
 
 {% block content %}
+    <script>search_url = "{% url 'events:event' slug %}search/"</script>
     <h3 id="name">{{ event.name }}</h3>
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
-        {% if not registration.over %}
-            <li><a href="#registration-tab" data-toggle="tab">Registration</a></li>
-        {% endif %}
-        <li><a href="#teams-tab" data-toggle="tab">Teams <span class="badge progress-bar-info">{{ team_participants.count }}</span></a></li>
-        <li><a href="#participants-tab" data-toggle="tab">Participants <span class="badge progress-bar-info">{{ participants.count }}</span></a></li>
+        <li{% if not tab or tab == 'information' %} class="active"{% endif %}><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
+        {% if not registration.over %}<li{% if tab == 'registration' %} class="active"{% endif %}><a href="#registration-tab" data-toggle="tab">Registration</a></li>{% endif %}
+        <li{% if tab == 'teams' %} class="active"{% endif %}><a href="#teams-tab" data-toggle="tab">Teams <span class="badge progress-bar-info">{{ team_participants.count }}</span></a></li>
+        <li{% if tab == 'participants' %} class="active"{% endif %}><a href="#participants-tab" data-toggle="tab">Participants <span class="badge progress-bar-info">{{ participants.count }}</span></a></li>
 {% if perms.events.change_team %}
-        <li><a href="#admin-teams-view-tab" data-toggle="tab">Admin <span class="badge progress-bar-info">{{ teams.count }}</span></a></li>
+        <li{% if tab == 'admin' %} class="active"{% endif %}><a href="#admin-teams-view-tab" data-toggle="tab">Admin <span class="badge progress-bar-info">{{ teams.count }}</span></a></li>
 {% endif %}
     </ul>
     <div class="tab-content">
-        <div id="information-tab" class="tab-pane active col-sm-offset-2 col-sm-8">
+        <div id="information-tab" class="tab-pane col-sm-offset-2 col-sm-8{% if not tab or tab == 'information' %} active{% endif %}">
             {% if event.standings_urls %}
             <div>
                 <label>Standings:</label>
@@ -57,7 +56,7 @@
             </div>
         </div>
 
-        <div id="registration-tab" class="tab-pane col-sm-offset-3 col-sm-6">
+        <div id="registration-tab" class="tab-pane col-sm-offset-3 col-sm-6{% if tab == 'registration' %} active{% endif %}">
 
             {% if participant %}
             {% if participant.is_coach or not team and not join_requests %}
@@ -114,15 +113,40 @@
             {% endif %}
         </div>
 
-        <div id="teams-tab"  class="tab-pane col-sm-offset-2 col-sm-8">
-            <hr/>
+        <div id="teams-tab"  class="tab-pane col-sm-offset-2 col-sm-8{% if tab == 'teams' %} active{% endif %}">
+            <br/>
+            <form method="get" action="{% url 'events:event-tab' event.slug 'teams' %}">
+            <div class="input-group">
+              <input name="team_search" value="{{ request.GET.team_search }}" class="form-control" placeholder="Regex filter to title, organization, participant or coach" {% if request.GET.team_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="submit">
+                  <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                  Search
+                </button>
+              </span>
+            </div>
+            </form>
+            <br/>
+
             <div class="list-group endless_page_template">
             {% include "team-participants.html" %}
             </div>
         </div>
 
-        <div id="participants-tab"  class="tab-pane col-sm-offset-2 col-sm-8">
-            <hr/>
+        <div id="participants-tab"  class="tab-pane col-sm-offset-2 col-sm-8{% if tab == 'participants' %} active{% endif %}">
+            <br/>
+            <form method="get" action="{% url 'events:event-tab' event.slug 'participants' %}">
+            <div class="input-group">
+              <input name="participant_search" value="{{ request.GET.participant_search }}" class="form-control" placeholder="Regex filter to first name, last name, team and organization" {% if request.GET.participant_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="submit">
+                  <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                  Search
+                </button>
+              </span>
+            </div>
+            </form>
+            <br/>
             <div class="list-group endless_page_template">
             {% include "participants.html" %}
             </div>
@@ -131,11 +155,11 @@
         <script>$.endlessPaginate({paginateOnScroll: true});</script>
 
 {% if perms.events.change_team %}
-        <div id="admin-teams-view-tab" class="tab-pane col-sm-offset-2 col-sm-8">
+        <div id="admin-teams-view-tab" class="tab-pane col-sm-offset-2 col-sm-8{% if tab == 'admin' %} active{% endif %}">
             <h3>Teams</h3>
             <div class="btn-group">
                 {% for status in team_status.labels %}
-                <a href="{% url 'events:event' event.slug %}{% if request.GET.status != status|slugify %}?status={{ status }}{% endif %}#admin-teams-view-tab" title="{{ team_status.labels|get_item:status|title }}" class="btn btn-{{ team_status.classes|get_item:status }}{% if request.GET.status == status|slugify %} active{% endif %}">{{ team_status.labels|get_item:status|title|make_list|first }}</a>
+                <a href="{% url 'events:event-tab' event.slug 'admin' %}{% if request.GET.status != status|slugify %}?status={{ status }}{% endif %}" title="{{ team_status.labels|get_item:status|title }}" class="btn btn-{{ team_status.classes|get_item:status }}{% if request.GET.status == status|slugify %} active{% endif %}">{{ team_status.labels|get_item:status|title|make_list|first }}</a>
                 {% endfor %}
             </div>
             <hr/>

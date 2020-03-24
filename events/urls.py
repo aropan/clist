@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^event/(?P<slug>[\w-]+)/search/$', views.search, name='search'),
     url(r'^event/(?P<slug>[\w-]+)/team-details/(?P<team_id>[0-9]+)/$', views.team_admin_view, name='team-details'),
     url(r'^event/(?P<slug>[\w-]+)/frame/teams/(?P<status>[-\s\w]+)/$', views.frame, name='frame'),
+    url(r'^event/(?P<slug>[\w-]+)/(?P<tab>[\w-]+)/$', views.event, name='event-tab'),
 ]
