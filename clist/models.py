@@ -172,10 +172,17 @@ class TimingContest(BaseModel):
 class Banner(BaseModel):
     name = models.CharField(max_length=255)
     url = models.URLField()
-    start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    template = models.CharField(max_length=255)
+    template = models.CharField(max_length=255, null=True, blank=True)
     data = JSONField(default=dict, blank=True)
+    enable = models.BooleanField(default=True)
 
     def __str__(self):
         return 'Banner %s' % self.name
+
+    @property
+    def next_time(self):
+        now = timezone.now()
+        if self.end_time < now:
+            return 0
+        return int(round((self.end_time - now).total_seconds()))

@@ -14,6 +14,20 @@
                 <li><a href="{% url 'clist:resources' %}">Resources</a></li>
                 <li><a href="{% url 'ranking:standings_list' %}">Standings</a></li>
                 <li><a href="https://github.com/aropan/clist/issues" target="_blank">Issues</a></li>
+                {% block banner %}
+                    {% for b in banners %}
+                        {% if not b.template %}
+                            <li>
+                                <a href="{{ b.url }}" target="_blank">
+                                    <strong>{{ b.name }}</strong> {{ b.data.text }}
+                                    <span title="{{ b.end_time|timezone:timezone|format_time:time_format }}" data-placement="bottom" data-toggle="tooltip" class="countdown" data-timestamp="{{ b.next_time }}">
+                                        {{ b.end_time|countdown }}
+                                    </span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                {% endblock %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li>

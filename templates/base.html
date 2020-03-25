@@ -43,7 +43,9 @@
         <div class="container">
         {% block banner %}
             {% for b in banners %}
-                {% include b.template with banner=b %}
+                {% if b.template %}
+                    {% include b.template with banner=b %}
+                {% endif %}
             {% endfor %}
         {% endblock %}
         {% block content %}

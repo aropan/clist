@@ -241,6 +241,10 @@ def main(request, party=None):
         }
 
     now = timezone.now()
+    banners = Banner.objects.filter(end_time__gt=now)
+    if not settings.DEBUG:
+        banners.objects.filter(enable=True)
+
     context.update({
         "offset": get_timezone_offset(tzname),
         "now": now,
@@ -250,7 +254,7 @@ def main(request, party=None):
         "time_format": time_format,
         "open_new_tab": open_new_tab,
         "add_to_calendar": add_to_calendar,
-        "banners": Banner.objects.filter(start_time__lte=now, end_time__gt=now),
+        "banners": banners,
     })
 
     return render(request, "main.html", context)
