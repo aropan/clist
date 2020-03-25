@@ -243,7 +243,7 @@ def main(request, party=None):
     now = timezone.now()
     banners = Banner.objects.filter(end_time__gt=now)
     if not settings.DEBUG:
-        banners.objects.filter(enable=True)
+        banners = banners.filter(enable=True)
 
     context.update({
         "offset": get_timezone_offset(tzname),
