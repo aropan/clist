@@ -274,9 +274,16 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
         'coach__coder__user',
         'coach__organization',
     )
+    codeforces_resource = Resource.objects.get(host='codeforces.com')
+    teams = teams.prefetch_related(
+        Prefetch(
+            'participants__coder__account_set',
+            queryset=Account.objects.filter(resource=codeforces_resource),
+        ),
+        'participants__coder__account_set__resource',
+    )
 
     approved_statuses = {k for k, v in TeamStatus.descriptions.items() if v == 'approved'}
-    team_participants = teams.filter(status__in=approved_statuses)
     team_search = request.GET.get('team_search')
     if team_search:
         team_search_filter = get_iregex_filter(
@@ -291,15 +298,8 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
             'coach__organization__name',
             'coach__organization__abbreviation',
         )
-        team_participants = team_participants.filter(team_search_filter)
-    codeforces_resource = Resource.objects.get(host='codeforces.com')
-    team_participants = team_participants.prefetch_related(
-        Prefetch(
-            'participants__coder__account_set',
-            queryset=Account.objects.filter(resource=codeforces_resource),
-        ),
-        'participants__coder__account_set__resource',
-    )
+        teams = teams.filter(team_search_filter)
+    team_participants = teams.filter(status__in=approved_statuses)
 
     participants = Participant.objects.filter(
         event=event,

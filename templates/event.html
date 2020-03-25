@@ -163,6 +163,19 @@
                 {% endfor %}
             </div>
             <hr/>
+            <form method="get" action="{% url 'events:event-tab' event.slug 'admin' %}">
+            <div class="input-group">
+              <input name="team_search" value="{{ request.GET.team_search }}" class="form-control" placeholder="Regex filter to title, organization, participant or coach" {% if request.GET.team_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="submit">
+                  <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                  Search
+                </button>
+              </span>
+            </div>
+            </form>
+            <br/>
+
             <div class="list-group">
             {% include "team-participants-admin.html" %}
             </div>
