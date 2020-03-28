@@ -9,12 +9,10 @@
     {% for o in team.organizations %}{{ o.name }}{% if forloop.revcounter0 %} + {% endif %}{% endfor %}, {{ team.country }}
     <div class="text-muted">
       {% for p in team.ordered_participants %}
-        {% if with_profile_url %}
-          {% for a in p.coder.account_set.all %}
-          {% coder_color_circle codeforces_resource a.info size=10 %}
-          <a href="{{ codeforces_resource.profile_url|format_dict:a.dict_with_info }}" class="{% coder_color_class codeforces_resource a.info %}" target="_blank">{{ a.key }}</a>
-          {% endfor %}
-        {% endif %}
+        {% for a in p.coder.account_set.all %}
+        {% coder_color_circle codeforces_resource a.info size=10 %}
+        <{% if with_profile_url %}a href="{{ codeforces_resource.profile_url|format_dict:a.dict_with_info }}" target="_blank"{% else %}span{% endif %} class="{% coder_color_class codeforces_resource a.info %}">{{ a.key }}</{% if with_profile_url %}a{% else %}span{% endif %}>
+        {% endfor %}
         {% if with_profile_url %}<a href="{% url 'coder:profile' p.coder %}">{% endif %}{{ p.first_name }} {{ p.last_name }}{% if with_profile_url %}</a>{% endif %}{% if forloop.revcounter0 %}, {% endif %}
       {% endfor %}
     </div>

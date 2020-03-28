@@ -403,6 +403,8 @@ def team_admin_view(request, slug, team_id):
             'event': event,
             'team_status': TeamStatus,
             'tshirt_size': TshirtSize,
+            'svg_r': 5,
+            'codeforces_resource': Resource.objects.get(host='codeforces.com'),
         },
     )
 
