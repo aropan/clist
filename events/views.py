@@ -116,8 +116,8 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                     ok = False
 
                 handle = request.POST.get('codeforces-handle')
-                error = None
-                if handle:
+                if handle and not is_coach:
+                    error = None
                     resource = Resource.objects.get(host='codeforces.com')
                     account = Account.objects.filter(key=handle, resource=resource).first()
                     if not account:
@@ -131,11 +131,12 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                                 error = 'Allow only one account for this resource'
                             elif account.coders.count():
                                 error = 'Account is already connect'
+                    if error:
+                        messages.error(request, error)
+                        ok = False
+                    else:
                         account.coders.add(coder)
                         account.save()
-                if error:
-                    messages.error(request, error)
-                    ok = False
             if ok:
                 if is_coach:
                     participant = Participant.objects.create(event=event, is_coach=True)
