@@ -48,7 +48,10 @@
     </script>
     <div id="piechart" class="text-center center-block" style="height: 400px; width: 500px"></div>
 
-    <input id="search" name="search" class="form-control" placeholder="Filter teams by inner content" autocomplete="off"/>
+    <div class="input-group">
+      <span class="input-group-addon" id="number_filtered">{{ teams.count }}</span>
+      <input id="search" name="search" class="form-control" placeholder="Filter teams by inner content" autocomplete="off"/>
+    </div>
     <br/>
     <script>
 
@@ -62,9 +65,10 @@
         var query = $(this).val();
         if (query.length) {
           $('.team').hide();
-          $('.team:icontains("' + query + '")').show()
+          $('#number_filtered').html($('.team:icontains("' + query + '")').show().length)
         } else {
           $('.team').show();
+          $('#number_filtered').html($('.team').length)
         }
       });
     </script>
