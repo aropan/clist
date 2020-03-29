@@ -48,6 +48,27 @@
     </script>
     <div id="piechart" class="text-center center-block" style="height: 400px; width: 500px"></div>
 
+    <input id="search" name="search" class="form-control" placeholder="Filter teams by inner content" autocomplete="off"/>
+    <br/>
+    <script>
+
+      $.extend($.expr[':'], {	//definizione di :conaints() case insesitive
+        'icontains': function(elem, i, match, array) {
+          return (elem.textContent || elem.innerText || '').toLowerCase().indexOf((match[3] || "").toLowerCase()) >= 0;
+        }
+      });
+      var $search = $('#search');
+      $search.on('keyup', function() {
+        var query = $(this).val();
+        if (query.length) {
+          $('.team').hide();
+          $('.team:icontains("' + query + '")').show()
+        } else {
+          $('.team').show();
+        }
+      });
+    </script>
+
     <div class="list-group">
       {% for team in teams %}
       <div class="team list-group-item country-{{ team.country|slugify }}">
