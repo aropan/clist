@@ -370,7 +370,28 @@ def result(request, slug, name):
 @permission_required('events.change_team')
 def team_admin_view(request, slug, team_id):
     event = get_object_or_404(Event, slug=slug)
-    team = get_object_or_404(Team, pk=team_id, event=event)
+
+    teams = Team.objects
+    teams = teams.prefetch_related(
+        'participants__coder__user',
+        'participants__organization',
+    )
+    teams = teams.select_related(
+        'author__coder__user',
+        'author__organization',
+        'coach__coder__user',
+        'coach__organization',
+    )
+    codeforces_resource = Resource.objects.get(host='codeforces.com')
+    teams = teams.prefetch_related(
+        Prefetch(
+            'participants__coder__account_set',
+            queryset=Account.objects.filter(resource=codeforces_resource),
+        ),
+        'participants__coder__account_set__resource',
+    )
+
+    team = get_object_or_404(teams, pk=team_id, event=event)
 
     if 'action' in request.POST:
         action = request.POST.get('action')
@@ -404,7 +425,7 @@ def team_admin_view(request, slug, team_id):
             'team_status': TeamStatus,
             'tshirt_size': TshirtSize,
             'svg_r': 5,
-            'codeforces_resource': Resource.objects.get(host='codeforces.com'),
+            'codeforces_resource': codeforces_resource,
         },
     )
 
