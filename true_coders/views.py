@@ -209,6 +209,7 @@ def settings(request):
             "categories": coder.get_categories(),
             "notification_form": notification_form,
             "modules": Module.objects.order_by('resource__id').all(),
+            "ace_calendars": django_settings.ACE_CALENDARS_,
         },
     )
 
@@ -246,16 +247,7 @@ def change(request):
             coder.settings.pop("time_format")
         coder.save()
     elif name == "add-to-calendar":
-        if value not in [
-            'enable',
-            'disable',
-            'apple',
-            'google',
-            'office365',
-            'outlook',
-            'outlookcom',
-            'yahoo',
-        ]:
+        if value not in django_settings.ACE_CALENDARS_.keys():
             return HttpResponseBadRequest("invalid addtocalendar value")
         coder.settings["add_to_calendar"] = value
         coder.save()

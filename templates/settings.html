@@ -29,6 +29,8 @@
 
     {% get_countries as countries %}
     COUNTRIES = { {% for c in countries %}{% if forloop.counter0 %}, {% endif %} '{{ c.code }}': '{{ c.name }}' {% endfor %} }
+
+    ACE_CALENDARS = { {% for k, v in ace_calendars.items %}{% if forloop.counter0 %}, {% endif %}'{{ k }}': '{{ v.name }}'{% endfor %} }
 </script>
 
 <script src="{% static_ts 'js/settings/main.js' %}"></script>

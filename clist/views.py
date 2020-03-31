@@ -107,7 +107,8 @@ def get_view_contests(request, coder):
 
 def get_timezone_offset(tzname):
     now = timezone.now()
-    return now.astimezone(pytz.timezone(tzname)).utcoffset().total_seconds() // 60
+    total_seconds = now.astimezone(pytz.timezone(tzname)).utcoffset().total_seconds()
+    return int(round(total_seconds / 60, 0))
 
 
 @csrf_protect
@@ -245,15 +246,19 @@ def main(request, party=None):
     if not settings.DEBUG:
         banners = banners.filter(enable=True)
 
+    offset = get_timezone_offset(tzname)
+    timezone_hm = f'{"+" if offset > 0 else "-"}{abs(offset // 60):02d}:{abs(offset % 60):02d}'
+
     context.update({
-        "offset": get_timezone_offset(tzname),
+        "offset": offset,
         "now": now,
         "viewmode": viewmode,
         "hide_contest": hide_contest,
         "timezone": tzname,
+        "timezone_hm": timezone_hm,
         "time_format": time_format,
         "open_new_tab": open_new_tab,
-        "add_to_calendar": add_to_calendar,
+        "add_to_calendar": settings.ACE_CALENDARS_[add_to_calendar]['id'],
         "banners": banners,
     })
 

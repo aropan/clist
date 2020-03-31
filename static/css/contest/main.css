@@ -65,7 +65,6 @@
 }
 
 :hover > .hide-contest {
-    cursor: pointer;
     color: #fff;
     visibility: visible;
 }
@@ -74,13 +73,14 @@
     cursor: pointer;
 }
 
-.event .addeventatc:hover i {
+.event .data-ace:hover i {
     color: #23527c;
 }
 
 .event .hide-contest,
-.event .addeventatc i {
+.event .data-ace {
     color: #8be;
+    cursor: pointer;
 }
 
 .contest.nofilter {
@@ -108,4 +108,8 @@
     .event .resource{
         float: right;
     }
+}
+
+.event .resource a {
+    text-decoration: none;
 }

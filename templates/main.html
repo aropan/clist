@@ -11,8 +11,11 @@
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script src="{% static_ts 'js/contest/toggle.js' %}"></script>
 
-<link href="{% static_ts 'css/theme8.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/atc.min.js' %}"></script>
+{% if add_to_calendar != "disable" %}
+  <script src="{% static_ts 'js/AddCalEvent.js' %}"></script>
+  <link href="{% static_ts 'css/AddCalEvent.css' %}" rel="stylesheet">
+  <script>var AddCalEventZones = undefined;</script>
+{% endif %}
 
 {% include "calendar.html" %}
 
@@ -113,15 +116,18 @@
                 <a href="{{ contest.url }}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
                 </span>
                 {% if contest.state != "past" and add_to_calendar != "disable" %}
-                  <div class="addeventatc" data-styling="none"{% if add_to_calendar != "enable" %} data-direct="{{ add_to_calendar }}"{% endif %}>
-                      <i class="far fa-calendar-alt"></i>
-                      <span class="start">{{ contest.start_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</span>
-                      <span class="end">{{ contest.end_time|timezone:timezone|format_time:"%Y%m%dT%H%M" }}</span>
-                      <span class="timezone">{{ timezone }}</span>
-                      <span class="title">{{ contest.title|pass_arg:"#"|replace:"" }} @ {{ contest.host }}</span>
-                      <span class="location">{{ contest.host }}</span>
-                      <span class="description">{{ contest.url }}</span>
-                  </div>
+                  <a class="data-ace" data-ace='{
+                    "title":"{{ contest.title }}",
+                    "desc":"url: {{ contest.url }}",
+                    "location":"{{ contest.host }}",
+                    "time":{
+                      "start":"{{ contest.start_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
+                      "end":"{{ contest.end_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
+                      "zone":"{{ timezone_hm }}"
+                    }
+                  }'>
+                    <i class="far fa-calendar-alt"></i>
+                  </a>
                 {% endif %}
                 {% if contest.group_size %}
                     <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
@@ -149,5 +155,14 @@
     </div>
   </div>
 </div>
+
+{% if add_to_calendar != "disable" %}
+  <script>
+    $('a.data-ace').addcalevent({
+      'onclick': true,
+      'apps': [{% if add_to_calendar == "enable" %}1,2,3{% else %}{{ add_to_calendar }}{% endif %}]
+    })
+  </script>
+{% endif %}
 
 {% endblock %}

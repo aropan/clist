@@ -1,0 +1,19 @@
+.ace_dd {
+	display: none;
+	border: 1px solid #aaa;
+	position: absolute;
+	background: white;
+	z-index: 1000;
+}
+a.ace_opt {
+	padding: 10px 11px;
+	display: block;
+	text-decoration: none;
+	text-align: left;
+	cursor: pointer;
+}
+a.ace_opt:hover {
+	background-color: #f0f0f0;
+	color: #0654ba;
+	text-decoration: none;
+}

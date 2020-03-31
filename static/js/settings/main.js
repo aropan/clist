@@ -63,16 +63,7 @@ $(function() {
     $('#add-to-calendar').editable({
         type: 'select',
         showbuttons: false,
-        source: {
-            'enable': 'Enable',
-            'disable': 'Disable',
-            'apple': 'Apple',
-            'google': 'Google',
-            'office365': 'Office 365',
-            'outlook': 'Outlook',
-            'outlookcom': 'Outlook Online',
-            'yahoo': 'Yahoo',
-        }
+        source: ACE_CALENDARS,
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 250,

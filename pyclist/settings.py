@@ -332,3 +332,10 @@ TIME_FORMAT_ = '%d.%m %a %H:%M'
 LIMIT_N_TOKENS_VIEW = 3
 LIMIT_TOKENS_VIEW_WAIT_IN_HOURS = 24
 YES_ = ['', '1', 'yes', 'true']
+ACE_CALENDARS_ = {
+    'enable': {'id': 'enable', 'name': 'Enable'},
+    'disable': {'id': 'disable', 'name': 'Disable'},
+    'google': {'id': 1, 'name': 'Google'},
+    'yahoo': {'id': 2, 'name': 'Yahoo'},
+    'outlook': {'id': 3, 'name': 'Outlook'},
+}
