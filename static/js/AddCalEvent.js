@@ -87,7 +87,7 @@
             'Outlook',
             'Google',
             'Yahoo',
-            'Hotmail',
+            'Outlook',
             'iCal'
         ]
     };
