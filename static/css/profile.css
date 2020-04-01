@@ -55,3 +55,18 @@ input[type="search"]::-webkit-search-cancel-button {
   font-size: 90%;
   background-color: #ccc;
 }
+
+.gold-medal {
+  color: transparent;
+  text-shadow: 0 0 0 #f9d923;
+}
+
+.silver-medal {
+  color: transparent;
+  text-shadow: 0 0 0 silver;
+}
+
+.bronze-medal {
+  color: transparent;
+  text-shadow: 0 0 0 #c08e55;
+}

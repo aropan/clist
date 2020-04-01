@@ -40,9 +40,13 @@ class Statistic(BaseModule):
                     d['short'] = str(problem_idx)
                     d['full_score'] = 100
                     d['name'] = k
-                    p = problems.setdefault(str(problem_idx), {})
-                    p['result'] = v.value
-                    p['partial'] = float(v.value) < 100
+                    try:
+                        score = float(v.value)
+                        p = problems.setdefault(str(problem_idx), {})
+                        p['result'] = v.value
+                        p['partial'] = score < 100
+                    except Exception:
+                        pass
                 elif k == 'Abs.':
                     row['solving'] = float(v.value)
                 elif k == 'Rank':

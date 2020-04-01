@@ -103,7 +103,7 @@
 
   {% for field in fields.keys %}
   {% with value=statistic.addition|get_item:field %}
-  <td{% if field in contest.resource.RATING_FIELDS %} class="{% coder_color_class contest.resource value %}"{% endif %}>
+  <td{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     {% if field in statistic.addition and not value.empty %}
       {% if field == 'hack' %}

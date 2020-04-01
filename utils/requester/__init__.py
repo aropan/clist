@@ -333,7 +333,8 @@ class requester():
         makedirs(self.dir_cache, mode=0o777, exist_ok=True)
 
         files = files or isinstance(post, dict) and post.pop('files__', None)
-        post_urlencoded = urllib.parse.urlencode(post).encode('utf-8') if post else None
+        post_urlencoded = urllib.parse.urlencode(post).encode('utf-8') if post and isinstance(post, dict) else post
+
         try:
             file_cache = ''.join((
                 self.dir_cache,
@@ -617,6 +618,8 @@ class requester():
             diff_time = (datetime.now() - datetime.fromtimestamp(getctime(self.dir_cache + file_cache)))
             if diff_time.seconds >= self.cache_timeout:
                 remove(self.dir_cache + file_cache)
+
+        self.save_cookie()
 
 
 if __name__ == "__main__":

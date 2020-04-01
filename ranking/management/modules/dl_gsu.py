@@ -53,7 +53,7 @@ class Statistic(BaseModule):
             if len(urls) > 1:
                 urls = [
                     (title, urljoin(url, u)) for title, u in matches
-                    if not re.search(r'[0-9]\s*-\s*[0-9].*[0-9]\s*-\s*[0-9].*\bкл\b', title)
+                    if not re.search(r'[0-9]\s*-\s*[0-9].*(?:[0-9]\s*-\s*[0-9].*\bкл\b|школа)', title, re.I)
                 ]
 
             if not urls:

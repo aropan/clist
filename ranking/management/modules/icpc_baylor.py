@@ -3,7 +3,7 @@
 import re
 import json
 from pprint import pprint
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from urllib.parse import urljoin
 import html
 
@@ -56,16 +56,19 @@ class Statistic(BaseModule):
 
         html_table = match.group(0)
         table = parsed_table.ParsedTable(html_table)
-        medals = defaultdict(int)
+        medals = OrderedDict()
+        fields = ('gold', 'silver', 'bronze')
+        for f in fields:
+            medals[f] = 0
         for r in table:
             _, v = next(iter(r.items()))
             for attr in v.attrs.get('class', '').split():
-                if attr in ('gold', 'silver', 'bronze'):
-                    medals[attr] += 1
+                if attr in fields:
+                    medals[attr] = medals.get(attr, 0) + 1
                     break
         if not medals:
             return default
-        return dict(medals)
+        return medals
 
     def get_standings(self, users=None, statistics=None):
         year = self.start_time.year
@@ -325,6 +328,13 @@ class Statistic(BaseModule):
             options = {'per_page': None}
             if not without_medals:
                 medals = self._get_medals(year)
+
+                medals_by_place = sum(([k] * v for k, v in medals.items()), [])
+                for r in result.values():
+                    place = int(r['place'])
+                    if place <= len(medals_by_place):
+                        r['medal'] = medals_by_place[place - 1]
+
                 medals = [{'name': k, 'count': v} for k, v in medals.items()]
                 options['medals'] = medals
             else:

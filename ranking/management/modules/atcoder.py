@@ -2,6 +2,7 @@
 
 import collections
 import json
+import re
 from urllib.parse import urlparse
 from pprint import pprint
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -15,6 +16,7 @@ from ranking.management.modules import conf
 
 class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
+    RESULTS_URL_ = '{0.url}/results'
     HISTORY_URL_ = '{0.scheme}://{0.netloc}/users/{1}/history'
 
     def __init__(self, **kwargs):
@@ -24,11 +26,9 @@ class Statistic(BaseModule):
         self._password = conf.ATCODER_PASSWORD
 
     def get_standings(self, users=None, statistics=None):
-        url = f'{self.STANDING_URL_.format(self)}/json'
-
+        url = f'{self.RESULTS_URL_.format(self)}/'
         page = REQ.get(url)
-
-        form = REQ.form(limit=3, selectors=['class="form-horizontal"'])
+        form = REQ.form(limit=2, selectors=['class="form-horizontal"'])
         if form:
             form['post'].update({
                 'username': self._username,
@@ -36,6 +36,21 @@ class Statistic(BaseModule):
             })
             page = REQ.get(form['url'], post=form['post'])
 
+        match = re.search(r'var\s*results\s*=\s*(\[[^\n]*\]);$', page, re.MULTILINE)
+        data = json.loads(match.group(1))
+        results = {}
+        for row in data:
+            if not row.get('IsRated'):
+                continue
+            handle = row.pop('UserScreenName')
+            r = collections.OrderedDict()
+            for k in ['OldRating', 'NewRating', 'Performance']:
+                if k in row:
+                    r[k] = row[k]
+            results[handle] = r
+
+        url = f'{self.STANDING_URL_.format(self)}/json'
+        page = REQ.get(url)
         data = json.loads(page)
 
         task_info = collections.OrderedDict()
@@ -98,7 +113,11 @@ class Statistic(BaseModule):
 
             if old_rating is not None:
                 r['OldRating'] = old_rating
-            if row['IsRated']:
+
+            if handle in results:
+                r.update(results.pop(handle))
+
+            if row['IsRated'] and 'NewRating' not in r:
                 if statistics is None or 'new_rating' not in statistics.get(handle, {}):
                     handles_to_get_new_rating.append(handle)
                 else:

@@ -9,7 +9,7 @@ import logging
 from utils.requester import requester
 from utils.requester import FailOnGetResponse  # noqa
 
-REQ = requester(cookie_filename=None)
+REQ = requester(cookie_filename=os.path.join(os.path.dirname(__file__), 'cookies.txt'))
 REQ.caching = 'REQUESTER_CACHING' in os.environ
 REQ.time_out = 23
 REQ.debug_output = 'REQUESTER_DEBUG' in os.environ

@@ -23,6 +23,7 @@ from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.management.commands.countrier import Countrier
+from ranking.management.modules.common import REQ
 
 
 class Command(BaseCommand):
@@ -148,8 +149,9 @@ class Command(BaseCommand):
 
                 statistics = Statistics.objects.filter(contest=contest).select_related('account')
 
-                statistics_by_key = {s.account.key: s.addition for s in statistics}
-                standings = plugin.get_standings(statistics=statistics_by_key)
+                with REQ:
+                    statistics_by_key = {s.account.key: s.addition for s in statistics}
+                    standings = plugin.get_standings(statistics=statistics_by_key)
 
                 with transaction.atomic():
                     if 'url' in standings and standings['url'] != contest.standings_url:

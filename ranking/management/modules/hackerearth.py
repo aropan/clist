@@ -3,10 +3,11 @@
 
 import re
 import json
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from time import sleep
 from collections import OrderedDict
+from pprint import pprint
 
 import tqdm
 
@@ -138,7 +139,7 @@ class Statistic(BaseModule):
                                 r['solved']['solving'] += 1
                             if 'background-color: #d5e8d2' in v.column.attrs.get('style', ''):
                                 p['first_ac'] = True
-                if not r or r['solving'] < 1e-9 or 'problems' not in r:
+                if not r or r.get('solving', 0) < 1e-9 and 'problems' not in r:
                     continue
 
                 members = r.pop('members')
@@ -169,7 +170,6 @@ class Statistic(BaseModule):
 if __name__ == "__main__":
     import sys
     import os
-    from pprint import pprint
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'

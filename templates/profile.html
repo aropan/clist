@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load extras %}
+{% load humanize %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/profile.css' %}" rel="stylesheet">
@@ -38,6 +39,11 @@
           +{{ resource.coder_accounts|length|add:-1 }}
         </span>
         {% endif %}
+        {% for s in medals|get_item:resource.pk %}
+          <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal">
+            &#9899;
+          </span>
+        {% endfor %}
       </a>
       {% if resource.profile_url %}
       <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" class="external-link" target="_blank"><i class="fas fa-external-link-alt"></i></a>

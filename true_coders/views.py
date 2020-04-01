@@ -77,10 +77,12 @@ def profile(request, username, template='profile.html', extra_context=None):
     resources = Resource.objects \
         .prefetch_related(Prefetch(
             'account_set',
-            queryset=Account.objects
-            .filter(coders=coder)
-            .annotate(num_stats=Count('statistics'))
-            .order_by('-num_stats'),
+            queryset=(
+                Account.objects
+                .filter(coders=coder)
+                .annotate(num_stats=Count('statistics'))
+                .order_by('-num_stats')
+            ),
             to_attr='coder_accounts',
         )) \
         .annotate(num_contests=Count(
@@ -89,11 +91,20 @@ def profile(request, username, template='profile.html', extra_context=None):
         )) \
         .filter(num_contests__gt=0).order_by('-num_contests')
 
+    stats = Statistics.objects \
+        .select_related('contest') \
+        .filter(account__coders=coder, addition__medal__isnull=False) \
+        .order_by('-contest__end_time')
+    medals = {}
+    for stat in stats:
+        medals.setdefault(stat.contest.resource_id, []).append(stat)
+
     context = {
         'coder': coder,
         'resources': resources,
         'statistics': statistics,
         'history_resources': history_resources,
+        'medals': medals,
     }
 
     if extra_context is not None:
