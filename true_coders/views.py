@@ -210,13 +210,15 @@ def settings(request):
     resources = Resource.objects.all()
     coder.filter_set.filter(resources=[], contest__isnull=True).delete()
 
+    services = Service.objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
+
     return render(
         request,
         "settings.html",
         {
             "resources": resources,
             "coder": coder,
-            "services": Service.objects.all(),
+            "services": services,
             "categories": coder.get_categories(),
             "notification_form": notification_form,
             "modules": Module.objects.order_by('resource__id').all(),

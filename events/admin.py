@@ -28,7 +28,7 @@ class EventAdmin(BaseModelAdmin):
 
 @admin_register(Participant)
 class ParticipantAdmin(BaseModelAdmin):
-    search_fields = ['coder__user__username', 'first_name', 'last_name', 'email']
+    search_fields = ['coder__user__username', 'first_name', 'last_name', 'email', 'team__name']
     list_display = [
         'coder',
         'first_name',

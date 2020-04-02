@@ -152,7 +152,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                         if data.get(field):
                             data[field] = data[field].strip()
 
-                    if 'organization' in data:
+                    if not is_coach and 'organization' in data:
                         organization_name = data['organization']
                         organization, created = Organization.objects.get_or_create(name=organization_name)
                         if created:

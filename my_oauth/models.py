@@ -1,7 +1,9 @@
 import re
 
-from pyclist.models import BaseModel
 from django.db import models
+from django.contrib.postgres.fields import JSONField
+
+from pyclist.models import BaseModel
 from true_coders.models import Coder
 
 
@@ -16,6 +18,7 @@ class Service(BaseModel):
     state_field = models.CharField(max_length=255)
     user_id_field = models.CharField(max_length=255)
     data_uri = models.TextField()
+    data_header = models.TextField(null=True, blank=True, default=None)
     fa_icon = models.CharField(max_length=255)
 
     def __str__(self):
@@ -27,6 +30,8 @@ class Token(BaseModel):
     coder = models.ForeignKey(Coder, null=True, on_delete=models.CASCADE, blank=True)
     user_id = models.CharField(max_length=255)
     email = models.EmailField()
+    access_token = JSONField(default=dict, blank=True)
+    data = JSONField(default=dict, blank=True)
 
     tokens_view_time = models.DateTimeField(null=True, default=None, blank=True)
     n_viewed_tokens = models.PositiveSmallIntegerField(default=0, blank=True)

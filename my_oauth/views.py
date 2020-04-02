@@ -15,7 +15,7 @@ from django.contrib import auth
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
@@ -48,7 +48,11 @@ def process_data(request, service, access_token, response):
     if response.status_code != requests.codes.ok:
         raise Exception('Response status code not equal ok.')
     data = json.loads(response.text)
+    while isinstance(data, list) or isinstance(data, dict) and len(data) == 1:
+        data = (data if isinstance(data, list) else list(data.values()))[0]
+
     data.update(access_token)
+
     for e in ('email', 'default_email', ):
         email = data.get(e, None)
         if email:
@@ -60,6 +64,8 @@ def process_data(request, service, access_token, response):
         service=service,
         user_id=user_id,
     )
+    token.access_token = access_token
+    token.data = json.loads(response.text)
     token.email = email
     token.save()
 
@@ -74,7 +80,8 @@ def process_access_token(request, service, response):
         access_token = json.loads(response.text)
     except Exception:
         access_token = dict(parse_qsl(response.text))
-    response = requests.get(service.data_uri % access_token)
+    headers = json.loads(service.data_header % access_token) if service.data_header else None
+    response = requests.get(service.data_uri % access_token, headers=headers)
     return process_data(request, service, access_token, response)
 
 
@@ -97,7 +104,6 @@ def response(request, name):
         else:
             url = re.sub('[\n\r]', '', service.token_uri % args)
             response = requests.get(url)
-
         return process_access_token(request, service, response)
     except Exception as e:
         messages.error(request, "ERROR: {}".format(str(e).strip("'")))
@@ -109,11 +115,13 @@ def login(request):
     if request.user.is_authenticated:
         return redirect(redirect_url)
 
+    services = Service.objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
+
     request.session['next'] = redirect_url
     return render(
         request,
         'login.html',
-        {'services': Service.objects.all()},
+        {'services': services},
     )
 
 
