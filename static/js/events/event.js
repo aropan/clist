@@ -109,36 +109,6 @@ $(function() {
         minimumInputLength: 0
     })
 
-    var $codeforces_handle= $('#codeforces-handle')
-    $codeforces_handle.select2({
-        width: '100%',
-        allowClear: true,
-        tags: true,
-        placeholder: 'Search codeforces handle by regex',
-        ajax: {
-            url: search_url,
-            dataType: 'json',
-            delay: 314,
-            data: function (params) {
-                return {
-                    query: 'accounts-for-add-account',
-                    user: params.term,
-                    resource: 1,  // codeforces.com resource id
-                    page: params.page || 1
-                };
-            },
-            processResults: function (data, params) {
-                return {
-                    results: data.items,
-                    pagination: {
-                        more: data.more
-                    }
-                };
-            },
-        },
-        minimumInputLength: 1,
-    })
-
     $('#tshirt-size').select2({
         width: '100%',
         minimumResultsForSearch: -1,

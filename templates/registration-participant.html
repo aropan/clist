@@ -61,9 +61,9 @@
     {% with account=coder|get_account:'codeforces.com' %}
     {% if not account %}
     <div class="form-group">
-        <label for="codeforces">Codeforces handle <small class="form-text text-muted">Optional. Other handles  can be added <a href="{% url 'coder:settings' %}#accounts-tab">here</a>.</small></label>
-        <select {% if not disable %}id="codeforces-handle"{% endif %} name="codeforces-handle" class="form-control" {% if disable %}disabled{% endif %}>
-        </select>
+        <label for="codeforces">Codeforces handle</label>
+        <input id="codeforces-handle" name="codeforces-handle" class="form-control" placeholder="Enter codeforces handle">
+        <small class="form-text text-muted">Optional. Other handles  can be added <a href="{% url 'coder:settings' %}#accounts-tab">here</a>.</small>
     </div>
     {% endif %}
     {% endwith %}
