@@ -113,6 +113,7 @@ $(function() {
     $codeforces_handle.select2({
         width: '100%',
         allowClear: true,
+        tags: true,
         placeholder: 'Search codeforces handle by regex',
         ajax: {
             url: search_url,
