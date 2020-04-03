@@ -58,6 +58,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
     else:
         join_requests = None
         team = None
+    has_join_requests = join_requests is not None and join_requests.exists()
 
     end_registration = event.registration_deadline < now()
     registration_timeleft = event.registration_deadline - now()
@@ -194,15 +195,16 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                     raise
         elif query == 'create-team':
             team_name = request.POST.get('team')
+            team_name_limit = event.limits.get('team_name_length')
             if not team_name:
                 messages.error(request, 'You must specify team name')
-            elif len(team_name) > 42:
-                messages.error(request, 'The team name is too long (limit is 42)')
+            elif team_name_limit and len(team_name) > team_name_limit:
+                messages.error(request, f'The team name is too long (limit is {team_name_limit})')
             elif participant and participant.is_coach:
                 team = Team.objects.create(event=event, name=team_name, author=participant)
                 team.coach = participant
                 team.save()
-            elif team or join_requests:
+            elif team or has_join_requests:
                 messages.error(request, 'You have already committed an action')
             else:
                 team = Team.objects.create(event=event, name=team_name, author=participant)
@@ -210,7 +212,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                 team.save()
         elif query == 'join-team':
             is_coach = participant and participant.is_coach
-            if not is_coach and (team or join_requests):
+            if not is_coach and (team or has_join_requests):
                 messages.error(request, 'You have already committed an action')
             else:
                 team_id = int(request.POST.get('team'))
@@ -218,7 +220,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                 if not JoinRequest.objects.filter(team=team, participant=participant).exists():
                     JoinRequest.objects.create(team=team, participant=participant)
         elif query == 'cancel-request':
-            if not join_requests:
+            if not has_join_requests:
                 messages.error(request, 'Join request not found')
             else:
                 join_request_id = int(request.GET.get('request_id'))
@@ -236,11 +238,18 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                 team = join_request.team
                 if query == 'accept-team':
                     if participant.is_coach:
-                        team.coach = participant
-                        team.save()
+                        if team.coach:
+                            messages.error(request, 'Team already has coach')
+                        else:
+                            team.coach = participant
+                            team.save()
+                            join_request.delete()
                     else:
-                        team.participants.add(participant)
-                join_request.delete()
+                        if team.participants.count() >= event.team_size:
+                            messages.error(request, 'Too many team participants')
+                        else:
+                            team.participants.add(participant)
+                            join_request.delete()
         elif query in ['register', 'delete-team']:
             team_id = int(request.POST.get('team_id'))
             team = Team.objects \
@@ -253,7 +262,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                 messages.error(request, 'Team already registered')
             elif query == 'delete-team':
                 team.delete()
-            elif not 0 < team.participants.count() < 4:
+            elif not 0 < team.participants.count() <= event.team_size:
                 messages.error(request, 'Team should be consists of one to three participants')
             else:
                 if team.coach:

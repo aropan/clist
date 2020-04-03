@@ -56,7 +56,7 @@ $(function() {
             },
         },
         minimumInputLength: 0,
-        maximumInputLength: 42,
+        maximumInputLength: team_name_limit,
     })
     $team.on('select2:close', function (e) {
         data = $team.select2('data')[0]

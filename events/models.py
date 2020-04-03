@@ -28,6 +28,8 @@ class Event(BaseModel):
     email_conf = JSONField(default=dict, blank=True)
     logins_paths = JSONField(default=dict, blank=True)
     standings_urls = JSONField(default=dict, blank=True)
+    limits = JSONField(default=dict, blank=True)
+    team_size = models.IntegerField(default=3)
 
     def email_backend(self):
         return EmailBackend(**self.email_conf['connection'])

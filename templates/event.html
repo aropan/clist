@@ -21,6 +21,7 @@
 
 {% block content %}
     <script>search_url = "{% url 'events:event' slug %}search/"</script>
+    <script>team_name_limit = {{ event.limits.team_name_length|default:255}}</script>
     <h3 id="name">{{ event.name }}</h3>
     <ul class="nav nav-tabs">
         <li{% if not tab or tab == 'information' %} class="active"{% endif %}><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
