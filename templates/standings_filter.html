@@ -1,0 +1,160 @@
+<form id="standings-form" class="form-inline invisible" method="get" action="">
+  <div class="form-group">
+    {% if divisions_order %}
+    <div class="input-group input-group-sm">
+      <div class="input-group-addon">Division</div>
+      <select name="division" id="division" onchange="this.form.submit()">
+        {% for d in divisions_order %}
+        <option value="{{ d }}" {% if params.division == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <script>
+      $(function() {
+        $('#division').select2({
+          minimumResultsForSearch: -1,
+          dropdownAutoWidth : true,
+          theme: 'bootstrap',
+          width: 'auto',
+        })
+      })
+    </script>
+    {% endif %}
+
+    <div class="input-group input-group-sm">
+      <input
+        type="search"
+        name="search"
+        {% if request.GET.search %}value="{{ request.GET.search }}"{% endif %}
+        placeholder="Regex filter to username"
+        {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %}
+        autocomplete="off"
+        class="form-control"
+        style="min-width: 300px"
+      />
+      <div class="input-group-btn">
+        <button class="btn btn-default" type="submit">
+          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+          Search
+        </button>
+      </div>
+    </div>
+
+    <input
+      name="detail"
+      type="checkbox"
+      data-size="small"
+      data-toggle="toggle"
+      data-on="Detail"
+      data-off="Short"
+      data-onstyle="default"
+      data-offstyle="default"
+      onchange="this.setAttribute('value', this.checked? 'true' : 'false'); this.checked = true; this.form.submit()"
+      {% if with_detail %}checked{% endif %}
+    >
+
+    {% if has_country %}
+    <div class="input-group input-group-sm hidden" id="country-hidden">
+      <div class="input-group-addon">Country</div>
+      <select name="country" id="country" onchange="this.form.submit()" multiple>
+        <option></option>
+        {% with country=request.user.coder.country %}
+          {% if country %}
+          <option value="{{ country.code }}"{% if country.code in params.countries %} selected{% endif %}>{{ country.name }}</option>
+          {% endif %}
+          {% get_countries as countries %}
+          {% for c in countries %}
+            {% if country.code != c.code %}
+              <option value="{{ c.code }}"{% if c.code in params.countries %} selected{% endif %}>{{ c.name }}</option>
+            {% endif %}
+          {% endfor %}
+        {% endwith %}
+      </select>
+    </div>
+
+    <script>
+      $(function() {
+        $('#country').select2({
+          dropdownAutoWidth : true,
+          theme: 'bootstrap',
+          placeholder: '',
+          allowClear: true,
+          templateResult: function (data) {
+              var $result = $('<span></span>')
+              $result.text(data.text)
+              if (data.id) {
+                  var code = data.id.toLowerCase()
+                  $result.prepend('<img class="flag flag-' + code + '"/>&nbsp;')
+              }
+              return $result
+          },
+        }).on('select2:unselecting', function() {
+          $(this).data('unselecting', true);
+        }).on('select2:opening', function(e) {
+          if ($(this).data('unselecting')) {
+            $(this).removeData('unselecting');
+            e.preventDefault();
+          }
+        })
+        $('#country-hidden').removeClass('hidden');
+      })
+    </script>
+    {% endif %}
+
+    {% if fields_to_select %}
+      {% for field, values in fields_to_select.items %}
+        <div class="input-group input-group-sm field-to-select hidden">
+          <div class="input-group-addon">{{ field|title }}</div>
+          <select name="{{ field }}" id="{{ field }}" onchange="this.form.submit()" multiple>
+          {% for v in values %}
+            <option value="{{ v }}" selected>{{ v }}</option>
+          {% endfor %}
+          </select>
+        </div>
+      {% endfor %}
+      <script>
+        $(function() {
+          $('.field-to-select select').select2({
+            dropdownAutoWidth : true,
+            theme: 'bootstrap',
+            placeholder: '',
+            allowClear: true,
+            ajax: {
+                url: '/settings/search/',
+                dataType: 'json',
+                delay: 314,
+                data: function (params) {
+                    return {
+                        query: 'field-to-select',
+                        cid: {{ contest.pk }},
+                        division: '{{ request.GET.division }}',
+                        field: $(this).attr('name'),
+                        text: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function (data, params) {
+                    return {
+                        results: data.items,
+                        pagination: {
+                            more: data.more
+                        }
+                    };
+                },
+                cache: true,
+            },
+          }).on('select2:unselecting', function() {
+            $(this).data('unselecting', true);
+          }).on('select2:opening', function(e) {
+            if ($(this).data('unselecting')) {
+              $(this).removeData('unselecting');
+              e.preventDefault();
+            }
+          })
+          $('.field-to-select').removeClass('hidden');
+        })
+      </script>
+    {% endif %}
+  </div>
+  <script>$(function() { $('#standings-form').hide().removeClass('invisible').fadeIn(); })</script>
+</form>

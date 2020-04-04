@@ -21,6 +21,7 @@ from django.db.models import Q, F, OuterRef, Exists
 
 from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
+from clist.templatetags.extras import get_problem_key
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.management.commands.countrier import Countrier
 from ranking.management.modules.common import REQ
@@ -44,6 +45,7 @@ class Command(BaseCommand):
         parser.add_argument('-c', '--no-check-timing', action='store_true', help='no check timing statistic')
         parser.add_argument('-o', '--only-new', action='store_true', default=False, help='parse without statistics')
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
+        parser.add_argument('-u', '--users', nargs='*', default=None, help='users for parse statistics')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
 
@@ -68,6 +70,7 @@ class Command(BaseCommand):
         no_update_results=False,
         limit_duration_in_secs=7 * 60 * 60,  # 7 hours
         title_regex=None,
+        users=None,
     ):
         now = timezone.now()
 
@@ -151,7 +154,7 @@ class Command(BaseCommand):
 
                 with REQ:
                     statistics_by_key = {s.account.key: s.addition for s in statistics}
-                    standings = plugin.get_standings(statistics=statistics_by_key)
+                    standings = plugin.get_standings(users=users, statistics=statistics_by_key)
 
                 with transaction.atomic():
                     if 'url' in standings and standings['url'] != contest.standings_url:
@@ -175,6 +178,7 @@ class Command(BaseCommand):
                         d_problems = {}
                         teams_viewed = set()
                         has_hidden = False
+                        languages = set()
 
                         ids = {s.pk for s in statistics}
                         for r in tqdm(list(result.values()), desc=f'update results {contest}'):
@@ -240,6 +244,14 @@ class Command(BaseCommand):
                                 account.save()
 
                             problems = r.get('problems', {})
+
+                            _languages = set()
+                            for problem in problems.values():
+                                if problem.get('language'):
+                                    languages.add(problem['language'])
+                                    _languages.add(problem['language'])
+                            if '_languages' not in r and _languages:
+                                r['_languages'] = list(sorted(_languages))
 
                             if 'team_id' not in r or r['team_id'] not in teams_viewed:
                                 if 'team_id' in r:
@@ -358,51 +370,59 @@ class Command(BaseCommand):
                                 statistic.addition = addition
                                 statistic.save()
 
-                        if has_hidden:
-                            contest.timing.statistic = timezone.now() + timedelta(minutes=30)
-                            contest.timing.save()
+                        if users is None:
+                            if has_hidden:
+                                contest.timing.statistic = timezone.now() + timedelta(minutes=30)
+                                contest.timing.save()
 
-                        if contest.start_time <= now:
-                            if now < contest.end_time:
-                                contest.info['last_parse_statistics'] = now.strftime('%Y-%m-%d %H:%M:%S.%f+%Z')
-                            elif 'last_parse_statistics' in contest.info:
-                                contest.info.pop('last_parse_statistics')
+                            if contest.start_time <= now:
+                                if now < contest.end_time:
+                                    contest.info['last_parse_statistics'] = now.strftime('%Y-%m-%d %H:%M:%S.%f+%Z')
+                                elif 'last_parse_statistics' in contest.info:
+                                    contest.info.pop('last_parse_statistics')
 
-                        if fields_set and not isinstance(addition, OrderedDict):
-                            fields.sort()
+                            if fields_set and not isinstance(addition, OrderedDict):
+                                fields.sort()
 
-                        if ids:
-                            first = Statistics.objects.filter(pk__in=ids).first()
-                            self.logger.info(f'First deleted: {first}, account = {first.account}')
-                            delete_info = Statistics.objects.filter(pk__in=ids).delete()
-                            self.logger.info(f'Delete info: {delete_info}')
-                            progress_bar.set_postfix(deleted=str(delete_info))
+                            if ids:
+                                first = Statistics.objects.filter(pk__in=ids).first()
+                                self.logger.info(f'First deleted: {first}, account = {first.account}')
+                                delete_info = Statistics.objects.filter(pk__in=ids).delete()
+                                self.logger.info(f'Delete info: {delete_info}')
+                                progress_bar.set_postfix(deleted=str(delete_info))
 
-                        if self._canonize(fields) != self._canonize(contest.info.get('fields')):
-                            contest.info['fields'] = fields
+                            if self._canonize(fields) != self._canonize(contest.info.get('fields')):
+                                contest.info['fields'] = fields
 
-                        if calculate_time and not contest.calculate_time:
-                            contest.calculate_time = True
+                            if calculate_time and not contest.calculate_time:
+                                contest.calculate_time = True
 
-                        problems = standings.pop('problems', None)
-                        if 'division' in problems:
-                            for d, ps in problems['division'].items():
-                                for p in ps:
-                                    if 'short' in p:
-                                        p.update(d_problems.get(d, {}).get(p['short'], {}))
-                            if isinstance(problems['division'], OrderedDict):
-                                problems['divisions_order'] = list(problems['division'].keys())
-                        else:
-                            for p in problems:
-                                if 'short' in p:
-                                    p.update(d_problems.get(p['short'], {}))
+                            problems = standings.pop('problems', None)
+                            if 'division' in problems:
+                                for d, ps in problems['division'].items():
+                                    for p in ps:
+                                        k = get_problem_key(p)
+                                        if k:
+                                            p.update(d_problems.get(d, {}).get(k, {}))
+                                if isinstance(problems['division'], OrderedDict):
+                                    problems['divisions_order'] = list(problems['division'].keys())
+                            else:
+                                for p in problems:
+                                    k = get_problem_key(p)
+                                    if k:
+                                        p.update(d_problems.get(k, {}))
 
-                        if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
-                            contest.info['problems'] = problems
+                            if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
+                                contest.info['problems'] = problems
 
-                        contest.save()
+                            if languages:
+                                languages = list(sorted(languages))
+                                if self._canonize(languages) != self._canonize(contest.info.get('languages')):
+                                    contest.info['languages'] = languages
 
-                        progress_bar.set_postfix(n_fields=len(fields))
+                            contest.save()
+
+                            progress_bar.set_postfix(n_fields=len(fields))
 
                     action = standings.get('action')
                     if action is not None:
@@ -478,4 +498,5 @@ class Command(BaseCommand):
             no_update_results=args.no_update_results,
             freshness_days=args.freshness_days,
             title_regex=args.event,
+            users=args.users,
         )

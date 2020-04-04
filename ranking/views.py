@@ -123,14 +123,9 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     # field to select
     fields_to_select = {}
     for f in contest_fields:
-        if f.lower() in ['institution', 'room', 'affiliation', 'city']:
-            values = request.GET.getlist(f)
-            if values:
-                filt = Q()
-                for q in values:
-                    filt |= Q(**{f'addition__{f}': q})
-                statistics = statistics.filter(filt)
-            fields_to_select[f] = values
+        f = f.strip('_')
+        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages']:
+            fields_to_select[f] = request.GET.getlist(f)
 
     with_detail = request.GET.get('detail') in ['true', 'on']
     if request.user.is_authenticated:
@@ -140,6 +135,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             coder.save()
         else:
             with_detail = coder.settings.get('standings_with_detail', False)
+    else:
+        coder = None
 
     if with_detail:
         for k in contest_fields:
@@ -148,6 +145,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
                               'division']
                 and 'country' not in k
+                and not k.startswith('_')
             ):
                 field = ' '.join(k.split('_'))
                 if field and not field[0].isupper():
@@ -208,18 +206,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
             mod_penalty.update({'solving': first.solving, 'penalty': penalty})
 
-    search = request.GET.get('search')
-    if search:
-        if search.startswith('party:'):
-            _, party_slug = search.split(':')
-            party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
-            statistics = statistics.filter(Q(account__coders__in=party.coders.all()) |
-                                           Q(account__coders__in=party.admins.all()) |
-                                           Q(account__coders=party.author))
-        else:
-            search_re = verify_regex(search)
-            statistics = statistics.filter(Q(account__key__iregex=search_re) | Q(addition__name__iregex=search_re))
-
     params = {}
     problems = contest.info.get('problems', {})
     if 'division' in problems:
@@ -262,14 +248,40 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         else:
             last = p
 
+    # own_stat = statistics.filter(account__coders=coder).first() if coder else None
+
+    # filter by search
+    search = request.GET.get('search')
+    if search:
+        if search.startswith('party:'):
+            _, party_slug = search.split(':')
+            party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
+            statistics = statistics.filter(Q(account__coders__in=party.coders.all()) |
+                                           Q(account__coders__in=party.admins.all()) |
+                                           Q(account__coders=party.author))
+        else:
+            search_re = verify_regex(search)
+            statistics = statistics.filter(Q(account__key__iregex=search_re) | Q(addition__name__iregex=search_re))
+
+    # filter by country
     countries = request.GET.getlist('country')
     countries = set([c for c in countries if c])
     if countries:
         statistics = statistics.filter(account__country__in=countries)
         params['countries'] = countries
 
-    page = request.GET.get('page', '1')
-    start_num = (int(page) - 1 if page.isdigit() else 0) * per_page
+    # filter by field to select
+    for field, values in fields_to_select.items():
+        if not values:
+            continue
+        filt = Q()
+        if field == 'languages':
+            for lang in values:
+                filt |= Q(**{f'addition___languages__contains': [lang]})
+        else:
+            for q in values:
+                filt |= Q(**{f'addition__{f}': q})
+        statistics = statistics.filter(filt)
 
     context = {
         'data_1st_u': data_1st_u,
@@ -286,7 +298,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'has_country': has_country,
         'per_page': per_page,
         'with_row_num': bool(search or countries),
-        'start_num': start_num,
         'merge_problems': merge_problems,
         'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),

@@ -48,6 +48,16 @@ class BaseModule(object, metaclass=ABCMeta):
         delta = int(delta)
         return f'{delta // 3600}:{delta // 60 % 60:02d}:{delta % 60:02d}'
 
+    @staticmethod
+    def merge_dict(src, dst):
+        for key, value in src.items():
+            if isinstance(value, dict):
+                node = dst.setdefault(key, {})
+                BaseModule.merge_dict(value, node)
+            else:
+                dst[key] = value
+        return dst
+
     def get_result(self, *users):
         standings = self.get_standings(users)
         result = standings.get('result', {})

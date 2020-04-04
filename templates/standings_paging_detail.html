@@ -1,5 +1,10 @@
-{% if not nosmall %}
+{% if small %}
 <small class="text-muted">
+{% endif %}
+{% if not small and stat.subscores %}
+<div>
+  {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
+</div>
 {% endif %}
 {% if stat.status and stat.time %}
   {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
@@ -14,6 +19,10 @@
     {{ stat.upsolving.result|floatformat:'-2' }}
   {% endif %}
 {% endif %}
-{% if not nosmall %}
+{% if stat.language %}
+{% if not small %}<br/>{% endif %}
+  {{ stat.language }}
+{% endif %}
+{% if small %}
 </small>
 {% endif %}

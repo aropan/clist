@@ -12,17 +12,18 @@ from datetime import datetime
 
 import tqdm
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://codejam.googleapis.com/scoreboard/{id}/poll?p='
+    API_ATTEMPTS_URL_FORMAT_ = 'https://codejam.googleapis.com/attempts/{id}/poll?p='
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
-    def _api_get_standings(self, users=None):
+    def _api_get_standings(self, users=None, statistics=None):
         match = re.search('/([0-9a-f]{16})$', self.url)
         if not match:
             raise ExceptionParseStandings(f'Not found id in url = {self.url}')
@@ -30,18 +31,27 @@ class Statistic(BaseModule):
         standings_url = self.url
 
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
+        api_attempts_url_format = self.API_ATTEMPTS_URL_FORMAT_.format(**self.__dict__)
+
+        def encode(value):
+            ret = base64.b64encode(value.encode()).decode()
+            ret = ret.replace('+', '-')
+            ret = ret.replace('/', '_')
+            return ret
+
+        def decode(code):
+            code = code.replace('-', '+')
+            code = code.replace('_', '/')
+            code = re.sub(r'[^A-Za-z0-9\+\/]', '', code)
+            code += '=' * ((4 - len(code) % 4) % 4)
+            data = json.loads(base64.b64decode(code).decode())
+            return data
 
         def get(offset, num):
             query = f'{{"min_rank":{offset},"num_consecutive_users":{num}}}'
-            base64_query = base64.b64encode(query.encode())
-            url = api_ranking_url_format + base64_query.decode()
+            url = api_ranking_url_format + encode(query)
             content = REQ.get(url)
-            content = content.replace('-', '+')
-            content = content.replace('_', '/')
-            content = re.sub(r'[^A-Za-z0-9\+\/]', '', content)
-            content += '=' * ((4 - len(content) % 4) % 4)
-            data = json.loads(base64.b64decode(content).decode())
-            return data
+            return decode(content)
 
         data = get(1, 1)
         problems_info = OrderedDict([
@@ -62,19 +72,36 @@ class Statistic(BaseModule):
         def fetch_page(page):
             return get(page * num_consecutive_users + 1, num_consecutive_users)
 
+        def fetch_attempts(handle):
+            query = f'{{"nickname":{json.dumps(handle)},"include_non_final_results":true}}'
+            url = api_attempts_url_format + encode(query)
+            try:
+                content = REQ.get(url)
+                data = decode(content)
+            except FailOnGetResponse:
+                data = None
+            return handle, data
+
         result = {}
         with PoolExecutor(max_workers=8) as executor:
-            for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page):
+            handles_for_getting_attempts = []
+            for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page, desc='paging'):
                 for row in data['user_scores']:
                     if not row['task_info']:
                         continue
                     handle = row.pop('displayname')
+                    if users and handle not in users:
+                        continue
 
                     r = result.setdefault(handle, {})
                     r['member'] = handle
                     r['place'] = row.pop('rank')
                     r['solving'] = row.pop('score_1')
                     r['penalty'] = self.to_time(-row.pop('score_2') / 10**6)
+                    if '/round/' in self.url:
+                        query = encode(handle)
+                        url = self.url.replace('/round/', '/submissions/').rstrip('/') + f'/{query}'
+                        r['url'] = url.rstrip('=')
 
                     country = row.pop('country', None)
                     if country:
@@ -85,7 +112,8 @@ class Statistic(BaseModule):
                     for task_info in row['task_info']:
                         tid = task_info['task_id']
                         p = problems.setdefault(tid, {})
-                        p['time'] = self.to_time(task_info['penalty_micros'] / 10**6)
+                        if task_info['penalty_micros']:
+                            p['time'] = self.to_time(task_info['penalty_micros'] / 10**6)
                         p['result'] = task_info['score']
                         if p['result'] and p['result'] != problems_info[tid]['full_score']:
                             p['partial'] = True
@@ -93,6 +121,57 @@ class Statistic(BaseModule):
                             p['penalty'] = task_info['penalty_attempts']
                         solved += task_info['tests_definitely_solved']
                     r['solved'] = {'solving': solved}
+
+                    if statistics and handle in statistics and statistics[handle].get('_with_subscores'):
+                        result[handle] = self.merge_dict(r, statistics.pop(handle))
+                    else:
+                        handles_for_getting_attempts.append(handle)
+
+            for handle, data in tqdm.tqdm(
+                executor.map(fetch_attempts, handles_for_getting_attempts),
+                total=len(handles_for_getting_attempts),
+                desc='attempting'
+            ):
+                if data is None:
+                    continue
+                challenge = data['challenge']
+                if not challenge.get('are_results_final'):
+                    break
+                tasks = {t['id']: t for t in challenge['tasks']}
+
+                row = result[handle]
+                problems = row['problems']
+
+                for attempt in sorted(data['attempts'], key=lambda a: a['timestamp_ms']):
+                    task_id = attempt['task_id']
+                    problem = problems.setdefault(task_id, {})
+
+                    subscores = []
+                    score = 0
+                    for res, test in zip(attempt['judgement']['results'], tasks[task_id]['tests']):
+                        if not test.get('value'):
+                            continue
+                        subscore = {'status': test['value']}
+                        if 'verdict' in res:
+                            subscore['result'] = res['verdict'] == 1
+                            subscore['verdict'] = res['verdict__str']
+                        else:
+                            subscore['verdict'] = res['status__str']
+                        subscores.append(subscore)
+                        if res.get('verdict') == 1:
+                            score += test['value']
+                    if score != problem.get('result'):
+                        continue
+
+                    problem['subscores'] = subscores
+                    problem['solution'] = attempt['src_content'].replace('\u0000', '')
+                    language = attempt.get('src_language__str')
+                    if language:
+                        problem['language'] = language
+                    if 'time' not in problem:
+                        delta_ms = attempt['timestamp_ms'] - challenge['start_ms']
+                        problem['time'] = self.to_time(delta_ms / 10**3)
+                row['_with_subscores'] = True
 
         standings = {
             'result': result,
@@ -188,7 +267,7 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
         if '/codingcompetitions.withgoogle.com/' in self.url:
-            return self._api_get_standings(users)
+            return self._api_get_standings(users, statistics)
         if '/code.google.com/' in self.url or '/codejam.withgoogle.com/' in self.url:
             return self._old_get_standings(users)
         raise InitModuleException(f'url = {self.url}')
