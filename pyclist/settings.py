@@ -339,3 +339,8 @@ ACE_CALENDARS_ = {
     'yahoo': {'id': 2, 'name': 'Yahoo'},
     'outlook': {'id': 3, 'name': 'Outlook'},
 }
+
+try:
+    from .local_settings import *  # noqa
+except ImportError:
+    pass
