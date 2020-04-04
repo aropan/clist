@@ -25,9 +25,8 @@ class Statistic(BaseModule):
         self._username = conf.ATCODER_HANDLE
         self._password = conf.ATCODER_PASSWORD
 
-    def get_standings(self, users=None, statistics=None):
-        url = f'{self.RESULTS_URL_.format(self)}/'
-        page = REQ.get(url)
+    def _get(self, *args, **kwargs):
+        page = REQ.get(*args, **kwargs)
         form = REQ.form(limit=2, selectors=['class="form-horizontal"'])
         if form:
             form['post'].update({
@@ -35,6 +34,11 @@ class Statistic(BaseModule):
                 'password': self._password,
             })
             page = REQ.get(form['url'], post=form['post'])
+        return page
+
+    def get_standings(self, users=None, statistics=None):
+        url = f'{self.RESULTS_URL_.format(self)}/'
+        page = self._get(url)
 
         match = re.search(r'var\s*results\s*=\s*(\[[^\n]*\]);$', page, re.MULTILINE)
         data = json.loads(match.group(1))
@@ -50,7 +54,7 @@ class Statistic(BaseModule):
             results[handle] = r
 
         url = f'{self.STANDING_URL_.format(self)}/json'
-        page = REQ.get(url)
+        page = self._get(url)
         data = json.loads(page)
 
         task_info = collections.OrderedDict()

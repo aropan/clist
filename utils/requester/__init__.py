@@ -11,6 +11,7 @@ import logging
 import mimetypes
 import random
 import string
+import html
 from os import path, makedirs, listdir, remove, stat, environ
 from os.path import isdir, getctime
 from json import loads, dumps, load
@@ -531,7 +532,7 @@ class requester():
             if field["type"] == "checkbox" and field["checked"] is None:
                 unchecked.append(field)
             else:
-                post[field['name']] = field['value']
+                post[field['name']] = html.unescape(field['value'])
 
         fields = re.finditer(r'''<select[^>]*name="(?P<name>[^"]*)"[^>]*>''', page, re.VERBOSE)
         for field in fields:
