@@ -57,17 +57,18 @@
       {% endwith %}
     {% endif %}
 
-    {% coder_color_circle contest.resource statistic.addition statistic.account.info %}
+    {% with team_id=statistic.addition.team_id %}
+    {% if not team_id %}{% coder_color_circle contest.resource statistic.addition statistic.account.info %}{% endif %}
 
-    <div class="{% coder_color_class contest.resource statistic.addition statistic.account.info %}" style="display: inline-block">
+    <div{% if not team_id%} class="{% coder_color_class contest.resource statistic.addition statistic.account.info %}"{% endif %} style="display: inline-block">
       {% with coders=statistic.account.coders.all %}
-        {% if coders|length == 1 %}
+        {% if coders|length == 1 and not team_id %}
           {% for c in coders %}
             <a href="{% url 'coder:profile' c.username %}" class="coder">
           {% endfor %}
         {% endif %}
 
-        {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name %}
+        {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name or statistic.addition.team_id %}
           <span>{{ statistic.addition.name }}</span>
         {% elif statistic.addition.name and contest.resource.info.standings.name_instead_key %}
           <span title="{{ statistic.account.key }}" data-placement="top">{{ statistic.addition.name }}</span>
@@ -75,7 +76,7 @@
           <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %}>{{ statistic.account.key }}</span>
         {% endif %}
 
-        {% if coders|length == 1 %}
+        {% if coders|length == 1 and not team_id %}
           </a>
         {% endif %}
 
@@ -92,6 +93,7 @@
         {% endif %}
       {% endwith %}
     </div>
+    {% endwith %}
   </td>
   <td>
     <div{% if not with_detail %} style="display: inline;"{% endif %}>{{ statistic.solving|floatformat:'-2' }}</div>
