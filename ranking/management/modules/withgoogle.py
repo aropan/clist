@@ -6,6 +6,8 @@ import re
 import json
 import urllib.parse
 import os
+from pprint import pprint
+from random import choice
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime
@@ -65,6 +67,7 @@ class Statistic(BaseModule):
             )
             for task in data['challenge']['tasks']
         ])
+        are_results_final = data['challenge']['are_results_final']
 
         num_consecutive_users = 200
         n_page = (data['full_scoreboard_size'] - 1) // num_consecutive_users + 1
@@ -127,51 +130,52 @@ class Statistic(BaseModule):
                     else:
                         handles_for_getting_attempts.append(handle)
 
-            for handle, data in tqdm.tqdm(
-                executor.map(fetch_attempts, handles_for_getting_attempts),
-                total=len(handles_for_getting_attempts),
-                desc='attempting'
-            ):
-                if data is None:
-                    continue
-                challenge = data['challenge']
-                if not challenge.get('are_results_final'):
-                    break
-                tasks = {t['id']: t for t in challenge['tasks']}
-
-                row = result[handle]
-                problems = row['problems']
-
-                for attempt in sorted(data['attempts'], key=lambda a: a['timestamp_ms']):
-                    task_id = attempt['task_id']
-                    problem = problems.setdefault(task_id, {})
-
-                    subscores = []
-                    score = 0
-                    for res, test in zip(attempt['judgement']['results'], tasks[task_id]['tests']):
-                        if not test.get('value'):
-                            continue
-                        subscore = {'status': test['value']}
-                        if 'verdict' in res:
-                            subscore['result'] = res['verdict'] == 1
-                            subscore['verdict'] = res['verdict__str']
-                        else:
-                            subscore['verdict'] = res['status__str']
-                        subscores.append(subscore)
-                        if res.get('verdict') == 1:
-                            score += test['value']
-                    if score != problem.get('result'):
+            if are_results_final:
+                for handle, data in tqdm.tqdm(
+                    executor.map(fetch_attempts, handles_for_getting_attempts),
+                    total=len(handles_for_getting_attempts),
+                    desc='attempting'
+                ):
+                    if data is None:
                         continue
+                    challenge = data['challenge']
+                    if not challenge.get('are_results_final'):
+                        break
+                    tasks = {t['id']: t for t in challenge['tasks']}
 
-                    problem['subscores'] = subscores
-                    problem['solution'] = attempt['src_content'].replace('\u0000', '')
-                    language = attempt.get('src_language__str')
-                    if language:
-                        problem['language'] = language
-                    if 'time' not in problem:
-                        delta_ms = attempt['timestamp_ms'] - challenge['start_ms']
-                        problem['time'] = self.to_time(delta_ms / 10**3)
-                row['_with_subscores'] = True
+                    row = result[handle]
+                    problems = row['problems']
+
+                    for attempt in sorted(data['attempts'], key=lambda a: a['timestamp_ms']):
+                        task_id = attempt['task_id']
+                        problem = problems.setdefault(task_id, {})
+
+                        subscores = []
+                        score = 0
+                        for res, test in zip(attempt['judgement']['results'], tasks[task_id]['tests']):
+                            if not test.get('value'):
+                                continue
+                            subscore = {'status': test['value']}
+                            if 'verdict' in res:
+                                subscore['result'] = res['verdict'] == 1
+                                subscore['verdict'] = res['verdict__str']
+                            else:
+                                subscore['verdict'] = res['status__str']
+                            subscores.append(subscore)
+                            if res.get('verdict') == 1:
+                                score += test['value']
+                        if score != problem.get('result'):
+                            continue
+
+                        problem['subscores'] = subscores
+                        problem['solution'] = attempt['src_content'].replace('\u0000', '')
+                        language = attempt.get('src_language__str')
+                        if language:
+                            problem['language'] = language
+                        if 'time' not in problem:
+                            delta_ms = attempt['timestamp_ms'] - challenge['start_ms']
+                            problem['time'] = self.to_time(delta_ms / 10**3)
+                    row['_with_subscores'] = True
 
         standings = {
             'result': result,
@@ -274,7 +278,6 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    from pprint import pprint
     statistics = [
         Statistic(
             name='Kick Start. Round H',
@@ -320,6 +323,5 @@ if __name__ == "__main__":
             scores.sort()
             score = scores[len(scores) * 9 // 10]
             result = [r for r in result.values() if float(r['solving']) == score]
-            from random import choice
             pprint(choice(result))
         pprint(standings)
