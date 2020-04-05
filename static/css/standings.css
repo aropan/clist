@@ -90,7 +90,7 @@ table.standings .handle-cell {
   display: inline;
 }
 
-.standings a.coder span {
+.standings a.coder span, a.solution {
   text-decoration: underline;
 }
 

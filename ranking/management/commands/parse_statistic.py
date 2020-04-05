@@ -47,6 +47,7 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
         parser.add_argument('-u', '--users', nargs='*', default=None, help='users for parse statistics')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
+        parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
 
     @staticmethod
@@ -71,6 +72,7 @@ class Command(BaseCommand):
         limit_duration_in_secs=7 * 60 * 60,  # 7 hours
         title_regex=None,
         users=None,
+        with_stats=True,
     ):
         now = timezone.now()
 
@@ -153,7 +155,7 @@ class Command(BaseCommand):
                 statistics = Statistics.objects.filter(contest=contest).select_related('account')
 
                 with REQ:
-                    statistics_by_key = {s.account.key: s.addition for s in statistics}
+                    statistics_by_key = {s.account.key: s.addition for s in statistics} if with_stats else {}
                     standings = plugin.get_standings(users=users, statistics=statistics_by_key)
 
                 with transaction.atomic():
@@ -499,4 +501,5 @@ class Command(BaseCommand):
             freshness_days=args.freshness_days,
             title_regex=args.event,
             users=args.users,
+            with_stats=not args.no_stats,
         )

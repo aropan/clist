@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load extras %}
+
+{% block title %}Solution {{ problem|get_problem_name }} on {{ contest.title }}{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
+<script src="{% static_ts 'js/highlight.pack.js' %}"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+{% endblock %}
+
+{% block content %}
+<div>
+  author: {% with coders=account.coders.all %}{% if coders|length == 1 %}<a href="{% url 'coder:profile' coders.0.username %}">{{ account.key }}</a>{% else %}{{ account.key }}{% endif %}{% endwith %},
+  {% if problem %}problem name: {{ problem|get_problem_name }},{% endif %}
+  contest: <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}">{{ contest.title }}</a>,
+  result:
+  <div class="inline {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %} {% if stat.partial %}par{% else %}acc{% endif %} {% elif stat.result|slice:":1" == "?" %}hid{% else %}rej{% endif %}">{% if stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}{{ stat.result }}{% else %}{{ stat.result|floatformat:'-2' }}{% endif %}</div>{% for f in fields %}{% with v=stat|get_item:f %}{% if v is not None %}, {{ f }}: {{ v }}{% endif %}{% endwith %}{% endfor %}
+</div>
+
+<pre style="padding: 0px"><code>{{ stat.solution }}</code></pre>
+
+{% endblock %}

@@ -16,9 +16,7 @@
 
 {% block content %}
 
-<h3 class="text-center">
-  Standings <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a> <small>{{ contest.end_time|naturalday:'F j, Y' }}</small>
-</h3>
+<h3 class="text-center">Standings <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a> <small>{{ contest.end_time|naturalday:'F j, Y' }}</small></h3>
 
 {% if contest.is_running and not contest.is_over %}
 <h4 class="text-center">Time remaining: {{ contest.next_time|countdown }}{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|naturaltime }}</small>{% endif %}</h4>

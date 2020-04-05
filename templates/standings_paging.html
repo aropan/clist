@@ -176,7 +176,7 @@
             {% if stat.url %}</a>{% endif %}
           </div>
         {% elif not with_detail %}
-          {% include "standings_paging_detail.html" with stat=stat small=True %}
+          {% include "standings_paging_detail.html" with stat=stat small=True sid=statistic.pk problem_key=key %}
         {% endif %}
         {% if stat.extra_score is not None %}
           <div class="inline"
@@ -193,7 +193,7 @@
         </div>
 
         {% if with_detail %}
-          {% include "standings_paging_detail.html" with stat=stat small=True %}
+          {% include "standings_paging_detail.html" with stat=stat small=True sid=statistic.pk problem_key=key %}
         {% endif %}
       {% endif %}
     </td>

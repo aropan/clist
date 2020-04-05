@@ -56,17 +56,17 @@ class Statistic(BaseModule):
             return decode(content)
 
         data = get(1, 1)
-        problems_info = OrderedDict([
-            (
-                task['id'],
-                {
-                    'code': task['id'],
-                    'name': task['title'],
-                    'full_score': sum([test['value'] for test in task['tests']])
-                }
-            )
+        problems_info = [
+            {
+                'code': task['id'],
+                'name': task['title'],
+                'full_score': sum([test['value'] for test in task['tests']])
+            }
             for task in data['challenge']['tasks']
-        ])
+        ]
+        problems_info.sort(key=lambda t: (t['full_score'], t['name']))
+        problems_info = OrderedDict([(t['code'], t) for t in problems_info])
+
         are_results_final = data['challenge']['are_results_final']
 
         num_consecutive_users = 200
@@ -115,7 +115,7 @@ class Statistic(BaseModule):
                     for task_info in row['task_info']:
                         tid = task_info['task_id']
                         p = problems.setdefault(tid, {})
-                        if task_info['penalty_micros']:
+                        if task_info['penalty_micros'] > 0:
                             p['time'] = self.to_time(task_info['penalty_micros'] / 10**6)
                         p['result'] = task_info['score']
                         if p['result'] and p['result'] != problems_info[tid]['full_score']:
@@ -152,7 +152,7 @@ class Statistic(BaseModule):
 
                         subscores = []
                         score = 0
-                        for res, test in zip(attempt['judgement']['results'], tasks[task_id]['tests']):
+                        for res, test in zip(attempt['judgement'].pop('results'), tasks[task_id]['tests']):
                             if not test.get('value'):
                                 continue
                             subscore = {'status': test['value']}
@@ -168,7 +168,7 @@ class Statistic(BaseModule):
                             continue
 
                         problem['subscores'] = subscores
-                        problem['solution'] = attempt['src_content'].replace('\u0000', '')
+                        problem['solution'] = attempt.pop('src_content').replace('\u0000', '')
                         language = attempt.get('src_language__str')
                         if language:
                             problem['language'] = language

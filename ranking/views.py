@@ -310,6 +310,30 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     return render(request, template, context)
 
 
+def solutions(request, sid, problem_key):
+    statistic = get_object_or_404(Statistics.objects.select_related('account', 'contest'), pk=sid)
+    problems = statistic.addition.get('problems', {})
+    if problem_key not in problems:
+        return HttpResponseNotFound()
+
+    for problem in statistic.contest.info['problems']:
+        if get_problem_key(problem) == problem_key:
+            break
+    else:
+        problem = None
+
+    stat = problems[problem_key]
+
+    return render(request, 'solution.html', {
+        'statistic': statistic,
+        'account': statistic.account,
+        'contest': statistic.contest,
+        'problem': problem,
+        'stat': stat,
+        'fields': ['time', 'status', 'language'],
+    })
+
+
 @login_required
 @xframe_options_exempt
 def action(request):
