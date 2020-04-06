@@ -154,8 +154,8 @@ class TeamStatus(Enum):
         ADD_COACH: 'new',
         BSU_SEMIFINAL: 'approved',
         INVITED: 'invited',
-        SCHOOL_FINAL: 'junior final',
-        SCHOOL_SEMIFINAL: 'junior semifinal',
+        SCHOOL_FINAL: 'approved',
+        SCHOOL_SEMIFINAL: 'approved',
     }
 
     classes = {
