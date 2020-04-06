@@ -456,6 +456,7 @@ def frame(request, slug, status):
             TeamStatus.SCHOOL_FINAL,
             TeamStatus.BSU_SEMIFINAL,
             TeamStatus.SEMIFINAL,
+            TeamStatus.SCHOOL_SEMIFINAL,
             TeamStatus.QUARTERFINAL,
             TeamStatus.QUALIFICATION,
             TeamStatus.EDITING,
