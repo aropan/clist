@@ -105,6 +105,7 @@ class TeamStatus(Enum):
     BSU_SEMIFINAL = 11
     INVITED = 12
     SCHOOL_FINAL = 13
+    SCHOOL_SEMIFINAL = 15
 
     labels = {
         PENDING: 'pending',
@@ -113,13 +114,14 @@ class TeamStatus(Enum):
         QUALIFICATION: 'qualification',
         QUARTERFINAL: 'quarterfinal',
         SEMIFINAL: 'semifinal',
+        SCHOOL_SEMIFINAL: 'junior semifinal',
         FINAL: 'final',
+        SCHOOL_FINAL: 'junior final',
         DISQUALIFIED: 'disqualified',
         NEW: 'new',
         ADD_COACH: 'coaching',
         BSU_SEMIFINAL: 'bsu',
         INVITED: 'invited',
-        SCHOOL_FINAL: 'school final',
     }
 
     frame_labels = {
@@ -135,7 +137,8 @@ class TeamStatus(Enum):
         ADD_COACH: 'coaching',
         BSU_SEMIFINAL: 'semifinal',
         INVITED: 'invited',
-        SCHOOL_FINAL: 'school final',
+        SCHOOL_FINAL: 'junior final',
+        SCHOOL_SEMIFINAL: 'junior semifinal',
     }
 
     descriptions = {
@@ -151,7 +154,8 @@ class TeamStatus(Enum):
         ADD_COACH: 'new',
         BSU_SEMIFINAL: 'approved',
         INVITED: 'invited',
-        SCHOOL_FINAL: 'school final',
+        SCHOOL_FINAL: 'junior final',
+        SCHOOL_SEMIFINAL: 'junior semifinal',
     }
 
     classes = {
@@ -168,6 +172,7 @@ class TeamStatus(Enum):
         BSU_SEMIFINAL: 'success',
         INVITED: 'default',
         SCHOOL_FINAL: 'success',
+        SCHOOL_SEMIFINAL: 'success',
     }
 
 
