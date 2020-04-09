@@ -28,7 +28,7 @@
   {% if statistics.exists %}
   <script>$.endlessPaginate({paginateOnScroll: true});</script>
   <div class="panel panel-default table-responsive">
-    <table class="standings table table-hover table-striped table-condensed table-float-head">
+    <table class="standings table table-condensed table-float-head{% if not mod_penalty %} table-striped{% endif %}">
       <thead>
         <tr class="header-row">
           <th{% if merge_problems %} rowspan="2"{% endif %}>Rank</th>

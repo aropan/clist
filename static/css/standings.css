@@ -41,23 +41,27 @@ table.standings th {
   font-weight: bold;
 }
 
-.first-ac {
-  background-color: #dff0d8;
+.standings .odd {
+  background: #f5f5f5;
 }
 
-.first-ac-of-all {
-  background-color: #ffe866;
+.standings .first-ac {
+  background: #dff0d8;
 }
 
-.gold-medal {
+.standings .first-ac-of-all {
+  background: #ffe866;
+}
+
+.standings .gold-medal {
   background: #f9d923;
 }
 
-.silver-medal {
+.standings .silver-medal {
   background: silver;
 }
 
-.bronze-medal {
+.standings .bronze-medal {
   background: #c08e55;
 }
 

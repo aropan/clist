@@ -4,7 +4,7 @@
 {% paginate per_page statistics %}{% get_pages %}
 {% for statistic in statistics %}
 {% with coders=statistic.account.coders.all %}
-<tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}>
+<tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}{% if mod_penalty %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
 {% endwith %}
   <td
     {% if statistic.addition.medal %}
@@ -44,7 +44,7 @@
     {% with info=participants_info|get_item:statistic.id %}
     {% if info and info.n <= standings_options.n_highlight %}bg-success{% endif %}
     {% endwith %}
-">
+  ">
     {% if has_country %}
       {% with country=statistic.account.country %}
         <div class="flag-width-fixed">
@@ -96,7 +96,7 @@
     {% endwith %}
   </td>
   <td>
-    <div{% if not with_detail %} style="display: inline;"{% endif %}>{{ statistic.solving|floatformat:'-2' }}</div>
+    <div>{{ statistic.solving|floatformat:'-2' }}</div>
   </td>
   {% if mod_penalty %}
   <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=statistic.addition.penalty|default:0 %}</td>
@@ -205,6 +205,25 @@
 </tr>
 {% endfor %}
 
-<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
+<script>
+  $(function(){
+    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()
+{% if mod_penalty %}
+    var prev = null
+    var idx = 0
+    $('.standings tr[data-result]').each(function(e) {
+      var node = $(this)
+      var result = node.attr('data-result')
+      if (result != prev) {
+        idx = 1 - idx
+      }
+      node.removeClass('odd')
+      node.removeClass('event')
+      node.addClass(idx? 'odd' : 'even')
+      prev = result
+    })
+{% endif %}
+  })
+</script>
 
 {% show_more_table %}
