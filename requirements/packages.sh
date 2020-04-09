@@ -3,6 +3,7 @@
 set -e -x
 
 add-apt-repository -y ppa:certbot/certbot
+add-apt-repository -y ppa:nginx/stable
 
 apt update
 apt upgrade -y
