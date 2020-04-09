@@ -293,7 +293,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
         'participants__coder__account_set__resource',
     )
 
-    approved_statuses = {k for k, v in TeamStatus.descriptions.items() if v == 'approved'}
+    approved_statuses = {k for k, v in TeamStatus.descriptions.items() if v in ['approved', 'disqualified']}
     team_search = request.GET.get('team_search')
     if team_search:
         team_search_filter = get_iregex_filter(
