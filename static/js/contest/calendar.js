@@ -76,7 +76,8 @@ $(function() {
                 delay: {
                     'show': 300,
                     'hide': 100,
-                }
+                },
+                trigger: 'hover',
             })
             $(element).on('inserted.bs.tooltip', function() {
                 $('.countdown-format').each(function(idx, val) {
