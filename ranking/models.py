@@ -72,7 +72,6 @@ class Statistics(BaseModel):
     upsolving = models.FloatField(default=0, blank=True)
     addition = JSONField(default=dict, blank=True)
     url = models.TextField(null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f'{self.account_id} on {self.contest_id} = {self.solving} + {self.upsolving}'
