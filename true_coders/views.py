@@ -435,16 +435,15 @@ def search(request, **kwargs):
     count = int(request.GET.get('count', 10))
     page = int(request.GET.get('page', 1))
     if query == 'resources-for-add-account':
-        accounts = Account.objects.filter(resource=OuterRef('pk'))
         coder = request.user.coder
         coder_accounts = coder.account_set.filter(resource=OuterRef('pk'))
 
         qs = Resource.objects \
-            .annotate(has_account=Exists(accounts)) \
+            .annotate(has_module=F('module')) \
             .annotate(has_coder_account=Exists(coder_accounts)) \
             .annotate(has_multi=F('module__multi_account_allowed')) \
             .annotate(disabled=Case(
-                When(has_account=False, then=Value(True)),
+                When(has_module=False, then=Value(True)),
                 When(has_coder_account=True, has_multi=False, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
