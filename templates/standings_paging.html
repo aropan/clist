@@ -84,6 +84,10 @@
           <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
         {% endif %}
 
+        {% if has_view_statistics %}
+          <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+        {% endif %}
+
         {% if coders|length > 1 %}
         <div class="small">
           {% for c in coders %}
@@ -164,7 +168,7 @@
             {% endif %}
           >
             {% if stat.url or stat.solution %}
-              <a onClick="return viewSolution(this);" href="{% if stat.url %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" target="_blank">
+              <a{% if stat.solution %} onClick="return viewSolution(this);"{% endif %} href="{% if not stat.solution %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" target="_blank">
             {% endif %}
 
             {% if stat.binary is not None %}

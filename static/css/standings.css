@@ -98,7 +98,9 @@ table.standings .handle-cell {
   text-decoration: underline;
 }
 
-.standings .handle-cell:hover .external-link {
+.standings .handle-cell:hover .external-link,
+.standings div:hover > a.external-database-link
+{
   color: #337ab7;
   visibility: visible;
 }

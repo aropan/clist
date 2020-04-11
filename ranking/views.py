@@ -302,6 +302,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': with_detail,
+        'has_view_statistics': request.user.has_perm('view_statistics'),
     }
 
     if extra_context is not None:
