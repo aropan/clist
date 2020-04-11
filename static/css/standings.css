@@ -121,3 +121,8 @@ a.contest:hover > .reset_timing_statistic, .reset_timing_statistic:hover {
 .standings thead th {
   background-color: #eee;
 }
+
+#viewSolutionModal .modal-body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}

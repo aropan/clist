@@ -1,0 +1,51 @@
+<script>
+  function copySolutionToClipboard(btn) {
+    var code = $('pre code').text()
+    var $temp = $('<textarea>');
+    $('body').append($temp);
+    $temp.val(code).select();
+    document.execCommand('copy');
+    $temp.remove();
+    $(btn).html('Copied').prop('disabled', true)
+  }
+</script>
+
+<div{% if is_modal %} class="modal-header"{% endif %}>
+  {% if is_modal %}
+  <button type="button" class="close" data-dismiss="modal">&times;</button>
+  {% endif %}
+
+  <span class="solution-attr-name">author</span>:
+  {% with coders=account.coders.all %}{% if coders|length == 1 %}<a href="{% url 'coder:profile' coders.0.username %}">{{ account.key }}</a>{% else %}{{ account.key }}{% endif %}{% endwith %}
+
+  {% if problem %}
+  <span class="solution-attr-name">problem name</span>:
+  {{ problem|get_problem_name }}
+  {% endif %}
+
+  <span class="solution-attr-name">contest</span>:
+  <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}">{{ contest.title }}</a>
+
+  <span class="solution-attr-name">result</span>:
+  <div class="inline {% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %} {% if stat.partial %}par{% else %}acc{% endif %} {% elif stat.result|slice:":1" == "?" %}hid{% else %}rej{% endif %}">{% if stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}{{ stat.result }}{% else %}{{ stat.result|floatformat:'-2' }}{% endif %}
+  </div>
+
+  {% for f in fields %}
+    {% with v=stat|get_item:f %}
+      {% if v is not None %}
+        <span class="solution-attr-name">{{ f }}</span>: {{ v }}
+      {% endif %}
+    {% endwith %}
+  {% endfor %}
+</div>
+
+<div{% if is_modal %} class="modal-body"{% endif %}>
+  <pre style="padding: 0px"><code>{{ stat.solution }}</code></pre>
+</div>
+
+<div{% if is_modal %} class="modal-footer"{% endif %}>
+  <button type="button" class="btn btn-default btn-sm" onClick="copySolutionToClipboard(this)">Copy to clipboard</button>
+  {% if is_modal %}
+  <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+  {% endif %}
+</div>

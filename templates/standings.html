@@ -12,6 +12,8 @@
 <link href="{% static_ts 'flags/flags.min.css' %}" rel=stylesheet type="text/css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.1.4/jquery.floatThead.min.js"></script>
 
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
+<script src="{% static_ts 'js/highlight.pack.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -102,4 +104,29 @@
     }
   }))
 </script>
+
+<div class="modal" id="viewSolutionModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+    </div>
+  </div>
+</div>
+
+<script>
+function viewSolution(a) {
+  var href = $(a).attr('href')
+  $.ajax({
+    url: href,
+    type: 'get',
+    success: function(response){
+      $('#viewSolutionModal .modal-content').html(response)
+      $('#viewSolutionModal .modal-content .modal-footer').prepend('<a href="' + href + '" target="_blank" class="btn btn-default btn-sm"><i class="fas fa-external-link-alt"></i></a>')
+      document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
+      $('#viewSolutionModal').modal('show')
+    }
+  })
+  return false;
+}
+</script>
+
 {% endblock %}

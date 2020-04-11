@@ -324,14 +324,18 @@ def solutions(request, sid, problem_key):
 
     stat = problems[problem_key]
 
-    return render(request, 'solution.html', {
-        'statistic': statistic,
-        'account': statistic.account,
-        'contest': statistic.contest,
-        'problem': problem,
-        'stat': stat,
-        'fields': ['time', 'status', 'language'],
-    })
+    return render(
+        request,
+        'solution-source.html' if request.is_ajax() else 'solution.html',
+        {
+            'is_modal': request.is_ajax(),
+            'statistic': statistic,
+            'account': statistic.account,
+            'contest': statistic.contest,
+            'problem': problem,
+            'stat': stat,
+            'fields': ['time', 'status', 'language'],
+        })
 
 
 @login_required

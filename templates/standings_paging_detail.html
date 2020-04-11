@@ -23,7 +23,7 @@
   {% if not small %}
     <br/>{{ stat.language }}
   {% elif problem_key and stat.solution %}
-    <a class="solution" href="{% url 'ranking:solution' sid problem_key %}" target="_blank">{{ stat.language }}</a>
+    <a class="solution" onClick="return viewSolution(this);" href="{% url 'ranking:solution' sid problem_key %}">{{ stat.language }}</a>
   {% else %}
     {{ stat.language }}
   {% endif %}
