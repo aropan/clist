@@ -42,7 +42,7 @@ String.prototype.toTitleCase = function(){
 };
 
 $(document).ready(function(){
-    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body'});
+    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'});
 });
 
 function slugify(text) {

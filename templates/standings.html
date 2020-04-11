@@ -47,7 +47,7 @@
           <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
           {% if mod_penalty %}
           <th{% if merge_problems %} rowspan="2"{% endif %}>
-            <span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true" data-placement="bottom">Gap</span>
+            <span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true" data-placement="bottom" data-toggle="tooltip">Gap</span>
           </th>
           {% endif %}
           {% for field in fields.values %}
@@ -57,18 +57,18 @@
           {% for problem in problems %}
           {% if not problem.skip %}
           <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
-            <div title="{{ problem|get_problem_name }}" data-placement="bottom">
+            <div title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip">
             {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
             {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
             {% if problem.url %}</a>{% endif %}
             </div>
             {% if not merge_problems %}
               {% if problem.full_score %}
-                <div class="small" title="Full score" data-placement="bottom">{{ problem.full_score|floatformat }}</div>
+                <div class="small" title="Full score" data-placement="bottom" data-toggle="tooltip">{{ problem.full_score|floatformat }}</div>
               {% endif %}
               {% if problem.n_teams is not None and with_detail %}
                 <div class="small text-muted nobold">
-                  <span title="Number of accepted" data-placement="bottom">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of tries" data-placement="bottom">{{ problem.n_teams }}</span>
+                  <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>
                 </div>
               {% endif %}
             {% endif %}
@@ -94,8 +94,6 @@
   <div class="alert alert-info">Standings is empty</div>
   {% endif %}
 </div>
-
-<script>$(function() {$('[title]').tooltip({container: 'body'})})</script>
 
 <script>
   $(() => $(".table-float-head").floatThead({
@@ -127,6 +125,12 @@ function viewSolution(a) {
   })
   return false;
 }
+
+$(document).keydown(function(event) {
+  if (event.keyCode == 27) {
+    $('#viewSolutionModal').modal('hide');
+  }
+});
 </script>
 
 {% endblock %}

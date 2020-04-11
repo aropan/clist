@@ -213,7 +213,7 @@
 
 <script>
   $(function(){
-    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()
+    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({trigger : 'hover'})
 {% if mod_penalty %}
     var prev = null
     var idx = 0
