@@ -280,7 +280,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 filt |= Q(**{f'addition___languages__contains': [lang]})
         else:
             for q in values:
-                filt |= Q(**{f'addition__{f}': q})
+                filt |= Q(**{f'addition__{field}': q})
         statistics = statistics.filter(filt)
 
     context = {
