@@ -152,10 +152,14 @@ class Command(BaseCommand):
                     end_time=contest.end_time,
                 )
 
-                statistics = Statistics.objects.filter(contest=contest).select_related('account')
-
                 with REQ:
-                    statistics_by_key = {s.account.key: s.addition for s in statistics} if with_stats else {}
+                    statistics_by_key = {}
+                    statistics_ids = set()
+                    statistics = Statistics.objects.filter(contest=contest).select_related('account')
+                    for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
+                        if with_stats:
+                            statistics_by_key[s.account.key] = s.addition
+                        statistics_ids.add(s.pk)
                     standings = plugin.get_standings(users=users, statistics=statistics_by_key)
 
                 with transaction.atomic():
@@ -182,7 +186,6 @@ class Command(BaseCommand):
                         has_hidden = False
                         languages = set()
 
-                        ids = {s.pk for s in statistics}
                         for r in tqdm(list(result.values()), desc=f'update results {contest}'):
                             for k, v in r.items():
                                 if isinstance(v, str) and chr(0x00) in v:
@@ -333,7 +336,7 @@ class Command(BaseCommand):
                             )
 
                             if not created:
-                                ids.remove(statistic.pk)
+                                statistics_ids.remove(statistic.pk)
 
                                 if calc_time:
                                     p_problems = statistic.addition.get('problems', {})
@@ -386,10 +389,10 @@ class Command(BaseCommand):
                             if fields_set and not isinstance(addition, OrderedDict):
                                 fields.sort()
 
-                            if ids:
-                                first = Statistics.objects.filter(pk__in=ids).first()
+                            if statistics_ids:
+                                first = Statistics.objects.filter(pk__in=statistics_ids).first()
                                 self.logger.info(f'First deleted: {first}, account = {first.account}')
-                                delete_info = Statistics.objects.filter(pk__in=ids).delete()
+                                delete_info = Statistics.objects.filter(pk__in=statistics_ids).delete()
                                 self.logger.info(f'Delete info: {delete_info}')
                                 progress_bar.set_postfix(deleted=str(delete_info))
 
