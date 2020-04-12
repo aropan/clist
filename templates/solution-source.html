@@ -46,7 +46,7 @@
 </div>
 
 <div{% if is_modal %} class="modal-body"{% endif %}>
-  <pre style="padding: 0px"><code>{{ stat.solution }}</code></pre>
+  <pre style="padding: 0px"><code{% if stat.language %} class="{{ stat.language|lower }}"{% endif %}>{{ stat.solution }}</code></pre>
 </div>
 
 <div{% if is_modal %} class="modal-footer"{% endif %}>
