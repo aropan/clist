@@ -17,6 +17,7 @@ import tqdm
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 from ranking.management.modules import conf
+from utils.requester import FailOnGetResponse
 
 
 class Statistic(BaseModule):
@@ -220,6 +221,22 @@ class Statistic(BaseModule):
                     url_info = urljoin(url, r.columns[0].node.xpath('a/@href')[0])
                     url_infos.append(url_info)
 
+                def fetch_solution(url):
+                    for i in range(2):
+                        try:
+                            page = REQ.get(url, time_out=60)
+                            match = re.search('<td[^>]*class="problemText"[^>]*>(?P<solution>.*?)</td>',
+                                              page,
+                                              re.DOTALL | re.IGNORECASE)
+                            ret = html.unescape(match.group('solution'))
+                            ret = ret.strip()
+                            ret = ret.replace('<BR>', '\n')
+                            ret = ret.replace('\xa0', ' ')
+                            return ret
+                        except FailOnGetResponse:
+                            sleep(i * 10 + 3)
+                    return None
+
                 def fetch_info(url):
                     delay = 3
                     for _ in range(5):
@@ -247,10 +264,12 @@ class Statistic(BaseModule):
                         <td[^>]*>(?P<result>[^<]*)</td>[^<]*
                     ''', page, re.VERBOSE | re.IGNORECASE)
                     problems = {}
+                    n_fetch_solution = 0
                     for match in matches:
                         d = match.groupdict()
                         short = d.pop('short')
-                        d['url'] = urljoin(url, d['url'])
+                        solution_url = urljoin(url, d['url'])
+                        d['url'] = solution_url
                         d = self._dict_as_number(d)
                         if d['status'] in ['Challenge Succeeded', 'Failed System Test']:
                             d['result'] = -d['result']
@@ -258,6 +277,13 @@ class Statistic(BaseModule):
                             d.pop('result')
                         if re.match('^[0.:]+$', d['time']):
                             d.pop('time')
+
+                        solution = (statistics or {}).get(handle, {}).get('problems', {}).get(short, {}).get('solution')
+                        if not solution:
+                            n_fetch_solution += 1
+                            solution = fetch_solution(solution_url)
+                        d['solution'] = solution
+
                         problems[short] = d
 
                     challenges = []
@@ -281,11 +307,14 @@ class Statistic(BaseModule):
                         p.setdefault('extra_info', []).append(f'{d["target"]}: {d["result"]}')
                         challenges.append(d)
 
-                    return url, handle, room, problems, challenges
+                    return url, handle, room, problems, challenges, n_fetch_solution
 
                 with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(url_infos)) as pbar:
-                    for url, handle, room, problems, challenges in executor.map(fetch_info, url_infos):
+                    n_fetch_solution = 0
+                    for url, handle, room, problems, challenges, n_sol in executor.map(fetch_info, url_infos):
+                        n_fetch_solution += n_sol
                         pbar.set_description(f'div{division} {url}')
+                        pbar.set_postfix(n_solution=n_fetch_solution)
                         pbar.update()
                         if handle is not None:
                             if handle not in result:
