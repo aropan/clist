@@ -15,12 +15,18 @@
   <button type="button" class="close" data-dismiss="modal">&times;</button>
   {% endif %}
 
+  {% if stat.url %}
+    <a href="{{ stat.url }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+  {% endif %}
+
   <span class="solution-attr-name">author</span>:
   {% with coders=account.coders.all %}{% if coders|length == 1 %}<a href="{% url 'coder:profile' coders.0.username %}">{{ account.key }}</a>{% else %}{{ account.key }}{% endif %}{% endwith %}
 
   {% if problem %}
   <span class="solution-attr-name">problem name</span>:
-  {{ problem|get_problem_name }}
+    {% with problem_name=problem|get_problem_name %}
+      {% if problem.url %}<a href="{{ problem.url }}">{{ problem_name }}</a>{% else %}{{ problem_name }}{% endif %}
+    {% endwith %}
   {% endif %}
 
   <span class="solution-attr-name">contest</span>:

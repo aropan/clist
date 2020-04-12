@@ -317,7 +317,10 @@ def solutions(request, sid, problem_key):
     if problem_key not in problems:
         return HttpResponseNotFound()
 
-    for problem in statistic.contest.info['problems']:
+    contest_problems = statistic.contest.info['problems']
+    if 'division' in contest_problems:
+        contest_problems = contest_problems['division'][statistic.addition['division']]
+    for problem in contest_problems:
         if get_problem_key(problem) == problem_key:
             break
     else:
