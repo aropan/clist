@@ -1,0 +1,85 @@
+<div class="col-lg-7">
+  <div class="panel panel-default table-responsive">
+    <table class="standings table table-condensed table-float-head table-striped">
+      <thead>
+        <tr class="header-row">
+          <th>N</th>
+          {% for field in fields.values %}
+          <th>{% for f in field.split %}<div>{{ f|title }}</div>{% endfor %}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% include 'standings_groupby_paging.html' %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="col-lg-5">
+  {% for field, header in fields.items %}
+  {% if header != groupby %}
+
+  {% with limited_statistics=statistics|limit:pie_limit_rows_groupby %}
+  <div>
+    <canvas id="chart_{{ field }}"></canvas>
+    <script>
+      $(function() {
+        var ctx = document.getElementById('chart_{{ field }}').getContext('2d');
+
+        var config = {
+          type: 'pie',
+          data: {
+            datasets: [{
+              data: [
+                {% for statistic in limited_statistics %}
+                  {% with value=statistic|get_item:field %}
+                    {% if value|get_type == 'float' %}
+                      {{ value|floatformat:2 }},
+                    {% else %}
+                      {{ value }},
+                    {% endif %}
+                  {% endwith %}
+                {% endfor %}
+              ],
+              backgroundColor: palette('tol-dv', {{ num_rows|minimize:pie_limit_rows_groupby }}).map(function(hex) {
+                return '#' + hex;
+              }),
+            }],
+            labels: [
+              {% for statistic in limited_statistics %}
+                {% with value=statistic|get_item:field_groupby %}
+                {% if groupby == 'country' %}
+                  {% if value %}
+                    "{{ value|get_country_name }}",
+                  {% else %}
+                    "Undefined",
+                  {% endif %}
+                {% else %}
+                  {% with values=value|aslist %}
+                    "{% for v in values %}{% if forloop.counter0 %} {% endif %}{{ v|default:'Undefined' }}{% endfor %}",
+                  {% endwith %}
+                {% endif %}
+                {% endwith %}
+              {% endfor %}
+            ],
+          },
+          options: {
+            responsive: true,
+            legend: {
+              display: false,
+            },
+            title: {
+              display: true,
+              text: '{{ header|title }} groupby {{ groupby }}{% if num_rows > pie_limit_rows_groupby %} (first {{ pie_limit_rows_groupby }}){% endif %}',
+            },
+          }
+        }
+        new Chart(ctx, config);
+      })
+    </script>
+  </div>
+  {% endwith %}
+
+  {% endif %}
+  {% endfor %}
+</div>

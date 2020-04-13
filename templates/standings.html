@@ -14,6 +14,13 @@
 
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
 <script src="{% static_ts 'js/highlight.pack.js' %}"></script>
+
+{% if groupby %}
+<link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/Chart.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/google-palette@1.1.0/palette.min.js"></script>
+{% endif %}
+
 {% endblock %}
 
 {% block content %}
@@ -28,70 +35,74 @@
   {% include "standings_filter.html" %}
   <br/>
   {% if statistics.exists %}
-  <script>$.endlessPaginate({paginateOnScroll: true});</script>
-  <div class="panel panel-default table-responsive">
-    <table class="standings table table-condensed table-float-head{% if not mod_penalty %} table-striped{% endif %}">
-      <thead>
-        <tr class="header-row">
-          <th{% if merge_problems %} rowspan="2"{% endif %}>Rank</th>
-          {% if data_1st_u %}
-          <th{% if merge_problems %} rowspan="2"{% endif %}>1st U</th>
-          {% endif %}
-          <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">
-            {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
-            Handle
-            {% if standings_options.help_message %}
-            <span class="bg-success nobold">{{ standings_options.help_message }}</span>
-            {% endif %}
-          </th>
-          <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
-          {% if mod_penalty %}
-          <th{% if merge_problems %} rowspan="2"{% endif %}>
-            <span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true" data-placement="bottom" data-toggle="tooltip">Gap</span>
-          </th>
-          {% endif %}
-          {% for field in fields.values %}
-          <th{% if merge_problems %} rowspan="2"{% endif %}>{% for f in field.split %}<div>{{ f }}</div>{% endfor %}</th>
-          {% endfor %}
+    <script>$.endlessPaginate({paginateOnScroll: true});</script>
+    {% if not groupby %}
+      <div class="panel panel-default table-responsive">
+        <table class="standings table table-condensed table-float-head{% if not mod_penalty %} table-striped{% endif %}">
+          <thead>
+            <tr class="header-row">
+              <th{% if merge_problems %} rowspan="2"{% endif %}>Rank</th>
+              {% if data_1st_u %}
+              <th{% if merge_problems %} rowspan="2"{% endif %}>1st U</th>
+              {% endif %}
+              <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">
+                {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
+                Handle
+                {% if standings_options.help_message %}
+                <span class="bg-success nobold">{{ standings_options.help_message }}</span>
+                {% endif %}
+              </th>
+              <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
+              {% if mod_penalty %}
+              <th{% if merge_problems %} rowspan="2"{% endif %}>
+                <span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true" data-placement="bottom" data-toggle="tooltip">Gap</span>
+              </th>
+              {% endif %}
+              {% for field in fields.values %}
+              <th{% if merge_problems %} rowspan="2"{% endif %}>{% for f in field.split %}<div>{{ f }}</div>{% endfor %}</th>
+              {% endfor %}
 
-          {% for problem in problems %}
-          {% if not problem.skip %}
-          <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
-            <div title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip">
-            {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
-            {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
-            {% if problem.url %}</a>{% endif %}
-            </div>
-            {% if not merge_problems %}
-              {% if problem.full_score %}
-                <div class="small" title="Full score" data-placement="bottom" data-toggle="tooltip">{{ problem.full_score|floatformat }}</div>
-              {% endif %}
-              {% if problem.n_teams is not None and with_detail %}
-                <div class="small text-muted nobold">
-                  <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>
+              {% for problem in problems %}
+              {% if not problem.skip %}
+              <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
+                <div title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip">
+                {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
+                {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
+                {% if problem.url %}</a>{% endif %}
                 </div>
+                {% if not merge_problems %}
+                  {% if problem.full_score %}
+                    <div class="small" title="Full score" data-placement="bottom" data-toggle="tooltip">{{ problem.full_score|floatformat }}</div>
+                  {% endif %}
+                  {% if problem.n_teams is not None and with_detail %}
+                    <div class="small text-muted nobold">
+                      <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </th>
               {% endif %}
+              {% endfor %}
+            </tr>
+            {% if merge_problems %}
+            <tr style="background: #f9f9f9">
+              {% for problem in problems %}
+              <th{% if problem.colspan %} class="header-score"{% endif %}><small>{{ problem.full_score|floatformat }}</small></th>
+              {% endfor %}
+            </tr>
+            <tr></tr>
             {% endif %}
-          </th>
-          {% endif %}
-          {% endfor %}
-        </tr>
-        {% if merge_problems %}
-        <tr style="background: #f9f9f9">
-          {% for problem in problems %}
-          <th{% if problem.colspan %} class="header-score"{% endif %}><small>{{ problem.full_score|floatformat }}</small></th>
-          {% endfor %}
-        </tr>
-        <tr></tr>
-        {% endif %}
-      </thead>
-      <tbody>
-      {% include page_template %}
-      </tbody>
-    </table>
-  </div>
+          </thead>
+          <tbody>
+          {% include 'standings_paging.html' %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {% include 'standings_groupby.html' %}
+    {% endif %}
   {% else %}
-  <div class="alert alert-info">Standings is empty</div>
+  <div class="alert alert-info">Empty data</div>
   {% endif %}
 </div>
 

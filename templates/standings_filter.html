@@ -53,9 +53,13 @@
       {% if with_detail %}checked{% endif %}
     >
 
+    {% if has_country or fields_to_select %}{% if groupby %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}{% endif %}
+
     {% if has_country %}
     <div class="input-group input-group-sm hidden" id="country-hidden">
-      <div class="input-group-addon">Country</div>
+      <div class="input-group-btn">
+        <button class="btn btn-default{% if groupby == 'country' %} active{% endif %}" name="groupby" value="{% if groupby != 'country' %}country{% endif %}">Country</button>
+      </div>
       <select name="country" id="country" onchange="this.form.submit()" multiple>
         <option></option>
         {% with country=request.user.coder.country %}
@@ -104,7 +108,9 @@
     {% if fields_to_select %}
       {% for field, values in fields_to_select.items %}
         <div class="input-group input-group-sm field-to-select hidden">
-          <div class="input-group-addon">{{ field|title }}</div>
+          <div class="input-group-btn">
+            <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">{{ field|title }}</button>
+          </div>
           <select name="{{ field }}" id="{{ field }}" onchange="this.form.submit()" multiple>
           {% for v in values %}
             <option value="{{ v }}" selected>{{ v }}</option>

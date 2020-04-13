@@ -1,7 +1,7 @@
 {% load el_pagination_tags %}
 {% load extras %}
 
-{% paginate per_page statistics %}{% get_pages %}
+{% paginate per_page statistics using 'standings_paging' %}{% get_pages %}
 {% for statistic in statistics %}
 {% with coders=statistic.account.coders.all %}
 <tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}{% if mod_penalty %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
@@ -49,7 +49,7 @@
       {% with country=statistic.account.country %}
         <div class="flag-width-fixed">
         {% if country %}
-        <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}">
+        <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}" data-toggle="tooltip">
           <img class="flag flag-{{ country.code|lower }}"/>
         </a>
         {% endif %}
@@ -71,9 +71,9 @@
         {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name or statistic.addition.team_id %}
           <span>{{ statistic.addition.name }}</span>
         {% elif statistic.addition.name and contest.resource.info.standings.name_instead_key %}
-          <span title="{{ statistic.account.key }}" data-placement="top">{{ statistic.addition.name }}</span>
+          <span title="{{ statistic.account.key }}" data-placement="top" data-toggle="tooltip">{{ statistic.addition.name }}</span>
         {% else %}
-          <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %}>{{ statistic.account.key }}</span>
+          <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ statistic.account.key }}</span>
         {% endif %}
 
         {% if coders|length == 1 and not team_id %}

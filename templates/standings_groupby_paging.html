@@ -1,0 +1,44 @@
+{% load el_pagination_tags %}
+{% load extras %}
+
+{% paginate per_page statistics using 'groupby_paging' %}{% get_pages %}
+
+{% for statistic in statistics %}
+<tr>
+  <td>{{ forloop.counter0|add:pages.current_start_index }}</td>
+  {% for field, header in fields.items %}
+    {% with value=statistic|get_item:field %}
+      {% if header == 'country' %}
+        <td>
+          <a href="{% url_transform request country=value groupby='' %}">
+            {% if value is None %}
+              Undefined
+            {% else %}
+              <img class="flag flag-{{ value|lower }}"/>
+              {{ value|get_country_name }}
+            {% endif %}
+          </a>
+        </td>
+      {% elif value|get_type == 'float' %}
+        <td>
+          {{ value|floatformat:2 }}
+        </td>
+      {% else %}
+        <td>
+          {% with values=value|aslist %}
+            {% for val in values %}
+              {% if header in fields_to_select %}
+                <a class="field-to-select" href="{% url_transform request header val groupby='' %}">{{ val|default:"Undefined" }}</a>
+              {% else %}
+                {{ val }}
+              {% endif %}
+            {% endfor %}
+          {% endwith %}
+        </td>
+      {% endif %}
+    {% endwith %}
+  {% endfor  %}
+</tr>
+{% endfor  %}
+
+{% show_more_table %}

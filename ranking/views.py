@@ -8,9 +8,10 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.http import HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q, Exists, OuterRef, Count, Avg
 from django.views.decorators.clickjacking import xframe_options_exempt
-from el_pagination.decorators import page_template
+from el_pagination.decorators import page_template, page_templates
+
 
 from clist.models import Contest
 from ranking.models import Statistics, Module
@@ -61,7 +62,10 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     return render(request, template, context)
 
 
-@page_template('standings_paging.html')
+@page_templates((
+    ('standings_paging.html', 'standings_paging'),
+    ('standings_groupby_paging.html', 'groupby_paging'),
+))
 def standings(request, title_slug, contest_id, template='standings.html', extra_context=None):
     search = request.GET.get('search')
     if search == '':
@@ -267,7 +271,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     countries = request.GET.getlist('country')
     countries = set([c for c in countries if c])
     if countries:
-        statistics = statistics.filter(account__country__in=countries)
+        cond = Q(account__country__in=countries)
+        if 'None' in countries:
+            cond |= Q(account__country__isnull=True)
+        statistics = statistics.filter(cond)
         params['countries'] = countries
 
     # filter by field to select
@@ -280,8 +287,35 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 filt |= Q(**{f'addition___languages__contains': [lang]})
         else:
             for q in values:
-                filt |= Q(**{f'addition__{field}': q})
+                if q == 'None':
+                    filt |= Q(**{f'addition__{field}__isnull': True})
+                else:
+                    filt |= Q(**{f'addition__{field}': q})
         statistics = statistics.filter(filt)
+
+    groupby = request.GET.get('groupby')
+    # groupby country
+    if groupby == 'country' or groupby in fields_to_select:
+        if groupby == 'country':
+            field = 'account__country'
+        elif groupby == 'languages':
+            field = f'addition___{groupby}'
+        else:
+            field = f'addition__{groupby}'
+        statistics = statistics.order_by(field)
+        statistics = statistics.values(field)
+        statistics = statistics.annotate(n_accounts=Count('pk'))
+        statistics = statistics.annotate(avg_score=Avg('solving'))
+        fields = OrderedDict()
+        fields[field] = groupby
+        fields['n_accounts'] = 'num'
+        fields['avg_score'] = 'avg'
+        statistics = statistics.order_by('-n_accounts', '-avg_score')
+        problems = []
+        field_groupby = field
+    else:
+        groupby = None
+        field_groupby = None
 
     context = {
         'data_1st_u': data_1st_u,
@@ -303,6 +337,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': with_detail,
         'has_view_statistics': request.user.has_perm('view_statistics'),
+        'groupby': groupby,
+        'pie_limit_rows_groupby': 50,
+        'field_groupby': field_groupby,
+        'num_rows': statistics.count(),
     }
 
     if extra_context is not None:

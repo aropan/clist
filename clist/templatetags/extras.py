@@ -174,11 +174,18 @@ def listsort(value):
 
 
 @register.filter
-def asfloat(value, default):
+def asfloat(value, default=None):
     try:
         return float(value)
-    except ValueError:
+    except Exception:
         return default
+
+
+@register.filter
+def aslist(value):
+    if isinstance(value, (list, tuple)):
+        return value
+    return [value]
 
 
 @register.simple_tag
@@ -237,8 +244,19 @@ def query_transform(request, *args, **kwargs):
 
 
 @register.simple_tag
+def url_transform(request, *args, **kwargs):
+    query = query_transform(request, *args, **kwargs)
+    return request.path + '?' + query
+
+
+@register.simple_tag
 def get_countries():
     return dict((c.code, c) for c in countries).values()
+
+
+@register.filter
+def get_country_name(code):
+    return countries.name(code)
 
 
 @register.filter
@@ -320,3 +338,28 @@ def abs_filter(val):
 @register.filter
 def get_account(coder, host):
     return coder.get_account(host)
+
+
+@register.filter
+def get_type(value):
+    return type(value).__name__
+
+
+@register.filter
+def order_by(value, orderby):
+    return value.order_by(orderby)
+
+
+@register.filter
+def order_by_desc(value, orderby):
+    return value.order_by('-' + orderby)
+
+
+@register.filter
+def limit(value, limit):
+    return value[:limit]
+
+
+@register.filter
+def minimize(a, b):
+    return min(a, b)

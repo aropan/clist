@@ -553,7 +553,10 @@ def search(request, **kwargs):
             total = len(qs)
         else:
             field = f'addition__{field}'
-            qs = contest.statistics_set.filter(**{f'{field}__icontains': text}).distinct(field).values_list(field)
+            qs = contest.statistics_set
+            if text:
+                qs = qs.filter(**{f'{field}__icontains': text})
+            qs = qs.distinct(field).values_list(field)
             total = qs.count()
 
         qs = qs[(page - 1) * count:page * count]
