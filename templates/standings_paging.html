@@ -8,15 +8,7 @@
 {% endwith %}
   <td
     {% if statistic.addition.medal %}
-      class="{{ statistic.addition.medal }}-medal"
-    {% elif medals and statistic.place_as_int %}
-      {% for medal, limit in medals %}
-        {% if statistic.place_as_int <= limit %}
-          {% ifchanged statistic.id %}
-            class="{{ medal }}-medal"
-          {% endifchanged %}
-        {% endif %}
-      {% endfor %}
+      class="{{ statistic.addition.medal|lower }}-medal"
     {% endif %}
   >
     {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
@@ -84,7 +76,7 @@
           <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
         {% endif %}
 
-        {% if has_view_statistics %}
+        {% if perms.ranking.statistics_change %}
           <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
         {% endif %}
 
@@ -119,6 +111,14 @@
       {% else %}
         {% if field in fields_to_select and value not in fields_to_select|get_item:field %}
           <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
+        {% elif value|get_type == 'bool' %}
+          <span class="text-muted">
+            {% if value %}
+              <i class="fas fa-check"></i>
+            {% else %}
+              <i class="fas fa-times"></i>
+            {% endif %}
+          </span>
         {% else %}
           {% with intvalue=value|toint %}
             <span{% if field == "rating_change" %} class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}"{% endif %}>
@@ -149,7 +149,9 @@
         {% if stat.result is not None %}
           <div
             class="inline
-            {% if stat.binary is None and with_detail and stat.subscores %}
+            {% if request.GET.languages and stat.language not in request.GET|get_list:'languages' %}
+              text-muted
+            {% elif stat.binary is None and with_detail and stat.subscores %}
             {% elif stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}
               {% if stat.partial %}par{% else %}acc{% endif %}
             {% elif stat.result|slice:":1" == "?" %}
@@ -174,7 +176,7 @@
             {% if stat.binary is not None %}
               <i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i>
             {% elif with_detail and stat.subscores %}
-            {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
+            {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if request.GET.languages and stat.language not in request.GET|get_list:'languages' %}text-muted{% elif subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
             {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
               {{ stat.result }}
             {% else %}

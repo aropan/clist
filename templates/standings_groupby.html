@@ -1,11 +1,38 @@
 <div class="col-lg-7">
+  {% with orderby=request.GET|get_list:'orderby' %}
   <div class="panel panel-default table-responsive">
     <table class="standings table table-condensed table-float-head table-striped">
       <thead>
         <tr class="header-row">
           <th>N</th>
-          {% for field in fields.values %}
-          <th>{% for f in field.split %}<div>{{ f|title }}</div>{% endfor %}</th>
+          {% for key, field in fields.items %}
+          <th>
+            {% with rev_key="-"|add:key %}
+            <span
+              {% if key in labels_groupby %}title="{{ labels_groupby|get_item:key }}" data-placement="bottom" data-toggle="tooltip"{% endif %}
+            >
+              {{ field|title }}
+            </span>
+            <a
+              {% if rev_key in orderby  %}
+                href="{% url_transform request orderby="--"|add:key %}"
+              {% else %}
+                href="{% url_transform request orderby=rev_key %}"
+                class="text-muted"
+              {% endif %}
+            ><i class="fas fa-chevron-down"></i></a>
+            <a
+              {% if key in orderby  %}
+                href="{% url_transform request orderby="--"|add:key %}"
+              {% else %}
+                href="{% url_transform request orderby=key %}"
+                class="text-muted"
+              {% endif %}
+            ><i class="fas fa-chevron-up"></i></a>
+            {% endwith %}
+            {% if forloop.last %}
+            {% endif %}
+          </th>
           {% endfor %}
         </tr>
       </thead>
@@ -14,6 +41,10 @@
       </tbody>
     </table>
   </div>
+  {% if orderby %}
+  <a href="{% url_transform request orderby='--' %}" style="position:absolute; top: 6px; right: 0px;"><i class="fas fa-times"></i></a>
+  {% endif %}
+  {% endwith %}
 </div>
 <div class="col-lg-5">
   {% for field, header in fields.items %}
@@ -41,13 +72,13 @@
                   {% endwith %}
                 {% endfor %}
               ],
-              backgroundColor: palette('tol-dv', {{ num_rows|minimize:pie_limit_rows_groupby }}).map(function(hex) {
+              backgroundColor: palette('tol-rainbow', {{ num_rows|minimize:pie_limit_rows_groupby }}).map(function(hex) {
                 return '#' + hex;
               }),
             }],
             labels: [
               {% for statistic in limited_statistics %}
-                {% with value=statistic|get_item:field_groupby %}
+                {% with value=statistic|get_item:'groupby' %}
                 {% if groupby == 'country' %}
                   {% if value %}
                     "{{ value|get_country_name }}",
@@ -70,7 +101,7 @@
             },
             title: {
               display: true,
-              text: '{{ header|title }} groupby {{ groupby }}{% if num_rows > pie_limit_rows_groupby %} (first {{ pie_limit_rows_groupby }}){% endif %}',
+              text: '{% if field in labels_groupby %}{{ labels_groupby|get_item:field }}{% else %}}{{ header|title }}{% endif %} by {{ groupby }}{% if num_rows > pie_limit_rows_groupby %} (first {{ pie_limit_rows_groupby }}){% endif %}',
             },
           }
         }

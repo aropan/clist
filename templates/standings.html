@@ -25,7 +25,15 @@
 
 {% block content %}
 
-<h3 class="text-center">Standings <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a> <small>{{ contest.end_time|naturalday:'F j, Y' }}</small></h3>
+<h3 class="text-center">
+  Standings
+  <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
+  <small>{{ contest.end_time|naturalday:'F j, Y' }}</small>
+
+  {% if perms.clist.change_contest %}
+    <a href="{% url 'admin:clist_contest_change' contest.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+  {% endif %}
+</h3>
 
 {% if contest.is_running and not contest.is_over %}
 <h4 class="text-center">Time remaining: {{ contest.next_time|countdown }}{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|naturaltime }}</small>{% endif %}</h4>
@@ -58,8 +66,8 @@
                 <span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true" data-placement="bottom" data-toggle="tooltip">Gap</span>
               </th>
               {% endif %}
-              {% for field in fields.values %}
-              <th{% if merge_problems %} rowspan="2"{% endif %}>{% for f in field.split %}<div>{{ f }}</div>{% endfor %}</th>
+              {% for key, field in fields.items %}
+              <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if advance.title and key == 'advanced' %} title="{{ advance.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{% for f in field.split %}<div>{{ f }}</div>{% endfor %}</span></th>
               {% endfor %}
 
               {% for problem in problems %}

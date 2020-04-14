@@ -3,15 +3,17 @@ import copy
 from collections import OrderedDict
 from itertools import accumulate
 
+from django.conf import settings
+from django.db import models, connection
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.utils import timezone
+from django.db.models import Case, When, F, Q, Exists, OuterRef, Count, Avg
+from django.db.models.functions import Cast
 from django.http import HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Q, Exists, OuterRef, Count, Avg
+from django.shortcuts import render
+from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
 from el_pagination.decorators import page_template, page_templates
-
 
 from clist.models import Contest
 from ranking.models import Statistics, Module
@@ -20,6 +22,8 @@ from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
 from clist.templatetags.extras import get_problem_key
 from utils.regex import get_iregex_filter, verify_regex
+from utils.json_field import JSONF
+from utils.list_as_queryset import ListAsQueryset
 
 
 @page_template('standings_list_paging.html')
@@ -67,12 +71,29 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     ('standings_groupby_paging.html', 'groupby_paging'),
 ))
 def standings(request, title_slug, contest_id, template='standings.html', extra_context=None):
+    groupby = request.GET.get('groupby')
     search = request.GET.get('search')
     if search == '':
         url = request.get_full_path()
         url = re.sub('search=&?', '', url)
         url = re.sub(r'\?$', '', url)
         return redirect(url)
+    orderby = request.GET.getlist('orderby')
+    if orderby:
+        if '--' in orderby:
+            updated_orderby = []
+        else:
+            orderby_set = set()
+            unique_orderby = reversed([
+                f for k, f in [(f.lstrip('-'), f) for f in reversed(orderby)]
+                if k not in orderby_set and not orderby_set.add(k)
+            ])
+            updated_orderby = [f for f in unique_orderby if not f.startswith('--')]
+
+        if updated_orderby != orderby:
+            query = request.GET.copy()
+            query.setlist('orderby', updated_orderby)
+            return redirect(f'{request.path}?{query.urlencode()}')
 
     contest = get_object_or_404(Contest.objects.select_related('resource'), pk=contest_id)
     if slug(contest.title) != title_slug:
@@ -96,7 +117,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     options = contest.info.get('standings', {})
 
     # fixed fields
-    fixed_fields = (('penalty', 'Penalty'), ('total_time', 'Time')) + tuple(options.get('fixed_fields', []))
+    fixed_fields = (
+        ('penalty', 'Penalty'),
+        ('total_time', 'Time'),
+        ('advanced', 'Advanced')
+    ) + tuple(options.get('fixed_fields', []))
 
     statistics = statistics \
         .select_related('account') \
@@ -112,7 +137,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             order.append('place_as_int')
         fixed_fields += (('division', 'Division'),)
 
-    if 'team_id' in contest_fields:
+    if 'team_id' in contest_fields and not groupby:
         order.append('addition__name')
         statistics = statistics.distinct(*[f.lstrip('-') for f in order])
 
@@ -293,29 +318,94 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                     filt |= Q(**{f'addition__{field}': q})
         statistics = statistics.filter(filt)
 
-    groupby = request.GET.get('groupby')
-    # groupby country
+    # groupby
     if groupby == 'country' or groupby in fields_to_select:
-        if groupby == 'country':
-            field = 'account__country'
-        elif groupby == 'languages':
-            field = f'addition___{groupby}'
-        else:
-            field = f'addition__{groupby}'
-        statistics = statistics.order_by(field)
-        statistics = statistics.values(field)
-        statistics = statistics.annotate(n_accounts=Count('pk'))
-        statistics = statistics.annotate(avg_score=Avg('solving'))
+
         fields = OrderedDict()
-        fields[field] = groupby
+        fields['groupby'] = groupby
         fields['n_accounts'] = 'num'
         fields['avg_score'] = 'avg'
-        statistics = statistics.order_by('-n_accounts', '-avg_score')
+        if 'medal' in contest_fields:
+            for medal in settings.ORDERED_MEDALS_:
+                fields[f'n_{medal}'] = medal[0]
+        if 'advanced' in contest_fields:
+            fields['n_advanced'] = 'adv'
+
+        orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
+
+        if groupby == 'languages':
+            _, before_params = statistics.query.sql_with_params()
+            querysets = []
+            for problem in problems:
+                key = get_problem_key(problem)
+                field = f'addition__problems__{key}__language'
+                score = f'addition__problems__{key}__result'
+                qs = statistics \
+                    .filter(**{f'{field}__isnull': False}) \
+                    .annotate(language=Cast(JSONF(field), models.TextField())) \
+                    .annotate(score=Case(
+                        When(**{f'{score}__startswith': '+'}, then=1),
+                        When(**{f'{score}__startswith': '-'}, then=0),
+                        When(**{f'{score}__startswith': '?'}, then=0),
+                        default=Cast(JSONF(score), models.FloatField()),
+                        output_field=models.FloatField(),
+                    )) \
+                    .annotate(sid=F('pk'))
+                querysets.append(qs)
+            merge_statistics = querysets[0].union(*querysets[1:], all=True)
+            language_query, language_params = merge_statistics.query.sql_with_params()
+            field = 'solving'
+            statistics = statistics.annotate(groupby=F(field))
+        elif groupby == 'country':
+            field = 'account__country'
+            statistics = statistics.annotate(groupby=F(field))
+        else:
+            field = f'addition__{groupby}'
+            statistics = statistics.annotate(groupby=Cast(JSONF(field), models.TextField()))
+
+        statistics = statistics.order_by('groupby')
+        statistics = statistics.values('groupby')
+        statistics = statistics.annotate(n_accounts=Count('id'))
+        statistics = statistics.annotate(avg_score=Avg('solving'))
+
+        if 'medal' in contest_fields:
+            for medal in settings.ORDERED_MEDALS_:
+                n_medal = f'n_{medal}'
+                statistics = statistics.annotate(**{
+                    f'{n_medal}': Count(Case(When(addition__medal__iexact=medal, then=1)))
+                })
+        if 'advanced' in contest_fields:
+            statistics = statistics.annotate(n_advanced=Count(Case(When(addition__advanced=True, then=1))))
+
+        statistics = statistics.order_by(*orderby)
+
+        if groupby == 'languages':
+            query, params = statistics.query.sql_with_params()
+            query = query.replace(f'"ranking_statistics"."{field}" AS "groupby"', '"language" AS "groupby"')
+            query = query.replace(f'GROUP BY "ranking_statistics"."{field}"', 'GROUP BY "language"')
+            query = query.replace(f'"ranking_statistics".', '')
+            query = query.replace(f'AVG("solving") AS "avg_score"', 'AVG("score") AS "avg_score"')
+            query = query.replace(f'COUNT("id") AS "n_accounts"', 'COUNT("sid") AS "n_accounts"')
+            query = re.sub('FROM "ranking_statistics".*GROUP BY', f'FROM ({language_query}) t1 GROUP BY', query)
+            params = params[:-len(before_params)] + language_params
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                columns = [col[0] for col in cursor.description]
+                statistics = [dict(zip(columns, row)) for row in cursor.fetchall()]
+                statistics = ListAsQueryset(statistics)
+
         problems = []
-        field_groupby = field
+        labels_groupby = {
+            'n_accounts': 'Number of participants',
+            'avg_score': 'Average score',
+            'n_gold': 'Number of gold',
+            'n_silver': 'Number of silver',
+            'n_bronze': 'Number of bronze',
+            'n_advanced': 'Number of advanced',
+        }
     else:
         groupby = None
-        field_groupby = None
+        labels_groupby = None
 
     context = {
         'data_1st_u': data_1st_u,
@@ -336,11 +426,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': with_detail,
-        'has_view_statistics': request.user.has_perm('view_statistics'),
         'groupby': groupby,
         'pie_limit_rows_groupby': 50,
-        'field_groupby': field_groupby,
+        'labels_groupby': labels_groupby,
         'num_rows': statistics.count(),
+        'advance': contest.info.get('advance'),
     }
 
     if extra_context is not None:

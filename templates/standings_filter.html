@@ -161,6 +161,12 @@
         })
       </script>
     {% endif %}
+
+    {% with orderby=request.GET|get_list:'orderby' %}
+      {% for order in orderby %}
+    <input type="hidden" name="orderby" value="{{ order }}"/>
+      {% endfor %}
+    {% endwith %}
   </div>
   <script>$(function() { $('#standings-form').hide().removeClass('invisible').fadeIn(); })</script>
 </form>

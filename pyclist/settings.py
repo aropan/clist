@@ -339,6 +339,7 @@ ACE_CALENDARS_ = {
     'yahoo': {'id': 2, 'name': 'Yahoo'},
     'outlook': {'id': 3, 'name': 'Outlook'},
 }
+ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 
 try:
     from .local_settings import *  # noqa

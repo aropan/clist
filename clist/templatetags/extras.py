@@ -1,11 +1,13 @@
+import json
+import re
 from datetime import timedelta, datetime
 from os import path
 from collections import OrderedDict
 from collections.abc import Iterable
 from unidecode import unidecode
-import json
-import re
 
+import pytz
+import yaml
 from django import template
 from django.urls import reverse
 from django.conf import settings
@@ -13,7 +15,6 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.template.defaultfilters import stringfilter, slugify
 from django_countries.fields import countries
-import pytz
 
 
 register = template.Library()
@@ -28,6 +29,11 @@ def split(string, sep):
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
+
+
+@register.filter
+def get_list(query_dict, key):
+    return query_dict.getlist(key)
 
 
 @register.filter
@@ -363,3 +369,16 @@ def limit(value, limit):
 @register.filter
 def minimize(a, b):
     return min(a, b)
+
+
+@register.filter
+def get_number_from_str(val):
+    if isinstance(val, (int, float)):
+        return val
+    if val is None:
+        return
+    match = re.search(r'-?[0-9]+(?:\.[0-9]+)?', str(val))
+    if not match:
+        return
+    ret = yaml.safe_load(match.group(0))
+    return ret

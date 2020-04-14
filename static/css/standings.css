@@ -99,7 +99,7 @@ table.standings .handle-cell {
 }
 
 .standings .handle-cell:hover .external-link,
-.standings div:hover > a.external-database-link
+:hover > a.external-database-link
 {
   color: #337ab7;
   visibility: visible;

@@ -29,7 +29,7 @@ class Statistic(BaseModule):
 
     @staticmethod
     def _get_medals(year):
-        default = {k: 4 for k in ('gold', 'silver', 'bronze')}
+        default = OrderedDict([(k, 4) for k in ('gold', 'silver', 'bronze')])
 
         main_url = 'https://icpc.baylor.edu/'
         page = REQ.get(main_url)
@@ -328,17 +328,8 @@ class Statistic(BaseModule):
             options = {'per_page': None}
             if not without_medals:
                 medals = self._get_medals(year)
-
-                medals_by_place = sum(([k] * v for k, v in medals.items()), [])
-                for r in result.values():
-                    place = int(r['place'])
-                    if place <= len(medals_by_place):
-                        r['medal'] = medals_by_place[place - 1]
-
                 medals = [{'name': k, 'count': v} for k, v in medals.items()]
                 options['medals'] = medals
-            else:
-                options['medals'] = []
 
             standings = {
                 'result': result,

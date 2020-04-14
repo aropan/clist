@@ -5,6 +5,7 @@ import sys
 import os
 import json
 import re
+import operator
 from html import unescape
 from collections import OrderedDict
 from random import shuffle
@@ -21,7 +22,7 @@ from django.db.models import Q, F, OuterRef, Exists
 
 from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
-from clist.templatetags.extras import get_problem_key
+from clist.templatetags.extras import get_problem_key, get_number_from_str
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.management.commands.countrier import Countrier
 from ranking.management.modules.common import REQ
@@ -281,6 +282,30 @@ class Command(BaseCommand):
                                         p['n_accepted'] = p.get('n_accepted', 0) + 1
 
                             calc_time = contest.calculate_time or contest.start_time <= now < contest.end_time
+
+                            advance = contest.info.get('advance')
+                            if advance:
+                                k = 'advanced'
+                                r.pop(k, None)
+                                for cond in advance['filter']:
+                                    field = cond['field']
+                                    value = r.get(field)
+                                    value = get_number_from_str(value)
+                                    if value is None:
+                                        continue
+                                    r[k] = getattr(operator, cond['operator'])(value, cond['threshold'])
+
+                            medals = contest.info.get('standings', {}).get('medals')
+                            if medals:
+                                k = 'medal'
+                                r.pop(k, None)
+                                place = get_number_from_str(r['place'])
+                                if place:
+                                    for medal in medals:
+                                        if place <= medal['count']:
+                                            r[k] = medal['name']
+                                            break
+                                        place -= medal['count']
 
                             defaults = {
                                 'place': r.pop('place', None),

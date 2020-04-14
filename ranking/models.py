@@ -1,4 +1,3 @@
-import re
 import ast
 import collections
 
@@ -12,7 +11,7 @@ from django_countries.fields import CountryField
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Party
 from clist.models import Contest, Resource
-from clist.templatetags.extras import slug
+from clist.templatetags.extras import slug, get_number_from_str
 
 
 class Account(BaseModel):
@@ -87,11 +86,7 @@ class Statistics(BaseModel):
 
 @receiver(models.signals.pre_save, sender=Statistics)
 def statistics_pre_save(sender, instance, *args, **kwargs):
-    instance.place_as_int = None
-    if instance.place is not None:
-        match = re.search('[0-9]+', str(instance.place))
-        if match:
-            instance.place_as_int = int(match.group(0))
+    instance.place_as_int = get_number_from_str(instance.place)
 
 
 class Module(BaseModel):

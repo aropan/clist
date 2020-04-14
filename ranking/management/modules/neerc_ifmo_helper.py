@@ -23,6 +23,7 @@ def parse_xml(standings_xml):
             time = None
             verdict = None
             score = None
+            language = None
             for run in problem.findall('run'):
                 v = run.attrib.get('outcome')
                 if v == 'compilation-error':
@@ -34,11 +35,13 @@ def parse_xml(standings_xml):
                     if 'score' in run.attrib:
                         run_score = int(run.attrib['score'])
                         if score is None or run_score > score:
+                            language = run.attrib.get('language-id')
                             score = run_score
                             time = run_time
                 else:
                     accepted = run.attrib['accepted'] == 'yes'
                     time = run_time
+                    language = run.attrib.get('language-id')
                     if accepted:
                         break
                     if v:
@@ -62,4 +65,6 @@ def parse_xml(standings_xml):
                 p['time'] = time
             if verdict:
                 p['verdict'] = verdict
+            if language:
+                p['language'] = language
     return ret
