@@ -40,7 +40,7 @@
 {% if not for_coach %}
     <div class="form-group">
         <label for="date-of-birth">Date of birth</label>
-        <input name="date-of-birth" type="date" class="form-control"{% if coder.date_of_birth %} value="{{ coder.date_of_birth|format_time:"%Y-%m-%d" }}"{% endif %} required {% if disable %}disabled{% endif %}>
+        <input name="date-of-birth" type="date" class="form-control"{% if coder.date_of_birth %} value="{{ coder.date_of_birth|format_time:"%Y-%m-%d" }}"{% endif %} placeholder="YYYY-MM-DD" required {% if disable %}disabled{% endif %}>
     </div>
     <div class="form-group">
         <label for="organization">Educational Institution</label>
