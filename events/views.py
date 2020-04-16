@@ -99,9 +99,8 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                     active_fields.append('date-of-birth')
                     active_fields.append('organization')
                     active_fields.append('country')
-
-                for field in event.fields_info.get('addition_fields', []):
-                    active_fields.append(field['name'])
+                    for field in event.fields_info.get('addition_fields', []):
+                        active_fields.append(field['name'])
 
                 active_fields = [f for f in active_fields if f not in event.fields_info.get('disabled_fields', [])]
 

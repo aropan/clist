@@ -6,7 +6,12 @@
   <span class="badge progress-bar-{{ team_status.classes|get_item:team.status }}">{{ team_status.labels|get_item:team.status }}</span>
 
   <div class="small">
-    {% for o in team.organizations %}{{ o.name }}{% if forloop.revcounter0 %} + {% endif %}{% endfor %}, {{ team.country }}
+    {% with organizations=team.organizations %}
+    {% if organizations %}{% for o in team.organizations %}{{ o.name }}{% if forloop.revcounter0 %} + {% endif %}{% endfor %}{% endif %}{% if team.country %},{% endif %}
+    {% endwith %}
+    {% with country=team.organizations %}
+    {% if country %}{{ team.country }}{% endif %}
+    {% endwith %}
     <div class="text-muted">
       {% for p in team.ordered_participants %}
         {% for a in p.coder.account_set.all %}

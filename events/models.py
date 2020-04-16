@@ -224,9 +224,13 @@ class Team(BaseModel):
         organizations = '+'.join(sorted(set(
             p.organization.abbreviation or 'none'
             for p in self.participants.all()
+            if p.organization
         )))
         names = ', '.join(p.last_name for p in self.ordered_participants)
-        return '[{}] {}: {}'.format(organizations, self.name, names)
+        ret = f'{self.name}: {names}'
+        if organizations:
+            ret = f'[{organizations}] {ret}'
+        return ret
 
     @property
     def members(self):
@@ -237,7 +241,7 @@ class Team(BaseModel):
 
     @property
     def organizations(self):
-        ret = [p.organization for p in self.participants.all()]
+        ret = [p.organization for p in self.participants.all() if p.organization]
         duplicate = set()
         ret = [x for x in ret if x.id not in duplicate and not duplicate.add(x.id)]
         return ret
