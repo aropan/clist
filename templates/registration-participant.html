@@ -39,6 +39,10 @@
     </div>
 {% if not for_coach %}
     <div class="form-group">
+        <label for="date-of-birth">Date of birth</label>
+        <input name="date-of-birth" type="date" class="form-control"{% if coder.date_of_birth %} value="{{ coder.date_of_birth|format_time:"%Y-%m-%d" }}"{% endif %} required {% if disable %}disabled{% endif %}>
+    </div>
+    <div class="form-group">
         <label for="organization">Educational Institution</label>
         <select {% if not disable %}id="organization"{% endif %} name="organization" class="form-control" required {% if disable %}disabled{% endif %}>
         {% if coder.organization %}
@@ -72,11 +76,41 @@
     <div class="form-group">
         <label for="tshirt-size">T-shirt size</label>
         <select {% if not disable %}id="tshirt-size"{% endif %} name="tshirt-size" class="form-control" required {% if disable %}disabled{% endif %}>
+        <option></option>
         {% for k, v in tshirt_size.labels.items %}
         <option value="{{ k }}" {% if k ==  coder.tshirt_size %}selected{% endif %}>{{ v }}</option>
         {% endfor %}
         </select>
     </div>
+
+{% if not for_coach %}
+{% for field in event.fields_info.addition_fields %}
+    <div class="form-group">
+        <label for="{{ field.name }}">{{ field.label }}</label>
+        <{{ field.type }} {% if not disable %}id="{{ field.name }}"{% endif %} name="{{ field.name }}" class="form-control"{% if field.placeholder %} placeholder="{{ field.placeholder }}"{% endif %}{% if field.pattern %} pattern="{{ field.pattern }}"{% endif %} value="{{ coder.addition_fields|get_item:field.name|default:"" }}" required {% if disable %}disabled{% endif %}>
+    {% if field.type == "select" %}
+        <option></option>
+        {% for value in field.values %}
+        <option value="{{ value }}">{{ value }}</option>
+        {% endfor %}
+        </select>
+        <script>
+            $(function() {
+                $('#{{ field.name }}').select2({
+                    placeholder: '{{ field.placeholder }}',
+                    minimumResultsForSearch: -1,
+                })
+            })
+        </script>
+    {% endif %}
+    </div>
+{% endfor %}
+{% endif %}
+
+{% for field in event.fields_info.disabled_fields %}
+    <script>$('[name="{{field}}"]').parent().remove()</script>
+{% endfor %}
+
 {% if not disable %}
     {% if not for_coach %}
         <button type="submit" name="query" class="btn btn-primary" value="join">Join the event</button>

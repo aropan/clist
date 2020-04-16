@@ -21,7 +21,8 @@ $(function() {
                 return { results: data.items, pagination: { more: data.more } }
             },
         },
-        minimumInputLength: 0
+        minimumInputLength: 0,
+        placeholder: "Select your educational institution or organization",
     })
 
     var $team = $('#team')
@@ -106,12 +107,14 @@ $(function() {
                 return { results: data.items, pagination: { more: data.more } }
             },
         },
-        minimumInputLength: 0
+        minimumInputLength: 0,
+        placeholder: "Select your country",
     })
 
     $('#tshirt-size').select2({
         width: '100%',
         minimumResultsForSearch: -1,
+        placeholder: "Select your t-shirt size",
     })
 
     $('#enable-register').on('click', function(event) {

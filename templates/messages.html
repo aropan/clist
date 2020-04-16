@@ -3,7 +3,7 @@
     $(function() {
     {% for message in messages %}
         $.notify(
-            "{{ message|safe }}",
+            "{{ message|safe|pass_arg:'"'|replace:"'"|safe }}",
             "{% if message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}warn{% else %}{{ message.level_tag }}{% endif %}"
         )
     {% endfor %}

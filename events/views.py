@@ -96,8 +96,15 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                     'tshirt-size',
                 ]
                 if not is_coach:
+                    active_fields.append('date-of-birth')
                     active_fields.append('organization')
                     active_fields.append('country')
+
+                for field in event.fields_info.get('addition_fields', []):
+                    active_fields.append(field['name'])
+
+                active_fields = [f for f in active_fields if f not in event.fields_info.get('disabled_fields', [])]
+
                 for field in active_fields:
                     if not request.POST.get(field, ''):
                         messages.error(request, 'You must specify all the information')
@@ -109,12 +116,13 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                         ok = False
                 active_fields.append('middle-name-native')
 
-                try:
-                    phone_number = PhoneNumber.from_string(phone_number=request.POST.get('phone-number'))
-                    assert phone_number.is_valid()
-                except Exception:
-                    messages.error(request, 'Invalid phone number')
-                    ok = False
+                if 'phone-number' in active_fields:
+                    try:
+                        phone_number = PhoneNumber.from_string(phone_number=request.POST.get('phone-number'))
+                        assert phone_number.is_valid()
+                    except Exception:
+                        messages.error(request, 'Invalid phone number')
+                        ok = False
 
                 handle = request.POST.get('codeforces-handle')
                 if handle and not is_coach:
@@ -145,10 +153,11 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                     participant, _ = Participant.objects.get_or_create(coder=coder, event=event)
 
                 created = False
-
                 try:
                     data = dict(list(request.POST.items()))
-                    data['phone-number'] = phone_number.as_e164
+                    if 'phone-number' in active_fields:
+                        data['phone-number'] = phone_number.as_e164
+
                     for field in active_fields:
                         if data.get(field):
                             data[field] = data[field].strip()
@@ -171,6 +180,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                         (coder, 'middle_name_native'),
                         (coder, 'phone_number'),
                         (coder, 'country'),
+                        (coder, 'date_of_birth'),
                         (coder, 'organization'),
                         (None, 'tshirt_size'),
                     ):
@@ -181,6 +191,15 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                         if not is_coach and object_:
                             setattr(object_, attr, value or getattr(object_, attr))
                         setattr(participant, attr, value)
+
+                    for field in event.fields_info.get('addition_fields', []):
+                        field = field['name']
+                        if field not in active_fields:
+                            continue
+                        value = data[field]
+                        coder.addition_fields[field] = value
+                        participant.addition_fields[field] = value
+
                     participant.save()
                     user.save()
                     coder.save()
@@ -188,11 +207,11 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                         team.coach = participant
                         team.status = TeamStatus.PENDING
                         team.save()
-                except Exception:
+                except Exception as e:
                     participant.delete()
                     if created:
                         organization.delete()
-                    raise
+                    messages.error(request, str(e))
         elif query == 'create-team':
             team_name = request.POST.get('team')
             team_name_limit = event.limits.get('team_name_length')

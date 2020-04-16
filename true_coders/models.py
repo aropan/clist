@@ -18,11 +18,13 @@ class Coder(BaseModel):
     first_name_native = models.CharField(max_length=255, blank=True)
     last_name_native = models.CharField(max_length=255, blank=True)
     middle_name_native = models.CharField(max_length=255, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     organization = models.ForeignKey('Organization', null=True, blank=True, on_delete=models.SET_NULL)
     timezone = models.CharField(max_length=32, default="UTC")
     settings = JSONField(default=dict, blank=True)
     country = CountryField(null=True, blank=True)
     phone_number = PhoneNumberField(blank=True)
+    addition_fields = JSONField(default=dict, blank=True)
 
     def __str__(self):
         return "%s" % (self.username)

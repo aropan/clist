@@ -29,6 +29,7 @@ class Event(BaseModel):
     logins_paths = JSONField(default=dict, blank=True)
     standings_urls = JSONField(default=dict, blank=True)
     limits = JSONField(default=dict, blank=True)
+    fields_info = JSONField(default=dict, blank=True)
     team_size = models.IntegerField(default=3)
 
     def email_backend(self):
@@ -76,10 +77,12 @@ class Participant(BaseModel):
     middle_name_native = models.CharField(max_length=255, blank=True)
     email = models.EmailField(null=True, blank=True)
     phone_number = PhoneNumberField(blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     organization = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.SET_NULL)
     country = CountryField(null=True, blank=True)
     tshirt_size = EnumField(TshirtSize, null=True, blank=True)
     is_coach = models.BooleanField(default=False)
+    addition_fields = JSONField(default=dict, blank=True)
 
     objects = ParticipantManager()
 
