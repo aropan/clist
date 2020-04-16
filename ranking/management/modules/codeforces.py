@@ -3,6 +3,7 @@
 import re
 import json
 import requests
+from datetime import timedelta
 from time import time, sleep
 from hashlib import sha512
 from pprint import pprint
@@ -66,18 +67,8 @@ def _query(
 
 class Statistic(BaseModule):
 
-    def __init__(self, contest=None, **kwargs):
-        if contest is not None:
-            super().__init__(
-                name=contest.title,
-                url=contest.url,
-                key=contest.key,
-                standings_url=contest.standings_url,
-                start_time=contest.start_time,
-                end_time=contest.end_time,
-            )
-        else:
-            super().__init__(**kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         cid = self.key
         if ':' in cid:
@@ -89,9 +80,12 @@ class Statistic(BaseModule):
             raise InitModuleException(f'Contest id {cid} should be number')
         self.cid = cid
 
-    def get_standings(self, users=None, statistics=None):
+    def get_season(self):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
+        return season
+
+    def get_standings(self, users=None, statistics=None):
 
         standings_url = (self.url + '/standings').replace('contests', 'contest')
 
@@ -120,6 +114,7 @@ class Statistic(BaseModule):
             if data['status'] != 'OK':
                 raise ExceptionParseStandings(data['status'])
 
+            phase = data['result']['contest'].get('phase', 'FINISHED').upper()
             contest_type = data['result']['contest']['type'].upper()
             duration_seconds = data['result']['contest'].get('durationSeconds')
 
@@ -142,7 +137,7 @@ class Statistic(BaseModule):
                     is_ghost_team = True
                     name = party['teamName']
                     party['members'] = [{
-                        'handle': f'{name} {season}',
+                        'handle': f'{name} {self.get_season()}',
                         'name': name,
                     }]
                 else:
@@ -278,6 +273,8 @@ class Statistic(BaseModule):
                 'fixed_fields': [('hack', 'Hacks')],
             },
         }
+        if phase != 'FINISHED':
+            standings['timing_statistic_delta'] = timedelta(minutes=10)
         return standings
 
     @staticmethod

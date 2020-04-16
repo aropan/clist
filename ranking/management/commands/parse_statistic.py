@@ -144,14 +144,7 @@ class Command(BaseCommand):
                     parsed = True
                     continue
 
-                plugin = plugin.Statistic(
-                    name=contest.title,
-                    url=contest.url,
-                    key=contest.key,
-                    standings_url=contest.standings_url,
-                    start_time=contest.start_time,
-                    end_time=contest.end_time,
-                )
+                plugin = plugin.Statistic(contest=contest)
 
                 with REQ:
                     statistics_by_key = {}
@@ -401,8 +394,10 @@ class Command(BaseCommand):
                                 statistic.save()
 
                         if users is None:
-                            if has_hidden:
-                                contest.timing.statistic = timezone.now() + timedelta(minutes=30)
+                            timing_statistic_delta = standings.get('timing_statistic_delta',
+                                                                   timedelta(minutes=30) if has_hidden else None)
+                            if timing_statistic_delta is not None:
+                                contest.timing.statistic = timezone.now() + timing_statistic_delta
                                 contest.timing.save()
 
                             if contest.start_time <= now:

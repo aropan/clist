@@ -42,7 +42,7 @@ class Statistic(BaseModule):
                     if k == '#':
                         row['place'] = v.value
                     elif not k:
-                        name, *_, score = v
+                        name, *infos, score = v
 
                         row['name'] = name.value
                         hrefs = name.column.node.xpath('.//a[contains(@href,"/u/")]/@href')
@@ -54,11 +54,28 @@ class Statistic(BaseModule):
                         flag = score.row.node.xpath(".//span[contains(@class, 'flag')]/@class")
                         if flag:
                             for f in flag[0].split():
-                                if f.startswith('flag-'):
-                                    row['country'] = f[5:]
+                                if f == 'flag-icon':
+                                    continue
+                                for p in 'flag-icon-', 'flag-':
+                                    if f.startswith(p):
+                                        row['country'] = f[len(p):]
+                                        break
 
                         title = score.column.node.xpath('.//div[@title]/@title')[0]
-                        row['solving'], row['penalty'] = title.replace(',', '').split()
+                        row['solving'], penalty = title.replace(',', '').split()
+                        if penalty.isdigit():
+                            penalty = int(penalty)
+                        row['penalty'] = penalty
+
+                        for info in infos:
+                            if 'rating' in info.attrs['class'].split():
+                                cs = info.row.node.xpath('.//i/@class')
+                                if cs:
+                                    cs = cs[0].split()
+                                    if 'fa-angle-double-up' in cs:
+                                        row['rating_change'] = int(info.value)
+                                    if 'fa-angle-double-down' in cs:
+                                        row['rating_change'] = -int(info.value)
                     else:
                         letter = k.split()[0]
                         problems_info[letter] = {'short': letter}
@@ -68,14 +85,28 @@ class Statistic(BaseModule):
                                 *_, time, attempt = title.split()
                                 time = int(time)
                                 attempt = sum(map(int, re.findall('[0-9]+', attempt)))
+                                p = problems.setdefault(letter, {})
 
-                                if time:
+                                divs = v.column.node.xpath('.//a[contains(@href,"submissions")]/div/text()')
+                                if len(divs) == 2 and divs[0]:
+                                    result = divs[0].strip()
+                                    cs = v.column.node.xpath('.//a[contains(@href,"submissions")]/div/@class')
+                                    if result != '0' and cs:
+                                        cs = cs[0].split()
+                                        if 'font-orange' in cs:
+                                            p['partial'] = True
+                                    p['attempts'] = attempt
+                                    if isinstance(row.get('penalty'), int):
+                                        penalty = row['penalty']
+                                        row['penalty'] = f'{penalty // 60:02}:{penalty % 60:02}'
+                                elif time:
                                     result = '+' if attempt == 1 else f'+{attempt - 1}'
                                 else:
                                     result = f'-{attempt}'
-
-                                p = problems.setdefault(letter, {})
-                                p.update({'time': time, 'result': result})
+                                if time:
+                                    time = f'{time // 60:02}:{time % 60:02}'
+                                    p['time'] = time
+                                p['result'] = result
 
                                 hrefs = v.column.node.xpath('.//a[contains(@href,"submissions")]/@href')
                                 if hrefs:
@@ -84,6 +115,8 @@ class Statistic(BaseModule):
                                     if to_get_handle:
                                         urls.append((row['member'], url))
                                         to_get_handle = False
+                                if v.column.node.xpath('.//a/div/*[contains(@class,"fa fa-star")]'):
+                                    p['first_ac'] = True
                 if not problems:
                     continue
                 if users and row['member'] not in users:
