@@ -59,11 +59,11 @@
                         <li><a href="{% url 'clist:tastypie_swagger:index' %}" class="authorized"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
                         <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
                         <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'coder:settings' %}#preferences-tab" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
-                        <li><a href="{% url 'coder:settings' %}#social-tab" class="authorized"><i class="fa fa-users"></i>&nbsp;Social</a></li>
-                        <li><a href="{% url 'coder:settings' %}#accounts-tab" class="authorized"><i class="fa fa-globe"></i>&nbsp;Accounts</a></li>
-                        <li><a href="{% url 'coder:settings' %}#filters-tab" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
-                        <li><a href="{% url 'coder:settings' %}#notifications-tab" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
+                        <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
+                        <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fa fa-users"></i>&nbsp;Social</a></li>
+                        <li><a href="{% url 'coder:settings' 'accounts' %}" class="authorized"><i class="fa fa-globe"></i>&nbsp;Accounts</a></li>
+                        <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
+                        <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
                         <li role="separator" class="divider"></li>
                         <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
                         <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>

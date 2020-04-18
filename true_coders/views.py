@@ -190,7 +190,7 @@ def ratings(request, username):
 
 
 @login_required
-def settings(request):
+def settings(request, tab=None):
     coder = request.user.coder
     notification_form = NotificationForm(coder)
     if request.method == 'POST':
@@ -223,6 +223,7 @@ def settings(request):
             "notification_form": notification_form,
             "modules": Module.objects.order_by('resource__id').all(),
             "ace_calendars": django_settings.ACE_CALENDARS_,
+            "tab": tab,
         },
     )
 

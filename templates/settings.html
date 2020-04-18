@@ -41,15 +41,15 @@
 
 {% block content %}
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#preferences-tab" data-toggle="tab">Preferences</a></li>
-        <li><a href="#social-tab" data-toggle="tab">Social</a></li>
-        <li><a href="#accounts-tab" data-toggle="tab">Accounts</a></li>
-        <li><a href="#filters-tab" data-toggle="tab">Filters</a></li>
-        <li><a href="#notifications-tab" data-toggle="tab">Notifications</a></li>
+        <li{% if tab == 'preferences' %} class="active"{% endif %}><a href="#preferences-tab" data-toggle="tab">Preferences</a></li>
+        <li{% if tab == 'social' %} class="active"{% endif %}><a href="#social-tab" data-toggle="tab">Social</a></li>
+        <li{% if tab == 'accounts' %} class="active"{% endif %}><a href="#accounts-tab" data-toggle="tab">Accounts</a></li>
+        <li{% if tab == 'filters' %} class="active"{% endif %}><a href="#filters-tab" data-toggle="tab">Filters</a></li>
+        <li{% if tab == 'notifications' %} class="active"{% endif %}><a href="#notifications-tab" data-toggle="tab">Notifications</a></li>
     </ul>
 
     <div class="tab-content">
-        <div id="preferences-tab" class="tab-pane active">
+        <div id="preferences-tab" class="tab-pane{% if tab == 'preferences' %} active{% endif %}">
             <div class="key">Timezone
                 <i rel="tooltip" title="For a single viewing in another timezone using /?timezone=..."></i>
             </div>
@@ -98,7 +98,7 @@
             </div>
             <div class="value"><input type="checkbox" id="hide-contest" data-value="{{ coder.settings.hide_contest }}"/></div>
         </div>
-        <div id="filters-tab" class="tab-pane">
+        <div id="filters-tab" class="tab-pane{% if tab == 'filters' %} active{% endif %}">
             <div class="key">
                 <a href="#" id="add-filter" class="btn btn-primary btn-sm">Create</a>
                 <i rel="tooltip" title="Filters of events that you want to show or hide."></i>
@@ -117,7 +117,7 @@
                 {% endfor %}
             </div>
         </div>
-        <div id="notifications-tab" class="tab-pane">
+        <div id="notifications-tab" class="tab-pane{% if tab == 'notifications' %} active{% endif %}">
             <div class="alert alert-danger text-center bold"><strong>WARNING</strong>: Notification with email is disabled (will be fix in the near future).</div>
             <div id="notifications" class="value">
                 {% if not notification_form.errors %}
@@ -140,7 +140,7 @@
                 {% endfor %}
             </div>
         </div>
-        <div id="social-tab" class="tab-pane">
+        <div id="social-tab" class="tab-pane{% if tab == 'social' %} active{% endif %}">
             <div class="key">First name in English</div>
             <div class="value"><a href="#" id="first-name" data-value="{{ user.first_name }}"></a></div>
             <div class="key">Last name in English</div>
@@ -172,7 +172,7 @@
             {% endfor %}
             </div>
         </div>
-        <div id="accounts-tab" class="tab-pane">
+        <div id="accounts-tab" class="tab-pane{% if tab == 'accounts' %} active{% endif %}">
             <div class="key">Resource</div>
             <div class="value"><select class="form-control" id="add-account-resource"></select></div>
             <div class="key">Handle</div>
