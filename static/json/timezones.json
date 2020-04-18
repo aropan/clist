@@ -1810,6 +1810,11 @@
     "offset": 480
   }, 
   {
+    "name": "Asia/Choibalsan", 
+    "repr": "+8:00", 
+    "offset": 480
+  }, 
+  {
     "name": "Asia/Hong_Kong", 
     "repr": "+8:00", 
     "offset": 480
@@ -1873,11 +1878,6 @@
     "name": "Australia/Eucla", 
     "repr": "+8:45", 
     "offset": 525
-  }, 
-  {
-    "name": "Asia/Choibalsan", 
-    "repr": "+9:00", 
-    "offset": 540
   }, 
   {
     "name": "Asia/Dili", 
