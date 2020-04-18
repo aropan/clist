@@ -13,8 +13,10 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
+from django_super_deduper.merge import MergedModelInstance
 
 from clist.models import Resource
+from ranking.models import Account
 
 from .countrier import Countrier
 
@@ -60,7 +62,7 @@ class Command(BaseCommand):
                     if args.query:
                         accounts = accounts.filter(key__iregex=args.query)
                     else:
-                        accounts = resource.account_set.filter(Q(updated__isnull=True) | Q(updated__lte=now))
+                        accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
                     accounts = list(accounts[:args.limit])
                     users = [a.key for a in accounts]
@@ -72,11 +74,24 @@ class Command(BaseCommand):
                         infos = plugin.Statistic.get_users_infos(users=users, pbar=pbar)
 
                     assert len(accounts) == len(infos)
-                    for account, info in zip(accounts, infos):
+                    for account, data in zip(accounts, infos):
+                        info = data['info']
                         if info is None:
                             self.logger.warning(f'Remove user = {account}')
                             account.delete()
                             continue
+
+                        if 'rename' in data:
+                            other, created = Account.objects.get_or_create(resource=account.resource,
+                                                                           key=data['rename'])
+                            if not created:
+                                new = MergedModelInstance.create(other, [account])
+                                account.delete()
+                            else:
+                                new = MergedModelInstance.create(account, [other])
+                                other.delete()
+                            account = new
+
                         if info.get('country'):
                             account.country = countrier.get(info['country'])
                         if info.get('rating'):

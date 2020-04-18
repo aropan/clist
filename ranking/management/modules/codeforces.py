@@ -290,6 +290,8 @@ class Statistic(BaseModule):
                     return Statistic.get_users_infos(users[:i], pbar) + Statistic.get_users_infos(users[i:], pbar)
 
         removed = []
+        last_index = 0
+        orig_users = list(users)
         while True:
             try:
                 handles = ';'.join(users)
@@ -303,28 +305,35 @@ class Statistic(BaseModule):
                     response = requests.head(f'https://codeforces.com/profile/{handle}')
                     location = response.headers['Location']
                     target = location.split('/')[-1]
+                    index = users.index(handle)
                     if location.endswith('//codeforces.com/'):
-                        index = users.index(handle)
                         removed.append((index, users[index]))
                         users.pop(index)
                     else:
-                        users[users.index(handle)] = target
+                        users[index] = target
+                    if pbar is not None:
+                        pbar.update(index - last_index)
+                        last_index = index
                 else:
                     raise NameError(f'data = {data}')
         if pbar is not None:
-            pbar.update(len(users))
+            pbar.update(len(users) - last_index)
         if data['status'] != 'OK':
             raise ValueError(f'status = {data["status"]}')
 
-        ret = data['result']
+        infos = data['result']
         for index, user in removed:
-            ret.insert(index, None)
+            infos.insert(index, None)
             users.insert(index, user)
 
-        assert len(ret) == len(users)
-        for data, user in zip(ret, users):
+        ret = []
+        assert len(infos) == len(users)
+        for data, user, orig in zip(infos, users, orig_users):
             if data and data['handle'].lower() != user.lower():
                 raise ValueError(f'Do not match handle name for user = {user} and data = {data}')
+            ret.append({'info': data})
+            if data['handle'] != orig:
+                ret[-1]['rename'] = data['handle']
         return ret
 
 

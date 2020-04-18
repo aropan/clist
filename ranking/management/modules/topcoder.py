@@ -378,7 +378,7 @@ class Statistic(BaseModule):
                 assert user.lower() == data['handle'].lower()
                 if pbar:
                     pbar.update(1)
-                ret.append(None if data.get('action') == 'remove' else data)
+                ret.append({'info': data})
         return ret
 
 
