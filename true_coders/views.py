@@ -435,7 +435,12 @@ def search(request, **kwargs):
 
     count = int(request.GET.get('count', 10))
     page = int(request.GET.get('page', 1))
-    if query == 'resources-for-add-account':
+    if query == 'timezones':
+        ret = {}
+        for tz in get_timezones():
+            ret[tz["name"]] = f'{tz["name"]} {tz["repr"]}'
+        return JsonResponse(ret)
+    elif query == 'resources-for-add-account':
         coder = request.user.coder
         coder_accounts = coder.account_set.filter(resource=OuterRef('pk'))
 

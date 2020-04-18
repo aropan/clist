@@ -2,26 +2,19 @@ $(function() {
     $.fn.editable.defaults.mode = 'inline'
     $.fn.editable.defaults.url = '/settings/change/'
 
-    $.getJSON('/static/json/timezones.json', function(data) {
-        var timezones = {}
-        $.each(data, function(k, v) {
-            timezones[v.name] = '{name} {repr}'.format(v);
-        })
+    $('#timezone').editable({
+        type: 'select',
+        source: '/settings/search/?query=timezones',
+        showbuttons: false,
+    }).on('shown', function(e, editable){
+        editable.input.$input.select2({
+            width: 250,
+            placeholder: 'Select timezone',
+            val: editable.input.$input.val(),
 
-        $('#timezone').editable({
-            type: 'select',
-            source: timezones,
-            showbuttons: false,
-        }).on('shown', function(e, editable){
-            editable.input.$input.select2({
-                width: 250,
-                placeholder: 'Select timezone',
-                val: editable.input.$input.val(),
-
-            });
-            setTimeout(function() { editable.input.$input.select2('open'); }, 1);
         });
-    })
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+    });
 
     $('.value [type="checkbox"]:not([data-on])').each(function() {
         $(this).attr('data-on', 'Enabled')
@@ -484,7 +477,7 @@ $(function() {
         allowClear: true,
         placeholder: 'Search resource by regex',
         ajax: {
-            url: 'search/',
+            url: '/settings/search/',
             dataType: 'json',
             delay: 314,
             data: function (params) {

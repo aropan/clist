@@ -149,9 +149,19 @@ def get_emails(tokens):
     return mark_safe(", ".join(result))
 
 
+def get_timezone_offset(tzname):
+    total_seconds = now().astimezone(pytz.timezone(tzname)).utcoffset().total_seconds()
+    return int(round(total_seconds / 60, 0))
+
+
 def get_timezones():
     with open(path.join(settings.STATIC_JSON_TIMEZONES), "r") as fo:
-        return json.load(fo)
+        timezones = json.load(fo)
+        for tz in timezones:
+            offset = get_timezone_offset(tz['name'])
+            tz['offset'] = offset
+            tz['repr'] = f'{"+" if offset > 0 else "-"}{abs(offset) // 60:02}:{abs(offset) % 60:02}'
+    return timezones
 
 
 @register.simple_tag

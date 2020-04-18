@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_protect
 from urllib.parse import urlparse, parse_qs
 
 
-from clist.templatetags.extras import get_timezones
+from clist.templatetags.extras import get_timezones, get_timezone_offset
 from clist.models import Resource, Contest, Banner
 from true_coders.models import Party, Coder, Filter
 from ranking.models import Rating, Statistics
@@ -103,12 +103,6 @@ def get_view_contests(request, coder):
         else:
             result.extend(contests)
     return result
-
-
-def get_timezone_offset(tzname):
-    now = timezone.now()
-    total_seconds = now.astimezone(pytz.timezone(tzname)).utcoffset().total_seconds()
-    return int(round(total_seconds / 60, 0))
 
 
 @csrf_protect
