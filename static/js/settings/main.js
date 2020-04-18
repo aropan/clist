@@ -1,6 +1,6 @@
 $(function() {
     $.fn.editable.defaults.mode = 'inline'
-    $.fn.editable.defaults.url = 'change/'
+    $.fn.editable.defaults.url = '/settings/change/'
 
     $.getJSON('/static/json/timezones.json', function(data) {
         var timezones = {}
@@ -143,7 +143,7 @@ $(function() {
                 theme: 'bootstrap',
                 placeholder: 'Select contest',
                 ajax: {
-                    url: 'search/',
+                    url: '/settings/search/',
                     dataType: 'json',
                     delay: 314,
                     data: function (params) {
@@ -558,7 +558,7 @@ $(function() {
         allowClear: true,
         placeholder: 'Search handle by regex',
         ajax: {
-            url: 'search/',
+            url: '/settings/search/',
             dataType: 'json',
             delay: 314,
             data: function (params) {
@@ -615,7 +615,7 @@ $(function() {
     $search_org.select2({
         width: '50%',
         ajax: {
-            url: 'search/',
+            url: '/settings/search/',
             dataType: 'json',
             delay: 314,
             data: function (params) {
