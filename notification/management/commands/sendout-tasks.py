@@ -4,15 +4,16 @@
 from traceback import format_exc
 from logging import getLogger
 
-from django.conf import settings
-from django.core.mail import send_mail
+import tqdm
+# from django.conf import settings
+# from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
-from django_print_sql import print_sql_decorator
-from django.db.models import Prefetch
 from django.db import transaction
+from django.db.models import Prefetch
+from django_print_sql import print_sql_decorator
+# from django.urls import reverse
 from notification.models import Task, Notification
 from telegram.error import Unauthorized
-from django.urls import reverse
 
 from tg.bot import Bot
 from tg.models import Chat
@@ -36,7 +37,9 @@ class Command(BaseCommand):
             )
         )
 
-        for task in qs:
+        done = 0
+        failed = 0
+        for task in tqdm.tqdm(qs.iterator(), 'sending'):
             try:
                 task.is_sent = True
                 notification = task.notification
@@ -55,30 +58,35 @@ class Command(BaseCommand):
                         will_mail = True
 
                     if will_mail:
+                        pass
                         # FIXME: skipping, fixed on https://yandex.ru/support/mail-new/web/spam/honest-mailers.html
-                        continue
-                        send_mail(
-                            settings.EMAIL_PREFIX_SUBJECT_ + task.subject,
-                            '%s, connect telegram chat by link %s.' % (
-                                coder.user.username,
-                                settings.HTTPS_HOST_ + reverse('telegram:me')
-                            ),
-                            'Contest list <noreply@clist.by>',
-                            [coder.user.email],
-                            fail_silently=False,
-                        )
+                        # send_mail(
+                        #     settings.EMAIL_PREFIX_SUBJECT_ + task.subject,
+                        #     '%s, connect telegram chat by link %s.' % (
+                        #         coder.user.username,
+                        #         settings.HTTPS_HOST_ + reverse('telegram:me')
+                        #     ),
+                        #     'Contest list <noreply@clist.by>',
+                        #     [coder.user.email],
+                        #     fail_silently=False,
+                        # )
                 elif notification.method == Notification.EMAIL:
+                    pass
                     # FIXME: skipping, fixed on https://yandex.ru/support/mail-new/web/spam/honest-mailers.html
-                    continue
-                    send_mail(
-                        settings.EMAIL_PREFIX_SUBJECT_ + task.subject,
-                        task.addition['text'],
-                        'Contest list <noreply@clist.by>',
-                        [coder.user.email],
-                        fail_silently=False,
-                        html_message=task.message,
-                    )
+                    # send_mail(
+                    #     settings.EMAIL_PREFIX_SUBJECT_ + task.subject,
+                    #     task.addition['text'],
+                    #     'Contest list <noreply@clist.by>',
+                    #     [coder.user.email],
+                    #     fail_silently=False,
+                    #     html_message=task.message,
+                    # )
             except Exception:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
+            if task.is_sent:
+                done += 1
+            else:
+                failed += 1
             task.save()
+        logger.info(f'Done: {done}, failed: {failed}')

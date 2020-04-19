@@ -85,7 +85,10 @@ class Command(BaseCommand):
                 started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
 
                 query = Q()
-                query &= Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
+                query &= (
+                    Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
+                    | Q(timing__statistic__isnull=True)
+                )
                 query &= Q(end_time__lt=now - F('resource__module__min_delay_after_end'))
                 ended = contests.filter(query)
 
@@ -308,7 +311,7 @@ class Command(BaseCommand):
 
                             addition = type(r)()
                             for k, v in r.items():
-                                if k[0].isalpha():
+                                if k[0].isalpha() and not re.match('^[A-Z]+$', k):
                                     k = k[0].upper() + k[1:]
                                     k = '_'.join(map(str.lower, re.findall('[A-ZА-Я][^A-ZА-Я]*', k)))
 
