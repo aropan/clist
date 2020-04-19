@@ -41,7 +41,7 @@
 
 {% block content %}
     <ul class="nav nav-tabs">
-        <li{% if tab == 'preferences' %} class="active"{% endif %}><a href="#preferences-tab" data-toggle="tab">Preferences</a></li>
+        <li{% if tab == 'preferences' or not tab %} class="active"{% endif %}><a href="#preferences-tab" data-toggle="tab">Preferences</a></li>
         <li{% if tab == 'social' %} class="active"{% endif %}><a href="#social-tab" data-toggle="tab">Social</a></li>
         <li{% if tab == 'accounts' %} class="active"{% endif %}><a href="#accounts-tab" data-toggle="tab">Accounts</a></li>
         <li{% if tab == 'filters' %} class="active"{% endif %}><a href="#filters-tab" data-toggle="tab">Filters</a></li>
@@ -49,7 +49,7 @@
     </ul>
 
     <div class="tab-content">
-        <div id="preferences-tab" class="tab-pane{% if tab == 'preferences' %} active{% endif %}">
+        <div id="preferences-tab" class="tab-pane{% if tab == 'preferences' or not tab %} active{% endif %}">
             <div class="key">Timezone
                 <i rel="tooltip" title="For a single viewing in another timezone using /?timezone=..."></i>
             </div>
