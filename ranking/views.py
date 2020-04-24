@@ -97,7 +97,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     contest = get_object_or_404(Contest.objects.select_related('resource'), pk=contest_id)
     if slug(contest.title) != title_slug:
-        return HttpResponseNotFound(f'Not found {slug(contest.title)} slug')
+        return HttpResponseNotFound()
 
     contest_fields = contest.info.get('fields', [])
 
@@ -120,7 +120,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     fixed_fields = (
         ('penalty', 'Penalty'),
         ('total_time', 'Time'),
-        ('advanced', 'Advanced')
+        ('advanced', 'Advance')
     ) + tuple(options.get('fixed_fields', []))
 
     statistics = statistics \
@@ -413,6 +413,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'standings_options': options,
         'medals': medals,
         'mod_penalty': mod_penalty,
+        'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
         'contest': contest,
         'statistics': statistics,
         'problems': problems,

@@ -27,17 +27,17 @@
     $URL = $url;
 
     preg_match_all('#
-        <li>[^<]*
-            <a[^>]*>(?<title>[^<]*GP[^<]*)\s\&\#
-        .*?
-        <li><a[^>]*href="(?<url>[^"]*)"[^>]*>[^<]*</a></li>[^<]*
-        <li><a[^>]*href="(?<standings_url>[^"]*)"[^>]*>1st\sDiv\sResults</a></li>
+        <li>(?:[^<]*<[^/>]*>)*\s*(?<title>[^<]*GP[^<]*)(?:</[^/>]*>)*(?:\s\&\#.*?)?\s*
+        <li><a[^>]*href="(?<url>[^"]*)"[^>]*>(?:[^<]*<[^>/]*>)*(?:[^<]*</[^>/]*>)*[^<]*</a></li>[^<]*
+        <li><a[^>]*href="(?<standings_url>[^"]*)"[^>]*>(?:[^<]*<[^>/]*>)*(?:1st\sDiv\sResults|Standings)(?:</[^>/]*>[^<]*)*</a></li>
         #xs', $page, $matches, PREG_SET_ORDER
     );
     $results = array();
     foreach ($matches as $match) {
         foreach (array('url', 'standings_url') as $k) {
-            $match[$k] = url_merge($URL, $match[$k]);
+            if (!preg_match('/^http/', $match[$k])) {
+                $match[$k] = url_merge($URL, $match[$k]);
+            }
         }
         $title = $match['title'];
         $title = str_replace('GP', 'Grand Prix', $title);

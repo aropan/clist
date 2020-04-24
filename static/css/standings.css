@@ -70,6 +70,10 @@ table.standings .handle-cell {
   white-space: nowrap;
 }
 
+table.standings .handle-cell .handle-div {
+  white-space: normal;
+}
+
 .standings th {
   border: none !important;
 }
@@ -127,4 +131,8 @@ a.contest:hover > .reset_timing_statistic, .reset_timing_statistic:hover {
 #viewSolutionModal .modal-body {
   max-height: calc(100vh - 200px);
   overflow-y: auto;
+}
+
+.advance {
+  font-weight: bold;
 }

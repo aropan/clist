@@ -10,7 +10,6 @@ from django_print_sql import print_sql_decorator
 from logging import getLogger
 from notification.models import Notification, Task
 from traceback import format_exc
-from true_coders.models import Coder
 from clist.models import Contest, TimingContest
 from django.template.loader import render_to_string
 from tqdm import tqdm
@@ -20,7 +19,6 @@ class Command(BaseCommand):
     help = 'Add notice tasks'
 
     def process(self, notify, contests, prefix=''):
-        self.logger.info('notify = {}, #contests = {}'.format(notify, contests.count()))
         if contests.exists():
             context = {
                 'contests': contests,
@@ -62,8 +60,6 @@ class Command(BaseCommand):
             .filter(Q(timing=None) | Q(modified__gt=F('timing__notification'))) \
             .order_by('start_time')
 
-        self.logger.info('updates = %d' % (updates.count()))
-        self.logger.info('coder = %d' % (Coder.objects.filter(~Q(notification=None)).count()))
         now = timezone.now()
 
         notifies = Notification.objects.all()
@@ -75,7 +71,7 @@ class Command(BaseCommand):
             notifies = notifies.filter(last_time__isnull=False, last_time__lte=now)
 
         notifies = notifies.select_related('coder')
-        for notify in tqdm(notifies, total=notifies.count()):
+        for notify in tqdm(notifies.iterator()):
             try:
                 if ':' in notify.method:
                     category = notify.method.split(':', 1)[-1]

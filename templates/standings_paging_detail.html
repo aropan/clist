@@ -7,9 +7,13 @@
 </div>
 {% endif %}
 {% if stat.status and stat.time %}
-  {% if stat.result|asfloat:0 < 0 %}{{ stat.status }}{% else %}{{ stat.time }}{% endif %}
+  {% if stat.result|asfloat:0 < 0 %}
+    {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
+  {% else %}
+    {{ stat.time }}
+  {% endif %}
 {% elif stat.status %}
-  {{ stat.status }}
+  {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
 {% elif stat.time %}
   {{ stat.time }}
 {% elif 'upsolving' in stat %}

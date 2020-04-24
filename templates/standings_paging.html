@@ -4,16 +4,25 @@
 {% paginate per_page statistics using 'standings_paging' %}{% get_pages %}
 {% for statistic in statistics %}
 {% with coders=statistic.account.coders.all %}
-<tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}{% if mod_penalty %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
+<tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
 {% endwith %}
+  {% with advance=statistic.addition|get_item:'_advance' %}
   <td
     {% if statistic.addition.medal %}
       class="{{ statistic.addition.medal|lower }}-medal"
+    {% elif advance %}
+      class="advance{% if advance.class %} {{ advance.class }}{% endif %}"
+      {% if advance %}
+        data-toggle="tooltip"
+        data-placement="top"
+        title="{% if advance.contest or not contest.next_time %}Advanced{% else %}Supposedly advance{% endif %} to {{ advance.next }}{% if advance.contest %} (in {{ advance.contest }}){% endif %}"
+      {% endif %}
     {% endif %}
   >
     {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
     {% if with_row_num %}({{ forloop.counter0|add:pages.current_start_index }}){% endif %}
   </td>
+  {% endwith %}
   {% if data_1st_u %}
   {% with info=participants_info|get_item:statistic.id %}
   <td>
@@ -52,7 +61,7 @@
     {% with team_id=statistic.addition.team_id %}
     {% if not team_id %}{% coder_color_circle contest.resource statistic.addition statistic.account.info %}{% endif %}
 
-    <div{% if not team_id%} class="{% coder_color_class contest.resource statistic.addition statistic.account.info %}"{% endif %} style="display: inline-block">
+    <div class="handle-div{% if not team_id%} {% coder_color_class contest.resource statistic.addition statistic.account.info %}{% endif %}" style="display: inline-block">
       {% with coders=statistic.account.coders.all %}
         {% if coders|length == 1 and not team_id %}
           {% for c in coders %}
@@ -213,10 +222,8 @@
 </tr>
 {% endfor %}
 
+{% if colored_by_group_score %}
 <script>
-  $(function(){
-    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({trigger : 'hover'})
-{% if mod_penalty %}
     var prev = null
     var idx = 0
     $('.standings tr[data-result]').each(function(e) {
@@ -230,7 +237,12 @@
       node.addClass(idx? 'odd' : 'even')
       prev = result
     })
+</script>
 {% endif %}
+
+<script>
+  $(function(){
+    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({trigger : 'hover'})
   })
 </script>
 

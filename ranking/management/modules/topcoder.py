@@ -218,6 +218,9 @@ class Statistic(BaseModule):
                     row['solved'] = {'solving': 0}
                     row['division'] = 'I' * division
 
+                    if 'adv.' in row:
+                        row['advanced'] = row.pop('adv.').lower().startswith('y')
+
                     url_info = urljoin(url, r.columns[0].node.xpath('a/@href')[0])
                     url_infos.append(url_info)
 

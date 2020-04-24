@@ -127,6 +127,7 @@ class Stage(BaseModel):
         n_best = self.score_params.get('n_best')
         fields = self.score_params.get('fields', [])
         order_by = self.score_params['order_by']
+        advances = self.score_params.get('advances', {})
         results = collections.defaultdict(collections.OrderedDict)
 
         problems_infos = collections.OrderedDict()
@@ -165,6 +166,17 @@ class Stage(BaseModel):
                 info['full_score'] = full_score
 
             problems_infos[contest.pk] = info
+
+        exclude_advances = {}
+        if advances and advances.get('exclude_stages'):
+            qs = Statistics.objects \
+                .filter(contest__stage__in=advances['exclude_stages'], addition___advance__isnull=False) \
+                .values('account__key', 'addition___advance', 'contest__title') \
+                .order_by('contest__end_time')
+            for r in qs:
+                d = r['addition___advance']
+                d['contest'] = r['contest__title']
+                exclude_advances[r['account__key']] = d
 
         statistics = Statistics.objects.select_related('account')
         filter_statistics = self.score_params.get('filter_statistics')
@@ -209,6 +221,8 @@ class Stage(BaseModel):
                     for field in fields:
                         inp = field['field']
                         out = field.get('out', inp)
+                        if 'type' in field:
+                            continue
                         if field.get('first') and out in row or inp not in s.addition:
                             continue
                         val = ast.literal_eval(str(s.addition[inp]))
@@ -222,17 +236,45 @@ class Stage(BaseModel):
                         for k, v in s.addition['solved'].items():
                             solved[k] = solved.get(k, 0) + v
 
-                    for field in order_by:
-                        field = field.lstrip('-')
-                        if field == 'score':
-                            continue
-                        status = field_values.get(field, row.get(field))
-                        if status is None:
-                            continue
-                        problem['status'] = status
-                        break
+                    if 'status' in self.score_params:
+                        field = self.score_params['status']
+                        problem['status'] = field_values.get(field, row.get(field))
+                    else:
+                        for field in order_by:
+                            field = field.lstrip('-')
+                            if field == 'score':
+                                continue
+                            status = field_values.get(field, row.get(field))
+                            if status is None:
+                                continue
+                            problem['status'] = status
+                            break
 
                     pbar.update()
+
+        for field in fields:
+            t = field.get('type')
+            if t == 'points_for_common_problems':
+                group = field['group']
+                inp = field['field']
+                out = field.get('out', inp)
+
+                common_problems = dict()
+                for account, row in results.items():
+                    problems = set(row['problems'].keys())
+                    key = row[group]
+                    common_problems[key] = problems if key not in common_problems else (problems & common_problems[key])
+
+                for account, row in results.items():
+                    key = row[group]
+                    problems = common_problems[key]
+                    value = 0
+                    for k in problems:
+                        value += float(row['problems'].get(k, {}).get(inp, 0))
+                    for k, v in row['problems'].items():
+                        if k not in problems:
+                            v['status_tag'] = 'strike'
+                    row[out] = round(value, 2)
 
         results = list(results.values())
         if n_best:
@@ -258,11 +300,35 @@ class Stage(BaseModel):
             pks = set()
             last_score = None
             place = None
+            score_advance = None
+            place_advance = 0
             for index, row in enumerate(tqdm.tqdm(results, desc=f'update statistics for stage {stage}'), start=1):
                 curr_score = tuple(row[k.lstrip('-')] for k in order_by)
                 if curr_score != last_score:
                     last_score = curr_score
                     place = index
+
+                if advances:
+                    tmp = score_advance, place_advance
+                    if curr_score != score_advance:
+                        score_advance = curr_score
+                        place_advance += 1
+
+                    for advance in advances.get('options', []):
+                        handle = row['member'].key
+                        if handle in exclude_advances and advance['next'] == exclude_advances[handle]['next']:
+                            advance = exclude_advances[handle]
+                            advance.pop('class', None)
+                            row['_advance'] = advance
+                            break
+
+                        if 'places' in advance and place_advance in advance['places']:
+                            row['_advance'] = advance
+                            tmp = None
+                            break
+
+                    if tmp is not None:
+                        score_advance, place_advance = tmp
 
                 account = row.pop('member')
                 solving = row.pop('score')
@@ -286,6 +352,9 @@ class Stage(BaseModel):
 
             stage.info['fields'] = list(fields)
 
-        stage.info['standings'] = {'fixed_fields': [(f.lstrip('-'), f.lstrip('-').title()) for f in order_by]}
+        standings_info = self.score_params.get('info', {})
+        standings_info['fixed_fields'] = [(f.lstrip('-'), f.lstrip('-').title()) for f in order_by]
+        stage.info['standings'] = standings_info
+
         stage.info['problems'] = list(problems_infos.values())
         stage.save()
