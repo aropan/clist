@@ -173,7 +173,7 @@ class TeamAdmin(BaseModelAdmin):
 
 @admin_register(Login)
 class LoginAdmin(BaseModelAdmin):
-    list_display = ['team', 'stage', 'username', 'is_sent']
+    list_display = ['team', 'stage', 'username', 'password', 'is_sent']
     search_fields = ['team__name', 'username', 'stage']
     list_filter = ['stage', 'is_sent', 'team__event']
 
