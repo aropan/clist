@@ -271,19 +271,19 @@ def get_countries():
 
 
 def is_country_code(val):
-    return len(val) == 2
+    return val is not None and len(val) == 2
 
 
 @register.filter
 def get_country_name(code):
-    if not is_country_code(code):
+    if code is None or not is_country_code(code):
         return code
     return countries.name(code)
 
 
 @register.filter
 def get_country_code(name):
-    if is_country_code(name):
+    if name is None or is_country_code(name):
         return name
     return countries.by_name(name)
 
@@ -400,6 +400,7 @@ def get_number_from_str(val):
         return val
     if val is None:
         return
+    val = re.sub(r'\s', '', str(val))
     match = re.search(r'-?[0-9]+(?:\.[0-9]+)?', str(val))
     if not match:
         return

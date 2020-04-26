@@ -6,6 +6,7 @@ import re
 import json
 import urllib.parse
 import os
+from html import unescape
 from pprint import pprint
 from random import choice
 from collections import OrderedDict
@@ -21,6 +22,8 @@ from ranking.management.modules.excepts import ExceptionParseStandings, InitModu
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://codejam.googleapis.com/scoreboard/{id}/poll?p='
     API_ATTEMPTS_URL_FORMAT_ = 'https://codejam.googleapis.com/attempts/{id}/poll?p='
+    ARCHIVE_URL_FORMAT_ = 'https://codingcompetitions.withgoogle.com/hashcode/archive/{year}'
+    ARCHIVE_DATA_URL_FORMAT_ = 'https://codingcompetitions.withgoogle.com/data/scoreboards/{year}.json'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -270,28 +273,90 @@ class Statistic(BaseModule):
         return standings
 
     def _hashcode(self, users=None, statistics=None):
-        page = REQ.get(self.info['hashcode_scoreboard'])
+        standings_url = None
+        is_final_round = self.name.endswith('Final Round')
+        page = REQ.get(self.ARCHIVE_DATA_URL_FORMAT_.format(year=self.start_time.year))
         data = json.loads(page)
+        names = set()
+        for data_round in data['rounds']:
+            name = data_round['name']
+            if name in names:
+                name = 'Qualification Round'
+            if self.name.endswith(name) or name in ['Full ranking', 'Main round'] and is_final_round:
+                data = data_round['data']
+                standings_url = self.ARCHIVE_URL_FORMAT_.format(year=self.start_time.year)
+                break
+            names.add(name)
+        else:
+            data = None
+
+        if not data:
+            if 'hashcode_scoreboard' in self.info:
+                page = REQ.get(self.info['hashcode_scoreboard'])
+                data = json.loads(page)
+            else:
+                raise ExceptionParseStandings('Not found data')
+
+        if 'columns' in data:
+            columns = data['columns']
+            data = data['rows']
+        else:
+            columns = None
+
         result = {}
         season = self.get_season()
         for rank, row in enumerate(data, start=1):
-            name = row.pop('teamName')
+            if columns is not None:
+                row = dict(zip(columns, row))
+            row = {k.lower().replace(' ', ''): v for k, v in row.items()}
+
+            name = row.pop('teamname')
+            name = unescape(name)
             member = f'{name}, {season}'
+
+            if users is not None and name not in users:
+                continue
+
             r = result.setdefault(member, {})
             r['name'] = name
             r['member'] = member
-            r['place'] = rank
-            r['solving'] = row.pop('score')
-            r['_countries'] = row.pop('countries')
+
+            score = row.pop('score', '0')
+            score = re.sub(r'[\s,]', '', str(score))
+            try:
+                float(score)
+            except Exception:
+                score = '0'
+            r['solving'] = score
+
+            if 'rank' in row:
+                r['place'] = row.pop('rank')
+            else:
+                r['place'] = rank
+
+            if 'country' in row:
+                r['_countries'] = re.sub(r',\s+', ',', row.pop('country')).split(',')
+            elif 'countries' in row:
+                r['_countries'] = row.pop('countries')
+
+            if 'finalround' in row:
+                r['advanced'] = row['finalround']
 
         standings = {
             'result': result,
             'problems': [],
         }
+
+        if standings_url:
+            standings['url'] = standings_url
+
+        if is_final_round:
+            standings['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
+
         return standings
 
     def get_standings(self, users=None, statistics=None):
-        if 'hashcode_scoreboard' in self.info:
+        if 'hashcode_scoreboard' in self.info or re.search(r'\bhash.*code\b.*round$', self.name, re.I):
             return self._hashcode(users, statistics)
         if '/codingcompetitions.withgoogle.com/' in self.url:
             return self._api_get_standings(users, statistics)

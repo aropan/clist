@@ -390,7 +390,12 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                     f'{n_medal}': Count(Case(When(addition__medal__iexact=medal, then=1)))
                 })
         if 'advanced' in contest_fields:
-            statistics = statistics.annotate(n_advanced=Count(Case(When(addition__advanced=True, then=1))))
+            statistics = statistics.annotate(n_advanced=Count(
+                Case(
+                    When(addition__advanced=True, then=1),
+                    When(~Q(addition__advanced=False) & ~Q(addition__advanced=''), then=1),
+                )
+            ))
 
         statistics = statistics.order_by(*orderby)
 
