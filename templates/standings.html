@@ -116,6 +116,7 @@
 
 <script>
   $(() => $(".table-float-head").floatThead({
+    zIndex: 999,
     responsiveContainer: function($table){
         return $table.closest(".table-responsive");
     }
