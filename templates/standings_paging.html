@@ -50,7 +50,7 @@
       {% with country=statistic.account.country %}
         <div class="flag-width-fixed">
         {% if country %}
-        <a href="{{ request.path }}?country={{ country.code }}" title="{{ country.name }}" data-toggle="tooltip">
+        <a href="{% url_transform request country=country_code %}" title="{{ country_name }}" data-toggle="tooltip">
           <img class="flag flag-{{ country.code|lower }}"/>
         </a>
         {% endif %}
@@ -80,6 +80,18 @@
         {% if coders|length == 1 and not team_id %}
           </a>
         {% endif %}
+
+        {% for country_name in statistic.addition|get_item:"_countries" %}
+          {% with country_code=country_name|get_country_code %}
+            {% if country_code %}
+              <div class="flag-width-fixed">
+                <a href="{% url_transform request country=country_code %}" title="{{ country_name }}" data-toggle="tooltip">
+                  <img class="flag flag-{{ country_code|lower }}"/>
+                </a>
+              </div>
+            {% endif %}
+          {% endwith %}
+        {% endfor %}
 
         {% if statistic.addition.url or contest.resource.profile_url %}
           <a href="{% if statistic.addition.url %}{{ statistic.addition.url }}{% else %}{{ contest.resource.profile_url|format_dict:statistic.account.dict_with_info }}{% endif %}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>

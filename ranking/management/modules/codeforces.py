@@ -80,11 +80,6 @@ class Statistic(BaseModule):
             raise InitModuleException(f'Contest id {cid} should be number')
         self.cid = cid
 
-    def get_season(self):
-        year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
-        season = f'{year}-{year + 1}'
-        return season
-
     def get_standings(self, users=None, statistics=None):
 
         standings_url = (self.url + '/standings').replace('contests', 'contest')

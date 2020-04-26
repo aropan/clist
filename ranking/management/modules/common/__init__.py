@@ -39,6 +39,7 @@ class BaseModule(object, metaclass=ABCMeta):
                 standings_url=contest.standings_url,
                 start_time=contest.start_time,
                 end_time=contest.end_time,
+                info=contest.info,
             )
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -67,6 +68,11 @@ class BaseModule(object, metaclass=ABCMeta):
             else:
                 dst[key] = value
         return dst
+
+    def get_season(self):
+        year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
+        season = f'{year}-{year + 1}'
+        return season
 
     def get_result(self, *users):
         standings = self.get_standings(users)

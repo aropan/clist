@@ -10,14 +10,22 @@
     {% with value=statistic|get_item:field %}
       {% if header == 'country' %}
         <td>
-          <a href="{% url_transform request country=value groupby='' %}">
+          {% with name=value|get_country_name %}
+          {% with code=value|get_country_code %}
+          <a href="{% url_transform request country=code groupby='' %}">
             {% if value is None %}
               Undefined
             {% else %}
-              <img class="flag flag-{{ value|lower }}"/>
-              {{ value|get_country_name }}
+                {% if name %}
+                  <img class="flag flag-{{ code|lower }}"/>
+                  {{ name }}
+                {% else %}
+                  {{ value }}
+                {% endif %}
             {% endif %}
           </a>
+          {% endwith %}
+          {% endwith %}
         </td>
       {% elif value|get_type == 'float' %}
         <td>

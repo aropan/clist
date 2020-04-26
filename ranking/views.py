@@ -8,6 +8,7 @@ from django.db import models, connection
 from django.contrib.auth.decorators import login_required
 from django.db.models import Case, When, F, Q, Exists, OuterRef, Count, Avg
 from django.db.models.functions import Cast
+from django.db.models.expressions import RawSQL
 from django.http import HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
@@ -20,7 +21,7 @@ from ranking.models import Statistics, Module
 from clist.templatetags.extras import slug
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
-from clist.templatetags.extras import get_problem_key
+from clist.templatetags.extras import get_problem_key, get_country_name
 from utils.regex import get_iregex_filter, verify_regex
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
@@ -128,7 +129,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         .select_related('account__resource') \
         .prefetch_related('account__coders')
 
-    has_country = 'country' in contest_fields or statistics.filter(account__country__isnull=False).exists()
+    has_country = (
+        'country' in contest_fields or
+        '_countries' in contest_fields or
+        statistics.filter(account__country__isnull=False).exists()
+    )
 
     division = request.GET.get('division')
     if division == 'any':
@@ -299,6 +304,12 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         cond = Q(account__country__in=countries)
         if 'None' in countries:
             cond |= Q(account__country__isnull=True)
+        if '_countries' in contest_fields:
+            for code in countries:
+                name = get_country_name(code)
+                if name:
+                    cond |= Q(addition___countries__icontains=name)
+
         statistics = statistics.filter(cond)
         params['countries'] = countries
 
@@ -320,7 +331,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     # groupby
     if groupby == 'country' or groupby in fields_to_select:
-
         fields = OrderedDict()
         fields['groupby'] = groupby
         fields['n_accounts'] = 'num'
@@ -357,7 +367,12 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             field = 'solving'
             statistics = statistics.annotate(groupby=F(field))
         elif groupby == 'country':
-            field = 'account__country'
+            if '_countries' in contest_fields:
+                statistics = statistics.annotate(
+                    country=RawSQL('''json_array_elements((("addition" ->> '_countries'))::json)::jsonb''', []))
+                field = 'country'
+            else:
+                field = 'account__country'
             statistics = statistics.annotate(groupby=F(field))
         else:
             field = f'addition__{groupby}'

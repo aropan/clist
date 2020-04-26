@@ -270,9 +270,22 @@ def get_countries():
     return dict((c.code, c) for c in countries).values()
 
 
+def is_country_code(val):
+    return len(val) == 2
+
+
 @register.filter
 def get_country_name(code):
+    if not is_country_code(code):
+        return code
     return countries.name(code)
+
+
+@register.filter
+def get_country_code(name):
+    if is_country_code(name):
+        return name
+    return countries.by_name(name)
 
 
 @register.filter

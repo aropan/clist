@@ -269,7 +269,30 @@ class Statistic(BaseModule):
         }
         return standings
 
+    def _hashcode(self, users=None, statistics=None):
+        page = REQ.get(self.info['hashcode_scoreboard'])
+        data = json.loads(page)
+        result = {}
+        season = self.get_season()
+        for rank, row in enumerate(data, start=1):
+            name = row.pop('teamName')
+            member = f'{name}, {season}'
+            r = result.setdefault(member, {})
+            r['name'] = name
+            r['member'] = member
+            r['place'] = rank
+            r['solving'] = row.pop('score')
+            r['_countries'] = row.pop('countries')
+
+        standings = {
+            'result': result,
+            'problems': [],
+        }
+        return standings
+
     def get_standings(self, users=None, statistics=None):
+        if 'hashcode_scoreboard' in self.info:
+            return self._hashcode(users, statistics)
         if '/codingcompetitions.withgoogle.com/' in self.url:
             return self._api_get_standings(users, statistics)
         if '/code.google.com/' in self.url or '/codejam.withgoogle.com/' in self.url:
