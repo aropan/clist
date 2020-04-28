@@ -84,6 +84,11 @@ class Statistic(BaseModule):
                     finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
                     r['penalty'] = self.to_time(finish_time)
                     r.update(row)
+                    if statistics and handle in statistics:
+                        stat = statistics[handle]
+                        for k in ('rating_change', 'new_rating'):
+                            if k in stat:
+                                r[k] = stat[k]
 
         standings = {
             'result': result,
