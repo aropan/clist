@@ -68,28 +68,35 @@ class Command(BaseCommand):
                     accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
                 accounts = list(accounts[:args.limit])
-                users = [a.key for a in accounts]
 
-                if not users:
+                if not accounts:
                     continue
 
                 try:
                     with tqdm(total=len(accounts), desc=f'getting {resource.host}') as pbar:
-                        infos = plugin.Statistic.get_users_infos(users=users, pbar=pbar)
+                        infos = plugin.Statistic.get_users_infos(
+                            users=[a.key for a in accounts],
+                            resource=resource,
+                            accounts=accounts,
+                            pbar=pbar,
+                        )
 
                         for account, data in zip(accounts, infos):
                             info = data['info']
                             if info is None:
-                                pbar.set_postfix(warning=f'Remove user {account}')
-                                account.delete()
+                                _, info = account.delete()
+                                info = {k: v for k, v in info.items() if v}
+                                pbar.set_postfix(warning=f'Remove user {account} = {info}')
                                 continue
 
                             contest_addition_update = data.pop('contest_addition_update', {})
+                            contest_addition_update_by = data.pop('contest_addition_update_by', None)
                             if contest_addition_update:
                                 account_update_contest_additions(
                                     account,
                                     contest_addition_update,
                                     timedelta_limit=timedelta(days=31) if account.info and not has_param else None,
+                                    by=contest_addition_update_by,
                                 )
 
                             coders = data.pop('coders', [])

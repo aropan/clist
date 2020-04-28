@@ -350,7 +350,7 @@ class Statistic(BaseModule):
         return standings
 
     @staticmethod
-    def get_users_infos(users, pbar=None):
+    def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
         def fetch_profile(user):
             url = f'http://api.topcoder.com/v2/users/{user}'

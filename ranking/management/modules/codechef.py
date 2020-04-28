@@ -194,7 +194,7 @@ class Statistic(BaseModule):
         return standings
 
     @staticmethod
-    def get_users_infos(users, pbar=None):
+    def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
         @RateLimiter(max_calls=5, period=1)
         def fetch_profle_page(user):
@@ -257,7 +257,7 @@ class Statistic(BaseModule):
 
                     info = {}
                     for match in matches:
-                        key = match.group('key').strip().lower()
+                        key = match.group('key').strip().replace(' ', '_').lower()
                         value = match.group('value').strip()
                         info[key] = value
 

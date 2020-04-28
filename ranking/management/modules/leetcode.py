@@ -1,17 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
 import json
+import html
 from datetime import datetime
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
 
-from ranking.management.modules.common import REQ, BaseModule
+import tqdm
+
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 
 
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}'
     RANKING_URL_FORMAT_ = '{url}/ranking'
+    PROFILE_URL_FORMAT_ = 'https://leetcode.com/{user}/'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -37,10 +43,12 @@ class Statistic(BaseModule):
         start_time = self.start_time.replace(tzinfo=None)
         result = {}
         with PoolExecutor(max_workers=8) as executor:
-            for data in executor.map(fetch_page, range(n_page)):
+            for data in tqdm.tqdm(
+                executor.map(fetch_page, range(n_page)),
+                total=n_page,
+                desc='parsing statistics paging',
+            ):
                 for row, submissions in zip(data['total_rank'], data['submissions']):
-                    if not submissions:
-                        continue
                     handle = row.pop('username')
                     if users and handle not in users:
                         continue
@@ -48,7 +56,7 @@ class Statistic(BaseModule):
                     row.pop('user_slug')
                     row.pop('global_ranking')
 
-                    r = result.setdefault(handle, {})
+                    r = result.setdefault(handle, OrderedDict())
                     r['member'] = handle
                     r['place'] = row.pop('rank')
                     r['solving'] = row.pop('score')
@@ -83,6 +91,110 @@ class Statistic(BaseModule):
             'problems': problems_info,
         }
         return standings
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        def is_chine(account):
+            return '-cn' in account.info.get('profile_url', {}).get('_data_region', '')
+
+        def fetch_profle_page(account):
+            if is_chine(account):
+                ret = {}
+                page = REQ.get(
+                    'https://leetcode.com/graphql',
+                    post=b'{"variables":{},"query":"{allContests{titleSlug}}"}',
+                    content_type='application/json',
+                )
+                ret['contests'] = json.loads(page)['data']
+
+                page = REQ.get(
+                    'https://leetcode-cn.com/graphql',
+                    post=b'''
+                    {"operationName":"userPublicProfile","variables":{"userSlug":"''' + account.key.encode() + b'''"},"query":"query userPublicProfile($userSlug: String!) { userProfilePublicProfile(userSlug: $userSlug) { username profile { userSlug realName contestCount ranking { currentLocalRanking currentGlobalRanking currentRating ratingProgress totalLocalUsers totalGlobalUsers } } }}"}''',  # noqa
+                    content_type='application/json',
+                )
+                ret['profile'] = json.loads(page)['data']
+                page = ret
+            else:
+                url = resource.profile_url.format(**account.dict_with_info())
+                try:
+                    page = REQ.get(url)
+                except FailOnGetResponse as e:
+                    if e.args[0].code == 404:
+                        page = None
+                    else:
+                        raise e
+            return account, page
+
+        with PoolExecutor(max_workers=8) as executor:
+            for account, page in executor.map(fetch_profle_page, accounts):
+                if pbar:
+                    pbar.update()
+
+                if page is None:
+                    yield {'info': None}
+                    continue
+
+                info = {}
+                contest_addition_update_by = None
+                ratings, titles = [], []
+                if is_chine(account):
+                    contests = [c['titleSlug'] for c in page['contests']['allContests']]
+                    info = page['profile']['userProfilePublicProfile']
+                    info.update(info.pop('profile', {}) or {})
+                    info.update(info.pop('ranking', {}) or {})
+                    ratings = info.pop('ratingProgress', []) or []
+                    contests = contests[len(contests) - len(ratings):]
+                    titles = list(reversed(contests))
+                else:
+                    matches = re.finditer(
+                        r'''
+                        <li[^>]*>\s*<span[^>]*>(?P<value>[^<]*)</span>\s*
+                        <i[^>]*>[^<]*</i>(?P<key>[^<]*)
+                        ''',
+                        page,
+                        re.VERBOSE
+                    )
+
+                    for match in matches:
+                        key = html.unescape(match.group('key')).strip().replace(' ', '_').lower()
+                        value = html.unescape(match.group('value')).strip()
+                        if value.isdigit():
+                            value = int(value)
+                        info[key] = value
+
+                    contest_addition_update = {}
+                    contest_addition_update_by = None
+                    match = re.search(r'ng-init="pc.init\((?P<data>.*?)\)"\s*ng-cloak>', page, re.DOTALL)
+                    if match:
+                        data = html.unescape(match.group('data').replace("'", '"'))
+                        data = json.loads(f'[{data}]')
+                        ratings, titles = data[11], data[13]
+                        if ratings:
+                            ratings = [v for v, _ in ratings]
+                            contest_addition_update_by = 'title'
+
+                contest_addition_update = {}
+                prev_rating = None
+                last_rating = None
+                if ratings and titles:
+                    for rating, title in zip(ratings, titles):
+                        if prev_rating != rating and (prev_rating is not None or rating != 1500):
+                            int_rating = int(rating)
+                            update = contest_addition_update.setdefault(title, OrderedDict())
+                            if last_rating is not None:
+                                update['rating_change'] = int_rating - last_rating
+                            update['new_rating'] = int_rating
+                            info['rating'] = int_rating
+                            last_rating = int_rating
+                        prev_rating = rating
+
+                yield {
+                    'info': info,
+                    'contest_addition_update': contest_addition_update,
+                    'contest_addition_update_by': contest_addition_update_by,
+                }
 
 
 if __name__ == "__main__":

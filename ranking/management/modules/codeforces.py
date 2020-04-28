@@ -273,7 +273,7 @@ class Statistic(BaseModule):
         return standings
 
     @staticmethod
-    def get_users_infos(users, pbar=None):
+    def get_users_infos(users, resource=None, accounts=None, pbar=None):
         handles = ';'.join(users)
 
         len_limit = 1000

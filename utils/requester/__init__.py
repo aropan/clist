@@ -379,6 +379,8 @@ class requester():
             if content_type == 'multipart/form-data' and post or files:
                 post_urlencoded, multipart_headers = encode_multipart(fields=post, files=files)
                 headers.update(multipart_headers)
+            elif content_type:
+                headers.update({"Content-type": content_type})
 
             try:
                 if headers:

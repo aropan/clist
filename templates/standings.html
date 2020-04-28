@@ -49,7 +49,9 @@
         <table class="standings table table-condensed table-float-head{% if not colored_by_group_score %} table-striped{% endif %}">
           <thead>
             <tr class="header-row">
-              <th{% if merge_problems %} rowspan="2"{% endif %}>Rank</th>
+              <th{% if merge_problems %} rowspan="2"{% endif %}>
+                <span title="Total {{ statistics.count }}" data-toggle="tooltip" data-placement="top">Rank</span>
+              </th>
               {% if data_1st_u %}
               <th{% if merge_problems %} rowspan="2"{% endif %}>1st U</th>
               {% endif %}
