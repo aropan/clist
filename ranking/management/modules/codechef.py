@@ -9,9 +9,11 @@ import tqdm
 import re
 from pprint import pprint
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
-from ranking.management.modules.common import REQ, LOG
-from ranking.management.modules.common import BaseModule
+from ratelimiter import RateLimiter
+
+from ranking.management.modules.common import REQ, LOG, parsed_table, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules import conf
 
@@ -20,6 +22,7 @@ class Statistic(BaseModule):
     STANDINGS_URL_FORMAT_ = 'https://www.codechef.com/rankings/{key}'
     API_CONTEST_URL_FORMAT_ = 'https://www.codechef.com/api/contests/{key}'
     API_RANKING_URL_FORMAT_ = 'https://www.codechef.com/api/rankings/{key}?sortBy=rank&order=asc&page={page}&itemsPerPage={per_page}'  # noqa
+    PROFILE_URL_FORMAT_ = 'https://www.codechef.com/users/{user}'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -84,7 +87,7 @@ class Statistic(BaseModule):
                     urls = [url]
 
                 for url in urls:
-                    delay = 10
+                    delay = 5
                     for _ in range(10):
                         try:
                             headers = {
@@ -135,7 +138,7 @@ class Statistic(BaseModule):
                         if d['score'] < 1e-9 and not problems_status:
                             LOG.warning(f'Skip handle = {handle}: {d}')
                             continue
-                        row = result.setdefault(handle, {})
+                        row = result.setdefault(handle, OrderedDict())
 
                         row['member'] = handle
                         row['place'] = d.pop('rank')
@@ -164,6 +167,11 @@ class Statistic(BaseModule):
                             d['country'] = country
                         row.update(d)
                         row.update(contest_info)
+                        if statistics and handle in statistics:
+                            stat = statistics[handle]
+                            for k in ('rating_change', 'new_rating'):
+                                if k in stat:
+                                    row[k] = stat[k]
                     pbar.set_description(f'key={key} url={url}')
                     pbar.update()
 
@@ -184,6 +192,99 @@ class Statistic(BaseModule):
             'problems': problems_info,
         }
         return standings
+
+    @staticmethod
+    def get_users_infos(users, pbar=None):
+
+        @RateLimiter(max_calls=5, period=1)
+        def fetch_profle_page(user):
+            url = Statistic.PROFILE_URL_FORMAT_.format(user=user)
+            try:
+                page = REQ.get(url)
+            except FailOnGetResponse as e:
+                if e.args[0].code == 404:
+                    page = None
+                else:
+                    raise e
+            return page
+
+        with PoolExecutor(max_workers=4) as executor:
+            for user, page in zip(users, executor.map(fetch_profle_page, users)):
+                if pbar:
+                    pbar.update()
+
+                if page is None:
+                    yield {'info': None}
+                    continue
+
+                match = re.search(r'jQuery.extend\(Drupal.settings,(?P<data>[^;]*)\);$', str(page), re.MULTILINE)
+                data = json.loads(match.group('data'))
+                if 'date_versus_rating' not in data:
+                    info = {}
+                    info['is_team'] = True
+                    regex = '<table[^>]*cellpadding=""[^>]*>.*?</table>'
+                    match = re.search(regex, page, re.DOTALL)
+                    if match:
+                        html_table = match.group(0)
+                        table = parsed_table.ParsedTable(html_table)
+                        for r in table:
+                            for k, v in list(r.items()):
+                                k = k.lower().replace(' ', '_')
+                                info[k] = v.value
+
+                    matches = re.finditer(r'''
+                                          <td[^>]*>\s*<b[^>]*>Member[^<]*</b>\s*</td>\s*
+                                          <td[^>]*><a[^>]*href\s*=\s*"[^"]*/users/(?P<member>[^"/]*)"[^>]*>
+                                          ''', page, re.VERBOSE)
+                    coders = set()
+                    for match in matches:
+                        coders.add(match.group('member'))
+                    if coders:
+                        info['members'] = list(coders)
+
+                    ret = {'info': info, 'coders': coders}
+                else:
+                    data = data['date_versus_rating']['all']
+
+                    matches = re.finditer(
+                        r'''
+                            <li[^>]*>\s*<label[^>]*>(?P<key>[^<]*):\s*</label>\s*
+                            <span[^>]*>(?P<value>[^<]*)</span>\s*</li>
+                        ''',
+                        page,
+                        re.VERBOSE,
+                    )
+
+                    info = {}
+                    for match in matches:
+                        key = match.group('key').strip().lower()
+                        value = match.group('value').strip()
+                        info[key] = value
+
+                    contest_addition_update = {}
+                    prev_rating = None
+                    for row in data:
+                        rating = row.get('rating')
+                        if not rating:
+                            continue
+                        rating = int(rating)
+                        info['rating'] = rating
+
+                        code = row.get('code')
+                        if code:
+                            if re.search(r'\bdivision\s+[AB12]', row['name'], re.I) and re.search('[AB]$', code):
+                                code = code[:-1]
+
+                            update = contest_addition_update.setdefault(code, OrderedDict())
+                            if prev_rating is not None:
+                                update['rating_change'] = rating - prev_rating
+                            update['new_rating'] = rating
+
+                        prev_rating = rating
+
+                    ret = {'info': info, 'contest_addition_update': contest_addition_update}
+
+                yield ret
 
 
 if __name__ == "__main__":

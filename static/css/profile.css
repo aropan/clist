@@ -17,12 +17,42 @@
   padding: 3px;
 }
 
-.account a {
+#list-accounts {
+  text-align: center;
+}
+
+#list-accounts .badge {
+  font-size: 90%;
+  background-color: #cccccc;
+}
+
+#list-accounts .account a {
   text-decoration: none;
 }
 
-.account .text-muted {
+#list-accounts .account .text-muted {
   color: white;
+}
+
+#list-accounts .account .input-group-addon {
+  background-color: #f7f7f7;
+  font-weight: bold;
+  width: 0px;
+}
+
+#list-accounts .account .input-group-btn {
+  width: 0px;
+}
+
+#list-accounts .input-group {
+  display: inline-block;
+  margin: 2px;
+}
+
+#list-accounts .input-group-addon .no-user-select {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .title .problems {
@@ -31,29 +61,6 @@
 
 input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: searchfield-cancel-button;
-}
-
-#list-accounts {
-  text-align: center;
-}
-
-#list-accounts a {
-  font-weight: bold;
-}
-
-#list-accounts .btn-group {
-  margin: 5px;
-}
-
-#list-accounts .btn.account:hover {
-  background-color: #fff;
-  border-color: #ccc;
-  cursor: default;
-}
-
-#list-accounts .badge {
-  font-size: 90%;
-  background-color: #ccc;
 }
 
 .gold-medal {

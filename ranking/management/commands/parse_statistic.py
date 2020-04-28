@@ -23,9 +23,10 @@ from django.db.models import Q, F, OuterRef, Exists
 from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
 from clist.templatetags.extras import get_problem_key, get_number_from_str
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.management.commands.countrier import Countrier
+from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.modules.common import REQ
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
 class Command(BaseCommand):
@@ -189,10 +190,10 @@ class Command(BaseCommand):
                                     r[k] = v.replace(chr(0x00), '')
 
                             member = r.pop('member')
-                            account, _ = Account.objects.get_or_create(resource=resource, key=member)
+                            account, created = Account.objects.get_or_create(resource=resource, key=member)
 
                             updated = now + timedelta(days=1)
-                            if updated < account.updated:
+                            if created or (not statistics_ids and updated < account.updated):
                                 account.updated = updated
                                 account.save()
 
@@ -216,27 +217,11 @@ class Command(BaseCommand):
 
                             contest_addition_update = r.pop('contest_addition_update', {})
                             if contest_addition_update:
-                                contest_keys = set(contest_addition_update.keys())
-                                qs = Statistics.objects \
-                                    .filter(account=account, contest__key__in=contest_keys) \
-                                    .select_related('contest')
-                                if with_check:
-                                    qs.filter(modified__lte=now - timedelta(days=31))
-
-                                for stat in qs:
-                                    addition = dict(stat.addition)
-                                    ordered_dict = contest_addition_update[stat.contest.key]
-                                    addition.update(dict(ordered_dict))
-                                    stat.addition = addition
-                                    stat.save()
-
-                                    to_save = False
-                                    for k in ordered_dict.keys():
-                                        if k not in stat.contest.info['fields']:
-                                            stat.contest.info['fields'].append(k)
-                                            to_save = True
-                                    if to_save:
-                                        stat.contest.save()
+                                account_update_contest_additions(
+                                    account,
+                                    contest_addition_update,
+                                    timedelta(days=31) if with_check else None
+                                )
 
                             account_info = r.pop('info', {})
                             if account_info:

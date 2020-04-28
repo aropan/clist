@@ -57,6 +57,9 @@ class AccountAdmin(BaseModelAdmin):
         return obj.has_coder
     _has_coder.boolean = True
 
+    def get_readonly_fields(self, request, obj=None):
+        return ['updated', ] + super().get_readonly_fields(request, obj)
+
     def get_queryset(self, request):
         coders = Coder.objects.filter(pk=OuterRef('coders'))
         return super().get_queryset(request).annotate(has_coder=Exists(coders))
@@ -88,7 +91,7 @@ class AutoRatingAdmin(BaseModelAdmin):
 @admin_register(Statistics)
 class StatisticsAdmin(BaseModelAdmin):
     list_display = ['account', 'contest', 'place', 'solving', 'upsolving']
-    search_fields = ['account__key', 'contest__title']
+    search_fields = ['=account__key']
     list_filter = ['contest__host']
 
 

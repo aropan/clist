@@ -245,8 +245,8 @@ class requester():
     counter_file_cache = 0
     verify_word = None
 
-    def print(self, *objs):
-        if self.debug_output:
+    def print(self, *objs, force=False):
+        if self.debug_output or force:
             print(datetime.utcnow(), *objs, file=stderr)
 
     def __init__(self,
@@ -355,7 +355,7 @@ class requester():
             else:
                 diff_time = datetime.now() - datetime.fromtimestamp(path.getctime(file_cache))
                 from_cache = diff_time.seconds < self.cache_timeout
-        self.print("[cache]" if from_cache else "", url)
+        self.print("[cache]" if from_cache else "", url, force=from_cache)
         self.error = None
         self.response = None
         if from_cache:
@@ -461,6 +461,10 @@ class requester():
             self.ref_url = self.last_url
         self.file_cache_clear()
         return page
+
+    @property
+    def current_url(self):
+        return self.last_url
 
     def get_link_by_text(self, text, page=None):
         if page is None:
