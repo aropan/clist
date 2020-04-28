@@ -168,7 +168,7 @@
                 $contests[] = $contest;
             }
         }
-        echo "(" . (count($contests) - $preCountContests) . " of " . count($contests) . ")<br>\n";
+        echo " (" . (count($contests) - $preCountContests) . " of " . count($contests) . ")<br>\n";
     }
 
     $lastresources = "";

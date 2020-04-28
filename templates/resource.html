@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block title %}{{ resource.host }} - Resource{% endblock %}
 
@@ -9,7 +10,7 @@
     }
 </style>
 
-<h2><a href="http://{{ resource.host }}">{{ resource.host }}</a></h2>
+<h2><a href="{{ resource.href }}">{{ resource.host }}</a></h2>
 
 <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
     <i class="far fa-calendar-alt"></i> Google calendar
@@ -24,18 +25,21 @@
     parse statistic
 </span>
 {% endif %}
-<span class="badge progress-bar-info">{{ resource.contest_set.all.count }} contest(s)</span>
+
+<span class="badge progress-bar-info">{{ resource.contest_set.all.count|intcomma }} contest(s)</span>
+
+<span class="badge progress-bar-info">{{ resource.account_set.all.count|intcomma }} accounts(s)</span>
 
 <h3>Coders</h3>
 {% if accounts.exists %}
     <div class="coders list">
-    {% for a in accounts|slice:":42" %}
+    {% for a in accounts|slice:":10" %}
         {% for c in a.coders.all %}
             <a class="badge" href="{% url 'coder:profile' c.username %}">{{ a.key }}</a>
         {% endfor %}
     {% endfor %}
-    {% if accounts.count > 42 %}
-        and {{ accounts.count|add:-42 }} other(s)
+    {% if accounts.count > 10 %}
+        and {{ accounts.count|add:-10 }} other(s)
     {% endif %}
     </div>
 {% else %}
@@ -48,11 +52,11 @@
     {% if set %}
     <h4>{{ name|title }}</h4>
     <div class="contests list">
-    {% for c in set|slice:":42" %}
+    {% for c in set|slice:":10" %}
     <a class="badge progress-bar-{% if c.has_statistics %}success{% elif name == "past" %}warning{% else %}info{% endif %}" href="{% if c.has_statistics %}{% url 'ranking:standings' c.title|slug c.pk %}{% else %}{{ c.standings_url|default:c.url }}{% endif %}">{{ c.title }}</a>
     {% endfor %}
-    {% if set.count > 42 %}
-        and {{ set.count|add:-42 }} other(s)
+    {% if set.count > 10 %}
+        and {{ set.count|add:-10 }} other(s)
     {% endif %}
     </div>
     {% endif %}

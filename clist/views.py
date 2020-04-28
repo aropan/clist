@@ -1,23 +1,23 @@
 from datetime import timedelta
+from urllib.parse import urlparse, parse_qs
 
 import arrow
 import pytz
 from django.conf import settings
-from django.db.models import F, Q, Count, OuterRef, Subquery, IntegerField, Exists
+from django.db.models import F, Q
 from django.core.management.commands import dumpdata
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
-
-from urllib.parse import urlparse, parse_qs
+from sql_util.utils import SubqueryCount, Exists
 
 
 from clist.templatetags.extras import get_timezones, get_timezone_offset
 from clist.models import Resource, Contest, Banner
 from true_coders.models import Party, Coder, Filter
-from ranking.models import Rating, Statistics
+from ranking.models import Rating
 from utils.regex import verify_regex
 
 
@@ -260,25 +260,23 @@ def main(request, party=None):
 
 
 def resources(request):
-    contests = Resource.objects.annotate(n_contests=Count('contest')).filter(pk=OuterRef('pk'))
-    accounts = Resource.objects.annotate(n_accounts=Count('account')).filter(pk=OuterRef('pk'))
-    resources = Resource.objects.select_related('module').annotate(
-        n_contests=Subquery(contests.values('n_contests'), output_field=IntegerField()),
-        n_accounts=Subquery(accounts.values('n_accounts'), output_field=IntegerField()),
-    )
+    resources = Resource.caching_objects
+    resources = resources.select_related('module')
+    resources = resources.annotate(n_contests=SubqueryCount('contest'),
+                                   n_accounts=SubqueryCount('account'))
     resources = resources.annotate(priority=F('n_accounts') + F('n_contests'))
     resources = resources.order_by('-priority')
+    resources.timeout = 60 * 60
     return render(request, 'resources.html', {'resources': resources})
 
 
 def resource(request, host):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
-    has_statistics = Statistics.objects.filter(contest__resource=resource, contest_id=OuterRef('pk'))
-    contests = resource.contest_set.filter(invisible=False).annotate(has_statistics=Exists(has_statistics))
+    contests = resource.contest_set.filter(invisible=False).annotate(has_statistics=Exists('statistics'))
     context = {
         'resource': resource,
-        'accounts': resource.account_set.filter(coders__isnull=False).order_by('-modified'),
+        'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
         'contests': [
             ('running', contests.filter(start_time__lt=now, end_time__gt=now).order_by('start_time')),
             ('coming', contests.filter(start_time__gt=now).order_by('start_time')),

@@ -1,36 +1,88 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block title %}Resources{% endblock %}
 
 {% block content %}
 <style>
-    .resource {
-        margin-top: 5px;
-    }
+  .resources table td,
+  .resources table th {
+    text-align: center;
+    vertical-align: middle !important;
+  }
+
+  .resources table tr *:first-child {
+    text-align: right;
+  }
+
+  .resources table td {
+    white-space: nowrap;
+  }
+  .resources.panel {
+    padding: 0px;
+  }
 </style>
-<div id="resources">
-    {% for resource in resources %}
-    <div class="resource">
-        <a href="{% url 'clist:resource' resource.host %}"><i class="fas fa-external-link-alt"></i></a>
-        <a class="host lead" href="http://{{ resource.host }}">{{ resource.host }}</a>
-        {% if resource.uid %}
+
+<div class="container">
+  <div class="resources panel panel-default table-responsive col-md-12 col-lg-8 col-lg-offset-2">
+    <table class="table table-condensed table-float-head table-striped">
+      <tr>
+        <th>Resource</th>
+        <th>Url</th>
+        <th>Google<br/>calendar</th>
+        <th>Auto<br/>update</th>
+        <th>Update<br/>statistics</th>
+        <th>Contests<br/>number</th>
+        <th>Accounts<br/>number</th>
+      </tr>
+      {% for resource in resources %}
+      <tr>
+        <td>
+          <a class="host lead" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
+        </td>
+        <td>
+          <a href="{{ resource.href }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+        </td>
+        <td>
+          {% if resource.uid %}
             <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
-                <i class="far fa-calendar-alt"></i> Google calendar
+              <i class="far fa-calendar-alt"></i>
             </a>
-        {% endif %}
+          {% else %}
+            <i class="fas fa-times"></i>
+          {% endif %}
+        </td>
 
-        <span class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
-            updating {% if resource.enable %}auto{% else %}manually{% endif %}
-        </span>
+        <td>
+          <span class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
+            {% if resource.enable %}
+              <i class="fas fa-check"></i>
+            {% else %}
+              <i class="fas fa-times"></i>
+            {% endif %}
+          </span>
+        </td>
 
-        {% if resource.module %}
-        <span class="badge progress-bar-warning">
-            parse statistic
-        </span>
-        {% endif %}
-        <span class="badge progress-bar-info">{{ resource.n_contests }} contest(s)</span>
-        <span class="badge">{{ resource.n_accounts }} accounts(s)</span>
-    </div>
-    {% endfor %}
+        <td>
+          <span class="badge progress-bar-{% if resource.module %}success{% else %}danger{% endif %}">
+            {% if resource.module %}
+              <i class="fas fa-check"></i>
+            {% else %}
+              <i class="fas fa-times"></i>
+            {% endif %}
+          </span>
+        </td>
+
+        <td>
+          <span class="badge progress-bar-info">{{ resource.n_contests|intcomma }}</span>
+        </td>
+
+        <td>
+          <span class="badge progress-bar-info">{{ resource.n_accounts|intcomma }}</span>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
 </div>
 {% endblock %}
