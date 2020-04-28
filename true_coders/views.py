@@ -2,7 +2,7 @@ import collections
 import re
 import json
 import logging
-
+import html
 
 import pytz
 from django.conf import settings as django_settings
@@ -22,23 +22,37 @@ from el_pagination.decorators import page_template
 from clist.models import Resource, Contest
 from clist.templatetags.extras import get_timezones, format_time, slug as slugify
 from clist.views import get_timezone, main
-from ranking.models import Rating
+from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
-from ranking.models import Statistics, Module, Account
+from ranking.models import Rating, Statistics, Module, Account
 from true_coders.models import Filter, Party, Coder, Organization
-from events.models import Team, TeamStatus
 from utils.regex import verify_regex, get_iregex_filter
 
 
 logger = logging.getLogger(__name__)
 
 
-@page_template('profile_contests_paging.html')
-def profile(request, username, template='profile.html', extra_context=None):
-    coder = get_object_or_404(Coder, user__username=username)
-    statistics = Statistics.objects \
-        .filter(account__coders=coder) \
+def get_profile_context(request, statistics):
+    history_resources = statistics \
+        .filter(contest__resource__has_rating_history=True) \
+        .filter(contest__stage__isnull=True) \
+        .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
+        .filter(new_rating__isnull=False) \
+        .annotate(host=F('contest__resource__host')) \
+        .values('host') \
+        .annotate(num_contests=Count('contest')) \
+        .order_by('-num_contests')
+
+    stats = statistics \
+        .select_related('contest') \
+        .filter(addition__medal__isnull=False) \
+        .order_by('-contest__end_time')
+    medals = {}
+    for stat in stats:
+        medals.setdefault(stat.contest.resource_id, []).append(stat)
+
+    statistics = statistics \
         .select_related('contest', 'contest__resource', 'account') \
         .order_by('-contest__end_time')
 
@@ -63,16 +77,19 @@ def profile(request, username, template='profile.html', extra_context=None):
                 query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
                 statistics = statistics.filter(query)
 
-    history_resources = Statistics.objects \
-        .filter(account__coders=coder) \
-        .filter(contest__resource__has_rating_history=True) \
-        .filter(contest__stage__isnull=True) \
-        .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
-        .filter(new_rating__isnull=False) \
-        .annotate(host=F('contest__resource__host')) \
-        .values('host') \
-        .annotate(num_contests=Count('contest')) \
-        .order_by('-num_contests')
+    context = {
+        'statistics': statistics,
+        'history_resources': history_resources,
+        'medals': medals,
+    }
+
+    return context
+
+
+@page_template('profile_contests_paging.html')
+def profile(request, username, template='profile.html', extra_context=None):
+    coder = get_object_or_404(Coder, user__username=username)
+    statistics = Statistics.objects.filter(account__coders=coder)
 
     resources = Resource.objects \
         .prefetch_related(Prefetch(
@@ -87,34 +104,46 @@ def profile(request, username, template='profile.html', extra_context=None):
         )) \
         .annotate(num_contests=Count(
             'contest',
-            filter=Q(contest__in=Statistics.objects.filter(account__coders=coder).values('contest'))
+            filter=Q(contest__in=statistics.values('contest'))
         )) \
         .filter(num_contests__gt=0).order_by('-num_contests')
 
-    stats = Statistics.objects \
-        .select_related('contest') \
-        .filter(account__coders=coder, addition__medal__isnull=False) \
-        .order_by('-contest__end_time')
-    medals = {}
-    for stat in stats:
-        medals.setdefault(stat.contest.resource_id, []).append(stat)
-
-    context = {
-        'coder': coder,
-        'resources': resources,
-        'statistics': statistics,
-        'history_resources': history_resources,
-        'medals': medals,
-    }
+    context = get_profile_context(request, statistics)
+    context['coder'] = coder
+    context['resources'] = resources
 
     if extra_context is not None:
         context.update(extra_context)
     return render(request, template, context)
 
 
-def ratings(request, username):
-    coder = get_object_or_404(Coder, user__username=username)
-    qs = Statistics.objects \
+@page_template('profile_contests_paging.html')
+def account(request, key, host, template='profile.html', extra_context=None):
+    key = html.unescape(key)
+    host = html.unescape(host)
+    accounts = Account.objects.select_related('resource').prefetch_related('coders')
+    account = get_object_or_404(accounts, key=key, resource__host=host)
+    statistics = Statistics.objects.filter(account=account)
+
+    context = get_profile_context(request, statistics)
+    context['account'] = account
+
+    if extra_context is not None:
+        context.update(extra_context)
+    return render(request, template, context)
+
+
+def ratings(request, username=None, key=None, host=None):
+    if username is not None:
+        coder = get_object_or_404(Coder, user__username=username)
+        statistics = Statistics.objects.filter(account__coders=coder)
+    else:
+        key = html.unescape(key)
+        host = html.unescape(host)
+        account = get_object_or_404(Account, key=key, resource__host=host)
+        statistics = Statistics.objects.filter(account=account)
+
+    qs = statistics \
         .annotate(date=F('contest__end_time')) \
         .annotate(name=F('contest__title')) \
         .annotate(host=F('contest__resource__host')) \
@@ -130,7 +159,6 @@ def ratings(request, username):
         .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField())) \
         .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0)) \
         .filter(new_rating__isnull=False) \
-        .filter(account__coders=coder) \
         .filter(contest__resource__has_rating_history=True) \
         .filter(contest__stage__isnull=True) \
         .order_by('date') \

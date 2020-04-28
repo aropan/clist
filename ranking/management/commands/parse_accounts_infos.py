@@ -67,6 +67,7 @@ class Command(BaseCommand):
                 else:
                     accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
+                self.stdout.write(f'accounts number on {resource.host}: {accounts.count()}')
                 accounts = list(accounts[:args.limit])
 
                 if not accounts:

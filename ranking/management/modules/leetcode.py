@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
 
 import tqdm
+from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 
@@ -103,6 +104,7 @@ class Statistic(BaseModule):
         def is_chine(account):
             return '-cn' in account.info.get('profile_url', {}).get('_data_region', '')
 
+        @RateLimiter(max_calls=1, period=2)
         def fetch_profle_page(account):
             if is_chine(account):
                 ret = {}
@@ -132,7 +134,7 @@ class Statistic(BaseModule):
                         raise e
             return account, page
 
-        with PoolExecutor(max_workers=8) as executor:
+        with PoolExecutor(max_workers=2) as executor:
             for account, page in executor.map(fetch_profle_page, accounts):
                 if pbar:
                     pbar.update()
@@ -147,6 +149,11 @@ class Statistic(BaseModule):
                 if is_chine(account):
                     contests = [c['titleSlug'] for c in page['contests']['allContests']]
                     info = page['profile']['userProfilePublicProfile']
+                    if info is None:
+                        print()
+                        print()
+                        print(account.key)
+                        pprint(page)
                     info.update(info.pop('profile', {}) or {})
                     info.update(info.pop('ranking', {}) or {})
                     ratings = info.pop('ratingProgress', []) or []
@@ -195,11 +202,12 @@ class Statistic(BaseModule):
                             last_rating = int_rating
                         prev_rating = rating
 
-                yield {
+                ret = {
                     'info': info,
                     'contest_addition_update': contest_addition_update,
                     'contest_addition_update_by': contest_addition_update_by,
                 }
+                yield ret
 
 
 if __name__ == "__main__":
