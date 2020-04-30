@@ -276,7 +276,7 @@ class Statistic(BaseModule):
 
                         code = row.get('code')
                         if code:
-                            if re.search(r'\bdivision\s+[AB12]', row['name'], re.I) and re.search('[AB]$', code):
+                            if re.search(r'\bdiv(ision)?[-_\s]+[AB12]', row['name'], re.I) and re.search('[AB]$', code):
                                 code = code[:-1]
 
                             update = contest_addition_update.setdefault(code, OrderedDict())

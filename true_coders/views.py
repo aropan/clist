@@ -149,6 +149,7 @@ def ratings(request, username=None, key=None, host=None):
         .annotate(host=F('contest__resource__host')) \
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
         .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
+        .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField())) \
         .annotate(score=F('solving')) \
         .annotate(addition_solved=KeyTextTransform('solved', 'addition')) \
         .annotate(solved=Cast(KeyTextTransform('solving', 'addition_solved'), IntegerField())) \
@@ -169,6 +170,7 @@ def ratings(request, username=None, key=None, host=None):
             'date',
             'new_rating',
             'old_rating',
+            'rating_change',
             'place',
             'score',
             'ratings',
@@ -208,6 +210,9 @@ def ratings(request, username=None, key=None, host=None):
             }
         r['slug'] = slugify(r['name'])
         resource.setdefault('data', [])
+        if r['rating_change'] is not None and r['old_rating'] is None:
+            r['old_rating'] = r['new_rating'] - r['rating_change']
+
         if resource['data'] and r['old_rating']:
             last = resource['data'][-1]
             if last['new_rating'] != r['old_rating']:
