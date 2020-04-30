@@ -67,14 +67,14 @@ class Command(BaseCommand):
                 else:
                     accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
-                self.stdout.write(f'accounts number on {resource.host}: {accounts.count()}')
+                total = accounts.count()
                 accounts = list(accounts[:args.limit])
 
                 if not accounts:
                     continue
 
                 try:
-                    with tqdm(total=len(accounts), desc=f'getting {resource.host}') as pbar:
+                    with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                         infos = plugin.Statistic.get_users_infos(
                             users=[a.key for a in accounts],
                             resource=resource,
