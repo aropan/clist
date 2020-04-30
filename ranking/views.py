@@ -1,7 +1,6 @@
 import re
 import copy
 from collections import OrderedDict
-from itertools import accumulate
 
 from django.conf import settings
 from django.db import models, connection
@@ -158,7 +157,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     fields_to_select = {}
     for f in contest_fields:
         f = f.strip('_')
-        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages']:
+        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class']:
             fields_to_select[f] = request.GET.getlist(f)
 
     with_detail = request.GET.get('detail') in ['true', 'on']
@@ -178,6 +177,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 k not in fields
                 and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
                               'division']
+                and not (k == 'medal' and '_medal_title_field' in contest_fields)
                 and 'country' not in k
                 and not k.startswith('_')
             ):
@@ -226,12 +226,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     elif 'n_highlight' in options:
         for idx, s in enumerate(statistics[:options['n_highlight']], 1):
             participants_info[s.id] = {'n': idx}
-
-    medals = options.get('medals')
-    if medals:
-        names = [m['name'] for m in medals]
-        counts = [m['count'] for m in medals]
-        medals = list(zip(names, accumulate(counts)))
 
     mod_penalty = {}
     first = statistics.first()
@@ -322,24 +316,27 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             for lang in values:
                 filt |= Q(**{f'addition___languages__contains': [lang]})
         else:
+            query_field = f'addition__{field}'
+            statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})
             for q in values:
                 if q == 'None':
-                    filt |= Q(**{f'addition__{field}__isnull': True})
+                    filt |= Q(**{f'{query_field}__isnull': True})
                 else:
-                    filt |= Q(**{f'addition__{field}': q})
+                    filt |= Q(**{f'{query_field}_str': q})
         statistics = statistics.filter(filt)
 
     # groupby
     if groupby == 'country' or groupby in fields_to_select:
         fields = OrderedDict()
-        fields['groupby'] = groupby
-        fields['n_accounts'] = 'num'
-        fields['avg_score'] = 'avg'
+        fields['groupby'] = groupby.title()
+        fields['n_accounts'] = 'Num'
+        fields['avg_score'] = 'Avg'
+        medals = {m['name']: m for m in options.get('medals', [])}
         if 'medal' in contest_fields:
             for medal in settings.ORDERED_MEDALS_:
-                fields[f'n_{medal}'] = medal[0]
+                fields[f'n_{medal}'] = medals.get(medal, {}).get('value', medal[0])
         if 'advanced' in contest_fields:
-            fields['n_advanced'] = 'adv'
+            fields['n_advanced'] = 'Adv'
 
         orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
 
@@ -376,7 +373,12 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             statistics = statistics.annotate(groupby=F(field))
         else:
             field = f'addition__{groupby}'
-            statistics = statistics.annotate(groupby=Cast(JSONF(field), models.TextField()))
+            types = contest.info.get('fields_types', {}).get(groupby, [])
+            if len(types) == 1 and types[0] == 'int':
+                field_type = models.IntegerField()
+            else:
+                field_type = models.TextField()
+            statistics = statistics.annotate(groupby=Cast(JSONF(field), field_type))
 
         statistics = statistics.order_by('groupby')
         statistics = statistics.values('groupby')
@@ -418,11 +420,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         labels_groupby = {
             'n_accounts': 'Number of participants',
             'avg_score': 'Average score',
-            'n_gold': 'Number of gold',
-            'n_silver': 'Number of silver',
-            'n_bronze': 'Number of bronze',
             'n_advanced': 'Number of advanced',
         }
+        for medal in settings.ORDERED_MEDALS_:
+            labels_groupby[f'n_{medal}'] = 'Number of ' + medals.get(medal, {}).get('value', medal)
     else:
         groupby = None
         labels_groupby = None
@@ -431,7 +432,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'data_1st_u': data_1st_u,
         'participants_info': participants_info,
         'standings_options': options,
-        'medals': medals,
         'mod_penalty': mod_penalty,
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
         'contest': contest,

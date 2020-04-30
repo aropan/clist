@@ -7,6 +7,7 @@
 <tr>
   <td>{{ forloop.counter0|add:pages.current_start_index }}</td>
   {% for field, header in fields.items %}
+    {% with header=header|lower %}
     {% with value=statistic|get_item:field %}
       {% if header == 'country' %}
         <td>
@@ -33,17 +34,14 @@
         </td>
       {% else %}
         <td>
-          {% with values=value|aslist %}
-            {% for val in values %}
-              {% if header in fields_to_select %}
-                <a class="field-to-select" href="{% url_transform request header val groupby='' %}">{{ val|default:"Undefined" }}</a>
-              {% else %}
-                {{ val }}
-              {% endif %}
-            {% endfor %}
-          {% endwith %}
+          {% if header in fields_to_select %}
+            <a class="field-to-select" href="{% url_transform request header value groupby='' %}">{{ value|default:"Undefined" }}</a>
+          {% else %}
+            {{ value }}
+          {% endif %}
         </td>
       {% endif %}
+    {% endwith %}
     {% endwith %}
   {% endfor  %}
 </tr>

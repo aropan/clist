@@ -11,7 +11,7 @@
             <span
               {% if key in labels_groupby %}title="{{ labels_groupby|get_item:key }}" data-placement="bottom" data-toggle="tooltip"{% endif %}
             >
-              {{ field|title }}
+              {{ field }}
             </span>
             <a
               {% if rev_key in orderby  %}
@@ -48,7 +48,7 @@
 </div>
 <div class="col-lg-5">
   {% for field, header in fields.items %}
-  {% if header != groupby %}
+  {% if field != "groupby" %}
 
   {% with limited_statistics=statistics|limit:pie_limit_rows_groupby %}
   <div>
@@ -86,9 +86,7 @@
                     "Undefined",
                   {% endif %}
                 {% else %}
-                  {% with values=value|aslist %}
-                    "{% for v in values %}{% if forloop.counter0 %} {% endif %}{{ v|default:'Undefined' }}{% endfor %}",
-                  {% endwith %}
+                  "{{ value|escapejs|default:'Undefined' }}",
                 {% endif %}
                 {% endwith %}
               {% endfor %}

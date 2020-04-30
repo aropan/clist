@@ -177,6 +177,7 @@ class Command(BaseCommand):
                     result = standings.get('result', {})
                     if not no_update_results and result:
                         fields_set = set()
+                        fields_types = {}
                         fields = list()
                         calculate_time = False
                         d_problems = {}
@@ -285,8 +286,21 @@ class Command(BaseCommand):
                                     for medal in medals:
                                         if place <= medal['count']:
                                             r[k] = medal['name']
+                                            if 'field' in medal:
+                                                r[medal['field']] = medal['value']
+                                                r[f'_{k}_title_field'] = medal['field']
                                             break
                                         place -= medal['count']
+                                medal_fields = [m['field'] for m in medals if 'field' in m] or [k]
+                                for f in medal_fields:
+                                    if f not in fields_set:
+                                        fields_set.add(f)
+                                        fields.append(f)
+
+                            additions = contest.info.get('additions', {})
+                            if additions:
+                                for field in [member, r.get('name')]:
+                                    r.update(OrderedDict(additions.get(field, [])))
 
                             defaults = {
                                 'place': r.pop('place', None),
@@ -307,6 +321,7 @@ class Command(BaseCommand):
                                 if (k in Resource.RATING_FIELDS or k == 'rating_change') and v is None:
                                     continue
 
+                                fields_types.setdefault(k, set()).add(type(v).__name__)
                                 addition[k] = v
 
                                 if (
@@ -396,6 +411,7 @@ class Command(BaseCommand):
 
                             if fields_set and not isinstance(addition, OrderedDict):
                                 fields.sort()
+                            fields_types = {k: list(v) for k, v in fields_types.items()}
 
                             if statistics_ids:
                                 first = Statistics.objects.filter(pk__in=statistics_ids).first()
@@ -406,6 +422,7 @@ class Command(BaseCommand):
 
                             if self._canonize(fields) != self._canonize(contest.info.get('fields')):
                                 contest.info['fields'] = fields
+                            contest.info['fields_types'] = fields_types
 
                             if calculate_time and not contest.calculate_time:
                                 contest.calculate_time = True

@@ -3,13 +3,19 @@
 
 {% paginate per_page statistics using 'standings_paging' %}{% get_pages %}
 {% for statistic in statistics %}
+{% with addition=statistic.addition %}
 {% with coders=statistic.account.coders.all %}
 <tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
 {% endwith %}
-  {% with advance=statistic.addition|get_item:'_advance' %}
+  {% with advance=addition|get_item:'_advance' %}
   <td
-    {% if statistic.addition.medal %}
-      class="{{ statistic.addition.medal|lower }}-medal"
+    {% if addition.medal %}
+      class="{{ addition.medal|lower }}-medal"
+      {% with medal_title_field=addition|get_item:"_medal_title_field" %}
+      title="{% if medal_title_field %}{{ medal_title_field|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
+      {% endwith %}
+      data-toggle="tooltip"
+      data-placement="top"
     {% elif advance %}
       class="advance{% if advance.class %} {{ advance.class }}{% endif %}"
       {% if advance %}
@@ -58,23 +64,23 @@
       {% endwith %}
     {% endif %}
 
-    {% with team_id=statistic.addition.team_id %}
-    {% if not team_id %}{% coder_color_circle contest.resource statistic.addition statistic.account.info %}{% endif %}
+    {% with team_id=addition.team_id %}
+    {% if not team_id %}{% coder_color_circle contest.resource addition statistic.account.info %}{% endif %}
 
-    <div class="handle-div{% if not team_id%} {% coder_color_class contest.resource statistic.addition statistic.account.info %}{% endif %}" style="display: inline-block">
+    <div class="handle-div{% if not team_id%} {% coder_color_class contest.resource addition statistic.account.info %}{% endif %}" style="display: inline-block">
       {% if statistic.account.url %}<a href="{{ statistic.account.url }}" class="coder">{% endif %}
 
-      {% if statistic.addition.name and statistic.account.key|has_season:statistic.addition.name or statistic.addition.team_id %}
-        <span>{{ statistic.addition.name }}</span>
-      {% elif statistic.addition.name and contest.resource.info.standings.name_instead_key %}
-        <span title="{{ statistic.account.key }}" data-placement="top" data-toggle="tooltip">{{ statistic.addition.name }}</span>
+      {% if addition.name and statistic.account.key|has_season:addition.name or addition.team_id %}
+        <span>{{ addition.name }}</span>
+      {% elif addition.name and contest.resource.info.standings.name_instead_key %}
+        <span title="{{ statistic.account.key }}" data-placement="top" data-toggle="tooltip">{{ addition.name }}</span>
       {% else %}
-        <span{% if statistic.addition.name %} title="{{ statistic.addition.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ statistic.account.key }}</span>
+        <span{% if addition.name %} title="{{ addition.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ statistic.account.key }}</span>
       {% endif %}
 
       {% if statistic.account.url %}</a>{% endif %}
 
-      {% for country_name in statistic.addition|get_item:"_countries" %}
+      {% for country_name in addition|get_item:"_countries" %}
         {% with country_code=country_name|get_country_code %}
           {% if country_code %}
             <div class="flag-width-fixed">
@@ -86,8 +92,8 @@
         {% endwith %}
       {% endfor %}
 
-      {% if statistic.addition.url %}
-        <a href="{{ statistic.addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+      {% if addition.url %}
+        <a href="{{ addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
       {% endif %}
 
       {% if perms.ranking.statistics_change %}
@@ -100,18 +106,18 @@
     <div>{{ statistic.solving|floatformat:'-2' }}</div>
   </td>
   {% if mod_penalty %}
-  <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=statistic.addition.penalty|default:0 %}</td>
+  <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty|default:0 %}</td>
   {% endif %}
 
   {% for field in fields.keys %}
-  {% with value=statistic.addition|get_item:field %}
+  {% with value=addition|get_item:field %}
   <td{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
-    {% if field in statistic.addition and not value.empty %}
+    {% if field in addition and not value.empty %}
       {% if field == 'hack' %}
         <small>
-        {% if statistic.addition.hack.successful %}<div class="inline acc">+{{ statistic.addition.hack.successful }}</div>{% endif %}
-        {% if statistic.addition.hack.unsuccessful %}<div class="inline rej">-{{ statistic.addition.hack.unsuccessful }}</div>{% endif %}
+        {% if addition.hack.successful %}<div class="inline acc">+{{ addition.hack.successful }}</div>{% endif %}
+        {% if addition.hack.unsuccessful %}<div class="inline rej">-{{ addition.hack.unsuccessful }}</div>{% endif %}
         </small>
       {% else %}
         {% if field in fields_to_select and value not in fields_to_select|get_item:field %}
@@ -145,7 +151,7 @@
   {% endfor %}
   {% for problem in problems %}
     {% with key=problem|get_problem_key  %}
-    {% with stat=statistic.addition.problems|get_item:key %}
+    {% with stat=addition.problems|get_item:key %}
     <td class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% endif %}{% if stat.first_ac %} first-ac{% endif %}{% endif %}">
       {% if not stat %}
         <div>&#183;</div>
@@ -216,6 +222,7 @@
     {% endwith %}
   {% endfor %}
 </tr>
+{% endwith %}
 {% endfor %}
 
 {% if colored_by_group_score %}
