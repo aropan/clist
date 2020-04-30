@@ -102,7 +102,7 @@ class ResourceAdmin(BaseModelAdmin):
     ]
     list_display = ['host', 'enable', '_has_rating', 'profile_url', 'timezone', '_num_contests']
     list_filter = ['has_rating_history', 'enable', 'timezone']
-    search_fields = ['host']
+    search_fields = ['host', 'url']
 
     def _num_contests(self, obj):
         return obj.contest_set.count()

@@ -2,6 +2,8 @@ import re
 
 from django.db import models
 from django.db.models import Q
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
 from datetime import timedelta
@@ -14,7 +16,7 @@ from clist.models import Contest
 
 class Coder(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    username = models.CharField(max_length=255, unique=True)
+    username = models.CharField(max_length=255, unique=True, blank=True)
     first_name_native = models.CharField(max_length=255, blank=True)
     last_name_native = models.CharField(max_length=255, blank=True)
     middle_name_native = models.CharField(max_length=255, blank=True)
@@ -28,10 +30,6 @@ class Coder(BaseModel):
 
     def __str__(self):
         return "%s" % (self.username)
-
-    def save(self, *args, **kwargs):
-        self.username = self.user.username
-        return super().save(*args, **kwargs)
 
     @property
     def chat(self):
@@ -103,6 +101,12 @@ class Coder(BaseModel):
 
     def get_account(self, host):
         return self.account_set.filter(resource__host=host).first()
+
+
+@receiver(pre_save, sender=Coder)
+def init_coder_username(instance, **kwargs):
+    if not instance.username:
+        instance.username = instance.user.username
 
 
 class PartyManager(BaseManager):

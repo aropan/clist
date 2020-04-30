@@ -165,8 +165,12 @@ class Statistic(BaseModule):
                         country = d.pop('country_code')
                         if country:
                             d['country'] = country
+
+                        rating = d.pop('rating', None)
                         row.update(d)
                         row.update(contest_info)
+                        if rating and rating != '0':
+                            row['rating'] = rating
                         if statistics and handle in statistics:
                             stat = statistics[handle]
                             for k in ('rating_change', 'new_rating'):

@@ -60,6 +60,7 @@ $(function() {
             var title =
                     event.title
                     + '<div>' + event.extendedProps.host + '</div>'
+                    + '<div>Duration: ' + event.extendedProps.hr_duration + '</div>'
                     + '<div>Start: ' + start.format('YYYY-MM-DD HH:mm') + '</div>'
                     + (event.end? '<div>End: ' + end.format('YYYY-MM-DD HH:mm') + '</div>' : '')
                     + (countdown?

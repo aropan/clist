@@ -125,9 +125,7 @@
                       "end":"{{ contest.end_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
                       "zone":"{{ timezone_hm }}"
                     }
-                  }'>
-                    <i class="far fa-calendar-alt"></i>
-                  </a>
+                  }'><i class="far fa-calendar-alt"></i></a>
                 {% endif %}
                 {% if contest.group_size %}
                     <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
@@ -136,7 +134,7 @@
                     {% if hide_contest %}
                     <i class="fa fa-eye invisible"></i>
                     {% endif %}
-                    <a href="http://{{ contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
+                    <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
                 </div>
             </div>
         </div>

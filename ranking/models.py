@@ -1,12 +1,15 @@
 import ast
 import collections
+from urllib.parse import quote_plus
 
 import tqdm
 from django.db import models, transaction
+from django.db.models.signals import pre_save, m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
 from django.contrib.postgres.fields import JSONField
 from django_countries.fields import CountryField
+
 
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Party
@@ -20,6 +23,7 @@ class Account(BaseModel):
     key = models.CharField(max_length=1024, null=False, blank=False)
     name = models.CharField(max_length=1024, null=True, blank=True)
     country = CountryField(null=True, blank=True)
+    url = models.CharField(max_length=4096, null=True, blank=True)
     info = JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
 
@@ -40,6 +44,31 @@ class Account(BaseModel):
 
     class Meta:
         unique_together = ('resource', 'key')
+
+
+@receiver(pre_save, sender=Account)
+@receiver(m2m_changed, sender=Account.coders.through)
+def update_account_url(signal, instance, **kwargs):
+
+    def default_url():
+        args = [quote_plus(instance.key), quote_plus(instance.resource.host)]
+        return reverse('coder:account', args=args)
+
+    if signal is pre_save:
+        if instance.url:
+            return
+        instance.url = default_url()
+    elif signal is m2m_changed:
+        if not kwargs.get('action').startswith('post_'):
+            return
+        url = None
+        for coder in instance.coders.iterator():
+            if url is not None:
+                url = None
+                break
+            url = reverse('coder:profile', args=[coder.username])
+        instance.url = url
+        instance.save()
 
 
 class Rating(BaseModel):
@@ -84,7 +113,7 @@ class Statistics(BaseModel):
         ]
 
 
-@receiver(models.signals.pre_save, sender=Statistics)
+@receiver(pre_save, sender=Statistics)
 def statistics_pre_save(sender, instance, *args, **kwargs):
     instance.place_as_int = get_number_from_str(instance.place)
 

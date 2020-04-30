@@ -332,9 +332,11 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
 </path>
 '''
         title = f'{value} ({percent * 100:.1f}%)'
+    if 'name' in rating:
+        title += f'<br/>{rating["name"]}'
 
     return mark_safe(f'''
-<div title="{title}" style="display: inline-block" data-toggle="tooltip">
+<div title="{title}" style="display: inline-block" data-toggle="tooltip" data-html="true">
     <svg class="coder-circle" viewBox="0 0 {size} {size}" width="{size}" height="{size}"">
         <circle
             style="stroke: {color}; fill: none; stroke-width: {size // 6}px;"
@@ -406,3 +408,8 @@ def get_number_from_str(val):
         return
     ret = yaml.safe_load(match.group(0))
     return ret
+
+
+@register.filter
+def resource_href(resource, host):
+    return resource.href(host)

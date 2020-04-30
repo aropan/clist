@@ -1,9 +1,8 @@
 from django.contrib import admin
-from django.db.models import OuterRef, Exists
+from sql_util.utils import Exists
 from django.utils.timezone import now
 
 from pyclist.admin import BaseModelAdmin, admin_register
-from true_coders.models import Coder
 from ranking.models import Account, Rating, AutoRating, Statistics, Module, Stage
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from clist.models import Contest
@@ -50,7 +49,7 @@ class HasInfo(admin.SimpleListFilter):
 @admin_register(Account)
 class AccountAdmin(BaseModelAdmin):
     list_display = ['resource', 'key', 'name', 'country', '_has_coder', 'updated']
-    search_fields = ['key__iregex', 'name__iregex']
+    search_fields = ['=key', '=name']
     list_filter = [HasCoders, HasInfo, 'resource__host']
 
     def _has_coder(self, obj):
@@ -61,8 +60,7 @@ class AccountAdmin(BaseModelAdmin):
         return ['updated', ] + super().get_readonly_fields(request, obj)
 
     def get_queryset(self, request):
-        coders = Coder.objects.filter(pk=OuterRef('coders'))
-        return super().get_queryset(request).annotate(has_coder=Exists(coders))
+        return super().get_queryset(request).annotate(has_coder=Exists('coders'))
 
 
 @admin_register(Rating)

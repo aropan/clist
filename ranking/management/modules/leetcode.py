@@ -150,10 +150,8 @@ class Statistic(BaseModule):
                     contests = [c['titleSlug'] for c in page['contests']['allContests']]
                     info = page['profile']['userProfilePublicProfile']
                     if info is None:
-                        print()
-                        print()
-                        print(account.key)
-                        pprint(page)
+                        yield {'info': None}
+                        continue
                     info.update(info.pop('profile', {}) or {})
                     info.update(info.pop('ranking', {}) or {})
                     ratings = info.pop('ratingProgress', []) or []

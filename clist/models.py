@@ -33,8 +33,8 @@ class Resource(CachingMixin, BaseModel):
     def __str__(self):
         return "%s" % (self.host)
 
-    def href(self):
-        return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=self.host)
+    def href(self, host=None):
+        return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=host or self.host)
 
     def get_rating_color(self, value):
         if self.ratings and value is not None:

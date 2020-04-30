@@ -2,7 +2,7 @@ import collections
 import re
 import json
 import logging
-import html
+from urllib.parse import unquote_plus
 
 import pytz
 from django.conf import settings as django_settings
@@ -119,8 +119,8 @@ def profile(request, username, template='profile.html', extra_context=None):
 
 @page_template('profile_contests_paging.html')
 def account(request, key, host, template='profile.html', extra_context=None):
-    key = html.unescape(key)
-    host = html.unescape(host)
+    key = unquote_plus(key)
+    host = unquote_plus(host)
     accounts = Account.objects.select_related('resource').prefetch_related('coders')
     account = get_object_or_404(accounts, key=key, resource__host=host)
     statistics = Statistics.objects.filter(account=account)
@@ -138,8 +138,8 @@ def ratings(request, username=None, key=None, host=None):
         coder = get_object_or_404(Coder, user__username=username)
         statistics = Statistics.objects.filter(account__coders=coder)
     else:
-        key = html.unescape(key)
-        host = html.unescape(host)
+        key = unquote_plus(key)
+        host = unquote_plus(host)
         account = get_object_or_404(Account, key=key, resource__host=host)
         statistics = Statistics.objects.filter(account=account)
 

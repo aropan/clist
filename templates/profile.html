@@ -77,8 +77,6 @@
         <a class="btn btn-default" href="?search=resource:{{ resource.host|urlencode }}">{{ resource.host }}</a>
       </span>
     </span>
-  {% for account in resource.coder_accounts %}
-  {% endfor %}
   {% endwith %}
 {% endfor %}
 </div>
