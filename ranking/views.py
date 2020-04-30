@@ -99,6 +99,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     if slug(contest.title) != title_slug:
         return HttpResponseNotFound()
 
+    with_row_num = False
+
     contest_fields = contest.info.get('fields', [])
 
     statistics = Statistics.objects.filter(contest=contest)
@@ -281,6 +283,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     # filter by search
     search = request.GET.get('search')
     if search:
+        with_row_num = True
         if search.startswith('party:'):
             _, party_slug = search.split(':')
             party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
@@ -295,6 +298,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     countries = request.GET.getlist('country')
     countries = set([c for c in countries if c])
     if countries:
+        with_row_num = True
         cond = Q(account__country__in=countries)
         if 'None' in countries:
             cond |= Q(account__country__isnull=True)
@@ -311,6 +315,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     for field, values in fields_to_select.items():
         if not values:
             continue
+        with_row_num = True
         filt = Q()
         if field == 'languages':
             for lang in values:
@@ -442,7 +447,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'divisions_order': divisions_order,
         'has_country': has_country,
         'per_page': per_page,
-        'with_row_num': bool(search or countries),
+        'with_row_num': with_row_num,
         'merge_problems': merge_problems,
         'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
