@@ -42,7 +42,11 @@ table.standings th {
 }
 
 .standings .odd {
-  background: #f5f5f5;
+  background: #f9f9f9;
+}
+
+.standings tr.parity-border td {
+  border-top: 1px solid #999;
 }
 
 .standings .first-ac {

@@ -5,7 +5,7 @@
 {% for statistic in statistics %}
 {% with addition=statistic.addition %}
 {% with coders=statistic.account.coders.all %}
-<tr{% for c in coders %}{% if c == request.user.coder %} style="background-color: #def !important;"{% endif %}{% endfor %}{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
+<tr{% for c in coders %}{% if c == request.user.coder %} class="info"{% endif %}{% endfor %}{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
 {% endwith %}
   {% with advance=addition|get_item:'_advance' %}
   <td
@@ -231,12 +231,16 @@
     var idx = 0
     $('.standings tr[data-result]').each(function(e) {
       var node = $(this)
+      node.removeClass('odd')
+      node.removeClass('event')
+      node.removeClass('parity-border')
       var result = node.attr('data-result')
       if (result != prev) {
         idx = 1 - idx
+        if (prev != null) {
+          node.addClass('parity-border')
+        }
       }
-      node.removeClass('odd')
-      node.removeClass('event')
       node.addClass(idx? 'odd' : 'even')
       prev = result
     })
