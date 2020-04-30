@@ -160,7 +160,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class']:
             fields_to_select[f] = request.GET.getlist(f)
 
-    with_detail = request.GET.get('detail') in ['true', 'on']
+    with_detail = request.GET.get('detail', 'true') in ['true', 'on']
     if request.user.is_authenticated:
         coder = request.user.coder
         if 'detail' in request.GET:
