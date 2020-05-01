@@ -50,11 +50,11 @@ table.standings th {
 }
 
 .standings .first-ac {
-  background: #dff0d8;
+  background: #dff0d8 !important;
 }
 
 .standings .first-ac-of-all {
-  background: #ffe866;
+  background: #ffe866 !important;
 }
 
 .standings .gold-medal {
@@ -102,13 +102,12 @@ table.standings .handle-cell .handle-div {
   display: inline;
 }
 
-.standings a.coder:hover span, a.solution {
+.standings a.coder:hover span,
+a.solution {
   text-decoration: underline;
 }
 
-.standings .handle-cell:hover .external-link,
-:hover > a.external-database-link
-{
+.standings .handle-cell:hover .external-link {
   color: #337ab7;
   visibility: visible;
 }

@@ -193,8 +193,7 @@ class Statistic(BaseModule):
                         if prev_rating != rating and (prev_rating is not None or rating != 1500):
                             int_rating = int(rating)
                             update = contest_addition_update.setdefault(title, OrderedDict())
-                            if last_rating is not None:
-                                update['rating_change'] = int_rating - last_rating
+                            update['rating_change'] = int_rating - last_rating if last_rating is not None else None
                             update['new_rating'] = int_rating
                             info['rating'] = int_rating
                             last_rating = int_rating

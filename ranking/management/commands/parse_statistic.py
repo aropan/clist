@@ -153,11 +153,12 @@ class Command(BaseCommand):
                 with REQ:
                     statistics_by_key = {}
                     statistics_ids = set()
-                    statistics = Statistics.objects.filter(contest=contest).select_related('account')
-                    for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
-                        if with_stats:
-                            statistics_by_key[s.account.key] = s.addition
-                        statistics_ids.add(s.pk)
+                    if not no_update_results:
+                        statistics = Statistics.objects.filter(contest=contest).select_related('account')
+                        for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
+                            if with_stats:
+                                statistics_by_key[s.account.key] = s.addition
+                            statistics_ids.add(s.pk)
                     standings = plugin.get_standings(users=users, statistics=statistics_by_key)
 
                 with transaction.atomic():

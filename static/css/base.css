@@ -132,11 +132,11 @@ html {
 }
 
 .coder-color {
-  font-weight: bold;
+  font-weight: bold !important;
 }
 
 .rating-change {
-  font-weight: bold;
+  font-weight: bold !important;
 }
 
 .rating-change-up {
@@ -145,6 +145,11 @@ html {
 
 .rating-change-down {
   color: #f00;
+}
+
+:hover > a.external-database-link {
+  color: #337ab7;
+  visibility: visible;
 }
 
 /*

@@ -350,19 +350,20 @@ class Statistic(BaseModule):
         if standings_url:
             standings['url'] = standings_url
 
-        if is_final_round:
-            standings['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
-
         return standings
 
     def get_standings(self, users=None, statistics=None):
         if 'hashcode_scoreboard' in self.info or re.search(r'\bhash.*code\b.*round$', self.name, re.I):
-            return self._hashcode(users, statistics)
-        if '/codingcompetitions.withgoogle.com/' in self.url:
-            return self._api_get_standings(users, statistics)
-        if '/code.google.com/' in self.url or '/codejam.withgoogle.com/' in self.url:
-            return self._old_get_standings(users)
-        raise InitModuleException(f'url = {self.url}')
+            ret = self._hashcode(users, statistics)
+        elif '/codingcompetitions.withgoogle.com/' in self.url:
+            ret = self._api_get_standings(users, statistics)
+        elif '/code.google.com/' in self.url or '/codejam.withgoogle.com/' in self.url:
+            ret = self._old_get_standings(users)
+        else:
+            raise InitModuleException(f'url = {self.url}')
+        if re.search(r'\bfinal\S*(?:\s+round)?$', self.name, re.I):
+            ret['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
+        return ret
 
 
 if __name__ == "__main__":

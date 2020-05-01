@@ -29,6 +29,9 @@
       {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
     {% endif %}
     {{ coder.user.username }}
+    {% if perms.true_coders.change_coder %}
+      <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    {% endif %}
   </h2>
 {% else %}
   <div>
@@ -37,6 +40,9 @@
       <span class="{% coder_color_class account.resource account.info %}">{{ account.key }}</span>
       {% if account.resource.profile_url %}
       <small><a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></small>
+      {% endif %}
+      {% if perms.ranking.change_account %}
+        <a href="{% url 'admin:ranking_account_change' account.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
       {% endif %}
     </h2>
     {% for coder in account.coders.all %}
@@ -50,9 +56,11 @@
   </div>
 {% endif %}
 
-{% if not request.GET.search and resources %}
+{% if resources %}
 <h3>Accounts</h3>
 <div id="list-accounts">
+{% if not search_resource %}
+
 {% for resource in resources %}
   {% with account=resource.coder_accounts.0 %}
     <span class="input-group input-group-sm account">
@@ -64,7 +72,7 @@
           +{{ resource.coder_accounts|length|add:-1 }}
         </span>
         {% endif %}
-        {% for s in medals|get_item:resource.pk %}
+        {% for s in resource_medals|get_item:resource.pk %}
           <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
             &#9899;
           </span>
@@ -79,10 +87,35 @@
     </span>
   {% endwith %}
 {% endfor %}
+
+{% else %}
+
+{% for resource in resources %}
+  {% for account in resource.coder_accounts %}
+    <span class="account btn-group btn-group-sm">
+    <a class="btn btn-default {% coder_color_class resource account.info %}" href="{% url 'coder:account' account.key|url_quote resource.host|url_quote %}">
+      {% coder_color_circle resource account.info %} {{ account.key }}
+
+      {% for s in account_medals|get_item:account.pk %}
+        <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
+          &#9899;
+        </span>
+      {% endfor %}
+    </a>
+    {% if resource.profile_url %}
+    <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+    {% endif %}
+    </span>
+  {% endfor %}
+{% endfor %}
+
+{% endif %}
 </div>
+
+
 {% endif %}
 
-{% if not request.GET.search %}
+{% if show_history_ratings and history_resources %}
 <h3>Ratings</h3>
 
 <style>
@@ -377,7 +410,6 @@ $(function(){
             ctx.strokeStyle = 'black'
             ctx.strokeRect(rx, ry, width, height)
 
-
             ctx.font = '12px Comic Sans MS';
             ctx.textAlign = 'center'
             ctx.fillStyle = 'black'
@@ -389,7 +421,7 @@ $(function(){
   }
 
   $.ajax({
-    url: '{{ request.path }}ratings/',
+    url: '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource }}{% endif %}',
     method: 'GET',
     dataType: 'json',
     success: function (response) {

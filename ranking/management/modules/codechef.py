@@ -280,8 +280,7 @@ class Statistic(BaseModule):
                                 code = code[:-1]
 
                             update = contest_addition_update.setdefault(code, OrderedDict())
-                            if prev_rating is not None:
-                                update['rating_change'] = rating - prev_rating
+                            update['rating_change'] = rating - prev_rating if prev_rating is not None else None
                             update['new_rating'] = rating
 
                         prev_rating = rating

@@ -25,6 +25,9 @@ def account_update_contest_additions(account, contest_addition_update, timedelta
         addition = dict(stat.addition)
         ordered_dict = contest_addition_update[getattr(stat.contest, field)]
         addition.update(dict(ordered_dict))
+        for k, v in ordered_dict.items():
+            if v is None:
+                addition.pop(k)
         if to_canonize_str(stat.addition) == to_canonize_str(addition):
             continue
         stat.addition = addition

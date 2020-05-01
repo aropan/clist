@@ -44,7 +44,8 @@
   width: 0px;
 }
 
-#list-accounts .input-group {
+#list-accounts .input-group,
+#list-accounts .btn-group {
   display: inline-block;
   margin: 2px;
 }

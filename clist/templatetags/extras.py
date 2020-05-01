@@ -5,6 +5,7 @@ from os import path
 from collections import OrderedDict
 from collections.abc import Iterable
 from unidecode import unidecode
+from urllib.parse import quote_plus
 
 import pytz
 import yaml
@@ -413,3 +414,8 @@ def get_number_from_str(val):
 @register.filter
 def resource_href(resource, host):
     return resource.href(host)
+
+
+@register.filter
+def url_quote(value):
+    return quote_plus(value)

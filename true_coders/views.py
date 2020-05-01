@@ -48,39 +48,50 @@ def get_profile_context(request, statistics):
         .select_related('contest') \
         .filter(addition__medal__isnull=False) \
         .order_by('-contest__end_time')
-    medals = {}
+    resource_medals = {}
+    account_medals = {}
     for stat in stats:
-        medals.setdefault(stat.contest.resource_id, []).append(stat)
+        resource_medals.setdefault(stat.contest.resource_id, []).append(stat)
+        account_medals.setdefault(stat.account.id, []).append(stat)
 
     statistics = statistics \
         .select_related('contest', 'contest__resource', 'account') \
         .order_by('-contest__end_time')
 
     search = request.GET.get('search')
+    filters = {}
     if search:
         for search in search.split(' && '):
             if search.startswith('problem:'):
-                _, search = search.split(':', 1)
+                field, search = search.split(':', 1)
                 search_re = verify_regex(search)
                 statistics = statistics.filter(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
             elif search.startswith('contest:'):
-                _, search = search.split(':', 1)
+                field, search = search.split(':', 1)
                 statistics = statistics.filter(contest__id=search)
             elif search.startswith('account:'):
-                _, search = search.split(':', 1)
+                field, search = search.split(':', 1)
                 statistics = statistics.filter(account__key=search)
             elif search.startswith('resource:'):
-                _, search = search.split(':', 1)
+                field, search = search.split(':', 1)
                 statistics = statistics.filter(contest__resource__host=search)
+                history_resources = history_resources.filter(contest__resource__host=search)
             else:
+                field = 'regex'
                 search_re = verify_regex(search)
                 query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
                 statistics = statistics.filter(query)
+            filters.setdefault(field, []).append(search)
+    search_resource = filters.pop('resource', [])
+    search_resource = search_resource[0] if len(search_resource) == 1 else None
 
     context = {
         'statistics': statistics,
         'history_resources': history_resources,
-        'medals': medals,
+        'show_history_ratings': not filters,
+        'resource_medals': resource_medals,
+        'account_medals': account_medals,
+        'search_resource': search_resource,
     }
 
     return context
@@ -109,6 +120,10 @@ def profile(request, username, template='profile.html', extra_context=None):
         .filter(num_contests__gt=0).order_by('-num_contests')
 
     context = get_profile_context(request, statistics)
+
+    if context['search_resource']:
+        resources = resources.filter(host=context['search_resource'])
+
     context['coder'] = coder
     context['resources'] = resources
 
@@ -142,6 +157,10 @@ def ratings(request, username=None, key=None, host=None):
         host = unquote_plus(host)
         account = get_object_or_404(Account, key=key, resource__host=host)
         statistics = Statistics.objects.filter(account=account)
+
+    resource_host = request.GET.get('resource')
+    if resource_host:
+        statistics = statistics.filter(contest__resource__host=resource_host)
 
     qs = statistics \
         .annotate(date=F('contest__end_time')) \
@@ -216,7 +235,7 @@ def ratings(request, username=None, key=None, host=None):
         if resource['data'] and r['old_rating']:
             last = resource['data'][-1]
             if last['new_rating'] != r['old_rating']:
-                logger.warning(f"coder = {coder}: prev = {last}, curr = {r}")
+                logger.warning(f"prev = {last}, curr = {r}")
         resource['data'].append(r)
 
     return JsonResponse(ratings)
