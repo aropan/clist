@@ -9,7 +9,6 @@
     if (!isset($contests)) $contests = array();
 
     $page = curlexec($URL);
-    //$page = file_get_contents(dirname(__FILE__) . '/page.html');
 
     preg_match_all('
 #

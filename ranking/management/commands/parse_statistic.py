@@ -43,6 +43,7 @@ class Command(BaseCommand):
         parser.add_argument('-f', '--freshness_days', type=float, help='how previous days skip by modified date')
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-e', '--event', help='regex event name')
+        parser.add_argument('-y', '--year', type=int, help='event year')
         parser.add_argument('-l', '--limit', type=int, help='limit count parse contest by resource', default=None)
         parser.add_argument('-c', '--no-check-timing', action='store_true', help='no check timing statistic')
         parser.add_argument('-o', '--only-new', action='store_true', default=False, help='parse without statistics')
@@ -164,6 +165,7 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     if 'url' in standings and standings['url'] != contest.standings_url:
                         contest.standings_url = standings['url']
+                        contest.save()
 
                     if 'options' in standings:
                         contest_options = contest.info.get('standings', {})
@@ -172,6 +174,7 @@ class Command(BaseCommand):
 
                         if self._canonize(standings_options) != self._canonize(contest_options):
                             contest.info['standings'] = standings_options
+                            contest.save()
 
                     problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
 
@@ -519,6 +522,10 @@ class Command(BaseCommand):
         if args.only_new:
             has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
             contests = contests.annotate(has_statistics=Exists(has_statistics)).filter(has_statistics=False)
+
+        if args.year:
+            contests = contests.filter(start_time__year=args.year)
+
         self.parse_statistic(
             contests=contests,
             previous_days=args.days,
