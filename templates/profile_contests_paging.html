@@ -10,7 +10,7 @@
         <div data-toggle="tooltip" data-placement="top" data-html="true" title="
             handle: {{ s.account.key }}<br/>
             {% for k, v in s.addition.items|sort %}
-                {% if k not in "problems,hack,solved,challenges,url" %}
+                {% if k.0 != "_" and k not in "problems,hack,solved,challenges,url" %}
                     {{ k|lower }}: {{ v }}<br/>
                 {% endif %}
             {% endfor %}

@@ -13,11 +13,21 @@
     $http_header = array('http_header' => array('content-type: application/json'), 'json_output' => true);
 
     $datas = array();
+
     $url = 'https://www.codingame.com/services/Challenge/findXNextVisibleChallenges';
     $data = curlexec($url, '[2]', $http_header);
+    if (!is_array($data)) {
+        trigger_error("data = $data from $url", E_USER_WARNING);
+        return;
+    }
     $datas = array_merge($datas, $data);
+
     $url = 'https://www.codingame.com/services/Challenge/findPastChallenges';
     $data = curlexec($url, '[null]', $http_header);
+    if (!is_array($data)) {
+        trigger_error("data = $data from $url", E_USER_WARNING);
+        return;
+    }
     $datas = array_merge($datas, array_slice($data, 0, 3));
 
     $pids = array();
