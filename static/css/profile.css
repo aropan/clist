@@ -64,17 +64,29 @@ input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: searchfield-cancel-button;
 }
 
-.gold-medal {
+#list-accounts .gold-medal {
   color: transparent;
   text-shadow: 0 0 0 #f9d923;
 }
 
-.silver-medal {
+#list-accounts .silver-medal {
   color: transparent;
   text-shadow: 0 0 0 silver;
 }
 
-.bronze-medal {
+#list-accounts .bronze-medal {
   color: transparent;
   text-shadow: 0 0 0 #c08e55;
+}
+
+table tr.contest.gold-medal {
+  background: #f9d923;
+}
+
+table tr.contest.silver-medal {
+  background: silver;
+}
+
+table tr.contest.bronze-medal {
+  background: #c08e55;
 }

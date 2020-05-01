@@ -347,6 +347,10 @@ class Statistic(BaseModule):
                 'fixed_fields': [('hack', 'Challenges')],
             },
         }
+
+        if re.search(r'\bfinals?(?:\s+rounds?)?$', self.name, re.I):
+            standings['options']['medals'] = [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]
+
         return standings
 
     @staticmethod
