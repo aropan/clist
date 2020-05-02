@@ -59,7 +59,7 @@ class Statistic(BaseModule):
 
                 problems_info = []
                 for problem in problem_data:
-                    name = str(problem['name'])
+                    name = str(problem['name']).strip()
                     problems_info.append({
                         'code': str(problem['id']),
                         'name': name,
@@ -93,6 +93,7 @@ class Statistic(BaseModule):
                     r['penalty'] = self.to_time(penalty)
 
                 problems = r.setdefault('problems', {})
+                solved = 0
                 for k, v in row.pop('problemData').items():
                     verdict = v.get('result')
                     if not verdict or verdict == 'none':
@@ -101,6 +102,7 @@ class Statistic(BaseModule):
                     if verdict == 'accepted':
                         p['result'] = '+'
                         p['binary'] = True
+                        solved += 1
                     else:
                         p['result'] = '0'
                         p['verdict'] = verdict
@@ -108,6 +110,8 @@ class Statistic(BaseModule):
                     u = v.get('sourceURI')
                     if v:
                         p['url'] = urljoin(url, u)
+                r['solved'] = {'solving': solved}
+
                 pbar.update()
                 total -= 1
 

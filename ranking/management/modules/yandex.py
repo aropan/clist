@@ -98,14 +98,20 @@ class Statistic(BaseModule):
                             name = v.value.replace(' ', '', 1)
                         row['name'] = name
                         row['member'] = name if ' ' not in name else f'{name} {season}'
+
+                        country = v.column.node.xpath(".//div[contains(@class,'country-flag')]/@title")
+                        if country:
+                            row['country'] = country[0]
                     elif 'table__cell_role_place' in v.attrs['class']:
                         row['place'] = v.value
                     elif 'table__header_type_penalty' in v.attrs['class']:
-                        row['penalty'] = int(v.value) if v.value.isdigit() else v.value
+                        row['penalty'] = int(v.value) if re.match('^-?[0-9]+$', v.value) else v.value
                     elif 'table__header_type_score' in v.attrs['class']:
                         row['solving'] = int(round(float(v.value)))
                 if has_solved:
                     row['solved'] = {'solving': solved}
+                if not problems:
+                    continue
                 result[row['member']] = row
 
             n_page += 1
