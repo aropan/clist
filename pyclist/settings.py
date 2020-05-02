@@ -303,9 +303,11 @@ COUNTRIES_OVERRIDE = {
     'PS': {'names': ['Palestine, State of', 'Palestine']},
     'KR': {'names': ['South Korea', 'Republic of Korea']},
     'MO': {'names': ['Macao', 'Macau']},
-    'US': {'names': ['United States of America', 'United States', 'America']},
+    'US': {'names': ['United States of America', 'United States', 'America', 'Соединенные Штаты Америки', 'США']},
     'VN': {'names': ['Vietnam', 'Viet Nam']},
-    'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England']},
+    'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Великобритания']},
+    'MD': {'names': ['Moldova', 'Молдова', 'Молдавия']},
+    'KG': {'names': ['Kyrgyzstan', 'Кыргызстан', 'Киргизия']},
 }
 
 # DJANGO DEBUG TOOLBAR
