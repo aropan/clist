@@ -3,6 +3,7 @@
 from logging import getLogger
 from collections import defaultdict
 
+from django.utils.translation import override
 from django_countries import countries
 
 
@@ -10,6 +11,8 @@ class Countrier:
 
     def __init__(self):
         self.countries_name = {name.lower(): code for code, name in countries}
+        with override('ru'):
+            self.countries_name.update({name.lower(): code for code, name in countries})
         self.countries_name.update({code.lower(): code for code, name in countries})
         self.countries_name.update({countries.alpha3(code).lower(): code for code, name in countries})
 

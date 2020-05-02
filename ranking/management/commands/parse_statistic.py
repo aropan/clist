@@ -167,6 +167,10 @@ class Command(BaseCommand):
                         contest.standings_url = standings['url']
                         contest.save()
 
+                    if 'title' in standings and standings['title'] != contest.title:
+                        contest.title = standings['title']
+                        contest.save()
+
                     if 'options' in standings:
                         contest_options = contest.info.get('standings', {})
                         standings_options = dict(contest_options)

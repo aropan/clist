@@ -159,7 +159,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     fields_to_select = {}
     for f in contest_fields:
         f = f.strip('_')
-        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class']:
+        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job']:
             fields_to_select[f] = request.GET.getlist(f)
 
     with_detail = request.GET.get('detail', 'true') in ['true', 'on']
