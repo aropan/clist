@@ -93,7 +93,7 @@ class Statistic(BaseModule):
                     elif 'table__cell_role_participant' in v.attrs['class']:
                         title = v.column.node.xpath('.//@title')
                         if title:
-                            name = title[0]
+                            name = str(title[0])
                         else:
                             name = v.value.replace(' ', '', 1)
                         row['name'] = name
@@ -101,7 +101,7 @@ class Statistic(BaseModule):
 
                         country = v.column.node.xpath(".//div[contains(@class,'country-flag')]/@title")
                         if country:
-                            row['country'] = country[0]
+                            row['country'] = str(country[0])
                     elif 'table__cell_role_place' in v.attrs['class']:
                         row['place'] = v.value
                     elif 'table__header_type_penalty' in v.attrs['class']:

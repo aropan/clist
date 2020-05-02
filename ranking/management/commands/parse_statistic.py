@@ -285,16 +285,17 @@ class Command(BaseCommand):
                             if medals:
                                 k = 'medal'
                                 r.pop(k, None)
-                                place = get_number_from_str(r['place'])
-                                if place:
-                                    for medal in medals:
-                                        if place <= medal['count']:
-                                            r[k] = medal['name']
-                                            if 'field' in medal:
-                                                r[medal['field']] = medal['value']
-                                                r[f'_{k}_title_field'] = medal['field']
-                                            break
-                                        place -= medal['count']
+                                if 'place' in r:
+                                    place = get_number_from_str(r['place'])
+                                    if place:
+                                        for medal in medals:
+                                            if place <= medal['count']:
+                                                r[k] = medal['name']
+                                                if 'field' in medal:
+                                                    r[medal['field']] = medal['value']
+                                                    r[f'_{k}_title_field'] = medal['field']
+                                                break
+                                            place -= medal['count']
                                 medal_fields = [m['field'] for m in medals if 'field' in m] or [k]
                                 for f in medal_fields:
                                     if f not in fields_set:
