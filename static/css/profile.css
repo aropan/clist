@@ -30,30 +30,17 @@
   text-decoration: none;
 }
 
-#list-accounts .account .text-muted {
-  color: white;
-}
-
-#list-accounts .account .input-group-addon {
+#list-accounts .account .btn:hover {
   background-color: #f7f7f7;
+}
+
+#list-accounts .account .btn:first-child {
   font-weight: bold;
-  width: 0px;
 }
 
-#list-accounts .account .input-group-btn {
-  width: 0px;
-}
-
-#list-accounts .input-group,
 #list-accounts .btn-group {
   display: inline-block;
   margin: 2px;
-}
-
-#list-accounts .input-group-addon .no-user-select {
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 
 .title .problems {

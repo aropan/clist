@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from urllib.parse import urlparse
 
 from ranking.management.modules.common import BaseModule
 from ranking.management.modules import yandex, opencup
@@ -8,8 +9,9 @@ from ranking.management.modules import yandex, opencup
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        standings_url = kwargs.get('standings_url')
-        if not standings_url or 'yandex' in standings_url:
+        super().__init__(**kwargs)
+        host = urlparse(self.standings_url).netloc
+        if not host or 'yandex' in host:
             self.module = yandex.Statistic(**kwargs)
         else:
             self.module = opencup.Statistic(**kwargs)
