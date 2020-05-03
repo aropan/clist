@@ -15,7 +15,6 @@ urlpatterns = [
     url(r'^$', views.main, name='main'),
     url(r'^resources/$', views.resources, name='resources'),
     url(r'^resources/dumpdata/$', views.resources_dumpdata, name='resources_dumpdata'),
-    url(r'^resource/(.*)/rating/hist/$', views.resource_rating_hist, name='resource_rating_hist'),
     url(r'^resource/(.*)/$', views.resource, name='resource'),
     url(r'^get/events/$', views.get_events),
 
