@@ -55,55 +55,7 @@
 
     {% if has_country or fields_to_select %}{% if groupby %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}{% endif %}
 
-    {% if has_country %}
-    <div class="input-group input-group-sm hidden" id="country-hidden">
-      <div class="input-group-btn">
-        <button class="btn btn-default{% if groupby == 'country' %} active{% endif %}" name="groupby" value="{% if groupby != 'country' %}country{% endif %}">Country</button>
-      </div>
-      <select name="country" id="country" onchange="this.form.submit()" multiple>
-        <option></option>
-        {% with country=request.user.coder.country %}
-          {% if country %}
-          <option value="{{ country.code }}"{% if country.code in params.countries %} selected{% endif %}>{{ country.name }}</option>
-          {% endif %}
-          {% get_countries as countries %}
-          {% for c in countries %}
-            {% if country.code != c.code %}
-              <option value="{{ c.code }}"{% if c.code in params.countries %} selected{% endif %}>{{ c.name }}</option>
-            {% endif %}
-          {% endfor %}
-        {% endwith %}
-      </select>
-    </div>
-
-    <script>
-      $(function() {
-        $('#country').select2({
-          dropdownAutoWidth : true,
-          theme: 'bootstrap',
-          placeholder: '',
-          allowClear: true,
-          templateResult: function (data) {
-              var $result = $('<span></span>')
-              $result.text(data.text)
-              if (data.id) {
-                  var code = data.id.toLowerCase()
-                  $result.prepend('<img class="flag flag-' + code + '"/>&nbsp;')
-              }
-              return $result
-          },
-        }).on('select2:unselecting', function() {
-          $(this).data('unselecting', true);
-        }).on('select2:opening', function(e) {
-          if ($(this).data('unselecting')) {
-            $(this).removeData('unselecting');
-            e.preventDefault();
-          }
-        })
-        $('#country-hidden').removeClass('hidden');
-      })
-    </script>
-    {% endif %}
+    {% include 'country_filter.html' %}
 
     {% if fields_to_select %}
       {% for field, values in fields_to_select.items %}

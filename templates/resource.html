@@ -5,6 +5,8 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/resource.css' %}" rel="stylesheet">
+<link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/Chart.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -32,18 +34,129 @@
     <span class="badge progress-bar-info">{{ resource.account_set.all.count|intcomma }} accounts(s)</span>
 </div>
 
-<div id="countries" class="col-md-5 col-lg-4">
-    <h4>Country distribution</h4>
-    <div class="panel panel-default table-responsive">
-        <table class="standings table table-hover table-condensed table-striped">
-        <tr>
-            <th>Country</th>
-            <th>Participants<br/>number</th>
-        </tr>
-        {% include 'resource_country_paging.html' %}
-        </table>
+<br/>
+
+<form class="form-inline" method="get" action="">
+    <div class="form-group">
+        {% include 'country_filter.html' %}
+
+        <div class="input-group input-group-sm">
+            <div class="input-group-btn">
+                <button class="btn btn-default">Period</button>
+            </div>
+            <select name="period" onchange="this.form.submit()">
+                {% for p in periods %}
+                    <option value="{{ p }}"{% if p == params.period %} selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <script>
+        $(function() {
+            $('select[name="period"]').select2({
+                theme: 'bootstrap',
+                placeholder: 'select period',
+            })
+        })
+        </script>
     </div>
+</form>
+
+<div class="col-xs-12">
+
+    <div id="countries" class="col-md-5 col-lg-4">
+        <h4>Country distribution</h4>
+        <div class="panel panel-default table-responsive">
+            <table class="standings table table-hover table-condensed table-striped">
+            <tr>
+                <th>Country</th>
+                <th>Participants<br/>number</th>
+            </tr>
+            {% comment %} {% include 'resource_country_paging.html' %} {% endcomment %}
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-7 col-lg-8">
+        <h4>Rating distribution</h4>
+        <span id="toggleLogScale">
+            <input
+                type="checkbox"
+                data-toggle="toggle"
+                data-on="logarithmic"
+                data-off="linear"
+                data-onstyle="default active"
+                data-offstyle="default active"
+                data-size="small"
+            />
+        </span>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        $(function() {
+            var ctx = document.getElementById('canvas').getContext('2d');
+            var chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [{% for label in rating.labels %}{% if forloop.counter0 %},{% endif %}{{ label }}{% endfor %}],
+                    datasets: [{
+                        data: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}{'x':{{ r.rating }},'y':{{ r.count }}}{% endfor %}],
+                        title: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}'{{ r.title }}'{% endfor %}],
+                        value: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}{{ r.count }}{% endfor %}],
+                        barPercentage: 0.9,
+                        categoryPercentage: 1.0,
+                        backgroundColor: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}'{{ r.info.hex_rgb }}'{% endfor %}],
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    legend: {
+                        display: false,
+                    },
+                    scales: {
+                        xAxes: [{
+                            gridLines: {
+                                display:false
+                            }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                            },
+                        }],
+                    },
+                    tooltips: {
+                        position: 'nearest',
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                                var tooltipItem = tooltipItems[0]
+                                return data.datasets[tooltipItem.datasetIndex].title[tooltipItem.index]
+                            },
+                            label: function(tooltipItem, data) {
+                                return data.datasets[tooltipItem.datasetIndex].value[tooltipItem.index]
+                            },
+                        },
+                    },
+                },
+            })
+
+            $('#toggleLogScale input').change(function() {
+                var type = chart.options.scales.yAxes[0].type
+                for (var i in chart.data.datasets[0].data) {
+                    chart.data.datasets[0].data[i]['y'] += type == 'linear'? 1 : -1;
+                }
+                type = type == 'linear'? 'logarithmic' : 'linear'
+                chart.options.scales.yAxes[0].type = type
+                chart.update()
+                return false
+            })
+        })
+    </script>
+
 </div>
+
+
+<div>
 
 <h3>Coders</h3>
 {% if accounts.exists %}
@@ -79,4 +192,7 @@
 {% else %}
     <div class="alert alert-warning">Not found</div>
 {% endif %}
+
+</div>
+
 {% endblock %}

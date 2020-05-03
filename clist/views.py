@@ -1,3 +1,5 @@
+import math
+from collections import defaultdict
 from datetime import timedelta
 from urllib.parse import urlparse, parse_qs
 
@@ -13,7 +15,6 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from sql_util.utils import Exists
 from el_pagination.decorators import page_template
-
 
 from clist.templatetags.extras import get_timezones, get_timezone_offset
 from clist.models import Resource, Contest, Banner
@@ -273,21 +274,79 @@ def resources(request):
 def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
+
+    params = {}
+
     contests = resource.contest_set.filter(invisible=False).annotate(has_statistics=Exists('statistics'))
-    countries = Account.objects \
-        .filter(resource=resource, country__isnull=False) \
+
+    accounts = Account.objects.filter(resource=resource)
+
+    has_country = accounts.filter(country__isnull=False).exists()
+    countries = request.GET.getlist('country')
+    countries = set([c for c in countries if c])
+    if countries:
+        params['countries'] = countries
+        accounts = accounts.filter(country__in=countries)
+
+    period = request.GET.get('period', 'half')
+    periods = ['month', 'quarter', 'half', 'year', 'all']
+    params['period'] = period
+    delta_period = {
+        'month': timedelta(days=30 * 1),
+        'quarter': timedelta(days=30 * 3),
+        'half': timedelta(days=30 * 6),
+        'year': timedelta(days=30 * 12),
+        'all': None,
+    }[period]
+    if delta_period:
+        accounts = accounts.annotate(in_period=Exists('statistics', filter=Q(contest__end_time__gt=now - delta_period)))
+        accounts = accounts.filter(in_period=True)
+
+    countries = accounts \
+        .filter(country__isnull=False) \
         .values('country') \
-        .annotate(count=Count('country')) \
-        .order_by('-count')
+        .annotate(count=Count('country'))
+    # .order_by('-count')
+
+    width = 50
+
+    ratings = defaultdict(int)
+    qs = accounts.filter(info__rating__isnull=False).values('info__rating')
+    for a in qs:
+        rating = a['info__rating']
+        rating = math.floor(rating / width) * width
+        ratings[rating] += 1
+
+    idx = 0
+    data = []
+    labels = []
+    for k, v in sorted(ratings.items()):
+        if k > resource.ratings[idx]['high']:
+            idx += 1
+        labels.append(k)
+        data.append({
+            'title': f'{k}..{k + width - 1}',
+            'rating': k,
+            'count': v,
+            'info': resource.ratings[idx],
+        })
+
     context = {
         'resource': resource,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
         'countries': countries,
+        'rating': {
+            'labels': labels,
+            'data': data,
+        },
         'contests': [
             ('running', contests.filter(start_time__lt=now, end_time__gt=now).order_by('start_time')),
             ('coming', contests.filter(start_time__gt=now).order_by('start_time')),
             ('past', contests.filter(end_time__lt=now).order_by('-end_time')),
         ],
+        'has_country': has_country,
+        'periods': periods,
+        'params': params,
     }
 
     if extra_context is not None:

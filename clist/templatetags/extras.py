@@ -273,7 +273,8 @@ def url_transform(request, *args, **kwargs):
 
 @register.simple_tag
 def get_countries():
-    return dict((c.code, c) for c in countries).values()
+    ret = dict((c.code, c) for c in countries if re.search(r'[a-zA-Z]', c.name)).values()
+    return ret
 
 
 def is_country_code(val):
@@ -424,3 +425,8 @@ def resource_href(resource, host):
 @register.filter
 def url_quote(value):
     return quote_plus(value)
+
+
+@register.filter
+def multiply(value, arg):
+    return value * arg

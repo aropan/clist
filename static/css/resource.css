@@ -12,3 +12,8 @@
   text-decoration: none;
   color: inherit;
 }
+
+#toggleLogScale {
+  position: absolute;
+  right: 0;
+}

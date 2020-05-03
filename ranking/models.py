@@ -26,6 +26,7 @@ class Account(BaseModel):
     url = models.CharField(max_length=4096, null=True, blank=True)
     info = JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
+    # n_contests = models.IntegerField(default=0)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource))
@@ -127,6 +128,17 @@ class Statistics(BaseModel):
 @receiver(pre_save, sender=Statistics)
 def statistics_pre_save(sender, instance, *args, **kwargs):
     instance.place_as_int = get_number_from_str(instance.place)
+
+
+# @receiver(post_save, sender=Statistics)
+# @receiver(post_delete, sender=Statistics)
+# def count_account_contests(signal, instance, **kwargs):
+#     if signal is post_delete:
+#         instance.account.n_accounts -= 1
+#         instance.account.save()
+#     elif signal is post_save and kwargs['created']:
+#         instance.account.n_accounts += 1
+#         instance.account.save()
 
 
 class Module(BaseModel):
