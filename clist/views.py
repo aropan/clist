@@ -4,7 +4,7 @@ from urllib.parse import urlparse, parse_qs
 import arrow
 import pytz
 from django.conf import settings
-from django.db.models import F, Q
+from django.db.models import F, Q, Count
 from django.core.management.commands import dumpdata
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
@@ -12,12 +12,13 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from sql_util.utils import Exists
+from el_pagination.decorators import page_template
 
 
 from clist.templatetags.extras import get_timezones, get_timezone_offset
 from clist.models import Resource, Contest, Banner
 from true_coders.models import Party, Coder, Filter
-from ranking.models import Rating
+from ranking.models import Rating, Account
 from utils.regex import verify_regex
 
 
@@ -268,20 +269,31 @@ def resources(request):
     return render(request, 'resources.html', {'resources': resources})
 
 
-def resource(request, host):
+@page_template('resource_country_paging.html')
+def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
     contests = resource.contest_set.filter(invisible=False).annotate(has_statistics=Exists('statistics'))
+    countries = Account.objects \
+        .filter(resource=resource, country__isnull=False) \
+        .values('country') \
+        .annotate(count=Count('country')) \
+        .order_by('-count')
     context = {
         'resource': resource,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
+        'countries': countries,
         'contests': [
             ('running', contests.filter(start_time__lt=now, end_time__gt=now).order_by('start_time')),
             ('coming', contests.filter(start_time__gt=now).order_by('start_time')),
             ('past', contests.filter(end_time__lt=now).order_by('-end_time')),
         ],
     }
-    return render(request, 'resource.html', context)
+
+    if extra_context is not None:
+        context.update(extra_context)
+
+    return render(request, template, context)
 
 
 @permission_required('clist.view_resources_dump_data')

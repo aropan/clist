@@ -3,32 +3,47 @@
 
 {% block title %}{{ resource.host }} - Resource{% endblock %}
 
+{% block end-head %}
+<link href="{% static_ts 'css/resource.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<style>
-    .list {
-        line-height: 2;
-    }
-</style>
+<script>$.endlessPaginate();</script>
 
 <h2><a href="{{ resource.href }}">{{ resource.host }}</a></h2>
 
-<a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
-    <i class="far fa-calendar-alt"></i> Google calendar
-</a>
+<div>
+    <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
+        <i class="far fa-calendar-alt"></i> Google calendar
+    </a>
 
-<div class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
-    updating {% if resource.enable %}auto{% else %}manually{% endif %}
+    <div class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
+        updating {% if resource.enable %}auto{% else %}manually{% endif %}
+    </div>
+
+    {% if resource.module %}
+    <span class="badge progress-bar-warning">
+        parse statistic
+    </span>
+    {% endif %}
+
+    <span class="badge progress-bar-info">{{ resource.contest_set.all.count|intcomma }} contest(s)</span>
+
+    <span class="badge progress-bar-info">{{ resource.account_set.all.count|intcomma }} accounts(s)</span>
 </div>
 
-{% if resource.module %}
-<span class="badge progress-bar-warning">
-    parse statistic
-</span>
-{% endif %}
-
-<span class="badge progress-bar-info">{{ resource.contest_set.all.count|intcomma }} contest(s)</span>
-
-<span class="badge progress-bar-info">{{ resource.account_set.all.count|intcomma }} accounts(s)</span>
+<div id="countries" class="col-md-5 col-lg-4">
+    <h4>Country distribution</h4>
+    <div class="panel panel-default table-responsive">
+        <table class="standings table table-hover table-condensed table-striped">
+        <tr>
+            <th>Country</th>
+            <th>Participants<br/>number</th>
+        </tr>
+        {% include 'resource_country_paging.html' %}
+        </table>
+    </div>
+</div>
 
 <h3>Coders</h3>
 {% if accounts.exists %}

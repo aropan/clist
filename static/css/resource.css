@@ -1,0 +1,14 @@
+.list {
+  line-height: 2;
+}
+
+#countries table tr td,
+#countries table tr th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+#countries a {
+  text-decoration: none;
+  color: inherit;
+}

@@ -257,6 +257,11 @@ def query_transform(request, *args, **kwargs):
         updated.update(kwargs)
     if args:
         updated.update(dict(zip(args[::2], args[1::2])))
+
+    if 'querystring_key' in updated and 'page'in updated:
+        updated.pop('page')
+        updated.pop('querystring_key')
+
     return updated.urlencode()
 
 

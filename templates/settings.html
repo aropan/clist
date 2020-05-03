@@ -15,8 +15,6 @@
 
 <link href="{% static_ts 'css/settings.css' %}" rel="stylesheet">
 
-<link href="{% static_ts 'flags/flags.min.css' %}" rel=stylesheet type="text/css">
-
 <script>
     $.fn.editable.defaults.pk = {{ coder.id }}
     emails = [ {{ coder.token_set|get_emails }} ]
