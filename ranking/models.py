@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 
 import tqdm
 from django.db import models, transaction
-from django.db.models.signals import pre_save, m2m_changed
+from django.db.models.signals import pre_save, m2m_changed, post_save, post_delete
 from django.dispatch import receiver
 from django.urls import reverse
 from django.contrib.postgres.fields import JSONField
@@ -44,6 +44,17 @@ class Account(BaseModel):
 
     class Meta:
         unique_together = ('resource', 'key')
+
+
+@receiver(post_save, sender=Account)
+@receiver(post_delete, sender=Account)
+def count_resource_accounts(signal, instance, **kwargs):
+    if signal is post_delete:
+        instance.resource.n_accounts -= 1
+        instance.resource.save()
+    elif signal is post_save and kwargs['created']:
+        instance.resource.n_accounts += 1
+        instance.resource.save()
 
 
 @receiver(pre_save, sender=Account)

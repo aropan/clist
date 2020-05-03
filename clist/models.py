@@ -24,6 +24,8 @@ class Resource(CachingMixin, BaseModel):
     info = JSONField(default=dict, blank=True)
     ratings = JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
+    n_accounts = models.IntegerField(default=0)
+    n_contests = models.IntegerField(default=0)
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 

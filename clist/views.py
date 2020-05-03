@@ -11,7 +11,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
-from sql_util.utils import SubqueryCount, Exists
+from sql_util.utils import Exists
 
 
 from clist.templatetags.extras import get_timezones, get_timezone_offset
@@ -261,13 +261,10 @@ def main(request, party=None):
 
 
 def resources(request):
-    resources = Resource.caching_objects
+    resources = Resource.objects
     resources = resources.select_related('module')
-    resources = resources.annotate(n_contests=SubqueryCount('contest'),
-                                   n_accounts=SubqueryCount('account'))
     resources = resources.annotate(priority=F('n_accounts') + F('n_contests'))
     resources = resources.order_by('-priority')
-    resources.timeout = 60 * 60
     return render(request, 'resources.html', {'resources': resources})
 
 

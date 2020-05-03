@@ -95,7 +95,7 @@ class ContestAdmin(BaseModelAdmin):
 @admin_register(Resource)
 class ResourceAdmin(BaseModelAdmin):
     fieldsets = [
-        [None, {'fields': ['host', 'enable', 'url', 'profile_url']}],
+        [None, {'fields': ['host', 'enable', 'url', 'profile_url', 'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
         [None, {'fields': ['info', 'ratings', 'has_rating_history']}],
@@ -110,6 +110,9 @@ class ResourceAdmin(BaseModelAdmin):
     def _has_rating(self, obj):
         return bool(obj.ratings)
     _has_rating.boolean = True
+
+    def get_readonly_fields(self, request, obj=None):
+        return ['n_accounts', 'n_contests'] + list(super().get_readonly_fields(request, obj))
 
 
 @admin_register(TimingContest)
