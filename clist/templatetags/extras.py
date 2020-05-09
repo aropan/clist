@@ -29,6 +29,8 @@ def split(string, sep):
 
 @register.filter
 def get_item(dictionary, key):
+    if not dictionary:
+        return None
     return dictionary.get(key)
 
 
