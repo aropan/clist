@@ -1,0 +1,19 @@
+{% load extras %}
+
+{% with country=account.country %}
+{% if country %}
+<a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><img class="flag flag-{{ country.code|lower }}"/></a>
+{% endif %}
+{% endwith %}
+<span>
+{% coder_color_circle resource account.info %}
+<a href="{{ account.url }}" class="{% coder_color_class resource account.info %}">
+  {% if account.name and account.key|has_season:account.name %}
+    <span>{{ account.name }}</span>
+  {% elif account.name and resource.info.standings.name_instead_key %}
+    <span>{{ account.name }}</span>
+  {% else %}
+    <span{% if account.name %} title="{{ account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
+  {% endif %}
+</a>
+</span>

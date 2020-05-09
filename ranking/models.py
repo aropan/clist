@@ -22,11 +22,12 @@ class Account(BaseModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     key = models.CharField(max_length=1024, null=False, blank=False)
     name = models.CharField(max_length=1024, null=True, blank=True)
-    country = CountryField(null=True, blank=True)
+    country = CountryField(null=True, blank=True, db_index=True)
     url = models.CharField(max_length=4096, null=True, blank=True)
+    n_contests = models.IntegerField(default=0, db_index=True)
+    last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     info = JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
-    # n_contests = models.IntegerField(default=0)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource))
@@ -44,6 +45,12 @@ class Account(BaseModel):
         return ret
 
     class Meta:
+        indexes = [
+            models.Index(fields=['resource', 'country']),
+            models.Index(fields=['resource', 'n_contests']),
+            models.Index(fields=['resource', 'last_activity']),
+        ]
+
         unique_together = ('resource', 'key')
 
 
@@ -130,15 +137,19 @@ def statistics_pre_save(sender, instance, *args, **kwargs):
     instance.place_as_int = get_number_from_str(instance.place)
 
 
-# @receiver(post_save, sender=Statistics)
-# @receiver(post_delete, sender=Statistics)
-# def count_account_contests(signal, instance, **kwargs):
-#     if signal is post_delete:
-#         instance.account.n_accounts -= 1
-#         instance.account.save()
-#     elif signal is post_save and kwargs['created']:
-#         instance.account.n_accounts += 1
-#         instance.account.save()
+@receiver(post_save, sender=Statistics)
+@receiver(post_delete, sender=Statistics)
+def count_account_contests(signal, instance, **kwargs):
+    if signal is post_delete:
+        instance.account.n_contests -= 1
+        instance.account.save()
+    elif signal is post_save and kwargs['created']:
+        instance.account.n_contests += 1
+
+        if not instance.account.last_activity or instance.account.last_activity < instance.contest.start_time:
+            instance.account.last_activity = instance.contest.start_time
+
+        instance.account.save()
 
 
 class Module(BaseModel):
@@ -405,7 +416,7 @@ class Stage(BaseModel):
             stage.info['fields'] = list(fields)
 
         standings_info = self.score_params.get('info', {})
-        standings_info['fixed_fields'] = [(f.lstrip('-'), f.lstrip('-').title()) for f in order_by]
+        standings_info['fixed_fields'] = [(f.lstrip('-'), f.lstrip('-')) for f in order_by]
         stage.info['standings'] = standings_info
 
         stage.info['problems'] = list(problems_infos.values())

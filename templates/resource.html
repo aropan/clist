@@ -29,9 +29,9 @@
     </span>
     {% endif %}
 
-    <span class="badge progress-bar-info">{{ resource.contest_set.all.count|intcomma }} contest(s)</span>
+    <span class="badge progress-bar-info">{{ resource.n_contests|intcomma }} contest(s)</span>
 
-    <span class="badge progress-bar-info">{{ resource.account_set.all.count|intcomma }} accounts(s)</span>
+    <span class="badge progress-bar-info">{{ resource.n_accounts|intcomma }} accounts(s)</span>
 </div>
 
 <br/>
@@ -61,22 +61,22 @@
     </div>
 </form>
 
-<div class="col-xs-12">
-
-    <div id="countries" class="col-md-5 col-lg-4">
-        <h4>Country distribution</h4>
+<div>
+    {% if rating.data %}
+    <div class="col-md-6 col-lg-4">
+        <h4>Top rating</h4>
         <div class="panel panel-default table-responsive">
             <table class="standings table table-hover table-condensed table-striped">
-            <tr>
-                <th>Country</th>
-                <th>Participants<br/>number</th>
-            </tr>
-            {% comment %} {% include 'resource_country_paging.html' %} {% endcomment %}
+                <tr>
+                    <th>Handle</th>
+                    <th>Rating</th>
+                </tr>
+                {% include 'resource_top_paging.html' %}
             </table>
         </div>
     </div>
 
-    <div class="col-md-7 col-lg-8">
+    <div class="col-md-6 col-lg-8">
         <h4>Rating distribution</h4>
         <span id="toggleLogScale">
             <input
@@ -89,12 +89,12 @@
                 data-size="small"
             />
         </span>
-        <canvas id="canvas"></canvas>
+        <canvas id="ratingDistribution"></canvas>
     </div>
 
     <script>
         $(function() {
-            var ctx = document.getElementById('canvas').getContext('2d');
+            var ctx = document.getElementById('ratingDistribution').getContext('2d');
             var chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -152,47 +152,52 @@
             })
         })
     </script>
-
-</div>
-
-
-<div>
-
-<h3>Coders</h3>
-{% if accounts.exists %}
-    <div class="coders list">
-    {% for a in accounts|slice:":10" %}
-        {% for c in a.coders.all %}
-            <a class="badge" href="{% url 'coder:profile' c.username %}">{{ a.key }}</a>
-        {% endfor %}
-    {% endfor %}
-    {% if accounts.count > 10 %}
-        and {{ accounts.count|add:-10 }} other(s)
     {% endif %}
-    </div>
-{% else %}
-    <div class="alert alert-warning">Not found</div>
-{% endif %}
 
-<h3>Contests</h3>
-{% if resource.contest_set.all.count %}
-{% for name, set in contests %}
-    {% if set %}
-    <h4>{{ name|title }}</h4>
-    <div class="contests list">
-    {% for c in set|slice:":10" %}
-    <a class="badge progress-bar-{% if c.has_statistics %}success{% elif name == "past" %}warning{% else %}info{% endif %}" href="{% if c.has_statistics %}{% url 'ranking:standings' c.title|slug c.pk %}{% else %}{{ c.standings_url|default:c.url }}{% endif %}">{{ c.title }}</a>
-    {% endfor %}
-    {% if set.count > 10 %}
-        and {{ set.count|add:-10 }} other(s)
-    {% endif %}
+    {% if has_country %}
+    <div id="countries" class="col-md-6 col-lg-4">
+        <h4>Country distribution</h4>
+        <div class="panel panel-default table-responsive">
+            <table class="standings table table-hover table-condensed table-striped">
+                <tr>
+                    <th>Country</th>
+                    <th>Participants<br/>number</th>
+                </tr>
+                {% include 'resource_country_paging.html' %}
+            </table>
+        </div>
     </div>
     {% endif %}
-{% endfor %}
-{% else %}
-    <div class="alert alert-warning">Not found</div>
-{% endif %}
 
+    {% if last_activities.count %}
+    <div class="col-md-6 col-lg-4">
+        <h4>Last activity</h4>
+        <div class="panel panel-default table-responsive">
+            <table class="standings table table-hover table-condensed table-striped">
+                <tr>
+                    <th>Handle</th>
+                    <th>Last<br/>activity</th>
+                </tr>
+                {% include 'resource_last_activity_paging.html' %}
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if most_participated %}
+    <div class="col-md-6 col-lg-4">
+        <h4>Most participated</h4>
+        <div class="panel panel-default table-responsive">
+            <table class="standings table table-hover table-condensed table-striped">
+                <tr>
+                    <th>Handle</th>
+                    <th>Contests<br/>number</th>
+                </tr>
+                {% include 'resource_most_participated_paging.html' %}
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}

@@ -14,7 +14,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from sql_util.utils import Exists
-from el_pagination.decorators import page_template
+from el_pagination.decorators import page_templates
 
 from clist.templatetags.extras import get_timezones, get_timezone_offset
 from clist.models import Resource, Contest, Banner
@@ -270,7 +270,12 @@ def resources(request):
     return render(request, 'resources.html', {'resources': resources})
 
 
-@page_template('resource_country_paging.html')
+@page_templates((
+    ('resource_country_paging.html', 'country_page'),
+    ('resource_last_activity_paging.html', 'last_activity_page'),
+    ('resource_top_paging.html', 'top_page'),
+    ('resource_most_participated_paging.html', 'most_participated_page'),
+))
 def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
@@ -288,7 +293,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         params['countries'] = countries
         accounts = accounts.filter(country__in=countries)
 
-    period = request.GET.get('period', 'half')
+    period = request.GET.get('period', 'all')
     periods = ['month', 'quarter', 'half', 'year', 'all']
     params['period'] = period
     delta_period = {
@@ -299,20 +304,19 @@ def resource(request, host, template='resource.html', extra_context=None):
         'all': None,
     }[period]
     if delta_period:
-        accounts = accounts.annotate(in_period=Exists('statistics', filter=Q(contest__end_time__gt=now - delta_period)))
-        accounts = accounts.filter(in_period=True)
+        accounts = accounts.filter(last_activity__gte=now - delta_period)
 
     countries = accounts \
         .filter(country__isnull=False) \
         .values('country') \
-        .annotate(count=Count('country'))
-    # .order_by('-count')
+        .annotate(count=Count('country')) \
+        .order_by('-count')
 
     width = 50
 
     ratings = defaultdict(int)
     qs = accounts.filter(info__rating__isnull=False).values('info__rating')
-    for a in qs:
+    for a in qs.iterator():
         rating = a['info__rating']
         rating = math.floor(rating / width) * width
         ratings[rating] += 1
@@ -347,6 +351,11 @@ def resource(request, host, template='resource.html', extra_context=None):
         'has_country': has_country,
         'periods': periods,
         'params': params,
+        'first_per_page': 10,
+        'per_page': 50,
+        'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity', 'pk'),
+        'top': accounts.filter(info__rating__isnull=False).order_by('-info__rating'),
+        'most_participated': accounts.filter(n_contests__gt=0).order_by('-n_contests'),
     }
 
     if extra_context is not None:

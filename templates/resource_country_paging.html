@@ -1,15 +1,14 @@
 {% load el_pagination_tags %}
 {% load extras %}
 
-{% paginate 10 countries %}{% get_pages %}
+{% paginate first_per_page,per_page countries using "country_page" %}
 {% for country in countries %}
   {% with name=country.country|get_country_name %}
   {% with code=country.country|get_country_code %}
   <tr>
     <td>
-      <a href="{% url_transform request country=code %}">
-        <img class="flag flag-{{ code|lower }}"/> {{ name }}
-      </a>
+      <img class="flag flag-{{ code|lower }}"/>
+      <a href="{% url_transform request country=code %}">{{ name }}</a>
     </td>
     <td>
       {{ country.count }}

@@ -183,10 +183,13 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
                 and 'country' not in k
                 and not k.startswith('_')
             ):
-                field = ' '.join(k.split('_'))
-                if field and not field[0].isupper():
-                    field = field.title()
-                fields[k] = field
+                fields[k] = k
+
+    for k, field in fields.items():
+        field = ' '.join(k.split('_'))
+        if field and not field[0].isupper():
+            field = field.title()
+        fields[k] = field
 
     per_page = options.get('per_page', 200)
     if per_page is None:
