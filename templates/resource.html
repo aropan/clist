@@ -62,7 +62,7 @@
 </form>
 
 <div>
-    {% if rating.data %}
+    {% if top.exists %}
     <div class="col-md-6 col-lg-4">
         <h4>Top rating</h4>
         <div class="panel panel-default table-responsive">
@@ -75,7 +75,9 @@
             </table>
         </div>
     </div>
+    {% endif %}
 
+    {% if rating.data %}
     <div class="col-md-6 col-lg-8">
         <h4>Rating distribution</h4>
         <span id="toggleLogScale">
@@ -169,7 +171,7 @@
     </div>
     {% endif %}
 
-    {% if last_activities.count %}
+    {% if last_activities.exists %}
     <div class="col-md-6 col-lg-4">
         <h4>Last activity</h4>
         <div class="panel panel-default table-responsive">
@@ -184,7 +186,7 @@
     </div>
     {% endif %}
 
-    {% if most_participated %}
+    {% if most_participated.exists %}
     <div class="col-md-6 col-lg-4">
         <h4>Most participated</h4>
         <div class="panel panel-default table-responsive">

@@ -312,37 +312,37 @@ def resource(request, host, template='resource.html', extra_context=None):
         .annotate(count=Count('country')) \
         .order_by('-count')
 
-    width = 50
+    # width = 50
 
-    ratings = defaultdict(int)
-    qs = accounts.filter(info__rating__isnull=False).values('info__rating')
-    for a in qs.iterator():
-        rating = a['info__rating']
-        rating = math.floor(rating / width) * width
-        ratings[rating] += 1
+    # ratings = defaultdict(int)
+    # qs = accounts.filter(info__rating__isnull=False).values('info__rating')
+    # for a in qs.iterator():
+    #     rating = a['info__rating']
+    #     rating = math.floor(rating / width) * width
+    #     ratings[rating] += 1
 
-    idx = 0
-    data = []
-    labels = []
-    for k, v in sorted(ratings.items()):
-        if k > resource.ratings[idx]['high']:
-            idx += 1
-        labels.append(k)
-        data.append({
-            'title': f'{k}..{k + width - 1}',
-            'rating': k,
-            'count': v,
-            'info': resource.ratings[idx],
-        })
+    # idx = 0
+    # data = []
+    # labels = []
+    # for k, v in sorted(ratings.items()):
+    #     if k > resource.ratings[idx]['high']:
+    #         idx += 1
+    #     labels.append(k)
+    #     data.append({
+    #         'title': f'{k}..{k + width - 1}',
+    #         'rating': k,
+    #         'count': v,
+    #         'info': resource.ratings[idx],
+    #     })
 
     context = {
         'resource': resource,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
         'countries': countries,
-        'rating': {
-            'labels': labels,
-            'data': data,
-        },
+        # 'rating': {
+        #     'labels': labels,
+        #     'data': data,
+        # },
         'contests': [
             ('running', contests.filter(start_time__lt=now, end_time__gt=now).order_by('start_time')),
             ('coming', contests.filter(start_time__gt=now).order_by('start_time')),
@@ -353,7 +353,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         'params': params,
         'first_per_page': 10,
         'per_page': 50,
-        'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity', 'pk'),
+        'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity'),
         'top': accounts.filter(info__rating__isnull=False).order_by('-info__rating'),
         'most_participated': accounts.filter(n_contests__gt=0).order_by('-n_contests'),
     }

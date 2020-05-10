@@ -2,7 +2,7 @@
 {% load extras %}
 {% load humanize %}
 
-{% paginate first_per_page,per_page last_activities using "last_activity_page" %}
+{% lazy_paginate first_per_page,per_page last_activities using "last_activity_page" %}
 {% for account in last_activities %}
   <tr>
     <td>

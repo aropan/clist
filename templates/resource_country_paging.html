@@ -1,7 +1,7 @@
 {% load el_pagination_tags %}
 {% load extras %}
 
-{% paginate first_per_page,per_page countries using "country_page" %}
+{% lazy_paginate first_per_page,per_page countries using "country_page" %}
 {% for country in countries %}
   {% with name=country.country|get_country_name %}
   {% with code=country.country|get_country_code %}
