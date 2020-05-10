@@ -354,7 +354,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         'first_per_page': 10,
         'per_page': 50,
         'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity'),
-        'top': accounts.filter(info__rating__isnull=False).order_by('-info__rating'),
+        'top': accounts.filter(rating__isnull=False).order_by('-rating'),
         'most_participated': accounts.filter(n_contests__gt=0).order_by('-n_contests'),
     }
 

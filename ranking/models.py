@@ -26,6 +26,7 @@ class Account(BaseModel):
     url = models.CharField(max_length=4096, null=True, blank=True)
     n_contests = models.IntegerField(default=0, db_index=True)
     last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
+    rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     info = JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
 
@@ -52,6 +53,11 @@ class Account(BaseModel):
         ]
 
         unique_together = ('resource', 'key')
+
+
+@receiver(pre_save, sender=Account)
+def set_account_rating(sender, instance, *args, **kwargs):
+    instance.rating = instance.info.get('rating')
 
 
 @receiver(post_save, sender=Account)
