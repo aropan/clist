@@ -4,6 +4,7 @@ from pytimeparse.timeparse import timeparse
 from tastypie import fields, http
 from tastypie.resources import NamespacedModelResource as ModelResource, ALL_WITH_RELATIONS
 from tastypie.authentication import ApiKeyAuthentication, SessionAuthentication, MultiAuthentication
+from tastypie.throttle import CacheThrottle
 
 
 def build_content_type(format, encoding='utf-8'):
@@ -43,6 +44,8 @@ class BaseModelResource(ModelResource):
         include_resource_uri = False
         allowed_methods = ['get']
         fields = ['id', ]
+
+        throttle = CacheThrottle(throttle_at=10, timeframe=60)
 
         authentication = MultiAuthentication(ApiKeyAuthentication(), SessionAuthentication())
 

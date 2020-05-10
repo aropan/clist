@@ -101,6 +101,10 @@ content: '<div class="info"><div class="title">Request header</div><div class="t
     <div class="title">format</div>
     <div class="text">Supported {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}. Set format in url <samp>/api/v1/json/...</samp> or use param in get query <samp>/?format=json</samp>.</div>
 </div>
+<div class="info">
+    <div class="title">throttle</div>
+    <div class="text">10 requests per minute.</div>
+</div>
 <div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
 
 <div id="swagger-ui-container" class="swagger-ui-wrap"></div>
