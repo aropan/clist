@@ -28,7 +28,8 @@
 
     preg_match_all('#
         <li>(?:[^<]*<[^/>]*>)*\s*(?<title>[^<]*GP[^<]*)(?:</[^/>]*>)*(?:\s\&\#.*?)?\s*
-        <li><a[^>]*href="(?<url>[^"]*)"[^>]*>(?:[^<]*<[^>/]*>)*(?:[^<]*</[^>/]*>)*[^<]*</a></li>[^<]*
+        (?:<li><a[^>]*>[^\n]*</a></li>\s*)?
+        <li><a[^>]*href="(?<url>[^"]*)"[^>]*>(?:[^<]*<[^>/]*>)*[^<]*Enter[^<]*(?:[^<]*</[^>/]*>)*[^<]*</a></li>[^<]*
         <li><a[^>]*href="(?<standings_url>[^"]*)"[^>]*>(?:[^<]*<[^>/]*>)*(?:1st\sDiv\sResults|Standings)(?:</[^>/]*>[^<]*)*</a></li>
         #xs', $page, $matches, PREG_SET_ORDER
     );
@@ -51,10 +52,10 @@
         $words = explode(" ", $title);
         $opt = strlen($title);
         $titles = explode(" of ", $title);
-        $q = end($titles);
+        $q = strtolower(end($titles));
         foreach ($results as $t => $u) {
             $ts = explode(" of ", $t);
-            $p = end($ts);
+            $p = strtolower(end($ts));
             $res = levenshtein($p, $q);
             if ($res < $opt) {
                 $opt = $res;
@@ -73,7 +74,7 @@
         if (empty($year)) {
             $year = date('Y', strtotime($start_time));
         }
-        $contests[] = array(
+        $c = array(
             'start_time' => $start_time,
             'duration' => "05:00",
             'title' => $title,
@@ -81,9 +82,12 @@
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
-            'standings_url' => $standings_url,
             'key' => $year . '-' . ($year + 1) . ' ' . $title
         );
+        if (!empty($standings_url)) {
+            $c['standings_url'] = $standings_url;
+        }
+        $contests[] = $c;
     }
     count($results) && trigger_error('No empty results list after parsing', E_USER_WARNING);
 ?>
