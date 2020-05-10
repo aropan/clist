@@ -23,6 +23,7 @@ class Statistic(BaseModule):
     API_CONTEST_URL_FORMAT_ = 'https://www.codechef.com/api/contests/{key}'
     API_RANKING_URL_FORMAT_ = 'https://www.codechef.com/api/rankings/{key}?sortBy=rank&order=asc&page={page}&itemsPerPage={per_page}'  # noqa
     PROFILE_URL_FORMAT_ = 'https://www.codechef.com/users/{user}'
+    TEAM_URL_FORMAT_ = 'https://www.codechef.com/teams/view/{user}'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -202,14 +203,23 @@ class Statistic(BaseModule):
 
         @RateLimiter(max_calls=5, period=1)
         def fetch_profle_page(user):
-            url = Statistic.PROFILE_URL_FORMAT_.format(user=user)
-            try:
-                page = REQ.get(url)
-            except FailOnGetResponse as e:
-                if e.args[0].code == 404:
-                    page = None
-                else:
-                    raise e
+            for format_url in (
+                Statistic.PROFILE_URL_FORMAT_,
+                Statistic.TEAM_URL_FORMAT_,
+            ):
+                url = format_url.format(user=user)
+                try:
+                    head = REQ.head(url)
+                    if head.status_code != 200:
+                        page = None
+                        continue
+                    page = REQ.get(url)
+                    break
+                except FailOnGetResponse as e:
+                    if e.args[0].code == 404:
+                        page = None
+                    else:
+                        raise e
             return page
 
         with PoolExecutor(max_workers=4) as executor:

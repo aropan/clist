@@ -12,6 +12,7 @@ import mimetypes
 import random
 import string
 import html
+import requests
 from os import path, makedirs, listdir, remove, stat, environ
 from os.path import isdir, getctime
 from json import loads, dumps, load
@@ -467,6 +468,9 @@ class requester():
     @property
     def current_url(self):
         return self.last_url
+
+    def head(self, url):
+        return requests.head(url)
 
     def get_link_by_text(self, text, page=None):
         if page is None:
