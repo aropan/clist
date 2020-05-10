@@ -317,6 +317,7 @@ class requester():
         detect_charsets=True,
         content_type=None,
         files=None,
+        return_url=False,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -358,7 +359,8 @@ class requester():
                 from_cache = diff_time.seconds < self.cache_timeout
         self.print("[cache]" if from_cache else "", url, force=from_cache)
         self.error = None
-        self.response = None
+        response = None
+        last_url = None
         if from_cache:
             with open(file_cache, "r") as f:
                 page = f.read().encode('utf8')
@@ -395,12 +397,12 @@ class requester():
                     post_urlencoded if post else None,
                     timeout=time_out or self.time_out,
                 )
+                last_url = response.geturl() if response else url
                 if response.info().get("Content-Encoding", None) == "gzip":
                     buf = BytesIO(response.read())
                     page = GzipFile(fileobj=buf).read()
                 else:
                     page = response.read()
-                self.response = response
                 self.time_response = datetime.utcnow() - time_start
                 if self.verify_word and self.verify_word not in page:
                     raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
@@ -417,10 +419,10 @@ class requester():
             try:
                 if file_cache and caching:
                     cookie_write = True
-                    if self.response.info().get("Content-Type").startswith("application/json"):
+                    if response.info().get("Content-Type").startswith("application/json"):
                         page = dumps(loads(page), indent=4)
                         cookie_write = False
-                    if self.response.info().get("Content-Type").startswith("image/"):
+                    if response.info().get("Content-Type").startswith("image/"):
                         cookie_write = False
                     with open(file_cache, "w") as f:
                         f.write(page.decode('utf8'))
@@ -459,11 +461,12 @@ class requester():
                 page = page.decode(charset, 'replace')
 
         self.last_page = page
-        self.last_url = self.response.geturl() if self.response else url
         if is_ref_url:
             self.ref_url = self.last_url
         self.file_cache_clear()
-        return page
+        self.response = response
+        self.last_url = last_url
+        return (page, last_url) if return_url else page
 
     @property
     def current_url(self):

@@ -207,13 +207,15 @@ class Statistic(BaseModule):
                 Statistic.PROFILE_URL_FORMAT_,
                 Statistic.TEAM_URL_FORMAT_,
             ):
+                page = None
                 url = format_url.format(user=user)
                 try:
-                    head = REQ.head(url)
-                    if head.status_code != 200:
-                        page = None
+                    ret = REQ.get(url, return_url=True)
+                    if not ret:
                         continue
-                    page = REQ.get(url)
+                    page, page_url = ret
+                    if url != page_url:
+                        page = None
                     break
                 except FailOnGetResponse as e:
                     if e.args[0].code == 404:

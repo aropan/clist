@@ -27,7 +27,7 @@
 <h3 class="text-center">
   Standings
   <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
-  <small>{{ contest.end_time|naturalday:'F j, Y' }}</small>
+  <small><a href="{{ contest.resource.href }}">{{ contest.resource.host }}</a> {{ contest.end_time|naturalday:'F j, Y' }}</small>
 
   {% if perms.clist.change_contest %}
     <a href="{% url 'admin:clist_contest_change' contest.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
