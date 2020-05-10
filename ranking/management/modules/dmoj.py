@@ -4,7 +4,7 @@
 import json
 import time
 import collections
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 from pprint import pprint
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from contextlib import ExitStack
@@ -16,16 +16,17 @@ from ranking.management.modules.common import REQ, BaseModule
 
 
 class Statistic(BaseModule):
-    API_RANKING_URL_FORMAT_ = 'https://dmoj.ca/api/contest/info/{key}'
-    PROBLEM_URL_ = 'https://dmoj.ca/problem/{short}'
-    FETCH_USER_INFO_URL_ = 'https://dmoj.ca/api/user/info/{0}'
+    API_RANKING_URL_FORMAT_ = '{resource}/api/contest/info/{key}'
+    PROBLEM_URL_ = '{resource}/problem/{short}'
+    FETCH_USER_INFO_URL_ = '{resource}/api/user/info/{user}'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None):
+        resource = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(self.url))
 
-        url = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
+        url = self.API_RANKING_URL_FORMAT_.format(resource=resource, **self.__dict__)
         try:
             time.sleep(1)
             page = REQ.get(url)
@@ -40,7 +41,7 @@ class Statistic(BaseModule):
                 'short': p['code'],
                 'name': p['name'],
             }
-            info['url'] = self.PROBLEM_URL_.format(**info)
+            info['url'] = self.PROBLEM_URL_.format(resource=resource, **info)
             if p.get('points'):
                 info['full_score'] = p['points']
             problems_info.append(info)
@@ -111,7 +112,7 @@ class Statistic(BaseModule):
 
                 @RateLimiter(max_calls=1, period=1)
                 def fetch_data(handle):
-                    url = self.FETCH_USER_INFO_URL_.format(quote_plus(handle))
+                    url = self.FETCH_USER_INFO_URL_.format(resource=resource, user=quote_plus(handle))
                     page = REQ.get(url)
                     data = json.loads(page)
                     return handle, data
