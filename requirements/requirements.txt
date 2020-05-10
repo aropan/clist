@@ -39,7 +39,7 @@ first==2.0.2
 setuptools==45.2.0
 jsonfield==2.0.2
 git+https://github.com/piotrbilski/django-tastypie-swagger@dec9484d3ccb7c0bb00251a4ba67ca68dfa56ffc
-git+https://github.com/aropan/django-el-pagination@loading-within-table-pr79
+git+https://github.com/aropan/django-el-pagination@4clist
 geopy==1.21.0
 cssutils==1.0.2
 unicodecsv==0.14.1

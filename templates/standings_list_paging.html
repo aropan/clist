@@ -1,7 +1,7 @@
 {% load humanize %}
 {% load extras %}
 {% load el_pagination_tags %}
-{% paginate 50 contests %}
+{% lazy_paginate 50 contests %}
 {% for contest in contests %}
 <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="contest list-group-item list-group-item-action list-group-item-{% if not contest.has_module %}info{% elif not contest.has_statistics %}danger{% elif contest.is_running %}success{% endif %}">
     {{ contest.title }}
