@@ -314,6 +314,14 @@ def strptime(val, form):
     return datetime.strptime(val, form)
 
 
+@register.filter
+def get_rating(resource, value):
+    rating, _ = resource.get_rating_color(value)
+    if not rating:
+        return None
+    return rating
+
+
 @register.simple_tag
 def coder_color_class(resource, *values):
     rating, _ = resource.get_rating_color(values)

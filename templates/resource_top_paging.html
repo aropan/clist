@@ -2,8 +2,12 @@
 {% load extras %}
 
 {% lazy_paginate first_per_page,per_page top using "top_page" %}
+{% get_pages %}
 {% for account in top %}
-  <tr>
+  <tr{% if account.id in coder_accounts_ids %} class="info"{% endif %}>
+    <td>
+      {{ forloop.counter0|add:pages.current_start_index }}
+    </td>
     <td>
       {% include 'account_table_cell.html' with account=account resource=resource %}
     </td>

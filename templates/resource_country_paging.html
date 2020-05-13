@@ -2,10 +2,14 @@
 {% load extras %}
 
 {% lazy_paginate first_per_page,per_page countries using "country_page" %}
+{% get_pages %}
 {% for country in countries %}
   {% with name=country.country|get_country_name %}
   {% with code=country.country|get_country_code %}
-  <tr>
+  <tr{% if code == coder.country %} class="info"{% endif %}>
+    <td>
+      {{ forloop.counter0|add:pages.current_start_index }}
+    </td>
     <td>
       <img class="flag flag-{{ code|lower }}"/>
       <a href="{% url_transform request country=code %}">{{ name }}</a>

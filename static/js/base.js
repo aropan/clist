@@ -53,3 +53,15 @@ function slugify(text) {
     .replace(/^-+/, '')             // Trim - from start of text
     .replace(/-+$/, '');            // Trim - from end of text
 }
+
+function get_y_chart(value, y_axis) {
+  value = (y_axis.max - value) / (y_axis.max - y_axis.min)
+  value = Math.min(Math.max(value, 0), 1)
+  return value * (y_axis.bottom - y_axis.top) + y_axis.top
+}
+
+function get_x_chart(value, x_axis) {
+  value = (value - x_axis.min) / (x_axis.max - x_axis.min)
+  value = Math.min(Math.max(value, 0), 1)
+  return value * (x_axis.right - x_axis.left) + x_axis.left
+}

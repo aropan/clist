@@ -12,7 +12,12 @@
 {% block content %}
 <script>$.endlessPaginate();</script>
 
-<h2><a href="{{ resource.href }}">{{ resource.host }}</a></h2>
+<h2>
+    <a href="{{ resource.href }}">{{ resource.host }}</a>
+    {% if perms.clist.change_resource %}
+      <a href="{% url 'admin:clist_resource_change' resource.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    {% endif %}
+</h2>
 
 <div>
     <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
@@ -41,15 +46,25 @@
         {% include 'country_filter.html' %}
 
         <div class="input-group input-group-sm">
-            <div class="input-group-btn">
-                <button class="btn btn-default">Period</button>
-            </div>
+            <span class="input-group-addon">Period</span>
             <select name="period" onchange="this.form.submit()">
                 {% for p in periods %}
                     <option value="{{ p }}"{% if p == params.period %} selected{% endif %}>{{ p }}</option>
                 {% endfor %}
             </select>
         </div>
+
+        {% if rating.data or request.GET.min_rating|length or request.GET.max_rating|length %}
+        <div class="input-group input-group-sm">
+            <span class="input-group-addon">Min rating</span>
+            <input name="min_rating" type="number" class="form-control" value="{{ request.GET.min_rating }}"/>
+            <span class="input-group-addon">Max rating</span>
+            <input name="max_rating" type="number" class="form-control" value="{{ request.GET.max_rating }}"/>
+        </div>
+        {% endif %}
+
+        <input type="submit" style="visibility: hidden;" />
+
         <script>
         $(function() {
             $('select[name="period"]').select2({
@@ -66,8 +81,9 @@
     <div class="col-md-6 col-lg-4">
         <h4>Top rating</h4>
         <div class="panel panel-default table-responsive">
-            <table class="standings table table-hover table-condensed table-striped">
+            <table class="table table-hover table-condensed table-striped">
                 <tr>
+                    <th>N</th>
                     <th>Handle</th>
                     <th>Rating</th>
                 </tr>
@@ -79,7 +95,12 @@
 
     {% if rating.data %}
     <div class="col-md-6 col-lg-8">
-        <h4>Rating distribution</h4>
+        <h4>
+            Rating distribution
+            {% if rating.account %}
+            <span class="pull-right">{% include 'account_table_cell.html' with account=rating.account resource=resource %}</span>
+            {% endif %}
+        </h4>
         <span id="toggleLogScale">
             <input
                 type="checkbox"
@@ -119,7 +140,7 @@
                         xAxes: [{
                             gridLines: {
                                 display:false
-                            }
+                            },
                         }],
                         yAxes: [{
                             ticks: {
@@ -139,7 +160,45 @@
                             },
                         },
                     },
+                    onClick: function (e, item) {
+                        if (!item) {
+                          return;
+                        }
+                        item = item[0]
+                        rating = item._chart.data.datasets[item._datasetIndex].data[item._index]
+                        {% autoescape off %}
+                        url = '{% url_transform request %}' + '&min_rating=' + rating['x'] + '&max_rating=' + (rating['x'] + {{ rating.width }} - 1)
+                        {% endautoescape %}
+                        window.location.assign(url);
+                    },
+                    onHover: (e, el) => {
+                        e.target.style.cursor = el[0] ? 'pointer' : 'default'
+                    },
                 },
+{% if rating.account %}
+                plugins: [{
+                    beforeDatasetsDraw: function (chart) {
+                        var ctx = chart.chart.ctx
+                        var y_axis = chart.chart.scales["y-axis-0"];
+                        var x_axis = chart.chart.scales["x-axis-0"];
+                        x_axis = {
+                            'min': x_axis.min,
+                            'max': x_axis.max + {{ rating.width }},
+                            'left': x_axis.left,
+                            'right': x_axis.right,
+                        }
+
+                        var x = get_x_chart({{ rating.account.rating }}, x_axis)
+                        ctx.beginPath();
+                        ctx.moveTo(x, y_axis.top);
+                        ctx.lineTo(x, y_axis.bottom);
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = "{{ resource|get_rating:rating.account.rating|get_item:'hex_rgb'|default:'black' }}";
+                        ctx.stroke();
+                        ctx.closePath()
+                    }
+                }],
+{% endif %}
             })
 
             $('#toggleLogScale input').change(function() {
@@ -160,8 +219,9 @@
     <div id="countries" class="col-md-6 col-lg-4">
         <h4>Country distribution</h4>
         <div class="panel panel-default table-responsive">
-            <table class="standings table table-hover table-condensed table-striped">
+            <table class="table table-hover table-condensed table-striped">
                 <tr>
+                    <th>N</th>
                     <th>Country</th>
                     <th>Participants<br/>number</th>
                 </tr>
@@ -175,8 +235,9 @@
     <div class="col-md-6 col-lg-4">
         <h4>Last activity</h4>
         <div class="panel panel-default table-responsive">
-            <table class="standings table table-hover table-condensed table-striped">
+            <table class="table table-hover table-condensed table-striped">
                 <tr>
+                    <th>N</th>
                     <th>Handle</th>
                     <th>Last<br/>activity</th>
                 </tr>
@@ -190,8 +251,9 @@
     <div class="col-md-6 col-lg-4">
         <h4>Most participated</h4>
         <div class="panel panel-default table-responsive">
-            <table class="standings table table-hover table-condensed table-striped">
+            <table class="table table-hover table-condensed table-striped">
                 <tr>
+                    <th>N</th>
                     <th>Handle</th>
                     <th>Contests<br/>number</th>
                 </tr>

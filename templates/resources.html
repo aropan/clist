@@ -32,6 +32,7 @@
         <th>Google<br/>calendar</th>
         <th>Auto<br/>update</th>
         <th>Update<br/>statistics</th>
+        <th>Rating</th>
         <th>Contests<br/>number</th>
         <th>Accounts<br/>number</th>
       </tr>
@@ -66,6 +67,16 @@
         <td>
           <span class="badge progress-bar-{% if resource.module %}success{% else %}danger{% endif %}">
             {% if resource.module %}
+              <i class="fas fa-check"></i>
+            {% else %}
+              <i class="fas fa-times"></i>
+            {% endif %}
+          </span>
+        </td>
+
+        <td>
+          <span class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}danger{% endif %}">
+            {% if resource.has_rating_history %}
               <i class="fas fa-check"></i>
             {% else %}
               <i class="fas fa-times"></i>

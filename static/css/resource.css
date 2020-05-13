@@ -1,10 +1,10 @@
-table tr td,
-table tr th {
+table.table tr td,
+table.table tr th {
   text-align: center;
   vertical-align: middle;
 }
 
-table tr td a {
+table.table tr td a {
   color: inherit;
 }
 
@@ -17,4 +17,9 @@ table tr td a {
   #ratingDistribution {
     min-height: 400px !important;
   }
+}
+
+[name="min_rating"],
+[name="max_rating"] {
+  width: 70px !important;
 }

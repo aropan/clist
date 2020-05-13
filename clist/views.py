@@ -1,5 +1,3 @@
-import math
-from collections import defaultdict
 from datetime import timedelta
 from urllib.parse import urlparse, parse_qs
 
@@ -279,6 +277,19 @@ def resources(request):
 def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
+    min_rating = request.GET.get('min_rating')
+    max_rating = request.GET.get('max_rating')
+
+    if request.user.is_authenticated:
+        coder = request.user.coder
+        coder_account = coder.account_set.filter(resource=resource, rating__isnull=False).first()
+        coder_account_ids = set(coder.account_set.filter(resource=resource).values_list('id', flat=True))
+        show_coder_account_rating = not min_rating and not max_rating
+    else:
+        coder = None
+        coder_account = None
+        coder_account_ids = set()
+        show_coder_account_rating = False
 
     params = {}
 
@@ -305,44 +316,65 @@ def resource(request, host, template='resource.html', extra_context=None):
     }[period]
     if delta_period:
         accounts = accounts.filter(last_activity__gte=now - delta_period)
+    if min_rating:
+        accounts = accounts.filter(rating__gte=int(min_rating))
+    if max_rating:
+        accounts = accounts.filter(rating__lte=int(max_rating))
 
     countries = accounts \
         .filter(country__isnull=False) \
         .values('country') \
         .annotate(count=Count('country')) \
-        .order_by('-count')
+        .order_by('-count', 'country')
 
-    # width = 50
+    width = 50
+    if min_rating and max_rating and int(max_rating) - int(min_rating) <= 100:
+        width = 1
 
-    # ratings = defaultdict(int)
-    # qs = accounts.filter(info__rating__isnull=False).values('info__rating')
-    # for a in qs.iterator():
-    #     rating = a['info__rating']
-    #     rating = math.floor(rating / width) * width
-    #     ratings[rating] += 1
+    rating_field = 'rating50' if width == 50 else 'rating'
 
-    # idx = 0
-    # data = []
-    # labels = []
-    # for k, v in sorted(ratings.items()):
-    #     if k > resource.ratings[idx]['high']:
-    #         idx += 1
-    #     labels.append(k)
-    #     data.append({
-    #         'title': f'{k}..{k + width - 1}',
-    #         'rating': k,
-    #         'count': v,
-    #         'info': resource.ratings[idx],
-    #     })
+    ratings = accounts \
+        .filter(**{f'{rating_field}__isnull': False}) \
+        .values(rating_field) \
+        .annotate(count=Count(rating_field)) \
+        .order_by(rating_field)
+    ratings = list(ratings)
+
+    labels = []
+    data = []
+    if ratings and resource.ratings:
+        idx = 0
+        for rating in ratings:
+            low = rating[rating_field] * width
+            high = low + width - 1
+
+            while low > resource.ratings[idx]['high']:
+                idx += 1
+            data.append({
+                'title': f'{low}..{high}',
+                'rating': low,
+                'count': rating['count'],
+                'info': resource.ratings[idx],
+            })
+        min_rating = ratings[0][rating_field]
+        max_rating = ratings[-1][rating_field]
+        if coder_account and show_coder_account_rating:
+            min_rating = min(min_rating, coder_account.rating // width)
+            max_rating = max(max_rating, coder_account.rating // width)
+        labels = list(range(min_rating * width, max_rating * width + 1, width))
 
     context = {
         'resource': resource,
+        'coder': coder,
+        'coder_accounts_ids': coder_account_ids,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
         'countries': countries,
-        # 'rating': {
-        #     'labels': labels,
-        #     'data': data,
-        # },
+        'rating': {
+            'labels': labels,
+            'data': data,
+            'account': coder_account if show_coder_account_rating else None,
+            'width': width,
+        },
         'contests': [
             ('running', contests.filter(start_time__lt=now, end_time__gt=now).order_by('start_time')),
             ('coming', contests.filter(start_time__gt=now).order_by('start_time')),
@@ -353,9 +385,9 @@ def resource(request, host, template='resource.html', extra_context=None):
         'params': params,
         'first_per_page': 10,
         'per_page': 50,
-        'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity'),
-        'top': accounts.filter(rating__isnull=False).order_by('-rating'),
-        'most_participated': accounts.filter(n_contests__gt=0).order_by('-n_contests'),
+        'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity', 'id'),
+        'top': accounts.filter(rating__isnull=False).order_by('-rating', 'id'),
+        'most_participated': accounts.order_by('-n_contests', 'id'),
     }
 
     if extra_context is not None:

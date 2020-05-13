@@ -3,8 +3,12 @@
 {% load humanize %}
 
 {% lazy_paginate first_per_page,per_page last_activities using "last_activity_page" %}
+{% get_pages %}
 {% for account in last_activities %}
-  <tr>
+  <tr{% if account.id in coder_accounts_ids %} class="info"{% endif %}>
+    <td>
+      {{ forloop.counter0|add:pages.current_start_index }}
+    </td>
     <td>
       {% include 'account_table_cell.html' with account=account resource=resource %}
     </td>

@@ -5,12 +5,11 @@ from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField
-from caching.base import CachingManager, CachingMixin
 
 from pyclist.models import BaseModel, BaseManager
 
 
-class Resource(CachingMixin, BaseModel):
+class Resource(BaseModel):
     host = models.CharField(max_length=255, unique=True)
     enable = models.BooleanField()
     url = models.CharField(max_length=255)
@@ -30,7 +29,6 @@ class Resource(CachingMixin, BaseModel):
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
     objects = BaseManager()
-    caching_objects = CachingManager()
 
     def __str__(self):
         return "%s" % (self.host)

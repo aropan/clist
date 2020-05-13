@@ -1,8 +1,12 @@
 {% if has_country %}
 <div class="input-group input-group-sm hidden" id="country-hidden">
+{% if groupby %}
   <div class="input-group-btn">
     <button class="btn btn-default{% if groupby == 'country' %} active{% endif %}" name="groupby" value="{% if groupby != 'country' %}country{% endif %}">Country</button>
   </div>
+{% else %}
+  <span class="input-group-addon">Country</span>
+{% endif %}
   <select name="country" id="country" onchange="this.form.submit()" multiple>
     <option></option>
     {% with country=request.user.coder.country %}
