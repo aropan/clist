@@ -27,6 +27,7 @@ class Account(BaseModel):
     n_contests = models.IntegerField(default=0, db_index=True)
     last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
+    rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
     info = JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
 
@@ -48,8 +49,11 @@ class Account(BaseModel):
     class Meta:
         indexes = [
             models.Index(fields=['resource', 'country']),
-            models.Index(fields=['resource', 'n_contests']),
-            models.Index(fields=['resource', 'last_activity']),
+            models.Index(fields=['resource', 'last_activity', 'country']),
+            models.Index(fields=['resource', 'n_contests', '-id']),
+            models.Index(fields=['resource', 'last_activity', '-id']),
+            models.Index(fields=['resource', 'rating', '-id']),
+            models.Index(fields=['resource', 'rating50']),
         ]
 
         unique_together = ('resource', 'key')
@@ -58,6 +62,7 @@ class Account(BaseModel):
 @receiver(pre_save, sender=Account)
 def set_account_rating(sender, instance, *args, **kwargs):
     instance.rating = instance.info.get('rating')
+    instance.rating50 = instance.rating / 50 if instance.rating is not None else None
 
 
 @receiver(post_save, sender=Account)
@@ -146,6 +151,9 @@ def statistics_pre_save(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=Statistics)
 @receiver(post_delete, sender=Statistics)
 def count_account_contests(signal, instance, **kwargs):
+    if instance.addition.get('_no_update_n_contests'):
+        return
+
     if signal is post_delete:
         instance.account.n_contests -= 1
         instance.account.save()
@@ -244,7 +252,8 @@ class Stage(BaseModel):
                 .order_by('contest__end_time')
             for r in qs:
                 d = r['addition___advance']
-                d['contest'] = r['contest__title']
+                if 'contest' not in d:
+                    d['contest'] = r['contest__title']
                 exclude_advances[r['account__key']] = d
 
         statistics = Statistics.objects.select_related('account')
@@ -387,7 +396,8 @@ class Stage(BaseModel):
                         handle = row['member'].key
                         if handle in exclude_advances and advance['next'] == exclude_advances[handle]['next']:
                             advance = exclude_advances[handle]
-                            advance.pop('class', None)
+                            if 'class' in advance and not advance['class'].startswith('text-'):
+                                advance['class'] = f'text-{advance["class"]}'
                             row['_advance'] = advance
                             break
 

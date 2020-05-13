@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
 <script src="{% static_ts 'js/highlight.pack.js' %}"></script>
 
-{% if groupby %}
+{% if groupby and groupby != 'none' %}
 <link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/Chart.min.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/google-palette@1.1.0/palette.min.js"></script>
@@ -43,7 +43,7 @@
   <br/>
   {% if statistics.exists %}
     <script>$.endlessPaginate({paginateOnScroll: true});</script>
-    {% if not groupby %}
+    {% if not groupby or groupby == 'none' %}
       <div class="panel panel-default table-responsive">
         <table class="standings table table-hover table-condensed table-float-head{% if not colored_by_group_score %} table-striped{% endif %}">
           <thead>

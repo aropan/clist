@@ -433,7 +433,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         for medal in settings.ORDERED_MEDALS_:
             labels_groupby[f'n_{medal}'] = 'Number of ' + medals.get(medal, {}).get('value', medal)
     else:
-        groupby = None
+        groupby = 'none'
         labels_groupby = None
 
     context = {

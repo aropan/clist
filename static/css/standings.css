@@ -69,6 +69,14 @@ table.standings th {
   background: #c08e55;
 }
 
+.standings .text-gold-medal {
+  color: #ccab04;
+}
+
+.standings .text-bg-success {
+  color: #4ba823;
+}
+
 table.standings .handle-cell {
   text-align: left;
   white-space: nowrap;

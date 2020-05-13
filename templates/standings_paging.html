@@ -111,40 +111,42 @@
 
   {% for field in fields.keys %}
   {% with value=addition|get_item:field %}
-  <td{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
+  <td>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
-    {% if field in addition and not value.empty %}
-      {% if field == 'hack' %}
-        <small>
-        {% if addition.hack.successful %}<div class="inline acc">+{{ addition.hack.successful }}</div>{% endif %}
-        {% if addition.hack.unsuccessful %}<div class="inline rej">-{{ addition.hack.unsuccessful }}</div>{% endif %}
-        </small>
-      {% else %}
-        {% if field in fields_to_select and value not in fields_to_select|get_item:field %}
-          <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
-        {% elif value|get_type == 'bool' %}
-          <span class="text-muted">
-            {% if value %}
-              <i class="fas fa-check"></i>
-            {% else %}
-              <i class="fas fa-times"></i>
-            {% endif %}
-          </span>
+    <span{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
+      {% if field in addition and not value.empty %}
+        {% if field == 'hack' %}
+          <small>
+          {% if addition.hack.successful %}<div class="inline acc">+{{ addition.hack.successful }}</div>{% endif %}
+          {% if addition.hack.unsuccessful %}<div class="inline rej">-{{ addition.hack.unsuccessful }}</div>{% endif %}
+          </small>
         {% else %}
-          {% with intvalue=value|toint %}
-            <span{% if field == "rating_change" %} class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}"{% endif %}>
-              {% if field == "rating_change" and intvalue %}
-                <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+          {% if field in fields_to_select and value not in fields_to_select|get_item:field %}
+            <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
+          {% elif value|get_type == 'bool' %}
+            <span class="text-muted">
+              {% if value %}
+                <i class="fas fa-check"></i>
               {% else %}
-                {{ value }}
+                <i class="fas fa-times"></i>
               {% endif %}
             </span>
-          {% endwith %}
+          {% else %}
+            {% with intvalue=value|toint %}
+              <span{% if field == "rating_change" %} class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}"{% endif %}>
+                {% if field == "rating_change" and intvalue %}
+                  <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+                {% else %}
+                  {{ value }}
+                {% endif %}
+              </span>
+            {% endwith %}
+          {% endif %}
         {% endif %}
+      {% else %}
+        <small class='text-muted'>&#183;</small>
       {% endif %}
-    {% else %}
-      <small class='text-muted'>&#183;</small>
-    {% endif %}
+    </span>
   </td>
   {% endwith %}
 
