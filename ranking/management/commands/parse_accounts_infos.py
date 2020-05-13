@@ -100,14 +100,6 @@ class Command(BaseCommand):
                                     by=contest_addition_update_by,
                                 )
 
-                            coders = data.pop('coders', [])
-                            if coders:
-                                qs = Coder.objects \
-                                    .filter(account__resource=resource, account__key__in=coders) \
-                                    .exclude(account=account)
-                                for c in qs:
-                                    c.account_set.add(account)
-
                             if 'rename' in data:
                                 other, created = Account.objects.get_or_create(resource=account.resource,
                                                                                key=data['rename'])
@@ -118,6 +110,14 @@ class Command(BaseCommand):
                                     new = MergedModelInstance.create(account, [other])
                                     other.delete()
                                 account = new
+
+                            coders = data.pop('coders', [])
+                            if coders:
+                                qs = Coder.objects \
+                                    .filter(account__resource=resource, account__key__in=coders) \
+                                    .exclude(account=account)
+                                for c in qs:
+                                    account.coders.add(c)
 
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])

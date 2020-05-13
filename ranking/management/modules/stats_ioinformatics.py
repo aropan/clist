@@ -20,6 +20,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None):
         result = {}
         problems_info = OrderedDict()
+        year = self.start_time.year
 
         if not self.standings_url:
             self.standings_url = self.url.replace('/olympiads/', '/results/')
@@ -29,6 +30,7 @@ class Statistic(BaseModule):
         html_table = re.search(regex, page, re.DOTALL).group(0)
         table = parsed_table.ParsedTable(html_table, as_list=True)
 
+        idx = 0
         for r in table:
             row = OrderedDict()
             problems = row.setdefault('problems', {})
@@ -52,12 +54,19 @@ class Statistic(BaseModule):
                 elif k == 'Rank':
                     row['place'] = v.value.strip('*').strip('.')
                 elif k == 'Contestant':
-                    url = first(v.column.node.xpath('a[@href]/@href'))
-                    member = url.strip('/').split('/')[-1]
-                    row['member'] = member
-                    row['name'] = v.value
+                    if not v.value:
+                        idx += 1
+                        member = f'{year}-{idx:06d}'
+                        row['member'] = member
+                    else:
+                        url = first(v.column.node.xpath('a[@href]/@href'))
+                        member = url.strip('/').split('/')[-1]
+                        row['member'] = member
+                        row['name'] = v.value
                 elif k == 'Country':
-                    row['country'] = re.sub(r'\s*[0-9]+$', '', v.value)
+                    country = re.sub(r'\s*[0-9]+$', '', v.value)
+                    if country:
+                        row['country'] = country
                 else:
                     row[k] = v.value
             result[row['member']] = row

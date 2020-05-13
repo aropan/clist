@@ -154,6 +154,7 @@ class Statistic(BaseModule):
                         r['room'] = str(party['room'])
 
                     r.setdefault('participant_type', []).append(party['participantType'])
+                    r['_no_update_n_contests'] = 'CONTESTANT' not in r['participant_type']
 
                     if is_ghost_team:
                         r['name'] = member['name']
@@ -213,27 +214,28 @@ class Statistic(BaseModule):
                             'unsuccessful': unhack,
                         }
 
-        try:
-            params.pop('showUnofficial')
-            data = _query(
-                method='contest.ratingChanges',
-                params=params,
-                api_key=self.api_key,
-            )
-            if data and data['status'] == 'OK':
-                for row in data['result']:
-                    if str(row.pop('contestId')) != self.key:
-                        continue
-                    handle = row.pop('handle')
-                    if handle not in result:
-                        continue
-                    r = result[handle]
-                    old_rating = row.pop('oldRating')
-                    new_rating = row.pop('newRating')
-                    r['old_rating'] = old_rating
-                    r['new_rating'] = new_rating
-        except FailOnGetResponse:
-            pass
+        params.pop('showUnofficial')
+        data = _query(
+            method='contest.ratingChanges',
+            params=params,
+            api_key=self.api_key,
+        )
+
+        if data['status'] not in ['OK', 'FAILED']:
+            raise ExceptionParseStandings(data['status'])
+
+        if data and data['status'] == 'OK':
+            for row in data['result']:
+                if str(row.pop('contestId')) != self.key:
+                    continue
+                handle = row.pop('handle')
+                if handle not in result:
+                    continue
+                r = result[handle]
+                old_rating = row.pop('oldRating')
+                new_rating = row.pop('newRating')
+                r['old_rating'] = old_rating
+                r['new_rating'] = new_rating
 
         def to_score(x):
             return (1 if x.startswith('+') or float(x) > 0 else 0) if isinstance(x, str) else x

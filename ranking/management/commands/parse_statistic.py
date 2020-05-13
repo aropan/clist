@@ -197,8 +197,14 @@ class Command(BaseCommand):
                             for k, v in r.items():
                                 if isinstance(v, str) and chr(0x00) in v:
                                     r[k] = v.replace(chr(0x00), '')
-
                             member = r.pop('member')
+                            account_action = r.pop('action', None)
+
+                            if account_action == 'delete':
+                                delete_info = Account.objects.filter(resource=resource, key=member).delete()
+                                self.logger.info(f'Delete info {member}: {delete_info}')
+                                continue
+
                             account, created = Account.objects.get_or_create(resource=resource, key=member)
 
                             updated = now + timedelta(days=1)
@@ -424,7 +430,8 @@ class Command(BaseCommand):
 
                             if statistics_ids:
                                 first = Statistics.objects.filter(pk__in=statistics_ids).first()
-                                self.logger.info(f'First deleted: {first}, account = {first.account}')
+                                if first:
+                                    self.logger.info(f'First deleted: {first}, account = {first.account}')
                                 delete_info = Statistics.objects.filter(pk__in=statistics_ids).delete()
                                 self.logger.info(f'Delete info: {delete_info}')
                                 progress_bar.set_postfix(deleted=str(delete_info))

@@ -34,7 +34,18 @@ class Statistic(BaseModule):
             return {'result': {}, 'url': standings_url}
         n_page = (data['user_num'] - 1) // len(data['total_rank']) + 1
 
-        problems_info = [{'short': f'Q{i + 1}', 'name': p['title']} for i, p in enumerate(data['questions'])]
+        problems_info = OrderedDict((
+            (
+                str(p['question_id']),
+                {
+                    'code': p['question_id'],
+                    'short': f'Q{i}',
+                    'name': p['title'],
+                    'full_score': p['credit'],
+                }
+            )
+            for i, p in enumerate(data['questions'], start=1)
+        ))
 
         def fetch_page(page):
             url = api_ranking_url_format.format(page + 1)
@@ -50,17 +61,20 @@ class Statistic(BaseModule):
                 desc='parsing statistics paging',
             ):
                 for row, submissions in zip(data['total_rank'], data['submissions']):
-                    handle = row.pop('username')
+                    handle = row.pop('user_slug')
                     if users and handle not in users:
                         continue
                     row.pop('contest_id')
-                    row.pop('user_slug')
                     row.pop('global_ranking')
 
                     r = result.setdefault(handle, OrderedDict())
                     r['member'] = handle
                     r['place'] = row.pop('rank')
                     r['solving'] = row.pop('score')
+
+                    name = row.pop('username')
+                    if name != handle:
+                        row['name'] = name
 
                     data_region = row.pop('data_region').lower()
                     r['info'] = {'profile_url': {'_data_region': '' if data_region == 'us' else f'-{data_region}'}}
@@ -73,8 +87,8 @@ class Statistic(BaseModule):
 
                     solved = 0
                     problems = r.setdefault('problems', {})
-                    for i, (k, s) in enumerate(submissions.items()):
-                        p = problems.setdefault(f'Q{i + 1}', {})
+                    for i, (k, s) in enumerate(submissions.items(), start=1):
+                        p = problems.setdefault(problems_info[k]['short'], {})
                         p['time'] = self.to_time(datetime.fromtimestamp(s['date']) - start_time)
                         if s['status'] == 10:
                             solved += 1
@@ -94,7 +108,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': standings_url,
-            'problems': problems_info,
+            'problems': list(problems_info.values()),
         }
         return standings
 

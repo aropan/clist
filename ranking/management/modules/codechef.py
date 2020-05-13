@@ -7,6 +7,7 @@ import json
 import traceback
 import tqdm
 import re
+from urllib.parse import quote
 from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -208,13 +209,13 @@ class Statistic(BaseModule):
                 Statistic.TEAM_URL_FORMAT_,
             ):
                 page = None
-                url = format_url.format(user=user)
+                url = format_url.format(user=quote(user))
                 try:
                     ret = REQ.get(url, return_url=True)
                     if not ret:
                         continue
                     page, page_url = ret
-                    if url != page_url:
+                    if '/users/' not in page_url and '/teams/' not in page_url:
                         page = None
                     break
                 except FailOnGetResponse as e:

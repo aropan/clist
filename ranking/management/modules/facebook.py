@@ -115,7 +115,7 @@ class Statistic(BaseModule):
                 pbar.update()
                 total -= 1
 
-            if len(data) < limit:
+            if not data:
                 break
 
             offset += limit

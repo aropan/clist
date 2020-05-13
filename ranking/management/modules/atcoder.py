@@ -47,6 +47,8 @@ class Statistic(BaseModule):
             if not row.get('IsRated'):
                 continue
             handle = row.pop('UserScreenName')
+            if users and handle not in users:
+                continue
             r = collections.OrderedDict()
             for k in ['OldRating', 'NewRating', 'Performance']:
                 if k in row:
@@ -73,8 +75,13 @@ class Statistic(BaseModule):
             if not row['TaskResults']:
                 continue
             handle = row.pop('UserScreenName')
+            if users and handle not in users:
+                continue
             r = result.setdefault(handle, collections.OrderedDict())
             r['member'] = handle
+            if row.pop('UserIsDeleted', None):
+                r['action'] = 'delete'
+                continue
             r['place'] = row.pop('Rank')
             total_result = row.pop('TotalResult')
             r['penalty'] = total_result['Elapsed'] // 10**9
@@ -107,7 +114,6 @@ class Statistic(BaseModule):
             r['solved'] = {'solving': solving}
 
             row.update(r)
-            row.pop('UserIsDeleted', None)
             row.pop('Additional')
             rating = row.pop('Rating', None)
             if rating is not None:
