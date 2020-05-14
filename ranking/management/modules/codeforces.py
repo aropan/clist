@@ -124,7 +124,10 @@ class Statistic(BaseModule):
                 d['url'] = urljoin(standings_url.rstrip('/'), f"problem/{d['short']}")
                 problems_info[d['short']] = d
 
-            grouped = any('teamId' in row['party'] for row in data['result']['rows'])
+            grouped = any(
+                'teamId' in row['party'] and 'CONTESTANT' in row['party']['participantType']
+                for row in data['result']['rows']
+            )
             for row in data['result']['rows']:
                 party = row['party']
 
@@ -215,14 +218,18 @@ class Statistic(BaseModule):
                         }
 
         params.pop('showUnofficial')
-        data = _query(
-            method='contest.ratingChanges',
-            params=params,
-            api_key=self.api_key,
-        )
 
-        if data['status'] not in ['OK', 'FAILED']:
-            raise ExceptionParseStandings(data['status'])
+        try:
+            data = _query(
+                method='contest.ratingChanges',
+                params=params,
+                api_key=self.api_key,
+            )
+        except FailOnGetResponse as e:
+            data = json.load(e.args[0].fp)
+
+        if data.get('status') not in ['OK', 'FAILED']:
+            raise ExceptionParseStandings(data)
 
         if data and data['status'] == 'OK':
             for row in data['result']:

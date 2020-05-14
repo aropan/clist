@@ -41,7 +41,7 @@ String.prototype.toTitleCase = function(){
     });
 };
 
-$(document).ready(function(){
+$(function(){
     $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'});
 });
 

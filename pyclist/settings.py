@@ -319,7 +319,7 @@ if DEBUG:
         'SHOW_TOOLBAR_CALLBACK': lambda request: (
             request.user.is_authenticated
             and request.user.has_perm('view_django_debug_toolbar')
-        )
+        ),
     }
 
 # CONSTANTS

@@ -114,6 +114,7 @@
   <td>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     <span{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
+    <span>
       {% if field in addition and not value.empty %}
         {% if field == 'hack' %}
           <small>
@@ -149,8 +150,8 @@
     </span>
   </td>
   {% endwith %}
-
   {% endfor %}
+
   {% for problem in problems %}
     {% with key=problem|get_problem_key  %}
     {% with stat=addition.problems|get_item:key %}

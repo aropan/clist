@@ -72,6 +72,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 ))
 def standings(request, title_slug, contest_id, template='standings.html', extra_context=None):
     groupby = request.GET.get('groupby')
+    if groupby == 'none':
+        groupby = None
+
     search = request.GET.get('search')
     if search == '':
         url = request.get_full_path()
@@ -458,7 +461,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'groupby': groupby,
         'pie_limit_rows_groupby': 50,
         'labels_groupby': labels_groupby,
-        'num_rows': statistics.count(),
         'advance': contest.info.get('advance'),
     }
 

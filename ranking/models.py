@@ -140,6 +140,7 @@ class Statistics(BaseModel):
 
         indexes = [
             models.Index(fields=['place_as_int', '-solving']),
+            models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
         ]
 
 
