@@ -329,7 +329,7 @@ def strptime(val, form):
 
 @register.filter
 def get_rating(resource, value):
-    rating, _ = resource.get_rating_color(value)
+    rating, *_ = resource.get_rating_color(value)
     if not rating:
         return None
     return rating
@@ -337,7 +337,7 @@ def get_rating(resource, value):
 
 @register.simple_tag
 def coder_color_class(resource, *values):
-    rating, _ = resource.get_rating_color(values)
+    rating, *_ = resource.get_rating_color(values)
     if not rating:
         return ''
     return f'coder-color coder-{rating["color"]}'
@@ -350,16 +350,19 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
         return ''
     color = rating['hex_rgb']
     radius = size // 2
-    if rating['high'] == 100500:
+    width = size // 6
+    if 'next' not in rating:
         fill = f'<circle cx="{radius}" cy="{radius}" r="{size // 5}" style="fill: {color}"></circle>'
         title = f'{value}'
     else:
-        low = max(rating['low'], 0)
-        percent = (value - low) / (rating['high'] - low + 1)
+        prv = max(rating['prev'], 0)
+        nxt = rating['next']
+        percent = (value - prv) / (nxt - prv)
+        v = percent * (size - 2 * width) + width
         fill = f'''
 <path
     clip-path="url(#rating-clip)"
-    d="M 0 {size} v-{round(percent * size, 3)} h {size} 0 v{size} z"
+    d="M 0 {size} v-{round(v, 3)} h {size} 0 v{size} z"
     style="fill: {color}">
 </path>
 '''
@@ -371,7 +374,7 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
 <div title="{title}" style="display: inline-block" data-toggle="tooltip" data-html="true">
     <svg class="coder-circle" viewBox="0 0 {size} {size}" width="{size}" height="{size}"">
         <circle
-            style="stroke: {color}; fill: none; stroke-width: {size // 6}px;"
+            style="stroke: {color}; fill: none; stroke-width: {width}px;"
             cx="{radius}"
             cy="{radius}"
             r="{radius - 1}"

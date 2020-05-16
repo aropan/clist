@@ -30,6 +30,8 @@ def run(*args):
                 selector_coloring[selector] = color
 
     for resource in Resource.objects.all():
+        if not resource.ratings:
+            continue
         to_save = False
         prev_rgb = None
         hsl = None
@@ -55,6 +57,25 @@ def run(*args):
                 rating['hsl'] = hsl
                 to_save = True
             prev_rgb = hex_rgb
+
+        limit = None
+        for rating in reversed(resource.ratings[:-1]):
+            if limit is None or rating['color'] != limit['color']:
+                limit = rating
+            value = limit['high'] + 1
+            if rating.get('next') != value:
+                rating['next'] = value
+                to_save = True
+
+        limit = None
+        for rating in resource.ratings[:-1]:
+            if limit is None or rating['color'] != limit['color']:
+                limit = rating
+            value = limit['low']
+            if rating.get('prev') != value:
+                rating['prev'] = value
+                to_save = True
+
         if to_save:
             pprint(resource.ratings)
             resource.save()
