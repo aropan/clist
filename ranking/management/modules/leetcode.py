@@ -140,9 +140,11 @@ class Statistic(BaseModule):
             else:
                 url = resource.profile_url.format(**account.dict_with_info())
                 try:
+                    print(url)
                     page = REQ.get(url)
                 except FailOnGetResponse as e:
-                    if e.args[0].code == 404:
+                    arg = e.args[0]
+                    if not hasattr(arg, 'code') or arg.code == 404:
                         page = None
                     else:
                         raise e
