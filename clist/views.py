@@ -4,7 +4,8 @@ from urllib.parse import urlparse, parse_qs
 import arrow
 import pytz
 from django.conf import settings
-from django.db.models import F, Q, Count
+from django.db.models.functions import Cast, Ln
+from django.db.models import F, Q, Count, IntegerField, FloatField
 from django.core.management.commands import dumpdata
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
@@ -263,7 +264,9 @@ def main(request, party=None):
 def resources(request):
     resources = Resource.objects
     resources = resources.select_related('module')
-    resources = resources.annotate(priority=F('n_accounts') + F('n_contests'))
+    resources = resources.annotate(has_rating_i=Cast('has_rating_history', IntegerField()))
+    resources = resources.annotate(has_rating_f=Cast('has_rating_i', FloatField()))
+    resources = resources.annotate(priority=Ln(F('n_contests') + 1) + Ln(F('n_accounts') + 1) + 2 * F('has_rating_f'))
     resources = resources.order_by('-priority')
     return render(request, 'resources.html', {'resources': resources})
 
