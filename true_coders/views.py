@@ -230,7 +230,8 @@ def ratings(request, username=None, key=None, host=None):
         if resource['data'] and r['old_rating']:
             last = resource['data'][-1]
             if last['new_rating'] != r['old_rating']:
-                logger.warning(f"coder = {coder}: prev = {last}, curr = {r}")
+                target = coder if username is not None else account
+                logger.warning(f"{target}: prev = {last}, curr = {r}")
         resource['data'].append(r)
 
     return JsonResponse(ratings)
