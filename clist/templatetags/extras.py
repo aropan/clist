@@ -28,6 +28,11 @@ def split(string, sep):
 
 
 @register.filter
+def strip(string, val):
+    return string.strip(val)
+
+
+@register.filter
 def get_item(dictionary, key):
     if not dictionary:
         return None
@@ -231,6 +236,14 @@ def get_problem_key(problem):
     for k in ['short', 'code', 'name']:
         if k in problem:
             return problem[k]
+
+
+@register.filter
+def add_prefix_to_problem_key(problem, prefix):
+    for k in ['short', 'code', 'name']:
+        if k in problem:
+            problem[k] = prefix + problem[k]
+            break
 
 
 @register.filter

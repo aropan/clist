@@ -18,6 +18,7 @@
 <link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/Chart.min.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/google-palette@1.1.0/palette.min.js"></script>
+<script src="{% static_ts 'js/addon-chart.js' %}"></script>
 {% endif %}
 
 {% endblock %}
@@ -74,9 +75,13 @@
               {% for problem in problems %}
               {% if not problem.skip %}
               <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
-                <div title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip">
+                <div title="{% if problem.group %}{{ problem.group }}{% else %}{{ problem|get_problem_name }}{% endif %}" data-placement="bottom" data-toggle="tooltip">
                 {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
-                {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
+                {% if problem.group %}
+                  {{ problem.group|truncatechars:truncatechars_name_problem }}
+                {% else %}
+                  {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
+                {% endif %}
                 {% if problem.url %}</a>{% endif %}
                 </div>
                 {% if not merge_problems %}
@@ -96,7 +101,14 @@
             {% if merge_problems %}
             <tr style="background: #f9f9f9">
               {% for problem in problems %}
-              <th{% if problem.colspan %} class="header-score"{% endif %}><small>{{ problem.full_score|floatformat }}</small></th>
+              <th{% if problem.colspan %} class="header-score"{% endif %}>
+                <small{% if problem.group %} title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ problem.full_score|floatformat }}</small>
+                {% if problem.n_teams is not None and with_detail %}
+                  <div class="small text-muted nobold">
+                    <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>
+                  </div>
+                {% endif %}
+              </th>
               {% endfor %}
             </tr>
             <tr></tr>

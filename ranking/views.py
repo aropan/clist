@@ -141,6 +141,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
 
     division = request.GET.get('division')
     if division == 'any':
+        with_row_num = True
         if 'place_as_int' in order:
             order.remove('place_as_int')
             order.append('place_as_int')
@@ -162,7 +163,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     fields_to_select = {}
     for f in contest_fields:
         f = f.strip('_')
-        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job']:
+        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region']:
             fields_to_select[f] = request.GET.getlist(f)
 
     with_detail = request.GET.get('detail', 'true') in ['true', 'on']
@@ -246,28 +247,34 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     problems = contest.info.get('problems', {})
     if 'division' in problems:
         divisions_order = list(problems.get('divisions_order', sorted(contest.info['problems']['division'].keys())))
+    elif 'divisions_order' in contest.info:
+        divisions_order = contest.info['divisions_order']
+    else:
+        divisions_order = []
+
+    if divisions_order:
         divisions_order.append('any')
         if division not in divisions_order:
             division = divisions_order[0]
         params['division'] = division
-        if division == 'any':
-            _problems = OrderedDict()
-            for div in reversed(divisions_order):
-                for p in problems['division'].get(div, []):
-                    k = get_problem_key(p)
-                    if k not in _problems:
-                        _problems[k] = p
-                    else:
-                        for f in 'n_accepted', 'n_teams':
-                            if f in p:
-                                _problems[k][f] = _problems[k].get(f, 0) + p[f]
+        if 'division' in problems:
+            if division == 'any':
+                _problems = OrderedDict()
+                for div in reversed(divisions_order):
+                    for p in problems['division'].get(div, []):
+                        k = get_problem_key(p)
+                        if k not in _problems:
+                            _problems[k] = p
+                        else:
+                            for f in 'n_accepted', 'n_teams':
+                                if f in p:
+                                    _problems[k][f] = _problems[k].get(f, 0) + p[f]
 
-            problems = list(_problems.values())
-        else:
+                problems = list(_problems.values())
+            else:
+                problems = problems['division'][division]
+        if division != 'any':
             statistics = statistics.filter(addition__division=division)
-            problems = problems['division'][division]
-    else:
-        divisions_order = []
 
     for p in problems:
         if 'full_score' in p and isinstance(p['full_score'], (int, float)) and abs(p['full_score'] - 1) > 1e-9:
@@ -277,7 +284,10 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     last = None
     merge_problems = False
     for p in problems:
-        if last and 'name' in last and last.get('name') == p.get('name') and last.get('full_score'):
+        if last and last.get('full_score') and (
+            'name' in last and last.get('name') == p.get('name') or
+            'group' in last and last.get('group') == p.get('group')
+        ):
             merge_problems = True
             last['colspan'] = last.get('colspan', 1) + 1
             p['skip'] = True
@@ -345,7 +355,7 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         medals = {m['name']: m for m in options.get('medals', [])}
         if 'medal' in contest_fields:
             for medal in settings.ORDERED_MEDALS_:
-                fields[f'n_{medal}'] = medals.get(medal, {}).get('value', medal[0])
+                fields[f'n_{medal}'] = medals.get(medal, {}).get('value', medal[0].upper())
         if 'advanced' in contest_fields:
             fields['n_advanced'] = 'Adv'
 
@@ -435,9 +445,13 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         }
         for medal in settings.ORDERED_MEDALS_:
             labels_groupby[f'n_{medal}'] = 'Number of ' + medals.get(medal, {}).get('value', medal)
+        num_rows_groupby = statistics.count()
+        map_colors_groupby = {s['groupby']: idx for idx, s in enumerate(statistics)}
     else:
         groupby = 'none'
         labels_groupby = None
+        num_rows_groupby = None
+        map_colors_groupby = None
 
     context = {
         'data_1st_u': data_1st_u,
@@ -461,6 +475,8 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         'groupby': groupby,
         'pie_limit_rows_groupby': 50,
         'labels_groupby': labels_groupby,
+        'num_rows_groupby': num_rows_groupby,
+        'map_colors_groupby': map_colors_groupby,
         'advance': contest.info.get('advance'),
     }
 

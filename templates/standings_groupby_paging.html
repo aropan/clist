@@ -9,38 +9,34 @@
   {% for field, header in fields.items %}
     {% with header=header|lower %}
     {% with value=statistic|get_item:field %}
+    <td>
       {% if header == 'country' %}
-        <td>
-          {% with name=value|get_country_name %}
-          {% with code=value|get_country_code %}
-          <a href="{% url_transform request country=code groupby='' %}">
-            {% if value is None %}
-              Undefined
-            {% else %}
-                {% if name %}
-                  <img class="flag flag-{{ code|lower }}"/>
-                  {{ name }}
-                {% else %}
-                  {{ value }}
-                {% endif %}
-            {% endif %}
-          </a>
-          {% endwith %}
-          {% endwith %}
-        </td>
-      {% elif value|get_type == 'float' %}
-        <td>
-          {{ value|floatformat:2 }}
-        </td>
-      {% else %}
-        <td>
-          {% if header in fields_to_select %}
-            <a class="field-to-select" href="{% url_transform request header value groupby='' %}">{{ value|default:"Undefined" }}</a>
+        {% with name=value|get_country_name %}
+        {% with code=value|get_country_code %}
+        <a href="{% url_transform request country=code groupby='' %}">
+          {% if value is None %}
+            Undefined
           {% else %}
-            {{ value }}
+              {% if name %}
+                <img class="flag flag-{{ code|lower }}"/>
+                {{ name }}
+              {% else %}
+                {{ value }}
+              {% endif %}
           {% endif %}
-        </td>
+        </a>
+        {% endwith %}
+        {% endwith %}
+      {% elif value|get_type == 'float' %}
+        {{ value|floatformat:2 }}
+      {% else %}
+        {% if header in fields_to_select %}
+          <a class="field-to-select" href="{% url_transform request header value groupby='' %}">{{ value|default:"Undefined" }}</a>
+        {% else %}
+          {{ value }}
+        {% endif %}
       {% endif %}
+    </td>
     {% endwith %}
     {% endwith %}
   {% endfor  %}

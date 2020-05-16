@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from django.db.models.signals import m2m_changed
+from django.db.models import Q
 from django.db import transaction
 from tqdm import tqdm
 
@@ -8,7 +9,7 @@ from ranking.models import Account, update_account_url
 
 
 def run(*args):
-    qs = Account.objects.filter(url__isnull=True)
+    qs = Account.objects.filter(Q(url__isnull=True))
     total = qs.count()
     with tqdm(total=total) as pbar:
         while True:

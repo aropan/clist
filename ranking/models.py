@@ -1,6 +1,5 @@
 import ast
 import collections
-from urllib.parse import quote_plus
 
 import tqdm
 from django.db import models, transaction
@@ -14,7 +13,7 @@ from django_countries.fields import CountryField
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Party
 from clist.models import Contest, Resource
-from clist.templatetags.extras import slug, get_number_from_str
+from clist.templatetags.extras import slug, get_number_from_str, get_problem_key, add_prefix_to_problem_key
 
 
 class Account(BaseModel):
@@ -81,7 +80,7 @@ def count_resource_accounts(signal, instance, **kwargs):
 def update_account_url(signal, instance, **kwargs):
 
     def default_url():
-        args = [quote_plus(instance.key), quote_plus(instance.resource.host)]
+        args = [instance.key, instance.resource.host]
         return reverse('coder:account', args=args)
 
     if signal is pre_save:
@@ -204,12 +203,13 @@ class Stage(BaseModel):
         placing = self.score_params.get('place')
         n_best = self.score_params.get('n_best')
         fields = self.score_params.get('fields', [])
+        detail_problems = self.score_params.get('detail_problems')
         order_by = self.score_params['order_by']
         advances = self.score_params.get('advances', {})
         results = collections.defaultdict(collections.OrderedDict)
 
         problems_infos = collections.OrderedDict()
-        for contest in tqdm.tqdm(contests, desc=f'getting contests for stage {stage}'):
+        for idx, contest in enumerate(tqdm.tqdm(contests, desc=f'getting contests for stage {stage}'), start=1):
             info = {
                 'code': str(contest.pk),
                 'name': contest.title,
@@ -222,28 +222,35 @@ class Stage(BaseModel):
             }
 
             problems = contest.info.get('problems', [])
-            full_score = None
-            if placing:
-                if 'division' in placing:
-                    full_score = max([max(p.values()) for p in placing['division'].values()])
+            if not detail_problems:
+                full_score = None
+                if placing:
+                    if 'division' in placing:
+                        full_score = max([max(p.values()) for p in placing['division'].values()])
+                    else:
+                        full_score = max(placing.values())
+                elif 'division' in problems:
+                    full_scores = []
+                    for ps in problems['division'].values():
+                        full = 0
+                        for problem in ps:
+                            full += problem.get('full_score', 1)
+                        full_scores.append(full)
+                    info['full_score'] = max(full_scores)
                 else:
-                    full_score = max(placing.values())
-            elif 'division' in problems:
-                full_scores = []
-                for ps in problems['division'].values():
-                    full = 0
-                    for problem in ps:
-                        full += problem.get('full_score', 1)
-                    full_scores.append(full)
-                info['full_score'] = max(full_scores)
+                    full_score = 0
+                    for problem in problems:
+                        full_score += problem.get('full_score', 1)
+                if full_score is not None:
+                    info['full_score'] = full_score
+                problems_infos[str(contest.pk)] = info
             else:
-                full_score = 0
                 for problem in problems:
-                    full_score += problem.get('full_score', 1)
-            if full_score is not None:
-                info['full_score'] = full_score
-
-            problems_infos[contest.pk] = info
+                    problem = dict(problem)
+                    add_prefix_to_problem_key(problem, f'{idx}.')
+                    problem['group'] = info['name']
+                    problem['url'] = info['url']
+                    problems_infos[get_problem_key(problem)] = problem
 
         exclude_advances = {}
         if advances and advances.get('exclude_stages'):
@@ -264,7 +271,8 @@ class Stage(BaseModel):
 
         total = statistics.filter(contest__in=contests).count()
         with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar:
-            for contest in contests:
+            for idx, contest in enumerate(contests, start=1):
+                problem_key = str(contest.pk)
                 pbar.set_postfix(contest=contest)
                 stats = statistics.filter(contest_id=contest.pk)
 
@@ -272,12 +280,14 @@ class Stage(BaseModel):
                     row = results[s.account]
                     row['member'] = s.account
 
-                    problems_infos[contest.pk]['n_teams'] += 1
+                    if not detail_problems:
+                        problems_infos[problem_key]['n_teams'] += 1
 
                     if s.solving < 1e-9:
                         score = 0
                     else:
-                        problems_infos[contest.pk]['n_accepted'] += 1
+                        if not detail_problems:
+                            problems_infos[problem_key]['n_accepted'] += 1
                         if placing:
                             placing_ = placing['division'][s.addition['division']] if 'division' in placing else placing
                             score = placing_.get(str(s.place_as_int), placing_['default'])
@@ -285,13 +295,17 @@ class Stage(BaseModel):
                             score = s.solving
 
                     problems = row.setdefault('problems', {})
-                    problem = problems.setdefault(str(contest.pk), {})
-                    problem['result'] = score
-                    url = s.addition.get('url')
-                    if url:
-                        problem['url'] = url
+                    if detail_problems:
+                        for key, problem in s.addition.get('problems', {}).items():
+                            problems[f'{idx}.' + key] = problem
+                    else:
+                        problem = problems.setdefault(problem_key, {})
+                        problem['result'] = score
+                        url = s.addition.get('url')
+                        if url:
+                            problem['url'] = url
 
-                    if n_best:
+                    if n_best and not detail_problems:
                         row.setdefault('scores', []).append((score, problem))
                     else:
                         row['score'] = row.get('score', 0) + score
@@ -304,7 +318,10 @@ class Stage(BaseModel):
                             continue
                         if field.get('first') and out in row or inp not in s.addition:
                             continue
-                        val = ast.literal_eval(str(s.addition[inp]))
+                        if field.get('safe'):
+                            val = s.addition[inp]
+                        else:
+                            val = ast.literal_eval(str(s.addition[inp]))
                         field_values[out] = val
                         if field.get('accumulate'):
                             val = round(val + ast.literal_eval(str(row.get(out, 0))), 2)
@@ -377,17 +394,20 @@ class Stage(BaseModel):
             fields = list()
 
             pks = set()
-            last_score = None
-            place = None
+            placing_infos = {}
             score_advance = None
             place_advance = 0
-            for index, row in enumerate(tqdm.tqdm(results, desc=f'update statistics for stage {stage}'), start=1):
-                curr_score = tuple(row[k.lstrip('-')] for k in order_by)
-                if curr_score != last_score:
-                    last_score = curr_score
-                    place = index
+            for row in tqdm.tqdm(results, desc=f'update statistics for stage {stage}'):
+                division = row.get('division', 'none')
+                placing_info = placing_infos.setdefault(division, {})
+                placing_info['index'] = placing_info.get('index', 0) + 1
 
-                if advances:
+                curr_score = tuple(row[k.lstrip('-')] for k in order_by)
+                if curr_score != placing_info.get('last_score'):
+                    placing_info['last_score'] = curr_score
+                    placing_info['place'] = placing_info['index']
+
+                if advances and ('divisions' not in advances or division in advances['divisions']):
                     tmp = score_advance, place_advance
                     if curr_score != score_advance:
                         score_advance = curr_score
@@ -404,6 +424,8 @@ class Stage(BaseModel):
 
                         if 'places' in advance and place_advance in advance['places']:
                             row['_advance'] = advance
+                            for field in advance.get('inplace_fields', []):
+                                row[field] = advance[field]
                             tmp = None
                             break
 
@@ -416,8 +438,8 @@ class Stage(BaseModel):
                     account=account,
                     contest=stage,
                     defaults={
-                        'place': str(place),
-                        'place_as_int': place,
+                        'place': str(placing_info['place']),
+                        'place_as_int': placing_info['place'],
                         'solving': solving,
                         'addition': row,
                     },

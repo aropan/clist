@@ -12,7 +12,7 @@
     {% if addition.medal %}
       class="{{ addition.medal|lower }}-medal"
       {% with medal_title_field=addition|get_item:"_medal_title_field" %}
-      title="{% if medal_title_field %}{{ medal_title_field|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
+      title="{% if medal_title_field %}{{ medal_title_field|strip:"_"|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
       {% endwith %}
       data-toggle="tooltip"
       data-placement="top"
@@ -21,7 +21,7 @@
       {% if advance %}
         data-toggle="tooltip"
         data-placement="top"
-        title="{% if advance.contest or not contest.next_time %}Advanced{% else %}Supposedly advance{% endif %} to {{ advance.next }}{% if advance.contest %} (in {{ advance.contest }}){% endif %}"
+        title="{% if advance.next %}{% if advance.contest or not contest.next_time %}Advanced{% else %}Supposedly advance{% endif %} to {{ advance.next }}{% if advance.contest %} (in {{ advance.contest }}){% endif %}{% elif advance.medal %}{{ advance.medal }}{% endif %}"
       {% endif %}
     {% endif %}
   >

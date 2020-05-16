@@ -193,6 +193,14 @@ class Command(BaseCommand):
                         has_hidden = False
                         languages = set()
 
+                        additions = contest.info.get('additions', {})
+                        if additions:
+                            for k, v in result.items():
+                                for field in [r.get('member'), r.get('name')]:
+                                    r.update(OrderedDict(additions.pop(field, [])))
+                            for k, v in additions.items():
+                                result[k] = dict(v)
+
                         for r in tqdm(list(result.values()), desc=f'update results {contest}'):
                             for k, v in r.items():
                                 if isinstance(v, str) and chr(0x00) in v:
@@ -245,6 +253,10 @@ class Command(BaseCommand):
                                 account.info.update(account_info)
                                 account.save()
 
+                            default_division = contest.info.get('default_division')
+                            if default_division and 'division' not in r:
+                                r['division'] = default_division
+
                             problems = r.get('problems', {})
 
                             _languages = set()
@@ -263,9 +275,22 @@ class Command(BaseCommand):
                                         continue
 
                                     p = d_problems
-                                    if 'division' in r:
+                                    if 'division' in standings.get('problems', {}):
                                         p = p.setdefault(r['division'], {})
                                     p = p.setdefault(k, {})
+
+                                    if 'default_problem_full_score' in contest.info:
+                                        full_score = contest.info['default_problem_full_score']
+                                        if 'partial' not in v and full_score - float(v['result']) > 1e-9:
+                                            v['partial'] = True
+                                        if 'full_score' not in p:
+                                            p['full_score'] = full_score
+                                    if contest.info.get('without_problem_first_ac'):
+                                        v.pop('first_ac', None)
+                                        v.pop('first_ac_of_all', None)
+                                    if contest.info.get('without_problem_time'):
+                                        v.pop('time', None)
+
                                     p['n_teams'] = p.get('n_teams', 0) + 1
 
                                     ac = str(v['result']).startswith('+')
@@ -311,11 +336,6 @@ class Command(BaseCommand):
                                     if f not in fields_set:
                                         fields_set.add(f)
                                         fields.append(f)
-
-                            additions = contest.info.get('additions', {})
-                            if additions:
-                                for field in [member, r.get('name')]:
-                                    r.update(OrderedDict(additions.get(field, [])))
 
                             defaults = {
                                 'place': r.pop('place', None),
@@ -443,7 +463,7 @@ class Command(BaseCommand):
                             if calculate_time and not contest.calculate_time:
                                 contest.calculate_time = True
 
-                            problems = standings.pop('problems', None)
+                            problems = standings.pop('problems', [])
                             if 'division' in problems:
                                 for d, ps in problems['division'].items():
                                     for p in ps:

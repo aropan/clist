@@ -5,3 +5,9 @@ class ListAsQueryset(list):
 
     def count(self):
         return len(self)
+
+    def order_by(self, field):
+        reverse = field.startswith('-')
+        field = field.strip('-')
+        self.sort(key=lambda el: el.get(field), reverse=reverse)
+        return self
