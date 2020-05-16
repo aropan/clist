@@ -1,0 +1,30 @@
+{% load el_pagination_tags %}
+{% load extras %}
+{% load humanize %}
+
+{% with name=request.GET.querystring_key|split:"_"|get_item:0|default:contest_key %}
+{% with data=contests|get_item:name %}
+{% with contests=data.contests %}
+{% with name_page=name|add:"_page" %}
+
+{% lazy_paginate first_per_page,per_page contests using name_page %}
+{% get_pages %}
+{% for contest in contests %}
+  <tr>
+    <td>
+      {{ contest|get_item:data.field|naturalday }}
+    </td>
+    <td class="title">
+      <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if contest.is_over and not contest.has_statistics %} class="text-muted"{% endif %}>
+        {{ contest.title }}
+      <a>
+    </td>
+  </tr>
+{% endfor %}
+
+{% show_more_table %}
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}

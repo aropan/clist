@@ -276,6 +276,9 @@ def resources(request):
     ('resource_last_activity_paging.html', 'last_activity_page'),
     ('resource_top_paging.html', 'top_page'),
     ('resource_most_participated_paging.html', 'most_participated_page'),
+    ('resource_contests.html', 'past_page'),
+    ('resource_contests.html', 'coming_page'),
+    ('resource_contests.html', 'running_page'),
 ))
 def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
@@ -378,11 +381,21 @@ def resource(request, host, template='resource.html', extra_context=None):
             'account': coder_account if show_coder_account_rating else None,
             'width': width,
         },
-        'contests': [
-            ('running', contests.filter(start_time__lt=now, end_time__gt=now).order_by('start_time')),
-            ('coming', contests.filter(start_time__gt=now).order_by('start_time')),
-            ('past', contests.filter(end_time__lt=now).order_by('-end_time')),
-        ],
+        'contests': {
+            'past': {
+                'contests': contests.filter(end_time__lt=now).order_by('-end_time'),
+                'field': 'end_time',
+            },
+            'running': {
+                'contests': contests.filter(start_time__lt=now, end_time__gt=now).order_by('end_time'),
+                'field': 'end_time',
+            },
+            'coming': {
+                'contests': contests.filter(start_time__gt=now).order_by('start_time'),
+                'field': 'start_time',
+            },
+        },
+        'contest_key': None,
         'has_country': has_country,
         'periods': periods,
         'params': params,

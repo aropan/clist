@@ -33,10 +33,14 @@ def strip(string, val):
 
 
 @register.filter
-def get_item(dictionary, key):
-    if not dictionary:
+def get_item(data, key):
+    if not data:
         return None
-    return dictionary.get(key)
+    if isinstance(data, dict):
+        return data.get(key)
+    if isinstance(data, (list, tuple)):
+        return data[key]
+    return getattr(data, key, None)
 
 
 @register.filter

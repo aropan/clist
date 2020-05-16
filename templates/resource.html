@@ -262,6 +262,27 @@
         </div>
     </div>
     {% endif %}
+
+    {% for name, data in contests.items %}
+    {% if data.contests.exists %}
+    <div class="col-md-6 col-lg-4">
+        <h4>{{ name|title }} contests</h4>
+        <div class="panel panel-default table-responsive">
+            <table class="contests table table-hover table-condensed table-striped">
+                <tr>
+                    <th>
+                    {% with values=data.field|title|split:"_" %}
+                    {% for v in values %}{{ v }}<br/>{% endfor %}
+                    {% endwith %}
+                    </th>
+                    <th class="title">Contest</th>
+                </tr>
+                {% include 'resource_contests.html' with contests=contests contest_key=name %}
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
 </div>
 
 {% endblock %}

@@ -31,7 +31,7 @@ class Account(BaseModel):
     updated = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return '%s on %s' % (str(self.key), str(self.resource))
+        return '%s on %s' % (str(self.key), str(self.resource_id))
 
     def dict(self):
         return {

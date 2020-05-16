@@ -4,10 +4,6 @@ table.table tr th {
   vertical-align: middle;
 }
 
-table.table tr td a {
-  color: inherit;
-}
-
 #toggleLogScale {
   position: absolute;
   right: 0;
@@ -22,4 +18,12 @@ table.table tr td a {
 [name="min_rating"],
 [name="max_rating"] {
   width: 70px !important;
+}
+
+table.table td {
+  white-space: nowrap;
+}
+
+table.table.contests tr .title {
+  text-align: left;
 }
