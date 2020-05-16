@@ -140,7 +140,6 @@ class Statistic(BaseModule):
             else:
                 url = resource.profile_url.format(**account.dict_with_info())
                 try:
-                    print(url)
                     page = REQ.get(url)
                 except FailOnGetResponse as e:
                     arg = e.args[0]
