@@ -96,6 +96,11 @@ def get_profile_context(request, statistics):
     return context
 
 
+@login_required
+def coder_profile(request):
+    return HttpResponseRedirect(reverse('coder:profile', args=[request.user.coder.username]))
+
+
 @page_template('profile_contests_paging.html')
 def profile(request, username, template='profile.html', extra_context=None):
     coder = get_object_or_404(Coder, user__username=username)

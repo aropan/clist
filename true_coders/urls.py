@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^settings/(preferences|social|accounts|filters|notifications)/$', views.settings, name='settings'),
     url(r'^settings/change/$', views.change, name='change'),
     url(r'^settings/search/$', views.search, name='search'),
+    url(r'^coder/$', views.coder_profile, name='coder_profile'),
     url(r'^coder/([^/]*)/$', views.profile, name='profile'),
     url(r'^coder/(?P<username>[^/]*)/ratings/$', views.ratings, name='ratings'),
     url(r'^account/(?P<key>.*)/resource/(?P<host>.*)/ratings/$', views.ratings),
