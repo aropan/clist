@@ -530,9 +530,17 @@ def search(request, **kwargs):
         else:
             qs = qs.select_related('resource')
         if 'user' in request.GET:
-            qs = qs.filter(get_iregex_filter(request.GET.get('user'), 'key', 'name'))
+            re_search = request.GET.get('user')
+            qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
+            qs = qs.annotate(match=Case(
+                When(Q(key=re_search) | Q(name=re_search), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))
+        else:
+            qs = qs.annotate(match=Value(False, output_field=BooleanField()))
 
-        qs = qs.annotate(has_multi=F('resource__module__multi_account_allowed')) \
+        qs = qs.annotate(has_multi=F('resource__module__multi_account_allowed'))
 
         qs = qs.annotate(disabled=Case(
             When(coders=coder, then=Value(True)),
@@ -541,7 +549,7 @@ def search(request, **kwargs):
             output_field=BooleanField(),
         ))
 
-        qs = qs.order_by('disabled')
+        qs = qs.order_by('disabled', '-match')
 
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
