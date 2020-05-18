@@ -58,6 +58,9 @@
                 $rounds = preg_replace('/([{,])([a-z]+):/', '\1"\2":', $rounds);
                 $rounds = json_decode($rounds, true);
                 foreach ($rounds as $r) {
+                    if (!isset($r['scores']) || !isset($r['problems'])) {
+                        continue;
+                    }
                     if (isset($r['id'])) {
                         $key = $r['id'];
                         if (strlen($key) == 16) {

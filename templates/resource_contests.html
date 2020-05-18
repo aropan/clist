@@ -12,7 +12,11 @@
 {% for contest in contests %}
   <tr>
     <td>
-      {{ contest|get_item:data.field|naturalday }}
+      {% if data.field == 'time_left' %}
+        {{ contest.next_time|countdown }}
+      {% else %}
+        {{ contest|get_item:data.field|naturalday }}
+      {% endif %}
     </td>
     <td class="title">
       <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if contest.is_over and not contest.has_statistics %} class="text-muted"{% endif %}>

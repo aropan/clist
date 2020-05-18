@@ -311,15 +311,16 @@ def resource(request, host, template='resource.html', extra_context=None):
         accounts = accounts.filter(country__in=countries)
 
     period = request.GET.get('period', 'all')
-    periods = ['month', 'quarter', 'half', 'year', 'all']
     params['period'] = period
-    delta_period = {
+    deltas_period = {
         'month': timedelta(days=30 * 1),
         'quarter': timedelta(days=30 * 3),
         'half': timedelta(days=30 * 6),
         'year': timedelta(days=30 * 12),
         'all': None,
-    }[period]
+    }
+    periods = list(deltas_period.keys())
+    delta_period = deltas_period.get(period, None)
     if delta_period:
         accounts = accounts.filter(last_activity__gte=now - delta_period)
     if min_rating:
@@ -388,7 +389,7 @@ def resource(request, host, template='resource.html', extra_context=None):
             },
             'running': {
                 'contests': contests.filter(start_time__lt=now, end_time__gt=now).order_by('end_time'),
-                'field': 'end_time',
+                'field': 'time_left',
             },
             'coming': {
                 'contests': contests.filter(start_time__gt=now).order_by('start_time'),

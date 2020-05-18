@@ -17,7 +17,7 @@ def main(host=None):
         accounts = accounts.filter(resource__host__regex=host)
     print(timezone.now(), accounts.count())
 
-    filt = Q(addition___no_update_n_contests__isnull=True)
+    filt = Q(addition___no_update_n_contests__isnull=True) | Q(addition___no_update_n_contests=False)
 
     qs = accounts.annotate(count=SubqueryCount('statistics', filter=filt))
     qs = qs.exclude(n_contests=F('count'))
@@ -31,6 +31,7 @@ def main(host=None):
                 pbar.update()
     print(timezone.now())
 
+    filt = Q(statistics__addition___no_update_n_contests__isnull=True)
     qs = accounts.annotate(last=SubqueryMax('statistics__contest__start_time', filter=filt))
     qs = qs.exclude(last_activity=F('last'))
     total = qs.count()
