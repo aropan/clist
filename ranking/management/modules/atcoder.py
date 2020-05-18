@@ -37,6 +37,16 @@ class Statistic(BaseModule):
         return page
 
     def get_standings(self, users=None, statistics=None):
+        page = self._get(self.url)
+        match = re.search(r'(?<=<li>)Writer:.*', page)
+        writers = []
+        if match:
+            matches = re.findall('(?<=>)[^<]+(?=<)', match.group())
+            writers = list()
+            for m in matches:
+                writers.extend(map(str.strip, re.split(r',\s*', m)))
+            writers = [w for w in writers if w and w != '?']
+
         url = f'{self.RESULTS_URL_.format(self)}/'
         page = self._get(url)
 
@@ -164,6 +174,7 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.STANDING_URL_.format(self),
             'problems': list(task_info.values()),
+            'writers': writers,
         }
         return standings
 

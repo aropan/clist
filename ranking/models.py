@@ -1,5 +1,7 @@
+import re
 import ast
 import collections
+from copy import deepcopy
 
 import tqdm
 from django.db import models, transaction
@@ -243,6 +245,8 @@ class Stage(BaseModel):
                         full_score += problem.get('full_score', 1)
                 if full_score is not None:
                     info['full_score'] = full_score
+                if self.score_params.get('abbreviation_problem_name'):
+                    info['short'] = ''.join(re.findall(r'(\b[A-Z]|[0-9])', contest.title))
                 problems_infos[str(contest.pk)] = info
             else:
                 for problem in problems:
@@ -269,30 +273,60 @@ class Stage(BaseModel):
         if filter_statistics:
             statistics = statistics.filter(**filter_statistics)
 
+        def get_placing(placing, stat):
+            return placing['division'][stat.addition['division']] if 'division' in placing else placing
+
+        account_keys = dict()
         total = statistics.filter(contest__in=contests).count()
         with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar:
             for idx, contest in enumerate(contests, start=1):
-                problem_key = str(contest.pk)
+                problem_info_key = str(contest.pk)
+                problem_key = get_problem_key(problems_infos[problem_info_key])
                 pbar.set_postfix(contest=contest)
                 stats = statistics.filter(contest_id=contest.pk)
 
-                for s in stats.iterator():
-                    row = results[s.account]
-                    row['member'] = s.account
+                if placing:
+                    placing_scores = deepcopy(placing)
+                    n_rows = 0
+                    for s in stats:
+                        n_rows += 1
+                        placing_ = get_placing(placing_scores, s)
+                        key = str(s.place_as_int)
+                        if key in placing_:
+                            placing_.setdefault('scores', {})
+                            placing_['scores'][key] = placing_.pop(key)
+                    scores = []
+                    for place in reversed(range(1, n_rows + 1)):
+                        placing_ = get_placing(placing_scores, s)
+                        key = str(place)
+                        if key in placing_:
+                            scores.append(placing_.pop(key))
+                        else:
+                            if scores:
+                                placing_['scores'][key] += sum(scores)
+                                placing_['scores'][key] /= len(scores) + 1
+                            scores = []
 
+                for s in stats:
                     if not detail_problems:
-                        problems_infos[problem_key]['n_teams'] += 1
+                        problems_infos[problem_info_key]['n_teams'] += 1
 
                     if s.solving < 1e-9:
                         score = 0
                     else:
                         if not detail_problems:
-                            problems_infos[problem_key]['n_accepted'] += 1
+                            problems_infos[problem_info_key]['n_accepted'] += 1
                         if placing:
-                            placing_ = placing['division'][s.addition['division']] if 'division' in placing else placing
-                            score = placing_.get(str(s.place_as_int), placing_['default'])
+                            placing_ = get_placing(placing_scores, s)
+                            score = placing_['scores'].get(str(s.place_as_int), placing_.get('default'))
+                            if score is None:
+                                continue
                         else:
                             score = s.solving
+
+                    row = results[s.account]
+                    row['member'] = s.account
+                    account_keys[s.account.key] = s.account
 
                     problems = row.setdefault('problems', {})
                     if detail_problems:
@@ -338,7 +372,7 @@ class Stage(BaseModel):
                     else:
                         for field in order_by:
                             field = field.lstrip('-')
-                            if field == 'score':
+                            if field in ['score', 'rating']:
                                 continue
                             status = field_values.get(field, row.get(field))
                             if status is None:
@@ -347,6 +381,39 @@ class Stage(BaseModel):
                             break
 
                     pbar.update()
+
+        if self.score_params.get('writers_proportionally_score'):
+            total = sum([len(contest.info.get('writers', [])) for contest in contests])
+            with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar:
+                writers = set()
+                for contest in contests:
+                    problem_info_key = str(contest.pk)
+                    problem_key = get_problem_key(problems_infos[problem_info_key])
+                    for writer in contest.info.get('writers', []):
+                        if writer in account_keys:
+                            account = account_keys[writer]
+                        else:
+                            account = Account.objects.filter(resource_id=contest.resource_id,
+                                                             key__iexact=writer).first()
+                        pbar.update()
+                        if not account:
+                            continue
+                        writers.add(account)
+
+                        row = results[account]
+                        row['member'] = account
+                        row['writer'] = row.get('writer', 0) + 1
+
+                        problems = row.setdefault('problems', {})
+                        problem = problems.setdefault(problem_key, {})
+                        problem['status'] = 'W'
+
+            n_contests = len(contests)
+            for account in writers:
+                row = results[account]
+                if n_contests == row['writer'] or 'score' not in row:
+                    continue
+                row['score'] = row['score'] / (n_contests - row['writer']) * n_contests
 
         for field in fields:
             t = field.get('type')

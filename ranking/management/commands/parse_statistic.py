@@ -180,6 +180,10 @@ class Command(BaseCommand):
                             contest.info['standings'] = standings_options
                             contest.save()
 
+                    if 'writers' in standings and contest.info.get('writers') != standings['writers']:
+                        contest.info['writers'] = standings['writers']
+                        contest.save()
+
                     problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
 
                     result = standings.get('result', {})
@@ -524,7 +528,7 @@ class Command(BaseCommand):
                     delay = resource.module.delay_on_error
                 contest.timing.statistic = timezone.now() + delay
                 contest.timing.save()
-            else:
+            elif not no_update_results:
                 stages = Stage.objects.filter(
                     contest__start_time__lte=contest.start_time,
                     contest__end_time__gte=contest.end_time,
