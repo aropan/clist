@@ -402,7 +402,10 @@ class Stage(BaseModel):
 
                         row = results[account]
                         row['member'] = account
-                        row['writer'] = row.get('writer', 0) + 1
+                        row.setdefault('score', 0)
+                        row.setdefault('writer', 0)
+
+                        row['writer'] += 1
 
                         problems = row.setdefault('problems', {})
                         problem = problems.setdefault(problem_key, {})
@@ -449,10 +452,10 @@ class Stage(BaseModel):
                     else:
                         problem['status'] = problem.pop('result')
 
-        results = [r for r in results if r['score'] > 1e-9]
+        results = [r for r in results if r['score'] > 1e-9 or r.get('writer')]
         results = sorted(
             results,
-            key=lambda r: tuple(r[k.lstrip('-')] * (-1 if k.startswith('-') else 1) for k in order_by),
+            key=lambda r: tuple(r.get(k.lstrip('-'), 0) * (-1 if k.startswith('-') else 1) for k in order_by),
             reverse=True,
         )
 
@@ -469,7 +472,7 @@ class Stage(BaseModel):
                 placing_info = placing_infos.setdefault(division, {})
                 placing_info['index'] = placing_info.get('index', 0) + 1
 
-                curr_score = tuple(row[k.lstrip('-')] for k in order_by)
+                curr_score = tuple(row.get(k.lstrip('-'), 0) for k in order_by)
                 if curr_score != placing_info.get('last_score'):
                     placing_info['last_score'] = curr_score
                     placing_info['place'] = placing_info['index']

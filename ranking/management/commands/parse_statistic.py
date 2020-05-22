@@ -180,7 +180,7 @@ class Command(BaseCommand):
                             contest.info['standings'] = standings_options
                             contest.save()
 
-                    if 'writers' in standings and contest.info.get('writers') != standings['writers']:
+                    if standings.get('writers') and contest.info.get('writers') != standings['writers']:
                         contest.info['writers'] = standings['writers']
                         contest.save()
 

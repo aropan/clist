@@ -170,7 +170,7 @@
               {% if stat.partial %}par{% else %}acc{% endif %}
             {% elif stat.result|slice:":1" == "?" %}
               hid
-            {% elif with_reject_color %}
+            {% elif stat.result|slice:":1" == "-" %}
               rej
             {% endif %}
             "
