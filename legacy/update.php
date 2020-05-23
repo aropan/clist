@@ -48,6 +48,11 @@
     foreach ($resources as $resource)
     {
         $parse_url = empty($resource['parse_url'])? $resource['url'] : $resource['parse_url'];
+        $variables = array(
+            '${YEAR}' => date('Y')
+        );
+        $parse_url = strtr($parse_url, $variables);
+
         echo "<b>{$resource['host']}</b>";
         $preCountContests = count($contests);
         if ($resource['path'])
@@ -71,10 +76,7 @@
         }
         if ($resource['regexp'])
         {
-            $variables = array(
-                '${YEAR}' => date('Y')
-            );
-            $url = strtr($parse_url, $variables);
+            $url = $parse_url;
 
             $page = curlexec($url);
 
@@ -213,14 +215,11 @@
                     if (!isset($match[$arg]) || empty($match[$arg])) $match[$arg] = 0;
                 $contest['duration'] = (($match['d'] * 24 + $match['hr']) * 60 + $match['min']) * 60;
             }
-            else
-            if (preg_match('#^(\d+):(\d+):(\d+)$#', $contest['duration'], $match))
+            else if (preg_match('#^(\d+):(\d+):(\d+)$#', $contest['duration'], $match))
                 $contest['duration'] = (((int)$match[1] * 24 + (int)$match[2]) * 60 + (int)$match[3]) * 60;
-            else
-            if (preg_match('#^(\d+):(\d+)$#', $contest['duration'], $match))
+            else if (preg_match('#^(\d+):(\d+)$#', $contest['duration'], $match))
                 $contest['duration'] = ((int)$match[1] * 60 + (int)$match[2]) * 60;
-            else
-            if (preg_match('#^(\d+)$#', $contest['duration'], $match))
+            else if (preg_match('#^(\d+)$#', $contest['duration'], $match))
                 $contest['duration'] = (int)$match[1] * 60;
             else {
                 $contest['duration'] = preg_replace('/^([0-9]+)d /', '\1 days ', $contest['duration']);
