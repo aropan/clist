@@ -312,7 +312,7 @@ def resource(request, host, template='resource.html', extra_context=None):
 
     params = {}
 
-    contests = resource.contest_set.filter(invisible=False).annotate(has_statistics=Exists('statistics'))
+    contests = resource.contest_set.annotate(has_statistics=Exists('statistics'))
 
     accounts = Account.objects.filter(resource=resource)
 
