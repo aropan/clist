@@ -34,7 +34,7 @@ class Coder(BaseModel):
     @property
     def chat(self):
         if not hasattr(self, 'cchat'):
-            self.cchat = list(self.chat_set.exclude(secret_key__isnull=True))
+            self.cchat = list(self.chat_set.filter(is_group=False))
         return self.cchat[0] if self.cchat else None
 
     def get_contest_filter(self, categories, ignores=None):
@@ -84,7 +84,7 @@ class Coder(BaseModel):
 
     def get_categories(self):
         categories = list(Filter.CATEGORIES)
-        for chat in self.chat_set.filter(secret_key__isnull=True):
+        for chat in self.chat_set.filter(is_group=True):
             categories.append(chat.get_group_name())
         return categories
 

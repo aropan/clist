@@ -10,9 +10,10 @@ class Chat(BaseModel):
     title = models.CharField(max_length=100, blank=True, null=True)
     secret_key = models.CharField(max_length=20, blank=True, null=True)
     last_command = JSONField(default=dict, blank=True)
+    is_group = models.BooleanField(default=False)
 
     def __str__(self):
-        return "%s#%s" % (self.coder.user.username, self.chat_id)
+        return "%s#%s" % (self.coder_id, self.chat_id)
 
     def get_group_name(self):
         return "%s@%s" % (self.chat_id, self.title)

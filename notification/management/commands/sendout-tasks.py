@@ -32,7 +32,7 @@ class Command(BaseCommand):
         qs = qs.prefetch_related(
             Prefetch(
                 'notification__coder__chat_set',
-                queryset=Chat.objects.exclude(secret_key__isnull=True),
+                queryset=Chat.objects.filter(is_group=False),
                 to_attr='cchat',
             )
         )

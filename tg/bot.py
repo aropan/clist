@@ -241,6 +241,7 @@ class Bot(telegram.Bot):
                     chat_id=self.chat_id,
                     coder=self.coder,
                     title=self.message['chat']['title'],
+                    is_group=True,
                 )
                 if created:
                     msg = '%s is new admin @ClistBot for "%s"' % (self.coder.user, chat.title)

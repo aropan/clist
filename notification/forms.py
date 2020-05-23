@@ -21,7 +21,7 @@ class NotificationForm(ModelForm):
         super(NotificationForm, self).__init__(*args, **kwargs)
 
         methods = list(Notification.METHODS_CHOICES)
-        for chat in coder.chat_set.filter(secret_key__isnull=True):
+        for chat in coder.chat_set.filter(is_group=True):
             name = chat.get_group_name()
             methods.append(('telegram:{}'.format(name), name))
         self.fields['method'] = ChoiceField(choices=methods)
