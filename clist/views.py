@@ -11,11 +11,12 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from sql_util.utils import Exists
 from el_pagination.decorators import page_templates
 
-from clist.templatetags.extras import get_timezones, get_timezone_offset
+from clist.templatetags.extras import get_timezones, get_timezone_offset, slug
 from clist.models import Resource, Contest, Banner
 from true_coders.models import Party, Coder, Filter
 from ranking.models import Rating, Account
@@ -80,7 +81,8 @@ def get_view_contests(request, coder):
     ):
         group_by_resource = {}
         contests = Contest.visible.filter(query).filter(user_contest_filter).order_by(order)
-        contests = contests.prefetch_related('resource')
+        contests = contests.select_related('resource')
+        contests = contests.annotate(has_statistics=Exists('statistics'))
         if limit:
             contests = contests[:limit]
         if order.startswith('-'):
@@ -148,6 +150,9 @@ def get_events(request):
         query = Q(rating__party=party) & query
 
     contests = Contest.objects if party_slug else Contest.visible
+    contests = contests.select_related('resource')
+    contests = contests.annotate(has_statistics=Exists('statistics'))
+
     try:
         result = []
         for contest in contests.filter(query):
@@ -155,7 +160,11 @@ def get_events(request):
                 'id': contest.pk,
                 'title': contest.title,
                 'host': contest.host,
-                'url': contest.url,
+                'url': (
+                    reverse('ranking:standings', args=(slug(contest.title), contest.pk))
+                    if contest.has_statistics else
+                    contest.standings_url or contest.url
+                ),
                 'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'countdown': contest.next_time,

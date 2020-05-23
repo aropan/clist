@@ -113,7 +113,7 @@
                 {% if contest.sub_contest %}
                     <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
                 {% endif %}
-                <a href="{{ contest.url }}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
+                <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
                 </span>
                 {% if contest.state != "past" and add_to_calendar != "disable" %}
                   <a class="data-ace" data-ace='{
