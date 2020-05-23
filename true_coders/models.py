@@ -38,17 +38,27 @@ class Coder(BaseModel):
         return self.cchat[0] if self.cchat else None
 
     def get_contest_filter(self, categories, ignores=None):
-        filter_categories = Q()
         if not isinstance(categories, (list, tuple, set)):
             categories = (categories, )
+        filter_categories = Q()
+        filter_categories_with_coder = Q()
         for c in categories:
-            filter_categories |= Q(categories__contains=[c])
+            if '@' in c:
+                c, coder = c.split('@', 1)
+                filter_categories_with_coder |= Q(coder__username=coder, categories__contains=[c])
+            else:
+                filter_categories |= Q(categories__contains=[c])
         if ignores:
             filter_categories &= ~Q(id__in=ignores)
 
+        if filter_categories_with_coder:
+            filters = Filter.objects.filter(filter_categories_with_coder)
+        else:
+            filters = self.filter_set.filter(filter_categories)
+
         hide = Q()
         show = Q()
-        for filter_ in self.filter_set.filter(filter_categories):
+        for filter_ in filters:
             query = Q()
             if filter_.resources:
                 query &= Q(resource__id__in=filter_.resources)
@@ -83,9 +93,12 @@ class Coder(BaseModel):
         return result
 
     def get_categories(self):
-        categories = list(Filter.CATEGORIES)
+        categories = [{'id': c, 'text': c} for c in Filter.CATEGORIES]
         for chat in self.chat_set.filter(is_group=True):
-            categories.append(chat.get_group_name())
+            categories.append({
+                'id': chat.chat_id,
+                'text': chat.get_group_name(),
+            })
         return categories
 
     def get_tshirt_size(self):

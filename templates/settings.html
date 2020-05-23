@@ -20,7 +20,7 @@
     emails = [ {{ coder.token_set|get_emails }} ]
 
     RESOURCES = [ {% for r in resources %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ r.id }}', 'text': '{{ r.host }}'}{% endfor %} ]
-    CATEGORIES = [ {% for c in categories %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ c }}', 'text': '{{ c }}'}{% endfor %} ]
+    CATEGORIES = [ {% for c in categories %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ c.id }}', 'text': '{{ c.text }}'}{% endfor %} ]
 
     ACCOUNTS_RESOURCES = [ {% for m in modules %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ m.resource.id }}', 'text': '{{ m.resource.host }}'}{% endfor %} ]
     ACCOUNTS = [ {% for a in coder.account_set_order_by_pk %}{% if forloop.counter0 %}, {% endif %}{{ a.dict|jsonify }}{% endfor %} ]

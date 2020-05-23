@@ -65,7 +65,8 @@ def get_view_contests(request, coder):
     group_list = settings.GROUP_LIST_
 
     if coder:
-        user_contest_filter = coder.get_contest_filter(['list'])
+        categories = request.GET.getlist('filter', ['list'])
+        user_contest_filter = coder.get_contest_filter(categories)
         group_list = bool(coder.settings.get("group_in_list", group_list))
 
     group = request.GET.get('group')
@@ -115,19 +116,22 @@ def get_events(request):
     else:
         coder = None
 
+    categories = request.POST.getlist('categories')
+    ignore_filters = request.POST.getlist('ignore_filters')
+
     referer = request.META.get('HTTP_REFERER')
     if referer:
         parsed = urlparse(referer)
-        as_coder = parse_qs(parsed.query).get('as_coder')
+        query_dict = parse_qs(parsed.query)
+        as_coder = query_dict.get('as_coder')
         if as_coder and request.user.has_perm('as_coder'):
             coder = Coder.objects.get(user__username=as_coder[0])
+        categories = query_dict.get('filter', categories)
 
     tzname = get_timezone(request)
     offset = get_timezone_offset(tzname)
 
     query = Q()
-    categories = request.POST.getlist('categories')
-    ignore_filters = request.POST.getlist('ignore_filters')
     if coder:
         query = coder.get_contest_filter(categories, ignore_filters)
 

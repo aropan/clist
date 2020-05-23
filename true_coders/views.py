@@ -389,7 +389,7 @@ def change(request):
             if not filter_.resources and not filter_.contest:
                 raise Exception("empty")
 
-            categories = coder.get_categories()
+            categories = [c['id'] for c in coder.get_categories()]
             field = "Categories"
             filter_.categories = request.POST.getlist("value[categories][]", [])
             if not all([c in categories for c in filter_.categories]):
