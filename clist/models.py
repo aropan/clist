@@ -82,7 +82,7 @@ class Resource(BaseModel):
 
 class VisibleContestManager(BaseManager):
     def get_queryset(self):
-        return super(VisibleContestManager, self).get_queryset().filter(invisible=0)
+        return super(VisibleContestManager, self).get_queryset().filter(invisible=0).filter(stage__isnull=True)
 
 
 class Contest(models.Model):
