@@ -3,12 +3,7 @@
 import collections
 import json
 import re
-from urllib.parse import urlparse
 from pprint import pprint
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from contextlib import ExitStack
-
-import tqdm
 
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules import conf
@@ -79,7 +74,6 @@ class Statistic(BaseModule):
 
         rows = data['StandingsData']
 
-        handles_to_get_new_rating = []
         result = {}
         for row in rows:
             if not row['TaskResults']:
@@ -94,7 +88,10 @@ class Statistic(BaseModule):
                 continue
             r['place'] = row.pop('Rank')
             total_result = row.pop('TotalResult')
-            r['penalty'] = total_result['Elapsed'] // 10**9
+
+            penalty = total_result['Elapsed'] // 10**9
+            r['penalty'] = f'{penalty // 60}:{penalty % 60:02d}'
+
             r['solving'] = total_result['Score'] / 100.
             r['country'] = row.pop('Country')
             if 'UserName' in row:
@@ -131,44 +128,11 @@ class Statistic(BaseModule):
             old_rating = row.pop('OldRating', None)
             r.update(row)
 
-            if old_rating is not None:
-                r['OldRating'] = old_rating
-
             if handle in results:
                 r.update(results.pop(handle))
 
-            if row['IsRated'] and 'NewRating' not in r:
-                if statistics is None or 'new_rating' not in statistics.get(handle, {}):
-                    handles_to_get_new_rating.append(handle)
-                else:
-                    r['OldRating'] = statistics[handle]['old_rating']
-                    r['NewRating'] = statistics[handle]['new_rating']
-
-        with ExitStack() as stack:
-            executor = stack.enter_context(PoolExecutor(max_workers=8))
-            pbar = stack.enter_context(tqdm.tqdm(total=len(handles_to_get_new_rating), desc='getting new rankings'))
-
-            def fetch_data(handle):
-                url = f'{self.HISTORY_URL_.format(urlparse(self.url), handle)}/json'
-                data = json.loads(REQ.get(url))
-                return handle, data
-
-            for handle, data in executor.map(fetch_data, handles_to_get_new_rating):
-                contest_addition_update = {}
-                for contest in data:
-                    if not contest.get('IsRated', True):
-                        continue
-                    key = contest['ContestScreenName'].split('.')[0]
-                    if key == self.key:
-                        result[handle]['OldRating'] = contest['OldRating']
-                        result[handle]['NewRating'] = contest['NewRating']
-                    else:
-                        contest_addition_update[key] = collections.OrderedDict((
-                            ('old_rating', contest['OldRating']),
-                            ('new_rating', contest['NewRating']),
-                        ))
-                result[handle]['contest_addition_update'] = contest_addition_update
-                pbar.update()
+            if old_rating is not None:
+                r['OldRating'] = old_rating
 
         standings = {
             'result': result,
