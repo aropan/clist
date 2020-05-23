@@ -13,10 +13,10 @@
     #<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>[^<]*<td>(?<title>.*?)</td>[^<]*<td>[^<]*(?:-|<a href="http://timeanddate\.com/[^"]*" .*?>(?<start_time>[^<]*)</a>)[^<]*</td>[^<]*<td>(?<duration>[^<]*)</td>#s
      */
     preg_match_all(
-        '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>.*?Подготовил[^<]*<a[^>]*>(?P<author>.*?)</a>#s',
+        '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>.*?Prepared\s*by[^<]*<a[^>]*>(?P<author>.*?)</a>#s',
         $page,
         $matches,
-         PREG_SET_ORDER
+        PREG_SET_ORDER
     );
     $authors = array();
     foreach ($matches as $match) {

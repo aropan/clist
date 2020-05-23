@@ -1,7 +1,7 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'https://codeforces.com/contests?locale=ru';
+    if (!isset($URL)) $URL = 'https://codeforces.com/contests?locale=en';
     if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
     if (!isset($RID)) $RID = -1;
     if (!isset($LANG)) $LANG = 'RU';
@@ -25,9 +25,6 @@
         if (preg_match_all('#<a[^>]*>(?P<name>.*?)</a>#', $match['authors'], $m)) {
             $names = array_map(function($n) { return strip_tags($n); }, $m['name']);
             $authors[$k] = implode(', ', $names);
-        }
-        if (preg_match('#Вы можете начать соревнование в любой момент до\s*<[^>]*>(?P<end_time>[^<]*)<#', $match[0], $m)) {
-            $end_times[$k] = $m['end_time'];
         }
     }
 
