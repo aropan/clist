@@ -258,7 +258,7 @@ class Bot(telegram.Bot):
         if self.group is False:
             msg = 'This command is used in chat rooms'
         else:
-            if self.group is None:
+            if self.group is None or self.group.coder != self.coder:
                 msg = '%s has unsuccessful attempt to lose admin' % (self.coder.user)
             else:
                 self.group.delete()
