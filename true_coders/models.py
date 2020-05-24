@@ -53,8 +53,10 @@ class Coder(BaseModel):
 
         if filter_categories_with_coder:
             filters = Filter.objects.filter(filter_categories_with_coder)
-        else:
+        elif self is not None:
             filters = self.filter_set.filter(filter_categories)
+        else:
+            filters = []
 
         hide = Q()
         show = Q()

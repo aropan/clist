@@ -68,6 +68,10 @@ def get_view_contests(request, coder):
         categories = request.GET.getlist('filter', ['list'])
         user_contest_filter = coder.get_contest_filter(categories)
         group_list = bool(coder.settings.get("group_in_list", group_list))
+    else:
+        categories = request.GET.getlist('filter')
+        if categories:
+            user_contest_filter = Coder.get_contest_filter(None, categories)
 
     group = request.GET.get('group')
     if group is not None:
@@ -118,6 +122,7 @@ def get_events(request):
 
     categories = request.POST.getlist('categories')
     ignore_filters = request.POST.getlist('ignore_filters')
+    has_filter = False
 
     referer = request.META.get('HTTP_REFERER')
     if referer:
@@ -126,6 +131,7 @@ def get_events(request):
         as_coder = query_dict.get('as_coder')
         if as_coder and request.user.has_perm('as_coder'):
             coder = Coder.objects.get(user__username=as_coder[0])
+        has_filter = 'filter' in query_dict
         categories = query_dict.get('filter', categories)
 
     tzname = get_timezone(request)
@@ -134,6 +140,8 @@ def get_events(request):
     query = Q()
     if coder:
         query = coder.get_contest_filter(categories, ignore_filters)
+    elif has_filter:
+        query = Coder.get_contest_filter(None, categories, ignore_filters)
 
     if not coder or coder.settings.get('calendar_filter_long', True):
         if categories == ['calendar'] and '0' not in ignore_filters:
