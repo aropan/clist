@@ -3,6 +3,7 @@
 
 from traceback import format_exc
 from logging import getLogger
+from datetime import timedelta
 
 import tqdm
 # from django.conf import settings
@@ -11,6 +12,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Prefetch
 from django_print_sql import print_sql_decorator
+from django.utils.timezone import now
 # from django.urls import reverse
 from notification.models import Task, Notification
 from telegram.error import Unauthorized
@@ -27,6 +29,10 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         logger = getLogger('notification.sendout.tasks')
+
+        delete_info = Task.objects.filter(is_sent=True, modified__lte=now() - timedelta(days=31)).delete()
+        logger.info(f'Tasks cleared: {delete_info}')
+
         qs = Task.unsent.all()
         qs = qs.select_related('notification__coder')
         qs = qs.prefetch_related(
@@ -44,9 +50,13 @@ class Command(BaseCommand):
                 task.is_sent = True
                 notification = task.notification
                 coder = notification.coder
-                if notification.method == Notification.TELEGRAM:
+                method, *args = notification.method.split(':', 1)
+                if method == Notification.TELEGRAM:
                     will_mail = False
-                    if coder.chat and coder.chat.chat_id:
+
+                    if args:
+                        self.TELEGRAM_BOT.send_message(task.message, args[0])
+                    elif coder.chat and coder.chat.chat_id:
                         try:
                             if not coder.settings.get('telegram', {}).get('unauthorized', False):
                                 self.TELEGRAM_BOT.send_message(task.message, coder.chat.chat_id)
@@ -70,7 +80,7 @@ class Command(BaseCommand):
                         #     [coder.user.email],
                         #     fail_silently=False,
                         # )
-                elif notification.method == Notification.EMAIL:
+                elif method == Notification.EMAIL:
                     pass
                     # FIXME: skipping, fixed on https://yandex.ru/support/mail-new/web/spam/honest-mailers.html
                     # send_mail(

@@ -182,8 +182,8 @@ def get_api_formats():
 
 
 @register.filter
-def md_escape(value):
-    return re.sub(r'([*_`\[])', r'\\\1', value)
+def md_escape(value, clear=False):
+    return re.sub(r'([*_`\[\]])', '' if clear else r'\\\1', value)
 
 
 @register.filter(name='sort')

@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 notification=notify,
                 subject=subject,
                 message=message,
-                addition=addition
+                addition=addition,
             )
 
     def add_arguments(self, parser):
