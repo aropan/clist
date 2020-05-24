@@ -330,7 +330,6 @@ class Bot(telegram.Bot):
 
             args = self.parser.parse_args(shlex.split(query))
 
-            self.logger.info('args = %s' % args)
             if args.command in ['/prev', '/next', '/repeat']:
                 if not self.chat or not self.chat.last_command:
                     yield 'Sorry, not found previous command'
@@ -376,8 +375,9 @@ class Bot(telegram.Bot):
                     yield msg
 
             try:
-                if self.group:
-                    self.delete_message(self.group.chat_id, self.message['message_id'])
+                chat_type = self.message.get('chat', {}).get('type')
+                if self.group or chat_type in ['group', 'supergroup']:
+                    self.delete_message(self.message['chat']['id'], self.message['message_id'])
             except telegram.error.BadRequest:
                 pass
 
@@ -416,8 +416,10 @@ class Bot(telegram.Bot):
     def incoming(self, raw_data):
         try:
             data = json.loads(raw_data)
-            self.message = data['message']
             self.logger.info('incoming = \n%s' % json.dumps(data, indent=2))
+            if 'message' not in data and 'channel_post' in data:
+                return
+            self.message = data['message']
             self.clear_cache()
             self.from_id = str(self.message['from']['id'])
             self.chat_id = str(self.message['chat']['id'])
