@@ -374,8 +374,13 @@ class Bot(telegram.Bot):
                     }
                 else:
                     yield msg
-            if self.group:
-                self.delete_message(self.group.chat_id, self.message['message_id'])
+
+            try:
+                if self.group:
+                    self.delete_message(self.group.chat_id, self.message['message_id'])
+            except telegram.error.BadRequest:
+                pass
+
         except ArgumentParserError as e:
             yield 'I\'m sorry, could you clarify:\n' + escape(str(e))
         except NeedHelpError as e:
