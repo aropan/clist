@@ -133,7 +133,7 @@ class Bot(telegram.Bot):
     def list(self, args):
         if not getattr(args, 'ignore_filters', False):
             if self.group:
-                filter_ = self.group.coder.get_contest_filter(self.group.get_group_name())
+                filter_ = self.group.coder.get_contest_filter(self.group.chat_id)
             else:
                 filter_ = self.coder.get_contest_filter('telegram') if self.coder else Q()
         else:
