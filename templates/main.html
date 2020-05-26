@@ -84,7 +84,7 @@
     {% for contest in contests %}
         {% with rid=contest.resource.id|stringformat:"s"  %}
         {% with group=contest.state|add:"-"|add:rid %}
-        <div class="row contest {{ contest.state }}{% if contest.sub_contest %} {{ group }} subcontest hidden{% endif %}">
+        <div class="row contest {{ contest.state }}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
             <div class="col-md-5 col-sm-4">
                 <div class="col-md-5 col-sm-12 start-time">
                     {% if contest.state == 'coming' %}

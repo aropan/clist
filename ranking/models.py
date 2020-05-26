@@ -280,8 +280,9 @@ class Stage(BaseModel):
         total = statistics.filter(contest__in=contests).count()
         with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar:
             for idx, contest in enumerate(contests, start=1):
-                problem_info_key = str(contest.pk)
-                problem_key = get_problem_key(problems_infos[problem_info_key])
+                if not detail_problems:
+                    problem_info_key = str(contest.pk)
+                    problem_key = get_problem_key(problems_infos[problem_info_key])
                 pbar.set_postfix(contest=contest)
                 stats = statistics.filter(contest_id=contest.pk)
 

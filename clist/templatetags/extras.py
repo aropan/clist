@@ -97,9 +97,9 @@ def hr_timedelta(delta):
     ):
         if c <= delta:
             val = delta // c
-            ret.append('%d %s%s' % (val, s, 's' if val > 1 else ''))
             delta %= c
-        else:
+            ret.append('%d %s%s' % (val, s, 's' if val > 1 else ''))
+        elif ret:
             ret.append('')
         if len(ret) == 2:
             break

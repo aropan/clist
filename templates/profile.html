@@ -93,7 +93,7 @@
 {% for resource in resources %}
   {% for account in resource.coder_accounts %}
     <span class="account btn-group btn-group-sm">
-      <a class="btn btn-default" href="{% url 'coder:account' account.key|url_quote resource.host|url_quote %}">
+      <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
         {% coder_color_circle resource account.info %}
         <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 

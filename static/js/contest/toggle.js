@@ -60,7 +60,7 @@ function toggle_party_contest(e) {
 $(function() {
     $(".toggle").click(function(e) {
         var cls = $(this).attr("data-group");
-        $(cls).toggleClass("hidden");
+        $(cls).slideToggle(200, "linear");
         var icon = $(".badge[data-group='{0}']".format(cls)).find("i");
         icon.toggleClass("fa-caret-down");
         icon.toggleClass("fa-caret-up");

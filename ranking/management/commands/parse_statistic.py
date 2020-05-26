@@ -274,6 +274,7 @@ class Command(BaseCommand):
                             if 'team_id' not in r or r['team_id'] not in teams_viewed:
                                 if 'team_id' in r:
                                     teams_viewed.add(r['team_id'])
+                                solved = {'solving': 0}
                                 for k, v in problems.items():
                                     if 'result' not in v:
                                         continue
@@ -287,6 +288,8 @@ class Command(BaseCommand):
                                         full_score = contest.info['default_problem_full_score']
                                         if 'partial' not in v and full_score - float(v['result']) > 1e-9:
                                             v['partial'] = True
+                                        if not v.get('partial'):
+                                            solved['solving'] += 1
                                         if 'full_score' not in p:
                                             p['full_score'] = full_score
                                     if contest.info.get('without_problem_first_ac'):
@@ -305,6 +308,9 @@ class Command(BaseCommand):
                                         pass
                                     if ac:
                                         p['n_accepted'] = p.get('n_accepted', 0) + 1
+
+                                if 'default_problem_full_score' in contest.info and solved and 'solved' not in r:
+                                    r['solved'] = solved
 
                             calc_time = contest.calculate_time or contest.start_time <= now < contest.end_time
 

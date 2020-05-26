@@ -17,6 +17,7 @@ from django.utils import timezone
 from tastypie.models import ApiKey
 from django_countries import countries
 from el_pagination.decorators import page_template
+from sql_util.utils import SubqueryCount
 
 from clist.models import Resource, Contest
 from clist.templatetags.extras import get_timezones, format_time, slug as slugify
@@ -677,16 +678,11 @@ def party(request, slug, tab='ranking'):
         .annotate(has_statistics=Exists(has_statistics)) \
         .order_by('-end_time')
 
-    coders = party.coders.filter(
-        account__resource__contest__rating__party=party,
-        account__resource__contest__statistics__account=F('account')
-    ).annotate(
-        n_participations=Count('account__resource')
-    ).order_by(
-        '-n_participations'
-    ).select_related(
-        'user'
-    )
+    filt = Q(rating__party=party, statistics__account__coders=OuterRef('pk'))
+    coders = party.coders \
+        .annotate(n_participations=SubqueryCount('account__resource__contest', filter=filt)) \
+        .order_by('-n_participations') \
+        .select_related('user')
     set_coders = set(coders)
 
     if request.user.is_authenticated:

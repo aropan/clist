@@ -263,7 +263,7 @@
     }
     unset($by_key);
 
-    echo "<br><br>Total number of contests: " . count($contests);
+    echo "<br><br>Total number of contests: " . count($contests) . "<br>";
 
     foreach ($contests as $i => $contest)
     {
@@ -279,6 +279,10 @@
             },
             $contest['title']
         );
+
+        if (!isset($contest['start_time']) || !isset($contest['end_time'])) {
+            continue;
+        }
 
         if (time() + 365 * 24 * 60 * 60 < $contest['end_time']) continue;
         if (!DEBUG && !isset($_GET['skip_check_time'])) {
