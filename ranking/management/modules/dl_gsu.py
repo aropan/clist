@@ -80,17 +80,24 @@ class Statistic(BaseModule):
         else:
             page = REQ.get(self.standings_url)
 
-        html_table = re.search('<table[^>]*bgcolor="silver"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL).group(0)
-        table = parsed_table.ParsedTable(html_table)
+        def get_table(page):
+            html_table = re.search('<table[^>]*bgcolor="silver"[^>]*>.*?</table>',
+                                   page,
+                                   re.MULTILINE | re.DOTALL).group(0)
+            table = parsed_table.ParsedTable(html_table)
+            return table
+
+        table = get_table(page)
 
         problems_info = OrderedDict()
         max_score = defaultdict(float)
+
+        scoring = False
 
         result = {}
         for r in table:
             row = OrderedDict()
             problems = row.setdefault('problems', {})
-            solved = 0
             for k, v in list(r.items()):
                 if k == 'Имя':
                     href = v.column.node.xpath('a/@href')
@@ -110,6 +117,10 @@ class Statistic(BaseModule):
                     if v.value:
                         p = problems.setdefault(k, {})
                         p['result'] = v.value
+
+                        if v.value and v.value[0] not in ['-', '+']:
+                            scoring = True
+
                         try:
                             max_score[k] = max(max_score[k], float(v.value))
                         except ValueError:
@@ -121,17 +132,40 @@ class Statistic(BaseModule):
                     if href:
                         row['url'] = urljoin(self.standings_url, href[0])
             result[row['member']] = row
+
+        if scoring:
+            match = re.search(r'<b[^>]*>\s*<a[^>]*href="(?P<url>[^"]*)"[^>]*>ACM</a>\s*</b>', page)
+            if match:
+                page = REQ.get(match.group('url'))
+                table = get_table(page)
+                for r in table:
+                    uid = None
+                    for k, v in list(r.items()):
+                        if k == 'Имя':
+                            href = v.column.node.xpath('a/@href')
+                            if not href:
+                                continue
+                            uid = re.search('[0-9]+$', href[0]).group(0)
+                        elif re.match('^[a-zA-Z0-9]+$', k) and uid and v.value:
+                            if v.value[0] == '-':
+                                result[uid]['problems'][k]['partial'] = True
+                            elif v.value[0] == '+':
+                                result[uid]['problems'][k]['partial'] = False
+                                problems_info[k]['full_score'] = result[uid]['problems'][k]['result']
+
         for r in result.values():
             solved = 0
             for k, p in r['problems'].items():
+                if p.get('partial'):
+                    continue
                 score = p['result']
-                if score.startswith('+'):
+                if score.startswith('+') or 'partial' in p and not p['partial']:
                     solved += 1
                 else:
                     try:
                         score = float(score)
                     except ValueError:
-                        pass
+                        continue
                     if abs(max_score[k] - score) < 1e-9 and score > 0:
                         solved += 1
             r['solved'] = {'solving': solved}
