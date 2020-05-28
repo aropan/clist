@@ -115,7 +115,11 @@ class Statistic(BaseModule):
                                     if to_get_handle:
                                         urls.append((row['member'], url))
                                         to_get_handle = False
-                                if v.column.node.xpath('.//a/div/*[contains(@class,"fa fa-star")]'):
+
+                                if (
+                                    v.column.node.xpath('.//a/div/*[contains(@class,"fa fa-star")]')
+                                    or v.column.node.xpath('.//a/div/img[contains(@src,"checkmark-done-sharp")]')
+                                ):
                                     p['first_ac'] = True
                 if not problems:
                     continue
