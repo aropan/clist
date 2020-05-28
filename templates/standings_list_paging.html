@@ -13,6 +13,9 @@
     <small class="pull-right" title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
         {{ contest.end_time|timezone:timezone|naturalday }}
     </small>
+    <div class="resource">
+        <small class="text-muted">{{ contest.host }}</small>
+    </div>
 </a>
 {% endfor %}
 {% show_more %}

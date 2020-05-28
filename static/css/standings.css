@@ -1,7 +1,15 @@
-.contest {
+#standings_list .contest {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+#standings_list a.contest:hover > .reset_timing_statistic, #standings_list .reset_timing_statistic:hover {
+  display: inline-block;
+}
+
+#standings_list .resource {
+  margin-top: -5px;
 }
 
 input[type="search"]::-webkit-search-cancel-button {
@@ -129,10 +137,6 @@ a.solution {
   position: absolute;
   z-index: 1;
   margin-left: 5px;
-}
-
-a.contest:hover > .reset_timing_statistic, .reset_timing_statistic:hover {
-  display: inline-block;
 }
 
 .standings thead th {

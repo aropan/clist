@@ -37,7 +37,7 @@
   <div>
     <h2>
       {% coder_color_circle account.resource account.info %}
-      <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+      <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
       {% if account.resource.profile_url %}
       <small><a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></small>
       {% endif %}
@@ -66,7 +66,7 @@
     <span class="account btn-group btn-group-sm">
       <a class="btn btn-default" href="?search=resource:{{ resource.host|urlencode }}">
         {% coder_color_circle resource account.info %}
-        <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+        <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 
         {% if resource.coder_accounts|length > 1 %}
         <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
@@ -95,7 +95,7 @@
     <span class="account btn-group btn-group-sm">
       <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
         {% coder_color_circle resource account.info %}
-        <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+        <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 
         {% for s in account_medals|get_item:account.pk %}
           <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">

@@ -87,10 +87,13 @@ class Statistic(BaseModule):
                     p['time'] = self.to_time(t)
 
             r.pop('is_disqualified', None)
+            r.pop('tiebreaker', None)
+
+            row['old_rating'] = r.pop('old_rating', None)
+            new_rating = r.pop('new_rating', None)
             if has_rated:
-                row['old_rating'] = r.pop('old_rating', None)
                 row['rating_change'] = None
-                row['new_rating'] = r.pop('new_rating', None)
+                row['new_rating'] = new_rating
 
             row.update({k: v for k, v in r.items() if k not in row})
 

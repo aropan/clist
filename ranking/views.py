@@ -49,7 +49,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     search = request.GET.get('search')
     if search is not None:
-        contests = contests.filter(get_iregex_filter(search, 'title', 'resource__host'))
+        contests = contests.filter(get_iregex_filter(search, 'title', 'host', 'resource__host'))
 
     context = {
         'contests': contests,
