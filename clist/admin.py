@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from pyclist.admin import BaseModelAdmin, admin_register
-from clist.models import Resource, Contest, TimingContest, Banner
+from clist.models import Resource, Contest, TimingContest, Banner, Problem
 from ranking.models import Rating
 from ranking.management.commands.parse_statistic import Command as parse_stat
 
@@ -113,6 +113,12 @@ class ResourceAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return ['n_accounts', 'n_contests'] + list(super().get_readonly_fields(request, obj))
+
+
+@admin_register(Problem)
+class ProblemAdmin(BaseModelAdmin):
+    list_display = ['contest', 'index', 'key', 'name', 'url', 'n_tries', 'n_accepted', 'divisions']
+    list_filter = ['contest__resource__host']
 
 
 @admin_register(TimingContest)

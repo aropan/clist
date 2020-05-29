@@ -490,6 +490,7 @@ class Command(BaseCommand):
 
                             if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
                                 contest.info['problems'] = problems
+                            contest.update_problems()
 
                             if languages:
                                 languages = list(sorted(languages))

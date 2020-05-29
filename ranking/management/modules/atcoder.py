@@ -12,6 +12,7 @@ from ranking.management.modules import conf
 class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
     RESULTS_URL_ = '{0.url}/results'
+    PROBLEM_URL_ = '{0.url}/tasks/{0.key}_{1}'
     HISTORY_URL_ = '{0.scheme}://{0.netloc}/users/{1}/history'
 
     def __init__(self, **kwargs):
@@ -70,6 +71,7 @@ class Statistic(BaseModule):
             task_info[k] = {
                 'short': t['Assignment'],
                 'name': t['TaskName'],
+                'url': self.PROBLEM_URL_.format(self, t['Assignment'].lower()),
             }
 
         rows = data['StandingsData']
