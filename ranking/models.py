@@ -211,6 +211,7 @@ class Stage(BaseModel):
         results = collections.defaultdict(collections.OrderedDict)
 
         problems_infos = collections.OrderedDict()
+        divisions_order = []
         for idx, contest in enumerate(tqdm.tqdm(contests, desc=f'getting contests for stage {stage}'), start=1):
             info = {
                 'code': str(contest.pk),
@@ -222,6 +223,10 @@ class Stage(BaseModel):
                 'n_accepted': 0,
                 'n_teams': 0,
             }
+
+            for division in contest.info.get('divisions_order', []):
+                if division not in divisions_order:
+                    divisions_order.append(division)
 
             problems = contest.info.get('problems', [])
             if not detail_problems:
@@ -528,6 +533,9 @@ class Stage(BaseModel):
         standings_info = self.score_params.get('info', {})
         standings_info['fixed_fields'] = [(f.lstrip('-'), f.lstrip('-')) for f in order_by]
         stage.info['standings'] = standings_info
+
+        if divisions_order and self.score_params.get('divisions_ordering'):
+            stage.info['divisions_order'] = divisions_order
 
         stage.info['problems'] = list(problems_infos.values())
         stage.save()

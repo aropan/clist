@@ -180,9 +180,10 @@ class Command(BaseCommand):
                             contest.info['standings'] = standings_options
                             contest.save()
 
-                    if standings.get('writers') and contest.info.get('writers') != standings['writers']:
-                        contest.info['writers'] = standings['writers']
-                        contest.save()
+                    for field in 'writers', 'divisions_order':
+                        if standings.get(field) and contest.info.get(field) != standings[field]:
+                            contest.info[field] = standings[field]
+                            contest.save()
 
                     problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
 
@@ -297,6 +298,9 @@ class Command(BaseCommand):
                                         v.pop('first_ac_of_all', None)
                                     if contest.info.get('without_problem_time'):
                                         v.pop('time', None)
+
+                                    if r.get('_skip_for_problem_stat'):
+                                        continue
 
                                     p['n_teams'] = p.get('n_teams', 0) + 1
 

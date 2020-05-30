@@ -308,6 +308,8 @@ COUNTRIES_OVERRIDE = {
     'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Великобритания']},
     'MD': {'names': ['Moldova', 'Молдова', 'Молдавия']},
     'KG': {'names': ['Kyrgyzstan', 'Кыргызстан', 'Киргизия']},
+    'RS': {'names': ['Serbia', 'Srbija']},
+    'HR': {'names': ['Croatia', 'Hrvatska']},
 }
 
 # DJANGO DEBUG TOOLBAR
