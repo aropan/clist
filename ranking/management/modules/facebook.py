@@ -39,7 +39,7 @@ class Statistic(BaseModule):
         title = None
         problems_info = None
         while limit:
-            url = f'{self.standings_url}?offset={offset}&length={limit}'
+            url = f'{self.standings_url}?offset={offset}&length={limit}&locale=ja_JP'
             page = REQ.get(url)
 
             match = re.search(r'"problemData":(?P<data>\[[^\]]*\])', page, re.I)
