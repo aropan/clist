@@ -4,6 +4,7 @@ import collections
 import json
 import re
 from pprint import pprint
+from datetime import timedelta, datetime
 
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules import conf
@@ -55,6 +56,8 @@ class Statistic(BaseModule):
             handle = row.pop('UserScreenName')
             if users and handle not in users:
                 continue
+            if 'NewRating' not in row:
+                continue
             r = collections.OrderedDict()
             for k in ['OldRating', 'NewRating', 'Performance']:
                 if k in row:
@@ -76,6 +79,8 @@ class Statistic(BaseModule):
 
         rows = data['StandingsData']
 
+        has_rated = False
+        has_new_rating = False
         result = {}
         for row in rows:
             if not row['TaskResults']:
@@ -136,12 +141,21 @@ class Statistic(BaseModule):
             if old_rating is not None:
                 r['OldRating'] = old_rating
 
+            if r.get('IsRated'):
+                has_rated = True
+                if r.get('NewRating') is not None:
+                    has_new_rating = True
+
         standings = {
             'result': result,
             'url': self.STANDING_URL_.format(self),
             'problems': list(task_info.values()),
             'writers': writers,
         }
+
+        if has_rated and not has_new_rating and self.end_time + timedelta(hours=3) > datetime.now():
+            standings['timing_statistic_delta'] = timedelta(minutes=30)
+
         return standings
 
 
