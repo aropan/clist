@@ -384,8 +384,7 @@ class Bot(telegram.Bot):
                     yield msg
 
             try:
-                chat_type = self.message.get('chat', {}).get('type')
-                if self.group or chat_type in ['group', 'supergroup', 'channel']:
+                if self.group or self.chat_type in ['group', 'supergroup', 'channel']:
                     self.delete_message(self.message['chat']['id'], self.message['message_id'])
             except telegram.error.BadRequest:
                 pass
@@ -398,7 +397,7 @@ class Bot(telegram.Bot):
             self.sendMessage(self.ADMIN_CHAT_ID, 'Query: %s\n\n%s' % (raw_query, format_exc()))
             yield 'Oops, I\'m having a little trouble:\n' + escape(str(e))
 
-    def send_message(self, msg, chat_id=None):
+    def send_message(self, msg, chat_id=None, reply_markup=None):
         if not isinstance(msg, dict):
             msg = {'text': msg}
         if not msg['text']:
@@ -409,8 +408,12 @@ class Bot(telegram.Bot):
         msg['chat_id'] = chat_id or self.from_id
 
         msg['disable_web_page_preview'] = True
+        if reply_markup:
+            msg['reply_markup'] = reply_markup
         if 'reply_markup' not in msg:
             msg['reply_markup'] = telegram.ReplyKeyboardRemove()
+        if reply_markup is False or getattr(self, 'chat_type', None) == 'channel':
+            msg.pop('reply_markup', None)
 
         try:
             ret = self.sendMessage(parse_mode='Markdown', **msg)
@@ -437,6 +440,7 @@ class Bot(telegram.Bot):
                 return
 
             self.chat_id = str(self.message['chat']['id'])
+            self.chat_type = self.message['chat'].get('type')
 
             self.clear_cache()
 

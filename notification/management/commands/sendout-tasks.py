@@ -55,11 +55,11 @@ class Command(BaseCommand):
                     will_mail = False
 
                     if args:
-                        self.TELEGRAM_BOT.send_message(task.message, args[0])
+                        self.TELEGRAM_BOT.send_message(task.message, args[0], reply_markup=False)
                     elif coder.chat and coder.chat.chat_id:
                         try:
                             if not coder.settings.get('telegram', {}).get('unauthorized', False):
-                                self.TELEGRAM_BOT.send_message(task.message, coder.chat.chat_id)
+                                self.TELEGRAM_BOT.send_message(task.message, coder.chat.chat_id, reply_markup=False)
                         except Unauthorized:
                             coder.settings.setdefault('telegram', {})['unauthorized'] = True
                             coder.save()

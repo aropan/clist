@@ -103,7 +103,8 @@ def hr_timedelta(delta):
             ret.append('')
         if len(ret) == 2:
             break
-    return ' '.join(ret)
+    ret = ' '.join(ret)
+    return ret.strip()
 
 
 @register.filter
