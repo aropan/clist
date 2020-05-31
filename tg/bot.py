@@ -245,11 +245,11 @@ class Bot(telegram.Bot):
                 )
                 if created:
                     msg = '%s is new admin @ClistBot for "%s".' % (self.coder.user, chat.title)
+                    delattr(self, 'group_')
                 else:
                     msg = 'Hmmmm, problem with set new admin.'
             else:
                 msg = 'Group "%s" already has %s admin.' % (self.message['chat']['title'], self.group.coder.user)
-            self.send_message(msg, chat_id=self.chat_id)
         yield msg
 
     def iamnotadmin(self, args):
@@ -264,7 +264,6 @@ class Bot(telegram.Bot):
                 self.group.delete()
                 msg = '%s has successful attempt to lose admin.' % (self.coder.user)
                 self.group_ = None
-            self.send_message(msg, chat_id=self.chat_id)
         yield msg
 
     def unlink(self, args):
@@ -386,7 +385,7 @@ class Bot(telegram.Bot):
 
             try:
                 chat_type = self.message.get('chat', {}).get('type')
-                if self.group or chat_type in ['group', 'supergroup']:
+                if self.group or chat_type in ['group', 'supergroup', 'channel']:
                     self.delete_message(self.message['chat']['id'], self.message['message_id'])
             except telegram.error.BadRequest:
                 pass
@@ -427,12 +426,20 @@ class Bot(telegram.Bot):
         try:
             data = json.loads(raw_data)
             self.logger.info('incoming = \n%s' % json.dumps(data, indent=2))
-            if 'message' not in data and 'channel_post' in data:
+
+            if 'from' in data.get('message', {}):
+                self.message = data['message']
+                self.from_id = str(self.message['from']['id'])
+            elif 'forward_from' in data.get('channel_post', {}):
+                self.message = data['channel_post']
+                self.from_id = str(self.message['forward_from']['id'])
+            else:
                 return
-            self.message = data['message']
-            self.clear_cache()
-            self.from_id = str(self.message['from']['id'])
+
             self.chat_id = str(self.message['chat']['id'])
+
+            self.clear_cache()
+
             if 'text' in self.message:
                 text = self.message['text']
                 if text.startswith('/'):
