@@ -234,7 +234,7 @@ class Bot(telegram.Bot):
         if not self.coder:
             return
         if self.group is False:
-            msg = 'This command is used in chat rooms'
+            msg = 'This command is used in chat rooms.'
         else:
             if self.group is None:
                 chat, created = Chat.objects.get_or_create(
@@ -244,11 +244,11 @@ class Bot(telegram.Bot):
                     is_group=True,
                 )
                 if created:
-                    msg = '%s is new admin @ClistBot for "%s"' % (self.coder.user, chat.title)
+                    msg = '%s is new admin @ClistBot for "%s".' % (self.coder.user, chat.title)
                 else:
-                    msg = 'Hmmmm, problem with set new admin'
+                    msg = 'Hmmmm, problem with set new admin.'
             else:
-                msg = 'Group "%s" already has %s admin' % (self.message['chat']['title'], self.group.coder.user)
+                msg = 'Group "%s" already has %s admin.' % (self.message['chat']['title'], self.group.coder.user)
             self.send_message(msg, chat_id=self.chat_id)
         yield msg
 
@@ -256,16 +256,24 @@ class Bot(telegram.Bot):
         if not self.coder:
             return
         if self.group is False:
-            msg = 'This command is used in chat rooms'
+            msg = 'This command is used in chat rooms.'
         else:
             if self.group is None or self.group.coder != self.coder:
-                msg = '%s has unsuccessful attempt to lose admin' % (self.coder.user)
+                msg = '%s has unsuccessful attempt to lose admin.' % (self.coder.user)
             else:
                 self.group.delete()
-                msg = '%s has successful attempt to lose admin' % (self.coder.user)
+                msg = '%s has successful attempt to lose admin.' % (self.coder.user)
                 self.group_ = None
             self.send_message(msg, chat_id=self.chat_id)
         yield msg
+
+    def unlink(self, args):
+        if not self.coder or self.group or not self.chat:
+            yield 'Unsuitable moment.'
+        else:
+            yield 'Bye Bye.'
+            self.chat.delete()
+            self.chat_ = False
 
     @property
     def parser(self):
@@ -302,6 +310,8 @@ class Bot(telegram.Bot):
 
             command_p.add_parser('/iamadmin', description='Set user as admin clistbot for group')
             command_p.add_parser('/iamnotadmin', description='Unset user as admin clistbot for group')
+
+            command_p.add_parser('/unlink', description='Unlink account')
 
             for a in list_p._actions:
                 if not isinstance(a, argparse._HelpAction):
@@ -431,12 +441,14 @@ class Bot(telegram.Bot):
 
             if not self.coder:
                 url = settings.HTTPS_HOST_ + reverse('telegram:me')
-                self.sendMessage(self.from_id, 'Follow on link %s to connect your account.' % url)
+                self.send_message(f'Follow {url} to connect your account.')
             else:
                 if self.coder.settings.get('telegram', {}).get('unauthorized', False):
                     self.coder.settings.setdefault('telegram', {})['unauthorized'] = False
                     self.coder.save()
-                History.objects.create(chat=self.group or self.chat, message=data).save()
+                chat = self.group or self.chat
+                if chat:
+                    History.objects.create(chat=chat, message=data).save()
         except Exception:
             if hasattr(self, 'from_id'):
                 self.sendMessage(self.from_id, 'Thanks, but I do not know what I should do about it.')
