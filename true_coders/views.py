@@ -8,11 +8,11 @@ from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.urls import reverse
-from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField, IntegerField, Prefetch
 from django.db.models.functions import Cast
+from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField, IntegerField, Prefetch
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from tastypie.models import ApiKey
 from django_countries import countries
@@ -272,10 +272,11 @@ def settings(request, tab=None):
         {
             "resources": resources,
             "coder": coder,
+            "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,
             "categories": coder.get_categories(),
             "notification_form": notification_form,
-            "modules": Module.objects.order_by('resource__id').all(),
+            "modules": Module.objects.select_related('resource').order_by('resource__id').all(),
             "ace_calendars": django_settings.ACE_CALENDARS_,
             "tab": tab,
         },

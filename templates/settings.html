@@ -17,7 +17,7 @@
 
 <script>
     $.fn.editable.defaults.pk = {{ coder.id }}
-    emails = [ {{ coder.token_set|get_emails }} ]
+    emails = [ {{ tokens.values|get_emails }} ]
 
     RESOURCES = [ {% for r in resources %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ r.id }}', 'text': '{{ r.host }}'}{% endfor %} ]
     CATEGORIES = [ {% for c in categories %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ c.id }}', 'text': '{{ c.text }}'}{% endfor %} ]
@@ -156,15 +156,33 @@
             <div class="key">Country</div>
             <div class="value"><a href="#" id="country" data-value="{{ coder.country.code }}"></a></div>
 
+            {% with chat=coder.chat %}
+            <div class="key">Telegram</div>
+            <div class="value">
+                <div class="btn-block btn-group">
+                    <a class="btn btn-default active service-icon-btn{% if chat %} disabled{% endif %}"><i class="fab fa-telegram-plane"></i></a>
+                    <a {% if not chat %}href="{% url 'telegram:me' %}"{% endif %} class="btn btn-default{% if chat %} disabled{% endif %}">
+                        <div class="text-left">{% if chat %}{{ chat.chat_id }}{% else %}connect{% endif %}</div>
+                    </a>
+                    {% if chat %}
+                    <a href="{% url 'telegram:unlink' %}" class="btn btn-default"><i class="far fa-trash-alt"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endwith %}
+
             <div class="key">OAuth</div>
             <div class="value">
             {% for service in services %}
-            {% with token=coder.token_set|get_token:service %}
+            {% with token=tokens|get_item:service.pk %}
                 <div class="btn-block btn-group">
                     <a class="btn btn-default active service-icon-btn{% if token %} disabled{% endif %}"><i class="fab {{ service.fa_icon }}"></i></a>
                     <a {% if not token %}href="{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}"{% endif %} class="btn btn-default{% if token %} disabled{% endif %}">
                         <div class="text-left">{% if token %}{{ token.user_id }}{% else %}connect{% endif %}</div>
                     </a>
+                    {% if token and tokens|length > 1 %}
+                    <a href="{% url 'auth:unlink' service.name %}" class="btn btn-default"><i class="far fa-trash-alt"></i></a>
+                    {% endif %}
                 </div>
             {% endwith %}
             {% endfor %}

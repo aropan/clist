@@ -108,7 +108,7 @@ class Coder(BaseModel):
         return p.tshirt_size_value if p is not None else None
 
     def account_set_order_by_pk(self):
-        return self.account_set.order_by('pk')
+        return self.account_set.select_related('resource').order_by('pk')
 
     @property
     def ordered_filter_set(self):

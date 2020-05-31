@@ -9,5 +9,6 @@ urlpatterns = [
     url(r'^logout/$', views.logout, name='logout'),
     url(r'^auth/services/dumpdata/$', views.services_dumpdata, name='services_dumpdata'),
     url(r'^oauth/([a-z]+)/$', views.query, name='query'),
+    url(r'^oauth/([a-z]+)/unlink/$', views.unlink, name='unlink'),
     url(r'^oauth/([a-z]+)/response/$', views.response, name='response'),
 ]

@@ -1,9 +1,9 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
-from tg.models import Chat
 from django.contrib.auth.models import User
+from django.http import HttpResponse, HttpResponseRedirect
 from django.views.generic.base import View
 from tg.bot import Bot
+from tg.models import Chat
 
 
 @login_required
@@ -20,6 +20,13 @@ def me(request):
         chat.save()
 
     return HttpResponseRedirect(url)
+
+
+@login_required
+def unlink(request):
+    coder = request.user.coder
+    coder.chat.delete()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 class Incoming(View):

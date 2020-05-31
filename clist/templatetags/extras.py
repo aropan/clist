@@ -158,7 +158,7 @@ def get_emails(tokens):
     if not tokens:
         return ""
     result = set()
-    for token in tokens.all():
+    for token in tokens:
         result.add("'%s'" % token.email)
     return mark_safe(", ".join(result))
 

@@ -8,6 +8,7 @@ from io import StringIO
 from datetime import timedelta
 from urllib.parse import parse_qsl
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.forms.models import model_to_dict
@@ -20,7 +21,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.management.commands import dumpdata
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 
 from my_oauth.models import Service, Token
 from true_coders.models import Coder
@@ -42,6 +43,16 @@ def query(request, name):
     request.session['state'] = args['state']
     url = re.sub('[\n\r]', '', service.code_uri % args)
     return redirect(url)
+
+
+@login_required
+def unlink(request, name):
+    coder = request.user.coder
+    if coder.token_set.count() < 2:
+        messages.error(request, 'Not enough services')
+    else:
+        coder.token_set.filter(service__name=name).delete()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 def process_data(request, service, access_token, response):
@@ -80,7 +91,14 @@ def process_access_token(request, service, response):
         access_token = json.loads(response.text)
     except Exception:
         access_token = dict(parse_qsl(response.text))
-    headers = json.loads(service.data_header % access_token) if service.data_header else None
+
+    if service.data_header:
+        args = model_to_dict(service)
+        args.update(access_token)
+        headers = json.loads(service.data_header % args)
+    else:
+        headers = None
+
     response = requests.get(service.data_uri % access_token, headers=headers)
     return process_data(request, service, access_token, response)
 
