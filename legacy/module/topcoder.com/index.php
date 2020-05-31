@@ -1,14 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "https://topcoder.com/community/events/";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'America/New_York';
-    if (!isset($contests)) $contests = array();
-
-
     function get_algorithm_key(&$title) {
         $title = preg_replace('#single\s*round\s*match#i', 'SRM', $title);
         $title = preg_replace('#marathon\s*match#i', 'MM', $title);

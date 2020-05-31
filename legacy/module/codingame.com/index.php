@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'http://www.codingame.com/html/challenges/challenges.json';
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($contests)) $contests = array();
-
     $prefix_contest = parse_url($URL, PHP_URL_SCHEME) . '://' . parse_url($URL, PHP_URL_HOST) . '/contests/';
 
     $http_header = array('http_header' => array('content-type: application/json'), 'json_output' => true);

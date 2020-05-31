@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "http://kaggle.com/competitions";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($contests)) $contests = array();
-
     $add_full_list = isset($_GET['parse_full_list']);
     $urls = array("https://www.kaggle.com/competitions.json?");
     if (!$add_full_list) {

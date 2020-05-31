@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'http://www.ch24.org/schedule.html';
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'CET';
-    if (!isset($contests)) $contests = array();
-
     $page = curlexec($URL);
     preg_match_all('/<li[^>]*>\s*<strong>(?P<title>[^:<]*):\s*<\/strong>\s*(<s>[^<]*<\/s>\s*)?\s*(?P<start>[^<\(]*)/', $page, $matches);
     foreach ($matches[0] as $i => $value) {

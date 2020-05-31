@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'https://www.hackerearth.com/api/events/upcoming/';
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($contests)) $contests = array();
-
     $data = curlexec($URL, NULL, array('json_output' => 1));
     if (!isset($data['response'])) {
         print_r($data);

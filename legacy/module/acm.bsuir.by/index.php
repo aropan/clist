@@ -1,15 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($HOST)) $URL = "http://acm.bsuir.by/";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($TIMEZONE)) $INFO = array();
-    if (!isset($contests)) $contests = array();
-
-
     for ($year = date('Y'); ; --$year) {
         $url = "http://contest.yandex.ru/bsuir{$year}";
 

@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'https://leetcode.com/contest/';
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($contests)) $contests = array();
-
     $url = 'https://leetcode.com/graphql';
     $postfields = '{"operationName":null,"variables":{},"query":"{\n  brightTitle\n  allContests {\n    containsPremium\n    title\n    cardImg\n    titleSlug\n    description\n    startTime\n    duration\n    originStartTime\n    isVirtual\n    company {\n      watermark\n      __typename\n    }\n    __typename\n  }\n}\n"}';
     $json = curlexec($url, $postfields, array("http_header" => array('content-type: application/json'), "json_output" => 1));

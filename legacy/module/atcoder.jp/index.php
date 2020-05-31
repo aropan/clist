@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "https://atcoder.jp/contests/";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'JST';
-    if (!isset($contests)) $contests = array();
-
     $seen = array();
     foreach (array('?lang=en' => '', '?lang=ja' => '?lang=ja') as $query => $host) {
         $url = $URL . $query;

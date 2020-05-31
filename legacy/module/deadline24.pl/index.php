@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'https://www.deadline24.pl/contest/competition-stages/';
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'CET';
-    if (!isset($contests)) $contests = array();
-
     $page = curlexec($URL);
     preg_match_all('/<h3>(?P<title>[^<]*)<\/h3>\s*<p>\s*<span[^>]*>.*?Time:(?P<date>[^<\(]*)[^<]*/s', $page, $matches);
     foreach ($matches[0] as $i => $value) {

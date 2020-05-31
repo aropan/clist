@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "https://www.facebook.com/hackercup/posts/";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'America/Los_Angeles';
-    if (!isset($contests)) $contests = array();
-
     $page = curlexec($URL);
 
     preg_match_all('

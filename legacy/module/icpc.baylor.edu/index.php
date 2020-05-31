@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "https://icpc.baylor.edu/worldfinals/schedule";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($contests)) $contests = array();
-
     $page = curlexec($URL);
     if (!preg_match('#src="(?P<js>/static/js/main.[^"]*.js)"#', $page, $match)) {
         trigger_error('Not found main.js', E_USER_WARNING);

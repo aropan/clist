@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "https://projecteuler.net/";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'Europe/London';
-    if (!isset($contests)) $contests = array();
-
     $urls = array('https://projecteuler.net/recent');
 
     if (isset($_GET['parse_full_list'])) {

@@ -1,14 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "https://contest.yandex.ru/CYF";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($INFO)) $INFO = array('update' => array('default_fields' => array()));
-    if (!isset($contests)) $contests = array();
-
     $page = curlexec($URL);
 
     preg_match_all('#<a[^>]*href="(?P<url>[^"]*contest.yandex.ru/CYF/contest/(?P<key>[0-9]+))#i', $page, $matches, PREG_SET_ORDER);

@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "http://acm.timus.ru/schedule.aspx?locale=en";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'Asia/Yekaterinburg';
-    if (!isset($contests)) $contests = array();
-
     curl_setopt($CID, CURLOPT_HTTPHEADER,
         array(
             "Host: acm.timus.ru",

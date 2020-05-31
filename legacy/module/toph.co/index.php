@@ -1,14 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    if (!isset($URL)) $URL = "https://toph.co/contests";
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($contests)) $contests = array();
-
-
     $page = curlexec($URL);
 
     preg_match_all('#<a[^>]*href="?(?P<url>[^">]*)"?[^>]*>\s*<h2[^>]*>(?P<title>[^<]*)</h2>\s*</a>#', $page, $matches, PREG_SET_ORDER);

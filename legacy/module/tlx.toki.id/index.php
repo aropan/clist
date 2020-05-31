@@ -1,13 +1,6 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!isset($URL)) $URL = 'https://tlx.toki.id/competition/contests';
-    if (!isset($HOST)) $HOST = parse_url($URL, PHP_URL_HOST);
-    if (!isset($RID)) $RID = -1;
-    if (!isset($LANG)) $LANG = 'RU';
-    if (!isset($TIMEZONE)) $TIMEZONE = 'UTC';
-    if (!isset($contests)) $contests = array();
-
     $min_start_time = INF;
     $limit_start_time = time() - 90 * 24 * 60 * 60;
     for ($n_page = 1; $limit_start_time < $min_start_time || isset($_GET['parse_full_list']); $n_page += 1) {
