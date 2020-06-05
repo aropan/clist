@@ -101,7 +101,10 @@ MIDDLEWARE = (
 )
 
 if DEBUG:
-    MIDDLEWARE += ('pyclist.middleware.DebugPermissionOnlyMiddleware',)
+    MIDDLEWARE += (
+        'pyclist.middleware.DebugPermissionOnlyMiddleware',
+        'django_cprofile_middleware.middleware.ProfilerMiddleware',
+    )
 
 ROOT_URLCONF = 'pyclist.urls'
 
@@ -120,7 +123,7 @@ TEMPLATES = [
             'builtins': [
                 'pyclist.templatetags.staticfiles',
                 'clist.templatetags.extras',
-            ]
+            ],
         },
     },
 ]
@@ -310,6 +313,7 @@ COUNTRIES_OVERRIDE = {
     'KG': {'names': ['Kyrgyzstan', 'Кыргызстан', 'Киргизия']},
     'RS': {'names': ['Serbia', 'Srbija']},
     'HR': {'names': ['Croatia', 'Hrvatska']},
+    'CN': {'names': ['China', '中国']},
 }
 
 # DJANGO DEBUG TOOLBAR
@@ -321,8 +325,14 @@ if DEBUG:
         'SHOW_TOOLBAR_CALLBACK': lambda request: (
             request.user.is_authenticated
             and request.user.has_perm('view_django_debug_toolbar')
+            and 'debug_toolbar' in request.GET
         ),
     }
+
+
+# DJANGO CPROFILE
+DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
+
 
 # CONSTANTS
 VIEWMODE_ = 'list'
