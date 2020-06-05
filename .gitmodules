@@ -1,39 +1,39 @@
 [submodule "third_party/x-editable"]
 	path = third_party/x-editable
-	url = git@github.com:vitalets/x-editable.git
+	url = ../../vitalets/x-editable.git
 [submodule "third_party/bootstrap"]
 	path = third_party/bootstrap
-	url = git@github.com:twbs/bootstrap.git
+	url = ../../twbs/bootstrap.git
 [submodule "third_party/select2"]
 	path = third_party/select2
-	url = git@github.com:select2/select2.git
+	url = ../../select2/select2.git
 [submodule "third_party/select2-bootstrap-theme"]
 	path = third_party/select2-bootstrap-theme
-	url = git@github.com:select2/select2-bootstrap-theme.git
+	url = ../../select2/select2-bootstrap-theme.git
 [submodule "third_party/BootstrapXL"]
 	path = third_party/BootstrapXL
-	url = git@github.com:marcvannieuwenhuijzen/BootstrapXL.git
+	url = ../../marcvannieuwenhuijzen/BootstrapXL.git
 [submodule "third_party/awesome-bootstrap-checkbox"]
 	path = third_party/awesome-bootstrap-checkbox
-	url = git@github.com:flatlogic/awesome-bootstrap-checkbox.git
+	url = ../../flatlogic/awesome-bootstrap-checkbox.git
 [submodule "bootbox"]
 	path = bootbox
-	url = git@github.com:makeusabrew/bootbox.git
+	url = ../../makeusabrew/bootbox.git
 [submodule "third_party/bootbox"]
 	path = third_party/bootbox
-	url = git@github.com:makeusabrew/bootbox.git
+	url = ../../makeusabrew/bootbox.git
 [submodule "third_party/fullcalendar"]
 	path = third_party/fullcalendar
-	url = git@github.com:fullcalendar/fullcalendar.git
+	url = ../../fullcalendar/fullcalendar.git
 [submodule "third_party/moment"]
 	path = third_party/moment
-	url = git@github.com:moment/moment.git
+	url = ../../moment/moment.git
 [submodule "third_party/moment-timezone"]
 	path = third_party/moment-timezone
-	url = git@github.com:moment/moment-timezone.git
+	url = ../../moment/moment-timezone.git
 [submodule "legacy/libs/smarty"]
 	path = legacy/libs/smarty
-	url = git@github.com:smarty-php/smarty.git
+	url = ../../smarty-php/smarty.git
 [submodule "third_party/Chart.js"]
 	path = third_party/Chart.js
-	url = git@github.com:chartjs/Chart.js.git
+	url = ../../chartjs/Chart.js.git
