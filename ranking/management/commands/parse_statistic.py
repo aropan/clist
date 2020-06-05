@@ -52,6 +52,7 @@ class Command(BaseCommand):
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
         parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
+        parser.add_argument('--update-without-new-rating', action='store_true', default=False, help='Update account')
 
     @staticmethod
     def _get_plugin(module):
@@ -76,6 +77,7 @@ class Command(BaseCommand):
         title_regex=None,
         users=None,
         with_stats=True,
+        update_without_new_rating=None,
     ):
         now = timezone.now()
 
@@ -129,6 +131,7 @@ class Command(BaseCommand):
 
         count = 0
         total = 0
+        n_upd_account_time = 0
         progress_bar = tqdm(contests)
         for contest in progress_bar:
             resource = contest.resource
@@ -221,7 +224,17 @@ class Command(BaseCommand):
                             account, created = Account.objects.get_or_create(resource=resource, key=member)
 
                             updated = now + timedelta(days=1)
-                            if created or (not statistics_ids and updated < account.updated):
+                            if (
+                                created
+                                or (not statistics_ids and updated < account.updated)
+                                or (
+                                    update_without_new_rating
+                                    and updated < account.updated
+                                    and with_stats
+                                    and 'new_rating' not in statistics_by_key.get(member, {})
+                                )
+                            ):
+                                n_upd_account_time += 1
                                 account.updated = updated
                                 account.save()
 
@@ -356,6 +369,8 @@ class Command(BaseCommand):
                                 'solving': r.pop('solving', 0),
                                 'upsolving': r.pop('upsolving', 0),
                             }
+                            if defaults['place'] == '__unchanged__':
+                                defaults.pop('place')
 
                             addition = type(r)()
                             for k, v in r.items():
@@ -549,7 +564,7 @@ class Command(BaseCommand):
                     if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
                         stage.update()
         progress_bar.close()
-        self.logger.info(f'Parse statistic: {count} of {total}.')
+        self.logger.info(f'Parsed statistic: {count} of {total}. Updated account time: {n_upd_account_time}')
         return count, total
 
     def handle(self, *args, **options):
@@ -585,4 +600,5 @@ class Command(BaseCommand):
             title_regex=args.event,
             users=args.users,
             with_stats=not args.no_stats,
+            update_without_new_rating=args.update_without_new_rating,
         )
