@@ -14,7 +14,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedire
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
 from tastypie.models import ApiKey
 from django_countries import countries
 from el_pagination.decorators import page_template
@@ -287,6 +287,7 @@ def settings(request, tab=None):
 
 
 @login_required
+@require_http_methods(['POST'])
 def change(request):
     name = request.POST.get("name", None)
     value = request.POST.get("value", None)
@@ -645,7 +646,7 @@ def search(request, **kwargs):
 
 
 @login_required
-@ensure_csrf_cookie
+@require_http_methods(['POST'])
 def get_api_key(request):
     if hasattr(request.user, 'api_key') and request.user.api_key is not None:
         api_key = request.user.api_key
@@ -655,7 +656,7 @@ def get_api_key(request):
 
 
 @login_required
-@ensure_csrf_cookie
+@require_http_methods(['DELETE'])
 def remove_api_key(request):
     ret = ApiKey.objects.filter(user=request.user).delete()
     return HttpResponse(str(ret))

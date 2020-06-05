@@ -53,7 +53,6 @@
         });
 
     </script>
-
     <script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
     <script src="{% static_ts 'js/bootbox.min.js' %}"></script>
 {% endblock %}
@@ -69,8 +68,10 @@
             $('#show-api-key').click(function() {
                 var $this = $(this)
                 $this.html('<i class="fas fa-sync-alt fa-lg fa-pulse"></i>')
-                $.get('{% url "coder:api-key" %}')
-                    .done(function (api_key) {
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url "coder:api-key" %}',
+                    success: function (api_key) {
                         $this.html(api_key)
                         $this.removeAttr('href').unbind('click')
                         $this.popover({
@@ -91,16 +92,19 @@ content: '<div class="info"><div class="title">Request header</div><div class="t
                                 message: 'Remove api key?<br/><small class="text-muted">You can create a new api key later.</small>',
                                 callback: function (result) {
                                     if (result) {
-                                        $.get('{% url "coder:remove-api-key" %}').done(function(response) { location.reload() })
+                                        $.ajax({
+                                            type: 'DELETE',
+                                            url: '{% url "coder:remove-api-key" %}',
+                                            success: function(response) { location.reload() },
+                                            error: function (data) { bootbox.alert({message: data.statusText, size: 'small'}) },
+                                        })
                                     }
                                 }
                             })
                         })
-                    })
-                    .fail(function (data) {
-                        $this.html('<span class="label label-danger">Something went wrong</span>')
-                        $this.removeAttr('href').unbind('click')
-                    })
+                    },
+                    error: function (data) { bootbox.alert({message: data.statusText, size: 'small'}) },
+                })
                 return false;
             })
         })
