@@ -14,6 +14,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedire
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
 from tastypie.models import ApiKey
 from django_countries import countries
 from el_pagination.decorators import page_template
@@ -643,14 +644,21 @@ def search(request, **kwargs):
     return HttpResponse(json.dumps(result, ensure_ascii=False), content_type="application/json")
 
 
+@login_required
+@ensure_csrf_cookie
 def get_api_key(request):
-    if not request.user.is_authenticated:
-        return HttpResponse('Unauthorized', status=401)
     if hasattr(request.user, 'api_key') and request.user.api_key is not None:
         api_key = request.user.api_key
     else:
         api_key = ApiKey.objects.create(user=request.user)
     return HttpResponse(api_key.key)
+
+
+@login_required
+@ensure_csrf_cookie
+def remove_api_key(request):
+    ret = ApiKey.objects.filter(user=request.user).delete()
+    return HttpResponse(str(ret))
 
 
 @login_required

@@ -40,8 +40,6 @@
 }
 
 .info {
-    font-size: 1.1em;
-    line-height: 1.1em;
     font-family: "Droid Sans", sans-serif;
 }
 
@@ -68,7 +66,7 @@
 #show-api-key {
     color: #0F6AB4;
     text-decoration: none;
-    font-size: 0.75em;
+    /* font-size: 0.75em; */
     outline: none !important;
 }
 
@@ -76,15 +74,15 @@
     padding-top: 3px;
 }
 
-.popover .info {
-    font-size: 0.9em;
-}
-
 .popover-title, .popover .or {
     font-weight: bold;
 }
 
+.popover .text {
+    white-space: nowrap;
+}
+
 .popover {
     font-family: "Droid Sans", sans-serif;
-    min-width: 500px;
+    max-width: none !important;
 }

@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^account/(?P<key>.*)/resource/(?P<host>.*)/ratings/$', views.ratings),
     url(r'^account/(?P<key>.*)/resource/(?P<host>.*)/$', views.account, name='account'),
     url(r'^api/key/$', views.get_api_key, name='api-key'),
+    url(r'^remove/api/key/$', views.remove_api_key, name='remove-api-key'),
     url(r'^party/([^/]*)/(join|leave)/$', views.party_action, name='party-action'),
     url(r'^party/([^/]*)/contests/$', views.party_contests, name='party-contests'),
     url(r'^party/([^/]*)/(?:(calendar|ranking|information)/)?$', views.party, name='party'),
