@@ -3,7 +3,7 @@
 import re
 import json
 import requests
-from datetime import timedelta
+from datetime import timedelta, datetime
 from time import time, sleep
 from hashlib import sha512
 from pprint import pprint
@@ -11,6 +11,8 @@ from urllib.parse import urlencode, urljoin
 from string import ascii_lowercase
 from random import choice
 from collections import OrderedDict
+
+import pytz
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -66,6 +68,7 @@ def _query(
 
 
 class Statistic(BaseModule):
+    PARTICIPANT_TYPES = ['CONTESTANT', 'OUT_OF_COMPETITION']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -87,7 +90,7 @@ class Statistic(BaseModule):
         is_gym = '/gym/' in self.url
         result = {}
 
-        for unofficial in [False, True]:
+        for unofficial in [True]:
             params = {
                 'contestId': self.cid,
                 'showUnofficial': str(unofficial).lower(),
@@ -125,9 +128,13 @@ class Statistic(BaseModule):
                 problems_info[d['short']] = d
 
             grouped = any(
-                'teamId' in row['party'] and 'CONTESTANT' in row['party']['participantType']
+                'teamId' in row['party'] and row['party']['participantType'] in self.PARTICIPANT_TYPES
                 for row in data['result']['rows']
             )
+
+            place = None
+            last = None
+            idx = 0
             for row in data['result']['rows']:
                 party = row['party']
 
@@ -145,19 +152,18 @@ class Statistic(BaseModule):
                     if is_gym:
                         upsolve = False
                     else:
-                        upsolve = party['participantType'] != 'CONTESTANT'
-                        if unofficial != upsolve:
-                            continue
+                        upsolve = party['participantType'] not in self.PARTICIPANT_TYPES
 
                     handle = member['handle']
 
                     r = result.setdefault(handle, OrderedDict())
+
                     r['member'] = handle
                     if 'room' in party:
                         r['room'] = str(party['room'])
 
                     r.setdefault('participant_type', []).append(party['participantType'])
-                    r['_no_update_n_contests'] = 'CONTESTANT' not in r['participant_type']
+                    r['_no_update_n_contests'] = all(pt not in r['participant_type'] for pt in r['participant_type'])
 
                     if is_ghost_team:
                         r['name'] = member['name']
@@ -185,30 +191,48 @@ class Statistic(BaseModule):
                         if s['type'] == 'FINAL' and (points or n):
                             if not points:
                                 points = f'-{n}'
+                                n = None
                             p = {'result': points}
                             if contest_type == 'IOI':
                                 full_score = problems_info[k].get('full_score')
                                 if full_score:
                                     p['partial'] = points < full_score
-                            if 'bestSubmissionTimeSeconds' in s:
-                                time = s['bestSubmissionTimeSeconds']
-                                if time > duration_seconds:
-                                    u = True
-                                else:
-                                    time /= 60
-                                    p['time'] = '%02d:%02d' % (time / 60, time % 60)
-                            a = problems.setdefault(k, {})
-                            if u:
-                                a['upsolving'] = p
+                            elif contest_type == 'CF' and n:
+                                p['penalty_score'] = n
+                        elif s['type'] == 'PRELIMINARY':
+                            p = {'result': f'?{n + 1}'}
+                        else:
+                            continue
+
+                        if 'bestSubmissionTimeSeconds' in s:
+                            time = s['bestSubmissionTimeSeconds']
+                            if time > duration_seconds:
+                                u = True
                             else:
-                                a.update(p)
+                                time /= 60
+                                p['time'] = '%02d:%02d' % (time / 60, time % 60)
+                        a = problems.setdefault(k, {})
+                        if u:
+                            a['upsolving'] = p
+                        else:
+                            a.update(p)
 
                     if row['rank'] and not upsolve:
-                        r['place'] = row['rank']
+                        if unofficial:
+                            if users:
+                                r['place'] = '__unchanged__'
+                            else:
+                                idx += 1
+                                value = (row['points'], row.get('penalty'))
+                                if last != value:
+                                    value = last
+                                    place = idx
+                                r['place'] = place
+                        else:
+                            r['place'] = row['rank']
                         r['solving'] = row['points']
                         if contest_type == 'ICPC':
                             r['penalty'] = row['penalty']
-                            r['solving'] = int(round(r['solving']))
 
                     if hack or unhack:
                         r['hack'] = {
@@ -245,7 +269,10 @@ class Statistic(BaseModule):
                 r['new_rating'] = new_rating
 
         def to_score(x):
-            return (1 if x.startswith('+') or float(x) > 0 else 0) if isinstance(x, str) else x
+            return (
+                (1 if x.startswith('+') or not x.startswith('?') and float(x) > 0 else 0)
+                if isinstance(x, str) else x
+            )
 
         def to_solve(x):
             return not x.get('partial', False) and to_score(x.get('result', 0)) > 0
@@ -277,8 +304,9 @@ class Statistic(BaseModule):
                 'fixed_fields': [('hack', 'Hacks')],
             },
         }
-        if phase != 'FINISHED':
-            standings['timing_statistic_delta'] = timedelta(minutes=10)
+
+        if phase != 'FINISHED' and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc):
+            standings['timing_statistic_delta'] = timedelta(minutes=15)
         return standings
 
     @staticmethod

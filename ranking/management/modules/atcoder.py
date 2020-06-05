@@ -6,6 +6,8 @@ import re
 from pprint import pprint
 from datetime import timedelta, datetime
 
+import pytz
+
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules import conf
 
@@ -153,7 +155,11 @@ class Statistic(BaseModule):
             'writers': writers,
         }
 
-        if has_rated and not has_new_rating and self.end_time + timedelta(hours=3) > datetime.now():
+        if (
+            has_rated
+            and not has_new_rating
+            and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc)
+        ):
             standings['timing_statistic_delta'] = timedelta(minutes=30)
 
         return standings

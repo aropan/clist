@@ -69,9 +69,12 @@ class Statistic(BaseModule):
                         ok = False
                     parent = urljoin(u, path[-2])
                     urls_set.add(parent)
-                if len(urls_set) > 1 or not ok:
+                if len(urls_set) > 1:
+                    _, url = urls[0]
+                elif not ok:
                     raise ExceptionParseStandings('Too much standing url')
-                url = urls_set.pop()
+                else:
+                    url = urls_set.pop()
             else:
                 _, url = urls[0]
 
