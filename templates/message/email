@@ -1,4 +1,3 @@
-{% load extras %}
 <div style="width: 400px; margin: auto">
     {% for c in contests %}
     <div style="margin-bottom: 20px; padding: 10px; border: 1px solid black;">

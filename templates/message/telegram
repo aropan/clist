@@ -1,4 +1,3 @@
-{% load extras %}
 {% autoescape off %}
 {% if prefix %}*{{ prefix }}*
 {% endif %}{% for c in contests %}[{{ c.title|md_escape:1 }}]({{ c.url }}) `{{ c.host }}` will start in [{{ c.next_time|hr_timedelta }}](https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ c.title|urlencode }}&iso={{ c.start_time|format_time:"%Y%m%dT%H%M" }}{% if c.duration|less_24_hours %}&ah={{ c.duration|hours }}&am={{ c.duration|minutes }}{% endif %})
