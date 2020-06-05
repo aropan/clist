@@ -67,13 +67,13 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 table tr.contest.gold-medal {
-  background: #f9d923;
+  background: #fff28c;
 }
 
 table tr.contest.silver-medal {
-  background: silver;
+  background: #d9d9d9;
 }
 
 table tr.contest.bronze-medal {
-  background: #c08e55;
+  background: #dbb993;
 }

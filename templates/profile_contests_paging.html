@@ -4,7 +4,7 @@
 {% paginate 50 statistics %}
 
 {% for s in statistics %}
-<tr class="contest{% if s.addition.medal %} {{ s.addition.medal|lower }}-medal{% endif %}" id="cid-{{ s.contest.id }}">
+<tr class="contest{% if s.addition.medal %} {{ s.addition.medal|lower }}-medal{% endif %}{% if s.contest.is_running %} success{% endif %}" id="cid-{{ s.contest.id }}">
     <td>
         {% if s.addition.url %}<a href="{{ s.addition.url }}">{% endif %}
         <div data-toggle="tooltip" data-placement="top" data-html="true" title="

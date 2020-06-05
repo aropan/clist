@@ -1,9 +1,12 @@
-from pyclist.models import BaseModel
-from django.db import models
-from true_coders.models import Coder
 from datetime import timedelta
+
+from django.db import models
+from django.utils import timezone
 from django.core.validators import MinValueValidator
 from django.contrib.postgres.fields import JSONField
+
+from pyclist.models import BaseModel
+from true_coders.models import Coder
 
 
 class Notification(BaseModel):
@@ -43,10 +46,15 @@ class Notification(BaseModel):
     method = models.CharField(max_length=256, null=False)
     before = models.IntegerField(null=False, validators=[MinValueValidator(0)])
     period = models.CharField(max_length=16, choices=PERIOD_CHOICES, null=False)
-    last_time = models.DateTimeField(auto_now_add=True, null=True)
+    last_time = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return '{0.method}@{0.coder}: {0.before} {0.period}'.format(self)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.last_time = timezone.now()
+        super().save(*args, **kwargs)
 
 
 class Task(BaseModel):

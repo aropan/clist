@@ -1,4 +1,4 @@
-<form id="standings-form" class="form-inline invisible" method="get" action="">
+<form class="form-inline" method="get" action="">
   <div class="form-group">
     {% if divisions_order %}
     <div class="input-group input-group-sm">
@@ -10,13 +10,11 @@
       </select>
     </div>
     <script>
-      $(function() {
-        $('#division').select2({
-          minimumResultsForSearch: -1,
-          dropdownAutoWidth : true,
-          theme: 'bootstrap',
-          width: 'auto',
-        })
+      $('#division').select2({
+        minimumResultsForSearch: -1,
+        dropdownAutoWidth : true,
+        theme: 'bootstrap',
+        width: 'auto',
       })
     </script>
     {% endif %}
@@ -52,8 +50,9 @@
       onchange="this.setAttribute('value', this.checked? 'true' : 'false'); this.checked = true; this.form.submit()"
       {% if with_detail %}checked{% endif %}
     >
+    <script>$('[data-toggle="toggle"]').removeAttr('data-toggle').bootstrapToggle();</script>
 
-    {% if has_country or fields_to_select %}{% if groupby %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}{% endif %}
+    {% if has_country or fields_to_select %}{% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}{% endif %}
 
     {% include 'country_filter.html' %}
 
@@ -71,46 +70,44 @@
         </div>
       {% endfor %}
       <script>
-        $(function() {
-          $('.field-to-select select').select2({
-            dropdownAutoWidth : true,
-            theme: 'bootstrap',
-            placeholder: '',
-            allowClear: true,
-            ajax: {
-                url: '/settings/search/',
-                dataType: 'json',
-                delay: 314,
-                data: function (params) {
-                    return {
-                        query: 'field-to-select',
-                        cid: {{ contest.pk }},
-                        division: '{{ request.GET.division }}',
-                        field: $(this).attr('name'),
-                        text: params.term,
-                        page: params.page || 1
-                    };
-                },
-                processResults: function (data, params) {
-                    return {
-                        results: data.items,
-                        pagination: {
-                            more: data.more
-                        }
-                    };
-                },
-                cache: true,
-            },
-          }).on('select2:unselecting', function() {
-            $(this).data('unselecting', true);
-          }).on('select2:opening', function(e) {
-            if ($(this).data('unselecting')) {
-              $(this).removeData('unselecting');
-              e.preventDefault();
-            }
-          })
-          $('.field-to-select').removeClass('hidden');
+        $('.field-to-select select').select2({
+          dropdownAutoWidth : true,
+          theme: 'bootstrap',
+          placeholder: '',
+          allowClear: true,
+          ajax: {
+              url: '/settings/search/',
+              dataType: 'json',
+              delay: 314,
+              data: function (params) {
+                  return {
+                      query: 'field-to-select',
+                      cid: {{ contest.pk }},
+                      division: '{{ request.GET.division }}',
+                      field: $(this).attr('name'),
+                      text: params.term,
+                      page: params.page || 1
+                  };
+              },
+              processResults: function (data, params) {
+                  return {
+                      results: data.items,
+                      pagination: {
+                          more: data.more
+                      }
+                  };
+              },
+              cache: true,
+          },
+        }).on('select2:unselecting', function() {
+          $(this).data('unselecting', true);
+        }).on('select2:opening', function(e) {
+          if ($(this).data('unselecting')) {
+            $(this).removeData('unselecting');
+            e.preventDefault();
+          }
         })
+        $('.field-to-select').removeClass('hidden');
       </script>
     {% endif %}
 
@@ -120,5 +117,4 @@
       {% endfor %}
     {% endwith %}
   </div>
-  <script>$(function() { $('#standings-form').hide().removeClass('invisible').fadeIn(); })</script>
 </form>

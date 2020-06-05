@@ -102,6 +102,17 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     if slug(contest.title) != title_slug:
         return HttpResponseNotFound()
 
+    with_detail = request.GET.get('detail', 'true') in ['true', 'on']
+    if request.user.is_authenticated:
+        coder = request.user.coder
+        if 'detail' in request.GET:
+            coder.settings['standings_with_detail'] = with_detail
+            coder.save()
+        else:
+            with_detail = coder.settings.get('standings_with_detail', False)
+    else:
+        coder = None
+
     with_row_num = False
 
     contest_fields = contest.info.get('fields', [])
@@ -125,8 +136,11 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
     fixed_fields = (
         ('penalty', 'Penalty'),
         ('total_time', 'Time'),
-        ('advanced', 'Advance')
-    ) + tuple(options.get('fixed_fields', []))
+        ('advanced', 'Advance'),
+    )
+    fixed_fields += tuple(options.get('fixed_fields', []))
+    if not with_detail:
+        fixed_fields += (('rating_change', 'Rating change'), )
 
     statistics = statistics \
         .select_related('account') \
@@ -165,17 +179,6 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
         f = f.strip('_')
         if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region']:
             fields_to_select[f] = request.GET.getlist(f)
-
-    with_detail = request.GET.get('detail', 'true') in ['true', 'on']
-    if request.user.is_authenticated:
-        coder = request.user.coder
-        if 'detail' in request.GET:
-            coder.settings['standings_with_detail'] = with_detail
-            coder.save()
-        else:
-            with_detail = coder.settings.get('standings_with_detail', False)
-    else:
-        coder = None
 
     if with_detail:
         for k in contest_fields:

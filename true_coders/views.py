@@ -61,27 +61,29 @@ def get_profile_context(request, statistics):
     search = request.GET.get('search')
     filters = {}
     if search:
-        for search in search.split(' && '):
-            if search.startswith('problem:'):
-                field, search = search.split(':', 1)
-                search_re = verify_regex(search)
-                statistics = statistics.filter(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
-            elif search.startswith('contest:'):
-                field, search = search.split(':', 1)
-                statistics = statistics.filter(contest__id=search)
-            elif search.startswith('account:'):
-                field, search = search.split(':', 1)
-                statistics = statistics.filter(account__key=search)
-            elif search.startswith('resource:'):
-                field, search = search.split(':', 1)
-                statistics = statistics.filter(contest__resource__host=search)
-                history_resources = history_resources.filter(contest__resource__host=search)
-            else:
-                field = 'regex'
-                search_re = verify_regex(search)
-                query = Q(contest__resource__host__iregex=search_re) | Q(contest__title__iregex=search_re)
-                statistics = statistics.filter(query)
-            filters.setdefault(field, []).append(search)
+        for search in search.split('&&'):
+            cond = Q()
+            for value in search.split('||'):
+                value = value.strip()
+                if value.startswith('problem:'):
+                    field, value = value.split(':', 1)
+                    search_re = verify_regex(value)
+                    cond |= Q(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
+                elif value.startswith('contest:'):
+                    field, value = value.split(':', 1)
+                    cond |= Q(contest__id=value)
+                elif value.startswith('account:'):
+                    field, value = value.split(':', 1)
+                    cond |= Q(account__key=value)
+                elif value.startswith('resource:'):
+                    field, value = value.split(':', 1)
+                    cond |= Q(contest__resource__host=value)
+                    history_resources = history_resources.filter(contest__resource__host=value)
+                else:
+                    field = 'regex'
+                    cond |= get_iregex_filter(value, 'contest__resource__host', 'contest__title')
+                filters.setdefault(field, []).append(value)
+            statistics = statistics.filter(cond)
     search_resource = filters.pop('resource', [])
     search_resource = search_resource[0] if len(search_resource) == 1 else None
 

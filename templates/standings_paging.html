@@ -169,7 +169,7 @@
               {% if stat.partial %}par{% else %}acc{% endif %}
             {% elif stat.result|slice:":1" == "?" %}
               hid
-            {% elif stat.result|slice:":1" == "-" %}
+            {% elif stat.result|slice:":1" == "-" or stat.result|asfloat:0 < 0 %}
               rej
             {% endif %}
             "
@@ -212,6 +212,9 @@
           >
           {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
           </div>
+        {% endif %}
+        {% if stat.penalty_score %}
+          <div class="inline">({{ stat.penalty_score }})</div>
         {% endif %}
         </div>
 

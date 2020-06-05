@@ -9,7 +9,7 @@ class NotificationAdmin(BaseModelAdmin):
     search_fields = ['coder__user__username', 'method', 'period']
 
     def get_readonly_fields(self, request, obj=None):
-        return ['last_time', ] + super().get_readonly_fields(request, obj)
+        return super().get_readonly_fields(request, obj)
 
 
 @admin_register(Task)
