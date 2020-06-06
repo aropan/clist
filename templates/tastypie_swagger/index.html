@@ -33,18 +33,7 @@
                 supportedSubmitMethods: ['get'],
                 onComplete: function(swaggerApi, swaggerUi){
                     $("img[src$='throbber.gif']").attr("src", "{% static_ts 'tastypie_swagger/images/throbber.gif' %}");
-                    if(console) {
-                        console.log("Loaded SwaggerUI")
-                        console.log(swaggerApi);
-                        console.log(swaggerUi);
-                    }
                     $('pre code').each(function(i, e) {hljs.highlightBlock(e)});
-                },
-                onFailure: function(data) {
-                    if(console) {
-                        console.log("Unable to Load SwaggerUI");
-                        console.log(data);
-                    }
                 },
                 docExpansion: "list"
             });
