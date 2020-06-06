@@ -18,7 +18,7 @@ from el_pagination.decorators import page_template, page_templates
 
 from clist.models import Contest
 from ranking.models import Statistics, Module
-from clist.templatetags.extras import slug
+from clist.templatetags.extras import slug, query_transform
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
 from clist.templatetags.extras import get_problem_key, get_country_name
@@ -130,8 +130,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     if contest is None:
         return HttpResponseNotFound()
     if to_redirect:
-        return redirect(reverse('ranking:standings',
-                                kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)}))
+        query = query_transform(request)
+        url = reverse('ranking:standings', kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)})
+        return redirect(url + '?' + query)
 
     with_detail = request.GET.get('detail', 'true') in ['true', 'on']
     if request.user.is_authenticated:
