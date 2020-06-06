@@ -132,7 +132,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     if to_redirect:
         query = query_transform(request)
         url = reverse('ranking:standings', kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)})
-        return redirect(url + '?' + query)
+        if query:
+            query = '?' + query
+        return redirect(url + query)
 
     with_detail = request.GET.get('detail', 'true') in ['true', 'on']
     if request.user.is_authenticated:
