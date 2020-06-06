@@ -61,6 +61,7 @@ class Statistic(BaseModule):
         data = get(1, 1)
         problems_info = [
             {
+                'url': os.path.join(self.url, task['id']),
                 'code': task['id'],
                 'name': task['title'],
                 'full_score': sum([test['value'] for test in task['tests']])
