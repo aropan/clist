@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.contrib.postgres.fields import JSONField, ArrayField
 
 from pyclist.models import BaseModel, BaseManager
-from clist.templatetags.extras import get_problem_key, get_problem_name, get_problem_short
+from clist.templatetags.extras import get_problem_key, get_problem_name, get_problem_short, slug
 
 
 class Resource(BaseModel):
@@ -89,6 +89,7 @@ class VisibleContestManager(BaseManager):
 class Contest(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     title = models.CharField(max_length=2048)
+    slug = models.CharField(max_length=2048, null=True, blank=True, db_index=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     duration_in_secs = models.IntegerField(null=False, blank=True)
@@ -121,6 +122,7 @@ class Contest(models.Model):
     def save(self, *args, **kwargs):
         if self.duration_in_secs is None:
             self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
+        self.slug = slug(self.title)
         return super(Contest, self).save(*args, **kwargs)
 
     def is_over(self):

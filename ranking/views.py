@@ -12,6 +12,7 @@ from django.http import HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 from django.utils import timezone
+from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_exempt
 from el_pagination.decorators import page_template, page_templates
 
@@ -49,7 +50,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     search = request.GET.get('search')
     if search is not None:
-        contests = contests.filter(get_iregex_filter(search, 'title', 'host', 'resource__host'))
+        contests = contests.filter(get_iregex_filter(search,
+                                                     'title', 'host', 'resource__host',
+                                                     mapping={'slug': {}}))
 
     context = {
         'contests': contests,
@@ -70,7 +73,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
 ))
-def standings(request, title_slug, contest_id, template='standings.html', extra_context=None):
+def standings(request, title_slug=None, contest_id=None, template='standings.html', extra_context=None):
     groupby = request.GET.get('groupby')
     if groupby == 'none':
         groupby = None
@@ -98,9 +101,37 @@ def standings(request, title_slug, contest_id, template='standings.html', extra_
             query.setlist('orderby', updated_orderby)
             return redirect(f'{request.path}?{query.urlencode()}')
 
-    contest = get_object_or_404(Contest.objects.select_related('resource'), pk=contest_id)
-    if slug(contest.title) != title_slug:
+    contests = Contest.objects
+    to_redirect = False
+    contest = None
+    if contest_id is not None:
+        contest = contests.filter(pk=contest_id).first()
+        if title_slug is None:
+            to_redirect = True
+        else:
+            if contest is None or slug(contest.title) != title_slug:
+                contest = None
+                title_slug += f'-{contest_id}'
+    if contest is None and title_slug is not None:
+        contests_iterator = contests.filter(slug=title_slug).iterator()
+
+        contest = None
+        try:
+            contest = next(contests_iterator)
+            another = next(contests_iterator)
+        except StopIteration:
+            another = None
+        if contest is None:
+            return HttpResponseNotFound()
+        if another is None:
+            to_redirect = True
+        else:
+            return redirect(reverse('ranking:standings_list') + f'?search=slug:{title_slug}')
+    if contest is None:
         return HttpResponseNotFound()
+    if to_redirect:
+        return redirect(reverse('ranking:standings',
+                                kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)}))
 
     with_detail = request.GET.get('detail', 'true') in ['true', 'on']
     if request.user.is_authenticated:

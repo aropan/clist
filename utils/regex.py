@@ -12,9 +12,17 @@ def verify_regex(regex):
     return regex
 
 
-def get_iregex_filter(regex, *fields):
+def get_iregex_filter(regex, *fields, mapping=None):
     ret = Q()
     for r in regex.split():
+        fs = fields
+        suff = '__iregex'
+        if ':' in r and mapping:
+            k, v = r.split(':', 1)
+            if k in mapping:
+                fs = mapping[k].get('fields', [k])
+                suff = mapping[k].get('suff', '')
+                r = v
         r = verify_regex(r)
-        ret = ret & functools.reduce(operator.ior, (Q(**{f'{field}__iregex': r}) for field in fields))
+        ret = ret & functools.reduce(operator.ior, (Q(**{f'{field}{suff}': r}) for field in fs))
     return ret
