@@ -191,7 +191,7 @@ class Command(BaseCommand):
                     problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
 
                     result = standings.get('result', {})
-                    if not no_update_results and result:
+                    if not no_update_results and (result or users is not None):
                         fields_set = set()
                         fields_types = {}
                         fields = list()
@@ -519,6 +519,16 @@ class Command(BaseCommand):
                             contest.save()
 
                             progress_bar.set_postfix(n_fields=len(fields))
+                        else:
+                            problems = standings.pop('problems', [])
+                            if 'division' not in problems:
+                                problems = [plugin.merge_dict(a, b) for a, b in zip(contest.info['problems'], problems)]
+                            else:
+                                problems = plugin.merge_dict(contest.info['problems'], problems)
+                            if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
+                                contest.info['problems'] = problems
+                                contest.update_problems()
+                                contest.save()
 
                     action = standings.get('action')
                     if action is not None:

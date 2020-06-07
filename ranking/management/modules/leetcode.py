@@ -54,58 +54,59 @@ class Statistic(BaseModule):
             content = REQ.get(url)
             return json.loads(content)
 
-        start_time = self.start_time.replace(tzinfo=None)
         result = {}
-        with PoolExecutor(max_workers=8) as executor:
-            for data in tqdm.tqdm(
-                executor.map(fetch_page, range(n_page)),
-                total=n_page,
-                desc='parsing statistics paging',
-            ):
-                for row, submissions in zip(data['total_rank'], data['submissions']):
-                    handle = row.pop('user_slug')
-                    if users and handle not in users:
-                        continue
-                    row.pop('contest_id')
-                    row.pop('global_ranking')
+        if users is None or users:
+            start_time = self.start_time.replace(tzinfo=None)
+            with PoolExecutor(max_workers=8) as executor:
+                for data in tqdm.tqdm(
+                    executor.map(fetch_page, range(n_page)),
+                    total=n_page,
+                    desc='parsing statistics paging',
+                ):
+                    for row, submissions in zip(data['total_rank'], data['submissions']):
+                        handle = row.pop('user_slug')
+                        if users and handle not in users:
+                            continue
+                        row.pop('contest_id')
+                        row.pop('global_ranking')
 
-                    r = result.setdefault(handle, OrderedDict())
-                    r['member'] = handle
-                    r['place'] = row.pop('rank')
-                    r['solving'] = row.pop('score')
+                        r = result.setdefault(handle, OrderedDict())
+                        r['member'] = handle
+                        r['place'] = row.pop('rank')
+                        r['solving'] = row.pop('score')
 
-                    name = row.pop('username')
-                    if name != handle:
-                        row['name'] = name
+                        name = row.pop('username')
+                        if name != handle:
+                            row['name'] = name
 
-                    data_region = row.pop('data_region').lower()
-                    r['info'] = {'profile_url': {'_data_region': '' if data_region == 'us' else f'-{data_region}'}}
+                        data_region = row.pop('data_region').lower()
+                        r['info'] = {'profile_url': {'_data_region': '' if data_region == 'us' else f'-{data_region}'}}
 
-                    country = None
-                    for field in 'country_code', 'country_name':
-                        country = country or row.pop(field, None)
-                    if country:
-                        r['country'] = country
+                        country = None
+                        for field in 'country_code', 'country_name':
+                            country = country or row.pop(field, None)
+                        if country:
+                            r['country'] = country
 
-                    solved = 0
-                    problems = r.setdefault('problems', {})
-                    for i, (k, s) in enumerate(submissions.items(), start=1):
-                        p = problems.setdefault(problems_info[k]['short'], {})
-                        p['time'] = self.to_time(datetime.fromtimestamp(s['date']) - start_time)
-                        if s['status'] == 10:
-                            solved += 1
-                            p['result'] = '+' + str(s['fail_count'] or '')
-                        else:
-                            p['result'] = f'-{s["fail_count"]}'
-                    r['solved'] = {'solving': solved}
-                    finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
-                    r['penalty'] = self.to_time(finish_time)
-                    r.update(row)
-                    if statistics and handle in statistics:
-                        stat = statistics[handle]
-                        for k in ('rating_change', 'new_rating'):
-                            if k in stat:
-                                r[k] = stat[k]
+                        solved = 0
+                        problems = r.setdefault('problems', {})
+                        for i, (k, s) in enumerate(submissions.items(), start=1):
+                            p = problems.setdefault(problems_info[k]['short'], {})
+                            p['time'] = self.to_time(datetime.fromtimestamp(s['date']) - start_time)
+                            if s['status'] == 10:
+                                solved += 1
+                                p['result'] = '+' + str(s['fail_count'] or '')
+                            else:
+                                p['result'] = f'-{s["fail_count"]}'
+                        r['solved'] = {'solving': solved}
+                        finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
+                        r['penalty'] = self.to_time(finish_time)
+                        r.update(row)
+                        if statistics and handle in statistics:
+                            stat = statistics[handle]
+                            for k in ('rating_change', 'new_rating'):
+                                if k in stat:
+                                    r[k] = stat[k]
 
         standings = {
             'result': result,
