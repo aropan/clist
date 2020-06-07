@@ -388,35 +388,37 @@ class Stage(BaseModel):
 
                     pbar.update()
 
+        total = sum([len(contest.info.get('writers', [])) for contest in contests])
+        with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar:
+            writers = set()
+            for contest in contests:
+                problem_info_key = str(contest.pk)
+                problem_key = get_problem_key(problems_infos[problem_info_key])
+                for writer in contest.info.get('writers', []):
+                    if writer in account_keys:
+                        account = account_keys[writer]
+                    else:
+                        account = Account.objects.filter(resource_id=contest.resource_id,
+                                                         key__iexact=writer).first()
+                    pbar.update()
+                    if not account:
+                        continue
+                    writers.add(account)
+
+                    row = results[account]
+                    row['member'] = account
+                    row.setdefault('score', 0)
+                    if n_best:
+                        row.setdefault('scores', [])
+                    row.setdefault('writer', 0)
+
+                    row['writer'] += 1
+
+                    problems = row.setdefault('problems', {})
+                    problem = problems.setdefault(problem_key, {})
+                    problem['status'] = 'W'
+
         if self.score_params.get('writers_proportionally_score'):
-            total = sum([len(contest.info.get('writers', [])) for contest in contests])
-            with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar:
-                writers = set()
-                for contest in contests:
-                    problem_info_key = str(contest.pk)
-                    problem_key = get_problem_key(problems_infos[problem_info_key])
-                    for writer in contest.info.get('writers', []):
-                        if writer in account_keys:
-                            account = account_keys[writer]
-                        else:
-                            account = Account.objects.filter(resource_id=contest.resource_id,
-                                                             key__iexact=writer).first()
-                        pbar.update()
-                        if not account:
-                            continue
-                        writers.add(account)
-
-                        row = results[account]
-                        row['member'] = account
-                        row.setdefault('score', 0)
-                        row.setdefault('writer', 0)
-
-                        row['writer'] += 1
-
-                        problems = row.setdefault('problems', {})
-                        problem = problems.setdefault(problem_key, {})
-                        problem['status'] = 'W'
-
             n_contests = len(contests)
             for account in writers:
                 row = results[account]
