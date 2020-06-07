@@ -52,7 +52,10 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     if search is not None:
         contests = contests.filter(get_iregex_filter(search,
                                                      'title', 'host', 'resource__host',
-                                                     mapping={'slug': {}}))
+                                                     mapping={
+                                                         'slug': ['slug'],
+                                                         'writer': ['info__writers__contains'],
+                                                     }))
 
     context = {
         'contests': contests,

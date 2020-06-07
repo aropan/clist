@@ -20,8 +20,8 @@ def get_iregex_filter(regex, *fields, mapping=None):
         if ':' in r and mapping:
             k, v = r.split(':', 1)
             if k in mapping:
-                fs = mapping[k].get('fields', [k])
-                suff = mapping[k].get('suff', '')
+                fs = mapping[k]
+                suff = ''
                 r = v
         r = verify_regex(r)
         ret = ret & functools.reduce(operator.ior, (Q(**{f'{field}{suff}': r}) for field in fs))

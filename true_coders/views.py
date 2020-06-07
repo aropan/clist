@@ -21,7 +21,7 @@ from el_pagination.decorators import page_template
 from sql_util.utils import SubqueryCount
 
 from clist.models import Resource, Contest
-from clist.templatetags.extras import get_timezones, format_time, slug as slugify
+from clist.templatetags.extras import get_timezones, format_time, slug as slugify, query_transform
 from clist.views import get_timezone, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
@@ -70,6 +70,9 @@ def get_profile_context(request, statistics):
                     field, value = value.split(':', 1)
                     search_re = verify_regex(value)
                     cond |= Q(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
+                elif value.startswith('writer:'):
+                    field, value = value.split(':', 1)
+                    cond |= Q(contest__info__writers__contains=value)
                 elif value.startswith('contest:'):
                     field, value = value.split(':', 1)
                     cond |= Q(contest__id=value)
@@ -102,7 +105,11 @@ def get_profile_context(request, statistics):
 
 @login_required
 def coder_profile(request):
-    return HttpResponseRedirect(reverse('coder:profile', args=[request.user.coder.username]))
+    url = reverse('coder:profile', args=[request.user.coder.username])
+    query = query_transform(request)
+    if query:
+        url += '?' + query
+    return HttpResponseRedirect(url)
 
 
 @page_template('profile_contests_paging.html')
