@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import re
 import json
 import html
@@ -41,6 +42,7 @@ class Statistic(BaseModule):
                     'code': p['question_id'],
                     'short': f'Q{i}',
                     'name': p['title'],
+                    'url': os.path.join(self.url, 'problems', p['title_slug']),
                     'full_score': p['credit'],
                 }
             )
