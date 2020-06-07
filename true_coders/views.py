@@ -62,32 +62,34 @@ def get_profile_context(request, statistics):
     search = request.GET.get('search')
     filters = {}
     if search:
-        for search in search.split('&&'):
+        filt = Q()
+        for search in search.split('||'):
             cond = Q()
-            for value in search.split('||'):
+            for value in search.split('&&'):
                 value = value.strip()
                 if value.startswith('problem:'):
                     field, value = value.split(':', 1)
                     search_re = verify_regex(value)
-                    cond |= Q(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
+                    cond &= Q(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
                 elif value.startswith('writer:'):
                     field, value = value.split(':', 1)
-                    cond |= Q(contest__info__writers__contains=value)
+                    cond &= Q(contest__info__writers__contains=value)
                 elif value.startswith('contest:'):
                     field, value = value.split(':', 1)
-                    cond |= Q(contest__id=value)
+                    cond &= Q(contest__id=value)
                 elif value.startswith('account:'):
                     field, value = value.split(':', 1)
-                    cond |= Q(account__key=value)
+                    cond &= Q(account__key=value)
                 elif value.startswith('resource:'):
                     field, value = value.split(':', 1)
-                    cond |= Q(contest__resource__host=value)
+                    cond &= Q(contest__resource__host=value)
                     history_resources = history_resources.filter(contest__resource__host=value)
                 else:
                     field = 'regex'
-                    cond |= get_iregex_filter(value, 'contest__resource__host', 'contest__title')
+                    cond &= get_iregex_filter(value, 'contest__resource__host', 'contest__title')
                 filters.setdefault(field, []).append(value)
-            statistics = statistics.filter(cond)
+            filt |= cond
+        statistics = statistics.filter(filt)
     search_resource = filters.pop('resource', [])
     search_resource = search_resource[0] if len(search_resource) == 1 else None
 
