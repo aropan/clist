@@ -19,6 +19,19 @@
         </div>{% if s.addition.url %}</a>{% endif %}
     </td>
     <td>{{ s.solving|floatformat }}</td>
+    <td>
+        {% with value=s.addition.rating_change %}
+        {% with intvalue=value|toint %}
+            <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
+            {% if intvalue %}
+              <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+            {% else %}
+              {{ value }}
+            {% endif %}
+            </span>
+        {% endwith %}
+        {% endwith %}
+    </td>
     <td>{{ s.contest.end_time|naturalday }}</td>
     <td class="title col-md-9 col-sm-8">
         <a href="{% url 'ranking:standings' s.contest.title|slug s.contest.pk %}">{{ s.contest.title }}</a>
@@ -36,13 +49,13 @@
                   {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
                     {% with key=problem|get_problem_key  %}
                     {% with stat=s.addition.problems|get_item:key %}
-                      {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat %}
+                      {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat problem_url=problem.url %}
                     {% endwith %}
                     {% endwith %}
                   {% endfor %}
                 {% else %}
                   {% for k, v in s.addition.problems.items|sort %}
-                  {% include 'problem_stat.html' with short=k name=k stat=v %}
+                  {% include 'problem_stat.html' with short=k name=k stat=v problem_url=None %}
                   {% endfor %}
                 {% endif %}
             {% endif %}
