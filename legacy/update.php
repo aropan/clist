@@ -314,6 +314,13 @@
         unset($contest['rid']);
         unset($contest['duplicate']);
 
+        $info = false;
+        if (isset($contest['info'])) {
+            $info = json_encode($contest['info']);
+        }
+        unset($contest['info']);
+
+
         $contest = $db->escapeArray($contest);
 
         $contest['was_auto_added'] = 1;
@@ -323,6 +330,12 @@
             $fields .= ",$field";
             $values .= ",'$value'";
             $update .= ",$field='$value'";
+        }
+
+        if ($info) {
+            $fields .= ",info";
+            $values .= ",'$info'::jsonb";
+            $update .= ",info=clist_contest.info || '$info'::jsonb";
         }
 
         $now = date("Y-m-d H:i:s", time());
