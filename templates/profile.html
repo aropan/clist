@@ -63,7 +63,7 @@
 {% for resource in resources %}
   {% with account=resource.coder_accounts.0 %}
     <span class="account btn-group btn-group-sm">
-      <a class="btn btn-default" href="?search=resource:{{ resource.host|urlencode }}">
+      <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
         {% coder_color_circle resource account.info %}
         <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 

@@ -27,14 +27,15 @@ class Statistic(BaseModule):
         while True:
             attempt += 1
             try:
-                if 'AJAX' in url:
-                    headers = {'x-requested-with': 'XMLHttpRequest'}
-                    csrftoken = REQ.get_cookie('csrftoken')
-                    if csrftoken:
-                        headers['x-csrftoken'] = csrftoken
-                else:
-                    headers = {}
-                return REQ.get(url, headers=headers)
+                return REQ.get(url)
+                # if 'AJAX' in url:
+                #     headers = {'x-requested-with': 'XMLHttpRequest'}
+                #     csrftoken = REQ.get_cookie('csrftoken')
+                #     if csrftoken:
+                #         headers['x-csrftoken'] = csrftoken
+                # else:
+                #     headers = {}
+                # return REQ.get(url, headers=headers)
             except FailOnGetResponse as e:
                 if attempt == 7 or getattr(e.args[0], 'code', None) != 500:
                     raise ExceptionParseStandings(e.args[0])
@@ -165,6 +166,10 @@ class Statistic(BaseModule):
             'url': standings_url,
         }
         return standings
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+        pass
 
 
 if __name__ == "__main__":
