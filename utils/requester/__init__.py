@@ -560,7 +560,7 @@ class requester():
         form = form or self.form(*args, **kwargs)
         form['post'].update(data)
         data_urlencoded = urllib.parse.urlencode(form['post']).encode('utf-8')
-        url = url or form['url']
+        url = url or form.get('url') or self.current_url
         content_type = form.get('enctype')
         ret = {
             'get': lambda: self.get(urllib.parse.urljoin(url, f'?{data_urlencoded}'), content_type=content_type),

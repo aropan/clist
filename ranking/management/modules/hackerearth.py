@@ -4,30 +4,51 @@
 import re
 import json
 import urllib.parse
+from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from time import sleep
 from collections import OrderedDict
 from pprint import pprint
+from threading import Lock
 
 import tqdm
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):
     RANKING_URL_FORMAT_ = 'https://www.hackerearth.com/AJAX/feed/newsfeed/icpc-leaderboard/event/{event_id}/{page}/'
+    RATING_URL_FORMAT_ = 'https://www.hackerearth.com/ratings/AJAX/rating-graph/{account}/'
+    LOGIN_URL_ = 'https://www.hackerearth.com/en-us/login/'
+    LOGGED_IN = False
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
     @staticmethod
-    def _get(url):
+    def _get(url, lock=Lock()):
         attempt = 0
         while True:
             attempt += 1
             try:
-                return REQ.get(url)
+                page = REQ.get(url)
+                if 'id="id_login"' in page and 'id="id_password"' in page:
+                    with lock:
+                        if not Statistic.LOGGED_IN:
+                            page = REQ.get(Statistic.LOGIN_URL_)
+                            page = REQ.submit_form(
+                                {
+                                    'login': conf.HACKEREARTH_USERNAME,
+                                    'password': conf.HACKEREARTH_PASSWORD,
+                                    'signin': 'Log In',
+                                },
+                                limit=0,
+                            )
+                            Statistic.LOGGED_IN = True
+                    page = REQ.get(url)
+                return page
                 # if 'AJAX' in url:
                 #     headers = {'x-requested-with': 'XMLHttpRequest'}
                 #     csrftoken = REQ.get_cookie('csrftoken')
@@ -41,7 +62,7 @@ class Statistic(BaseModule):
                     raise ExceptionParseStandings(e.args[0])
                 sleep(2 ** attempt)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, fixed_rank=None):
         standings_url = urllib.parse.urljoin(self.url, 'leaderboard/')
 
         try:
@@ -142,6 +163,8 @@ class Statistic(BaseModule):
                                 p['first_ac'] = True
                 if not r or r.get('solving', 0) < 1e-9 and 'problems' not in r:
                     continue
+                if fixed_rank is not None and fixed_rank != r['place']:
+                    continue
 
                 members = r.pop('members')
                 for member in members:
@@ -152,13 +175,22 @@ class Statistic(BaseModule):
 
             return page, problems_info
 
-        page, problems_info = fetch_page(1)
-        pages = re.findall('<a[^>]*href="[^"]*/page/([0-9]+)/?"', page)
-        max_page_index = int(pages[-1]) if pages else 1
+        if fixed_rank is not None:
+            per_page = 50
+            page_index = (fixed_rank - 1) // per_page + 1
+            _, problems_info = fetch_page(page_index)
+            if page_index > 1 and fixed_rank % per_page == 1:
+                fetch_page(page_index - 1)
+            if fixed_rank % per_page == 0:
+                fetch_page(page_index + 1)
+        else:
+            page, problems_info = fetch_page(1)
+            pages = re.findall('<a[^>]*href="[^"]*/page/([0-9]+)/?"', page)
+            max_page_index = int(pages[-1]) if pages else 1
 
-        with PoolExecutor(max_workers=8) as executor:
-            for _ in tqdm.tqdm(executor.map(fetch_page, range(2, max_page_index + 1)), total=max_page_index - 1):
-                pass
+            with PoolExecutor(max_workers=8) as executor:
+                for _ in tqdm.tqdm(executor.map(fetch_page, range(2, max_page_index + 1)), total=max_page_index - 1):
+                    pass
 
         standings = {
             'result': results,
@@ -169,7 +201,81 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-        pass
+
+        def fetch_account(account):
+            ret = {}
+            info = ret.setdefault('info', {})
+
+            ts = (datetime.now() - timedelta(days=30)).timestamp()
+            if 'country_ts' not in account.info or account.info['country_ts'] < ts:
+                try:
+                    url = resource.profile_url.format(**account.dict_with_info())
+                    page = Statistic._get(url)
+                except ExceptionParseStandings as e:
+                    arg = e.args[0]
+                    if not hasattr(arg, 'code') or arg.code == 404:
+                        for stat in account.statistics_set.order_by('-contest__end_time')[:3]:
+                            if stat.place is None:
+                                continue
+                            if stat.solving < 1e-9:
+                                continue
+                            try:
+                                module = Statistic(contest=stat.contest)
+                                standings = module.get_standings(fixed_rank=stat.place_as_int)
+                            except Exception:
+                                continue
+                            results = standings.get('result', {})
+                            if len(results) != 1:
+                                continue
+                            member, result = list(results.items())[0]
+                            if (
+                                not re.search('[1-9]', result.get('penalty', ''))
+                                or result['penalty'] != stat.addition.get('penalty')
+                            ):
+                                continue
+                            if abs(stat.solving - result.get('solving', 0)) > 1e-9:
+                                continue
+
+                            if member == account.key:
+                                return account, {'info': None}
+
+                            return account, {'rename': member, 'info': {}}
+                        return account, {'info': {}}
+
+                match = re.search(r'''
+                    <div[^>]*class="[^"]*track-current-location[^"]*"[^>]*>
+                    [^<]*<i[^>]*>[^<]*</[^>]*>
+                    [^<]*<span[^>]*>[^<]*,\s*(?P<country>[^,<]+)\s*</[^>]*>
+                ''', page, re.VERBOSE)
+                if match:
+                    info['country'] = match.group('country')
+                info['country_ts'] = datetime.now().timestamp()
+
+            url = Statistic.RATING_URL_FORMAT_.format(account=account.key)
+            page = Statistic._get(url)
+            matches = re.search(r'var[^=]*=\s*(?P<data>.*);$', page, re.M)
+            data = json.loads(matches.group('data'))
+            contest_addition_update = ret.setdefault('contest_addition_update', {})
+            for contest in data:
+                key = re.search(r'/(?P<key>[^/]+)/$', contest['event_url']).group('key')
+                addition_update = contest_addition_update.setdefault(key, OrderedDict())
+                for src, dst in (
+                    ('old_rating', 'old_rating'),
+                    ('rating_change', 'rating_change'),
+                    ('rating', 'new_rating'),
+                ):
+                    if src in contest:
+                        addition_update[dst] = contest[src]
+                if 'rating' in contest:
+                    info['rating'] = contest['rating']
+
+            return account, ret
+
+        with PoolExecutor(max_workers=8) as executor:
+            for account, data in executor.map(fetch_account, accounts):
+                if pbar:
+                    pbar.update()
+                yield data
 
 
 if __name__ == "__main__":

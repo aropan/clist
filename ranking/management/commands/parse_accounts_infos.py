@@ -103,13 +103,10 @@ class Command(BaseCommand):
                             if 'rename' in data:
                                 other, created = Account.objects.get_or_create(resource=account.resource,
                                                                                key=data['rename'])
-                                if not created:
-                                    new = MergedModelInstance.create(other, [account])
-                                    account.delete()
-                                else:
-                                    new = MergedModelInstance.create(account, [other])
-                                    other.delete()
+                                new = MergedModelInstance.create(other, [account])
+                                account.delete()
                                 account = new
+                                account.save()
 
                             coders = data.pop('coders', [])
                             if coders:

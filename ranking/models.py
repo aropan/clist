@@ -97,7 +97,7 @@ def update_account_url(signal, instance, **kwargs):
             if url is not None:
                 url = None
                 break
-            url = reverse('coder:profile', args=[coder.username])
+            url = reverse('coder:profile', args=[coder.username]) + f'?search=resource:{instance.resource.host}'
         instance.url = url
         instance.save()
 

@@ -223,20 +223,21 @@ class Command(BaseCommand):
 
                             account, created = Account.objects.get_or_create(resource=resource, key=member)
 
-                            updated = now + timedelta(days=1)
-                            if (
-                                created
-                                or (not statistics_ids and updated < account.updated)
-                                or (
-                                    update_without_new_rating
-                                    and updated < account.updated
-                                    and with_stats
-                                    and 'new_rating' not in statistics_by_key.get(member, {})
-                                )
-                            ):
-                                n_upd_account_time += 1
-                                account.updated = updated
-                                account.save()
+                            if not contest.info.get('_no_update_account_time'):
+                                updated = now + timedelta(days=1)
+                                if (
+                                    created
+                                    or (not statistics_ids and updated < account.updated)
+                                    or (
+                                        update_without_new_rating
+                                        and updated < account.updated
+                                        and with_stats
+                                        and 'new_rating' not in statistics_by_key.get(member, {})
+                                    )
+                                ):
+                                    n_upd_account_time += 1
+                                    account.updated = updated
+                                    account.save()
 
                             if r.get('name'):
                                 while True:

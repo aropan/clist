@@ -53,6 +53,7 @@ class FilterAdmin(BaseModelAdmin):
         'regex',
         'inverse_regex',
         'resources',
+        'contest_id',
         'categories',
         'modified',
     ]

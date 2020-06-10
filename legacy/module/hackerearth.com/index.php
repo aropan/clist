@@ -11,6 +11,7 @@
         $title = $item['title'];
 
         $url = $item['url'];
+        $en_url = str_replace('/ru/', '/en-us/', $url);
         $url = str_replace('/ru/', '/', $url);
 
         if (!preg_match('#/([^/]*)/?$#', $url, $match)) {
@@ -19,25 +20,51 @@
         }
         $key = $match[1];
         $is_sprint_key = strpos($url, '/sprints/') !== false;
-        if ($is_sprint_key && preg_match_all('#<div[^>]*time-location[^>]*>\s*<div[^>]*location[^>]*>.*?(?:\s*</div[^>]*>){3}#sm', curlexec($url), $matches)) {
+        $contest_page = curlexec($en_url);
+
+        $info = array();
+        if (preg_match('#<h1[^>]*class="event-[^"]*"[^>]*>(?:[^<]*<[^/]+[^>]*>)*<i[^>]* class="[^"]*fa-star[^"]*"[^>]*>[^<]*</i>(?P<label>[^<]*)#', $contest_page, $match)) {
+            $label = trim($match['label']);
+            $label = ucfirst(strtolower($label));
+            $title .= ". " . $label;
+            $info['_no_update_account_time'] = stripos($label, 'rated') === false;
+        } else {
+            $info['_no_update_account_time'] = true;
+        }
+
+        if (preg_match_all('#<div[^>]*time-location[^>]*>\s*<div[^>]*location[^>]*>.*?(?:\s*</div[^>]*>){3}#sm', $contest_page, $matches)) {
             foreach ($matches[0] as $page) {
                 preg_match_all('#>\s*(\w[^<]*?)\s*<#', $page, $ms);
                 $ms = $ms[1];
-                if (count($ms) !== 6 || $ms[2] !== 'opens at:' || $ms[4] != 'closes on:') {
-                    print_r($ms);
+                $start_idx = -1;
+                $end_idx = -1;
+                foreach ($ms as $i => $v) {
+                    if (in_array($v, array('starts on:', 'opens at:'))) {
+                        $start_idx = $start_idx == -1? $i : -2;
+                    }
+                    if (in_array($v, array('ends on:', 'closes on:'))) {
+                        $end_idx = $end_idx == -1? $i : -2;
+                    }
+                }
+                if ($start_idx <= 1 || $end_idx <= 1 || count($ms) != 6) {
                     trigger_error("No match time location '$title', url = '$url'", E_USER_WARNING);
                     continue;
                 }
                 $t = implode('. ', array($title, ucfirst($ms[0]), $ms[1]));
+                $k = $key;
+                if (count($matches[0]) > 1) {
+                    $k .= "\n$t";
+                }
                 $contests[] = array(
-                    'start_time' => $ms[3],
-                    'end_time' => $ms[5],
+                    'start_time' => $ms[$start_idx + 1],
+                    'end_time' => $ms[$end_idx + 1],
                     'title' => $t,
                     'url' => $url,
                     'host' => $HOST,
                     'rid' => $RID,
                     'timezone' => 'UTC',
-                    'key' => $key . '\n' . $t,
+                    'info' => $info,
+                    'key' => $k,
                 );
             }
         } else {
@@ -49,6 +76,7 @@
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => 'UTC',
+                'info' => $info,
                 'key' => $key,
             );
             if ($is_sprint_key) {
