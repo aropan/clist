@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.postgres.fields import JSONField
 
 from pyclist.models import BaseModel
@@ -44,7 +44,7 @@ class Notification(BaseModel):
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     method = models.CharField(max_length=256, null=False)
-    before = models.IntegerField(null=False, validators=[MinValueValidator(0)])
+    before = models.IntegerField(null=False, validators=[MinValueValidator(0), MaxValueValidator(1000000)])
     period = models.CharField(max_length=16, choices=PERIOD_CHOICES, null=False)
     last_time = models.DateTimeField(null=True, blank=True)
 

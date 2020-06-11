@@ -67,7 +67,7 @@
     {% if not team_id %}{% coder_color_circle contest.resource addition statistic.account.info %}{% endif %}
 
     <div class="handle-div{% if not team_id%} {% coder_color_class contest.resource addition statistic.account.info %}{% endif %}" style="display: inline-block">
-      {% if statistic.account.url %}<a href="{{ statistic.account.url }}"/coder/" in statistic.account.url %}?search=resource:{{ contest.resource.host }}{% endif %}" class="coder">{% endif %}
+      {% if statistic.account.url %}<a href="{{ statistic.account.url }}" class="coder">{% endif %}
 
       {% if addition.name and statistic.account.key|has_season:addition.name or addition.team_id %}
         <span>{{ addition.name }}</span>
