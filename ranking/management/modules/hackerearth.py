@@ -265,9 +265,9 @@ class Statistic(BaseModule):
                     ('rating', 'new_rating'),
                 ):
                     if src in contest:
-                        addition_update[dst] = contest[src]
+                        addition_update[dst] = int(contest[src])
                 if 'rating' in contest:
-                    info['rating'] = contest['rating']
+                    info['rating'] = int(contest['rating'])
 
             return account, ret
 
