@@ -18,7 +18,7 @@ from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}'
     RANKING_URL_FORMAT_ = '{url}/ranking'
-    PROFILE_URL_FORMAT_ = 'https://leetcode.com/{user}/'
+    API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}.com/api/submissions/{}/'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -53,15 +53,29 @@ class Statistic(BaseModule):
             content = REQ.get(url)
             return json.loads(content)
 
+        def fetch_submission(submission):
+            data_region = submission['data_region']
+            data_region = '' if data_region == 'US' else f'-{data_region.lower()}'
+            url = Statistic.API_SUBMISSION_URL_FORMAT_.format(data_region, submission['submission_id'])
+            content = REQ.get(url)
+            return submission, json.loads(content)
+
         result = {}
+        stop = False
         if users is None or users:
+            if users:
+                users = list(users)
             start_time = self.start_time.replace(tzinfo=None)
             with PoolExecutor(max_workers=8) as executor:
+                solutions_for_get = []
+
                 for data in tqdm.tqdm(
                     executor.map(fetch_page, range(n_page)),
                     total=n_page,
                     desc='parsing statistics paging',
                 ):
+                    if stop:
+                        break
                     for row, submissions in zip(data['total_rank'], data['submissions']):
                         handle = row.pop('user_slug')
                         if users and handle not in users:
@@ -87,16 +101,23 @@ class Statistic(BaseModule):
                         if country:
                             r['country'] = country
 
+                        problems_stats = statistics.get(handle, {}).get('problems', {})
+
                         solved = 0
                         problems = r.setdefault('problems', {})
                         for i, (k, s) in enumerate(submissions.items(), start=1):
-                            p = problems.setdefault(problems_info[k]['short'], {})
+                            short = problems_info[k]['short']
+                            p = problems.setdefault(short, problems_stats.get(short, {}))
                             p['time'] = self.to_time(datetime.fromtimestamp(s['date']) - start_time)
                             if s['status'] == 10:
                                 solved += 1
                                 p['result'] = '+' + str(s['fail_count'] or '')
                             else:
                                 p['result'] = f'-{s["fail_count"]}'
+                            if 'submission_id' in s and 'solution' not in p:
+                                s['handle'] = handle
+                                solutions_for_get.append(s)
+
                         r['solved'] = {'solving': solved}
                         finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
                         r['penalty'] = self.to_time(finish_time)
@@ -106,6 +127,21 @@ class Statistic(BaseModule):
                             for k in ('rating_change', 'new_rating'):
                                 if k in stat:
                                     r[k] = stat[k]
+                        if users:
+                            users.remove(handle)
+                            if not users:
+                                stop = True
+                                break
+
+                if statistics is not None and solutions_for_get:
+                    for s, d in tqdm.tqdm(executor.map(fetch_submission, solutions_for_get),
+                                          total=len(solutions_for_get),
+                                          desc='getting solutions'):
+                        short = problems_info[str(s['question_id'])]['short']
+                        result[s['handle']]['problems'][short].update({
+                            'language': d['lang'],
+                            'solution': d['code'],
+                        })
 
         standings = {
             'result': result,
