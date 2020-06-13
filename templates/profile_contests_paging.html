@@ -47,7 +47,7 @@
             {% if 'problems' in s.addition %}
                 {% if s.contest.info.problems %}
                   {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
-                    {% with key=problem|get_problem_key  %}
+                    {% with key=problem|get_problem_short  %}
                     {% with stat=s.addition.problems|get_item:key %}
                       {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat problem_url=problem.url %}
                     {% endwith %}

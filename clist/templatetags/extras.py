@@ -240,17 +240,9 @@ def get_division_problems(problem, info):
 
 @register.filter
 def get_problem_key(problem):
-    for k in ['short', 'code', 'name']:
+    for k in ['code', 'short', 'name']:
         if k in problem:
             return problem[k]
-
-
-@register.filter
-def add_prefix_to_problem_key(problem, prefix):
-    for k in ['short', 'code', 'name']:
-        if k in problem:
-            problem[k] = prefix + problem[k]
-            break
 
 
 @register.filter
@@ -262,9 +254,17 @@ def get_problem_name(problem):
 
 @register.filter
 def get_problem_short(problem):
-    for k in ['short', 'name', 'code']:
+    for k in ['short', 'code', 'name']:
         if k in problem:
             return problem[k]
+
+
+@register.filter
+def add_prefix_to_problem_short(problem, prefix):
+    for k in ['short', 'code', 'name']:
+        if k in problem:
+            problem[k] = prefix + problem[k]
+            break
 
 
 @register.simple_tag

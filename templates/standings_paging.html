@@ -152,7 +152,7 @@
   {% endfor %}
 
   {% for problem in problems %}
-    {% with key=problem|get_problem_key  %}
+    {% with key=problem|get_problem_short  %}
     {% with stat=addition.problems|get_item:key %}
     <td class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% endif %}{% if stat.first_ac %} first-ac{% endif %}{% endif %}">
       {% if not stat %}

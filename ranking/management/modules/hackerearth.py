@@ -12,6 +12,7 @@ from pprint import pprint
 from threading import Lock
 
 import tqdm
+from first import first
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -98,11 +99,16 @@ class Statistic(BaseModule):
                 if col.attrs.get('class') == 'tool-tip align-center':
                     short = col.value.split()[0]
                     _, full_score = col.value.rsplit(' ', 1)
-                    problems_info[short] = {
+                    info = {
                         'short': short,
                         'name': col.attrs['title'],
                         'full_score': int(re.sub(r'[\(\)]', '', full_score)),
                     }
+                    url = first(col.node.xpath('.//a/@href'))
+                    if url:
+                        info['url'] = urllib.parse.urljoin(self.url, url)
+                        info['code'] = url.strip('/').split('/')[-1]
+                    problems_info[short] = info
 
             for row in table:
                 r = {}
@@ -188,9 +194,11 @@ class Statistic(BaseModule):
             pages = re.findall('<a[^>]*href="[^"]*/page/([0-9]+)/?"', page)
             max_page_index = int(pages[-1]) if pages else 1
 
-            with PoolExecutor(max_workers=8) as executor:
-                for _ in tqdm.tqdm(executor.map(fetch_page, range(2, max_page_index + 1)), total=max_page_index - 1):
-                    pass
+            if users is None or users:
+                with PoolExecutor(max_workers=8) as executor:
+                    for _ in tqdm.tqdm(executor.map(fetch_page, range(2, max_page_index + 1)),
+                                       total=max_page_index - 1):
+                        pass
 
         standings = {
             'result': results,

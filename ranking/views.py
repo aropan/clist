@@ -21,7 +21,7 @@ from ranking.models import Statistics, Module
 from clist.templatetags.extras import slug, query_transform
 from clist.views import get_timezone, get_timeformat
 from true_coders.models import Party
-from clist.templatetags.extras import get_problem_key, get_country_name
+from clist.templatetags.extras import get_problem_short, get_country_name
 from utils.regex import get_iregex_filter, verify_regex
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
@@ -302,7 +302,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 _problems = OrderedDict()
                 for div in reversed(divisions_order):
                     for p in problems['division'].get(div, []):
-                        k = get_problem_key(p)
+                        k = get_problem_short(p)
                         if k not in _problems:
                             _problems[k] = p
                         else:
@@ -405,7 +405,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             _, before_params = statistics.query.sql_with_params()
             querysets = []
             for problem in problems:
-                key = get_problem_key(problem)
+                key = get_problem_short(problem)
                 field = f'addition__problems__{key}__language'
                 score = f'addition__problems__{key}__result'
                 qs = statistics \
@@ -536,7 +536,7 @@ def solutions(request, sid, problem_key):
     if 'division' in contest_problems:
         contest_problems = contest_problems['division'][statistic.addition['division']]
     for problem in contest_problems:
-        if get_problem_key(problem) == problem_key:
+        if get_problem_short(problem) == problem_key:
             break
     else:
         problem = None

@@ -15,7 +15,7 @@ from django_countries.fields import CountryField
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Party
 from clist.models import Contest, Resource
-from clist.templatetags.extras import slug, get_number_from_str, get_problem_key, add_prefix_to_problem_key
+from clist.templatetags.extras import slug, get_number_from_str, get_problem_short, add_prefix_to_problem_short
 
 
 class Account(BaseModel):
@@ -256,10 +256,10 @@ class Stage(BaseModel):
             else:
                 for problem in problems:
                     problem = dict(problem)
-                    add_prefix_to_problem_key(problem, f'{idx}.')
+                    add_prefix_to_problem_short(problem, f'{idx}.')
                     problem['group'] = info['name']
                     problem['url'] = info['url']
-                    problems_infos[get_problem_key(problem)] = problem
+                    problems_infos[get_problem_short(problem)] = problem
 
         exclude_advances = {}
         if advances and advances.get('exclude_stages'):
@@ -287,7 +287,7 @@ class Stage(BaseModel):
             for idx, contest in enumerate(contests, start=1):
                 if not detail_problems:
                     problem_info_key = str(contest.pk)
-                    problem_key = get_problem_key(problems_infos[problem_info_key])
+                    problem_short = get_problem_short(problems_infos[problem_info_key])
                 pbar.set_postfix(contest=contest)
                 stats = statistics.filter(contest_id=contest.pk)
 
@@ -339,7 +339,7 @@ class Stage(BaseModel):
                         for key, problem in s.addition.get('problems', {}).items():
                             problems[f'{idx}.' + key] = problem
                     else:
-                        problem = problems.setdefault(problem_key, {})
+                        problem = problems.setdefault(problem_short, {})
                         problem['result'] = score
                         url = s.addition.get('url')
                         if url:
@@ -393,7 +393,7 @@ class Stage(BaseModel):
             writers = set()
             for contest in contests:
                 problem_info_key = str(contest.pk)
-                problem_key = get_problem_key(problems_infos[problem_info_key])
+                problem_short = get_problem_short(problems_infos[problem_info_key])
                 for writer in contest.info.get('writers', []):
                     if writer in account_keys:
                         account = account_keys[writer]
@@ -415,7 +415,7 @@ class Stage(BaseModel):
                     row['writer'] += 1
 
                     problems = row.setdefault('problems', {})
-                    problem = problems.setdefault(problem_key, {})
+                    problem = problems.setdefault(problem_short, {})
                     problem['status'] = 'W'
 
         if self.score_params.get('writers_proportionally_score'):

@@ -22,7 +22,7 @@ from django.db.models import Q, F, OuterRef, Exists
 
 from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
-from clist.templatetags.extras import get_problem_key, get_number_from_str
+from clist.templatetags.extras import get_problem_short, get_number_from_str
 from ranking.management.commands.countrier import Countrier
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.modules.common import REQ
@@ -514,14 +514,14 @@ class Command(BaseCommand):
                             if 'division' in problems:
                                 for d, ps in problems['division'].items():
                                     for p in ps:
-                                        k = get_problem_key(p)
+                                        k = get_problem_short(p)
                                         if k:
                                             p.update(d_problems.get(d, {}).get(k, {}))
                                 if isinstance(problems['division'], OrderedDict):
                                     problems['divisions_order'] = list(problems['division'].keys())
                             else:
                                 for p in problems:
-                                    k = get_problem_key(p)
+                                    k = get_problem_short(p)
                                     if k:
                                         p.update(d_problems.get(k, {}))
 
