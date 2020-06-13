@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Unsubscribe{% endblock %}
+
+{% block end-head %}
+<script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
+<script src="{% static_ts 'js/bootbox.min.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<script>
+    function tab_close() {
+        window.open("/", "_self")
+    }
+
+    bootbox.confirm({
+        size: 'medium',
+        message: 'Unsubscribe <b>{{ notification.method }}</b> before <b>{{ notification.before }}</b> once a <b>{{ notification.period }}</b>?',
+        callback: function(result) {
+            if (result) {
+                $.ajax({
+                    type: 'POST',
+                    data: {
+                        'unsubscribe': 1,
+                    },
+                    success: function(data) {
+                        tab_close()
+                    },
+                    error: function(data) {
+                        alert('{status} {statusText}'.format(data))
+                    },
+                })
+            } else {
+                tab_close()
+            }
+        }
+    })
+</script>
+
+{% endblock %}

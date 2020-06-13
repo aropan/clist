@@ -671,6 +671,17 @@ def remove_api_key(request):
     return HttpResponse(str(ret))
 
 
+def unsubscribe(request):
+    pk = request.GET.get('pk')
+    secret = request.GET.get('secret')
+    notification = get_object_or_404(Notification, pk=pk, secret=secret)
+    if 'unsubscribe' in request.POST:
+        if request.POST.get('unsubscribe'):
+            notification.delete()
+        return HttpResponse('ok')
+    return render(request, 'unsubscribe.html', context={'notification': notification})
+
+
 @login_required
 def party_action(request, secret_key, action):
     party = get_object_or_404(Party.objects.for_user(request.user), secret_key=secret_key)

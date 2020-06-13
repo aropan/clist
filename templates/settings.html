@@ -115,7 +115,6 @@
             </div>
         </div>
         <div id="notifications-tab" class="tab-pane{% if tab == 'notifications' %} active{% endif %}">
-            <div class="alert alert-danger text-center bold"><strong>WARNING</strong>: Notification with email is disabled (will be fix in the near future).</div>
             <div id="notifications" class="value">
                 {% if not notification_form.errors %}
                 <a id="add-filter" class="btn btn-primary btn-sm" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>

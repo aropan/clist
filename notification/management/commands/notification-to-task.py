@@ -11,7 +11,6 @@ from logging import getLogger
 from notification.models import Notification, Task
 from traceback import format_exc
 from clist.models import Contest, TimingContest
-from django.template.loader import render_to_string
 from tqdm import tqdm
 
 
@@ -20,27 +19,12 @@ class Command(BaseCommand):
 
     def process(self, notify, contests, prefix=''):
         if contests.exists():
-            context = {
-                'contests': contests,
-                'coder': notify.coder,
-                'prefix': prefix,
-            }
-
-            subject = render_to_string('subject', context).strip()
-            context['subject'] = subject
-            method = notify.method.split(':', 1)[0]
-            message = render_to_string('message/%s' % method, context).strip()
-
             addition = {}
-            if notify.method == Notification.EMAIL:
-                addition['text'] = render_to_string('message/txt', context).strip()
-
-            self.logger.info('subject = %s' % subject.encode('utf8'))
+            addition['context'] = {'prefix': prefix}
+            addition['contests'] = [contest.pk for contest in contests]
 
             Task.objects.create(
                 notification=notify,
-                subject=subject,
-                message=message,
                 addition=addition,
             )
 

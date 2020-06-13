@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -47,6 +48,7 @@ class Notification(BaseModel):
     before = models.IntegerField(null=False, validators=[MinValueValidator(0), MaxValueValidator(1000000)])
     period = models.CharField(max_length=16, choices=PERIOD_CHOICES, null=False)
     last_time = models.DateTimeField(null=True, blank=True)
+    secret = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return '{0.method}@{0.coder}: {0.before} {0.period}'.format(self)
@@ -54,13 +56,15 @@ class Notification(BaseModel):
     def save(self, *args, **kwargs):
         if not self.id:
             self.last_time = timezone.now()
+        if not self.secret:
+            self.secret = User.objects.make_random_password(length=50)
         super().save(*args, **kwargs)
 
 
 class Task(BaseModel):
     notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
-    subject = models.CharField(max_length=4096)
-    message = models.TextField(null=False)
+    subject = models.CharField(max_length=4096, null=True, blank=True)
+    message = models.TextField(null=True, blank=True)
     addition = JSONField(default=dict, blank=True)
     is_sent = models.BooleanField(default=False)
 

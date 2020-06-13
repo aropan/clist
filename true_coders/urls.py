@@ -7,6 +7,7 @@ app_name = 'coder'
 urlpatterns = [
     url(r'^settings/$', views.settings, name='settings'),
     url(r'^settings/(preferences|social|accounts|filters|notifications)/$', views.settings, name='settings'),
+    url(r'^settings/notifications/unsubscribe/$', views.unsubscribe, name='unsubscribe'),
     url(r'^settings/change/$', views.change, name='change'),
     url(r'^settings/search/$', views.search, name='search'),
     url(r'^coder/$', views.coder_profile, name='coder_profile'),

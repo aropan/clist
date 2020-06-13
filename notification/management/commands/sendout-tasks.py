@@ -4,19 +4,22 @@
 from traceback import format_exc
 from logging import getLogger
 from datetime import timedelta
+from copy import deepcopy
 
 import tqdm
-# from django.conf import settings
-# from django.core.mail import send_mail
+from django.core.mail import send_mail
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Prefetch
 from django_print_sql import print_sql_decorator
 from django.utils.timezone import now
+from django.template.loader import render_to_string
 # from django.urls import reverse
+
 from notification.models import Task, Notification
 from telegram.error import Unauthorized
-
+from clist.models import Contest
 from tg.bot import Bot
 from tg.models import Chat
 
@@ -25,15 +28,52 @@ class Command(BaseCommand):
     help = 'Send out all unsent tasks'
     TELEGRAM_BOT = Bot()
 
+    def add_arguments(self, parser):
+        parser.add_argument('--coders', nargs='+')
+        parser.add_argument('--dryrun', action='store_true', default=False)
+
+    def get_message(self, task):
+        if 'contests' in task.addition:
+            notify = task.notification
+            contests = Contest.objects.filter(pk__in=task.addition['contests'])
+            context = deepcopy(task.addition.get('context', {}))
+            context.update({
+                'contests': contests,
+                'notification': notify,
+                'coder': notify.coder,
+                'domain': settings.HTTPS_HOST_,
+            })
+            subject = render_to_string('subject', context).strip()
+            context['subject'] = subject
+            method = notify.method.split(':', 1)[0]
+            message = render_to_string('message/%s' % method, context).strip()
+        else:
+            subject = ''
+            message = ''
+
+        if task.subject:
+            subject = task.subject + subject
+
+        if task.message:
+            message = task.message + message
+
+        return subject, message
+
     @print_sql_decorator()
     @transaction.atomic
     def handle(self, *args, **options):
+        coders = options.get('coders')
+        dryrun = options.get('dryrun')
+
         logger = getLogger('notification.sendout.tasks')
 
         delete_info = Task.objects.filter(is_sent=True, modified__lte=now() - timedelta(days=31)).delete()
         logger.info(f'Tasks cleared: {delete_info}')
 
-        qs = Task.unsent.all()
+        if dryrun:
+            qs = Task.objects.all()
+        else:
+            qs = Task.unsent.all()
         qs = qs.select_related('notification__coder')
         qs = qs.prefetch_related(
             Prefetch(
@@ -42,6 +82,11 @@ class Command(BaseCommand):
                 to_attr='cchat',
             )
         )
+        if coders:
+            qs = qs.filter(notification__coder__username__in=coders)
+
+        if dryrun:
+            qs = qs.order_by('-modified')[:1]
 
         done = 0
         failed = 0
@@ -51,46 +96,27 @@ class Command(BaseCommand):
                 notification = task.notification
                 coder = notification.coder
                 method, *args = notification.method.split(':', 1)
+                message = self.get_message(task)
+                subject, message = self.get_message(task)
                 if method == Notification.TELEGRAM:
-                    will_mail = False
-
                     if args:
-                        self.TELEGRAM_BOT.send_message(task.message, args[0], reply_markup=False)
+                        self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
                     elif coder.chat and coder.chat.chat_id:
                         try:
                             if not coder.settings.get('telegram', {}).get('unauthorized', False):
-                                self.TELEGRAM_BOT.send_message(task.message, coder.chat.chat_id, reply_markup=False)
+                                self.TELEGRAM_BOT.send_message(message, coder.chat.chat_id, reply_markup=False)
                         except Unauthorized:
                             coder.settings.setdefault('telegram', {})['unauthorized'] = True
                             coder.save()
-                            will_mail = True
-                    else:
-                        will_mail = True
-
-                    if will_mail:
-                        pass
-                        # FIXME: skipping, fixed on https://yandex.ru/support/mail-new/web/spam/honest-mailers.html
-                        # send_mail(
-                        #     settings.EMAIL_PREFIX_SUBJECT_ + task.subject,
-                        #     '%s, connect telegram chat by link %s.' % (
-                        #         coder.user.username,
-                        #         settings.HTTPS_HOST_ + reverse('telegram:me')
-                        #     ),
-                        #     'Contest list <noreply@clist.by>',
-                        #     [coder.user.email],
-                        #     fail_silently=False,
-                        # )
                 elif method == Notification.EMAIL:
-                    pass
-                    # FIXME: skipping, fixed on https://yandex.ru/support/mail-new/web/spam/honest-mailers.html
-                    # send_mail(
-                    #     settings.EMAIL_PREFIX_SUBJECT_ + task.subject,
-                    #     task.addition['text'],
-                    #     'Contest list <noreply@clist.by>',
-                    #     [coder.user.email],
-                    #     fail_silently=False,
-                    #     html_message=task.message,
-                    # )
+                    send_mail(
+                        subject,
+                        message,
+                        'CLIST <noreply@clist.by>',
+                        [coder.user.email],
+                        fail_silently=False,
+                        html_message=message,
+                    )
             except Exception:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
