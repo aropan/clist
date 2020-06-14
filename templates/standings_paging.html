@@ -192,6 +192,8 @@
             {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if request.GET.languages and stat.language not in request.GET|get_list:'languages' %}text-muted{% elif subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
             {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
               {{ stat.result }}
+            {% elif stat.result|slice:":1" == "-" and with_detail %}
+            {{ stat.result|floatformat:'-2' }}{% if 'verdict' in stat %} <small>{{ stat.verdict }}</small>{% endif %}
             {% else %}
               {{ stat.result|floatformat:'-2' }}
             {% endif %}

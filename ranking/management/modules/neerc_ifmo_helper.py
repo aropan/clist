@@ -43,6 +43,7 @@ def parse_xml(standings_xml):
                     time = run_time
                     language = run.attrib.get('language-id')
                     if accepted:
+                        verdict = None
                         break
                     if v:
                         verdict = ''.join(s[0] for s in v.upper().split('-'))
