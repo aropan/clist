@@ -23,6 +23,14 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
+    @staticmethod
+    def fetch_submission(submission):
+        data_region = submission['data_region']
+        data_region = '' if data_region == 'US' else f'-{data_region.lower()}'
+        url = Statistic.API_SUBMISSION_URL_FORMAT_.format(data_region, submission['submission_id'])
+        content = REQ.get(url)
+        return submission, json.loads(content)
+
     def get_standings(self, users=None, statistics=None):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
 
@@ -52,13 +60,6 @@ class Statistic(BaseModule):
             url = api_ranking_url_format.format(page + 1)
             content = REQ.get(url)
             return json.loads(content)
-
-        def fetch_submission(submission):
-            data_region = submission['data_region']
-            data_region = '' if data_region == 'US' else f'-{data_region.lower()}'
-            url = Statistic.API_SUBMISSION_URL_FORMAT_.format(data_region, submission['submission_id'])
-            content = REQ.get(url)
-            return submission, json.loads(content)
 
         result = {}
         stop = False
@@ -114,9 +115,13 @@ class Statistic(BaseModule):
                                 p['result'] = '+' + str(s['fail_count'] or '')
                             else:
                                 p['result'] = f'-{s["fail_count"]}'
-                            if 'submission_id' in s and 'solution' not in p:
-                                s['handle'] = handle
-                                solutions_for_get.append(s)
+                            if 'submission_id' in s:
+                                p['submission_id'] = s['submission_id']
+                                p['external_solution'] = True
+                                p['data_region'] = s['data_region']
+                                if 'language' not in p:
+                                    s['handle'] = handle
+                                    solutions_for_get.append(s)
 
                         r['solved'] = {'solving': solved}
                         finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
@@ -134,14 +139,11 @@ class Statistic(BaseModule):
                                 break
 
                 if statistics is not None and solutions_for_get:
-                    for s, d in tqdm.tqdm(executor.map(fetch_submission, solutions_for_get),
+                    for s, d in tqdm.tqdm(executor.map(Statistic.fetch_submission, solutions_for_get),
                                           total=len(solutions_for_get),
                                           desc='getting solutions'):
                         short = problems_info[str(s['question_id'])]['short']
-                        result[s['handle']]['problems'][short].update({
-                            'language': d['lang'],
-                            'solution': d['code'],
-                        })
+                        result[s['handle']]['problems'][short].update({'language': d['lang']})
 
         standings = {
             'result': result,
@@ -149,6 +151,11 @@ class Statistic(BaseModule):
             'problems': list(problems_info.values()),
         }
         return standings
+
+    @staticmethod
+    def get_source_code(contest, problem):
+        _, data = Statistic.fetch_submission(problem)
+        return {'solution': data['code']}
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
