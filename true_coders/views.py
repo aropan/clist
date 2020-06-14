@@ -631,7 +631,7 @@ def search(request, **kwargs):
 
         if field == 'languages':
             qs = contest.info.get('languages', [])
-            qs = [[q] for q in qs if not text or text.lower() in q.lower()]
+            qs = [['any']] + [[q] for q in qs if not text or text.lower() in q.lower()]
             total = len(qs)
         else:
             field = f'addition__{field}'

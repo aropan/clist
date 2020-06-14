@@ -375,6 +375,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         filt = Q()
         if field == 'languages':
             for lang in values:
+                if lang == 'any':
+                    filt = Q(**{f'addition___languages__isnull': False})
+                    break
                 filt |= Q(**{f'addition___languages__contains': [lang]})
         else:
             query_field = f'addition__{field}'

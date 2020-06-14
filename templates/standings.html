@@ -79,7 +79,7 @@
                 {% if problem.group %}
                   {{ problem.group|truncatechars:truncatechars_name_problem }}
                 {% else %}
-                  {{ problem|get_problem_short|truncatechars:truncatechars_name_problem }}
+                  {{ problem|get_problem_header|truncatechars:truncatechars_name_problem }}
                 {% endif %}
                 {% if problem.url %}</a>{% endif %}
                 </div>

@@ -62,9 +62,14 @@ def _query(
     for k in ('apiSig', 'time', ):
         md5_file_cache = re.sub('%s=[0-9a-z]+' % k, '', md5_file_cache)
     times.append(time())
-    page = REQ.get(url, md5_file_cache=md5_file_cache)
+    try:
+        page = REQ.get(url, md5_file_cache=md5_file_cache)
+        ret = json.loads(page)
+    except FailOnGetResponse as e:
+        ret = json.load(e.args[0].fp)
+        ret['code'] = getattr(e.args[0], 'code', None)
     times[-1] = time()
-    return json.loads(page)
+    return ret
 
 
 class Statistic(BaseModule):
@@ -98,18 +103,11 @@ class Statistic(BaseModule):
             if users:
                 params['handles'] = ';'.join(users)
 
-            try:
-                data = _query(
-                    method='contest.standings',
-                    params=params,
-                    api_key=self.api_key,
-                )
-            except FailOnGetResponse as e:
-                if getattr(e.args[0], 'code', None) == 400:
-                    return {'action': 'delete'}
-                raise ExceptionParseStandings(e.args[0])
+            data = _query(method='contest.standings', params=params, api_key=self.api_key)
 
             if data['status'] != 'OK':
+                if data['code'] == 400:
+                    return {'action': 'delete'}
                 raise ExceptionParseStandings(data['status'])
 
             phase = data['result']['contest'].get('phase', 'FINISHED').upper()
@@ -243,18 +241,9 @@ class Statistic(BaseModule):
 
         params.pop('showUnofficial')
 
-        try:
-            data = _query(
-                method='contest.ratingChanges',
-                params=params,
-                api_key=self.api_key,
-            )
-        except FailOnGetResponse as e:
-            data = json.load(e.args[0].fp)
-
+        data = _query(method='contest.ratingChanges', params=params, api_key=self.api_key)
         if data.get('status') not in ['OK', 'FAILED']:
             raise ExceptionParseStandings(data)
-
         if data and data['status'] == 'OK':
             for row in data['result']:
                 if str(row.pop('contestId')) != self.key:
@@ -267,6 +256,44 @@ class Statistic(BaseModule):
                 new_rating = row.pop('newRating')
                 r['old_rating'] = old_rating
                 r['new_rating'] = new_rating
+
+        data = _query('contest.status', params={'contestId': self.cid}, api_key=self.api_key)
+        if data.get('status') not in ['OK', 'FAILED']:
+            raise ExceptionParseStandings(data)
+        if data['status'] == 'OK':
+            for submission in data['result']:
+                party = submission['author']
+                if is_gym:
+                    upsolve = False
+                else:
+                    upsolve = party['participantType'] not in self.PARTICIPANT_TYPES
+
+                info = {
+                    'submission_id': submission['id'],
+                }
+
+                if 'verdict' in submission:
+                    v = submission['verdict'].upper()
+                    info['verdict'] = ''.join(s[0] for s in v.split('_')) if len(v) > 3 else v
+
+                if 'programmingLanguage' in submission:
+                    info['language'] = submission['programmingLanguage']
+
+                if info.get('verdict') != 'OK' and 'passedTestCount' in submission:
+                    info['test'] = submission['passedTestCount'] + 1
+
+                for member in party['members']:
+                    handle = member['handle']
+                    if handle not in result:
+                        continue
+                    r = result[handle]
+                    problems = r.setdefault('problems', {})
+                    k = submission['problem']['index']
+                    p = problems.setdefault(k, {})
+                    if upsolve:
+                        p = p.setdefault('upsolving', {})
+                    if 'submission_id' not in p:
+                        p.update(info)
 
         def to_score(x):
             return (

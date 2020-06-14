@@ -6,6 +6,10 @@
   {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
 </div>
 {% endif %}
+{% if not small and stat.verdict and stat.result|slice:":1" == "-" %}
+<div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</div>
+{% endif %}
+
 {% if 'status' in stat and 'time' in stat %}
   {% if stat.result|asfloat:0 < 0 %}
     {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
@@ -14,22 +18,21 @@
   {% endif %}
 {% elif 'status' in stat %}
   {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
-{% elif stat.time %}
+{% elif 'time' in stat %}
   {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}
 {% elif 'upsolving' in stat %}
   {% if stat.upsolving.result|slice:":1" == "+" %}
     {{ stat.upsolving.result }}
+  {% elif stat.upsolving.result|slice:":1" == "-" and not small %}
+    {{ stat.upsolving.result|floatformat:'-2' }}{% if 'verdict' in stat.upsolving %} <small>{{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}</small>{% endif %}
   {% else %}
     {{ stat.upsolving.result|floatformat:'-2' }}
   {% endif %}
 {% endif %}
+
 {% if stat.language %}
-  {% if not small %}
-    <br/>{{ stat.language }}
-  {% elif problem_key and stat.solution %}
-    <a class="solution" onClick="return viewSolution(this);" href="{% url 'ranking:solution' sid problem_key %}" target="_blank">{{ stat.language }}</a>
-  {% else %}
-    {{ stat.language }}
+  {% if not small or request.GET.languages %}
+    <div>{{ stat.language }}</div>
   {% endif %}
 {% endif %}
 {% if small %}

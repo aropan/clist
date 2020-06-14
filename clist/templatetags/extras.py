@@ -267,6 +267,13 @@ def add_prefix_to_problem_short(problem, prefix):
             break
 
 
+@register.filter
+def get_problem_header(problem):
+    for k in ['short', 'name', 'code']:
+        if k in problem:
+            return problem[k]
+
+
 @register.simple_tag
 def define(val=None):
     return val
