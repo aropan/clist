@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
-import os
 import json
 import re
 import operator
@@ -53,11 +51,6 @@ class Command(BaseCommand):
         parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
         parser.add_argument('--update-without-new-rating', action='store_true', default=False, help='Update account')
-
-    @staticmethod
-    def _get_plugin(module):
-        sys.path.append(os.path.dirname(module.path))
-        return __import__(module.path.replace('/', '.'), fromlist=['Statistic'])
 
     @staticmethod
     def _canonize(data):
@@ -140,7 +133,6 @@ class Command(BaseCommand):
                 continue
             progress_bar.set_description(f'contest = {contest.title}')
             progress_bar.refresh()
-            plugin = self._get_plugin(resource.module)
             total += 1
             parsed = False
             user_info = None
@@ -154,7 +146,7 @@ class Command(BaseCommand):
                     parsed = True
                     continue
 
-                plugin = plugin.Statistic(contest=contest)
+                plugin = resource.plugin.Statistic(contest=contest)
 
                 with REQ:
                     statistics_by_key = {}

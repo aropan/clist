@@ -49,7 +49,11 @@ class BaseModule(object, metaclass=ABCMeta):
         pass
 
     @staticmethod
-    def get_users_infos(users, pbar):
+    def get_users_infos(users, resource=None, accounts=None, pbar=None):
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_source_code(contest, problem):
         raise NotImplementedError()
 
     @staticmethod

@@ -148,12 +148,15 @@ function viewSolution(a) {
   $.ajax({
     url: href,
     type: 'get',
-    success: function(response){
+    success: function(response) {
       $('#viewSolutionModal .modal-content').html(response)
       $('#viewSolutionModal .modal-content .modal-footer').prepend('<a href="' + href + '" target="_blank" class="btn btn-default btn-sm"><i class="fas fa-external-link-alt"></i></a>')
       document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
       $('#viewSolutionModal').modal('show')
-    }
+    },
+    error: function(response) {
+      bootbox.alert({message: response.statusText, size: 'small'})
+    },
   })
   return false;
 }

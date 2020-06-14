@@ -4,14 +4,8 @@
 
 
 {% block end-head %}
-<script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
-
-<script src="{% static_ts 'js/bootbox.min.js' %}"></script>
-
 <link href="{% static_ts 'css/events/event.css' %}" rel="stylesheet">
-
 <script src="{% static_ts 'js/events/event.js' %}"></script>
-
 {% endblock %}
 
 {% block title %}{{ event.name }} event{% endblock %}

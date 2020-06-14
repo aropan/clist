@@ -59,7 +59,6 @@ class Command(BaseCommand):
         now = timezone.now()
         for resource in resources:
             with transaction.atomic():
-                plugin = self._get_plugin(resource.module)
                 accounts = resource.account_set
 
                 if args.query:
@@ -75,7 +74,7 @@ class Command(BaseCommand):
 
                 try:
                     with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
-                        infos = plugin.Statistic.get_users_infos(
+                        infos = resource.plugin.Statistic.get_users_infos(
                             users=[a.key for a in accounts],
                             resource=resource,
                             accounts=accounts,

@@ -17,14 +17,15 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from el_pagination.decorators import page_template, page_templates
 
 from clist.models import Contest
-from ranking.models import Statistics, Module
+from clist.templatetags.extras import get_problem_short, get_country_name
 from clist.templatetags.extras import slug, query_transform
 from clist.views import get_timezone, get_timeformat
+from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.models import Statistics, Module
 from true_coders.models import Party
-from clist.templatetags.extras import get_problem_short, get_country_name
-from utils.regex import get_iregex_filter, verify_regex
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
+from utils.regex import get_iregex_filter, verify_regex
 
 
 @page_template('standings_list_paging.html')
@@ -530,7 +531,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
 
 def solutions(request, sid, problem_key):
-    statistic = get_object_or_404(Statistics.objects.select_related('account', 'contest'), pk=sid)
+    statistic = get_object_or_404(Statistics.objects.select_related('account', 'contest', 'contest__resource'), pk=sid)
     problems = statistic.addition.get('problems', {})
     if problem_key not in problems:
         return HttpResponseNotFound()
@@ -545,6 +546,17 @@ def solutions(request, sid, problem_key):
         problem = None
 
     stat = problems[problem_key]
+
+    if 'solution' not in stat:
+        if stat.get('external_solution'):
+            plugin = statistic.contest.resource.plugin
+            try:
+                source_code = plugin.Statistic.get_source_code(statistic.contest, stat)
+                stat.update(source_code)
+            except (NotImplementedError, ExceptionParseStandings):
+                return HttpResponseNotFound()
+        else:
+            return HttpResponseNotFound()
 
     return render(
         request,

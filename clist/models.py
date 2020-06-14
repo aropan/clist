@@ -80,6 +80,15 @@ class Resource(BaseModel):
 
         super().save(*args, **kwargs)
 
+    @property
+    def plugin(self):
+        if not hasattr(self, 'plugin_'):
+            if not self.module:
+                self.plugin_ = None
+            else:
+                self.plugin_ = __import__(self.module.path.replace('/', '.'), fromlist=['Statistic'])
+        return self.plugin_
+
 
 class VisibleContestManager(BaseManager):
     def get_queryset(self):

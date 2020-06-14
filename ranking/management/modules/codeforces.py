@@ -3,6 +3,7 @@
 import re
 import json
 import requests
+import html
 from datetime import timedelta, datetime
 from time import time, sleep
 from hashlib import sha512
@@ -74,6 +75,7 @@ def _query(
 
 class Statistic(BaseModule):
     PARTICIPANT_TYPES = ['CONTESTANT', 'OUT_OF_COMPETITION']
+    SUBMISSION_URL_FORMAT_ = 'https://codeforces.com/contest/{cid}/submission/{sid}'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -270,6 +272,7 @@ class Statistic(BaseModule):
 
                 info = {
                     'submission_id': submission['id'],
+                    'external_solution': True,
                 }
 
                 if 'verdict' in submission:
@@ -393,6 +396,26 @@ class Statistic(BaseModule):
             ret.append({'info': data})
             if data['handle'] != orig:
                 ret[-1]['rename'] = data['handle']
+        return ret
+
+    @staticmethod
+    def get_source_code(contest, problem):
+        if 'submission_id' not in problem:
+            raise ExceptionParseStandings('Not found submission id')
+
+        url = Statistic.SUBMISSION_URL_FORMAT_.format(cid=contest.key.split(':')[0],
+                                                      sid=problem['submission_id'])
+        page = REQ.get(url)
+        match = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # noqa
+        if not match:
+            raise ExceptionParseStandings('Not found source code')
+        ret = {
+            'solution': html.unescape(match.group('source')),
+            'url': url,
+        }
+        for c in match.group('class').split():
+            if c.startswith('lang-'):
+                ret['lang_class'] = c
         return ret
 
 
