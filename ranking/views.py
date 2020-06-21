@@ -15,12 +15,14 @@ from django.utils import timezone
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_exempt
 from el_pagination.decorators import page_template, page_templates
+from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest
 from clist.templatetags.extras import get_problem_short, get_country_name
 from clist.templatetags.extras import slug, query_transform
 from clist.views import get_timezone, get_timeformat
 from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import FailOnGetResponse
 from ranking.models import Statistics, Module
 from true_coders.models import Party
 from utils.json_field import JSONF
@@ -54,8 +56,11 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         contests = contests.filter(get_iregex_filter(search,
                                                      'title', 'host', 'resource__host',
                                                      mapping={
-                                                         'slug': ['slug'],
-                                                         'writer': ['info__writers__contains'],
+                                                         'slug': {'fields': ['slug']},
+                                                         'writer': {'fields': ['info__writers__contains']},
+                                                         'medal': {'fields': ['info__standings__medals'],
+                                                                   'suff': '__isnull',
+                                                                   'func': lambda v: False},
                                                      }))
 
     context = {
@@ -236,7 +241,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             field = field.title()
         fields[k] = field
 
-    per_page = options.get('per_page', 200)
+    per_page = options.get('per_page', 50)
     if per_page is None:
         per_page = 100500
 
@@ -467,16 +472,16 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         statistics = statistics.order_by(*orderby)
 
         if groupby == 'languages':
-            query, params = statistics.query.sql_with_params()
+            query, sql_params = statistics.query.sql_with_params()
             query = query.replace(f'"ranking_statistics"."{field}" AS "groupby"', '"language" AS "groupby"')
             query = query.replace(f'GROUP BY "ranking_statistics"."{field}"', 'GROUP BY "language"')
             query = query.replace(f'"ranking_statistics".', '')
             query = query.replace(f'AVG("solving") AS "avg_score"', 'AVG("score") AS "avg_score"')
             query = query.replace(f'COUNT("id") AS "n_accounts"', 'COUNT("sid") AS "n_accounts"')
             query = re.sub('FROM "ranking_statistics".*GROUP BY', f'FROM ({language_query}) t1 GROUP BY', query)
-            params = params[:-len(before_params)] + language_params
+            sql_params = sql_params[:-len(before_params)] + language_params
             with connection.cursor() as cursor:
-                cursor.execute(query, params)
+                cursor.execute(query, sql_params)
                 columns = [col[0] for col in cursor.description]
                 statistics = [dict(zip(columns, row)) for row in cursor.fetchall()]
                 statistics = ListAsQueryset(statistics)
@@ -497,6 +502,11 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         num_rows_groupby = None
         map_colors_groupby = None
 
+    my_statistics = iter(())
+    if groupby == 'none' and coder:
+        statistics = statistics.annotate(my_stat=SubqueryExists('account__coders', filter=Q(coder=coder)))
+        my_statistics = statistics.filter(account__coders=coder).extra(select={'floating': True})
+
     context = {
         'data_1st_u': data_1st_u,
         'participants_info': participants_info,
@@ -505,6 +515,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
         'contest': contest,
         'statistics': statistics,
+        'my_statistics': my_statistics,
         'problems': problems,
         'params': params,
         'fields': fields,
@@ -553,7 +564,7 @@ def solutions(request, sid, problem_key):
             try:
                 source_code = plugin.Statistic.get_source_code(statistic.contest, stat)
                 stat.update(source_code)
-            except (NotImplementedError, ExceptionParseStandings):
+            except (NotImplementedError, ExceptionParseStandings, FailOnGetResponse):
                 return HttpResponseNotFound()
         else:
             return HttpResponseNotFound()

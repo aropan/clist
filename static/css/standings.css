@@ -53,7 +53,9 @@ table.standings th {
   background: #f9f9f9;
 }
 
-.standings tr.parity-border td {
+.standings tr.parity-border td,
+.standings tr.parity-border th
+{
   border-top: 1px solid #999;
 }
 
@@ -66,23 +68,23 @@ table.standings th {
 }
 
 .standings .gold-medal {
-  background: #f9d923;
+  background: #f9d923 !important;
 }
 
 .standings .silver-medal {
-  background: silver;
+  background: silver !important;
 }
 
 .standings .bronze-medal {
-  background: #c08e55;
+  background: #c08e55 !important;
 }
 
 .standings .text-gold-medal {
-  color: #ccab04;
+  color: #ccab04 !important;
 }
 
 .standings .text-bg-success {
-  color: #4ba823;
+  color: #4ba823 !important;
 }
 
 table.standings .handle-cell {
@@ -94,7 +96,7 @@ table.standings .handle-cell .handle-div {
   white-space: normal;
 }
 
-.standings th {
+.standings thead th {
   border: none !important;
 }
 
@@ -106,7 +108,9 @@ table.standings .handle-cell .handle-div {
   text-decoration: none;
 }
 
-.standings td a {
+.standings td a,
+.standings .my-stat th a
+{
   color: inherit;
 }
 
@@ -119,7 +123,7 @@ table.standings .handle-cell .handle-div {
 }
 
 .standings a.coder:hover span,
-a.solution {
+a.solution:hover span {
   text-decoration: underline;
 }
 
@@ -129,7 +133,7 @@ a.solution {
 }
 
 .nobold {
-  font-weight:normal;
+  font-weight: normal;
 }
 
 .reset_timing_statistic {
@@ -150,4 +154,33 @@ a.solution {
 
 .advance {
   font-weight: bold;
+}
+
+.language {
+  white-space: nowrap;
+}
+
+#table-inner-scroll table th {
+  position: sticky;
+  position: -webkit-sticky;
+  top: 0;
+}
+
+#table-inner-scroll .my-stat th {
+  font-weight: normal;
+  top: -2px;
+  bottom: 0;
+}
+
+#table-inner-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+#standings-filters > * {
+  margin-bottom: 5px;
+}
+
+#standings-groupby > div {
+  padding: 0px;
 }

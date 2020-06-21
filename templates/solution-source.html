@@ -20,7 +20,7 @@
   {% endif %}
 
   <span class="solution-attr-name">author</span>:
-  {% with coders=account.coders.all %}{% if coders|length == 1 %}<a href="{% url 'coder:profile' coders.0.username %}">{{ account.key }}</a>{% else %}{{ account.key }}{% endif %}{% endwith %}
+  <a href="{{ account.url }}">{{ account.key }}</a>
 
   {% if problem %}
   <span class="solution-attr-name">problem name</span>:

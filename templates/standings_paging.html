@@ -1,13 +1,31 @@
 {% load el_pagination_tags %}
 
-{% lazy_paginate per_page statistics using 'standings_paging' %}{% get_pages %}
-{% for statistic in statistics %}
+{% lazy_paginate per_page,200 statistics using 'standings_paging' %}{% get_pages %}
+{% for statistic in statistics|chain:my_statistics %}
+{% with tag=statistic.my_stat|then:"th"|default:"td" %}
 {% with addition=statistic.addition %}
 {% with coders=statistic.account.coders.all %}
-<tr{% for c in coders %}{% if c == request.user.coder %} class="info"{% endif %}{% endfor %}{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
+{% if statistic.my_stat %}
+  {% if statistic.floating %}
+    {% show_more_table %}
+  {% elif 'Safari' not in request.user_agent.browser.family and 'iOS' not in request.user_agent.os.family %}
+    <script>$(function() { $('#table-inner-scroll .my-stat th').css({'top': $('#table-inner-scroll thead').height() - 1 }) })</script>
+  {% endif %}
+  <script>
+    $(function() {
+      var selector = $('tr.my-stat.floating')
+      if (!$('tr.my-stat:not(.floating)').length) {
+        selector = selector.not(':last')
+      }
+      selector.remove()
+      $('tr.my-stat.floating').removeClass('hidden')
+    })
+  </script>
+{% endif %}
+<tr class="{% if statistic.my_stat %}info my-stat{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
 {% endwith %}
   {% with advance=addition|get_item:'_advance' %}
-  <td
+  <{{ tag }}
     {% if addition.medal %}
       class="{{ addition.medal|lower }}-medal"
       {% with medal_title_field=addition|get_item:"_medal_title_field" %}
@@ -26,11 +44,11 @@
   >
     {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
     {% if with_row_num %}({{ forloop.counter0|add:pages.current_start_index }}){% endif %}
-  </td>
+  </{{ tag }}>
   {% endwith %}
   {% if data_1st_u %}
   {% with info=participants_info|get_item:statistic.id %}
-  <td>
+  <{{ tag }}>
     <a href="{{ request.path }}?{% query_transform request search=info.search %}">
     {% if info.n %}
       <div>{{ info.n }}</div>
@@ -43,10 +61,10 @@
     </small>
     {% endif %}
     </a>
-  </td>
+  </{{ tag }}>
   {% endwith %}
   {% endif %}
-  <td class="handle-cell
+  <{{ tag }} class="handle-cell
     {% with info=participants_info|get_item:statistic.id %}
     {% if info and info.n <= standings_options.n_highlight %}bg-success{% endif %}
     {% endwith %}
@@ -100,17 +118,17 @@
       {% endif %}
     </div>
     {% endwith %}
-  </td>
-  <td>
+  </{{ tag }}>
+  <{{ tag }}>
     <div>{{ statistic.solving|floatformat:'-2' }}</div>
-  </td>
+  </{{ tag }}>
   {% if mod_penalty %}
-  <td>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty|default:0 %}</td>
+  <{{ tag }}>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty|default:0 %}</{{ tag }}>
   {% endif %}
 
   {% for field in fields.keys %}
   {% with value=addition|get_item:field %}
-  <td>
+  <{{ tag }}>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     <span{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
     <span>
@@ -147,14 +165,14 @@
         <small class='text-muted'>&#183;</small>
       {% endif %}
     </span>
-  </td>
+  </{{ tag }}>
   {% endwith %}
   {% endfor %}
 
   {% for problem in problems %}
     {% with key=problem|get_problem_short  %}
     {% with stat=addition.problems|get_item:key %}
-    <td class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% endif %}{% if stat.first_ac %} first-ac{% endif %}{% endif %}">
+    <{{ tag }} class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% endif %}{% if stat.first_ac %} first-ac{% endif %}{% endif %}">
       {% if not stat %}
         <div>&#183;</div>
       {% else %}
@@ -183,25 +201,23 @@
             {% endif %}
           >
             {% if stat.url or stat.solution or stat.external_solution %}
-              <a{% if stat.solution or stat.external_solution %} onClick="return viewSolution(this);"{% endif %} href="{% if stat.solution or stat.external_solution %}{% url 'ranking:solution' statistic.pk key %}{% else %}{{ stat.url }}{% endif %}" target="_blank">
+              <a class="solution"{% if stat.solution or stat.external_solution %} onClick="return viewSolution(this);"{% endif %} href="{% if stat.solution or stat.external_solution %}{% url 'ranking:solution' statistic.pk key %}{% else %}{{ stat.url }}{% endif %}" target="_blank">
             {% endif %}
 
             {% if stat.binary is not None %}
-              <i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i>
+              <span><i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i></span>
             {% elif with_detail and stat.subscores %}
-            {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if request.GET.languages and stat.language not in request.GET|get_list:'languages' %}text-muted{% elif subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
+              <span>{% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}</span>
             {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
-              {{ stat.result }}
+              <span>{{ stat.result }}</span>
             {% elif stat.result|slice:":1" == "-" and with_detail %}
-              {{ stat.result|floatformat:'-2' }}{% if 'verdict' in stat %} <small>{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</small>{% endif %}
+              <span>{{ stat.result|floatformat:'-2' }}{% if 'verdict' in stat %} <small>{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</small>{% endif %}</span>
             {% else %}
-              {{ stat.result|floatformat:'-2' }}
+              <span>{{ stat.result|floatformat:'-2' }}</span>
             {% endif %}
 
             {% if stat.url or stat.solution or stat.external_solution %}</a>{% endif %}
           </div>
-        {% elif not with_detail %}
-          {% include "standings_paging_detail.html" with stat=stat small=True sid=statistic.pk problem_key=key %}
         {% endif %}
         {% if stat.extra_score is not None %}
           <div class="inline"
@@ -220,17 +236,26 @@
         {% endif %}
         </div>
 
-        {% if with_detail %}
+        {% if with_detail or 'result' not in stat and 'extra_score' not in stat %}
           {% include "standings_paging_detail.html" with stat=stat small=True sid=statistic.pk problem_key=key %}
         {% endif %}
+
+        {% if stat.language and request.GET.languages %}
+          <small{% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %} class="text-muted"{% endif %}><div class="language">{{ stat.language }}</div></small>
+        {% endif %}
       {% endif %}
-    </td>
+    </{{ tag }}>
     {% endwith %}
     {% endwith %}
   {% endfor %}
 </tr>
 {% endwith %}
+{% endwith %}
 {% endfor %}
+
+{% if not my_statistics %}
+  {% show_more_table %}
+{% endif %}
 
 {% if colored_by_group_score %}
 <script>
@@ -256,8 +281,6 @@
 
 <script>
   $(function(){
-    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({trigger : 'hover'})
+    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'});
   })
 </script>
-
-{% show_more_table %}

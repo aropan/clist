@@ -263,6 +263,22 @@
     </div>
     {% endif %}
 
+    {% if most_writer.exists %}
+    <div class="col-md-6 col-lg-4">
+        <h4>Most writer</h4>
+        <div class="panel panel-default table-responsive">
+            <table class="table table-hover table-condensed table-striped">
+                <tr>
+                    <th>N</th>
+                    <th>Handle</th>
+                    <th>Writer<br/>number</th>
+                </tr>
+                {% include 'resource_most_writer_paging.html' %}
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     {% for name, data in contests.items %}
     {% if data.contests.exists %}
     <div class="col-md-6 col-lg-4">

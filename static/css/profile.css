@@ -8,6 +8,14 @@
   text-align: left;
 }
 
+#writers tr .date {
+  text-align: center;
+}
+
+#writers td {
+  white-space: nowrap;
+}
+
 #contests .endless_container {
   margin-right: -15px;
   margin-left: -15px;

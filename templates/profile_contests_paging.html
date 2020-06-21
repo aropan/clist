@@ -1,7 +1,7 @@
 {% load humanize %}
 {% load el_pagination_tags %}
 
-{% paginate 50 statistics %}
+{% lazy_paginate 50,100 statistics using "contest_page" %}
 
 {% for s in statistics %}
 <tr class="contest{% if s.addition.medal %} {{ s.addition.medal|lower }}-medal{% endif %}{% if s.contest.is_running %} success{% endif %}" id="cid-{{ s.contest.id }}">
@@ -32,7 +32,7 @@
         {% endwith %}
         {% endwith %}
     </td>
-    <td>{{ s.contest.end_time|naturalday }}</td>
+    <td><div title="{{ s.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ s.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
         <a href="{% url 'ranking:standings' s.contest.title|slug s.contest.pk %}">{{ s.contest.title }}</a>
         <a href="{{ s.contest.resource.url }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
@@ -49,7 +49,7 @@
                   {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
                     {% with key=problem|get_problem_short  %}
                     {% with stat=s.addition.problems|get_item:key %}
-                      {% include 'problem_stat.html' with short=problem|get_problem_short name=problem|get_problem_name stat=stat problem_url=problem.url %}
+                      {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url %}
                     {% endwith %}
                     {% endwith %}
                   {% endfor %}

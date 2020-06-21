@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/problems.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block title %}Problems{% endblock %}
+
+{% block content %}
+
+<div class="col-lg-8 col-lg-offset-2">
+  <form method="get" action="">
+  <div class="input-group">
+    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to name:{PROBLEM}, contest:{NAME} or resource:{HOST}" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+    <span class="input-group-btn">
+      <button class="btn btn-default" type="submit">
+        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+        Search
+      </button>
+  </div>
+  </form>
+  <br/>
+
+  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  <div id="problems" class="panel panel-default table-responsive">
+    <table class="table table-hover table-condensed table-striped table-float-head">
+      <thead>
+        <tr>
+          <th>
+            Name
+            <div><small class="text-muted">Contest</small></div>
+            <div><small class="text-muted">Resource</small></div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% include page_template %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

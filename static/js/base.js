@@ -41,9 +41,11 @@ String.prototype.toTitleCase = function(){
     });
 };
 
-$(function(){
-    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'});
-});
+function toggle_tooltip() {
+  $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'});
+}
+
+$(toggle_tooltip);
 
 function slugify(text) {
   return text.toString().toLowerCase()
@@ -65,3 +67,11 @@ function get_x_chart(value, x_axis) {
   value = Math.min(Math.max(value, 0), 1)
   return value * (x_axis.right - x_axis.left) + x_axis.left
 }
+
+
+$(() => $(".table-float-head").floatThead({
+  zIndex: 999,
+  responsiveContainer: function($table){
+      return $table.closest(".table-responsive");
+  },
+}))

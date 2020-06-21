@@ -17,6 +17,7 @@ urlpatterns = [
     url(r'^resources/dumpdata/$', views.resources_dumpdata, name='resources_dumpdata'),
     url(r'^resource/(.*)/$', views.resource, name='resource'),
     url(r'^get/events/$', views.get_events),
+    url(r'^problems/$', views.problems, name='problems'),
 
     url(r'^api/', include((api_v1.urls, app_name), namespace='api')),
     url(

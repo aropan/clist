@@ -1,0 +1,9 @@
+#problems table th,
+#problems table td
+{
+  padding: 5px 15px;
+}
+
+#problems table thead th {
+  background-color: #eee;
+}

@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.contrib.postgres.fields import JSONField, ArrayField
 
 from pyclist.models import BaseModel, BaseManager
-from clist.templatetags.extras import get_problem_key, get_problem_name, get_problem_short, slug
+from clist.templatetags.extras import slug
 
 
 class Resource(BaseModel):
@@ -48,6 +48,10 @@ class Resource(BaseModel):
                 for field in self.RATING_FIELDS:
                     if field in value:
                         ret = self.get_rating_color(value.get(field))
+                        if ret[0]:
+                            return ret
+                    if 'rating_change' in value and 'new_rating' in value and field.lower().startswith('old'):
+                        ret = self.get_rating_color(value.get('new_rating') - value.get('rating_change'))
                         if ret[0]:
                             return ret
             else:
@@ -111,6 +115,7 @@ class Contest(models.Model):
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
     info = JSONField(default=dict, blank=True)
+    writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -175,50 +180,6 @@ class Contest(models.Model):
             total = duration.total_seconds()
             return "%02d:%02d" % ((total + 1e-9) // 3600, (total + 1e-9) % 3600 // 60)
 
-    def update_problems(self):
-        problems = self.info.get('problems')
-        if not problems or hasattr(self, 'stage'):
-            return
-        if 'division' in problems:
-            problem_sets = problems['division'].items()
-        else:
-            problem_sets = [(None, problems)]
-
-        old_problem_ids = set(self.problem_set.values_list('id', flat=True))
-        added_problems = dict()
-        for division, problem_set in problem_sets:
-            for index, problem_info in enumerate(problem_set, start=1):
-                key = get_problem_key(problem_info)
-                short = get_problem_short(problem_info)
-                name = get_problem_name(problem_info)
-                if short == name:
-                    short = None
-
-                added_problem = added_problems.get(key)
-
-                defaults = {
-                    'index': index if not added_problem else None,
-                    'short': short,
-                    'name': name,
-                    'divisions': getattr(added_problem, 'divisions', []) + [division] if division else None,
-                    'url': problem_info.get('url'),
-                    'n_tries': problem_info.get('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
-                    'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
-                }
-
-                problem, created = Problem.objects.update_or_create(
-                    contest=self,
-                    key=key,
-                    defaults=defaults,
-                )
-
-                added_problems[key] = problem
-
-                if problem.id in old_problem_ids:
-                    old_problem_ids.remove(problem.id)
-        if old_problem_ids:
-            Problem.objects.filter(id__in=old_problem_ids).delete()
-
 
 class Problem(BaseModel):
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
@@ -230,12 +191,22 @@ class Problem(BaseModel):
     divisions = ArrayField(models.TextField(), default=None, null=True, blank=True)
     n_tries = models.IntegerField(default=None, null=True, blank=True)
     n_accepted = models.IntegerField(default=None, null=True, blank=True)
+    visible = models.BooleanField(default=True, null=False)
 
     def __str__(self):
         return "%s [%d]" % (self.name, self.id)
 
     class Meta:
         unique_together = ('contest', 'key')
+
+    def save(self, *args, **kwargs):
+        self.visible = bool(self.url) or self.key != self.name
+        super().save(*args, **kwargs)
+
+
+class ProblemTag(BaseModel):
+    name = models.TextField(unique=True, db_index=True, null=False)
+    problems = models.ManyToManyField(Problem, blank=True, related_name='tags')
 
 
 class TimingContest(BaseModel):

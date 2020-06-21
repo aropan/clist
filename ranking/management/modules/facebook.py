@@ -110,6 +110,7 @@ class Statistic(BaseModule):
                     u = v.get('sourceURI')
                     if v:
                         p['url'] = urljoin(url, u)
+                        p['external_solution'] = True
                 r['solved'] = {'solving': solved}
 
                 pbar.update()
@@ -141,6 +142,11 @@ class Statistic(BaseModule):
             standings['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
 
         return standings
+
+    @staticmethod
+    def get_source_code(contest, problem):
+        solution = REQ.get(problem['url'])
+        return {'solution': solution}
 
 
 def run():

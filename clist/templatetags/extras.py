@@ -1,5 +1,6 @@
 import json
 import re
+import itertools
 from datetime import timedelta, datetime
 from os import path
 from collections import OrderedDict
@@ -472,3 +473,22 @@ def url_quote(value):
 @register.filter
 def multiply(value, arg):
     return value * arg
+
+
+def canonize(data):
+    return json.dumps(data, sort_keys=True)
+
+
+@register.filter
+def chain(value, arg):
+    return itertools.chain(value, arg)
+
+
+@register.filter
+def then(value, arg):
+    return arg if value else None
+
+
+@register.filter
+def is_equal(value, arg):
+    return value == arg

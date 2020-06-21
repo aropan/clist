@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import re
 import operator
+from copy import deepcopy
 from html import unescape
 from collections import OrderedDict
 from random import shuffle
@@ -20,7 +20,8 @@ from django.db.models import Q, F, OuterRef, Exists
 
 from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
-from clist.templatetags.extras import get_problem_short, get_number_from_str
+from clist.views import update_problems, update_writers
+from clist.templatetags.extras import get_problem_short, get_number_from_str, canonize
 from ranking.management.commands.countrier import Countrier
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.modules.common import REQ
@@ -51,10 +52,6 @@ class Command(BaseCommand):
         parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
         parser.add_argument('--update-without-new-rating', action='store_true', default=False, help='Update account')
-
-    @staticmethod
-    def _canonize(data):
-        return json.dumps(data, sort_keys=True)
 
     def parse_statistic(
         self,
@@ -126,6 +123,7 @@ class Command(BaseCommand):
         total = 0
         n_upd_account_time = 0
         progress_bar = tqdm(contests)
+        stages_ids = []
         for contest in progress_bar:
             resource = contest.resource
             if not hasattr(resource, 'module'):
@@ -151,8 +149,10 @@ class Command(BaseCommand):
                 with REQ:
                     statistics_by_key = {}
                     statistics_ids = set()
-                    if not no_update_results:
+                    if not no_update_results and (users or users is None):
                         statistics = Statistics.objects.filter(contest=contest).select_related('account')
+                        if users:
+                            statistics = statistics.filter(account__key__in=users)
                         for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
                             if with_stats:
                                 statistics_by_key[s.account.key] = s.addition
@@ -173,14 +173,17 @@ class Command(BaseCommand):
                         standings_options = dict(contest_options)
                         standings_options.update(standings.pop('options'))
 
-                        if self._canonize(standings_options) != self._canonize(contest_options):
+                        if canonize(standings_options) != canonize(contest_options):
                             contest.info['standings'] = standings_options
                             contest.save()
 
-                    for field in 'writers', 'divisions_order':
+                    info_fields = standings.pop('info_fields', []) + ['divisions_order']
+                    for field in info_fields:
                         if standings.get(field) and contest.info.get(field) != standings[field]:
                             contest.info[field] = standings[field]
                             contest.save()
+
+                    update_writers(contest, standings.pop('writers', None))
 
                     problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
 
@@ -211,8 +214,7 @@ class Command(BaseCommand):
                             account_action = r.pop('action', None)
 
                             if account_action == 'delete':
-                                delete_info = Account.objects.filter(resource=resource, key=member).delete()
-                                self.logger.info(f'Delete info {member}: {delete_info}')
+                                Account.objects.filter(resource=resource, key=member).delete()
                                 continue
 
                             account, created = Account.objects.get_or_create(resource=resource, key=member)
@@ -379,8 +381,7 @@ class Command(BaseCommand):
                                 'solving': r.pop('solving', 0),
                                 'upsolving': r.pop('upsolving', 0),
                             }
-                            if defaults['place'] == '__unchanged__':
-                                defaults.pop('place')
+                            defaults = {k: v for k, v in defaults.items() if v != '__unchanged__'}
 
                             addition = type(r)()
                             for k, v in r.items():
@@ -495,50 +496,51 @@ class Command(BaseCommand):
                                 self.logger.info(f'Delete info: {delete_info}')
                                 progress_bar.set_postfix(deleted=str(delete_info))
 
-                            if self._canonize(fields) != self._canonize(contest.info.get('fields')):
+                            if canonize(fields) != canonize(contest.info.get('fields')):
                                 contest.info['fields'] = fields
                             contest.info['fields_types'] = fields_types
 
                             if calculate_time and not contest.calculate_time:
                                 contest.calculate_time = True
 
-                            problems = standings.pop('problems', [])
-                            if 'division' in problems:
-                                for d, ps in problems['division'].items():
-                                    for p in ps:
+                            problems = standings.pop('problems', None)
+                            if problems is not None:
+                                if 'division' in problems:
+                                    for d, ps in problems['division'].items():
+                                        for p in ps:
+                                            k = get_problem_short(p)
+                                            if k:
+                                                p.update(d_problems.get(d, {}).get(k, {}))
+                                    if isinstance(problems['division'], OrderedDict):
+                                        problems['divisions_order'] = list(problems['division'].keys())
+                                else:
+                                    for p in problems:
                                         k = get_problem_short(p)
                                         if k:
-                                            p.update(d_problems.get(d, {}).get(k, {}))
-                                if isinstance(problems['division'], OrderedDict):
-                                    problems['divisions_order'] = list(problems['division'].keys())
-                            else:
-                                for p in problems:
-                                    k = get_problem_short(p)
-                                    if k:
-                                        p.update(d_problems.get(k, {}))
+                                            p.update(d_problems.get(k, {}))
 
-                            if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
-                                contest.info['problems'] = problems
-                            contest.update_problems()
+                                update_problems(contest, problems=problems)
 
                             if languages:
                                 languages = list(sorted(languages))
-                                if self._canonize(languages) != self._canonize(contest.info.get('languages')):
+                                if canonize(languages) != canonize(contest.info.get('languages')):
                                     contest.info['languages'] = languages
 
                             contest.save()
 
                             progress_bar.set_postfix(n_fields=len(fields))
                         else:
-                            problems = standings.pop('problems', [])
-                            if 'division' not in problems:
-                                problems = [plugin.merge_dict(a, b) for a, b in zip(contest.info['problems'], problems)]
-                            else:
-                                problems = plugin.merge_dict(contest.info['problems'], problems)
-                            if problems and self._canonize(problems) != self._canonize(contest.info.get('problems')):
-                                contest.info['problems'] = problems
-                                contest.update_problems()
-                                contest.save()
+                            problems = standings.pop('problems', None)
+                            contest_problems = deepcopy(contest.info['problems'])
+                            if problems is not None:
+                                if 'division' not in problems:
+                                    problems = [
+                                        plugin.merge_dict(a, b)
+                                        for a, b in zip(problems, contest_problems)
+                                    ]
+                                else:
+                                    problems = plugin.merge_dict(problems, contest_problems)
+                                update_problems(contest, problems=problems)
 
                     action = standings.get('action')
                     if action is not None:
@@ -574,15 +576,22 @@ class Command(BaseCommand):
                     delay = resource.module.delay_on_error
                 contest.timing.statistic = timezone.now() + delay
                 contest.timing.save()
-            elif not no_update_results:
+            elif not no_update_results and (users is None or users):
                 stages = Stage.objects.filter(
+                    ~Q(pk__in=stages_ids),
                     contest__start_time__lte=contest.start_time,
                     contest__end_time__gte=contest.end_time,
                     contest__resource=contest.resource,
                 )
                 for stage in stages:
                     if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
-                        stage.update()
+                        stages_ids.append(stage.pk)
+
+        for stage in tqdm(Stage.objects.filter(pk__in=stages_ids),
+                          total=len(stages_ids),
+                          desc='getting stages'):
+            stage.update()
+
         progress_bar.close()
         self.logger.info(f'Parsed statistic: {count} of {total}. Updated account time: {n_upd_account_time}')
         return count, total

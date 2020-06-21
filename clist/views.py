@@ -14,13 +14,14 @@ from django.utils import timezone
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from sql_util.utils import Exists
-from el_pagination.decorators import page_templates
+from el_pagination.decorators import page_templates, page_template
 
 from clist.templatetags.extras import get_timezones, get_timezone_offset, slug
-from clist.models import Resource, Contest, Banner
+from clist.templatetags.extras import get_problem_key, get_problem_name, get_problem_short, canonize
+from clist.models import Resource, Contest, Banner, Problem, ProblemTag
 from true_coders.models import Party, Coder, Filter
 from ranking.models import Rating, Account
-from utils.regex import verify_regex
+from utils.regex import verify_regex, get_iregex_filter
 
 
 def get_timeformat(request):
@@ -297,6 +298,7 @@ def resources(request):
     ('resource_last_activity_paging.html', 'last_activity_page'),
     ('resource_top_paging.html', 'top_page'),
     ('resource_most_participated_paging.html', 'most_participated_page'),
+    ('resource_most_writer_paging.html', 'most_writer_page'),
     ('resource_contests.html', 'past_page'),
     ('resource_contests.html', 'coming_page'),
     ('resource_contests.html', 'running_page'),
@@ -426,6 +428,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity', 'id'),
         'top': accounts.filter(rating__isnull=False).order_by('-rating', 'id'),
         'most_participated': accounts.order_by('-n_contests', 'id'),
+        'most_writer': accounts.filter(n_writers__gt=0).order_by('-n_writers', 'id'),
     }
 
     if extra_context is not None:
@@ -445,3 +448,113 @@ def resources_dumpdata(request):
         '--format', 'json'
     ])
     return response
+
+
+def update_writers(contest, writers=None):
+    if writers is not None:
+        if canonize(writers) == canonize(contest.info.get('writers')):
+            return
+        contest.info['writers'] = writers
+        contest.save()
+
+    writers = contest.info.get('writers', [])
+    for writer in contest.writers.filter(~Q(key__in=writers)):
+        contest.writers.remove(writer)
+    already_writers = set(contest.writers.filter(key__in=writers).values_list('key', flat=True))
+    for writer in writers:
+        if writer in already_writers:
+            continue
+        account, created = Account.objects.get_or_create(resource=contest.resource, key=writer)
+        account.writer_set.add(contest)
+
+
+def update_problems(contest, problems=None):
+    if problems is not None:
+        if canonize(problems) == canonize(contest.info.get('problems')):
+            return
+        contest.info['problems'] = problems
+        contest.save()
+
+    problems = contest.info.get('problems')
+    if not problems or hasattr(contest, 'stage'):
+        return
+    if 'division' in problems:
+        problem_sets = problems['division'].items()
+    else:
+        problem_sets = [(None, problems)]
+
+    old_problem_ids = set(contest.problem_set.values_list('id', flat=True))
+    added_problems = dict()
+    for division, problem_set in problem_sets:
+        for index, problem_info in enumerate(problem_set, start=1):
+            key = get_problem_key(problem_info)
+            short = get_problem_short(problem_info)
+            name = get_problem_name(problem_info)
+            if short == name:
+                short = None
+
+            added_problem = added_problems.get(key)
+
+            defaults = {
+                'index': index if not added_problem else None,
+                'short': short,
+                'name': name,
+                'divisions': getattr(added_problem, 'divisions', []) + [division] if division else None,
+                'url': problem_info.get('url'),
+                'n_tries': problem_info.get('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
+                'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
+            }
+
+            problem, created = Problem.objects.update_or_create(
+                contest=contest,
+                key=key,
+                defaults=defaults,
+            )
+
+            if 'tags' in problem_info:
+                old_tags = set(problem.tags.all())
+                for name in problem_info['tags']:
+                    tag, _ = ProblemTag.objects.get_or_create(name=name)
+                    if tag in old_tags:
+                        old_tags.pop(tag)
+                    else:
+                        problem.tags.add(tag)
+                for tag in old_tags:
+                    tag.delete()
+
+            added_problems[key] = problem
+
+            if problem.id in old_problem_ids:
+                old_problem_ids.remove(problem.id)
+    if old_problem_ids:
+        Problem.objects.filter(id__in=old_problem_ids).delete()
+
+
+@page_template('problems_paging.html')
+def problems(request, template='problems.html', extra_context=None):
+    problems = Problem.objects.all()
+    problems = problems.select_related('contest', 'contest__resource')
+    problems = problems.order_by('-contest__end_time', 'contest_id', 'index')
+    problems = problems.filter(contest__end_time__lt=timezone.now(), visible=True)
+
+    search = request.GET.get('search')
+    if search is not None:
+        cond = get_iregex_filter(search,
+                                 'name', 'contest__title', 'contest__host',
+                                 mapping={
+                                     'name': {'fields': ['name__iregex']},
+                                     'contest': {'fields': ['contest__title__iregex']},
+                                     'resource': {'fields': ['contest__host__iregex']},
+                                     'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
+                                     'pid': {'fields': ['id'], 'func': lambda v: int(v)},
+                                 })
+        problems = problems.filter(cond)
+
+    context = {
+        'problems': problems,
+    }
+
+    if extra_context is not None:
+        context.update(extra_context)
+
+    return render(request, template, context)

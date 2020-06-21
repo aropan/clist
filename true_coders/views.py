@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db.models.functions import Cast
-from django.db.models import Count, F, Q, Exists, Case, When, Value, OuterRef, BooleanField, IntegerField, Prefetch
+from django.db.models import Count, F, Q, Case, When, Value, OuterRef, BooleanField, IntegerField, Prefetch
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -17,12 +17,12 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from tastypie.models import ApiKey
 from django_countries import countries
-from el_pagination.decorators import page_template
-from sql_util.utils import SubqueryCount
+from el_pagination.decorators import page_templates
+from sql_util.utils import SubqueryCount, SubquerySum, Exists
 
 from clist.models import Resource, Contest
 from clist.templatetags.extras import get_timezones, format_time, slug as slugify, query_transform
-from clist.views import get_timezone, main
+from clist.views import get_timezone, get_timeformat, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
@@ -34,7 +34,7 @@ from utils.regex import verify_regex, get_iregex_filter
 logger = logging.getLogger(__name__)
 
 
-def get_profile_context(request, statistics):
+def get_profile_context(request, statistics, writers):
     history_resources = statistics \
         .filter(contest__resource__has_rating_history=True) \
         .filter(contest__stage__isnull=True) \
@@ -46,7 +46,7 @@ def get_profile_context(request, statistics):
         .order_by('-num_contests')
 
     stats = statistics \
-        .select_related('contest') \
+        .select_related('contest', 'account') \
         .filter(addition__medal__isnull=False) \
         .order_by('-contest__end_time')
     resource_medals = {}
@@ -84,6 +84,12 @@ def get_profile_context(request, statistics):
                     field, value = value.split(':', 1)
                     cond &= Q(contest__resource__host=value)
                     history_resources = history_resources.filter(contest__resource__host=value)
+                elif value.startswith('medal:'):
+                    field, value = value.split(':', 1)
+                    if not value or value == 'any':
+                        cond &= Q(addition__medal__isnull=False)
+                    else:
+                        cond &= Q(addition__medal=value)
                 else:
                     field = 'regex'
                     cond &= get_iregex_filter(value, 'contest__resource__host', 'contest__title')
@@ -93,13 +99,21 @@ def get_profile_context(request, statistics):
     search_resource = filters.pop('resource', [])
     search_resource = search_resource[0] if len(search_resource) == 1 else None
 
+    if search_resource:
+        writers = writers.filter(resource__host=search_resource)
+    writers = writers.order_by('-end_time')
+    writers = writers.annotate(has_statistics=Exists('statistics'))
+
     context = {
         'statistics': statistics,
+        'writers': writers,
         'history_resources': history_resources,
         'show_history_ratings': not filters,
         'resource_medals': resource_medals,
         'account_medals': account_medals,
         'search_resource': search_resource,
+        'timezone': get_timezone(request),
+        'timeformat': get_timeformat(request),
     }
 
     return context
@@ -114,7 +128,10 @@ def coder_profile(request):
     return HttpResponseRedirect(url)
 
 
-@page_template('profile_contests_paging.html')
+@page_templates((
+    ('profile_contests_paging.html', 'contest_page'),
+    ('profile_writers_paging.html', 'writers_page'),
+))
 def profile(request, username, template='profile.html', extra_context=None):
     coder = get_object_or_404(Coder, user__username=username)
     statistics = Statistics.objects.filter(account__coders=coder)
@@ -130,13 +147,11 @@ def profile(request, username, template='profile.html', extra_context=None):
             ),
             to_attr='coder_accounts',
         )) \
-        .annotate(num_contests=Count(
-            'contest',
-            filter=Q(contest__in=statistics.values('contest'))
-        )) \
+        .annotate(num_contests=SubquerySum('account__n_contests', filter=Q(coders=coder))) \
         .filter(num_contests__gt=0).order_by('-num_contests')
 
-    context = get_profile_context(request, statistics)
+    writers = Contest.objects.filter(writers__coders=coder)
+    context = get_profile_context(request, statistics, writers)
 
     if context['search_resource']:
         resources = resources.filter(host=context['search_resource'])
@@ -149,17 +164,22 @@ def profile(request, username, template='profile.html', extra_context=None):
     return render(request, template, context)
 
 
-@page_template('profile_contests_paging.html')
+@page_templates((
+    ('profile_contests_paging.html', 'contest_page'),
+    ('profile_writers_paging.html', 'writers_page'),
+))
 def account(request, key, host, template='profile.html', extra_context=None):
     accounts = Account.objects.select_related('resource').prefetch_related('coders')
     account = get_object_or_404(accounts, key=key, resource__host=host)
     statistics = Statistics.objects.filter(account=account)
 
-    context = get_profile_context(request, statistics)
+    writers = Contest.objects.filter(writers=account).order_by('-end_time')
+    context = get_profile_context(request, statistics, writers)
     context['account'] = account
 
     if extra_context is not None:
         context.update(extra_context)
+
     return render(request, template, context)
 
 
@@ -704,10 +724,9 @@ def party_action(request, secret_key, action):
 def party(request, slug, tab='ranking'):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
 
-    has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
     party_contests = Contest.objects \
         .filter(rating__party=party) \
-        .annotate(has_statistics=Exists(has_statistics)) \
+        .annotate(has_statistics=Exists('statistics')) \
         .order_by('-end_time')
 
     filt = Q(rating__party=party, statistics__account__coders=OuterRef('pk'))

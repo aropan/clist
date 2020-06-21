@@ -55,65 +55,86 @@
   </div>
 {% endif %}
 
+<div class="row">
+
 {% if resources and show_history_ratings %}
-<h3>Accounts</h3>
+<div class="{% if writers.exists %}col-md-12 col-lg-8{% else %}col-lg-12{% endif %}">
+
+<h3>Accounts{% if request.GET.search %} <a class="btn btn-xs btn-default" href="{% url 'coder:profile' coder.user.username %}">view all</a>{% endif %}</h3>
 <div id="list-accounts">
 {% if not search_resource %}
 
-{% for resource in resources %}
-  {% with account=resource.coder_accounts.0 %}
-    <span class="account btn-group btn-group-sm">
-      <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
-        {% coder_color_circle resource account.info %}
-        <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+  {% for resource in resources %}
+    {% with account=resource.coder_accounts.0 %}
+      <span class="account btn-group btn-group-sm">
+        <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
+          {% coder_color_circle resource account.info %}
+          <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 
-        {% if resource.coder_accounts|length > 1 %}
-        <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
-          +{{ resource.coder_accounts|length|add:-1 }}
-        </span>
-        {% endif %}
-
-        {% for s in resource_medals|get_item:resource.pk %}
-          <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
-            &#9899;
+          {% if resource.coder_accounts|length > 1 %}
+          <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
+            +{{ resource.coder_accounts|length|add:-1 }}
           </span>
-        {% endfor %}
-      </a>
-      {% if resource.profile_url %}
-      <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-      {% endif %}
-      <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
-    </span>
-  {% endwith %}
-{% endfor %}
+          {% endif %}
+
+          {% for s in resource_medals|get_item:resource.pk %}
+            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
+              &#9899;
+            </span>
+          {% endfor %}
+        </a>
+        {% if resource.profile_url %}
+        <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+        {% endif %}
+        <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
+      </span>
+    {% endwith %}
+  {% endfor %}
 
 {% else %}
 
-{% for resource in resources %}
-  {% for account in resource.coder_accounts %}
-    <span class="account btn-group btn-group-sm">
-      <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
-        {% coder_color_circle resource account.info %}
-        <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+  {% for resource in resources %}
+    {% for account in resource.coder_accounts %}
+      <span class="account btn-group btn-group-sm">
+        <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
+          {% coder_color_circle resource account.info %}
+          <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 
-        {% for s in account_medals|get_item:account.pk %}
-          <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
-            &#9899;
-          </span>
-        {% endfor %}
-      </a>
-      {% if resource.profile_url %}
-      <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-      {% endif %}
-    </span>
+          {% for s in account_medals|get_item:account.pk %}
+            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
+              &#9899;
+            </span>
+          {% endfor %}
+        </a>
+        {% if resource.profile_url %}
+        <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+        {% endif %}
+      </span>
+    {% endfor %}
   {% endfor %}
-{% endfor %}
 
 {% endif %}
 </div>
 
-
+</div>
 {% endif %}
+
+{% if show_history_ratings and writers.exists %}
+<div class="{% if resources %}col-md-12 col-lg-4{% else %}col-lg-6{% endif %}">
+  <h3>Writer</h3>
+  <div class="panel panel-default table-responsive">
+    <table id="writers" class="table table-hover table-condensed table-striped">
+      <tr>
+        <th class="date">Date</th>
+        <th class="event">Event</th>
+      </tr>
+      {% include 'profile_writers_paging.html' %}
+    </table>
+  </div>
+</div>
+<script>$('#writers').endlessPaginate();</script>
+{% endif %}
+</div>
 
 {% if show_history_ratings and history_resources %}
 <h3>Ratings</h3>
@@ -428,7 +449,7 @@ $(function(){
 <form method="get" action="">
 <div class="input-group">
   <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-  <span class="input-group-addon icon" data-toggle="tooltip" data-html="true" title="Also you can use contest:{ID}, problem:{NAME}, account:{NAME}, resource:{HOST} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
+  <span class="input-group-addon icon" data-toggle="tooltip" data-html="true" title="Also you can use contest:{ID}, problem:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
     <i class="fas fa-question"></i>
   </span>
   <span class="input-group-btn">
@@ -448,13 +469,13 @@ $(function(){
       <th>Rank</th>
       <th>Score</th>
       <th>Rating</th>
-      <th>Time</th>
+      <th>Date</th>
       <th class="title">Event</th>
     </tr>
-    {% include page_template %}
+    {% include 'profile_contests_paging.html' %}
   </table>
 </div>
-<script>$.endlessPaginate({paginateOnScroll: true});</script>
+<script>$('#contests').endlessPaginate({paginateOnScroll: true});</script>
 {% else %}
 <div class="alert alert-warning">Empty statistics</div>
 {% endif %}

@@ -1,40 +1,41 @@
 {% if small %}
 <small class="text-muted">
 {% endif %}
+
 {% if not small and stat.subscores %}
 <div>
   {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
 </div>
 {% endif %}
-{% if not small and stat.verdict and stat.result|slice:":1" == "-" %}
-<div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</div>
+{% if not small and stat.verdict %}
+  {% if stat.result|slice:":1" == "-" or stat.binary is not None and not stat.binary %}
+    <div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</div>
+  {% endif %}
 {% endif %}
 
-{% if 'status' in stat and 'time' in stat %}
-  {% if stat.result|asfloat:0 < 0 %}
-    {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
-  {% else %}
-    {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}
-  {% endif %}
-{% elif 'status' in stat %}
+<div>
+{% if 'status' in stat and 'time' in stat and stat.result is None and stat.extra_score is None and with_detail or 'status' in stat and 'time' in stat and not small %}
+  <div>{% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}</div>
+  <div>{{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}</div>
+{% elif 'status' in stat and 'time' not in stat or 'status' in stat and stat.result|asfloat:0 <= 0 %}
   {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
 {% elif 'time' in stat %}
   {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}
 {% elif 'upsolving' in stat %}
   {% if stat.upsolving.result|slice:":1" == "+" %}
     {{ stat.upsolving.result }}
-  {% elif stat.upsolving.result|slice:":1" == "-" and not small %}
+  {% elif stat.upsolving.result|slice:":1" == "-" %}
     {{ stat.upsolving.result|floatformat:'-2' }}{% if 'verdict' in stat.upsolving %} <small>{{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}</small>{% endif %}
   {% else %}
     {{ stat.upsolving.result|floatformat:'-2' }}
   {% endif %}
 {% endif %}
+</div>
 
-{% if stat.language %}
-  {% if not small or request.GET.languages %}
-    <div>{{ stat.language }}</div>
-  {% endif %}
+{% if stat.language and not small %}
+  <div class="language">{{ stat.language }}</div>
 {% endif %}
+
 {% if small %}
 </small>
 {% endif %}

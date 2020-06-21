@@ -1,0 +1,18 @@
+{% load humanize %}
+{% load el_pagination_tags %}
+
+{% paginate 5,50 writers using "writers_page" %}
+
+{% for contest in writers %}
+<tr>
+  <td class="date"><div title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</div></td>
+  <td class="event">
+    <a href="{% if contest.has_statistics %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}">{{ contest.title }}</a>
+    <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
+  </td>
+</tr>
+{% endfor %}
+
+<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
+
+{% show_more_table %}

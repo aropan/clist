@@ -4,7 +4,7 @@
 import re
 import json
 import html
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from urllib.parse import urljoin, parse_qs
 from lxml import etree
 from datetime import timedelta, datetime
@@ -15,7 +15,7 @@ from time import sleep, time
 import tqdm
 
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import InitModuleException
+from ranking.management.modules.excepts import InitModuleException, ExceptionParseStandings
 from ranking.management.modules import conf
 from utils.requester import FailOnGetResponse
 
@@ -75,6 +75,7 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
         result = {}
+        writers = defaultdict(int)
 
         start_time = self.start_time.replace(tzinfo=None)
 
@@ -117,6 +118,8 @@ class Statistic(BaseModule):
 
         if not result_urls:  # marathon match
             match = re.search('<[^>]*>Problem:[^<]*<a[^>]*href="(?P<href>[^"]*)"[^>]*>(?P<name>[^<]*)<', page)
+            if not match:
+                raise ExceptionParseStandings('not found problem')
             problem_name = match.group('name').strip()
             problems_info = [{
                 'short': problem_name,
@@ -178,12 +181,43 @@ class Statistic(BaseModule):
                 url = url.replace('&amp;', '&')
                 division = int(parse_qs(url)['dn'][0])
 
-                for p in problems_set:
-                    d = problems_info
-                    if len(problems_sets) > 1:
-                        d = d.setdefault('division', OrderedDict())
-                        d = d.setdefault('I' * division, [])
-                    d.append(p)
+                with PoolExecutor(max_workers=3) as executor:
+                    def fetch_problem(p):
+                        errors = set()
+                        for attempt in range(3):
+                            try:
+                                page = REQ.get(p['url'], time_out=30)
+                                match = re.search('<a[^>]*href="(?P<href>[^"]*module=ProblemDetail[^"]*)"[^>]*>', page)
+                                page = REQ.get(urljoin(p['url'], match.group('href')), time_out=30)
+                                matches = re.findall(r'<td[^>]*class="statTextBig"[^>]*>(?P<key>[^<]*)</td>\s*<td[^>]*>(?P<value>.*?)</td>', page, re.DOTALL)  # noqa
+                                for key, value in matches:
+                                    key = key.strip().rstrip(':').lower()
+                                    if key == 'categories':
+                                        p['tags'] = [t.strip().lower() for t in value.split(',')]
+                                    elif key.startswith('writer') or key.startswith('tester'):
+                                        key = key.rstrip('s') + 's'
+                                        p[key] = re.findall('(?<=>)[^<>,]+(?=<)', value)
+                                for w in p.get('writers', []):
+                                    writers[w] += 1
+                            except Exception as e:
+                                errors.add(f'error parse problem info {p}: {e}')
+                                sleep(5**attempt)
+                        else:
+                            errors = None
+                        if errors:
+                            LOG.error(errors)
+
+                        return p
+
+                    for p in tqdm.tqdm(executor.map(fetch_problem, problems_set), total=len(problems_set)):
+                        d = problems_info
+                        if len(problems_sets) > 1:
+                            d = d.setdefault('division', OrderedDict())
+                            d = d.setdefault('I' * division, [])
+                        d.append(p)
+
+                if not users and users is not None:
+                    continue
 
                 page = REQ.get(url)
                 rows = etree.HTML(page).xpath("//tr[@valign='middle']")
@@ -201,7 +235,7 @@ class Statistic(BaseModule):
                     d = OrderedDict(list(zip(header, values)))
                     handle = d.pop('Coders').strip()
                     d = self._dict_as_number(d)
-                    if 'division_placed' not in d or users and handle not in users:
+                    if users and handle not in users:
                         continue
 
                     row = result.setdefault(handle, OrderedDict())
@@ -213,7 +247,7 @@ class Statistic(BaseModule):
                         row.pop('rating_change', None)
 
                     row['member'] = handle
-                    row['place'] = row.pop('division_placed')
+                    row['place'] = row.pop('division_placed', None)
                     row['solving'] = row['point_total']
                     row['solved'] = {'solving': 0}
                     row['division'] = 'I' * division
@@ -347,6 +381,10 @@ class Statistic(BaseModule):
                 'fixed_fields': [('hack', 'Challenges')],
             },
         }
+
+        if writers:
+            writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
+            standings['writers'] = writers
 
         if re.search(r'\bfinals?(?:\s+rounds?)?$', self.name, re.I):
             standings['options']['medals'] = [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]

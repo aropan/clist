@@ -8,7 +8,6 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.1.4/jquery.floatThead.min.js"></script>
 
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
 <script src="{% static_ts 'js/highlight.pack.js' %}"></script>
@@ -40,12 +39,10 @@
 
 <div class="container">
   {% include "standings_filter.html" %}
-  <br/>
   {% if statistics.exists %}
-    <script>$.endlessPaginate({paginateOnScroll: true});</script>
     {% if not groupby or groupby == 'none' %}
-      <div class="panel panel-default table-responsive">
-        <table class="standings table table-hover table-condensed table-float-head{% if not colored_by_group_score %} table-striped{% endif %}">
+      <div id="table-inner-scroll" class="panel panel-default">
+        <table class="standings table table-hover table-condensed{% if not colored_by_group_score %} table-striped{% endif %}">
           <thead>
             <tr class="header-row">
               <th{% if merge_problems %} rowspan="2"{% endif %}>
@@ -118,21 +115,44 @@
           </tbody>
         </table>
       </div>
+      <script>
+        var el = $('#table-inner-scroll')
+        el.scroll(function() {
+          if (el.scrollTop() + el.height() + 10 >= document.getElementById("table-inner-scroll").scrollHeight) {
+            $('.endless_more').trigger('click')
+          }
+        });
+      </script>
     {% else %}
-      {% include 'standings_groupby.html' %}
+      <div id="standings-groupby">
+        {% include 'standings_groupby.html' %}
+      </div>
     {% endif %}
+    <script>$.endlessPaginate({paginateOnScroll: true});</script>
   {% else %}
   <div class="alert alert-info">Empty data</div>
   {% endif %}
 </div>
 
 <script>
-  $(() => $(".table-float-head").floatThead({
-    zIndex: 999,
-    responsiveContainer: function($table){
-        return $table.closest(".table-responsive");
-    }
-  }))
+</script>
+
+<script>
+  $(function() {
+    var el = $('#table-inner-scroll')
+    var default_height = el.height()
+    $(window).resize(function() {
+      if (el.length) {
+        var val = $(window).height() - el.offset().top - 50
+        if (val < default_height) {
+          el.height(val)
+        } else {
+          el.height(default_height)
+        }
+      }
+    })
+    $(window).trigger('resize')
+  })
 </script>
 
 <div class="modal" id="viewSolutionModal">
@@ -145,6 +165,9 @@
 <script>
 function viewSolution(a) {
   var href = $(a).attr('href')
+  $('#viewSolutionModal .modal-content').html('<div class="modal-body"><p><i class="fa fa-spin fa-spinner"></i> Loading...</p></div>')
+  $('#viewSolutionModal').modal('show')
+
   $.ajax({
     url: href,
     type: 'get',
@@ -152,10 +175,10 @@ function viewSolution(a) {
       $('#viewSolutionModal .modal-content').html(response)
       $('#viewSolutionModal .modal-content .modal-footer').prepend('<a href="' + href + '" target="_blank" class="btn btn-default btn-sm"><i class="fas fa-external-link-alt"></i></a>')
       document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
-      $('#viewSolutionModal').modal('show')
     },
     error: function(response) {
       bootbox.alert({message: response.statusText, size: 'small'})
+      $('#viewSolutionModal').modal('hide')
     },
   })
   return false;

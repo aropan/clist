@@ -5,6 +5,7 @@ from copy import deepcopy
 
 import tqdm
 from django.db import models, transaction
+from django.db.models import F
 from django.db.models.signals import pre_save, m2m_changed, post_save, post_delete
 from django.dispatch import receiver
 from django.urls import reverse
@@ -26,6 +27,7 @@ class Account(BaseModel):
     country = CountryField(null=True, blank=True, db_index=True)
     url = models.CharField(max_length=4096, null=True, blank=True)
     n_contests = models.IntegerField(default=0, db_index=True)
+    n_writers = models.IntegerField(default=0, db_index=True)
     last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
@@ -100,6 +102,25 @@ def update_account_url(signal, instance, **kwargs):
             url = reverse('coder:profile', args=[coder.username]) + f'?search=resource:{instance.resource.host}'
         instance.url = url
         instance.save()
+
+
+@receiver(m2m_changed, sender=Account.writer_set.through)
+def update_account_writer(signal, instance, action, reverse, pk_set, **kwargs):
+    when, action = action.split('_', 1)
+    if when != 'post':
+        return
+    if action == 'add':
+        delta = 1
+    elif action == 'remove':
+        delta = -1
+    else:
+        return
+
+    if reverse:
+        instance.n_writers += delta
+        instance.save()
+    else:
+        Account.objects.filter(pk__in=pk_set).update(n_writers=F('n_writers') + delta)
 
 
 class Rating(BaseModel):
@@ -446,7 +467,7 @@ class Stage(BaseModel):
                     for k in problems:
                         value += float(row['problems'].get(k, {}).get(inp, 0))
                     for k, v in row['problems'].items():
-                        if k not in problems:
+                        if k not in problems and v.get('status') != 'W':
                             v['status_tag'] = 'strike'
                     row[out] = round(value, 2)
 

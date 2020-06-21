@@ -325,7 +325,7 @@ if DEBUG:
         'SHOW_TOOLBAR_CALLBACK': lambda request: (
             request.user.is_authenticated
             and request.user.has_perm('view_django_debug_toolbar')
-            and ('debug_toolbar' in request.GET or request.path.startswith('/admin/'))
+            and ('debug_toolbar' in request.GET or request.path.startswith('/admin/') or '/__debug__' in request.path)
         ),
     }
 

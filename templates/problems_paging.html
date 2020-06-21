@@ -1,0 +1,24 @@
+{% load humanize %}
+{% load el_pagination_tags %}
+
+{% lazy_paginate 50,200 problems %}
+
+{% for problem in problems %}
+<tr>
+    <td>
+        <a href="{% if problem.url %}{{ problem.url }}{% else %}{{ problem.contest.url }}{% endif %}">
+            {% if problem.short and problem.short != problem.name %}{{ problem.short }}. {% endif %}{{ problem.name }}
+        </a>
+        <div class="contest">
+            <a href="{{ problem.contest.url }}"><small class="text-muted">{{ problem.contest.title }}</small></a>
+        </div>
+        <div class="resource">
+            <a href="{{ problem.contest.resource|resource_href:problem.contest.host }}"><small class="text-muted">{{ problem.contest.host }}</small></a>
+        </div>
+    </tr>
+</tr>
+{% endfor %}
+
+{% show_more_table %}
+
+<script>$(toggle_tooltip);</script>

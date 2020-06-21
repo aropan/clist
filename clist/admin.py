@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from pyclist.admin import BaseModelAdmin, admin_register
-from clist.models import Resource, Contest, TimingContest, Banner, Problem
+from clist.models import Resource, Contest, TimingContest, Banner, Problem, ProblemTag
 from ranking.models import Rating
 from ranking.management.commands.parse_statistic import Command as parse_stat
 
@@ -117,8 +117,15 @@ class ResourceAdmin(BaseModelAdmin):
 
 @admin_register(Problem)
 class ProblemAdmin(BaseModelAdmin):
-    list_display = ['contest', 'index', 'key', 'short', 'name', 'url', 'n_tries', 'n_accepted', 'divisions']
-    list_filter = ['contest__resource__host']
+    list_display = ['contest', 'index', 'key', 'short', 'name', 'n_tries', 'n_accepted', 'divisions', 'url', 'visible']
+    list_filter = ['visible', 'contest__resource__host']
+    search_fields = ['contest__id']
+
+
+@admin_register(ProblemTag)
+class ProblemTagAdmin(BaseModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
 
 
 @admin_register(TimingContest)
