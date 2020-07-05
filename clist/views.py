@@ -543,9 +543,9 @@ def problems(request, template='problems.html', extra_context=None):
     problems = problems.filter(contest__end_time__lt=timezone.now(), visible=True)
 
     search = request.GET.get('search')
-    if search is not None:
+    if search:
         cond = get_iregex_filter(search,
-                                 'name', 'contest__title', 'contest__host', 'tags__name',
+                                 'name', 'contest__title', 'contest__host',
                                  mapping={
                                      'name': {'fields': ['name__iregex']},
                                      'contest': {'fields': ['contest__title__iregex']},

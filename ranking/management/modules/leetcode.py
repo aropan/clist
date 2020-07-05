@@ -56,6 +56,30 @@ class Statistic(BaseModule):
             for i, p in enumerate(data['questions'], start=1)
         ))
 
+        def update_problem_info(info):
+            slug = info['url'].strip('/').rsplit('/', 1)[-1]
+            params = {
+                'operationName': 'questionData',
+                'variables': {'titleSlug': slug},
+                'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { username } topicTags { name } hints } }', # noqa
+            }
+            page = REQ.get(
+                'https://leetcode.com/graphql',
+                content_type='application/json',
+                post=json.dumps(params).encode('utf-8'),
+            )
+            question = json.loads(page)['data']['question']
+            info['tags'] = [t['name'].lower() for t in question['topicTags']]
+            info['writers'] = [c['username'] for c in question['contributors']]
+            if not info['writers']:
+                info['writers'] = ['leetcode']
+            info['difficulty'] = question['difficulty'].lower()
+            info['hints'] = question['hints']
+
+        with PoolExecutor(max_workers=8) as executor:
+            for _ in executor.map(update_problem_info, problems_info.values()):
+                pass
+
         def fetch_page(page):
             url = api_ranking_url_format.format(page + 1)
             content = REQ.get(url)
