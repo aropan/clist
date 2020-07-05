@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from copy import deepcopy
 from datetime import timedelta
 from abc import ABCMeta, abstractmethod
 import logging
@@ -65,13 +66,15 @@ class BaseModule(object, metaclass=ABCMeta):
 
     @staticmethod
     def merge_dict(src, dst):
-        for key, value in src.items():
-            if isinstance(value, dict):
-                node = dst.setdefault(key, {})
-                BaseModule.merge_dict(value, node)
-            else:
-                dst[key] = value
-        return dst
+        if not dst:
+            return src
+        if isinstance(src, dict):
+            ret = deepcopy(dst)
+            ret.update({key: BaseModule.merge_dict(value, dst.get(key)) for key, value in src.items()})
+            return ret
+        if isinstance(src, (tuple, list)) and len(src) == len(dst):
+            return [BaseModule.merge_dict(a, b) for a, b in zip(src, dst)]
+        return src
 
     def get_season(self):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)

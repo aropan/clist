@@ -43,7 +43,7 @@
     {% endif %}
   >
     {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
-    {% if with_row_num %}({{ forloop.counter0|add:pages.current_start_index }}){% endif %}
+    {% if with_row_num and not statistic.floating %}({{ forloop.counter0|add:pages.current_start_index }}){% endif %}
   </{{ tag }}>
   {% endwith %}
   {% if data_1st_u %}
@@ -139,7 +139,7 @@
           {% if addition.hack.unsuccessful %}<div class="inline rej">-{{ addition.hack.unsuccessful }}</div>{% endif %}
           </small>
         {% else %}
-          {% if field in fields_to_select and value not in fields_to_select|get_item:field %}
+          {% if field in fields_to_select and value not in fields_to_select|get_item:field and not fields_to_select|get_item:field|get_item:'nourl' %}
             <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
           {% elif value|get_type == 'bool' %}
             <span class="text-muted">

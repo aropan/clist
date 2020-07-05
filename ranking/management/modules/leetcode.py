@@ -4,7 +4,7 @@ import os
 import re
 import json
 import html
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
@@ -63,6 +63,7 @@ class Statistic(BaseModule):
 
         result = {}
         stop = False
+        timing_statistic_delta = None
         if users is None or users:
             if users:
                 users = list(users)
@@ -102,7 +103,7 @@ class Statistic(BaseModule):
                         if country:
                             r['country'] = country
 
-                        problems_stats = statistics.get(handle, {}).get('problems', {})
+                        problems_stats = (statistics or {}).get(handle, {}).get('problems', {})
 
                         solved = 0
                         problems = r.setdefault('problems', {})
@@ -139,17 +140,22 @@ class Statistic(BaseModule):
                                 break
 
                 if statistics is not None and solutions_for_get:
-                    for s, d in tqdm.tqdm(executor.map(Statistic.fetch_submission, solutions_for_get),
-                                          total=len(solutions_for_get),
-                                          desc='getting solutions'):
-                        short = problems_info[str(s['question_id'])]['short']
-                        result[s['handle']]['problems'][short].update({'language': d['lang']})
+                    if statistics:
+                        for s, d in tqdm.tqdm(executor.map(Statistic.fetch_submission, solutions_for_get),
+                                              total=len(solutions_for_get),
+                                              desc='getting solutions'):
+                            short = problems_info[str(s['question_id'])]['short']
+                            result[s['handle']]['problems'][short].update({'language': d['lang']})
+                    elif result:
+                        timing_statistic_delta = timedelta(minutes=15)
 
         standings = {
             'result': result,
             'url': standings_url,
             'problems': list(problems_info.values()),
         }
+        if timing_statistic_delta:
+            standings['timing_statistic_delta'] = timing_statistic_delta
         return standings
 
     @staticmethod
@@ -165,33 +171,34 @@ class Statistic(BaseModule):
 
         @RateLimiter(max_calls=1, period=2)
         def fetch_profle_page(account):
-            if is_chine(account):
-                ret = {}
-                page = REQ.get(
-                    'https://leetcode.com/graphql',
-                    post=b'{"variables":{},"query":"{allContests{titleSlug}}"}',
-                    content_type='application/json',
-                )
-                ret['contests'] = json.loads(page)['data']
+            page = False
+            try:
+                if is_chine(account):
+                    ret = {}
+                    page = REQ.get(
+                        'https://leetcode.com/graphql',
+                        post=b'{"variables":{},"query":"{allContests{titleSlug}}"}',
+                        content_type='application/json',
+                    )
+                    ret['contests'] = json.loads(page)['data']
 
-                page = REQ.get(
-                    'https://leetcode-cn.com/graphql',
-                    post=b'''
-                    {"operationName":"userPublicProfile","variables":{"userSlug":"''' + account.key.encode() + b'''"},"query":"query userPublicProfile($userSlug: String!) { userProfilePublicProfile(userSlug: $userSlug) { username profile { userSlug realName contestCount ranking { currentLocalRanking currentGlobalRanking currentRating ratingProgress totalLocalUsers totalGlobalUsers } } }}"}''',  # noqa
-                    content_type='application/json',
-                )
-                ret['profile'] = json.loads(page)['data']
-                page = ret
-            else:
-                url = resource.profile_url.format(**account.dict_with_info())
-                try:
+                    page = REQ.get(
+                        'https://leetcode-cn.com/graphql',
+                        post=b'''
+                        {"operationName":"userPublicProfile","variables":{"userSlug":"''' + account.key.encode() + b'''"},"query":"query userPublicProfile($userSlug: String!) { userProfilePublicProfile(userSlug: $userSlug) { username profile { userSlug realName contestCount ranking { currentLocalRanking currentGlobalRanking currentRating ratingProgress totalLocalUsers totalGlobalUsers } } }}"}''',  # noqa
+                        content_type='application/json',
+                    )
+                    ret['profile'] = json.loads(page)['data']
+                    page = ret
+                else:
+                    url = resource.profile_url.format(**account.dict_with_info())
                     page = REQ.get(url)
-                except FailOnGetResponse as e:
-                    arg = e.args[0]
-                    if not hasattr(arg, 'code') or arg.code == 404:
-                        page = None
-                    else:
-                        raise e
+            except FailOnGetResponse as e:
+                arg = e.args[0]
+                if not hasattr(arg, 'code') or arg.code == 404:
+                    page = None
+                else:
+                    page = False
             return account, page
 
         with PoolExecutor(max_workers=2) as executor:
@@ -199,8 +206,10 @@ class Statistic(BaseModule):
                 if pbar:
                     pbar.update()
 
-                if page is None:
-                    yield {'info': None}
+                if not page:
+                    if page is None:
+                        yield {'info': None}
+                    yield {'skip': True}
                     continue
 
                 info = {}
@@ -240,10 +249,12 @@ class Statistic(BaseModule):
                     if match:
                         data = html.unescape(match.group('data').replace("'", '"'))
                         data = json.loads(f'[{data}]')
-                        ratings, titles = data[11], data[13]
-                        if ratings:
-                            ratings = [v for v, _ in ratings]
-                            contest_addition_update_by = 'title'
+                        filtered_data = [d for d in reversed(data) if d and isinstance(d, list)]
+                        if len(filtered_data) >= 2:
+                            titles, ratings, *_ = filtered_data
+                            if ratings:
+                                ratings = [v for v, _ in ratings]
+                                contest_addition_update_by = 'title'
 
                 contest_addition_update = {}
                 prev_rating = None
@@ -261,8 +272,11 @@ class Statistic(BaseModule):
 
                 ret = {
                     'info': info,
-                    'contest_addition_update': contest_addition_update,
-                    'contest_addition_update_by': contest_addition_update_by,
+                    'contest_addition_update_params': {
+                        'update': contest_addition_update,
+                        'by': contest_addition_update_by,
+                        'clear_rating_change': True,
+                    },
                 }
                 yield ret
 

@@ -59,9 +59,9 @@ class Statistic(BaseModule):
                 #     headers = {}
                 # return REQ.get(url, headers=headers)
             except FailOnGetResponse as e:
-                if attempt == 7 or getattr(e.args[0], 'code', None) != 500:
+                if attempt == 15 or getattr(e.args[0], 'code', None) != 500:
                     raise ExceptionParseStandings(e.args[0])
-                sleep(2 ** attempt)
+                sleep(2 * attempt)
 
     def get_standings(self, users=None, statistics=None, fixed_rank=None):
         standings_url = urllib.parse.urljoin(self.url, 'leaderboard/')

@@ -119,7 +119,7 @@ class ResourceAdmin(BaseModelAdmin):
 class ProblemAdmin(BaseModelAdmin):
     list_display = ['contest', 'index', 'key', 'short', 'name', 'n_tries', 'n_accepted', 'divisions', 'url', 'visible']
     list_filter = ['visible', 'contest__resource__host']
-    search_fields = ['contest__id']
+    search_fields = ['contest__id', 'name']
 
 
 @admin_register(ProblemTag)

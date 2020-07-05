@@ -27,7 +27,7 @@ class Statistic(BaseModule):
         result = {}
         problems_info = OrderedDict()
 
-        page = REQ.get(self.standings_url)
+        page = REQ.get(self.standings_url, detect_charsets=True)
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
         html_table = re.search(regex, page, re.DOTALL).group(0)
         table = parsed_table.ParsedTable(html_table)

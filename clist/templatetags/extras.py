@@ -492,3 +492,8 @@ def then(value, arg):
 @register.filter
 def is_equal(value, arg):
     return value == arg
+
+
+@register.filter
+def concat(a, b):
+    return str(a) + str(b)

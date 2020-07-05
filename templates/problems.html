@@ -10,16 +10,22 @@
 
 <div class="col-lg-8 col-lg-offset-2">
   <form method="get" action="">
-  <div class="input-group">
-    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to name:{PROBLEM}, contest:{NAME} or resource:{HOST}" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+  <div class="form-group input-group">
+    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to problem name, contest title, resource host or problem tag" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+
+    <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use name:{PROBLEM}, contest:{NAME}, resource:{HOST} or tag:{TAG}.<br>Use && and || for difficult conditions.">
+      <i class="fas fa-info"></i>
+    </span>
+
     <span class="input-group-btn">
       <button class="btn btn-default" type="submit">
         <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
         Search
       </button>
+
+    </span>
   </div>
   </form>
-  <br/>
 
   <script>$.endlessPaginate({paginateOnScroll: true});</script>
   <div id="problems" class="panel panel-default table-responsive">
@@ -30,6 +36,9 @@
             Name
             <div><small class="text-muted">Contest</small></div>
             <div><small class="text-muted">Resource</small></div>
+          </th>
+          <th>
+            Tags
           </th>
         </tr>
       </thead>

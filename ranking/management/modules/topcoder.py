@@ -193,7 +193,10 @@ class Statistic(BaseModule):
                                 for key, value in matches:
                                     key = key.strip().rstrip(':').lower()
                                     if key == 'categories':
-                                        p['tags'] = [t.strip().lower() for t in value.split(',')]
+                                        tags = [t.strip().lower() for t in value.split(',')]
+                                        tags = [t for t in tags if t]
+                                        if tags:
+                                            p['tags'] = tags
                                     elif key.startswith('writer') or key.startswith('tester'):
                                         key = key.rstrip('s') + 's'
                                         p[key] = re.findall('(?<=>)[^<>,]+(?=<)', value)

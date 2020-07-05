@@ -511,16 +511,20 @@ def update_problems(contest, problems=None):
                 defaults=defaults,
             )
 
+            old_tags = set(problem.tags.all())
             if 'tags' in problem_info:
-                old_tags = set(problem.tags.all())
+                if '' in problem_info['tags']:
+                    problem_info['tags'].remove('')
+                    contest.save()
+
                 for name in problem_info['tags']:
                     tag, _ = ProblemTag.objects.get_or_create(name=name)
                     if tag in old_tags:
-                        old_tags.pop(tag)
+                        old_tags.discard(tag)
                     else:
                         problem.tags.add(tag)
-                for tag in old_tags:
-                    tag.delete()
+            for tag in old_tags:
+                problem.tags.remove(tag)
 
             added_problems[key] = problem
 
@@ -534,18 +538,21 @@ def update_problems(contest, problems=None):
 def problems(request, template='problems.html', extra_context=None):
     problems = Problem.objects.all()
     problems = problems.select_related('contest', 'contest__resource')
+    problems = problems.prefetch_related('tags')
     problems = problems.order_by('-contest__end_time', 'contest_id', 'index')
     problems = problems.filter(contest__end_time__lt=timezone.now(), visible=True)
 
     search = request.GET.get('search')
     if search is not None:
         cond = get_iregex_filter(search,
-                                 'name', 'contest__title', 'contest__host',
+                                 'name', 'contest__title', 'contest__host', 'tags__name',
                                  mapping={
                                      'name': {'fields': ['name__iregex']},
                                      'contest': {'fields': ['contest__title__iregex']},
                                      'resource': {'fields': ['contest__host__iregex']},
+                                     'tag': {'fields': ['tags__name__iregex']},
                                      'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
+                                     'rid': {'fields': ['contest__resource_id'], 'func': lambda v: int(v)},
                                      'pid': {'fields': ['id'], 'func': lambda v: int(v)},
                                  })
         problems = problems.filter(cond)

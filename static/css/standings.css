@@ -167,9 +167,12 @@ a.solution:hover span {
 }
 
 #table-inner-scroll .my-stat th {
-  font-weight: normal;
   top: -2px;
   bottom: 0;
+}
+
+.my-stat th {
+  font-weight: normal;
 }
 
 #table-inner-scroll {

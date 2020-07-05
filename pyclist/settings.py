@@ -98,6 +98,7 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'pyclist.middleware.RequestLoggerMiddleware',
 )
 
 if DEBUG:

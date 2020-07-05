@@ -62,42 +62,31 @@ def get_profile_context(request, statistics, writers):
     search = request.GET.get('search')
     filters = {}
     if search:
-        filt = Q()
-        for search in search.split('||'):
-            cond = Q()
-            for value in search.split('&&'):
-                value = value.strip()
-                if value.startswith('problem:'):
-                    field, value = value.split(':', 1)
-                    search_re = verify_regex(value)
-                    cond &= Q(addition__problems__iregex=f'"[^"]*{search_re}[^"]*"')
-                elif value.startswith('writer:'):
-                    field, value = value.split(':', 1)
-                    cond &= Q(contest__info__writers__contains=value)
-                elif value.startswith('contest:'):
-                    field, value = value.split(':', 1)
-                    cond &= Q(contest__id=value)
-                elif value.startswith('account:'):
-                    field, value = value.split(':', 1)
-                    cond &= Q(account__key=value)
-                elif value.startswith('resource:'):
-                    field, value = value.split(':', 1)
-                    cond &= Q(contest__resource__host=value)
-                    history_resources = history_resources.filter(contest__resource__host=value)
-                elif value.startswith('medal:'):
-                    field, value = value.split(':', 1)
-                    if not value or value == 'any':
-                        cond &= Q(addition__medal__isnull=False)
-                    else:
-                        cond &= Q(addition__medal=value)
-                else:
-                    field = 'regex'
-                    cond &= get_iregex_filter(value, 'contest__resource__host', 'contest__title')
-                filters.setdefault(field, []).append(value)
-            filt |= cond
+        filt = get_iregex_filter(
+            search,
+            'contest__resource__host', 'contest__title',
+            mapping={
+                'writer': {'fields': ['contest__info__writers__contains']},
+                'contest': {'fields': ['contest__title__iregex']},
+                'resource': {'fields': ['contest__resource__host']},
+                'account': {'fields': ['account__key']},
+                'medal': {
+                    'fields': ['addition__medal'],
+                    'func': lambda v: False if not v or v == 'any' else v,
+                    'suff': lambda v: '__isnull' if v is False else '',
+                },
+                'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
+                'rid': {'fields': ['contest__resource_id'], 'func': lambda v: int(v)},
+            },
+            values=filters,
+            logger=request.logger,
+        )
         statistics = statistics.filter(filt)
-    search_resource = filters.pop('resource', [])
-    search_resource = search_resource[0] if len(search_resource) == 1 else None
+
+    filter_resources = filters.pop('resource', [])
+    for val in filter_resources:
+        history_resources = history_resources.filter(contest__resource__host=val)
+    search_resource = filter_resources[0] if len(filter_resources) == 1 else None
 
     if search_resource:
         writers = writers.filter(resource__host=search_resource)
@@ -651,18 +640,21 @@ def search(request, **kwargs):
 
         if field == 'languages':
             qs = contest.info.get('languages', [])
-            qs = [['any']] + [[q] for q in qs if not text or text.lower() in q.lower()]
+            qs = ['any'] + [q for q in qs if not text or text.lower() in q.lower()]
+            total = len(qs)
+        elif field == 'rating':
+            qs = ['rated', 'unrated']
             total = len(qs)
         else:
             field = f'addition__{field}'
             qs = contest.statistics_set
             if text:
                 qs = qs.filter(**{f'{field}__icontains': text})
-            qs = qs.distinct(field).values_list(field)
+            qs = qs.distinct(field).values_list(field, flat=True)
             total = qs.count()
 
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': f[0], 'text': f[0]} for f in qs]
+        ret = [{'id': f, 'text': f} for f in qs]
     else:
         return HttpResponseBadRequest('invalid query')
 

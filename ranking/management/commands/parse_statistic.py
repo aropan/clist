@@ -3,7 +3,6 @@
 
 import re
 import operator
-from copy import deepcopy
 from html import unescape
 from collections import OrderedDict
 from random import shuffle
@@ -147,7 +146,7 @@ class Command(BaseCommand):
                 plugin = resource.plugin.Statistic(contest=contest)
 
                 with REQ:
-                    statistics_by_key = {}
+                    statistics_by_key = {} if with_stats else None
                     statistics_ids = set()
                     if not no_update_results and (users or users is None):
                         statistics = Statistics.objects.filter(contest=contest).select_related('account')
@@ -220,7 +219,7 @@ class Command(BaseCommand):
                             account, created = Account.objects.get_or_create(resource=resource, key=member)
 
                             if not contest.info.get('_no_update_account_time'):
-                                stats = statistics_by_key.get(member, {})
+                                stats = (statistics_by_key or {}).get(member, {})
                                 no_rating = with_stats and 'new_rating' not in stats and 'rating_change' not in stats
                                 updated = now + timedelta(days=1)
                                 wait_rating = contest.resource.info.get('statistics', {}).get('wait_rating')
@@ -531,15 +530,10 @@ class Command(BaseCommand):
                             progress_bar.set_postfix(n_fields=len(fields))
                         else:
                             problems = standings.pop('problems', None)
-                            contest_problems = deepcopy(contest.info['problems'])
                             if problems is not None:
-                                if 'division' not in problems:
-                                    problems = [
-                                        plugin.merge_dict(a, b)
-                                        for a, b in zip(problems, contest_problems)
-                                    ]
-                                else:
-                                    problems = plugin.merge_dict(problems, contest_problems)
+                                problems = plugin.merge_dict(problems, contest.info.get('problems'))
+                                if not users:
+                                    contest.info['problems'] = {}
                                 update_problems(contest, problems=problems)
 
                     action = standings.get('action')

@@ -7,3 +7,8 @@
 #problems table thead th {
   background-color: #eee;
 }
+
+#problems table td,
+#problems table th {
+  vertical-align: top !important;
+}

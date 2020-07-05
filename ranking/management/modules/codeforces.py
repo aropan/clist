@@ -68,8 +68,12 @@ def _query(
         page = REQ.get(url, md5_file_cache=md5_file_cache)
         ret = json.loads(page)
     except FailOnGetResponse as e:
-        ret = json.load(e.args[0].fp)
-        ret['code'] = getattr(e.args[0], 'code', None)
+        err = e.args[0]
+        if hasattr(err, 'fp'):
+            ret = json.load(err.fp)
+        else:
+            ret = {'status': str(e)}
+        ret['code'] = getattr(err, 'code', None)
     times[-1] = time()
     return ret
 
@@ -172,7 +176,7 @@ class Statistic(BaseModule):
                         r['room'] = str(party['room'])
 
                     r.setdefault('participant_type', []).append(party['participantType'])
-                    r['_no_update_n_contests'] = all(pt not in r['participant_type'] for pt in r['participant_type'])
+                    r['_no_update_n_contests'] = all(pt not in self.PARTICIPANT_TYPES for pt in r['participant_type'])
 
                     if is_ghost_team:
                         r['name'] = member['name']
@@ -328,6 +332,11 @@ class Statistic(BaseModule):
                     p = p.setdefault('upsolving', {})
                 if 'submission_id' not in p:
                     p.update(info)
+
+        result = {
+            k: v for k, v in result.items()
+            if v.get('hack') or v.get('problems') or 'new_rating' in v or not v.get('_no_update_n_contests')
+        }
 
         def to_score(x):
             return (

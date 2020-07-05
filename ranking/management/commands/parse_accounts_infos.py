@@ -82,6 +82,8 @@ class Command(BaseCommand):
                         )
 
                         for account, data in zip(accounts, infos):
+                            if data.get('skip'):
+                                continue
                             info = data['info']
                             if info is None:
                                 _, info = account.delete()
@@ -89,14 +91,16 @@ class Command(BaseCommand):
                                 pbar.set_postfix(warning=f'Remove user {account} = {info}')
                                 continue
 
-                            contest_addition_update = data.pop('contest_addition_update', {})
-                            contest_addition_update_by = data.pop('contest_addition_update_by', None)
+                            params = data.pop('contest_addition_update_params', {})
+                            contest_addition_update = data.pop('contest_addition_update', params.pop('update', {}))
+                            contest_addition_update_by = data.pop('contest_addition_update_by', params.pop('by', None))
                             if contest_addition_update:
                                 account_update_contest_additions(
                                     account,
                                     contest_addition_update,
                                     timedelta_limit=timedelta(days=31) if account.info and not has_param else None,
                                     by=contest_addition_update_by,
+                                    **params,
                                 )
 
                             if 'rename' in data:

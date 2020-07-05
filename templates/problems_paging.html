@@ -10,12 +10,17 @@
             {% if problem.short and problem.short != problem.name %}{{ problem.short }}. {% endif %}{{ problem.name }}
         </a>
         <div class="contest">
-            <a href="{{ problem.contest.url }}"><small class="text-muted">{{ problem.contest.title }}</small></a>
+            <a href="{{ request.path }}?search={{ 'cid:'|concat:problem.contest.pk }}"><small class="text-muted">{{ problem.contest.title }}</small></a>
         </div>
         <div class="resource">
-            <a href="{{ problem.contest.resource|resource_href:problem.contest.host }}"><small class="text-muted">{{ problem.contest.host }}</small></a>
+            <a href="{{ request.path }}?search={{ 'rid:'|concat:problem.contest.resource_id }}"><small class="text-muted">{{ problem.contest.host }}</small></a>
         </div>
-    </tr>
+    </td>
+    <td>
+        {% for tag in problem.tags.all %}
+            <a href="{{ request.path }}?search={{ 'tag:'|concat:tag.name }}" class="badge progress-bar-info">{{ tag.name }}</a>
+        {% endfor %}
+    </td>
 </tr>
 {% endfor %}
 

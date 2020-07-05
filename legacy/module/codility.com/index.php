@@ -24,7 +24,7 @@
         $title = trim($match['title']);
 
         $now = time();
-        $end_time = max($now + $timedelta_week, $start_time + 3 * $timedelta_week);
+        $end_time = min($now + $timedelta_week, $start_time + 8 * $timedelta_week);
         if (!$start_challenge) {
             $end_time = min($end_time, $now);
         }

@@ -449,8 +449,8 @@ $(function(){
 <form method="get" action="">
 <div class="input-group">
   <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-  <span class="input-group-addon icon" data-toggle="tooltip" data-html="true" title="Also you can use contest:{ID}, problem:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
-    <i class="fas fa-question"></i>
+  <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
+    <i class="fas fa-info"></i>
   </span>
   <span class="input-group-btn">
     <button class="btn btn-default" type="submit">

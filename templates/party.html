@@ -114,7 +114,7 @@
                                         <td>{{ s.place }}</td>
                                         <td>
                                             <div title="{% if s.stat.account.key %}{{ s.stat.account.key }}{% else %}{{ s.coder.username }}{% endif %}">
-                                                <a href="{% url 'coder:profile' s.coder.username %}{% if forloop.parentloop.counter0 %}?search=contest:{{ r.contest.id }}{% endif %}">
+                                                <a href="{% url 'coder:profile' s.coder.username %}{% if forloop.parentloop.counter0 %}?search=cid:{{ r.contest.id }}{% endif %}">
                                                 {% if s.coder.user.first_name and s.coder.user.last_name %}
                                                     {{ s.coder.user.first_name }} {{ s.coder.user.last_name }}
                                                 {% else %}

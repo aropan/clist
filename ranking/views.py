@@ -5,7 +5,7 @@ from collections import OrderedDict
 from django.conf import settings
 from django.db import models, connection
 from django.contrib.auth.decorators import login_required
-from django.db.models import Case, When, F, Q, Exists, OuterRef, Count, Avg
+from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg
 from django.db.models.functions import Cast
 from django.db.models.expressions import RawSQL
 from django.http import HttpResponseNotFound, JsonResponse
@@ -27,7 +27,7 @@ from ranking.models import Statistics, Module
 from true_coders.models import Party
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
-from utils.regex import get_iregex_filter, verify_regex
+from utils.regex import get_iregex_filter
 
 
 @page_template('standings_list_paging.html')
@@ -61,7 +61,8 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                                                          'medal': {'fields': ['info__standings__medals'],
                                                                    'suff': '__isnull',
                                                                    'func': lambda v: False},
-                                                     }))
+                                                     },
+                                                     logger=request.logger))
 
     context = {
         'contests': contests,
@@ -217,11 +218,26 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             fields[k] = v
 
     # field to select
+    fields_to_select_defaults = {
+        'rating': {
+            'options': ['rated', 'unrated'],
+            'noajax': True,
+            'nomultiply': True,
+            'nourl': True,
+        },
+    }
     fields_to_select = {}
+    map_fields_to_select = {'rating_change': 'rating'}
     for f in contest_fields:
         f = f.strip('_')
-        if f.lower() in ['institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region']:
-            fields_to_select[f] = request.GET.getlist(f)
+        if f.lower() in [
+            'institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region',
+            'rating_change'
+        ]:
+            f = map_fields_to_select.get(f, f)
+            field_to_select = fields_to_select.setdefault(f, {})
+            field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
+            field_to_select.update(fields_to_select_defaults.get(f, {}))
 
     if with_detail:
         for k in contest_fields:
@@ -353,8 +369,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                                            Q(account__coders__in=party.admins.all()) |
                                            Q(account__coders=party.author))
         else:
-            search_re = verify_regex(search)
-            statistics = statistics.filter(Q(account__key__iregex=search_re) | Q(addition__name__iregex=search_re))
+            cond = get_iregex_filter(search, 'account__key', 'addition__name', logger=request.logger)
+            statistics = statistics.filter(cond)
 
     # filter by country
     countries = request.GET.getlist('country')
@@ -374,7 +390,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         params['countries'] = countries
 
     # filter by field to select
-    for field, values in fields_to_select.items():
+    for field, field_to_select in fields_to_select.items():
+        values = field_to_select.get('values')
         if not values:
             continue
         with_row_num = True
@@ -385,6 +402,11 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                     filt = Q(**{f'addition___languages__isnull': False})
                     break
                 filt |= Q(**{f'addition___languages__contains': [lang]})
+        elif field == 'rating':
+            for q in values:
+                if q not in field_to_select['options']:
+                    continue
+                filt |= Q(addition__rating_change__isnull=q == 'unrated')
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})
@@ -433,6 +455,14 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             language_query, language_params = merge_statistics.query.sql_with_params()
             field = 'solving'
             statistics = statistics.annotate(groupby=F(field))
+        elif groupby == 'rating':
+            statistics = statistics.annotate(
+                groupby=Case(
+                    When(addition__rating_change__isnull=False, then=Value('Rated')),
+                    default=Value('Unrated'),
+                    output_field=models.TextField(),
+                )
+            )
         elif groupby == 'country':
             if '_countries' in contest_fields:
                 statistics = statistics.annotate(
@@ -502,7 +532,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         num_rows_groupby = None
         map_colors_groupby = None
 
-    my_statistics = iter(())
+    my_statistics = []
     if groupby == 'none' and coder:
         statistics = statistics.annotate(my_stat=SubqueryExists('account__coders', filter=Q(coder=coder)))
         my_statistics = statistics.filter(account__coders=coder).extra(select={'floating': True})

@@ -4,6 +4,7 @@
     $authors = array();
     $urls = array();
     $url = $URL;
+    $url = url_merge($URL, '?complete=true');
     for (; $url && !in_array($url, $urls);) {
         $urls[] = $url;
         $page = curlexec($url);

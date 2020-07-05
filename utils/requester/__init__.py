@@ -314,7 +314,7 @@ class requester():
         md5_file_cache=None,
         time_out=None,
         headers=None,
-        detect_charsets=True,
+        detect_charsets=False,
         content_type=None,
         files=None,
         return_url=False,
@@ -438,27 +438,29 @@ class requester():
                 else:
                     self.proxer.fail()
 
+        matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
+        if matches:
+            charsets = [c.lower() for c in matches]
+            if len(charsets) > 1 and len(set(charsets)) > 1:
+                self.print(f'[WARNING] set multi charset values: {charsets}')
+            charset = charsets[-1].lower()
+        else:
+            charset = 'utf-8'
+
         if detect_charsets:
-            matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
-            if matches:
-                charsets = [c.lower() for c in matches]
-                if len(charsets) > 1 and len(set(charsets)) > 1:
-                    self.print(f'[WARNING] set multi charset values: {charsets}')
-                charset = charsets[-1].lower()
-            else:
-                charset = 'utf-8'
             try:
                 charset_detect = chardet.detect(page)
                 if charset_detect and charset_detect['confidence'] > 0.98:
                     charset = charset_detect['encoding']
             except Exception as e:
                 self.print('exception on charset detect:', str(e))
-            if charset in ('utf-8', 'utf8'):
-                page = page.decode('utf-8', 'replace')
-            elif charset in ('windows-1251', 'cp1251'):
-                page = page.decode('cp1251', 'replace')
-            else:
-                page = page.decode(charset, 'replace')
+
+        if charset in ('utf-8', 'utf8'):
+            page = page.decode('utf-8', 'replace')
+        elif charset in ('windows-1251', 'cp1251'):
+            page = page.decode('cp1251', 'replace')
+        else:
+            page = page.decode(charset, 'replace')
 
         self.last_page = page
         if is_ref_url:
