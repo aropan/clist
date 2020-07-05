@@ -279,7 +279,7 @@ class Statistic(BaseModule):
                 if handle in results:
                     r.update(results.pop(handle))
 
-                if old_rating is not None:
+                if old_rating is not None and (old_rating or 'NewRating' in r):
                     r['OldRating'] = old_rating
 
                 if r.get('IsRated'):
