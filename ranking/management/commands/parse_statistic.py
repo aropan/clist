@@ -233,8 +233,10 @@ class Command(BaseCommand):
                                     account.save()
                                 elif no_rating and wait_rating:
                                     updated = now + timedelta(hours=1)
+                                    title_re = wait_rating.get('title_re')
                                     if (
                                         contest.end_time + timedelta(days=wait_rating['days']) > now
+                                        and (not title_re or re.search(title_re, contest.title))
                                         and updated < account.updated
                                     ):
                                         if user_info is None:

@@ -116,6 +116,8 @@ class Statistic(BaseModule):
                             p['time'] = f'{penalty // 60:02d}:{penalty % 60:02d}'
                         else:
                             p['result'] = f"-{attempt}"
+                        if pstate == 2:
+                            p['first_ac'] = True
                 if not problems:
                     result.pop(handle)
                     continue

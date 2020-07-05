@@ -83,7 +83,7 @@ class Statistic(BaseModule):
 
         event_id = match.group('id')
 
-        results = {}
+        results = OrderedDict()
 
         def fetch_page(page_index):
             nonlocal results
