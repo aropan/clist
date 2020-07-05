@@ -13,7 +13,10 @@
             <a href="{{ request.path }}?search={{ 'cid:'|concat:problem.contest.pk }}"><small class="text-muted">{{ problem.contest.title }}</small></a>
         </div>
     </td>
-    <td>
+    <td class="problem-date">
+        <div title="{{ problem.contest.start_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.contest.start_time|timezone:timezone|naturalday }}</div>
+    </td>
+    <td class="problem-resource">
         <a href="{{ request.path }}?search={{ 'rid:'|concat:problem.contest.resource_id }}"><small class="text-muted">{{ problem.contest.host }}</small></a>
     </td>
     <td>

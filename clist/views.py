@@ -539,13 +539,14 @@ def problems(request, template='problems.html', extra_context=None):
     problems = Problem.objects.all()
     problems = problems.select_related('contest', 'contest__resource')
     problems = problems.prefetch_related('tags')
-    problems = problems.order_by('-contest__end_time', 'contest_id', 'index')
+    problems = problems.order_by('-contest__start_time', 'contest_id', 'index')
     problems = problems.filter(contest__end_time__lt=timezone.now(), visible=True)
 
     search = request.GET.get('search')
     if search:
         cond = get_iregex_filter(search,
                                  'name', 'contest__title', 'contest__host',
+                                 logger=request.logger,
                                  mapping={
                                      'name': {'fields': ['name__iregex']},
                                      'contest': {'fields': ['contest__title__iregex']},
@@ -559,6 +560,8 @@ def problems(request, template='problems.html', extra_context=None):
 
     context = {
         'problems': problems,
+        'timeformat': get_timeformat(request),
+        'timezone': get_timezone(request),
     }
 
     if extra_context is not None:

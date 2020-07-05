@@ -12,3 +12,8 @@
 #problems table th {
   vertical-align: middle !important;
 }
+
+.problem-date, .problem-resource {
+  text-align: center;
+  white-space: nowrap;
+}
