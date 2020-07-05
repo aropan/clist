@@ -5,7 +5,7 @@ import re
 import json
 import html
 from datetime import datetime, timedelta
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
 
@@ -75,10 +75,13 @@ class Statistic(BaseModule):
                 info['writers'] = ['leetcode']
             info['difficulty'] = question['difficulty'].lower()
             info['hints'] = question['hints']
+            return info
 
+        writers = defaultdict(int)
         with PoolExecutor(max_workers=8) as executor:
-            for _ in executor.map(update_problem_info, problems_info.values()):
-                pass
+            for problem_info in executor.map(update_problem_info, problems_info.values()):
+                for w in problem_info['writers']:
+                    writers[w] += 1
 
         def fetch_page(page):
             url = api_ranking_url_format.format(page + 1)
@@ -178,6 +181,9 @@ class Statistic(BaseModule):
             'url': standings_url,
             'problems': list(problems_info.values()),
         }
+        if writers:
+            writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
+            standings['writers'] = writers
         if timing_statistic_delta:
             standings['timing_statistic_delta'] = timing_statistic_delta
         return standings
