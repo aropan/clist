@@ -25,7 +25,7 @@ class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
     RESULTS_URL_ = '{0.url}/results'
     SUBMISSIONS_URL_ = '{0.url}/submissions'
-    PROBLEM_URL_ = '{0.url}/tasks/{0.key}_{1}'
+    PROBLEM_URL_ = '{0.url}/tasks/{1}_{2}'
     HISTORY_URL_ = '{0.scheme}://{0.netloc}/users/{1}/history'
 
     def __init__(self, **kwargs):
@@ -209,7 +209,7 @@ class Statistic(BaseModule):
                 task_info[k] = {
                     'short': t['Assignment'],
                     'name': t['TaskName'],
-                    'url': self.PROBLEM_URL_.format(self, t['Assignment'].lower()),
+                    'url': self.PROBLEM_URL_.format(self, self.key.replace('-', '_'), t['Assignment'].lower()),
                 }
 
             has_rated = False

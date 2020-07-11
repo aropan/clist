@@ -61,7 +61,7 @@ class Statistic(BaseModule):
             params = {
                 'operationName': 'questionData',
                 'variables': {'titleSlug': slug},
-                'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { username } topicTags { name } hints } }', # noqa
+                'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { profileUrl } topicTags { name } hints } }', # noqa
             }
             page = REQ.get(
                 'https://leetcode.com/graphql',
@@ -70,7 +70,10 @@ class Statistic(BaseModule):
             )
             question = json.loads(page)['data']['question']
             info['tags'] = [t['name'].lower() for t in question['topicTags']]
-            info['writers'] = [c['username'] for c in question['contributors']]
+            info['writers'] = [
+                re.search('/(?P<username>[^/]*)/?$', c['profileUrl']).group('username')
+                for c in question['contributors']
+            ]
             if not info['writers']:
                 info['writers'] = ['leetcode']
             info['difficulty'] = question['difficulty'].lower()
@@ -197,7 +200,11 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
 
         def is_chine(account):
-            return '-cn' in account.info.get('profile_url', {}).get('_data_region', '')
+            profile_url = account.info.setdefault('profile_url', {})
+            if profile_url.get('_data_region') is None:
+                profile_url['_data_region'] = ''
+                account.save()
+            return '-cn' in profile_url['_data_region']
 
         @RateLimiter(max_calls=1, period=2)
         def fetch_profle_page(account):
@@ -239,7 +246,8 @@ class Statistic(BaseModule):
                 if not page:
                     if page is None:
                         yield {'info': None}
-                    yield {'skip': True}
+                    else:
+                        yield {'skip': True}
                     continue
 
                 info = {}
@@ -257,21 +265,18 @@ class Statistic(BaseModule):
                     contests = contests[len(contests) - len(ratings):]
                     titles = list(reversed(contests))
                 else:
-                    matches = re.finditer(
-                        r'''
-                        <li[^>]*>\s*<span[^>]*>(?P<value>[^<]*)</span>\s*
-                        <i[^>]*>[^<]*</i>(?P<key>[^<]*)
-                        ''',
-                        page,
-                        re.VERBOSE
-                    )
+                    for regex, to_number in (
+                        (r'<li[^>]*>\s*<span[^>]*>(?P<value>[^<]*)</span>\s*<i[^>]*>[^<]*</i>(?P<key>[^<]*)', True),
+                        (r'<[^>]*class="(?P<key>realname|username)"[^>]*title="(?P<value>[^"]*)"[^>]*>', False),
+                    ):
+                        matches = re.finditer(regex, page)
 
-                    for match in matches:
-                        key = html.unescape(match.group('key')).strip().replace(' ', '_').lower()
-                        value = html.unescape(match.group('value')).strip()
-                        if value.isdigit():
-                            value = int(value)
-                        info[key] = value
+                        for match in matches:
+                            key = html.unescape(match.group('key')).strip().replace(' ', '_').lower()
+                            value = html.unescape(match.group('value')).strip()
+                            if to_number and value.isdigit():
+                                value = int(value)
+                            info[key] = value
 
                     contest_addition_update = {}
                     contest_addition_update_by = None
@@ -308,6 +313,10 @@ class Statistic(BaseModule):
                         'clear_rating_change': True,
                     },
                 }
+
+                assert info['username'].replace('.', '').lower() == account.key.lower(), \
+                    f'Account key {account.key} should be equal username {info["username"]}'
+
                 yield ret
 
 

@@ -3,3 +3,4 @@ cache
 uwsgi.sock
 nginx/static/
 environment
+.envrc

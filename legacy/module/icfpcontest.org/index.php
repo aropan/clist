@@ -3,11 +3,21 @@
 
     $debug_ = $RID == -1;
 
+    $urls = [];
     foreach(array($URL, 'http://icfpcontest.org/') as $url) {
         $page = curlexec($url);
+        echo $url . "\n";
+        if (in_array($url, $urls)) {
+            continue;
+        }
+        $urls[] = $url;
 
-        preg_match('#contest will start(?:\s*at|\s*on)\s*(?:<a[^>]*>)?(?P<start_time>[^<.]{4,})#', $page, $match);
-        $start_time = preg_replace('/\s+at/', '', $match['start_time']);
+        if (!preg_match('#contest will start(?:\s*at|\s*on)\s*(?:<a[^>]*>)?(?P<start_time>[^<.]{4,})#', $page, $match)) {
+            preg_match('#<script[^>]*src="(?P<url>/static/js/main\.[^"]*\.js)"[^>]*>#', $page, $match);
+            $js = curlexec($match['url']);
+            preg_match('#"on\s*(?P<start_time>[^,"]*,[^@"]*@[^"]*)"#', $js, $match);
+        }
+        $start_time = preg_replace('/\s+(?:at|@)/', '', $match['start_time']);
 
         if (preg_match_all('#(?P<title>\b[\s*a-z]*)\s*will end(?:\s*at|\s*on)\s*(?:<a[^>]*>)?(?P<end_time>[^<.]*)#', $page, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $m) {
