@@ -173,7 +173,7 @@
             $a = $header["Content-Type"];
             $a = is_array($a)? $a : array($a);
             $content_type = implode(", ", $a);
-            if (strpos($content_type, "application/json") !== false) {
+            if (strpos($content_type, "application/json") !== false || strpos($content_type, "text/javascript") !== false) {
                 $page = json_decode(substr($page, $sep + 4), true);
             }
         }

@@ -1,43 +1,82 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    $page = curlexec($URL);
-
-    preg_match_all('
-#
->\s*(?:[0-9]{4}\s+)?(?P<title>[-\sa-zA-Z0-9\<]+)\s*(?:\([^<:]*\)\s*)?
-(?:<[^>]*>|:)\s*
-(?P<start_time>[^<,"]*,\s*[0-9]{4}[^-\(<]*)[^<]*
-#x
-        ',
-        $page,
-        $matches,
-        PREG_SET_ORDER
-    );
-
-    foreach ($matches as $match)
-    {
-        $title = $match['title'];
-        $start_time = $match['start_time'];
-        if (preg_match('#\((?P<duration>[0-9]+)[^-<>\)]*\)#', $match[0], $m)) {
-            $duration = $m['duration'] * 60;
-        } else {
-            $duration = '00:00';
+    for (;;) {
+        $url = $URL;
+        if (isset($year)) {
+            $url .= $year;
         }
-        $start_time = preg_replace('/\s*-[^,]*[0-9]+[^,]*,/', '', $start_time);
-        $start_time = preg_replace('/[A-Z]{3,}\s*$/', '', $start_time);
-        $contests[] = array(
-            'start_time' => $start_time,
-            'duration' => $duration,
-            'title' => $title,
-            'url' => $URL,
-            'host' => $HOST,
-            'rid' => $RID,
-            'timezone' => $TIMEZONE,
-            'key' => "$title " . date('Y', strtotime($start_time))
-        );
+        $page = curlexec($url);
+
+        preg_match('#\["LSD",\[\],{"token":"(?P<token>[^"]*)"#', $page, $match);
+        $lsd_token = $match['token'];
+
+        preg_match_all('#<link[^>]*href="(?P<href>[^"]*static[^"]*fbcdn[^"]*)"[^>]*>#', $page, $matches);
+        $ids = array();
+        foreach ($matches['href'] as $u) {
+            $p = curlexec($u);
+            if (preg_match_all('#{id:"(?P<id>[^"]*)"(?:[^{}]*(?:{[^}]*})?)*}#', $p, $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $match) {
+                    if (preg_match('#,name:"(?P<name>[^"]*)"#', $match[0], $m)) {
+                        $ids[$m['name']] = $match['id'];
+                    }
+                }
+            }
+        }
+
+        $url = 'https://www.facebook.com/api/graphql/';
+        if (isset($year)) {
+            $params = array(
+                "lsd" => $lsd_token,
+                "fb_api_caller_class" => "RelayModern",
+                "fb_api_req_friendly_name" => "CodingCompetitionsContestSeasonRootQuery",
+                "variables" => '{"series_vanity":"hacker-cup","season_vanity":"' . $year . '"}',
+                "doc_id" => $ids['CodingCompetitionsContestSeasonRootQuery'],
+            );
+        } else {
+            $params = array(
+                "lsd" => $lsd_token,
+                "fb_api_caller_class" => "RelayModern",
+                "fb_api_req_friendly_name" => "CodingCompetitionsContestSeriesRootQuery",
+                "variables" => '{"series_vanity":"hacker-cup"}',
+                "doc_id" => $ids['CodingCompetitionsContestSeriesRootQuery'],
+            );
+        }
+        $data = curlexec($url, $params, array("json_output" => 1));
+
+        $contest_series = $data['data']['contestSeries'];
+        if (isset($contest_series['latest_season'])) {
+            $season = $contest_series['latest_season']['nodes'][0];
+        } else {
+            $season = $contest_series['contestSeason'];
+        }
+
+        if (empty($season)) {
+            break;
+        }
+
+        foreach ($season['season_contests']['nodes'] as $node) {
+            $year = $node['contest_season']['season_vanity'];
+            $contests[] = array(
+                'start_time' => $node['start_time'],
+                'duration' => $node['duration_in_seconds'] / 60,
+                'title' => $node['name'] . ' ' . $year,
+                'url' => rtrim($URL, '/') . "/$year/${node['contest_vanity']}",
+                'host' => $HOST,
+                'rid' => $RID,
+                'timezone' => $TIMEZONE,
+                'key' => $node['id'],
+                'info' => array('parse' => $node),
+            );
+        }
+
+        if (!isset($_GET['parse_full_list'])) {
+            break;
+        }
+        --$year;
     }
-    if ($RID == -1) {
+
+    if (DEBUG) {
         print_r($contests);
     }
 ?>
