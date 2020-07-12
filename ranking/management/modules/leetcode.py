@@ -315,7 +315,7 @@ class Statistic(BaseModule):
                 }
 
                 username = re.sub('[.@]', '', info['username'])
-                assert username.lower() == account.key.lower(), \
+                assert re.search(r'[\u4e00-\u9fff]', username) or username.lower() == account.key.lower(), \
                     f'Account key {account.key} should be equal username {info["username"]}'
 
                 yield ret
