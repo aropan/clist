@@ -39,11 +39,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         .filter(Q(has_statistics=True) | Q(end_time__lte=timezone.now())) \
         .order_by('-end_time')
 
-    has_perm_reset_statistic_timing = False
     all_standings = False
     if request.user.is_authenticated:
         all_standings = request.user.coder.settings.get('all_standings')
-        has_perm_reset_statistic_timing = request.user.has_perm('reset_contest_statistic_timing')
 
     switch = 'switch' in request.GET
     if bool(all_standings) == bool(switch):
@@ -69,7 +67,6 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'all_standings': all_standings,
-        'has_perm_reset_statistic_timing': has_perm_reset_statistic_timing,
         'switch': switch,
     }
 

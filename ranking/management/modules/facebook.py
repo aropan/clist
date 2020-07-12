@@ -3,142 +3,103 @@
 
 import json
 import re
-import warnings
-import html
-from tqdm import tqdm
-from urllib.parse import urljoin
+import tqdm
 from pprint import pprint
 from collections import OrderedDict
 
-import googlesearch
-
 from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
+    API_GRAPH_URL_ = 'https://www.facebook.com/api/graphql/'
 
     def get_standings(self, users=None, statistics=None):
-        if not self.standings_url:
-            year = self.start_time.year
-            name = re.sub(r'(online|onsite)\s+', '', self.name, flags=re.I).strip()
-            query = f'site:https://www.facebook.com/hackercup/round/* Facebook Hacker Cup {year} {name}'
-            urls = list(googlesearch.search(query, stop=2))
-            if len(urls) == 1:
-                self.standings_url = urls[0].replace('/round/', '/scoreboard/')
-        if not self.standings_url:
-            raise ExceptionParseStandings('not found standing url')
+        page = REQ.get(self.standings_url)
+        match = re.search(r'\["LSD",\[\],{"token":"(?P<token>[^"]*)"', page)
+        lsd_token = match.group('token')
 
-        offset = 0
-        limit = 100
+        def query(name, variables):
+            ret = REQ.get(
+                self.API_GRAPH_URL_,
+                post={
+                    'lsd': lsd_token,
+                    'fb_api_caller_class': 'RelayModern',
+                    'fb_api_req_friendly_name': name,
+                    'variables': json.dumps(variables),
+                    'doc_id': self.info['parse']['scoreboard_ids'][name],
+                },
+            )
+            return json.loads(ret)
+
+        scoreboard_data = query('CodingCompetitionsContestScoreboardQuery', {'id': self.key})
+
+        problems_info = OrderedDict()
+        for problem_set in scoreboard_data['data']['contest']['ordered_problem_sets']:
+            for problem in problem_set['ordered_problems_with_display_indices']:
+                code = str(problem['problem']['id'])
+                info = {
+                    'short': problem['display_index'],
+                    'code': code,
+                    'name': problem['problem']['problem_title'],
+                    'full_score': problem['problem']['point_value'],
+                    'url': self.url.rstrip('/') + '/problems/' + problem['display_index'],
+                }
+                problems_info[info['code']] = info
+
+        limit = 1000
+        total = scoreboard_data['data']['contest']['entrant_performance_summaries']['count']
 
         result = OrderedDict()
+        for page in tqdm.trange((total + limit - 1) // limit, desc='paging'):
+            data = query('CCEScoreboardQuery', {
+                'id': self.key,
+                'start': page * limit,
+                'count': limit,
+                'friends_only': False,
+                'force_limited_data': False,
+            })
 
-        pbar = None
-        total = None
-        title = None
-        problems_info = None
-        while limit:
-            url = f'{self.standings_url}?offset={offset}&length={limit}&locale=ja_JP'
-            page = REQ.get(url)
-
-            match = re.search(r'"problemData":(?P<data>\[[^\]]*\])', page, re.I)
-            if not match:
-                limit //= 2
-                continue
-
-            problem_data = json.loads(match.group('data'))
-            if problems_info is None:
-                matches = re.finditer(r'<div[^>]*class="linkWrap noCount"[^>]*>(?P<score>[0-9]+):\s*(?P<title>[^<]*)',
-                                      page)
-                problems_scores = {}
-                for match in matches:
-                    score = int(match.group('score'))
-                    name = html.unescape(match.group('title')).strip()
-                    problems_scores[name] = score
-
-                problems_info = []
-                for problem in problem_data:
-                    name = str(problem['name']).strip()
-                    problems_info.append({
-                        'code': str(problem['id']),
-                        'name': name,
-                        'full_score': problems_scores[name],
-                    })
-
-            if title is None:
-                match = re.search('<h2[^>]*class="accessible_elem"[^>]*>(?P<title>[^<]*)</h2>', page)
-                title = match.group('title')
-
-            match = re.search(r'"scoreboardData":(?P<data>\[[^\]]*\])', page, re.I)
-            data = json.loads(match.group('data'))
-
-            if pbar is None:
-                match = re.search(r'"pagerData":(?P<data>{[^}]*})', page, re.I)
-                pager = json.loads(match.group('data'))
-                total = pager['total']
-                pbar = tqdm(total=total, desc='paging')
-
-            for row in data:
-                handle = str(row.pop('userID'))
+            for row in data['data']['contest']['entrant_performance_summaries']['nodes']:
+                row.update(row.pop('entrant'))
+                handle = row.pop('id')
                 r = result.setdefault(handle, OrderedDict())
-
                 r['member'] = handle
-                r['solving'] = row.pop('score')
-                r['place'] = row.pop('rank')
-                r['name'] = row.pop('profile')['name']
 
-                penalty = row.pop('penalty')
+                r['name'] = row.pop('display_name')
+                r['solving'] = row.pop('total_score')
+                r['place'] = row.pop('rank')
+
+                penalty = row.pop('total_penalty')
                 if penalty:
                     r['penalty'] = self.to_time(penalty)
 
                 problems = r.setdefault('problems', {})
                 solved = 0
-                for k, v in row.pop('problemData').items():
-                    verdict = v.get('result')
-                    if not verdict or verdict == 'none':
-                        continue
-                    p = problems.setdefault(k, {})
+                for problem in row.pop('problems'):
+                    code = str(problem['problem']['id'])
+                    problem = problem['representative_submission']
+                    verdict = problem['submission_overall_result'].lower()
+                    p = problems.setdefault(problems_info[code]['short'], {})
                     if verdict == 'accepted':
                         p['result'] = '+'
                         p['binary'] = True
                         solved += 1
                     else:
-                        p['result'] = '0'
+                        p['result'] = '-'
                         p['verdict'] = verdict
                         p['binary'] = False
-                    u = v.get('sourceURI')
-                    if v:
-                        p['url'] = urljoin(url, u)
-                        p['external_solution'] = True
+                    p['time'] = self.to_time(problem['submission_time_after_contest_start'])
+                    p['url'] = problem['submission_source_code_download_uri']
+                    p['external_solution'] = True
+
                 r['solved'] = {'solving': solved}
-
-                pbar.update()
-                total -= 1
-
-            if not data:
-                break
-
-            offset += limit
-
-        pbar.close()
-
-        words = self.name.split()
-        words.append(str(self.start_time.year))
-        for w in words:
-            if w.lower() not in title.lower():
-                warnings.warn(f'"{w}" not in title "{title}"')
-
-        if total:
-            warnings.warn(f'{total} member(s) did not get')
 
         standings = {
             'result': result,
-            'url': self.standings_url,
-            'problems': problems_info,
+            'problems': list(problems_info.values()),
         }
 
-        if re.search(r'\bfinals?\b', self.name, re.I):
+        if re.search(r'\bfinals?\b', self.name, re.IGNORECASE):
             standings['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
 
         return standings

@@ -1,16 +1,7 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    for (;;) {
-        $url = $URL;
-        if (isset($year)) {
-            $url .= $year;
-        }
-        $page = curlexec($url);
-
-        preg_match('#\["LSD",\[\],{"token":"(?P<token>[^"]*)"#', $page, $match);
-        $lsd_token = $match['token'];
-
+    function get_ids($page) {
         preg_match_all('#<link[^>]*href="(?P<href>[^"]*static[^"]*fbcdn[^"]*)"[^>]*>#', $page, $matches);
         $ids = array();
         foreach ($matches['href'] as $u) {
@@ -23,6 +14,20 @@
                 }
             }
         }
+        return $ids;
+    }
+
+    for (;;) {
+        $url = $URL;
+        if (isset($year)) {
+            $url .= $year;
+        }
+        $page = curlexec($url);
+
+        preg_match('#\["LSD",\[\],{"token":"(?P<token>[^"]*)"#', $page, $match);
+        $lsd_token = $match['token'];
+
+        $ids = get_ids($page);
 
         $url = 'https://www.facebook.com/api/graphql/';
         if (isset($year)) {
@@ -57,15 +62,20 @@
 
         foreach ($season['season_contests']['nodes'] as $node) {
             $year = $node['contest_season']['season_vanity'];
+            $url = rtrim($URL, '/') . "/$year/${node['contest_vanity']}";
+            $scoreboard_url = rtrim($url) . '/scoreboard';
+            $scoreboard_page = curlexec($scoreboard_url);
+            $node['scoreboard_ids'] = get_ids($scoreboard_page);
             $contests[] = array(
                 'start_time' => $node['start_time'],
                 'duration' => $node['duration_in_seconds'] / 60,
                 'title' => $node['name'] . ' ' . $year,
-                'url' => rtrim($URL, '/') . "/$year/${node['contest_vanity']}",
+                'url' => $url,
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
                 'key' => $node['id'],
+                'standings_url' => $scoreboard_url,
                 'info' => array('parse' => $node),
             );
         }

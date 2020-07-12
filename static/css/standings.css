@@ -4,7 +4,7 @@
   text-overflow: ellipsis;
 }
 
-#standings_list a.contest:hover > .reset_timing_statistic, #standings_list .reset_timing_statistic:hover {
+#standings_list a.contest:hover > .inline-button, #standings_list .inline-button:hover {
   display: inline-block;
 }
 
@@ -136,10 +136,11 @@ a.solution:hover span {
   font-weight: normal;
 }
 
-.reset_timing_statistic {
+.inline-button {
   display: none;
   position: absolute;
   z-index: 1;
+  margin-top: -3px;
   margin-left: 5px;
 }
 
