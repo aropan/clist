@@ -28,6 +28,7 @@ class Statistic(BaseModule):
                     'variables': json.dumps(variables),
                     'doc_id': self.info['parse']['scoreboard_ids'][name],
                 },
+                headers={'accept-language': 'en-US,en;q=1.0'}
             )
             return json.loads(ret)
 
