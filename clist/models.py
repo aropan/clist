@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField, ArrayField
 from sql_util.utils import Exists
+from django_ltree.fields import PathField
 
 from pyclist.models import BaseModel, BaseManager
 from clist.templatetags.extras import slug
@@ -106,6 +107,7 @@ class Contest(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     title = models.CharField(max_length=2048)
     slug = models.CharField(max_length=2048, null=True, blank=True, db_index=True)
+    title_path = PathField(null=True, blank=True, db_index=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     duration_in_secs = models.IntegerField(null=False, blank=True)
@@ -139,7 +141,8 @@ class Contest(models.Model):
     def save(self, *args, **kwargs):
         if self.duration_in_secs is None:
             self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
-        self.slug = slug(self.title)
+        self.slug = slug(self.title).strip('-')
+        self.title_path = self.slug.replace('-', '.')
         return super(Contest, self).save(*args, **kwargs)
 
     def is_over(self):
@@ -213,13 +216,27 @@ class Contest(models.Model):
         resource_contests = Contest.objects.filter(resource=self.resource_id)
         resource_contests = resource_contests.annotate(has_statistics=Exists('statistics')).filter(has_statistics=True)
 
-        prv = resource_contests.filter(end_time__lt=self.start_time).order_by('-end_time').first()
-        if prv:
-            cond |= Q(pk=prv.pk)
+        for query, order in (
+            (Q(end_time__lt=self.start_time), '-end_time'),
+            (Q(start_time__gt=self.end_time), 'start_time'),
+        ):
+            c = resource_contests.filter(query).order_by(order).first()
+            if c:
+                cond |= Q(pk=c.pk)
 
-        nxt = resource_contests.filter(start_time__gt=self.end_time).order_by('start_time').first()
-        if nxt:
-            cond |= Q(pk=nxt.pk)
+            if self.title_path is not None:
+                qs = resource_contests.filter(
+                    query & (
+                        Q(start_time__year=self.start_time.year) | Q(end_time__year=self.end_time.year)
+                        | Q(start_time__lt=self.start_time, start_time__gt=self.start_time - timedelta(days=31))
+                        | Q(end_time__gt=self.end_time, end_time__lt=self.end_time + timedelta(days=31))
+                    )
+                )
+                qs = qs.extra(select={'lcp': f'''nlevel(lca(title_path, '{self.title_path}'))'''})
+                qs = qs.order_by('-lcp', order)
+                c = qs.first()
+                if c:
+                    cond |= Q(pk=c.pk)
 
         qs = resource_contests.filter(cond).exclude(pk=self.pk).order_by('end_time')
 

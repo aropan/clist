@@ -86,6 +86,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'django_user_agents',
     'django_json_widget',
+    'django_ltree',
 )
 
 MIDDLEWARE = (
