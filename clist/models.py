@@ -235,7 +235,7 @@ class Contest(models.Model):
                 qs = qs.extra(select={'lcp': f'''nlevel(lca(title_path, '{self.title_path}'))'''})
                 qs = qs.order_by('-lcp', order)
                 c = qs.first()
-                if c:
+                if c and c.lcp:
                     cond |= Q(pk=c.pk)
 
         qs = resource_contests.filter(cond).exclude(pk=self.pk).order_by('end_time')
