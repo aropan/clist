@@ -314,7 +314,8 @@ class Statistic(BaseModule):
                     },
                 }
 
-                assert info['username'].replace('.', '').lower() == account.key.lower(), \
+                username = re.sub('[.@]', '', info['username'])
+                assert username.lower() == account.key.lower(), \
                     f'Account key {account.key} should be equal username {info["username"]}'
 
                 yield ret
