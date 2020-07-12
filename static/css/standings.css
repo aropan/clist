@@ -188,3 +188,8 @@ a.solution:hover span {
 #standings-groupby > div {
   padding: 0px;
 }
+
+.neighbors-contests {
+  text-align: left;
+  display: none;
+}

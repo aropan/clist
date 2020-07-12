@@ -1,0 +1,8 @@
+{% load humanize %}
+<div class="neighbors-contests">
+  {% for contest in contests %}
+  <div class="neighbors-standings-url">
+    <span class="neighbors-standings-url-date"><small title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</small>&nbsp;</span><a href="{% url 'ranking:standings_by_id' contest.pk %}?{% query_transform request %}">{{ contest.title }}</a>
+  </div>
+  {% endfor %}
+</div>

@@ -534,6 +534,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         statistics = statistics.annotate(my_stat=SubqueryExists('account__coders', filter=Q(coder=coder)))
         my_statistics = statistics.filter(account__coders=coder).extra(select={'floating': True})
 
+    neighbors = list(contest.neighbors())
+
     context = {
         'data_1st_u': data_1st_u,
         'participants_info': participants_info,
@@ -560,6 +562,13 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         'num_rows_groupby': num_rows_groupby,
         'map_colors_groupby': map_colors_groupby,
         'advance': contest.info.get('advance'),
+        'timezone': get_timezone(request),
+        'timeformat': get_timeformat(request),
+        'neighbors': {
+            'total': len(neighbors),
+            'before': [c for c in neighbors if c.end_time < contest.end_time],
+            'after': [c for c in neighbors if c.end_time >= contest.end_time],
+        },
     }
 
     if extra_context is not None:

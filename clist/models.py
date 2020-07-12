@@ -1,10 +1,13 @@
+import re
 import colorsys
 from urllib.parse import urlparse
 from datetime import timedelta
 
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField, ArrayField
+from sql_util.utils import Exists
 
 from pyclist.models import BaseModel, BaseManager
 from clist.templatetags.extras import slug
@@ -179,6 +182,43 @@ class Contest(models.Model):
         else:
             total = duration.total_seconds()
             return "%02d:%02d" % ((total + 1e-9) // 3600, (total + 1e-9) % 3600 // 60)
+
+    @staticmethod
+    def title_neighbors_(title, deep, viewed):
+        viewed.add(title)
+        if deep == 0:
+            return
+
+        for match in re.finditer('[0-9]+', title):
+            for delta in (-1, 1):
+                start, end = match.span()
+                new_title = title[:start] + str(int(match.group(0)) + delta) + title[end:]
+                if new_title in viewed:
+                    continue
+                Contest.title_neighbors_(new_title, deep=deep - 1, viewed=viewed)
+
+    def neighbors(self):
+        viewed = set()
+        Contest.title_neighbors_(self.title, deep=1, viewed=viewed)
+
+        cond = Q()
+        for title in viewed:
+            cond |= Q(title=title)
+
+        resource_contests = Contest.objects.filter(resource=self.resource_id)
+        resource_contests = resource_contests.annotate(has_statistics=Exists('statistics')).filter(has_statistics=True)
+
+        prv = resource_contests.filter(end_time__lt=self.start_time).order_by('-end_time').first()
+        if prv:
+            cond |= Q(pk=prv.pk)
+
+        nxt = resource_contests.filter(start_time__gt=self.end_time).order_by('start_time').first()
+        if nxt:
+            cond |= Q(pk=nxt.pk)
+
+        qs = resource_contests.filter(cond).exclude(pk=self.pk).order_by('end_time')
+
+        return qs
 
 
 class Problem(BaseModel):
