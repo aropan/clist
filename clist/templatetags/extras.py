@@ -283,10 +283,13 @@ def define(val=None):
 @register.simple_tag
 def query_transform(request, *args, **kwargs):
     updated = request.GET.copy()
-    if kwargs:
-        updated.update(kwargs)
     if args:
-        updated.update(dict(zip(args[::2], args[1::2])))
+        kwargs.update(dict(zip(args[::2], args[1::2])))
+    if kwargs:
+        if kwargs.pop('with_replace', False):
+            for k in kwargs:
+                updated.pop(k, None)
+        updated.update(kwargs)
 
     if 'querystring_key' in updated:
         k = updated['querystring_key']

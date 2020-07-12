@@ -31,7 +31,7 @@
   <a id="standings-url" href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
 
   {% if neighbors.total %}
-  <a href="#" id="standings-url-toggle" class="badge progress-bar-info">{{ neighbors.total }}&nbsp;<i class="fa fa-caret-down"></i></a>
+  <a href="#" id="standings-url-toggle" class="badge progress-bar-info">{{ neighbors.total }}&nbsp;<i class="fa fa-caret-{% if neighbors.visible %}up{% else %}down{% endif %}"></i></a>
   {% endif %}
 
   <small><a href="{{ contest.resource.href }}">{{ contest.resource.host }}</a> {{ contest.end_time|naturalday:'F j, Y' }}</small>
@@ -45,12 +45,17 @@
 </h3>
 
 <script>
-  $('#standings-url-toggle').click(function() {
-    $(this).children('i').toggleClass('fa-caret-down').toggleClass('fa-caret-up')
-    $('.neighbors-contests').slideToggle(200, 'linear');
+  function update_neighbors_standings_url_offset() {
     $('.neighbors-standings-url').each(function(idx, el) {
       $(el).offset({left: $('#standings-url').offset().left - $(el).children('.neighbors-standings-url-date').width()})
     })
+  }
+  update_neighbors_standings_url_offset()
+  $(window).on('resize', update_neighbors_standings_url_offset)
+  $('#standings-url-toggle').click(function() {
+    $(this).children('i').toggleClass('fa-caret-down').toggleClass('fa-caret-up')
+    $('.neighbors-contests').slideToggle(200, 'linear', function() { $(window).resize() });
+    update_neighbors_standings_url_offset()
   })
 </script>
 

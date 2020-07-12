@@ -565,6 +565,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'neighbors': {
+            'visible': request.GET.get('neighbors') == 'on',
             'total': len(neighbors),
             'before': [c for c in neighbors if c.end_time < contest.end_time],
             'after': [c for c in neighbors if c.end_time >= contest.end_time],
