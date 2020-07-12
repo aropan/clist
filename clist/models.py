@@ -189,10 +189,15 @@ class Contest(models.Model):
         if deep == 0:
             return
 
-        for match in re.finditer('[0-9]+', title):
+        for match in re.finditer(r'([0-9]+|[A-Z]\b)', title):
             for delta in (-1, 1):
                 start, end = match.span()
-                new_title = title[:start] + str(int(match.group(0)) + delta) + title[end:]
+                value = match.group(0)
+                if value.isdigit():
+                    value = str(int(value) + delta)
+                else:
+                    value = chr(ord(value) + delta)
+                new_title = title[:start] + value + title[end:]
                 if new_title in viewed:
                     continue
                 Contest.title_neighbors_(new_title, deep=deep - 1, viewed=viewed)
