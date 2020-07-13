@@ -201,7 +201,7 @@
             {% endif %}
           >
             {% if stat.url or stat.solution or stat.external_solution %}
-              <a class="solution"{% if stat.solution or stat.external_solution %} onClick="return viewSolution(this);"{% endif %} href="{% if stat.solution or stat.external_solution %}{% url 'ranking:solution' statistic.pk key %}{% else %}{{ stat.url }}{% endif %}" target="_blank">
+            <a class="solution"{% if stat.solution or stat.external_solution %} onClick="return viewSolution(this);"{% endif %} data-url="{% if stat.url %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" href="{% if stat.solution or stat.external_solution %}{% url 'ranking:solution' statistic.pk key %}{% else %}{{ stat.url }}{% endif %}" target="_blank">
             {% endif %}
 
             {% if stat.binary is not None %}

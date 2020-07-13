@@ -437,7 +437,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 field = f'addition__problems__{key}__language'
                 score = f'addition__problems__{key}__result'
                 qs = statistics \
-                    .filter(**{f'{field}__isnull': False}) \
+                    .filter(**{f'{field}__isnull': False, f'{score}__isnull': False}) \
                     .annotate(language=Cast(JSONF(field), models.TextField())) \
                     .annotate(score=Case(
                         When(**{f'{score}__startswith': '+'}, then=1),

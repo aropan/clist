@@ -128,5 +128,9 @@
     <input type="hidden" name="orderby" value="{{ order }}"/>
       {% endfor %}
     {% endwith %}
+
+    {% if neighbors.visible %}
+    <input type="hidden" name="neighbors" value="on"/>
+    {% endif %}
   </div>
 </form>

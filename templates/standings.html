@@ -203,7 +203,7 @@ function viewSolution(a) {
       document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
     },
     error: function(response) {
-      bootbox.alert({message: response.statusText, size: 'small'})
+      bootbox.alert({title: response.statusText, message: 'You can check <a href="' + $(a).attr('data-url') + '">here</a>.', size: 'small'})
       $('#viewSolutionModal').modal('hide')
     },
   })
