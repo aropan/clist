@@ -28,7 +28,8 @@
 
   <div>
   Standings
-  <a id="standings-url" href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
+  <span id="standings-url"></span>
+  <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
 
   {% if neighbors.total %}
   <a href="#" id="standings-url-toggle" class="badge progress-bar-info">{{ neighbors.total }}&nbsp;<i class="fa fa-caret-{% if neighbors.visible %}up{% else %}down{% endif %}"></i></a>
@@ -48,6 +49,7 @@
   function update_neighbors_standings_url_offset() {
     $('.neighbors-standings-url').each(function(idx, el) {
       $(el).offset({left: $('#standings-url').offset().left - $(el).children('.neighbors-standings-url-date').width()})
+      $(el).width($('#standings-title').width() - $(el).offset().left)
     })
   }
   update_neighbors_standings_url_offset()

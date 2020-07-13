@@ -225,13 +225,7 @@ class Contest(models.Model):
                 cond |= Q(pk=c.pk)
 
             if self.title_path is not None:
-                qs = resource_contests.filter(
-                    query & (
-                        Q(start_time__year=self.start_time.year) | Q(end_time__year=self.end_time.year)
-                        | Q(start_time__lt=self.start_time, start_time__gt=self.start_time - timedelta(days=31))
-                        | Q(end_time__gt=self.end_time, end_time__lt=self.end_time + timedelta(days=31))
-                    )
-                )
+                qs = resource_contests.filter(query).exclude(title=self.title)
                 qs = qs.extra(select={'lcp': f'''nlevel(lca(title_path, '{self.title_path}'))'''})
                 qs = qs.order_by('-lcp', order)
                 c = qs.first()
