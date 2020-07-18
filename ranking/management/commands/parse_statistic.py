@@ -178,7 +178,7 @@ class Command(BaseCommand):
 
                     info_fields = standings.pop('info_fields', []) + ['divisions_order']
                     for field in info_fields:
-                        if standings.get(field) and contest.info.get(field) != standings[field]:
+                        if standings.get(field) is not None and contest.info.get(field) != standings[field]:
                             contest.info[field] = standings[field]
                             contest.save()
 

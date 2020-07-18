@@ -36,6 +36,10 @@ class ParsedTableCol(object):
         self.value = ' '.join(texts)
         self.node = col
 
+    @property
+    def colspan(self):
+        return int(self.attrs.get('colspan', 1))
+
     def __str__(self):
         return f'attrs = {self.attrs}, value = {self.value}'
 
@@ -53,9 +57,13 @@ class ParsedTableRow(object):
 
 class ParsedTable(object):
 
-    def __init__(self, html, xpath='//table//tr', as_list=False):
+    def __init__(self, html, xpath='//table//tr', as_list=False, with_duplicate_colspan=False):
         self.as_list = as_list
+        self.with_duplicate_colspan = with_duplicate_colspan
         self.table = etree.HTML(html).xpath(xpath)
+        self.init_iter()
+
+    def init_iter(self):
         self.iter_table = iter(self.table)
         self.header = ParsedTableRow(next(self.iter_table))
 
@@ -71,7 +79,7 @@ class ParsedTable(object):
             columns = []
             for c in self.header.columns:
                 if rs > int(c.attrs.get('rowspan', 0)):
-                    for cs in range(int(c.attrs.get('colspan', 1))):
+                    for cs in range(c.colspan):
                         columns.append(next(iter_row))
                 else:
                     columns.append(c)
@@ -79,7 +87,7 @@ class ParsedTable(object):
 
         columns = []
         for c in self.header.columns:
-            for cs in range(int(c.attrs.get('colspan', 1))):
+            for cs in range(c.colspan):
                 columns.append(c)
         self.header.columns = columns
 
@@ -90,14 +98,21 @@ class ParsedTable(object):
         while True:
             nxt = next(self.iter_table)
             row = ParsedTableRow(nxt)
+            if self.with_duplicate_colspan:
+                row.columns = sum([[c] * c.colspan for c in row.columns], [])
             if len(row.columns) == len(self.header.columns):
                 break
 
         kv = []
+        colspan = 0
         for h, r in zip(self.header.columns, row.columns):
+            if self.with_duplicate_colspan and colspan > 0:
+                colspan -= 1
+                continue
             k = h.value
             v = ParsedTableValue(row, r, h)
             kv.append((k, v))
+            colspan = r.colspan - 1
 
         if self.as_list:
             return kv

@@ -6,6 +6,7 @@ import re
 import urllib.parse
 import html
 import functools
+import time
 from copy import deepcopy
 from pprint import pprint
 from datetime import timedelta, datetime
@@ -16,7 +17,7 @@ import arrow
 from first import first
 from tqdm import tqdm
 
-from ranking.management.modules.common import REQ, FailOnGetResponse, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, LOG, FailOnGetResponse, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules import conf
 
@@ -27,6 +28,8 @@ class Statistic(BaseModule):
     SUBMISSIONS_URL_ = '{0.url}/submissions'
     PROBLEM_URL_ = '{0.url}/tasks/{1}_{2}'
     HISTORY_URL_ = '{0.scheme}://{0.netloc}/users/{1}/history'
+    DEFAULT_LAST_SUBMISSION_TIME = -1
+    DEFAULT_LAST_PAGE = 1
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -46,31 +49,31 @@ class Statistic(BaseModule):
             page = REQ.get(form['url'], post=form['post'])
         return page
 
-    def fetch_submissions(self, fuser=None, page=1):
-        url = self.SUBMISSIONS_URL_.format(self) + f'?page={page}'
+    def fetch_submissions(self, fuser=None, c_page=1):
+        url = self.SUBMISSIONS_URL_.format(self) + f'?page={c_page}'
         if fuser:
             url += f'&f.User={fuser}'
 
-        for _ in range(4):
+        for attempt in range(4):
             if self._stop:
                 return
 
             try:
-                page = REQ.get(url)
+                page = self._get(url)
                 break
             except FailOnGetResponse:
-                pass
+                time.sleep(attempt)
         else:
-            return None, None, None, None
+            return
 
         regex = '<table[^>]*>.*?</table>'
         html_table = re.search(regex, page, re.DOTALL).group(0)
-        table = parsed_table.ParsedTable(html_table)
+        table = parsed_table.ParsedTable(html_table, with_duplicate_colspan=True)
 
         pages = re.findall(r'''<a[^>]*href=["'][^"']*/submissions\?[^"']*page=([0-9]+)[^"']*["'][^>]*>[0-9]+</a>''', page)  # noqa
         n_page = max(map(int, pages))
 
-        return url, page, table, n_page
+        return url, page, table, c_page, n_page
 
     def _update_submissions(self, fusers, standings):
         result = standings['result']
@@ -80,9 +83,10 @@ class Statistic(BaseModule):
                                     total=len(fusers),
                                     desc='gettings first page'))
 
-            for fuser, (url, page, table, n_page) in zip(fusers, submissions):
-                if url is None:
-                    continue
+            for fuser, page_submissions in zip(fusers, submissions):
+                if page_submissions is None:
+                    break
+                url, page, table, _, n_page = page_submissions
 
                 submissions_times = {}
 
@@ -108,47 +112,69 @@ class Statistic(BaseModule):
                         row['verdict'] = row.pop('status')
                         user = row.pop('user')
                         task = row.pop('task').split()[0]
-                        score = row.pop('score')
+                        score = float(row.pop('score'))
 
                         res = result.setdefault(user, collections.OrderedDict())
                         res.setdefault('member', user)
                         problems = res.setdefault('problems', {})
                         problem = problems.setdefault(task, {})
+                        problem_score = problem.get('result', 0)
+                        eps = 1e-9
                         if upsolve:
                             problem = problem.setdefault('upsolving', {})
 
                             st = submissions_times.setdefault((user, task), problem.get('submission_time'))
-                            if float(score) > 0:
+                            if score > 0:
                                 row['result'] = score
-                            elif not float(problem.get('result', 0)) > 0:
+                            elif problem_score < eps:
                                 if (
                                     (not st or st < row['submission_time'])
                                     and row['submission_time'] != problem.get('submission_time')
                                 ):
-                                    row['result'] = str(int(problem.get('result', 0)) - 1)
+                                    row['result'] = problem_score - 1
 
                         if 'submission_time' in problem and row['submission_time'] < problem['submission_time']:
                             continue
+
+                        if problem_score > eps and abs(problem_score - score) > eps:
+                            continue
+
                         problem.update(row)
                     return last_submission_time
 
+                last_submission_time = process_page(url, page, table)
+
                 st_data = result.get(fuser, {}) if fuser else standings
-                limit_st = st_data.get('_last_submission_time', -1)
-                st_data['_last_submission_time'] = process_page(url, page, table)
+                submissions_info = st_data.setdefault('_submissions_info', {})
+                limit_st = submissions_info.pop('last_submission_time', self.DEFAULT_LAST_SUBMISSION_TIME)
+                last_page = submissions_info.pop('last_page', self.DEFAULT_LAST_PAGE)
+                last_page_st = submissions_info.pop('last_page_st', self.DEFAULT_LAST_SUBMISSION_TIME)
+                c_page = last_page
 
                 self._stop = False
                 fetch_submissions_user = functools.partial(self.fetch_submissions, fuser)
-                for url, page, table, n_page in tqdm(executor.map(fetch_submissions_user, range(2, n_page + 1)),
-                                                     total=n_page - 1,
-                                                     desc='getting submissions'):
-                    if url is None:
-                        continue
-                    last_st = process_page(url, page, table)
-                    if last_st and last_st < limit_st:
+                for page_submissions in tqdm(
+                    executor.map(fetch_submissions_user, range(last_page + 1, n_page + 1)),
+                    total=n_page - last_page,
+                    desc=f'getting submissions for ({last_page};{n_page}]'
+                ):
+                    if page_submissions is None:
+                        submissions_info['last_page'] = c_page
+                        submissions_info['last_page_st'] = last_page_st
+                        LOG.info(f'stopped after ({last_page};{c_page}] of {n_page}')
                         self._stop = True
                         break
 
-        standings['info_fields'] = ['_last_submission_time']
+                    url, page, table, c_page, _ = page_submissions
+                    submission_time = process_page(url, page, table)
+                    last_page_st = max(last_page_st, submission_time)
+
+                    if submission_time < limit_st:
+                        self._stop = True
+                        break
+                if 'last_page' not in submissions_info:
+                    submissions_info['last_submission_time'] = \
+                        last_submission_time if last_page == self.DEFAULT_LAST_PAGE else last_page_st
 
     def get_standings(self, users=None, statistics=None):
 
@@ -262,10 +288,10 @@ class Statistic(BaseModule):
                         if v['Penalty'] > 0:
                             p['penalty'] = v['Penalty']
                     else:
-                        p['result'] = f"-{v['Failure']}"
+                        p['result'] = -v['Failure']
                     no_url = no_url or 'url' not in p
                 r['solved'] = {'solving': solving}
-                if problems and no_url and self.info.get('_last_submission_time', -1) > 0:
+                if problems and no_url and self.info.get('_submissions_info', {}).get('last_submission_time', -1) > 0:
                     fusers.append(handle)
 
                 row.update(r)
@@ -311,18 +337,29 @@ class Statistic(BaseModule):
                 standings['timing_statistic_delta'] = timedelta(minutes=30)
 
         if users or users is None:
-            standings['_last_submission_time'] = self.info.get('_last_submission_time', -1)
-
             self._stop = False
-            *_, n_page = self.fetch_submissions()
+            page_submissions = self.fetch_submissions()
+            if page_submissions is not None:
+                standings['_submissions_info'] = {} if statistics is None else self.info.pop('_submissions_info', {})
+                standings['info_fields'] = ['_submissions_info']
 
-            if not fusers:
-                fusers = [None]
-            elif len(fusers) > n_page:
-                standings.pop('_last_submission_time')
-                fusers = [None]
+                *_, n_page = page_submissions
 
-            self._update_submissions(fusers, standings)
+                if not users:
+                    if fusers:
+                        LOG.info(f'Numbers of users without urls for some problems: {len(fusers)}')
+                    if not fusers or 'last_page' in standings['_submissions_info']:
+                        fusers = [None]
+                    elif len(fusers) > n_page:
+                        standings['_submissions_info'].pop('_last_submission_time', None)
+                        fusers = [None]
+
+                self._update_submissions(fusers, standings)
+
+            if page_submissions is None or 'last_page' in standings['_submissions_info']:
+                delta = timedelta(minutes=15)
+                LOG.info(f'Repeat statistics update after {delta}')
+                standings['timing_statistic_delta'] = delta
 
         for row in result.values():
             has_result = any('result' in p for p in row.get('problems', {}).values())
