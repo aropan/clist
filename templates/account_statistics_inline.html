@@ -1,0 +1,12 @@
+{% load extras %}
+<div class="inline-group">
+  <h2>{{ inline_admin_formset.opts.verbose_name_plural|title}}</h2>
+
+  {% for inline_admin_form in inline_admin_formset %}
+  {% with stat=inline_admin_form.original %}
+  {% if stat %}
+    <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="label label-info">{{ stat.contest.title }}</a>
+  {% endif %}
+  {% endwith %}
+  {% endfor %}
+</div>

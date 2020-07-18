@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if request.is_ajax %}
+<script>
+    window.location.href = "{{ request.get_full_path }}";
+</script>
+{% else %}
 <div class="col-sm-offset-2 col-sm-8 col-lg-offset-4 col-lg-4">
     <div class="panel panel-primary">
         <div class="panel-heading">{% block title %}Login / Sign up{% endblock %}</div>
@@ -30,4 +35,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

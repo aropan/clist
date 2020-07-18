@@ -1,10 +1,6 @@
-{% extends "admin/base.html" %}
-{% load i18n %}
-
-{% block title %}{{ title }} | {% trans 'clist.by site admin' %}{% endblock %}
+{% extends 'admin/base_site.html' %}
+{% load static %}
 
 {% block branding %}
-<h1 id="site-name">{% trans 'clist.by administration' %}</h1>
-{% endblock %}
-
-{% block nav-global %}{% endblock %}
+<h3 class="text-center"><a href="{% url 'admin:index' %}" style="text-decoration: none; color: white">CLIST<br/><small>administration panel</small></a></h3>
+{% endblock branding %}
