@@ -261,6 +261,7 @@ class Statistic(BaseModule):
                         continue
                     info.update(info.pop('profile', {}) or {})
                     info.update(info.pop('ranking', {}) or {})
+                    info['slug'] = info.pop('userSlug')
                     ratings = info.pop('ratingProgress', []) or []
                     contests = contests[len(contests) - len(ratings):]
                     titles = list(reversed(contests))
@@ -268,6 +269,7 @@ class Statistic(BaseModule):
                     for regex, to_number in (
                         (r'<li[^>]*>\s*<span[^>]*>(?P<value>[^<]*)</span>\s*<i[^>]*>[^<]*</i>(?P<key>[^<]*)', True),
                         (r'<[^>]*class="(?P<key>realname|username)"[^>]*title="(?P<value>[^"]*)"[^>]*>', False),
+                        (r'<[^>]*data-user-(?P<key>slug)="(?P<value>[^"]*)"[^>]*>', False),
                     ):
                         matches = re.finditer(regex, page)
 
@@ -314,9 +316,8 @@ class Statistic(BaseModule):
                     },
                 }
 
-                username = re.sub('[.@]', '', info['username'])
-                assert re.search(r'[\u4e00-\u9fff]', username) or username.lower() == account.key.lower(), \
-                    f'Account key {account.key} should be equal username {info["username"]}'
+                assert not info or info['slug'] == account.key, \
+                    f'Account key {account.key} should be equal username {info["slug"]}'
 
                 yield ret
 

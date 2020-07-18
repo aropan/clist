@@ -31,6 +31,7 @@ class Statistic(BaseModule):
         results = {}
         problems_info = collections.OrderedDict()
         n_page = 1
+        has_penalty = False
         while next_url:
             page = REQ.get(next_url)
             table = parsed_table.ParsedTable(html=page)
@@ -66,6 +67,7 @@ class Statistic(BaseModule):
                         if penalty.isdigit():
                             penalty = int(penalty)
                         row['penalty'] = penalty
+                        has_penalty |= bool(penalty)
 
                         for info in infos:
                             if 'rating' in info.attrs['class'].split():
@@ -78,11 +80,12 @@ class Statistic(BaseModule):
                                         row['rating_change'] = -int(info.value)
                     else:
                         letter = k.split()[0]
-                        problems_info[letter] = {'short': letter}
+                        if letter not in problems_info:
+                            problems_info[letter] = {'short': letter}
                         if len(letter) == 1:
                             if v.value:
                                 title = v.column.node.xpath('.//div[@title]/@title')[0]
-                                *_, time, attempt = title.split()
+                                score, time, attempt = title.split()
                                 time = int(time)
                                 attempt = sum(map(int, re.findall('[0-9]+', attempt)))
                                 p = problems.setdefault(letter, {})
@@ -99,6 +102,11 @@ class Statistic(BaseModule):
                                     if isinstance(row.get('penalty'), int):
                                         penalty = row['penalty']
                                         row['penalty'] = f'{penalty // 60:02}:{penalty % 60:02}'
+                                elif not v.column.node.xpath('.//img[@src]'):
+                                    score, full_score = map(int, re.findall('[0-9]+', score))
+                                    result = score
+                                    problems_info[letter]['full_score'] = full_score
+                                    p['partial'] = score < full_score
                                 elif time:
                                     result = '+' if attempt == 1 else f'+{attempt - 1}'
                                 else:
@@ -130,6 +138,10 @@ class Statistic(BaseModule):
             n_page += 1
             match = re.search(f'<a[^>]*href="(?P<href>[^"]*standings[^"]*)"[^>]*>{n_page}</a>', page)
             next_url = urllib.parse.urljoin(next_url, match.group('href')) if match else None
+
+        if not has_penalty:
+            for r in results.values():
+                r.pop('penalty', None)
 
         if urls:
             def fetch(info):
