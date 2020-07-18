@@ -1,7 +1,9 @@
 import re
 import colorsys
+import calendar
+import itertools
 from urllib.parse import urlparse
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.db import models
 from django.db.models import Q
@@ -186,24 +188,47 @@ class Contest(models.Model):
             total = duration.total_seconds()
             return "%02d:%02d" % ((total + 1e-9) // 3600, (total + 1e-9) % 3600 // 60)
 
+    @classmethod
+    def month_regex(cls):
+        if not hasattr(cls, '_month_regex'):
+            months = itertools.chain(calendar.month_name, calendar.month_abbr)
+            regex = '|'.join([f'[{m[0]}{m[0].lower()}]{m[1:]}' for m in months if m])
+            cls._month_regex = rf'\b(?:{regex})\b'
+        return cls._month_regex
+
     @staticmethod
     def title_neighbors_(title, deep, viewed):
         viewed.add(title)
         if deep == 0:
             return
 
-        for match in re.finditer(r'([0-9]+|[A-Z]\b)', title):
+        for match in re.finditer(rf'([0-9]+|[A-Z]\b|{Contest.month_regex()})', title):
             for delta in (-1, 1):
-                start, end = match.span()
+                base_title = title
                 value = match.group(0)
+                values = []
                 if value.isdigit():
                     value = str(int(value) + delta)
-                else:
+                elif len(value) == 1:
                     value = chr(ord(value) + delta)
-                new_title = title[:start] + value + title[end:]
-                if new_title in viewed:
-                    continue
-                Contest.title_neighbors_(new_title, deep=deep - 1, viewed=viewed)
+                else:
+                    mformat = '%b' if len(value) == 3 else '%B'
+                    index = datetime.strptime(value.title(), mformat).month
+                    mformats = ['%b', '%B'] if index == 5 else [mformat]
+                    if not (1 <= index + delta <= 12):
+                        ym = re.search(r'\b[0-9]{4}\b', base_title)
+                        if ym:
+                            year = str(int(ym.group()) + delta)
+                            base_title = base_title[:ym.start()] + year + base_title[ym.end():]
+                    index = (index - 1 + delta) % 12 + 1
+                    for mformat in mformats:
+                        values.append(datetime.strptime(str(index), '%m').strftime(mformat))
+                values = values or [value]
+                for value in values:
+                    new_title = base_title[:match.start()] + value + base_title[match.end():]
+                    if new_title in viewed:
+                        continue
+                    Contest.title_neighbors_(new_title, deep=deep - 1, viewed=viewed)
 
     def neighbors(self):
         viewed = set()

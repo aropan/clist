@@ -7,9 +7,11 @@ django-crispy-forms==1.7.2
 django-enumfield==1.5
 django-extensions==2.2.8
 django-jsonify==0.3.0
+django-ltree==0.5
 django-markdown-app==0.9.6
 django-phonenumber-field==2.2.0
 django-print-sql==2018.3.6
+django-ratelimit==3.0.0
 django-sql-utils==0.5.0
 django-static-fontawesome==5.0.8.1
 django-super-deduper==0.1.4
@@ -46,3 +48,5 @@ cssutils==1.0.2
 unicodecsv==0.14.1
 ratelimiter==1.2.0
 django-json-widget==1.0.0
+bootstrap-admin==0.4.4
+docutils==0.16

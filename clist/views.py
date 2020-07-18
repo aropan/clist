@@ -490,7 +490,7 @@ def update_problems(contest, problems=None):
             key = get_problem_key(problem_info)
             short = get_problem_short(problem_info)
             name = get_problem_name(problem_info)
-            if short == name:
+            if short == name or short == key:
                 short = None
 
             added_problem = added_problems.get(key)

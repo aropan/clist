@@ -59,6 +59,7 @@ DEBUG = 'DJANGO_RUNSERVER_DEBUG' in environ
 # Application definition
 
 INSTALLED_APPS = (
+    'bootstrap_admin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -334,7 +335,6 @@ if DEBUG:
 
 # DJANGO CPROFILE
 DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
-
 
 # CONSTANTS
 VIEWMODE_ = 'list'

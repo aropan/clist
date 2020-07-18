@@ -1,6 +1,6 @@
 from django.contrib import admin
-from sql_util.utils import Exists
 from django.utils.timezone import now
+from sql_util.utils import Exists
 
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.models import Account, Rating, AutoRating, Statistics, Module, Stage
@@ -61,6 +61,18 @@ class AccountAdmin(BaseModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(has_coder=Exists('coders'))
+
+    class StatisticsSet(admin.TabularInline):
+        model = Statistics
+        ordering = ('-contest__end_time', )
+        raw_id_fields = ('contest', )
+        template = 'account_statistics_inline.html'
+
+        def get_queryset(self, *args, **kwargs):
+            qs = super().get_queryset(*args, **kwargs)
+            return qs.select_related('contest')
+
+    inlines = [StatisticsSet]
 
 
 @admin_register(Rating)

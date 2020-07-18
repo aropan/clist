@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_exempt
 from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists as SubqueryExists
+from ratelimit.decorators import ratelimit
 
 from clist.models import Contest
 from clist.templatetags.extras import get_problem_short, get_country_name
@@ -578,6 +579,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     return render(request, template, context)
 
 
+@login_required
+@ratelimit(key='user', rate='1000/h', block=True)
 def solutions(request, sid, problem_key):
     statistic = get_object_or_404(Statistics.objects.select_related('account', 'contest', 'contest__resource'), pk=sid)
     problems = statistic.addition.get('problems', {})
