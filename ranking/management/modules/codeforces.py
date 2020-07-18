@@ -2,7 +2,6 @@
 
 import re
 import json
-import requests
 import html
 from copy import deepcopy
 from datetime import timedelta, datetime
@@ -19,6 +18,7 @@ import pytz
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.management.modules import conf
+from utils.aes import AESModeOfOperation
 
 
 API_KEYS = conf.CODEFORCES_API_KEYS
@@ -76,6 +76,26 @@ def _query(
         ret['code'] = getattr(err, 'code', None)
     times[-1] = time()
     return ret
+
+
+def _get(url, *args, **kwargs):
+    page = REQ.get(url, *args, **kwargs)
+    if 'document.cookie="RCPC="+toHex(slowAES.decrypt(c,2,a,b))+";' in page:
+        matches = re.findall(r'(?P<var>[a-z]+)=toNumbers\("(?P<value>[^"]*)"\)', page)
+        variables = {}
+        for variable, value in matches:
+            variables[variable] = [int(value[i:i + 2], 16) for i in range(0, len(value), 2)]
+
+        size = len(variables['a'])
+        ret = AESModeOfOperation().decrypt(variables['c'], None, 2, variables['a'], size, variables['b'])
+        rcpc = ''.join(('0' if x < 16 else '') + hex(x)[2:] for x in map(ord, ret))
+        REQ.add_cookie('RCPC', rcpc)
+
+        match = re.search('document.location.href="(?P<url>[^"]*)"', page)
+        url = match.group('url')
+        page = REQ.get(url, *args, **kwargs)
+        REQ.save_cookie()
+    return page
 
 
 class Statistic(BaseModule):
@@ -405,14 +425,13 @@ class Statistic(BaseModule):
                 break
             if data['status'] == 'FAILED' and data['comment'].startswith('handles: User with handle'):
                 handle = data['comment'].split()[-3]
-                response = requests.head(f'https://codeforces.com/profile/{handle}')
-                location = response.headers['Location']
-                target = location.split('/')[-1]
+                location = REQ.geturl(f'https://codeforces.com/profile/{handle}')
                 index = users.index(handle)
                 if location.endswith('//codeforces.com/'):
                     removed.append((index, users[index]))
                     users.pop(index)
                 else:
+                    target = location.rstrip('/').split('/')[-1]
                     users[index] = target
                 if pbar is not None:
                     pbar.update(index - last_index)
@@ -442,7 +461,7 @@ class Statistic(BaseModule):
         if 'url' not in problem:
             raise ExceptionParseStandings('Not found url')
 
-        page = REQ.get(problem['url'])
+        page = _get(problem['url'])
         match = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # noqa
         if not match:
             raise ExceptionParseStandings('Not found source code')

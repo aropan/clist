@@ -12,17 +12,16 @@ import mimetypes
 import random
 import string
 import html
-import requests
 from os import path, makedirs, listdir, remove, stat, environ
 from os.path import isdir, getctime
 from json import loads, dumps, load
-from http.cookiejar import MozillaCookieJar
+from http.cookiejar import MozillaCookieJar, Cookie
 from sys import stderr
 from gzip import GzipFile
 from hashlib import md5
 from io import BytesIO
 from time import sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 from string import ascii_letters, digits
 from random import choice, gauss
 from distutils.util import strtobool
@@ -475,7 +474,10 @@ class requester():
         return self.last_url
 
     def head(self, url):
-        return requests.head(url)
+        return self.opener.open(url).getheaders()
+
+    def geturl(self, url):
+        return self.opener.open(url).geturl()
 
     def get_link_by_text(self, text, page=None):
         if page is None:
@@ -599,6 +601,31 @@ class requester():
                 self.print("[setcookie]", name)
                 break
 
+    def add_cookie(self, name, value, domain=None, path='/', expires=None):
+        if expires is None:
+            expires = (datetime.now() + timedelta(days=365)).timestamp()
+
+        c = Cookie(
+            version=0,
+            name=name,
+            value=value,
+            port=None,
+            port_specified=False,
+            domain=domain or urllib.parse.urlparse(self.last_url).netloc,
+            domain_specified=False,
+            domain_initial_dot=False,
+            path='/',
+            path_specified=True,
+            secure=False,
+            expires=expires,
+            discard=False,
+            comment=None,
+            comment_url=None,
+            rest={'HttpOnly': None},
+            rfc2109=False,
+        )
+        self.cookiejar.set_cookie(c)
+
     @staticmethod
     def rand_string(length):
         a = ascii_letters + digits
@@ -606,10 +633,7 @@ class requester():
 
     def save_cookie(self):
         if self.cookie_filename:
-            try:
-                self.cookiejar.save()
-            except Exception:
-                pass
+            self.cookiejar.save(self.cookie_filename)
 
     def close(self):
         if self.proxer:
@@ -627,6 +651,8 @@ class requester():
             self.close()
 
     def __del__(self):
+        self.save_cookie()
+
         if not isdir(self.dir_cache):
             return
 
@@ -634,8 +660,6 @@ class requester():
             diff_time = (datetime.now() - datetime.fromtimestamp(getctime(self.dir_cache + file_cache)))
             if diff_time.seconds >= self.cache_timeout:
                 remove(self.dir_cache + file_cache)
-
-        self.save_cookie()
 
 
 if __name__ == "__main__":
