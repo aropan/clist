@@ -114,7 +114,7 @@
                   {% endif %}
                   {% if problem.n_teams is not None and with_detail %}
                     <div class="small text-muted nobold">
-                      <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>
+                      <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>{% if not contest.resource.info.standings.only_one_when_stat_equal or problem.n_accepted != problem.n_teams %}/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>{% endif %}
                     </div>
                   {% endif %}
                 {% endif %}

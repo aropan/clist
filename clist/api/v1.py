@@ -56,6 +56,7 @@ class BaseModelResource(ModelResource):
 
 class ResourceResource(BaseModelResource):
     name = fields.CharField('host')
+    icon = fields.CharField('icon')
 
     class Meta(BaseModelResource.Meta):
         abstract = False
@@ -66,6 +67,10 @@ class ResourceResource(BaseModelResource):
             'name': ['exact', 'iregex', 'regex', 'in'],
         }
         ordering = ['id', 'name', ]
+
+    def dehydrate(self, bundle):
+        bundle.data['icon'] = '/imagefit/static_resize/64x64/' + bundle.data['icon']
+        return bundle
 
 
 class ContestResource(BaseModelResource):

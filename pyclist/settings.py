@@ -341,10 +341,10 @@ DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
 
 # DGANGO IMAGEFIT
 IMAGEFIT_CACHE_ENABLED = True
-IMAGEFIT_CACHE_BACKEND_NAME = 'imagefit'
-CACHES['imagefit'] = {
+IMAGEFIT_CACHE_BACKEND_NAME = 'django_imagefit'
+CACHES[IMAGEFIT_CACHE_BACKEND_NAME] = {
     'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-    'LOCATION': path.join(tempfile.gettempdir(), 'django_imagefit')
+    'LOCATION': path.join(tempfile.gettempdir(), 'django_imagefit' + ('_debug' if DEBUG else ''))
 }
 
 # CONSTANTS
