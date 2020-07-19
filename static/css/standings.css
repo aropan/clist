@@ -189,6 +189,10 @@ a.solution:hover span {
   padding: 0px;
 }
 
+.standings-resource img {
+  vertical-align: top;
+}
+
 .neighbors-contests {
   text-align: left;
 }

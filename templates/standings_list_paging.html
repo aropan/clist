@@ -3,6 +3,7 @@
 {% lazy_paginate 50 contests %}
 {% for contest in contests %}
 <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="contest list-group-item list-group-item-action list-group-item-{% if not contest.has_module %}info{% elif not contest.has_statistics %}danger{% elif contest.is_running %}success{% endif %}">
+    <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
     {{ contest.title }}
     {% if perms.clist.reset_timing_statistic_tooltip %}
     <button class="inline-button reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}" title="timing.statistic = {{ contest.timing.statistic|naturaltime }}" data-toggle="tooltip">
@@ -16,9 +17,6 @@
     <small class="pull-right" title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
         {{ contest.end_time|timezone:timezone|naturalday }}
     </small>
-    <div class="resource">
-        <small class="text-muted">{{ contest.host }}</small>
-    </div>
 </a>
 {% endfor %}
 {% show_more %}

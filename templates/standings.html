@@ -28,6 +28,7 @@
 
   <div>
   Standings
+  <a class="standings-resource" href="{{ contest.resource.href }}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
   <span id="standings-url"></span>
   <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
 
@@ -35,7 +36,7 @@
   <a href="#" id="standings-url-toggle" class="badge progress-bar-info">{{ neighbors.total }}&nbsp;<i class="fa fa-caret-{% if neighbors.visible %}up{% else %}down{% endif %}"></i></a>
   {% endif %}
 
-  <small><a href="{{ contest.resource.href }}">{{ contest.resource.host }}</a> {{ contest.end_time|naturalday:'F j, Y' }}</small>
+  <small>{{ contest.end_time|naturalday:'F j, Y' }}</small>
 
   {% if perms.clist.change_contest %}
     <a href="{% url 'admin:clist_contest_change' contest.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
