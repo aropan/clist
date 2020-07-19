@@ -15,7 +15,9 @@
         if (!preg_match('#contest will start(?:\s*at|\s*on)\s*(?:<a[^>]*>)?(?P<start_time>[^<.]{4,})#', $page, $match)) {
             preg_match('#<script[^>]*src="(?P<url>/static/js/main\.[^"]*\.js)"[^>]*>#', $page, $match);
             $js = curlexec($match['url']);
-            preg_match('#"on\s*(?P<start_time>[^,"]*,[^@"]*@[^"]*)"#', $js, $match);
+            if (!preg_match('#"on\s*(?P<start_time>[^,"]*,[^@"]*@[^"]*)"#', $js, $match)) {
+                continue;
+            }
         }
         $start_time = preg_replace('/\s+(?:at|@)/', '', $match['start_time']);
 
