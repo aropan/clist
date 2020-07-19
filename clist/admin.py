@@ -9,54 +9,50 @@ from ranking.models import Rating
 from ranking.management.commands.parse_statistic import Command as parse_stat
 
 
-class PastContestListFilter(SimpleListFilter):
-    title = 'past'
-    parameter_name = 'past'
-
-    def lookups(self, request, model_admin):
-        return (
-            ('0', 'No'),
-            ('1', 'Yes'),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == '0':
-            return queryset.filter(end_time__gt=timezone.now())
-        elif self.value() == '1':
-            return queryset.filter(end_time__lte=timezone.now())
-
-
-class ComingContestListFilter(SimpleListFilter):
-    title = 'coming'
-    parameter_name = 'coming'
-
-    def lookups(self, request, model_admin):
-        return (
-            ('0', 'No'),
-            ('1', 'Yes'),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == '0':
-            return queryset.filter(start_time__lte=timezone.now())
-        elif self.value() == '1':
-            return queryset.filter(start_time__gt=timezone.now())
-
-
 @admin_register(Contest)
 class ContestAdmin(BaseModelAdmin):
-    fieldsets = [
-        [None, {'fields': ['title', 'slug', 'title_path', 'resource', 'host', 'url', 'standings_url']}],
-        ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
-        ['Secury information', {'fields': ['key']}],
-        ['Addition information', {'fields': ['calculate_time', 'info', 'invisible']}],
-        ['Access time', {'fields': ['created', 'modified', 'updated']}],
-    ]
-    list_display = [
-        'title', 'host', 'start_time', 'url', 'invisible', 'key', 'standings_url', 'created', 'modified', 'updated']
-    search_fields = ['title', 'standings_url']
-    list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'resource__host']
-    date_hierarchy = 'start_time'
+
+    class PastContestListFilter(SimpleListFilter):
+        title = 'past'
+        parameter_name = 'past'
+
+        def lookups(self, request, model_admin):
+            return (
+                ('0', 'No'),
+                ('1', 'Yes'),
+            )
+
+        def queryset(self, request, queryset):
+            if self.value() == '0':
+                return queryset.filter(end_time__gt=timezone.now())
+            elif self.value() == '1':
+                return queryset.filter(end_time__lte=timezone.now())
+
+    class ComingContestListFilter(SimpleListFilter):
+        title = 'coming'
+        parameter_name = 'coming'
+
+        def lookups(self, request, model_admin):
+            return (
+                ('0', 'No'),
+                ('1', 'Yes'),
+            )
+
+        def queryset(self, request, queryset):
+            if self.value() == '0':
+                return queryset.filter(start_time__lte=timezone.now())
+            elif self.value() == '1':
+                return queryset.filter(start_time__gt=timezone.now())
+
+    class RatingSet(admin.TabularInline):
+        model = Rating
+        extra = 0
+
+    class Timing(admin.TabularInline):
+        model = TimingContest
+        fields = ['statistic']
+        readonly_fields = ['modified']
+        extra = 0
 
     @transaction.atomic
     def create_timing(self, request, queryset):
@@ -74,42 +70,76 @@ class ContestAdmin(BaseModelAdmin):
         self.message_user(request, "%d of %d parsed." % (count, total))
     parse_statistic.short_description = 'Parse statistic'
 
+    fieldsets = [
+        [None, {'fields': ['title', 'slug', 'title_path', 'resource', 'host', 'url', 'standings_url']}],
+        ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
+        ['Secury information', {'fields': ['key']}],
+        ['Addition information', {'fields': ['calculate_time', 'info', 'invisible']}],
+        ['Access time', {'fields': ['created', 'modified', 'updated']}],
+    ]
+    list_display = [
+        'title', 'host', 'start_time', 'url', 'invisible', 'key', 'standings_url', 'created', 'modified', 'updated']
+    search_fields = ['title', 'standings_url']
+    list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'resource__host']
+
     actions = [create_timing, parse_statistic]
 
     def get_readonly_fields(self, request, obj=None):
         return ['updated', ] + list(super().get_readonly_fields(request, obj))
-
-    class RatingSet(admin.TabularInline):
-        model = Rating
-        extra = 0
-
-    class Timing(admin.TabularInline):
-        model = TimingContest
-        fields = ['statistic']
-        readonly_fields = ['modified']
-        extra = 0
 
     inlines = [RatingSet, Timing]
 
 
 @admin_register(Resource)
 class ResourceAdmin(BaseModelAdmin):
+    class HasProfileListFilter(SimpleListFilter):
+        title = 'has profile url'
+        parameter_name = 'has_profile_url'
+
+        def lookups(self, request, model_admin):
+            return (
+                ('0', 'No'),
+                ('1', 'Yes'),
+            )
+
+        def queryset(self, request, queryset):
+            if self.value() == '0':
+                return queryset.filter(profile_url__isnull=True)
+            elif self.value() == '1':
+                return queryset.filter(profile_url__isnull=False)
+
     fieldsets = [
         [None, {'fields': ['host', 'enable', 'url', 'profile_url', 'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
         [None, {'fields': ['info', 'ratings', 'has_rating_history']}],
     ]
-    list_display = ['host', 'enable', '_has_rating', 'profile_url', 'timezone', '_num_contests']
-    list_filter = ['has_rating_history', 'enable', 'timezone']
+    list_display = ['host', 'enable', '_has_rating', '_has_profile_url', '_num_contests']
     search_fields = ['host', 'url']
+    list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone']
 
     def _num_contests(self, obj):
         return obj.contest_set.count()
 
+    def _has_profile_url(self, obj):
+        return bool(obj.profile_url)
+    _has_profile_url.boolean = True
+    _has_profile_url.short_description = 'Has profile url'
+
     def _has_rating(self, obj):
         return bool(obj.ratings)
     _has_rating.boolean = True
+    _has_rating.short_description = 'Has rating'
+
+    def get_list_display(self, request):
+        ret = super().get_list_display(request)
+        if request.GET.get('has_profile_url') == '1':
+            ret = list(ret)
+            try:
+                ret[ret.index('_has_profile_url')] = 'profile_url'
+            except ValueError:
+                pass
+        return ret
 
     def get_readonly_fields(self, request, obj=None):
         return ['n_accounts', 'n_contests'] + list(super().get_readonly_fields(request, obj))
