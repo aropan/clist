@@ -58,10 +58,14 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
-    def to_time(delta):
+    def to_time(delta, num=None):
         if isinstance(delta, timedelta):
             delta = delta.total_seconds()
         delta = int(delta)
+
+        if num == 2:
+            return f'{delta // 60:02d}:{delta % 60:02d}'
+
         return f'{delta // 3600}:{delta // 60 % 60:02d}:{delta % 60:02d}'
 
     @staticmethod

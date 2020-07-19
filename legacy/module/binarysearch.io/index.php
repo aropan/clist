@@ -19,6 +19,7 @@
             'rid' => $RID,
             'timezone' => $TIMEZONE,
             'key' => $c['id'],
+            'info' => array('parse' => $c),
         );
     }
 
