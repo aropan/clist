@@ -13,6 +13,7 @@
 <script>$.endlessPaginate();</script>
 
 <h2>
+    <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
     <a href="{{ resource.href }}">{{ resource.host }}</a>
     {% if perms.clist.change_resource %}
       <a href="{% url 'admin:clist_resource_change' resource.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>

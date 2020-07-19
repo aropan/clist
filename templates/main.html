@@ -11,9 +11,9 @@
 <script src="{% static_ts 'js/contest/toggle.js' %}"></script>
 
 {% if add_to_calendar != "disable" %}
-  <script src="{% static_ts 'js/AddCalEvent.js' %}"></script>
-  <link href="{% static_ts 'css/AddCalEvent.css' %}" rel="stylesheet">
-  <script>var AddCalEventZones = undefined;</script>
+<script src="{% static_ts 'js/AddCalEvent.js' %}"></script>
+<link href="{% static_ts 'css/AddCalEvent.css' %}" rel="stylesheet">
+<script>var AddCalEventZones = undefined;</script>
 {% endif %}
 
 {% include "calendar.html" %}
@@ -28,34 +28,34 @@
 
 <div id="timezone-and-filter" class="row">
   {% if not request.GET.timezone %}
-    {% if not request.user.is_authenticated or request.user.coder.settings.check_timezone != 0 %}
-      {% include "check_timezone.js" %}
+  {% if not request.user.is_authenticated or request.user.coder.settings.check_timezone != 0 %}
+  {% include "check_timezone.js" %}
   <div class="hidden incorrect-tz-alert label label-warning">
     Warning! Timezone is set incorrectly. Please reload page.
   </div>
-    {% endif %}
+  {% endif %}
   {% endif %}
   <div id="time-view-search">
     <div id="time" class="small text-muted">{{ now|timezone:timezone|format_time:"%A, %H:%M:%S%z" }}</div>
     <div class="btn-group">
       <input
-        id="toggle-view"
-        type="checkbox"
-        data-toggle="toggle"
-        data-on="List"
-        data-off="Calendar"
-        data-onstyle="default active"
-        data-offstyle="default active"
-        data-size="mini"
-        {% if viewmode == 'list' %}checked{% endif %}
-      >
+         id="toggle-view"
+         type="checkbox"
+         data-toggle="toggle"
+         data-on="List"
+         data-off="Calendar"
+         data-onstyle="default active"
+         data-offstyle="default active"
+         data-size="mini"
+         {% if viewmode == 'list' %}checked{% endif %}
+         >
     </div>
-    <div id="filter" class="input-group input-group-xs">
-      <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
-      <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
-        <i class="fa fa-search"></i>
-      </span>
-    </div>
+      <div id="filter" class="input-group input-group-xs">
+        <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
+        <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
+          <i class="fa fa-search"></i>
+        </span>
+      </div>
   </div>
 </div>
 
@@ -63,83 +63,84 @@
   <div class="tab-pane{% if viewmode == "list" %} active{% endif %}" id="list-view">
     {% if contests %}
     <div id="contests">
-        <div class="row hidden-xs">
-            <div class="col-md-5 col-sm-4">
-                <div class="col-md-5 col-sm-12 header-start-time">Start/End Time</div>
-                <div class="col-md-3 col-sm-6 header-duration">Duration</div>
-                <div class="col-md-4 col-sm-6 header-timeleft">Time Left</div>
-            </div>
-            <div class="col-md-7 col-sm-8 header-event">
-                {% if hide_contest %}
-                <i class="fa fa-eye invisible"></i>
-                {% endif %}
-                Event
-                {% if contests|total_sub_contest > 0 %}
-                <a href="#" id="toggle-all" class="badge progress-bar-info">{{ contests|total_sub_contest }}&nbsp;<i class="fa fa-caret-down"></i></a>
-                {% endif %}
-                <span id="filter-count-matches" class="badge progress-bar-info hidden"></span>
-            </div>
+      <div class="row hidden-xs">
+        <div class="col-md-5 col-sm-4">
+          <div class="col-md-5 col-sm-12 header-start-time">Start/End Time</div>
+          <div class="col-md-3 col-sm-6 header-duration">Duration</div>
+          <div class="col-md-4 col-sm-6 header-timeleft">Time Left</div>
         </div>
-    {% for contest in contests %}
-        {% with rid=contest.resource.id|stringformat:"s"  %}
-        {% with group=contest.state|add:"-"|add:rid %}
-        <div class="row contest {{ contest.state }}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
-            <div class="col-md-5 col-sm-4">
-                <div class="col-md-5 col-sm-12 start-time">
-                    {% if contest.state == 'coming' %}
-                    <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.start_time|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}">
-                        {{ contest.start_time|timezone:timezone|format_time:time_format }}
-                    </a>
-                    {% else %}
-                    <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}">
-                        {{ contest.end_time|timezone:timezone|format_time:time_format }}
-                    </a>
-                    {% endif %}
-                </div>
-                <div class="col-md-3 col-sm-6 duration">{{ contest.hr_duration }}</div>
-                <div class="col-md-4 col-sm-6 timeleft{% if contest.next_time %} countdown{% endif %}"{% if contest.next_time %} data-timestamp="{{ contest.next_time }}"{% endif %}>
-                    {% if contest.is_over %}over{% else %}{{ contest.next_time|countdown }}{% endif %}
-                </div>
-            </div>
-            <div class="col-md-7 col-sm-8 event">
-                {% if hide_contest %}
-                <i class="hide-contest fa fa-eye" data-contest-id="{{ contest.id }}"></i>
-                {% endif %}
-                {% if party %}
-                <i class="party-check{% if party.has_permission_toggle %} has-permission-toggle-party-contest{% endif %} fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" data-contest-id="{{ contest.id }}"></i>
-                {% endif %}
-                <span class="contest_title">
-                {% if contest.sub_contest %}
-                    <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
-                {% endif %}
-                <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
-                </span>
-                {% if contest.state != "past" and add_to_calendar != "disable" %}
-                  <a class="data-ace" data-ace='{
-                    "title":"{{ contest.title }}",
-                    "desc":"url: {{ contest.url }}",
-                    "location":"{{ contest.host }}",
-                    "time":{
-                      "start":"{{ contest.start_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
-                      "end":"{{ contest.end_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
-                      "zone":"{{ timezone_hm }}"
-                    }
-                  }'><i class="far fa-calendar-alt"></i></a>
-                {% endif %}
-                {% if contest.group_size %}
-                    <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
-                {% endif %}
-                <div class="resource">
-                    {% if hide_contest %}
-                    <i class="fa fa-eye invisible"></i>
-                    {% endif %}
-                    <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
-                </div>
-            </div>
+        <div class="col-md-7 col-sm-8 header-event">
+          {% if hide_contest %}
+          <i class="fa fa-eye invisible"></i>
+          {% endif %}
+          Event
+          {% if contests|total_sub_contest > 0 %}
+          <a href="#" id="toggle-all" class="badge progress-bar-info">{{ contests|total_sub_contest }}&nbsp;<i class="fa fa-caret-down"></i></a>
+          {% endif %}
+          <span id="filter-count-matches" class="badge progress-bar-info hidden"></span>
         </div>
-        {% endwith %}
-        {% endwith %}
-    {% endfor %}
+      </div>
+      {% for contest in contests %}
+      {% with rid=contest.resource.id|stringformat:"s"  %}
+      {% with group=contest.state|add:"-"|add:rid %}
+      <div class="row contest {{ contest.state }}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
+        <div class="col-md-5 col-sm-4">
+          <div class="col-md-5 col-sm-12 start-time">
+            {% if contest.state == 'coming' %}
+            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.start_time|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}">
+              {{ contest.start_time|timezone:timezone|format_time:time_format }}
+            </a>
+            {% else %}
+            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}">
+              {{ contest.end_time|timezone:timezone|format_time:time_format }}
+            </a>
+            {% endif %}
+          </div>
+          <div class="col-md-3 col-sm-6 duration">{{ contest.hr_duration }}</div>
+          <div class="col-md-4 col-sm-6 timeleft{% if contest.next_time %} countdown{% endif %}"{% if contest.next_time %} data-timestamp="{{ contest.next_time }}"{% endif %}>
+            {% if contest.is_over %}over{% else %}{{ contest.next_time|countdown }}{% endif %}
+          </div>
+        </div>
+        <div class="col-md-7 col-sm-8 event">
+          {% if hide_contest %}
+          <i class="hide-contest fa fa-eye" data-contest-id="{{ contest.id }}"></i>
+          {% endif %}
+          {% if party %}
+          <i class="party-check{% if party.has_permission_toggle %} has-permission-toggle-party-contest{% endif %} fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" data-contest-id="{{ contest.id }}"></i>
+          {% endif %}
+          <span class="contest_title">
+            {% if contest.sub_contest %}
+            <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
+            {% endif %}
+            <a href="{{ contest.resource.href }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+            <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
+          </span>
+          {% if contest.state != "past" and add_to_calendar != "disable" %}
+          <a class="data-ace" data-ace='{
+            "title":"{{ contest.title }}",
+            "desc":"url: {{ contest.url }}",
+            "location":"{{ contest.host }}",
+            "time":{
+              "start":"{{ contest.start_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
+              "end":"{{ contest.end_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
+              "zone":"{{ timezone_hm }}"
+            }
+          }'><i class="far fa-calendar-alt"></i></a>
+          {% endif %}
+          {% if contest.group_size %}
+          <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
+          {% endif %}
+          <div class="resource">
+            {% if hide_contest %}
+            <i class="fa fa-eye invisible"></i>
+            {% endif %}
+            <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% endwith %}
+      {% endfor %}
     </div>
     {% else %}
     <div class="row alert alert-info text-center">List of competitions is empty</div>
@@ -154,12 +155,12 @@
 </div>
 
 {% if add_to_calendar != "disable" %}
-  <script>
-    $('a.data-ace').addcalevent({
-      'onclick': true,
-      'apps': [{% if add_to_calendar == "enable" %}1,2,3{% else %}{{ add_to_calendar }}{% endif %}]
-    })
-  </script>
+<script>
+  $('a.data-ace').addcalevent({
+    'onclick': true,
+    'apps': [{% if add_to_calendar == "enable" %}1,2,3{% else %}{{ add_to_calendar }}{% endif %}]
+  })
+</script>
 {% endif %}
 
 {% endblock %}

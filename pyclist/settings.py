@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
-from os import path, environ
 import warnings
+import tempfile
+from os import path, environ
 
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import UnorderedObjectListWarning
@@ -88,6 +89,7 @@ INSTALLED_APPS = (
     'django_user_agents',
     'django_json_widget',
     'django_ltree',
+    'imagefit',
 )
 
 MIDDLEWARE = (
@@ -126,6 +128,7 @@ TEMPLATES = [
             'builtins': [
                 'pyclist.templatetags.staticfiles',
                 'clist.templatetags.extras',
+                'imagefit.templatetags.imagefit',
             ],
         },
     },
@@ -335,6 +338,14 @@ if DEBUG:
 
 # DJANGO CPROFILE
 DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
+
+# DGANGO IMAGEFIT
+IMAGEFIT_CACHE_ENABLED = True
+IMAGEFIT_CACHE_BACKEND_NAME = 'imagefit'
+CACHES['imagefit'] = {
+    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+    'LOCATION': path.join(tempfile.gettempdir(), 'django_imagefit')
+}
 
 # CONSTANTS
 VIEWMODE_ = 'list'

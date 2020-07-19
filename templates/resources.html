@@ -10,6 +10,10 @@
     text-align: center;
     vertical-align: middle !important;
   }
+  .resources table td img {
+    vertical-align: top;
+    margin-top: 3px;
+  }
 
   .resources table tr *:first-child {
     text-align: right;
@@ -39,6 +43,7 @@
       {% for resource in resources %}
       <tr>
         <td>
+          <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
           <a class="host lead" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
         </td>
         <td>

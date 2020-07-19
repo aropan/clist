@@ -1,16 +1,22 @@
+import os
 import re
 import colorsys
 import calendar
 import itertools
-from urllib.parse import urlparse
+import logging
+from urllib.parse import urlparse, urljoin
 from datetime import timedelta, datetime
 
+import requests
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField, ArrayField
-from sql_util.utils import Exists
 from django_ltree.fields import PathField
+from sql_util.utils import Exists
+from PIL import Image
+
 
 from pyclist.models import BaseModel, BaseManager
 from clist.templatetags.extras import slug
@@ -32,6 +38,7 @@ class Resource(BaseModel):
     has_rating_history = models.BooleanField(default=False)
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
+    icon = models.CharField(max_length=255, null=True, blank=True)
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
@@ -88,7 +95,58 @@ class Resource(BaseModel):
 
             self.color = '#' + ''.join(f'{int(c * 255):02x}' for c in color).upper()
 
+        if self.icon is None:
+            self.update_icon()
+
         super().save(*args, **kwargs)
+
+    def update_icon(self):
+
+        urls = []
+        for parse_url in (self.url, self.href()):
+            try:
+                response = requests.get(parse_url, timeout=7)
+            except Exception as e:
+                logging.error(str(e))
+                continue
+
+            matches = re.findall(
+                r'<link[^>]*rel="([^"]*\bicon\b[^"]*)"[^>]*href="([^"]*)"[^>]*>',
+                response.content.decode('utf8', errors='ignore'),
+                re.IGNORECASE,
+            )
+
+            for rel, match in matches:
+                if '-icon' in rel:
+                    continue
+                match = re.sub(r'\?.*$', '', match)
+                sizes = list(map(int, re.findall('[0-9]+', match)))
+                size = sizes[-1] if sizes else 0
+                *_, ext = os.path.splitext(match)
+                if not match.startswith('/') and not match.startswith('http'):
+                    match = '/' + match
+                urls.append((size, urljoin(response.url, match), (ext or '.png')))
+            if urls:
+                break
+        urls.sort(reverse=True)
+        urls.append((None, f'https://www.google.com/s2/favicons?domain={self.host}', '.ico'))
+
+        for _, url, ext in urls:
+            response = requests.get(url)
+            if response.status_code == 200:
+                filename = re.sub('[./]', '_', self.host) + ext
+                relpath = os.path.join('img', 'resources', filename)
+                filepath = os.path.join(settings.STATIC_ROOT, relpath)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+                with open(filepath, 'wb') as fo:
+                    fo.write(response.content)
+
+                Image.open(filepath).convert('RGBA').save(filepath)
+
+                self.icon = relpath
+                self.save()
+                break
 
     @property
     def plugin(self):

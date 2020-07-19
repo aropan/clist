@@ -183,6 +183,7 @@ def get_events(request):
                 'countdown': contest.next_time,
                 'hr_duration': contest.hr_duration,
                 'color': contest.resource.color,
+                'icon': contest.resource.icon,
             }
             result.append(c)
     except Exception as e:
