@@ -13,7 +13,8 @@
                 <li><a href="{% url 'clist:resources' %}">Resources</a></li>
                 <li><a href="{% url 'ranking:standings_list' %}">Standings</a></li>
                 <li><a href="{% url 'clist:problems' %}">Problems</a></li>
-                <li><a href="https://github.com/aropan/clist/issues" target="_blank">Issues</a></li>
+                <li><a href="{{ issues_url }}" target="_blank">Issues</a></li>
+                <li><a href="{{ news_url }}" target="_blank">News</a></li>
                 {% block banner %}
                     {% for b in banners %}
                         {% if not b.template %}
@@ -58,6 +59,7 @@
                         <li role="separator" class="divider"></li>
                         <li><a href="{% url 'clist:tastypie_swagger:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
                         <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
+                        <li><a href="{{ discuss_url }}" target="_blank"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
                         <li role="separator" class="divider"></li>
                         <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
                         <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fa fa-users"></i>&nbsp;Social</a></li>
