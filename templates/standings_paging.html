@@ -264,7 +264,7 @@
     $('.standings tr[data-result]').each(function(e) {
       var node = $(this)
       node.removeClass('odd')
-      node.removeClass('event')
+      node.removeClass('even')
       node.removeClass('parity-border')
       var result = node.attr('data-result')
       if (result != prev) {

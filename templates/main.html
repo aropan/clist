@@ -6,7 +6,6 @@
 <script>page_load = $.now();</script>
 <link href="{% static_ts 'css/contest/main.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/main.js' %}"></script>
-<link href="{% static_ts 'css/bootstrap-input-xs.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script src="{% static_ts 'js/contest/toggle.js' %}"></script>
 
@@ -83,7 +82,7 @@
       {% for contest in contests %}
       {% with rid=contest.resource.id|stringformat:"s"  %}
       {% with group=contest.state|add:"-"|add:rid %}
-      <div class="row contest {{ contest.state }}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
+      <div class="row contest {{ contest.state }}{% if contest.state == 'running' %} bg-success{% elif contest.state == 'past' %} text-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
         <div class="col-md-5 col-sm-4">
           <div class="col-md-5 col-sm-12 start-time">
             {% if contest.state == 'coming' %}

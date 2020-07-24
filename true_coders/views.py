@@ -318,7 +318,15 @@ def change(request):
 
     if coder.id != int(request.POST.get("pk", -1)):
         return HttpResponseBadRequest("invalid pk")
-    if name == "timezone":
+    if name == "theme":
+        if value not in django_settings.THEMES_:
+            return HttpResponseBadRequest("invalid theme name")
+        if value == 'default':
+            coder.settings.pop('theme')
+        else:
+            coder.settings['theme'] = value
+        coder.save()
+    elif name == "timezone":
         if value not in (tz["name"] for tz in get_timezones()):
             return HttpResponseBadRequest("invalid timezone name")
         coder.timezone = value
@@ -512,7 +520,12 @@ def search(request, **kwargs):
 
     count = int(request.GET.get('count', 10))
     page = int(request.GET.get('page', 1))
-    if query == 'timezones':
+    if query == 'themes':
+        ret = {}
+        for t in django_settings.THEMES_:
+            ret[t] = t.title()
+        return JsonResponse(ret)
+    elif query == 'timezones':
         ret = {}
         for tz in get_timezones():
             ret[tz["name"]] = f'{tz["name"]} {tz["repr"]}'

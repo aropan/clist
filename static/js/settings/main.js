@@ -2,6 +2,30 @@ $(function() {
     $.fn.editable.defaults.mode = 'inline'
     $.fn.editable.defaults.url = '/settings/change/'
 
+    $('#theme').editable({
+        type: 'select',
+        source: '/settings/search/?query=themes',
+        showbuttons: false,
+        display: function(value, sourceData, response) {
+            if (response == 'accepted') {
+                window.location.replace(PREFERENCES_URL);
+            }
+            if (value) {
+                $(this).html(value.charAt(0).toUpperCase() + value.slice(1));
+            }
+        },
+    }).on('shown', function(e, editable){
+        editable.input.$input.select2({
+            width: 250,
+            placeholder: 'Select theme',
+            val: editable.input.$input.val(),
+            allowClear: true,
+        }).change(function() {
+            setTimeout(function() { editable.input.$input.select2('close'); }, 1);
+        })
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+    })
+
     $('#timezone').editable({
         type: 'select',
         source: '/settings/search/?query=timezones',

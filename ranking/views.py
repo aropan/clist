@@ -224,9 +224,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             'nourl': True,
         },
     }
-    fields_to_select = {}
+    fields_to_select = OrderedDict()
     map_fields_to_select = {'rating_change': 'rating'}
-    for f in contest_fields:
+    for f in sorted(contest_fields):
         f = f.strip('_')
         if f.lower() in [
             'institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region',

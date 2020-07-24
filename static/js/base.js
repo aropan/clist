@@ -75,3 +75,18 @@ $(() => $(".table-float-head").floatThead({
       return $table.closest(".table-responsive");
   },
 }))
+
+// Fixed transparent table header
+$(function() {
+  $('table th').each(function() {
+    var color = $(this).css('background-color')
+    if (color == 'rgba(0, 0, 0, 0)') {
+      $(this).parents().each(function() {
+        if (color == 'rgba(0, 0, 0, 0)') {
+          color = $(this).css('background-color')
+        }
+      })
+      $(this).css('background-color', color)
+    }
+  })
+})

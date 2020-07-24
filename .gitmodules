@@ -37,3 +37,6 @@
 [submodule "third_party/Chart.js"]
 	path = third_party/Chart.js
 	url = ../../chartjs/Chart.js.git
+[submodule "third_party/bootswatch"]
+	path = third_party/bootswatch
+	url = ../../thomaspark/bootswatch.git

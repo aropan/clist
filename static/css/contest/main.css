@@ -10,22 +10,6 @@
     vertical-align: middle;
 }
 
-#contests .running {
-    background: #CFC;
-}
-
-#contests>div:hover.coming {
-    background: #f3f3f3;
-}
-
-#contests>div:hover.running {
-    background: #b7ffb7;
-}
-
-#contests .past * {
-    color: #CCC;
-}
-
 .header-start-time,
 .header-duration,
 .header-timeleft,

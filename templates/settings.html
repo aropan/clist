@@ -24,6 +24,8 @@
     COUNTRIES = { {% for c in countries %}{% if forloop.counter0 %}, {% endif %} '{{ c.code }}': '{{ c.name }}' {% endfor %} }
 
     ACE_CALENDARS = { {% for k, v in ace_calendars.items %}{% if forloop.counter0 %}, {% endif %}'{{ k }}': '{{ v.name }}'{% endfor %} }
+
+    PREFERENCES_URL = "{% url 'coder:settings' 'preferences' %}"
 </script>
 
 <script src="{% static_ts 'js/settings/main.js' %}"></script>
@@ -43,6 +45,9 @@
 
     <div class="tab-content">
         <div id="preferences-tab" class="tab-pane{% if tab == 'preferences' or not tab %} active{% endif %}">
+            <div class="key">Theme</div>
+            <div class="value"><a href="#" id="theme" data-value="{{ coder.settings.theme|default:"default" }}"></a></div>
+
             <div class="key">Timezone
                 <i rel="tooltip" title="For a single viewing in another timezone using /?timezone=..."></i>
             </div>

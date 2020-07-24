@@ -90,6 +90,7 @@ INSTALLED_APPS = (
     'django_json_widget',
     'django_ltree',
     'imagefit',
+    'webpush',
 )
 
 MIDDLEWARE = (
@@ -124,6 +125,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'pyclist.context_processors.global_settings',
+                'pyclist.context_processors.bootstrap_admin',
             ],
             'builtins': [
                 'pyclist.templatetags.staticfiles',
@@ -219,10 +222,6 @@ LOGGING = {
         },
     },
     'formatters': {
-        'simple': {
-            'format': '[%(asctime)s] %(levelname)s %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
         'verbose': {
             'format': '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
@@ -242,7 +241,7 @@ LOGGING = {
             'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'verbose',
         },
         'development': {
             'level': 'DEBUG',
@@ -259,7 +258,7 @@ LOGGING = {
             'interval': 1,
             'backupCount': 7,
             'filename': path.join(BASE_DIR, 'logs', 'prod.log'),
-            'formatter': 'simple',
+            'formatter': 'verbose',
         },
         'telegrambot': {
             'level': 'DEBUG',
@@ -269,11 +268,15 @@ LOGGING = {
             'interval': 1,
             'backupCount': 7,
             'filename': path.join(BASE_DIR, 'logs', 'telegram.log'),
-            'formatter': 'simple',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
         'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'PIL': {
             'handlers': ['null'],
             'propagate': False,
         },
@@ -331,7 +334,7 @@ if DEBUG:
         'SHOW_TOOLBAR_CALLBACK': lambda request: (
             request.user.is_authenticated
             and request.user.has_perm('view_django_debug_toolbar')
-            and ('debug_toolbar' in request.GET or request.path.startswith('/admin/') or '/__debug__' in request.path)
+            and ('debug_toolbar' in request.GET or '/__debug__' in request.path)
         ),
     }
 
@@ -345,6 +348,16 @@ IMAGEFIT_CACHE_BACKEND_NAME = 'django_imagefit'
 CACHES[IMAGEFIT_CACHE_BACKEND_NAME] = {
     'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
     'LOCATION': path.join(tempfile.gettempdir(), 'django_imagefit' + ('_debug' if DEBUG else ''))
+}
+
+# BOOSTRAP ADMIN
+BOOTSTRAP_ADMIN_SIDEBAR_MENU = True
+
+# WEBPUSH
+WEBPUSH_SETTINGS = {
+  'VAPID_PUBLIC_KEY': 'BLM8jbznhlOctmETpTmBhYCpS7YB9w57uopEKrUa44vPT8-ITGuruzxtfnV7K7tdYPUeoDGIokz7I2sboUqbwR8',
+  'VAPID_PRIVATE_KEY': 'DuG3FnlFusaR1_2EXsdbezdVblJJTP4aIpB3DiwweFU',
+  'VAPID_ADMIN_EMAIL': 'mailto:webmaster@clist.by',
 }
 
 # CONSTANTS
@@ -371,6 +384,9 @@ ACE_CALENDARS_ = {
     'outlook': {'id': 3, 'name': 'Outlook'},
 }
 ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
+THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
+           'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']
+
 
 try:
     from .local_settings import *  # noqa

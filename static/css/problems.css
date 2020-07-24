@@ -4,10 +4,6 @@
   padding: 5px 15px;
 }
 
-#problems table thead th {
-  background-color: #eee;
-}
-
 #problems table td,
 #problems table th {
   vertical-align: middle !important;

@@ -49,10 +49,6 @@ table.standings th {
   font-weight: bold;
 }
 
-.standings .odd {
-  background: #f9f9f9;
-}
-
 .standings tr.parity-border td,
 .standings tr.parity-border th
 {
@@ -104,18 +100,10 @@ table.standings .handle-cell .handle-div {
   border-left: 1px solid #d0d0d0 !important;
 }
 
-.standings a {
-  text-decoration: none;
-}
-
 .standings td a,
 .standings .my-stat th a
 {
-  color: inherit;
-}
-
-.standings td a.field-to-select {
-  color: #337ab7;
+  color: inherit !important;
 }
 
 .inline {
@@ -128,7 +116,6 @@ a.solution:hover span {
 }
 
 .standings .handle-cell:hover .external-link {
-  color: #337ab7;
   visibility: visible;
 }
 
@@ -142,10 +129,6 @@ a.solution:hover span {
   z-index: 1;
   margin-top: -3px;
   margin-left: 5px;
-}
-
-.standings thead th {
-  background-color: #eee;
 }
 
 #viewSolutionModal .modal-body {

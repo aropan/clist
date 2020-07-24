@@ -81,7 +81,6 @@ def get_view_contests(request, coder):
     now = timezone.now()
     result = []
     for group, query, order, limit in (
-        ("past", Q(start_time__gt=now - timedelta(days=1), end_time__lt=now), "-end_time", settings.COUNT_PAST_),
         ("running", Q(start_time__lte=now, end_time__gte=now), "end_time", None),
         ("coming", Q(start_time__gt=now), "start_time", None),
     ):

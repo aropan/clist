@@ -5,6 +5,11 @@
         <meta name="google-site-verification" content="_r9dKPi1upFgyN6EgdU2g6yNRC7aza6qHyhdIPGomkE" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+        {% if user.is_authenticated %}
+        <meta name="sw" content="{% static_ts 'js/sw.js' %}">
+        <meta name="vapid-key" content="{{ vapid_public_key }}">
+        {% endif %}
+
         <title>{% block full-title %}{% block title %}{% endblock %} - CLIST{% endblock %}</title>
 
         {% include 'counter/base.html' %}
@@ -17,10 +22,16 @@
         <link href="{% static_ts 'css/base.css' %}" rel="stylesheet">
         <script src="{% static_ts 'js/base.js' %}"></script>
 
+        {% if user.is_authenticated and user.coder.settings.theme %}
+        <link href="{% static_ts 'bootswatch/'|add:user.coder.settings.theme|add:'/bootstrap.min.css' %}" rel="stylesheet">
+        {% else %}
         <link href="{% static_ts 'css/bootstrap.min.css' %}" rel="stylesheet">
+        {% endif %}
+
         <script src="{% static_ts 'js/bootstrap.min.js' %}"></script>
         <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
         <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+        <link href="{% static_ts 'css/bootstrap-input-xs.css' %}" rel="stylesheet">
 
         <link href="{% static_ts 'css/BootstrapXL.css' %}" rel="stylesheet">
         <link href="{% static_ts 'css/bootstrap-left-right-below-tabs.css' %}" rel="stylesheet">
@@ -61,5 +72,9 @@
         {% endblock %}
         </div>
         {% include 'messages.html' %}
+
+        {% if user.is_authenticated %}
+        <script src="{% static_ts 'js/register-sw.js' %}"></script>
+        {% endif %}
     </body>
 </html>

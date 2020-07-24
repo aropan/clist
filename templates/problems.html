@@ -10,7 +10,7 @@
 
 <div class="col-lg-10 col-lg-offset-1">
   <form method="get" action="">
-  <div class="form-group input-group">
+  <div class="form-group input-group input-group-sm">
     <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to problem name, contest title, resource host or problem tag" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
 
     <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use name:{PROBLEM}, contest:{NAME}, resource:{HOST} or tag:{TAG}.<br>Use && and || for difficult conditions.">
@@ -29,7 +29,7 @@
 
   <script>$.endlessPaginate({paginateOnScroll: true});</script>
   <div id="problems" class="panel panel-default table-responsive">
-    <table class="table table-hover table-condensed table-striped">
+    <table class="table table-hover table-condensed table-striped table-float-head">
       <thead>
         <tr>
           <th>

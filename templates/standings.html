@@ -71,7 +71,7 @@
   {% if statistics.exists %}
     {% if not groupby or groupby == 'none' %}
     <div{% if not request.user_agent.is_mobile %} id="table-inner-scroll"{% endif %} class="panel panel-default{% if request.user_agent.is_mobile %} table-responsive{% endif %}">
-      <table class="standings table table-hover table-condensed{% if not colored_by_group_score %} table-striped{% endif %}{% if request.user_agent.is_mobile %} table-float-head{% endif %}">
+      <table class="standings table table-hover table-condensed table-striped{% if request.user_agent.is_mobile %} table-float-head{% endif %}">
           <thead>
             <tr class="header-row">
               <th{% if merge_problems %} rowspan="2"{% endif %}>
