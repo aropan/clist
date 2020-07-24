@@ -19,7 +19,6 @@ $(function() {
             width: 250,
             placeholder: 'Select theme',
             val: editable.input.$input.val(),
-            allowClear: true,
         }).change(function() {
             setTimeout(function() { editable.input.$input.select2('close'); }, 1);
         })
