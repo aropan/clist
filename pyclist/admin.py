@@ -73,7 +73,6 @@ class BaseModelAdmin(admin.ModelAdmin):
     readonly_fields = ['created', 'modified']
     save_as = True
     paginator = CachingPaginator
-    show_full_result_count = False
 
     formfield_overrides = {
         fields.JSONField: {'widget': JSONEditorWidget},

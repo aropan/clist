@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'^googleee727737cf7b6a5a.html$', TemplateView.as_view(template_name='googleee727737cf7b6a5a.html')),
 
     url(r'^imagefit/', include('imagefit.urls')),
+    url(r'^webpush/', include('webpush.urls')),
 ]
 
 

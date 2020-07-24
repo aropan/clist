@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -13,11 +14,13 @@ from true_coders.models import Coder
 class Notification(BaseModel):
     EMAIL = 'email'
     TELEGRAM = 'telegram'
+    WEBBROWSER = 'webbrowser'
 
     METHODS_CHOICES = (
         ('', '...'),
         (EMAIL, 'Email'),
         (TELEGRAM, 'Telegram'),
+        (WEBBROWSER, 'WebBrowser'),
     )
 
     EVENT = 'event'
@@ -59,6 +62,10 @@ class Notification(BaseModel):
         if not self.secret:
             self.secret = User.objects.make_random_password(length=50)
         super().save(*args, **kwargs)
+
+    def clean(self):
+        if self.method == Notification.WEBBROWSER and self.period != Notification.EVENT:
+            raise ValidationError(f'WebBrowser method must have Event period.')
 
 
 class Task(BaseModel):

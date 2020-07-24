@@ -18,6 +18,7 @@ django-static-fontawesome==5.0.8.1
 django-super-deduper==0.1.4
 django-tastypie==0.14.2
 django-user-agents==0.4.0
+django-webpush==0.3.3
 pytest-django==3.8.0
 phonenumbers==8.10.6
 psycopg2==2.7.7

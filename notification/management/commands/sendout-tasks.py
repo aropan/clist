@@ -15,7 +15,7 @@ from django.db.models import Prefetch
 from django_print_sql import print_sql_decorator
 from django.utils.timezone import now
 from django.template.loader import render_to_string
-# from django.urls import reverse
+from webpush import send_user_notification
 
 from notification.models import Task, Notification
 from telegram.error import Unauthorized
@@ -50,6 +50,7 @@ class Command(BaseCommand):
         else:
             subject = ''
             message = ''
+            context = {}
 
         if task.subject:
             subject = task.subject + subject
@@ -57,7 +58,7 @@ class Command(BaseCommand):
         if task.message:
             message = task.message + message
 
-        return subject, message
+        return subject, message, context
 
     @print_sql_decorator()
     @transaction.atomic
@@ -97,7 +98,7 @@ class Command(BaseCommand):
                 coder = notification.coder
                 method, *args = notification.method.split(':', 1)
                 message = self.get_message(task)
-                subject, message = self.get_message(task)
+                subject, message, context = self.get_message(task)
                 if method == Notification.TELEGRAM:
                     if args:
                         self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
@@ -116,6 +117,22 @@ class Command(BaseCommand):
                         [coder.user.email],
                         fail_silently=False,
                         html_message=message,
+                    )
+                elif method == Notification.WEBBROWSER:
+                    payload = {
+                        'head': subject,
+                        'body': message,
+                    }
+                    contests = list(context.get('contests', []))
+                    if len(contests) == 1:
+                        contest = contests[0]
+                        payload['url'] = contest.url
+                        payload['icon'] = f'{settings.HTTPS_HOST_}/imagefit/static_resize/64x64/{contest.resource.icon}'
+
+                    send_user_notification(
+                        user=coder.user,
+                        payload=payload,
+                        ttl=300,
                     )
             except Exception:
                 logger.error('Exception sendout task:\n%s' % format_exc())

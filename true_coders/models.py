@@ -159,11 +159,11 @@ class Party(BaseModel):
 
 
 def _get_default_categories():
-    return ['list', 'calendar', 'email', 'telegram', 'api']
+    return Filter.CATEGORIES
 
 
 class Filter(BaseModel):
-    CATEGORIES = ['list', 'calendar', 'email', 'telegram', 'api']
+    CATEGORIES = ['list', 'calendar', 'email', 'telegram', 'api', 'webbrowser']
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     name = models.CharField(max_length=60, null=True, blank=True)
