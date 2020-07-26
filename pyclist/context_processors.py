@@ -7,6 +7,7 @@ def global_settings(request):
         'issues_url': settings.ISSUES_URL_,
         'news_url': settings.NEWS_URL_,
         'discuss_url': settings.DISCUSS_URL_,
+        'donate_url': settings.DONATE_URL_,
     }
 
 
