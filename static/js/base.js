@@ -90,3 +90,7 @@ $(function() {
     }
   })
 })
+
+function update_sticky_header_problems_top() {
+  $('tr.header-problems th').css('top', $('tr.header-row:first').height())
+}

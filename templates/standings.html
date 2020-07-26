@@ -70,8 +70,8 @@
   {% include "standings_filter.html" %}
   {% if statistics.exists %}
     {% if not groupby or groupby == 'none' %}
-    <div{% if not request.user_agent.is_mobile %} id="table-inner-scroll"{% endif %} class="panel panel-default{% if request.user_agent.is_mobile %} table-responsive{% endif %}">
-      <table class="standings table table-hover table-condensed table-striped{% if request.user_agent.is_mobile %} table-float-head{% endif %}">
+    <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default{% if not with_table_inner_scroll %} table-responsive{% endif %}">
+      <table class="standings table table-hover table-condensed table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}">
           <thead>
             <tr class="header-row">
               <th{% if merge_problems %} rowspan="2"{% endif %}>
@@ -124,7 +124,7 @@
               {% endfor %}
             </tr>
             {% if merge_problems %}
-            <tr style="background: #f9f9f9">
+            <tr class="header-problems">
               {% for problem in problems %}
               <th{% if problem.colspan %} class="header-score"{% endif %}>
                 <small{% if problem.group %} title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ problem.full_score|floatformat }}</small>
@@ -136,7 +136,6 @@
               </th>
               {% endfor %}
             </tr>
-            <tr></tr>
             {% endif %}
           </thead>
           <tbody>
@@ -218,6 +217,10 @@ $(document).keydown(function(event) {
     $('#viewSolutionModal').modal('hide');
   }
 });
+
+{% if with_table_inner_scroll and merge_problems %}
+    $(window).resize(update_sticky_header_problems_top)
+{% endif %}
 </script>
 
 {% endblock %}

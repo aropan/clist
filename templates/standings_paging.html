@@ -257,6 +257,12 @@
   {% show_more_table %}
 {% endif %}
 
+{% if with_table_inner_scroll and merge_problems %}
+<script>
+  $(update_sticky_header_problems_top)
+</script>
+{% endif %}
+
 {% if colored_by_group_score %}
 <script>
     var prev = null

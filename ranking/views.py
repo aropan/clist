@@ -353,6 +353,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             p['skip'] = True
         else:
             last = p
+            last['colspan'] = 1
 
     # own_stat = statistics.filter(account__coders=coder).first() if coder else None
 
@@ -571,6 +572,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             'before': [c for c in neighbors if c.end_time < contest.end_time],
             'after': [c for c in neighbors if c.end_time >= contest.end_time],
         },
+        'with_table_inner_scroll': not request.user_agent.is_mobile,
     }
 
     if extra_context is not None:
