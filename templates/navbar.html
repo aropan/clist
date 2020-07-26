@@ -15,7 +15,6 @@
                 <li><a href="{% url 'ranking:standings_list' %}">Standings</a></li>
                 <li><a href="{% url 'clist:problems' %}">Problems</a></li>
                 <li><a href="{{ issues_url }}" target="_blank">Issues</a></li>
-                <li><a href="{{ donate_url }}" target="_blank">Donate</a></li>
                 {% block banner %}
                     {% for b in banners %}
                         {% if not b.template %}
