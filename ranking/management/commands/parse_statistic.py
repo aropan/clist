@@ -257,6 +257,8 @@ class Command(BaseCommand):
                                     if name == r['name']:
                                         break
                                     r['name'] = name
+                                if len(r['name']) > 1024:
+                                    r['name'] = r['name'][:1020] + '...'
                                 no_update_name = r.pop('_no_update_name', False)
                                 if not no_update_name and account.name != r['name'] and member.find(r['name']) == -1:
                                     account.name = r['name']

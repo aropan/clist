@@ -6,6 +6,7 @@ import re
 import tqdm
 from pprint import pprint
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 from ranking.management.modules.common import REQ, BaseModule
 
@@ -51,49 +52,63 @@ class Statistic(BaseModule):
         total = scoreboard_data['data']['contest']['entrant_performance_summaries']['count']
 
         result = OrderedDict()
-        for page in tqdm.trange((total + limit - 1) // limit, desc='paging'):
-            data = query('CCEScoreboardQuery', {
-                'id': self.key,
-                'start': page * limit,
-                'count': limit,
-                'friends_only': False,
-                'force_limited_data': False,
-            })
+        with PoolExecutor(max_workers=3) as executor:
 
-            for row in data['data']['contest']['entrant_performance_summaries']['nodes']:
-                row.update(row.pop('entrant'))
-                handle = row.pop('id')
-                r = result.setdefault(handle, OrderedDict())
-                r['member'] = handle
+            def fetch_page(page):
+                data = query('CCEScoreboardQuery', {
+                    'id': self.key,
+                    'start': page * limit,
+                    'count': limit,
+                    'friends_only': False,
+                    'force_limited_data': False,
+                })
+                return data
 
-                r['name'] = row.pop('display_name')
-                r['solving'] = row.pop('total_score')
-                r['place'] = row.pop('rank')
+            n_page = (total + limit - 1) // limit
+            for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page, desc='paging'):
 
-                penalty = row.pop('total_penalty')
-                if penalty:
-                    r['penalty'] = self.to_time(penalty)
+                for row in data['data']['contest']['entrant_performance_summaries']['nodes']:
+                    row.update(row.pop('entrant'))
+                    handle = row.pop('id')
+                    r = result.setdefault(handle, OrderedDict())
+                    r['member'] = handle
 
-                problems = r.setdefault('problems', {})
-                solved = 0
-                for problem in row.pop('problems'):
-                    code = str(problem['problem']['id'])
-                    problem = problem['representative_submission']
-                    verdict = problem['submission_overall_result'].lower()
-                    p = problems.setdefault(problems_info[code]['short'], {})
-                    if verdict == 'accepted':
-                        p['result'] = '+'
-                        p['binary'] = True
-                        solved += 1
-                    else:
-                        p['result'] = '-'
-                        p['verdict'] = verdict
-                        p['binary'] = False
-                    p['time'] = self.to_time(problem['submission_time_after_contest_start'])
-                    p['url'] = problem['submission_source_code_download_uri']
-                    p['external_solution'] = True
+                    r['name'] = row.pop('display_name')
+                    r['solving'] = row.pop('total_score')
+                    r['place'] = row.pop('rank')
 
-                r['solved'] = {'solving': solved}
+                    penalty = row.pop('total_penalty')
+                    if penalty:
+                        r['penalty'] = self.to_time(penalty)
+
+                    problems = r.setdefault('problems', {})
+                    solved = 0
+                    for problem in row.pop('problems'):
+                        code = str(problem['problem']['id'])
+                        problem = problem['representative_submission']
+                        if not problem:
+                            continue
+                        verdict = problem['submission_overall_result'].lower()
+                        p = problems.setdefault(problems_info[code]['short'], {})
+                        if verdict == 'accepted':
+                            p['result'] = '+'
+                            p['binary'] = True
+                            solved += 1
+                        elif verdict == 'hidden':
+                            p['result'] = '?'
+                        elif verdict == 'wrong_answer':
+                            p['result'] = '-'
+                            p['verdict'] = verdict
+                            p['binary'] = False
+                        else:
+                            p['verdict'] = verdict
+                        p['time'] = self.to_time(problem['submission_time_after_contest_start'])
+                        url = problem['submission_source_code_download_uri']
+                        if url:
+                            p['url'] = url
+                            p['external_solution'] = True
+
+                    r['solved'] = {'solving': solved}
 
         standings = {
             'result': result,
