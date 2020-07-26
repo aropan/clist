@@ -456,7 +456,7 @@ class Stage(BaseModel):
 
                 common_problems = dict()
                 for account, row in results.items():
-                    problems = set(row['problems'].keys())
+                    problems = {k for k, p in row['problems'].items() if p.get('status') != 'W'}
                     key = row[group]
                     common_problems[key] = problems if key not in common_problems else (problems & common_problems[key])
 
