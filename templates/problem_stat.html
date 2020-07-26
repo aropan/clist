@@ -20,7 +20,7 @@
   <div>Status: {{ stat.status }}</div>
 {% endif %}
 " data-html="true"{% endif %}
-  class="badge progress-bar-{% if stat and stat.result is not None %}{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}{% if stat.partial %}info{% else %}success{% endif %}{% else %}{% if stat.upsolving %}info{% else %}danger{% endif %}{% endif %}{% else %}{% if stat.upsolving %}info{% else %}default{% endif %}{% endif %}"
+  class="badge progress-bar-{% if stat and stat.result is not None %}{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}{% if stat.partial %}info{% else %}success{% endif %}{% elif stat.result == '?' %}warning{% elif stat.upsolving %}info{% else %}danger{% endif %}{% else %}{% if stat.upsolving %}info{% else %}default{% endif %}{% endif %}"
 >
 {{ short|truncatechars:10 }}
 </span>{% if stat.url or problem_url %}</a>{% endif %}

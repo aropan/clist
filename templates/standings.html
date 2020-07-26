@@ -19,6 +19,9 @@
 <script src="{% static_ts 'js/addon-chart.js' %}"></script>
 {% endif %}
 
+<script>page_load = $.now();</script>
+<script src="{% static_ts 'js/countdown.js' %}"></script>
+
 {% endblock %}
 
 {% block content %}
@@ -63,7 +66,8 @@
 </script>
 
 {% if contest.is_running and not contest.is_over %}
-<h4 class="text-center">Time remaining: {{ contest.next_time|countdown }}{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|naturaltime }}</small>{% endif %}</h4>
+<h4 class="text-center">Time remaining: <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|naturaltime }}</small>{% endif %}</h4>
+
 {% endif %}
 
 <div class="container">

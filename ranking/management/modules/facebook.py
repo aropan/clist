@@ -52,63 +52,82 @@ class Statistic(BaseModule):
         total = scoreboard_data['data']['contest']['entrant_performance_summaries']['count']
 
         result = OrderedDict()
-        with PoolExecutor(max_workers=3) as executor:
+        if users or users is None:
+            has_users_filter = bool(users)
+            users = set(users) if users else None
+            with PoolExecutor(max_workers=3) as executor:
+                stop = False
 
-            def fetch_page(page):
-                data = query('CCEScoreboardQuery', {
-                    'id': self.key,
-                    'start': page * limit,
-                    'count': limit,
-                    'friends_only': False,
-                    'force_limited_data': False,
-                })
-                return data
+                def fetch_page(page):
+                    if stop:
+                        return
+                    data = query('CCEScoreboardQuery', {
+                        'id': self.key,
+                        'start': page * limit,
+                        'count': limit,
+                        'friends_only': False,
+                        'force_limited_data': False,
+                    })
+                    return data
 
-            n_page = (total + limit - 1) // limit
-            for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page, desc='paging'):
+                n_page = (total + limit - 1) // limit
+                for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page, desc='paging'):
+                    if not data:
+                        continue
 
-                for row in data['data']['contest']['entrant_performance_summaries']['nodes']:
-                    row.update(row.pop('entrant'))
-                    handle = row.pop('id')
-                    r = result.setdefault(handle, OrderedDict())
-                    r['member'] = handle
-
-                    r['name'] = row.pop('display_name')
-                    r['solving'] = row.pop('total_score')
-                    r['place'] = row.pop('rank')
-
-                    penalty = row.pop('total_penalty')
-                    if penalty:
-                        r['penalty'] = self.to_time(penalty)
-
-                    problems = r.setdefault('problems', {})
-                    solved = 0
-                    for problem in row.pop('problems'):
-                        code = str(problem['problem']['id'])
-                        problem = problem['representative_submission']
-                        if not problem:
+                    for row in data['data']['contest']['entrant_performance_summaries']['nodes']:
+                        row.update(row.pop('entrant'))
+                        handle = row.pop('id')
+                        if has_users_filter and handle not in users:
                             continue
-                        verdict = problem['submission_overall_result'].lower()
-                        p = problems.setdefault(problems_info[code]['short'], {})
-                        if verdict == 'accepted':
-                            p['result'] = '+'
-                            p['binary'] = True
-                            solved += 1
-                        elif verdict == 'hidden':
-                            p['result'] = '?'
-                        elif verdict == 'wrong_answer':
-                            p['result'] = '-'
-                            p['verdict'] = verdict
-                            p['binary'] = False
-                        else:
-                            p['verdict'] = verdict
-                        p['time'] = self.to_time(problem['submission_time_after_contest_start'])
-                        url = problem['submission_source_code_download_uri']
-                        if url:
-                            p['url'] = url
-                            p['external_solution'] = True
 
-                    r['solved'] = {'solving': solved}
+                        r = result.setdefault(handle, OrderedDict())
+                        r['member'] = handle
+
+                        r['name'] = row.pop('display_name')
+                        r['solving'] = row.pop('total_score')
+                        r['place'] = row.pop('rank')
+
+                        penalty = row.pop('total_penalty')
+                        if penalty:
+                            r['penalty'] = self.to_time(penalty)
+
+                        problems = r.setdefault('problems', {})
+                        solved = 0
+                        for problem in row.pop('problems'):
+                            code = str(problem['problem']['id'])
+                            input_download_status = problem['input_download_status']
+                            problem = problem['representative_submission'] or {}
+                            verdict = problem.get('submission_overall_result', input_download_status).lower()
+                            p = problems.setdefault(problems_info[code]['short'], {})
+                            if verdict == 'accepted':
+                                p['result'] = '+'
+                                p['binary'] = True
+                                solved += 1
+                            elif verdict == 'hidden':
+                                p['result'] = '?'
+                                p['icon'] = '<i class="fas fa-question"></i>'
+                            else:
+                                if 'submission_overall_result' not in problem:
+                                    p['icon'] = '<i class="fas fa-hourglass-half"></i>'
+                                p['binary'] = False
+                                p['result'] = '-'
+                                p['verdict'] = verdict
+
+                            if problem:
+                                p['time'] = self.to_time(problem['submission_time_after_contest_start'])
+                                url = problem['submission_source_code_download_uri']
+                                if url:
+                                    p['url'] = url
+                                    p['external_solution'] = True
+
+                        r['solved'] = {'solving': solved}
+
+                        if has_users_filter:
+                            users.remove(handle)
+                            if not users:
+                                stop = True
+                                break
 
         standings = {
             'result': result,

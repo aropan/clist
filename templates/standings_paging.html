@@ -204,7 +204,9 @@
             <a class="solution"{% if stat.solution or stat.external_solution %} onClick="return viewSolution(this);"{% endif %} data-url="{% if stat.url %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" href="{% if stat.solution or stat.external_solution %}{% url 'ranking:solution' statistic.pk key %}{% else %}{{ stat.url }}{% endif %}" target="_blank">
             {% endif %}
 
-            {% if stat.binary is not None %}
+            {% if stat.icon %}
+              {{ stat.icon|safe }}
+            {% elif stat.binary is not None %}
               <span><i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i></span>
             {% elif with_detail and stat.subscores %}
               <span>{% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}</span>

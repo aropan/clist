@@ -344,7 +344,10 @@ class Command(BaseCommand):
                                 if 'default_problem_full_score' in contest.info and solved and 'solved' not in r:
                                     r['solved'] = solved
 
-                            calc_time = contest.calculate_time or contest.start_time <= now < contest.end_time
+                            calc_time = contest.calculate_time or (
+                                contest.start_time <= now < contest.end_time and
+                                not contest.resource.info.get('parse', {}).get('no_calculate_time', False)
+                            )
 
                             advance = contest.info.get('advance')
                             if advance:
