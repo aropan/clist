@@ -322,6 +322,7 @@ class Contest(models.Model):
 
 class Problem(BaseModel):
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    time = models.DateTimeField()
     index = models.SmallIntegerField(null=True)
     key = models.TextField()
     name = models.TextField()

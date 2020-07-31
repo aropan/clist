@@ -6,7 +6,7 @@
 {% for problem in problems %}
 <tr>
     <td class="problem-date">
-        <div title="{{ problem.contest.start_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.contest.start_time|timezone:timezone|naturalday }}</div>
+        <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div>
     </td>
     <td>
         <a href="{{ request.path }}?search={{ 'rid:'|concat:problem.contest.resource_id }}"><img data-toggle="tooltip" data-placement="top" title="{{ problem.contest.resource.host }}" src="{{ problem.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>

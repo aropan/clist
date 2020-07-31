@@ -508,6 +508,7 @@ def update_problems(contest, problems=None):
             problem, created = Problem.objects.update_or_create(
                 contest=contest,
                 key=key,
+                time=contest.start_time,
                 defaults=defaults,
             )
 
@@ -539,7 +540,7 @@ def problems(request, template='problems.html', extra_context=None):
     problems = Problem.objects.all()
     problems = problems.select_related('contest', 'contest__resource')
     problems = problems.prefetch_related('tags')
-    problems = problems.order_by('-contest__start_time', 'contest_id', 'index')
+    problems = problems.order_by('-time', 'contest_id', 'index')
     problems = problems.filter(contest__end_time__lt=timezone.now(), visible=True)
 
     search = request.GET.get('search')
