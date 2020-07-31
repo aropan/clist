@@ -5,23 +5,21 @@
 
 {% for problem in problems %}
 <tr>
-    <td>
-        <a href="{% if problem.url %}{{ problem.url }}{% else %}{{ problem.contest.url }}{% endif %}">
-            {% if problem.short and problem.short != problem.name %}{{ problem.short }}. {% endif %}{{ problem.name }}
-        </a>
-        <div class="contest">
-            <a href="{{ request.path }}?search={{ 'cid:'|concat:problem.contest.pk }}"><small class="text-muted">{{ problem.contest.title }}</small></a>
-        </div>
-    </td>
     <td class="problem-date">
         <div title="{{ problem.contest.start_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.contest.start_time|timezone:timezone|naturalday }}</div>
     </td>
-    <td class="problem-resource">
-        <a href="{{ request.path }}?search={{ 'rid:'|concat:problem.contest.resource_id }}"><small class="text-muted">{{ problem.contest.host }}</small></a>
+    <td>
+        <a href="{{ request.path }}?search={{ 'rid:'|concat:problem.contest.resource_id }}"><img data-toggle="tooltip" data-placement="top" title="{{ problem.contest.resource.host }}" src="{{ problem.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+        <a href="{% url 'ranking:standings' problem.contest.title|slug problem.contest.pk %}">{% if problem.short and problem.short != problem.name %}{{ problem.short }}. {% endif %}{{ problem.name }}</a>
+        <a href="{% if problem.url %}{{ problem.url }}{% else %}{{ problem.contest.url }}{% endif %}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+
+        {% if perms.clist.change_problem %}
+        <a href="{% url 'admin:clist_problem_change' problem.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+        {% endif %}
     </td>
     <td>
         {% for tag in problem.tags.all %}
-            <a href="{{ request.path }}?search={{ 'tag:'|concat:tag.name }}" class="badge progress-bar-info">{{ tag.name }}</a>
+        <a href="{{ request.path }}?search={{ 'tag:'|concat:tag.name }}" class="badge progress-bar-info">{{ tag.name }}</a>
         {% endfor %}
     </td>
 </tr>

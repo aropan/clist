@@ -405,7 +405,11 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             for q in values:
                 if q not in field_to_select['options']:
                     continue
-                filt |= Q(addition__rating_change__isnull=q == 'unrated')
+                q = q == 'unrated'
+                if q:
+                    filt |= Q(addition__rating_change__isnull=True) & Q(addition__new_rating__isnull=True)
+                else:
+                    filt |= Q(addition__rating_change__isnull=False) | Q(addition__new_rating__isnull=False)
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})
