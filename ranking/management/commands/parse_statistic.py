@@ -223,15 +223,8 @@ class Command(BaseCommand):
                                 no_rating = with_stats and 'new_rating' not in stats and 'rating_change' not in stats
                                 updated = now + timedelta(days=1)
                                 wait_rating = contest.resource.info.get('statistics', {}).get('wait_rating')
-                                if (
-                                    created
-                                    or (not statistics_ids and updated < account.updated)
-                                    or (update_without_new_rating and updated < account.updated and no_rating)
-                                ):
-                                    n_upd_account_time += 1
-                                    account.updated = updated
-                                    account.save()
-                                elif no_rating and wait_rating:
+
+                                if no_rating and wait_rating:
                                     updated = now + timedelta(hours=1)
                                     title_re = wait_rating.get('title_re')
                                     if (
@@ -242,14 +235,23 @@ class Command(BaseCommand):
                                         if user_info is None:
                                             generator = plugin.get_users_infos([member], contest.resource, [account])
                                             user_info = next(generator)
-                                            field = user_info.get('contest_addition_update_by') or 'key'
-                                            value = getattr(contest, field)
-                                            user_info_has_rating = value in user_info.get('contest_addition_update', {})
+                                            params = user_info.get('contest_addition_update_params', {})
+                                            field = user_info.get('contest_addition_update_by') or params.get('by') or 'key'  # noqa
+                                            updates = user_info.get('contest_addition_update') or params.get('update') or {}  # noqa
+                                            user_info_has_rating = getattr(contest, field) in updates
 
                                         if user_info_has_rating:
                                             n_upd_account_time += 1
                                             account.updated = updated
                                             account.save()
+                                elif (
+                                    created
+                                    or (not statistics_ids and updated < account.updated)
+                                    or (update_without_new_rating and updated < account.updated and no_rating)
+                                ):
+                                    n_upd_account_time += 1
+                                    account.updated = updated
+                                    account.save()
 
                             if r.get('name'):
                                 while True:
@@ -478,8 +480,10 @@ class Command(BaseCommand):
                                 statistic.save()
 
                         if users is None:
-                            timing_statistic_delta = standings.get('timing_statistic_delta',
-                                                                   timedelta(minutes=30) if has_hidden else None)
+                            timing_statistic_delta = standings.get(
+                                'timing_statistic_delta',
+                                timedelta(minutes=30) if has_hidden and contest.end_time < now else None,
+                            )
                             if timing_statistic_delta is not None:
                                 contest.timing.statistic = timezone.now() + timing_statistic_delta
                                 contest.timing.save()

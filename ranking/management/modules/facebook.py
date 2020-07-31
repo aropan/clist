@@ -96,7 +96,7 @@ class Statistic(BaseModule):
                         solved = 0
                         for problem in row.pop('problems'):
                             code = str(problem['problem']['id'])
-                            input_download_status = problem['input_download_status']
+                            input_download_status = problem.get('input_download_status', '')
                             problem = problem['representative_submission'] or {}
                             verdict = problem.get('submission_overall_result', input_download_status).lower()
                             p = problems.setdefault(problems_info[code]['short'], {})
@@ -112,7 +112,8 @@ class Statistic(BaseModule):
                                     p['icon'] = '<i class="fas fa-hourglass-half"></i>'
                                 p['binary'] = False
                                 p['result'] = '-'
-                                p['verdict'] = verdict
+                                if verdict:
+                                    p['verdict'] = verdict
 
                             if problem:
                                 p['time'] = self.to_time(problem['submission_time_after_contest_start'])
