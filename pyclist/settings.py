@@ -127,6 +127,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'pyclist.context_processors.global_settings',
                 'pyclist.context_processors.bootstrap_admin',
+                'pyclist.context_processors.coder_time_info',
             ],
             'builtins': [
                 'pyclist.templatetags.staticfiles',

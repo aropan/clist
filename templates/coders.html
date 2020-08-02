@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Coders{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/coders.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<div class="col-lg-8 col-lg-offset-2">
+  <form class="form-inline" method="get" action="">
+  <div id="coders-filters" class="form-group">
+    <div class="input-group input-group-sm">
+      <input
+        type="search"
+        name="search"
+        value="{{ request.GET.search }}"
+        class="form-control"
+        placeholder="Regex filter to username"
+        {% if request.GET.search %}
+        autofocus
+        onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"
+        {% endif %}
+        autocomplete="off"
+        style="min-width: 300px"
+      />
+
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="submit">
+          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+          Search
+        </button>
+      </span>
+    </div>
+
+    {% include 'country_filter.html' with has_country=True %}
+    {% include 'resource_filter.html' %}
+  </div>
+
+  </form>
+
+  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  <div id="coders" class="panel panel-default table-responsive">
+    <table class="table table-hover table-striped table-float-head">
+      <thead>
+        <tr>
+          <th class="username">
+            Coder
+          </th>
+          {% for resource in params.resources %}
+          <th>
+            <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="24" height="24"/>
+          </th>
+          {% endfor %}
+          <th>
+            Number of<br/>accounts
+          </th>
+          <th>
+            Registration time
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% include page_template %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+

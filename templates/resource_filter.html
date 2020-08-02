@@ -1,0 +1,48 @@
+<div class="input-group input-group-sm hidden" id="resource-hidden">
+  <span class="input-group-addon">Resource</span>
+
+  <select name="resource" id="resource" onchange="this.form.submit()" multiple>
+    <option></option>
+    {% for resource in params.resources %}
+      <option value="{{ resource.pk }}" selected>{{ resource.host }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<script>
+  $('#resource').select2({
+    dropdownAutoWidth : true,
+    theme: 'bootstrap',
+    placeholder: '',
+    allowClear: true,
+    ajax: {
+      url: '/settings/search/',
+      dataType: 'json',
+      delay: 314,
+      data: function (params) {
+        return {
+          query: 'resources',
+          regex: params.term,
+          page: params.page || 1
+        };
+      },
+      processResults: function (data, params) {
+        return {
+          results: data.items,
+          pagination: {
+            more: data.more
+          }
+        };
+      },
+      cache: true,
+    },
+  }).on('select2:unselecting', function() {
+    $(this).data('unselecting', true);
+  }).on('select2:opening', function(e) {
+    if ($(this).data('unselecting')) {
+      $(this).removeData('unselecting');
+      e.preventDefault();
+    }
+  })
+  $('#resource-hidden').removeClass('hidden');
+</script>

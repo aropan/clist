@@ -123,6 +123,25 @@ def update_account_writer(signal, instance, action, reverse, pk_set, **kwargs):
         Account.objects.filter(pk__in=pk_set).update(n_writers=F('n_writers') + delta)
 
 
+@receiver(m2m_changed, sender=Account.coders.through)
+def update_n_coder_accounts(signal, instance, action, reverse, pk_set, **kwargs):
+    when, action = action.split('_', 1)
+    if when != 'post':
+        return
+    if action == 'add':
+        delta = 1
+    elif action == 'remove':
+        delta = -1
+    else:
+        return
+
+    if reverse:
+        instance.n_accounts += delta
+        instance.save()
+    else:
+        Coder.objects.filter(pk__in=pk_set).update(n_accounts=F('n_accounts') + delta)
+
+
 class Rating(BaseModel):
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
     party = models.ForeignKey(Party, on_delete=models.CASCADE)

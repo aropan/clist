@@ -27,6 +27,7 @@ class Coder(BaseModel):
     country = CountryField(null=True, blank=True)
     phone_number = PhoneNumberField(blank=True)
     addition_fields = JSONField(default=dict, blank=True)
+    n_accounts = models.IntegerField(default=0, db_index=True)
 
     def __str__(self):
         return "%s" % (self.username)

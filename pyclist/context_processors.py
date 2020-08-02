@@ -1,5 +1,7 @@
 from django.conf import settings
 
+from clist.views import get_timeformat, get_timezone
+
 
 def global_settings(request):
     return {
@@ -13,3 +15,10 @@ def global_settings(request):
 
 def bootstrap_admin(request):
     return {'current_url': request.path}
+
+
+def coder_time_info(request):
+    return {
+        'timeformat': get_timeformat(request),
+        'timezone': get_timezone(request),
+    }

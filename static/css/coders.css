@@ -1,0 +1,13 @@
+#coders table th,
+#coders table td
+{
+  text-align: center;
+}
+
+#coders .username {
+  text-align: left;
+}
+
+#coders-filters > * {
+  margin-bottom: 5px;
+}

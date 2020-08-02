@@ -1,0 +1,47 @@
+{% load humanize %}
+{% load el_pagination_tags %}
+
+{% lazy_paginate 50,200 coders %}
+
+{% for coder in coders %}
+<tr{% if request.user.is_authenticated and coder.username == request.user.username %} class="info"{% endif %}>
+  <td class="username">
+    {% with country=coder.country %}
+      <div class="flag-width-fixed">
+      {% if country %}
+      <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
+        <img class="flag flag-{{ country.code|lower }}"/>
+      </a>
+      {% endif %}
+      </div>
+    {% endwith %}
+
+    <a href="{% url 'coder:profile' coder.username %}">{{ coder.username }}</a>
+    {% if perms.true_coders.change_coder %}
+    <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    {% endif %}
+  </td>
+  {% for resource in params.resources %}
+  <td>
+    <a href="{% url 'coder:profile' coder.username %}?search=resource:{{ resource.host }}">
+    {% with rating_key=resource.pk|slugify|add:'_rating' n_contests_key=resource.pk|slugify|add:'_n_contests' %}
+    {% with rating=coder|get_item:rating_key n_contests=coder|get_item:n_contests_key %}
+    {% if rating is not None %}
+      {% coder_color_circle resource rating %}
+      <div class="{% coder_color_class resource rating %}" style="display: inline-block">{{ rating }}</div>
+    {% else %}
+      <div>{{ n_contests }}</div>
+    {% endif %}
+    {% endwith %}
+    {% endwith %}
+    </a>
+  </td>
+  {% endfor %}
+  <td>{{ coder.n_accounts }}</td>
+  <td><div title="{{ coder.created|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ coder.created|timezone:timezone|naturalday }}</div></td>
+</tr>
+{% endfor %}
+
+{% show_more_table %}
+
+<script>$(toggle_tooltip);</script>

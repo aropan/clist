@@ -17,8 +17,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from tastypie.models import ApiKey
 from django_countries import countries
-from el_pagination.decorators import page_templates
-from sql_util.utils import SubqueryCount, SubquerySum, Exists
+from el_pagination.decorators import page_templates, page_template
+from sql_util.utils import SubqueryMax, SubqueryCount, SubquerySum, Exists
 
 from clist.models import Resource, Contest
 from clist.templatetags.extras import get_timezones, format_time, slug as slugify, query_transform
@@ -29,6 +29,7 @@ from notification.forms import Notification, NotificationForm
 from ranking.models import Rating, Statistics, Module, Account
 from true_coders.models import Filter, Party, Coder, Organization
 from utils.regex import verify_regex, get_iregex_filter
+from pyclist.decorators import context_pagination
 
 
 logger = logging.getLogger(__name__)
@@ -115,6 +116,45 @@ def coder_profile(request):
     if query:
         url += '?' + query
     return HttpResponseRedirect(url)
+
+
+@page_template('coders_paging.html')
+@context_pagination()
+def coders(request, template='coders.html'):
+    coders = Coder.objects.all()
+    params = {}
+
+    search = request.GET.get('search')
+    if search:
+        filt = get_iregex_filter(search, 'username', logger=request.logger)
+        coders = coders.filter(filt)
+
+    countries = request.GET.getlist('country')
+    countries = set([c for c in countries if c])
+    if countries:
+        coders = coders.annotate(filter_country=Exists('account', filter=Q(account__country__in=countries)))
+        coders = coders.filter(Q(country__in=countries) | Q(filter_country=True))
+        params['countries'] = countries
+
+    resources = request.GET.getlist('resource')
+    if resources:
+        resources = [r for r in resources if r]
+        resources = list(Resource.objects.filter(pk__in=resources))
+
+        for r in resources:
+            coders = coders.annotate(has_account=Exists('account', filter=Q(account__resource=r)))
+            coders = coders.filter(has_account=True)
+            coders = coders.annotate(**{f'{r.pk}_rating': SubqueryMax('account__rating', filter=Q(resource=r))})
+            coders = coders.annotate(**{f'{r.pk}_n_contests': SubquerySum('account__n_contests', filter=Q(resource=r))})
+        params['resources'] = resources
+
+    coders = coders.order_by('-created')
+
+    context = {
+        'coders': coders,
+        'params': params,
+    }
+    return template, context
 
 
 @page_templates((
@@ -530,6 +570,15 @@ def search(request, **kwargs):
         for tz in get_timezones():
             ret[tz["name"]] = f'{tz["name"]} {tz["repr"]}'
         return JsonResponse(ret)
+    elif query == 'resources':
+        qs = Resource.objects.all()
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'host'))
+        qs = qs.order_by('-n_accounts')
+
+        total = qs.count()
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'text': r.host} for r in qs]
     elif query == 'resources-for-add-account':
         coder = request.user.coder
         coder_accounts = coder.account_set.filter(resource=OuterRef('pk'))

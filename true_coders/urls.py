@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'^coder/$', views.coder_profile, name='coder_profile'),
     url(r'^coder/([^/]*)/$', views.profile, name='profile'),
     url(r'^coder/(?P<username>[^/]*)/ratings/$', views.ratings, name='ratings'),
+    url(r'^coders/$', views.coders, name='coders'),
     url(r'^account/(?P<key>.*)/resource/(?P<host>.*)/ratings/$', views.ratings),
     url(r'^account/(?P<key>.*)/resource/(?P<host>.*)/$', views.account, name='account'),
     url(r'^api/key/$', views.get_api_key, name='api-key'),
