@@ -121,7 +121,7 @@ def coder_profile(request):
 @page_template('coders_paging.html')
 @context_pagination()
 def coders(request, template='coders.html'):
-    coders = Coder.objects.all()
+    coders = Coder.objects.select_related('user')
     params = {}
 
     search = request.GET.get('search')
@@ -149,13 +149,13 @@ def coders(request, template='coders.html'):
     orderby = request.GET.get('sort_column')
     if orderby in ['username', 'created', 'n_accounts']:
         pass
-    elif orderby.startswith('resource_'):
+    elif orderby and orderby.startswith('resource_'):
         _, pk = orderby.split('_')
         orderby = [f'{pk}_rating', f'{pk}_n_contests']
     elif orderby:
         request.logger.error(f'Not found `{orderby}` column for sorting')
         orderby = []
-    orderby = orderby if isinstance(orderby, list) else [orderby]
+    orderby = orderby if not orderby or isinstance(orderby, list) else [orderby]
     order = request.GET.get('sort_order')
     if order in ['asc', 'desc']:
         orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]

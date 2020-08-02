@@ -16,7 +16,10 @@
       </div>
     {% endwith %}
 
-    <a href="{% url 'coder:profile' coder.username %}">{{ coder.username }}</a>
+    <span{% if coder.user.first_name or coder.user.last_name %} data-toggle="tooltip" data-title="{{ coder.user.first_name }} {{ coder.user.last_name }}"{% endif %}>
+      <a href="{% url 'coder:profile' coder.username %}">{{ coder.username }}</a>
+    </span>
+
     {% if perms.true_coders.change_coder %}
     <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
