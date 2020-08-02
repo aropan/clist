@@ -140,10 +140,7 @@ def coders(request, template='coders.html'):
     if resources:
         resources = [r for r in resources if r]
         resources = list(Resource.objects.filter(pk__in=resources))
-
         for r in resources:
-            coders = coders.annotate(has_account=Exists('account', filter=Q(account__resource=r)))
-            coders = coders.filter(has_account=True)
             coders = coders.annotate(**{f'{r.pk}_rating': SubqueryMax('account__rating', filter=Q(resource=r))})
             coders = coders.annotate(**{f'{r.pk}_n_contests': SubquerySum('account__n_contests', filter=Q(resource=r))})
         params['resources'] = resources
@@ -593,7 +590,7 @@ def search(request, **kwargs):
 
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.host} for r in qs]
+        ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
     elif query == 'resources-for-add-account':
         coder = request.user.coder
         coder_accounts = coder.account_set.filter(resource=OuterRef('pk'))

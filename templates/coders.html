@@ -51,7 +51,9 @@
           </th>
           {% for resource in params.resources %}
           <th>
-            <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="24" height="24"/>
+            <a href="{% url 'clist:resource' resource.host %}">
+              <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="24" height="24"/>
+            </a>
             <div class="sortable-column" data-column="resource_{{ resource.pk }}"></div>
           </th>
           {% endfor %}

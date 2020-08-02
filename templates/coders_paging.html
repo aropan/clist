@@ -23,18 +23,22 @@
   </td>
   {% for resource in params.resources %}
   <td>
-    <a href="{% url 'coder:profile' coder.username %}?search=resource:{{ resource.host }}">
     {% with rating_key=resource.pk|slugify|add:'_rating' n_contests_key=resource.pk|slugify|add:'_n_contests' %}
     {% with rating=coder|get_item:rating_key n_contests=coder|get_item:n_contests_key %}
-    {% if rating is not None %}
-      {% coder_color_circle resource rating %}
-      <div class="{% coder_color_class resource rating %}" style="display: inline-block">{{ rating }}</div>
+    {% if rating is None and n_contests is None %}
+    <div>&#183;</div>
     {% else %}
-      <div>{{ n_contests }}</div>
+    <a href="{% url 'coder:profile' coder.username %}?search=resource:{{ resource.host }}">
+      {% if rating is not None %}
+        {% coder_color_circle resource rating %}
+        <div class="{% coder_color_class resource rating %}" style="display: inline-block">{{ rating }}</div>
+      {% else %}
+        <div>{{ n_contests }}</div>
+      {% endif %}
+    </a>
     {% endif %}
     {% endwith %}
     {% endwith %}
-    </a>
   </td>
   {% endfor %}
   <td>{{ coder.n_accounts }}</td>
