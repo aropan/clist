@@ -66,7 +66,8 @@ class AccountAdmin(BaseModelAdmin):
         model = Statistics
         ordering = ('-contest__end_time', )
         raw_id_fields = ('contest', )
-        template = 'account_statistics_inline.html'
+        fields = ('contest', )
+        can_delete = False
 
         def get_queryset(self, *args, **kwargs):
             qs = super().get_queryset(*args, **kwargs)
