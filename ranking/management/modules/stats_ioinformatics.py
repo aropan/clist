@@ -68,7 +68,9 @@ class Statistic(BaseModule):
                     if country:
                         row['country'] = country
                 else:
-                    row[k] = v.value
+                    val = v.value.strip()
+                    if val:
+                        row[k] = val
             result[row['member']] = row
 
         standings = {

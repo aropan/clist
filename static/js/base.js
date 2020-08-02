@@ -94,3 +94,29 @@ $(function() {
 function update_sticky_header_problems_top() {
   $('tr.header-problems th').css('top', $('tr.header-row:first').height())
 }
+
+$(function() {
+  $('.sortable-column').each(function() {
+    var url = new URL(window.location.href)
+    var sort_column = url.searchParams.get('sort_column')
+    var sort_order = url.searchParams.get('sort_order')
+    var column = this.getAttribute('data-column')
+    url.searchParams.set('sort_column', column)
+    url.searchParams.set('sort_order', 'asc')
+    var asc_url = url.href
+    url.searchParams.set('sort_order', 'desc')
+    var desc_url = url.href
+
+    if (sort_column == column) {
+      var order = sort_order == 'asc'? 'up' : 'down'
+      $(this).append(`<i class="sortable-column-order fas fa-chevron-` + order + `"></i>`)
+    }
+
+    if (sort_column != column || sort_order != 'desc') {
+      $(this).append(`<a href="` + desc_url + `" class="text-muted"><i class="fas fa-chevron-down"></i></a>`)
+    }
+    if (sort_column != column || sort_order != 'asc') {
+      $(this).append(`<a href="` + asc_url + `" class="text-muted"><i class="fas fa-chevron-up"></i></a>`)
+    }
+  })
+})

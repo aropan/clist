@@ -194,3 +194,23 @@ html {
   border-left: 0px;
   border-right: 0px;
 }
+
+/*
+ * sortable column
+ */
+
+.sortable-column {
+  position: absolute;
+  margin-top: -5px;
+  margin-left: 5px;
+  display: inline;
+  font-size: 20px;
+}
+
+.sortable-column > a {
+  visibility: hidden;
+}
+
+*:hover > .sortable-column > a {
+  visibility: visible;
+}

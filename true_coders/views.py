@@ -148,7 +148,22 @@ def coders(request, template='coders.html'):
             coders = coders.annotate(**{f'{r.pk}_n_contests': SubquerySum('account__n_contests', filter=Q(resource=r))})
         params['resources'] = resources
 
-    coders = coders.order_by('-created')
+    # ordering
+    orderby = request.GET.get('sort_column', 'created')
+    if orderby in ['username', 'created', 'n_accounts']:
+        pass
+    elif orderby.startswith('resource_'):
+        _, pk = orderby.split('_')
+        orderby = [f'{pk}_rating', f'{pk}_n_contests']
+    else:
+        request.logger.error(f'Not found `{orderby}` column for sorting')
+    orderby = orderby if isinstance(orderby, list) else [orderby]
+    order = request.GET.get('sort_order', 'desc')
+    if order in ['asc', 'desc']:
+        orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
+    else:
+        request.logger.error(f'Not found `{order}` order for sorting')
+    coders = coders.order_by(*orderby)
 
     context = {
         'coders': coders,

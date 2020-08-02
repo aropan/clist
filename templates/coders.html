@@ -47,17 +47,20 @@
         <tr>
           <th class="username">
             Coder
+            <div class="sortable-column" data-column="username"></div>
           </th>
           {% for resource in params.resources %}
           <th>
-            <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="24" height="24"/>
+            <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="24" height="24"/>
+            <div class="sortable-column" data-column="resource_{{ resource.pk }}"></div>
           </th>
           {% endfor %}
           <th>
-            Number of<br/>accounts
+            <span data-toggle="tooltip" data-placement="bottom" data-title="Number of accounts">N</span><div class="sortable-column" data-column="n_accounts"></div>
           </th>
           <th>
             Registration time
+            <div class="sortable-column" data-column="created"></div>
           </th>
         </tr>
       </thead>
