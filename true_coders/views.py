@@ -566,7 +566,6 @@ def change(request):
     return HttpResponse("accepted")
 
 
-@login_required
 def search(request, **kwargs):
     query = request.GET.get('query', None)
     if not query or not isinstance(query, str):
@@ -593,7 +592,7 @@ def search(request, **kwargs):
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
-    elif query == 'resources-for-add-account':
+    elif query == 'resources-for-add-account' and request.user.is_authenticated:
         coder = request.user.coder
         coder_accounts = coder.account_set.filter(resource=OuterRef('pk'))
 
@@ -620,7 +619,7 @@ def search(request, **kwargs):
             }
             for r in qs
         ]
-    elif query == 'accounts-for-add-account':
+    elif query == 'accounts-for-add-account' and request.user.is_authenticated:
         coder = request.user.coder
 
         qs = Account.objects.all()
