@@ -12,7 +12,7 @@ from ranking.management.modules.common.locator import Locator
 
 
 class Statistic(BaseModule):
-    API_ROOM_URL_FORMAT_ = 'https://api.binarysearch.io/rooms/{id}?slug={slug}'
+    API_ROOM_URL_FORMAT_ = 'https://api.binarysearch.io/rooms/{channelSlug}?slug={slug}'
     API_RANKING_URL_FORMAT_ = 'https://api.binarysearch.io/rooms/{id}/sessions/{sid}/leaderboards?page={page}'
     API_PROFILE_URL_FORMAT_ = 'https://api.binarysearch.io/users/{user}/profile'
 
@@ -35,6 +35,8 @@ class Statistic(BaseModule):
                     'name': problem['title'],
                     'url': f'{self.url}?questionsetIndex={idx}'
                 }
+                if problem.get('difficulty') is not None:
+                    info['full_score'] = problem['difficulty'] + 3
                 problems_info[info['code']] = info
                 problems_ids.append(info['code'])
 
@@ -70,14 +72,19 @@ class Statistic(BaseModule):
 
                             solved = 0
                             problems = r.setdefault('problems', {})
-                            for code, duration in zip(problems_ids, row.pop('durationTimes')):
-                                if not duration:
-                                    continue
+                            for code, duration, attempts in zip(
+                                problems_ids, row.pop('durationTimes'), row.pop('attempts')
+                            ):
                                 p = problems.setdefault(code, {})
-                                p['result'] = '+'
-                                p['time'] = self.to_time(duration)
-                                p['binary'] = True
-                                solved += 1
+                                if duration:
+                                    p['result'] = '+'
+                                    p['time'] = self.to_time(duration)
+                                    p['binary'] = True
+                                    if attempts > 1:
+                                        p['penalty_score'] = attempts - 1
+                                    solved += 1
+                                elif attempts:
+                                    p['result'] = f'-{attempts}'
                             r['solved'] = {'solving': solved}
                             r['info'] = {'stat': row.pop('stat')}
         standings = {
@@ -90,19 +97,32 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
 
         def fetch_profile(user):
+            nonlocal stop
+            if stop:
+                return False
             url = Statistic.API_PROFILE_URL_FORMAT_.format(user=user)
             page = REQ.get(url)
             data = json.loads(page)
             return data
 
         with PoolExecutor(max_workers=8) as executor, Locator() as locator:
+            stop = False
             profiles = executor.map(fetch_profile, users)
             for user, account, data in tqdm(zip(users, accounts, profiles), total=len(users), desc='getting users'):
+                if stop:
+                    break
+                if not data:
+                    yield {'info': None}
+                    return
                 data = data['user']
                 assert user == data['username']
                 data = {k: v for k, v in data.items() if k == 'stat' or not isinstance(v, (dict, list))}
                 location = data.get('location')
-                if location and (not account.country or account.info.get('country') != location):
+                if (
+                    location and
+                    location.lower() != 'planet earth' and
+                    (not account.country or account.info.get('country') != location)
+                ):
                     country = locator.get_country(location)
                     if country:
                         data['country'] = country

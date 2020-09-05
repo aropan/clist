@@ -41,7 +41,10 @@ class ListProxiesEmpty(Exception):
 
 
 class FailOnGetResponse(Exception):
-    pass
+
+    @property
+    def code(self):
+        return getattr(self.args[0], 'code', None)
 
 
 class NoVerifyWord(Exception):
@@ -587,11 +590,15 @@ class requester():
         for c in self.cookiejar:
             yield c
 
-    def get_cookies(self):
-        return dict(((i.name, i.value) for i in self.cookiejar))
+    def get_cookies(self, domain_regex=None):
+        return dict((
+            (i.name, i.value)
+            for i in self.cookiejar
+            if domain_regex is None or re.search(domain_regex, i.domain)
+        ))
 
-    def get_cookie(self, name):
-        return self.get_cookies().get(name, None)
+    def get_cookie(self, name, *args, **kwargs):
+        return self.get_cookies(*args, **kwargs).get(name, None)
 
     def set_cookie(self, name, value):
         for c in self.cookiejar:

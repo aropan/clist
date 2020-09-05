@@ -234,11 +234,15 @@ class Command(BaseCommand):
                                     ):
                                         if user_info is None:
                                             generator = plugin.get_users_infos([member], contest.resource, [account])
-                                            user_info = next(generator)
-                                            params = user_info.get('contest_addition_update_params', {})
-                                            field = user_info.get('contest_addition_update_by') or params.get('by') or 'key'  # noqa
-                                            updates = user_info.get('contest_addition_update') or params.get('update') or {}  # noqa
-                                            user_info_has_rating = getattr(contest, field) in updates
+                                            try:
+                                                user_info = next(generator)
+                                                params = user_info.get('contest_addition_update_params', {})
+                                                field = user_info.get('contest_addition_update_by') or params.get('by') or 'key'  # noqa
+                                                updates = user_info.get('contest_addition_update') or params.get('update') or {}  # noqa
+                                                user_info_has_rating = getattr(contest, field) in updates
+                                            except StopIteration:
+                                                user_info = False
+                                                user_info_has_rating = False
 
                                         if user_info_has_rating:
                                             n_upd_account_time += 1

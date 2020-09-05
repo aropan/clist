@@ -2,6 +2,7 @@ import re
 import ast
 import collections
 from copy import deepcopy
+from pydoc import locate
 
 import tqdm
 from django.db import models, transaction
@@ -250,6 +251,8 @@ class Stage(BaseModel):
         advances = self.score_params.get('advances', {})
         results = collections.defaultdict(collections.OrderedDict)
 
+        mapping_account_by_coder = {}
+
         problems_infos = collections.OrderedDict()
         divisions_order = []
         for idx, contest in enumerate(tqdm.tqdm(contests, desc=f'getting contests for stage {stage}'), start=1):
@@ -313,7 +316,7 @@ class Stage(BaseModel):
                     d['contest'] = r['contest__title']
                 exclude_advances[r['account__key']] = d
 
-        statistics = Statistics.objects.select_related('account')
+        statistics = Statistics.objects.select_related('account').prefetch_related('account__coders')
         filter_statistics = self.score_params.get('filter_statistics')
         if filter_statistics:
             statistics = statistics.filter(**filter_statistics)
@@ -370,9 +373,16 @@ class Stage(BaseModel):
                         else:
                             score = s.solving
 
-                    row = results[s.account]
-                    row['member'] = s.account
-                    account_keys[s.account.key] = s.account
+                    account = s.account
+
+                    coders = account.coders.all()
+                    if len(coders) == 1:
+                        coder = coders[0]
+                        account = mapping_account_by_coder.setdefault(coder, account)
+
+                    row = results[account]
+                    row['member'] = account
+                    account_keys[account.key] = account
 
                     problems = row.setdefault('problems', {})
                     if detail_problems:
@@ -396,12 +406,13 @@ class Stage(BaseModel):
                         out = field.get('out', inp)
                         if 'type' in field:
                             continue
-                        if field.get('first') and out in row or inp not in s.addition:
+                        if field.get('first') and out in row or (inp not in s.addition and not hasattr(s, inp)):
                             continue
-                        if field.get('safe'):
-                            val = s.addition[inp]
-                        else:
-                            val = ast.literal_eval(str(s.addition[inp]))
+                        val = s.addition[inp] if inp in s.addition else getattr(s, inp)
+                        if not field.get('safe') and isinstance(val, str):
+                            val = ast.literal_eval(val)
+                        if 'cast' in field:
+                            val = locate(field['cast'])(val)
                         field_values[out] = val
                         if field.get('accumulate'):
                             val = round(val + ast.literal_eval(str(row.get(out, 0))), 2)
@@ -414,7 +425,11 @@ class Stage(BaseModel):
 
                     if 'status' in self.score_params:
                         field = self.score_params['status']
-                        problem['status'] = field_values.get(field, row.get(field))
+                        val = field_values.get(field, row.get(field))
+                        if val is None:
+                            val = getattr(s, field)
+                        if val:
+                            problem['status'] = val
                     else:
                         for field in order_by:
                             field = field.lstrip('-')

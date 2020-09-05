@@ -223,6 +223,11 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             'nomultiply': True,
             'nourl': True,
         },
+        'advanced': {
+            'options': ['true', 'false'],
+            'noajax': True,
+            'nomultiply': True,
+        },
     }
     fields_to_select = OrderedDict()
     map_fields_to_select = {'rating_change': 'rating'}
@@ -230,7 +235,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         f = f.strip('_')
         if f.lower() in [
             'institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region',
-            'rating_change'
+            'rating_change', 'advanced',
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})
@@ -410,6 +415,11 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                     filt |= Q(addition__rating_change__isnull=True) & Q(addition__new_rating__isnull=True)
                 else:
                     filt |= Q(addition__rating_change__isnull=False) | Q(addition__new_rating__isnull=False)
+        elif field == 'advanced':
+            for q in values:
+                if q not in field_to_select['options']:
+                    continue
+                filt |= Q(addition__advanced=q == 'true')
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})

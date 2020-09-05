@@ -66,8 +66,10 @@ class Command(BaseCommand):
                 else:
                     accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
-                total = accounts.count()
-                accounts = list(accounts[:args.limit])
+                count, total = 0, accounts.count()
+                if args.limit:
+                    accounts = accounts[:args.limit]
+                accounts = list(accounts)
 
                 if not accounts:
                     continue
@@ -84,6 +86,7 @@ class Command(BaseCommand):
                         for account, data in zip(accounts, infos):
                             if data.get('skip'):
                                 continue
+                            count += 1
                             info = data['info']
                             if info is None:
                                 _, info = account.delete()
@@ -124,7 +127,10 @@ class Command(BaseCommand):
                             if info.get('rating'):
                                 info['rating_ts'] = int(now.timestamp())
                             delta = info.pop('delta', timedelta(days=365))
-                            account.info.update(info)
+                            if data.get('replace_info'):
+                                account.info = info
+                            else:
+                                account.info.update(info)
                             account.updated = now + delta
                             account.save()
                 except Exception:
@@ -134,3 +140,4 @@ class Command(BaseCommand):
                             account.save()
                     self.logger.error(format_exc())
                     self.logger.error(f'resource = {resource}')
+                self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}')

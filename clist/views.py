@@ -503,12 +503,12 @@ def update_problems(contest, problems=None):
                 'url': problem_info.get('url'),
                 'n_tries': problem_info.get('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
                 'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
+                'time': contest.start_time,
             }
 
             problem, created = Problem.objects.update_or_create(
                 contest=contest,
                 key=key,
-                time=contest.start_time,
                 defaults=defaults,
             )
 

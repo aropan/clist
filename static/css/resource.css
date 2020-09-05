@@ -27,3 +27,7 @@ table.table td {
 table.table.contests tr .title {
   text-align: left;
 }
+
+#resource-filters > * {
+  margin-bottom: 5px;
+}

@@ -139,27 +139,23 @@
           {% if addition.hack.unsuccessful %}<div class="inline rej">-{{ addition.hack.unsuccessful }}</div>{% endif %}
           </small>
         {% else %}
+          {% with template_value=value|to_template_value %}
+          <span{% if value|get_type == 'bool' %} class="text-muted"{% endif %}>
           {% if field in fields_to_select and value not in fields_to_select|get_item:field and not fields_to_select|get_item:field|get_item:'nourl' %}
-            <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ value }}</a>
-          {% elif value|get_type == 'bool' %}
-            <span class="text-muted">
-              {% if value %}
-                <i class="fas fa-check"></i>
-              {% else %}
-                <i class="fas fa-times"></i>
-              {% endif %}
-            </span>
+            <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ template_value|safe }}</a>
           {% else %}
             {% with intvalue=value|toint %}
               <span{% if field == "rating_change" %} class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}"{% endif %}>
                 {% if field == "rating_change" and intvalue %}
                   <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
                 {% else %}
-                  {{ value }}
+                  {{ template_value|safe }}
                 {% endif %}
               </span>
             {% endwith %}
           {% endif %}
+          </span>
+          {% endwith %}
         {% endif %}
       {% else %}
         <small class='text-muted'>&#183;</small>

@@ -500,3 +500,10 @@ def is_equal(value, arg):
 @register.filter
 def concat(a, b):
     return str(a) + str(b)
+
+
+@register.filter
+def to_template_value(value):
+    if isinstance(value, bool):
+        return f'<i class="fas fa-{"check" if value else "times"}"></i>'
+    return value
