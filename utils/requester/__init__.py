@@ -12,6 +12,7 @@ import mimetypes
 import random
 import string
 import html
+import json
 from os import path, makedirs, listdir, remove, stat, environ
 from os.path import isdir, getctime
 from json import loads, dumps, load
@@ -45,6 +46,19 @@ class FailOnGetResponse(Exception):
     @property
     def code(self):
         return getattr(self.args[0], 'code', None)
+
+    def __str__(self):
+        err = self.args[0]
+        if not hasattr(self, 'error_'):
+            self.error_ = super().__str__()
+            if hasattr(err, 'fp'):
+                response = err.fp.read()
+                try:
+                    response = json.loads(response)
+                except Exception:
+                    pass
+                self.error_ += ', response = ' + str(response)
+        return self.error_
 
 
 class NoVerifyWord(Exception):

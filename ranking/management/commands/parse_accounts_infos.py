@@ -33,7 +33,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-q', '--query', default=None, help='regex account key')
-        parser.add_argument('-l', '--limit', default=1000, type=int, help='limit users for one resource')
+        parser.add_argument('-l', '--limit', default=None, type=int,
+                            help='limit users for one resource (default is 1000)')
 
     @staticmethod
     def _get_plugin(module):
@@ -67,8 +68,9 @@ class Command(BaseCommand):
                     accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
                 count, total = 0, accounts.count()
-                if args.limit:
-                    accounts = accounts[:args.limit]
+                if args.limit or not resource.info.get('accounts', {}).get('nolimit', False):
+                    limit = args.limit or 1000
+                    accounts = accounts[:limit]
                 accounts = list(accounts)
 
                 if not accounts:

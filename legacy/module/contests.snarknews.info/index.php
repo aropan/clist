@@ -39,6 +39,12 @@
         }
     }
     sort($URLS);
+
+    if (DEBUG) {
+        echo "Schedule urls: ";
+        print_r($URLS);
+    }
+
     $URLS = array_unique($URLS);
     foreach ($URLS as $url)
     {
@@ -68,6 +74,11 @@
 
         if (!$schedule_url) {
             continue;
+        }
+
+        if (DEBUG) {
+            echo "Standings urls: ";
+            print_r($standings_url);
         }
 
         $page = curlexec($schedule_url);
