@@ -11,7 +11,7 @@
         $title = $item['title'];
 
         $url = $item['url'];
-        $en_url = str_replace('/ru/', '/en-us/', $url);
+        $en_url = preg_replace('#hackerearth.com/(ru|en-us/)?#', 'hackerearth.com/en-us/', $url);
         $url = str_replace('/ru/', '/', $url);
 
         if (!preg_match('#/([^/]*)/?$#', $url, $match)) {
@@ -46,7 +46,7 @@
                         $end_idx = $end_idx == -1? $i : -2;
                     }
                 }
-                if ($start_idx <= 1 || $end_idx <= 1 || count($ms) != 6) {
+                if ($start_idx < 2 || $end_idx < 2 || count($ms) != 6) {
                     trigger_error("No match time location '$title', url = '$url'", E_USER_WARNING);
                     continue;
                 }

@@ -1,8 +1,10 @@
 import tqdm
 import json
 
-from ranking.models import Statistics
 from django.utils import timezone
+from django.db.models import Q
+
+from ranking.models import Statistics
 
 
 def to_canonize_str(data):
@@ -23,8 +25,8 @@ def account_update_contest_additions(
         qs.filter(modified__lte=timezone.now() - timedelta_limit)
 
     if clear_rating_change:
-        qs_clear = qs.filter(addition__rating_change__isnull=False).iterator()
-        for s in tqdm.tqdm(qs_clear, desc='clear rating change'):
+        qs_clear = qs.filter(Q(addition__rating_change__isnull=False) | Q(addition__new_rating__isnull=False))
+        for s in tqdm.tqdm(qs_clear.iterator(), desc='clear rating change'):
             s.addition.pop('rating_change', None)
             s.addition.pop('new_rating', None)
             s.addition.pop('old_rating', None)

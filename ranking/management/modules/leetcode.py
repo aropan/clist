@@ -21,7 +21,7 @@ from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):
-    API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}'
+    API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global'
     RANKING_URL_FORMAT_ = '{url}/ranking'
     API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}.com/api/submissions/{}/'
     STATE_FILE = os.path.join(os.path.dirname(__file__), '.leetcode.yaml')
@@ -129,7 +129,7 @@ class Statistic(BaseModule):
                         break
                     for row, submissions in zip(data['total_rank'], data['submissions']):
                         handle = row.pop('user_slug')
-                        if users and handle not in users:
+                        if users and handle not in users or handle in result:
                             continue
                         row.pop('contest_id')
                         row.pop('global_ranking')
@@ -244,8 +244,10 @@ class Statistic(BaseModule):
             nonlocal rate_limiter
             nonlocal n_chinese_accounts_parse
 
-            if account.key in global_ranking_users and not is_chine(account):
-                return account, global_ranking_users[account.key]
+            if not is_chine(account):
+                key = (account.info['profile_url']['_data_region'], account.key)
+                if key in global_ranking_users:
+                    return account, global_ranking_users[key]
 
             if is_chine(account):
                 if stop and not n_chinese_accounts_parse:
@@ -289,7 +291,7 @@ class Statistic(BaseModule):
                     page = Statistic._get(
                         'https://leetcode-cn.com/graphql',
                         post=b'''
-                        {"operationName":"null","variables":{},"query":"{globalRanking(page: ''' + str(page_index).encode() + b''') { rankingNodes { user { username profile { userSlug realName contestCount ranking { currentLocalRanking currentGlobalRanking currentRating ratingProgress totalLocalUsers totalGlobalUsers } } } }  } }"}''',  # noqa
+                        {"operationName":"null","variables":{},"query":"{globalRanking(page: ''' + str(page_index).encode() + b''') { rankingNodes { dataRegion user { username profile { userSlug realName contestCount ranking { currentLocalRanking currentGlobalRanking currentRating ratingProgress totalLocalUsers totalGlobalUsers } } } }  } }"}''',  # noqa
                         content_type='application/json',
                     )
                     ret = json.loads(page)['data']
@@ -319,8 +321,9 @@ class Statistic(BaseModule):
                 and last_page == 0
             ):
                 for a in accounts:
-                    a.updated = state['next_time']
-                    a.save()
+                    if not is_chine(a):
+                        a.updated = state['next_time']
+                        a.save()
                 next_page = last_page
             else:
                 next_page = last_page + pages_per_update
@@ -348,8 +351,10 @@ class Statistic(BaseModule):
                     data = data['globalRanking']['rankingNodes']
                 if data:
                     for node in data:
+                        data_region = node['dataRegion']
+                        data_region = '' if data_region == 'US' else f'-{data_region.lower()}'
                         username = node['user']['profile']['userSlug']
-                        global_ranking_users[username] = {
+                        global_ranking_users[(data_region, username)] = {
                             'profile': {'userProfilePublicProfile': node['user']},
                             'contests': get_all_contests(),
                         }

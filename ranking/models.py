@@ -34,6 +34,7 @@ class Account(BaseModel):
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
     info = JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
+    duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource_id))
@@ -316,7 +317,9 @@ class Stage(BaseModel):
                     d['contest'] = r['contest__title']
                 exclude_advances[r['account__key']] = d
 
-        statistics = Statistics.objects.select_related('account').prefetch_related('account__coders')
+        statistics = Statistics.objects \
+            .select_related('account', 'account__duplicate') \
+            .prefetch_related('account__coders')
         filter_statistics = self.score_params.get('filter_statistics')
         if filter_statistics:
             statistics = statistics.filter(**filter_statistics)
@@ -374,11 +377,18 @@ class Stage(BaseModel):
                             score = s.solving
 
                     account = s.account
+                    if account.duplicate is not None:
+                        account = account.duplicate
 
                     coders = account.coders.all()
+                    has_mapping_account_by_coder = False
                     if len(coders) == 1:
                         coder = coders[0]
-                        account = mapping_account_by_coder.setdefault(coder, account)
+                        if coder not in mapping_account_by_coder:
+                            mapping_account_by_coder[coder] = account
+                        else:
+                            account = mapping_account_by_coder[coder]
+                            has_mapping_account_by_coder = True
 
                     row = results[account]
                     row['member'] = account
@@ -404,6 +414,8 @@ class Stage(BaseModel):
                     for field in fields:
                         inp = field['field']
                         out = field.get('out', inp)
+                        if field.get('skip_on_mapping_account_by_coder') and has_mapping_account_by_coder:
+                            continue
                         if 'type' in field:
                             continue
                         if field.get('first') and out in row or (inp not in s.addition and not hasattr(s, inp)):

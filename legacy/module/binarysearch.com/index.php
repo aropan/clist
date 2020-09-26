@@ -1,7 +1,7 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
-    $url = 'https://binarysearch.io/api/contests';
+    $url = 'https://binarysearch.com/api/contests';
     $json = curlexec($url, null, array("http_header" => array('content-type: application/json'), "json_output" => 1));
 
     $data_contests = array_merge($json['contests'], $json['eduContests']);
@@ -14,7 +14,7 @@
             'start_time' => $c['starting'],
             'duration' => $c['contestDuration'] / 60.0,
             'title' => $c['name'],
-            'url' => 'https://binarysearch.io/room/' . $c['uniqueSlug'],
+            'url' => 'https://binarysearch.com/room/' . $c['uniqueSlug'],
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
