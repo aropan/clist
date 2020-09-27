@@ -355,12 +355,14 @@ class Statistic(BaseModule):
                 a.save()
 
         global_ranking_users = {}
+        n_data = 0
         with PoolExecutor(max_workers=8) as executor, tqdm.tqdm(desc='global ranking paging', total=len(pages)) as pb:
             for page, data in executor.map(fetch_global_ranking_users, pages):
                 pb.set_postfix(page=page)
                 pb.update()
                 if data is None:
                     continue
+                n_data += 1
                 if data:
                     data = data['globalRanking']['rankingNodes']
                 if data:
@@ -376,6 +378,12 @@ class Statistic(BaseModule):
                     state['last_page'] = 0
                     state['next_time'] = datetime.now() + timedelta(hours=8)
                     break
+        if len(pages) > n_accounts_to_paging and not n_data:
+            state['last_page'] = 0
+            state['next_time'] = datetime.now() + timedelta(hours=8)
+            for a in accounts:
+                a.updated = state['next_time']
+                a.save()
 
         with open(Statistic.STATE_FILE, 'w') as fo:
             yaml.dump(state, fo, indent=2)
