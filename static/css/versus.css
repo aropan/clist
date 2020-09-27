@@ -37,13 +37,28 @@
 }
 
 td.title-column {
-    max-width: 300px;
+  max-width: 300px;
 }
 
 td.title-column span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: inline-block;
-    max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 100%;
+}
+
+/*
+ * Make versus
+ */
+
+#make-versus form {
+  text-align: center;
+}
+
+#make-versus .vs,
+#make-versus .or
+{
+  font-weight: bold;
+  font-size: 130%;
 }

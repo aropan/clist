@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Versus{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/versus.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<h2 class="text-center">
+{% if url is not None %}
+  <a href="{{ url }}" target="_blank" class="btn btn-primary btn-lg">Versus</a>
+{% else %}
+  Versus
+{% endif %}
+</h2>
+
+<div id="make-versus">
+  <form class="form-inline" method="get" action="">
+    {% for key, values in opponents.items %}
+    {% if forloop.counter0 %}<div class="vs">vs</div>{% endif %}
+    <div>
+      {% if key|startswith:'coder' %}
+        {% include "coder_filter.html" with coder=key coders=values nomultiply=True %}
+      {% elif key|startswith:'account' %}
+        {% include "account_filter.html" with account=key accounts=values %}
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if opponents %}<div class="vs">vs</div>{% endif %}
+    <div>
+      {% include "coder_filter.html" with nomultiply=True %}<span class="or">or</span>{% include "account_filter.html" %}
+    </div>
+  </form>
+</div>
+
+{% endblock %}

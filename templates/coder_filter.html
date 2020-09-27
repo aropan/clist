@@ -1,17 +1,17 @@
-{% with resource_id=resource|default:"resource" %}
-<div class="input-group input-group-sm hidden" id="{{ resource_id }}-hidden">
-  <span class="input-group-addon">Resource</span>
+{% with coder_id=coder|default:"coder" %}
+<div class="input-group input-group-sm hidden" id="{{ coder_id }}-hidden">
+  <span class="input-group-addon">Coder</span>
 
-  <select{% if not noname %} name="{{ resource_id }}"{% endif %} id="{{ resource_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}>
+  <select name="{{ coder_id }}" id="{{ coder_id }}" onchange="this.form.submit()"{% if not nomultiply %} multiple{% endif %}>
     <option></option>
-    {% for resource in params.resources %}
-      <option value="{{ resource.pk }}" selected>{{ resource.host }}</option>
+    {% for coder in coders %}
+      <option value="{{ coder.pk }}" selected>{{ coder.username }}</option>
     {% endfor %}
   </select>
 </div>
 
 <script>
-  $('#{{ resource_id }}').select2({
+  $('#{{ coder_id }}').select2({
     dropdownAutoWidth : true,
     theme: 'bootstrap',
     placeholder: '',
@@ -30,7 +30,7 @@
       delay: 314,
       data: function (params) {
         return {
-          query: 'resources',
+          query: 'coders',
           regex: params.term,
           page: params.page || 1
         };
@@ -53,6 +53,6 @@
       e.preventDefault();
     }
   })
-  $('#{{ resource_id }}-hidden').removeClass('hidden');
+  $('#{{ coder_id }}-hidden').removeClass('hidden');
 </script>
 {% endwith %}

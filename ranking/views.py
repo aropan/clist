@@ -735,7 +735,6 @@ def get_versus_data(request, query, fields_to_select):
 
 
 def versus(request, query):
-
     # filtration data
     params = {}
 
@@ -833,3 +832,50 @@ def versus(request, query):
         'scored': 'show' in fields_to_select['score_in_row']['values'],
     }
     return render(request, 'versus.html', context)
+
+
+def make_versus(request):
+    n_versus = 0
+    n_versus_mapping = {}
+    opponents = OrderedDict()
+    for key in request.GET.keys():
+        if not key.startswith('coder') and not key.startswith('account'):
+            continue
+
+        values = [v for v in request.GET.getlist(key) if v]
+        if not values:
+            continue
+        values = list(map(int, values))
+        if key.startswith('coder'):
+            values = Coder.objects.filter(pk__in=values)
+        else:
+            values = Account.objects.filter(pk__in=values).select_related('resource')
+
+        if key not in n_versus_mapping:
+            n_versus_mapping[key] = n_versus
+            n_versus += 1
+        versus_idx = n_versus_mapping[key]
+
+        if '_' in key:
+            key, *_ = key.split('_')
+        key = f'{key}_{versus_idx}'
+
+        opponents[key] = values
+
+    whos = []
+    for key, values in opponents.items():
+        if key.startswith('coder'):
+            who = ','.join([c.username for c in values])
+        elif key.startswith('account'):
+            who = ','.join([f'{a.resource.short_host or a.resource.host}:{a.key}' for a in values])
+        else:
+            request.logger.warning(f'Unknown opponents type {key}')
+            continue
+        whos.append(who)
+    url = reverse('ranking:versus', args=['/vs/'.join(whos)]) if len(whos) > 1 else None
+
+    context = {
+        'url': url,
+        'opponents': opponents,
+    }
+    return render(request, 'make_versus.html', context)

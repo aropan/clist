@@ -1,7 +1,6 @@
 <form class="form-inline" method="get" action="">
-  <div id="versus-filter">
-    <div class="form-group input-group input-group-sm">
-      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest title or resource host" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off" style="min-width: 300px"/>
+  <div id="versus-filter"> <div class="form-group input-group input-group-sm">
+      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest title or resource host" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off" style="min-width: 200px"/>
 
       <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, resource:{HOST}, writer:{writer}.<br>Use &&, || and ! separated by spaces for difficult conditions.<br>Examples:<br>contest:! qualification<br>topcoder.com && tco">
         <i class="fas fa-info"></i>

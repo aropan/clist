@@ -730,6 +730,25 @@ def search(request, **kwargs):
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': f, 'text': f} for f in qs]
+    elif query == 'coders':
+        qs = Coder.objects.all()
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'username'))
+        qs = qs.order_by('-n_accounts')
+        total = qs.count()
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'text': r.username} for r in qs]
+    elif query == 'accounts':
+        qs = Account.objects.all()
+        if request.GET.get('resource'):
+            qs = qs.filter(resource_id=int(request.GET.get('resource')))
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'key'))
+        qs = qs.select_related('resource')
+
+        total = qs.count()
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'text': f'{r.key}, {r.resource.host}'} for r in qs]
     else:
         return HttpResponseBadRequest('invalid query')
 

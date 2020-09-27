@@ -512,3 +512,10 @@ def to_template_value(value):
 @register.filter(name='zip')
 def zip_lists(a, b):
     return zip(a, b)
+
+
+@register.filter
+def startswith(text, starts):
+    if isinstance(text, str):
+        return text.startswith(starts)
+    return False

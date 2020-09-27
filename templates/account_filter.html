@@ -1,21 +1,24 @@
-{% with resource_id=resource|default:"resource" %}
-<div class="input-group input-group-sm hidden" id="{{ resource_id }}-hidden">
-  <span class="input-group-addon">Resource</span>
+{% with account_id=account|default:"account" %}
+{% with resource_id=account_id|add:"_resource" %}
+{% include "resource_filter.html" with resource=resource_id noname=True nosubmit=True nomultiply=True %}
+<div class="input-group input-group-sm hidden" id="{{ account_id }}-hidden">
+  <span class="input-group-addon">Account</span>
 
-  <select{% if not noname %} name="{{ resource_id }}"{% endif %} id="{{ resource_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}>
+  <select name="{{ account_id }}" id="{{ account_id }}" onchange="this.form.submit()"{% if not nomultiply %} multiple{% endif %}>
     <option></option>
-    {% for resource in params.resources %}
-      <option value="{{ resource.pk }}" selected>{{ resource.host }}</option>
+    {% for account in accounts %}
+    <option value="{{ account.pk }}" selected>{{ account.resource.short_host|default:account.resource.host }}:{{ account.key }}</option>
     {% endfor %}
   </select>
 </div>
 
 <script>
-  $('#{{ resource_id }}').select2({
+  $('#{{ account_id }}').select2({
     dropdownAutoWidth : true,
     theme: 'bootstrap',
     placeholder: '',
     allowClear: true,
+    minimumInputLength: 1,
     templateResult: function (data) {
       var $result = $('<span></span>')
       $result.text(data.text)
@@ -30,8 +33,9 @@
       delay: 314,
       data: function (params) {
         return {
-          query: 'resources',
+          query: 'accounts',
           regex: params.term,
+          resource: $('#{{ resource_id }}').val(),
           page: params.page || 1
         };
       },
@@ -53,6 +57,7 @@
       e.preventDefault();
     }
   })
-  $('#{{ resource_id }}-hidden').removeClass('hidden');
+  $('#{{ account_id }}-hidden').removeClass('hidden');
 </script>
+{% endwith %}
 {% endwith %}
