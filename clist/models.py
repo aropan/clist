@@ -24,6 +24,7 @@ from clist.templatetags.extras import slug
 
 class Resource(BaseModel):
     host = models.CharField(max_length=255, unique=True)
+    short_host = models.CharField(max_length=20, unique=True, null=True, blank=True)
     enable = models.BooleanField()
     url = models.CharField(max_length=255)
     regexp = models.CharField(max_length=1024, null=True, blank=True)

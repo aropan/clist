@@ -507,3 +507,8 @@ def to_template_value(value):
     if isinstance(value, bool):
         return f'<i class="fas fa-{"check" if value else "times"}"></i>'
     return value
+
+
+@register.filter(name='zip')
+def zip_lists(a, b):
+    return zip(a, b)

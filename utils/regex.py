@@ -41,8 +41,18 @@ def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=Non
                         continue
                     if values is not None:
                         values.setdefault(k, []).append(r)
+
+            neg = False
             if isinstance(r, str):
+                if r.startswith('! '):
+                    neg = True
+                    r = r[2:]
                 r = verify_regex(r, logger=logger)
-            cond &= functools.reduce(operator.ior, (Q(**{f'{field}{suff}': r}) for field in fs))
+
+            cs = (Q(**{f'{field}{suff}': r}) for field in fs)
+            if neg:
+                cond &= functools.reduce(operator.iand, (~c for c in cs))
+            else:
+                cond &= functools.reduce(operator.ior, cs)
         ret |= cond
     return ret

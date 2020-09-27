@@ -56,72 +56,7 @@
 
     {% include 'country_filter.html' %}
 
-    {% if fields_to_select %}
-      {% for field, field_to_select in fields_to_select.items %}
-        <div class="input-group input-group-sm field-to-select hidden">
-          <div class="input-group-btn">
-            <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">{{ field|title }}</button>
-          </div>
-          <select name="{{ field }}" id="{{ field }}" onchange="this.form.submit()"{% if not field_to_select.nomultiply %} multiple{% endif %}>
-          {% if field_to_select.options %}
-            <option></option>
-            {% for v in field_to_select.options %}
-              <option value="{{ v }}"{% if v in field_to_select.values %} selected{% endif %}>{{ v }}</option>
-            {% endfor %}
-          {% else %}
-            {% for v in field_to_select.values %}
-              <option value="{{ v }}" selected>{{ v }}</option>
-            {% endfor %}
-          {% endif %}
-          </select>
-        </div>
-        <script>
-          $('#{{ field }}').select2({
-            minimumResultsForSearch: -1,
-            dropdownAutoWidth : true,
-            theme: 'bootstrap',
-            placeholder: '',
-            allowClear: true,
-            {% if not field_to_select.noajax %}
-            ajax: {
-                url: '/settings/search/',
-                dataType: 'json',
-                delay: 314,
-                data: function (params) {
-                    return {
-                        query: 'field-to-select',
-                        cid: {{ contest.pk }},
-                        division: '{{ request.GET.division }}',
-                        field: $(this).attr('name'),
-                        text: params.term,
-                        page: params.page || 1
-                    };
-                },
-                processResults: function (data, params) {
-                    return {
-                        results: data.items,
-                        pagination: {
-                            more: data.more
-                        }
-                    };
-                },
-                cache: true,
-            },
-            {% endif %}
-          }).on('select2:unselecting', function() {
-            $(this).data('unselecting', true);
-          }).on('select2:opening', function(e) {
-            if ($(this).data('unselecting')) {
-              $(this).removeData('unselecting');
-              e.preventDefault();
-            }
-          })
-        </script>
-      {% endfor %}
-      <script>
-        $('.field-to-select').removeClass('hidden');
-      </script>
-    {% endif %}
+    {% include 'fields_to_select.html' %}
 
     {% with orderby=request.GET|get_list:'orderby' %}
       {% for order in orderby %}

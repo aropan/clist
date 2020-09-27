@@ -12,10 +12,6 @@
   margin-top: -5px;
 }
 
-input[type="search"]::-webkit-search-cancel-button {
-  -webkit-appearance: searchfield-cancel-button;
-}
-
 table.standings td,
 table.standings th {
   text-align: center;

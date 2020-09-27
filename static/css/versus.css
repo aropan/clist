@@ -1,0 +1,49 @@
+#versus-title table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#versus-title table td {
+  padding: 10px;
+}
+
+#versus-table .title-column {
+  text-align: left;
+}
+
+#versus-table tr th,
+#versus-table tr td
+{
+  text-align: center;
+}
+
+#versus-filter > * {
+  margin-bottom: 5px;
+}
+
+#versus-table .gold-medal {
+  color: transparent;
+  text-shadow: 0 0 0 #f9d923;
+}
+
+#versus-table .silver-medal {
+  color: transparent;
+  text-shadow: 0 0 0 silver;
+}
+
+#versus-table .bronze-medal {
+  color: transparent;
+  text-shadow: 0 0 0 #c08e55;
+}
+
+td.title-column {
+    max-width: 300px;
+}
+
+td.title-column span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 100%;
+}

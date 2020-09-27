@@ -109,12 +109,12 @@ class ResourceAdmin(BaseModelAdmin):
                 return queryset.filter(profile_url__isnull=False)
 
     fieldsets = [
-        [None, {'fields': ['host', 'enable', 'url', 'profile_url', 'icon', 'n_accounts', 'n_contests']}],
+        [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'icon', 'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
         [None, {'fields': ['info', 'ratings', 'has_rating_history']}],
     ]
-    list_display = ['host', 'enable', '_has_rating', '_has_profile_url', '_num_contests']
+    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', '_num_contests']
     search_fields = ['host', 'url']
     list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone']
 

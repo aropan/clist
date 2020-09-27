@@ -10,6 +10,10 @@
   {% if participant.team %}
   in <strong class="small">{{ participant.team.name }}</strong>
   {% endif %}
+
+  {% if perms.events.participant_change %}
+    <a href="{% url 'admin:events_participant_change' participant.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+  {% endif %}
 </div>
 
 <script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>

@@ -7,6 +7,14 @@ a {
 }
 
 /*
+ * Search
+ */
+
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: searchfield-cancel-button;
+}
+
+/*
  * Country inline td
  */
 
@@ -20,6 +28,11 @@ a {
 /* Space out content a bit */
 body {
   padding-bottom: 20px;
+}
+
+img.resource-icon {
+  vertical-align: top;
+  margin-top: 3px;
 }
 
 .service-icon-btn {

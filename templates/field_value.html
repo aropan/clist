@@ -1,0 +1,17 @@
+{% with template_value=value|to_template_value %}
+<span{% if value|get_type == 'bool' %} class="text-muted"{% endif %}>
+{% if fields_to_select and field in fields_to_select and value not in fields_to_select|get_item:field and not fields_to_select|get_item:field|get_item:'nourl' %}
+  <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ template_value|safe }}</a>
+{% else %}
+  {% with intvalue=value|toint %}
+    <span{% if field == "rating_change" %} class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}"{% endif %}>
+      {% if field == "rating_change" and intvalue %}
+        <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+      {% else %}
+        {{ template_value|safe }}
+      {% endif %}
+    </span>
+  {% endwith %}
+{% endif %}
+</span>
+{% endwith %}

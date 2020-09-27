@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+  {% for whos in versus_data.opponents %}
+  {% if forloop.counter0 %} vs {% endif %}
+  {% for w in whos %}{% if forloop.counter0 %}, {% endif %}{{ w }}{% endfor %}
+  {% endfor %} - Versus
+{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/versus.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<h2 id="versus-title" class="text-center">
+  <table>
+  <tr>
+  {% for whos, urls in versus_data.opponents|zip:versus_data.urls %}
+    {% if forloop.counter0 %}<td>vs</td>{% endif %}
+    <td>
+      {% for val, href in whos|zip:urls %}
+      <div>
+        {% if href %}
+          <a href="{{ href }}">{{ val }}</a>
+        {% else %}
+          {{ val }}
+        {% endif %}
+      </div>
+      {% endfor %}
+    </td>
+  {% endfor %}
+  </tr>
+  <tr>
+  {% for info in versus_data.infos %}
+    {% if forloop.counter0 %}<td>:</td>{% endif %}<td>{{ info.score }}</td>
+  {% endfor %}
+  </tr>
+  </table>
+</h3>
+
+<div class="col-lg-8 col-lg-offset-2">
+  {% include "versus_filter.html" %}
+
+  <div id="versus-table" class="panel panel-default table-responsive">
+    <table class="table table-hover table-striped table-float-head">
+    <thead>
+    <tr>
+      {% for whos, urls in versus_data.opponents|zip:versus_data.urls %}
+      <th class="score-column">
+        {% for val, href in whos|zip:urls %}
+        <div>
+          {% if href %}
+            <a href="{{ href }}">{{ val }}</a>
+          {% else %}
+            {{ val }}
+          {% endif %}
+        </div>
+        {% endfor %}
+      </th>
+      {% endfor %}
+      {% if scored %}
+      <th>Score</th>
+      {% endif %}
+      <th class="time-column">Time</th>
+      <th class="title-column">Event</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for contest in contests %}
+    <tr>
+      {% for info in versus_data.infos %}
+      {% with stat=info.contests|get_item:contest.id %}
+      <td class="score-column{% if stat.scored_ %} info{% endif %}">
+        <div
+          title='
+            <div>Rank: {{ stat.place }}</div>
+            <div>Score: {{ stat.solving|floatformat:'-2' }}</div>
+            {% if stat.addition.penalty is not None %}
+            <div>Penalty: {{ stat.addition.penalty }}</div>
+            {% endif %}
+            {% if stat.addition.medal %}
+            <div>Medal: {{ stat.addition.medal|title }}</div>
+            {% endif %}
+          '
+          data-toggle="tooltip"
+          data-placement="top"
+          data-html="true"
+        >
+          {{ stat.solving|floatformat:'-2' }} ({{ stat.place }})
+          {% if stat.addition.medal %}<span class="{{ stat.addition.medal|lower }}-medal">&#9899;</span>{% endif %}
+        </div>
+        {% if rated %}
+        <div>
+          {% with rating=stat.addition.new_rating %}
+          {% if rating %}
+          <span class="{% coder_color_class contest.resource rating %}">
+          {% coder_color_circle contest.resource rating %}
+          {{ rating }}
+          </span>
+          {% endif %}
+          {% endwith %}
+
+          {% if stat.addition.rating_change %}
+          {% include "field_value.html" with field='rating_change' value=stat.addition.rating_change %}
+          {% endif %}
+        </div>
+        {% endif %}
+      </td>
+      {% endwith %}
+      {% endfor %}
+      {% if scored %}
+      <td>
+        {% with scoring=versus_data.scores|get_item:contest.pk %}
+          {% for s in scoring.score %}
+          {% if forloop.counter0 %}:{% endif %}
+          {% if forloop.counter0 in scoring.indices %}
+            <b>{{ s }}</b>
+          {% else %}
+            {{ s }}
+          {% endif %}
+          {% endfor %}
+        {% endwith %}
+      </td>
+      {% endif %}
+      <td class="time-column">
+        <div title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+          {{ contest.end_time|timezone:timezone|naturalday }}
+        </div>
+      </td>
+      <td class="title-column">
+        <a href="{{ contest.resource.href }}"><img class="resource-icon" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+        <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}"><span>{{ contest.title }}</span></a>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

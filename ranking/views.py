@@ -18,14 +18,14 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists as SubqueryExists
 from ratelimit.decorators import ratelimit
 
-from clist.models import Contest
+from clist.models import Contest, Resource
 from clist.templatetags.extras import get_problem_short, get_country_name
 from clist.templatetags.extras import slug, query_transform
 from clist.views import get_timezone, get_timeformat
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules.common import FailOnGetResponse
-from ranking.models import Statistics, Module
-from true_coders.models import Party
+from ranking.models import Statistics, Module, Account
+from true_coders.models import Party, Coder
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
 from utils.regex import get_iregex_filter
@@ -667,3 +667,169 @@ def action(request):
     else:
         ret = {'status': 'ok', 'message': message}
     return JsonResponse(ret)
+
+
+def get_versus_data(request, query, fields_to_select):
+    opponents = [whos.split(',') for whos in query.split('/vs/')]
+
+    base_filter = Q()
+    rating = fields_to_select['rating']['values']
+    if rating:
+        for q in rating:
+            if q not in fields_to_select['rating']['options']:
+                continue
+            q = q == 'unrated'
+            if q:
+                base_filter &= Q(addition__rating_change__isnull=True) & Q(addition__new_rating__isnull=True)
+            else:
+                base_filter &= Q(addition__rating_change__isnull=False) | Q(addition__new_rating__isnull=False)
+
+    filters = []
+    urls = []
+    for idx, whos in enumerate(opponents):
+        filt = Q()
+        us = []
+        for who in whos:
+            url = None
+            if ':' in who:
+                host, key = who.split(':', 1)
+                account = Account.objects.filter(Q(resource__host=host) | Q(resource__short_host=host), key=key).first()
+                if not account:
+                    request.logger.warning(f'Not found account {who}')
+                else:
+                    filt |= Q(account=account)
+                    url = reverse('coder:account', kwargs={'key': account.key, 'host': account.resource.host})
+            else:
+                coder = Coder.objects.filter(username=who).first()
+                if not coder:
+                    request.logger.warning(f'Not found coder {who}')
+                else:
+                    filt |= Q(account__coders=coder)
+                    url = reverse('coder:profile', args=[coder.username])
+            us.append(url)
+        if not filt:
+            filt = Q(pk=-1)
+        urls.append(us)
+        filters.append(base_filter & filt)
+
+    infos = []
+    medal_contest_ids = set()
+    for filt in filters:
+        qs = Statistics.objects.filter(filt, place__isnull=False)
+        infos.append({
+            'score': 0,
+            'contests': {s.contest_id: s for s in qs},
+        })
+        for s in qs:
+            if s.addition.get('medal'):
+                medal_contest_ids.add(s.contest_id)
+
+    return {
+        'infos': infos,
+        'opponents': opponents,
+        'urls': urls,
+        'filters': filters,
+        'contest_ids': set.intersection(*[set(info['contests'].keys()) for info in infos]),
+        'medal_contest_ids': medal_contest_ids,
+    }
+
+
+def versus(request, query):
+
+    # filtration data
+    params = {}
+
+    fields_to_select = {}
+
+    for data in [
+        {'field': 'rating', 'options': ['rated', 'unrated']},
+        {'field': 'score_in_row', 'options': ['show', 'hide'], 'title': 'score'},
+        {'field': 'medal', 'options': ['yes', 'no']},
+    ]:
+        field = data.pop('field')
+        fields_to_select[field] = {
+            'noajax': True,
+            'nomultiply': True,
+            'nourl': True,
+            'nogroupby': True,
+            'values': [v for v in request.GET.getlist(field) if v],
+        }
+        fields_to_select[field].update(data)
+
+    versus_data = get_versus_data(request, query, fields_to_select)
+
+    # filter contests
+    contests = Contest.visible.filter(pk__in=versus_data['contest_ids']).order_by('-end_time')
+    contests = contests.select_related('resource')
+
+    search = request.GET.get('search')
+    if search is not None:
+        with_medal = False
+
+        def set_medal(v):
+            nonlocal with_medal
+            with_medal = True
+            return False
+
+        contests_filter = get_iregex_filter(search,
+                                            'title', 'host', 'resource__host',
+                                            mapping={
+                                                'contest': {'fields': ['title__iregex']},
+                                                'resource': {'fields': ['host__iregex']},
+                                                'slug': {'fields': ['slug']},
+                                                'writer': {'fields': ['info__writers__contains']},
+                                                'medal': {'fields': ['info__standings__medals'],
+                                                          'suff': '__isnull',
+                                                          'func': set_medal},
+                                            },
+                                            logger=request.logger)
+        if with_medal:
+            contests_filter |= Q(pk__in=versus_data['medal_contest_ids'])
+        contests = contests.filter(contests_filter)
+
+    medal = request.GET.get('medal')
+    if medal:
+        contests_filter = Q(info__standings__medals__isnull=False)
+        contests_filter |= Q(pk__in=versus_data['medal_contest_ids'])
+        if medal == 'no':
+            contests_filter = ~contests_filter
+        contests = contests.filter(contests_filter)
+
+    resources = [r for r in request.GET.getlist('resource') if r]
+    if resources:
+        resources = list(Resource.objects.filter(pk__in=resources))
+        params['resources'] = resources
+        rids = set([r.pk for r in resources])
+        contests = contests.filter(resource_id__in=rids)
+
+    # scoring by contests
+    scores = versus_data.setdefault('scores', {})
+    for contest in reversed(contests):
+        best = None
+        indices = []
+        for idx, info in enumerate(versus_data['infos']):
+            stat = info['contests'][contest.pk]
+            score = (-stat.place_as_int, stat.solving)
+            if best is None or score > best:
+                best = score
+                indices = []
+            if score == best:
+                indices.append(idx)
+        for idx in indices:
+            info = versus_data['infos'][idx]
+            info['score'] += 1
+            setattr(info['contests'][contest.pk], 'scored_', True)
+        scores[contest.pk] = {
+            'score': [info['score'] for info in versus_data['infos']],
+            'indices': indices,
+        }
+
+    context = {
+        'contests': contests,
+        'versus_data': versus_data,
+        'params': params,
+        'fields_to_select': fields_to_select,
+        'rated': 'rated' in fields_to_select['rating']['values'],
+        'scored': 'show' in fields_to_select['score_in_row']['values'],
+    }
+    return render(request, 'versus.html', context)
