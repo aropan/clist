@@ -221,6 +221,7 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
 
         rate_limiter = RateLimiter(max_calls=1, period=4)
+        code_errors = defaultdict(int)
 
         def is_chine(account):
             profile_url = account.info.setdefault('profile_url', {})
@@ -250,7 +251,7 @@ class Statistic(BaseModule):
                     return account, global_ranking_users[key]
 
             if is_chine(account):
-                if stop and not n_chinese_accounts_parse:
+                if stop or not n_chinese_accounts_parse:
                     return account, False
                 n_chinese_accounts_parse -= 1
             else:
@@ -275,6 +276,11 @@ class Statistic(BaseModule):
                         url = resource.profile_url.format(**account.dict_with_info())
                         page = Statistic._get(url)
             except FailOnGetResponse as e:
+                if is_chine(account):
+                    nonlocal code_errors
+                    code_errors[e.code] += 1
+                    if code_errors[e.code] > 20:
+                        n_chinese_accounts_parse = 0
                 code = e.code
                 if code == 404:
                     page = None
@@ -286,6 +292,10 @@ class Statistic(BaseModule):
             return account, page
 
         def fetch_global_ranking_users(page_index):
+            nonlocal n_chinese_accounts_parse
+            if not n_chinese_accounts_parse:
+                return page_index, None
+
             for attempt in range(3):
                 try:
                     page = Statistic._get(
@@ -298,6 +308,10 @@ class Statistic(BaseModule):
                     return page_index, ret
 
                 except FailOnGetResponse as e:
+                    nonlocal code_errors
+                    code_errors[e.code] += 1
+                    if code_errors[e.code] > 20:
+                        n_chinese_accounts_parse = 0
                     if e.code == 504:
                         time.sleep(attempt)
                         continue
@@ -446,6 +460,16 @@ class Statistic(BaseModule):
                 if 'rating' in info:
                     info['rating_ts'] = int(datetime.now().timestamp())
 
+                if 'global_ranking' in info:
+                    global_ranking = int(re.split('[^0-9]', info['global_ranking'])[0])
+                elif 'currentGlobalRanking' in info:
+                    global_ranking = info['currentGlobalRanking']
+                else:
+                    global_ranking = None
+                if global_ranking:
+                    page = (int(global_ranking) + 24) // 25
+                    info['global_ranking_page'] = page
+
                 ret = {
                     'info': info,
                     'contest_addition_update_params': {
@@ -455,16 +479,6 @@ class Statistic(BaseModule):
                     },
                     'replace_info': True,
                 }
-
-                if 'global_ranking' in a.info:
-                    global_ranking = int(re.split('[^0-9]', a.info['global_ranking'])[0])
-                elif 'currentGlobalRanking' in a.info:
-                    global_ranking = a.info['currentGlobalRanking']
-                else:
-                    global_ranking = None
-                if global_ranking:
-                    page = (int(global_ranking) + 24) // 25
-                    info['global_ranking_page'] = page
 
                 assert info and info['slug'] == account.key, \
                     f'Account key {account.key} should be equal username {info["slug"]}'
