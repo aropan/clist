@@ -130,8 +130,10 @@
         </div>
       </td>
       <td class="title-column">
-        <a href="{{ contest.resource.href }}"><img class="resource-icon" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
-        <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}"><span>{{ contest.title }}</span></a>
+        <span>
+          <a href="{{ contest.resource.href }}"><img class="resource-icon" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+          <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}">{{ contest.title }}</a>
+        </span>
       </td>
     </tr>
     {% endfor %}
