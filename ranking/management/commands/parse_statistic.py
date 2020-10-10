@@ -3,6 +3,7 @@
 
 import re
 import operator
+import copy
 from html import unescape
 from collections import OrderedDict
 from random import shuffle
@@ -197,11 +198,11 @@ class Command(BaseCommand):
                         has_hidden = False
                         languages = set()
 
-                        additions = contest.info.get('additions', {})
+                        additions = copy.deepcopy(contest.info.get('additions', {}))
                         if additions:
                             for k, v in result.items():
-                                for field in [r.get('member'), r.get('name')]:
-                                    r.update(OrderedDict(additions.pop(field, [])))
+                                for field in [v.get('member'), v.get('name')]:
+                                    v.update(OrderedDict(additions.pop(field, [])))
                             for k, v in additions.items():
                                 result[k] = dict(v)
 
@@ -256,6 +257,9 @@ class Command(BaseCommand):
                                     n_upd_account_time += 1
                                     account.updated = updated
                                     account.save()
+
+                            if contest.info.get('_push_name_instead_key'):
+                                r['_name_instead_key'] = True
 
                             if r.get('name'):
                                 while True:
@@ -327,6 +331,9 @@ class Command(BaseCommand):
                                             solved['solving'] += 1
                                         if 'full_score' not in p:
                                             p['full_score'] = full_score
+                                    if contest.info.get('with_last_submit_time') and float(v.get('result', 0)) > 1e-9:
+                                        if '_last_submit_time' not in r or r['_last_submit_time'] < v['time']:
+                                            r['_last_submit_time'] = v['time']
                                     if contest.info.get('without_problem_first_ac'):
                                         v.pop('first_ac', None)
                                         v.pop('first_ac_of_all', None)

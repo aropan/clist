@@ -7,7 +7,7 @@
         if (preg_match('#\s+(test|testing)$#i', $title)) {
             return false;
         }
-        if (!preg_match('#(?P<key>(?:srm|mm)\s*[-/.0-9]*[0-9]|TCO[0-9]+\s*(?:algorithm|marathon)?\s*round\s*[.0-9a-z]*[0-9a-z])#i', $title, $match)) {
+        if (!preg_match('#(?P<key>(?:srm|mm)\s*[-/.0-9]*[0-9]|TCO[0-9]+.*(?:algorithm|marathon)?\s*round\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
             return false;
         }
         return $match['key'];
@@ -20,6 +20,7 @@
     $url_scheme_host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
 
     $authorization = get_calendar_authorization();
+    $calendar_parsed = false;
     if ($authorization) {
         $calendar = "appirio.com_bhga3musitat85mhdrng9035jg@group.calendar.google.com";
         $url = "https://www.googleapis.com/calendar/v3/calendars/" . urlencode($calendar) . "/events?timeMin=" . urlencode(date("c", time() - 7 * 24 * 60 * 60));
@@ -30,6 +31,7 @@
         if (!isset($data["items"])) {
             echo $data['error']['message'] . "\n";
         } else {
+            $calendar_parsed = true;
             foreach ($data["items"] as $item)
             {
                 if ($item["status"] != "confirmed" || !isset($item["summary"])) {
@@ -164,112 +166,121 @@
     $_contests = $_;
     unset($_);
 
-    $add_from_stats = isset($_GET['parse_full_list']);
-    $iou_treshhold = 0.61803398875;
+    if ($calendar_parsed) {
+        $add_from_stats = isset($_GET['parse_full_list']);
+        $iou_treshhold = 0.61803398875;
 
-    $round_overview = array();
-    foreach (array('https://www.topcoder.com/tc?module=MatchList') as $base_url) {
-        $nr = 200;
-        $sr = 1;
-        for (;;) {
-            $url = $base_url . "&nr=$nr&sr=$sr";
-            if ($debug_) {
-                echo $url . "\n";
-            }
-            $page = curlexec($url);
-            preg_match_all('#(?:<td[^>]*>(?:[^<]*<a[^>]*href="(?P<url>[^"]*/stat[^"]*rd=(?P<rd>[0-9]+)[^"]*)"[^>]*>(?P<title>[^<]*)</a>[^<]*|(?P<date>[0-9]+\.[0-9]+\.[0-9]+))</td>[^<]*){2}#', $page, $matches, PREG_SET_ORDER);
-            foreach ($matches as $match) {
-                $round_overview[$match['rd']] = array(
-                    'url' => url_merge($base_url, htmlspecialchars_decode($match['url'])),
-                    'title' => $match['title'],
-                    'date' => $match['date']
-                );
-            }
-            if (!$add_from_stats) {
-                break;
-            }
-            if (!preg_match('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>next#', $page, $match)) {
-                break;
-            }
-            $sr += $nr;
-        }
-    }
-
-    for ($iter = 0; $iter < 2; ++$iter) {
-        foreach ($_contests as $i => $c) {
-            $ret = preg_match('/&rd=(?P<rd>[0-9]+)/', $c['url'], $match);
-            if ($ret != ($iter == 0)) {
-                continue;
-            }
-            if ($ret) {
-                $rd = $match['rd'];
-                if (isset($round_overview[$rd])) {
-                    $_contests[$i]['standings_url'] = $round_overview[$rd]['url'];
-                    unset($round_overview[$rd]);
+        $round_overview = array();
+        foreach (array('https://www.topcoder.com/tc?module=MatchList') as $base_url) {
+            $nr = 200;
+            $sr = 1;
+            for (;;) {
+                $url = $base_url . "&nr=$nr&sr=$sr";
+                if ($debug_) {
+                    echo $url . "\n";
                 }
-            } else {
-                if (!isset($c['_calendar'])) {
+                $page = curlexec($url);
+                preg_match_all('#(?:<td[^>]*>(?:[^<]*<a[^>]*href="(?P<url>[^"]*/stat[^"]*rd=(?P<rd>[0-9]+)[^"]*)"[^>]*>(?P<title>[^<]*)</a>[^<]*|(?P<date>[0-9]+\.[0-9]+\.[0-9]+))</td>[^<]*){2}#', $page, $matches, PREG_SET_ORDER);
+                foreach ($matches as $match) {
+                    $key = get_algorithm_key($match['title']);
+                    $ro = array(
+                        'url' => url_merge($base_url, htmlspecialchars_decode($match['url'])),
+                        'title' => $match['title'],
+                        'date' => $match['date'],
+                        'key' => $key? $key : $match['title'],
+                    );
+                    $round_overview[$match['rd']] = $ro;
+                }
+                if (!$add_from_stats) {
+                    break;
+                }
+                if (!preg_match('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>next#', $page, $match)) {
+                    break;
+                }
+                $sr += $nr;
+            }
+        }
+
+        for ($iter = 0; $iter < 2; ++$iter) {
+            foreach ($_contests as $i => $c) {
+                $ret = preg_match('/&rd=(?P<rd>[0-9]+)/', $c['url'], $match);
+                if ($ret != ($iter == 0)) {
                     continue;
                 }
-                $opt = $iou_treshhold;
-                $t = null;
-                foreach (array(0, -1, 1) as $shift_day) {
-                    $date = date('m.d.Y', strtotime($c['start_time']) + $shift_day * 24 * 60 * 60);
-                    foreach ($round_overview as $k => $ro) {
-                        if ($ro['date'] == $date) {
-                            $w1 = explode(" ", $c["title"]);
-                            $w2 = explode(" ", $ro["title"]);
-                            $intersect = count(array_intersect($w1, $w2));
-                            $iou = $intersect / count(array_unique(array_merge($w1, $w2)));
-                            if ($intersect == count($w2)) {
-                                $iou = 0.9 + $iou * 0.1;
-                            }
-                            if ($iou > $opt) {
-                                $opt = $iou;
-                                $t = $k;
+                if ($ret) {
+                    $rd = $match['rd'];
+                    if (!isset($round_overview[$rd])) {
+                        continue;
+                    }
+                } else {
+                    if (!isset($c['_calendar'])) {
+                        continue;
+                    }
+                    $opt = $iou_treshhold;
+                    $t = null;
+                    foreach (array(0, -1, 1) as $shift_day) {
+                        $date = date('m.d.Y', strtotime($c['start_time']) + $shift_day * 24 * 60 * 60);
+                        foreach ($round_overview as $k => $ro) {
+                            if ($ro['date'] == $date) {
+                                $w1 = explode(" ", $c["title"]);
+                                $w2 = explode(" ", $ro["title"]);
+                                $intersect = count(array_intersect($w1, $w2));
+                                $iou = $intersect / count(array_unique(array_merge($w1, $w2)));
+                                if ($intersect == count($w2)) {
+                                    $iou = 0.9 + $iou * 0.1;
+                                }
+                                if ($iou > $opt) {
+                                    $opt = $iou;
+                                    $t = $k;
+                                }
                             }
                         }
                     }
+                    if ($t === null) {
+                        continue;
+                    }
+                    $rd = $t;
                 }
-                if ($t !== null) {
-                    $_contests[$i]['standings_url'] = $round_overview[$t]['url'];
-                    unset($round_overview[$t]);
+                $_contests[$i]['standings_url'] = $round_overview[$rd]['url'];
+                if (isset($_contests[$i]['key'])) {
+                    $_contests[$i]['key'] = $round_overview[$rd]['key'];
                 }
-            }
-        }
-    }
-
-    foreach ($round_overview as $ro) {
-        $ds = explode('.', $ro['date']);
-        list($ds[0], $ds[1]) = array($ds[1], $ds[0]);
-        $date_str = implode('.', $ds);
-        if (!$add_from_stats) {
-            $now = time();
-            $date = strtotime($date_str);
-            if ($date < $now - 5 * 24 * 60 * 60 || $now - 1 * 24 * 60 * 60 < $date) {
-                continue;
+                unset($round_overview[$rd]);
             }
         }
 
-        # FIX same name
-        if (abs(strtotime($date_str) - strtotime('06.03.2006')) < 4 * 24 * 60 * 60 && strpos($ro['title'], 'TCO06 Sponsor') === 0) {
-            $ro['title'] .= ' Track Round';
-        }
+        foreach ($round_overview as $ro) {
+            $ds = explode('.', $ro['date']);
+            list($ds[0], $ds[1]) = array($ds[1], $ds[0]);
+            $date_str = implode('.', $ds);
+            if (!$add_from_stats) {
+                $now = time();
+                $date = strtotime($date_str);
+                if ($date < $now - 5 * 24 * 60 * 60 || $now - 1 * 24 * 60 * 60 < $date) {
+                    continue;
+                }
+            }
 
-        $title = $ro['title'];
-        $key = get_algorithm_key($title);
-        if (!$key) {
-            $key = $title;
-        }
+            # FIX same name
+            if (abs(strtotime($date_str) - strtotime('06.03.2006')) < 4 * 24 * 60 * 60 && strpos($ro['title'], 'TCO06 Sponsor') === 0) {
+                $ro['title'] .= ' Track Round';
+            }
 
-        $_contests[] = array(
-            "start_time" => $date_str,
-            "end_time" => $date_str,
-            "title" => $title,
-            "url" => $ro['url'],
-            "key" => $key,
-            "standings_url" => $ro['url'],
-        );
+            $title = $ro['title'];
+            $key = get_algorithm_key($title);
+            if (!$key) {
+                $key = $title;
+            }
+
+            $_contests[] = array(
+                "start_time" => $date_str,
+                "end_time" => $date_str,
+                "title" => $title,
+                "url" => $ro['url'],
+                "key" => $key,
+                "standings_url" => $ro['url'],
+            );
+        }
     }
 
     foreach ($_contests as $c) {

@@ -123,6 +123,12 @@ class Statistic(BaseModule):
         is_gym = '/gym/' in self.url
         result = {}
 
+        domain_users = {}
+        if '_domain_users' in self.info:
+            for user in self.info['_domain_users']:
+                user = deepcopy(user)
+                domain_users[user.pop('login')] = user
+
         problems_info = OrderedDict()
         for unofficial in [True]:
             params = {
@@ -148,8 +154,6 @@ class Statistic(BaseModule):
                 d = {'short': p['index'], 'name': p['name']}
                 if 'points' in p:
                     d['full_score'] = p['points']
-                elif contest_type == 'IOI':
-                    d['full_score'] = 100
                 tags = p.get('tags')
                 if tags:
                     d['tags'] = tags
@@ -165,9 +169,9 @@ class Statistic(BaseModule):
                 for row in data['result']['rows']
             )
 
-            place = None
-            last = None
-            idx = 0
+            # place = None
+            # last = None
+            # idx = 0
             for row in data['result']['rows']:
                 party = row['party']
 
@@ -198,7 +202,7 @@ class Statistic(BaseModule):
                     r.setdefault('participant_type', []).append(party['participantType'])
                     r['_no_update_n_contests'] = all(pt not in self.PARTICIPANT_TYPES for pt in r['participant_type'])
 
-                    if is_ghost_team:
+                    if is_ghost_team and member['name']:
                         r['name'] = member['name']
                         r['_no_update_name'] = True
                     elif grouped and (not upsolve and not is_gym or 'name' not in r):
@@ -207,6 +211,9 @@ class Statistic(BaseModule):
                             r['team_id'] = party['teamId']
                             r['name'] = f"{party['teamName']}: {r['name']}"
                         r['_no_update_name'] = True
+                    if domain_users and '=' in handle:
+                        _, login = handle.split('=', 1)
+                        r.update(domain_users.get(login, {}))
 
                     hack = row['successfulHackCount']
                     unhack = row['unsuccessfulHackCount']
@@ -255,14 +262,14 @@ class Statistic(BaseModule):
                             if users:
                                 r['place'] = '__unchanged__'
                             else:
-                                idx += 1
-                                value = (row['points'], row.get('penalty'))
-                                if last != value:
-                                    value = last
-                                    place = idx
-                                r['place'] = place
-                        else:
-                            r['place'] = row['rank']
+                                r['place'] = row['rank']
+                            # else:
+                            #     idx += 1
+                            #     value = (row['points'], row.get('penalty'))
+                            #     if last != value:
+                            #         last = value
+                            #         place = idx
+                            #     r['place'] = place
                         r['solving'] = row['points']
                         if contest_type == 'ICPC':
                             r['penalty'] = row['penalty']
@@ -320,7 +327,9 @@ class Statistic(BaseModule):
 
             if 'verdict' in submission:
                 v = submission['verdict'].upper()
-                info['verdict'] = ''.join(s[0] for s in v.split('_')) if len(v) > 3 else v
+                if v == 'PARTIAL':
+                    info['partial'] = True
+                info['verdict'] = ''.join(s[0].upper() for s in v.split('_')) if len(v) > 3 else v.upper()
 
             if 'programmingLanguage' in submission:
                 info['language'] = submission['programmingLanguage']

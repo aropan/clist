@@ -17,7 +17,8 @@ class Statistic(BaseModule):
             raise InitModuleException('Not set standings url for %s' % self.name)
 
     def get_standings(self, users=None, statistics=None):
-        season = self.key.split()[0]
+        year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
+        season = f'{year}-{year + 1}'
 
         result = {}
 

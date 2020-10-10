@@ -113,7 +113,7 @@ class Statistic(BaseModule):
             raise InitModuleException('Not set standings url for %s' % self.name)
 
         url = self.standings_url + '&nr=100000042'
-        page = REQ.get(url)
+        page = REQ.get(url, time_out=100)
         result_urls = re.findall(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>Results</a>', str(page), re.I)
 
         if not result_urls:  # marathon match
@@ -278,16 +278,16 @@ class Statistic(BaseModule):
                     return None
 
                 def fetch_info(url):
-                    delay = 3
+                    delay = 10
                     for _ in range(5):
                         try:
-                            page = REQ.get(url)
+                            page = REQ.get(url, time_out=delay)
                             break
                         except Exception:
                             sleep(delay)
                             delay *= 2
                     else:
-                        return None, None, None
+                        return
 
                     match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE)
                     handle = html.unescape(match.group('handle').strip())
@@ -351,7 +351,10 @@ class Statistic(BaseModule):
 
                 with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(url_infos)) as pbar:
                     n_fetch_solution = 0
-                    for url, handle, room, problems, challenges, n_sol in executor.map(fetch_info, url_infos):
+                    for info in executor.map(fetch_info, url_infos):
+                        if info is None:
+                            continue
+                        url, handle, room, problems, challenges, n_sol = info
                         n_fetch_solution += n_sol
                         pbar.set_description(f'div{division} {url}')
                         pbar.set_postfix(n_solution=n_fetch_solution)
