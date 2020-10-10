@@ -5,23 +5,7 @@
 {% with tag=statistic.my_stat|then:"th"|default:"td" %}
 {% with addition=statistic.addition %}
 {% with coders=statistic.account.coders.all %}
-{% if statistic.my_stat %}
-  {% if statistic.floating %}
-    {% show_more_table %}
-  {% elif 'Safari' not in request.user_agent.browser.family and 'iOS' not in request.user_agent.os.family %}
-    <script>$(function() { $('#table-inner-scroll .my-stat th').css({'top': $('#table-inner-scroll thead').height() - 1 }) })</script>
-  {% endif %}
-  <script>
-    $(function() {
-      var selector = $('tr.my-stat.floating')
-      if (!$('tr.my-stat:not(.floating)').length) {
-        selector = selector.not(':last')
-      }
-      selector.remove()
-      $('tr.my-stat.floating').removeClass('hidden')
-    })
-  </script>
-{% endif %}
+{% if statistic.my_stat and statistic.floating %}{% show_more_table %}{% endif %}
 <tr class="{% if statistic.my_stat %}info my-stat{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
 {% endwith %}
   {% with advance=addition|get_item:'_advance' %}
@@ -66,58 +50,10 @@
   {% endif %}
   <{{ tag }} class="handle-cell
     {% with info=participants_info|get_item:statistic.id %}
-    {% if info and info.n <= standings_options.n_highlight %}bg-success{% endif %}
+    {% if info and info.n and info.n <= standings_options.n_highlight or info and info.highlight %}bg-success{% endif %}
     {% endwith %}
   ">
-    {% if has_country %}
-      {% with country=statistic.account.country %}
-        <div class="flag-width-fixed">
-        {% if country %}
-        <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
-          <img class="flag flag-{{ country.code|lower }}"/>
-        </a>
-        {% endif %}
-        </div>
-      {% endwith %}
-    {% endif %}
-
-    {% with team_id=addition.team_id %}
-    {% if not team_id %}{% coder_color_circle contest.resource addition statistic.account.info %}{% endif %}
-
-    <div class="handle-div{% if not team_id%} {% coder_color_class contest.resource addition statistic.account.info %}{% endif %}" style="display: inline-block">
-      {% if statistic.account.url %}<a href="{{ statistic.account.url }}" class="coder">{% endif %}
-
-      {% if addition.name and statistic.account.key|has_season:addition.name or addition.team_id %}
-        <span>{{ addition.name }}</span>
-      {% elif addition.name and contest.resource.info.standings.name_instead_key %}
-        <span>{{ addition.name }}</span>
-      {% else %}
-        <span{% if addition.name %} title="{{ addition.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ statistic.account.key }}</span>
-      {% endif %}
-
-      {% if statistic.account.url %}</a>{% endif %}
-
-      {% for country_name in addition|get_item:"_countries" %}
-        {% with country_code=country_name|get_country_code %}
-          {% if country_code %}
-            <div class="flag-width-fixed">
-              <a href="{% url_transform request country=country_code %}" title="{{ country_name }}" data-toggle="tooltip">
-                <img class="flag flag-{{ country_code|lower }}"/>
-              </a>
-            </div>
-          {% endif %}
-        {% endwith %}
-      {% endfor %}
-
-      {% if addition.url %}
-        <a href="{{ addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-      {% endif %}
-
-      {% if perms.ranking.statistics_change %}
-        <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
-      {% endif %}
-    </div>
-    {% endwith %}
+    {% include "standings_account.html" with account=statistic.account addition=addition %}
   </{{ tag }}>
   <{{ tag }}>
     <div>{{ statistic.solving|floatformat:'-2' }}</div>
@@ -233,6 +169,23 @@
 </tr>
 {% endwith %}
 {% endwith %}
+
+{% if statistic.my_stat %}
+  {% if not statistic.floating and 'Safari' not in request.user_agent.browser.family and 'iOS' not in request.user_agent.os.family %}
+    <script>$(function() { $('#table-inner-scroll .my-stat th').css({'top': $('#table-inner-scroll thead').height() - 1 }) })</script>
+  {% endif %}
+  <script>
+    $(function() {
+      var selector = $('tr.my-stat.floating')
+      if (!$('tr.my-stat:not(.floating)').length) {
+        selector = selector.not(':last')
+      }
+      selector.remove()
+      $('tr.my-stat.floating').removeClass('hidden')
+    })
+  </script>
+{% endif %}
+
 {% endfor %}
 
 {% if not my_statistics %}

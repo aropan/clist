@@ -44,26 +44,47 @@
     outline: none;
 }
 
-.hide-contest.fa-eye {
+
+/*
+ * action contest
+ */
+
+.hide-contest.fa-eye,
+.fc-content .data-ace
+{
     visibility: hidden;
+    margin-right: 2px;
 }
 
-:hover > .hide-contest {
+.fc-content .data-ace {
     color: #fff;
+}
+
+:hover > .hide-contest,
+:hover > .data-ace
+{
     visibility: visible;
 }
 
-.party-check.has-permission-toggle-party-contest:hover {
-    cursor: pointer;
-}
-
+.event i.hide-contest:hover,
 .event .data-ace:hover i {
     color: #23527c;
 }
 
+.fc-content a.data-ace:hover,
+.fc-content i.hide-contest:hover
+{
+    color: black;
+}
+
 .event .hide-contest,
-.event .data-ace {
+.event .data-ace
+{
     color: #8be;
+    cursor: pointer;
+}
+
+.party-check.has-permission-toggle-party-contest:hover {
     cursor: pointer;
 }
 

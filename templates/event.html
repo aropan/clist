@@ -13,7 +13,12 @@
 {% block content %}
     <script>search_url = "{% url 'events:event' slug %}search/"</script>
     <script>team_name_limit = {{ event.limits.team_name_length|default:255}}</script>
-    <h3 id="name">{{ event.name }}</h3>
+    <h3 id="name">
+        {{ event.name }}
+        {% if perms.events.event_change %}
+        <a href="{% url 'admin:events_event_change' event.pk %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+        {% endif %}
+    </h3>
     <ul class="nav nav-tabs">
         <li{% if not tab or tab == 'information' %} class="active"{% endif %}><a href="#information-tab" data-toggle="tab">Infrormation</a></li>
         {% if not registration.over %}<li{% if tab == 'registration' %} class="active"{% endif %}><a href="#registration-tab" data-toggle="tab">Registration</a></li>{% endif %}
@@ -105,6 +110,15 @@
             {% endif %}
         </div>
 
+        <script>
+        $.endlessPaginate({
+            paginateOnScroll: true,
+            onCompleted: function(context, fragment) {
+                $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()
+            },
+        });
+        </script>
+
         <div id="teams-tab"  class="tab-pane col-sm-offset-2 col-sm-8{% if tab == 'teams' %} active{% endif %}">
             <br/>
             <form method="get" action="{% url 'events:event-tab' event.slug 'teams' %}">
@@ -144,32 +158,38 @@
             </div>
         </div>
 
-        <script>$.endlessPaginate({paginateOnScroll: true});</script>
-
 {% if perms.events.change_team %}
-        <div id="admin-teams-view-tab" class="tab-pane col-sm-offset-2 col-sm-8{% if tab == 'admin' %} active{% endif %}">
-            <h3>Teams</h3>
-            <div class="btn-group">
-                {% for status in team_status.labels %}
-                <a href="{% url 'events:event-tab' event.slug 'admin' %}{% if request.GET.status != status|slugify %}?status={{ status }}{% endif %}" title="{{ team_status.labels|get_item:status|title }}" data-toggle="tooltip" class="btn btn-{{ team_status.classes|get_item:status }}{% if request.GET.status == status|slugify %} active{% endif %}">{{ team_status.labels|get_item:status|title|make_list|first }}</a>
-                {% endfor %}
-            </div>
-            <hr/>
-            <form method="get" action="{% url 'events:event-tab' event.slug 'admin' %}">
-            <div class="input-group">
-              <input name="team_search" value="{{ request.GET.team_search }}" class="form-control" placeholder="Regex filter to name, organization, participant or coach" {% if request.GET.team_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-              <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">
-                  <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                  Search
-                </button>
-              </span>
-            </div>
-            </form>
-            <br/>
+        <div id="admin-teams-view-tab" class="tab-pane{% if tab == 'admin' %} active{% endif %}">
+            <div class="col-sm-7">
+                <h3>Teams</h3>
+                <div class="btn-group">
+                    {% for status in team_status.labels %}
+                    <a href="{% url 'events:event-tab' event.slug 'admin' %}{% if request.GET.status != status|slugify %}?status={{ status }}{% endif %}" title="{{ team_status.labels|get_item:status|title }}" data-toggle="tooltip" class="btn btn-{{ team_status.classes|get_item:status }}{% if request.GET.status == status|slugify %} active{% endif %}">{{ team_status.labels|get_item:status|title|make_list|first }}</a>
+                    {% endfor %}
+                </div>
+                <hr/>
+                <form method="get" action="{% url 'events:event-tab' event.slug 'admin' %}">
+                <div class="input-group">
+                  <input name="team_search" value="{{ request.GET.team_search }}" class="form-control" placeholder="Regex filter to name, organization, participant or coach" {% if request.GET.team_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+                  <span class="input-group-btn">
+                    <button class="btn btn-default" type="submit">
+                      <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                      Search
+                    </button>
+                  </span>
+                </div>
+                </form>
+                <br/>
 
-            <div class="list-group">
-            {% include "team-participants-admin.html" %}
+                <div class="list-group endless_page_template">
+                {% include "team-participants-admin.html" %}
+                </div>
+            </div>
+            <div class="col-sm-5">
+                <h3>Participants</h3>
+                <div class="list-group endless_page_template">
+                {% include "participants-admin.html" %}
+                </div>
             </div>
         </div>
 {% endif %}

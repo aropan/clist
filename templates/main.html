@@ -12,7 +12,9 @@
 {% if add_to_calendar != "disable" %}
 <script src="{% static_ts 'js/AddCalEvent.js' %}"></script>
 <link href="{% static_ts 'css/AddCalEvent.css' %}" rel="stylesheet">
-<script>var AddCalEventZones = undefined;</script>
+<script>
+  var AddCalEventZones = undefined
+</script>
 {% endif %}
 
 {% include "calendar.html" %}
@@ -20,7 +22,11 @@
 <link href="{% static_ts 'css/contest/check-timezone-and-filter.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/check-timezone-and-filter.js' %}"></script>
 
-<script>var timezone = '{{ timezone }}'</script>
+<script>
+  var add_to_calendar = "{{ add_to_calendar }}"
+  var timezone = '{{ timezone }}'
+  var timezone_hm = "{{ timezone_hm }}"
+</script>
 {% endblock %}
 
 {% block content %}

@@ -97,6 +97,7 @@ table.standings .handle-cell .handle-div {
   box-shadow: inset 1px 0 #d0d0d0, inset 0 -1px #d0d0d0;
 }
 
+a.coder,
 .standings td a,
 .standings .my-stat th a
 {
@@ -159,6 +160,11 @@ a.solution:hover span {
 #table-inner-scroll {
   overflow-x: auto;
   overflow-y: auto;
+}
+
+#standings-authors {
+  margin-top: -10px;
+  margin-bottom: 10px;
 }
 
 #standings-filters > * {

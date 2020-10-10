@@ -52,7 +52,7 @@ function countdown()
 
     if (need_reload) {
         setTimeout("location.reload()", 1990);
-    } else {
+    } else if (typeof(time_update) != "undefined") {
         setTimeout(countdown, time_update);
     }
 }

@@ -1,4 +1,4 @@
-<{% if without_detail_url %}div{% else %}a{% endif %} class="team list-group-item status-{{ team.status }}"{% if not without_detail_url %} href="{% url 'events:team-details' slug=slug team_id=team.id %}"{% endif %}>
+<{% if without_detail_url %}div{% else %}a{% endif %} class="team list-group-item status-{{ team.status }}"{% if not without_detail_url %} href="{% url 'events:team-details' slug=slug team_id=team.id %}" target="_blank"{% endif %}>
   <strong class="name">
     {{ team.title }}
   </strong>

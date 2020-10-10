@@ -631,8 +631,9 @@ def search(request, **kwargs):
         if 'user' in request.GET:
             re_search = request.GET.get('user')
             qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
+            search_striped = re_search.rstrip('$').lstrip('^')
             qs = qs.annotate(match=Case(
-                When(Q(key=re_search) | Q(name=re_search), then=Value(True)),
+                When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             ))
@@ -732,9 +733,20 @@ def search(request, **kwargs):
         ret = [{'id': f, 'text': f} for f in qs]
     elif query == 'coders':
         qs = Coder.objects.all()
+
         if 'regex' in request.GET:
             qs = qs.filter(get_iregex_filter(request.GET['regex'], 'username'))
-        qs = qs.order_by('-n_accounts')
+
+        order = ['-n_accounts', 'pk']
+        if request.user.is_authenticated:
+            qs = qs.annotate(iam=Case(
+                When(pk=request.user.coder.pk, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField()
+            ))
+            order.insert(0, 'iam')
+        qs = qs.order_by(*order)
+
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.username} for r in qs]
@@ -742,13 +754,29 @@ def search(request, **kwargs):
         qs = Account.objects.all()
         if request.GET.get('resource'):
             qs = qs.filter(resource_id=int(request.GET.get('resource')))
+
+        order = ['-n_contests', 'pk']
         if 'regex' in request.GET:
-            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'key'))
+            re_search = request.GET['regex']
+            qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
+            search_striped = re_search.rstrip('$').lstrip('^')
+            qs = qs.annotate(match=Case(
+                When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))
+            order.insert(0, '-match')
         qs = qs.select_related('resource')
+        qs = qs.order_by(*order)
 
         total = qs.count()
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': f'{r.key}, {r.resource.host}'} for r in qs]
+        ret = [
+            {
+                'id': r.id,
+                'text': f'{r.key}, {r.name}, {r.resource.host}' if r.name else f'{r.key}, {r.resource.host}'
+            } for r in qs
+        ]
     else:
         return HttpResponseBadRequest('invalid query')
 

@@ -15,6 +15,7 @@ from django_countries.fields import CountryField
 
 
 from pyclist.models import BaseModel
+from pyclist.indexes import GistIndexTrgrmOps
 from true_coders.models import Coder, Party
 from clist.models import Contest, Resource
 from clist.templatetags.extras import slug, get_number_from_str, get_problem_short, add_prefix_to_problem_short
@@ -53,6 +54,8 @@ class Account(BaseModel):
 
     class Meta:
         indexes = [
+            GistIndexTrgrmOps(fields=['key']),
+            GistIndexTrgrmOps(fields=['name']),
             models.Index(fields=['resource', 'country']),
             models.Index(fields=['resource', 'last_activity', 'country']),
             models.Index(fields=['resource', 'n_contests', '-id']),

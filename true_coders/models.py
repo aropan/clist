@@ -11,6 +11,7 @@ from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from pyclist.models import BaseModel, BaseManager
+from pyclist.indexes import GistIndexTrgrmOps
 from clist.models import Contest
 
 
@@ -28,6 +29,11 @@ class Coder(BaseModel):
     phone_number = PhoneNumberField(blank=True)
     addition_fields = JSONField(default=dict, blank=True)
     n_accounts = models.IntegerField(default=0, db_index=True)
+
+    class Meta:
+        indexes = [
+            GistIndexTrgrmOps(fields=['username']),
+        ]
 
     def __str__(self):
         return "%s" % (self.username)

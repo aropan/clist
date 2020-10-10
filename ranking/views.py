@@ -77,6 +77,76 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     return render(request, template, context)
 
 
+def _standings_highlight(statistics, options):
+    ret = {}
+    data_1st_u = options.get('1st_u')
+    participants_info = {}
+    if data_1st_u:
+        seen = {}
+        last_hl = None
+        for s in statistics:
+            match = re.search(data_1st_u['regex'], s.account.key)
+            k = match.group('key')
+
+            solving = s.solving
+            penalty = s.addition.get('penalty')
+
+            info = participants_info.setdefault(s.id, {})
+            info['search'] = rf'^{k}'
+
+            if k in seen or last_hl:
+                p_info = participants_info.get(seen.get(k))
+                if (
+                    not p_info or
+                    last_hl and (-last_hl['solving'], last_hl['penalty']) < (-p_info['solving'], p_info['penalty'])
+                ):
+                    p_info = last_hl
+
+                info.update({
+                    't_solving': p_info['solving'] - solving,
+                    't_penalty': p_info['penalty'] - penalty if penalty is not None else None,
+                })
+
+            if k not in seen:
+                seen[k] = s.id
+                info.update({'n': len(seen), 'solving': solving, 'penalty': penalty})
+                if len(seen) == options.get('n_highlight'):
+                    last_hl = info
+    elif 'n_highlight' in options:
+        if isinstance(options['n_highlight'], int):
+            for idx, s in enumerate(statistics[:options['n_highlight']], 1):
+                participants_info[s.id] = {'n': idx}
+        else:
+            n_highlight = copy.deepcopy(options['n_highlight'])
+            stats = statistics
+            if 'order_by' in n_highlight:
+                stats = stats.order_by(*n_highlight['order_by'])
+            for s in stats:
+                for param in n_highlight['params']:
+                    value = s.addition.get(param['field'])
+                    if not value:
+                        continue
+                    if param.get('regex'):
+                        match = re.search(param['regex'], value)
+                        if not match:
+                            continue
+                        value = match.group('value')
+                    values = param.setdefault('_values', {})
+                    counter = values.setdefault(value, {})
+                    counter['count'] = counter.get('count', 0) + 1
+                    last_score = (s.solving, s.addition.get('penalty'))
+                    if counter['count'] <= param['number'] or counter.get('_last') == last_score:
+                        participants_info[s.id] = {'highlight': True}
+                        ret.setdefault('statistics_ids', set()).add(s.id)
+                        if param.get('all'):
+                            counter['_last'] = last_score
+    ret.update({
+        'data_1st_u': data_1st_u,
+        'participants_info': participants_info,
+    })
+    return ret
+
+
 @page_templates((
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
@@ -215,19 +285,13 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         if k in contest_fields:
             fields[k] = v
 
+    n_highlight_context = _standings_highlight(statistics, options)
+
     # field to select
     fields_to_select_defaults = {
-        'rating': {
-            'options': ['rated', 'unrated'],
-            'noajax': True,
-            'nomultiply': True,
-            'nourl': True,
-        },
-        'advanced': {
-            'options': ['true', 'false'],
-            'noajax': True,
-            'nomultiply': True,
-        },
+        'rating': {'options': ['rated', 'unrated'], 'noajax': True, 'nomultiply': True, 'nourl': True},
+        'advanced': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
+        'highlight': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
     }
     fields_to_select = OrderedDict()
     map_fields_to_select = {'rating_change': 'rating'}
@@ -241,6 +305,12 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             field_to_select = fields_to_select.setdefault(f, {})
             field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
             field_to_select.update(fields_to_select_defaults.get(f, {}))
+
+    if n_highlight_context.get('statistics_ids'):
+        f = 'highlight'
+        field_to_select = fields_to_select.setdefault(f, {})
+        field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
+        field_to_select.update(fields_to_select_defaults.get(f, {}))
 
     if with_detail:
         for k in contest_fields:
@@ -263,43 +333,6 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     per_page = options.get('per_page', 50)
     if per_page is None:
         per_page = 100500
-
-    data_1st_u = options.get('1st_u')
-    participants_info = {}
-    if data_1st_u:
-        seen = {}
-        last_hl = None
-        for s in statistics:
-            match = re.search(data_1st_u['regex'], s.account.key)
-            k = match.group('key')
-
-            solving = s.solving
-            penalty = s.addition.get('penalty')
-
-            info = participants_info.setdefault(s.id, {})
-            info['search'] = rf'^{k}'
-
-            if k in seen or last_hl:
-                p_info = participants_info.get(seen.get(k))
-                if (
-                    not p_info or
-                    last_hl and (-last_hl['solving'], last_hl['penalty']) < (-p_info['solving'], p_info['penalty'])
-                ):
-                    p_info = last_hl
-
-                info.update({
-                    't_solving': p_info['solving'] - solving,
-                    't_penalty': p_info['penalty'] - penalty if penalty is not None else None,
-                })
-
-            if k not in seen:
-                seen[k] = s.id
-                info.update({'n': len(seen), 'solving': solving, 'penalty': penalty})
-                if len(seen) == options.get('n_highlight'):
-                    last_hl = info
-    elif 'n_highlight' in options:
-        for idx, s in enumerate(statistics[:options['n_highlight']], 1):
-            participants_info[s.id] = {'n': idx}
 
     mod_penalty = {}
     first = statistics.first()
@@ -420,6 +453,13 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 if q not in field_to_select['options']:
                     continue
                 filt |= Q(addition__advanced=q == 'true')
+        elif field == 'highlight':
+            for q in values:
+                if q not in field_to_select['options']:
+                    continue
+                filt = Q(pk__in=n_highlight_context.get('statistics_ids', {}))
+                if q == 'false':
+                    filt = ~filt
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})
@@ -553,8 +593,6 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     neighbors = list(contest.neighbors())
 
     context = {
-        'data_1st_u': data_1st_u,
-        'participants_info': participants_info,
         'standings_options': options,
         'mod_penalty': mod_penalty,
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
@@ -588,6 +626,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         },
         'with_table_inner_scroll': not request.user_agent.is_mobile,
     }
+
+    context.update(n_highlight_context)
 
     if extra_context is not None:
         context.update(extra_context)
@@ -735,6 +775,19 @@ def get_versus_data(request, query, fields_to_select):
 
 
 def versus(request, query):
+
+    if request.GET.get('coder'):
+        coder = get_object_or_404(Coder, pk=request.GET.get('coder'))
+        return redirect(f'{request.path}vs/{coder.username}')
+
+    if request.GET.get('remove'):
+        idx = int(request.GET.get('remove'))
+        parts = query.split('/vs/')
+        if 0 <= idx < len(parts):
+            parts = parts[:idx] + parts[idx + 1:]
+        query = '/vs/'.join(parts)
+        return redirect(reverse('ranking:versus', args=[query]))
+
     # filtration data
     params = {}
 

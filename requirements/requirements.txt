@@ -14,7 +14,7 @@ django-phonenumber-field==2.2.0
 django-print-sql==2018.3.6
 django-ratelimit==3.0.0
 django-sql-utils==0.5.0
-django-static-fontawesome==5.0.8.1
+django-static-fontawesome==5.14.0.0
 django-super-deduper==0.1.4
 django-tastypie==0.14.2
 django-user-agents==0.4.0

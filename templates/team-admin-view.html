@@ -7,7 +7,7 @@
 {% block title %}{{ team.title }} on {{ event.name }}{% endblock %}
 
 {% block content %}
-<h3><a href="{% url 'admin:events_team_change' team.pk %}"><i class="fas fa-external-link-alt"></i> {{ team.title }}</a></h3>
+<h3><a href="{% url 'admin:events_team_change' team.pk %}" target="_blank"><i class="fas fa-external-link-alt"></i> {{ team.title }}</a></h3>
 
 <form method="post">{% csrf_token %}
   <div class="form-group">
@@ -58,7 +58,7 @@
   {% for p in team.members %}
   <div class="col-sm-3">
     <div>
-      <a href="{% url 'admin:events_participant_change' p.pk %}"><i class="fas fa-external-link-alt"></i>{{ p.first_name }} {{ p.last_name }}</a>
+      <a href="{% url 'admin:events_participant_change' p.pk %}" target="_blank"><i class="fas fa-external-link-alt"></i>{{ p.first_name }} {{ p.last_name }}</a>
     </div>
     {% include "registration-participant.html" with for_coach=p.is_coach user=p coder=p disable=True %}
   </div>

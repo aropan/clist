@@ -28,6 +28,11 @@
       {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
     {% endif %}
     {{ coder.user.username }}
+
+    {% if request.user.is_authenticated and request.user.coder != coder %}
+    <small><a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a></small>
+    {% endif %}
+
     {% if perms.true_coders.change_coder %}
       <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
@@ -39,6 +44,11 @@
       <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
       {% if account.resource.profile_url %}
       <small><a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></small>
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      {% with hostname=account.resource.short_host|default:account.resource.host %}
+      <small><a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:hostname|add:":"|add:account.key %}"><i class="fas fa-people-arrows"></i></a></small>
+      {% endwith %}
       {% endif %}
       {% if perms.ranking.change_account %}
         <a href="{% url 'admin:ranking_account_change' account.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>

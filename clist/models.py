@@ -19,6 +19,7 @@ from PIL import Image
 
 
 from pyclist.models import BaseModel, BaseManager
+from pyclist.indexes import GistIndexTrgrmOps
 from clist.templatetags.extras import slug
 
 
@@ -44,6 +45,12 @@ class Resource(BaseModel):
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
     objects = BaseManager()
+
+    class Meta:
+        indexes = [
+            GistIndexTrgrmOps(fields=['host']),
+            GistIndexTrgrmOps(fields=['short_host']),
+        ]
 
     def __str__(self):
         return "%s" % (self.host)
@@ -197,6 +204,7 @@ class Contest(models.Model):
         indexes = [
             models.Index(fields=['start_time']),
             models.Index(fields=['end_time']),
+            GistIndexTrgrmOps(fields=['title']),
         ]
 
     def save(self, *args, **kwargs):
@@ -339,6 +347,10 @@ class Problem(BaseModel):
 
     class Meta:
         unique_together = ('contest', 'key')
+
+        indexes = [
+            GistIndexTrgrmOps(fields=['name']),
+        ]
 
     def save(self, *args, **kwargs):
         self.visible = bool(self.url) or self.key != self.name

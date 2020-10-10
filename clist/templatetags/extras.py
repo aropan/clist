@@ -519,3 +519,18 @@ def startswith(text, starts):
     if isinstance(text, str):
         return text.startswith(starts)
     return False
+
+
+@register.filter
+def is_solved(value):
+    if not value:
+        return False
+    if isinstance(value, dict):
+        value = value.get('result', 0)
+    if isinstance(value, str):
+        if value.startswith('+'):
+            return True
+        if value.startswith('-'):
+            return False
+        value = float(value)
+    return value > 0

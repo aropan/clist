@@ -1,4 +1,9 @@
+{% with events=participant.coder.participant_set %}
 <div class="list-group-item">
+  {% if with_admin %}
+    <a href="{% url 'admin:events_participant_change' participant.id %}" class="external-database-link" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+  {% endif %}
+
   <strong class="name">
     {{ participant.first_name }}
     <a href="{% url 'coder:profile' participant.coder.username %}">{{ participant.coder.username }}</a>
@@ -8,12 +13,28 @@
   from <abbr title="{{ participant.organization.name }}" data-toggle="tooltip">{{ participant.organization.abbreviation }}</abbr>
   {% endif %}
   {% if participant.team %}
-  in <strong class="small">{{ participant.team.name }}</strong>
+  in <strong>
+    {% if with_admin %}<a href="{% url 'events:team-details' slug=slug team_id=participant.team.id %}" target="_blank">{% endif %}
+      {{ participant.team.name }}
+    {% if with_admin %}</a>{% endif %}
+  </strong>
   {% endif %}
-
-  {% if perms.events.participant_change %}
-    <a href="{% url 'admin:events_participant_change' participant.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+  {% if events.count %}
+  with <a class="small" href="#events-{{ participant.pk }}{{ collapse_suffix }}" data-toggle="collapse">{{ events.count }} event(s)</a>
   {% endif %}
 </div>
 
-<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
+<div class="list-group collapse" id="events-{{ participant.pk }}{{ collapse_suffix }}">
+{% for p in events.all %}
+  {% with team=p.team %}
+  <{% if with_admin %}a href="{% url 'events:team-details' slug=p.event.slug team_id=team.id %}" target="_blank"{% else %}div{% endif %} class="list-group-item">
+    <strong class="name">{{ team.title }}</strong>
+    <span class="badge progress-bar-{{ team_status.classes|get_item:team.status }}">{{ team_status.labels|get_item:team.status }}</span>
+    <div>
+      <small class="text-muted">{{ p.event.name }}</small>
+    </div>
+  </{% if with_admin %}a{% else %}div{% endif %}>
+  {% endwith %}
+{% endfor %}
+</div>
+{% endwith %}

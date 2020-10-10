@@ -49,6 +49,17 @@
   {% include "standings_neighbors.html" with contests=neighbors.after %}
 </h3>
 
+{% with writers=contest.writers.all %}
+{% if writers %}
+  <div id="standings-authors" class="text-center">
+    <b>Writer{% if writers|length > 1 %}s{% endif %}</b>
+    {% for writer in writers %}
+      {% include "standings_account.html" with account=writer addition=None %}
+    {% endfor %}
+  </div>
+{% endif %}
+{% endwith %}
+
 <script>
   function update_neighbors_standings_url_offset() {
     $('.neighbors-standings-url').each(function(idx, el) {

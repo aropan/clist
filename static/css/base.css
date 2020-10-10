@@ -193,6 +193,21 @@ html {
   visibility: visible;
 }
 
+.remove-from-versus {
+  position: absolute;
+  margin-top: -25px;
+  margin-left: -5px;
+}
+
+.visible-on-hover {
+  visibility: hidden;
+}
+
+:hover > .visible-on-hover {
+  color: #337ab7;
+  visibility: visible;
+}
+
 /*
  * tooltip nowrap
  */

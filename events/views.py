@@ -41,6 +41,7 @@ def events(request):
     ('team-participants.html', 'teams'),
     ('participants.html', 'participants'),
     ('team-participants-admin.html', 'teams-admin'),
+    ('participants-admin.html', 'participants-admin'),
 ))
 def event(request, slug, tab=None, template='event.html', extra_context=None):
     event = get_object_or_404(Event, slug=slug)
@@ -291,7 +292,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
 
         return redirect(resolve_url('events:event-tab', slug=event.slug, tab='registration'))
 
-    teams = Team.objects.filter(event=event).order_by('-created')
+    teams = Team.objects.filter(event=event).order_by('-modified')
     teams = teams.prefetch_related(
         'participants__coder__user',
         'participants__organization',
@@ -346,6 +347,9 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
             'team__name',
         )
         participants = participants.filter(participant_search_filter)
+    qs = Participant.objects.filter(team__isnull=False).order_by('-created')
+    qs = qs.prefetch_related('team__participants').select_related('team__author')
+    participants = participants.prefetch_related(Prefetch('coder__participant_set', queryset=qs)).order_by('-modified')
 
     status = request.GET.get('status')
     if status is not None:
