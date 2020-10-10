@@ -48,6 +48,10 @@ td.title-column span {
   max-width: 100%;
 }
 
+#col_add_to_versus {
+  min-width: 120px;
+}
+
 /*
  * Make versus
  */
