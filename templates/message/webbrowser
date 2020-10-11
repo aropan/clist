@@ -1,1 +1,1 @@
-{% for c in contests %}{% if forloop.counter0 %}, {{ c.title }} will{% else %}Will{% endif %} start in {{ c.next_time|hr_timedelta }}{% endfor %}
+{% for c in contests %}{% if forloop.counter0 %}, {{ c.title }} will{% else %}Will{% endif %} {% if c.is_running %}end{% else %}start{% endif %} in {{ c.next_time|hr_timedelta }}{% endfor %}
