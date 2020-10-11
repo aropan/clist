@@ -14,7 +14,9 @@
         </div>
     </div>
     {% endfor %}
+    {% if notification %}
     <div style="margin: auto; text-align: center">
         <a href="{{ domain }}{% url 'coder:unsubscribe' %}?pk={{ notification.pk }}&secret={{ notification.secret }}">Unsibsribe</a>
     </div>
+    {% endif %}
 </div>

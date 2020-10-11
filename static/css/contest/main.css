@@ -67,7 +67,9 @@
 }
 
 .event i.hide-contest:hover,
-.event .data-ace:hover i {
+.event .data-ace:hover i,
+.event i.share-to-category:hover
+{
     color: #23527c;
 }
 
@@ -78,7 +80,8 @@
 }
 
 .event .hide-contest,
-.event .data-ace
+.event .data-ace,
+.event .share-to-category
 {
     color: #8be;
     cursor: pointer;

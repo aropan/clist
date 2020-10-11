@@ -17,7 +17,7 @@ from django.utils.timezone import now
 from django.template.loader import render_to_string
 from webpush import send_user_notification
 
-from notification.models import Task, Notification
+from notification.models import Task
 from telegram.error import Unauthorized
 from clist.models import Contest
 from tg.bot import Bot
@@ -32,33 +32,73 @@ class Command(BaseCommand):
         parser.add_argument('--coders', nargs='+')
         parser.add_argument('--dryrun', action='store_true', default=False)
 
-    def get_message(self, task):
-        if 'contests' in task.addition:
-            notify = task.notification
-            contests = Contest.objects.filter(pk__in=task.addition['contests'])
-            context = deepcopy(task.addition.get('context', {}))
+    def get_message(self, method, data, **kwargs):
+        subject_ = kwargs.pop('subject', None)
+        message_ = kwargs.pop('message', None)
+
+        if 'contests' in data:
+            contests = Contest.objects.filter(pk__in=data['contests'])
+            context = deepcopy(data.get('context', {}))
             context.update({
                 'contests': contests,
-                'notification': notify,
-                'coder': notify.coder,
                 'domain': settings.HTTPS_HOST_,
             })
+            context.update(kwargs)
             subject = render_to_string('subject', context).strip()
             context['subject'] = subject
-            method = notify.method.split(':', 1)[0]
+            method = method.split(':', 1)[0]
             message = render_to_string('message/%s' % method, context).strip()
         else:
             subject = ''
             message = ''
             context = {}
 
-        if task.subject:
-            subject = task.subject + subject
+        if subject_:
+            subject = subject_ + subject
 
-        if task.message:
-            message = task.message + message
+        if message_:
+            message = message_ + message
 
         return subject, message, context
+
+    def send_message(self, coder, method, data, **kwargs):
+        method, *args = method.split(':', 1)
+        subject, message, context = self.get_message(method=method, data=data, coder=coder,  **kwargs)
+        if method == settings.NOTIFICATION_CONF.TELEGRAM:
+            if args:
+                self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
+            elif coder.chat and coder.chat.chat_id:
+                try:
+                    if not coder.settings.get('telegram', {}).get('unauthorized', False):
+                        self.TELEGRAM_BOT.send_message(message, coder.chat.chat_id, reply_markup=False)
+                except Unauthorized:
+                    coder.settings.setdefault('telegram', {})['unauthorized'] = True
+                    coder.save()
+        elif method == settings.NOTIFICATION_CONF.EMAIL:
+            send_mail(
+                subject,
+                message,
+                'CLIST <noreply@clist.by>',
+                [coder.user.email],
+                fail_silently=False,
+                html_message=message,
+            )
+        elif method == settings.NOTIFICATION_CONF.WEBBROWSER:
+            payload = {
+                'head': subject,
+                'body': message,
+            }
+            contests = list(context.get('contests', []))
+            if len(contests) == 1:
+                contest = contests[0]
+                payload['url'] = contest.url
+                payload['icon'] = f'{settings.HTTPS_HOST_}/imagefit/static_resize/64x64/{contest.resource.icon}'
+
+            send_user_notification(
+                user=coder.user,
+                payload=payload,
+                ttl=300,
+            )
 
     @print_sql_decorator()
     @transaction.atomic
@@ -96,44 +136,15 @@ class Command(BaseCommand):
                 task.is_sent = True
                 notification = task.notification
                 coder = notification.coder
-                method, *args = notification.method.split(':', 1)
-                message = self.get_message(task)
-                subject, message, context = self.get_message(task)
-                if method == Notification.TELEGRAM:
-                    if args:
-                        self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
-                    elif coder.chat and coder.chat.chat_id:
-                        try:
-                            if not coder.settings.get('telegram', {}).get('unauthorized', False):
-                                self.TELEGRAM_BOT.send_message(message, coder.chat.chat_id, reply_markup=False)
-                        except Unauthorized:
-                            coder.settings.setdefault('telegram', {})['unauthorized'] = True
-                            coder.save()
-                elif method == Notification.EMAIL:
-                    send_mail(
-                        subject,
-                        message,
-                        'CLIST <noreply@clist.by>',
-                        [coder.user.email],
-                        fail_silently=False,
-                        html_message=message,
-                    )
-                elif method == Notification.WEBBROWSER:
-                    payload = {
-                        'head': subject,
-                        'body': message,
-                    }
-                    contests = list(context.get('contests', []))
-                    if len(contests) == 1:
-                        contest = contests[0]
-                        payload['url'] = contest.url
-                        payload['icon'] = f'{settings.HTTPS_HOST_}/imagefit/static_resize/64x64/{contest.resource.icon}'
-
-                    send_user_notification(
-                        user=coder.user,
-                        payload=payload,
-                        ttl=300,
-                    )
+                method = notification.method
+                self.send_message(
+                    coder,
+                    method,
+                    task.addition,
+                    subject=task.subject,
+                    message=task.message,
+                    notification=notification,
+                )
             except Exception:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False

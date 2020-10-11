@@ -532,5 +532,8 @@ def is_solved(value):
             return True
         if value.startswith('-'):
             return False
-        value = float(value)
+        try:
+            value = float(value)
+        except ValueError:
+            return False
     return value > 0

@@ -90,6 +90,20 @@ $(function() {
         setTimeout(function() { editable.input.$input.select2('open'); }, 1);
     });
 
+    $('#share-to-category').editable({
+        type: 'select',
+        showbuttons: false,
+        source: SHARE_TO_CATEGORY,
+    }).on('shown', function(e, editable){
+        editable.input.$input.select2({
+            width: 250,
+            placeholder: 'Select category',
+            val: editable.input.$input.val(),
+
+        });
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+    });
+
     $('#view-mode').editable({
         type: 'select',
         showbuttons: false,

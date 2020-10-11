@@ -394,6 +394,18 @@ DISCUSS_URL_ = 'https://t.me/clistbynews'
 DONATE_URL_ = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=47CJBL6B2XPM8&source=url'
 
 
+class NOTIFICATION_CONF:
+    EMAIL = 'email'
+    TELEGRAM = 'telegram'
+    WEBBROWSER = 'webbrowser'
+
+    METHODS_CHOICES = (
+        (EMAIL, 'Email'),
+        (TELEGRAM, 'Telegram'),
+        (WEBBROWSER, 'WebBrowser'),
+    )
+
+
 try:
     from .local_settings import *  # noqa
 except ImportError:

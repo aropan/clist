@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -12,16 +13,6 @@ from true_coders.models import Coder
 
 
 class Notification(BaseModel):
-    EMAIL = 'email'
-    TELEGRAM = 'telegram'
-    WEBBROWSER = 'webbrowser'
-
-    METHODS_CHOICES = (
-        ('', '...'),
-        (EMAIL, 'Email'),
-        (TELEGRAM, 'Telegram'),
-        (WEBBROWSER, 'WebBrowser'),
-    )
 
     EVENT = 'event'
     HOUR = 'hour'
@@ -30,7 +21,6 @@ class Notification(BaseModel):
     MONTH = 'month'
 
     PERIOD_CHOICES = (
-        ('', '...'),
         (EVENT, 'Event'),
         (HOUR, 'Hour'),
         (DAY, 'Day'),
@@ -63,8 +53,14 @@ class Notification(BaseModel):
             self.secret = User.objects.make_random_password(length=50)
         super().save(*args, **kwargs)
 
+    def get_delta(self):
+        return Notification.DELTAS[self.period]
+
     def clean(self):
-        if self.method == Notification.WEBBROWSER and self.period != Notification.EVENT:
+        if (
+            self.method == django_settings.NOTIFICATION_CONF.WEBBROWSER
+            and self.period != django_settings.NOTIFICATION_CONF.EVENT
+        ):
             raise ValidationError(f'WebBrowser method must have Event period.')
 
 

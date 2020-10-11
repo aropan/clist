@@ -327,7 +327,7 @@ def settings(request, tab=None):
             notification_form = NotificationForm(coder, request.POST)
             if notification_form.is_valid():
                 notification = notification_form.save(commit=False)
-                if notification.method == Notification.TELEGRAM and not coder.chat:
+                if notification.method == django_settings.NOTIFICATION_CONF.TELEGRAM and not coder.chat:
                     return HttpResponseRedirect(django_settings.HTTPS_HOST_ + reverse('telegram:me'))
                 notification.coder = coder
                 notification.save()
@@ -350,6 +350,7 @@ def settings(request, tab=None):
             "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,
             "categories": coder.get_categories(),
+            "notifications": coder.get_notifications(),
             "notification_form": notification_form,
             "modules": Module.objects.select_related('resource').order_by('resource__id').all(),
             "ace_calendars": django_settings.ACE_CALENDARS_,
@@ -401,8 +402,14 @@ def change(request):
         coder.save()
     elif name == "add-to-calendar":
         if value not in django_settings.ACE_CALENDARS_.keys():
-            return HttpResponseBadRequest("invalid addtocalendar value")
+            return HttpResponseBadRequest("invalid add-to-calendar value")
         coder.settings["add_to_calendar"] = value
+        coder.save()
+    elif name == "share-to-category":
+        categories = [k for k, v in coder.get_notifications()]
+        if value != 'disable' and value not in categories:
+            return HttpResponseBadRequest("invalid share-to-category value")
+        coder.settings["share_to_category"] = value
         coder.save()
     elif name == "view-mode":
         if value in ["0", "1"]:

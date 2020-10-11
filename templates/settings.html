@@ -26,6 +26,8 @@
     ACE_CALENDARS = { {% for k, v in ace_calendars.items %}{% if forloop.counter0 %}, {% endif %}'{{ k }}': '{{ v.name }}'{% endfor %} }
 
     PREFERENCES_URL = "{% url 'coder:settings' 'preferences' %}"
+
+    SHARE_TO_CATEGORY = { 'disable': 'Disable' {% for k, v in notifications %}, '{{ k }}': '{{ v }}'{% endfor %} }
 </script>
 
 <script src="{% static_ts 'js/settings/main.js' %}"></script>
@@ -63,8 +65,11 @@
             </div>
             <div class="value"><a href="#" id="time-format" data-value="{{ coder.settings.time_format }}"></a></div>
 
-            <div class="key">Default import calendar</div>
+            <div class="key">Default import to calendar</div>
             <div class="value"><a href="#" id="add-to-calendar" data-value="{{ coder.settings.add_to_calendar }}"></a></div>
+
+            <div class="key">Default share to category</div>
+            <div class="value"><a href="#" id="share-to-category" data-value="{{ coder.settings.share_to_category }}"></a></div>
 
             <div class="key">View mode
                 <i rel="tooltip" title="For a single viewing in another mode using /?view=..."></i>

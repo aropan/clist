@@ -1,6 +1,7 @@
 import re
 
 from django.db import models
+from django.conf import settings as django_settings
 from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -103,12 +104,19 @@ class Coder(BaseModel):
 
     def get_categories(self):
         categories = [{'id': c, 'text': c} for c in Filter.CATEGORIES]
-        for chat in self.chat_set.filter(is_group=True):
+        for chat in self.chat_set.filter(is_group=True).order_by('pk'):
             categories.append({
                 'id': chat.chat_id,
                 'text': chat.get_group_name(),
             })
         return categories
+
+    def get_notifications(self):
+        ret = list(django_settings.NOTIFICATION_CONF.METHODS_CHOICES)
+        for chat in self.chat_set.filter(is_group=True):
+            name = chat.get_group_name()
+            ret.append(('telegram:{}'.format(chat.chat_id), name))
+        return ret
 
     def get_tshirt_size(self):
         p = self.participant_set.order_by('-modified').first()

@@ -4,6 +4,7 @@ from urllib.parse import urlparse, parse_qs
 import arrow
 import pytz
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.db.models.functions import Cast, Ln
 from django.db.models import F, Q, Count, IntegerField, FloatField
 from django.core.management.commands import dumpdata
@@ -19,6 +20,7 @@ from el_pagination.decorators import page_templates, page_template
 from clist.templatetags.extras import get_timezones, get_timezone_offset, slug
 from clist.templatetags.extras import get_problem_key, get_problem_name, get_problem_short, canonize
 from clist.models import Resource, Contest, Banner, Problem, ProblemTag
+from notification.management.commands import sendout_tasks
 from true_coders.models import Party, Coder, Filter
 from ranking.models import Rating, Account
 from utils.regex import verify_regex, get_iregex_filter
@@ -190,11 +192,31 @@ def get_events(request):
     return JsonResponse(result, safe=False)
 
 
+@csrf_protect
+@login_required
+def send_event_notification(request):
+    method = request.POST['method']
+    contest_id = request.POST['contest_id']
+    message = request.POST['message']
+
+    coder = request.user.coder
+
+    sendout_tasks.Command().send_message(
+        coder=coder,
+        method=method,
+        data={'contests': [int(contest_id)]},
+        message=message.strip() + '\n',
+    )
+
+    return HttpResponse('ok')
+
+
 def main(request, party=None):
     viewmode = settings.VIEWMODE_
     open_new_tab = settings.OPEN_NEW_TAB_
     add_to_calendar = settings.ADD_TO_CALENDAR_
     hide_contest = settings.HIDE_CONTEST_
+    share_to_category = None
 
     if request.user.is_authenticated:
         if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
@@ -205,6 +227,7 @@ def main(request, party=None):
         hide_contest = coder.settings.get("hide_contest", hide_contest)
         open_new_tab = coder.settings.get("open_new_tab", open_new_tab)
         add_to_calendar = coder.settings.get("add_to_calendar", add_to_calendar)
+        share_to_category = coder.settings.get("share_to_category", add_to_calendar)
     else:
         coder = None
     viewmode = request.GET.get("view", viewmode)
@@ -272,6 +295,7 @@ def main(request, party=None):
         "now": now,
         "viewmode": viewmode,
         "hide_contest": hide_contest,
+        "share_to_category": share_to_category,
         "timezone": tzname,
         "timezone_hm": timezone_hm,
         "time_format": time_format,

@@ -1,0 +1,25 @@
+{% with message_id=message_id|default:"send_message_id" %}
+<div class="modal fade" id="{{ message_id }}" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"></h4>
+      </div>
+
+{% if body_template %}
+      <div class="modal-body">
+{% include body_template %}
+      </div>
+{% endif %}
+
+{% if footer_template %}
+      <div class="modal-footer">
+{% include body_template %}
+      </div>
+{% endif %}
+
+    </div>
+  </div>
+</div>
+{% endwith %}

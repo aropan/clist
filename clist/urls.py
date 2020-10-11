@@ -13,6 +13,7 @@ api_v1.register(v1.ContestResource())
 
 urlpatterns = [
     url(r'^$', views.main, name='main'),
+    url(r'^send-event-notification/$', views.send_event_notification, name='send_event_notification'),
     url(r'^resources/$', views.resources, name='resources'),
     url(r'^resources/dumpdata/$', views.resources_dumpdata, name='resources_dumpdata'),
     url(r'^resource/(.*)/$', views.resource, name='resource'),

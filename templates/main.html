@@ -132,13 +132,15 @@
             }
           }'><i class="far fa-calendar-alt"></i></a>
           {% endif %}
+          {% if share_to_category and share_to_category != "disable" %}
+          <a data-toggle="modal" data-target="#send_notification" data-title="{{ contest.title }}" data-contest-id="{{ contest.id }}" data-method="{{ share_to_category }}">
+            <i class="share-to-category fas fa-share-square"></i>
+          </a>
+          {% endif %}
           {% if contest.group_size %}
           <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
           {% endif %}
           <div class="resource">
-            {% if hide_contest %}
-            <i class="fa fa-eye invisible"></i>
-            {% endif %}
             <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
           </div>
         </div>
@@ -166,6 +168,10 @@
     'apps': [{% if add_to_calendar == "enable" %}1,2,3{% else %}{{ add_to_calendar }}{% endif %}]
   })
 </script>
+{% endif %}
+
+{% if share_to_category and share_to_category != "disable" %}
+  {% include "send_message.html" with message_id="send_notification" body_template="main_notification.html" %}
 {% endif %}
 
 {% endblock %}
