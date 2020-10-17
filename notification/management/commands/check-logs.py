@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
         command_cache = cache.setdefault('command', {})
         files = list(glob.glob('./logs/command/**/*.log', recursive=True))
-        files.append('./legacy/logs/calendar/index.html')
+        files.append('./legacy/logs/calendar/index.txt')
 
         for log_file in files:
             if not os.path.exists(log_file):
