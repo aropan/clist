@@ -35,6 +35,18 @@ def get_all_calendars():
     return ret
 
 
+def get_all_events(**kwargs):
+    ret = []
+    page_token = None
+    while True:
+        events = service.events().list(pageToken=page_token, **kwargs).execute()
+        ret += events["items"]
+        page_token = events.get('nextPageToken')
+        if not page_token:
+            break
+    return ret
+
+
 def create_resource_calendar(resource, calendarId=None):
     body = {
         "summary": resource.host,
@@ -114,10 +126,7 @@ def main():
             service.calendarList().delete(calendarId=uid).execute()
 
     for r in Resource.objects.all():
-        events = dict(
-            (entry["id"], entry)
-            for entry in service.events().list(calendarId=r.uid, timeMin=current.isoformat()).execute()["items"]
-        )
+        events = {entry["id"]: entry for entry in get_all_events(calendarId=r.uid, timeMin=current.isoformat())}
         contests = Contest.visible.filter(resource=r, end_time__gt=current)
 
         print("%s <%d event(s), %d contest(s)>:" % (r, len(events), len(contests)))
