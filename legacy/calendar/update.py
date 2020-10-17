@@ -23,6 +23,18 @@ from datetime import datetime, timedelta
 batch = BatchHttpRequest()
 
 
+def get_all_calendars():
+    ret = []
+    page_token = None
+    while True:
+        calendar_list = service.calendarList().list(pageToken=page_token).execute()
+        ret += calendar_list["items"]
+        page_token = calendar_list.get('nextPageToken')
+        if not page_token:
+            break
+    return ret
+
+
 def create_resource_calendar(resource, calendarId=None):
     body = {
         "summary": resource.host,
@@ -75,16 +87,13 @@ def main():
     print()
     current = now - timedelta(days=8)
 
-    calendars = dict(
-        (entry["id"], entry)
-        for entry in service.calendarList().list().execute()["items"]
-    )
+    calendars = {entry["id"]: entry for entry in get_all_calendars()}
 
-    print("Calendars:")
-    for c in list(calendars.values()):
-        if c["summary"] == "Дни рождения":
-            continue
+    print(f"Calendars ({len(calendars)}):")
+    for c in sorted(list(calendars.values()), key=lambda c: c['summary']):
         print("    %(summary)s, %(id)s" % c)
+
+    resources_uids = set()
     for r in Resource.objects.all():
         if r.uid:
             if r.uid not in calendars:
@@ -95,6 +104,14 @@ def main():
         else:
             print("+   %s" % r)
             create_resource_calendar(r)
+        resources_uids.add(r.uid)
+
+    for uid, cal in calendars.items():
+        if cal['summary'] == 'CLIST':
+            continue
+        if uid not in resources_uids:
+            print(f"-   {cal['summary']}")
+            service.calendarList().delete(calendarId=uid).execute()
 
     for r in Resource.objects.all():
         events = dict(

@@ -73,7 +73,7 @@ class Command(BaseCommand):
             if not os.path.exists(log_file):
                 continue
             key = os.path.basename(log_file)
-            regex = r'^[^\{\n]*\b(error\b|exception\b[^\(]).*$'
+            regex = r'^[^-\{\+\!\n]*\b(error\b|exception\b[^\(]).*$'
             self._check(log_file, regex, command_cache, key)
 
         cache = yaml.dump(cache, default_flow_style=False)
