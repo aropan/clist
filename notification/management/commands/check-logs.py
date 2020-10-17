@@ -18,7 +18,9 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = 'Notify errors'
 
-    def _check(self, filepath, regex, cache, key, href=None, flags=None):
+    def _check(self, filepath, regex, cache, key, href=None, flags=re.MULTILINE | re.IGNORECASE):
+        if not os.path.exists(filepath):
+            return
         self._logger.info(f'log file is {filepath}')
         with open(filepath, 'r') as fo:
             errors = []
@@ -53,26 +55,28 @@ class Command(BaseCommand):
         cache_filepath = os.path.join(os.path.dirname(__file__), 'cache.yaml')
         if os.path.exists(cache_filepath):
             with open(cache_filepath, 'r') as fo:
-                cache = yaml.load(fo)
+                cache = yaml.safe_load(fo)
         else:
             cache = {}
 
-        filepath = './legacy/logs/update/index.html'
-        key = 'update-file-error-hash'
-        if os.path.exists(filepath):
-            self._check(
-                filepath,
-                regex='php.*:.*$',
-                cache=cache,
-                key=key,
-                href='https://legacy.clist.by/logs/update/',
-                flags=re.MULTILINE | re.IGNORECASE,
-            )
+        self._check(
+            './legacy/logs/update/index.html',
+            regex='php.*:.*$',
+            cache=cache,
+            key='update-file-error-hash',
+            href='https://legacy.clist.by/logs/update/',
+        )
 
         command_cache = cache.setdefault('command', {})
-        for log_file in glob.glob('./logs/command/**/*.log', recursive=True):
+        files = list(glob.glob('./logs/command/**/*.log', recursive=True))
+        files.append('./legacy/logs/calendar/index.html')
+
+        for log_file in files:
+            if not os.path.exists(log_file):
+                continue
             key = os.path.basename(log_file)
-            self._check(log_file, r'^[^\{\n]*\berror\b.*$', command_cache, key, flags=re.MULTILINE | re.IGNORECASE)
+            regex = r'^[^\{\n]*\b\(error|exception\)\b.*$'
+            self._check(log_file, regex, command_cache, key)
 
         cache = yaml.dump(cache, default_flow_style=False)
         with open(cache_filepath, 'w') as fo:
