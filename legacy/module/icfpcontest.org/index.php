@@ -6,7 +6,6 @@
     $urls = [];
     foreach(array($URL, 'http://icfpcontest.org/') as $url) {
         $page = curlexec($url);
-        echo $url . "\n";
         if (in_array($url, $urls)) {
             continue;
         }

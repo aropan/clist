@@ -753,24 +753,28 @@ def get_versus_data(request, query, fields_to_select):
         filters.append(base_filter & filt)
 
     infos = []
-    medal_contest_ids = set()
+    medal_contests_ids = set()
     for filt in filters:
         qs = Statistics.objects.filter(filt, place__isnull=False)
         infos.append({
             'score': 0,
             'contests': {s.contest_id: s for s in qs},
+            'divisions': {(s.contest_id, s.addition.get('division')) for s in qs},
         })
         for s in qs:
             if s.addition.get('medal'):
-                medal_contest_ids.add(s.contest_id)
+                medal_contests_ids.add(s.contest_id)
+
+    intersection = set.intersection(*[info['divisions'] for info in infos])
+    contests_ids = {cid for cid, div in intersection}
 
     return {
         'infos': infos,
         'opponents': opponents,
         'urls': urls,
         'filters': filters,
-        'contest_ids': set.intersection(*[set(info['contests'].keys()) for info in infos]),
-        'medal_contest_ids': medal_contest_ids,
+        'contests_ids': contests_ids,
+        'medal_contests_ids': medal_contests_ids,
     }
 
 
@@ -811,7 +815,7 @@ def versus(request, query):
     versus_data = get_versus_data(request, query, fields_to_select)
 
     # filter contests
-    contests = Contest.visible.filter(pk__in=versus_data['contest_ids']).order_by('-end_time')
+    contests = Contest.visible.filter(pk__in=versus_data['contests_ids']).order_by('-end_time')
     contests = contests.select_related('resource')
 
     search = request.GET.get('search')
@@ -836,13 +840,13 @@ def versus(request, query):
                                             },
                                             logger=request.logger)
         if with_medal:
-            contests_filter |= Q(pk__in=versus_data['medal_contest_ids'])
+            contests_filter |= Q(pk__in=versus_data['medal_contests_ids'])
         contests = contests.filter(contests_filter)
 
     medal = request.GET.get('medal')
     if medal:
         contests_filter = Q(info__standings__medals__isnull=False)
-        contests_filter |= Q(pk__in=versus_data['medal_contest_ids'])
+        contests_filter |= Q(pk__in=versus_data['medal_contests_ids'])
         if medal == 'no':
             contests_filter = ~contests_filter
         contests = contests.filter(contests_filter)

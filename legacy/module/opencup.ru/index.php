@@ -40,29 +40,37 @@
 
     preg_match_all('#</td><td>(?<date>\d?\d\.\d?\d\.\d\d\d\d)</td><td>[^0-9]*(?<date_start_time>\d\d:\d\d).*?</td><td>(?<title>.*?)</td></tr>#s', $page, $matches, PREG_SET_ORDER);
     $year = "";
-    foreach ($matches as $match) {
-        $title = trim(strip_tags($match['title']));
-        $words = explode(" ", $title);
-        $opt = strlen($title);
-        $titles = explode(" of ", $title);
-        $q = strtolower(end($titles));
-        foreach ($results as $t => $u) {
-            $ts = explode(" of ", $t);
-            $p = strtolower(end($ts));
-            $res = levenshtein($p, $q);
-            if ($res < $opt) {
-                $opt = $res;
-                $tit = $t;
+    for (;;) {
+        $opt = 42;
+        $index = -1;
+        foreach ($matches as $idx => $match) {
+            if (isset($match['standings_url'])) {
+                continue;
+            }
+            $title = trim(strip_tags($match['title']));
+            $words = explode(" ", $title);
+            $titles = explode(" of ", $title);
+            $q = strtolower(end($titles));
+            foreach ($results as $t => $u) {
+                $ts = explode(" of ", $t);
+                $p = strtolower(end($ts));
+                $res = levenshtein($p, $q);
+                if ($res < $opt) {
+                    $opt = $res;
+                    $tit = $t;
+                    $index = $idx;
+                }
             }
         }
-        if ($opt <= 6) {
-            $url = $results[$tit]['url'];
-            $standings_url = $results[$tit]['standings_url'];
-            unset($results[$tit]);
-        } else {
-            $url = $URL;
-            $standings_url = null;
+        if ($opt > 5) {
+            break;
         }
+        $matches[$index]['url'] = $results[$tit]['url'];
+        $matches[$index]['standings_url'] = $results[$tit]['standings_url'];
+        unset($results[$tit]);
+    }
+    foreach ($matches as $match) {
+        $title = trim(strip_tags($match['title']));
         $start_time = trim(strip_tags($match['date'])) . " " . trim(strip_tags($match['date_start_time']));
         if (empty($year)) {
             $year = date('Y', strtotime($start_time));
@@ -71,14 +79,14 @@
             'start_time' => $start_time,
             'duration' => "05:00",
             'title' => $title,
-            'url' => $url,
+            'url' => isset($match['url'])? $match['url'] : $URL,
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
-            'key' => $year . '-' . ($year + 1) . ' ' . $title
+            'key' => $year . '-' . ($year + 1) . ' ' . $title,
         );
-        if (!empty($standings_url)) {
-            $c['standings_url'] = $standings_url;
+        if (isset($match['standing_url'])) {
+            $c['standings_url'] = $match['standing_url'];
         }
         $contests[] = $c;
     }

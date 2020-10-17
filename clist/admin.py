@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from pyclist.admin import BaseModelAdmin, admin_register
 from clist.models import Resource, Contest, TimingContest, Banner, Problem, ProblemTag
-from ranking.models import Rating
+from ranking.models import Rating, Module
 from ranking.management.commands.parse_statistic import Command as parse_stat
 
 
@@ -143,6 +143,11 @@ class ResourceAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return ['n_accounts', 'n_contests'] + list(super().get_readonly_fields(request, obj))
+
+    class ResourceModuleInline(admin.StackedInline):
+        model = Module
+
+    inlines = [ResourceModuleInline]
 
 
 @admin_register(Problem)

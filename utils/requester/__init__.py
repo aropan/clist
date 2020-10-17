@@ -13,6 +13,7 @@ import random
 import string
 import html
 import json
+import copy
 from os import path, makedirs, listdir, remove, stat, environ
 from os.path import isdir, getctime
 from json import loads, dumps, load
@@ -28,6 +29,8 @@ from random import choice, gauss
 from distutils.util import strtobool
 
 import chardet
+
+from fp.fp import FreeProxy
 
 
 logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
@@ -65,12 +68,7 @@ class NoVerifyWord(Exception):
     pass
 
 
-class SlowlyProxy(Exception):
-    pass
-
-
 class proxer():
-    LIMIT_FAIL = 3
     DIVIDER = 3
     LIMIT_TIME = 2.5
 
@@ -81,14 +79,19 @@ class proxer():
         except (IOError, ValueError):
             self.data = {}
 
-    def save_data(self):
-        if (
-            self.proxy and
-            self.proxy["_fail"] >= self.LIMIT_FAIL
-            or
-            self.is_slow_proxy()
-        ):
+    def check_proxy(self):
+        if (self.proxy and self.proxy["_fail"] > 0 and self.proxy["_success"] == 0 or self.is_slow_proxy()):
+            self.print(f'remove {self.proxy_key}, info = {self.proxy}')
             del self.data[self.proxy_key]
+            self.proxy = None
+            self.proxy_key = None
+            self.save_data()
+            if not self.without_new_proxy and self.callback_new_proxy:
+                proxy = self.get()
+                self.callback_new_proxy(proxy)
+
+    def save_data(self):
+        self.check_proxy()
         j = dumps(
             self.data,
             indent=4,
@@ -100,7 +103,8 @@ class proxer():
 
     def is_slow_proxy(self):
         if self.proxy and self.proxy.get("_count", 0) > 9:
-            return self.time_response() > self.LIMIT_TIME
+            time = self.time_response()
+            return time > self.time_limit
 
     @staticmethod
     def get_timestamp():
@@ -108,7 +112,7 @@ class proxer():
 
     @staticmethod
     def get_score(proxy):
-        return (proxy["_success"] - proxer.DIVIDER ** proxy["_fail"], -proxy["_timestamp"])
+        return (proxy["_success"], -proxy["_timestamp"])
 
     def add(self, proxy):
         value = self.data.setdefault(proxy, {})
@@ -117,7 +121,14 @@ class proxer():
         value.setdefault("_fail", 0)
         value.setdefault("_timestamp", self.get_timestamp())
 
+    def add_free_proxies(self):
+        proxies = FreeProxy().get_proxy_list()
+        for proxy in proxies:
+            self.add(proxy)
+
     def get(self):
+        if not self.data:
+            self.add_free_proxies()
         self.proxy = None
         for k, v in self.data.items():
             if self.proxy is None or self.get_score(v) > self.get_score(self.proxy):
@@ -126,45 +137,78 @@ class proxer():
         if not self.proxy:
             raise ListProxiesEmpty()
         self.proxy["_timestamp"] = self.get_timestamp()
-        return "%(addr)s:%(port)s" % self.proxy
+        ret = "%(addr)s:%(port)s" % self.proxy
+        self.print(f'get = {ret} of {len(self)}, time = {self.time_response()}')
+        return ret
 
     def ok(self, time_response=None):
-        if self.proxy:
-            self.proxy["_success"] += 1
-            for i in range(self.LIMIT_FAIL):
-                if self.proxy["_fail"] <= i:
-                    break
-                if self.proxy["_success"] > 2 ** (2 ** (self.LIMIT_FAIL - i)) + 10:
-                    self.proxy["_fail"] = i
-                    break
-            if time_response:
-                self.proxy.setdefault("_count", 0)
-                self.proxy.setdefault("_total_time", 0.)
-                self.proxy["_count"] += 1
-                self.proxy["_total_time"] += time_response.total_seconds() + time_response.microseconds / 1000000.
-                if self.is_slow_proxy():
-                    raise SlowlyProxy("%s, %.3f" % (self.proxy["addr"], self.time_response()))
+        if not self.proxy:
+            return
+        self.proxy["_success"] += 1
+        if time_response:
+            self.proxy.setdefault("_count", 0)
+            self.proxy.setdefault("_total_time", 0.)
+            self.proxy["_count"] += 1
+            self.proxy["_total_time"] += time_response.total_seconds() + time_response.microseconds / 1000000.
+        self.print(f'ok, {time_response} with average {self.time_response()}')
+        self.check_proxy()
 
-    def fail(self):
-        if self.proxy:
-            self.proxy["_success"] //= self.DIVIDER
-            self.proxy["_fail"] += 1
+    def fail(self, error):
+        if not self.proxy:
+            return
+        self.print('fail', str(error)[:80])
+        self.proxy["_success"] //= self.DIVIDER
+        self.proxy["_fail"] += 1
+        self.check_proxy()
 
     def time_response(self):
         if self.proxy and self.proxy.get("_count", 0):
-            return self.proxy["_total_time"] / self.proxy["_count"]
+            return round(self.proxy["_total_time"] / self.proxy["_count"], 3)
 
-    def __init__(self, file_name):
-        self.file_name = file_name + ".json"
-        self.load_data()
-        with open(file_name, "r") as fo:
-            for line in fo:
-                line = line.strip()
-                if not line:
+    def print(self, *args):
+        if self.logger:
+            self.logger('[proxy]', *args)
+
+    def get_connect_ret(self):
+        return self.connect_ret
+
+    def set_connect_func(self, func):
+        self.connect_func = func
+        self.connect_ret = None
+
+    def connect(self, req, set_proxy):
+        if self.connect_func:
+            self.without_new_proxy = True
+            while True:
+                try:
+                    self.connect_ret = self.connect_func(req)
+                except FailOnGetResponse:
+                    set_proxy(self.get())
                     continue
-                self.add(line)
+                break
+            self.without_new_proxy = False
+
+    def __init__(self, file_name, callback_new_proxy=None, logger=None, connect=None, time_limit=LIMIT_TIME):
+        self.logger = logger
+        self.file_name = file_name + ".json"
+        self.time_limit = time_limit
+        self.callback_new_proxy = callback_new_proxy
+        self.without_new_proxy = False
+        self.connect_func = connect
+        self.connect_ret = None
+        self.load_data()
+        if path.exists(file_name):
+            with open(file_name, "r") as fo:
+                for line in fo:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    self.add(line)
+            open(file_name, "w").close()
         self.proxy = None
-        open(file_name, "w").close()
+
+    def __len__(self):
+        return len(self.data)
 
     def __exit__(self, *err):
         self.close()
@@ -254,6 +298,7 @@ class requester():
     debug_output = True
     dir_cache = path.dirname(path.realpath(__file__)) + "/cache/"
     cookie_filename = path.abspath(path.realpath(__file__)) + ".cookie"
+    default_filepath_proxies = path.join(path.dirname(__file__), "proxies.txt")
     last_page = None
     last_url = None
     ref_url = None
@@ -272,8 +317,7 @@ class requester():
                  caching=None,
                  user_agent=None,
                  headers=None,
-                 file_name_with_proxies=path.join(path.dirname(__file__), 'proxies.txt')):
-        self.opened = None
+                 file_name_with_proxies=default_filepath_proxies):
         if cookie_filename:
             self.cookie_filename = cookie_filename
         if caching is not None:
@@ -292,6 +336,11 @@ class requester():
                     if user_agent is None else user_agent
                 )
             ]
+        self._init_opener_headers = self.headers
+        self.init_opener()
+        self.set_proxy(proxy, file_name_with_proxies)
+
+    def init_opener(self):
         if self.cookie_filename:
             makedirs(path.dirname(self.cookie_filename), exist_ok=True)
             self.cookiejar = MozillaCookieJar(self.cookie_filename)
@@ -303,23 +352,23 @@ class requester():
         self.http_cookie_processor = urllib.request.HTTPCookieProcessor(self.cookiejar)
         self.opener = urllib.request.build_opener(self.http_cookie_processor)
         self.proxer = None
+
+    def set_proxy(self, proxy, filepath_proxies=default_filepath_proxies, **kwargs):
+        if proxy is True:
+            self.proxer = proxer(filepath_proxies, callback_new_proxy=self.set_proxy, logger=self.print, **kwargs)
+            proxy = self.proxer.get()
+
         if proxy:
-            if proxy is True:
-                if not file_name_with_proxies or not path.exists(file_name_with_proxies):
-                    raise FileWithProxiesNotFound("ERROR: not found '%s' file" % file_name_with_proxies)
-                self.proxer = proxer(file_name_with_proxies)
-                proxy = self.proxer.get()
-                self.print("[proxy]", proxy)
-                time_response = self.proxer.time_response()
-                if time_response:
-                    self.print("[average time]", time_response)
+            def set_proxy(proxy):
+                self.opener.add_handler(urllib.request.ProxyHandler({
+                    'http': proxy,
+                    'https': proxy,
+                }))
 
-            self.opener.add_handler(urllib.request.ProxyHandler({
-                'http': proxy,
-                'https': proxy,
-            }))
+            set_proxy(proxy)
 
-        self._init_opener_headers = self.headers
+            if self.proxer:
+                self.proxer.connect(req=self, set_proxy=set_proxy)
 
     def get(
         self,
@@ -408,10 +457,14 @@ class requester():
                     request = url
 
                 time_start = datetime.utcnow()
+
+                time_out = time_out or self.time_out
+                if self.proxer:
+                    time_out = min(time_out, self.proxer.time_limit)
                 response = self.opener.open(
                     request,
                     post_urlencoded if post else None,
-                    timeout=time_out or self.time_out,
+                    timeout=time_out,
                 )
                 last_url = response.geturl() if response else url
                 if response.info().get("Content-Encoding", None) == "gzip":
@@ -423,10 +476,11 @@ class requester():
                 if self.verify_word and self.verify_word not in page:
                     raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
             except Exception as err:
+                self.print('[error]', str(err)[:80])
                 self.error = err
                 if self.assert_on_fail:
                     if self.proxer:
-                        self.proxer.fail()
+                        self.proxer.fail(err)
                     raise FailOnGetResponse(err)
                 else:
                     traceback.print_exc()
@@ -476,7 +530,10 @@ class requester():
         elif charset in ('windows-1251', 'cp1251'):
             page = page.decode('cp1251', 'replace')
         else:
-            page = page.decode(charset, 'replace')
+            try:
+                page = page.decode(charset, 'replace')
+            except LookupError:
+                pass
 
         self.last_page = page
         if is_ref_url:
@@ -653,7 +710,7 @@ class requester():
         return ''.join([choice(a) for i in range(length)])
 
     def save_cookie(self):
-        if self.cookie_filename:
+        if self.cookie_filename and hasattr(self, 'cookiejar'):
             self.cookiejar.save(self.cookie_filename)
 
     def close(self):
@@ -661,15 +718,20 @@ class requester():
             self.proxer.save_data()
         self.save_cookie()
 
+    def __call__(self, with_proxy=False, args_proxy=None):
+        if with_proxy:
+            ret = copy.copy(self)
+            ret.init_opener()
+            args_proxy = args_proxy or {}
+            ret.set_proxy(proxy=True, **args_proxy)
+            return ret
+        return self
+
     def __enter__(self):
-        if self.opened is not True:
-            self.opened = True
         return self
 
     def __exit__(self, *err):
-        if self.opened is not False:
-            self.opened = False
-            self.close()
+        self.close()
 
     def __del__(self):
         self.save_cookie()

@@ -101,6 +101,9 @@
             {% if stat.addition.medal %}
             <div>Medal: {{ stat.addition.medal|title }}</div>
             {% endif %}
+            {% if stat.addition.division %}
+            <div>Division: {{ stat.addition.division }}</div>
+            {% endif %}
           '
           data-toggle="tooltip"
           data-placement="top"
@@ -108,6 +111,9 @@
         >
           {{ stat.solving|floatformat:'-2' }} ({{ stat.place }})
           {% if stat.addition.medal %}<span class="{{ stat.addition.medal|lower }}-medal">&#9899;</span>{% endif %}
+          {% if perms.ranking.statistics_change and stat %}
+            <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+          {% endif %}
         </div>
         {% if rated %}
         <div>
