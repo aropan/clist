@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from datetime import timedelta
-from django.conf import settings as django_settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F, Q
@@ -93,7 +92,7 @@ class Command(BaseCommand):
                     notify.save()
                     continue
 
-                if notify.period == django_settings.NOTIFICATION_CONF.EVENT:
+                if notify.period == Notification.EVENT:
                     last = first.start_time - now + timedelta(seconds=1)
                 else:
                     last = before + notify.get_delta()

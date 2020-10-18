@@ -59,7 +59,7 @@ class Notification(BaseModel):
     def clean(self):
         if (
             self.method == django_settings.NOTIFICATION_CONF.WEBBROWSER
-            and self.period != django_settings.NOTIFICATION_CONF.EVENT
+            and self.period != Notification.EVENT
         ):
             raise ValidationError(f'WebBrowser method must have Event period.')
 
