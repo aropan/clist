@@ -241,7 +241,7 @@ class Command(BaseCommand):
                                                 field = user_info.get('contest_addition_update_by') or params.get('by') or 'key'  # noqa
                                                 updates = user_info.get('contest_addition_update') or params.get('update') or {}  # noqa
                                                 user_info_has_rating = getattr(contest, field) in updates
-                                            except StopIteration:
+                                            except Exception:
                                                 user_info = False
                                                 user_info_has_rating = False
 

@@ -5,6 +5,7 @@ from traceback import format_exc
 from logging import getLogger
 from datetime import timedelta
 from copy import deepcopy
+from smtplib import SMTPSenderRefused
 
 import tqdm
 from django.core.mail import send_mail
@@ -131,12 +132,17 @@ class Command(BaseCommand):
 
         done = 0
         failed = 0
+        stop_email = False
         for task in tqdm.tqdm(qs.iterator(), 'sending'):
+            if stop_email and task.notification.method == settings.NOTIFICATION_CONF.EMAIL:
+                continue
+
             try:
                 task.is_sent = True
                 notification = task.notification
                 coder = notification.coder
                 method = notification.method
+
                 self.send_message(
                     coder,
                     method,
@@ -145,9 +151,11 @@ class Command(BaseCommand):
                     message=task.message,
                     notification=notification,
                 )
-            except Exception:
+            except Exception as e:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
+                if e is SMTPSenderRefused:
+                    stop_email = True
             if task.is_sent:
                 done += 1
             else:
