@@ -12,6 +12,7 @@ from django.dispatch import receiver
 from django.urls import reverse
 from django.contrib.postgres.fields import JSONField
 from django_countries.fields import CountryField
+from django_print_sql import print_sql
 
 
 from pyclist.models import BaseModel
@@ -332,7 +333,7 @@ class Stage(BaseModel):
 
         account_keys = dict()
         total = statistics.filter(contest__in=contests).count()
-        with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar:
+        with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar, print_sql(count_only=True):
             for idx, contest in enumerate(contests, start=1):
                 if not detail_problems:
                     problem_info_key = str(contest.pk)
@@ -459,7 +460,7 @@ class Stage(BaseModel):
                     pbar.update()
 
         total = sum([len(contest.info.get('writers', [])) for contest in contests])
-        with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar:
+        with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar, print_sql(count_only=True):
             writers = set()
             for contest in contests:
                 problem_info_key = str(contest.pk)

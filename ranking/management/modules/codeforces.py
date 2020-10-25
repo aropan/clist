@@ -169,9 +169,9 @@ class Statistic(BaseModule):
                 for row in data['result']['rows']
             )
 
-            # place = None
-            # last = None
-            # idx = 0
+            place = None
+            last = None
+            idx = 0
             for row in data['result']['rows']:
                 party = row['party']
 
@@ -262,14 +262,12 @@ class Statistic(BaseModule):
                             if users:
                                 r['place'] = '__unchanged__'
                             else:
-                                r['place'] = row['rank']
-                            # else:
-                            #     idx += 1
-                            #     value = (row['points'], row.get('penalty'))
-                            #     if last != value:
-                            #         last = value
-                            #         place = idx
-                            #     r['place'] = place
+                                idx += 1
+                                value = (row['points'], row.get('penalty'))
+                                if last != value:
+                                    last = value
+                                    place = idx
+                                r['place'] = place
                         r['solving'] = row['points']
                         if contest_type == 'ICPC':
                             r['penalty'] = row['penalty']

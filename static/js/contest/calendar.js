@@ -59,7 +59,7 @@ $(function() {
             var now = FullCalendarMoment.toMoment($.now(), calendar)
             var countdown = event.extendedProps.countdown
             var start_time = start.format('YYYY-MM-DD HH:mm')
-            var end_time = event.end? start.format('YYYY-MM-DD HH:mm') : null;
+            var end_time = event.end? end.format('YYYY-MM-DD HH:mm') : null;
             var title =
                     event.title
                     + '<div>' + event.extendedProps.host + '</div>'

@@ -231,9 +231,11 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
     statistics = Statistics.objects.filter(contest=contest)
 
+    options = contest.info.get('standings', {})
+
     order = None
     resource_standings = contest.resource.info.get('standings', {})
-    order = copy.copy(resource_standings.get('order'))
+    order = copy.copy(options.get('order', resource_standings.get('order')))
     if order:
         for f in order:
             if f.startswith('addition__') and f.split('__', 1)[1] not in contest_fields:
@@ -241,8 +243,6 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 break
     if order is None:
         order = ['place_as_int', '-solving']
-
-    options = contest.info.get('standings', {})
 
     # fixed fields
     fixed_fields = (
@@ -325,6 +325,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 fields[k] = k
 
     for k, field in fields.items():
+        if k != field:
+            continue
         field = ' '.join(k.split('_'))
         if field and not field[0].isupper():
             field = field.title()
