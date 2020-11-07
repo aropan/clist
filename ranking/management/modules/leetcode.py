@@ -349,7 +349,7 @@ class Statistic(BaseModule):
                     and last_page == 0
                 ):
                     for a in accounts:
-                        a.updated = state['next_time']
+                        a.updated += timedelta(days=365)
                         a.save()
                     next_page = last_page
                 else:
