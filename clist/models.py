@@ -59,7 +59,7 @@ class Resource(BaseModel):
         return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=host or self.host)
 
     def get_rating_color(self, value):
-        if self.ratings and value is not None:
+        if self.ratings and (value or isinstance(value, (int, float))):
             if isinstance(value, (list, tuple)):
                 for v in value:
                     ret = self.get_rating_color(v)

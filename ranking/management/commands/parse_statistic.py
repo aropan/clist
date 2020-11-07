@@ -173,6 +173,13 @@ class Command(BaseCommand):
                         standings_options = dict(contest_options)
                         standings_options.update(standings.pop('options'))
 
+                        canonized_fixed_fields = set([canonize(f) for f in standings_options.get('fixed_fields', [])])
+                        for field in contest_options.get('fixed_fields', []):
+                            canonize_field = canonize(field)
+                            if canonize_field not in canonized_fixed_fields:
+                                canonized_fixed_fields.add(canonize_field)
+                                standings_options['fixed_fields'].append(field)
+
                         if canonize(standings_options) != canonize(contest_options):
                             contest.info['standings'] = standings_options
                             contest.save()
@@ -260,6 +267,9 @@ class Command(BaseCommand):
 
                             if contest.info.get('_push_name_instead_key'):
                                 r['_name_instead_key'] = True
+                            if contest.info.get('_push_name_instead_key_to_account'):
+                                account.info['_name_instead_key'] = True
+                                account.save()
 
                             if r.get('name'):
                                 while True:

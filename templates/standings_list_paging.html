@@ -36,9 +36,9 @@
             })
         })
         $('.database-href').click(function(e) {
-            e.preventDefault()
             var btn = $(this)
-            location.href = btn.attr('data-href')
+            window.open(btn.attr('data-href'), "_blank");
+            return false
         })
 {% endif %}
     })

@@ -2,9 +2,9 @@
   {% with country=account.country %}
     <div class="flag-width-fixed">
     {% if country %}
-    <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
-      <img class="flag flag-{{ country.code|lower }}"/>
-    </a>
+    {% with code=account.info.custom_countries_|get_item:country.code|default:country.code %}
+    <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><img class="flag flag-{{ code|lower }}"/></a>
+    {% endwith %}
     {% endif %}
     </div>
   {% endwith %}

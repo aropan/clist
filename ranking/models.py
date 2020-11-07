@@ -85,6 +85,38 @@ def count_resource_accounts(signal, instance, **kwargs):
         instance.resource.save()
 
 
+def update_account_by_coders(instance, default_url=None):
+    url = False
+    custom_countries = None
+    for idx, coder in enumerate(instance.coders.iterator()):
+        if url:
+            url = True
+        else:
+            url = reverse('coder:profile', args=[coder.username]) + f'?search=resource:{instance.resource.host}'
+
+        if custom_countries is None:
+            custom_countries = coder.settings.get('custom_countries', {})
+        else:
+            d = {}
+            for k, v in coder.settings.get('custom_countries', {}).items():
+                if custom_countries.get(k) == v:
+                    d[k] = v
+            custom_countries = d
+
+            if idx >= 1 and not custom_countries:
+                break
+
+    if isinstance(url, bool):
+        url = default_url
+
+    if url:
+        instance.url = url
+
+    instance.info['custom_countries_'] = custom_countries or {}
+
+    instance.save()
+
+
 @receiver(pre_save, sender=Account)
 @receiver(m2m_changed, sender=Account.coders.through)
 def update_account_url(signal, instance, **kwargs):
@@ -100,14 +132,7 @@ def update_account_url(signal, instance, **kwargs):
     elif signal is m2m_changed:
         if not kwargs.get('action').startswith('post_'):
             return
-        url = None
-        for coder in instance.coders.iterator():
-            if url is not None:
-                url = None
-                break
-            url = reverse('coder:profile', args=[coder.username]) + f'?search=resource:{instance.resource.host}'
-        instance.url = url
-        instance.save()
+        update_account_by_coders(instance, default_url=default_url())
 
 
 @receiver(m2m_changed, sender=Account.writer_set.through)

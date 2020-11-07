@@ -85,8 +85,8 @@
             'timezone' => $TIMEZONE,
             'key' => $year . '-' . ($year + 1) . ' ' . $title,
         );
-        if (isset($match['standing_url'])) {
-            $c['standings_url'] = $match['standing_url'];
+        if (isset($match['standings_url'])) {
+            $c['standings_url'] = $match['standings_url'];
         }
         $contests[] = $c;
     }

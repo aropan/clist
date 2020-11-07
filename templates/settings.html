@@ -158,7 +158,19 @@
             <div class="value"><a href="#" id="email" data-value="{{ coder.user.email }}"></a></div>
 
             <div class="key">Country</div>
-            <div class="value"><a href="#" id="country" data-value="{{ coder.country.code }}"></a></div>
+            <div class="value">
+                <a href="#" id="country" data-value="{{ coder.country.code }}"></a>
+
+                {% for name, values in custom_countries.items %}
+                    {% with value=coder.settings.custom_countries|get_item:name %}
+                        {% for val in values %}
+                        <button class="btn btn-default custom-countries {% if coder.country.code != name %} hidden{% endif %}{% if value == val %} active{% endif %}" data-country="{{ name }}" data-value="{{ val }}"><img class="flag flag-{{ val|lower}}"></button>
+                        {% endfor %}
+                    {% endwith %}
+                {% endfor %}
+                <i id="custom_countries_loading" class="fas fa-spinner fa-pulse hidden"></i>
+
+            </div>
 
             {% with chat=coder.chat %}
             <div class="key">Telegram</div>

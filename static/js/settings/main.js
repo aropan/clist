@@ -135,8 +135,43 @@ $(function() {
                 return $result
             },
             minimumInputLength: 0
-        });
-        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+        }).on('select2:select', function (e) {
+            var country = e.params.data.id
+            $('.custom-countries').addClass('hidden')
+            $('.custom-countries[data-country="' + country + '"]').removeClass('hidden')
+        })
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1)
+    })
+
+
+    $('.custom-countries').click(function() {
+        var a = $(this)
+        var country = a.data('country')
+        var value = a.data('value')
+        $('.custom-countries[data-country="' + country + '"]').blur()
+
+        $('#custom_countries_loading').removeClass('hidden')
+
+        $.ajax({
+            type: 'POST',
+            url: $.fn.editable.defaults.url,
+            data: {
+                pk: $.fn.editable.defaults.pk,
+                name: 'custom-countries',
+                country: country,
+                value: value,
+            },
+            success: function(data) {
+                $('.custom-countries[data-country="' + country + '"]').removeClass('active')
+                $('.custom-countries[data-value="' + value + '"]').addClass('active')
+                $('#custom_countries_loading').addClass('hidden')
+            },
+            error: function(data) {
+                $.notify(data.responseText, 'error')
+                $('#custom_countries_loading').addClass('hidden')
+            },
+        })
+        return false
     })
 
     var Filter = function (options) {

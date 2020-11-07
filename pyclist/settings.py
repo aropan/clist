@@ -388,6 +388,10 @@ ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
            'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']
 
+CUSTOM_COUNTRIES_ = {
+  'BY': ['BY', 'BPR'],
+}
+
 ISSUES_URL_ = 'https://github.com/aropan/clist/issues'
 NEWS_URL_ = 'https://t.me/s/clistbynews'
 DISCUSS_URL_ = 'https://t.me/clistbynews'

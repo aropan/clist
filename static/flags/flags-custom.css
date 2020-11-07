@@ -1,0 +1,7 @@
+.flag.flag-bpr {
+  background: url('bpr.png') no-repeat !important;
+}
+
+.custom-countries.active {
+  cursor: default !important;
+}

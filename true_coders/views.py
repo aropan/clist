@@ -8,6 +8,7 @@ from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
+from django.db import transaction
 from django.db.models.functions import Cast
 from django.db.models import Count, F, Q, Case, When, Value, OuterRef, BooleanField, IntegerField, Prefetch
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
@@ -26,7 +27,7 @@ from clist.views import get_timezone, get_timeformat, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
-from ranking.models import Rating, Statistics, Module, Account
+from ranking.models import Rating, Statistics, Module, Account, update_account_by_coders
 from true_coders.models import Filter, Party, Coder, Organization
 from utils.regex import verify_regex, get_iregex_filter
 from pyclist.decorators import context_pagination
@@ -185,8 +186,7 @@ def profile(request, username, template='profile.html', extra_context=None):
             queryset=(
                 Account.objects
                 .filter(coders=coder)
-                .annotate(num_stats=Count('statistics'))
-                .order_by('-num_stats')
+                .order_by('-n_contests')
             ),
             to_attr='coder_accounts',
         )) \
@@ -354,6 +354,7 @@ def settings(request, tab=None):
             "notification_form": notification_form,
             "modules": Module.objects.select_related('resource').order_by('resource__id').all(),
             "ace_calendars": django_settings.ACE_CALENDARS_,
+            "custom_countries": django_settings.CUSTOM_COUNTRIES_,
             "tab": tab,
         },
     )
@@ -432,6 +433,19 @@ def change(request):
     elif name == "country":
         coder.country = value
         coder.save()
+    elif name == "custom-countries":
+        country = request.POST.get("country", None)
+        if country not in django_settings.CUSTOM_COUNTRIES_:
+            return HttpResponseBadRequest(f"invalid custom country '{country}'")
+        if value not in django_settings.CUSTOM_COUNTRIES_[country]:
+            return HttpResponseBadRequest(f"invalid custom value '{value}' for country '{country}'")
+
+        with transaction.atomic():
+            coder.settings.setdefault('custom_countries', {})[country] = value
+            coder.save()
+
+            for account in coder.account_set.prefetch_related('coders'):
+                update_account_by_coders(account)
     elif name == "filter":
         try:
             field = "Filter id"

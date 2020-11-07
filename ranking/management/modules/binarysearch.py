@@ -4,10 +4,12 @@
 import json
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import datetime
 
 from tqdm import tqdm
+from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.common.locator import Locator
 
 
@@ -96,12 +98,19 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
 
+        @RateLimiter(max_calls=100, period=30)
         def fetch_profile(user):
             nonlocal stop
             if stop:
                 return False
             url = Statistic.API_PROFILE_URL_FORMAT_.format(user=user)
-            page = REQ.get(url)
+            try:
+                page = REQ.get(url)
+            except FailOnGetResponse as e:
+                code = e.code
+                if code == 404:
+                    return None
+                return {}
             data = json.loads(page)
             return data
 
@@ -112,8 +121,12 @@ class Statistic(BaseModule):
                 if stop:
                     break
                 if not data:
-                    yield {'info': None}
-                    return
+                    if data is None:
+                        yield {'info': None}
+                    else:
+                        yield {'skip': True}
+                    continue
+                profile = data['profile']
                 data = data['user']
                 assert user == data['username']
                 data = {k: v for k, v in data.items() if k == 'stat' or not isinstance(v, (dict, list))}
@@ -126,4 +139,28 @@ class Statistic(BaseModule):
                     country = locator.get_country(location)
                     if country:
                         data['country'] = country
-                yield {'info': data}
+
+                contest_addition_update = {}
+                for rating in profile['ratings']:
+                    if not rating.get('participated'):
+                        continue
+                    title = rating['name']
+                    update = contest_addition_update.setdefault(title, OrderedDict())
+                    update['old_rating'] = rating['rating'] - rating['gain']
+                    update['rating_change'] = rating['gain']
+                    update['new_rating'] = rating['rating']
+                    data['rating'] = update['new_rating']
+
+                if 'rating' in data:
+                    data['rating_ts'] = int(datetime.now().timestamp())
+
+                ret = {
+                    'info': data,
+                    'contest_addition_update_params': {
+                        'update': contest_addition_update,
+                        'by': 'title',
+                        'clear_rating_change': True,
+                    },
+                }
+
+                yield ret

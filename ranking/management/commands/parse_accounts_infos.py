@@ -130,6 +130,9 @@ class Command(BaseCommand):
                                 info['rating_ts'] = int(now.timestamp())
                             delta = info.pop('delta', timedelta(days=365))
                             if data.get('replace_info'):
+                                for k, v in account.info.items():
+                                    if k.endswith('_') and k not in info:
+                                        info[k] = v
                                 account.info = info
                             else:
                                 account.info.update(info)
