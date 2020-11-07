@@ -28,11 +28,12 @@ class ParsedTableValue(object):
 
 class FakeTableCol(object):
 
-    def __init__(self, value):
+    def __init__(self, value, attrs):
         self.value = value
+        self.attrs = attrs
 
     def items(self):
-        return {}
+        return self.attrs.items()
 
     def itertext(self):
         return [self.value]
@@ -126,7 +127,7 @@ class ParsedTable(object):
                 field = self.unnamed_fields[self.unnamed_fields_idx]
                 self.unnamed_fields_idx += 1
 
-                column = ParsedTableCol(FakeTableCol(field))
+                column = ParsedTableCol(FakeTableCol(field.get('value', ''), field.get('attrs', {})))
                 self.header.columns.append(column)
 
             if len(row.columns) == len(self.header.columns):
