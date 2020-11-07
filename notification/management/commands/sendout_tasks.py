@@ -154,7 +154,7 @@ class Command(BaseCommand):
             except Exception as e:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
-                if e is SMTPResponseException:
+                if isinstance(e, SMTPResponseException):
                     stop_email = True
             if task.is_sent:
                 done += 1
