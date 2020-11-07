@@ -26,6 +26,18 @@ class ParsedTableValue(object):
         return self.value
 
 
+class FakeTableCol(object):
+
+    def __init__(self, value):
+        self.value = value
+
+    def items(self):
+        return {}
+
+    def itertext(self):
+        return [self.value]
+
+
 class ParsedTableCol(object):
 
     def __init__(self, col):
@@ -57,11 +69,19 @@ class ParsedTableRow(object):
 
 class ParsedTable(object):
 
-    def __init__(self, html, xpath='//table//tr', as_list=False, with_duplicate_colspan=False):
+    def __init__(
+        self,
+        html, xpath='//table//tr',
+        as_list=False,
+        with_duplicate_colspan=False,
+        unnamed_fields=(),
+    ):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
         self.table = etree.HTML(html).xpath(xpath)
         self.init_iter()
+        self.unnamed_fields = unnamed_fields
+        self.unnamed_fields_idx = 0
 
     def init_iter(self):
         self.iter_table = iter(self.table)
@@ -98,8 +118,17 @@ class ParsedTable(object):
         while True:
             nxt = next(self.iter_table)
             row = ParsedTableRow(nxt)
+
             if self.with_duplicate_colspan:
                 row.columns = sum([[c] * c.colspan for c in row.columns], [])
+
+            while self.unnamed_fields_idx < len(self.unnamed_fields) and len(row.columns) > len(self.header.columns):
+                field = self.unnamed_fields[self.unnamed_fields_idx]
+                self.unnamed_fields_idx += 1
+
+                column = ParsedTableCol(FakeTableCol(field))
+                self.header.columns.append(column)
+
             if len(row.columns) == len(self.header.columns):
                 break
 

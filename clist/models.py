@@ -364,8 +364,8 @@ class ProblemTag(BaseModel):
 
 class TimingContest(BaseModel):
     contest = models.OneToOneField(Contest, related_name='timing', on_delete=models.CASCADE)
-    notification = models.DateTimeField(auto_now_add=True)
-    statistic = models.DateTimeField(default=None, null=True)
+    notification = models.DateTimeField(auto_now_add=True, blank=True)
+    statistic = models.DateTimeField(default=None, null=True, blank=True)
 
     def __str__(self):
         return '%s timing, modified = %s' % (str(self.contest), self.modified)

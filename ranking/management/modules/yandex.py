@@ -47,7 +47,8 @@ class Statistic(BaseModule):
                 raise ExceptionParseStandings('Not found table standings')
 
             html_table = match.group(0)
-            table = parsed_table.ParsedTable(html_table)
+            unnamed_fields = self.info.get('standings', {}).get('unnamed_fields', [])
+            table = parsed_table.ParsedTable(html_table, unnamed_fields=unnamed_fields)
 
             for r in table:
                 row = {}
