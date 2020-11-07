@@ -5,7 +5,7 @@ from traceback import format_exc
 from logging import getLogger
 from datetime import timedelta
 from copy import deepcopy
-from smtplib import SMTPSenderRefused
+from smtplib import SMTPResponseException
 
 import tqdm
 from django.core.mail import send_mail
@@ -154,7 +154,7 @@ class Command(BaseCommand):
             except Exception as e:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
-                if e is SMTPSenderRefused:
+                if e is SMTPResponseException:
                     stop_email = True
             if task.is_sent:
                 done += 1

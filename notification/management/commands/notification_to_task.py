@@ -31,11 +31,13 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--coders', nargs='+')
         parser.add_argument('--dryrun', action='store_true', default=False)
+        parser.add_argument('--methods', nargs='+')
 
     @print_sql_decorator()
     def handle(self, *args, **options):
         coders = options.get('coders')
         dryrun = options.get('dryrun')
+        methods = options.get('methods')
 
         self.logger = getLogger('notification.send.notice')
 
@@ -53,6 +55,9 @@ class Command(BaseCommand):
                 notifies.update(last_time=now)
         if not updates:
             notifies = notifies.filter(last_time__isnull=False, last_time__lte=now)
+
+        if methods:
+            notifies = notifies.filter(method__in=methods)
 
         notifies = notifies.select_related('coder')
         for notify in tqdm(notifies.iterator()):
