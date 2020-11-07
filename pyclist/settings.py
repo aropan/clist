@@ -311,19 +311,19 @@ TELEGRAM_ADMIN_CHAT_ID = conf.TELEGRAM_ADMIN_CHAT_ID
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 COUNTRIES_OVERRIDE = {
-    'CZ': {'names': ['Czechia', 'Czech Republic']},
-    'MK': {'names': ['North Macedonia', 'Macedonia']},
-    'PS': {'names': ['Palestine, State of', 'Palestine']},
-    'KR': {'names': ['South Korea', 'Republic of Korea']},
-    'MO': {'names': ['Macao', 'Macau']},
+    'CZ': {'names': ['Czechia', 'Czech Republic', 'Чехия']},
+    'MK': {'names': ['North Macedonia', 'Macedonia', 'Македония']},
+    'PS': {'names': ['Palestine, State of', 'Palestine', 'Палестина']},
+    'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея']},
+    'MO': {'names': ['Macao', 'Macau', 'Макао']},
     'US': {'names': ['United States of America', 'United States', 'America', 'Соединенные Штаты Америки', 'США']},
-    'VN': {'names': ['Vietnam', 'Viet Nam']},
+    'VN': {'names': ['Vietnam', 'Viet Nam', 'Вьетнам']},
     'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Великобритания']},
     'MD': {'names': ['Moldova', 'Молдова', 'Молдавия']},
     'KG': {'names': ['Kyrgyzstan', 'Кыргызстан', 'Киргизия']},
-    'RS': {'names': ['Serbia', 'Srbija']},
-    'HR': {'names': ['Croatia', 'Hrvatska']},
-    'CN': {'names': ['China', '中国']},
+    'RS': {'names': ['Serbia', 'Srbija', 'Сербия']},
+    'HR': {'names': ['Croatia', 'Hrvatska', 'Хорватия']},
+    'CN': {'names': ['China', '中国', 'Китай']},
 }
 
 # DJANGO DEBUG TOOLBAR
