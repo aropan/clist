@@ -373,6 +373,7 @@ HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
 HTTP_HOST_ = 'http://' + HOST_
 HTTPS_HOST_ = 'https://' + HOST_
 EMAIL_PREFIX_SUBJECT_ = '[Clist] '
+STOP_EMAIL_ = getattr(conf, 'STOP_EMAIL', False)
 TIME_FORMAT_ = '%d.%m %a %H:%M'
 LIMIT_N_TOKENS_VIEW = 3
 LIMIT_TOKENS_VIEW_WAIT_IN_HOURS = 24

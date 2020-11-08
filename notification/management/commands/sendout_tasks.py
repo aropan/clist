@@ -132,7 +132,7 @@ class Command(BaseCommand):
 
         done = 0
         failed = 0
-        stop_email = getattr(settings.conf, 'STOP_EMAIL', False)
+        stop_email = settings.STOP_EMAIL_
         for task in tqdm.tqdm(qs.iterator(), 'sending'):
             if stop_email and task.notification.method == settings.NOTIFICATION_CONF.EMAIL:
                 continue
