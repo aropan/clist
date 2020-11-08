@@ -46,9 +46,8 @@
 {% block content %}
 <div class="info">
     <div class="title">authentication</div>
-    <div class="text">To access need api-key. There is also access without api-key through session on this website.
+    <div class="text">To access need api-key (<a href="{% url 'auth:login' %}" id="show-api-key">show my api-key</a>). There is also access without api-key through session on this website.
     {% if user.is_authenticated %}
-    <a href="#" id="show-api-key" class="pull-right">Show api-key</a>
     <script>
         $(function() {
             $('#show-api-key').click(function() {
