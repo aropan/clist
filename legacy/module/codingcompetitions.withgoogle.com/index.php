@@ -102,8 +102,11 @@
 
     $url = 'https://codejam.googleapis.com/poll?p=e30';
     $page = curlexec($url, NULL, array('no_header' => true));
+    $page = str_replace('_', '/', $page);
+    $page = str_replace('-', '+', $page);
+    $page = preg_replace('[^A-Za-z/+]', '', $page);
     $page_decode = base64_decode($page);
-    $data = json_decode($page_decode, true);
+    $data = json_decode($page_decode, true, 512, JSON_INVALID_UTF8_IGNORE);
     $infos = array();
     foreach ($data['adventures'] as $adventure) {
         $competition = $competitions[$adventure['competition']];
