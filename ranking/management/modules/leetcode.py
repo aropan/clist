@@ -273,8 +273,6 @@ class Statistic(BaseModule):
                                 post=b'''
                             {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String\u0021) {  userContestRanking(username: $username) {    attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }    rating    ranking    __typename  }}"}''',  # noqa
                                 content_type='application/json',
-                                req=req,
-                                **kwargs,
                             )
                             page = json.loads(page)['data']
                             page['slug'] = account.key
@@ -364,9 +362,11 @@ class Statistic(BaseModule):
                 if len(pages) > pages_per_update * 2:
                     break
                 if 'global_ranking_page' in a.info:
-                    page = a.info.pop('global_ranking_page')
+                    page = a.info['global_ranking_page']
                     pages.add(page)
-                    a.save()
+                    if len(accounts) > n_accounts_to_paging:
+                        a.info.pop('global_ranking_page')
+                        a.save()
 
             global_ranking_users = {}
             n_data = 0
