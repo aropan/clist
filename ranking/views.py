@@ -82,11 +82,21 @@ def _standings_highlight(statistics, options):
     data_1st_u = options.get('1st_u')
     participants_info = {}
     if data_1st_u:
-        seen = {}
+        lasts = {}
+        n_quota = {}
+        n_highlight = 0
         last_hl = None
+        quotas = data_1st_u.get('quotas', {})
         for s in statistics:
             match = re.search(data_1st_u['regex'], s.account.key)
-            k = match.group('key')
+            if not match:
+                continue
+            k = match.group('key').strip()
+
+            quota = quotas.get(k, data_1st_u.get('default_quota', 1))
+            if not quota:
+                continue
+            add_quota = k in quotas or 'default_quota' in data_1st_u
 
             solving = s.solving
             penalty = s.addition.get('penalty')
@@ -94,8 +104,9 @@ def _standings_highlight(statistics, options):
             info = participants_info.setdefault(s.id, {})
             info['search'] = rf'^{k}'
 
-            if k in seen or last_hl:
-                p_info = participants_info.get(seen.get(k))
+            n_quota[k] = n_quota.get(k, 0) + 1
+            if n_quota[k] > quota or last_hl:
+                p_info = participants_info.get(lasts.get(k))
                 if (
                     not p_info or
                     last_hl and (-last_hl['solving'], last_hl['penalty']) < (-p_info['solving'], p_info['penalty'])
@@ -106,11 +117,13 @@ def _standings_highlight(statistics, options):
                     't_solving': p_info['solving'] - solving,
                     't_penalty': p_info['penalty'] - penalty if penalty is not None else None,
                 })
-
-            if k not in seen:
-                seen[k] = s.id
-                info.update({'n': len(seen), 'solving': solving, 'penalty': penalty})
-                if len(seen) == options.get('n_highlight'):
+            else:
+                n_highlight += 1
+                lasts[k] = s.id
+                info.update({'n': n_highlight, 'solving': solving, 'penalty': penalty})
+                if add_quota:
+                    info['q'] = n_quota[k]
+                if n_highlight == options.get('n_highlight'):
                     last_hl = info
     elif 'n_highlight' in options:
         if isinstance(options['n_highlight'], int):

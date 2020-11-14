@@ -93,7 +93,7 @@
                 <span data-toggle="tooltip" data-placement="top">Rank</span>
               </th>
               {% if data_1st_u %}
-              <th{% if merge_problems %} rowspan="2"{% endif %}>1st U</th>
+              <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if data_1st_u.title %} title="{{ data_1st_u.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ data_1st_u.header|default:"1st U" }}</span></th>
               {% endif %}
               <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">
                 {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}

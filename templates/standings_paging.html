@@ -35,7 +35,7 @@
   <{{ tag }}>
     <a href="{{ request.path }}?{% query_transform request search=info.search %}">
     {% if info.n %}
-      <div>{{ info.n }}</div>
+    <div>{{ info.n }}{% if info.q %} ({{ info.q }}){% endif %}</div>
     {% else %}
       <div class="text-muted">—</div>
     {% endif %}
