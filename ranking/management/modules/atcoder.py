@@ -199,10 +199,10 @@ class Statistic(BaseModule):
             match = re.search(r'(?<=<li>)Writer:.*', page)
             writers = []
             if match:
-                matches = re.findall('(?<=>)[^<]+(?=<)', match.group())
+                matches = re.findall('(?<=>)[^<]+(?=</)', match.group())
                 writers = list()
                 for m in matches:
-                    writers.extend(map(str.strip, re.split(r',\s*', m)))
+                    writers.extend(map(str.strip, re.split(r'[,\s]+', m)))
                 writers = [w for w in writers if w and w != '?']
 
             url = f'{self.RESULTS_URL_.format(self)}/'

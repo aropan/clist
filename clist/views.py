@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from urllib.parse import urlparse, parse_qs
 
@@ -481,14 +482,28 @@ def update_writers(contest, writers=None):
         contest.info['writers'] = writers
         contest.save()
 
+    def get_re_writers(writers):
+        ret = '|'.join([re.escape(w) for w in writers])
+        ret = f'^({ret})$'
+        return ret
+
     writers = contest.info.get('writers', [])
-    for writer in contest.writers.filter(~Q(key__in=writers)):
+    if not writers:
+        contest.writers.clear()
+        return
+
+    re_writers = get_re_writers(writers)
+    for writer in contest.writers.filter(~Q(key__iregex=re_writers)):
         contest.writers.remove(writer)
-    already_writers = set(contest.writers.filter(key__in=writers).values_list('key', flat=True))
+    already_writers = set(contest.writers.filter(key__iregex=re_writers).values_list('key', flat=True))
+    re_already_writers = re.compile(get_re_writers(already_writers))
     for writer in writers:
-        if writer in already_writers:
+        if re_already_writers.match(writer):
             continue
-        account, created = Account.objects.get_or_create(resource=contest.resource, key=writer)
+
+        account = Account.objects.filter(resource=contest.resource, key__iexact=writer).order_by('-n_contests').first()
+        if account is None:
+            account, created = Account.objects.get_or_create(resource=contest.resource, key=writer)
         account.writer_set.add(contest)
 
 
