@@ -199,6 +199,7 @@ class Command(BaseCommand):
                         fields_set = set()
                         fields_types = {}
                         fields = list()
+                        addition_was_ordereddict = False
                         calculate_time = False
                         d_problems = {}
                         teams_viewed = set()
@@ -328,6 +329,13 @@ class Command(BaseCommand):
                                     if 'result' not in v:
                                         continue
 
+                                    ac = str(v['result']).startswith('+')
+                                    try:
+                                        result = float(v['result'])
+                                        ac = ac or result > 0 and not v.get('partial', False)
+                                    except Exception:
+                                        pass
+
                                     p = d_problems
                                     if 'division' in standings.get('problems', {}):
                                         p = p.setdefault(r['division'], {})
@@ -341,7 +349,7 @@ class Command(BaseCommand):
                                             solved['solving'] += 1
                                         if 'full_score' not in p:
                                             p['full_score'] = full_score
-                                    if contest.info.get('with_last_submit_time') and float(v.get('result', 0)) > 1e-9:
+                                    if contest.info.get('with_last_submit_time') and ac:
                                         if '_last_submit_time' not in r or r['_last_submit_time'] < v['time']:
                                             r['_last_submit_time'] = v['time']
                                     if contest.info.get('without_problem_first_ac'):
@@ -355,12 +363,6 @@ class Command(BaseCommand):
 
                                     p['n_teams'] = p.get('n_teams', 0) + 1
 
-                                    ac = str(v['result']).startswith('+')
-                                    try:
-                                        result = float(v['result'])
-                                        ac = ac or result > 0 and not v.get('partial', False)
-                                    except Exception:
-                                        pass
                                     if ac:
                                         p['n_accepted'] = p.get('n_accepted', 0) + 1
 
@@ -413,6 +415,7 @@ class Command(BaseCommand):
                             defaults = {k: v for k, v in defaults.items() if v != '__unchanged__'}
 
                             addition = type(r)()
+                            addition_was_ordereddict |= isinstance(addition, OrderedDict)
                             for k, v in r.items():
                                 if k[0].isalpha() and not re.match('^[A-Z]+$', k):
                                     k = k[0].upper() + k[1:]
@@ -428,17 +431,17 @@ class Command(BaseCommand):
                                 fields_types.setdefault(k, set()).add(type(v).__name__)
                                 addition[k] = v
 
-                                if (
-                                    addition.get('rating_change') is None
-                                    and addition.get('new_rating') is not None
-                                    and addition.get('old_rating') is not None
-                                ):
-                                    delta = addition['new_rating'] - addition['old_rating']
-                                    f = 'rating_change'
-                                    addition[f] = f'{"+" if delta > 0 else ""}{delta}'
-                                    if f not in fields_set:
-                                        fields_set.add(f)
-                                        fields.insert(-1, f)
+                            if (
+                                addition.get('rating_change') is None
+                                and addition.get('new_rating') is not None
+                                and addition.get('old_rating') is not None
+                            ):
+                                delta = addition['new_rating'] - addition['old_rating']
+                                f = 'rating_change'
+                                addition[f] = f'{"+" if delta > 0 else ""}{delta}'
+                                if f not in fields_set:
+                                    fields_set.add(f)
+                                    fields.append(f)
 
                             if 'is_rated' in addition and not addition['is_rated']:
                                 addition.pop('old_rating', None)
@@ -515,7 +518,11 @@ class Command(BaseCommand):
                                 elif 'last_parse_statistics' in contest.info:
                                     contest.info.pop('last_parse_statistics')
 
-                            if fields_set and not isinstance(addition, OrderedDict):
+                            for rating_field in ('old_rating', 'rating_change', 'new_rating'):
+                                if rating_field in fields_set:
+                                    fields.remove(rating_field)
+                                    fields.append(rating_field)
+                            if fields_set and not addition_was_ordereddict:
                                 fields.sort()
                             fields_types = {k: list(v) for k, v in fields_types.items()}
 

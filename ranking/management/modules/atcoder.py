@@ -186,7 +186,7 @@ class Statistic(BaseModule):
                 if member not in statistics:
                     continue
 
-                info = deepcopy(statistics.get(member))
+                info = collections.OrderedDict(deepcopy(statistics.get(member)))
                 info['member'] = member
                 for f in ('place', 'solving', 'upsolving'):
                     info[f] = '__unchanged__'
@@ -295,12 +295,16 @@ class Statistic(BaseModule):
                     fusers.append(handle)
 
                 row.update(r)
-                row.pop('Additional')
+                row.pop('Additional', None)
+                if 'AtCoderRank' in row:
+                    row['AtcoderRank'] = row.pop('AtCoderRank')
                 rating = row.pop('Rating', None)
                 if rating is not None:
                     r['info'] = {'rating': rating}
                 old_rating = row.pop('OldRating', None)
-                r.update(row)
+
+                for k, v in sorted(row.items()):
+                    r[k] = v
 
                 if handle in results:
                     r.update(results.pop(handle))

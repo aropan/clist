@@ -7,18 +7,21 @@ import time
 import json
 import subprocess
 import logging
+from datetime import timedelta
 
 from attrdict import AttrDict
 
 import coloredlogs
+import humanize
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 
-from clist.models import Contest
-from ranking.models import Statistics
-
 from tg.bot import Bot
 from tg.bot import telegram
+
+from clist.models import Contest
+from ranking.models import Statistics
+from clist.templatetags.extras import has_season
 
 from .parse_statistic import Command as ParserCommand
 
@@ -63,8 +66,9 @@ class Command(BaseCommand):
         while True:
             subprocess.call('clear', shell=True)
 
-            contest = Contest.objects.get(pk=args.cid)
-            parser_command.parse_statistic([contest], with_check=False)
+            contest = Contest.objects.filter(pk=args.cid)
+            parser_command.parse_statistic(contest, with_check=False)
+            contest = contest.first()
             statistics = Statistics.objects.filter(contest=contest)
 
             updated = False
@@ -115,7 +119,13 @@ class Command(BaseCommand):
                     else:
                         place = stat.place
 
-                    msg = '%s. _%s_ %s' % (place, stat.account.key, ', '.join(p))
+                    name = stat.addition.get('name')
+                    if not name or not has_season(stat.account.key, name):
+                        name = stat.account.key
+
+                    msg = '%s. _%s_' % (place, name)
+                    if p:
+                        msg = '%s, %s' % (', '.join(p), msg)
                     if standings[key]['solving'] != stat.solving:
                         msg += ' = %d' % stat.solving
 
@@ -133,6 +143,7 @@ class Command(BaseCommand):
                                         bot.delete_message(chat_id=args.tid, message_id=message_id)
                                     message = bot.send_message(msg=msg, chat_id=args.tid)
                                     message_id = message.message_id
+                                    break
                                 except telegram.error.TimedOut as e:
                                     logger.warning(str(e))
                                     time.sleep(_ * 3)
@@ -155,6 +166,15 @@ class Command(BaseCommand):
                 is_over = contest.end_time < now()
                 if is_over and not has_hidden:
                     break
-                time.sleep(args.delay * (60 if is_over else 1))
+                tick = 60 if is_over else 1
+                limit = now() + timedelta(seconds=args.delay * tick)
+                size = 1
+                while now() < limit:
+                    value = humanize.naturaldelta(limit - now())
+                    out = f'{value:{size}s}'
+                    size = len(value)
+                    print(out, end='\r')
+                    time.sleep(tick)
+                print()
 
             iteration += 1
