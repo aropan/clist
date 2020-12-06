@@ -33,7 +33,7 @@ urlpatterns = [
     url(r'^webpush/', include('webpush.urls')),
 
     path('sitemap.xml',
-         cache_page(86400)(sitemap),
+         sitemap if settings.DEBUG else cache_page(86400)(sitemap),
          {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 ]
 

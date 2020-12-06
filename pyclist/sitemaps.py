@@ -27,13 +27,23 @@ class StandingsSitemap(BaseSitemap):
     limit = 1000
 
     def items(self):
-        return Contest.objects.filter(n_statistics__gt=0).order_by('-updated')
+        return Contest.objects.filter(n_statistics__gt=0).order_by('-end_time')
 
     def lastmod(self, contest):
         return contest.updated
 
     def location(self, contest):
         return reverse('ranking:standings', args=(slug(contest.title), contest.pk))
+
+
+class UpdatedStandingsSitemap(StandingsSitemap):
+    priority = 0.6
+    limit = StandingsSitemap.limit // 5
+
+    def items(self):
+        qs = super().items()
+        pks = {c.pk for c in qs[:StandingsSitemap.limit]}
+        return Contest.objects.filter(n_statistics__gt=0).exclude(pk__in=pks).order_by('-updated')
 
 
 class AccountsSitemap(BaseSitemap):
@@ -55,5 +65,6 @@ class AccountsSitemap(BaseSitemap):
 sitemaps = {
     'static': StaticViewSitemap,
     'standings': StandingsSitemap,
+    'updated_standings': UpdatedStandingsSitemap,
     'accounts': AccountsSitemap,
 }
