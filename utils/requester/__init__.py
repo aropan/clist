@@ -202,6 +202,7 @@ class proxer():
                     continue
                 break
             self.without_new_proxy = False
+        return self.connect_ret
 
     def __init__(
         self,

@@ -55,3 +55,7 @@
   <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
   {% endif %}
 </div>
+
+{% if not stat.solution and stat.url %}
+<script>window.open('{{ stat.url }}', '_blank').focus()</script>
+{% endif %}

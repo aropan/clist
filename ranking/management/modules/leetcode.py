@@ -37,15 +37,19 @@ class Statistic(BaseModule):
         return req.get(*args, **kwargs)
 
     @staticmethod
-    def fetch_submission(submission):
+    def fetch_submission(submission, req=REQ, raise_on_error=False):
         data_region = submission['data_region']
         data_region = '' if data_region == 'US' else f'-{data_region.lower()}'
         url = Statistic.API_SUBMISSION_URL_FORMAT_.format(data_region, submission['submission_id'])
         try:
-            content = REQ.get(url)
+            content = req.get(url)
             content = json.loads(content)
-        except FailOnGetResponse:
-            content = None
+        except FailOnGetResponse as e:
+            if raise_on_error:
+                raise e
+            content = {}
+        except ProxyLimitReached:
+            return submission, {'url': url}
 
         return submission, content
 
@@ -196,7 +200,7 @@ class Statistic(BaseModule):
                 #         for s, d in tqdm.tqdm(executor.map(Statistic.fetch_submission, solutions_for_get),
                 #                               total=len(solutions_for_get),
                 #                               desc='getting solutions'):
-                #             if d is None:
+                #             if not d:
                 #                 continue
                 #             short = problems_info[str(s['question_id'])]['short']
                 #             result[s['handle']]['problems'][short].update({'language': d['lang']})
@@ -218,8 +222,22 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_source_code(contest, problem):
-        _, data = Statistic.fetch_submission(problem)
-        return {'solution': data['code']}
+        with REQ(
+            with_proxy=True,
+            args_proxy={
+                'time_limit': 3,
+                'n_limit': 30,
+                'filepath_proxies': os.path.join(os.path.dirname(__file__), '.leetcode.proxies'),
+                'connect': partial(Statistic.fetch_submission, problem, raise_on_error=True),
+            },
+        ) as req:
+            _, data = req.proxer.get_connect_ret()
+
+        if 'code' in data:
+            return {'solution': data['code']}
+        if 'url' in data:
+            return {'url': data['url']}
+        return {}
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
