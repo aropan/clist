@@ -160,7 +160,7 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_source_code(contest, problem):
-        solution = REQ.get(problem['url'])
+        solution = REQ.get(problem['url'], headers={'referer': 'https://www.facebook.com/'})
         return {'solution': solution}
 
 
