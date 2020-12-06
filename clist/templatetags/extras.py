@@ -1,5 +1,6 @@
 import json
 import re
+import six
 import itertools
 from datetime import timedelta, datetime
 from os import path
@@ -13,8 +14,10 @@ import yaml
 from django import template
 from django.urls import reverse
 from django.conf import settings
+from django.utils.functional import keep_lazy
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
+from django.template.base import Node
 from django.template.defaultfilters import stringfilter, slugify
 from django_countries.fields import countries
 
@@ -168,6 +171,12 @@ def get_emails(tokens):
 def get_timezone_offset(tzname):
     total_seconds = now().astimezone(pytz.timezone(tzname)).utcoffset().total_seconds()
     return int(round(total_seconds / 60, 0))
+
+
+@register.filter
+def get_timezone_offset_hm(value):
+    offset = get_timezone_offset(value)
+    return f'{"+" if offset > 0 else "-"}{abs(offset // 60):02d}:{abs(offset % 60):02d}'
 
 
 def get_timezones():
@@ -478,6 +487,16 @@ def multiply(value, arg):
     return value * arg
 
 
+@register.filter
+def divide(value, arg):
+    return value / arg
+
+
+@register.filter
+def substract(value, arg):
+    return value - arg
+
+
 def canonize(data):
     return json.dumps(data, sort_keys=True)
 
@@ -537,3 +556,27 @@ def is_solved(value):
         except ValueError:
             return False
     return value > 0
+
+
+@register.filter
+def timestamp_to_datetime(value):
+    try:
+        return datetime.fromtimestamp(value)
+    except Exception:
+        return None
+
+
+@register.tag
+def linebreakless(parser, token):
+    nodelist = parser.parse(('endlinebreakless',))
+    parser.delete_first_token()
+    return LinebreaklessNode(nodelist)
+
+
+class LinebreaklessNode(Node):
+    def __init__(self, nodelist):
+        self.nodelist = nodelist
+
+    def render(self, context):
+        strip_line_breaks = keep_lazy(six.text_type)(lambda x: x.replace('\n', ''))
+        return strip_line_breaks(self.nodelist.render(context).strip())

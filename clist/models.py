@@ -34,6 +34,7 @@ class Resource(BaseModel):
     timezone = models.CharField(max_length=30, null=True, blank=True)
     color = models.CharField(max_length=20, null=True, blank=True)
     profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)
+    avatar_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     uid = models.CharField(max_length=100, null=True, blank=True)
     info = JSONField(default=dict, blank=True)
     ratings = JSONField(default=list, blank=True)
@@ -189,10 +190,11 @@ class Contest(models.Model):
     calculate_time = models.BooleanField(default=False)
     info = JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
+    n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
+    updated = models.DateTimeField(auto_now=True, db_index=True)
     was_auto_added = models.BooleanField(default=False)
 
     objects = BaseManager()
@@ -204,6 +206,8 @@ class Contest(models.Model):
         indexes = [
             models.Index(fields=['start_time']),
             models.Index(fields=['end_time']),
+            models.Index(fields=['updated']),
+            models.Index(fields=['n_statistics', 'updated']),
             GistIndexTrgrmOps(fields=['title']),
         ]
 
@@ -340,6 +344,8 @@ class Problem(BaseModel):
     divisions = ArrayField(models.TextField(), default=None, null=True, blank=True)
     n_tries = models.IntegerField(default=None, null=True, blank=True)
     n_accepted = models.IntegerField(default=None, null=True, blank=True)
+    n_partial = models.IntegerField(default=None, null=True, blank=True)
+    n_total = models.IntegerField(default=None, null=True, blank=True)
     visible = models.BooleanField(default=True, null=False)
 
     def __str__(self):

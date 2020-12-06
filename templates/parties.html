@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Parties{% endblock %}
+{% block ogtitle %}{% block title %}Parties{% endblock %}{% endblock %}
 
 {% block end-head %}
     <link href="{% static_ts 'css/party/ranking.css' %}" rel="stylesheet">

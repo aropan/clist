@@ -1,3 +1,13 @@
+{% if resource.avatar_url %}
+  <div class="avatar-width-fixed">
+  {% with avatar_url=account.avatar_url %}
+    {% if avatar_url %}
+      <img class="account-avatar" src="{{ avatar_url }}"/>
+    {% endif %}
+  {% endwith %}
+  </div>
+{% endif %}
+
 {% if has_country %}
   {% with country=account.country %}
     <div class="flag-width-fixed">
@@ -11,17 +21,17 @@
 {% endif %}
 
 {% with team_id=addition.team_id %}
-{% if not team_id %}{% coder_color_circle contest.resource addition account.info %}{% endif %}
+{% if not team_id %}{% coder_color_circle resource addition account.info %}{% endif %}
 
-<div class="handle-div{% if not team_id%} {% coder_color_class contest.resource addition account.info %}{% endif %}" style="display: inline-block">
+<div class="handle-div{% if not team_id%} {% coder_color_class resource addition account.info %}{% endif %}" style="display: inline-block">
   {% if account.url %}<a href="{{ account.url }}" class="coder">{% endif %}
 
   {% if addition.name and account.key|has_season:addition.name or addition.team_id %}
     <span>{{ addition.name }}</span>
-  {% elif addition.name and contest.resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
+  {% elif addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
     <span>{{ addition.name }}</span>
   {% else %}
-    <span{% if addition.name %} title="{{ addition.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
+    <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
   {% endif %}
 
   {% if account.url %}</a>{% endif %}

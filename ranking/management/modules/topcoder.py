@@ -268,6 +268,8 @@ class Statistic(BaseModule):
                             match = re.search('<td[^>]*class="problemText"[^>]*>(?P<solution>.*?)</td>',
                                               page,
                                               re.DOTALL | re.IGNORECASE)
+                            if not match:
+                                break
                             ret = html.unescape(match.group('solution'))
                             ret = ret.strip()
                             ret = ret.replace('<BR>', '\n')
@@ -420,6 +422,8 @@ class Statistic(BaseModule):
                 if not ret:
                     ret['delta'] = timedelta(days=30)
                 ret['handle'] = user
+            if not ret.get('photoLink'):
+                ret.pop('photoLink', None)
             return ret
 
         ret = []
@@ -428,7 +432,7 @@ class Statistic(BaseModule):
                 data['handle'] = data['handle'].strip()
                 assert user.lower() == data['handle'].lower()
                 if pbar:
-                    pbar.update(1)
+                    pbar.update()
                 ret.append({'info': data})
         return ret
 

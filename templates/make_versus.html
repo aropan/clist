@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Versus{% endblock %}
+{% block ogtitle %}{% block title %}Versus{% endblock %}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/versus.css' %}" rel="stylesheet">

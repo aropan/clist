@@ -4,9 +4,12 @@
 import json
 import re
 import tqdm
+from datetime import datetime
 from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+
+import pytz
 
 from ranking.management.modules.common import REQ, BaseModule
 
@@ -51,6 +54,7 @@ class Statistic(BaseModule):
         limit = 1000
         total = scoreboard_data['data']['contest']['entrant_performance_summaries']['count']
 
+        has_hidden = False
         result = OrderedDict()
         if users or users is None:
             has_users_filter = bool(users)
@@ -107,6 +111,11 @@ class Statistic(BaseModule):
                             elif verdict == 'hidden':
                                 p['result'] = '?'
                                 p['icon'] = '<i class="fas fa-question"></i>'
+                                has_hidden = True
+                            elif verdict == 'download_valid':
+                                p['result'] = '?!'
+                                p['icon'] = '<i class="fas fa-arrow-circle-down"></i>'
+                                has_hidden = True
                             else:
                                 if 'submission_overall_result' not in problem:
                                     p['icon'] = '<i class="fas fa-hourglass-half"></i>'
@@ -124,6 +133,12 @@ class Statistic(BaseModule):
 
                         r['solved'] = {'solving': solved}
 
+                        profile_picture = row
+                        for field in ('entrant_personal_info', 'individual_entrant_user', 'profile_picture', 'uri'):
+                            profile_picture = profile_picture.get(field) or {}
+                        if profile_picture:
+                            r['info'] = {'profile_picture': profile_picture}
+
                         if has_users_filter:
                             users.remove(handle)
                             if not users:
@@ -136,7 +151,10 @@ class Statistic(BaseModule):
         }
 
         if re.search(r'\bfinals?\b', self.name, re.IGNORECASE):
-            standings['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
+            if has_hidden or datetime.utcnow().replace(tzinfo=pytz.utc) < self.end_time:
+                standings['options'] = {'medals': []}
+            else:
+                standings['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
 
         return standings
 

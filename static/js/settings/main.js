@@ -548,6 +548,7 @@ $(function() {
         width: '50%',
         allowClear: true,
         placeholder: 'Search resource by regex',
+        data: SELECTED_RESOURCE,
         ajax: {
             url: '/settings/search/',
             dataType: 'json',
@@ -622,6 +623,7 @@ $(function() {
         width: '50%',
         allowClear: true,
         placeholder: 'Search handle by regex',
+        data: SELECTED_ACCOUNT,
         ajax: {
             url: '/settings/search/',
             dataType: 'json',
@@ -702,6 +704,4 @@ $(function() {
         },
         minimumInputLength: 0
     })
-
-
 })

@@ -53,7 +53,7 @@
     {% if info and info.n and info.n <= standings_options.n_highlight or info and info.highlight %}bg-success{% endif %}
     {% endwith %}
   ">
-    {% include "standings_account.html" with account=statistic.account addition=addition %}
+    {% include "standings_account.html" with account=statistic.account addition=addition resource=contest.resource %}
   </{{ tag }}>
   <{{ tag }}>
     <div>{{ statistic.solving|floatformat:'-2' }}</div>
@@ -121,9 +121,9 @@
             {% endif %}
 
             {% if stat.icon %}
-              {{ stat.icon|safe }}
+              <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.icon|safe }}</span>
             {% elif stat.binary is not None %}
-              <span><i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i></span>
+            <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}><i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i></span>
             {% elif with_detail and stat.subscores %}
               <span>{% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}</span>
             {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
@@ -219,9 +219,3 @@
     })
 </script>
 {% endif %}
-
-<script>
-  $(function(){
-    $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'});
-  })
-</script>

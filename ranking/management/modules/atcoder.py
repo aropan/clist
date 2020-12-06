@@ -16,6 +16,7 @@ import pytz
 import arrow
 from first import first
 from tqdm import tqdm
+from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, LOG, FailOnGetResponse, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -100,6 +101,10 @@ class Statistic(BaseModule):
                                 if href:
                                     row['url'] = urllib.parse.urljoin(url, href)
                                     row['external_solution'] = True
+                            elif k == 'User':
+                                row['name'] = v.value
+                                href = v.column.node.xpath('.//a/@href')[0]
+                                row['user'] = href.split('/')[-1]
                             else:
                                 k = k.lower().replace(' ', '_')
                                 row[k] = v.value
@@ -111,11 +116,14 @@ class Statistic(BaseModule):
 
                         row['verdict'] = row.pop('status')
                         user = row.pop('user')
+                        name = row.pop('name')
                         task = row.pop('task').split()[0]
                         score = float(row.pop('score'))
 
                         res = result.setdefault(user, collections.OrderedDict())
                         res.setdefault('member', user)
+                        if name != user:
+                            res['name'] = name
                         problems = res.setdefault('problems', {})
                         problem = problems.setdefault(task, {})
                         problem_score = problem.get('result', 0)
@@ -226,7 +234,12 @@ class Statistic(BaseModule):
                 results[handle] = r
 
             url = f'{self.STANDING_URL_.format(self)}/json'
-            page = self._get(url)
+            try:
+                page = self._get(url)
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return {'action': 'delete'}
+                raise e
             data = json.loads(page)
 
             task_info = collections.OrderedDict()
@@ -373,6 +386,54 @@ class Statistic(BaseModule):
                 row['_no_update_n_contests'] = True
 
         return standings
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        key_value_re = re.compile(
+            '''
+            <tr>[^<]*<th[^>]*class="no-break"[^>]*>(?P<key>[^<]*)</th>[^<]*
+            <td[^>]*>(?:<[^>]*>)*(?P<value>[^<]*)(?:</[^>]*>)*</td>[^<]*</tr>
+            ''',
+            re.VERBOSE,
+        )
+        avatar_re = re.compile('''<img[^>]*class=["']avatar["'][^>]*src=["'](?P<url>[^"']*/icons/[^"']*)["'][^>]*>''')
+
+        @RateLimiter(max_calls=100, period=10)
+        def fetch_profile(user):
+            url = resource.profile_url.format(account=user)
+            try:
+                page = REQ.get(url)
+            except FailOnGetResponse as e:
+                if isinstance(e.args[0], UnicodeEncodeError):
+                    return None
+                code = e.code
+                if code == 404:
+                    return None
+                return {}
+            ret = {}
+            matches = key_value_re.finditer(page, re.VERBOSE)
+            for match in matches:
+                key = match.group('key').strip()
+                value = match.group('value').strip()
+                if value:
+                    ret[key] = value
+            match = avatar_re.search(page)
+            if match:
+                ret['avatar'] = match.group('url')
+            return ret
+
+        with PoolExecutor(max_workers=8) as executor:
+            profiles = executor.map(fetch_profile, users)
+            for data in profiles:
+                if not data:
+                    if data is None:
+                        yield {'info': None}
+                    else:
+                        yield {'skip': True}
+                else:
+                    yield {'info': data}
+                pbar.update()
 
     @staticmethod
     def get_source_code(contest, problem):

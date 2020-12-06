@@ -1,45 +1,38 @@
-{% load humanize %}
 {% load el_pagination_tags %}
 {% lazy_paginate 50 contests %}
 {% for contest in contests %}
 <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="contest list-group-item list-group-item-action list-group-item-{% if not contest.has_module %}info{% elif not contest.has_statistics %}danger{% elif contest.is_running %}success{% endif %}">
+    <div>
     <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
     {{ contest.title }}
-    {% if perms.clist.reset_timing_statistic_tooltip %}
-    <button class="inline-button reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}" title="timing.statistic = {{ contest.timing.statistic|naturaltime }}" data-toggle="tooltip">
-        <i class="fas fa-sync-alt"></i>
-    </button>
+    <small class="pull-right">
+        {% include "contest_inline_buttons.html" with contest=contest %}
 
-    <button class="inline-button database-href btn btn-default btn-xs" style="margin-left: 30px" data-href="{% url 'admin:clist_contest_change' contest.id %}">
-        <i class="fas fa-database"></i>
-    </button>
-    {% endif %}
-    <small class="pull-right" title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
-        {{ contest.end_time|timezone:timezone|naturalday }}
+        <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+            {{ contest.end_time|timezone:timezone|naturalday }}
+        </span>
     </small>
+    </div>
+
+    {% for stat in contest.stats %}
+    <small>
+        {% if stat.place %}
+        Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.n_statistics }}{% endif %}
+        {% endif %}
+
+        {% with value=stat.addition.rating_change %}
+        {% with intvalue=value|toint %}
+            <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
+            {% if intvalue %}
+              <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+            {% else %}
+              {{ value }}
+            {% endif %}
+            </span>
+        {% endwith %}
+        {% endwith %}
+    </small>
+    {% endfor %}
 </a>
 {% endfor %}
 {% show_more %}
-
-<script>
-    $(function(){
-        $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body'});
-{% if perms.clist.reset_timing_statistic_tooltip %}
-        $('.reset-timing-statistic').click(function(e) {
-            e.preventDefault()
-            var btn = $(this)
-            $.post(
-                '/standings/action/',
-                {action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')},
-            ).done(function(data) {
-                btn.attr('data-original-title', data.message).tooltip('show')
-            })
-        })
-        $('.database-href').click(function(e) {
-            var btn = $(this)
-            window.open(btn.attr('data-href'), "_blank");
-            return false
-        })
-{% endif %}
-    })
-</script>

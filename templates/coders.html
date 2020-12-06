@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Coders{% endblock %}
+{% block ogtitle %}{% block title %}Coders{% endblock %}{% endblock %}
+{% block description %}List of coders with functional filter and search{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/coders.css' %}" rel="stylesheet">
@@ -40,7 +41,7 @@
 
   </form>
 
-  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
   <div id="coders" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
       <thead>

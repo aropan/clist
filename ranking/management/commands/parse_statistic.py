@@ -5,7 +5,7 @@ import re
 import operator
 import copy
 from html import unescape
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from random import shuffle
 from tqdm import tqdm
 from attrdict import AttrDict
@@ -52,6 +52,8 @@ class Command(BaseCommand):
         parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
         parser.add_argument('--update-without-new-rating', action='store_true', default=False, help='Update account')
+        parser.add_argument('--stage', action='store_true', default=False, help='Stage contests')
+        parser.add_argument('--division', action='store_true', default=False, help='Contests with divisions')
 
     def parse_statistic(
         self,
@@ -68,30 +70,32 @@ class Command(BaseCommand):
         users=None,
         with_stats=True,
         update_without_new_rating=None,
+        without_contest_filter=False,
     ):
         now = timezone.now()
 
-        if with_check:
-            if previous_days is not None:
-                contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
+        if not without_contest_filter:
+            if with_check:
+                if previous_days is not None:
+                    contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
+                else:
+                    contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
+                    started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
+
+                    query = Q()
+                    query &= (
+                        Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
+                        | Q(timing__statistic__isnull=True)
+                    )
+                    query &= Q(end_time__lt=now - F('resource__module__min_delay_after_end'))
+                    ended = contests.filter(query)
+
+                    contests = started.union(ended)
+                    contests = contests.distinct('id')
+            elif title_regex:
+                contests = contests.filter(title__iregex=title_regex)
             else:
-                contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
-                started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
-
-                query = Q()
-                query &= (
-                    Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
-                    | Q(timing__statistic__isnull=True)
-                )
-                query &= Q(end_time__lt=now - F('resource__module__min_delay_after_end'))
-                ended = contests.filter(query)
-
-                contests = started.union(ended)
-                contests = contests.distinct('id')
-        elif title_regex:
-            contests = contests.filter(title__iregex=title_regex)
-        else:
-            contests = contests.filter(end_time__lt=now - F('resource__module__min_delay_after_end'))
+                contests = contests.filter(end_time__lt=now - F('resource__module__min_delay_after_end'))
 
         if freshness_days is not None:
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
@@ -118,6 +122,16 @@ class Command(BaseCommand):
             shuffle(contests)
 
         countrier = Countrier()
+
+        def canonize_name(name):
+            while True:
+                v = unescape(name)
+                if v == name:
+                    break
+                name = v
+            if len(name) > 1024:
+                name = name[:1020] + '...'
+            return name
 
         count = 0
         total = 0
@@ -194,6 +208,8 @@ class Command(BaseCommand):
 
                     problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
 
+                    standings_hidden_fields = standings.pop('hidden_fields', {})
+
                     result = standings.get('result', {})
                     if not no_update_results and (result or users is not None):
                         fields_set = set()
@@ -201,10 +217,12 @@ class Command(BaseCommand):
                         fields = list()
                         addition_was_ordereddict = False
                         calculate_time = False
+                        n_statistics = defaultdict(int)
                         d_problems = {}
                         teams_viewed = set()
                         has_hidden = False
                         languages = set()
+                        hidden_fields = set()
 
                         additions = copy.deepcopy(contest.info.get('additions', {}))
                         if additions:
@@ -273,16 +291,13 @@ class Command(BaseCommand):
                                 account.info['_name_instead_key'] = True
                                 account.save()
 
+                            no_update_name = r.pop('_no_update_name', False)
                             if r.get('name'):
-                                while True:
-                                    name = unescape(r['name'])
-                                    if name == r['name']:
-                                        break
-                                    r['name'] = name
-                                if len(r['name']) > 1024:
-                                    r['name'] = r['name'][:1020] + '...'
-                                no_update_name = r.pop('_no_update_name', False)
-                                if not no_update_name and account.name != r['name'] and member.find(r['name']) == -1:
+                                r['name'] = canonize_name(r['name'])
+                                if (
+                                    not no_update_name and
+                                    account.name != r['name']
+                                ):
                                     account.name = r['name']
                                     account.save()
 
@@ -326,31 +341,36 @@ class Command(BaseCommand):
                                 if 'team_id' in r:
                                     teams_viewed.add(r['team_id'])
                                 solved = {'solving': 0}
+                                n_statistics[r.get('division')] += 1
                                 for k, v in problems.items():
                                     if 'result' not in v:
                                         continue
-
-                                    ac = str(v['result']).startswith('+')
-                                    try:
-                                        result = float(v['result'])
-                                        ac = ac or result > 0 and not v.get('partial', False)
-                                    except Exception:
-                                        pass
 
                                     p = d_problems
                                     if 'division' in standings.get('problems', {}):
                                         p = p.setdefault(r['division'], {})
                                     p = p.setdefault(k, {})
 
-                                    if 'default_problem_full_score' in contest.info:
-                                        full_score = contest.info['default_problem_full_score']
-                                        if 'partial' not in v and full_score - float(v['result']) > 1e-9:
+                                    scored = str(v['result']).startswith('+')
+                                    try:
+                                        scored = scored or float(v['result']) > 0
+                                    except Exception:
+                                        pass
+
+                                    default_full_score = (
+                                        contest.info.get('default_problem_full_score')
+                                        or contest.resource.info.get('statistics', {}).get('default_problem_full_score')
+                                    )
+                                    if default_full_score:
+                                        if 'partial' not in v and default_full_score - float(v['result']) > 1e-9:
                                             v['partial'] = True
                                         if not v.get('partial'):
                                             solved['solving'] += 1
                                         if 'full_score' not in p:
-                                            p['full_score'] = full_score
-                                    if contest.info.get('with_last_submit_time') and ac:
+                                            p['full_score'] = default_full_score
+                                    ac = scored and not v.get('partial', False)
+
+                                    if contest.info.get('with_last_submit_time') and scored:
                                         if '_last_submit_time' not in r or r['_last_submit_time'] < v['time']:
                                             r['_last_submit_time'] = v['time']
                                     if contest.info.get('without_problem_first_ac'):
@@ -366,6 +386,10 @@ class Command(BaseCommand):
 
                                     if ac:
                                         p['n_accepted'] = p.get('n_accepted', 0) + 1
+                                    elif scored and v.get('partial'):
+                                        p['n_partial'] = p.get('n_partial', 0) + 1
+                                    elif str(v['result']).startswith('?'):
+                                        p['n_hidden'] = p.get('n_hidden', 0) + 1
 
                                 if 'default_problem_full_score' in contest.info and solved and 'solved' not in r:
                                     r['solved'] = solved
@@ -418,6 +442,7 @@ class Command(BaseCommand):
                             addition = type(r)()
                             addition_was_ordereddict |= isinstance(addition, OrderedDict)
                             for k, v in r.items():
+                                is_hidden_field = k in standings_hidden_fields
                                 if k[0].isalpha() and not re.match('^[A-Z]+$', k):
                                     k = k[0].upper() + k[1:]
                                     k = '_'.join(map(str.lower, re.findall('[A-ZА-Я][^A-ZА-Я]*', k)))
@@ -425,6 +450,8 @@ class Command(BaseCommand):
                                 if k not in fields_set:
                                     fields_set.add(k)
                                     fields.append(k)
+                                    if is_hidden_field:
+                                        hidden_fields.add(k)
 
                                 if (k in Resource.RATING_FIELDS or k == 'rating_change') and v is None:
                                     continue
@@ -525,7 +552,6 @@ class Command(BaseCommand):
                                     fields.append(rating_field)
                             if fields_set and not addition_was_ordereddict:
                                 fields.sort()
-                            fields_types = {k: list(v) for k, v in fields_types.items()}
 
                             if statistics_ids:
                                 first = Statistics.objects.filter(pk__in=statistics_ids).first()
@@ -537,10 +563,20 @@ class Command(BaseCommand):
 
                             if canonize(fields) != canonize(contest.info.get('fields')):
                                 contest.info['fields'] = fields
+
+                            hidden_fields = list(hidden_fields)
+                            if hidden_fields and canonize(hidden_fields) != canonize(contest.info.get('hidden_fields')):
+                                contest.info['hidden_fields'] = hidden_fields
+
+                            fields_types = {k: list(v) for k, v in fields_types.items()}
+                            for k, v in standings.get('fields_types', {}).items():
+                                fields_types.setdefault(k, []).extend(v)
                             contest.info['fields_types'] = fields_types
 
                             if calculate_time and not contest.calculate_time:
                                 contest.calculate_time = True
+
+                            contest.n_statistics = len(result)
 
                             problems = standings.pop('problems', None)
                             if problems is not None:
@@ -550,13 +586,16 @@ class Command(BaseCommand):
                                             k = get_problem_short(p)
                                             if k:
                                                 p.update(d_problems.get(d, {}).get(k, {}))
+                                                p['n_total'] = n_statistics[d]
                                     if isinstance(problems['division'], OrderedDict):
                                         problems['divisions_order'] = list(problems['division'].keys())
+                                    problems['n_statistics'] = n_statistics
                                 else:
                                     for p in problems:
                                         k = get_problem_short(p)
                                         if k:
                                             p.update(d_problems.get(k, {}))
+                                            p['n_total'] = contest.n_statistics
 
                                 update_problems(contest, problems=problems)
 
@@ -650,6 +689,12 @@ class Command(BaseCommand):
 
         if args.year:
             contests = contests.filter(start_time__year=args.year)
+
+        if args.stage:
+            contests = contests.filter(stage__isnull=False)
+
+        if args.division:
+            contests = contests.filter(info__problems__division__isnull=False)
 
         self.parse_statistic(
             contests=contests,

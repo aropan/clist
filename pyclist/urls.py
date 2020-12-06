@@ -1,11 +1,16 @@
-from django.conf.urls import include, url
 from django.conf import settings
-from django.views.generic import TemplateView
+from django.conf.urls import include, url
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
+from django.urls import path
+from django.views.decorators.cache import cache_page
+from django.views.generic import TemplateView
+
+
+from pyclist.sitemaps import sitemaps
 
 
 admin.autodiscover()
-
 
 urlpatterns = [
     url(r'', include('clist.urls')),
@@ -26,6 +31,10 @@ urlpatterns = [
 
     url(r'^imagefit/', include('imagefit.urls')),
     url(r'^webpush/', include('webpush.urls')),
+
+    path('sitemap.xml',
+         cache_page(86400)(sitemap),
+         {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 ]
 
 

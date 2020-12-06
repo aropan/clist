@@ -1,4 +1,3 @@
-{% load humanize %}
 {% load el_pagination_tags %}
 
 {% lazy_paginate 50,200 coders %}
@@ -48,7 +47,4 @@
   <td><div title="{{ coder.created|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ coder.created|timezone:timezone|naturalday }}</div></td>
 </tr>
 {% endfor %}
-
 {% show_more_table %}
-
-<script>$(toggle_tooltip);</script>

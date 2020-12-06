@@ -1,4 +1,3 @@
-{% load humanize %}
 {% load el_pagination_tags %}
 
 {% paginate 5,50 writers using "writers_page" %}
@@ -12,7 +11,4 @@
   </td>
 </tr>
 {% endfor %}
-
-<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
-
 {% show_more_table %}

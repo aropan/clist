@@ -16,8 +16,7 @@ import humanize
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 
-from tg.bot import Bot
-from tg.bot import telegram
+from tg.bot import Bot, telegram
 
 from clist.models import Contest
 from ranking.models import Statistics
@@ -67,16 +66,32 @@ class Command(BaseCommand):
             subprocess.call('clear', shell=True)
 
             contest = Contest.objects.filter(pk=args.cid)
-            parser_command.parse_statistic(contest, with_check=False)
+            parser_command.parse_statistic(contest, without_contest_filter=True)
             contest = contest.first()
+            resource = contest.resource
             statistics = Statistics.objects.filter(contest=contest)
+
+            for p in problems_info.values():
+                if p.get('accepted') or not p.get('n_hidden'):
+                    p.pop('show_hidden')
+                p['n_hidden'] = 0
 
             updated = False
             has_hidden = False
             numbered = 0
             for stat in sorted(statistics, key=lambda s: s.place_as_int):
+                name_instead_key = resource.info.get('standings', {}).get('name_instead_key')
+                name_instead_key = stat.account.info.get('_name_instead_key', name_instead_key)
+
+                if name_instead_key:
+                    name = stat.account.name
+                else:
+                    name = stat.addition.get('name')
+                    if not name or not has_season(stat.account.key, name):
+                        name = stat.account.key
+
                 filtered = False
-                if args.query is not None and re.search(args.query, stat.account.key, re.I):
+                if args.query is not None and re.search(args.query, name, re.I):
                     filtered = True
 
                 message_id = None
@@ -87,26 +102,43 @@ class Command(BaseCommand):
                     p = []
                     has_update = False
                     has_first_ac = False
+                    has_try_first_ac = False
+
                     for k, v in stat.addition.get('problems', {}).items():
                         p_info = problems_info.setdefault(k, {})
                         p_result = problems.get(k, {}).get('result')
                         result = v['result']
-                        is_hidden = result.startswith('?')
+
+                        is_hidden = str(result).startswith('?')
+                        is_accepted = str(result).startswith('+')
                         try:
-                            is_accepted = result.startswith('+')
-                            is_accepted = is_accepted or float(result) > 0
+                            is_accepted = is_accepted or float(result) > 0 and not v.get('partial')
                         except Exception:
                             pass
+
+                        if is_hidden:
+                            p_info['n_hidden'] = p_info.get('n_hidden', 0) + 1
+
                         if p_result != result or is_hidden:
                             m = '%s%s %s' % (k, ('. ' + v['name']) if 'name' in v else '', result)
 
                             if p_result != result:
                                 m = '*%s*' % m
                                 has_update = True
-                                if iteration and is_accepted and not p_info.get('accepted'):
-                                    m += ' FIRST ACCEPTED'
-                                    has_first_ac = True
-                                if is_accepted and args.top and stat.place_as_int <= args.top:
+                                if iteration:
+                                    if p_info.get('show_hidden') == key:
+                                        has_try_first_ac = True
+                                        if not is_hidden:
+                                            p_info.pop('show_hidden')
+                                    if not p_info.get('accepted'):
+                                        if is_accepted:
+                                            m += ' FIRST ACCEPTED'
+                                            has_first_ac = True
+                                        elif is_hidden and not p_info.get('show_hidden'):
+                                            p_info['show_hidden'] = key
+                                            m += ' TRY FIRST AC'
+                                            has_try_first_ac = True
+                                if args.top and stat.place_as_int <= args.top:
                                     filtered = True
                             p.append(m)
                         if result.startswith('+'):
@@ -119,23 +151,19 @@ class Command(BaseCommand):
                     else:
                         place = stat.place
 
-                    name = stat.addition.get('name')
-                    if not name or not has_season(stat.account.key, name):
-                        name = stat.account.key
-
-                    msg = '%s. _%s_' % (place, name)
+                    msg = '%s. _%s_' % (place, telegram.utils.helpers.escape_markdown(name))
                     if p:
                         msg = '%s, %s' % (', '.join(p), msg)
                     if standings[key]['solving'] != stat.solving:
                         msg += ' = %d' % stat.solving
 
-                    if has_update or has_first_ac:
+                    if has_update or has_first_ac or has_try_first_ac:
                         updated = True
 
                     if filtered:
                         print(msg)
 
-                    if filtered and has_update or has_first_ac:
+                    if filtered and has_update or has_first_ac or has_try_first_ac:
                         if not args.dryrun:
                             for _ in range(1, 5):
                                 try:

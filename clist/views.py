@@ -34,6 +34,13 @@ def get_timeformat(request):
     return ret
 
 
+def get_add_to_calendar(request):
+    ret = settings.ADD_TO_CALENDAR_
+    if request.user.is_authenticated:
+        ret = request.user.coder.settings.get("add_to_calendar", ret)
+    return settings.ACE_CALENDARS_[ret]['id']
+
+
 def get_timezone(request):
     tz = request.GET.get("timezone", None)
     if tz:
@@ -215,7 +222,6 @@ def send_event_notification(request):
 def main(request, party=None):
     viewmode = settings.VIEWMODE_
     open_new_tab = settings.OPEN_NEW_TAB_
-    add_to_calendar = settings.ADD_TO_CALENDAR_
     hide_contest = settings.HIDE_CONTEST_
     share_to_category = None
 
@@ -227,8 +233,7 @@ def main(request, party=None):
         viewmode = coder.settings.get("view_mode", viewmode)
         hide_contest = coder.settings.get("hide_contest", hide_contest)
         open_new_tab = coder.settings.get("open_new_tab", open_new_tab)
-        add_to_calendar = coder.settings.get("add_to_calendar", add_to_calendar)
-        share_to_category = coder.settings.get("share_to_category", add_to_calendar)
+        share_to_category = coder.settings.get("share_to_category", share_to_category)
     else:
         coder = None
     viewmode = request.GET.get("view", viewmode)
@@ -289,7 +294,6 @@ def main(request, party=None):
         banners = banners.filter(enable=True)
 
     offset = get_timezone_offset(tzname)
-    timezone_hm = f'{"+" if offset > 0 else "-"}{abs(offset // 60):02d}:{abs(offset % 60):02d}'
 
     context.update({
         "offset": offset,
@@ -298,10 +302,9 @@ def main(request, party=None):
         "hide_contest": hide_contest,
         "share_to_category": share_to_category,
         "timezone": tzname,
-        "timezone_hm": timezone_hm,
         "time_format": time_format,
         "open_new_tab": open_new_tab,
-        "add_to_calendar": settings.ACE_CALENDARS_[add_to_calendar]['id'],
+        "add_to_calendar": get_add_to_calendar(request),
         "banners": banners,
     })
 
@@ -525,12 +528,16 @@ def update_problems(contest, problems=None):
     old_problem_ids = set(contest.problem_set.values_list('id', flat=True))
     added_problems = dict()
     for division, problem_set in problem_sets:
+        last_group = None
         for index, problem_info in enumerate(problem_set, start=1):
             key = get_problem_key(problem_info)
             short = get_problem_short(problem_info)
             name = get_problem_name(problem_info)
             if short == name or short == key:
                 short = None
+            if last_group is not None and last_group == problem_info.get('group'):
+                continue
+            last_group = problem_info.get('group')
 
             added_problem = added_problems.get(key)
 

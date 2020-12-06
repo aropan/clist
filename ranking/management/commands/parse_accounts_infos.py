@@ -33,6 +33,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-q', '--query', default=None, help='regex account key')
+        parser.add_argument('-f', '--force', action='store_true', help='get accounts with min updated time')
         parser.add_argument('-l', '--limit', default=None, type=int,
                             help='limit users for one resource (default is 1000)')
 
@@ -64,6 +65,8 @@ class Command(BaseCommand):
 
                 if args.query:
                     accounts = accounts.filter(key__iregex=args.query)
+                elif args.force:
+                    accounts = accounts.order_by('updated')
                 else:
                     accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
@@ -126,6 +129,8 @@ class Command(BaseCommand):
 
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])
+                            if info.get('name'):
+                                account.name = info['name']
                             if info.get('rating'):
                                 info['rating_ts'] = int(now.timestamp())
                             delta = info.pop('delta', timedelta(days=365))

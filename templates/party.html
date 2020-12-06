@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Ranking - {{ party.name }}{% endblock %}
+{% block ogtitle %}{% block title %}Ranking - {{ party.name }}{% endblock %}{% endblock %}
 
 {% block end-head %}
     <link href="{% static_ts 'css/party/ranking.css' %}" rel="stylesheet">

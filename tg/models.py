@@ -11,6 +11,7 @@ class Chat(BaseModel):
     secret_key = models.CharField(max_length=20, blank=True, null=True)
     last_command = JSONField(default=dict, blank=True)
     is_group = models.BooleanField(default=False)
+    coders = models.ManyToManyField(Coder, blank=True, related_name='chats')
 
     def __str__(self):
         return "%s#%s" % (self.coder_id, self.chat_id)

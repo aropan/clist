@@ -7,7 +7,7 @@
         if (preg_match('#\s+(test|testing)$#i', $title)) {
             return false;
         }
-        if (!preg_match('#(?P<key>(?:srm|mm)\s*[-/.0-9]*[0-9]|TCO[0-9]+.*(?:algorithm|marathon)?\s*round\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
+        if (!preg_match('#(?P<key>(?:(?:rookie\s*)?srm|mm)\s*[-/.0-9]*[0-9]|TCO[0-9]+.*(?:algorithm|marathon)?\s*round\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
             return false;
         }
         return $match['key'];

@@ -220,6 +220,16 @@ def account(request, key, host, template='profile.html', extra_context=None):
     context = get_profile_context(request, statistics, writers)
     context['account'] = account
 
+    add_account_button = False
+    if request.user.is_authenticated:
+        module = getattr(account.resource, 'module', None)
+        coder_accounts = request.user.coder.account_set.filter(resource=account.resource)
+        if module and (module.multi_account_allowed or not coder_accounts.first()):
+            add_account_button = True
+    else:
+        add_account_button = True
+    context['add_account_button'] = add_account_button
+
     if extra_context is not None:
         context.update(extra_context)
 
@@ -341,11 +351,21 @@ def settings(request, tab=None):
 
     services = Service.objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
 
+    selected_resource = request.GET.get('resource')
+    selected_account = None
+    if selected_resource:
+        selected_resource = Resource.objects.filter(host=selected_resource).first()
+        selected_account = request.GET.get('account')
+        if selected_account:
+            selected_account = Account.objects.filter(resource=selected_resource, key=selected_account).first()
+
     return render(
         request,
         "settings.html",
         {
             "resources": resources,
+            "selected_resource": selected_resource,
+            "selected_account": selected_account,
             "coder": coder,
             "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,

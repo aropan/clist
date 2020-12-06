@@ -12,13 +12,33 @@
 
 {% endblock %}
 
-{% block title %}
+{% block ogtitle %}{% block title %}{% linebreakless %}
+{% if coder %}
+  {{ coder.user.username }} - Coder
+{% elif account %}
+  {% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} on {{ account.resource.host }} - Account{% endif %}
+{% endlinebreakless %}{% endblock %}{% endblock %}
+
+{% block description %}{% linebreakless %}
   {% if coder %}
-    {{ coder.user.username }} - Coder
-  {% else %}
-    {{ account.key }} on {{ account.resource.host }} - Account
+Number of accounts: {{ coder.n_accounts }}
+
+{% if coder.first_name_native or coder.last_name_native %}
+, name: {% if coder.first_name_native %}{{ coder.first_name_native }}{% endif %}{% if coder.first_name_native and coder.last_name_native %} {% endif %}{% if coder.last_name_native %}{{ coder.last_name_native }}{% endif %}
+{% elif coder.user.first_name or coder.user.last_name %}
+, name: {% if coder.user.first_name %}{{ coder.user.first_name }}{% endif %}{% if coder.user.first_name and coder.user.last_name %} {% endif %}{% if coder.user.last_name %}{{ coder.user.last_name }}{% endif %}
+{% endif %}
+
+{% if coder.country %}, country: {{ coder.country.name }}{% endif %}
+, last update: {{ coder.modified|format_time:"%-d %B %Y" }}
+  {% elif account %}
+Number of competitions: {{ account.n_contests }}
+{% if account.country %}, country: {{ account.country.name }}{% endif %}
+{% if account.rating %}, rating: {{ account.rating }}{% endif %}
+{% if account.last_activity %}, last activity: {{ account.last_activity|format_time:"%-d %B %Y" }}{% endif %}
+, last update: {{ account.modified|format_time:"%-d %B %Y" }}
   {% endif %}
-{% endblock %}
+{% endlinebreakless %}{% endblock %}
 
 {% block content %}
 
@@ -37,7 +57,7 @@
       <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
   </h2>
-{% else %}
+{% elif account %}
   <div>
     <h2>
       {% coder_color_circle account.resource account.info %}
@@ -45,11 +65,17 @@
       {% if account.resource.profile_url %}
       <small><a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></small>
       {% endif %}
+
       {% if request.user.is_authenticated %}
       {% with hostname=account.resource.short_host|default:account.resource.host %}
       <small><a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:hostname|add:":"|add:account.key %}"><i class="fas fa-people-arrows"></i></a></small>
       {% endwith %}
       {% endif %}
+
+      {% if add_account_button %}
+      <small><a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key}}"><i class="fas fa-user-plus"></i></a></small>
+      {% endif %}
+
       {% if perms.ranking.change_account %}
         <a href="{% url 'admin:ranking_account_change' account.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
       {% endif %}
@@ -142,7 +168,7 @@
     </table>
   </div>
 </div>
-<script>$('#writers').endlessPaginate();</script>
+  <script>$('#writers').endlessPaginate({onCompleted: toggle_tooltip});</script>
 {% endif %}
 </div>
 
@@ -487,7 +513,7 @@ $(function(){
     {% include 'profile_contests_paging.html' %}
   </table>
 </div>
-<script>$('#contests').endlessPaginate({paginateOnScroll: true});</script>
+<script>$('#contests').endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
 {% else %}
 <div class="alert alert-warning">Empty statistics</div>
 {% endif %}

@@ -5,7 +5,7 @@ from collections import OrderedDict
 from django.conf import settings
 from django.db import models, connection
 from django.contrib.auth.decorators import login_required
-from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg
+from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg, Prefetch
 from django.db.models.functions import Cast
 from django.db.models.expressions import RawSQL
 from django.http import HttpResponseNotFound, JsonResponse
@@ -26,6 +26,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.models import Statistics, Module, Account
 from true_coders.models import Party, Coder
+from tg.models import Chat
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
 from utils.regex import get_iregex_filter
@@ -35,6 +36,7 @@ from utils.regex import get_iregex_filter
 def standings_list(request, template='standings_list.html', extra_context=None):
     contests = Contest.objects \
         .select_related('timing') \
+        .select_related('resource') \
         .annotate(has_statistics=Exists(Statistics.objects.filter(contest=OuterRef('pk')))) \
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
         .filter(Q(has_statistics=True) | Q(end_time__lte=timezone.now())) \
@@ -60,8 +62,19 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                                                          'medal': {'fields': ['info__standings__medals'],
                                                                    'suff': '__isnull',
                                                                    'func': lambda v: False},
+                                                         'stage': {'fields': ['stage'],
+                                                                   'suff': '__isnull',
+                                                                   'func': lambda v: False},
+                                                         'coder': {'fields': ['statistics__account__coders__username']},
                                                      },
                                                      logger=request.logger))
+
+    if request.user.is_authenticated:
+        contests = contests.prefetch_related(Prefetch(
+            'statistics_set',
+            to_attr='stats',
+            queryset=Statistics.objects.filter(account__coders=request.user.coder),
+        ))
 
     context = {
         'contests': contests,
@@ -240,7 +253,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
     with_row_num = False
 
-    contest_fields = contest.info.get('fields', [])
+    contest_fields = list(contest.info.get('fields', []))
+    hidden_fields = list(contest.info.get('hidden_fields', []))
 
     statistics = Statistics.objects.filter(contest=contest)
 
@@ -306,13 +320,14 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         'advanced': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
         'highlight': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
     }
+
     fields_to_select = OrderedDict()
     map_fields_to_select = {'rating_change': 'rating'}
     for f in sorted(contest_fields):
         f = f.strip('_')
         if f.lower() in [
             'institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region',
-            'rating_change', 'advanced',
+            'rating_change', 'advanced', 'company', 'language', 'league'
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})
@@ -325,17 +340,37 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
         field_to_select.update(fields_to_select_defaults.get(f, {}))
 
-    if with_detail:
-        for k in contest_fields:
-            if (
-                k not in fields
-                and k not in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
-                              'division']
-                and not (k == 'medal' and '_medal_title_field' in contest_fields)
-                and 'country' not in k
-                and not k.startswith('_')
-            ):
-                fields[k] = k
+    chats = coder.chats.all() if coder else None
+    if chats:
+        options = {c.chat_id: c.title for c in chats}
+        fields_to_select['chat'] = {
+            'values': [v for v in request.GET.getlist('chat') if v and v in options],
+            'options': options,
+            'noajax': True,
+            'nogroupby': True,
+            'nourl': True,
+        }
+
+    hidden_fields_values = [v for v in request.GET.getlist('field') if v]
+    for v in hidden_fields_values:
+        if v not in hidden_fields:
+            hidden_fields.append(v)
+
+    for k in contest_fields:
+        if (
+            k in fields
+            or k in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
+                     'division']
+            or k == 'medal' and '_medal_title_field' in contest_fields
+            or 'country' in k and k not in hidden_fields_values
+            or k.startswith('_')
+            or k in hidden_fields and k not in hidden_fields_values
+        ):
+            continue
+        if with_detail or k in hidden_fields_values:
+            fields[k] = k
+        else:
+            hidden_fields.append(k)
 
     for k, field in fields.items():
         if k != field:
@@ -344,6 +379,16 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         if field and not field[0].isupper():
             field = field.title()
         fields[k] = field
+
+    if hidden_fields:
+        fields_to_select['field'] = {
+            'values': hidden_fields_values,
+            'options': hidden_fields,
+            'noajax': True,
+            'nogroupby': True,
+            'nourl': True,
+            'nofilter': True,
+        }
 
     per_page = options.get('per_page', 50)
     if per_page is None:
@@ -379,10 +424,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                         if k not in _problems:
                             _problems[k] = p
                         else:
-                            for f in 'n_accepted', 'n_teams':
+                            for f in 'n_accepted', 'n_teams', 'n_partial', 'n_total':
                                 if f in p:
                                     _problems[k][f] = _problems[k].get(f, 0) + p[f]
-
                 problems = list(_problems.values())
             else:
                 problems = problems['division'][division]
@@ -397,7 +441,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     last = None
     merge_problems = False
     for p in problems:
-        if last and last.get('full_score') and (
+        if last and (last.get('full_score') or last.get('subname')) and (
             'name' in last and last.get('name') == p.get('name') or
             'group' in last and last.get('group') == p.get('group')
         ):
@@ -444,7 +488,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     # filter by field to select
     for field, field_to_select in fields_to_select.items():
         values = field_to_select.get('values')
-        if not values:
+        if not values or field_to_select.get('nofilter'):
             continue
         with_row_num = True
         filt = Q()
@@ -475,6 +519,13 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 filt = Q(pk__in=n_highlight_context.get('statistics_ids', {}))
                 if q == 'false':
                     filt = ~filt
+        elif field == 'chat':
+            for q in values:
+                if q not in field_to_select['options']:
+                    continue
+                chat = Chat.objects.filter(chat_id=q, is_group=True).first()
+                if chat:
+                    filt |= Q(account__coders__in=chat.coders.all())
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})
@@ -542,8 +593,10 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         else:
             field = f'addition__{groupby}'
             types = contest.info.get('fields_types', {}).get(groupby, [])
-            if len(types) == 1 and types[0] == 'int':
+            if 'int' in types:
                 field_type = models.IntegerField()
+            elif 'float' in types:
+                field_type = models.FloatField()
             else:
                 field_type = models.TextField()
             statistics = statistics.annotate(groupby=Cast(JSONF(field), field_type))
@@ -617,6 +670,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         'problems': problems,
         'params': params,
         'fields': fields,
+        'fields_types': contest.info.get('fields_types', {}),
         'divisions_order': divisions_order,
         'has_country': has_country,
         'per_page': per_page,

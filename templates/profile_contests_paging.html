@@ -1,26 +1,25 @@
-{% load humanize %}
 {% load el_pagination_tags %}
 
 {% lazy_paginate 50,100 statistics using "contest_page" %}
 
-{% for s in statistics %}
-<tr class="contest{% if s.addition.medal %} {{ s.addition.medal|lower }}-medal{% endif %}{% if s.contest.is_running %} success{% endif %}" id="cid-{{ s.contest.id }}">
+{% for stat in statistics %}
+<tr class="contest{% if stat.addition.medal %} {{ stat.addition.medal|lower }}-medal{% endif %}{% if stat.contest.is_running %} success{% endif %}" id="cid-{{ stat.contest.id }}">
     <td>
-        {% if s.addition.url %}<a href="{{ s.addition.url }}">{% endif %}
+        {% if stat.addition.url %}<a href="{{ stat.addition.url }}">{% endif %}
         <div data-toggle="tooltip" data-placement="top" data-html="true" title="
-            handle: {{ s.account.key }}<br/>
-            {% for k, v in s.addition.items|sort %}
+            handle: {{ stat.account.key }}<br/>
+            {% for k, v in stat.addition.items|sort %}
                 {% if k.0 != "_" and k not in "problems,hack,solved,challenges,url" %}
                     {{ k|lower }}: {{ v }}<br/>
                 {% endif %}
             {% endfor %}
         ">
-            {{ s.place|default:"-" }}
-        </div>{% if s.addition.url %}</a>{% endif %}
+            {{ stat.place|default:"-" }}
+        </div>{% if stat.addition.url %}</a>{% endif %}
     </td>
-    <td>{{ s.solving|floatformat }}</td>
+    <td>{{ stat.solving|floatformat }}</td>
     <td>
-        {% with value=s.addition.rating_change %}
+        {% with value=stat.addition.rating_change %}
         {% with intvalue=value|toint %}
             <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
             {% if intvalue %}
@@ -32,41 +31,38 @@
         {% endwith %}
         {% endwith %}
     </td>
-    <td><div title="{{ s.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ s.contest.end_time|timezone:timezone|naturalday }}</div></td>
+    <td><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
-        <a href="{% url 'ranking:standings' s.contest.title|slug s.contest.pk %}">{{ s.contest.title }}</a>
-        <a href="{{ s.contest.resource.url }}"><small class="text-muted">{{ s.contest.resource.host }}</small></a>
+        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}">{{ stat.contest.title }}</a>
+        <a href="{{ stat.contest.resource.url }}"><small class="text-muted">{{ stat.contest.resource.host }}</small></a>
         <div class="problems">
-            {% if s.addition.hack %}
-            {% with hack=s.addition.hack %}
+            {% if stat.addition.hack %}
+            {% with hack=stat.addition.hack %}
                 <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>
                     {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
                 </span>
             {% endwith %}
             {% endif %}
-            {% if 'problems' in s.addition %}
-                {% if s.contest.info.problems %}
-                  {% for problem in s.contest.info.problems|get_division_problems:s.addition %}
+            {% if 'problems' in stat.addition %}
+                {% if stat.contest.info.problems %}
+                  {% for problem in stat.contest.info.problems|get_division_problems:stat.addition %}
                     {% with key=problem|get_problem_short  %}
-                    {% with stat=s.addition.problems|get_item:key %}
+                    {% with stat=stat.addition.problems|get_item:key %}
                       {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url %}
                     {% endwith %}
                     {% endwith %}
                   {% endfor %}
                 {% else %}
-                  {% for k, v in s.addition.problems.items|sort %}
+                  {% for k, v in stat.addition.problems.items|sort %}
                   {% include 'problem_stat.html' with short=k name=k stat=v problem_url=None %}
                   {% endfor %}
                 {% endif %}
             {% endif %}
         </div>
         {% if perms.ranking.change_statistics %}
-          <a href="{% url 'admin:ranking_statistics_change' s.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+          <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
         {% endif %}
     </td>
 </tr>
 {% endfor %}
-
-<script>$(function(){$('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()})</script>
-
 {% show_more_table %}

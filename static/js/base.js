@@ -42,10 +42,10 @@ String.prototype.toTitleCase = function(){
 };
 
 function toggle_tooltip() {
-  $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'});
+  $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'})
 }
 
-$(toggle_tooltip);
+$(toggle_tooltip)
 
 function slugify(text) {
   return text.toString().toLowerCase()
@@ -120,3 +120,21 @@ $(function() {
     }
   })
 })
+
+function inline_button() {
+  $('.reset-timing-statistic').click(function(e) {
+    e.preventDefault()
+    var btn = $(this)
+    $.post('/standings/action/', {action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')}).done(function(data) {
+      btn.attr('data-original-title', data.message).tooltip('show')
+    })
+  })
+
+  $('.database-href').click(function(e) {
+    var btn = $(this)
+    window.open(btn.attr('data-href'), "_blank");
+    return false
+  })
+}
+
+$(inline_button)

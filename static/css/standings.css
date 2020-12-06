@@ -4,8 +4,12 @@
   text-overflow: ellipsis;
 }
 
-#standings_list a.contest:hover > .inline-button, #standings_list .inline-button:hover {
+#standings_list a.contest:hover .inline-button {
   display: inline-block;
+}
+
+#standings_list a.contest .inline-button {
+  margin-left: -60px;
 }
 
 #standings_list .resource {
@@ -93,7 +97,7 @@ table.standings .handle-cell .handle-div {
   box-shadow: inset 1px 0 #d0d0d0;
 }
 
-.standings tr.header-problems th.header-score {
+.standings tr.header-problems th.subheader-score {
   box-shadow: inset 1px 0 #d0d0d0, inset 0 -1px #d0d0d0;
 }
 
@@ -119,14 +123,6 @@ a.solution:hover span {
 
 .nobold {
   font-weight: normal;
-}
-
-.inline-button {
-  display: none;
-  position: absolute;
-  z-index: 1;
-  margin-top: -3px;
-  margin-left: 5px;
 }
 
 #viewSolutionModal .modal-body {
@@ -181,4 +177,9 @@ a.solution:hover span {
 
 .neighbors-contests {
   text-align: left;
+}
+
+.problem-progress {
+  height: 7px;
+  margin: 5px;
 }

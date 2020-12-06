@@ -8,7 +8,7 @@
 <script src="{% static_ts 'js/events/event.js' %}"></script>
 {% endblock %}
 
-{% block title %}{{ event.name }} event{% endblock %}
+{% block ogtitle %}{% block title %}{{ event.name }} event{% endblock %}{% endblock %}
 
 {% block content %}
     <script>search_url = "{% url 'events:event' slug %}search/"</script>
@@ -110,14 +110,7 @@
             {% endif %}
         </div>
 
-        <script>
-        $.endlessPaginate({
-            paginateOnScroll: true,
-            onCompleted: function(context, fragment) {
-                $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip()
-            },
-        });
-        </script>
+        <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
 
         <div id="teams-tab"  class="tab-pane col-sm-offset-2 col-sm-8{% if tab == 'teams' %} active{% endif %}">
             <br/>

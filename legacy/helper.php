@@ -191,6 +191,11 @@
         return $page;
     }
 
+    function response_code() {
+        global $CID;
+        return curl_getinfo($CID, CURLINFO_RESPONSE_CODE);
+    }
+
     function HSVtoRGB(array $hsv) {
         list($H,$S,$V) = $hsv;
         //1

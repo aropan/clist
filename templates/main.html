@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block full-title %}CLIST{% endblock %}
+{% block ogtitle %}{% block title %}Main{% endblock %}{% endblock %}
 
 {% block end-head %}
 <script>page_load = $.now();</script>
@@ -9,24 +9,11 @@
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script src="{% static_ts 'js/contest/toggle.js' %}"></script>
 
-{% if add_to_calendar != "disable" %}
-<script src="{% static_ts 'js/AddCalEvent.js' %}"></script>
-<link href="{% static_ts 'css/AddCalEvent.css' %}" rel="stylesheet">
-<script>
-  var AddCalEventZones = undefined
-</script>
-{% endif %}
-
 {% include "calendar.html" %}
 
 <link href="{% static_ts 'css/contest/check-timezone-and-filter.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/check-timezone-and-filter.js' %}"></script>
 
-<script>
-  var add_to_calendar = "{{ add_to_calendar }}"
-  var timezone = '{{ timezone }}'
-  var timezone_hm = "{{ timezone_hm }}"
-</script>
 {% endblock %}
 
 {% block content %}
@@ -117,7 +104,7 @@
             {% if contest.sub_contest %}
             <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
             {% endif %}
-            <a href="{{ contest.resource.href }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+            <a href="{{ contest.resource.href }}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
             <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
           </span>
           {% if contest.state != "past" and add_to_calendar != "disable" %}
@@ -128,7 +115,7 @@
             "time":{
               "start":"{{ contest.start_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
               "end":"{{ contest.end_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
-              "zone":"{{ timezone_hm }}"
+              "zone":"{{ timezone|get_timezone_offset_hm }}"
             }
           }'><i class="far fa-calendar-alt"></i></a>
           {% endif %}
@@ -140,6 +127,9 @@
           {% if contest.group_size %}
           <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
           {% endif %}
+
+          {% include "contest_inline_buttons.html" with contest=contest %}
+
           <div class="resource">
             <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
           </div>

@@ -2,7 +2,7 @@
 {% load jsonify %}
 {% load crispy_forms_tags %}
 
-{% block title %}Settings{% endblock %}
+{% block ogtitle %}{% block title %}Settings{% endblock %}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/bootstrap-editable.css' %}" rel="stylesheet">
@@ -28,6 +28,9 @@
     PREFERENCES_URL = "{% url 'coder:settings' 'preferences' %}"
 
     SHARE_TO_CATEGORY = { 'disable': 'Disable' {% for k, v in notifications %}, '{{ k }}': '{{ v }}'{% endfor %} }
+
+    SELECTED_RESOURCE = {% if selected_resource %}[{'id': {{ selected_resource.pk }}, 'text': '{{ selected_resource.host }}'}]{% else %}[]{% endif %}
+    SELECTED_ACCOUNT = {% if selected_account %}[{'id': '{{ selected_account.key }}', 'text': '{{ selected_account.key }}{% if selected_account.name %} - {{ selected_account.name }}{% endif %}'}]{% else %}[]{% endif %}
 </script>
 
 <script src="{% static_ts 'js/settings/main.js' %}"></script>

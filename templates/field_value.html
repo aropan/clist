@@ -4,13 +4,19 @@
   <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ template_value|safe }}</a>
 {% else %}
   {% with intvalue=value|toint %}
+  {% with types=fields_types|get_item:field %}
     <span{% if field == "rating_change" %} class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}"{% endif %}>
       {% if field == "rating_change" and intvalue %}
         <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+      {% elif 'timestamp' in types %}
+        <span title="{{ template_value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+          {{ template_value|timestamp_to_datetime|timezone:timezone|naturaltime }}
+        <span>
       {% else %}
         {{ template_value|safe }}
       {% endif %}
     </span>
+  {% endwith %}
   {% endwith %}
 {% endif %}
 </span>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 
-{% block title %}API Documentation{% endblock %}
+{% block ogtitle %}{% block title %}API Documentation{% endblock %}{% endblock %}
 
 {% block begin-head %}
     <link href="{% static_ts 'tastypie_swagger/css/highlight.default.css' %}" media='screen' rel='stylesheet' type='text/css'/>
@@ -46,7 +46,7 @@
 {% block content %}
 <div class="info">
     <div class="title">authentication</div>
-    <div class="text">To access need api-key (<a href="{% url 'auth:login' %}" id="show-api-key">show my api-key</a>). There is also access without api-key through session on this website.
+    <div class="text">API key is needed to access API (<a href="{% url 'auth:login' %}" id="show-api-key">show my api-key</a>). There is also access without api-key through session on this website.
     {% if user.is_authenticated %}
     <script>
         $(function() {

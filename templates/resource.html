@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}{{ resource.host }} - Resource{% endblock %}
+{% block ogtitle %}{% block title %}{{ resource.host }} - Resource{% endblock %}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/resource.css' %}" rel="stylesheet">
@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<script>$.endlessPaginate();</script>
+<script>$.endlessPaginate({onCompleted: toggle_tooltip});</script>
 
 <h2>
     <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>

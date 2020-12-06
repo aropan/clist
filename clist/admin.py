@@ -74,7 +74,7 @@ class ContestAdmin(BaseModelAdmin):
         [None, {'fields': ['title', 'slug', 'title_path', 'resource', 'host', 'url', 'standings_url']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
-        ['Addition information', {'fields': ['calculate_time', 'info', 'invisible']}],
+        ['Addition information', {'fields': ['n_statistics', 'calculate_time', 'info', 'invisible']}],
         ['Access time', {'fields': ['created', 'modified', 'updated']}],
     ]
     list_display = [
@@ -109,7 +109,8 @@ class ResourceAdmin(BaseModelAdmin):
                 return queryset.filter(profile_url__isnull=False)
 
     fieldsets = [
-        [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'icon', 'n_accounts', 'n_contests']}],
+        [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'avatar_url', 'icon',
+                           'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
         [None, {'fields': ['info', 'ratings', 'has_rating_history']}],

@@ -4,7 +4,7 @@
 <script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
 {% endblock %}
 
-{% block title %}{{ team.title }} on {{ event.name }}{% endblock %}
+{% block ogtitle %}{% block title %}{{ team.title }} on {{ event.name }}{% endblock %}{% endblock %}
 
 {% block content %}
 <h3><a href="{% url 'admin:events_team_change' team.pk %}" target="_blank"><i class="fas fa-external-link-alt"></i> {{ team.title }}</a></h3>

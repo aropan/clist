@@ -1,12 +1,15 @@
 {% extends "base.html" %}
-{% load humanize %}
 
-{% block title %}
-  {% for whos in versus_data.opponents %}
-  {% if forloop.counter0 %} vs {% endif %}
-  {% for w in whos %}{% if forloop.counter0 %}, {% endif %}{{ w }}{% endfor %}
-  {% endfor %} - Versus
-{% endblock %}
+{% block ogtitle %}{% block title %}{% linebreakless %}
+{% for whos in versus_data.opponents %}
+{% if forloop.counter0 %} vs {% endif %}
+{% for w in whos %}{% if forloop.counter0 %}, {% endif %}{{ w }}{% endfor %}
+{% endfor %} - Versus
+{% endlinebreakless %}{% endblock %}{% endblock %}
+
+{% block description %}{% linebreakless %}
+Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% endif %}{{ info.score }}{% endfor %}
+{% endlinebreakless %}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/versus.css' %}" rel="stylesheet">

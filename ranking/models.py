@@ -3,6 +3,7 @@ import ast
 import collections
 from copy import deepcopy
 from pydoc import locate
+from urllib.parse import urljoin
 
 import tqdm
 from django.db import models, transaction
@@ -52,6 +53,21 @@ class Account(BaseModel):
         ret = self.dict()
         ret.update(self.info.get('profile_url', {}))
         return ret
+
+    def avatar_url(self, resource=None):
+        resource = resource or self.resource
+        if resource.avatar_url:
+            try:
+                avatar_url_info = resource.info.get('avatar_url', {})
+                fields = avatar_url_info.get('fields')
+                if fields and any(not self.info.get(f) for f in fields):
+                    return
+                url = resource.avatar_url.format(key=self.key, info=self.info)
+                if avatar_url_info.get('urljoin'):
+                    url = urljoin(avatar_url_info.get('urljoin'), url)
+                return url
+            except KeyError:
+                pass
 
     class Meta:
         indexes = [
@@ -212,6 +228,7 @@ class Statistics(BaseModel):
 
         indexes = [
             models.Index(fields=['place_as_int', '-solving']),
+            models.Index(fields=['place_as_int', '-created']),
             models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
         ]
 
@@ -293,8 +310,6 @@ class Stage(BaseModel):
                     'ranking:standings',
                     kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)}
                 ),
-                'n_accepted': 0,
-                'n_teams': 0,
             }
 
             for division in contest.info.get('divisions_order', []):
@@ -323,8 +338,12 @@ class Stage(BaseModel):
                         full_score += problem.get('full_score', 1)
                 if full_score is not None:
                     info['full_score'] = full_score
+                if self.score_params.get('regex_problem_name'):
+                    match = re.search(self.score_params.get('regex_problem_name'), contest.title)
+                    if match:
+                        info['short'] = match.group(1)
                 if self.score_params.get('abbreviation_problem_name'):
-                    info['short'] = ''.join(re.findall(r'(\b[A-Z]|[0-9])', contest.title))
+                    info['short'] = ''.join(re.findall(r'(\b[A-Z]|[0-9])', info.get('short', contest.title)))
                 problems_infos[str(contest.pk)] = info
             else:
                 for problem in problems:
@@ -360,6 +379,9 @@ class Stage(BaseModel):
         total = statistics.filter(contest__in=contests).count()
         with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar, print_sql(count_only=True):
             for idx, contest in enumerate(contests, start=1):
+                skip_problem_stat = '_skip_for_problem_stat' in contest.info.get('fields', [])
+                contest_unrated = contest.info.get('unrated')
+
                 if not detail_problems:
                     problem_info_key = str(contest.pk)
                     problem_short = get_problem_short(problems_infos[problem_info_key])
@@ -389,14 +411,13 @@ class Stage(BaseModel):
                             scores = []
 
                 for s in stats:
-                    if not detail_problems:
-                        problems_infos[problem_info_key]['n_teams'] += 1
+                    if not detail_problems and not skip_problem_stat:
+                        problems_infos[problem_info_key].setdefault('n_total', 0)
+                        problems_infos[problem_info_key]['n_total'] += 1
 
                     if s.solving < 1e-9:
                         score = 0
                     else:
-                        if not detail_problems:
-                            problems_infos[problem_info_key]['n_accepted'] += 1
                         if placing:
                             placing_ = get_placing(placing_scores, s)
                             score = placing_['scores'].get(str(s.place_as_int), placing_.get('default'))
@@ -404,6 +425,13 @@ class Stage(BaseModel):
                                 continue
                         else:
                             score = s.solving
+
+                    if not detail_problems and not skip_problem_stat:
+                        problems_infos[problem_info_key].setdefault('n_teams', 0)
+                        problems_infos[problem_info_key]['n_teams'] += 1
+                        if score:
+                            problems_infos[problem_info_key].setdefault('n_accepted', 0)
+                            problems_infos[problem_info_key]['n_accepted'] += 1
 
                     account = s.account
                     if account.duplicate is not None:
@@ -429,10 +457,14 @@ class Stage(BaseModel):
                             problems[f'{idx}.' + key] = problem
                     else:
                         problem = problems.setdefault(problem_short, {})
+                        if contest_unrated:
+                            problem = problem.setdefault('upsolving', {})
                         problem['result'] = score
                         url = s.addition.get('url')
                         if url:
                             problem['url'] = url
+                    if contest_unrated:
+                        score = 0
 
                     if n_best and not detail_problems:
                         row.setdefault('scores', []).append((score, problem))
@@ -488,9 +520,12 @@ class Stage(BaseModel):
         with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar, print_sql(count_only=True):
             writers = set()
             for contest in contests:
+                contest_writers = contest.info.get('writers', [])
+                if not contest_writers or detail_problems:
+                    continue
                 problem_info_key = str(contest.pk)
                 problem_short = get_problem_short(problems_infos[problem_info_key])
-                for writer in contest.info.get('writers', []):
+                for writer in contest_writers:
                     if writer in account_keys:
                         account = account_keys[writer]
                     else:
@@ -556,7 +591,29 @@ class Stage(BaseModel):
                     else:
                         problem['status'] = problem.pop('result')
 
-        results = [r for r in results if r['score'] > 1e-9 or r.get('writer')]
+        filtered_results = []
+        for r in results:
+            if r['score'] > 1e-9 or r.get('writer'):
+                filtered_results.append(r)
+                continue
+            if detail_problems:
+                continue
+
+            problems = r.setdefault('problems', {})
+
+            for idx, contest in enumerate(contests, start=1):
+                skip_problem_stat = '_skip_for_problem_stat' in contest.info.get('fields', [])
+                if skip_problem_stat:
+                    continue
+
+                problem_info_key = str(contest.pk)
+                problem_short = get_problem_short(problems_infos[problem_info_key])
+
+                if problem_short in problems:
+                    problems_infos[problem_info_key].setdefault('n_teams', 0)
+                    problems_infos[problem_info_key]['n_teams'] -= 1
+        results = filtered_results
+
         results = sorted(
             results,
             key=lambda r: tuple(r.get(k.lstrip('-'), 0) * (-1 if k.startswith('-') else 1) for k in order_by),
@@ -625,6 +682,7 @@ class Stage(BaseModel):
                         fields_set.add(k)
                         fields.append(k)
             stage.statistics_set.exclude(pk__in=pks).delete()
+            stage.n_statistics = len(results)
 
             stage.info['fields'] = list(fields)
 

@@ -1,10 +1,7 @@
 {% extends "base.html" %}
-{% load humanize %}
 {% load el_pagination_tags %}
 
-{% block title %}
-  {{ contest.title }} - Standings
-{% endblock %}
+{% block ogtitle %}{% block title %}{{ contest.title }} - Standings{% endblock %}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
@@ -26,60 +23,66 @@
 
 {% block content %}
 
-<h3 id="standings-title" class="text-center">
-  {% include "standings_neighbors.html" with contests=neighbors.before %}
+<div class="container">
 
-  <div>
-  Standings
-  <a class="standings-resource" href="{{ contest.resource.href }}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
-  <span id="standings-url"></span>
-  <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
+  <h3 id="standings-title" class="text-center">
+    {% include "standings_neighbors.html" with contests=neighbors.before %}
 
-  {% if neighbors.total %}
-  <a href="#" id="standings-url-toggle" class="badge progress-bar-info">{{ neighbors.total }}&nbsp;<i class="fa fa-caret-{% if neighbors.visible %}up{% else %}down{% endif %}"></i></a>
+    <div>
+    Standings
+    <a class="standings-resource" href="{{ contest.resource.href }}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
+    <span id="standings-url"></span>
+    <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
+
+    {% if neighbors.total %}
+    <a href="#" id="standings-url-toggle" class="badge progress-bar-info">{{ neighbors.total }}&nbsp;<i class="fa fa-caret-{% if neighbors.visible %}up{% else %}down{% endif %}"></i></a>
+    {% endif %}
+
+    <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+      <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
+    </span>
+
+    {% if perms.clist.change_contest %}
+      <a href="{% url 'admin:clist_contest_change' contest.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    {% endif %}
+    </div>
+
+    {% include "standings_neighbors.html" with contests=neighbors.after %}
+  </h3>
+
+  {% with writers=contest.writers.all %}
+  {% if writers %}
+    <div id="standings-authors" class="text-center">
+      <b>Writer{% if writers|length > 1 %}s{% endif %}</b>
+      {% for writer in writers %}
+        {% include "account_table_cell.html" with account=writer addition=None resource=contest.resource %}
+      {% endfor %}
+    </div>
   {% endif %}
+  {% endwith %}
 
-  <small>{{ contest.end_time|naturalday:'F j, Y' }}</small>
-
-  {% if perms.clist.change_contest %}
-    <a href="{% url 'admin:clist_contest_change' contest.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
-  {% endif %}
-  </div>
-
-  {% include "standings_neighbors.html" with contests=neighbors.after %}
-</h3>
-
-{% with writers=contest.writers.all %}
-{% if writers %}
-  <div id="standings-authors" class="text-center">
-    <b>Writer{% if writers|length > 1 %}s{% endif %}</b>
-    {% for writer in writers %}
-      {% include "standings_account.html" with account=writer addition=None %}
-    {% endfor %}
-  </div>
-{% endif %}
-{% endwith %}
-
-<script>
-  function update_neighbors_standings_url_offset() {
-    $('.neighbors-standings-url').each(function(idx, el) {
-      $(el).offset({left: $('#standings-url').offset().left - $(el).children('.neighbors-standings-url-date').width()})
-      $(el).width($('#standings-title').width() - $(el).offset().left)
-    })
-  }
-  update_neighbors_standings_url_offset()
-  $(window).on('resize', update_neighbors_standings_url_offset)
-  $('#standings-url-toggle').click(function() {
-    $(this).children('i').toggleClass('fa-caret-down').toggleClass('fa-caret-up')
-    $('.neighbors-contests').slideToggle(200, 'linear', function() { $(window).resize() });
+  <script>
+    function update_neighbors_standings_url_offset() {
+      $('.neighbors-standings-url').each(function(idx, el) {
+        $(el).offset({left: $('#standings-url').offset().left - $(el).children('.neighbors-standings-url-date').width()})
+        $(el).width($('#standings-title').width() - $(el).offset().left)
+      })
+    }
     update_neighbors_standings_url_offset()
-  })
-</script>
+    $(window).on('resize', update_neighbors_standings_url_offset)
+    $('#standings-url-toggle').click(function() {
+      $(this).children('i').toggleClass('fa-caret-down').toggleClass('fa-caret-up')
+      $('.neighbors-contests').slideToggle(200, 'linear', function() { $(window).resize() });
+      update_neighbors_standings_url_offset()
+    })
+  </script>
 
-{% if contest.is_running and not contest.is_over %}
-<h4 class="text-center">Time remaining: <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|naturaltime }}</small>{% endif %}</h4>
+  {% if contest.is_running and not contest.is_over %}
+  <h4 class="text-center">Time remaining: <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|timezone:timezone|naturaltime }}</small>{% endif %}</h4>
 
-{% endif %}
+  {% endif %}
+</div>
+
 
 <div class="container">
   {% include "standings_filter.html" %}
@@ -90,7 +93,7 @@
           <thead>
             <tr class="header-row">
               <th{% if merge_problems %} rowspan="2"{% endif %}>
-                <span data-toggle="tooltip" data-placement="top">Rank</span>
+                <span{% if contest.n_statistics %} title="Total: {{ contest.n_statistics }}" data-toggle="tooltip" data-placement="top"{% endif %}>Rank</span>
               </th>
               {% if data_1st_u %}
               <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if data_1st_u.title %} title="{{ data_1st_u.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ data_1st_u.header|default:"1st U" }}</span></th>
@@ -129,9 +132,7 @@
                     <div class="small" title="Full score" data-placement="bottom" data-toggle="tooltip">{{ problem.full_score|floatformat }}</div>
                   {% endif %}
                   {% if problem.n_teams is not None and with_detail %}
-                    <div class="small text-muted nobold">
-                      <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>{% if not contest.resource.info.standings.only_one_when_stat_equal or problem.n_accepted != problem.n_teams %}/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>{% endif %}
-                    </div>
+                    {% include "standings_problem_progress.html" %}
                   {% endif %}
                 {% endif %}
               </th>
@@ -141,12 +142,13 @@
             {% if merge_problems %}
             <tr class="header-problems">
               {% for problem in problems %}
-              <th{% if problem.colspan %} class="header-score"{% endif %}>
-                <small{% if problem.group %} title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ problem.full_score|floatformat }}</small>
+              <th class="problem-cell{% if problem.colspan %} subheader-score{% endif %}">
+                <small{% if problem.group %} title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>
+                  {% if problem.subname %}<div>{{ problem.subname }}</div>{% endif %}
+                  {% if problem.full_score %}<div>{{  problem.full_score|floatformat }}</div>{% endif %}
+                </small>
                 {% if problem.n_teams is not None and with_detail %}
-                  <div class="small text-muted nobold">
-                    <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ problem.n_accepted|default:0 }}</span>/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ problem.n_teams }}</span>
-                  </div>
+                  {% include "standings_problem_progress.html" %}
                 {% endif %}
               </th>
               {% endfor %}
@@ -171,14 +173,11 @@
         {% include 'standings_groupby.html' %}
       </div>
     {% endif %}
-    <script>$.endlessPaginate({paginateOnScroll: true});</script>
+    <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
   {% else %}
   <div class="alert alert-info">Empty data</div>
   {% endif %}
 </div>
-
-<script>
-</script>
 
 <script>
   $(function() {
@@ -195,6 +194,9 @@
       }
     })
     $(window).trigger('resize')
+
+    var max_width = Math.max(...$('th.problem-cell:not(.header-score)').map(function() { return $(this).width() }), 0)
+    $('th.problem-cell:not(.header-score)').each(function () { $(this).width(max_width); })
   })
 </script>
 

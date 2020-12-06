@@ -97,20 +97,20 @@
         function insert($table, $fields, $values)
         {
             $sql = "insert into " . $table . "(" . $fields . ") values (" . $values . ")";
-            $this->query($sql);
+            return $this->query($sql);
         }
 
         function delete($table, $where = false)
         {
             $sql = "delete from " . $table . "";
             if ($where) $sql  .= " where " . $where;
-            $this->query($sql);
+            return $this->query($sql);
         }
 
         function update($table, $values, $where = '1 = 1')
         {
             $sql = "update " . $table . " set " . $values . " where " . $where;
-            $this->query($sql);
+            return $this->query($sql);
         }
 
         function affected_rows()

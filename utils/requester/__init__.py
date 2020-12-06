@@ -40,7 +40,11 @@ class FileWithProxiesNotFound(Exception):
     pass
 
 
-class ListProxiesEmpty(Exception):
+class NotFoundProxy(Exception):
+    pass
+
+
+class ProxyLimitReached(Exception):
     pass
 
 
@@ -115,18 +119,29 @@ class proxer():
         return (proxy["_success"], -proxy["_timestamp"])
 
     def add(self, proxy):
-        value = self.data.setdefault(proxy, {})
-        value["addr"], value["port"] = proxy.split(":")
+        value = self.data.setdefault(str(proxy), {})
+        if isinstance(proxy, str):
+            value["addr"], value["port"] = proxy.split(":")
+        else:
+            value["addr"] = proxy.host
+            value["port"] = proxy.port
         value.setdefault("_success", 0)
         value.setdefault("_fail", 0)
         value.setdefault("_timestamp", self.get_timestamp())
 
     def add_free_proxies(self):
-        proxies = FreeProxy().get_proxy_list()
-        for proxy in proxies:
+        for proxy in FreeProxy().get_proxy_list():
             self.add(proxy)
 
+    def is_alive(self):
+        return self.n_limit is None or self.n_limit > 0
+
     def get(self):
+        if self.n_limit is not None:
+            if self.n_limit <= 0:
+                raise ProxyLimitReached()
+            self.n_limit -= 1
+
         if not self.data:
             self.add_free_proxies()
         self.proxy = None
@@ -135,10 +150,10 @@ class proxer():
                 self.proxy = v
                 self.proxy_key = k
         if not self.proxy:
-            raise ListProxiesEmpty()
+            raise NotFoundProxy()
         self.proxy["_timestamp"] = self.get_timestamp()
         ret = "%(addr)s:%(port)s" % self.proxy
-        self.print(f'get = {ret} of {len(self)}, time = {self.time_response()}')
+        self.print(f'get = {ret} of {len(self)} (limit = {self.n_limit}), time = {self.time_response()}')
         return ret
 
     def ok(self, time_response=None):
@@ -188,7 +203,15 @@ class proxer():
                 break
             self.without_new_proxy = False
 
-    def __init__(self, file_name, callback_new_proxy=None, logger=None, connect=None, time_limit=LIMIT_TIME):
+    def __init__(
+        self,
+        file_name,
+        callback_new_proxy=None,
+        logger=None,
+        connect=None,
+        time_limit=LIMIT_TIME,
+        n_limit=None,
+    ):
         self.logger = logger
         self.file_name = file_name + ".json"
         self.time_limit = time_limit
@@ -197,6 +220,7 @@ class proxer():
         self.connect_func = connect
         self.connect_ret = None
         self.load_data()
+        self.n_limit = n_limit
         if path.exists(file_name):
             with open(file_name, "r") as fo:
                 for line in fo:
@@ -383,6 +407,7 @@ class requester():
         content_type=None,
         files=None,
         return_url=False,
+        return_last_url=False,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -401,7 +426,13 @@ class requester():
         makedirs(self.dir_cache, mode=0o777, exist_ok=True)
 
         files = files or isinstance(post, dict) and post.pop('files__', None)
-        post_urlencoded = urllib.parse.urlencode(post).encode('utf-8') if post and isinstance(post, dict) else post
+
+        if post and isinstance(post, dict):
+            post_urlencoded = urllib.parse.urlencode(post).encode('utf-8')
+        elif isinstance(post, str):
+            post_urlencoded = post.encode('utf8')
+        else:
+            post_urlencoded = post
 
         try:
             file_cache = ''.join((
@@ -430,6 +461,8 @@ class requester():
             with open(file_cache, "r") as f:
                 page = f.read().encode('utf8')
         else:
+            if self.proxer and not self.proxer.is_alive():
+                raise ProxyLimitReached()
             if self.time_sleep:
                 v_time_sleep = min(1, abs(gauss(0, 1)) * self.time_sleep)
                 sleep(v_time_sleep)
@@ -467,6 +500,8 @@ class requester():
                     timeout=time_out,
                 )
                 last_url = response.geturl() if response else url
+                if return_last_url:
+                    return last_url
                 if response.info().get("Content-Encoding", None) == "gzip":
                     buf = BytesIO(response.read())
                     page = GzipFile(fileobj=buf).read()
@@ -509,7 +544,7 @@ class requester():
                     self.proxer.fail()
 
         matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
-        if matches:
+        if matches and detect_charsets is not None:
             charsets = [c.lower() for c in matches]
             if len(charsets) > 1 and len(set(charsets)) > 1:
                 self.print(f'[WARNING] set multi charset values: {charsets}')

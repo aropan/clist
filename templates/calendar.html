@@ -3,11 +3,21 @@
   customButtonGroup = '{% for i in ignore_filters %}{% if i.id == 0 %} {% endif %}cb{{ i.id }}{% if forloop.revcounter0 %},{% endif %}{% endfor %}'
   customButtonSelector = [{% for i in ignore_filters %}{% if i.id > 0 %}'.fc-cb{{ i.id }}-button',{% endif %}{% endfor %}].join(',')
   timezone = '{{ timezone }}'
+  timezone_hm = '{{ timezone|get_timezone_offset_hm }}'
   hide_contest = {{ hide_contest|default:0 }}
   contest_toggle = {{ party.toggle_contest|default:0 }}
   party_contests_set = new Set([{% for i in party.contest_ids %}{% if forloop.counter0 %},{% endif %}{{ i }}{% endfor %}])
   has_permission_toggle_party_contests = {{ party.has_permission_toggle|default:0 }}
+  add_to_calendar = {% if add_to_calendar %}"{{ add_to_calendar }}"{% else %}"disable"{% endif %}
 </script>
+
+{% if add_to_calendar and add_to_calendar != "disable" %}
+<script src="{% static_ts 'js/AddCalEvent.js' %}"></script>
+<link href="{% static_ts 'css/AddCalEvent.css' %}" rel="stylesheet">
+<script>
+  var AddCalEventZones = undefined
+</script>
+{% endif %}
 
 <script src="{% static_ts 'js/moment.min.js' %}"></script>
 <script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>

@@ -112,6 +112,8 @@ class Statistic(BaseModule):
                     return None
                 return {}
             data = json.loads(page)
+            if not data:
+                return None
             return data
 
         with PoolExecutor(max_workers=8) as executor, Locator() as locator:

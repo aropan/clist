@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Standings{% endblock %}
+{% block ogtitle %}{% block title %}Standings{% endblock %}{% endblock %}
+{% block description %}Pretty standings for past competitions with additional information and filtering{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
@@ -37,13 +38,12 @@
           onchange="this.form.submit()"
           {% if switch %}checked{% endif %}
         />
-
       </div>
     </div>
 
   </form>
 
-  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
   <div id="standings_list" class="list-group">
   {% include page_template %}
   </div>

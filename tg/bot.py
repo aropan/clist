@@ -62,7 +62,6 @@ class Bot(telegram.Bot):
         super(Bot, self).__init__(settings.TELEGRAM_TOKEN, *args, **kw)
         self.logger = logging.getLogger('telegrambot')
         self.logger.setLevel(logging.DEBUG)
-        self.logger.info('Start')
 
     @property
     def chat(self):
@@ -234,7 +233,7 @@ class Bot(telegram.Bot):
         if not self.coder:
             return
         if self.group is False:
-            msg = 'This command is used in chat rooms.'
+            msg = 'This command should be used in chat rooms.'
         else:
             if self.group is None:
                 chat, created = Chat.objects.get_or_create(
@@ -256,7 +255,7 @@ class Bot(telegram.Bot):
         if not self.coder:
             return
         if self.group is False:
-            msg = 'This command is used in chat rooms.'
+            msg = 'This command should be used in chat rooms.'
         else:
             if self.group is None or self.group.coder != self.coder:
                 msg = '%s has unsuccessful attempt to lose admin.' % (self.coder.user)
@@ -264,6 +263,30 @@ class Bot(telegram.Bot):
                 self.group.delete()
                 msg = '%s has successful attempt to lose admin.' % (self.coder.user)
                 self.group_ = None
+        yield msg
+
+    def join(self, args):
+        if not self.coder:
+            return
+        if self.group is None:
+            msg = 'Select admin before join.'
+        elif self.group is False:
+            msg = 'This command should be used in chat rooms.'
+        elif self.group.coders.filter(pk=self.coder.pk).first():
+            msg = f'You are already joined "{self.group.title}".'
+        else:
+            self.group.coders.add(self.coder)
+            msg = f'You joined "{self.group.title}".'
+        yield msg
+
+    def leave(self, args):
+        if not self.coder:
+            return
+        if not self.group or not self.group.coders.filter(pk=self.coder.pk).first():
+            msg = 'Join telegram group before leave.'
+        else:
+            self.group.coders.remove(self.coder)
+            msg = f'You left "{self.group.title}".'
         yield msg
 
     def unlink(self, args):
@@ -309,6 +332,9 @@ class Bot(telegram.Bot):
 
             command_p.add_parser('/iamadmin', description='Set user as admin clistbot for group')
             command_p.add_parser('/iamnotadmin', description='Unset user as admin clistbot for group')
+
+            command_p.add_parser('/join', description='Join telegram group')
+            command_p.add_parser('/leave', description='Leave telegram group')
 
             command_p.add_parser('/unlink', description='Unlink account')
 
@@ -417,6 +443,8 @@ class Bot(telegram.Bot):
 
         try:
             ret = self.sendMessage(parse_mode='Markdown', **msg)
+        except telegram.error.Unauthorized:
+            pass
         except Exception:
             self.logger.error('Exception send message = %s' % msg)
             ret = self.sendMessage(**msg)
@@ -424,6 +452,10 @@ class Bot(telegram.Bot):
 
     def admin_message(self, msg):
         return self.send_message(msg, chat_id=self.ADMIN_CHAT_ID)
+
+    @property
+    def follow_url(self):
+        return settings.HTTPS_HOST_ + reverse('telegram:me')
 
     def incoming(self, raw_data):
         try:
@@ -444,15 +476,16 @@ class Bot(telegram.Bot):
 
             self.clear_cache()
 
+            was_messaging = False
             if 'text' in self.message:
                 text = self.message['text']
                 if text.startswith('/'):
                     for msg in self.execute_command(text):
                         self.send_message(msg)
+                        was_messaging = True
 
-            if not self.coder:
-                url = settings.HTTPS_HOST_ + reverse('telegram:me')
-                self.send_message(f'Follow {url} to connect your account.')
+            if not self.coder and was_messaging:
+                self.send_message(f'Follow {self.follow_url} to connect your account.')
             else:
                 if self.coder.settings.get('telegram', {}).get('unauthorized', False):
                     self.coder.settings.setdefault('telegram', {})['unauthorized'] = False

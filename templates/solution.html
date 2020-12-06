@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Solution{% if problem %} {{ problem|get_problem_name }}{% endif %} on {{ contest.title }}{% endblock %}
+{% block ogtitle %}{% block title %}Solution{% if problem %} {{ problem|get_problem_name }}{% endif %} on {{ contest.title }}{% endblock %}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">

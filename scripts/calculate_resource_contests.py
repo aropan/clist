@@ -1,37 +1,28 @@
 #!/usr/bin/env python3
 
-
-from django.db import transaction
-from django.db.models import F, Count
-from django.utils import timezone
 from tqdm import tqdm
 
-from clist.models import Resource
+from clist.models import Resource, Contest
+from ranking.models import Account
 
 
 def run(*args):
     resources = Resource.objects.all()
+    total = resources.count()
 
-    qs = resources.annotate(count=Count('contest'))
-    qs = qs.exclude(n_contests=F('count'))
-    total = qs.count()
-    print(timezone.now(), total)
-    with tqdm(total=total, desc='calculating contests') as pbar:
-        with transaction.atomic():
-            for r in qs.iterator():
-                r.n_contests = r.count
-                r.save()
-                pbar.update()
-    print(timezone.now())
+    for resource in tqdm(resources.iterator(), total=total, desc='contests'):
+        count = Contest.objects.filter(resource=resource).count()
+        if count != resource.n_contests:
+            print(resource, resource.n_contests, count)
+            resource.n_contests = count
+            resource.save()
 
-    qs = resources.annotate(count=Count('account'))
-    qs = qs.exclude(n_accounts=F('account'))
-    total = qs.count()
-    print(timezone.now(), total)
-    with tqdm(total=total, desc='calculating accounts') as pbar:
-        with transaction.atomic():
-            for r in qs.iterator():
-                r.n_accounts = r.count
-                r.save()
-                pbar.update()
-    print(timezone.now())
+    with tqdm(total=total, desc='accounts') as pbar:
+        for resource in resources.iterator():
+            pbar.set_postfix(resource=resource)
+            count = Account.objects.filter(resource=resource).count()
+            if count != resource.n_accounts:
+                print(resource, resource.n_accounts, count)
+                resource.n_accounts = count
+                resource.save()
+            pbar.update()

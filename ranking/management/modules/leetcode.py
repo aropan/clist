@@ -14,7 +14,7 @@ from pprint import pprint
 import tqdm
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 # from ranking.management.modules import conf
 
 
@@ -110,9 +110,11 @@ class Statistic(BaseModule):
             content = REQ.get(url)
             return json.loads(content)
 
+        hidden_fields = set()
         result = {}
         stop = False
         timing_statistic_delta = None
+        rank_index0 = False
         if users is None or users:
             if users:
                 users = list(users)
@@ -136,9 +138,12 @@ class Statistic(BaseModule):
 
                         r = result.setdefault(handle, OrderedDict())
                         r['member'] = handle
-                        r['place'] = row.pop('rank')
                         r['solving'] = row.pop('score')
                         r['name'] = row.pop('username')
+
+                        rank = int(row.pop('rank'))
+                        rank_index0 |= rank == 0
+                        r['place'] = rank + (1 if rank_index0 else 0)
 
                         data_region = row.pop('data_region').lower()
                         r['info'] = {'profile_url': {'_data_region': '' if data_region == 'us' else f'-{data_region}'}}
@@ -174,6 +179,7 @@ class Statistic(BaseModule):
                         finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
                         r['penalty'] = self.to_time(finish_time)
                         r.update(row)
+                        hidden_fields |= set(row.keys())
                         if statistics and handle in statistics:
                             stat = statistics[handle]
                             for k in ('rating_change', 'new_rating'):
@@ -200,6 +206,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': standings_url,
+            'hidden_fields': hidden_fields,
             'problems': list(problems_info.values()),
         }
         if writers:
@@ -247,7 +254,7 @@ class Statistic(BaseModule):
             if stop:
                 return account, False
 
-            connect_func = partial(fetch_profile_data, account=account, raise_on_error=True, time_out=5)
+            connect_func = partial(fetch_profile_data, account=account, raise_on_error=True)
             req.proxer.set_connect_func(connect_func)
 
             page = False
@@ -295,12 +302,14 @@ class Statistic(BaseModule):
                         if code in [403, 429]:
                             stop = True
                         break
+                except ProxyLimitReached:
+                    return account, {}
 
             return account, page
 
         @RateLimiter(max_calls=2, period=1)
         def fetch_global_ranking_users(req, page_index, raise_on_error=False, **kwargs):
-            connect_func = partial(fetch_global_ranking_users, page_index=page_index, raise_on_error=True, time_out=5)
+            connect_func = partial(fetch_global_ranking_users, page_index=page_index, raise_on_error=True)
             req.proxer.set_connect_func(connect_func)
 
             while True:
@@ -322,6 +331,8 @@ class Statistic(BaseModule):
                     ret = req.proxer.get_connect_ret()
                     if ret:
                         return ret
+                except ProxyLimitReached:
+                    return page_index, None
 
             return page_index, data
 
@@ -329,7 +340,7 @@ class Statistic(BaseModule):
 
         with REQ(
             with_proxy=True,
-            args_proxy={'time_limit': 5},
+            args_proxy={'time_limit': 10, 'n_limit': 30},
         ) as req:
             if os.path.exists(Statistic.STATE_FILE):
                 with open(Statistic.STATE_FILE, 'r') as fo:
@@ -376,7 +387,7 @@ class Statistic(BaseModule):
                     pb.set_postfix(page=page, last_page=last_page, n_data=n_data)
                     pb.update()
                     if data is None:
-                        continue
+                        break
                     n_data += 1
                     if data:
                         data = data['globalRanking']['rankingNodes']
@@ -395,14 +406,12 @@ class Statistic(BaseModule):
                     else:
                         state['last_page'] = 0
                         state['next_time'] = datetime.now() + timedelta(hours=8)
-                        break
 
-            if stop and not n_data:
-                state['last_page'] = 0
-                state['next_time'] = datetime.now() + timedelta(hours=8)
-                for a in accounts:
-                    a.updated = state['next_time']
-                    a.save()
+                        if stop:
+                            for a in accounts:
+                                a.updated = state['next_time']
+                                a.save()
+                        break
 
             if stop:
                 with open(Statistic.STATE_FILE, 'w') as fo:
@@ -441,12 +450,17 @@ class Statistic(BaseModule):
                     if 'currentRating' in info:
                         info['rating'] = int(info['currentRating'])
                 else:
+                    if page['userContestRankingHistory'] is None:
+                        yield {'info': None}
+                        continue
                     contest_addition_update_by = 'title'
                     for history in page['userContestRankingHistory']:
                         ratings.append(history['rating'])
                         rankings.append(history['ranking'])
                         titles.append(history['contest']['title'])
-                    info['global_ranking'] = page['userContestRanking']['globalRanking']
+                    global_ranking = (page.get('userContestRanking') or {}).get('globalRanking')
+                    if global_ranking is not None:
+                        info['global_ranking'] = global_ranking
                     info['slug'] = page['slug']
 
                 for k in ('profile_url', ):

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
+{% block ogtitle %}{% block title %}Problems{% endblock %}{% endblock %}
+{% block description %}Tasks of past competitions with tags of competitive programming topics{% endblock %}
+
 {% block end-head %}
 <link href="{% static_ts 'css/problems.css' %}" rel="stylesheet">
 {% endblock %}
-
-{% block title %}Problems{% endblock %}
 
 {% block content %}
 
@@ -27,7 +28,7 @@
   </div>
   </form>
 
-  <script>$.endlessPaginate({paginateOnScroll: true});</script>
+  <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
   <div id="problems" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
       <thead>
