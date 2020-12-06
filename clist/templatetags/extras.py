@@ -566,6 +566,13 @@ def timestamp_to_datetime(value):
         return None
 
 
+@register.filter
+def highlight_class(lang):
+    if lang == 'python3':
+        return 'python'
+    return lang.replace(' ', '').lower()
+
+
 @register.tag
 def linebreakless(parser, token):
     nodelist = parser.parse(('endlinebreakless',))

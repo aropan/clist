@@ -233,11 +233,12 @@ class Statistic(BaseModule):
         ) as req:
             _, data = req.proxer.get_connect_ret()
 
-        if 'code' in data:
-            return {'solution': data['code']}
-        if 'url' in data:
-            return {'url': data['url']}
-        return {}
+        if not data:
+            return {}
+
+        data['solution'] = data.pop('code', None)
+        data['language'] = data.pop('lang', None)
+        return data
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
