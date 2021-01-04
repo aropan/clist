@@ -26,7 +26,8 @@ class Statistic(BaseModule):
                 'Тренировочные олимпиады',
             ):
                 match = re.search('<a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<'.format(name), page)
-                page = REQ.get(match.group('url'))
+                url = match.group('url')
+                page = REQ.get(url)
 
             match = re.search(
                 '{}.*?<a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<'.format(

@@ -2,6 +2,7 @@ import re
 import copy
 from collections import OrderedDict
 
+import arrow
 from django.conf import settings
 from django.db import models, connection
 from django.contrib.auth.decorators import login_required
@@ -976,6 +977,11 @@ def versus(request, query):
         if medal == 'no':
             contests_filter = ~contests_filter
         contests = contests.filter(contests_filter)
+
+    daterange = request.GET.get('daterange')
+    if daterange:
+        date_from, date_to = [arrow.get(x).datetime for x in daterange.split(' - ')]
+        contests = contests.filter(start_time__gte=date_from, end_time__lte=date_to)
 
     resources = [r for r in request.GET.getlist('resource') if r]
     if resources:
