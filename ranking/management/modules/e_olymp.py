@@ -2,12 +2,14 @@
 
 import re
 import urllib.parse
+from time import sleep
 from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from first import first
 
 import tqdm
+from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, FailOnGetResponse, BaseModule, parsed_table
 
@@ -33,16 +35,29 @@ class Statistic(BaseModule):
         match = re.findall('<a[^>]href="[^"]*page=[0-9]+"[^>]*>(?P<n_page>[0-9]+)</a>', page)
         n_page = 1 if not match else int(match[-1])
 
+        @RateLimiter(max_calls=1, period=1)
         def fetch_page(page_index):
             url = self.standings_url
             if page_index:
                 url += f'?page={page_index}'
-            return REQ.get(url), url
+            n_attempts = 3
+            for attempt in range(n_attempts):
+                try:
+                    page = REQ.get(url)
+                    break
+                except FailOnGetResponse as e:
+                    if e.code == 503 and attempt + 1 < n_attempts:
+                        REQ.print(str(e))
+                        sleep(5)
+                        continue
+                    raise e
+
+            return page, url
 
         place = 0
         idx = 0
         prev = None
-        with PoolExecutor(max_workers=8) as executor, tqdm.tqdm(total=n_page, desc='fetch pages') as pbar:
+        with PoolExecutor(max_workers=4) as executor, tqdm.tqdm(total=n_page, desc='fetch pages') as pbar:
             for page, url in executor.map(fetch_page, range(n_page)):
                 pbar.set_postfix(url=url)
                 pbar.update(1)
