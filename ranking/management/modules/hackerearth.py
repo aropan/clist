@@ -48,16 +48,14 @@ class Statistic(BaseModule):
                                 limit=0,
                             )
                             Statistic.LOGGED_IN = True
-                    page = REQ.get(url)
-                return page
-                # if 'AJAX' in url:
-                #     headers = {'x-requested-with': 'XMLHttpRequest'}
-                #     csrftoken = REQ.get_cookie('csrftoken')
-                #     if csrftoken:
-                #         headers['x-csrftoken'] = csrftoken
-                # else:
-                #     headers = {}
-                # return REQ.get(url, headers=headers)
+                if 'AJAX' in url:
+                    headers = {'x-requested-with': 'XMLHttpRequest'}
+                    csrftoken = REQ.get_cookie('csrftoken')
+                    if csrftoken:
+                        headers['x-csrftoken'] = csrftoken
+                else:
+                    headers = {}
+                return REQ.get(url, headers=headers)
             except FailOnGetResponse as e:
                 if attempt == 15 or getattr(e.args[0], 'code', None) != 500:
                     raise ExceptionParseStandings(e.args[0])
@@ -110,8 +108,9 @@ class Statistic(BaseModule):
                         info['code'] = url.strip('/').split('/')[-1]
                     problems_info[short] = info
 
+            rows = []
             for row in table:
-                r = {}
+                r = OrderedDict()
                 r['solved'] = {'solving': 0}
                 for k, v in row.items():
                     f = k.lower()
@@ -128,13 +127,8 @@ class Statistic(BaseModule):
                             r['members'] = []
                             url = members_teams[0]
                             r['team_id'] = re.search('(?P<team_id>[0-9]+)/?$', url).group('team_id')
-                            members_page = self._get(url)
-                            members_page = json.loads(members_page)['data']
-                            members_table = parsed_table.ParsedTable(members_page)
-                            for member_row in members_table:
-                                _, member = member_row['Developer'].value.strip().rsplit(' ', 1)
-                                r['members'].append(member)
-                            r['name'] = f'{name}: {", ".join(r["members"])}'
+                            r['name'] = name
+                            r['members_url'] = url
                         else:
                             if ' ' in name:
                                 name, member = name.rsplit(' ', 1)
@@ -172,12 +166,33 @@ class Statistic(BaseModule):
                 if fixed_rank is not None and fixed_rank != r['place']:
                     continue
 
-                members = r.pop('members')
-                for member in members:
-                    if users and member not in users:
-                        continue
-                    r['member'] = member
-                    results[member] = dict(r)
+                rows.append(r)
+
+            def fetch_members(r):
+                url = r.pop('members_url', None)
+                if url:
+                    members_page = self._get(url)
+                    members_page = json.loads(members_page)['data']
+                    members_table = parsed_table.ParsedTable(members_page)
+                    for member_row in members_table:
+                        _, member = member_row['Developer'].value.strip().rsplit(' ', 1)
+                        r['members'].append(member)
+                return r
+
+            with PoolExecutor(max_workers=8) as executor:
+                for r in executor.map(fetch_members, rows):
+                    members = r.pop('members')
+                    for member in members:
+                        if users and member not in users:
+                            continue
+                        row = OrderedDict(r)
+                        row['member'] = member
+                        if statistics is not None and member in statistics:
+                            stat = statistics[member]
+                            for k in 'old_rating', 'rating_change', 'new_rating':
+                                if k in stat and k not in row:
+                                    row[k] = stat[k]
+                        results[member] = row
 
             return page, problems_info
 
@@ -215,13 +230,13 @@ class Statistic(BaseModule):
             info = ret.setdefault('info', {})
 
             ts = (datetime.now() - timedelta(days=30)).timestamp()
-            if 'country_ts' not in account.info or account.info['country_ts'] < ts:
+            if account.info.get('country_ts') is None or account.info['country_ts'] < ts:
                 try:
                     url = resource.profile_url.format(**account.dict_with_info())
                     page = Statistic._get(url)
                 except ExceptionParseStandings as e:
                     arg = e.args[0]
-                    if not hasattr(arg, 'code') or arg.code == 404:
+                    if arg.code == 404:
                         for stat in account.statistics_set.order_by('-contest__end_time')[:3]:
                             if stat.place is None:
                                 continue
@@ -245,10 +260,10 @@ class Statistic(BaseModule):
                                 continue
 
                             if member == account.key:
-                                return account, {'info': None}
+                                break
 
                             return account, {'rename': member, 'info': {}}
-                        return account, {'info': {}}
+                        return account, {'info': None}
 
                 match = re.search(r'''
                     <div[^>]*class="[^"]*track-current-location[^"]*"[^>]*>
@@ -261,21 +276,24 @@ class Statistic(BaseModule):
 
             url = Statistic.RATING_URL_FORMAT_.format(account=account.key)
             page = Statistic._get(url)
-            matches = re.search(r'var[^=]*=\s*(?P<data>.*);$', page, re.M)
-            data = json.loads(matches.group('data'))
-            contest_addition_update = ret.setdefault('contest_addition_update', {})
-            for contest in data:
-                key = re.search(r'/(?P<key>[^/]+)/$', contest['event_url']).group('key')
-                addition_update = contest_addition_update.setdefault(key, OrderedDict())
-                for src, dst in (
-                    ('old_rating', 'old_rating'),
-                    ('rating_change', 'rating_change'),
-                    ('rating', 'new_rating'),
-                ):
-                    if src in contest:
-                        addition_update[dst] = int(contest[src])
-                if 'rating' in contest:
-                    info['rating'] = int(contest['rating'])
+            match = re.search(r'var[^=]*=\s*(?P<data>.*);$', page, re.M)
+            if not match:
+                info['country_ts'] = None
+            else:
+                data = json.loads(match.group('data'))
+                contest_addition_update = ret.setdefault('contest_addition_update', {})
+                for contest in data:
+                    key = re.search(r'/(?P<key>[^/]+)/$', contest['event_url']).group('key')
+                    addition_update = contest_addition_update.setdefault(key, OrderedDict())
+                    for src, dst in (
+                        ('old_rating', 'old_rating'),
+                        ('rating_change', 'rating_change'),
+                        ('rating', 'new_rating'),
+                    ):
+                        if src in contest:
+                            addition_update[dst] = int(contest[src])
+                    if 'rating' in contest:
+                        info['rating'] = int(contest['rating'])
 
             return account, ret
 

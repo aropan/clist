@@ -32,12 +32,12 @@ table.standings th {
   font-weight: bold;
 }
 
-.hid {
+.hid, .upsolving {
   color: #da2;
   font-weight: bold;
 }
 
-.par {
+.par, .upsolved {
   color: #07f;
   font-weight: bold;
 }
@@ -66,6 +66,10 @@ table.standings th {
 
 .standings .bronze-medal {
   background: #c08e55 !important;
+}
+
+.standings .honorable-medal {
+  background: #d0e3f7 !important;
 }
 
 .standings .text-gold-medal {

@@ -22,13 +22,37 @@
 {% elif 'time' in stat %}
   {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}
 {% elif 'upsolving' in stat %}
+  {% if small and stat.verdict and not stat.binary and not stat.icon %}
+  <div
+     class="{% if stat.upsolving.result|is_solved %}upsolved{% else %}upsolving{% endif %}"
+     data-toggle="tooltip"
+     data-placement="top"
+     data-html="true"
+     title='
+  {% endif %}
+
   {% if stat.upsolving.result|slice:":1" == "+" %}
     {{ stat.upsolving.result }}
-  {% elif stat.upsolving.result|slice:":1" == "-" %}
-    {{ stat.upsolving.result|floatformat:'-2' }}{% if 'verdict' in stat.upsolving %} <small>{{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}</small>{% endif %}
-  {% else %}
+  {% elif stat.upsolving.result|slice:":1" == "-" and stat.upsolving.verdict %}
+    {% if not small or small and stat.verdict %}
+      {{ stat.upsolving.result|floatformat:'-2' }} {{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}
+    {% else %}
+      <span title="{{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}" data-toggle="tooltip">
+        {{ stat.upsolving.result|floatformat:'-2' }}
+      </span>
+    {% endif %}
+  {% elif stat.upsolving.result %}
     {{ stat.upsolving.result|floatformat:'-2' }}
   {% endif %}
+
+  {% if small and stat.verdict and not stat.binary and not stat.icon %}
+  '>
+    {{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}
+  </div>
+  {% endif %}
+
+{% elif small and stat.verdict and not stat.binary and not stat.icon %}
+  <div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</div>
 {% endif %}
 </div>
 

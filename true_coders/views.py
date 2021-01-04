@@ -248,10 +248,13 @@ def ratings(request, username=None, key=None, host=None):
     if resource_host:
         statistics = statistics.filter(contest__resource__host=resource_host)
 
+    resources = {r.pk: r for r in Resource.objects.filter(has_rating_history=True)}
+
     qs = statistics \
         .annotate(date=F('contest__end_time')) \
         .annotate(name=F('contest__title')) \
-        .annotate(host=F('contest__resource__host')) \
+        .annotate(stage=F('contest__stage')) \
+        .annotate(resource=F('contest__resource')) \
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
         .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
         .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField())) \
@@ -261,70 +264,79 @@ def ratings(request, username=None, key=None, host=None):
         .annotate(problems=KeyTextTransform('problems', 'contest__info')) \
         .annotate(division=KeyTextTransform('division', 'addition')) \
         .annotate(cid=F('contest__pk')) \
-        .annotate(ratings=F('contest__resource__ratings')) \
         .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField())) \
         .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0)) \
         .filter(new_rating__isnull=False) \
-        .filter(contest__resource__has_rating_history=True) \
-        .filter(contest__stage__isnull=True) \
         .order_by('date') \
-        .values(
-            'cid',
-            'name',
-            'host',
-            'date',
-            'new_rating',
-            'old_rating',
-            'rating_change',
-            'place',
-            'score',
-            'ratings',
-            'solved',
-            'problems',
-            'division',
-        )
+
+    qs = qs.values(
+        'cid',
+        'name',
+        'date',
+        'new_rating',
+        'old_rating',
+        'rating_change',
+        'place',
+        'score',
+        'solved',
+        'problems',
+        'division',
+        'addition___rating_data',
+        'resource',
+        'stage',
+    )
 
     ratings = {
         'status': 'ok',
         'data': {},
     }
 
-    dates = list(sorted(set(r['date'] for r in qs)))
-    ratings['data']['dates'] = dates
     ratings['data']['resources'] = {}
 
-    for r in qs:
-        colors = r.pop('ratings')
+    qs = [stat for stat in qs if stat['stage'] is None and stat['resource'] in resources]
+    n_resources = len({stat['resource'] for stat in qs})
+    for stat in qs:
+        if stat['addition___rating_data'] and n_resources > 1:
+            continue
 
-        division = r.pop('division')
-        problems = json.loads(r.pop('problems') or '{}')
-        if division and 'division' in problems:
-            problems = problems['division'][division]
-        r['n_problems'] = len(problems)
+        resource = resources[stat['resource']]
+        resource_info = ratings['data']['resources'].setdefault(resource.host, {'colors': resource.ratings})
+        resource_info.setdefault('data', [])
 
-        date = r['date']
-        if request.user.is_authenticated and request.user.coder:
-            date = timezone.localtime(date, pytz.timezone(request.user.coder.timezone))
-        r['when'] = date.strftime('%b %-d, %Y')
-        resource = ratings['data']['resources'].setdefault(r['host'], {})
-        resource['colors'] = colors
-        if r['new_rating'] > resource.get('highest', {}).get('value', 0):
-            resource['highest'] = {
-                'value': r['new_rating'],
-                'timestamp': int(date.timestamp()),
-            }
-        r['slug'] = slugify(r['name'])
-        resource.setdefault('data', [])
-        if r['rating_change'] is not None and r['old_rating'] is None:
-            r['old_rating'] = r['new_rating'] - r['rating_change']
+        if stat['addition___rating_data']:
+            data = resource.plugin.Statistic.get_rating_history(stat['addition___rating_data'], stat, resource)
+            if data:
+                resource_info['data'].extend(data)
+        else:
+            stat.pop('addition___rating_data')
+            stat['slug'] = slugify(stat['name'])
+            division = stat.pop('division')
+            problems = json.loads(stat.pop('problems') or '{}')
+            if division and 'division' in problems:
+                problems = problems['division'][division]
+            stat['n_problems'] = len(problems)
 
-        if resource['data'] and r['old_rating']:
-            last = resource['data'][-1]
-            if last['new_rating'] != r['old_rating']:
-                target = coder if username is not None else account
-                logger.warning(f"{target}: prev = {last}, curr = {r}")
-        resource['data'].append(r)
+            if stat['rating_change'] is not None and stat['old_rating'] is None:
+                stat['old_rating'] = stat['new_rating'] - stat['rating_change']
 
+            resource_info['data'].append(stat)
+
+    dates = []
+    for resource_info in ratings['data']['resources'].values():
+        for stat in resource_info['data']:
+            date = stat['date']
+            dates.append(date)
+            if stat['new_rating'] > resource_info.get('highest', {}).get('value', 0):
+                resource_info['highest'] = {
+                    'value': stat['new_rating'],
+                    'timestamp': int(date.timestamp()),
+                }
+            if request.user.is_authenticated and request.user.coder:
+                date = timezone.localtime(date, pytz.timezone(request.user.coder.timezone))
+            date_format = stat.pop('date_format', '%b %-d, %Y')
+            stat['when'] = date.strftime(date_format)
+
+    ratings['data']['dates'] = list(sorted(set(dates)))
     return JsonResponse(ratings)
 
 

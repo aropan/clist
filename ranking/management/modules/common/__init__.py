@@ -41,6 +41,7 @@ class BaseModule(object, metaclass=ABCMeta):
                 start_time=contest.start_time,
                 end_time=contest.end_time,
                 info=contest.info,
+                resource=contest.resource,
             )
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -55,6 +56,10 @@ class BaseModule(object, metaclass=ABCMeta):
 
     @staticmethod
     def get_source_code(contest, problem):
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_rating_history(rating_data, stat, resource):
         raise NotImplementedError()
 
     @staticmethod

@@ -9,7 +9,7 @@ from first import first
 
 import tqdm
 
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, FailOnGetResponse, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):
@@ -24,7 +24,12 @@ class Statistic(BaseModule):
         result = {}
         problems_info = OrderedDict()
 
-        page = REQ.get(self.standings_url)
+        try:
+            page = REQ.get(self.standings_url)
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                return {'action': 'delete'}
+            raise e
         match = re.findall('<a[^>]href="[^"]*page=[0-9]+"[^>]*>(?P<n_page>[0-9]+)</a>', page)
         n_page = 1 if not match else int(match[-1])
 

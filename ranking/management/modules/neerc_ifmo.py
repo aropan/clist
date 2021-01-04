@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import re
+from datetime import datetime
 from pprint import pprint
 from collections import OrderedDict
 
@@ -31,6 +32,7 @@ class Statistic(BaseModule):
             xml_result = {}
 
         page = REQ.get(self.standings_url)
+
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
         match = re.search(regex, page, re.DOTALL)
         if not match:
@@ -39,6 +41,8 @@ class Statistic(BaseModule):
             match = re.search(regex, page, re.DOTALL)
         html_table = match.group(0)
         table = parsed_table.ParsedTable(html_table)
+
+        university_regex = self.info.get('standings', {}).get('1st_u', {}).get('regex')
         for r in table:
             row = {}
             problems = row.setdefault('problems', {})
@@ -84,6 +88,11 @@ class Statistic(BaseModule):
                     elif medal in ['Б', 'B']:
                         row['medal'] = 'bronze'
                     break
+            if university_regex:
+                match = re.search(university_regex, row['name'])
+                if match:
+                    u = match.group('key').strip()
+                    row['university'] = u
             result[row['member']] = row
 
         standings = {
@@ -91,12 +100,12 @@ class Statistic(BaseModule):
             'url': self.standings_url,
             'problems': list(problems_info.values()),
             'problems_time_format': '{M}:{s:02d}',
+            'hidden_fields': ['university'],
         }
         return standings
 
 
 if __name__ == "__main__":
-    from datetime import datetime
     statictic = Statistic(
         name='ICPC 2019-2020, NEERC - Northern Eurasia Finals',
         standings_url='http://neerc.ifmo.ru/archive/2019/standings.html',

@@ -89,6 +89,28 @@ class Bot(telegram.Bot):
             if hasattr(self, a):
                 delattr(self, a)
 
+    def update_chat_info(self, chat, message):
+        if not chat:
+            return
+
+        message_from = self.message.get('from', {})
+        for k in ('username', 'id', ):
+            if k in message_from:
+                title = '@' + str(message_from[k])
+                if title != chat.title:
+                    chat.title = title
+                    chat.save()
+                break
+
+        names = []
+        for k in 'first_name', 'last_name':
+            if k in message_from:
+                names.append(message_from[k])
+        name = ' '.join(names).strip()
+        if name != chat.name:
+            chat.name = name
+            chat.save()
+
     def start(self, args):
         success = False
         if args.key:
@@ -105,10 +127,7 @@ class Bot(telegram.Bot):
                     yield 'Oops, chat id are already connected to %s.' % (qs[0].coder.user.username)
                     return
                 chat.chat_id = self.from_id
-                for k in ('username', 'id', ):
-                    if k in self.message['from']:
-                        chat.title = '@' + str(self.message['from'][k])
-                        break
+                self.update_chat_info(chat, self.message)
                 chat.save()
                 self.chat_ = chat
                 self.coder_ = chat.coder
@@ -474,6 +493,8 @@ class Bot(telegram.Bot):
             self.chat_id = str(self.message['chat']['id'])
             self.chat_type = self.message['chat'].get('type')
 
+            self.update_chat_info(self.chat, self.message)
+
             self.clear_cache()
 
             was_messaging = False
@@ -487,7 +508,7 @@ class Bot(telegram.Bot):
             if not self.coder and was_messaging:
                 self.send_message(f'Follow {self.follow_url} to connect your account.')
             else:
-                if self.coder.settings.get('telegram', {}).get('unauthorized', False):
+                if self.coder and self.coder.settings.get('telegram', {}).get('unauthorized', False):
                     self.coder.settings.setdefault('telegram', {})['unauthorized'] = False
                     self.coder.save()
                 chat = self.group or self.chat

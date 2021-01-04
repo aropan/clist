@@ -285,7 +285,11 @@ $(function(){
           }
           item = item[0]
           rating = item._chart.data.datasets[item._datasetIndex].history[item._index]
-          url = '/standings/' + rating['slug'] + '-' + rating['cid'] + '/'
+          if ('url' in rating) {
+            url = rating['url']
+          } else {
+            url = '/standings/' + rating['slug'] + '-' + rating['cid'] + '/'
+          }
           window.open(url, '_blank');
         },
         onHover: (e, el) => {

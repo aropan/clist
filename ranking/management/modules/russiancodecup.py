@@ -122,6 +122,7 @@ class Statistic(BaseModule):
             'title': self.name,
             'result': result,
             'url': self.standings_url,
+            'hidden_fields': ['city', 'school', 'job'],
             'problems': list(problems_info.values()),
         }
 

@@ -89,6 +89,12 @@ class Statistic(BaseModule):
                                     p['result'] = f'-{attempts}'
                             r['solved'] = {'solving': solved}
                             r['info'] = {'stat': row.pop('stat')}
+
+                            if statistics is not None and handle in statistics:
+                                stat = statistics[handle]
+                                for k in 'old_rating', 'rating_change', 'new_rating':
+                                    if k in stat and k not in r:
+                                        r[k] = stat[k]
         standings = {
             'result': results,
             'problems': list(problems_info.values()),

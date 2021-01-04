@@ -35,6 +35,7 @@
         }
         $title = $match['title'];
         $title = str_replace('GP', 'Grand Prix', $title);
+        unset($match[0]);
         $results[$title] = $match;
     }
 

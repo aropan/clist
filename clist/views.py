@@ -591,18 +591,19 @@ def problems(request, template='problems.html', extra_context=None):
 
     search = request.GET.get('search')
     if search:
-        cond = get_iregex_filter(search,
-                                 'name', 'contest__title', 'contest__host',
-                                 logger=request.logger,
-                                 mapping={
-                                     'name': {'fields': ['name__iregex']},
-                                     'contest': {'fields': ['contest__title__iregex']},
-                                     'resource': {'fields': ['contest__host__iregex']},
-                                     'tag': {'fields': ['tags__name__iregex']},
-                                     'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
-                                     'rid': {'fields': ['contest__resource_id'], 'func': lambda v: int(v)},
-                                     'pid': {'fields': ['id'], 'func': lambda v: int(v)},
-                                 })
+        cond, problems = get_iregex_filter(search,
+                                           'name', 'contest__title', 'contest__host',
+                                           logger=request.logger,
+                                           mapping={
+                                               'name': {'fields': ['name__iregex']},
+                                               'contest': {'fields': ['contest__title__iregex']},
+                                               'resource': {'fields': ['contest__host__iregex']},
+                                               'tag': {'fields': ['problemtag__name__iregex'], 'exists': 'tags'},
+                                               'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
+                                               'rid': {'fields': ['contest__resource_id'], 'func': lambda v: int(v)},
+                                               'pid': {'fields': ['id'], 'func': lambda v: int(v)},
+                                           },
+                                           queryset=problems)
         problems = problems.filter(cond)
 
     context = {

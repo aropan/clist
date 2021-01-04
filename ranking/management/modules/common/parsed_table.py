@@ -72,10 +72,12 @@ class ParsedTable(object):
 
     def __init__(
         self,
-        html, xpath='//table//tr',
+        html,
+        xpath='//table//tr',
         as_list=False,
         with_duplicate_colspan=False,
         unnamed_fields=(),
+        header_mapping=(),
     ):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
@@ -83,6 +85,7 @@ class ParsedTable(object):
         self.init_iter()
         self.unnamed_fields = unnamed_fields
         self.unnamed_fields_idx = 0
+        self.header_mapping = header_mapping
 
     def init_iter(self):
         self.iter_table = iter(self.table)
@@ -140,6 +143,8 @@ class ParsedTable(object):
                 colspan -= 1
                 continue
             k = h.value
+            if k in self.header_mapping:
+                k = self.header_mapping[k]
             v = ParsedTableValue(row, r, h)
             kv.append((k, v))
             colspan = r.colspan - 1

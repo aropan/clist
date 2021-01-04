@@ -5,7 +5,7 @@ from collections import OrderedDict
 from django.conf import settings
 from django.db import models, connection
 from django.contrib.auth.decorators import login_required
-from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg, Prefetch
+from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg, Prefetch, Subquery
 from django.db.models.functions import Cast
 from django.db.models.expressions import RawSQL
 from django.http import HttpResponseNotFound, JsonResponse
@@ -99,7 +99,11 @@ def _standings_highlight(statistics, options):
         n_quota = {}
         n_highlight = 0
         last_hl = None
+        more_last_hl = None
         quotas = data_1st_u.get('quotas', {})
+        more = options.get('more')
+        if more:
+            more['n'] = 0
         for s in statistics:
             match = re.search(data_1st_u['regex'], s.account.key)
             if not match:
@@ -118,26 +122,35 @@ def _standings_highlight(statistics, options):
             info['search'] = rf'^{k}'
 
             n_quota[k] = n_quota.get(k, 0) + 1
-            if n_quota[k] > quota or last_hl:
+            if (n_quota[k] > quota or last_hl) and (not more or more['n'] >= more['n_highlight'] or more_last_hl):
                 p_info = participants_info.get(lasts.get(k))
-                if (
-                    not p_info or
-                    last_hl and (-last_hl['solving'], last_hl['penalty']) < (-p_info['solving'], p_info['penalty'])
-                ):
+                if (not p_info or last_hl and (-last_hl['solving'], last_hl['penalty']) < (-p_info['solving'], p_info['penalty'])):  # noqa
                     p_info = last_hl
-
+                if (not p_info or more_last_hl and (-more_last_hl['solving'], more_last_hl['penalty']) > (-p_info['solving'], p_info['penalty'])):  # noqa
+                    p_info = more_last_hl
                 info.update({
                     't_solving': p_info['solving'] - solving,
                     't_penalty': p_info['penalty'] - penalty if penalty is not None else None,
                 })
-            else:
+            elif n_quota[k] <= quota:
                 n_highlight += 1
                 lasts[k] = s.id
                 info.update({'n': n_highlight, 'solving': solving, 'penalty': penalty})
+                if 'n_highlight_prefix' in options:
+                    info['prefix'] = options['n_highlight_prefix']
                 if add_quota:
                     info['q'] = n_quota[k]
                 if n_highlight == options.get('n_highlight'):
                     last_hl = info
+            elif more and more['n'] < more['n_highlight']:
+                more['n'] += 1
+                lasts[k] = s.id
+                info.update({'n': more['n'], 'solving': solving, 'penalty': penalty,
+                             'n_highlight': more['n_highlight']})
+                if 'n_highlight_prefix' in more:
+                    info['prefix'] = more['n_highlight_prefix']
+                if more['n'] == more['n_highlight']:
+                    more_last_hl = info
     elif 'n_highlight' in options:
         if isinstance(options['n_highlight'], int):
             for idx, s in enumerate(statistics[:options['n_highlight']], 1):
@@ -178,6 +191,8 @@ def _standings_highlight(statistics, options):
     ('standings_groupby_paging.html', 'groupby_paging'),
 ))
 def standings(request, title_slug=None, contest_id=None, template='standings.html', extra_context=None):
+    context = {}
+
     groupby = request.GET.get('groupby')
     if groupby == 'none':
         groupby = None
@@ -302,7 +317,30 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
     if 'team_id' in contest_fields and not groupby:
         order.append('addition__name')
+
         statistics = statistics.distinct(*[f.lstrip('-') for f in order])
+
+        # host = resource_standings.get('account_team_resource', contest.resource.host)
+        # account_team_resource = Resource.objects.get(host=host)
+        # context['account_team_resource'] = account_team_resource
+
+        # statistics = statistics.annotate(
+        #     accounts=RawSQL(
+        #         '''
+        #         SELECT array_agg(array[u2.key, u3.rating::text, u3.url])
+        #         FROM       "ranking_statistics" U0
+        #         INNER JOIN "ranking_account" U2
+        #         ON         (u0."account_id" = u2."id")
+        #         INNER JOIN "ranking_account" U3
+        #         ON         (u2."key" = u3."key" AND u3."resource_id" = %s)
+        #         WHERE      (
+        #             u0."contest_id" = %s
+        #             AND ("u0"."addition" -> 'team_id') = ("ranking_statistics"."addition" -> 'team_id')
+        #         )
+        #         ''',
+        #         [account_team_resource.pk, contest.pk]
+        #     )
+        # )
 
     order.append('pk')
     statistics = statistics.order_by(*order)
@@ -327,7 +365,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         f = f.strip('_')
         if f.lower() in [
             'institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region',
-            'rating_change', 'advanced', 'company', 'language', 'league'
+            'rating_change', 'advanced', 'company', 'language', 'league', 'onsite', 'degree', 'university'
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})
@@ -342,10 +380,10 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
     chats = coder.chats.all() if coder else None
     if chats:
-        options = {c.chat_id: c.title for c in chats}
+        options_values = {c.chat_id: c.title for c in chats}
         fields_to_select['chat'] = {
-            'values': [v for v in request.GET.getlist('chat') if v and v in options],
-            'options': options,
+            'values': [v for v in request.GET.getlist('chat') if v and v in options_values],
+            'options': options_values,
             'noajax': True,
             'nogroupby': True,
             'nourl': True,
@@ -393,6 +431,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     per_page = options.get('per_page', 50)
     if per_page is None:
         per_page = 100500
+    elif contest.n_statistics and contest.n_statistics < 500:
+        per_page = contest.n_statistics
 
     mod_penalty = {}
     first = statistics.first()
@@ -526,6 +566,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 chat = Chat.objects.filter(chat_id=q, is_group=True).first()
                 if chat:
                     filt |= Q(account__coders__in=chat.coders.all())
+
+            subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
+            statistics = statistics.annotate(chat_name=Subquery(subquery))
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})
@@ -538,6 +581,12 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
     # groupby
     if groupby == 'country' or groupby in fields_to_select:
+        statistics = statistics.order_by('pk')
+
+        participants_info = n_highlight_context.get('participants_info')
+        n_highlight = options.get('n_highlight')
+        advanced_by_participants_info = participants_info and n_highlight and groupby != 'languages'
+
         fields = OrderedDict()
         fields['groupby'] = groupby.title()
         fields['n_accounts'] = 'Num'
@@ -546,7 +595,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         if 'medal' in contest_fields:
             for medal in settings.ORDERED_MEDALS_:
                 fields[f'n_{medal}'] = medals.get(medal, {}).get('value', medal[0].upper())
-        if 'advanced' in contest_fields:
+        if 'advanced' in contest_fields or advanced_by_participants_info:
             fields['n_advanced'] = 'Adv'
 
         orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
@@ -612,6 +661,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 statistics = statistics.annotate(**{
                     f'{n_medal}': Count(Case(When(addition__medal__iexact=medal, then=1)))
                 })
+
         if 'advanced' in contest_fields:
             statistics = statistics.annotate(n_advanced=Count(
                 Case(
@@ -619,6 +669,13 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                     When(~Q(addition__advanced=False) & ~Q(addition__advanced=''), then=1),
                 )
             ))
+        elif advanced_by_participants_info:
+            pks = list()
+            for pk, info in participants_info.items():
+                if 'n' not in info or info['n'] > info.get('n_highlight', n_highlight):
+                    continue
+                pks.append(pk)
+            statistics = statistics.annotate(n_advanced=Count(Case(When(pk__in=set(pks), then=1))))
 
         statistics = statistics.order_by(*orderby)
 
@@ -660,7 +717,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
     neighbors = list(contest.neighbors())
 
-    context = {
+    context.update({
         'standings_options': options,
         'mod_penalty': mod_penalty,
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
@@ -694,7 +751,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             'after': [c for c in neighbors if c.end_time >= contest.end_time],
         },
         'with_table_inner_scroll': not request.user_agent.is_mobile,
-    }
+    })
 
     context.update(n_highlight_context)
 

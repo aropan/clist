@@ -3,6 +3,7 @@ import functools
 import operator
 
 from django.db.models import Q
+from sql_util.utils import Exists
 
 
 def verify_regex(regex, logger=None):
@@ -15,16 +16,21 @@ def verify_regex(regex, logger=None):
     return regex
 
 
-def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=None):
+def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=None, queryset=None):
     ret = Q()
-    for dis in expression.split(' || '):
+    n_exists = 0
+    for dis in expression.split('||'):
         cond = Q()
-        for con in dis.split(' && '):
+        for con in dis.split('&&'):
             r = con.strip()
             fs = fields
             suff = '__iregex'
+            neg = False
             if ':' in r and mapping:
                 k, v = r.split(':', 1)
+                if k.startswith('!'):
+                    k = k[1:].strip()
+                    neg = not neg
                 if k in mapping:
                     mapped = mapping[k]
                     try:
@@ -35,6 +41,14 @@ def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=Non
                         suff = mapped.get('suff', '')
                         if callable(suff):
                             suff = suff(r)
+
+                        exists = mapped.get('exists')
+                        if exists:
+                            n_exists += 1
+                            field = f'exists{n_exists}'
+                            queryset = queryset.annotate(**{field: Exists(exists, filter=Q(**{fs[0]: r}))})
+                            fs = [field]
+                            r = True
                     except Exception as e:
                         if logger:
                             logger.error(f'Field "{k}" has error: {e}')
@@ -42,17 +56,18 @@ def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=Non
                     if values is not None:
                         values.setdefault(k, []).append(r)
 
-            neg = False
             if isinstance(r, str):
-                if r.startswith('! '):
-                    neg = True
-                    r = r[2:]
+                if r.startswith('!'):
+                    neg = not neg
+                    r = r[1:].strip()
                 r = verify_regex(r, logger=logger)
 
-            cs = (Q(**{f'{field}{suff}': r}) for field in fs)
+            cs = [Q(**{f'{field}{suff}': r}) for field in fs]
             if neg:
                 cond &= functools.reduce(operator.iand, (~c for c in cs))
             else:
                 cond &= functools.reduce(operator.ior, cs)
         ret |= cond
+    if queryset is not None:
+        return ret, queryset
     return ret

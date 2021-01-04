@@ -209,7 +209,7 @@ class Statistic(BaseModule):
                         r['name'] = ', '.join(m['handle'] for m in party['members'])
                         if 'teamId' in party:
                             r['team_id'] = party['teamId']
-                            r['name'] = f"{party['teamName']}: {r['name']}"
+                            r['name'] = f"{party['teamName']}"
                         r['_no_update_name'] = True
                     if domain_users and '=' in handle:
                         _, login = handle.split('=', 1)
@@ -258,7 +258,9 @@ class Statistic(BaseModule):
                             a.update(p)
 
                     if row['rank'] and not upsolve:
-                        if unofficial:
+                        if is_gym:
+                            r['place'] = row['rank']
+                        elif unofficial:
                             if users:
                                 r['place'] = '__unchanged__'
                             else:
@@ -332,7 +334,8 @@ class Statistic(BaseModule):
             if 'programmingLanguage' in submission:
                 info['language'] = submission['programmingLanguage']
 
-            if info.get('verdict') != 'OK' and 'passedTestCount' in submission:
+            is_accepted = info.get('verdict') == 'OK'
+            if not is_accepted and 'passedTestCount' in submission:
                 info['test'] = submission['passedTestCount'] + 1
 
             if is_gym:
@@ -359,6 +362,14 @@ class Statistic(BaseModule):
                     p = p.setdefault('upsolving', {})
                 if 'submission_id' not in p:
                     p.update(info)
+                    if 'result' not in p:
+                        p['result'] = '+' if is_accepted else '-1'
+                elif upsolve:
+                    v = str(p.get('result'))
+                    if v and v[0] in ['-', '+']:
+                        v = 0 if v == '+' else int(v)
+                        v = v + 1 if v >= 0 else v - 1
+                        p['result'] = f'{"+" if v > 0 else ""}{v}'
 
         result = {
             k: v for k, v in result.items()

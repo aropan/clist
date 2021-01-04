@@ -137,6 +137,11 @@ class Statistic(BaseModule):
                     ('clashes_count', 'clashes_count'),
                     ('created', 'Submit Time'),
                 ],
+                'medals': [
+                    {'name': 'gold', 'count': 1},
+                    {'name': 'silver', 'count': 1},
+                    {'name': 'bronze', 'count': 1},
+                ],
             },
         }
 

@@ -74,6 +74,11 @@ input[type="search"]::-webkit-search-cancel-button {
   text-shadow: 0 0 0 #c08e55;
 }
 
+#list-accounts .honorable-medal {
+  color: transparent;
+  text-shadow: 0 0 0 #d0e3f7;
+}
+
 table tr.contest.gold-medal {
   background: #fff28c;
 }
@@ -84,4 +89,8 @@ table tr.contest.silver-medal {
 
 table tr.contest.bronze-medal {
   background: #dbb993;
+}
+
+table tr.contest.honorable-medal {
+  background: #d0e3f7;
 }

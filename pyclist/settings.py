@@ -92,6 +92,7 @@ INSTALLED_APPS = (
     'django_ltree',
     'imagefit',
     'webpush',
+    'django_postgres_reindex_command'
 )
 
 MIDDLEWARE = (
@@ -318,14 +319,15 @@ COUNTRIES_OVERRIDE = {
     'PS': {'names': ['Palestine, State of', 'Palestine', 'Палестина']},
     'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея']},
     'MO': {'names': ['Macao', 'Macau', 'Макао']},
-    'US': {'names': ['United States of America', 'United States', 'America', 'Соединенные Штаты Америки', 'США']},
+    'US': {'names': ['United States of America', 'United States', 'America', 'Virgin Islands', 'Соединенные Штаты Америки', 'США']},  # noqa
     'VN': {'names': ['Vietnam', 'Viet Nam', 'Вьетнам']},
-    'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Великобритания']},
+    'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Scotland', 'Northern Ireland', 'Wales', 'Великобритания', 'Англия', 'Шотландия']},  # noqa
     'MD': {'names': ['Moldova', 'Молдова', 'Молдавия']},
     'KG': {'names': ['Kyrgyzstan', 'Кыргызстан', 'Киргизия']},
     'RS': {'names': ['Serbia', 'Srbija', 'Сербия']},
     'HR': {'names': ['Croatia', 'Hrvatska', 'Хорватия']},
     'CN': {'names': ['China', '中国', 'Китай']},
+    'PL': {'names': ['Poland', 'Republic of Poland', 'Польша']},
 }
 
 # DJANGO DEBUG TOOLBAR

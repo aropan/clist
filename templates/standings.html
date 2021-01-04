@@ -105,6 +105,9 @@
                 <span class="bg-success nobold">{{ standings_options.help_message }}</span>
                 {% endif %}
               </th>
+              {% if fields_to_select.chat.values %}
+              <th{% if merge_problems %} rowspan="2"{% endif %}>Name</th>
+              {% endif %}
               <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
               {% if mod_penalty %}
               <th{% if merge_problems %} rowspan="2"{% endif %}>
@@ -120,11 +123,13 @@
               <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
                 <div title="{% if problem.group %}{{ problem.group }}{% else %}{{ problem|get_problem_name }}{% endif %}" data-placement="bottom" data-toggle="tooltip">
                 {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
+                <span{% if mod_penalty and not problem.n_accepted %} class="rej"{% endif %}>
                 {% if problem.group %}
                   {{ problem.group|truncatechars:truncatechars_name_problem }}
                 {% else %}
                   {{ problem|get_problem_header|truncatechars:truncatechars_name_problem }}
                 {% endif %}
+                </span>
                 {% if problem.url %}</a>{% endif %}
                 </div>
                 {% if not merge_problems %}
@@ -181,6 +186,9 @@
 
 <script>
   $(function() {
+    var max_width = Math.max(...$('th.problem-cell:not(.header-score)').map(function() { return $(this).width() }), 0)
+    $('th.problem-cell:not(.header-score)').each(function () { $(this).width(max_width); })
+
     var el = $('#table-inner-scroll')
     var default_height = el.height()
     $(window).resize(function() {
@@ -194,9 +202,6 @@
       }
     })
     $(window).trigger('resize')
-
-    var max_width = Math.max(...$('th.problem-cell:not(.header-score)').map(function() { return $(this).width() }), 0)
-    $('th.problem-cell:not(.header-score)').each(function () { $(this).width(max_width); })
   })
 </script>
 

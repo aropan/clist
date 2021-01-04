@@ -454,13 +454,13 @@ class requester():
             else:
                 diff_time = datetime.now() - datetime.fromtimestamp(path.getctime(file_cache))
                 from_cache = diff_time.seconds < self.cache_timeout
-        self.print("[cache]" if from_cache else "", url, force=from_cache)
+        self.print(("[cache] " if from_cache else "") + url, force=from_cache)
         self.error = None
         response = None
         last_url = None
         if from_cache:
             with open(file_cache, "r") as f:
-                page = f.read().encode('utf8')
+                page = f.read()
         else:
             if self.proxer and not self.proxer.is_alive():
                 raise ProxyLimitReached()
@@ -522,13 +522,15 @@ class requester():
                     traceback.print_exc()
                 return
 
+            response_content_type = response.info().get('Content-Type')
+
             try:
                 if file_cache and caching:
                     cookie_write = True
-                    if response.info().get("Content-Type").startswith("application/json"):
+                    if response_content_type.startswith('application/json'):
                         page = dumps(loads(page), indent=4)
                         cookie_write = False
-                    if response.info().get("Content-Type").startswith("image/"):
+                    if response_content_type.startswith('image/'):
                         cookie_write = False
                     with open(file_cache, "w") as f:
                         f.write(page.decode('utf8'))
@@ -544,32 +546,33 @@ class requester():
                 else:
                     self.proxer.fail()
 
-        matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
-        if matches and detect_charsets is not None:
-            charsets = [c.lower() for c in matches]
-            if len(charsets) > 1 and len(set(charsets)) > 1:
-                self.print(f'[WARNING] set multi charset values: {charsets}')
-            charset = charsets[-1].lower()
-        else:
-            charset = 'utf-8'
+            if not response_content_type.startswith('image/'):
+                matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
+                if matches and detect_charsets is not None:
+                    charsets = [c.lower() for c in matches]
+                    if len(charsets) > 1 and len(set(charsets)) > 1:
+                        self.print(f'[WARNING] set multi charset values: {charsets}')
+                    charset = charsets[-1].lower()
+                else:
+                    charset = 'utf-8'
 
-        if detect_charsets:
-            try:
-                charset_detect = chardet.detect(page)
-                if charset_detect and charset_detect['confidence'] > 0.98:
-                    charset = charset_detect['encoding']
-            except Exception as e:
-                self.print('exception on charset detect:', str(e))
+                if detect_charsets:
+                    try:
+                        charset_detect = chardet.detect(page)
+                        if charset_detect and charset_detect['confidence'] > 0.98:
+                            charset = charset_detect['encoding']
+                    except Exception as e:
+                        self.print('exception on charset detect:', str(e))
 
-        if charset in ('utf-8', 'utf8'):
-            page = page.decode('utf-8', 'replace')
-        elif charset in ('windows-1251', 'cp1251'):
-            page = page.decode('cp1251', 'replace')
-        else:
-            try:
-                page = page.decode(charset, 'replace')
-            except LookupError:
-                pass
+                if charset in ('utf-8', 'utf8'):
+                    page = page.decode('utf-8', 'replace')
+                elif charset in ('windows-1251', 'cp1251'):
+                    page = page.decode('cp1251', 'replace')
+                else:
+                    try:
+                        page = page.decode(charset, 'replace')
+                    except LookupError:
+                        pass
 
         self.last_page = page
         if is_ref_url:
@@ -611,7 +614,7 @@ class requester():
             self.get(url)
         return self.last_page
 
-    def form(self, page=None, action='', limit=1, fid=None, selectors=(), enctype=False):
+    def form(self, page=None, name=None, action='', limit=1, fid=None, selectors=(), enctype=False):
         if page is None:
             page = self.last_page
         selectors = list(selectors)
@@ -624,6 +627,9 @@ class requester():
             limit += 1
         if enctype:
             selectors.append('enctype="(?P<enctype>[^"]*)"')
+            limit += 1
+        if name is not None:
+            selectors.append('name="(?P<name>[^"]*)"')
             limit += 1
 
         selector = '|[^>]*'.join(selectors)

@@ -75,6 +75,8 @@ def url(value):
 
 @register.filter
 def timezone(time, tzname):
+    if not time:
+        return
     return time.astimezone(pytz.timezone(tzname))
 
 

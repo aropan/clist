@@ -211,7 +211,10 @@ class Command(BaseCommand):
                     standings_hidden_fields = standings.pop('hidden_fields', {})
 
                     result = standings.get('result', {})
-                    if not no_update_results and (result or users is not None):
+                    if no_update_results:
+                        continue
+
+                    if result or users is not None:
                         fields_set = set()
                         fields_types = {}
                         fields = list()
@@ -248,14 +251,20 @@ class Command(BaseCommand):
                             if not contest.info.get('_no_update_account_time'):
                                 stats = (statistics_by_key or {}).get(member, {})
                                 no_rating = with_stats and 'new_rating' not in stats and 'rating_change' not in stats
-                                updated = now + timedelta(days=1)
-                                wait_rating = contest.resource.info.get('statistics', {}).get('wait_rating')
+
+                                resource_statistics = contest.resource.info.get('statistics', {})
+                                updated_delta = resource_statistics.get('account_updated_delta', {'days': 1})
+                                updated = now + timedelta(**updated_delta)
+                                wait_rating = resource_statistics.get('wait_rating')
 
                                 if no_rating and wait_rating:
                                     updated = now + timedelta(hours=1)
                                     title_re = wait_rating.get('title_re')
                                     if (
-                                        contest.end_time + timedelta(days=wait_rating['days']) > now
+                                        (
+                                            contest.end_time + timedelta(days=wait_rating['days']) > now
+                                            or update_without_new_rating
+                                        )
                                         and (not title_re or re.search(title_re, contest.title))
                                         and updated < account.updated
                                     ):
@@ -546,12 +555,12 @@ class Command(BaseCommand):
                                 elif 'last_parse_statistics' in contest.info:
                                     contest.info.pop('last_parse_statistics')
 
+                            if fields_set and not addition_was_ordereddict:
+                                fields.sort()
                             for rating_field in ('old_rating', 'rating_change', 'new_rating'):
                                 if rating_field in fields_set:
                                     fields.remove(rating_field)
                                     fields.append(rating_field)
-                            if fields_set and not addition_was_ordereddict:
-                                fields.sort()
 
                             if statistics_ids:
                                 first = Statistics.objects.filter(pk__in=statistics_ids).first()
@@ -607,13 +616,13 @@ class Command(BaseCommand):
                             contest.save()
 
                             progress_bar.set_postfix(n_fields=len(fields))
-                        else:
-                            problems = standings.pop('problems', None)
-                            if problems is not None:
-                                problems = plugin.merge_dict(problems, contest.info.get('problems'))
-                                if not users:
-                                    contest.info['problems'] = {}
-                                update_problems(contest, problems=problems)
+                    else:
+                        problems = standings.pop('problems', None)
+                        if problems is not None and problems:
+                            problems = plugin.merge_dict(problems, contest.info.get('problems'))
+                            if not users:
+                                contest.info['problems'] = {}
+                            update_problems(contest, problems=problems)
 
                     action = standings.get('action')
                     if action is not None:

@@ -8,6 +8,7 @@ import json
 import subprocess
 import logging
 from datetime import timedelta
+from pprint import pprint  # noqa
 
 from attrdict import AttrDict
 
@@ -64,16 +65,17 @@ class Command(BaseCommand):
         iteration = 1 if args.dump else 0
         while True:
             subprocess.call('clear', shell=True)
+            print(now())
 
             contest = Contest.objects.filter(pk=args.cid)
             parser_command.parse_statistic(contest, without_contest_filter=True)
             contest = contest.first()
             resource = contest.resource
-            statistics = Statistics.objects.filter(contest=contest)
+            statistics = list(Statistics.objects.filter(contest=contest))
 
             for p in problems_info.values():
                 if p.get('accepted') or not p.get('n_hidden'):
-                    p.pop('show_hidden')
+                    p.pop('show_hidden', None)
                 p['n_hidden'] = 0
 
             updated = False
@@ -97,12 +99,30 @@ class Command(BaseCommand):
                 message_id = None
                 key = str(stat.account.id)
                 if key in standings:
+                    if filtered:
+                        print(stat.modified, {k: v for k, v in standings[key].items() if k != 'problems'}, end=' | ')
+                        print(stat.place, stat.solving, end=' | ')
                     problems = standings[key]['problems']
                     message_id = standings[key].get('messageId')
+
+                    def delete_message():
+                        nonlocal message_id
+                        if message_id:
+                            for iteration in range(1, 5):
+                                try:
+                                    bot.delete_message(chat_id=args.tid, message_id=message_id)
+                                    message_id = None
+                                    break
+                                except telegram.error.TimedOut as e:
+                                    logger.warning(str(e))
+                                    time.sleep(iteration)
+                                    continue
+
                     p = []
                     has_update = False
                     has_first_ac = False
                     has_try_first_ac = False
+                    has_new_accepted = False
 
                     for k, v in stat.addition.get('problems', {}).items():
                         p_info = problems_info.setdefault(k, {})
@@ -120,6 +140,7 @@ class Command(BaseCommand):
                             p_info['n_hidden'] = p_info.get('n_hidden', 0) + 1
 
                         if p_result != result or is_hidden:
+                            has_new_accepted |= is_accepted
                             m = '%s%s %s' % (k, ('. ' + v['name']) if 'name' in v else '', result)
 
                             if p_result != result:
@@ -127,7 +148,7 @@ class Command(BaseCommand):
                                 has_update = True
                                 if iteration:
                                     if p_info.get('show_hidden') == key:
-                                        has_try_first_ac = True
+                                        delete_message()
                                         if not is_hidden:
                                             p_info.pop('show_hidden')
                                     if not p_info.get('accepted'):
@@ -139,42 +160,50 @@ class Command(BaseCommand):
                                             m += ' TRY FIRST AC'
                                             has_try_first_ac = True
                                 if args.top and stat.place_as_int <= args.top:
+                                    if not filtered:
+                                        m += f' TOP{args.top}'
                                     filtered = True
                             p.append(m)
                         if result.startswith('+'):
                             p_info['accepted'] = True
                         has_hidden = has_hidden or is_hidden
 
+                    prev_place = standings[key].get('place')
+                    place = stat.place
+                    if has_new_accepted and prev_place:
+                        place = '%s->%s' % (prev_place, place)
                     if args.numbered is not None and re.search(args.numbered, stat.account.key, re.I):
                         numbered += 1
-                        place = '%s (%s)' % (stat.place, numbered)
-                    else:
-                        place = stat.place
+                        place = '%s (%s)' % (place, numbered)
 
-                    msg = '%s. _%s_' % (place, telegram.utils.helpers.escape_markdown(name))
+                    msg = '%s. _%s_' % (place, telegram.utils.helpers.escape_markdown(name.replace('_', ' ')))
                     if p:
                         msg = '%s, %s' % (', '.join(p), msg)
-                    if standings[key]['solving'] != stat.solving:
+                    if abs(standings[key]['solving'] - stat.solving) > 1e-9:
                         msg += ' = %d' % stat.solving
+                        if 'penalty' in stat.addition:
+                            msg += f' ({stat.addition["penalty"]})'
 
                     if has_update or has_first_ac or has_try_first_ac:
                         updated = True
+
+                    if filtered:
+                        print(stat.place, stat.solving, end=' | ')
 
                     if filtered:
                         print(msg)
 
                     if filtered and has_update or has_first_ac or has_try_first_ac:
                         if not args.dryrun:
-                            for _ in range(1, 5):
+                            delete_message()
+                            for iteration in range(1, 5):
                                 try:
-                                    if message_id:
-                                        bot.delete_message(chat_id=args.tid, message_id=message_id)
                                     message = bot.send_message(msg=msg, chat_id=args.tid)
                                     message_id = message.message_id
                                     break
                                 except telegram.error.TimedOut as e:
                                     logger.warning(str(e))
-                                    time.sleep(_ * 3)
+                                    time.sleep(iteration * 3)
                                     continue
                                 except telegram.error.BadRequest as e:
                                     logger.error(str(e))
@@ -182,6 +211,7 @@ class Command(BaseCommand):
 
                 standings[key] = {
                     'solving': stat.solving,
+                    'place': stat.place,
                     'problems': stat.addition.get('problems', {}),
                     'messageId': message_id,
                 }

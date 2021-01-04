@@ -8,6 +8,7 @@ class Chat(BaseModel):
     chat_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     title = models.CharField(max_length=100, blank=True, null=True)
+    name = models.TextField(blank=True, null=True)
     secret_key = models.CharField(max_length=20, blank=True, null=True)
     last_command = JSONField(default=dict, blank=True)
     is_group = models.BooleanField(default=False)
