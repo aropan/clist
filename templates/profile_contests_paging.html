@@ -31,16 +31,16 @@
         {% endwith %}
         {% endwith %}
     </td>
-    <td><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
+    <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
         <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}">{{ stat.contest.title }}</a>
         <a href="{{ stat.contest.resource.url }}"><small class="text-muted">{{ stat.contest.resource.host }}</small></a>
         <div class="problems">
             {% if stat.addition.hack %}
             {% with hack=stat.addition.hack %}
-                <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>
-                    {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
-                </span>
+            <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>
+                {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
+            </span>
             {% endwith %}
             {% endif %}
             {% if 'problems' in stat.addition %}
@@ -60,7 +60,7 @@
             {% endif %}
         </div>
         {% if perms.ranking.change_statistics %}
-          <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+        <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
         {% endif %}
     </td>
 </tr>

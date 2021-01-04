@@ -138,3 +138,26 @@ function inline_button() {
 }
 
 $(inline_button)
+
+
+/*
+ * Chartjs printable version
+ * https://github.com/chartjs/Chart.js/issues/1350#issuecomment-320265946
+ */
+
+function beforePrint () {
+  for (const id in Chart.instances) {
+    Chart.instances[id].resize()
+  }
+}
+
+if (window.matchMedia) {
+  let mediaQueryList = window.matchMedia('print')
+  mediaQueryList.addListener((mql) => {
+    if (mql.matches) {
+      beforePrint()
+    }
+  })
+}
+
+window.onbeforeprint = beforePrint

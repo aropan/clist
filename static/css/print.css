@@ -1,0 +1,11 @@
+@media print {
+  a[href]:after {
+    display: none;
+    visibility: hidden;
+  }
+
+  html {
+    -webkit-print-color-adjust: exact;
+    -webkit-filter: opacity(1);
+  }
+}

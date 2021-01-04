@@ -8,8 +8,9 @@
   text-align: left;
 }
 
-#writers tr .date {
+tr .date {
   text-align: center;
+  white-space: nowrap;
 }
 
 #writers td {
@@ -52,7 +53,7 @@
 }
 
 .title .problems {
-  display: inline-block;
+  display: inline;
 }
 
 input[type="search"]::-webkit-search-cancel-button {
@@ -70,8 +71,8 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 #list-accounts .bronze-medal {
-  color: transparent;
-  text-shadow: 0 0 0 #c08e55;
+  color: transparent !important;
+  text-shadow: 0 0 0 #c08e55 !important;
 }
 
 #list-accounts .honorable-medal {

@@ -23,6 +23,8 @@
         <script src="{% static_ts 'js/ie-emulation-modes-warning.js' %}"></script>
 
         <link href="{% static_ts 'css/base.css' %}" rel="stylesheet">
+        <link href="{% static_ts 'css/print.css' %}" media="print" rel="stylesheet">
+
         <script src="{% static_ts 'js/base.js' %}"></script>
 
         {% if user.is_authenticated and user.coder.settings.theme %}

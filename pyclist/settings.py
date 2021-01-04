@@ -204,7 +204,6 @@ STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
 STATICFILES_DIRS = [
     path.join(BASE_DIR, 'static'),
     path.join(BASE_DIR, 'third_party/x-editable/dist/bootstrap3-editable'),
-    path.join(BASE_DIR, 'third_party/bootstrap/dist'),
     path.join(BASE_DIR, 'third_party/select2/dist'),
 ]
 
