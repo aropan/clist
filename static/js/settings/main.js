@@ -704,4 +704,62 @@ $(function() {
         },
         minimumInputLength: 0
     })
+
+    var $delete_user = $('#delete-user')
+    $delete_user.click(function() {
+        $.ajax({
+            type: 'POST',
+            url: $.fn.editable.defaults.url,
+            data: {
+                pk: $.fn.editable.defaults.pk,
+                name: 'pre-delete-user',
+            },
+            success: function(data) {
+                bootbox.prompt({
+                    size: 'medium',
+                    title: 'Delete user?',
+                    message: 'Data to be deleted:<pre>' + data.data + '</pre>Enter your username to be deleted:',
+                    callback: function(result) {
+                        if (result) {
+                            $.ajax({
+                                type: 'POST',
+                                url: $.fn.editable.defaults.url,
+                                data: {
+                                    pk: $.fn.editable.defaults.pk,
+                                    username: result,
+                                    name: 'delete-user',
+                                },
+                                success: function(data) {
+                                    document.location.href = "/"
+                                },
+                                error: function(data) {
+                                    $.notify(data.responseText, "error")
+                                },
+                            })
+                        }
+                    },
+                    onShown: function(e) {
+                        var btn = $('.btn.btn-danger.bootbox-accept')
+                        btn.addClass('disabled')
+                        $('.bootbox-input-text').keyup(function() {
+                            if ($(this).val() == USERNAME) {
+                                btn.removeClass('disabled')
+                            } else {
+                                btn.addClass('disabled')
+                            }
+                        })
+                    },
+                    buttons: {
+                        confirm: {
+                            label: 'Delete user',
+                            className: 'btn-danger',
+                        },
+                    },
+                })
+            },
+            error: function(data) {
+                $.notify(data.responseText, "error")
+            },
+        })
+    })
 })

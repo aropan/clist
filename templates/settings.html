@@ -14,6 +14,8 @@
     $.fn.editable.defaults.pk = {{ coder.id }}
     emails = [ {{ tokens.values|get_emails }} ]
 
+    USERNAME = "{{ coder.username }}"
+
     RESOURCES = [ {% for r in resources %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ r.id }}', 'text': '{{ r.host }}'}{% endfor %} ]
     CATEGORIES = [ {% for c in categories %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ c.id }}', 'text': '{{ c.text }}'}{% endfor %} ]
 
@@ -103,6 +105,13 @@
                 <i rel="tooltip" title="Add button hide separate contest and to create contest filter. After end of contest filter will be removed. Use hide_contest=1 in GET query for once."></i>
             </div>
             <div class="value"><input type="checkbox" id="hide-contest" data-value="{{ coder.settings.hide_contest }}"/></div>
+
+            <hr>
+
+            <div class="key">Danger zone</div>
+            <div class="value">
+                <a class="btn btn-danger btn-sm" id="delete-user">Delete user?</a>
+            </div>
         </div>
         <div id="filters-tab" class="tab-pane{% if tab == 'filters' %} active{% endif %}">
             <div class="key">

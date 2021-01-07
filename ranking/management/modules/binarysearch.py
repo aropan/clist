@@ -87,8 +87,14 @@ class Statistic(BaseModule):
                                     solved += 1
                                 elif attempts:
                                     p['result'] = f'-{attempts}'
+                                elif not p:
+                                    problems.pop(code)
                             r['solved'] = {'solving': solved}
                             r['info'] = {'stat': row.pop('stat')}
+
+                            if not problems:
+                                results.pop(handle)
+                                continue
 
                             if statistics is not None and handle in statistics:
                                 stat = statistics[handle]

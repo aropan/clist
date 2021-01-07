@@ -613,6 +613,24 @@ def change(request):
             account.coders.remove(coder)
         except Exception as e:
             return HttpResponseBadRequest(e)
+    elif name == "pre-delete-user":
+        class RollbackException(Exception):
+            pass
+        try:
+            with transaction.atomic():
+                _, delete_info = user.delete()
+                delete_info = [(k, v) for k, v in delete_info.items() if v]
+                delete_info.sort(key=lambda d: d[1], reverse=True)
+                raise RollbackException()
+        except RollbackException:
+            pass
+        delete_info = '\n'.join(f'{k}: {v}' for k, v in delete_info)
+        return JsonResponse({'status': 'ok', 'data': delete_info})
+    elif name == "delete-user":
+        username = request.POST.get("username")
+        if username != user.username:
+            return HttpResponseBadRequest(f"invalid username: found '{username}', expected '{user.username}'")
+        user.delete()
     else:
         return HttpResponseBadRequest("unknown query")
 
