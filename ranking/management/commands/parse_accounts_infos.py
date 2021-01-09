@@ -131,7 +131,7 @@ class Command(BaseCommand):
                                 account.country = countrier.get(info['country'])
                             if info.get('name'):
                                 account.name = info['name']
-                            if info.get('rating'):
+                            if 'rating' in info:
                                 info['rating_ts'] = int(now.timestamp())
                             delta = info.pop('delta', timedelta(days=365))
                             if data.get('replace_info'):

@@ -504,6 +504,11 @@ def canonize(data):
 
 
 @register.filter
+def to_json(data):
+    return json.dumps(data, indent=2)
+
+
+@register.filter
 def chain(value, arg):
     return itertools.chain(value, arg)
 

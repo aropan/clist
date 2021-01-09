@@ -21,7 +21,7 @@
 
     <div class="input-group input-group-sm">
       <span class="input-group-addon">Date</span>
-      <input type="text" class="input-sm form-control" name="daterange"{% if request.GET.daterange %} value="{{ request.GET.daterange }}"{% endif %} style="width: 170px"/>
+      <input type="text" autocomplete="off" class="input-sm form-control" name="daterange"{% if request.GET.daterange %} value="{{ request.GET.daterange }}"{% endif %} style="width: 170px"/>
     </div>
     <script type="text/javascript">
       $(function() {

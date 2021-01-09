@@ -3,6 +3,7 @@ import copy
 from collections import OrderedDict
 
 import arrow
+import randomcolor
 from django.conf import settings
 from django.db import models, connection
 from django.contrib.auth.decorators import login_required
@@ -27,6 +28,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.models import Statistics, Module, Account
 from true_coders.models import Party, Coder
+from true_coders.views import get_ratings_data
 from tg.models import Chat
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
@@ -851,6 +853,11 @@ def get_versus_data(request, query, fields_to_select):
             else:
                 base_filter &= Q(addition__rating_change__isnull=False) | Q(addition__new_rating__isnull=False)
 
+    daterange = request.GET.get('daterange')
+    if daterange:
+        date_from, date_to = [arrow.get(x).datetime for x in daterange.split(' - ')]
+        base_filter &= Q(contest__start_time__gte=date_from, contest__end_time__lte=date_to)
+
     filters = []
     urls = []
     for idx, whos in enumerate(opponents):
@@ -883,10 +890,14 @@ def get_versus_data(request, query, fields_to_select):
     medal_contests_ids = set()
     for filt in filters:
         qs = Statistics.objects.filter(filt, place__isnull=False)
+
+        ratings_data = get_ratings_data(request=request, statistics=qs)
+
         infos.append({
             'score': 0,
             'contests': {s.contest_id: s for s in qs},
             'divisions': {(s.contest_id, s.addition.get('division')) for s in qs},
+            'ratings': ratings_data,
         })
         for s in qs:
             if s.addition.get('medal'):
@@ -1011,6 +1022,49 @@ def versus(request, query):
             'score': [info['score'] for info in versus_data['infos']],
             'indices': indices,
         }
+
+    ratings_resources = None
+    for idx, info in enumerate(versus_data['infos']):
+        rdata = info['ratings']['data']
+        rdata_resources = {k: len(v['data']) for k, v in rdata['resources'].items()}
+        if ratings_resources is None:
+            ratings_resources = rdata_resources
+        else:
+            ratings_resources = {
+                k: v + ratings_resources[k]
+                for k, v in rdata_resources.items() if k in ratings_resources
+            }
+    ratings_resources = sorted([(v, k) for k, v in ratings_resources.items()], reverse=True)
+
+    ratings_data = {'resources': {}}
+    ratings_dates = []
+    datasets_colors = randomcolor.RandomColor().generate(count=len(versus_data['infos']), luminosity='dark')
+    for idx, info in enumerate(versus_data['infos']):
+        rdata = info['ratings']['data']
+        for _, resource in ratings_resources:
+            rinfo = rdata['resources'][resource]
+            resource_info = ratings_data['resources'].setdefault(resource, {
+                'data': [],
+                'colors': rinfo['colors'],
+                'min': rinfo['min'],
+                'max': rinfo['max'],
+                'point_radius': 0,
+                'point_hit_radius': 5,
+                'border_width': 2,
+                'datasets': {
+                    'colors': datasets_colors,
+                    'labels': versus_data['opponents'],
+                }
+            })
+            resource_info['data'].extend(rinfo['data'])
+            resource_info['min'] = min(resource_info['min'], rinfo['min'])
+            resource_info['max'] = max(resource_info['max'], rinfo['max'])
+            for data in rinfo['data']:
+                for stat in data:
+                    stat['date'] = str(stat['date'])
+                    ratings_dates.append(stat['date'])
+    ratings_data['dates'] = list(sorted(set(ratings_dates)))
+    versus_data['ratings'] = ratings_data
 
     context = {
         'contests': contests,

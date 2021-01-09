@@ -18,6 +18,9 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
 <script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
 <script src="{% static_ts 'js/daterangepicker.js' %}"></script>
 <link href="{% static_ts 'css/daterangepicker-bs3.css' %}" rel="stylesheet">
+
+<link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/Chart.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -65,6 +68,17 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
   </tr>
   </table>
 </h3>
+
+{% with ratings=versus_data.ratings %}
+{% for resource, resource_info in ratings.resources.items %}
+  {% if forloop.first %}{% include "create_chart_config.html" %}{% endif %}
+  <canvas class="rating_history" id="{{ resource }}_rating" height="75vh">{{ resource }}</canvas>
+  <script>
+    config = create_chart_config("{{ resource }}", {{ resource_info|to_json|safe }}, {{ ratings.dates|to_json|safe }})
+    new Chart('{{ resource }}_rating', config)
+  </script>
+{% endfor %}
+{% endwith %}
 
 <div class="col-lg-8 col-lg-offset-2">
   {% include "versus_filter.html" %}

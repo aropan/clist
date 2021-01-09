@@ -275,3 +275,25 @@ html {
   z-index: 1;
   margin-left: 5px;
 }
+
+/*
+ * rating history canvas
+ */
+
+canvas.rating_history {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+#chartjs-tooltip {
+  white-space: nowrap;
+  opacity: 1;
+  position: absolute;
+  background: rgba(0, 0, 0, .7);
+  color: white;
+  border-radius: 3px;
+  -webkit-transition: all .1s ease;
+  transition: all .1s ease;
+  pointer-events: none;
+}

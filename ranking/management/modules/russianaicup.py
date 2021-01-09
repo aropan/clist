@@ -63,7 +63,9 @@ class Statistic(BaseModule):
             web_archive_url = re.sub('/http.*', '/', web_archive_url)
             standings_url = web_archive_url + standings_url
 
-        if not web_archive_url and datetime.utcnow().replace(tzinfo=pytz.utc) - self.end_time > timedelta(days=30):
+        passed = datetime.utcnow().replace(tzinfo=pytz.utc) - self.end_time > timedelta(days=30)
+
+        if not web_archive_url and passed:
             raise ExceptionParseStandings('Long time passed')
 
         total_num_pages = None
@@ -123,6 +125,7 @@ class Statistic(BaseModule):
                 break
 
             for row in table:
+                ok = True
                 r = OrderedDict()
 
                 participant = row.pop('Participant')
@@ -159,10 +162,9 @@ class Statistic(BaseModule):
                     r[k.strip().lower()] = v.value
 
                 result[member] = r
-                ok = True
             n_page += 1
 
-            if total_num_pages is None or n_page >= total_num_pages:
+            if total_num_pages is None or n_page > total_num_pages:
                 break
 
         def fetch_rating(row):
@@ -199,7 +201,8 @@ class Statistic(BaseModule):
                             ema += ((rating['rating'] - prev) - ema) * alpha
                         prev = rating['rating']
                     row[f'delta_ema={alpha}'] = f'{ema:.2f}'
-                row['new_rating'] = ratings[-1]['rating']
+                if not passed:
+                    row['new_rating'] = ratings[-1]['rating']
 
             submissions = rating_changes.get('submissions')
             if submissions:
@@ -274,6 +277,9 @@ class Statistic(BaseModule):
             match = re.search('<a[^>]*class="userFace"[^>]*>[^<]*<img[^>]*src="(?P<url>[^"]*)"', page)
             if match:
                 ret['avatar'] = urllib.parse.urljoin(url, match.group('url'))
+
+            if re.search('<h[^>]*class="tableCaption"[^>]*>No contests<', page):
+                ret['rating'] = None
 
             match = re.search(r'userId\s*:\s*(?P<user_id>[0-9]+)', page)
             ret['_user_id'] = match.group('user_id')

@@ -236,13 +236,14 @@ def account(request, key, host, template='profile.html', extra_context=None):
     return render(request, template, context)
 
 
-def ratings(request, username=None, key=None, host=None):
-    if username is not None:
-        coder = get_object_or_404(Coder, user__username=username)
-        statistics = Statistics.objects.filter(account__coders=coder)
-    else:
-        account = get_object_or_404(Account, key=key, resource__host=host)
-        statistics = Statistics.objects.filter(account=account)
+def get_ratings_data(request, username=None, key=None, host=None, statistics=None):
+    if statistics is None:
+        if username is not None:
+            coder = get_object_or_404(Coder, user__username=username)
+            statistics = Statistics.objects.filter(account__coders=coder)
+        else:
+            account = get_object_or_404(Account, key=key, resource__host=host)
+            statistics = Statistics.objects.filter(account=account)
 
     resource_host = request.GET.get('resource')
     if resource_host:
@@ -335,9 +336,22 @@ def ratings(request, username=None, key=None, host=None):
                 date = timezone.localtime(date, pytz.timezone(request.user.coder.timezone))
             date_format = stat.pop('date_format', '%b %-d, %Y')
             stat['when'] = date.strftime(date_format)
+        resource_info['min'] = min([stat['new_rating'] for stat in resource_info['data']])
+        resource_info['max'] = max([stat['new_rating'] for stat in resource_info['data']])
+        resource_info['data'] = [resource_info['data']]
 
     ratings['data']['dates'] = list(sorted(set(dates)))
-    return JsonResponse(ratings)
+    return ratings
+
+
+def ratings(request, username=None, key=None, host=None):
+    ratings_data = get_ratings_data(
+        request=request,
+        username=username,
+        key=key,
+        host=host,
+    )
+    return JsonResponse(ratings_data)
 
 
 @login_required
