@@ -326,6 +326,10 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
 
             resource_info['data'].append(stat)
 
+    resources_to_remove = [k for k, v in ratings['data']['resources'].items() if not v['data']]
+    for k in resources_to_remove:
+        ratings['data']['resources'].pop(k)
+
     dates = []
     for resource_info in ratings['data']['resources'].values():
         for stat in resource_info['data']:
