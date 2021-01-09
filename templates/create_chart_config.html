@@ -107,7 +107,11 @@ function create_chart_config(resource, resource_info, dates) {
         callbacks: {
           title: function(tooltipItem, data) {
             var hist = data.datasets[tooltipItem[0].datasetIndex].history[tooltipItem[0].index]
-            return '<div style="font-weight: bold">' + hist['name'] + '</div>'
+            var ret = '<div style="font-weight: bold">' + hist['name'] + '</div>'
+            if (resource_info['data'].length > 1) {
+              ret = '<div style="font-weight: bold">' + datasets_labels[tooltipItem[0].datasetIndex] + '</div>' + ret
+            }
+            return ret
           },
           label: function(tooltipItem, data) {
             var color = data.datasets[tooltipItem.datasetIndex].pointBackgroundColor[tooltipItem.index]

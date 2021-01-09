@@ -27,7 +27,9 @@
       $(function() {
         $('input[name="daterange"]').daterangepicker(
           {
-            format: 'YYYY-MM-DD',
+            timePickerIncrement: 5,
+            timePicker: true,
+            format: 'YYYY-MM-DD hh:mm A',
             separator: ' - ',
             opens: 'center',
           }
