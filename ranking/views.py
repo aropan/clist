@@ -856,7 +856,9 @@ def get_versus_data(request, query, fields_to_select):
     daterange = request.GET.get('daterange')
     if daterange:
         date_from, date_to = [arrow.get(x).datetime for x in daterange.split(' - ')]
-        base_filter &= Q(contest__start_time__gte=date_from, contest__end_time__lte=date_to)
+        base_filter &= Q(contest__start_time__gte=date_from, contest__end_time__lte=date_to) | Q(contest__info__fields__contains='_rating_data')  # noqa
+    else:
+        date_from, date_to = None, None
 
     filters = []
     urls = []
@@ -891,7 +893,7 @@ def get_versus_data(request, query, fields_to_select):
     for filt in filters:
         qs = Statistics.objects.filter(filt, place__isnull=False)
 
-        ratings_data = get_ratings_data(request=request, statistics=qs)
+        ratings_data = get_ratings_data(request=request, statistics=qs, date_from=date_from, date_to=date_to)
 
         infos.append({
             'score': 0,

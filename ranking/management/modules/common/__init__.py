@@ -59,7 +59,7 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
-    def get_rating_history(rating_data, stat, resource):
+    def get_rating_history(rating_data, stat, resource, date_from=None, date_to=None):
         raise NotImplementedError()
 
     @staticmethod

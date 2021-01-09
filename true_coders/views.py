@@ -236,7 +236,7 @@ def account(request, key, host, template='profile.html', extra_context=None):
     return render(request, template, context)
 
 
-def get_ratings_data(request, username=None, key=None, host=None, statistics=None):
+def get_ratings_data(request, username=None, key=None, host=None, statistics=None, date_from=None, date_to=None):
     if statistics is None:
         if username is not None:
             coder = get_object_or_404(Coder, user__username=username)
@@ -305,7 +305,11 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         resource_info.setdefault('data', [])
 
         if stat['addition___rating_data']:
-            data = resource.plugin.Statistic.get_rating_history(stat['addition___rating_data'], stat, resource)
+            data = resource.plugin.Statistic.get_rating_history(stat['addition___rating_data'],
+                                                                stat,
+                                                                resource,
+                                                                date_from=date_from,
+                                                                date_to=date_to)
             if data:
                 resource_info['data'].extend(data)
         else:

@@ -295,7 +295,7 @@ class Statistic(BaseModule):
                     yield {'info': data}
 
     @staticmethod
-    def get_rating_history(rating_data, stat, resource):
+    def get_rating_history(rating_data, stat, resource, date_from=None, date_to=None):
         rating_data_zip = b64decode(rating_data.encode('ascii'))
         rating_data_str = zlib.decompress(rating_data_zip).decode('utf-8')
         rating_data = json.loads(rating_data_str)
@@ -305,6 +305,12 @@ class Statistic(BaseModule):
         for rating in ratings:
             timestamp = Statistic.norm_timestamp(rating['time'])
             date = datetime.utcnow().fromtimestamp(timestamp).replace(tzinfo=pytz.utc)
+
+            if date_from is not None and date < date_from:
+                continue
+
+            if date_to is not None and date_to < date:
+                continue
 
             if rating['gameId'] < 0:
                 continue
