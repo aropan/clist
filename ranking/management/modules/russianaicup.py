@@ -155,7 +155,15 @@ class Statistic(BaseModule):
                         if language:
                             r['language'] = Statistic.LANGUAGES_MAPPING.get(language, language)
 
-                r['games'] = row.pop('Games').value.split()[-1]
+                if 'Games' in row:
+                    n_games = row.pop('Games').value.split()[-1]
+                    if n_games != '0':
+                        r['games'] = n_games
+
+                if 'Won' in row:
+                    p_won = row.pop('Won').value
+                    if p_won != '-':
+                        r['won'] = p_won
 
                 row.pop('Δ', None)
                 for k, v in list(row.items()):

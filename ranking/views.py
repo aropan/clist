@@ -860,6 +860,10 @@ def get_versus_data(request, query, fields_to_select):
     else:
         date_from, date_to = None, None
 
+    resources = [r for r in request.GET.getlist('resource') if r]
+    if resources:
+        base_filter &= Q(contest__resource__in=resources)
+
     filters = []
     urls = []
     for idx, whos in enumerate(opponents):
@@ -1056,7 +1060,8 @@ def versus(request, query):
                 'datasets': {
                     'colors': datasets_colors,
                     'labels': versus_data['opponents'],
-                }
+                },
+                'x_axes_unit': rinfo.get('x_axes_unit'),
             })
             resource_info['data'].extend(rinfo['data'])
             resource_info['min'] = min(resource_info['min'], rinfo['min'])

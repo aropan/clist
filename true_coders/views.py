@@ -245,10 +245,6 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             account = get_object_or_404(Account, key=key, resource__host=host)
             statistics = Statistics.objects.filter(account=account)
 
-    resource_host = request.GET.get('resource')
-    if resource_host:
-        statistics = statistics.filter(contest__resource__host=resource_host)
-
     resources = {r.pk: r for r in Resource.objects.filter(has_rating_history=True)}
 
     qs = statistics \
@@ -301,7 +297,9 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             continue
 
         resource = resources[stat['resource']]
-        resource_info = ratings['data']['resources'].setdefault(resource.host, {'colors': resource.ratings})
+        default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
+        default_info['colors'] = resource.ratings
+        resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
         resource_info.setdefault('data', [])
 
         if stat['addition___rating_data']:

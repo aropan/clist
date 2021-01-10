@@ -71,8 +71,8 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 #list-accounts .bronze-medal {
-  color: transparent !important;
-  text-shadow: 0 0 0 #c08e55 !important;
+  color: transparent;
+  text-shadow: 0 0 0 #c08e55;
 }
 
 #list-accounts .honorable-medal {

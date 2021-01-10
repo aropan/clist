@@ -226,6 +226,7 @@ class Command(BaseCommand):
                         has_hidden = False
                         languages = set()
                         hidden_fields = set()
+                        medals_skip = set()
 
                         additions = copy.deepcopy(contest.info.get('additions', {}))
                         if additions:
@@ -426,7 +427,10 @@ class Command(BaseCommand):
                                 r.pop(k, None)
                                 if 'place' in r:
                                     place = get_number_from_str(r['place'])
-                                    if place:
+                                    if member in contest.info.get('standings', {}).get('medals_skip', []):
+                                        medals_skip.add(member)
+                                    elif place:
+                                        place -= len(medals_skip)
                                         for medal in medals:
                                             if place <= medal['count']:
                                                 r[k] = medal['name']

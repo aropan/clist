@@ -36,6 +36,11 @@
   text-shadow: 0 0 0 #c08e55;
 }
 
+#versus-table .honorable-medal {
+  color: transparent;
+  text-shadow: 0 0 0 #d0e3f7;
+}
+
 td.title-column {
   max-width: 300px;
 }

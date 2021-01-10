@@ -61,7 +61,7 @@ function create_chart_config(resource, resource_info, dates) {
         xAxes: [{
           type: 'time',
           time: {
-            unit: 'year',
+            unit: get_or_default(resource_info['x_axes_unit'], 'year'),
           },
         }],
         yAxes: [{
