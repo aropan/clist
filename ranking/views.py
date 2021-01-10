@@ -1032,7 +1032,7 @@ def versus(request, query):
     ratings_resources = None
     for idx, info in enumerate(versus_data['infos']):
         rdata = info['ratings']['data']
-        rdata_resources = {k: len(v['data']) for k, v in rdata['resources'].items()}
+        rdata_resources = {k: sum([len(d) for d in v['data']]) for k, v in rdata['resources'].items()}
         if ratings_resources is None:
             ratings_resources = rdata_resources
         else:

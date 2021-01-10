@@ -505,7 +505,7 @@ def canonize(data):
 
 @register.filter
 def to_json(data):
-    return json.dumps(data, indent=2)
+    return json.dumps(data)
 
 
 @register.filter
