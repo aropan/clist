@@ -909,7 +909,7 @@ def unsubscribe(request):
 
 @login_required
 def party_action(request, secret_key, action):
-    party = get_object_or_404(Party.objects.for_user(request.user), secret_key=secret_key)
+    party = get_object_or_404(Party, secret_key=secret_key)
     coder = request.user.coder
     if coder.party_set.filter(pk=party.id).exists():
         if action == 'join':
