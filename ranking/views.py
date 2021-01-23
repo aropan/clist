@@ -1,9 +1,9 @@
 import re
 import copy
+import colorsys
 from collections import OrderedDict
 
 import arrow
-import randomcolor
 from django.conf import settings
 from django.db import models, connection
 from django.contrib.auth.decorators import login_required
@@ -33,6 +33,7 @@ from tg.models import Chat
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
 from utils.regex import get_iregex_filter
+from utils.colors import get_n_colors
 
 
 @page_template('standings_list_paging.html')
@@ -400,10 +401,11 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     for k in contest_fields:
         if (
             k in fields
-            or k in ['problems', 'name', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
+            or k in ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
                      'division']
             or k == 'medal' and '_medal_title_field' in contest_fields
             or 'country' in k and k not in hidden_fields_values
+            or k in ['name'] and k not in hidden_fields_values
             or k.startswith('_')
             or k in hidden_fields and k not in hidden_fields_values
         ):
@@ -1014,8 +1016,8 @@ def versus(request, query):
         indices = []
         for idx, info in enumerate(versus_data['infos']):
             stat = info['contests'][contest.pk]
-            score = (-stat.place_as_int, stat.solving)
-            if best is None or score > best:
+            score = (stat.place_as_int, -stat.solving)
+            if best is None or score < best:
                 best = score
                 indices = []
             if score == best:
@@ -1044,7 +1046,18 @@ def versus(request, query):
 
     ratings_data = {'resources': {}}
     ratings_dates = []
-    datasets_colors = randomcolor.RandomColor().generate(count=len(versus_data['infos']), luminosity='dark')
+
+    ignore_colors = {}
+    rdata = versus_data['infos'][0]['ratings']['data']
+    for _, resource in ratings_resources:
+        rinfo = rdata['resources'][resource]
+        for color in rinfo['colors']:
+            H, S, L = color['hsl']
+            rgb = colorsys.hls_to_rgb(H, L, S)
+            ignore_colors[color['hex_rgb']] = rgb
+    ignore_colors = list(ignore_colors.values())
+
+    datasets_colors = get_n_colors(n=len(versus_data['infos']), ignore_colors=ignore_colors)
     for idx, info in enumerate(versus_data['infos']):
         rdata = info['ratings']['data']
         for _, resource in ratings_resources:
@@ -1056,7 +1069,8 @@ def versus(request, query):
                 'max': rinfo['max'],
                 'point_radius': 0,
                 'point_hit_radius': 5,
-                'border_width': 2,
+                'border_width': 1,
+                'outline': True,
                 'datasets': {
                     'colors': datasets_colors,
                     'labels': versus_data['opponents'],

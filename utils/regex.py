@@ -44,6 +44,8 @@ def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=Non
 
                         exists = mapped.get('exists')
                         if exists:
+                            if isinstance(r, str) and 'regex' in fs[0]:
+                                r = verify_regex(r, logger=logger)
                             n_exists += 1
                             field = f'exists{n_exists}'
                             queryset = queryset.annotate(**{field: Exists(exists, filter=Q(**{fs[0]: r}))})
@@ -56,7 +58,7 @@ def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=Non
                     if values is not None:
                         values.setdefault(k, []).append(r)
 
-            if isinstance(r, str):
+            if isinstance(r, str) and 'regex' in suff:
                 if r.startswith('!'):
                     neg = not neg
                     r = r[1:].strip()

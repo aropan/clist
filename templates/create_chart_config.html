@@ -16,32 +16,45 @@ function create_chart_config(resource, resource_info, dates) {
   var datasets_colors = get_or_default(datasets_infos['colors'], [])
   var datasets_labels = get_or_default(datasets_infos['labels'], [])
 
+
+  var datasets = [].concat.apply([], $.map(resource_info['data'], function(data, index) {
+    var dataset = {
+      data: $.map(data, function(val) { return {t: val['date'], y: val['new_rating']}; }),
+      label: datasets_labels[index],
+      labelIndex_: index,
+      history: data,
+      borderWidth: get_or_default(resource_info['border_width'], 1),
+      borderColor: get_or_default(datasets_colors[index], 'black'),
+      pointRadius: get_or_default(resource_info['point_radius'], 3),
+      pointHitRadius: get_or_default(resource_info['point_hit_radius'], 1),
+      pointHoverRadius: 5,
+      fill: false,
+      lineTension: 0,
+      pointBackgroundColor: $.map(data, function(val) {
+        for (var idx in resource_info['colors']) {
+          var rating = resource_info['colors'][idx]
+          if (rating['low'] <= val['new_rating'] && val['new_rating'] <= rating['high']) {
+            return rating['hex_rgb']
+          }
+        }
+      }),
+    }
+    var ret = [dataset]
+    if (get_or_default(resource_info['outline'], false)) {
+      var border = {...dataset, }
+      border['borderWidth'] += 1
+      border['borderColor'] = 'black'
+      delete border['history']
+      ret.push(border)
+    }
+    return ret
+  }))
+
   return {
     type: 'line',
     data: {
       labels: dates,
-      datasets: $.map(resource_info['data'], function(data, index) {
-        return {
-          data: $.map(data, function(val) { return {t: val['date'], y: val['new_rating']}; }),
-          label: datasets_labels[index],
-          history: data,
-          borderWidth: get_or_default(resource_info['border_width'], 1),
-          borderColor: get_or_default(datasets_colors[index], 'black'),
-          pointRadius: get_or_default(resource_info['point_radius'], 3),
-          pointHitRadius: get_or_default(resource_info['point_hit_radius'], 1),
-          pointHoverRadius: 5,
-          fill: false,
-          lineTension: 0,
-          pointBackgroundColor: $.map(data, function(val) {
-            for (var idx in resource_info['colors']) {
-              var rating = resource_info['colors'][idx]
-              if (rating['low'] <= val['new_rating'] && val['new_rating'] <= rating['high']) {
-                return rating['hex_rgb']
-              }
-            }
-          }),
-        }
-      })
+      datasets: datasets,
     },
     options: {
       responsive: true,
@@ -53,6 +66,40 @@ function create_chart_config(resource, resource_info, dates) {
       legend: {
         display: resource_info['data'].length > 1,
         position: 'right',
+        labels: {
+          generateLabels: function() {
+            var ci = this.chart
+            ret = datasets_labels.map(function(label, index) {
+              var hidden = false;
+              for (var idx = 0; idx < datasets.length; ++idx) {
+                if (ci.data.datasets[idx].label != label) {
+                  continue;
+                }
+                var meta = ci.getDatasetMeta(idx)
+                hidden = meta.hidden
+                break
+              }
+              return {
+                text: label,
+                hidden: hidden,
+                fillStyle: datasets_colors[index],
+              }
+            })
+            return ret
+          },
+        },
+        onClick: function(e, item) {
+          var ci = this.chart
+          var label = item.text[0]
+          for (var index = 0; index < datasets.length; ++index) {
+            if (ci.data.datasets[index].label != label) {
+              continue;
+            }
+            var meta = ci.getDatasetMeta(index)
+            meta.hidden = meta.hidden === null? !ci.data.datasets[index].hidden : null
+          }
+          ci.update()
+        },
       },
       hover: {
         mode: 'nearest',
@@ -83,18 +130,18 @@ function create_chart_config(resource, resource_info, dates) {
         }],
       },
       rating_colors: resource_info['colors'],
-      onClick: function (e, item) {
-        if (item.length == 0) {
-          return
+      onClick: function (e, items) {
+        for (var i = 0; i < items.length; ++i) {
+          var item = items[i]
+          rating = item._chart.data.datasets[item._datasetIndex].history[item._index]
+          if ('url' in rating) {
+            url = rating['url']
+          } else {
+            url = '/standings/' + rating['slug'] + '-' + rating['cid'] + '/'
+          }
+          window.open(url, '_blank')
+          break
         }
-        item = item[0]
-        rating = item._chart.data.datasets[item._datasetIndex].history[item._index]
-        if ('url' in rating) {
-          url = rating['url']
-        } else {
-          url = '/standings/' + rating['slug'] + '-' + rating['cid'] + '/'
-        }
-        window.open(url, '_blank');
       },
       onHover: (e, el) => {
         e.target.style.cursor = el[0] ? 'pointer' : 'default'
@@ -105,17 +152,28 @@ function create_chart_config(resource, resource_info, dates) {
         caretPadding: 0,
         caretSize: 0,
         callbacks: {
-          title: function(tooltipItem, data) {
-            var hist = data.datasets[tooltipItem[0].datasetIndex].history[tooltipItem[0].index]
-            var ret = '<div style="font-weight: bold">' + hist['name'] + '</div>'
-            if (resource_info['data'].length > 1) {
-              ret = '<div style="font-weight: bold">' + datasets_labels[tooltipItem[0].datasetIndex] + '</div>' + ret
+          title: function(tooltipItems, data) {
+            for (var i = 0; i < tooltipItems.length; ++i) {
+              var tooltipItem = tooltipItems[i]
+              var dataset = data.datasets[tooltipItem.datasetIndex]
+              if (dataset.history === undefined) {
+                continue
+              }
+              var hist = dataset.history[tooltipItem.index]
+              var ret = '<div style="font-weight: bold">' + hist['name'] + '</div>'
+              if (resource_info['data'].length > 1) {
+                ret = '<div style="font-weight: bold">' + datasets_labels[dataset.labelIndex_] + '</div>' + ret
+              }
+              return ret
             }
-            return ret
           },
           label: function(tooltipItem, data) {
-            var color = data.datasets[tooltipItem.datasetIndex].pointBackgroundColor[tooltipItem.index]
-            var hist = data.datasets[tooltipItem.datasetIndex].history[tooltipItem.index]
+            var dataset = data.datasets[tooltipItem.datasetIndex]
+            if (dataset.history === undefined) {
+              return
+            }
+            var color = dataset.pointBackgroundColor[tooltipItem.index]
+            var hist = dataset.history[tooltipItem.index]
             var rating = '<span style="font-weight: bold; color: ' + color + '">' + hist['new_rating'] + '</span>'
             if (hist['old_rating']) {
               var change = hist['new_rating'] - hist['old_rating']

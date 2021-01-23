@@ -240,8 +240,11 @@ $(document).keydown(function(event) {
   }
 });
 
-{% if with_table_inner_scroll and merge_problems %}
+{% if with_table_inner_scroll %}
+  {% block html %} style="overflow-y: hidden"{% endblock %}
+  {% if merge_problems %}
     $(window).resize(update_sticky_header_problems_top)
+  {% endif %}
 {% endif %}
 </script>
 

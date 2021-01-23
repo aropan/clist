@@ -313,12 +313,12 @@ TELEGRAM_ADMIN_CHAT_ID = conf.TELEGRAM_ADMIN_CHAT_ID
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 COUNTRIES_OVERRIDE = {
-    'CZ': {'names': ['Czechia', 'Czech Republic', 'Чехия']},
-    'MK': {'names': ['North Macedonia', 'Macedonia', 'Македония']},
-    'PS': {'names': ['Palestine, State of', 'Palestine', 'Палестина']},
+    'CZ': {'names': ['Czech Republic', 'Czechia', 'Чехия']},
+    'MK': {'names': ['Macedonia', 'North Macedonia', 'Македония']},
+    'PS': {'names': ['Palestine', 'Palestine, State of', 'Палестина']},
     'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея']},
     'MO': {'names': ['Macao', 'Macau', 'Макао']},
-    'US': {'names': ['United States of America', 'United States', 'America', 'Virgin Islands', 'Соединенные Штаты Америки', 'США']},  # noqa
+    'US': {'names': ['United States of America', 'United States', 'America', 'Virgin Islands', 'UM', 'United States Minor Outlying Islands', 'Соединенные Штаты Америки', 'США']},  # noqa
     'VN': {'names': ['Vietnam', 'Viet Nam', 'Вьетнам']},
     'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Scotland', 'Northern Ireland', 'Wales', 'Великобритания', 'Англия', 'Шотландия']},  # noqa
     'MD': {'names': ['Moldova', 'Молдова', 'Молдавия']},
@@ -328,6 +328,7 @@ COUNTRIES_OVERRIDE = {
     'CN': {'names': ['China', '中国', 'Китай']},
     'PL': {'names': ['Poland', 'Republic of Poland', 'Польша']},
 }
+DISABLED_COUNTRIES = {'UM'}
 
 # DJANGO DEBUG TOOLBAR
 if DEBUG:

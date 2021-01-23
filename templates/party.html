@@ -12,7 +12,12 @@
 
 {% block content %}
 
-<h3 id="party-name" data-slug="{{ party.slug }}"><a href="{% url 'coder:parties' %}"><i class="fas fa-chevron-left"></i></a> {{ party.name }}</h3>
+<h3 id="party-name" data-slug="{{ party.slug }}">
+    <a href="{% url 'coder:parties' %}"><i class="fas fa-chevron-left"></i></a> {{ party.name }}
+    {% if perms.true_coders.change_party %}
+      <a href="{% url 'admin:true_coders_party_change' party.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    {% endif %}
+</h3>
 
 <ul class="nav nav-tabs">
     <li{% if tab == "information" %} class="active"{% endif %}><a href="#information-tab" data-toggle="tab">Infrormation</a></li>

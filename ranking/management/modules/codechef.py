@@ -66,6 +66,7 @@ class Statistic(BaseModule):
         result = {}
 
         problems_info = dict() if len(contest_infos) > 1 else list()
+        hidden_fields = set()
 
         for key, contest_info in contest_infos.items():
             url = self.STANDINGS_URL_FORMAT_.format(key=key)
@@ -145,6 +146,10 @@ class Statistic(BaseModule):
                         row['member'] = handle
                         row['place'] = d.pop('rank')
                         row['solving'] = d.pop('score')
+                        for k in 'time', 'total_time':
+                            if k in d:
+                                row['time'] = d.pop(k)
+                                break
 
                         problems = row.setdefault('problems', {})
                         solved, upsolved = 0, 0
@@ -169,15 +174,18 @@ class Statistic(BaseModule):
                             d['country'] = country
 
                         rating = d.pop('rating', None)
+                        if rating and rating != '0':
+                            hidden_fields.add('rating')
+                            row['rating'] = rating
+
                         row.update(d)
                         row.update(contest_info)
-                        if rating and rating != '0':
-                            row['rating'] = rating
                         if statistics and handle in statistics:
                             stat = statistics[handle]
                             for k in ('rating_change', 'new_rating'):
                                 if k in stat:
                                     row[k] = stat[k]
+                        hidden_fields |= set(list(d.keys()))
                     pbar.set_description(f'key={key} url={url}')
                     pbar.update()
 
@@ -196,6 +204,7 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.url,
             'problems': problems_info,
+            'hidden_fields': list(hidden_fields),
         }
         return standings
 

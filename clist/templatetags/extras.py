@@ -319,7 +319,14 @@ def url_transform(request, *args, **kwargs):
 
 @register.simple_tag
 def get_countries():
-    ret = dict((c.code, c) for c in countries if re.search(r'[a-zA-Z]', c.name)).values()
+    ret = []
+    for c in countries:
+        if not re.search(r'[a-zA-Z]', c.name) or c.code in settings.DISABLED_COUNTRIES:
+            continue
+        override_names = settings.COUNTRIES_OVERRIDE.get(c.code, {}).get('names')
+        if override_names and override_names[0] != c.name:
+            continue
+        ret.append(c)
     return ret
 
 

@@ -71,3 +71,7 @@ td.title-column span {
   font-weight: bold;
   font-size: 130%;
 }
+
+#versus-table .score-column .solving-place {
+  white-space: nowrap;
+}
