@@ -12,7 +12,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django_print_sql import print_sql_decorator
 from django.utils.timezone import now
 from django.template.loader import render_to_string
@@ -109,7 +109,10 @@ class Command(BaseCommand):
 
         logger = getLogger('notification.sendout.tasks')
 
-        delete_info = Task.objects.filter(is_sent=True, modified__lte=now() - timedelta(days=31)).delete()
+        delete_info = Task.objects.filter(
+            Q(is_sent=True, modified__lte=now() - timedelta(days=1)) |
+            Q(modified__lte=now() - timedelta(days=7))
+        ).delete()
         logger.info(f'Tasks cleared: {delete_info}')
 
         if dryrun:
@@ -124,6 +127,9 @@ class Command(BaseCommand):
                 to_attr='cchat',
             )
         )
+        if settings.STOP_EMAIL_:
+            qs = qs.exclude(notification__method='email')
+
         if coders:
             qs = qs.filter(notification__coder__username__in=coders)
 

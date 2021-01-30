@@ -385,6 +385,13 @@ class Statistic(BaseModule):
             else:
                 row['_no_update_n_contests'] = True
 
+        standings['hidden_fields'] = [
+            'Affiliation',
+            'AtcoderRank',
+            'Competitions',
+            'IsRated',
+            'IsTeam',
+        ]
         return standings
 
     @staticmethod

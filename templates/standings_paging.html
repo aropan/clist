@@ -55,9 +55,6 @@
   ">
     {% include "standings_account.html" with account=statistic.account addition=addition resource=contest.resource %}
   </{{ tag }}>
-  {% if fields_to_select.chat.values %}
-  <{{ tag }}{% if merge_problems %} rowspan="2"{% endif %}>{{ statistic.chat_name|default:"" }}</{{ tag }}>
-  {% endif %}
   <{{ tag }}>
     <div>{{ statistic.solving|floatformat:'-2' }}</div>
   </{{ tag }}>

@@ -23,7 +23,7 @@
         $subjects = array();
         foreach ($amonths as $ind => $month)
         {
-            $month = $month . '[^\s]{0,3}';
+            $month = $month . '[^\s<]{0,3}';
             $ind = sprintf("%02d", $ind + 1);
 
             $replacements[] = '#([0-9]+)\s' . $month . '\s?#';
@@ -43,10 +43,18 @@
         $page = curlexec($url);
         $page = $replace_months($page);
 
-        preg_match_all('#<p>\s*<font[^>]*>\s*(?P<date>(?:[0-9]+.?)+)[^<]*</font>[^<]*(?:<a[^>]*>[^<]*</a>[^<]*)*<a[^>]*href="(?P<url>[^"]*/[^"]*(?:res|standing)[^"]*)"[^>]*>[^<]*результат[^<]*</a>#', $page, $matches, PREG_SET_ORDER);
+        if (!preg_match('#<h4\s*align="center"\s*>(?P<title>[^<]*,[^<]*)<#', $page, $match)) {
+            continue;
+        }
+        list($main_title, $season) = explode(",", $match['title']);
+        $main_title = trim($main_title);
+        $season = str_replace("/", "-20", explode(" ", trim($season))[0]);
+
+        preg_match_all('#<p>\s*<font[^>]*>\s*(?:[0-9]+-)?(?P<date>(?:[0-9]+.?)+)[^<]*</font>[^<]*(?:<a[^>]*>[^<]*</a>[^<]*)*<a[^>]*href="(?P<url>[^"]*/[^"]*(?:res|standing)[^"]*)"[^>]*>[^<]*результат[^<]*</a>#', $page, $matches, PREG_SET_ORDER);
 
         $standings = array();
         $used = array();
+        $matches = array_reverse($matches);
         foreach ($matches as $match) {
             $u = url_merge($url, $match['url']);
             if (preg_match('#(overall|unrated)#', $u)) {
@@ -76,26 +84,18 @@
             $standings[] = array(
                 "date" => $date,
                 "url" => $u,
-                "is_final" => (bool)(preg_match("#(final|results[^/]*$|onsite)#", $u))
+                "is_final" => (bool)(preg_match("#(final|results[^/]*$|onsite|res-och)#", $u))
             );
             if (DEBUG) {
                 echo "$date ::: $u\n";
             }
         }
-        $standings = array_reverse($standings);
 
         if (!preg_match('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>\s*Информация\s*об\s*олимпиаде\s*</a>#', $page, $match)) {
             continue;
         }
         $page = curlexec($match['url']);
         $page = $replace_months($page);
-
-        if (!preg_match('#<h4\s*align="center"\s*>(?P<title>[^<]*,[^<]*)<#', $page, $match)) {
-            continue;
-        }
-        list($main_title, $season) = explode(",", $match['title']);
-        $main_title = trim($main_title);
-        $season = str_replace("/", "-20", explode(" ", trim($season))[0]);
 
         preg_match_all("#
             (?P<start_time>(?:(?:[0-9]+\.){1,2}[0-9]+(?:\s+г[^\s]*)?\s*|с\s+[0-9:]+\s*)+)(?:-|по)\s*
@@ -150,6 +150,9 @@
                 if ($title != $long_title && $date < $end) {
                     continue;
                 }
+                if (strpos($s['url'], 'short') && $title != $short_title) {
+                    continue;
+                }
                 if ((bool)($title == $final_title) != $s['is_final']) {
                     continue;
                 }
@@ -196,6 +199,9 @@
                     "rid" => $RID,
                     "timezone" => $TIMEZONE
                 );
+                if (DEBUG) {
+                    echo '+ ' . $s['date'] . ' --- ' . $s['url'] . "\n";
+                }
             }
         }
     }

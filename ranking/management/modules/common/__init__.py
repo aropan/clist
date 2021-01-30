@@ -34,6 +34,7 @@ class BaseModule(object, metaclass=ABCMeta):
         contest = kwargs.pop('contest', None)
         if contest is not None:
             self.__init__(
+                pk=contest.pk,
                 name=contest.title,
                 url=contest.url,
                 key=contest.key,

@@ -7,7 +7,7 @@ import arrow
 from django.conf import settings
 from django.db import models, connection
 from django.contrib.auth.decorators import login_required
-from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg, Prefetch, Subquery
+from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg, Prefetch
 from django.db.models.functions import Cast
 from django.db.models.expressions import RawSQL
 from django.http import HttpResponseNotFound, JsonResponse
@@ -70,6 +70,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                                                                    'suff': '__isnull',
                                                                    'func': lambda v: False},
                                                          'coder': {'fields': ['statistics__account__coders__username']},
+                                                         'account': {'fields': ['statistics__account__key',
+                                                                                'statistics__account__name'],
+                                                                     'suff': '__iregex'},
                                                      },
                                                      logger=request.logger))
 
@@ -571,9 +574,8 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                 chat = Chat.objects.filter(chat_id=q, is_group=True).first()
                 if chat:
                     filt |= Q(account__coders__in=chat.coders.all())
-
-            subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
-            statistics = statistics.annotate(chat_name=Subquery(subquery))
+            # subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
+            # statistics = statistics.annotate(chat_name=Subquery(subquery))
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})

@@ -88,6 +88,7 @@ class ParsedTable(object):
         self.header_mapping = header_mapping
 
     def init_iter(self):
+        self.n_rows = len(self.table) - 1
         self.iter_table = iter(self.table)
         self.header = ParsedTableRow(next(self.iter_table))
 
@@ -117,6 +118,9 @@ class ParsedTable(object):
 
     def __iter__(self):
         return self
+
+    def __len__(self):
+        return self.n_rows
 
     def __next__(self):
         while True:
