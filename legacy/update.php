@@ -152,7 +152,7 @@
                 {
                     $url = empty($resource['parse_url'])? $url : $resource['url'];
                     if ($contest['url'][0] == '/')
-                        $contest['url'] = 'http://' . parse_url($url, PHP_URL_HOST) . $contest['url'];
+                        $contest['url'] = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . $contest['url'];
                     else
                         $contest['url'] = dirname($url . '.tmp') . '/' . $contest['url'];
                 }
