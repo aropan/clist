@@ -460,11 +460,11 @@ class Command(BaseCommand):
                                     k = k[0].upper() + k[1:]
                                     k = '_'.join(map(str.lower, re.findall('[A-ZА-Я][^A-ZА-Я]*', k)))
 
+                                if is_hidden_field:
+                                    hidden_fields.add(k)
                                 if k not in fields_set:
                                     fields_set.add(k)
                                     fields.append(k)
-                                    if is_hidden_field:
-                                        hidden_fields.add(k)
 
                                 if (k in Resource.RATING_FIELDS or k == 'rating_change') and v is None:
                                     continue
