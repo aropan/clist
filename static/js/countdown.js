@@ -29,6 +29,7 @@ function countdown()
 {
     var need_reload = false;
     var now = $.now();
+    time_update = DAY;
 
     $(".countdown").each(function () {
         var el = $(this)

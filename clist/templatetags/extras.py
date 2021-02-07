@@ -555,6 +555,11 @@ def startswith(text, starts):
 
 
 @register.filter
+def next_time_to(obj, now):
+    return obj.next_time_to(now)
+
+
+@register.filter
 def is_solved(value):
     if not value:
         return False

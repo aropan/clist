@@ -89,9 +89,11 @@
             {% endif %}
           </div>
           <div class="col-md-3 col-sm-6 duration">{{ contest.hr_duration }}</div>
-          <div class="col-md-4 col-sm-6 timeleft{% if contest.next_time %} countdown{% endif %}"{% if contest.next_time %} data-timestamp="{{ contest.next_time }}"{% endif %}>
-            {% if contest.is_over %}over{% else %}{{ contest.next_time|countdown }}{% endif %}
+          {% with next_time=contest|next_time_to:now %}
+          <div class="col-md-4 col-sm-6 timeleft{% if next_time %} countdown{% endif %}"{% if next_time %} data-timestamp="{{ next_time }}"{% endif %}>
+            {% if contest.is_over %}over{% else %}{{ next_time|countdown }}{% endif %}
           </div>
+          {% endwith %}
         </div>
         <div class="col-md-7 col-sm-8 event">
           {% if hide_contest %}

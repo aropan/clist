@@ -70,7 +70,7 @@ $(function() {
                         '<div class="countdown">'
                         + (start < now? "Ends in " : "Starts in ")
                         + '<span class="countdown-timestamp hidden">'  + countdown + '</span>'
-                        + '<span class="countdown-format">' + getFormatTime() + '</span>'
+                        + '<span class="countdown-format">' + getFormatTime(countdown) + '</span>'
                         + '</div>' : '')
             $(element).tooltip({
                 title: title,

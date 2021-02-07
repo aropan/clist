@@ -175,6 +175,7 @@ def get_events(request):
     contests = contests.select_related('resource')
     contests = contests.annotate(has_statistics=Exists('statistics'))
 
+    now = timezone.now()
     try:
         result = []
         for contest in contests.filter(query):
@@ -189,7 +190,7 @@ def get_events(request):
                 ),
                 'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
-                'countdown': contest.next_time,
+                'countdown': contest.next_time_to(now),
                 'hr_duration': contest.hr_duration,
                 'color': contest.resource.color,
                 'icon': contest.resource.icon,

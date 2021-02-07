@@ -229,14 +229,19 @@ class Contest(models.Model):
 
     @property
     def next_time(self):
+        return self.next_time_to(None)
+
+    def next_time_to(self, now):
         if self.is_over():
             return 0
         return int(round(
-            ((
-                self.end_time
-                if self.is_running()
-                else self.start_time
-            ) - timezone.now()).total_seconds()
+            (
+                (
+                    self.end_time
+                    if self.is_running()
+                    else self.start_time
+                ) - (now or timezone.now())
+            ).total_seconds()
         ))
 
     def __str__(self):
