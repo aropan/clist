@@ -20,6 +20,7 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
         per_page = 10
+        stop = False
 
         url = self.API_ROOM_URL_FORMAT_.format(**self.info['parse'])
         page = REQ.get(url)
@@ -28,7 +29,7 @@ class Statistic(BaseModule):
         problems_info = OrderedDict()
 
         for session in room_data['sessions']:
-            total = len(session['players'])
+            total = len(session['players']) + len(room_data.get('participants', 0))
             problems_ids = []
             for idx, problems_set in enumerate(session['questionsets']):
                 problem = problems_set['question']
@@ -43,6 +44,9 @@ class Statistic(BaseModule):
                 problems_ids.append(info['code'])
 
             def fetch_results(page):
+                nonlocal stop
+                if stop:
+                    return
                 url = self.API_RANKING_URL_FORMAT_.format(id=self.key, sid=session['id'], page=page)
                 page = REQ.get(url)
                 data = json.loads(page)
@@ -56,6 +60,9 @@ class Statistic(BaseModule):
                     idx = 0
                     last = None
                     for data in tqdm(executor.map(fetch_results, range(n_page)), total=n_page, desc='getting results'):
+                        if not data or not data['leaders']:
+                            stop = True
+                            break
                         for row in data['leaders']:
                             idx += 1
                             score = (row['score'], row['durationTime'])

@@ -31,33 +31,34 @@ class Statistic(BaseModule):
             cookie.name for cookie in REQ.get_raw_cookies()
             if 'topcoder.com' in cookie.domain and (cookie.expires is None or cookie.expires > time())
         }
-        if 'tcjwt' not in cookies or 'tcsso' not in cookies:
-            page = REQ.get('https://accounts.topcoder.com/')
-            match = re.search(r'src="(app\.[^"]*.js)"', page)
-            url = urljoin(REQ.last_url, match.group(1))
-            page = REQ.get(url)
-            match = re.search('clientId:"([^"]*)"', page)
-            client_id = match.group(1)
-            params = {
-                "client_id": client_id,
-                "connection": "TC-User-Database",
-                "device": "Browser",
-                "grant_type": "password",
-                "password": self._password,
-                "response_type": "token",
-                "scope": "openid profile offline_access",
-                "sso": False,
-                "username": self._handle,
-            }
-            page = REQ.get('https://topcoder.auth0.com/oauth/ro', post=params)
-            data = json.loads(page)
+        raise InitModuleException('blabla')
+        # if 'tcjwt' not in cookies or 'tcsso' not in cookies:
+        #     page = REQ.get('https://topcoder.com/login')
+        #     match = re.search(r'src="(app\.[^"]*.js|[^"]*setupAuth0WithRedirect.js)"', page)
+        #     url = urljoin(REQ.last_url, match.group(1))
+        #     page = REQ.get(url)
+        #     match = re.search(r'''clientId\s*[:=]\s*["']([^"']*)''', page)
+        #     client_id = match.group(1)
+        #     params = {
+        #         "client_id": client_id,
+        #         "connection": "TC-User-Database",
+        #         "device": "Browser",
+        #         "grant_type": "password",
+        #         "password": self._password,
+        #         "response_type": "token",
+        #         "scope": "openid profile offline_access",
+        #         "sso": False,
+        #         "username": self._handle,
+        #     }
+        #     page = REQ.get('https://topcoder.auth0.com/oauth/ro', post=params)
+        #     data = json.loads(page)
 
-            params = {"param": {"externalToken": data['id_token'], "refreshToken": data['refresh_token']}}
-            page = REQ.get(
-                'https://api.topcoder.com/v3/authorizations',
-                post=json.dumps(params).encode('utf-8'),
-                headers={'Content-Type': 'application/json;charset=UTF-8'}
-            )
+        #     params = {"param": {"externalToken": data['id_token'], "refreshToken": data['refresh_token']}}
+        #     page = REQ.get(
+        #         'https://api.topcoder.com/v3/authorizations',
+        #         post=json.dumps(params).encode('utf-8'),
+        #         headers={'Content-Type': 'application/json;charset=UTF-8'}
+        #     )
 
     @staticmethod
     def _dict_as_number(d):

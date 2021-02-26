@@ -72,9 +72,14 @@ class Command(BaseCommand):
                 try:
                     if not coder.settings.get('telegram', {}).get('unauthorized', False):
                         self.TELEGRAM_BOT.send_message(message, coder.chat.chat_id, reply_markup=False)
-                except Unauthorized:
-                    coder.settings.setdefault('telegram', {})['unauthorized'] = True
-                    coder.save()
+                except Unauthorized as e:
+                    if 'bot was blocked by the user' in str(e):
+                        coder.chat.delete()
+                    else:
+                        coder.settings.setdefault('telegram', {})['unauthorized'] = True
+                        coder.save()
+            elif 'notification' in kwargs:
+                kwargs['notification'].delete()
         elif method == settings.NOTIFICATION_CONF.EMAIL:
             send_mail(
                 subject,
@@ -145,6 +150,7 @@ class Command(BaseCommand):
 
             try:
                 task.is_sent = True
+                task.save()
                 notification = task.notification
                 coder = notification.coder
                 method = notification.method
@@ -160,11 +166,11 @@ class Command(BaseCommand):
             except Exception as e:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
+                task.save()
                 if isinstance(e, SMTPResponseException):
                     stop_email = True
             if task.is_sent:
                 done += 1
             else:
                 failed += 1
-            task.save()
         logger.info(f'Done: {done}, failed: {failed}')

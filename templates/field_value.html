@@ -12,6 +12,11 @@
         <span title="{{ template_value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
           {{ template_value|timestamp_to_datetime|timezone:timezone|naturaltime }}
         <span>
+      {% elif 'time' in types %}
+        <span title="{{ template_value|timestamp_to_datetime|timezone:timezone|naturaltime }}" data-toggle="tooltip">
+          {{ template_value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}
+        <span>
+
       {% else %}
         {{ template_value|safe }}
       {% endif %}

@@ -276,20 +276,26 @@ class Statistic(BaseModule):
     def _hashcode(self, users=None, statistics=None):
         standings_url = None
         is_final_round = self.name.endswith('Final Round')
-        page = REQ.get(self.ARCHIVE_DATA_URL_FORMAT_.format(year=self.start_time.year))
-        data = json.loads(page)
-        names = set()
-        for data_round in data['rounds']:
-            name = data_round['name']
-            if name in names:
-                name = 'Qualification Round'
-            if self.name.endswith(name) or name in ['Full ranking', 'Main round'] and is_final_round:
-                data = data_round['data']
-                standings_url = self.ARCHIVE_URL_FORMAT_.format(year=self.start_time.year)
-                break
-            names.add(name)
-        else:
-            data = None
+
+        data = None
+        try:
+            page = REQ.get(self.ARCHIVE_DATA_URL_FORMAT_.format(year=self.start_time.year))
+            data = json.loads(page)
+            names = set()
+            for data_round in data['rounds']:
+                name = data_round['name']
+                if name in names:
+                    name = 'Qualification Round'
+                if self.name.endswith(name) or name in ['Full ranking', 'Main round'] and is_final_round:
+                    data = data_round['data']
+                    standings_url = self.ARCHIVE_URL_FORMAT_.format(year=self.start_time.year)
+                    break
+                names.add(name)
+            else:
+                data = None
+        except FailOnGetResponse as e:
+            if e.code != 404:
+                raise e
 
         if not data:
             if 'hashcode_scoreboard' in self.info:
@@ -343,8 +349,17 @@ class Statistic(BaseModule):
             if 'finalround' in row:
                 r['advanced'] = row['finalround']
 
+            stime = row.get('submissiontime', {}).get('iMillis')
+            if stime:
+                r['submission_time'] = stime / 1000
+
+            if 'hubid' in row:
+                r['hub_id'] = row.pop('hubid')
+
         standings = {
             'result': result,
+            'hidden_fields': ['hub_id'],
+            'fields_types': {'submission_time': ['time']},
             'problems': [],
         }
 

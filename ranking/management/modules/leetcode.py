@@ -388,15 +388,15 @@ class Statistic(BaseModule):
                 pages = set()
                 stop = False
 
-            for a in tqdm.tqdm(accounts, desc='getting global ranking pages'):
-                if len(pages) > pages_per_update * 2:
-                    break
-                if 'global_ranking_page' in a.info:
-                    page = a.info['global_ranking_page']
-                    pages.add(page)
-                    if len(accounts) > n_accounts_to_paging:
-                        a.info.pop('global_ranking_page')
-                        a.save()
+            # for a in tqdm.tqdm(accounts, desc='getting global ranking pages'):
+            #     if len(pages) > pages_per_update * 2:
+            #         break
+            #     if 'global_ranking_page' in a.info:
+            #         page = a.info['global_ranking_page']
+            #         pages.add(page)
+            #         if len(accounts) > n_accounts_to_paging:
+            #             a.info.pop('global_ranking_page')
+            #             a.save()
 
             global_ranking_users = {}
             n_data = 0

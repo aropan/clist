@@ -85,7 +85,7 @@ class Bot(telegram.Bot):
         return self.coder_
 
     def clear_cache(self):
-        for a in ('chat_', 'coder_'):
+        for a in ('chat_', 'group_', 'coder_'):
             if hasattr(self, a):
                 delattr(self, a)
 
@@ -462,10 +462,10 @@ class Bot(telegram.Bot):
 
         try:
             ret = self.sendMessage(parse_mode='Markdown', **msg)
-        except telegram.error.Unauthorized:
-            pass
-        except Exception:
-            self.logger.error('Exception send message = %s' % msg)
+        except telegram.error.Unauthorized as e:
+            raise e
+        except Exception as e:
+            self.logger.error('Exception send message %s: %s' % (e, msg))
             ret = self.sendMessage(**msg)
         return ret
 
@@ -515,8 +515,6 @@ class Bot(telegram.Bot):
                 if chat:
                     History.objects.create(chat=chat, message=data).save()
         except Exception:
-            if hasattr(self, 'from_id'):
-                self.sendMessage(self.from_id, 'Thanks, but I do not know what I should do about it.')
             self.logger.error('Exception incoming message:\n%s\n%s' % (format_exc(), raw_data))
             try:
                 self.sendMessage(
@@ -526,6 +524,8 @@ class Bot(telegram.Bot):
                 )
             except Exception:
                 pass
+            if hasattr(self, 'from_id'):
+                self.sendMessage(self.from_id, 'Thanks, but I do not know what I should do about it.')
 
     def get_commands(self):
         return '\n'.join(

@@ -26,7 +26,9 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None):
         resource = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(self.url))
 
-        url = self.API_RANKING_URL_FORMAT_.format(resource=resource, **self.__dict__)
+        infos = self.__dict__
+        infos['resource'] = resource
+        url = self.API_RANKING_URL_FORMAT_.format(**infos)
         try:
             time.sleep(1)
             page = REQ.get(url)
