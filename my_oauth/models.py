@@ -3,8 +3,13 @@ import re
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 
-from pyclist.models import BaseModel
+from pyclist.models import BaseModel, BaseManager
 from true_coders.models import Coder
+
+
+class ActiveServiceManager(BaseManager):
+    def get_queryset(self):
+        return super(ActiveServiceManager, self).get_queryset().filter(disable=False)
 
 
 class Service(BaseModel):
@@ -20,9 +25,13 @@ class Service(BaseModel):
     data_uri = models.TextField()
     data_header = models.TextField(null=True, blank=True, default=None)
     fa_icon = models.CharField(max_length=255)
+    disable = models.BooleanField(default=False)
 
     def __str__(self):
         return "%s" % (self.name)
+
+    objects = BaseManager()
+    active_objects = ActiveServiceManager()
 
 
 class Token(BaseModel):

@@ -4,7 +4,7 @@ from my_oauth.models import Service, Token
 
 @admin_register(Service)
 class ServiceAdmin(BaseModelAdmin):
-    list_display = ['name', 'title']
+    list_display = ['name', 'title', 'disable']
     search_fields = ['name', 'title']
 
 

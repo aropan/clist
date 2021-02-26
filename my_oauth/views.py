@@ -4,6 +4,7 @@ import random
 import requests
 import json
 import re
+from copy import deepcopy
 from io import StringIO
 from datetime import timedelta
 from urllib.parse import parse_qsl
@@ -36,7 +37,7 @@ def query(request, name):
     if redirect_url:
         request.session['next'] = redirect_url
 
-    service = get_object_or_404(Service, name=name)
+    service = get_object_or_404(Service.active_objects, name=name)
     args = model_to_dict(service)
     args['redirect_uri'] = settings.HTTPS_HOST_ + reverse('auth:response', args=(name, ))
     args['state'] = generate_state()
@@ -55,28 +56,25 @@ def unlink(request, name):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-def process_data(request, service, access_token, response):
-    if response.status_code != requests.codes.ok:
-        raise Exception('Response status code not equal ok.')
-    data = json.loads(response.text)
-    while isinstance(data, list) or isinstance(data, dict) and len(data) == 1:
-        data = (data if isinstance(data, list) else list(data.values()))[0]
-
-    data.update(access_token)
+def process_data(request, service, access_token, data):
+    d = deepcopy(data)
+    d.update(access_token)
 
     for e in ('email', 'default_email', ):
-        email = data.get(e, None)
+        email = d.get(e, None)
         if email:
             break
-    user_id = data.get(service.user_id_field, None)
+
+    user_id = d.get(service.user_id_field, None)
     if not email or not user_id:
         raise Exception('Email or User ID not found.')
+
     token, created = Token.objects.get_or_create(
         service=service,
         user_id=user_id,
     )
     token.access_token = access_token
-    token.data = json.loads(response.text)
+    token.data = data
     token.email = email
     token.save()
 
@@ -99,12 +97,32 @@ def process_access_token(request, service, response):
     else:
         headers = None
 
-    response = requests.get(service.data_uri % access_token, headers=headers)
-    return process_data(request, service, access_token, response)
+    data = {}
+    for data_uri in service.data_uri.split():
+        response = requests.get(data_uri % access_token, headers=headers)
+
+        if response.status_code != requests.codes.ok:
+            raise Exception('Response status code not equal ok.')
+
+        response = json.loads(response.text)
+        while isinstance(response, list) or isinstance(response, dict) and len(response) == 1:
+            array = response if isinstance(response, list) else list(response.values())
+            response = array[0]
+            for d in array[1:]:
+                if not isinstance(response, dict):
+                    break
+                if not isinstance(d, dict):
+                    continue
+                if d.get('primary') and not response.get('primary'):
+                    response = d
+
+        data.update(response)
+
+    return process_data(request, service, access_token, data)
 
 
 def response(request, name):
-    service = get_object_or_404(Service, name=name)
+    service = get_object_or_404(Service.active_objects, name=name)
     state = request.session.get(service.state_field, None)
     try:
         if state is None or state != request.GET.get('state'):
@@ -133,7 +151,7 @@ def login(request):
     if request.user.is_authenticated:
         return redirect(redirect_url)
 
-    services = Service.objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
+    services = Service.active_objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
 
     request.session['next'] = redirect_url
     return render(

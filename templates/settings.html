@@ -203,6 +203,7 @@
             <div class="value">
             {% for service in services %}
             {% with token=tokens|get_item:service.pk %}
+                {% if not service.disable or token %}
                 <div class="btn-block btn-group">
                     <a class="btn btn-default active service-icon-btn{% if token %} disabled{% endif %}"><i class="fab {{ service.fa_icon }}"></i></a>
                     <a {% if not token %}href="{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}social/"{% endif %} class="btn btn-default{% if token %} disabled{% endif %}">
@@ -212,6 +213,7 @@
                     <a href="{% url 'auth:unlink' service.name %}" class="btn btn-default"><i class="far fa-trash-alt"></i></a>
                     {% endif %}
                 </div>
+                {% endif %}
             {% endwith %}
             {% endfor %}
             </div>
