@@ -91,8 +91,8 @@ class ContestResource(BaseModelResource):
     end = fields.DateTimeField('end_time')
     duration = fields.DateTimeField('duration_in_secs', help_text='Time delta: Ex: "864000" or "10 days"')
     href = fields.CharField('url')
-    filtered = fields.BooleanField(help_text='use user filters')
-    category = fields.CharField(help_text=f'filter category (default: api, allowed {Filter.CATEGORIES})')
+    filtered = fields.BooleanField(help_text='Use user filters')
+    category = fields.CharField(help_text=f'Category to filter (default: api, allowed {Filter.CATEGORIES})')
 
     class Meta(BaseModelResource.Meta):
         abstract = False
