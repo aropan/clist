@@ -15,7 +15,6 @@
             </ul>
 
             <a class="btn btn-success" href="{% url "oauth2_provider:register" %}">{% trans "New Application" %}</a>
-            <a class="btn btn-default" href="{% url "oauth2_provider:authorized-token-list" %}">{% trans "Tokens" %}</a>
         {% else %}
             <p>{% trans "No applications defined" %}. <a href="{% url 'oauth2_provider:register' %}">{% trans "Click here" %}</a> {% trans "if you want to register a new one" %}</p>
         {% endif %}

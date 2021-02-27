@@ -201,6 +201,10 @@
 
             <div class="key">OAuth</div>
             <div class="value">
+                <div class="btn-block btn-group">
+                    <a class="btn btn-default active service-icon-btn disabled"><i class="fas fa-exchange-alt"></i></a>
+                    <a class="btn btn-default" href="{% url "oauth2_provider:authorized-token-list" %}">OAuth Tokens</a>
+                </div>
             {% for service in services %}
             {% with token=tokens|get_item:service.pk %}
                 {% if not service.disable or token %}
