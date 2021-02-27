@@ -10,6 +10,7 @@ django-imagefit==0.6.2
 django-jsonify==0.3.0
 django-ltree==0.5
 django-markdown-app==0.9.6
+django-oauth-toolkit==1.4.0
 django-phonenumber-field==2.2.0
 django-postgres-reindex-command==2020.12.3
 django-print-sql==2018.3.6
@@ -47,6 +48,7 @@ setuptools==45.2.0
 jsonfield==2.0.2
 git+https://github.com/piotrbilski/django-tastypie-swagger@dec9484d3ccb7c0bb00251a4ba67ca68dfa56ffc
 git+https://github.com/aropan/django-el-pagination@4clist
+git+https://github.com/orcasgit/django-tastypie-oauth@01c40de7b86ae3c6cc9e9463ec9bcecbb22b897e
 geopy==1.21.0
 cssutils==1.0.2
 unicodecsv==0.14.1

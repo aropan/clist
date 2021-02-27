@@ -9,7 +9,7 @@ def DebugPermissionOnlyMiddleware(get_response):
     def middleware(request):
         if not request.user.is_authenticated:
             first_path = request.path.split('/')[1]
-            if first_path not in ('login', 'signup', 'oauth',):
+            if first_path not in ('login', 'signup', 'oauth', 'o', 'api'):
                 return HttpResponseRedirect(reverse('auth:login') + f'?next={request.path}')
         elif not request.user.has_perm('auth.view_debug'):
             return HttpResponseForbidden()

@@ -92,7 +92,9 @@ INSTALLED_APPS = (
     'django_ltree',
     'imagefit',
     'webpush',
-    'django_postgres_reindex_command'
+    'django_postgres_reindex_command',
+    'oauth2_provider',
+    'tastypie_oauth',
 )
 
 MIDDLEWARE = (

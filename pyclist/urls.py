@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 
 
 from pyclist.sitemaps import sitemaps
+from pyclist.views import test
 
 
 admin.autodiscover()
@@ -32,6 +33,8 @@ urlpatterns = [
     url(r'^imagefit/', include('imagefit.urls')),
     url(r'^webpush/', include('webpush.urls')),
 
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+
     path('sitemap.xml',
          sitemap if settings.DEBUG else cache_page(86400)(sitemap),
          {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
@@ -42,4 +45,5 @@ if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
         url(r'^__debug__/', include(debug_toolbar.urls)),
+        url(r'__test__/', test, name='__test__'),
     ] + urlpatterns

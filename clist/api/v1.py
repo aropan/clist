@@ -4,6 +4,7 @@ from pytimeparse.timeparse import timeparse
 from tastypie import fields, http
 from tastypie.resources import NamespacedModelResource as ModelResource, ALL_WITH_RELATIONS
 from tastypie.authentication import ApiKeyAuthentication, SessionAuthentication, MultiAuthentication
+from tastypie_oauth.authentication import OAuth2ScopedAuthentication
 from tastypie.throttle import CacheThrottle
 
 
@@ -47,7 +48,15 @@ class BaseModelResource(ModelResource):
 
         throttle = CacheThrottle(throttle_at=10, timeframe=60)
 
-        authentication = MultiAuthentication(ApiKeyAuthentication(), SessionAuthentication())
+        authentication = MultiAuthentication(
+            ApiKeyAuthentication(),
+            SessionAuthentication(),
+            OAuth2ScopedAuthentication(
+                post=('read write', ),
+                get=('read', ),
+                put=('read', 'write'),
+            ),
+        )
 
     def _handle_500(self, request, exception):
         data = {'error_message': str(exception)}
