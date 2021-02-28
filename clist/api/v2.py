@@ -2,6 +2,7 @@ from pytimeparse.timeparse import timeparse
 from django.conf.urls import url
 from django.urls import reverse
 from tastypie.utils import trailing_slash
+from tastypie.exceptions import BadRequest
 from tastypie import fields
 from django.db.models.functions import Cast
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
@@ -174,7 +175,7 @@ class StatisticsResource(BaseModelResource):
             if applicable_filters.get(f'{k}'):
                 break
         else:
-            raise Exception(f'One of {[k.split("__")[0] for k in one_of]} is required')
+            raise BadRequest(f'One of {[k.split("__")[0] for k in one_of]} is required')
 
         rating_change_isnull = applicable_filters.pop('rating_change__isnull', None)
         new_rating_isnull = applicable_filters.pop('new_rating__isnull', None)
