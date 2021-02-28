@@ -45,6 +45,11 @@
 
 {% block content %}
 <div class="info">
+    {% with api_url="clist:api:latest:index"|url %}
+    {% if request.path != api_url %}
+    <div class="alert alert-warning text-center lead">Use the <a href="{{ api_url }}">latest</a> API version</div>
+    {% endif %}
+    {% endwith %}
     <div class="title">authentication</div>
     <div class="text">API key is needed to access API (<a href="{% url 'auth:login' %}" id="show-api-key">show my api-key</a>). There is also access without api-key through session on this website. You can get access API from other user throught <a href="{% url 'oauth2_provider:list' %}">OAuth</a>.
     {% if user.is_authenticated %}

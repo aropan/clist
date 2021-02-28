@@ -185,7 +185,7 @@ class Contest(models.Model):
     host = models.CharField(max_length=255)
     uid = models.CharField(max_length=100, null=True, blank=True)
     edit = models.CharField(max_length=100, null=True, blank=True)
-    invisible = models.BooleanField(default=False)
+    invisible = models.BooleanField(default=False, db_index=True)
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
     info = JSONField(default=dict, blank=True)
@@ -204,6 +204,7 @@ class Contest(models.Model):
         unique_together = ('resource', 'key', )
 
         indexes = [
+            models.Index(fields=['invisible']),
             models.Index(fields=['start_time']),
             models.Index(fields=['end_time']),
             models.Index(fields=['updated']),

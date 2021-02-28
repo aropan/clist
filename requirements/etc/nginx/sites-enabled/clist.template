@@ -80,6 +80,7 @@ server {
   location / {
     proxy_set_header Host ${DOLLAR}host;
     proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+    proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
     proxy_pass http://devclist;
   }
 

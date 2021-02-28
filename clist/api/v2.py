@@ -1,21 +1,41 @@
 from pytimeparse.timeparse import timeparse
 from tastypie import fields
-from tastypie.resources import ALL_WITH_RELATIONS
 
 from clist.models import Resource, Contest
 from true_coders.models import Filter
-from clist.api.common import BaseModelResource
+from ranking.models import Account
+from clist.api.common import BaseModelResource as CommmonBaseModuelResource
+from clist.api.paginator import EstimatedCountPaginator
+
+
+class BaseModelResource(CommmonBaseModuelResource):
+
+    class Meta(CommmonBaseModuelResource.Meta):
+        paginator_class = EstimatedCountPaginator
+
+    def build_filters(self, filters=None, *args, **kwargs):
+        filters = filters or {}
+        filters.pop('total_count', None)
+        return super().build_filters(filters, *args, **kwargs)
+
+    def dehydrate(self, *args, **kwargs):
+        bundle = super().dehydrate(*args, **kwargs)
+        bundle.data.pop('total_count', None)
+        return bundle
 
 
 class ResourceResource(BaseModelResource):
     name = fields.CharField('host')
     icon = fields.CharField('icon')
+    total_count = fields.BooleanField()
 
     class Meta(BaseModelResource.Meta):
         abstract = False
         queryset = Resource.objects.all()
         resource_name = 'resource'
+        excludes = ('total_count', )
         filtering = {
+            'total_count': ['exact'],
             'id': ['exact', 'in'],
             'name': ['exact', 'iregex', 'regex', 'in'],
         }
@@ -28,7 +48,7 @@ class ResourceResource(BaseModelResource):
 
 
 class ContestResource(BaseModelResource):
-    resource = fields.ForeignKey(ResourceResource, 'resource', full=True)
+    resource_id = fields.IntegerField('resource_id')
     event = fields.CharField('title')
     start = fields.DateTimeField('start_time')
     end = fields.DateTimeField('end_time')
@@ -36,15 +56,17 @@ class ContestResource(BaseModelResource):
     href = fields.CharField('url')
     filtered = fields.BooleanField(help_text='Use user filters')
     category = fields.CharField(help_text=f'Category to filter (default: api, allowed {Filter.CATEGORIES})')
+    total_count = fields.BooleanField()
 
     class Meta(BaseModelResource.Meta):
         abstract = False
         queryset = Contest.visible.all()
         resource_name = 'contest'
-        excludes = ('filtered', 'category', )
+        excludes = ('filtered', 'category', 'total_count', )
         filtering = {
+            'total_count': ['exact'],
             'id': ['exact', 'in'],
-            'resource': ALL_WITH_RELATIONS,
+            'resource_id': ['exact', 'in'],
             'event': ['exact', 'iregex', 'regex'],
             'start': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
             'end': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
@@ -95,6 +117,26 @@ class ContestResource(BaseModelResource):
                 filter_ = ~filter_
             query_set = query_set.filter(filter_)
 
-        query_set = query_set.select_related('resource')
-
         return query_set
+
+
+class AccountResource(BaseModelResource):
+    resource_id = fields.IntegerField('resource_id')
+    handle = fields.CharField('key')
+    name = fields.CharField('name', null=True)
+    rating = fields.IntegerField('rating', null=True)
+    total_count = fields.BooleanField()
+
+    class Meta(BaseModelResource.Meta):
+        abstract = False
+        queryset = Account.objects.all()
+        resource_name = 'account'
+        excludes = ('total_count', )
+        filtering = {
+            'total_count': ['exact'],
+            'id': ['exact', 'in'],
+            'resource_id': ['exact', 'in'],
+            'handle': ['exact', 'iregex', 'regex'],
+            'rating': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
+        }
+        ordering = ['id', 'handle', 'rating']

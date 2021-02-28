@@ -16,6 +16,7 @@ from os import path, environ
 
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import UnorderedObjectListWarning
+from stringcolor import cs
 
 from pyclist import conf
 
@@ -115,6 +116,7 @@ if DEBUG:
         'pyclist.middleware.DebugPermissionOnlyMiddleware',
         'django_cprofile_middleware.middleware.ProfilerMiddleware',
     )
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ROOT_URLCONF = 'pyclist.urls'
 
@@ -231,6 +233,10 @@ LOGGING = {
             'format': '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
+        'db': {
+            'format': str(cs('[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s', 'grey')),
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
     },
     'handlers': {
         'null': {
@@ -247,6 +253,12 @@ LOGGING = {
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+        },
+        'db': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'db',
         },
         'development': {
             'level': 'DEBUG',
@@ -297,6 +309,11 @@ LOGGING = {
             'handlers': ['console', 'development', 'production'],
             'level': 'ERROR',
         },
+        'django.db.backends': {
+            'handlers': ['db'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         '': {
             'handlers': ['console', 'development', 'production'],
             'level': 'DEBUG',
@@ -337,13 +354,13 @@ if DEBUG:
     MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
     INTERNAL_IPS = ['dev.clist.by', 'localhost', '127.0.0.1', '::1']
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda request: (
-            request.user.is_authenticated
-            and request.user.has_perm('view_django_debug_toolbar')
-            and ('debug_toolbar' in request.GET or '/__debug__' in request.path)
-        ),
-    }
+    # DEBUG_TOOLBAR_CONFIG = {
+    #     'SHOW_TOOLBAR_CALLBACK': lambda request: (
+    #         request.user.is_authenticated
+    #         and request.user.has_perm('view_django_debug_toolbar')
+    #         and ('debug_toolbar' in request.GET or '/__debug__' in request.path)
+    #     ),
+    # }
 
 
 # DJANGO CPROFILE

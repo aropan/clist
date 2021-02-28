@@ -63,3 +63,4 @@ sqlparse==0.3.0
 pytesseract==0.3.7
 python-dateutil==2.8.0
 scikit-image==0.17.2
+string-color==1.2.1
