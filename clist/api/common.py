@@ -41,6 +41,7 @@ class BaseModelResource(ModelResource):
         abstract = True
         limit = 100
         include_resource_uri = False
+        include_absolute_url = False
         allowed_methods = ['get']
         fields = ['id']
 

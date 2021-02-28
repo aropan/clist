@@ -58,8 +58,9 @@
     <a href="{{ addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
   {% endif %}
 
-  {% if perms.ranking.statistics_change and statistic %}
-    <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
-  {% endif %}
 </div>
+{% if perms.ranking.statistics_change and statistic %}
+  <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+{% endif %}
+
 {% endwith %}

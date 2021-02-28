@@ -13,6 +13,8 @@ api_v2 = Api(api_name='v2', urlconf_namespace=f'{app_name}:api:v2')
 api_v2.register(v2.ResourceResource())
 api_v2.register(v2.ContestResource())
 api_v2.register(v2.AccountResource())
+api_v2.register(v2.CoderResource())
+api_v2.register(v2.StatisticsResource())
 
 apis = [api_v2, api_v1]
 
