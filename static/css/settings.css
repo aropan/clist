@@ -52,7 +52,11 @@
 }
 
 .notification {
-    line-height: 2.5;
+    margin-top: 7px;
+}
+
+.notification .label {
+    font-size: 100%;
 }
 
 #accounts-tab>div {

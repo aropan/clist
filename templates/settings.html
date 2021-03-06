@@ -115,7 +115,7 @@
         </div>
         <div id="filters-tab" class="tab-pane{% if tab == 'filters' %} active{% endif %}">
             <div class="key">
-                <a href="#" id="add-filter" class="btn btn-primary btn-sm">Create</a>
+                <a href="#" id="add-filter" class="btn btn-primary">Create</a>
                 <i rel="tooltip" title="Filters of events that you want to show or hide."></i>
                 <span class="small">
                     Resulting filter looks like <span class="badge alert-success">not (hide<sub>1</sub> or hide<sub>2</sub> or ... hide<sub>n</sub>) and (show<sub>1</sub> or show<sub>2</sub> or ... or show<sub>m</sub>)</span>
@@ -135,21 +135,25 @@
         <div id="notifications-tab" class="tab-pane{% if tab == 'notifications' %} active{% endif %}">
             <div id="notifications" class="value">
                 {% if not notification_form.errors %}
-                <a id="add-filter" class="btn btn-primary btn-sm" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>
+                <a id="add-notification" class="btn btn-primary" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>
                 {% endif %}
                 <div id="notification-form"{% if not notification_form.errors %} class="collapse"{% endif %}>
                     {% crispy notification_form %}
                 </div>
-                {% for n in coder.notification_set.all %}
+                {% for n in coder_notifications %}
                 <div class="notification">
-                    <span class="label label-info">{{ n.method }}</span>
-                    before <span class="label label-info">{{ n.before }}</span> minute(s)
-                    once a <span class="label label-info">{{ n.get_period_display|lower }}</span>
+                    <span class="label label-info" data-value="method"{% if n.method in custom_categories %} title="{{ custom_categories|get_item:n.method }}"{% endif %} data-toggle="tooltip">{{ n.method }}</span>
+                    before <span class="label label-info" data-value="before">{{ n.before }}</span> minute(s)
+                    once a <span class="label label-info" data-value="period">{{ n.get_period_display|lower }}</span>
                     <span class="checkin">
                     {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}
                     </span>
-                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-default btn-sm"><i class="far fa-trash-alt"></i></a>
-                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-default btn-sm"><i class="fas fa-redo-alt"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="edit-notification" class="edit-notification btn btn-default"><i class="fas fa-pen"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-default"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-default"><i class="fas fa-sync-alt"></i></a>
+                    {% if perms.notification.change_notification %}
+                      <a href="{% url 'admin:notification_notification_change' n.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

@@ -366,9 +366,13 @@ def settings(request, tab=None):
     notification_form = NotificationForm(coder)
     if request.method == 'POST':
         if request.POST.get('action', None) == 'notification':
-            notification_form = NotificationForm(coder, request.POST)
+            pk = request.POST.get('pk')
+            instance = Notification.objects.get(pk=pk) if pk else None
+            notification_form = NotificationForm(coder, request.POST, instance=instance)
             if notification_form.is_valid():
                 notification = notification_form.save(commit=False)
+                if pk:
+                    notification.last_time = timezone.now()
                 if notification.method == django_settings.NOTIFICATION_CONF.TELEGRAM and not coder.chat:
                     return HttpResponseRedirect(django_settings.HTTPS_HOST_ + reverse('telegram:me'))
                 notification.coder = coder
@@ -391,6 +395,9 @@ def settings(request, tab=None):
         if selected_account:
             selected_account = Account.objects.filter(resource=selected_resource, key=selected_account).first()
 
+    categories = coder.get_categories()
+    custom_categories = {f'telegram:{c.chat_id}': c.title for c in coder.chat_set.filter(is_group=True)}
+
     return render(
         request,
         "settings.html",
@@ -401,7 +408,9 @@ def settings(request, tab=None):
             "coder": coder,
             "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,
-            "categories": coder.get_categories(),
+            "categories": categories,
+            "custom_categories": custom_categories,
+            "coder_notifications": coder.notification_set.order_by('method'),
             "notifications": coder.get_notifications(),
             "notification_form": notification_form,
             "modules": Module.objects.select_related('resource').order_by('resource__id').all(),

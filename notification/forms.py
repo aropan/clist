@@ -10,7 +10,7 @@ class NotificationForm(ModelForm):
 
     class Meta:
         model = Notification
-        exclude = ['coder']
+        exclude = ['coder', 'last_time', 'secret']
         help_texts = {
             'method': ('You can <a href="/settings#filtres-tab">configure filters</a> for each method'),
             'before': ('How much before event to send notifications'),
@@ -33,5 +33,6 @@ class NotificationForm(ModelForm):
         AppendedText('before', 'minute(s)', css_class='input-sm'),
         Field('period', css_class='input-sm'),
         Hidden('action', 'notification'),
+        Hidden('pk', ''),
         FormActions(Submit('add', 'Add', css_class='btn-primary'))
     )

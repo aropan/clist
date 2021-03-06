@@ -498,6 +498,19 @@ $(function() {
         return false
     })
 
+    var ntf_form = $('#notification-form')
+    var ntf_add = $('#add-notification')
+    $('.edit-notification').click(function() {
+        var ntf = $(this).closest('.notification')
+        ntf_form.find('[name="pk"]').val($(this).attr('data-id'))
+        ntf_form.find('[name="method"]').val(ntf.find('[data-value="method"]').text())
+        ntf_form.find('[name="period"]').val(ntf.find('[data-value="period"]').text())
+        ntf_form.find('[name="before"]').val(ntf.find('[data-value="before"]').text())
+        ntf_form.find('[name="add"]').val('Update')
+        ntf_add.remove()
+        ntf_form.show(300)
+    })
+
     function sentAction() {
         var $this = $(this)
         var $div = $this.parent()
