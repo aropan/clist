@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
-from logging import getLogger
 from notification.models import Notification, Task
 from traceback import format_exc
 from clist.models import Contest, TimingContest
 from tqdm import tqdm
+
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -32,6 +35,7 @@ class Command(BaseCommand):
         parser.add_argument('--coders', nargs='+')
         parser.add_argument('--dryrun', action='store_true', default=False)
         parser.add_argument('--methods', nargs='+')
+        parser.add_argument('--reset', action='store_true', default=False)
 
     @print_sql_decorator()
     def handle(self, *args, **options):
@@ -39,25 +43,26 @@ class Command(BaseCommand):
         dryrun = options.get('dryrun')
         methods = options.get('methods')
 
-        self.logger = getLogger('notification.send.notice')
-
         updates = Contest.visible\
             .filter(start_time__gte=timezone.now()) \
             .filter(Q(timing=None) | Q(modified__gt=F('timing__notification'))) \
             .order_by('start_time')
 
         now = timezone.now()
+        if dryrun:
+            logger.debug(f'now = {now}')
 
         notifies = Notification.objects.all()
         if coders is not None:
             notifies = notifies.filter(coder__user__username__in=coders)
-            if dryrun:
-                notifies.update(last_time=now)
-        if not updates:
-            notifies = notifies.filter(last_time__isnull=False, last_time__lte=now)
-
         if methods:
             notifies = notifies.filter(method__in=methods)
+        if dryrun and options.get('reset'):
+            notifies.update(last_time=now)
+        if not updates:
+            notifies = notifies.filter(last_time__isnull=False, last_time__lte=now)
+        elif dryrun:
+            logger.debug(f'updates = {updates}')
 
         notifies = notifies.select_related('coder')
         for notify in tqdm(notifies.iterator()):
@@ -87,14 +92,21 @@ class Command(BaseCommand):
 
                 first = qs.first()
                 if not first:
-                    notify.last_time = None
-                    notify.save()
+                    if dryrun:
+                        logger.debug(f'last_time = {notify.last_time} to none')
+                    else:
+                        notify.last_time = None
+                        notify.save()
                     continue
 
                 delta = first.start_time - (now + before)
-                if delta > timedelta(minutes=3) and not dryrun:
-                    notify.last_time = first.start_time - before - timedelta(minutes=1)
-                    notify.save()
+                if delta > timedelta(minutes=3):
+                    new_time = first.start_time - before - timedelta(minutes=1)
+                    if dryrun:
+                        logger.debug(f'last_time = {notify.last_time} to {new_time}')
+                    else:
+                        notify.last_time = new_time
+                        notify.save()
                     continue
 
                 if notify.period == Notification.EVENT:
@@ -103,17 +115,22 @@ class Command(BaseCommand):
                     last = before + notify.get_delta()
                 qs = qs.filter(start_time__lt=now + last)
 
-                self.process(notify, qs)
-
-                notify.last_time = now + last - before
-                notify.save()
+                new_time = now + last - before
+                if dryrun:
+                    logger.debug(f'qs = {qs}')
+                    logger.debug(f'last_time = {notify.last_time} to {new_time}')
+                else:
+                    self.process(notify, qs)
+                    notify.last_time = new_time
+                    notify.save()
             except Exception:
-                self.logger.error('Exception send notice:\n%s' % format_exc())
+                logger.error('Exception send notice:\n%s' % format_exc())
 
-        with transaction.atomic():
-            now = timezone.now()
-            for contest in updates:
-                TimingContest.objects.update_or_create(
-                    contest=contest,
-                    defaults={'notification': now}
-                )
+        if not dryrun:
+            with transaction.atomic():
+                now = timezone.now()
+                for contest in updates:
+                    TimingContest.objects.update_or_create(
+                        contest=contest,
+                        defaults={'notification': now}
+                    )

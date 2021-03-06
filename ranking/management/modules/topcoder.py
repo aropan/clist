@@ -10,7 +10,7 @@ from lxml import etree
 from datetime import timedelta, datetime
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
-from time import sleep, time
+from time import sleep
 
 import tqdm
 
@@ -27,11 +27,21 @@ class Statistic(BaseModule):
         self._handle = conf.TOPCODER_HANDLE
         self._password = conf.TOPCODER_PASSWORD
 
-        cookies = {
-            cookie.name for cookie in REQ.get_raw_cookies()
-            if 'topcoder.com' in cookie.domain and (cookie.expires is None or cookie.expires > time())
-        }
-        raise InitModuleException('blabla')
+        new_expires = int((datetime.now() + timedelta(days=100)).timestamp())
+        for c in REQ.get_raw_cookies():
+            if 'topcoder.com' in c.domain:
+                print(c.name, datetime.fromtimestamp(c.expires))
+                c.expires = max(c.expires, new_expires)
+                REQ.update_cookie(c)
+        # cookies = {
+        #     cookie.name for cookie in REQ.get_raw_cookies()
+        #     if 'topcoder.com' in cookie.domain
+        #     and (
+        #         cookie.expires is None
+        #         or cookie.expires > datetime.now().timestamp()
+        #     )
+        # }
+        # assert 'tcjwt' in cookies or 'tcsso' in cookies
         # if 'tcjwt' not in cookies or 'tcsso' not in cookies:
         #     page = REQ.get('https://topcoder.com/login')
         #     match = re.search(r'src="(app\.[^"]*.js|[^"]*setupAuth0WithRedirect.js)"', page)
@@ -205,7 +215,7 @@ class Statistic(BaseModule):
                                     writers[w] += 1
                             except Exception as e:
                                 errors.add(f'error parse problem info {p}: {e}')
-                                sleep(5**attempt)
+                                sleep(5 + attempt)
                         else:
                             errors = None
                         if errors:
@@ -280,19 +290,27 @@ class Statistic(BaseModule):
                             sleep(i * 10 + 3)
                     return None
 
+                n_failed_fetch_info = 0
+
                 def fetch_info(url):
+                    nonlocal n_failed_fetch_info
+                    if n_failed_fetch_info > 10:
+                        return
                     delay = 10
-                    for _ in range(5):
+                    for _ in range(3):
                         try:
                             page = REQ.get(url, time_out=delay)
                             break
                         except Exception:
-                            sleep(delay)
-                            delay *= 2
+                            sleep(delay + _)
                     else:
+                        n_failed_fetch_info += 1
                         return
 
                     match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE)
+                    if not match:
+                        n_failed_fetch_info += 1
+                        return
                     handle = html.unescape(match.group('handle').strip())
 
                     match = re.search(r'&nbsp;Room\s*(?P<room>[0-9]+)', page)

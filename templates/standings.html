@@ -25,8 +25,11 @@
 
 <div class="container">
 
+  {% with neighbors=contest.neighbors %}
   <h3 id="standings-title" class="text-center">
-    {% include "standings_neighbors.html" with contests=neighbors.before %}
+    {% if with_neighbors %}
+    {% for c in neighbors %}{% if c.end_time < contest.end_time %}{% include "standings_neighbors.html" with contest=c %}{% endif %}{% endfor %}
+    {% endif %}
 
     <div>
     Standings
@@ -34,9 +37,7 @@
     <span id="standings-url"></span>
     <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
 
-    {% if neighbors.total %}
-    <a href="#" id="standings-url-toggle" class="badge progress-bar-info">{{ neighbors.total }}&nbsp;<i class="fa fa-caret-{% if neighbors.visible %}up{% else %}down{% endif %}"></i></a>
-    {% endif %}
+    <a href="?{% query_transform request "neighbors" with_neighbors|yesno:"off,on" with_replace=True %}" class="badge progress-bar-info"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></a>
 
     <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
       <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
@@ -47,8 +48,11 @@
     {% endif %}
     </div>
 
-    {% include "standings_neighbors.html" with contests=neighbors.after %}
+    {% if with_neighbors %}
+    {% for c in neighbors %}{% if not c.end_time < contest.end_time %}{% include "standings_neighbors.html" with contest=c %}{% endif %}{% endfor %}
+    {% endif %}
   </h3>
+  {% endwith %}
 
   {% with writers=contest.writers.all %}
   {% if writers %}
@@ -69,12 +73,6 @@
       })
     }
     update_neighbors_standings_url_offset()
-    $(window).on('resize', update_neighbors_standings_url_offset)
-    $('#standings-url-toggle').click(function() {
-      $(this).children('i').toggleClass('fa-caret-down').toggleClass('fa-caret-up')
-      $('.neighbors-contests').slideToggle(200, 'linear', function() { $(window).resize() });
-      update_neighbors_standings_url_offset()
-    })
   </script>
 
   {% if contest.is_running and not contest.is_over %}
@@ -93,7 +91,9 @@
           <thead>
             <tr class="header-row">
               <th{% if merge_problems %} rowspan="2"{% endif %}>
-                <span{% if contest.n_statistics %} title="Total: {{ contest.n_statistics }}" data-toggle="tooltip" data-placement="top"{% endif %}>Rank</span>
+                {% with division=params|get_item:"division" %}
+                <span{% if contest.n_statistics %} title="Total: {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}" data-toggle="tooltip" data-placement="top"{% endif %}>Rank</span>
+                {% endwith %}
               </th>
               {% if data_1st_u %}
               <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if data_1st_u.title %} title="{{ data_1st_u.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ data_1st_u.header|default:"1st U" }}</span></th>

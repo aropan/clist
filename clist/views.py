@@ -88,6 +88,10 @@ def get_view_contests(request, coder):
     if group is not None:
         group_list = bool(group)
 
+    base_contests = Contest.visible.filter(user_contest_filter)
+    if request.user.has_perm('reset_contest_statistic_timing'):
+        base_contests = base_contests.select_related('timing')
+
     now = timezone.now()
     result = []
     for group, query, order, limit in (
@@ -95,7 +99,7 @@ def get_view_contests(request, coder):
         ("coming", Q(start_time__gt=now), "start_time", None),
     ):
         group_by_resource = {}
-        contests = Contest.visible.filter(query).filter(user_contest_filter).order_by(order)
+        contests = base_contests.filter(query).order_by(order)
         contests = contests.select_related('resource')
         contests = contests.annotate(has_statistics=Exists('statistics'))
         if limit:

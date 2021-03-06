@@ -14,7 +14,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django_ltree.fields import PathField
-from sql_util.utils import Exists
 from PIL import Image
 
 
@@ -209,6 +208,9 @@ class Contest(models.Model):
             models.Index(fields=['end_time']),
             models.Index(fields=['updated']),
             models.Index(fields=['n_statistics', 'updated']),
+            models.Index(fields=['resource', 'end_time', 'id']),
+            models.Index(fields=['resource', 'start_time', 'id']),
+            models.Index(fields=['title']),
             GistIndexTrgrmOps(fields=['title']),
         ]
 
@@ -311,31 +313,41 @@ class Contest(models.Model):
         viewed = set()
         Contest.title_neighbors_(self.title, deep=1, viewed=viewed)
 
-        cond = Q()
-        for title in viewed:
-            cond |= Q(title=title)
+        qs = None
+
+        def add(q):
+            nonlocal qs
+            if qs is None:
+                qs = q
+            else:
+                qs = qs | q
+
+        viewed.discard(self.title)
+        if viewed:
+            cond = Q()
+            for title in viewed:
+                cond |= Q(title=title)
+            add(Contest.objects.filter(cond))
 
         resource_contests = Contest.objects.filter(resource=self.resource_id)
-        resource_contests = resource_contests.annotate(has_statistics=Exists('statistics')).filter(has_statistics=True)
 
         for query, order in (
-            (Q(end_time__lt=self.start_time), '-end_time'),
-            (Q(start_time__gt=self.end_time), 'start_time'),
+            (Q(end_time__lt=self.end_time), '-end_time'),
+            (Q(end_time__gt=self.end_time), 'start_time'),
         ):
-            c = resource_contests.filter(query).order_by(order).first()
-            if c:
-                cond |= Q(pk=c.pk)
+            q = resource_contests.filter(query).order_by(order)
+            add(q[:1])
 
             if self.title_path is not None:
-                qs = resource_contests.filter(query).exclude(title=self.title)
-                qs = qs.extra(select={'lcp': f'''nlevel(lca(title_path, '{self.title_path}'))'''})
-                qs = qs.order_by('-lcp', order)
-                c = qs.first()
-                if c and c.lcp:
-                    cond |= Q(pk=c.pk)
+                q = resource_contests.filter(query)
+                q = q.extra(select={'lcp': f'''nlevel(lca(title_path, '{self.title_path}'))'''})
+                q = q.order_by('-lcp', order)
+                add(q[:1])
 
-        qs = resource_contests.filter(cond).exclude(pk=self.pk).order_by('end_time')
-
+        if qs is not None:
+            qs = qs.order_by('end_time')
+        else:
+            qs = []
         return qs
 
 

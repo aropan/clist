@@ -721,6 +721,9 @@ class requester():
                 self.print("[setcookie]", name)
                 break
 
+    def update_cookie(self, c):
+        self.cookiejar.set_cookie(c)
+
     def add_cookie(self, name, value, domain=None, path='/', expires=None):
         if expires is None:
             expires = (datetime.now() + timedelta(days=365)).timestamp()

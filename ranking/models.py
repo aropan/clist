@@ -9,11 +9,13 @@ import tqdm
 from django.db import models, transaction
 from django.db.models import F
 from django.db.models.signals import pre_save, m2m_changed, post_save, post_delete
+from django.db.models.functions import Upper
 from django.dispatch import receiver
 from django.urls import reverse
 from django.contrib.postgres.fields import JSONField
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
+from django_expression_index import ExpressionIndex
 
 
 from pyclist.models import BaseModel
@@ -73,6 +75,7 @@ class Account(BaseModel):
         indexes = [
             GistIndexTrgrmOps(fields=['key']),
             GistIndexTrgrmOps(fields=['name']),
+            ExpressionIndex(expressions=[Upper('key')]),
             models.Index(fields=['resource', 'country']),
             models.Index(fields=['resource', 'last_activity', 'country']),
             models.Index(fields=['resource', 'n_contests', '-id']),
@@ -289,6 +292,7 @@ class Stage(BaseModel):
         ).exclude(pk=self.contest.pk)
 
         contests = contests.order_by('start_time')
+        contests = contests.prefetch_related('writers')
 
         placing = self.score_params.get('place')
         n_best = self.score_params.get('n_best')
@@ -516,6 +520,8 @@ class Stage(BaseModel):
 
                     pbar.update()
 
+        for writer in contest.writers.all():
+            account_keys[writer.key] = writer
         total = sum([len(contest.info.get('writers', [])) for contest in contests])
         with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar, print_sql(count_only=True):
             writers = set()
@@ -529,8 +535,11 @@ class Stage(BaseModel):
                     if writer in account_keys:
                         account = account_keys[writer]
                     else:
-                        account = Account.objects.filter(resource_id=contest.resource_id,
-                                                         key__iexact=writer).first()
+                        try:
+                            account = Account.objects.get(resource_id=contest.resource_id, key__iexact=writer)
+                        except Account.DoesNotExist:
+                            account = None
+
                     pbar.update()
                     if not account:
                         continue

@@ -12,7 +12,9 @@
         $urls[] = $url;
 
         if (!preg_match('#contest will start(?:\s*at|\s*on)\s*(?:<a[^>]*>)?(?P<start_time>[^<.]{4,})#', $page, $match)) {
-            preg_match('#<script[^>]*src="(?P<url>/static/js/main\.[^"]*\.js)"[^>]*>#', $page, $match);
+            if (!preg_match('#<script[^>]*src="(?P<url>/static/js/main\.[^"]*\.js)"[^>]*>#', $page, $match)) {
+                continue;
+            }
             $js = curlexec($match['url']);
             if (!preg_match('#"on\s*(?P<start_time>[^,"]*,[^@"]*@[^"]*)"#', $js, $match)) {
                 continue;

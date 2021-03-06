@@ -606,3 +606,9 @@ class LinebreaklessNode(Node):
     def render(self, context):
         strip_line_breaks = keep_lazy(six.text_type)(lambda x: x.replace('\n', ''))
         return strip_line_breaks(self.nodelist.render(context).strip())
+
+
+@register.simple_tag
+def call_method(obj, method_name, *args, **kwargs):
+    method = getattr(obj, method_name)
+    return method(*args, **kwargs)

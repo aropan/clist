@@ -50,6 +50,7 @@ class Statistic(BaseModule):
 
         result = {}
         prev = None
+        skip = 0
         handles_to_get_new_rating = []
         has_rated = data.get('is_rated', True) or data.get('has_rating', True)
         has_rating = False
@@ -57,6 +58,7 @@ class Statistic(BaseModule):
         for index, r in enumerate(rankings, start=1):
             solutions = r.pop('solutions')
             if not any(solutions):
+                skip += 1
                 continue
             handle = r.pop('user')
             row = result.setdefault(handle, collections.OrderedDict())
@@ -70,7 +72,7 @@ class Statistic(BaseModule):
             curr = (row['solving'], cumtime)
             if curr != prev:
                 prev = curr
-                rank = index
+                rank = index - skip
             row['place'] = rank
 
             solved = 0

@@ -351,7 +351,7 @@ class Statistic(BaseModule):
 
             stime = row.get('submissiontime', {}).get('iMillis')
             if stime:
-                r['submission_time'] = stime / 1000
+                r['time'] = self.to_time(stime / 1000 - self.start_time.timestamp(), 3)
 
             if 'hubid' in row:
                 r['hub_id'] = row.pop('hubid')
@@ -359,7 +359,6 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'hidden_fields': ['hub_id'],
-            'fields_types': {'submission_time': ['time']},
             'problems': [],
         }
 

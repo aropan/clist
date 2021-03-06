@@ -17,7 +17,9 @@
     {% for stat in contest.stats %}
     <small>
         {% if stat.place %}
-        Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.n_statistics }}{% endif %}
+        {% with division=stat.addition|get_item:"division" %}
+        Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}{% endif %}
+        {% endwith %}
         {% endif %}
 
         {% with value=stat.addition.rating_change %}
