@@ -9,7 +9,7 @@
 <tr class="{% if statistic.my_stat %}info my-stat{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
 {% endwith %}
   {% with advance=addition|get_item:'_advance' %}
-  <{{ tag }}
+  <{{ tag }} class="place-cell"
     {% if addition.medal %}
       class="{{ addition.medal|lower }}-medal"
       {% with medal_title_field=addition|get_item:"_medal_title_field" %}
@@ -64,7 +64,7 @@
 
   {% for field in fields.keys %}
   {% with value=addition|get_item:field %}
-  <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-field"{% endif %}>
+  <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% endif %}>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     <span{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
     <span>

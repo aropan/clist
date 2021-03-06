@@ -85,7 +85,11 @@ table.standings .handle-cell {
   white-space: nowrap;
 }
 
-table.standings .rating-field {
+table.standings .rating-cell {
+  white-space: nowrap;
+}
+
+table.standings .place-cell {
   white-space: nowrap;
 }
 

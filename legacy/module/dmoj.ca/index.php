@@ -3,6 +3,9 @@
 
     $prefix_contest = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST) . "/contest/";
     $json = curlexec($URL, NULL, array("json_output" => true));
+    if (!$json || !is_array($json)) {
+        return;
+    }
     foreach ($json as $key => $data) {
         if (!isset($data["start_time"]) || !$data["start_time"]) {
             continue;
