@@ -120,7 +120,7 @@ $(function() {
         loading: function(bool) {
             $('#loading').toggle(bool)
         },
-        eventLimit: true,
+        eventLimit: event_limit,
         height: get_calendar_height()
     })
 

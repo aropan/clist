@@ -9,6 +9,7 @@
   party_contests_set = new Set([{% for i in party.contest_ids %}{% if forloop.counter0 %},{% endif %}{{ i }}{% endfor %}])
   has_permission_toggle_party_contests = {{ party.has_permission_toggle|default:0 }}
   add_to_calendar = {% if add_to_calendar %}"{{ add_to_calendar }}"{% else %}"disable"{% endif %}
+  event_limit = {{ request.user.coder.settings.event_limit_calendar|default:"true" }}
 </script>
 
 {% if add_to_calendar and add_to_calendar != "disable" %}
