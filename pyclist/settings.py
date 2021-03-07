@@ -78,8 +78,6 @@ INSTALLED_APPS = (
     'true_coders',
     'jsonify',  # https://pypi.python.org/pypi/django-jsonify/0.2.1
     'tastypie_swagger',
-    'blog',
-    'django_markdown',
     'tg',
     'notification',
     'crispy_forms',
@@ -354,14 +352,6 @@ if DEBUG:
     MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
     INTERNAL_IPS = ['dev.clist.by', 'localhost', '127.0.0.1', '::1']
-    # DEBUG_TOOLBAR_CONFIG = {
-    #     'SHOW_TOOLBAR_CALLBACK': lambda request: (
-    #         request.user.is_authenticated
-    #         and request.user.has_perm('view_django_debug_toolbar')
-    #         and ('debug_toolbar' in request.GET or '/__debug__' in request.path)
-    #     ),
-    # }
-
 
 # DJANGO CPROFILE
 DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False

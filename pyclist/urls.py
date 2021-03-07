@@ -20,7 +20,6 @@ urlpatterns = [
     url(r'', include('ranking.urls')),
     url(r'', include('events.urls')),
 
-    url(r'^markdown/', include('django_markdown.urls')),
     url(r'^telegram/', include('tg.urls')),
 
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

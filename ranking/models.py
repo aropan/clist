@@ -1,28 +1,28 @@
-import re
 import ast
 import collections
+import re
 from copy import deepcopy
 from pydoc import locate
 from urllib.parse import urljoin
 
 import tqdm
+from clist.models import Contest, Resource
+from clist.templatetags.extras import (add_prefix_to_problem_short,
+                                       get_number_from_str, get_problem_short,
+                                       slug)
+from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.db.models import F
-from django.db.models.signals import pre_save, m2m_changed, post_save, post_delete
 from django.db.models.functions import Upper
+from django.db.models.signals import (m2m_changed, post_delete, post_save,
+                                      pre_save)
 from django.dispatch import receiver
 from django.urls import reverse
-from django.contrib.postgres.fields import JSONField
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
-from django_expression_index import ExpressionIndex
-
-
+from pyclist.indexes import ExpressionIndex, GistIndexTrgrmOps
 from pyclist.models import BaseModel
-from pyclist.indexes import GistIndexTrgrmOps
 from true_coders.models import Coder, Party
-from clist.models import Contest, Resource
-from clist.templatetags.extras import slug, get_number_from_str, get_problem_short, add_prefix_to_problem_short
 
 
 class Account(BaseModel):

@@ -5,8 +5,9 @@ from urllib.parse import urlparse
 from collections import Counter
 
 from django.db import models
-from django_enumfield.enum import Enum
-from django_enumfield.db.fields import EnumField
+from django_enumfield import enum
+# from django_enumfield.enum import Enum
+# from django_enumfield.db.fields import EnumField
 from django.template.loader import get_template
 from django.core.mail import EmailMultiAlternatives
 from django.core.mail.backends.smtp import EmailBackend
@@ -14,6 +15,8 @@ from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import now
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
+from django.utils.functional import classproperty
+
 
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Organization
@@ -42,7 +45,7 @@ class Event(BaseModel):
         return urlparse(self.website_url).netloc
 
 
-class TshirtSize(Enum):
+class TshirtSize(enum.Enum):
     S = 1
     M = 2
     L = 3
@@ -50,7 +53,7 @@ class TshirtSize(Enum):
     XXL = 5
     XXXL = 6
 
-    labels = {
+    __labels__ = {
         S: 'S',
         M: 'M',
         L: 'L',
@@ -80,7 +83,7 @@ class Participant(BaseModel):
     date_of_birth = models.DateField(null=True, blank=True)
     organization = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.SET_NULL)
     country = CountryField(null=True, blank=True)
-    tshirt_size = EnumField(TshirtSize, null=True, blank=True)
+    tshirt_size = enum.EnumField(TshirtSize, null=True, blank=True)
     is_coach = models.BooleanField(default=False)
     addition_fields = JSONField(default=dict, blank=True)
 
@@ -94,7 +97,7 @@ class Participant(BaseModel):
         return TshirtSize.labels[self.tshirt_size] if self.tshirt_size else None
 
 
-class TeamStatus(Enum):
+class TeamStatus(enum.Enum):
     PENDING = 0
     EDITING = 1
     CANCELLED = 2
@@ -110,7 +113,7 @@ class TeamStatus(Enum):
     SCHOOL_FINAL = 13
     SCHOOL_SEMIFINAL = 15
 
-    labels = {
+    __labels__ = {
         PENDING: 'pending',
         EDITING: 'editing',
         CANCELLED: 'cancelled',
@@ -127,56 +130,62 @@ class TeamStatus(Enum):
         INVITED: 'invited',
     }
 
-    frame_labels = {
-        PENDING: 'pending',
-        EDITING: 'editing',
-        CANCELLED: 'cancelled',
-        QUALIFICATION: 'qualification',
-        QUARTERFINAL: 'quarterfinal',
-        SEMIFINAL: 'semifinal',
-        FINAL: 'final',
-        DISQUALIFIED: 'disqualified',
-        NEW: 'new',
-        ADD_COACH: 'coaching',
-        BSU_SEMIFINAL: 'semifinal',
-        INVITED: 'invited',
-        SCHOOL_FINAL: 'junior final',
-        SCHOOL_SEMIFINAL: 'junior semifinal',
-    }
+    @classproperty
+    def frame_labels(cls):
+        return {
+            cls.PENDING: 'pending',
+            cls.EDITING: 'editing',
+            cls.CANCELLED: 'cancelled',
+            cls.QUALIFICATION: 'qualification',
+            cls.QUARTERFINAL: 'quarterfinal',
+            cls.SEMIFINAL: 'semifinal',
+            cls.FINAL: 'final',
+            cls.DISQUALIFIED: 'disqualified',
+            cls.NEW: 'new',
+            cls.ADD_COACH: 'coaching',
+            cls.BSU_SEMIFINAL: 'semifinal',
+            cls.INVITED: 'invited',
+            cls.SCHOOL_FINAL: 'junior final',
+            cls.SCHOOL_SEMIFINAL: 'junior semifinal',
+        }
 
-    descriptions = {
-        PENDING: 'pending',
-        EDITING: 'pending',
-        CANCELLED: 'canceled',
-        QUALIFICATION: 'approved',
-        QUARTERFINAL: 'approved',
-        SEMIFINAL: 'approved',
-        FINAL: 'approved',
-        DISQUALIFIED: 'disqualified',
-        NEW: 'new',
-        ADD_COACH: 'new',
-        BSU_SEMIFINAL: 'approved',
-        INVITED: 'invited',
-        SCHOOL_FINAL: 'approved',
-        SCHOOL_SEMIFINAL: 'approved',
-    }
+    @classproperty
+    def descriptions(cls):
+        return {
+            cls.PENDING: 'pending',
+            cls.EDITING: 'pending',
+            cls.CANCELLED: 'canceled',
+            cls.QUALIFICATION: 'approved',
+            cls.QUARTERFINAL: 'approved',
+            cls.SEMIFINAL: 'approved',
+            cls.FINAL: 'approved',
+            cls.DISQUALIFIED: 'disqualified',
+            cls.NEW: 'new',
+            cls.ADD_COACH: 'new',
+            cls.BSU_SEMIFINAL: 'approved',
+            cls.INVITED: 'invited',
+            cls.SCHOOL_FINAL: 'approved',
+            cls.SCHOOL_SEMIFINAL: 'approved',
+        }
 
-    classes = {
-        PENDING: 'warning',
-        EDITING: 'warning',
-        CANCELLED: 'danger',
-        QUALIFICATION: 'success',
-        QUARTERFINAL: 'success',
-        SEMIFINAL: 'success',
-        FINAL: 'success',
-        DISQUALIFIED: 'danger',
-        NEW: 'default',
-        ADD_COACH: 'default',
-        BSU_SEMIFINAL: 'success',
-        INVITED: 'default',
-        SCHOOL_FINAL: 'success',
-        SCHOOL_SEMIFINAL: 'success',
-    }
+    @classproperty
+    def classes(cls):
+        return {
+            cls.PENDING: 'warning',
+            cls.EDITING: 'warning',
+            cls.CANCELLED: 'danger',
+            cls.QUALIFICATION: 'success',
+            cls.QUARTERFINAL: 'success',
+            cls.SEMIFINAL: 'success',
+            cls.FINAL: 'success',
+            cls.DISQUALIFIED: 'danger',
+            cls.NEW: 'default',
+            cls.ADD_COACH: 'default',
+            cls.BSU_SEMIFINAL: 'success',
+            cls.INVITED: 'default',
+            cls.SCHOOL_FINAL: 'success',
+            cls.SCHOOL_SEMIFINAL: 'success',
+        }
 
 
 class TeamManager(models.Manager):
@@ -202,7 +211,7 @@ class Team(BaseModel):
                               null=True,
                               blank=True,
                               on_delete=models.CASCADE)
-    status = EnumField(TeamStatus, default=TeamStatus.NEW)
+    status = enum.EnumField(TeamStatus, default=TeamStatus.NEW)
 
     objects = TeamManager()
 
@@ -313,7 +322,7 @@ class JoinRequest(BaseModel):
 
 class Login(BaseModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    stage = EnumField(TeamStatus)
+    stage = enum.EnumField(TeamStatus)
     username = models.CharField(max_length=256, null=False, unique=True)
     password = models.CharField(max_length=256, null=False)
     is_sent = models.BooleanField(default=False)
