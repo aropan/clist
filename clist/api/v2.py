@@ -1,18 +1,18 @@
-from pytimeparse.timeparse import timeparse
 from django.conf.urls import url
-from django.urls import reverse
-from tastypie.utils import trailing_slash
-from tastypie.exceptions import BadRequest
-from tastypie import fields
-from django.db.models.functions import Cast
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db.models import IntegerField
+from django.db.models.functions import Cast
+from django.urls import reverse
+from pytimeparse.timeparse import timeparse
+from tastypie import fields
+from tastypie.exceptions import BadRequest
+from tastypie.utils import trailing_slash
 
-from clist.models import Resource, Contest
-from true_coders.models import Coder, Filter
-from ranking.models import Account, Statistics
 from clist.api.common import BaseModelResource as CommmonBaseModuelResource
 from clist.api.paginator import EstimatedCountPaginator
+from clist.models import Contest, Resource
+from ranking.models import Account, Statistics
+from true_coders.models import Coder, Filter
 
 
 class BaseModelResource(CommmonBaseModuelResource):
@@ -242,9 +242,14 @@ class AccountResource(BaseModelResource):
         return qs
 
 
-def use_in_only_me(bundle, *args, **kwargs):
+def use_in_me_only(bundle, *args, **kwargs):
     url = reverse('clist:api:v2:api_dispatch_me', kwargs={'api_name': 'v2', 'resource_name': 'coder'})
     return url == bundle.request.path
+
+
+def use_in_detail_only(bundle, *args, **kwargs):
+    url = reverse('clist:api:v2:api_dispatch_list', kwargs={'api_name': 'v2', 'resource_name': 'coder'})
+    return not (url == bundle.request.path or use_in_me_only(bundle, *args, **kwargs))
 
 
 class CoderResource(BaseModelResource):
@@ -252,10 +257,10 @@ class CoderResource(BaseModelResource):
     first_name = fields.CharField('user__first_name')
     last_name = fields.CharField('user__last_name')
     country = fields.CharField('country')
-    timezone = fields.CharField('timezone', use_in=use_in_only_me)
-    email = fields.CharField('user__email', use_in=use_in_only_me)
+    timezone = fields.CharField('timezone', use_in=use_in_me_only)
+    email = fields.CharField('user__email', use_in=use_in_me_only)
     n_accounts = fields.IntegerField('n_accounts', use_in='list')
-    accounts = fields.ManyToManyField(AccountResource, 'account_set', use_in='detail', full=True)
+    accounts = fields.ManyToManyField(AccountResource, 'account_set', use_in=use_in_detail_only, full=True)
     total_count = fields.BooleanField()
 
     class Meta(BaseModelResource.Meta):
