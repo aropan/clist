@@ -1,37 +1,37 @@
 import collections
-import re
 import json
 import logging
+import re
 
 import pytz
 from django.conf import settings as django_settings
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import transaction
+from django.db.models import BooleanField, Case, Count, F, IntegerField, OuterRef, Prefetch, Q, Value, When
 from django.db.models.functions import Cast
-from django.db.models import Count, F, Q, Case, When, Value, OuterRef, BooleanField, IntegerField, Prefetch
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from tastypie.models import ApiKey
 from django_countries import countries
-from el_pagination.decorators import page_templates, page_template
-from sql_util.utils import SubqueryMax, SubqueryCount, SubquerySum, Exists
+from el_pagination.decorators import page_template, page_templates
+from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
+from tastypie.models import ApiKey
 
-from clist.models import Resource, Contest
-from clist.templatetags.extras import get_timezones, format_time, slug as slugify, query_transform
-from clist.views import get_timezone, get_timeformat, main
+from clist.models import Contest, Resource
+from clist.templatetags.extras import format_time, get_timezones, query_transform
+from clist.templatetags.extras import slug as slugify
+from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
-from ranking.models import Rating, Statistics, Module, Account, update_account_by_coders
-from true_coders.models import Filter, Party, Coder, Organization
-from utils.regex import verify_regex, get_iregex_filter
 from pyclist.decorators import context_pagination
-
+from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
+from true_coders.models import Coder, Filter, Organization, Party
+from utils.regex import get_iregex_filter, verify_regex
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +314,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             stat.pop('addition___rating_data')
             stat['slug'] = slugify(stat['name'])
             division = stat.pop('division')
-            problems = json.loads(stat.pop('problems') or '{}')
+            problems = stat.pop('problems', {})
             if division and 'division' in problems:
                 problems = problems['division'][division]
             stat['n_problems'] = len(problems)
