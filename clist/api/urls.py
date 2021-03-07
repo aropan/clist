@@ -1,4 +1,4 @@
-from django.conf.urls import url, include
+from django.conf.urls import re_path, include
 from tastypie.api import NamespacedApi as Api
 from clist.api import v1
 from clist.api import v2
@@ -23,8 +23,8 @@ urlpatterns = []
 for index, api in enumerate(apis):
     name = f'{api.api_name}_doc' if index else 'latest'
     urlpatterns += [
-        url(r'', include((api.urls, app_name), namespace=api.api_name)),
-        url(
+        re_path(r'', include((api.urls, app_name), namespace=api.api_name)),
+        re_path(
             f'{api.api_name}/doc/',
             include(('tastypie_swagger.urls', app_name), namespace=name),
             kwargs={

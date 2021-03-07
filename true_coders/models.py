@@ -1,19 +1,19 @@
 import re
+from datetime import timedelta
 
-from django.db import models
 from django.conf import settings as django_settings
+from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
 from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField, ArrayField
-from datetime import timedelta
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from pyclist.models import BaseModel, BaseManager
-from pyclist.indexes import GistIndexTrgrmOps
 from clist.models import Contest
+from pyclist.indexes import GistIndexTrgrmOps
+from pyclist.models import BaseManager, BaseModel
 
 
 class Coder(BaseModel):
@@ -25,10 +25,10 @@ class Coder(BaseModel):
     date_of_birth = models.DateField(null=True, blank=True)
     organization = models.ForeignKey('Organization', null=True, blank=True, on_delete=models.SET_NULL)
     timezone = models.CharField(max_length=32, default="UTC")
-    settings = JSONField(default=dict, blank=True)
+    settings = models.JSONField(default=dict, blank=True)
     country = CountryField(null=True, blank=True)
     phone_number = PhoneNumberField(blank=True)
-    addition_fields = JSONField(default=dict, blank=True)
+    addition_fields = models.JSONField(default=dict, blank=True)
     n_accounts = models.IntegerField(default=0, db_index=True)
 
     class Meta:
@@ -187,7 +187,7 @@ class Filter(BaseModel):
     regex = models.CharField(max_length=1000, null=True, blank=True)
     inverse_regex = models.BooleanField(default=False)
     to_show = models.BooleanField(default=True)
-    resources = JSONField(default=list, blank=True)
+    resources = models.JSONField(default=list, blank=True)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE, default=None, null=True, blank=True)
     categories = ArrayField(models.CharField(max_length=20), blank=True, default=_get_default_categories)
 

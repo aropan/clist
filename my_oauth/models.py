@@ -1,9 +1,8 @@
 import re
 
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 
-from pyclist.models import BaseModel, BaseManager
+from pyclist.models import BaseManager, BaseModel
 from true_coders.models import Coder
 
 
@@ -39,8 +38,8 @@ class Token(BaseModel):
     coder = models.ForeignKey(Coder, null=True, on_delete=models.CASCADE, blank=True)
     user_id = models.CharField(max_length=255)
     email = models.EmailField()
-    access_token = JSONField(default=dict, blank=True)
-    data = JSONField(default=dict, blank=True)
+    access_token = models.JSONField(default=dict, blank=True)
+    data = models.JSONField(default=dict, blank=True)
 
     tokens_view_time = models.DateTimeField(null=True, default=None, blank=True)
     n_viewed_tokens = models.PositiveSmallIntegerField(default=0, blank=True)

@@ -6,20 +6,17 @@ from pydoc import locate
 from urllib.parse import urljoin
 
 import tqdm
-from clist.models import Contest, Resource
-from clist.templatetags.extras import (add_prefix_to_problem_short,
-                                       get_number_from_str, get_problem_short,
-                                       slug)
-from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.db.models import F
 from django.db.models.functions import Upper
-from django.db.models.signals import (m2m_changed, post_delete, post_save,
-                                      pre_save)
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
+
+from clist.models import Contest, Resource
+from clist.templatetags.extras import add_prefix_to_problem_short, get_number_from_str, get_problem_short, slug
 from pyclist.indexes import ExpressionIndex, GistIndexTrgrmOps
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Party
@@ -37,7 +34,7 @@ class Account(BaseModel):
     last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
-    info = JSONField(default=dict, blank=True)
+    info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
 
@@ -205,7 +202,7 @@ class Rating(BaseModel):
 
 class AutoRating(BaseModel):
     party = models.ForeignKey(Party, on_delete=models.CASCADE)
-    info = JSONField(default=dict, blank=True)
+    info = models.JSONField(default=dict, blank=True)
     deadline = models.DateTimeField()
 
     def __str__(self):
@@ -219,7 +216,7 @@ class Statistics(BaseModel):
     place_as_int = models.IntegerField(default=None, null=True, blank=True)
     solving = models.FloatField(default=0, blank=True)
     upsolving = models.FloatField(default=0, blank=True)
-    addition = JSONField(default=dict, blank=True)
+    addition = models.JSONField(default=dict, blank=True)
     url = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -275,8 +272,8 @@ class Module(BaseModel):
 
 class Stage(BaseModel):
     contest = models.OneToOneField(Contest, on_delete=models.CASCADE)
-    filter_params = JSONField(default=dict, blank=True)
-    score_params = JSONField(default=dict, blank=True)
+    filter_params = models.JSONField(default=dict, blank=True)
+    score_params = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return '%s' % (self.contest)

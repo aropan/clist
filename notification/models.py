@@ -3,10 +3,9 @@ from datetime import timedelta
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.contrib.postgres.fields import JSONField
 
 from pyclist.models import BaseModel
 from true_coders.models import Coder
@@ -61,14 +60,14 @@ class Notification(BaseModel):
             self.method == django_settings.NOTIFICATION_CONF.WEBBROWSER
             and self.period != Notification.EVENT
         ):
-            raise ValidationError(f'WebBrowser method must have Event period.')
+            raise ValidationError('WebBrowser method must have Event period.')
 
 
 class Task(BaseModel):
     notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
     subject = models.CharField(max_length=4096, null=True, blank=True)
     message = models.TextField(null=True, blank=True)
-    addition = JSONField(default=dict, blank=True)
+    addition = models.JSONField(default=dict, blank=True)
     is_sent = models.BooleanField(default=False)
 
     class UnsentManager(models.Manager):

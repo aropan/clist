@@ -1,22 +1,18 @@
-import random
 import csv
+import random
+from collections import Counter
 from datetime import timedelta
 from urllib.parse import urlparse
-from collections import Counter
 
-from django.db import models
-from django_enumfield import enum
-# from django_enumfield.enum import Enum
-# from django_enumfield.db.fields import EnumField
-from django.template.loader import get_template
 from django.core.mail import EmailMultiAlternatives
 from django.core.mail.backends.smtp import EmailBackend
-from django.contrib.postgres.fields import JSONField
+from django.db import models
+from django.template.loader import get_template
+from django.utils.functional import classproperty
 from django.utils.timezone import now
 from django_countries.fields import CountryField
+from django_enumfield import enum
 from phonenumber_field.modelfields import PhoneNumberField
-from django.utils.functional import classproperty
-
 
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Organization
@@ -28,11 +24,11 @@ class Event(BaseModel):
     registration_deadline = models.DateTimeField()
     website_url = models.URLField(null=True, blank=True)
     information = models.CharField(max_length=4096)
-    email_conf = JSONField(default=dict, blank=True)
-    logins_paths = JSONField(default=dict, blank=True)
-    standings_urls = JSONField(default=dict, blank=True)
-    limits = JSONField(default=dict, blank=True)
-    fields_info = JSONField(default=dict, blank=True)
+    email_conf = models.JSONField(default=dict, blank=True)
+    logins_paths = models.JSONField(default=dict, blank=True)
+    standings_urls = models.JSONField(default=dict, blank=True)
+    limits = models.JSONField(default=dict, blank=True)
+    fields_info = models.JSONField(default=dict, blank=True)
     team_size = models.IntegerField(default=3)
 
     def email_backend(self):
@@ -85,7 +81,7 @@ class Participant(BaseModel):
     country = CountryField(null=True, blank=True)
     tshirt_size = enum.EnumField(TshirtSize, null=True, blank=True)
     is_coach = models.BooleanField(default=False)
-    addition_fields = JSONField(default=dict, blank=True)
+    addition_fields = models.JSONField(default=dict, blank=True)
 
     objects = ParticipantManager()
 

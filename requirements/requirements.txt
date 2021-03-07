@@ -1,7 +1,7 @@
 django==3.1.7
 django-add-default-value==0.6.0
 django-cache-machine==1.1.0
-django-countries==5.5
+django_countries==7.0.0
 django-cprofile-middleware==1.0.5
 django-crispy-forms==1.11.1
 django-enumfield==2.0.2
@@ -10,7 +10,7 @@ django-imagefit==0.6.2
 django-jsonify==0.3.0
 django-ltree==0.5.2
 django-oauth-toolkit==1.4.0
-django-phonenumber-field==2.2.0
+django-phonenumber-field==5.0.0
 django-postgres-reindex-command==2020.12.3
 django-print-sql==2018.3.6
 django-ratelimit==3.0.0

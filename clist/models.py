@@ -1,25 +1,24 @@
-import os
-import re
-import colorsys
 import calendar
+import colorsys
 import itertools
 import logging
-from urllib.parse import urlparse, urljoin
-from datetime import timedelta, datetime
+import os
+import re
+from datetime import datetime, timedelta
+from urllib.parse import urljoin, urlparse
 
 import requests
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-from django.contrib.postgres.fields import JSONField, ArrayField
 from django_ltree.fields import PathField
 from PIL import Image
 
-
-from pyclist.models import BaseModel, BaseManager
-from pyclist.indexes import GistIndexTrgrmOps
 from clist.templatetags.extras import slug
+from pyclist.indexes import GistIndexTrgrmOps
+from pyclist.models import BaseManager, BaseModel
 
 
 class Resource(BaseModel):
@@ -35,8 +34,8 @@ class Resource(BaseModel):
     profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     avatar_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     uid = models.CharField(max_length=100, null=True, blank=True)
-    info = JSONField(default=dict, blank=True)
-    ratings = JSONField(default=list, blank=True)
+    info = models.JSONField(default=dict, blank=True)
+    ratings = models.JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
@@ -187,7 +186,7 @@ class Contest(models.Model):
     invisible = models.BooleanField(default=False, db_index=True)
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
-    info = JSONField(default=dict, blank=True)
+    info = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
 
@@ -400,7 +399,7 @@ class Banner(BaseModel):
     url = models.URLField()
     end_time = models.DateTimeField()
     template = models.CharField(max_length=255, null=True, blank=True)
-    data = JSONField(default=dict, blank=True)
+    data = models.JSONField(default=dict, blank=True)
     enable = models.BooleanField(default=True)
 
     def __str__(self):

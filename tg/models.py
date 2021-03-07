@@ -1,7 +1,7 @@
-from pyclist.models import BaseModel
 from django.db import models
+
+from pyclist.models import BaseModel
 from true_coders.models import Coder
-from django.contrib.postgres.fields import JSONField
 
 
 class Chat(BaseModel):
@@ -10,7 +10,7 @@ class Chat(BaseModel):
     title = models.CharField(max_length=100, blank=True, null=True)
     name = models.TextField(blank=True, null=True)
     secret_key = models.CharField(max_length=20, blank=True, null=True)
-    last_command = JSONField(default=dict, blank=True)
+    last_command = models.JSONField(default=dict, blank=True)
     is_group = models.BooleanField(default=False)
     coders = models.ManyToManyField(Coder, blank=True, related_name='chats')
 
@@ -24,7 +24,7 @@ class Chat(BaseModel):
 class History(BaseModel):
     LIMIT_BY_CHAT = 7
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
-    message = JSONField()
+    message = models.JSONField()
 
     def __str__(self):
         return "Histroy %s" % (self.chat)

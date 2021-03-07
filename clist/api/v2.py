@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db.models import IntegerField
 from django.db.models.functions import Cast
@@ -290,7 +290,7 @@ class CoderResource(BaseModelResource):
 
     def prepend_urls(self):
         return [
-            url(
+            re_path(
                 r'^(?P<resource_name>%s)/me%s$' % (self._meta.resource_name, trailing_slash),
                 self.wrap_view('me'),
                 name='api_dispatch_me'
