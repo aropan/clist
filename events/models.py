@@ -58,6 +58,10 @@ class TshirtSize(enum.Enum):
         XXXL: 'XXXL',
     }
 
+    @classproperty
+    def labels(cls):
+        return TshirtSize.__labels__
+
 
 class ParticipantManager(models.Manager):
     def get_queryset(self):
@@ -125,6 +129,10 @@ class TeamStatus(enum.Enum):
         BSU_SEMIFINAL: 'bsu',
         INVITED: 'invited',
     }
+
+    @classproperty
+    def labels(cls):
+        return TeamStatus.__labels__
 
     @classproperty
     def frame_labels(cls):
