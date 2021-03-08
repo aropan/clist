@@ -1,30 +1,29 @@
 import re
 from datetime import timedelta
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 import arrow
 import pytz
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.db.models.functions import Cast, Ln
-from django.db.models import F, Q, Count, IntegerField, FloatField
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.management.commands import dumpdata
-from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
-from django.shortcuts import render, get_object_or_404
-from django.utils import timezone
+from django.db.models import Count, F, FloatField, IntegerField, Q
+from django.db.models.functions import Cast, Ln
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
+from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists
-from el_pagination.decorators import page_templates, page_template
 
-from clist.templatetags.extras import get_timezones, get_timezone_offset, slug
-from clist.templatetags.extras import get_problem_key, get_problem_name, get_problem_short, canonize
-from clist.models import Resource, Contest, Banner, Problem, ProblemTag
+from clist.models import Banner, Contest, Problem, ProblemTag, Resource
+from clist.templatetags.extras import (canonize, get_problem_key, get_problem_name, get_problem_short,
+                                       get_timezone_offset, get_timezones, slug)
 from notification.management.commands import sendout_tasks
-from true_coders.models import Party, Coder, Filter
-from ranking.models import Rating, Account
-from utils.regex import verify_regex, get_iregex_filter
+from ranking.models import Account, Rating
+from true_coders.models import Coder, Filter, Party
+from utils.regex import get_iregex_filter, verify_regex
 
 
 def get_timeformat(request):
@@ -335,6 +334,7 @@ def resources(request):
     ('resource_contests.html', 'past_page'),
     ('resource_contests.html', 'coming_page'),
     ('resource_contests.html', 'running_page'),
+    ('resource_problems_paging.html', 'problems_page'),
 ))
 def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
@@ -462,6 +462,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         'top': accounts.filter(rating__isnull=False).order_by('-rating', 'id'),
         'most_participated': accounts.order_by('-n_contests', 'id'),
         'most_writer': accounts.filter(n_writers__gt=0).order_by('-n_writers', 'id'),
+        'problems': resource.problem_set.filter(url__isnull=False).order_by('-time', 'contest_id', 'index'),
     }
 
     if extra_context is not None:
@@ -559,6 +560,7 @@ def update_problems(contest, problems=None):
 
             problem, created = Problem.objects.update_or_create(
                 contest=contest,
+                resource=contest.resource,
                 key=key,
                 defaults=defaults,
             )

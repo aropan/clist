@@ -14,7 +14,7 @@
       {% if data.field == 'time_left' %}
         {{ contest.next_time|countdown }}
       {% else %}
-        {{ contest|get_item:data.field|naturalday }}
+        {{ contest|get_item:data.field|timezone:timezone|naturalday }}
       {% endif %}
     </td>
     <td class="title">

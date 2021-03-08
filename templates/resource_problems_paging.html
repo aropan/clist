@@ -1,0 +1,17 @@
+{% load el_pagination_tags %}
+
+{% lazy_paginate first_per_page,per_page problems using "problems_page" %}
+{% get_pages %}
+{% for problem in problems %}
+  <tr>
+    <td>
+      {{ problem.time|timezone:timezone|naturalday }}
+    </td>
+    <td class="title">
+      {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
+      {{ problem.name }}
+      {% if problem.url %}</a>{% endif %}
+    </td>
+  </tr>
+{% endfor %}
+{% show_more_table %}

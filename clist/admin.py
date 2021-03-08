@@ -1,12 +1,12 @@
-from django.contrib.admin import SimpleListFilter
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
 from django.db import transaction
 from django.utils import timezone
 
+from clist.models import Banner, Contest, Problem, ProblemTag, Resource, TimingContest
 from pyclist.admin import BaseModelAdmin, admin_register
-from clist.models import Resource, Contest, TimingContest, Banner, Problem, ProblemTag
-from ranking.models import Rating, Module
 from ranking.management.commands.parse_statistic import Command as parse_stat
+from ranking.models import Module, Rating
 
 
 @admin_register(Contest)
@@ -154,8 +154,8 @@ class ResourceAdmin(BaseModelAdmin):
 @admin_register(Problem)
 class ProblemAdmin(BaseModelAdmin):
     list_display = ['contest', 'index', 'key', 'short', 'name', 'n_tries', 'n_accepted', 'divisions', 'url', 'visible']
-    list_filter = ['visible', 'contest__resource__host']
-    search_fields = ['contest__id', 'name']
+    list_filter = ['visible', 'resource']
+    search_fields = ['contest', 'name']
 
 
 @admin_register(ProblemTag)

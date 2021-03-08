@@ -352,6 +352,7 @@ class Contest(models.Model):
 
 class Problem(BaseModel):
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     time = models.DateTimeField()
     index = models.SmallIntegerField(null=True)
     key = models.TextField()
@@ -372,6 +373,8 @@ class Problem(BaseModel):
         unique_together = ('contest', 'key')
 
         indexes = [
+            models.Index(fields=['resource_id', 'url', '-time', 'contest_id', 'index']),
+            models.Index(fields=['-time', 'contest_id', 'index']),
             GistIndexTrgrmOps(fields=['name']),
         ]
 

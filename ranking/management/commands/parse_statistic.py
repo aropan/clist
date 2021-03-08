@@ -1,31 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
-import operator
 import copy
-from html import unescape
+import operator
+import re
 from collections import OrderedDict, defaultdict
-from random import shuffle
-from tqdm import tqdm
-from attrdict import AttrDict
 from datetime import timedelta
+from html import unescape
 from logging import getLogger
+from random import shuffle
 from traceback import format_exc
 
+from attrdict import AttrDict
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q, F, OuterRef, Exists
+from django.db.models import Exists, F, OuterRef, Q
+from django.utils import timezone
+from tqdm import tqdm
 
-from ranking.models import Statistics, Account, Stage, Module
 from clist.models import Contest, Resource, TimingContest
+from clist.templatetags.extras import canonize, get_number_from_str, get_problem_short
 from clist.views import update_problems, update_writers
-from clist.templatetags.extras import get_problem_short, get_number_from_str, canonize
-from ranking.management.commands.countrier import Countrier
 from ranking.management.commands.common import account_update_contest_additions
+from ranking.management.commands.countrier import Countrier
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.models import Account, Module, Stage, Statistics
 
 
 class Command(BaseCommand):
@@ -73,6 +73,8 @@ class Command(BaseCommand):
         without_contest_filter=False,
     ):
         now = timezone.now()
+
+        contests = contests.select_related('resource', 'module')
 
         if not without_contest_filter:
             if with_check:
@@ -636,7 +638,7 @@ class Command(BaseCommand):
                         self.logger.info(f'Action {action} with {args}, contest = {contest}, url = {contest.url}')
                         if action == 'delete':
                             if Statistics.objects.filter(contest=contest).exists():
-                                self.logger.info(f'No deleted. Contest have statistics')
+                                self.logger.info('No deleted. Contest have statistics')
                             elif now < contest.end_time:
                                 self.logger.info(f'No deleted. Try after = {contest.end_time - now}')
                             else:

@@ -24,7 +24,8 @@ table.table td {
   white-space: nowrap;
 }
 
-table.table.contests tr .title {
+table.table.contests tr .title,
+table.table.problems tr .title {
   text-align: left;
 }
 

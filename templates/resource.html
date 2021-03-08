@@ -29,7 +29,7 @@
         updating {% if resource.enable %}auto{% else %}manually{% endif %}
     </div>
 
-    {% if resource.module %}
+    {% if resource.module.exists %}
     <span class="badge progress-bar-warning">
         parse statistic
     </span>
@@ -300,6 +300,21 @@
     </div>
     {% endif %}
     {% endfor %}
+
+    {% if problems.exists %}
+    <div class="col-md-6 col-lg-4">
+        <h4>Problems</h4>
+        <div class="panel panel-default table-responsive">
+            <table class="problems table table-hover table-condensed table-striped">
+                <tr>
+                    <th>Date</th>
+                    <th class="title">Name</th>
+                </tr>
+                {% include 'resource_problems_paging.html' %}
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}
