@@ -1,29 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import argparse
+import json
 import logging
+import re
+import shlex
+from itertools import chain
+from traceback import format_exc
 
+import pytz
 import telegram
-
 from django.conf import settings
-from django.utils.timezone import now
-from django.urls import reverse
 from django.db.models import Q
+from django.urls import reverse
+from django.utils.timezone import now
+from pytimeparse.timeparse import timeparse
 
-from tg.models import Chat, History
+from clist.api.v1 import ContestResource
 from clist.models import Contest, Resource
 from clist.templatetags.extras import hr_timedelta, md_escape
-from clist.api.v1 import ContestResource
-
-import argparse
-import shlex
-from traceback import format_exc
-import pytz
-from pytimeparse.timeparse import timeparse
-from itertools import chain
-import json
-import re
-
+from tg.models import Chat, History
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -487,6 +484,9 @@ class Bot(telegram.Bot):
             elif 'forward_from' in data.get('channel_post', {}):
                 self.message = data['channel_post']
                 self.from_id = str(self.message['forward_from']['id'])
+            elif 'sender_chat' in data.get('channel_post', {}):
+                self.message = data['channel_post']
+                self.from_id = str(self.message['sender_chat']['id'])
             else:
                 return
 
@@ -498,12 +498,20 @@ class Bot(telegram.Bot):
             self.clear_cache()
 
             was_messaging = False
+            has_command = False
             if 'text' in self.message:
                 text = self.message['text']
                 if text.startswith('/'):
+                    has_command = True
                     for msg in self.execute_command(text):
                         self.send_message(msg)
                         was_messaging = True
+            if not has_command and self.chat and self.chat.settings.get('_forwarding'):
+                self.forwardMessage(
+                    chat_id=self.chat.settings.get('_forwarding'),
+                    from_chat_id=self.from_id,
+                    message_id=self.message['message_id'],
+                )
 
             if not self.coder and was_messaging:
                 self.send_message(f'Follow {self.follow_url} to connect your account.')

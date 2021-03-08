@@ -13,6 +13,7 @@ class Chat(BaseModel):
     last_command = models.JSONField(default=dict, blank=True)
     is_group = models.BooleanField(default=False)
     coders = models.ManyToManyField(Coder, blank=True, related_name='chats')
+    settings = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return "%s#%s" % (self.coder_id, self.chat_id)
