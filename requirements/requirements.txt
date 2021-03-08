@@ -6,6 +6,7 @@ django-cprofile-middleware==1.0.5
 django-crispy-forms==1.11.1
 django-enumfield==2.0.2
 django-extensions==2.2.8
+django-json-widget==1.1.1
 django-imagefit==0.6.2
 django-jsonify==0.3.0
 django-ltree==0.5.2
@@ -52,7 +53,6 @@ geopy==1.21.0
 cssutils==1.0.2
 unicodecsv==0.14.1
 ratelimiter==1.2.0
-django-json-widget==1.0.0
 bootstrap-admin==0.4.4
 docutils==0.16
 image==1.5.32

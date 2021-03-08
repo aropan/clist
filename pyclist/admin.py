@@ -1,10 +1,9 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Permission
-from django.db import connection, transaction, models
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.contrib.postgres import fields
+from django.db import connection, models, transaction
 from django_json_widget.widgets import JSONEditorWidget
 
 from pyclist.models import BaseModel
@@ -75,7 +74,7 @@ class BaseModelAdmin(admin.ModelAdmin):
     paginator = CachingPaginator
 
     formfield_overrides = {
-        fields.JSONField: {'widget': JSONEditorWidget},
+        models.JSONField: {'widget': JSONEditorWidget(mode='tree')},
     }
 
     def formfield_for_dbfield(self, db_field, **kwargs):
