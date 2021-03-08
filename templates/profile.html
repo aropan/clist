@@ -62,7 +62,7 @@ Number of competitions: {{ account.n_contests }}
     <h2>
       {% coder_color_circle account.resource account.info %}
       <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
-      {% if account.resource.profile_url %}
+      {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
       <small><a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></small>
       {% endif %}
 
@@ -119,7 +119,7 @@ Number of competitions: {{ account.n_contests }}
             </span>
           {% endfor %}
         </a>
-        {% if resource.profile_url %}
+        {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
         <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
         {% endif %}
         <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
@@ -142,7 +142,7 @@ Number of competitions: {{ account.n_contests }}
             </span>
           {% endfor %}
         </a>
-        {% if resource.profile_url %}
+        {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
         <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
         {% endif %}
       </span>

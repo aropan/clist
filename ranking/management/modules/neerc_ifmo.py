@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 import re
+from collections import OrderedDict
 from datetime import datetime
 from pprint import pprint
-from collections import OrderedDict
 
-from ranking.management.modules.common import REQ, BaseModule, parsed_table, FailOnGetResponse
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 from ranking.management.modules.neerc_ifmo_helper import parse_xml
 

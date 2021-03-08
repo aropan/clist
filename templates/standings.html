@@ -33,7 +33,7 @@
 
     <div>
     Standings
-    <a class="standings-resource" href="{{ contest.resource.href }}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
+    <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
     <span id="standings-url"></span>
     <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
 

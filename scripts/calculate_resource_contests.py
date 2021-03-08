@@ -2,7 +2,7 @@
 
 from tqdm import tqdm
 
-from clist.models import Resource, Contest
+from clist.models import Contest, Resource
 from ranking.models import Account
 
 
