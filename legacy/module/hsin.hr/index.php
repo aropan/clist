@@ -7,7 +7,12 @@
     $page = curlexec($url);
     $urls = array($url);
     if (preg_match_all('#<a[^>]*href="(?P<url>archive/[0-9_]*/[^"]*)"[^>]*>#', $page, $matches)) {
-        foreach ($matches['url'] as $url) {
+        if (isset($_GET['parse_full_list'])) {
+            $old_urls = $matches['url'];
+        } else {
+            $old_urls = array(end($matches['url']));
+        }
+        foreach ($old_urls as $url) {
             $urls[] = url_merge($URL, $url);
         }
     }
@@ -20,11 +25,13 @@
         $season = $match[0];
         $season[4] = '-';
 
-        preg_match_all('#<div class="naslov">(?<title>[^<]+)</div>.*?<a [^>]+>(?<date>\d\d\.\d\d\.\d\d\d\d)\.<br />(?<date_start_time>\d\d:\d\d) GMT/UTC#si', $page, $matches, PREG_SET_ORDER);
+        preg_match_all('#<td[^>]*>\s*<div[^>]*class="naslov">(?<title>[^<]+)</div>.*?<a [^>]+>(?<date>\d\d\.\d\d\.\d\d\d\d)\.<br />(?<date_start_time>\d\d:\d\d) GMT/UTC.*?</td>#si', $page, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $m) {
             $title = $m['title'];
-            $contests[] = array(
+
+
+            $contest = array(
                 'start_time' => $m['date'] . ' ' . $m['date_start_time'],
                 'duration' => '03:00',
                 'title' => $title,
@@ -34,6 +41,12 @@
                 'timezone' => $TIMEZONE,
                 'key' => $season . ' ' . $title,
             );
+
+            if (preg_match('#<a[^>]*href="(?P<href>[^"]*)"[^>]*><strong>Results</strong></a>#i', $m[0], $match)) {
+                $contest['standings_url'] = url_merge($url, $match['href']);
+            }
+
+            $contests[] = $contest;
         }
     }
 
