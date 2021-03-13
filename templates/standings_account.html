@@ -26,10 +26,8 @@
 <div class="handle-div{% if not team_id%} {% coder_color_class resource addition account.info %}{% endif %}" style="display: inline-block">
   {% if account.url and not statistic.accounts %}<a href="{{ account.url }}" class="coder">{% endif %}
 
-  {% if addition.name and account.key|has_season:addition.name or team_id %}
-    <span>{{ addition.name }}</span>
-  {% elif addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
-    <span>{{ addition.name }}</span>
+  {% if addition.name and account.key|has_season:addition.name or team_id or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
+    <span{% if addition.name|length > 50 %} title="{{ addition.name }}" data-toggle="tooltip"{% endif %}>{{ addition.name|truncatechars:50 }}</span>
   {% else %}
     <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
   {% endif %}

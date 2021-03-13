@@ -1,6 +1,6 @@
-import re
 import functools
 import operator
+import re
 
 from django.db.models import Q
 from sql_util.utils import Exists
@@ -16,7 +16,15 @@ def verify_regex(regex, logger=None):
     return regex
 
 
-def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=None, queryset=None):
+def get_iregex_filter(
+    expression,
+    *fields,
+    mapping=None,
+    logger=None,
+    values=None,
+    queryset=None,
+    suffix='__iregex',
+):
     ret = Q()
     n_exists = 0
     for dis in expression.split('||'):
@@ -24,7 +32,7 @@ def get_iregex_filter(expression, *fields, mapping=None, logger=None, values=Non
         for con in dis.split('&&'):
             r = con.strip()
             fs = fields
-            suff = '__iregex'
+            suff = suffix
             neg = False
             if ':' in r and mapping:
                 k, v = r.split(':', 1)

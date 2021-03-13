@@ -1,6 +1,6 @@
 {% load el_pagination_tags %}
 
-{% lazy_paginate 50,100 statistics using "contest_page" %}
+{% lazy_paginate 10,100 statistics using "contest_page" %}
 
 {% for stat in statistics %}
 <tr class="contest{% if stat.addition.medal %} {{ stat.addition.medal|lower }}-medal{% endif %}{% if stat.contest.is_running %} success{% endif %}" id="cid-{{ stat.contest.id }}">
@@ -33,8 +33,8 @@
     </td>
     <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
+        <a href="{% url 'clist:resource' stat.contest.resource.host %}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
         <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}">{{ stat.contest.title }}</a>
-        <a href="{{ stat.contest.resource.url }}"><small class="text-muted">{{ stat.contest.resource.host }}</small></a>
         <div class="problems">
             {% if stat.addition.hack %}
             {% with hack=stat.addition.hack %}

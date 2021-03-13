@@ -678,7 +678,8 @@ def search(request, **kwargs):
     if not query or not isinstance(query, str):
         return HttpResponseBadRequest('invalid query')
 
-    count = int(request.GET.get('count', 10))
+    count = int(request.GET.get('count', django_settings.DEFAULT_COUNT_QUERY_))
+    count = min(count, django_settings.DEFAULT_COUNT_LIMIT_)
     page = int(request.GET.get('page', 1))
     if query == 'themes':
         ret = {}
@@ -694,9 +695,8 @@ def search(request, **kwargs):
         qs = Resource.objects.all()
         if 'regex' in request.GET:
             qs = qs.filter(get_iregex_filter(request.GET['regex'], 'host'))
-        qs = qs.order_by('-n_accounts')
+        qs = qs.order_by('-n_accounts', 'pk')
 
-        total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
     elif query == 'resources-for-add-account' and request.user.is_authenticated:
@@ -716,7 +716,6 @@ def search(request, **kwargs):
             qs = qs.filter(get_iregex_filter(request.GET['regex'], 'host'))
         qs = qs.order_by('disabled', 'pk')
 
-        total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [
             {
@@ -735,17 +734,22 @@ def search(request, **kwargs):
             qs = qs.filter(resource__id=int(resource))
         else:
             qs = qs.select_related('resource')
+
+        order = ['disabled']
         if 'user' in request.GET:
             re_search = request.GET.get('user')
-            qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
-            search_striped = re_search.rstrip('$').lstrip('^')
-            qs = qs.annotate(match=Case(
-                When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            ))
-        else:
-            qs = qs.annotate(match=Value(False, output_field=BooleanField()))
+            exact_qs = qs.filter(key__iexact=re_search)
+            if exact_qs.exists():
+                qs = exact_qs
+            else:
+                qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
+                search_striped = re_search.rstrip('$').lstrip('^')
+                qs = qs.annotate(match=Case(
+                    When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ))
+                order.append('-match')
 
         qs = qs.annotate(has_multi=F('resource__module__multi_account_allowed'))
 
@@ -756,9 +760,8 @@ def search(request, **kwargs):
             output_field=BooleanField(),
         ))
 
-        qs = qs.order_by('disabled', '-match')
+        qs = qs.order_by(*order, 'pk')
 
-        total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = []
         for r in qs:
@@ -778,7 +781,6 @@ def search(request, **kwargs):
         if name:
             qs = qs.filter(Q(name__icontains=name) | Q(name_ru__icontains=name) | Q(abbreviation__icontains=name))
 
-        total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': o.name, 'text': o.name} for o in qs]
     elif query == 'team':
@@ -795,9 +797,8 @@ def search(request, **kwargs):
             When(status=TeamStatus.NEW, then=Value(False)),
             default=Value(True),
             output_field=BooleanField())
-        ).order_by('disabled', '-modified')
+        ).order_by('disabled', '-modified', 'pk')
 
-        total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.name, 'disabled': r.disabled} for r in qs]
     elif query == 'country':
@@ -806,13 +807,11 @@ def search(request, **kwargs):
         if name:
             name = name.lower()
             qs = [(c, n) for c, n in countries if name in n.lower()]
-        total = len(qs)
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c, 'text': n} for c, n in qs]
     elif query == 'notpast':
         title = request.GET.get('title')
         qs = Contest.objects.filter(title__iregex=verify_regex(title), end_time__gte=timezone.now())
-        total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c.id, 'text': c.title} for c in qs]
     elif query == 'field-to-select':
@@ -824,17 +823,14 @@ def search(request, **kwargs):
         if field == 'languages':
             qs = contest.info.get('languages', [])
             qs = ['any'] + [q for q in qs if not text or text.lower() in q.lower()]
-            total = len(qs)
         elif field == 'rating':
             qs = ['rated', 'unrated']
-            total = len(qs)
         else:
             field = f'addition__{field}'
             qs = contest.statistics_set
             if text:
                 qs = qs.filter(**{f'{field}__icontains': text})
             qs = qs.distinct(field).values_list(field, flat=True)
-            total = qs.count()
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': f, 'text': f} for f in qs]
@@ -852,9 +848,8 @@ def search(request, **kwargs):
                 output_field=IntegerField()
             ))
             order.insert(0, 'iam')
-        qs = qs.order_by(*order)
+        qs = qs.order_by(*order, 'pk')
 
-        total = qs.count()
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.username} for r in qs]
     elif query == 'accounts':
@@ -865,18 +860,22 @@ def search(request, **kwargs):
         order = ['-n_contests', 'pk']
         if 'regex' in request.GET:
             re_search = request.GET['regex']
-            qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
-            search_striped = re_search.rstrip('$').lstrip('^')
-            qs = qs.annotate(match=Case(
-                When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            ))
-            order.insert(0, '-match')
-        qs = qs.select_related('resource')
-        qs = qs.order_by(*order)
 
-        total = qs.count()
+            exact_qs = qs.filter(key__iexact=re_search)
+            if exact_qs.exists():
+                qs = exact_qs
+            else:
+                qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
+                search_striped = re_search.rstrip('$').lstrip('^')
+                qs = qs.annotate(match=Case(
+                    When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ))
+                order.insert(0, '-match')
+        qs = qs.select_related('resource')
+        qs = qs.order_by(*order, 'pk')
+
         qs = qs[(page - 1) * count:page * count]
         ret = [
             {
@@ -889,7 +888,7 @@ def search(request, **kwargs):
 
     result = {
         'items': ret,
-        'more': page * count <= total,
+        'more': len(ret) and len(ret) == count,
     }
 
     return HttpResponse(json.dumps(result, ensure_ascii=False), content_type="application/json")

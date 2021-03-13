@@ -1,39 +1,37 @@
-import re
-import copy
 import colorsys
+import copy
+import re
 from collections import OrderedDict
 
 import arrow
 from django.conf import settings
-from django.db import models, connection
 from django.contrib.auth.decorators import login_required
-from django.db.models import Case, When, Value, F, Q, Exists, OuterRef, Count, Avg, Prefetch
-from django.db.models.functions import Cast
+from django.db import connection, models
+from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Value, When
 from django.db.models.expressions import RawSQL
+from django.db.models.functions import Cast
 from django.http import HttpResponseNotFound, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.shortcuts import render
-from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
 from el_pagination.decorators import page_template, page_templates
-from sql_util.utils import Exists as SubqueryExists
 from ratelimit.decorators import ratelimit
+from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import get_problem_short, get_country_name
-from clist.templatetags.extras import slug, query_transform
-from clist.views import get_timezone, get_timeformat
-from ranking.management.modules.excepts import ExceptionParseStandings
+from clist.templatetags.extras import get_country_name, get_problem_short, query_transform, slug
+from clist.views import get_timeformat, get_timezone
 from ranking.management.modules.common import FailOnGetResponse
-from ranking.models import Statistics, Module, Account
-from true_coders.models import Party, Coder
-from true_coders.views import get_ratings_data
+from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.models import Account, Module, Statistics
 from tg.models import Chat
+from true_coders.models import Coder, Party
+from true_coders.views import get_ratings_data
+from utils.colors import get_n_colors
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
 from utils.regex import get_iregex_filter
-from utils.colors import get_n_colors
 
 
 @page_template('standings_list_paging.html')
@@ -372,7 +370,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         f = f.strip('_')
         if f.lower() in [
             'institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region',
-            'rating_change', 'advanced', 'company', 'language', 'league', 'onsite', 'degree', 'university'
+            'rating_change', 'advanced', 'company', 'language', 'league', 'onsite', 'degree', 'university', 'list',
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})
@@ -543,9 +541,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         if field == 'languages':
             for lang in values:
                 if lang == 'any':
-                    filt = Q(**{f'addition___languages__isnull': False})
+                    filt = Q(**{'addition___languages__isnull': False})
                     break
-                filt |= Q(**{f'addition___languages__contains': [lang]})
+                filt |= Q(**{'addition___languages__contains': [lang]})
         elif field == 'rating':
             for q in values:
                 if q not in field_to_select['options']:
@@ -690,9 +688,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             query, sql_params = statistics.query.sql_with_params()
             query = query.replace(f'"ranking_statistics"."{field}" AS "groupby"', '"language" AS "groupby"')
             query = query.replace(f'GROUP BY "ranking_statistics"."{field}"', 'GROUP BY "language"')
-            query = query.replace(f'"ranking_statistics".', '')
-            query = query.replace(f'AVG("solving") AS "avg_score"', 'AVG("score") AS "avg_score"')
-            query = query.replace(f'COUNT("id") AS "n_accounts"', 'COUNT("sid") AS "n_accounts"')
+            query = query.replace('"ranking_statistics".', '')
+            query = query.replace('AVG("solving") AS "avg_score"', 'AVG("score") AS "avg_score"')
+            query = query.replace('COUNT("id") AS "n_accounts"', 'COUNT("sid") AS "n_accounts"')
             query = re.sub('FROM "ranking_statistics".*GROUP BY', f'FROM ({language_query}) t1 GROUP BY', query)
             sql_params = sql_params[:-len(before_params)] + language_params
             with connection.cursor() as cursor:

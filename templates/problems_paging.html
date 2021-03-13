@@ -8,7 +8,7 @@
         <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div>
     </td>
     <td>
-        <a href="{{ request.path }}?search={{ 'rid:'|concat:problem.contest.resource_id }}"><img data-toggle="tooltip" data-placement="top" title="{{ problem.contest.resource.host }}" src="{{ problem.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+        <a href="{{ request.path }}?search={{ 'rid:'|concat:problem.resource_id }}"><img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
         <a href="{% url 'ranking:standings' problem.contest.title|slug problem.contest.pk %}">{% if problem.short and problem.short != problem.name %}{{ problem.short }}. {% endif %}{{ problem.name }}</a>
         <a href="{% if problem.url %}{{ problem.url }}{% else %}{{ problem.contest.url }}{% endif %}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
 

@@ -10,16 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
-import warnings
 import tempfile
-from os import path, environ
+import warnings
+from os import environ, path
 
-from django.utils.translation import gettext_lazy as _
 from django.core.paginator import UnorderedObjectListWarning
+from django.utils.translation import gettext_lazy as _
 from stringcolor import cs
 
 from pyclist import conf
-
 
 # disable UnorderedObjectListWarning when using autocomplete_fields
 warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
@@ -401,6 +400,9 @@ ACE_CALENDARS_ = {
 ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
            'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']
+
+DEFAULT_COUNT_QUERY_ = 10
+DEFAULT_COUNT_LIMIT_ = 100
 
 CUSTOM_COUNTRIES_ = {
   'BY': ['BY', 'BPR'],

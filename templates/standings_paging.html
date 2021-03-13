@@ -4,10 +4,8 @@
 {% for statistic in statistics|chain:my_statistics %}
 {% with tag=statistic.my_stat|then:"th"|default:"td" %}
 {% with addition=statistic.addition %}
-{% with coders=statistic.account.coders.all %}
 {% if statistic.my_stat and statistic.floating %}{% show_more_table %}{% endif %}
 <tr class="{% if statistic.my_stat %}info my-stat{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
-{% endwith %}
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }} class="place-cell"
     {% if addition.medal %}
@@ -88,7 +86,7 @@
   {% for problem in problems %}
     {% with key=problem|get_problem_short  %}
     {% with stat=addition.problems|get_item:key %}
-    <{{ tag }} class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% endif %}{% if stat.first_ac %} first-ac{% endif %}{% endif %}">
+    <{{ tag }} class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}">
       {% if not stat %}
         <div>&#183;</div>
       {% else %}

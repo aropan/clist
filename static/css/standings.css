@@ -48,7 +48,8 @@ table.standings th {
   border-top: 1px solid #999;
 }
 
-.standings .first-ac {
+.standings .first-ac,
+.standings .max-score {
   background: #dff0d8 !important;
 }
 

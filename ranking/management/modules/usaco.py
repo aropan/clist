@@ -3,9 +3,9 @@
 
 import re
 import urllib.parse
-from pprint import pprint
 from collections import OrderedDict
 from datetime import datetime
+from pprint import pprint
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
@@ -22,7 +22,7 @@ class Statistic(BaseModule):
             prev_standings_url = None
             for match in matches:
                 name = match.group('name').lower()
-                if (month in name or self.name.lower() in name) and str(self.start_time.year)in name:
+                if (month in name or self.name.lower() in name) and str(self.start_time.year) in name:
                     self.standings_url = urllib.parse.urljoin(url, match.group('url'))
                     break
                 if (month in name or self.name.lower() in name) and str(self.start_time.year - 1) in name:
@@ -45,17 +45,80 @@ class Statistic(BaseModule):
                                               f'name = {self.name}')
 
     def get_standings(self, users=None, statistics=None):
-        page = REQ.get(self.standings_url)
 
-        result = {}
+        def parse_problems(page, full=False):
+            matches = re.finditer(r'''
+                <div[^>]*class=['"]panel\s*historypanel['"][^>]*>\s*
+                <div[^>]*>\s*<h[^>]*>(?P<index>[^<]*)</h[^>]*>\s*</div>\s*
+                <div[^>]*>(\s*<[^>]*>)*(?P<name>[^<]+)
+                (\s*<[^>]*>)*\s*<a[^>]*href=["'](?P<url>[^"']*)["'][^>]*>
+            ''', page, re.VERBOSE)
+
+            problems = []
+            problemsets = []
+
+            prev_index = None
+            for match in matches:
+                index = match.group('index')
+                if prev_index and index <= prev_index:
+                    if full:
+                        problemsets.append(problems)
+                        problems = []
+                    else:
+                        break
+                prev_index = index
+                url = urllib.parse.urljoin(self.standings_url, match.group('url'))
+                cpid = re.search('cpid=([0-9]+)', url).group(1)
+                problems.append({
+                    'short': str(len(problems) + 1),
+                    'code': cpid,
+                    'name': match.group('name'),
+                    'url': url,
+                })
+
+            if problems:
+                problemsets.append(problems)
+
+            return problemsets if full else problems
+
+        page = REQ.get(self.standings_url)
+        divisions = list(re.finditer('<a[^>]*href="(?P<url>[^"]*data[^"]*_(?P<name>[^_]*)_results.html)"[^>]*>', page))
+        descriptions = []
+        prev_span = None
+        for division_match in divisions:
+            curr_span = division_match.span()
+            if prev_span is not None:
+                descriptions.append(page[prev_span[1]:curr_span[0]])
+            prev_span = curr_span
+        if prev_span is not None:
+            descriptions.append(page[prev_span[1]:])
 
         problems_info = OrderedDict()
+        match = re.search('''<a[^>]*href=["'](?P<href>[^"']*page=[a-z0-9]+problems)["'][^>]*>''', page)
+        if match:
+            url = urllib.parse.urljoin(self.standings_url, match.group('href'))
+            page = REQ.get(url)
+            problemsets = parse_problems(page, full=True)
+            assert len(divisions) == len(problemsets)
+        else:
+            problemsets = None
 
-        divisions = re.finditer('<a[^>]*href="(?P<url>[^"]*data[^"]*_(?P<name>[^_]*)_results.html)"[^>]*>', page)
-        for division_match in divisions:
-            url = urllib.parse.urljoin(self.standings_url, division_match.group('url'))
+        result = {}
+        d0_set = set()
+        for division_idx, (division_match, description) in enumerate(zip(divisions, descriptions)):
             division = division_match.group('name')
 
+            d_problems = parse_problems(description) if problemsets is None else problemsets[division_idx]
+            division_info = problems_info.setdefault('division', OrderedDict())
+            division_info[division] = d_problems
+
+            d0 = division[0].upper()
+            assert d0 not in d0_set
+            d0_set.add(d0)
+            for p in d_problems:
+                p['short'] = d0 + p['short']
+
+            url = urllib.parse.urljoin(self.standings_url, division_match.group('url'))
             page = REQ.get(url)
 
             tables = re.finditer(r'>(?P<title>[^<]*)</[^>]*>\s*(?P<html><table[^>]*>.*?</table>)', page, re.DOTALL)
@@ -63,33 +126,25 @@ class Statistic(BaseModule):
                 title = table_match.group('title')
                 table = parsed_table.ParsedTable(table_match.group('html'))
 
-                d = problems_info.setdefault('division', OrderedDict())
-                if division not in d:
-                    d = d.setdefault(division, [])
-                    already_added = set()
-                    for c in table.header.columns:
-                        short = c.value
-                        if 'colspan' in c.attrs and short not in already_added:
-                            d.append({'short': short})
-                            already_added.add(short)
-
                 for r in table:
                     row = OrderedDict()
                     problems = row.setdefault('problems', {})
                     solved = 0
+                    idx = 0
                     for key, value in r.items():
                         key = key.replace('&nbsp', ' ').strip()
                         if not key:
                             continue
                         if isinstance(value, list):
                             status = ''.join(v.value for v in value)
+                            idx += 1
                             if not status:
                                 continue
                             partial = not bool(re.match(r'^[\*]+$', status))
                             solved += not partial
-                            problems[key] = {
+                            problems[d0 + str(idx)] = {
                                 'partial': partial,
-                                'result': 1000 / len(already_added) * status.count('*') / len(status),
+                                'result': 1000 / len(d_problems) * status.count('*') / len(status),
                                 'status': status,
                             }
                         elif key == 'Score':
@@ -98,7 +153,7 @@ class Statistic(BaseModule):
                             row[key.lower()] = value.value.replace('&nbsp', ' ').strip()
                     row['member'] = f'{row["name"]}, {row["country"]}'
                     row['division'] = division
-                    row['title'] = title.strip().strip(':')
+                    row['list'] = title.strip().strip(':')
                     row['solved'] = {'solving': solved}
                     result[row['member']] = row
 
@@ -106,6 +161,7 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.standings_url,
             'problems': problems_info,
+            'hidden_fields': ['list'],
         }
         return standings
 

@@ -6,8 +6,8 @@
 <tr>
   <td class="date"><div title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</div></td>
   <td class="event">
+    <a href="{% url 'clist:resource' contest.resource.host %}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
     <a href="{% if contest.has_statistics %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}">{{ contest.title }}</a>
-    <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
   </td>
 </tr>
 {% endfor %}

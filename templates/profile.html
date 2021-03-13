@@ -103,6 +103,7 @@ Number of competitions: {{ account.n_contests }}
   {% for resource in resources %}
     {% with account=resource.coder_accounts.0 %}
       <span class="account btn-group btn-group-sm">
+        <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
         <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
           {% coder_color_circle resource account.info %}
           <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
@@ -122,7 +123,6 @@ Number of competitions: {{ account.n_contests }}
         {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
         <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
         {% endif %}
-        <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
       </span>
     {% endwith %}
   {% endfor %}
@@ -229,7 +229,7 @@ $(function(){
     {% include 'profile_contests_paging.html' %}
   </table>
 </div>
-<script>$('#contests').endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
+<script>$('#contests').endlessPaginate({onCompleted: toggle_tooltip});</script>
 {% else %}
 <div class="alert alert-warning">Empty statistics</div>
 {% endif %}

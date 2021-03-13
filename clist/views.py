@@ -516,12 +516,12 @@ def update_writers(contest, writers=None):
         account.writer_set.add(contest)
 
 
-def update_problems(contest, problems=None):
-    if problems is not None:
+def update_problems(contest, problems=None, force=False):
+    if problems is not None and not force:
         if canonize(problems) == canonize(contest.info.get('problems')):
             return
-        contest.info['problems'] = problems
-        contest.save()
+    contest.info['problems'] = problems
+    contest.save()
 
     problems = contest.info.get('problems')
     if not problems or hasattr(contest, 'stage'):
@@ -591,7 +591,7 @@ def update_problems(contest, problems=None):
 @page_template('problems_paging.html')
 def problems(request, template='problems.html', extra_context=None):
     problems = Problem.objects.all()
-    problems = problems.select_related('contest', 'contest__resource')
+    problems = problems.select_related('contest', 'resource')
     problems = problems.prefetch_related('tags')
     problems = problems.order_by('-time', 'contest_id', 'index')
     problems = problems.filter(contest__end_time__lt=timezone.now(), visible=True)
@@ -604,10 +604,10 @@ def problems(request, template='problems.html', extra_context=None):
                                            mapping={
                                                'name': {'fields': ['name__iregex']},
                                                'contest': {'fields': ['contest__title__iregex']},
-                                               'resource': {'fields': ['contest__host__iregex']},
+                                               'resource': {'fields': ['resource__host__iregex']},
                                                'tag': {'fields': ['problemtag__name__iregex'], 'exists': 'tags'},
                                                'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
-                                               'rid': {'fields': ['contest__resource_id'], 'func': lambda v: int(v)},
+                                               'rid': {'fields': ['resource_id'], 'func': lambda v: int(v)},
                                                'pid': {'fields': ['id'], 'func': lambda v: int(v)},
                                            },
                                            queryset=problems)

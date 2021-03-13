@@ -54,6 +54,7 @@ class Command(BaseCommand):
         parser.add_argument('--update-without-new-rating', action='store_true', default=False, help='Update account')
         parser.add_argument('--stage', action='store_true', default=False, help='Stage contests')
         parser.add_argument('--division', action='store_true', default=False, help='Contests with divisions')
+        parser.add_argument('--force-problems', action='store_true', default=False, help='Force update problems')
 
     def parse_statistic(
         self,
@@ -71,10 +72,11 @@ class Command(BaseCommand):
         with_stats=True,
         update_without_new_rating=None,
         without_contest_filter=False,
+        force_problems=False,
     ):
         now = timezone.now()
 
-        contests = contests.select_related('resource', 'module')
+        contests = contests.select_related('resource__module')
 
         if not without_contest_filter:
             if with_check:
@@ -612,7 +614,7 @@ class Command(BaseCommand):
                                             p.update(d_problems.get(k, {}))
                                             p['n_total'] = contest.n_statistics
 
-                                update_problems(contest, problems=problems)
+                                update_problems(contest, problems=problems, force=force_problems)
 
                             if languages:
                                 languages = list(sorted(languages))
@@ -628,7 +630,7 @@ class Command(BaseCommand):
                             problems = plugin.merge_dict(problems, contest.info.get('problems'))
                             if not users:
                                 contest.info['problems'] = {}
-                            update_problems(contest, problems=problems)
+                            update_problems(contest, problems=problems, force=force_problems)
 
                     action = standings.get('action')
                     if action is not None:
@@ -724,4 +726,5 @@ class Command(BaseCommand):
             users=args.users,
             with_stats=not args.no_stats,
             update_without_new_rating=args.update_without_new_rating,
+            force_problems=args.force_problems,
         )
