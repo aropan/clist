@@ -246,6 +246,7 @@ class Command(BaseCommand):
                                     r[k] = v.replace(chr(0x00), '')
                             member = r.pop('member')
                             account_action = r.pop('action', None)
+                            skip_result = r.get('_no_update_n_contests')
 
                             if account_action == 'delete':
                                 Account.objects.filter(resource=resource, key=member).delete()
@@ -253,7 +254,7 @@ class Command(BaseCommand):
 
                             account, created = Account.objects.get_or_create(resource=resource, key=member)
 
-                            if not contest.info.get('_no_update_account_time'):
+                            if not contest.info.get('_no_update_account_time') and not skip_result:
                                 stats = (statistics_by_key or {}).get(member, {})
                                 no_rating = with_stats and 'new_rating' not in stats and 'rating_change' not in stats
 
@@ -351,11 +352,13 @@ class Command(BaseCommand):
                             if '_languages' not in r and _languages:
                                 r['_languages'] = list(sorted(_languages))
 
-                            if 'team_id' not in r or r['team_id'] not in teams_viewed:
+                            if ('team_id' not in r or r['team_id'] not in teams_viewed) and not skip_result:
                                 if 'team_id' in r:
                                     teams_viewed.add(r['team_id'])
                                 solved = {'solving': 0}
-                                n_statistics[r.get('division')] += 1
+                                if r.get('division'):
+                                    n_statistics[r.get('division')] += 1
+                                n_statistics['__total__'] += 1
                                 for k, v in problems.items():
                                     if 'result' not in v:
                                         continue
@@ -593,7 +596,7 @@ class Command(BaseCommand):
                             if calculate_time and not contest.calculate_time:
                                 contest.calculate_time = True
 
-                            contest.n_statistics = len(result)
+                            contest.n_statistics = n_statistics.pop('__total__', 0)
 
                             problems = standings.pop('problems', None)
                             if problems is not None:
