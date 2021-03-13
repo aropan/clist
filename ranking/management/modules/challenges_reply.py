@@ -130,7 +130,7 @@ class Statistic(BaseModule):
                     offset = None
                     break
 
-                if r.get('maxScoring'):
+                if r.get('maxScoring') or not problems_info:
                     max_solving = max(max_solving, row['solving'])
 
                 result[row['member']] = row

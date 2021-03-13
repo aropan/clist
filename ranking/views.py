@@ -42,7 +42,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         .annotate(has_statistics=Exists(Statistics.objects.filter(contest=OuterRef('pk')))) \
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
         .filter(Q(has_statistics=True) | Q(end_time__lte=timezone.now())) \
-        .order_by('-end_time')
+        .order_by('-end_time', 'pk')
 
     all_standings = False
     if request.user.is_authenticated:
