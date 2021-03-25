@@ -34,7 +34,7 @@ humanize==3.1.0
 python-telegram-bot==12.7
 lxml==4.6.2
 defusedxml==0.5.0
-pyyaml==5.1
+pyyaml==5.4
 biplist==1.0.3
 ipdb==0.11
 google-api-python-client==1.7.8
