@@ -101,14 +101,14 @@ def count_resource_accounts(signal, instance, **kwargs):
         instance.resource.save()
 
 
-def update_account_by_coders(instance, default_url=None):
+def update_account_by_coders(account, default_url=None):
     url = False
     custom_countries = None
-    for idx, coder in enumerate(instance.coders.iterator()):
+    for idx, coder in enumerate(account.coders.iterator()):
         if url:
             url = True
         else:
-            url = reverse('coder:profile', args=[coder.username]) + f'?search=resource:{instance.resource.host}'
+            url = reverse('coder:profile', args=[coder.username]) + f'?search=resource:{account.resource.host}'
 
         if custom_countries is None:
             custom_countries = coder.settings.get('custom_countries', {})
@@ -126,29 +126,32 @@ def update_account_by_coders(instance, default_url=None):
         url = default_url
 
     if url:
-        instance.url = url
+        account.url = url
 
-    instance.info['custom_countries_'] = custom_countries or {}
+    account.info['custom_countries_'] = custom_countries or {}
 
-    instance.save()
+    account.save()
 
 
 @receiver(pre_save, sender=Account)
 @receiver(m2m_changed, sender=Account.coders.through)
 def update_account_url(signal, instance, **kwargs):
+    if kwargs.get('reverse'):
+        return
+    account = instance
 
     def default_url():
-        args = [instance.key, instance.resource.host]
+        args = [account.key, account.resource.host]
         return reverse('coder:account', args=args)
 
     if signal is pre_save:
-        if instance.url:
+        if account.url:
             return
-        instance.url = default_url()
+        account.url = default_url()
     elif signal is m2m_changed:
         if not kwargs.get('action').startswith('post_'):
             return
-        update_account_by_coders(instance, default_url=default_url())
+        update_account_by_coders(account, default_url=default_url())
 
 
 @receiver(m2m_changed, sender=Account.writer_set.through)

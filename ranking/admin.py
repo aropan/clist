@@ -2,10 +2,10 @@ from django.contrib import admin
 from django.utils.timezone import now
 from sql_util.utils import Exists
 
-from pyclist.admin import BaseModelAdmin, admin_register
-from ranking.models import Account, Rating, AutoRating, Statistics, Module, Stage
-from ranking.management.commands.parse_statistic import Command as parse_stat
 from clist.models import Contest
+from pyclist.admin import BaseModelAdmin, admin_register
+from ranking.management.commands.parse_statistic import Command as parse_stat
+from ranking.models import Account, AutoRating, Module, Rating, Stage, Statistics
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -67,7 +67,9 @@ class AccountAdmin(BaseModelAdmin):
         ordering = ('-contest__end_time', )
         raw_id_fields = ('contest', )
         fields = ('contest', )
+        readonly_fields = ('contest', )
         can_delete = False
+        extra = 0
 
         def get_queryset(self, *args, **kwargs):
             qs = super().get_queryset(*args, **kwargs)

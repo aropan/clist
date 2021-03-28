@@ -338,6 +338,12 @@
             $update .= ",info=clist_contest.info || '$info'::jsonb";
         }
 
+        $slug = slugify($contest['title']);
+        if ($slug) {
+            $fields .= ",slug,title_path";
+            $values .= ",'$slug','" . str_replace("-", ".", $slug) . "'";
+        }
+
         $now = date("Y-m-d H:i:s", time());
 
         $to_update = !DEBUG && (!isset($_GET['title']) || preg_match($_GET['title'], $contest['title']));

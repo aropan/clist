@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 import re
-import logging
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 from pprint import pprint
-from collections import OrderedDict, defaultdict
 
-import yaml
 import tqdm
-from geopy.geocoders import Nominatim
+import yaml
 from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 
-from ranking.management.modules.common import REQ, DOT, SPACE, BaseModule, parsed_table, FailOnGetResponse
+from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.neerc_ifmo_helper import parse_xml
-
 
 logging.getLogger('geopy').setLevel(logging.INFO)
 
@@ -137,9 +136,11 @@ class Statistic(BaseModule):
                         match = re.search(regex_info, row['name'])
                         if not match:
                             continue
+
                         row['name'] = row['name'][:match.span()[0]]
                         if ',' in row['name']:
-                            continue
+                            row['name'] = re.sub(r'[\s,]+', ' ', row['name'])
+
                         group_info = match.group('info')
 
                         infos = [s.strip() for s in group_info.split(',')]
@@ -159,7 +160,7 @@ class Statistic(BaseModule):
                         n_loc_infos = len(loc_infos)
                         for idx in range(n_loc_infos):
                             loc_info = ', '.join(loc_infos[:n_loc_infos - idx])
-                            address = locations[loc_info]
+                            address = get_location(loc_info)
                             if address:
                                 break
                         else:

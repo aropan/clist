@@ -13,7 +13,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
 from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists
 
@@ -126,7 +126,7 @@ def get_view_contests(request, coder):
     return result
 
 
-@csrf_protect
+@require_POST
 def get_events(request):
     if request.user.is_authenticated:
         coder = request.user.coder
@@ -204,7 +204,6 @@ def get_events(request):
     return JsonResponse(result, safe=False)
 
 
-@csrf_protect
 @login_required
 def send_event_notification(request):
     method = request.POST['method']

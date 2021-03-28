@@ -1,28 +1,26 @@
 
-import string
-import random
-import requests
 import json
+import random
 import re
+import string
 from copy import deepcopy
-from io import StringIO
 from datetime import timedelta
+from io import StringIO
 from urllib.parse import parse_qsl
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from django.forms.models import model_to_dict
-from django.contrib import auth
-from django.contrib import messages
-from django.contrib.auth.models import User
-from django.db import transaction
-from django.db.models import Q, Count
-from django.utils import timezone
+import requests
 from django.conf import settings
-from django.contrib.auth.decorators import permission_required
+from django.contrib import auth, messages
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import User
 from django.core.management.commands import dumpdata
+from django.db import transaction
+from django.db.models import Count, Q
+from django.forms.models import model_to_dict
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
 
 from my_oauth.models import Service, Token
 from true_coders.models import Coder
@@ -202,8 +200,8 @@ def signup(request, action=None):
                 context['error'] = '30 characters or fewer.'
             elif not re.match(r'^[\-A-Za-z0-9_@\+\.]{1,30}$', username):
                 context['error'] = 'Username may contain alphanumeric, _, @, +, . and - characters.'
-            elif User.objects.filter(username=username).exists():
-                q_token = q_token | Q(coder__user__username=username)
+            elif User.objects.filter(username__iexact=username).exists():
+                q_token = q_token | Q(coder__user__username__iexact=username)
                 context['error'] = 'User already exist.'
             else:
                 with transaction.atomic():

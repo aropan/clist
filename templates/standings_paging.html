@@ -7,16 +7,16 @@
 {% if statistic.my_stat and statistic.floating %}{% show_more_table %}{% endif %}
 <tr class="{% if statistic.my_stat %}info my-stat{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
   {% with advance=addition|get_item:'_advance' %}
-  <{{ tag }} class="place-cell"
+  <{{ tag }}
     {% if addition.medal %}
-      class="{{ addition.medal|lower }}-medal"
+      class="place-cell {{ addition.medal|lower }}-medal"
       {% with medal_title_field=addition|get_item:"_medal_title_field" %}
       title="{% if medal_title_field %}{{ medal_title_field|strip:"_"|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
       {% endwith %}
       data-toggle="tooltip"
       data-placement="top"
     {% elif advance %}
-      class="advance{% if advance.class %} {{ advance.class }}{% endif %}"
+      class="place-cell advance{% if advance.class %} {{ advance.class }}{% endif %}"
       {% if advance %}
         data-toggle="tooltip"
         data-placement="top"

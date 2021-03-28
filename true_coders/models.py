@@ -5,8 +5,7 @@ from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Q
-from django.db.models.signals import pre_save
+from django.db.models import Q, signals
 from django.dispatch import receiver
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -133,10 +132,17 @@ class Coder(BaseModel):
         return self.account_set.filter(resource__host=host).first()
 
 
-@receiver(pre_save, sender=Coder)
+@receiver(signals.pre_save, sender=Coder)
 def init_coder_username(instance, **kwargs):
     if not instance.username:
         instance.username = instance.user.username
+
+
+@receiver(signals.pre_delete, sender=Coder)
+def clear_coder_accounts(instance, **kwargs):
+    accounts = instance.account_set.select_related('resource').prefetch_related('coders')
+    for a in accounts:
+        a.coders.remove(instance)
 
 
 class PartyManager(BaseManager):

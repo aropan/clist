@@ -207,6 +207,7 @@ class Contest(models.Model):
             models.Index(fields=['end_time']),
             models.Index(fields=['updated']),
             models.Index(fields=['n_statistics', 'updated']),
+            models.Index(fields=['n_statistics', 'end_time']),
             models.Index(fields=['resource', 'end_time', 'id']),
             models.Index(fields=['resource', 'start_time', 'id']),
             models.Index(fields=['title']),

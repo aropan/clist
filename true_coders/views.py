@@ -654,7 +654,11 @@ def change(request):
             pass
         try:
             with transaction.atomic():
+                n_accounts = user.coder.account_set.count()
+                user.coder.account_set.clear()
                 _, delete_info = user.delete()
+                if n_accounts:
+                    delete_info.setdefault('ranking.Account_coders', n_accounts)
                 delete_info = [(k, v) for k, v in delete_info.items() if v]
                 delete_info.sort(key=lambda d: d[1], reverse=True)
                 raise RollbackException()
@@ -666,7 +670,8 @@ def change(request):
         username = request.POST.get("username")
         if username != user.username:
             return HttpResponseBadRequest(f"invalid username: found '{username}', expected '{user.username}'")
-        user.delete()
+        with transaction.atomic():
+            user.delete()
     else:
         return HttpResponseBadRequest("unknown query")
 

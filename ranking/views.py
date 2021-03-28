@@ -39,9 +39,8 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     contests = Contest.objects \
         .select_related('timing') \
         .select_related('resource') \
-        .annotate(has_statistics=Exists(Statistics.objects.filter(contest=OuterRef('pk')))) \
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
-        .filter(Q(has_statistics=True) | Q(end_time__lte=timezone.now())) \
+        .filter(Q(n_statistics__gt=0) | Q(end_time__lte=timezone.now())) \
         .order_by('-end_time', 'pk')
 
     all_standings = False
@@ -50,7 +49,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     switch = 'switch' in request.GET
     if bool(all_standings) == bool(switch):
-        contests = contests.filter(has_statistics=True, has_module=True)
+        contests = contests.filter(n_statistics__gt=0, has_module=True)
         if request.user.is_authenticated:
             contests = contests.filter(request.user.coder.get_contest_filter(['list']))
 

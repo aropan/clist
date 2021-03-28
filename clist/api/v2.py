@@ -55,7 +55,8 @@ class ResourceResource(BaseModelResource):
 
 
 class ContestResource(BaseModelResource):
-    resource = fields.CharField('resource__host')
+    resource = fields.CharField('resource__host',
+                                help_text='Unicode string data. Use comma to filter multiple resources')
     resource_id = fields.IntegerField('resource_id')
     event = fields.CharField('title')
     start = fields.DateTimeField('start_time')
@@ -101,7 +102,7 @@ class ContestResource(BaseModelResource):
             filters['filtered'] = filtered[-1]
             filters['category'] = category[-1]
         if resource:
-            filters['resource__host'] = resource[-1]
+            filters['resource__host__in'] = ','.join(resource).split(',')
         return filters
 
     def apply_filters(self, request, applicable_filters):
