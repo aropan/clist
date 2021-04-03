@@ -27,17 +27,15 @@ warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
 # Build paths inside the project like this: path.join(BASE_DIR, ...)
 BASE_DIR = path.dirname(path.dirname(path.abspath(__file__)))
 
-ADMINS = (
-    ('Aleksey Ropan', 'aropan@clist.by'),
-)
+ADMINS = conf.ADMINS
 
 MANAGERS = ADMINS
 
-EMAIL_HOST = 'smtp.yandex.ru'
-EMAIL_HOST_USER = 'noreply@clist.by'
+EMAIL_HOST = conf.EMAIL_HOST
+EMAIL_HOST_USER = conf.EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = conf.EMAIL_HOST_PASSWORD
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_PORT = conf.EMAIL_PORT
+EMAIL_USE_TLS = conf.EMAIL_USE_TLS
 
 SERVER_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
 DEFAULT_FROM_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
@@ -93,6 +91,8 @@ INSTALLED_APPS = (
     'django_postgres_reindex_command',
     'oauth2_provider',
     'tastypie_oauth',
+    'channels',
+    'chats',
 )
 
 MIDDLEWARE = (
@@ -143,6 +143,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'pyclist.wsgi.application'
+
+ASGI_APPLICATION = 'pyclist.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Database
@@ -384,11 +394,7 @@ CACHES[IMAGEFIT_CACHE_BACKEND_NAME] = {
 BOOTSTRAP_ADMIN_SIDEBAR_MENU = True
 
 # WEBPUSH
-WEBPUSH_SETTINGS = {
-  'VAPID_PUBLIC_KEY': 'BLM8jbznhlOctmETpTmBhYCpS7YB9w57uopEKrUa44vPT8-ITGuruzxtfnV7K7tdYPUeoDGIokz7I2sboUqbwR8',
-  'VAPID_PRIVATE_KEY': 'DuG3FnlFusaR1_2EXsdbezdVblJJTP4aIpB3DiwweFU',
-  'VAPID_ADMIN_EMAIL': 'mailto:webmaster@clist.by',
-}
+WEBPUSH_SETTINGS = conf.WEBPUSH_SETTINGS
 
 # CONSTANTS
 VIEWMODE_ = 'list'
@@ -422,7 +428,7 @@ DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
 
 CUSTOM_COUNTRIES_ = {
-  'BY': ['BY', 'BPR'],
+    'BY': ['BY', 'BPR'],
 }
 
 ISSUES_URL_ = 'https://github.com/aropan/clist/issues'

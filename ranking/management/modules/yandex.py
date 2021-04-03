@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import re
 import os
+import re
 from collections import OrderedDict
 from urllib.parse import urljoin
-
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -130,16 +129,17 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    from pprint import pprint
     import sys
+    from pprint import pprint
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'
 
     from django import setup
     setup()
 
-    from clist.models import Contest
     from django.utils.timezone import now
+
+    from clist.models import Contest
 
     contest = Contest.objects.filter(host='contests.snarknews.info', end_time__lte=now()).last()
 

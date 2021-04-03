@@ -70,3 +70,5 @@ emoji-country-flag==1.2.4
 gitpython==3.1.14
 free-proxy==1.0.2
 coloredlogs==15.0
+twisted[http2,tls]==21.2.0
+channels_redis==3.2.0

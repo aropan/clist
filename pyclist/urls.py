@@ -6,10 +6,8 @@ from django.urls import path
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
 
-
 from pyclist.sitemaps import sitemaps
 from pyclist.views import test
-
 
 admin.autodiscover()
 
@@ -19,6 +17,7 @@ urlpatterns = [
     re_path(r'', include('true_coders.urls')),
     re_path(r'', include('ranking.urls')),
     re_path(r'', include('events.urls')),
+    re_path(r'', include('chats.urls')),
 
     re_path(r'^telegram/', include('tg.urls')),
 

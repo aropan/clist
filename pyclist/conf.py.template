@@ -1,4 +1,14 @@
+ADMINS = (
+    ('{str:name}', '{str:email}'),
+)
+
+EMAIL_HOST = '{str}'
+EMAIL_HOST_USER = '{str:email}'
 EMAIL_HOST_PASSWORD = '{str}'
+EMAIL_PORT = {int}
+EMAIL_USE_TLS = {bool}
+STOP_EMAIL = {bool}
+
 SECRET_KEY = '{str}'
 TELEGRAM_TOKEN = '{int}:{str}'
 TELEGRAM_ADMIN_CHAT_ID = {int}
@@ -8,3 +18,9 @@ DB_PORT = '{int}'
 DB_NAME = '{str}'
 DB_USER = '{str}'
 DB_PASSWORD = '{str}'
+
+WEBPUSH_SETTINGS = {
+    'VAPID_PUBLIC_KEY': '{str}',
+    'VAPID_PRIVATE_KEY': '{str}',
+    'VAPID_ADMIN_EMAIL': '{str}',
+}

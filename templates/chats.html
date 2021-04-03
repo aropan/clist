@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Chats{% endblock %}{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/chats.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/chats.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div id="chats" class="row">
+        <div class="col-md-3 col-sm-3 col-xs-12 left-sidebar">
+            {% comment %} <div class="input-group searchbox"> {% endcomment %}
+            {% comment %}     <input class="form-control" placeholder="Search" name="srch-term" id="srch-term" type="text"> {% endcomment %}
+            {% comment %}     <div class="input-group-btn"> {% endcomment %}
+            {% comment %}         <button class="btn btn-default search-icon" type="submit"><i class="glyphicon glyphicon-search"></i></button> {% endcomment %}
+            {% comment %}     </div> {% endcomment %}
+            {% comment %} </div> {% endcomment %}
+            <div class="left-chats">
+                <ul>
+                    {% for i in '012345678901234567890123456789'|make_list %}
+                    <li>
+                        <div class="chats-left-detail">
+                            <p>luis yankee</p>
+                            <span><i class="fa fa-circle" aria-hidden="true"></i> online</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-9 col-sm-9 col-xs-12 right-sidebar">
+            <div class="row">
+                <div class="col-md-12 right-header">
+                    <div class="right-header-detail">
+                        <p>Jack Clerk</p>
+                        <span>already 19 messages </span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 right-header-content">
+                    <ul>
+                        {% for i in '0123456789'|make_list %}
+                        <li>
+                            <div class="rightside-left-chats">
+                                <span><i class="fa fa-circle" aria-hidden="true"></i> joi chak <small>10:00 AM,Today</small> </span><br><br>
+                                <p>Lorem ipsum dolor sit ameeserunt mollit anim id est laborum.
+                                Lorem ipsum dolor sit ameeserunt mollit anim mollit anim laborum.
+                                Lorem ipsum dolor sit ameeserunt mollit anim id est laborum.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="rightside-right-chats">
+                                <span> <small>10:00 AM,Today</small>  nik minaj <i class="fa fa-circle" aria-hidden="true"></i></span><br><br>
+                                <p>Lorem ipsum dolor sit ameeserunt mollit anim id est laborum.
+                                Lorem ipsum dolor sit ameeserunt mollit anim id est laborum.</p>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 right-chats-textbox">
+                    <input type="text"><a href="#"><i class="fa fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% comment %} <textarea id="chats-log" cols="100" rows="20"></textarea><br> {% endcomment %}
+    {% comment %} <input id="chats-message-input" type="text" size="100"><br> {% endcomment %}
+    {% comment %} <input id="chats-message-submit" type="button" value="Send"> {% endcomment %}
+    {% comment %} <script> {% endcomment %}
+    {% comment %}     const roomName = 'room_general'; {% endcomment %}
+
+    {% comment %}     const chatSocket = new WebSocket( {% endcomment %}
+    {% comment %}         (window.location.protocol == 'https:' ? 'wss' : 'ws') {% endcomment %}
+    {% comment %}         + '://' {% endcomment %}
+    {% comment %}         + window.location.host {% endcomment %}
+    {% comment %}         + '/ws/chats/' {% endcomment %}
+    {% comment %}     ); {% endcomment %}
+
+    {% comment %}     chatSocket.onmessage = function(e) { {% endcomment %}
+    {% comment %}         const data = JSON.parse(e.data); {% endcomment %}
+    {% comment %}         document.querySelector('#chats-log').value += (data.message + '\n'); {% endcomment %}
+    {% comment %}     }; {% endcomment %}
+
+    {% comment %}     chatSocket.onclose = function(e) { {% endcomment %}
+    {% comment %}         console.error('chats socket closed unexpectedly'); {% endcomment %}
+    {% comment %}     }; {% endcomment %}
+
+    {% comment %}     document.querySelector('#chats-message-input').focus(); {% endcomment %}
+    {% comment %}     document.querySelector('#chats-message-input').onkeyup = function(e) { {% endcomment %}
+    {% comment %}         if (e.keyCode === 13) {  // enter, return {% endcomment %}
+    {% comment %}             document.querySelector('#chats-message-submit').click(); {% endcomment %}
+    {% comment %}         } {% endcomment %}
+    {% comment %}     }; {% endcomment %}
+
+    {% comment %}     document.querySelector('#chats-message-submit').onclick = function(e) { {% endcomment %}
+    {% comment %}         const messageInputDom = document.querySelector('#chats-message-input'); {% endcomment %}
+    {% comment %}         const message = messageInputDom.value; {% endcomment %}
+    {% comment %}         chatSocket.send(JSON.stringify({ {% endcomment %}
+    {% comment %}             'message': message {% endcomment %}
+    {% comment %}         })); {% endcomment %}
+    {% comment %}         messageInputDom.value = ''; {% endcomment %}
+    {% comment %}     }; {% endcomment %}
+    {% comment %} </script> {% endcomment %}
+{% endblock %}
