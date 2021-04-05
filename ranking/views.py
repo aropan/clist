@@ -321,30 +321,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
 
     if 'team_id' in contest_fields and not groupby:
         order.append('addition__name')
-
         statistics = statistics.distinct(*[f.lstrip('-') for f in order])
-
-        # host = resource_standings.get('account_team_resource', contest.resource.host)
-        # account_team_resource = Resource.objects.get(host=host)
-        # context['account_team_resource'] = account_team_resource
-
-        # statistics = statistics.annotate(
-        #     accounts=RawSQL(
-        #         '''
-        #         SELECT array_agg(array[u2.key, u3.rating::text, u3.url])
-        #         FROM       "ranking_statistics" U0
-        #         INNER JOIN "ranking_account" U2
-        #         ON         (u0."account_id" = u2."id")
-        #         INNER JOIN "ranking_account" U3
-        #         ON         (u2."key" = u3."key" AND u3."resource_id" = %s)
-        #         WHERE      (
-        #             u0."contest_id" = %s
-        #             AND ("u0"."addition" -> 'team_id') = ("ranking_statistics"."addition" -> 'team_id')
-        #         )
-        #         ''',
-        #         [account_team_resource.pk, contest.pk]
-        #     )
-        # )
 
     order.append('pk')
     statistics = statistics.order_by(*order)

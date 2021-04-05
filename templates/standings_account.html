@@ -1,30 +1,27 @@
+{% with team_id=addition.team_id %}
 {% if resource.avatar_url %}
   <div class="avatar-width-fixed">
-  {% with avatar_url=account.avatar_url %}
-    {% if avatar_url %}
-      <img class="account-avatar" src="{{ avatar_url }}"/>
-    {% endif %}
-  {% endwith %}
+  {% if not team_id %}
+  {% with avatar_url=account.avatar_url %}{% if avatar_url %}<img class="account-avatar" src="{{ avatar_url }}"/>{% endif %}{% endwith %}
+  {% endif %}
   </div>
 {% endif %}
 
 {% if has_country %}
-  {% with country=account.country %}
-    <div class="flag-width-fixed">
-    {% if country %}
-    {% with code=account.info.custom_countries_|get_item:country.code|default:country.code %}
+  <div class="flag-width-fixed">
+  {% if not team_id %}
+  {% with country=account.country %}{% if country %}{% with code=account.info.custom_countries_|get_item:country.code|default:country.code %}
     <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><img class="flag flag-{{ code|lower }}"/></a>
-    {% endwith %}
-    {% endif %}
-    </div>
-  {% endwith %}
+  {% endwith %}{% endif %}{% endwith %}
+  {% endif %}
+  </div>
 {% endif %}
 
-{% with team_id=addition.team_id %}
 {% if not team_id %}{% coder_color_circle resource addition account.info %}{% endif %}
 
 <div class="handle-div{% if not team_id%} {% coder_color_class resource addition account.info %}{% endif %}" style="display: inline-block">
-  {% if account.url and not statistic.accounts %}<a href="{{ account.url }}" class="coder">{% endif %}
+  {% with members=addition|get_item:"_members" %}
+  {% if account.url and not members %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in addition %}<a href="{{ addition|get_item:"_account_url" }}">{% endif %}
 
   {% if addition.name and account.key|has_season:addition.name or team_id or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
     <span{% if addition.name|length > 50 %} title="{{ addition.name }}" data-toggle="tooltip"{% endif %}>{{ addition.name|truncatechars:50 }}</span>
@@ -32,7 +29,21 @@
     <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
   {% endif %}
 
-  {% if account.url and not statistic.accounts %}</a>{% endif %}
+  {% if account.url and not members or '_account_url' in addition %}</a>{% endif %}
+
+  {% if members %}:
+    {% for member in members %}
+      {% if forloop.counter0 %}|{% endif %}
+      {% with account=preload_statistics_data.accounts|get_item:member.account %}
+      <span class="{% coder_color_class resource account.info %}">
+      {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}">{% endif %}
+      {{ member.account }}
+      {% if account.url or resource.profile_url %}</a>{% endif %}
+      </span>
+      {% endwith %}
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
 
   {% for country_name in addition|get_item:"_countries" %}
     {% with country_code=country_name|get_country_code %}
@@ -45,12 +56,6 @@
       {% endif %}
     {% endwith %}
   {% endfor %}
-
-  {% if statistic.accounts %}:
-    {% for key, rating, url in statistic.accounts %}
-      <{% if url %}a href="{{ url }}" class="coder"{% else %}span{% endif %} class="{% if rating %}{% coder_color_class account_team_resource rating|asfloat %}{% endif %}"><span{% if rating %} class="{% coder_color_class account_team_resource rating|asfloat %}"{% endif %}>{{ key }}</span></{% if url %}a{% else %}span{% endif %}>
-    {% endfor %}
-  {% endif %}
 
   {% if addition.url %}
     <a href="{{ addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>

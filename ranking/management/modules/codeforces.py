@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
 
-import re
-import json
 import html
+import json
+import re
+from collections import OrderedDict
 from copy import deepcopy
-from datetime import timedelta, datetime
-from time import time, sleep
+from datetime import datetime, timedelta
 from hashlib import sha512
 from pprint import pprint
-from urllib.parse import urlencode, urljoin
-from string import ascii_lowercase
 from random import choice
-from collections import OrderedDict
+from string import ascii_lowercase
+from time import sleep, time
+from urllib.parse import urlencode, urljoin
 
 import pytz
 
+from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
-from ranking.management.modules import conf
 from utils.aes import AESModeOfOperation
-
 
 API_KEYS = conf.CODEFORCES_API_KEYS
 DEFAULT_API_KEY = API_KEYS[API_KEYS['__default__']]
@@ -172,6 +171,7 @@ class Statistic(BaseModule):
             place = None
             last = None
             idx = 0
+            teams_to_skip = set()
             for row in data['result']['rows']:
                 party = row['party']
 
@@ -210,6 +210,8 @@ class Statistic(BaseModule):
                         if 'teamId' in party:
                             r['team_id'] = party['teamId']
                             r['name'] = f"{party['teamName']}"
+                            r['_members'] = [{'account': m['handle']} for m in party['members']]
+                            r['_account_url'] = urljoin(self.url, '/team/' + str(r['team_id']))
                         r['_no_update_name'] = True
                     if domain_users and '=' in handle:
                         _, login = handle.split('=', 1)
@@ -264,7 +266,12 @@ class Statistic(BaseModule):
                             if users:
                                 r['place'] = '__unchanged__'
                             else:
-                                idx += 1
+                                if 'team_id' in r:
+                                    if r['team_id'] not in teams_to_skip:
+                                        teams_to_skip.add(r['team_id'])
+                                        idx += 1
+                                else:
+                                    idx += 1
                                 value = (row['points'], row.get('penalty'))
                                 if last != value:
                                     last = value

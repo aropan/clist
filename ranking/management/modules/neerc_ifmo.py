@@ -25,13 +25,13 @@ class Statistic(BaseModule):
         result = {}
         problems_info = OrderedDict()
 
+        page = REQ.get(self.standings_url)
+
         try:
             standings_xml = REQ.get(self.standings_url.replace('.html', '.xml'), detect_charsets=False)
             xml_result = parse_xml(standings_xml)
         except FailOnGetResponse:
             xml_result = {}
-
-        page = REQ.get(self.standings_url)
 
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
         match = re.search(regex, page, re.DOTALL)
@@ -40,13 +40,13 @@ class Statistic(BaseModule):
             regex = '<table[^>]*>.*?</table>'
             match = re.search(regex, page, re.DOTALL)
         html_table = match.group(0)
-        table = parsed_table.ParsedTable(html_table)
+        table = parsed_table.ParsedTable(html_table, as_list=True)
 
         university_regex = self.info.get('standings', {}).get('1st_u', {}).get('regex')
         for r in table:
             row = {}
             problems = row.setdefault('problems', {})
-            for k, v in list(r.items()):
+            for k, v in r:
                 k = k.split()[0]
                 if k == 'Total' or k == '=':
                     row['solving'] = int(v.value)
@@ -59,10 +59,14 @@ class Statistic(BaseModule):
                         p = problems.setdefault(k, {})
                         if ' ' in v.value:
                             point, time = v.value.split()
-                            p['time'] = time
                         else:
                             point = v.value
+                            time = None
+                        if 'result' in p and point != p.get('result'):
+                            p.clear()
                         p['result'] = point
+                        if time is not None:
+                            p['time'] = time
 
                         first_ac = v.column.node.xpath('.//*[@class="first-to-solve"]')
                         if len(first_ac):
@@ -95,12 +99,62 @@ class Statistic(BaseModule):
                     row['university'] = u
             result[row['member']] = row
 
+        if statistics and self.info.get('use_icpc.kimden.online'):
+            team_regions = {}
+
+            def canonize_name(name):
+                name = re.sub(':', '', name)
+                name = re.sub(r'\s+', ' ', name)
+                return name
+
+            def get_region(team_name):
+                nonlocal team_regions
+                if not team_regions:
+                    page = REQ.get('https://icpc.kimden.online/')
+                    matches = re.finditer(
+                        '<label[^>]*for="(?P<selector>[^"]*)"[^"]*onclick="setRegion[^"]*"[^>]*>(?P<name>[^>]*)</',
+                        page,
+                    )
+                    regions = {}
+                    for match in matches:
+                        selector = match.group('selector').replace('selector', '').replace('--', '-')
+                        regions[selector] = match.group('name')
+                    pprint(regions)
+
+                    matches = re.finditer(
+                        r'''
+                        <tr[^>]*class="(?P<class>[^"]*)"[^>]*>\s*<td[^>]*>[^<]*</td>\s*<td[^>]*title="(?P<name>[^"]*)">[^<]*</td>
+                        ''',
+                        page,
+                        re.VERBOSE,
+                    )
+
+                    for match in matches:
+                        classes = match.group('class').split()
+                        name = match.group('name')
+                        name = canonize_name(name)
+                        for c in classes:
+                            if c in regions:
+                                team_regions[name] = regions[c]
+                                break
+                team_name = canonize_name(team_name)
+                return team_regions[team_name]
+
+            for row in result.values():
+                stat = statistics.get(row['member'])
+                if not stat:
+                    continue
+                if stat.get('region'):
+                    row['region'] = stat['region']
+                else:
+                    row['region'] = get_region(row['name'])
+
         standings = {
             'result': result,
             'url': self.standings_url,
             'problems': list(problems_info.values()),
             'problems_time_format': '{M}:{s:02d}',
-            'hidden_fields': ['university'],
+            'hidden_fields': ['university', 'region', 'medal'],
         }
         return standings
 

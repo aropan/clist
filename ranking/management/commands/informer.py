@@ -1,30 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import json
+import logging
 import os
 import re
-import time
-import json
 import subprocess
-import logging
+import time
 from datetime import timedelta
 from pprint import pprint  # noqa
 
-from attrdict import AttrDict
-
 import coloredlogs
 import humanize
+from attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 
-from tg.bot import Bot, telegram
-
-from clist.models import Contest
-from ranking.models import Statistics
-from clist.templatetags.extras import has_season
-
 from .parse_statistic import Command as ParserCommand
-
+from clist.models import Contest
+from clist.templatetags.extras import has_season
+from ranking.models import Statistics
+from tg.bot import Bot, telegram
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
@@ -142,6 +138,9 @@ class Command(BaseCommand):
                         if p_result != result or is_hidden:
                             has_new_accepted |= is_accepted
                             m = '%s%s %s' % (k, ('. ' + v['name']) if 'name' in v else '', result)
+
+                            if v.get('verdict'):
+                                m += ' ' + v['verdict']
 
                             if p_result != result:
                                 m = '*%s*' % m

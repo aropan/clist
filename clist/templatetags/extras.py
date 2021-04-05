@@ -1,26 +1,25 @@
+import itertools
 import json
 import re
-import six
-import itertools
-from datetime import timedelta, datetime
-from os import path
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
-from unidecode import unidecode
+from datetime import datetime, timedelta
+from os import path
 from urllib.parse import quote_plus
 
 import pytz
+import six
 import yaml
 from django import template
-from django.urls import reverse
 from django.conf import settings
+from django.template.base import Node
+from django.template.defaultfilters import slugify, stringfilter
+from django.urls import reverse
 from django.utils.functional import keep_lazy
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
-from django.template.base import Node
-from django.template.defaultfilters import stringfilter, slugify
 from django_countries.fields import countries
-
+from unidecode import unidecode
 
 register = template.Library()
 
@@ -40,7 +39,7 @@ def strip(string, val):
 def get_item(data, key):
     if not data:
         return None
-    if isinstance(data, dict):
+    if isinstance(data, (dict, defaultdict, OrderedDict)):
         return data.get(key)
     if isinstance(data, (list, tuple)):
         return data[key]
