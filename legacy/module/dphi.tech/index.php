@@ -15,7 +15,11 @@
                 }
                 $cid = $match['id'];
 
-                $title = $c['title'] . '. ' . ucfirst($c['datathon_type']);
+                $title = $c['title'];
+                if ($c['datathon_type']) {
+                    $title .= '. ' . ucfirst($c['datathon_type']);
+                }
+
                 $contests[] = array(
                     'start_time' => $c['start_date'],
                     'end_time' => $c['end_date'],
