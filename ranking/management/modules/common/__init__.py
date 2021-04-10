@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 import os
+from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from datetime import timedelta
-from abc import ABCMeta, abstractmethod
-import logging
 
-from utils.requester import requester
-from utils.requester import FailOnGetResponse, ProxyLimitReached  # noqa
+from utils.requester import FailOnGetResponse, ProxyLimitReached, requester  # noqa
 
 REQ = requester(cookie_filename=os.path.join(os.path.dirname(__file__), 'cookies.txt'))
 REQ.caching = 'REQUESTER_CACHING' in os.environ
-REQ.time_out = 23
+REQ.time_out = 30
 REQ.debug_output = 'REQUESTER_DEBUG' in os.environ
 
 SPACE = ' '

@@ -1,26 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 import os
-from attrdict import AttrDict
+import sys
 from datetime import timedelta
 from logging import getLogger
 from traceback import format_exc
 
-from tqdm import tqdm
+from attrdict import AttrDict
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 from django_super_deduper.merge import MergedModelInstance
+from tqdm import tqdm
 
 from clist.models import Resource
+from ranking.management.commands.common import account_update_contest_additions
+from ranking.management.commands.countrier import Countrier
 from ranking.models import Account
 from true_coders.models import Coder
-
-from ranking.management.commands.countrier import Countrier
-from ranking.management.commands.common import account_update_contest_additions
 
 
 class Command(BaseCommand):
@@ -71,8 +70,9 @@ class Command(BaseCommand):
                     accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
                 count, total = 0, accounts.count()
-                if args.limit or not resource.info.get('accounts', {}).get('nolimit', False):
-                    limit = args.limit or 1000
+                resource_info = resource.info.get('accounts', {})
+                if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):
+                    limit = resource_info.get('limit') or args.limit or 1000
                     accounts = accounts[:limit]
                 accounts = list(accounts)
 

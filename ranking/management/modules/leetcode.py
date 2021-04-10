@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import json
 import os
 import re
-import json
-import yaml
-from functools import lru_cache, partial
-from datetime import datetime, timedelta
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import datetime, timedelta
+from functools import lru_cache, partial
 from pprint import pprint
 
 import tqdm
+import yaml
 from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
+
 # from ranking.management.modules import conf
 
 
@@ -133,6 +134,7 @@ class Statistic(BaseModule):
                 ):
                     if stop:
                         break
+                    n_added = 0
                     for row, submissions in zip(data['total_rank'], data['submissions']):
                         handle = row.pop('user_slug').lower()
                         if users and handle not in users or handle in result:
@@ -179,6 +181,15 @@ class Statistic(BaseModule):
                                     s['handle'] = handle
                                     solutions_for_get.append(s)
 
+                        if users:
+                            users.remove(handle)
+                            if not users:
+                                stop = True
+
+                        if not problems:
+                            result.pop(handle)
+                            continue
+
                         r['solved'] = {'solving': solved}
                         finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
                         r['penalty'] = self.to_time(finish_time)
@@ -189,11 +200,9 @@ class Statistic(BaseModule):
                             for k in ('rating_change', 'new_rating'):
                                 if k in stat:
                                     r[k] = stat[k]
-                        if users:
-                            users.remove(handle)
-                            if not users:
-                                stop = True
-                                break
+                        n_added += 1
+                    if n_added == 0:
+                        stop = True
 
                 # if statistics is not None and solutions_for_get:
                 #     if statistics:
@@ -281,17 +290,48 @@ class Statistic(BaseModule):
                 try:
                     with rate_limiter:
                         if is_chine(account):
-                            ret = {'contests': get_all_contests()}
+                            ret = {}
+
+                            post = '''
+                            {"operationName":"userPublicProfile","variables":{"userSlug":"''' + account.key + '''"},"query":"
+                            query userPublicProfile($userSlug: String!) {
+                                userProfilePublicProfile(userSlug: $userSlug) {
+                                    username
+                                    profile {
+                                        userSlug
+                                        realName
+                                        contestCount
+                                        ranking {
+                                            currentLocalRanking
+                                            currentGlobalRanking
+                                            currentRating
+                                            totalLocalUsers
+                                            totalGlobalUsers
+                                        }
+                                    }
+                                }
+
+                                userContestRanking(userSlug: $userSlug) {
+                                    ratingHistory
+                                    contestHistory
+                                }
+                            }"}'''
+                            post = re.sub(r'\s+', ' ', post)
 
                             page = Statistic._get(
                                 'https://leetcode-cn.com/graphql',
-                                post=b'''
-                                {"operationName":"userPublicProfile","variables":{"userSlug":"''' + account.key.encode() + b'''"},"query":"query userPublicProfile($userSlug: String!) { userProfilePublicProfile(userSlug: $userSlug) { username profile { userSlug realName contestCount ranking { ranking currentLocalRanking currentGlobalRanking currentRating ratingProgress totalLocalUsers totalGlobalUsers } } }}"}''',  # noqa
+                                post=post.encode(),
                                 content_type='application/json',
                                 req=req,
                                 **kwargs,
                             )
                             ret['profile'] = json.loads(page)['data']
+                            ranking = ret['profile'].pop('userContestRanking')
+
+                            ret['history'] = {
+                                'titles': [h['title_slug'] for h in json.loads(ranking['contestHistory'])],
+                                'ratings': json.loads(ranking['ratingHistory']),
+                            }
                             page = ret
                         else:
                             page = Statistic._get(
@@ -333,10 +373,39 @@ class Statistic(BaseModule):
 
             while True:
                 try:
+                    post = '''{
+                        "operationName":"null",
+                        "variables":{},
+                        "query":"{
+                            globalRanking(page: ''' + str(page_index) + ''') {
+                                rankingNodes {
+                                    dataRegion
+                                    user {
+                                        username
+                                        profile {
+                                            userSlug
+                                            realName
+                                            contestCount
+                                            ranking {
+                                                ranking
+                                                currentLocalRanking
+                                                currentGlobalRanking
+                                                currentRating
+                                                ratingProgress
+                                                totalLocalUsers
+                                                totalGlobalUsers
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }"
+                    }'''
+                    post = re.sub(r'\s+', ' ', post)
+
                     page = Statistic._get(
                         'https://leetcode-cn.com/graphql',
-                        post=b'''
-                        {"operationName":"null","variables":{},"query":"{globalRanking(page: ''' + str(page_index).encode() + b''') { rankingNodes { dataRegion user { username profile { userSlug realName contestCount ranking { ranking currentLocalRanking currentGlobalRanking currentRating ratingProgress totalLocalUsers totalGlobalUsers } } } }  } }"}''',  # noqa
+                        post=post.encode(),
                         content_type='application/json',
                         req=req,
                         **kwargs,
@@ -355,8 +424,6 @@ class Statistic(BaseModule):
 
             return page_index, data
 
-        all_contests = get_all_contests()
-
         with REQ(
             with_proxy=True,
             args_proxy={'time_limit': 10, 'n_limit': 30},
@@ -368,25 +435,27 @@ class Statistic(BaseModule):
                 state = {}
 
             last_page = state.setdefault('last_page', 0)
-            n_accounts_to_paging = state.setdefault('n_accounts_to_paging', 10)
-            pages_per_update = state.setdefault('pages_per_update', 200)
-            if len(accounts) > n_accounts_to_paging:
-                if (
-                    'next_time' in state
-                    and datetime.now() < state['next_time']
-                    and last_page == 0
-                ):
-                    for a in accounts:
-                        a.updated += timedelta(days=365)
-                        a.save()
-                    next_page = last_page
-                else:
-                    next_page = last_page + pages_per_update
-                pages = set(list(range(last_page + 1, next_page + 1)))
-                stop = True
-            else:
-                pages = set()
-                stop = False
+            # n_accounts_to_paging = state.setdefault('n_accounts_to_paging', 10)
+            # pages_per_update = state.setdefault('pages_per_update', 200)
+            # if len(accounts) > n_accounts_to_paging:
+            #     if (
+            #         'next_time' in state
+            #         and datetime.now() < state['next_time']
+            #         and last_page == 0
+            #     ):
+            #         for a in accounts:
+            #             a.updated += timedelta(days=365)
+            #             a.save()
+            #         next_page = last_page
+            #     else:
+            #         next_page = last_page + pages_per_update
+            #     pages = set(list(range(last_page + 1, next_page + 1)))
+            #     stop = True
+            # else:
+            #     pages = set()
+            #     stop = False
+
+            pages, stop = set(), False
 
             # for a in tqdm.tqdm(accounts, desc='getting global ranking pages'):
             #     if len(pages) > pages_per_update * 2:
@@ -420,7 +489,6 @@ class Statistic(BaseModule):
                             username = node['user']['profile']['userSlug'].lower()
                             global_ranking_users[(data_region, username)] = {
                                 'profile': {'userProfilePublicProfile': node['user']},
-                                'contests': all_contests,
                             }
                     else:
                         state['last_page'] = 0
@@ -453,19 +521,32 @@ class Statistic(BaseModule):
                 contest_addition_update_by = None
                 ratings, rankings, titles = [], [], []
                 if is_chine(account) or isinstance(page, dict) and 'contests' in page:
-                    contests = [c['titleSlug'] for c in page['contests']['allContests']]
-                    info = page['profile']['userProfilePublicProfile']
+                    info = page.pop('profile')['userProfilePublicProfile']
                     if info is None:
                         yield {'info': None}
                         continue
+                    contest_addition_update_by = 'key'
                     info.update(info.pop('profile', {}) or {})
                     info.update(info.pop('ranking', {}) or {})
+                    info.update(page.pop('history', {}) or {})
                     info['slug'] = info.pop('userSlug')
-                    if 'ranking' in info:
+
+                    if 'titles' in info:
+                        titles = info.pop('titles')
+                    else:
+                        contests = [c['titleSlug'] for c in page['contests']['allContests']]
+                        titles = list(reversed(contests))
+
+                    if 'rankings' in info:
+                        rankings = info.pop('rankings')
+                    elif 'ranking' in info:
                         rankings = yaml.safe_load(info.pop('ranking'))
-                    ratings = info.pop('ratingProgress', []) or []
-                    contests = contests[len(contests) - len(ratings):]
-                    titles = list(reversed(contests))
+
+                    if 'ratings' in info:
+                        ratings = info.pop('ratings')
+                    else:
+                        ratings = info.pop('ratingProgress', []) or []
+
                     if 'currentRating' in info:
                         info['rating'] = int(info['currentRating'])
                 else:
