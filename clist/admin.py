@@ -115,12 +115,9 @@ class ResourceAdmin(BaseModelAdmin):
         ['Calendar information', {'fields': ['color', 'uid']}],
         [None, {'fields': ['info', 'ratings', 'has_rating_history']}],
     ]
-    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', '_num_contests']
+    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', 'n_contests', 'n_accounts']
     search_fields = ['host', 'url']
     list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone']
-
-    def _num_contests(self, obj):
-        return obj.contest_set.count()
 
     def _has_profile_url(self, obj):
         return bool(obj.profile_url)

@@ -1,7 +1,8 @@
-from pyclist.admin import BaseModelAdmin, admin_register
 from django.contrib import admin
-from true_coders.models import Coder, Filter, Party, Organization
+
 from events.models import Participant
+from pyclist.admin import BaseModelAdmin, admin_register
+from true_coders.models import Coder, Filter, Organization, Party
 
 
 @admin_register(Coder)
@@ -52,11 +53,14 @@ class FilterAdmin(BaseModelAdmin):
         'to_show',
         'regex',
         'inverse_regex',
-        'resources',
+        '_n_resources',
         'contest_id',
         'categories',
         'modified',
     ]
+
+    def _n_resources(self, obj):
+        return len(obj.resources)
 
 
 @admin_register(Organization)

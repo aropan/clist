@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import json
+import re
 import sys
 import time
-import json
 import traceback
-import tqdm
-import re
-from urllib.parse import quote
-from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from pprint import pprint
+from urllib.parse import quote
 
+import tqdm
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, LOG, parsed_table, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules import conf
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -287,7 +287,9 @@ class Statistic(BaseModule):
                         value = match.group('value').strip()
                         info[key] = value
 
-                    contest_addition_update = {}
+                    contest_addition_update_params = {}
+                    update = contest_addition_update_params.setdefault('update', {})
+                    by = contest_addition_update_params.setdefault('by', ['key'])
                     prev_rating = None
                     for row in data:
                         rating = row.get('rating')
@@ -297,18 +299,30 @@ class Statistic(BaseModule):
                         info['rating'] = rating
 
                         code = row.get('code')
+                        name = row.get('name')
                         if code:
-                            if re.search(r'\bdiv(ision)?[-_\s]+[ABCD1234]\b', row['name'], re.I) \
+                            if re.search(r'\bdiv(ision)?[-_\s]+[ABCD1234]\b', name, re.I) \
                                and re.search('[ABCD]$', code):
                                 code = code[:-1]
 
-                            update = contest_addition_update.setdefault(code, OrderedDict())
-                            update['rating_change'] = rating - prev_rating if prev_rating is not None else None
-                            update['new_rating'] = rating
+                            u = update.setdefault(code, OrderedDict())
+                            u['rating_change'] = rating - prev_rating if prev_rating is not None else None
+                            u['new_rating'] = rating
+
+                            new_name = name
+                            new_name = re.sub(r'\s*\([^\)]*\brated\b[^\)]*\)$', '', new_name, flags=re.I)
+                            new_name = re.sub(r'\s*\bdiv(ision)?[-_\s]+[ABCD1234]$', '', new_name, flags=re.I)
+                            if new_name != name:
+                                if 'title' not in by:
+                                    by.append('title')
+                                update[new_name] = u
 
                         prev_rating = rating
 
-                    ret = {'info': info, 'contest_addition_update': contest_addition_update}
+                    ret = {
+                        'info': info,
+                        'contest_addition_update_params': contest_addition_update_params,
+                    }
 
                 yield ret
 

@@ -1,8 +1,10 @@
-import tqdm
+import functools
 import json
+import operator
 
-from django.utils import timezone
+import tqdm
 from django.db.models import Q
+from django.utils import timezone
 
 from ranking.models import Statistics
 
@@ -19,7 +21,11 @@ def account_update_contest_additions(
     clear_rating_change=None,
 ):
     contest_keys = set(contest_addition_update.keys())
-    field = 'key' if by is None else by
+
+    fields = 'key' if by is None else by
+    if isinstance(fields, str):
+        fields = [fields]
+
     qs = Statistics.objects.filter(account=account)
     if timedelta_limit is not None and not clear_rating_change:
         qs.filter(modified__lte=timezone.now() - timedelta_limit)
@@ -32,13 +38,19 @@ def account_update_contest_additions(
             s.addition.pop('old_rating', None)
             s.save()
 
-    qs = qs.filter(**{f'contest__{field}__in': contest_keys}).select_related('contest')
+    conditions = (Q(**{f'contest__{field}__in': contest_keys}) for field in fields)
+    condition = functools.reduce(operator.__or__, conditions)
+    qs = qs.filter(condition).select_related('contest')
 
     total = 0
     for stat in tqdm.tqdm(qs.iterator(), desc=f'updating additions for {account.key}', position=1):
         total += 1
         addition = dict(stat.addition)
-        ordered_dict = contest_addition_update[getattr(stat.contest, field)]
+        for field in fields:
+            key = getattr(stat.contest, field)
+            if key in contest_addition_update:
+                ordered_dict = contest_addition_update[key]
+                break
         addition.update(dict(ordered_dict))
         for k, v in ordered_dict.items():
             if v is None:

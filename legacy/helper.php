@@ -160,17 +160,18 @@
             logmsg('ERROR ' . curl_errno($CID) . ': ' . curl_error($CID));
         }
 
-        if (isset($params["json_output"])) {
-            $sep = strrpos($page, "\r\n\r\n");
-        } else {
-            $sep = strrpos($page, "\r\n\r\n");
-        }
-
+        $sep = strrpos($page, "\r\n\r\n");
         $header = substr($page, 0, $sep);
         $header = http_parse_headers($header);
 
-        if (isset($params["json_output"]) && isset($header["Content-Type"])) {
-            $a = $header["Content-Type"];
+        $header_ = array();
+        foreach ($header as $k => $v) {
+            $header_[strtolower($k)] = $v;
+        }
+        $header = $header_;
+
+        if (isset($params["json_output"]) && isset($header["content-type"])) {
+            $a = $header["content-type"];
             $a = is_array($a)? $a : array($a);
             $content_type = implode(", ", $a);
             if (strpos($content_type, "application/json") !== false || strpos($content_type, "text/javascript") !== false) {
@@ -178,8 +179,8 @@
             }
         }
 
-        if (isset($header['Set-Cookie'])) {
-            $a = $header['Set-Cookie'];
+        if (isset($header['set-cookie'])) {
+            $a = $header['set-cookie'];
             $a = is_array($a)? $a : array($a);
             foreach ($a as $c) {
                 $kv = explode(";", $c, 2)[0];
