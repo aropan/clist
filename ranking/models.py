@@ -638,6 +638,7 @@ class Stage(BaseModel):
             score_advance = None
             place_advance = 0
             for row in tqdm.tqdm(results, desc=f'update statistics for stage {stage}'):
+                row['_no_update_n_contests'] = True
                 division = row.get('division', 'none')
                 placing_info = placing_infos.setdefault(division, {})
                 placing_info['index'] = placing_info.get('index', 0) + 1
@@ -671,7 +672,6 @@ class Stage(BaseModel):
 
                     if tmp is not None:
                         score_advance, place_advance = tmp
-
                 account = row.pop('member')
                 solving = row.pop('score')
                 stat, created = Statistics.objects.update_or_create(

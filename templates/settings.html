@@ -127,10 +127,21 @@
             </div>
 
             <div id="filters" class="value">
-                {% for filter in coder.ordered_filter_set.all %}
+                {% for f in coder.grouped_filter_set.all %}
+                {% ifchanged f.has_contest %}{% if forloop.counter0 %}<hr/>{%endif %}{% endifchanged %}
+                {% ifchanged f.categories %}
+                <div class="key">
+                    {% for cid in f.categories %}
+                        {% if forloop.counter0 %}|{% endif %}
+                        {% for c in categories %}
+                            {% if c.id == cid %}{{ c.text }}{% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                {% endifchanged %}
                 <div>
-                    <a href="#" data-name="filter" data-value='{{ filter.dict|jsonify|force_escape }}' class="filter"></a>
-                    <a href="#" data-id="{{ filter.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" data-name="filter" data-value='{{ f.dict|jsonify|force_escape }}' class="filter"></a>
+                    <a href="#" data-id="{{ f.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"><i class="far fa-trash-alt"></i></a>
                 </div>
                 {% endfor %}
             </div>

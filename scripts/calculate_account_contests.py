@@ -29,6 +29,7 @@ def main(host=None):
                 a.n_contests = a.count
                 a.save()
                 pbar.update()
+        pbar.close()
     print(timezone.now())
 
     filt = Q(statistics__addition___no_update_n_contests__isnull=True)
@@ -42,6 +43,7 @@ def main(host=None):
                 a.last_activity = a.last
                 a.save()
                 pbar.update()
+        pbar.close()
     print(timezone.now())
 
 

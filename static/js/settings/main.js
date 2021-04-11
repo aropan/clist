@@ -310,9 +310,6 @@ $(function() {
             if (value.regex) {
                 html += ', with ' + (value.inverse_regex? 'inverse ' : '') + 'regex ' + value.regex
             }
-            if (value.categories && value.categories.length) {
-                html += ', for ' + value.categories.length + ' categories';
-            }
             $(element).html(html)
         },
 
@@ -502,7 +499,7 @@ $(function() {
                 $div.find('.filter').on('hidden', filterEditableHidden)
 
                 $div.find('.action-filter').click(sentAction)
-                $div.appendTo('#filters')
+                $div.prependTo('#filters')
                 $div.find('.filter').click()
             },
             error: function(data) {

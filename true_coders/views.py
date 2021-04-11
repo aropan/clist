@@ -571,12 +571,14 @@ def change(request):
                 raise Exception("invalid value(s)")
             if len(filter_.categories) == 0:
                 raise Exception("empty")
+            if filter_.categories != Filter.CATEGORIES:
+                filter_.categories.sort()
 
             filter_.save()
         except Exception as e:
             return HttpResponseBadRequest("%s: %s" % (field, e))
     elif name == "add-filter":
-        if coder.filter_set.count() >= 50:
+        if coder.filter_set.filter(contest__isnull=True).count() >= 50:
             return HttpResponseBadRequest("reached the limit number of filters")
         filter_ = Filter.objects.create(coder=coder)
         return HttpResponse(json.dumps(filter_.dict()), content_type="application/json")

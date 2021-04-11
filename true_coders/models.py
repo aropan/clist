@@ -5,7 +5,7 @@ from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Q, signals
+from django.db.models import Count, Q, signals
 from django.dispatch import receiver
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -128,6 +128,13 @@ class Coder(BaseModel):
     def ordered_filter_set(self):
         return self.filter_set.order_by('created')
 
+    @property
+    def grouped_filter_set(self):
+        qs = self.filter_set.select_related('contest')
+        qs = qs.annotate(has_contest=Count('contest'))
+        qs = qs.order_by('has_contest', 'categories', '-modified')
+        return qs
+
     def get_account(self, host):
         return self.account_set.filter(resource__host=host).first()
 
@@ -186,7 +193,7 @@ def _get_default_categories():
 class Filter(BaseModel):
     CATEGORIES = ['list', 'calendar', 'email', 'telegram', 'api', 'webbrowser']
 
-    coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, db_index=True)
     name = models.CharField(max_length=60, null=True, blank=True)
     duration_from = models.IntegerField(null=True, blank=True)
     duration_to = models.IntegerField(null=True, blank=True)
@@ -194,7 +201,7 @@ class Filter(BaseModel):
     inverse_regex = models.BooleanField(default=False)
     to_show = models.BooleanField(default=True)
     resources = models.JSONField(default=list, blank=True)
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, default=None, null=True, blank=True)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, default=None, null=True, blank=True, db_index=True)
     categories = ArrayField(models.CharField(max_length=20), blank=True, default=_get_default_categories)
 
     def __str__(self):
@@ -231,6 +238,13 @@ class Filter(BaseModel):
         if self.contest_id:
             ret['contest__title'] = self.contest.title
         return ret
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['coder']),
+            models.Index(fields=['contest']),
+            models.Index(fields=['coder', 'contest']),
+        ]
 
 
 class Organization(BaseModel):

@@ -56,6 +56,7 @@ class FilterAdmin(BaseModelAdmin):
         '_n_resources',
         'contest_id',
         'categories',
+        'created',
         'modified',
     ]
 

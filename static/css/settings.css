@@ -14,6 +14,10 @@
     color: #333 !important;
 }
 
+#filters .key {
+    margin-top: 5px;
+}
+
 .filter-field {
     margin-top: 7px;
 }
