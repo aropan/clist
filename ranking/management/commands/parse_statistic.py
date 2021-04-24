@@ -151,7 +151,7 @@ class Command(BaseCommand):
             progress_bar.refresh()
             total += 1
             parsed = False
-            user_info_has_rating = None
+            user_info_has_rating = {}
             try:
                 r = {}
 
@@ -273,19 +273,26 @@ class Command(BaseCommand):
                                         and (not title_re or re.search(title_re, contest.title))
                                         and updated < account.updated
                                     ):
-                                        if user_info_has_rating is None:
+                                        division = r.get('division')
+                                        if division not in user_info_has_rating:
                                             generator = plugin.get_users_infos([member], contest.resource, [account])
                                             try:
                                                 user_info = next(generator)
                                                 params = user_info.get('contest_addition_update_params', {})
                                                 field = user_info.get('contest_addition_update_by') or params.get('by') or 'key'  # noqa
                                                 updates = user_info.get('contest_addition_update') or params.get('update') or {}  # noqa
-                                                user_info_has_rating = getattr(contest, field) in updates
+                                                if not isinstance(field, (list, tuple)):
+                                                    field = [field]
+                                                user_info_has_rating[division] = False
+                                                for f in field:
+                                                    if getattr(contest, f) in updates:
+                                                        user_info_has_rating[division] = True
+                                                        break
                                             except Exception:
                                                 self.logger.error(format_exc())
-                                                user_info_has_rating = False
+                                                user_info_has_rating[division] = False
 
-                                        if user_info_has_rating:
+                                        if user_info_has_rating[division]:
                                             n_upd_account_time += 1
                                             account.updated = updated
                                             account.save()
