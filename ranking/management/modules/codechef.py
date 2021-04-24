@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
 from urllib.parse import quote
 
+import arrow
 import tqdm
 from ratelimiter import RateLimiter
 
@@ -300,6 +301,7 @@ class Statistic(BaseModule):
 
                         code = row.get('code')
                         name = row.get('name')
+                        end_time = row.get('end_date')
                         if code:
                             if re.search(r'\bdiv(ision)?[-_\s]+[ABCD1234]\b', name, re.I) \
                                and re.search('[ABCD]$', code):
@@ -312,10 +314,17 @@ class Statistic(BaseModule):
                             new_name = name
                             new_name = re.sub(r'\s*\([^\)]*\brated\b[^\)]*\)$', '', new_name, flags=re.I)
                             new_name = re.sub(r'\s*\bdiv(ision)?[-_\s]+[ABCD1234]$', '', new_name, flags=re.I)
+
                             if new_name != name:
                                 if 'title' not in by:
                                     by.append('title')
                                 update[new_name] = u
+
+                            if end_time:
+                                end_time = arrow.get(end_time)
+                                year = str(end_time.year)
+                                if code.endswith(year[-2:]) and not code.endswith(year):
+                                    update[code[:-2] + year] = u
 
                         prev_rating = rating
 
