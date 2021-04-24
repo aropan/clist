@@ -151,7 +151,6 @@ class Command(BaseCommand):
             progress_bar.refresh()
             total += 1
             parsed = False
-            user_info = None
             user_info_has_rating = None
             try:
                 r = {}
@@ -274,7 +273,7 @@ class Command(BaseCommand):
                                         and (not title_re or re.search(title_re, contest.title))
                                         and updated < account.updated
                                     ):
-                                        if user_info is None:
+                                        if user_info_has_rating is None:
                                             generator = plugin.get_users_infos([member], contest.resource, [account])
                                             try:
                                                 user_info = next(generator)
@@ -284,7 +283,6 @@ class Command(BaseCommand):
                                                 user_info_has_rating = getattr(contest, field) in updates
                                             except Exception:
                                                 self.logger.error(format_exc())
-                                                user_info = False
                                                 user_info_has_rating = False
 
                                         if user_info_has_rating:

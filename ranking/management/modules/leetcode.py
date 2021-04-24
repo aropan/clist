@@ -326,11 +326,11 @@ class Statistic(BaseModule):
                                 **kwargs,
                             )
                             ret['profile'] = json.loads(page)['data']
-                            ranking = ret['profile'].pop('userContestRanking')
+                            ranking = ret['profile'].pop('userContestRanking', None) or {}
 
                             ret['history'] = {
-                                'titles': [h['title_slug'] for h in json.loads(ranking['contestHistory'])],
-                                'ratings': json.loads(ranking['ratingHistory']),
+                                'titles': [h['title_slug'] for h in json.loads(ranking.get('contestHistory', '{}'))],
+                                'ratings': json.loads(ranking.get('ratingHistory', '{}')),
                             }
                             page = ret
                         else:

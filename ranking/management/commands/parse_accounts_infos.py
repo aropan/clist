@@ -59,36 +59,36 @@ class Command(BaseCommand):
 
         now = timezone.now()
         for resource in resources:
-            with transaction.atomic():
-                accounts = resource.account_set
+            accounts = resource.account_set
 
-                if args.query:
-                    accounts = accounts.filter(key__iregex=args.query)
-                elif args.force:
-                    accounts = accounts.order_by('updated')
-                else:
-                    accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
+            if args.query:
+                accounts = accounts.filter(key__iregex=args.query)
+            elif args.force:
+                accounts = accounts.order_by('updated')
+            else:
+                accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now + timedelta(hours=2)))
 
-                count, total = 0, accounts.count()
-                resource_info = resource.info.get('accounts', {})
-                if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):
-                    limit = resource_info.get('limit') or args.limit or 1000
-                    accounts = accounts[:limit]
-                accounts = list(accounts)
+            count, total = 0, accounts.count()
+            resource_info = resource.info.get('accounts', {})
+            if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):
+                limit = resource_info.get('limit') or args.limit or 1000
+                accounts = accounts[:limit]
+            accounts = list(accounts)
 
-                if not accounts:
-                    continue
+            if not accounts:
+                continue
 
-                try:
-                    with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
-                        infos = resource.plugin.Statistic.get_users_infos(
-                            users=[a.key for a in accounts],
-                            resource=resource,
-                            accounts=accounts,
-                            pbar=pbar,
-                        )
+            try:
+                with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
+                    infos = resource.plugin.Statistic.get_users_infos(
+                        users=[a.key for a in accounts],
+                        resource=resource,
+                        accounts=accounts,
+                        pbar=pbar,
+                    )
 
-                        for account, data in zip(accounts, infos):
+                    for account, data in zip(accounts, infos):
+                        with transaction.atomic():
                             if data.get('skip'):
                                 continue
                             count += 1
@@ -143,11 +143,11 @@ class Command(BaseCommand):
                                 account.info.update(info)
                             account.updated = now + delta
                             account.save()
-                except Exception:
-                    if not has_param:
-                        for account in tqdm(accounts, desc='changing update time'):
-                            account.updated = now + timedelta(days=1)
-                            account.save()
-                    self.logger.error(format_exc())
-                    self.logger.error(f'resource = {resource}')
-                self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}')
+            except Exception:
+                if not has_param:
+                    for account in tqdm(accounts, desc='changing update time'):
+                        account.updated = now + timedelta(days=1)
+                        account.save()
+                self.logger.error(format_exc())
+                self.logger.error(f'resource = {resource}')
+            self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}')
