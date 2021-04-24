@@ -66,7 +66,7 @@ class Command(BaseCommand):
             elif args.force:
                 accounts = accounts.order_by('updated')
             else:
-                accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now + timedelta(hours=2)))
+                accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
 
             count, total = 0, accounts.count()
             resource_info = resource.info.get('accounts', {})
