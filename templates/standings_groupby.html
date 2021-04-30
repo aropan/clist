@@ -46,6 +46,7 @@
   {% endif %}
   {% endwith %}
 </div>
+{% if num_rows_groupby > 1 %}
 <div class="col-lg-5">
   {% for field, header in fields.items %}
   {% if field != "groupby" %}
@@ -151,3 +152,4 @@
     })
   </script>
 </div>
+{% endif %}

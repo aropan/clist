@@ -2,20 +2,22 @@
 # -*- coding: utf-8 -*-
 
 import base64
-import re
 import json
-import urllib.parse
 import os
-from html import unescape
-from pprint import pprint
-from random import choice
+import re
+import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime
+from html import unescape
+from pprint import pprint
+from random import choice
 
+import flag
 import tqdm
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from clist.templatetags.extras import get_country_name
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
@@ -300,11 +302,16 @@ class Statistic(BaseModule):
         if not data:
             if 'hashcode_scoreboard' in self.info:
                 page = REQ.get(self.info['hashcode_scoreboard'])
-                data = json.loads(page)
+                match = re.search('<table[^>]*class="[^"]*Hashcode[^"]*Judge[^"]*Table[^"]*"[^>]*>.*?</table>', page)
+                if match:
+                    data = parsed_table.ParsedTable(match.group(0))
+                    data = [{k: v.value for k, v in row.items()} for row in data]
+                else:
+                    data = json.loads(page)
             else:
                 raise ExceptionParseStandings('Not found data')
 
-        if 'columns' in data:
+        if isinstance(data, dict) and 'columns' in data:
             columns = data['columns']
             data = data['rows']
         else:
@@ -319,6 +326,23 @@ class Statistic(BaseModule):
 
             name = row.pop('teamname')
             name = unescape(name)
+
+            countries = None
+
+            if 'country' in row:
+                countries = re.sub(r',\s+', ',', row.pop('country')).split(',')
+            elif 'countries' in row:
+                countries = row.pop('countries')
+            else:
+                match = re.search(r'^(:[A-Z]+:\s)*', flag.dflagize(name))
+                if match:
+                    countries = []
+                    for c in match.group(0).strip().split():
+                        c = c.strip(':')
+                        countries.append(get_country_name(c))
+                    *_, name = name.split(' ', len(countries))
+                    name = name.strip()
+
             member = f'{name}, {season}'
 
             if users is not None and name not in users:
@@ -341,10 +365,8 @@ class Statistic(BaseModule):
             else:
                 r['place'] = rank
 
-            if 'country' in row:
-                r['_countries'] = re.sub(r',\s+', ',', row.pop('country')).split(',')
-            elif 'countries' in row:
-                r['_countries'] = row.pop('countries')
+            if countries:
+                r['_countries'] = countries
 
             if 'finalround' in row:
                 r['advanced'] = row['finalround']
@@ -368,7 +390,7 @@ class Statistic(BaseModule):
         return standings
 
     def get_standings(self, users=None, statistics=None):
-        if 'hashcode_scoreboard' in self.info or re.search(r'\bhash.*code\b.*round$', self.name, re.I):
+        if 'hashcode_scoreboard' in self.info or re.search(r'\bhash.*code\b.*\(round|final\)$', self.name, re.I):
             ret = self._hashcode(users, statistics)
         elif '/codingcompetitions.withgoogle.com/' in self.url:
             ret = self._api_get_standings(users, statistics)

@@ -25,12 +25,13 @@
         if ($month >= 9) {
             $year = $year + 1;
         }
-        $key = ($year - 1) . "-" . $year . " " . $round['name'];
+        $title = preg_replace("#\s+#", " ", $round['name']);
+        $key = ($year - 1) . "-" . $year . " " . $title;
 
         $contests[] = array(
             'start_time' => $match['start_time'],
             'end_time' => $match['end_time'],
-            'title' => $round['name'],
+            'title' => $title,
             'url' => $URL,
             'host' => $HOST,
             'rid' => $RID,

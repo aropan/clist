@@ -21,7 +21,7 @@
 
 <div class="handle-div{% if not team_id%} {% coder_color_class resource addition account.info %}{% endif %}" style="display: inline-block">
   {% with members=addition|get_item:"_members" %}
-  {% if account.url and not members %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in addition %}<a href="{{ addition|get_item:"_account_url" }}">{% endif %}
+  {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in addition %}<a href="{{ addition|get_item:"_account_url" }}">{% endif %}
 
   {% if addition.name and account.key|has_season:addition.name or team_id or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
     <span{% if addition.name|length > 50 %} title="{{ addition.name }}" data-toggle="tooltip"{% endif %}>{{ addition.name|truncatechars:50 }}</span>
@@ -29,15 +29,15 @@
     <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
   {% endif %}
 
-  {% if account.url and not members or '_account_url' in addition %}</a>{% endif %}
+  {% if account.url and not team_id or '_account_url' in addition %}</a>{% endif %}
 
   {% if members %}:
     {% for member in members %}
       {% if forloop.counter0 %}|{% endif %}
       {% with account=preload_statistics_data.accounts|get_item:member.account %}
       <span class="{% coder_color_class resource account.info %}">
-      {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}">{% endif %}
-      {{ member.account }}
+      {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}" class="coder">{% endif %}
+        <span>{{ member.name|default:member.account }}</span>
       {% if account.url or resource.profile_url %}</a>{% endif %}
       </span>
       {% endwith %}

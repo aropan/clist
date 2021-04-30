@@ -183,8 +183,10 @@
 
 <script>
   $(function() {
+{% if not contest.resource.info.standings.no_change_problem_width %}
     var max_width = Math.max(...$('th.problem-cell:not(.header-score)').map(function() { return $(this).width() }), 0)
     $('th.problem-cell:not(.header-score)').each(function () { $(this).width(max_width); })
+{% endif %}
 
     var el = $('#table-inner-scroll')
     var default_height = el.height()

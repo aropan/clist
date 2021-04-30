@@ -3,8 +3,8 @@
 import collections
 import json
 import re
-from urllib.parse import unquote
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from urllib.parse import unquote
 
 import tqdm
 from dateutil import parser
@@ -30,7 +30,8 @@ class Statistic(BaseModule):
                               round_data['description'],
                               re.IGNORECASE)
             start_time = parser.parse(match.group('start_time'), tzinfos={'CET': 'UTC+1'})
-            if start_time == self.start_time and round_data['name'] == self.name:
+            title = re.sub(r'\s+', ' ', round_data['name'])
+            if start_time == self.start_time and title == self.name:
                 break
         else:
             raise ExceptionParseStandings('not found round')
@@ -41,7 +42,8 @@ class Statistic(BaseModule):
         page = REQ.get(self.ROUND_INFO_API_URL_)
         round_infos = json.loads(page)
         for round_info in round_infos['roundDisplayInfo']:
-            if round_info['displayName'] == self.name:
+            title = re.sub(r'\s+', ' ', round_info['displayName'])
+            if title == self.name:
                 break
         else:
             raise ExceptionParseStandings('not found round')
@@ -49,10 +51,11 @@ class Statistic(BaseModule):
         problems_info = collections.OrderedDict([
             (p['code'], {
                 'code': p['code'],
+                'short': chr(i + ord('A')),
                 'name': p['name'],
                 'url': self.PROBLEM_URL_.format(**p),
             })
-            for p in round_data['problems']
+            for i, p in enumerate(round_data['problems'])
         ])
         if self.name.startswith('Round'):
             level = int(self.name.split()[-1])
@@ -94,23 +97,50 @@ class Statistic(BaseModule):
 
                     matches = re.finditer(
                         r'<a[^>]*href="[^"]*/Problem/(?P<code>[^"/]*)">[^<]*(?:\s*<[^>]*>)*(?P<score>[.0-9]+)',
-                        page
+                        page,
                     )
                     problems = {}
+                    points = {}
                     for m in matches:
                         k = m['code']
                         if k not in problems_info:
                             continue
-                        p = problems.setdefault(k, {})
+                        points[k] = m['score']
+                        p = problems.setdefault(problems_info[k]['short'], {})
                         p['result'] = m['score']
 
-                    users = re.findall('<a[^>]*href="[^"]*/CompetitorResults/[^"]*">([^<]*)</a>', page)
+                    matches = re.finditer(
+                        '<a[^>]*href="[^"]*/CompetitorResults/[^"]*/(?P<account>[0-9]+)/?">(?P<name>[^<]*)</a>',
+                        page,
+                    )
+                    users = [m.groupdict() for m in matches]
 
                     info = {
                         'problems': problems,
                         'url': url,
                         'member': member,
+                        'points': points,
                     }
+
+                    matches = re.finditer(
+                        r'<tr[^>]*>\s*<td[^>]*><b>(?P<key>[^<]*)</b></td>\s*<td[^>]*>(?P<value>[^<]*)</td>\s*</tr>',
+                        page,
+                    )
+
+                    more_info = {}
+                    for m in matches:
+                        k = m.group('key').lower().replace(' ', '_')
+                        v = m.group('value')
+                        if not v:
+                            continue
+                        more_info[k] = v
+                    if more_info.get('name') and more_info.get('surname'):
+                        info['full_name'] = '{name} {surname}'.format(**more_info)
+                    if more_info.get('birth_year') == '0':
+                        more_info.pop('birth_year')
+                    for k in 'school', 'city', 'birth_year':
+                        if more_info.get(k):
+                            info[k] = more_info[k]
 
                     return d, info, users
 
@@ -123,18 +153,22 @@ class Statistic(BaseModule):
 
                     row['name'] = r['name']
                     if users:
-                        row['name'] += f': {", ".join(users)}'
+                        row['_members'] = users
                     row['place'] = place
                     row['solving'] = r['score']
-                    row['country'] = unquote(r['country']).split()[0]
+
+                    country = unquote(r['country'])
+                    country = re.sub(r'\s*\(.*$', '', country)
+                    row['country'] = country
+
                     row['division'] = division
                     if ctype == 'individual':
                         row['_skip_for_problem_stat'] = True
 
                     division_result[row['member']] = row
 
-                    for k, p in row['problems'].items():
-                        max_points[k] = max(max_points[k], float(p['result']))
+                    for k, s in row.pop('points', {}).items():
+                        max_points[k] = max(max_points[k], float(s))
 
                     pbar.update()
 
@@ -146,8 +180,9 @@ class Statistic(BaseModule):
                     problems_info[code]['full_score'] = max_points_challenge_problem
 
                     for r in division_result.values():
-                        if code in r['problems']:
-                            p = r['problems'][code]
+                        k = problems_info[code]['short']
+                        if k in r['problems']:
+                            p = r['problems'][k]
                             p['status'] = p['result']
                             k = 1 - (1 - float(p['result']) / value) ** .5
                             if k < 1:
@@ -170,5 +205,6 @@ class Statistic(BaseModule):
             'url': standings_url,
             'problems': list(problems_info.values()),
             'divisions_order': divisions_order,
+            'hidden_fields': ['full_name', 'school', 'city', 'birth_year'],
         }
         return standings
