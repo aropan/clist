@@ -17,6 +17,7 @@ class Statistic(BaseModule):
     COMPETITION_INFO_API_URL_ = 'https://www.bubblecup.org/_api/competitionInfo'
     ROUND_INFO_API_URL_ = 'https://www.bubblecup.org/_api/ResultsRoundInfo'
     SOLVED_BY_API_URL_ = 'https://www.bubblecup.org/_api/SolvedBy?id={code}'
+    PROBLEM_API_URL_ = 'https://www.bubblecup.org/_api/Problems/View/{code}'
     RESULTS_API_URL_ = 'https://www.bubblecup.org/_api/ResultsSelectedResults/{cid}/{url}/{ctype}'
     TEAM_RESULTS_URL_ = 'https://www.bubblecup.org/CompetitorsCorner/{name}Results/{cid}/{uid}'
     PROBLEM_URL_ = 'https://www.bubblecup.org/CompetitorsCorner/Problem/{code}'
@@ -65,6 +66,7 @@ class Statistic(BaseModule):
 
         result = dict()
 
+        has_scoring = {}
         divisions_order = []
         for cid, ctype in (
             (round_infos['teamCompetitionPremierLeagueId'], 'Team'),
@@ -85,7 +87,6 @@ class Statistic(BaseModule):
             }[ctype]
 
             sorted_data = sorted(data['standings'], key=lambda r: r['score'], reverse=True)
-            max_points = collections.defaultdict(int)
             division_result = dict()
 
             with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(sorted_data)) as pbar:
@@ -100,12 +101,10 @@ class Statistic(BaseModule):
                         page,
                     )
                     problems = {}
-                    points = {}
                     for m in matches:
                         k = m['code']
                         if k not in problems_info:
                             continue
-                        points[k] = m['score']
                         p = problems.setdefault(problems_info[k]['short'], {})
                         p['result'] = m['score']
 
@@ -119,7 +118,6 @@ class Statistic(BaseModule):
                         'problems': problems,
                         'url': url,
                         'member': member,
-                        'points': points,
                     }
 
                     matches = re.finditer(
@@ -166,33 +164,67 @@ class Statistic(BaseModule):
                         row['_skip_for_problem_stat'] = True
 
                     division_result[row['member']] = row
-
-                    for k, s in row.pop('points', {}).items():
-                        max_points[k] = max(max_points[k], float(s))
-
                     pbar.update()
 
             if max_points_challenge_problem is not None:
-                for code, value in max_points.items():
-                    if code != round_data['problems'][-1]['code'] and value <= 2:
+                for code, problem_info in problems_info.items():
+                    key = problem_info['short']
+                    target = self.info.get('parse', {}).get('problems', {}).get(key, {}).get('target')
+
+                    if target is None:
+                        url = self.PROBLEM_API_URL_.format(**problem_info)
+                        if url not in has_scoring:
+                            page = REQ.get(url)
+                            data = json.loads(page)
+                            has_scoring[url] = bool(re.search(r'####\s*Scoring:\s+', data['statement']))
+                        if has_scoring[url]:
+                            for r in division_result.values():
+                                p = r['problems'].get(key, {})
+                                if 'result' not in p:
+                                    continue
+                                p['status'] = p.pop('result')
                         continue
 
-                    problems_info[code]['full_score'] = max_points_challenge_problem
+                    problem_info['full_score'] = max_points_challenge_problem
+
+                    if target == 'minimize':
+                        func = min
+                    elif target == 'maximize':
+                        func = max
+                    else:
+                        raise ExceptionParseStandings(f'unknown target = {target}')
+
+                    opt = None
+                    for r in division_result.values():
+                        res = r['problems'].get(key, {}).get('result')
+                        if res is None:
+                            continue
+                        res = float(res)
+                        if opt is None:
+                            opt = res
+                        else:
+                            opt = func(opt, res)
 
                     for r in division_result.values():
-                        k = problems_info[code]['short']
-                        if k in r['problems']:
-                            p = r['problems'][k]
-                            p['status'] = p['result']
-                            k = 1 - (1 - float(p['result']) / value) ** .5
-                            if k < 1:
-                                p['partial'] = True
-                            p['result'] = round(max_points_challenge_problem * k, 2)
+                        p = r['problems'].get(key, {})
+                        if 'result' not in p:
+                            continue
+                        p['status'] = p['result']
+                        if opt is None or abs(opt) < 1e-9:
+                            p.pop('result')
+                            continue
+                        if target == 'minimize':
+                            coefficient = 1 - (1 - opt / float(p['result'])) ** .5
+                        elif target == 'maximize':
+                            coefficient = 1 - (1 - float(p['result']) / opt) ** .5
+                        if coefficient < 1:
+                            p['partial'] = True
+                        p['result'] = round(max_points_challenge_problem * coefficient, 2)
 
             for r in division_result.values():
                 solved = 0
                 for p in r['problems'].values():
-                    if not p.get('partial') and float(p['result']) > 0:
+                    if not p.get('partial') and 'result' in p and float(p['result']) > 0:
                         solved += 1
                 r['solved'] = {'solving': solved}
 
