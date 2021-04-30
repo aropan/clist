@@ -6,7 +6,7 @@ chdir = $PROJECT_DIR
 
 plugins = python3
 
-virtualenv = $WORKON_HOME/%(project)
+virtualenv = $VIRTUAL_ENV
 module = py%(project).wsgi:application
 
 master = true

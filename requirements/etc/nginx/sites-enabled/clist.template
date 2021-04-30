@@ -80,7 +80,9 @@ server {
 
   charset utf-8;
 
-  include acme;
+  location /.well-known {
+    root /var/www/html;
+  }
 
   location = /favicon.ico { access_log off; log_not_found off; }
 

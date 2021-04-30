@@ -23,7 +23,7 @@ django-user-agents==0.4.0
 django-webpush==0.3.3
 pytest-django==3.8.0
 phonenumbers==8.10.6
-psycopg2==2.7.7
+psycopg2-binary==2.8.6
 arrow==0.13.2
 tqdm==4.31.1
 attrdict==2.0.1
@@ -67,3 +67,5 @@ channels==3.0.3
 flake8==3.8.4
 isort==5.7.0
 emoji-country-flag==1.2.4
+gitpython==3.1.14
+free-proxy==1.0.2

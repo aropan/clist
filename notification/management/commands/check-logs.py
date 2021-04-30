@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger.info('start')
-        cache_filepath = os.path.join(os.path.dirname(__file__), 'cache.yaml')
+        cache_filepath = os.path.join(os.path.dirname(__file__), '.cache.yaml')
         if os.path.exists(cache_filepath):
             with open(cache_filepath, 'r') as fo:
                 cache = yaml.safe_load(fo)

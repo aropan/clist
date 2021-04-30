@@ -1,25 +1,23 @@
 Contributing
 ======
 
-* Clone fork with `--recursive`
-
-* Install all requirements:
-
+* Clone fork with `--recursive`:
 ```bash
+git clone --recursive git@github.com:aropan/clist.git
 cd clist
-sudo ./requirements/packages.sh
-python3 -m venv environment
-source environment/bin/activate
-pip3 install -r requirements/requirements.txt
 ```
 
-* Copy config from template:
+* Install packages `sudo ./requirements/packages.sh`
 
+* Configure and activate virtualenv:
 ```bash
-cp pyclist/conf.py.template pyclist/conf.py
+python3 -m venv .envs/clist
+source .envs/clist/bin/activate
 ```
 
-* Enter all information in `pyclist/conf.py`
+* Install requirements `pip3 install -r requirements/requirements.txt`
+
+* Copy config from template `cp pyclist/conf.py.template pyclist/conf.py` and enter all information in `pyclist/conf.py`:
 
 * Run `sudo ./requirements/configure.sh` to configure postgresql database
 
@@ -29,8 +27,8 @@ cp pyclist/conf.py.template pyclist/conf.py
 
 * Configure uwsgi by config file `requirements/etc/uwsgi/apps-enabled/clist.ini`
 
-* Run `./manage migrate` to migrate database
+* Run `./manage.py migrate` to migrate database
 
-* Run `./manage createsuperuser` to create admin user
+* Run `./manage.py createsuperuser` to create admin user
 
 * Go to `${DOMAIN}/admin/true_coders/coder/` and create `Coder` for admin user

@@ -28,14 +28,14 @@ from utils.regex import get_iregex_filter, verify_regex
 
 def get_timeformat(request):
     ret = settings.TIME_FORMAT_
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and hasattr(request.user, "coder"):
         ret = request.user.coder.settings.get("time_format", ret)
     return ret
 
 
 def get_add_to_calendar(request):
     ret = settings.ADD_TO_CALENDAR_
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and hasattr(request.user, "coder"):
         ret = request.user.coder.settings.get("add_to_calendar", ret)
     return settings.ACE_CALENDARS_[ret]['id']
 
@@ -65,7 +65,7 @@ def get_timezone(request):
                 return
             return result
 
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and hasattr(request.user, "coder"):
         return request.user.coder.timezone
     return request.session.get("timezone", settings.DEFAULT_TIME_ZONE_)
 

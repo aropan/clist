@@ -8,9 +8,6 @@ while IFS= read -r line; do
     export $line
 done <<< $(cat "$(dirname $BASH_SOURCE[0])/../pyclist/conf.py" | grep " = " | sed "s/ = '\?/=/;s/'$//")
 
-mkdir -p /var/log/nginx/clist/
-mkdir -p /var/log/nginx/clist/legacy/
-
 sudo -u postgres createuser $DB_USER || :
 sudo -u postgres createdb $DB_NAME || :
 
