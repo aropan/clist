@@ -2,36 +2,35 @@
 # -*- coding: utf-8 -*-
 
 
-import traceback
-import re
-import urllib.request
-import urllib.parse
-import urllib.error
+import atexit
+import copy
+import html
+import json
 import logging
 import mimetypes
 import random
+import re
 import string
-import html
-import json
-import copy
-from os import path, makedirs, listdir, remove, stat, environ
-from os.path import isdir, getctime
-from json import loads, dumps, load
-from http.cookiejar import MozillaCookieJar, Cookie
-from sys import stderr
+import traceback
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta
+from distutils.util import strtobool
 from gzip import GzipFile
 from hashlib import md5
+from http.cookiejar import Cookie, MozillaCookieJar
 from io import BytesIO
-from time import sleep
-from datetime import datetime, timedelta
-from string import ascii_letters, digits
+from json import dumps, load, loads
+from os import environ, listdir, makedirs, path, remove, stat
+from os.path import getctime, isdir
 from random import choice, gauss
-from distutils.util import strtobool
+from string import ascii_letters, digits
+from sys import stderr
+from time import sleep
 
 import chardet
-
 from fp.fp import FreeProxy
-
 
 logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
 
@@ -321,8 +320,8 @@ class requester():
     assert_on_fail = True
     time_out = 4
     debug_output = True
-    dir_cache = path.dirname(path.realpath(__file__)) + "/cache/"
-    cookie_filename = path.abspath(path.realpath(__file__)) + ".cookie"
+    dir_cache = path.dirname(path.abspath(__file__)) + "/cache/"
+    cookie_filename = path.join(path.dirname(path.abspath(__file__)), ".cookie")
     default_filepath_proxies = path.join(path.dirname(__file__), "proxies.txt")
     last_page = None
     last_url = None
@@ -364,6 +363,7 @@ class requester():
         self._init_opener_headers = self.headers
         self.init_opener()
         self.set_proxy(proxy, file_name_with_proxies)
+        atexit.register(self.cleanup)
 
     def init_opener(self):
         if self.cookie_filename:
@@ -778,7 +778,7 @@ class requester():
     def __exit__(self, *err):
         self.close()
 
-    def __del__(self):
+    def cleanup(self):
         self.save_cookie()
 
         if not isdir(self.dir_cache):
@@ -805,4 +805,3 @@ if __name__ == "__main__":
     req.time_sleep = 1
     req.get("http://opencup.ru")
     req.get("http://clist.by")
-    del req
