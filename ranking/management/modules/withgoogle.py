@@ -31,6 +31,7 @@ class Statistic(BaseModule):
         super(Statistic, self).__init__(**kwargs)
 
     def _api_get_standings(self, users=None, statistics=None):
+
         match = re.search('/([0-9a-f]{16})$', self.url)
         if not match:
             raise ExceptionParseStandings(f'Not found id in url = {self.url}')
@@ -188,6 +189,31 @@ class Statistic(BaseModule):
             'url': standings_url,
             'problems': list(problems_info.values()),
         }
+
+        if self.start_time.year >= 2020:
+            match = re.search(r'\bcode.*jam\b.*\bround\b.*\b(?P<round>[123])[A-Z]?$', self.name, flags=re.I)
+            if match:
+                r = match.group('round')
+                standings.setdefault('info_fields', []).append('advance')
+                standings['advance'] = {
+                    "title": {
+                        "1": "The top 1500 contestants in this round will advance to Round 2",
+                        "2": "The top 1000 contestants in this round will win a T-shirt and advance to Round 3",
+                        "3": "The top 25 contestants in this round will advance to the World Finals",
+                    }[r],
+                    "filter": [
+                        {
+                            "field": "place",
+                            "operator": "le",
+                            "threshold": {
+                                "1": 1500,
+                                "2": 1000,
+                                "3": 25,
+                            }[r],
+                        }
+                    ]
+                }
+
         return standings
 
     def _old_get_standings(self, users=None):
