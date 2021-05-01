@@ -149,7 +149,12 @@ class Resource(BaseModel):
                 with open(filepath, 'wb') as fo:
                     fo.write(response.content)
 
-                Image.open(filepath).convert('RGBA').save(filepath)
+                img = Image.open(filepath).convert('RGBA')
+                img.save(filepath)
+
+                filepath = os.path.join(settings.REPO_STATIC_ROOT, relpath)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                img.save(filepath)
 
                 self.icon = relpath
                 self.save()
