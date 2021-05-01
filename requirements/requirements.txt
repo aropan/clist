@@ -69,3 +69,4 @@ isort==5.7.0
 emoji-country-flag==1.2.4
 gitpython==3.1.14
 free-proxy==1.0.2
+coloredlogs==15.0
