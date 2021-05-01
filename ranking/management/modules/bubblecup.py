@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import collections
 import json
 import re
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
 from urllib.parse import unquote
 
 import tqdm
@@ -49,7 +50,7 @@ class Statistic(BaseModule):
         else:
             raise ExceptionParseStandings('not found round')
 
-        problems_info = collections.OrderedDict([
+        default_problems_info = OrderedDict([
             (p['code'], {
                 'code': p['code'],
                 'short': chr(i + ord('A')),
@@ -61,8 +62,9 @@ class Statistic(BaseModule):
         if self.name.startswith('Round'):
             level = int(self.name.split()[-1])
             if level in [1, 2]:
-                for p in problems_info.values():
+                for p in default_problems_info.values():
                     p['full_score'] = level
+        d_problems_info = OrderedDict()
 
         result = dict()
 
@@ -80,6 +82,7 @@ class Statistic(BaseModule):
             division = data['displayedName'].replace(self.name, '').strip().lower()
             if division not in divisions_order:
                 divisions_order.append(division)
+            problems_info = d_problems_info.setdefault(division, deepcopy(default_problems_info))
 
             participaty_type = {
                 'Team': 'Team',
@@ -232,10 +235,15 @@ class Statistic(BaseModule):
 
         standings_url = self.STANDING_URL_.format(cid=round_infos['teamCompetitionPremierLeagueId'])
 
+        problem_info = {'division': OrderedDict(((d, list(ps.values())) for d, ps in d_problems_info.items()))}
+
+        if len(problem_info['division']) == 1:
+            problems_info = next(iter(problem_info['division'].values()))
+
         standings = {
             'result': result,
             'url': standings_url,
-            'problems': list(problems_info.values()),
+            'problems': problem_info,
             'divisions_order': divisions_order,
             'hidden_fields': ['full_name', 'school', 'city', 'birth_year'],
         }
