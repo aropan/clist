@@ -46,7 +46,7 @@
                         {% url 'auth:login' as login_url %}
 
                         {% if request.path != login_url %}
-                        <li><a href="{{ login_url }}"><i class="fa fa-sign-in-alt">&nbsp;</i>Login / Sign up</a></li>
+                        <li><a href="{{ login_url }}"><i class="fa fa-sign-in-alt">&nbsp;</i>Log in / Sign up</a></li>
                         {% endif %}
 
                         <li>
@@ -74,7 +74,7 @@
                         <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>
                         {% if user.is_authenticated %}
                         <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Log out</a></li>
                         {% endif %}
                     </ul>
 

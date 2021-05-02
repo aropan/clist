@@ -1,12 +1,43 @@
-function chats_height_resize() {
-  var left_height = $(window).height() - $('#chats').position().top - 30
-  $('.left-chats').css('height', left_height + 'px')
-  var right_height = $('.left-sidebar').height() - $('.right-header').outerHeight() - $('.right-chats-textbox').outerHeight() + 1
-  $('.right-header-content').css('height', right_height + 'px')
+const chat_socket = new WebSocket('wss://' + window.location.host + '/ws/chats/')
+
+chat_socket.onmessage = function(e) {
+  const data = JSON.parse(e.data)
+  console.log('onmessage', data)
+  if (data.type == 'new_message') {
+    $('.messages').append(
+      $('<div class="message"/>')
+        .append($('<div class="from"/>').text(data.from.coder))
+        .append($('<div class="text"/>').text(data.message))
+    )
+    ScrollDown()
+  }
+};
+
+chat_socket.onclose = function(e) {
+  console.error('Chat socket closed unexpectedly');
+};
+
+function ScrollDown() {
+  $('#right').animate({scrollTop: $('#right').prop('scrollHeight')}, 300)
 }
 
-$(chats_height_resize)
+$(function() {
+  $('#chat-message-input').keyup(function(e) {
+    if (e.keyCode === 13) {
+      document.querySelector('#chat-message-submit').click();
+    }
+  })
 
-$(window).resize(function() {
-  chats_height_resize()
-});
+  $('#chat-message-submit').click(function(e) {
+    const messageInputDom = document.querySelector('#chat-message-input');
+    const message = messageInputDom.value;
+    chat_socket.send(JSON.stringify({
+      'action': 'new_message',
+      'message': message,
+    }));
+    messageInputDom.value = '';
+  })
+
+  $('#chat-message-input').focus();
+  ScrollDown()
+})

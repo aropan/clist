@@ -25,7 +25,7 @@
                 <div class="alert alert-warning">Too many requests for authorization hints. Wait a while.</div>
                     {% else %}
                 <div class="alert alert-warning">
-                    Email or username used in another service(s). Login with
+                    Email or username used in another service(s). Log in with
                     {% for t in tokens%}<a href="{% url 'auth:query' t.service.name %}?next={% url 'coder:settings' %}">{{ t.service.title }}</a>{% if forloop.revcounter0 %} or {% endif %}{% endfor %}, and connect {{ token.service.title }} in settings.
                 </div>
                     {% endif %}
