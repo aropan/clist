@@ -2,7 +2,6 @@ const chat_socket = new WebSocket('wss://' + window.location.host + '/ws/chats/'
 
 chat_socket.onmessage = function(e) {
   const data = JSON.parse(e.data)
-  console.log('onmessage', data)
   if (data.type == 'new_message') {
     $('.messages').append(
       $('<div class="message"/>')

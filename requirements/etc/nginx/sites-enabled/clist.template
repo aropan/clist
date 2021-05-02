@@ -62,6 +62,20 @@ server {
 
   proxy_read_timeout 500;
 
+  location /ws/ {
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade ${DOLLAR}http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    proxy_redirect off;
+    proxy_set_header Host ${DOLLAR}host;
+    proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+    proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host ${DOLLAR}server_name;
+
+    proxy_pass http://devclist;
+  }
+
   location / {
     proxy_set_header Host ${DOLLAR}host;
     proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
@@ -70,6 +84,10 @@ server {
   }
 
   listen ${PORT};
+}
+
+upstream channels-backend {
+  server localhost:${CHANNELS_PORT};
 }
 
 server {
@@ -90,6 +108,20 @@ server {
 
   location /static/ {
     root $PROJECT_DIR/nginx/;
+  }
+
+  location /ws/ {
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade ${DOLLAR}http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    proxy_redirect off;
+    proxy_set_header Host ${DOLLAR}host;
+    proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+    proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host ${DOLLAR}server_name;
+
+    proxy_pass http://channels-backend;
   }
 
   location / {

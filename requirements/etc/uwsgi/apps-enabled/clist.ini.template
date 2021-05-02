@@ -7,7 +7,7 @@ chdir = $PROJECT_DIR
 plugins = python3
 
 virtualenv = $VIRTUAL_ENV
-module = py%(project).wsgi:application
+module = pyclist.wsgi:application
 
 master = true
 processes = 5
@@ -17,4 +17,4 @@ chown-socket = www-data:www-data
 socket = %(chdir)/uwsgi.sock
 vacuum = true
 
-daemonize = /var/log/uwsgi/%(project).log
+daemonize = /var/log/uwsgi/clist.log

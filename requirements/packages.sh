@@ -22,6 +22,7 @@ apt install -y protobuf-compiler
 apt install -y php-curl php-imap php-pspell php-tidy php-xmlrpc php-fxsl php-sqlite3 php-pgsql php-cgi php-mysql php-curl php-gd php-json php-memcache php-fpm php-mbstring php-intl php-yaml
 
 apt install -y docker-ce docker-ce-cli containerd.io
+apt install -y supervisor
 
 apt install -y python3-pip python3-dev python3-venv
 
