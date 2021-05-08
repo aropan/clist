@@ -11,8 +11,8 @@
         <meta name="vapid-key" content="{{ vapid_public_key }}">
         {% endif %}
 
-        <meta property="og:title" content="{% block ogtitle %}{% endblock %} - CLIST">
-        <title>{% block title %}{% endblock %} - CLIST</title>
+        <meta property="og:title" content="{%block full_ogtitle %}{% block ogtitle %}{% endblock %} - CLIST{% endblock %}">
+        <title>{% block full_title %}{% block title %}{% endblock %} - CLIST{% endblock %}</title>
 
         {% include 'counter/base.html' %}
 

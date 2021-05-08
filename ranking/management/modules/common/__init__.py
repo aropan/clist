@@ -7,12 +7,20 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from datetime import timedelta
 
+from lazy_load import lz
+
 from utils.requester import FailOnGetResponse, ProxyLimitReached, requester  # noqa
 
-REQ = requester(cookie_filename=os.path.join(os.path.dirname(__file__), 'cookies.txt'))
-REQ.caching = 'REQUESTER_CACHING' in os.environ
-REQ.time_out = 30
-REQ.debug_output = 'REQUESTER_DEBUG' in os.environ
+
+def create_requester():
+    req = requester(cookie_filename=os.path.join(os.path.dirname(__file__), 'cookies.txt'))
+    req.caching = 'REQUESTER_CACHING' in os.environ
+    req.time_out = 30
+    req.debug_output = 'REQUESTER_DEBUG' in os.environ
+    return req
+
+
+REQ = lz(create_requester)
 
 SPACE = ' '
 DOT = '.'

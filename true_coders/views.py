@@ -98,6 +98,7 @@ def get_profile_context(request, statistics, writers):
     context = {
         'statistics': statistics,
         'writers': writers,
+        'two_columns': len(history_resources) > 1,
         'history_resources': history_resources,
         'show_history_ratings': not filters,
         'resource_medals': resource_medals,
@@ -832,6 +833,8 @@ def search(request, **kwargs):
             qs = ['any'] + [q for q in qs if not text or text.lower() in q.lower()]
         elif field == 'rating':
             qs = ['rated', 'unrated']
+        elif f'_{field}' in contest.info:
+            qs = contest.info.get(f'_{field}')
         else:
             field = f'addition__{field}'
             qs = contest.statistics_set

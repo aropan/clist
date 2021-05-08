@@ -313,10 +313,6 @@ LOGGING = {
             'handlers': ['telegrambot'],
             'level': 'DEBUG',
         },
-        'django_super_deduper': {
-            'handlers': ['console', 'development', 'production'],
-            'level': 'ERROR',
-        },
         'django.db.backends': {
             'handlers': ['db'],
             'level': 'DEBUG',
@@ -324,7 +320,7 @@ LOGGING = {
         },
         '': {
             'handlers': ['console', 'development', 'production'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
 }

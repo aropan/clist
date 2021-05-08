@@ -72,3 +72,5 @@ free-proxy==1.0.2
 coloredlogs==15.0
 twisted[http2,tls]==21.2.0
 channels_redis==3.2.0
+fire==0.4.0
+lazy-load==0.8.2

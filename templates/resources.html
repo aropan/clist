@@ -15,16 +15,17 @@
     vertical-align: top;
     margin-top: 3px;
   }
-
-  .resources table tr *:first-child {
+  .resources table tr td:first-child {
     text-align: right;
   }
-
   .resources table td {
     white-space: nowrap;
   }
   .resources.panel {
     padding: 0px;
+  }
+  .resources .badge {
+    min-width: 30px;
   }
 </style>
 
@@ -36,7 +37,6 @@
         <th>Url</th>
         <th>Google<br/>calendar</th>
         <th>Auto<br/>update</th>
-        <th>Update<br/>statistics</th>
         <th>Rating</th>
         <th>Contests<br/>number</th>
         <th>Accounts<br/>number</th>
@@ -61,7 +61,7 @@
         </td>
 
         <td>
-          <span class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
+          <span class="badge progress-bar-{% if resource.enable %}success{% else %}info{% endif %}">
             {% if resource.enable %}
               <i class="fas fa-check"></i>
             {% else %}
@@ -71,17 +71,7 @@
         </td>
 
         <td>
-          <span class="badge progress-bar-{% if resource.module %}success{% else %}danger{% endif %}">
-            {% if resource.module %}
-              <i class="fas fa-check"></i>
-            {% else %}
-              <i class="fas fa-times"></i>
-            {% endif %}
-          </span>
-        </td>
-
-        <td>
-          <span class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}danger{% endif %}">
+          <span class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}info{% endif %}">
             {% if resource.has_rating_history %}
               <i class="fas fa-check"></i>
             {% else %}
@@ -90,13 +80,9 @@
           </span>
         </td>
 
-        <td>
-          <span class="badge progress-bar-info">{{ resource.n_contests|intcomma }}</span>
-        </td>
+        <td><span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }}</span></td>
 
-        <td>
-          <span class="badge progress-bar-info">{{ resource.n_accounts|intcomma }}</span>
-        </td>
+        <td><span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }}</span></td>
       </tr>
       {% endfor %}
     </table>

@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import json
+import os
 import re
-import tqdm
 import urllib.parse
-from functools import partial
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from functools import partial
+
+import tqdm
 
 from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -49,15 +51,40 @@ class Statistic(BaseModule):
 
         standings_url = os.path.join(self.url, 'leaderboard')
 
+        countries = None
+        leagues_names = None
         page = REQ.get(standings_url)
-        match = re.search(r'<script[^>]*src="(?P<js>[^"]*static.codingame.com/app\.[^"]*\.js)"[^>]*>', page)
-        page = REQ.get(match.group('js'), detect_charsets=None)
-        match = re.search(r'const t={EN:(?P<countries>\[{id:"[^"]*",name:"[^"]*"},.*?}]),[A-Z]{2}:', page)
-        countries = match.group('countries')
-        countries = countries.replace('id:', '"id":')
-        countries = countries.replace('name:', '"name":')
-        countries = json.loads(countries)
-        countries = [c['id'] for c in countries]
+        matches = re.finditer(r'<script[^>]*src="(?P<js>[^"]*static[^"]*\.codingame[^"]*\.js)"[^>]*>', page)
+        for match in matches:
+            page = REQ.get(match.group('js'), detect_charsets=None)
+            if countries is None:
+                m = re.search(r'const t={EN:(?P<countries>\[{id:"[^"]*",name:"[^"]*"},.*?}]),[A-Z]{2}:', page)
+                if m:
+                    countries = m.group('countries')
+                    countries = countries.replace('id:', '"id":')
+                    countries = countries.replace('name:', '"name":')
+                    countries = json.loads(countries)
+                    countries = [c['id'] for c in countries]
+            if leagues_names is None:
+                m = re.search(r'N=(?P<array>\[(?:"[^"]*",?)+\])', page)
+                if m:
+                    leagues_names = [league.title() for league in json.loads(m.group('array'))]
+            if countries is not None and leagues_names is not None:
+                break
+        if countries is None:
+            raise ExceptionParseStandings('not found countries')
+
+        def get_league_name(league):
+            nonlocal leagues_names
+            if leagues_names is None:
+                raise ExceptionParseStandings('not found leagues_names')
+            index = league['divisionCount'] - league['divisionIndex'] - 1 + league.get('divisionOffset', 0)
+            number = index - len(leagues_names) + 2
+            return f'{leagues_names[-1]} {number}' if number >= 1 else leagues_names[index]
+
+        leagues = data.get('leagues')
+        if leagues:
+            leagues = [get_league_name(league) for league in reversed(leagues.values())]
 
         languages = list(data.get('programmingLanguages', {}).keys())
 
@@ -85,7 +112,7 @@ class Statistic(BaseModule):
 
                     if 'league' in row:
                         league = row.pop('league')
-                        r['league'] = league['divisionIndex']
+                        r['league'] = get_league_name(league)
                         r['league_rank'] = row.pop('localRank')
 
                     for field, out in (
@@ -99,6 +126,8 @@ class Statistic(BaseModule):
                     ):
                         if field in row:
                             r[out] = row.pop(field)
+                            if field in ('school', 'company'):
+                                hidden_fields.add(field)
 
                     if 'updateTime' in row:
                         row['updated'] = row.pop('updateTime') / 1000
@@ -129,6 +158,8 @@ class Statistic(BaseModule):
             'result': result,
             'fields_types': {'updated': ['timestamp'], 'created': ['timestamp']},
             'hidden_fields': hidden_fields,
+            'info_fields': ['_league'],
+            '_league': leagues,
             'options': {
                 'fixed_fields': [
                     ('league', 'league'),

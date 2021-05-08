@@ -398,26 +398,33 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
 <path
     clip-path="url(#rating-clip)"
     d="M 0 {size} v-{round(v, 3)} h {size} 0 v{size} z"
-    style="fill: {color}">
-</path>
+    style="fill: {color}"
+/>
 '''
         title = f'{value} ({percent * 100:.1f}%)'
     if 'name' in rating:
         title += f'<br/>{rating["name"]}'
 
-    return mark_safe(f'''
-<div title="{title}" style="display: inline-block" data-toggle="tooltip" data-html="true">
-    <svg class="coder-circle" viewBox="0 0 {size} {size}" width="{size}" height="{size}"">
-        <circle
-            style="stroke: {color}; fill: none; stroke-width: {width}px;"
-            cx="{radius}"
-            cy="{radius}"
-            r="{radius - 1}"
-        />
-        {fill}
-    </svg>
-</div>
-''')
+    return mark_safe(
+        f'''
+        <div
+            class="coder-circle"
+            title="{title}"
+            data-toggle="tooltip"
+            data-html="true"
+            style="display: inline-block; vertical-align: middle"
+        >
+            <svg viewBox="0 0 {size} {size}" width="{size}" height="{size}">
+                <circle
+                    style="stroke: {color}; fill: none; stroke-width: {width}px;"
+                    cx="{radius}"
+                    cy="{radius}"
+                    r="{radius - 1}"
+                />
+                {fill}
+            </svg>
+        </div>
+        ''')
 
 
 @register.filter

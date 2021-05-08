@@ -85,12 +85,13 @@
 {% if not for_coach %}
 {% for field in event.fields_info.addition_fields %}
     <div class="form-group">
+    {% with value=coder.addition_fields|get_item:field.name|default:"" %}
         <label for="{{ field.name }}">{{ field.label }}</label>
-        <{{ field.type }} {% if not disable %}id="{{ field.name }}"{% endif %} name="{{ field.name }}" class="form-control"{% if field.placeholder %} placeholder="{{ field.placeholder }}"{% endif %}{% if field.pattern %} pattern="{{ field.pattern }}"{% endif %} value="{{ coder.addition_fields|get_item:field.name|default:"" }}" required {% if disable %}disabled{% endif %}>
+        <{{ field.type }} {% if not disable %}id="{{ field.name }}"{% endif %} name="{{ field.name }}" class="form-control"{% if field.placeholder %} placeholder="{{ field.placeholder }}"{% endif %}{% if field.pattern %} pattern="{{ field.pattern }}"{% endif %} value="{{ value }}" required {% if disable %}disabled{% endif %}>
     {% if field.type == "select" %}
         <option></option>
-        {% for value in field.values %}
-        <option value="{{ value }}">{{ value }}</option>
+        {% for val in field.values %}
+        <option value="{{ val }}"{% if val == value %} selected{% endif %}>{{ val }}</option>
         {% endfor %}
         </select>
         <script>
@@ -102,6 +103,7 @@
             })
         </script>
     {% endif %}
+    {% endwith %}
     </div>
 {% endfor %}
 {% endif %}

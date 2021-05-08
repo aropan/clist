@@ -13,7 +13,27 @@ chat_socket.onmessage = function(e) {
 };
 
 chat_socket.onclose = function(e) {
-  console.error('Chat socket closed unexpectedly');
+  console.error('Chat socket closed unexpectedly')
+  $('#chat-message-input').remove()
+  $('#typing-textbox').append($('<button id="chat-message-input" onclick="location.reload()">Disconnected. Refresh the page to reconnect</button>'))
+  bootbox.confirm({
+    size: 'small',
+    message: 'Disconnected. Refresh the page to reconnect?',
+    buttons: {
+      confirm: {
+        label: 'Reload',
+        className: 'btn-success',
+      },
+      cancel: {
+        label: 'No',
+      },
+    },
+    callback: function(result) {
+      if (result) {
+        location.reload()
+      }
+    },
+  })
 };
 
 function ScrollDown() {

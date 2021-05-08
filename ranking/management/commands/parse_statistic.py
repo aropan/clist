@@ -647,9 +647,10 @@ class Command(BaseCommand):
                             action, *args = action
                         self.logger.info(f'Action {action} with {args}, contest = {contest}, url = {contest.url}')
                         if action == 'delete':
-                            if Statistics.objects.filter(contest=contest).exists():
+                            force = standings.get('force')
+                            if not force and Statistics.objects.filter(contest=contest).exists():
                                 self.logger.info('No deleted. Contest have statistics')
-                            elif now < contest.end_time:
+                            elif not force and now < contest.end_time:
                                 self.logger.info(f'No deleted. Try after = {contest.end_time - now}')
                             else:
                                 delete_info = contest.delete()

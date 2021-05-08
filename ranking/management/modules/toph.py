@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import collections
-from pprint import pprint
-from datetime import datetime
-import urllib.parse
 import re
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-import tqdm
+from datetime import datetime
+from pprint import pprint
 
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+import tqdm
+import yaml
+
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
 
 class Statistic(BaseModule):
@@ -18,7 +20,12 @@ class Statistic(BaseModule):
         super(Statistic, self).__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None):
-        page = REQ.get(self.url)
+        try:
+            page = REQ.get(self.url)
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                return {'action': 'delete', 'force': True}
+            raise e
 
         page = REQ.get(self.url.strip('/') + '/statistics')
         table = parsed_table.ParsedTable(html=page)
@@ -39,6 +46,7 @@ class Statistic(BaseModule):
                 to_get_handle = False
                 row = {}
                 problems = row.setdefault('problems', {})
+                pind = 0
                 for k, v in r.items():
                     if k == '#':
                         row['place'] = v.value
@@ -49,9 +57,11 @@ class Statistic(BaseModule):
                         hrefs = name.column.node.xpath('.//a[contains(@href,"/u/")]/@href')
                         if hrefs:
                             row['member'] = hrefs[0].split('/')[-1]
+                            row['info'] = {'is_virtual': False}
                         else:
                             to_get_handle = True
                             row['member'] = f'{row["name"]}, {row["place"]}, {self.start_time.year}'
+                            row['info'] = {'is_virtual': True}
                         flag = score.row.node.xpath(".//span[contains(@class, 'flag')]/@class")
                         if flag:
                             for f in flag[0].split():
@@ -71,23 +81,33 @@ class Statistic(BaseModule):
 
                         for info in infos:
                             if 'rating' in info.attrs['class'].split():
-                                cs = info.row.node.xpath('.//i/@class')
+                                cs = info.column.node.xpath('.//*/@class')
                                 if cs:
                                     cs = cs[0].split()
-                                    if 'fa-angle-double-up' in cs:
+                                    if 'fa-angle-double-up' in cs or 'font-green' in cs:
                                         row['rating_change'] = int(info.value)
-                                    if 'fa-angle-double-down' in cs:
+                                    if 'fa-angle-double-down' in cs or 'text-muted' in cs:
                                         row['rating_change'] = -int(info.value)
                     else:
-                        letter = k.split()[0]
+                        letter = k.rsplit(' ', 1)[0].strip()
                         if letter not in problems_info:
                             problems_info[letter] = {'short': letter}
-                        if len(letter) == 1:
+                        if (
+                            len(letter) == 1
+                            or re.match('^[A-Z][0-9]+$', letter)
+                            or pind < len(problem_names) and problem_names[pind] == letter
+                        ):
                             if v.value:
                                 title = v.column.node.xpath('.//div[@title]/@title')[0]
-                                score, time, attempt = title.split()
-                                time = int(time)
-                                attempt = sum(map(int, re.findall('[0-9]+', attempt)))
+                                if ',' in title:
+                                    variables = yaml.safe_load(re.sub(r',\s*', '\n', title.lower()))
+                                    time = int(variables['minutes'])
+                                    attempt = int(variables['rejections']) + 1
+                                else:
+                                    _, time, attempt = title.split()
+                                    time = int(time)
+                                    attempt = sum(map(int, re.findall('[0-9]+', attempt)))
+
                                 p = problems.setdefault(letter, {})
 
                                 divs = v.column.node.xpath('.//a[contains(@href,"submissions")]/div/text()')
@@ -103,10 +123,14 @@ class Statistic(BaseModule):
                                         penalty = row['penalty']
                                         row['penalty'] = f'{penalty // 60:02}:{penalty % 60:02}'
                                 elif not v.column.node.xpath('.//img[@src]'):
-                                    score, full_score = map(int, re.findall('[0-9]+', score))
-                                    result = score
-                                    problems_info[letter]['full_score'] = full_score
-                                    p['partial'] = score < full_score
+                                    score, *_ = v.value.split()
+                                    result = int(score)
+                                    p['partial'] = not bool(v.column.node.xpath('.//*[contains(@class,"font-green")]'))
+                                    solved = row.setdefault('solved', {'solving': 0})
+                                    if not p['partial']:
+                                        solved['solving'] += 1
+                                    if attempt > 1:
+                                        p['penalty'] = attempt - 1
                                 elif time:
                                     result = '+' if attempt == 1 else f'+{attempt - 1}'
                                 else:
@@ -129,6 +153,7 @@ class Statistic(BaseModule):
                                     or v.column.node.xpath('.//a/div/img[contains(@src,"checkmark-done-sharp")]')
                                 ):
                                     p['first_ac'] = True
+                        pind += 1
                 if not problems:
                     continue
                 if users and row['member'] not in users:
@@ -167,6 +192,59 @@ class Statistic(BaseModule):
             'result': results,
         }
         return ret
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        def fetch_ratings(user, account):
+            if account.info.get('is_virtual'):
+                return user, False, None
+            try:
+                page = REQ.get(f'https://toph.co/u/{user}/ratings')
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return user, None, None
+                return user, False, None
+
+            tables = re.findall('<table[^>]*>.*?</table>', page, re.DOTALL)
+            t = parsed_table.ParsedTable(html=tables[-1])
+            ratings = {}
+            info = {}
+            for row in t:
+                href = row['Contest'].column.node.xpath('.//a/@href')[0]
+                key = href.rstrip('/').split('/')[-1]
+                rating = int(row['Rating'].value)
+                ratings[key] = {'new_rating': rating}
+                info.setdefault('rating', rating)
+
+            matches = re.finditer('''
+                 <div[^>]*class="?value"?[^>]*>(?P<value>[^<]*)</div>[^<]*
+                 <div[^>]*class="?title"?>(?P<key>[^<]*)</div>
+            ''', page, re.DOTALL | re.VERBOSE)
+            for match in matches:
+                key = match.group('key').lower()
+                value = match.group('value')
+                info[key] = value
+            return user, info, ratings
+
+        with PoolExecutor(max_workers=8) as executor:
+            for user, info, ratings in executor.map(fetch_ratings, users, accounts):
+                if pbar:
+                    pbar.update()
+                if not info:
+                    if info is None:
+                        yield {'info': None}
+                    else:
+                        yield {'skip': True}
+                    continue
+                info = {
+                    'info': info,
+                    'contest_addition_update_params': {
+                        'update': ratings,
+                        'by': 'key',
+                    },
+                }
+                yield info
 
 
 if __name__ == "__main__":

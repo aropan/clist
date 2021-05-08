@@ -380,7 +380,7 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             k in fields
             or k in ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type',
                      'division']
-            or k == 'medal' and '_medal_title_field' in contest_fields
+            or k == 'medal' and '_medal_title_field' not in contest_fields
             or 'country' in k and k not in hidden_fields_values
             or k in ['name'] and k not in hidden_fields_values
             or k.startswith('_')

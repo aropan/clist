@@ -34,7 +34,7 @@
                     {% if request.user.is_authenticated %}
                     <input id="chat-message-input" placeholder="Type a message..." type="text">
                     {% else %}
-                    <button id="chat-message-input"  onclick="location.href='{% url 'auth:login' %}?next={{ request.path }}'">Log in to type a message</button>
+                    <button id="chat-message-input" onclick="location.href='{% url 'auth:login' %}?next={{ request.path }}'">Log in to send a message</button>
                     {% endif %}
                     <input id="chat-message-submit" class="hidden" type="button" value="Send">
                 </div>
