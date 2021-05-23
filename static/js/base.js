@@ -41,8 +41,12 @@ String.prototype.toTitleCase = function(){
     });
 };
 
+function toggle_tooltip_object(object) {
+  object.removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'})
+}
+
 function toggle_tooltip() {
-  $('[data-toggle="tooltip"]').removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'})
+  toggle_tooltip_object($('[data-toggle="tooltip"]'))
 }
 
 $(toggle_tooltip)

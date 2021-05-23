@@ -222,7 +222,7 @@ class Contest(models.Model):
     def save(self, *args, **kwargs):
         if self.duration_in_secs is None:
             self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
-        self.slug = slug(self.title).strip('-')
+        self.slug = slug(self.title)
         self.title_path = self.slug.replace('-', '.')
         return super(Contest, self).save(*args, **kwargs)
 

@@ -6,6 +6,10 @@
 {% block end-head %}
 <link href="{% static_ts 'css/chats.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/chats.js' %}"></script>
+
+<script src="{% static_ts 'js/moment.min.js' %}"></script>
+<script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
+<script src="{% static_ts 'js/jquery.timeago.js' %}"></script>
 {% endblock %}
 
 {% block navbar %}{% endblock %}
@@ -27,16 +31,19 @@
             {% comment %}     </div> {% endcomment %}
             {% comment %} </div> {% endcomment %}
             <div class="messages">
+
             </div>
 
             <div id="typing">
                 <div id="typing-textbox">
                     {% if request.user.is_authenticated %}
-                    <input id="chat-message-input" placeholder="Type a message..." type="text">
+                    <input id="chat-message-input" placeholder="Type a message..." type="text" autocomplete="off">
                     {% else %}
                     <button id="chat-message-input" onclick="location.href='{% url 'auth:login' %}?next={{ request.path }}'">Log in to send a message</button>
                     {% endif %}
                     <input id="chat-message-submit" class="hidden" type="button" value="Send">
+                    <input id="chat-name" class="hidden" type="text" value="room__general">
+                    <input id="chat-history-id" class="hidden" type="text">
                 </div>
             </div>
         </div>

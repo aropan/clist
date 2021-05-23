@@ -245,7 +245,7 @@ def calc_mod_penalty(info, contest, solving, penalty):
 
 @register.filter
 def slug(value):
-    return slugify(unidecode(value))
+    return slugify(unidecode(value)).strip('-')
 
 
 @register.filter

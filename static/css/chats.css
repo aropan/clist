@@ -20,8 +20,7 @@ body{
 }
 
 .messages {
-  min-height: 100%;
-  padding-top: 40px;
+  min-height: calc(100% - 30px);
 }
 
 #right {
@@ -64,11 +63,21 @@ body{
   width:100%;
   height:40px;
   border-radius: 0px;
-  padding: 0px 10px;
+  padding: 0px 15px;
   border: solid #e7e7e7;
   border-width: 1px 1px 1px 0px;
 }
 
 .messages .message .from {
   font-weight: bold;
+}
+
+.messages .title div {
+  padding-right: 10px;
+  display: inline-block;
+}
+
+.messages .title .time {
+  font-size: 80%;
+  color: #777;
 }
