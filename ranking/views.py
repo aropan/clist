@@ -20,7 +20,7 @@ from ratelimit.decorators import ratelimit
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import get_country_name, get_problem_short, query_transform, slug
+from clist.templatetags.extras import get_country_name, get_problem_short, query_transform, slug, toint
 from clist.views import get_timeformat, get_timezone
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -560,6 +560,24 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                     filt |= Q(**{f'{query_field}_str': q})
         statistics = statistics.filter(filt)
 
+    # versus statistics
+    has_versus = contest.info.get('_has_versus', {}).get('enable')
+    versus = request.GET.get('versus')
+    versus_data = None
+    versus_statistic_id = toint(request.GET.get('id'))
+    if has_versus and versus == 'statistics' and versus_statistic_id is not None:
+        plugin = contest.resource.plugin.Statistic(contest=contest)
+        statistic = get_object_or_404(Statistics.objects.prefetch_related('account'),
+                                      contest=contest,
+                                      pk=versus_statistic_id)
+        versus_status, versus_data = plugin.get_versus(statistic)
+        if versus_status:
+            statistics = statistics.filter(account__key__in=versus_data['stats'].keys())
+            with_row_num = True
+        else:
+            request.logger.warning(versus_data)
+            versus_data = None
+
     # groupby
     if groupby == 'country' or groupby in fields_to_select:
         statistics = statistics.order_by('pk')
@@ -697,6 +715,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         my_statistics = statistics.filter(account__coders=coder).extra(select={'floating': True})
 
     context.update({
+        'has_versus': has_versus,
+        'versus_data': versus_data,
+        'versus_statistic_id': versus_statistic_id,
         'standings_options': options,
         'mod_penalty': mod_penalty,
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),

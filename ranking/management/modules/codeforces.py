@@ -474,14 +474,15 @@ class Statistic(BaseModule):
         ret = []
         assert len(infos) == len(users)
         for data, user, orig in zip(infos, users, orig_users):
-            if data and data['handle'].lower() != user.lower():
-                raise ValueError(f'Do not match handle name for user = {user} and data = {data}')
-            if data.get('avatar', '').endswith('/no-avatar.jpg'):
-                data.pop('avatar')
-            if data.get('titlePhoto', '').endswith('/no-title.jpg'):
-                data.pop('titlePhoto')
+            if data:
+                if data['handle'].lower() != user.lower():
+                    raise ValueError(f'Do not match handle name for user = {user} and data = {data}')
+                if data.get('avatar', '').endswith('/no-avatar.jpg'):
+                    data.pop('avatar')
+                if data.get('titlePhoto', '').endswith('/no-title.jpg'):
+                    data.pop('titlePhoto')
             ret.append({'info': data})
-            if data['handle'] != orig:
+            if data and data['handle'] != orig:
                 ret[-1]['rename'] = data['handle']
         return ret
 

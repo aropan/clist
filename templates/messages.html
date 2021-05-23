@@ -5,11 +5,12 @@
         $.notify(
             "{{ message|escapejs }}",
             {
-                "className": "{% if message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}warn{% else %}{{ message.level_tag }}{% endif %}",
-                "position": "bottom right",
+                className: "{% if message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}warn{% else %}{{ message.level_tag }}{% endif %}",
+                position: "bottom right",
             },
         )
         {% endfor %}
+        $('.notifyjs-bootstrap-base').effect('shake')
     })
 </script>
 {% endif %}

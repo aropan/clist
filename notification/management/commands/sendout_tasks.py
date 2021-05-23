@@ -1,28 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from traceback import format_exc
-from logging import getLogger
-from datetime import timedelta
 from copy import deepcopy
+from datetime import timedelta
+from logging import getLogger
 from smtplib import SMTPResponseException
+from traceback import format_exc
 
 import tqdm
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from django_print_sql import print_sql_decorator
-from django.utils.timezone import now
 from django.template.loader import render_to_string
-from webpush import send_user_notification
-
-from notification.models import Task
+from django.utils.timezone import now
+from django_print_sql import print_sql_decorator
 from telegram.error import Unauthorized
+from webpush import send_user_notification
+from webpush.utils import WebPushException
+
 from clist.models import Contest
+from notification.models import Task
 from tg.bot import Bot
 from tg.models import Chat
+
+logger = getLogger('notification.sendout.tasks')
 
 
 class Command(BaseCommand):
@@ -100,19 +103,23 @@ class Command(BaseCommand):
                 payload['url'] = contest.url
                 payload['icon'] = f'{settings.HTTPS_HOST_}/imagefit/static_resize/64x64/{contest.resource.icon}'
 
-            send_user_notification(
-                user=coder.user,
-                payload=payload,
-                ttl=300,
-            )
+            try:
+                send_user_notification(
+                    user=coder.user,
+                    payload=payload,
+                    ttl=300,
+                )
+            except WebPushException as e:
+                if '403 Forbidden' in str(e):
+                    if 'notification' in kwargs:
+                        delete_info = kwargs['notification'].delete()
+                        logger.error(f'{str(e)} = {delete_info}')
 
     @print_sql_decorator()
     @transaction.atomic
     def handle(self, *args, **options):
         coders = options.get('coders')
         dryrun = options.get('dryrun')
-
-        logger = getLogger('notification.sendout.tasks')
 
         delete_info = Task.objects.filter(
             Q(is_sent=True, modified__lte=now() - timedelta(days=1)) |
@@ -169,6 +176,7 @@ class Command(BaseCommand):
                 task.save()
                 if isinstance(e, SMTPResponseException):
                     stop_email = True
+
             if task.is_sent:
                 done += 1
             else:

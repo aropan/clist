@@ -23,7 +23,11 @@
   {% with members=addition|get_item:"_members" %}
   {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in addition %}<a href="{{ addition|get_item:"_account_url" }}">{% endif %}
 
-  {% if addition.name and account.key|has_season:addition.name or team_id or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
+  {% if with_detail and resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
+    {% with names=account.key|split_account_key:resource.info.standings.subname %}
+    <span>{{ names.0 }}<div class="text-muted small">{{ names.1 }}</div></span>
+    {% endwith %}
+  {% elif addition.name and account.key|has_season:addition.name or team_id or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
     <span{% if addition.name|length > 50 %} title="{{ addition.name }}" data-toggle="tooltip"{% endif %}>{{ addition.name|truncatechars:50 }}</span>
   {% else %}
     <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
@@ -61,9 +65,22 @@
     <a href="{{ addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
   {% endif %}
 
+  {% if has_versus %}
+    {% if versus_statistic_id == statistic.id %}
+      <a href="{% url_transform request versus='statistics' id=statistic.id with_remove=1 %}" class="external-link">
+        <i class="fas fa-times"{% if versus_data.cache_time %}
+           title="Time in cache: {{ versus_data.cache_time|timestamp_to_datetime|timezone:timezone|timedelta_with_now|hr_timedelta }}"
+           data-toggle="tooltip"
+           data-placement="right"
+        {% endif %}></i>
+      </a>
+    {% else %}
+      <a href="{% url_transform request versus='statistics' id=statistic.id with_replace=1 %}" class="external-link invisible"><i class="fas fa-desktop"></i></a>
+    {% endif %}
+  {% endif %}
 </div>
 {% if perms.ranking.statistics_change and statistic %}
-  <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+  <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank"><i class="fas fa-database"></i></a>
 {% endif %}
 
 {% endwith %}

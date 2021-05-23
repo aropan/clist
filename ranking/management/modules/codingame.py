@@ -4,26 +4,24 @@
 import json
 import os
 import re
-import urllib.parse
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import datetime, timedelta
 from functools import partial
+from pprint import pprint
 
 import tqdm
+from django.core.cache import cache
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
-
-        urlinfo = urllib.parse.urlparse(self.url)
-        host = f'{urlinfo.scheme}://{urlinfo.netloc}/'
-
         page = REQ.get(
-            host + 'services/Challenge/findWorldCupByPublicId',
+            self.host + 'services/Challenge/findWorldCupByPublicId',
             post=f'["{self.key}", null]',
             content_type='application/json',
         )
@@ -43,9 +41,9 @@ class Statistic(BaseModule):
             return data
 
         if clash_hubs:
-            url = host + 'services/Leaderboards/getClashLeaderboard'
+            url = self.host + 'services/Leaderboards/getClashLeaderboard'
         else:
-            url = host + 'services/Leaderboards/getFilteredChallengeLeaderboard'
+            url = self.host + 'services/Leaderboards/getFilteredChallengeLeaderboard'
 
         data = get_leaderboard(url)
 
@@ -88,6 +86,7 @@ class Statistic(BaseModule):
 
         languages = list(data.get('programmingLanguages', {}).keys())
 
+        opening = {}
         with PoolExecutor(max_workers=8) as executor:
             hidden_fields = set()
             result = {}
@@ -95,6 +94,7 @@ class Statistic(BaseModule):
             def process_data(data):
                 nonlocal hidden_fields
                 nonlocal result
+                nonlocal opening
                 for row in data['users']:
                     if 'codingamer' not in row:
                         continue
@@ -114,6 +114,13 @@ class Statistic(BaseModule):
                         league = row.pop('league')
                         r['league'] = get_league_name(league)
                         r['league_rank'] = row.pop('localRank')
+
+                        if 'openingDate' in league:
+                            league_name = leagues_names[league['openingLeaguesCount'] - 1]
+                            opening[league_name] = {
+                                'title': f'Presumably the opening of the {league_name.title()} League',
+                                'date': league['openingDate'] / 1000,
+                            }
 
                     for field, out in (
                         ('score', 'solving'),
@@ -158,8 +165,10 @@ class Statistic(BaseModule):
             'result': result,
             'fields_types': {'updated': ['timestamp'], 'created': ['timestamp']},
             'hidden_fields': hidden_fields,
-            'info_fields': ['_league'],
+            'info_fields': ['_league', '_challenge', '_has_versus', '_opening'],
             '_league': leagues,
+            '_challenge': challenge,
+            '_opening': list(sorted(opening.values(), key=lambda o: o['date'])),
             'options': {
                 'fixed_fields': [
                     ('league', 'league'),
@@ -176,4 +185,86 @@ class Statistic(BaseModule):
             },
         }
 
+        if challenge.get('type') == 'BATTLE':
+            standings['_has_versus'] = {'enable': True}
+
         return standings
+
+    def get_versus(self, statistic, use_cache=True):
+        url = self.host + 'services/gamesPlayersRanking/findLastBattlesByAgentId'
+        agent_id = statistic.addition.get('agent_id')
+        user_id = statistic.addition.get('user_id')
+
+        if use_cache:
+            cache_key = f'codingame__versus_data__{user_id}'
+            if cache_key in cache:
+                return True, cache.get(cache_key)
+
+        data = json.loads(REQ.get(url, post=f'[{agent_id}, null]', content_type='application/json'))
+        if not data:
+            url = self.host + 'services/Leaderboards/getCodinGamerChallengeRanking'
+            data = json.loads(REQ.get(url, post=f'[{user_id},"{self.key}",null]', content_type='application/json'))
+            agent_id = data['agentId']
+            try:
+                url = self.host + 'services/gamesPlayersRanking/findLastBattlesByAgentId'
+                data = json.loads(REQ.get(url, post=f'[{agent_id}, null]', content_type='application/json'))
+            except FailOnGetResponse as e:
+                return False, str(e)
+        if not data:
+            return False, 'Not found versus data'
+
+        stats = {}
+        my = stats.setdefault(str(user_id), defaultdict(int))
+        for gidx, game in zip(reversed(range(len(data))), data):
+            if not game.get('done'):
+                continue
+            for player in game['players']:
+                if player['userId'] != user_id:
+                    continue
+                for opponent in game['players']:
+                    if opponent['userId'] == user_id:
+                        continue
+                    stat = stats.setdefault(str(opponent['userId']), defaultdict(int))
+
+                    players = sorted([player, opponent], key=lambda p: p['position'])
+                    game_info = {
+                        'url': self.host + f'/replay/{game["gameId"]}',
+                        'index': gidx + 1,
+                        'game_id': game["gameId"],
+                        'players': ' vs '.join(f'{p.get("nickname","")}#{p["position"] + 1}' for p in players),
+                    }
+                    stat['total'] += 1
+                    my['total'] += 1
+                    if player['position'] == opponent['position']:
+                        result = 'draw'
+                    else:
+                        result = 'win' if player['position'] < opponent['position'] else 'lose'
+                    game_info['result'] = result
+                    stat[result] += 1
+                    my[result] += 1
+                    my.setdefault('games', []).append(game_info)
+                    stat.setdefault('games', []).append(game_info)
+        cache_time_seconds = 300
+        results = {
+            'stats': stats,
+            'games': {
+                'fields': ['index', 'players', 'game_id'],
+            },
+            'cache_time': (datetime.now() + timedelta(seconds=cache_time_seconds)).timestamp(),
+        }
+        if use_cache:
+            cache.set(cache_key, results, timeout=cache_time_seconds)
+        return True, results
+
+
+def run(*args):
+
+    from clist.models import Contest
+    from ranking.models import Statistics
+    contest = Contest.objects.get(key='spring-challenge-2021')
+    qs = Statistics.objects.filter(contest=contest, account__name="aropan").order_by('place_as_int')
+    for statistic in qs:
+        status, data = Statistic(contest=contest).get_versus(statistic, use_cache=False)
+        if status:
+            pprint(data.pop('stats', None))
+        pprint(data)

@@ -14,7 +14,9 @@
         <meta property="og:title" content="{%block full_ogtitle %}{% block ogtitle %}{% endblock %} - CLIST{% endblock %}">
         <title>{% block full_title %}{% block title %}{% endblock %} - CLIST{% endblock %}</title>
 
+        {% if not DEBUG %}
         {% include 'counter/base.html' %}
+        {% endif %}
 
         {% block begin-head %}{% endblock %}
 

@@ -9,7 +9,7 @@
 {% with tag=statistic.my_stat|then:"th"|default:"td" %}
 {% with addition=statistic.addition %}
 {% if statistic.my_stat and statistic.floating %}{% show_more_table %}{% endif %}
-<tr class="{% if statistic.my_stat %}info my-stat{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
+<tr class="{{ request.GET.id }} {{ statistic.id }} {% if statistic.my_stat %}info my-stat{% elif versus_statistic_id == statistic.id %}success{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }}
     {% if addition.medal %}
@@ -57,6 +57,43 @@
   ">
     {% include "standings_account.html" with account=statistic.account addition=addition resource=contest.resource %}
   </{{ tag }}>
+  {% if versus_data %}
+  {% with versus_data_row=versus_data.stats|get_item:statistic.account.key %}
+  {% if versus_data_row %}
+    {% with win=versus_data_row.win lose=versus_data_row.lose draw=versus_data_row.draw total=versus_data_row.total %}
+    <{{ tag }}>
+      {% if versus_data_row.games %}
+        <a class="versus-games" onclick="$('#versus-games-{{ statistic.pk }}').modal('show');">
+      {% endif %}
+      {{ total }}
+      {% if versus_data_row.games %}
+        </a>
+        {% if not statistic.my_stat %}
+          {% include "standings_versus_games.html" %}
+        {% endif %}
+      {% endif %}
+    </{{ tag }}>
+    <{{ tag }}>{% with p=win|multiply:2|add:draw q=total|multiply:2 %}{{ p|multiply:100|divide:q|floatformat:"1" }}%{% endwith %}</{{ tag }}>
+    <{{ tag }}>
+      <div class="problem-progress progress" title="
+        {% if win %}Number of wins: {{ win }} ({{ win|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
+        {% if draw %}Number of draws: {{ draw }} ({{ draw|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
+        {% if lose %}Number of loses: {{ lose }} ({{ lose|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
+        Total: {{ total }}
+      " data-toggle="tooltip" data-html="true" data-placement="bottom">
+        <div class="progress-bar progress-bar-success" style="width: {{ win|multiply:100|divide:total|floatformat:"3" }}%"></div>
+        <div class="progress-bar progress-bar-warning" style="width: {{ draw|multiply:100|divide:total|floatformat:"3" }}%"></div>
+        <div class="progress-bar progress-bar-danger" style="width: {{ lose|multiply:100|divide:total|floatformat:"3" }}%"></div>
+      </div>
+    </{{ tag }}>
+    {% endwith %}
+  {% else %}
+    <{{ tag }}></{{ tag }}>
+    <{{ tag }}></{{ tag }}>
+    <{{ tag }}></{{ tag }}>
+  {% endif %}
+  {% endwith %}
+  {% endif %}
   <{{ tag }}>
     <div>{{ statistic.solving|floatformat:'-2' }}</div>
   </{{ tag }}>
@@ -193,9 +230,7 @@
 {% endif %}
 
 {% if with_table_inner_scroll and merge_problems %}
-<script>
-  $(update_sticky_header_problems_top)
-</script>
+<script>$(update_sticky_header_problems_top)</script>
 {% endif %}
 
 {% if colored_by_group_score %}

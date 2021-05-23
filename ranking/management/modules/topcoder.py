@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
-import json
 import html
+import json
+import re
 from collections import OrderedDict, defaultdict
-from urllib.parse import urljoin, parse_qs
-from lxml import etree
-from datetime import timedelta, datetime
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import datetime, timedelta
 from pprint import pprint
 from time import sleep
+from urllib.parse import parse_qs, urljoin
 
 import tqdm
+from lxml import etree
 
-from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import InitModuleException, ExceptionParseStandings
 from ranking.management.modules import conf
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from utils.requester import FailOnGetResponse
 
 
@@ -119,6 +119,18 @@ class Statistic(BaseModule):
                         if iou > opt:
                             opt = iou
                             self.standings_url = urljoin(url, match.group('url'))
+            if not self.standings_url:
+                url = 'https://community.topcoder.com/stat?c=round_overview&er=1&rd=3000'
+                page = REQ.get(url)
+                page = re.sub('Single Round Match', 'SRM', page, flags=re.I)
+                regex = r'''
+                    <option[^>]*value="(?P<url>[^"]*/stat[^"]*round_overview[^"]*)"[^>]*>
+                    \s*''' + self.name.replace(" ", r"\s+") + '''[^<]*
+                    </option>
+                '''
+                match = re.search(regex, page, flags=re.IGNORECASE | re.VERBOSE)
+                if match:
+                    self.standings_url = urljoin(url, match.group('url'))
 
         if not self.standings_url:
             raise InitModuleException('Not set standings url for %s' % self.name)

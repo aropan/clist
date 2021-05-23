@@ -3,6 +3,7 @@
 
 import logging
 import os
+import urllib.parse
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from datetime import timedelta
@@ -102,6 +103,14 @@ class BaseModule(object, metaclass=ABCMeta):
         standings = self.get_standings(users)
         result = standings.get('result', {})
         return [result.get(u, None) for u in users]
+
+    def get_versus(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    @property
+    def host(self):
+        urlinfo = urllib.parse.urlparse(self.url)
+        return f'{urlinfo.scheme}://{urlinfo.netloc}/'
 
 
 def main():

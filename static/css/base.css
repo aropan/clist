@@ -30,10 +30,6 @@ input[type="search"]::-webkit-search-cancel-button {
   vertical-align: initial;
 }
 
-a img.flag {
-  vertical-align: initial;
-}
-
 /*
  * Country inline td
  */
@@ -43,7 +39,10 @@ a img.flag {
   width: 20px;
   display: inline-block;
   text-align: center;
-  vertical-align: text-bottom;
+}
+
+a img.flag {
+  margin-top: -4px;
 }
 
 /* Space out content a bit */
@@ -300,4 +299,12 @@ canvas.rating_history {
   -webkit-transition: all .1s ease;
   transition: all .1s ease;
   pointer-events: none;
+}
+
+/*
+ * notifyjs border
+ */
+
+.notifyjs-container .notifyjs-bootstrap-base {
+  border: 1px solid #888;
 }

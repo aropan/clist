@@ -116,6 +116,8 @@ def hr_timedelta(delta):
 def countdown(timer):
     if isinstance(timer, datetime):
         timer = (timer - now()).total_seconds()
+    if isinstance(timer, timedelta):
+        timer = timer.total_seconds()
     timer = int(timer)
     h = timer // 3600
     m = timer % 3600 // 60
@@ -132,6 +134,11 @@ def countdown(timer):
 @register.filter
 def less_24_hours(time_delta):
     return time_delta < timedelta(hours=24)
+
+
+@register.filter
+def timedelta_with_now(value):
+    return value - now()
 
 
 @register.filter
@@ -299,6 +306,10 @@ def query_transform(request, *args, **kwargs):
         if kwargs.pop('with_replace', False):
             for k in kwargs:
                 updated.pop(k, None)
+        if kwargs.pop('with_remove', False):
+            for k in kwargs:
+                updated.pop(k, None)
+            kwargs = {}
         updated.update(kwargs)
 
     if 'querystring_key' in updated:
@@ -412,8 +423,9 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
             title="{title}"
             data-toggle="tooltip"
             data-html="true"
-            style="display: inline-block; vertical-align: middle"
+            style="display: inline-block; vertical-align: top; padding-top: 1px"
         >
+            <div style="height: {size}px; ">
             <svg viewBox="0 0 {size} {size}" width="{size}" height="{size}">
                 <circle
                     style="stroke: {color}; fill: none; stroke-width: {width}px;"
@@ -423,6 +435,7 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
                 />
                 {fill}
             </svg>
+            </div>
         </div>
         ''')
 
@@ -618,3 +631,14 @@ class LinebreaklessNode(Node):
 def call_method(obj, method_name, *args, **kwargs):
     method = getattr(obj, method_name)
     return method(*args, **kwargs)
+
+
+@register.filter
+def split_account_key(value, regex):
+    if regex:
+        match = re.search(regex, value)
+        if match:
+            st, fn = match.span()
+            name = (value[:st] + value[fn:]).strip()
+            subname = match.group('value')
+            return name, subname

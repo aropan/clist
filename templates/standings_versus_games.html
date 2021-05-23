@@ -1,0 +1,23 @@
+<div class="modal modal-versus-games" id="versus-games-{{ statistic.pk }}">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="panel panel-default table-responsive">
+        <table class="table table-hover table-condensed table-striped">
+          {% for g in versus_data_row.games %}
+          <tr class="{% if g.result == 'win' %}success{% elif g.result == 'lose' %}danger{% elif g.result == 'draw' %}warning{% endif %}">
+          {% if g.url %}
+          <td><a href="{{ g.url }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>
+          {% endif %}
+          <td>{{ forloop.revcounter }}</td>
+          {% for f in versus_data.games.fields %}
+          <td>
+            {{ g|get_item:f }}
+          </td>
+          {% endfor %}
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -196,3 +196,33 @@ a.solution:hover span {
   height: 7px;
   margin: 5px;
 }
+
+/*
+ * versus games modal
+ */
+
+.modal-versus-games .panel,
+.modal-versus-games table {
+  margin: 0;
+}
+
+.modal-versus-games table {
+  text-align: center;
+}
+
+.modal-versus-games table a {
+  color: #337ab7 !important;
+}
+
+.modal-versus-games table {
+  text-align: center;
+}
+
+.modal-versus-games .modal-content {
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+a.versus-games:hover {
+  cursor: pointer;
+}

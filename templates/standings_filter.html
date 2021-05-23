@@ -67,5 +67,9 @@
     {% if neighbors.visible %}
     <input type="hidden" name="neighbors" value="on"/>
     {% endif %}
+    {% if request.GET.versus %}
+    <input type="hidden" name="versus" value="{{ request.GET.versus }}"/>
+    <input type="hidden" name="id" value="{{ request.GET.id }}"/>
+    {% endif %}
   </div>
 </form>

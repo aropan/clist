@@ -76,9 +76,24 @@
   </script>
 
   {% if contest.is_running and not contest.is_over %}
-  <h4 class="text-center">Time remaining: <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>{% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|timezone:timezone|naturaltime }}</small>{% endif %}</h4>
-
+  <h4 class="text-center">
+    Time remaining: <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>
   {% endif %}
+  {% with opening=contest.info|get_item:"_opening" %}
+  {% if opening %}
+    {% for o in opening %}
+    {% with otimedelta=o.date|timestamp_to_datetime|timezone:timezone|timedelta_with_now  %}
+    {% with oseconds=otimedelta.total_seconds %}
+    {% if oseconds > 0 %}
+    | {{ o.title }}: <span class="timeleft countdown" data-timestamp="{{ oseconds }}">{{ oseconds|countdown }}</span>
+    {% endif %}
+    {% endwith %}
+    {% endwith %}
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+  {% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|timezone:timezone|naturaltime }}</small>{% endif %}
+  </h4>
 </div>
 
 
@@ -105,6 +120,11 @@
                 <span class="bg-success nobold">{{ standings_options.help_message }}</span>
                 {% endif %}
               </th>
+              {% if versus_data %}
+              <th{% if merge_problems %} rowspan="2"{% endif %}>Games</th>
+              <th{% if merge_problems %} rowspan="2"{% endif %}>Win Rate</th>
+              <th{% if merge_problems %} rowspan="2"{% endif %}>Results</th>
+              {% endif %}
               <th{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
               {% if mod_penalty %}
               <th{% if merge_problems %} rowspan="2"{% endif %}>
@@ -161,6 +181,15 @@
           {% include 'standings_paging.html' %}
           </tbody>
         </table>
+        {% if versus_data %}
+        {% for statistic in my_statistics %}
+          {% with versus_data_row=versus_data.stats|get_item:statistic.account.key %}
+          {% if versus_data_row %}
+            {% include "standings_versus_games.html" %}
+          {% endif %}
+          {% endwith %}
+        {% endfor %}
+        {% endif %}
       </div>
       <script>
         var el = $('#table-inner-scroll')
