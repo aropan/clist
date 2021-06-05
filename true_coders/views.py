@@ -41,7 +41,7 @@ def get_profile_context(request, statistics, writers):
         .filter(contest__resource__has_rating_history=True) \
         .filter(contest__stage__isnull=True) \
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
-        .filter(new_rating__isnull=False) \
+        .filter(Q(new_rating__isnull=False) | Q(contest__resource__info__ratings__external=True)) \
         .annotate(host=F('contest__resource__host')) \
         .values('host') \
         .annotate(num_contests=Count('contest')) \
@@ -128,7 +128,16 @@ def coders(request, template='coders.html'):
 
     search = request.GET.get('search')
     if search:
-        filt = get_iregex_filter(search, 'username', logger=request.logger)
+        filt = get_iregex_filter(
+            search,
+            'username',
+            'first_name_native',
+            'last_name_native',
+            'middle_name_native',
+            'user__first_name',
+            'user__last_name',
+            logger=request.logger,
+        )
         coders = coders.filter(filt)
 
     countries = request.GET.getlist('country')
@@ -143,17 +152,24 @@ def coders(request, template='coders.html'):
         resources = [r for r in resources if r]
         resources = list(Resource.objects.filter(pk__in=resources))
         for r in resources:
+            field = r.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
+            if field:
+                field = Cast(KeyTextTransform(field, 'account__info'), IntegerField())
+                coders = coders.annotate(**{f'{r.pk}_coloring_rating': SubqueryMax(field, filter=Q(resource=r))})
             coders = coders.annotate(**{f'{r.pk}_rating': SubqueryMax('account__rating', filter=Q(resource=r))})
             coders = coders.annotate(**{f'{r.pk}_n_contests': SubquerySum('account__n_contests', filter=Q(resource=r))})
         params['resources'] = resources
 
     # ordering
     orderby = request.GET.get('sort_column')
-    if orderby in ['username', 'created', 'n_accounts']:
+    if orderby in ['username', 'created', 'n_accounts', 'n_contests']:
         pass
     elif orderby and orderby.startswith('resource_'):
         _, pk = orderby.split('_')
-        orderby = [f'{pk}_rating', f'{pk}_n_contests']
+        if pk.isdigit() and int(pk) in [r.pk for r in params.get('resources', [])]:
+            orderby = [f'{pk}_rating', f'{pk}_n_contests']
+        else:
+            orderby = []
     elif orderby:
         request.logger.error(f'Not found `{orderby}` column for sorting')
         orderby = []
@@ -245,6 +261,9 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         else:
             account = get_object_or_404(Account, key=key, resource__host=host)
             statistics = Statistics.objects.filter(account=account)
+        resource = request.GET.get('resource')
+        if resource:
+            statistics = statistics.filter(contest__resource__host=resource)
 
     resources = {r.pk: r for r in Resource.objects.filter(has_rating_history=True)}
 
@@ -318,12 +337,32 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             problems = stat.pop('problems', {})
             if division and 'division' in problems:
                 problems = problems['division'][division]
-            stat['n_problems'] = len(problems)
+            if problems:
+                stat['n_problems'] = len(problems)
 
             if stat['rating_change'] is not None and stat['old_rating'] is None:
                 stat['old_rating'] = stat['new_rating'] - stat['rating_change']
 
             resource_info['data'].append(stat)
+
+    qs = statistics.filter(contest__resource__has_rating_history=True,
+                           contest__resource__info__ratings__external=True,
+                           account__info___rating_data__isnull=False)
+    resources_list = qs.distinct('contest__resource__host').values_list('contest__resource__pk', flat=True)
+    for pk in resources_list:
+        resource = resources[pk]
+        default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
+        default_info['colors'] = resource.ratings
+        resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
+        resource_info.setdefault('data', [])
+        for stat in qs.filter(contest__resource__pk=pk).distinct('account__key'):
+            data = resource.plugin.Statistic.get_rating_history(stat.account.info['_rating_data'],
+                                                                stat,
+                                                                resource,
+                                                                date_from=date_from,
+                                                                date_to=date_to)
+            if data:
+                resource_info['data'].extend(data)
 
     resources_to_remove = [k for k, v in ratings['data']['resources'].items() if not v['data']]
     for k in resources_to_remove:

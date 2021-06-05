@@ -55,7 +55,7 @@ def _query(
 
     times = prev_time_queries.setdefault((key, secret), [])
     if len(times) == 5:
-        delta = max(2 - (time() - times[0]), 0)
+        delta = max(4 - (time() - times[0]), 0)
         sleep(delta)
         times.clear()
 
@@ -63,17 +63,27 @@ def _query(
     for k in ('apiSig', 'time', ):
         md5_file_cache = re.sub('%s=[0-9a-z]+' % k, '', md5_file_cache)
     times.append(time())
-    try:
-        page = REQ.get(url, md5_file_cache=md5_file_cache)
-        ret = json.loads(page)
-    except FailOnGetResponse as e:
-        err = e.args[0]
-        if hasattr(err, 'fp'):
-            ret = json.load(err.fp)
-        else:
-            ret = {'status': str(e)}
-        ret['code'] = getattr(err, 'code', None)
-    times[-1] = time()
+
+    for attempt in reversed(range(5)):
+        try:
+            page = REQ.get(url, md5_file_cache=md5_file_cache)
+            times[-1] = time()
+            ret = json.loads(page)
+        except FailOnGetResponse as e:
+            if e.code == 503 and attempt:
+                sleep(1)
+                continue
+            err = e.args[0]
+            if hasattr(err, 'fp'):
+                try:
+                    ret = json.load(err.fp)
+                except json.decoder.JSONDecodeError:
+                    ret = {'status': str(e)}
+            else:
+                ret = {'status': str(e)}
+            ret['code'] = getattr(err, 'code', None)
+        break
+
     return ret
 
 
@@ -440,12 +450,8 @@ class Statistic(BaseModule):
         last_index = 0
         orig_users = list(users)
         while True:
-            try:
-                handles = ';'.join(users)
-                data = _query(method='user.info', params={'handles': handles})
-            except FailOnGetResponse as e:
-                page = e.args[0].read()
-                data = json.loads(page)
+            handles = ';'.join(users)
+            data = _query(method='user.info', params={'handles': handles})
             if data['status'] == 'OK':
                 break
             if data['status'] == 'FAILED' and data['comment'].startswith('handles: User with handle'):

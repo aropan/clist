@@ -105,6 +105,8 @@ $(function() {
     var sort_column = url.searchParams.get('sort_column')
     var sort_order = url.searchParams.get('sort_order')
     var column = this.getAttribute('data-column')
+    url.searchParams.set('sort_column', '')
+    var disable_url = url.href
     url.searchParams.set('sort_column', column)
     url.searchParams.set('sort_order', 'asc')
     var asc_url = url.href
@@ -113,14 +115,14 @@ $(function() {
 
     if (sort_column == column) {
       var order = sort_order == 'asc'? 'up' : 'down'
-      $(this).append(`<i class="sortable-column-order fas fa-chevron-` + order + `"></i>`)
+      $(this).append(`<a href="` + disable_url + `"><i class="sortable-column-order fas fa-chevron-` + order + `"></i></a>`)
     }
 
     if (sort_column != column || sort_order != 'desc') {
-      $(this).append(`<a href="` + desc_url + `" class="text-muted"><i class="fas fa-chevron-down"></i></a>`)
+      $(this).append(`<a href="` + desc_url + `" class="hiding text-muted"><i class="fas fa-chevron-down"></i></a>`)
     }
     if (sort_column != column || sort_order != 'asc') {
-      $(this).append(`<a href="` + asc_url + `" class="text-muted"><i class="fas fa-chevron-up"></i></a>`)
+      $(this).append(`<a href="` + asc_url + `" class="hiding text-muted"><i class="fas fa-chevron-up"></i></a>`)
     }
   })
 })
@@ -175,3 +177,13 @@ $.browser = {};
     $.browser.version = RegExp.$1;
   }
 })();
+
+
+function log_ajax_error(response) {
+  if (typeof response.responseJSON !== 'undefined') {
+    $.notify(response.responseJSON.message, 'error')
+  } else {
+    $.notify("{status} {statusText}, more in console".format(response), "error")
+    console.log(response.responseText)
+  }
+}

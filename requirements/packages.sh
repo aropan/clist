@@ -14,7 +14,6 @@ apt -y install vim bash-completion wget
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
 
-
 apt update
 apt upgrade -y
 apt install -y bash-completion
@@ -39,6 +38,14 @@ apt install -y postgresql postgresql-contrib
 
 apt install -y memcached
 update-rc.d memcached enable
+
+apt install -y tesseract-ocr tesseract-ocr-eng
+tessdata=$(sudo find / -name "tessdata" | head -n 1)
+if [ -n "$tessdata" ]; then
+  pushd "$tessdata"
+  wget --quiet -O eng.traineddata https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata
+  popd
+fi
 
 yes | pip3 install virtualenv
 yes | pip3 install wheel

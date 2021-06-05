@@ -174,7 +174,7 @@ Number of competitions: {{ account.n_contests }}
 {% endif %}
 
 {% if show_history_ratings and history_resources %}
-<div{% if two_columns %} class="col-lg-6"{% endif %}>
+<div{% if two_columns %} class="col-lg-6"{% else %} class="col-xs-12"{% endif %}>
 <h3>Ratings
 {% if two_columns %}
 <a id="expand-ratings" href="#" onclick=""><i class="fas fa-expand-arrows-alt"></i></a>
@@ -218,7 +218,12 @@ $(function(){
       }
       $('.loading_rating').next().remove()
       $('.loading_rating').remove()
-    }
+    },
+    error: function(data) {
+      $.notify('{status} {statusText}'.format(data), 'error');
+      $('.loading_rating').next().remove()
+      $('.loading_rating').remove()
+    },
   });
 });
 </script>

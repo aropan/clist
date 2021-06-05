@@ -4,14 +4,19 @@
 import json
 import os
 import re
+import zlib
+from base64 import b64decode, b64encode
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
 from functools import partial
 from pprint import pprint
+from urllib.parse import urljoin
 
+import pytz
 import tqdm
 from django.core.cache import cache
+from django.utils.timezone import now
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -149,6 +154,12 @@ class Statistic(BaseModule):
                             r[k] = v
                             hidden_fields.add(k)
 
+                    stat = (statistics or {}).get(handle)
+                    if stat:
+                        for field in ['codinpoints']:
+                            if field in stat and field not in r:
+                                r[field] = stat[field]
+
             process_data(data)
 
             if len(data['users']) >= 1000:
@@ -159,6 +170,9 @@ class Statistic(BaseModule):
                 fetch_data = partial(get_leaderboard, url, "COUNTRY")
                 for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries), desc='countries'):
                     process_data(data)
+
+        if self.end_time > now():
+            hidden_fields.extend(['created', 'updated'])
 
         standings = {
             'url': standings_url,
@@ -189,6 +203,92 @@ class Statistic(BaseModule):
             standings['_has_versus'] = {'enable': True}
 
         return standings
+
+    def get_users_infos(users, resource=None, accounts=None, pbar=None):
+
+        def fetch_ratings(user, account):
+            handle = account.info.get('profile_url', {}).get('public_handle')
+            if not handle:
+                return user, False, None
+
+            try:
+                url = urljoin(resource.profile_url, '/services/CodinGamer/findCodingamePointsStatsByHandle')
+                points_stats = json.loads(REQ.get(url, post=f'["{handle}"]', content_type='application/json'))
+
+                url = urljoin(resource.profile_url, '/services/CodinGamer/getMyConsoleInformation')
+                infos = json.loads(REQ.get(url, post=f'["{user}"]', content_type='application/json'))
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return user, None, None
+                return user, False, None
+
+            hist = points_stats['codingamePointsRankingDto'].pop('rankHistorics', None)
+            info = points_stats.pop('codingamer')
+            info.setdefault('points', {}).update(points_stats.pop('codingamePointsRankingDto'))
+            info.update({k: v for k, v in points_stats.items() if not isinstance(v, list)})
+
+            if hist is not None:
+                dates = hist.pop('dates')
+                rating_data = []
+                prev_rating = None
+                n_x_axis = resource.info['ratings']['chartjs']['n_x_axis']
+                size = max(len(dates) // n_x_axis, 1)
+                for offset in range(0, len(dates), size):
+                    chunk = list(range(offset, min(len(dates), offset + size)))
+                    ratings = [hist['points'][idx] for idx in chunk]
+                    new_rating = round(sum(ratings) / len(ratings), 2)
+                    st = chunk[0]
+                    fn = chunk[-1]
+                    r = {
+                        'timestamp': dates[fn],
+                        'new_rating': new_rating,
+                        'name': (f'{st + 1}' if st == fn else f'{st + 1}-{fn + 1}') + f' of {len(dates)}',
+                        'rank_rating': hist['ranks'][fn],
+                        'place': f"{hist['ranks'][fn]:,}",
+                        'total': f"{hist['totals'][fn]:,}",
+                    }
+                    if prev_rating is not None:
+                        r['rating_change'] = round(new_rating - prev_rating, 2)
+                    prev_rating = new_rating
+                    rating_data.append(r)
+
+                rating_data_str = json.dumps(rating_data)
+                rating_data_zip = zlib.compress(rating_data_str.encode('utf-8'))
+                rating_data_b64 = b64encode(rating_data_zip).decode('ascii')
+                info['_rating_data'] = rating_data_b64
+
+                if rating_data:
+                    info.update({
+                        'rating': rating_data[-1]['new_rating'],
+                        'rank_rating': rating_data[-1]['rank_rating'],
+                    })
+
+            ratings = {}
+            challenges = infos.get('challenges', [])
+            for challenge in challenges:
+                rating = ratings.setdefault(challenge['publicId'], {})
+                rating['codinpoints'] = challenge['points']
+            return user, info, ratings
+
+        with PoolExecutor(max_workers=8) as executor:
+            for user, info, ratings in executor.map(fetch_ratings, users, accounts):
+                if pbar:
+                    pbar.update()
+                if not info:
+                    if info is None:
+                        yield {'info': None}
+                    else:
+                        yield {'skip': True}
+                    continue
+                info = {
+                    'info': info,
+                    'contest_addition_update_params': {
+                        'update': ratings,
+                        'by': 'key',
+                        'clear_rating_change': True,
+                    },
+                }
+                yield info
 
     def get_versus(self, statistic, use_cache=True):
         url = self.host + 'services/gamesPlayersRanking/findLastBattlesByAgentId'
@@ -250,11 +350,24 @@ class Statistic(BaseModule):
             'games': {
                 'fields': ['index', 'players', 'game_id'],
             },
-            'cache_time': (datetime.now() + timedelta(seconds=cache_time_seconds)).timestamp(),
+            'cache_time': (now() + timedelta(seconds=cache_time_seconds)).timestamp(),
         }
         if use_cache:
             cache.set(cache_key, results, timeout=cache_time_seconds)
         return True, results
+
+    @staticmethod
+    def get_rating_history(rating_data, stat, resource, date_from=None, date_to=None):
+        rating_data_zip = b64decode(rating_data.encode('ascii'))
+        rating_data_str = zlib.decompress(rating_data_zip).decode('utf-8')
+        rating_data = json.loads(rating_data_str)
+
+        ret = []
+        for data in rating_data:
+            data['date'] = datetime.utcnow().fromtimestamp(data['timestamp'] / 1000).replace(tzinfo=pytz.utc)
+            data['date_format'] = '%b %-d, %Y'
+            ret.append(data)
+        return ret
 
 
 def run(*args):

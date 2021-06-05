@@ -37,6 +37,11 @@
 
     {% include 'country_filter.html' with has_country=True %}
     {% include 'resource_filter.html' %}
+
+    {% if request.GET.sort_order %}
+    <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
+    <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>
+    {% endif %}
   </div>
 
   </form>
@@ -46,8 +51,10 @@
     <table class="table table-hover table-striped table-float-head">
       <thead>
         <tr>
+          <th>#</th>
           <th class="username">
-            Coder
+            <div class="flag-width-fixed"></div>
+            <div>Coder</div>
             <div class="sortable-column" data-column="username"></div>
           </th>
           {% for resource in params.resources %}
@@ -59,10 +66,15 @@
           </th>
           {% endfor %}
           <th>
-            <span data-toggle="tooltip" data-placement="bottom" data-title="Number of accounts">N</span><div class="sortable-column" data-column="n_accounts"></div>
+            <div>Contests<br/>number</div>
+            <div class="sortable-column" data-column="n_contests"></div>
           </th>
           <th>
-            Registration time
+            <div>Accounts<br/>number</div>
+            <div class="sortable-column" data-column="n_accounts"></div>
+          </th>
+          <th>
+            <div>Registration<br/>time</div>
             <div class="sortable-column" data-column="created"></div>
           </th>
         </tr>

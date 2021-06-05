@@ -28,6 +28,9 @@
         $lsd_token = $match['token'];
 
         $ids = get_ids($page);
+        if (!isset($ids['CodingCompetitionsContestSeasonRootQuery'])) {
+            continue;
+        }
 
         $url = 'https://www.facebook.com/api/graphql/';
         if (isset($year)) {

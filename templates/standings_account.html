@@ -41,7 +41,7 @@
       {% with account=preload_statistics_data.accounts|get_item:member.account %}
       <span class="{% coder_color_class resource account.info %}">
       {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}" class="coder">{% endif %}
-        <span>{{ member.name|default:member.account }}</span>
+        <span>{{ member.name|truncatechars:30|default:member.account }}</span>
       {% if account.url or resource.profile_url %}</a>{% endif %}
       </span>
       {% endwith %}
@@ -60,25 +60,26 @@
       {% endif %}
     {% endwith %}
   {% endfor %}
-
-  {% if addition.url %}
-    <a href="{{ addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-  {% endif %}
-
-  {% if has_versus %}
-    {% if versus_statistic_id == statistic.id %}
-      <a href="{% url_transform request versus='statistics' id=statistic.id with_remove=1 %}" class="external-link">
-        <i class="fas fa-times"{% if versus_data.cache_time %}
-           title="Time in cache: {{ versus_data.cache_time|timestamp_to_datetime|timezone:timezone|timedelta_with_now|hr_timedelta }}"
-           data-toggle="tooltip"
-           data-placement="right"
-        {% endif %}></i>
-      </a>
-    {% else %}
-      <a href="{% url_transform request versus='statistics' id=statistic.id with_replace=1 %}" class="external-link invisible"><i class="fas fa-desktop"></i></a>
-    {% endif %}
-  {% endif %}
 </div>
+
+{% if addition.url %}
+  <a href="{{ addition.url }}" class="external-link invisible" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+{% endif %}
+
+{% if has_versus %}
+  {% if versus_statistic_id == statistic.id %}
+    <a href="{% url_transform request versus='statistics' id=statistic.id with_remove=1 %}" class="external-link">
+      <i class="fas fa-times"{% if versus_data.cache_time %}
+         title="Time in cache: {{ versus_data.cache_time|timestamp_to_datetime|timezone:timezone|timedelta_with_now|hr_timedelta }}"
+         data-toggle="tooltip"
+         data-placement="right"
+      {% endif %}></i>
+    </a>
+  {% else %}
+    <a href="{% url_transform request versus='statistics' id=statistic.id with_replace=1 %}" class="external-link invisible"><i class="fas fa-desktop"></i></a>
+  {% endif %}
+{% endif %}
+
 {% if perms.ranking.statistics_change and statistic %}
   <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank"><i class="fas fa-database"></i></a>
 {% endif %}

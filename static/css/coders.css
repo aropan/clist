@@ -1,13 +1,18 @@
-#coders table th,
-#coders table td
+#coders table.table th,
+#coders table.table td
 {
   text-align: center;
+  vertical-align: middle;
 }
 
-#coders .username {
+#coders table.table .username {
   text-align: left;
 }
 
 #coders-filters > * {
   margin-bottom: 5px;
+}
+
+#coders table.table th > div {
+  display: inline-block;
 }

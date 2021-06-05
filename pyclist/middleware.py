@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.middleware import csrf
 from django.urls import reverse
 
 from utils.request_logger import RequestLogger
@@ -25,6 +27,17 @@ def RequestLoggerMiddleware(get_response):
 
     def middleware(request):
         setattr(request, 'logger', RequestLogger(request))
+        response = get_response(request)
+        return response
+
+    return middleware
+
+
+def SetUpCSRFToken(get_response):
+
+    def middleware(request):
+        if not request.COOKIES.get(settings.CSRF_COOKIE_NAME):
+            csrf.get_token(request)
         response = get_response(request)
         return response
 

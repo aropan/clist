@@ -13,6 +13,13 @@
         return $match['key'];
     }
 
+    function normalize_title($title, $date) {
+        $ret = strtolower($title);
+        $ret = preg_replace('/[0-9]*([0-9]{2})\s*tco(\s+)/', 'tco\1\2', $ret);
+        $ret = preg_replace('/tco\s*[0-9]*([0-9]{2})(\s+)/', 'tco\1\2', $ret);
+        return $ret;
+    }
+
     $debug_ = $RID == -1 || DEBUG;
 
     $_DATE_FORMAT = 'm.d.Y';
@@ -32,6 +39,9 @@
             echo $data['error']['message'] . "\n";
         } else {
             $calendar_parsed = true;
+            if ($debug_) {
+                echo "Total items: " . count($data["items"]) . "\n";
+            }
             foreach ($data["items"] as $item)
             {
                 if ($item["status"] != "confirmed" || !isset($item["summary"])) {
@@ -224,8 +234,8 @@
                         $date = date('m.d.Y', strtotime($c['start_time']) + $shift_day * 24 * 60 * 60);
                         foreach ($round_overview as $k => $ro) {
                             if ($ro['date'] == $date) {
-                                $w1 = explode(" ", $c["title"]);
-                                $w2 = explode(" ", $ro["title"]);
+                                $w1 = explode(" ", normalize_title($c["title"], $date));
+                                $w2 = explode(" ", normalize_title($ro["title"], $date));
                                 $intersect = count(array_intersect($w1, $w2));
                                 $iou = $intersect / count(array_unique(array_merge($w1, $w2)));
                                 if ($intersect == count($w2)) {
@@ -241,12 +251,16 @@
                     if ($t === null) {
                         continue;
                     }
+                    if ($debug_) {
+                        echo $c['title'] . " <-> " . $round_overview[$t]['title'] . "\n";
+                    }
                     $rd = $t;
                 }
                 $_contests[$i]['standings_url'] = $round_overview[$rd]['url'];
                 if (isset($_contests[$i]['key'])) {
-                    $_contests[$i]['key'] = $round_overview[$rd]['key'];
+                    $_contests[$i]['old_key'] = $_contests[$i]['key'];
                 }
+                $_contests[$i]['key'] = $round_overview[$rd]['key'];
                 unset($round_overview[$rd]);
             }
         }

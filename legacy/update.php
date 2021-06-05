@@ -316,12 +316,23 @@
 
         $info = false;
         if (isset($contest['info'])) {
-            $info = json_encode($contest['info']);
+            $info = json_encode($contest['info'], JSON_HEX_APOS);
         }
         unset($contest['info']);
 
 
         $contest = $db->escapeArray($contest);
+
+        if (isset($contest['old_key'])) {
+            $old_key = $contest['old_key'];
+            unset($contest['old_key']);
+            $key = $contest['key'];
+
+            $old_update = "$update and key = '${old_key}'";
+            if (!$db->query("UPDATE clist_contest SET key = '$key' WHERE $old_update", true)) {
+                $db->query("DELETE FROM clist_contest WHERE $old_update", true);
+            }
+        }
 
         $contest['was_auto_added'] = 1;
 

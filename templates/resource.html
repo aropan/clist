@@ -177,6 +177,8 @@
                     },
                 },
 {% if rating.account %}
+{% with coloring_field=resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'coloring_field' %}
+{% with coloring_value=rating.account.info|get_item:coloring_field|default:rating.account.rating %}
                 plugins: [{
                     beforeDatasetsDraw: function (chart) {
                         var ctx = chart.chart.ctx
@@ -194,11 +196,13 @@
                         ctx.moveTo(x, y_axis.top);
                         ctx.lineTo(x, y_axis.bottom);
                         ctx.lineWidth = 2;
-                        ctx.strokeStyle = "{{ resource|get_rating:rating.account.rating|get_item:'hex_rgb'|default:'black' }}";
+                        ctx.strokeStyle = "{{ resource|get_rating:coloring_value|get_item:'hex_rgb'|default:'black' }}";
                         ctx.stroke();
                         ctx.closePath()
                     }
                 }],
+{% endwith %}
+{% endwith %}
 {% endif %}
             })
 

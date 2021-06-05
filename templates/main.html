@@ -21,10 +21,7 @@
 <div id="timezone-and-filter" class="row">
   {% if not request.GET.timezone %}
   {% if not request.user.is_authenticated or request.user.coder.settings.check_timezone != 0 %}
-  {% include "check_timezone.js" %}
-  <div class="hidden incorrect-tz-alert label label-warning">
-    Warning! Timezone is set incorrectly. Please reload page.
-  </div>
+    {% include "check_timezone.js" %}
   {% endif %}
   {% endif %}
   <div id="time-view-search">

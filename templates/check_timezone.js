@@ -7,9 +7,12 @@
             url: "{% url 'clist:main' %}",
             data: "timezone=" + offset + "&update",
             success: function(data) {
-                if (data == "accepted") {
-                    // $(".incorrect-tz-alert").removeClass("hidden")
-                    $.notify('Warning! Timezone is set incorrectly. Please reload page.', 'error')
+                if (data == "reload") {
+                    location.reload()
+                } else if (data == "accepted") {
+                    $.notify("Warning! Timezone is set incorrectly. Please reload page.", "warn")
+                } else {
+                    $.notify(data, "error")
                 }
             }
         });

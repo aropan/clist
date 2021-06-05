@@ -1,15 +1,18 @@
 {% load el_pagination_tags %}
 
-{% lazy_paginate 50,200 coders %}
+{% lazy_paginate 50,200 coders %}{% get_pages %}
 
 {% for coder in coders %}
 <tr{% if request.user.is_authenticated and coder.username == request.user.username %} class="info"{% endif %}>
+  <td class="text-muted">{{ forloop.counter0|add:pages.current_start_index }}</td>
   <td class="username">
     {% with country=coder.country %}
       <div class="flag-width-fixed">
       {% if country %}
       {% with code=coder.settings.custom_countries|get_item:country.code|default:country.code %}
-      <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><img class="flag flag-{{ code|lower }}"/></a>
+      <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
+        <img class="flag flag-{{ code|lower }}"/>
+      </a>
       {% endwith %}
       {% endif %}
       </div>
@@ -25,15 +28,17 @@
   </td>
   {% for resource in params.resources %}
   <td>
-    {% with rating_key=resource.pk|slugify|add:'_rating' n_contests_key=resource.pk|slugify|add:'_n_contests' %}
+    {% with rating_key=resource.pk|slugify|add:'_rating' n_contests_key=resource.pk|slugify|add:'_n_contests' rating_coloring_key=resource.pk|slugify|add:'_coloring_rating' %}
     {% with rating=coder|get_item:rating_key n_contests=coder|get_item:n_contests_key %}
     {% if rating is None and n_contests is None %}
     <div>&#183;</div>
     {% else %}
     <a href="{% url 'coder:profile' coder.username %}?search=resource:{{ resource.host }}">
       {% if rating is not None %}
-        {% coder_color_circle resource rating %}
-        <div class="{% coder_color_class resource rating %}" style="display: inline-block">{{ rating }}</div>
+        {% with coloring_rating=coder|get_item:rating_coloring_key|default:rating %}
+        {% coder_color_circle resource coloring_rating %}
+        <div class="{% coder_color_class resource coloring_rating %}" style="display: inline-block">{{ rating }}</div>
+        {% endwith %}
       {% else %}
         <div>{{ n_contests }}</div>
       {% endif %}
@@ -43,6 +48,7 @@
     {% endwith %}
   </td>
   {% endfor %}
+  <td>{{ coder.n_contests }}</td>
   <td>{{ coder.n_accounts }}</td>
   <td><div title="{{ coder.created|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ coder.created|timezone:timezone|naturalday }}</div></td>
 </tr>

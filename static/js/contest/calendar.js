@@ -27,9 +27,6 @@ $(function() {
                 url: '/get/events/',
                 type: 'POST',
                 traditional: true,
-                headers: {
-                    'X-CSRF-TOKEN': $('[name="csrf-token"]').attr('content')
-                },
                 data: {
                     start: fetchInfo.startStr,
                     end: fetchInfo.endStr,
@@ -46,7 +43,7 @@ $(function() {
                     successCallback(response)
                 },
                 error: function(response) {
-                    $.notify(response.responseJSON.message, 'error')
+                    log_ajax_error(response)
                     failureCallback({message: 'there was an error while fetching events!'})
                 }
             });

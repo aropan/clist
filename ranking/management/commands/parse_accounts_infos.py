@@ -62,7 +62,7 @@ class Command(BaseCommand):
             accounts = resource.account_set
 
             if args.query:
-                accounts = accounts.filter(key__iregex=args.query)
+                accounts = accounts.filter(Q(key__iregex=args.query) | Q(name__iregex=args.query))
             elif args.force:
                 accounts = accounts.order_by('updated')
             else:
@@ -102,7 +102,7 @@ class Command(BaseCommand):
                             params = data.pop('contest_addition_update_params', {})
                             contest_addition_update = data.pop('contest_addition_update', params.pop('update', {}))
                             contest_addition_update_by = data.pop('contest_addition_update_by', params.pop('by', None))
-                            if contest_addition_update:
+                            if contest_addition_update or params.get('clear_rating_change'):
                                 account_update_contest_additions(
                                     account,
                                     contest_addition_update,

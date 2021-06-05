@@ -2,7 +2,6 @@
 
 
 import fire
-from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
 from sql_util.utils import SubqueryCount, SubqueryMax
@@ -24,11 +23,10 @@ def main(host=None):
     total = qs.count()
     print(timezone.now(), total)
     with tqdm(total=total) as pbar:
-        with transaction.atomic():
-            for a in qs.iterator():
-                a.n_contests = a.count
-                a.save()
-                pbar.update()
+        for a in qs.iterator():
+            a.n_contests = a.count
+            a.save()
+            pbar.update()
         pbar.close()
     print(timezone.now())
 
@@ -38,11 +36,10 @@ def main(host=None):
     total = qs.count()
     print(timezone.now(), total)
     with tqdm(total=total) as pbar:
-        with transaction.atomic():
-            for a in qs.iterator():
-                a.last_activity = a.last
-                a.save()
-                pbar.update()
+        for a in qs.iterator():
+            a.last_activity = a.last
+            a.save()
+            pbar.update()
         pbar.close()
     print(timezone.now())
 

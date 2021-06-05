@@ -1,15 +1,14 @@
-import unicodecsv as csv
 import time
 
+import unicodecsv as csv
 from django.contrib import admin
+from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponse
 from django.utils import timezone
-from django.db.models import Q, OuterRef, Exists
 from django_print_sql import print_sql_decorator
 
-
+from events.models import Event, JoinRequest, Login, Participant, Team, TeamStatus
 from pyclist.admin import BaseModelAdmin, admin_register
-from events.models import Event, Participant, JoinRequest, Team, Login, TeamStatus
 
 
 @admin_register(Event)

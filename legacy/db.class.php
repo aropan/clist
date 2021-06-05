@@ -31,12 +31,12 @@
             $this->query("SET TIME ZONE 'UTC';");
         }
 
-        function query($sql)
+        function query($sql, $ignore_error = false)
         {
             global $is_debug;
             $this->result = pg_query($this->link, $sql);
 
-            if (!$this->result && $is_debug)
+            if (!$this->result && $is_debug && !$ignore_error)
             {
                 print "
                     <span style=\"color:#555555;font-size:12pt;font-family:'Arial';font-weight:bold;\">SQL query error:<br>&nbsp;&nbsp;&nbsp;Query: </span>

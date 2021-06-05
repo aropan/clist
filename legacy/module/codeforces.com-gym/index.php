@@ -16,7 +16,7 @@
         $authors[$match['key']] = $match['author'];
     }
 
-    $url = 'http://codeforces.com/api/contest.list?gym=true';
+    $url = 'http://codeforces.com/api/contest.list?gym=true&lang=en';
     $json = curlexec($url, NULL, array('json_output' => true));
 
     if ($json['status'] != 'OK') {

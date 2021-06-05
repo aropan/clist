@@ -397,13 +397,16 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
     color = rating['hex_rgb']
     radius = size // 2
     width = size // 6
-    if 'next' not in rating:
+    reverse_percent = resource.info.get('ratings', {}).get('reverse_circle_percent')
+    if ('prev' if reverse_percent else 'next') not in rating:
         fill = f'<circle cx="{radius}" cy="{radius}" r="{size // 5}" style="fill: {color}"></circle>'
         title = f'{value}'
     else:
-        prv = max(rating['prev'], 0)
-        nxt = rating['next']
+        prv = max(rating.get('prev', rating['low']), 0)
+        nxt = rating.get('next', value)
         percent = (value - prv) / (nxt - prv)
+        if reverse_percent:
+            percent = 1 - percent
         v = percent * (size - 2 * width) + width
         fill = f'''
 <path
@@ -412,7 +415,9 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
     style="fill: {color}"
 />
 '''
-        title = f'{value} ({percent * 100:.1f}%)'
+        title = f'{value}'
+        if 'next' in rating:
+            title += f' ({percent * 100:.1f}%)'
     if 'name' in rating:
         title += f'<br/>{rating["name"]}'
 

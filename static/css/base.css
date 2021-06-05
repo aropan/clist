@@ -188,6 +188,18 @@ html {
   color: #7030a0 !important;
 }
 
+.coder-gold {
+  color: #ff8c00 !important;
+}
+
+.coder-silver {
+  color: #627984 !important;
+}
+
+.coder-bronze {
+  color: #a8763e !important;
+}
+
 .coder-color {
   font-weight: bold !important;
 }
@@ -256,11 +268,11 @@ a.external-database-link {
   font-size: 20px;
 }
 
-.sortable-column > a {
+.sortable-column a.hiding {
   visibility: hidden;
 }
 
-*:hover > .sortable-column > a {
+*:hover > .sortable-column a {
   visibility: visible;
 }
 

@@ -166,6 +166,7 @@ class Command(BaseCommand):
                 with REQ:
                     statistics_by_key = {} if with_stats else None
                     statistics_ids = set()
+                    has_statistics = False
                     if not no_update_results and (users or users is None):
                         statistics = Statistics.objects.filter(contest=contest).select_related('account')
                         if users:
@@ -174,6 +175,7 @@ class Command(BaseCommand):
                             if with_stats:
                                 statistics_by_key[s.account.key] = s.addition
                             statistics_ids.add(s.pk)
+                            has_statistics = with_stats
                     standings = plugin.get_standings(users=users, statistics=statistics_by_key)
 
                 with transaction.atomic():
@@ -262,7 +264,7 @@ class Command(BaseCommand):
                                 updated = now + timedelta(**updated_delta)
                                 wait_rating = resource_statistics.get('wait_rating')
 
-                                if no_rating and wait_rating:
+                                if no_rating and wait_rating and has_statistics:
                                     updated = now + timedelta(hours=1)
                                     title_re = wait_rating.get('title_re')
                                     if (
@@ -298,7 +300,7 @@ class Command(BaseCommand):
                                             account.save()
                                 elif (
                                     created
-                                    or (not statistics_ids and updated < account.updated)
+                                    or (not has_statistics and updated < account.updated)
                                     or (update_without_new_rating and updated < account.updated and no_rating)
                                 ):
                                     n_upd_account_time += 1
@@ -312,13 +314,14 @@ class Command(BaseCommand):
                                 account.save()
 
                             no_update_name = r.pop('_no_update_name', False)
-                            if r.get('name'):
-                                r['name'] = canonize_name(r['name'])
+                            field_update_name = r.pop('_field_update_name', 'name')
+                            if r.get(field_update_name):
+                                r[field_update_name] = canonize_name(r[field_update_name])
                                 if (
                                     not no_update_name and
-                                    account.name != r['name']
+                                    account.name != r[field_update_name]
                                 ):
-                                    account.name = r['name']
+                                    account.name = r[field_update_name]
                                     account.save()
 
                             country = r.get('country', None)

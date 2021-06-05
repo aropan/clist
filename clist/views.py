@@ -6,8 +6,9 @@ import arrow
 import pytz
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.commands import dumpdata
-from django.db.models import Count, F, FloatField, IntegerField, Q
+from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, Q
 from django.db.models.functions import Cast, Ln
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -189,7 +190,7 @@ def get_events(request):
                 'url': (
                     reverse('ranking:standings', args=(slug(contest.title), contest.pk))
                     if contest.has_statistics else
-                    contest.standings_url or contest.url
+                    (contest.standings_url if contest.end_time < now else contest.url)
                 ),
                 'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
@@ -264,9 +265,10 @@ def main(request, party=None):
             return HttpResponse("created")
         return HttpResponseBadRequest("fail")
 
+    has_tz = request.user.is_authenticated or "timezone" in request.session
     tzname = get_timezone(request)
     if tzname is None:
-        return HttpResponse("accepted")
+        return HttpResponse("accepted" if has_tz else "reload")
 
     if coder:
         ignore_filters = coder.ordered_filter_set.filter(categories__contains=['calendar'])
@@ -389,17 +391,32 @@ def resource(request, host, template='resource.html', extra_context=None):
         .annotate(count=Count('country')) \
         .order_by('-count', 'country')
 
-    width = 50
-    if min_rating and max_rating and int(max_rating) - int(min_rating) <= 100:
-        width = 1
+    n_x_axis = resource.info.get('ratings', {}).get('chartjs', {}).get('n_x_axis')
+    coloring_field = resource.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
 
+    width = 50
+    if n_x_axis or min_rating and max_rating and int(max_rating) - int(min_rating) <= 100:
+        width = 1
     rating_field = 'rating50' if width == 50 else 'rating'
 
-    ratings = accounts \
-        .filter(**{f'{rating_field}__isnull': False}) \
+    ratings = accounts.filter(**{f'{rating_field}__isnull': False})
+
+    if n_x_axis:
+        rs = ratings.aggregate(max_rating=Max(rating_field), min_rating=Min(rating_field))
+        width = max((rs['max_rating'] - rs['min_rating']) // n_x_axis, 1)
+        ratings = ratings.annotate(ratingw=F(rating_field) / width)
+        rating_field = 'ratingw'
+
+    annotations = {'count': Count(rating_field)}
+    if coloring_field:
+        ratings = ratings.annotate(rank=Cast(KeyTextTransform(coloring_field, 'info'), IntegerField()))
+        annotations['coloring_field'] = Avg('rank')
+
+    ratings = ratings \
         .values(rating_field) \
-        .annotate(count=Count(rating_field)) \
+        .annotate(**annotations) \
         .order_by(rating_field)
+
     ratings = list(ratings)
 
     labels = []
@@ -410,8 +427,12 @@ def resource(request, host, template='resource.html', extra_context=None):
             low = rating[rating_field] * width
             high = low + width - 1
 
-            while low > resource.ratings[idx]['high']:
+            val = rating.get('coloring_field', low)
+            while val > resource.ratings[idx]['high']:
                 idx += 1
+            while idx and val <= resource.ratings[idx - 1]['high']:
+                idx -= 1
+
             data.append({
                 'title': f'{low}..{high}',
                 'rating': low,

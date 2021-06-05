@@ -5,6 +5,7 @@
     <div>
     <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
     {{ contest.title }}
+    {% if contest.n_statistics and not contest.stats %}<small>({{ contest.n_statistics }})</small>{% endif %}
     <small class="pull-right">
         {% include "contest_inline_buttons.html" with contest=contest %}
 

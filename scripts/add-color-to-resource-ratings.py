@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import re
-import logging
 import colorsys
+import logging
+import re
 from pprint import pprint
 
 import cssutils
@@ -68,7 +68,7 @@ def run(*args):
                 to_save = True
 
         limit = None
-        for rating in resource.ratings[:-1]:
+        for rating in resource.ratings[1:]:
             if limit is None or rating['color'] != limit['color']:
                 limit = rating
             value = limit['low']

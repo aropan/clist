@@ -15,6 +15,17 @@ function create_chart_config(resource, resource_info, dates) {
   var datasets_infos = get_or_default(resource_info['datasets'], {})
   var datasets_colors = get_or_default(datasets_infos['colors'], [])
   var datasets_labels = get_or_default(datasets_infos['labels'], [])
+  var coloring_field = get_or_default(resource_info['coloring_field'], 'new_rating')
+  var n_gen_y_axis_ticks = get_or_default(resource_info['n_gen_y_axis_ticks'], false)
+  if (n_gen_y_axis_ticks) {
+    var delta = Math.floor((max_rating - min_rating) / n_gen_y_axis_ticks)
+    var power = Math.max(0, Math.floor(Math.log10(delta)) - 1)
+    var div10 = Math.pow(10, power)
+    var y_axis_ticks_every = Math.floor(delta / div10) * div10
+  } else {
+    var y_axis_ticks_every = false
+  }
+  var with_url = !get_or_default(resource_info['without_url'], false)
 
 
   var datasets = [].concat.apply([], $.map(resource_info['data'], function(data, index) {
@@ -33,7 +44,7 @@ function create_chart_config(resource, resource_info, dates) {
       pointBackgroundColor: $.map(data, function(val) {
         for (var idx in resource_info['colors']) {
           var rating = resource_info['colors'][idx]
-          if (rating['low'] <= val['new_rating'] && val['new_rating'] <= rating['high']) {
+          if (rating['low'] <= val[coloring_field] && val[coloring_field] <= rating['high']) {
             return rating['hex_rgb']
           }
         }
@@ -113,7 +124,7 @@ function create_chart_config(resource, resource_info, dates) {
         }],
         yAxes: [{
           gridLines: {
-            display: false,
+            display: get_or_default(resource_info['display_y_axis_gridlines'], false),
           },
           ticks: {
             stepSize: 50,
@@ -121,8 +132,14 @@ function create_chart_config(resource, resource_info, dates) {
             min: Math.floor((min_rating - 100) / 100) * 100,
             max: Math.ceil((max_rating + 100) / 100) * 100,
             callback: function(value, index, values) {
+              if (get_or_default(resource_info['without_y_axis_ticks'], false)) {
+                return
+              }
+              if (y_axis_ticks_every) {
+                return value % y_axis_ticks_every == 0? value : null
+              }
               if ((value < max_rating_labels || value % 500) && !rating_labels.has(value)) {
-                return;
+                return
               }
               return value
             },
@@ -131,20 +148,25 @@ function create_chart_config(resource, resource_info, dates) {
       },
       rating_colors: resource_info['colors'],
       onClick: function (e, items) {
+        if (!with_url) {
+          return;
+        }
         for (var i = 0; i < items.length; ++i) {
           var item = items[i]
           rating = item._chart.data.datasets[item._datasetIndex].history[item._index]
           if ('url' in rating) {
             url = rating['url']
-          } else {
+          } else if ('slug' in rating && 'cid' in rating) {
             url = '/standings/' + rating['slug'] + '-' + rating['cid'] + '/'
+          } else {
+            continue;
           }
           window.open(url, '_blank')
           break
         }
       },
       onHover: (e, el) => {
-        e.target.style.cursor = el[0] ? 'pointer' : 'default'
+        e.target.style.cursor = el[0] && with_url? 'pointer' : 'default'
       },
       tooltips: {
         displayColors: false,
@@ -175,8 +197,8 @@ function create_chart_config(resource, resource_info, dates) {
             var color = dataset.pointBackgroundColor[tooltipItem.index]
             var hist = dataset.history[tooltipItem.index]
             var rating = '<span style="font-weight: bold; color: ' + color + '">' + hist['new_rating'] + '</span>'
-            if (hist['old_rating']) {
-              var change = hist['new_rating'] - hist['old_rating']
+            if (hist['old_rating'] || hist['rating_change']) {
+              var change = hist['old_rating']? hist['new_rating'] - hist['old_rating'] : hist['rating_change'];
               if (change > 0) {
                 rating += ' <span style="font-weight: bold; color: #0f0"><i class="fas fa-angle-up"></i>' + change + '</span>'
               } else if (change < 0) {
@@ -189,7 +211,11 @@ function create_chart_config(resource, resource_info, dates) {
             label += '<div>' + hist['when'] + '</div>'
             label += '<div>' + rating + '</div>'
             if (hist['place']) {
-              label += '<div class="small">Rank: ' + hist['place'] + '</div>'
+              label += '<div class="small">Rank: ' + hist['place']
+              if (hist['total']) {
+                label += ' of ' + hist['total']
+              }
+              label += '</div>'
             }
             if (typeof hist['score'] != 'undefined') {
               label += '<div class="small">Score: ' + hist['score'] + '</div>'
@@ -274,6 +300,9 @@ function create_chart_config(resource, resource_info, dates) {
     },
     plugins: [{
       beforeDraw: function (chart) {
+        if (get_or_default(resource_info['without_before_draw'], false)) {
+          return;
+        }
         var rating_colors = chart.chart.options.rating_colors
         var ctx = chart.chart.ctx
         var rules = chart.chart.options.backgroundRules;
@@ -301,6 +330,9 @@ function create_chart_config(resource, resource_info, dates) {
         }
       },
       beforeDatasetsDraw: function (chart) {
+        if (get_or_default(resource_info['without_highest'], false)) {
+          return;
+        }
         if (!highest) {
           return;
         }

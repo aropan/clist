@@ -77,8 +77,8 @@ class ContestAdmin(BaseModelAdmin):
         ['Addition information', {'fields': ['n_statistics', 'calculate_time', 'info', 'invisible']}],
         ['Access time', {'fields': ['created', 'modified', 'updated']}],
     ]
-    list_display = [
-        'title', 'host', 'start_time', 'url', 'invisible', 'key', 'standings_url', 'created', 'modified', 'updated']
+    list_display = ['title', 'host', 'start_time', 'url', 'invisible', 'key', 'standings_url', 'created', 'modified',
+                    'updated']
     search_fields = ['title', 'standings_url']
     list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'resource__host']
 
@@ -115,7 +115,8 @@ class ResourceAdmin(BaseModelAdmin):
         ['Calendar information', {'fields': ['color', 'uid']}],
         [None, {'fields': ['info', 'ratings', 'has_rating_history']}],
     ]
-    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', 'n_contests', 'n_accounts']
+    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', 'n_contests', 'n_accounts',
+                    'modified']
     search_fields = ['host', 'url']
     list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone']
 

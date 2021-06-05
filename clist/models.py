@@ -14,7 +14,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django_ltree.fields import PathField
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from clist.templatetags.extras import slug
 from pyclist.indexes import GistIndexTrgrmOps
@@ -65,7 +65,9 @@ class Resource(BaseModel):
                     if ret[0]:
                         return ret
             elif isinstance(value, dict):
-                for field in self.RATING_FIELDS:
+                fields = self.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
+                fields = [fields] if fields else self.RATING_FIELDS
+                for field in fields:
                     if field in value:
                         ret = self.get_rating_color(value.get(field))
                         if ret[0]:
@@ -149,7 +151,10 @@ class Resource(BaseModel):
                 with open(filepath, 'wb') as fo:
                     fo.write(response.content)
 
-                img = Image.open(filepath).convert('RGBA')
+                try:
+                    img = Image.open(filepath).convert('RGBA')
+                except UnidentifiedImageError:
+                    continue
                 img.save(filepath)
 
                 filepath = os.path.join(settings.REPO_STATIC_ROOT, relpath)

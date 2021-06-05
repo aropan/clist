@@ -7,13 +7,14 @@ from urllib.parse import urljoin
 
 import tqdm
 from django.db import models, transaction
-from django.db.models import F
-from django.db.models.functions import Upper
+from django.db.models import F, Sum
+from django.db.models.functions import Coalesce, Upper
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
+from sql_util.utils import SubqueryCount, SubquerySum
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import add_prefix_to_problem_short, get_number_from_str, get_problem_short, slug
@@ -174,22 +175,20 @@ def update_account_writer(signal, instance, action, reverse, pk_set, **kwargs):
 
 
 @receiver(m2m_changed, sender=Account.coders.through)
-def update_n_coder_accounts(signal, instance, action, reverse, pk_set, **kwargs):
+def update_coder_n_accounts_and_n_contests(signal, instance, action, reverse, pk_set, **kwargs):
     when, action = action.split('_', 1)
-    if when != 'post':
-        return
-    if action == 'add':
-        delta = 1
-    elif action == 'remove':
-        delta = -1
-    else:
+    if when != 'post' or action not in ['add', 'remove']:
         return
 
     if reverse:
-        instance.n_accounts += delta
+        instance.n_accounts = instance.account_set.count()
+        instance.n_contests = instance.account_set.aggregate(total=Sum('n_contests'))['total'] or 0
         instance.save()
     else:
-        Coder.objects.filter(pk__in=pk_set).update(n_accounts=F('n_accounts') + delta)
+        Coder.objects.filter(pk__in=pk_set) \
+            .annotate(n_a=SubqueryCount('account')) \
+            .annotate(n_c=SubquerySum('account__n_contests')) \
+            .update(n_accounts=F('n_a'), n_contests=Coalesce('n_c', 0))
 
 
 class Rating(BaseModel):

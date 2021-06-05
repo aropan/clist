@@ -29,6 +29,7 @@ class Coder(BaseModel):
     phone_number = PhoneNumberField(blank=True)
     addition_fields = models.JSONField(default=dict, blank=True)
     n_accounts = models.IntegerField(default=0, db_index=True)
+    n_contests = models.IntegerField(default=0, db_index=True)
 
     class Meta:
         indexes = [

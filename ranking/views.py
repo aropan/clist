@@ -1054,7 +1054,7 @@ def versus(request, query):
             rinfo = rdata['resources'][resource]
             resource_info = ratings_data['resources'].setdefault(resource, {
                 'data': [],
-                'colors': rinfo['colors'],
+                'colors': rinfo.pop('colors'),
                 'min': rinfo['min'],
                 'max': rinfo['max'],
                 'point_radius': 0,
@@ -1065,15 +1065,18 @@ def versus(request, query):
                     'colors': datasets_colors,
                     'labels': versus_data['opponents'],
                 },
-                'x_axes_unit': rinfo.get('x_axes_unit'),
+                'x_axes_unit': rinfo.pop('x_axes_unit', None),
             })
-            resource_info['data'].extend(rinfo['data'])
-            resource_info['min'] = min(resource_info['min'], rinfo['min'])
-            resource_info['max'] = max(resource_info['max'], rinfo['max'])
-            for data in rinfo['data']:
+            rinfo_data = rinfo.pop('data')
+            resource_info['data'].extend(rinfo_data)
+            resource_info['min'] = min(resource_info['min'], rinfo.pop('min'))
+            resource_info['max'] = max(resource_info['max'], rinfo.pop('max'))
+            for data in rinfo_data:
                 for stat in data:
                     stat['date'] = str(stat['date'])
                     ratings_dates.append(stat['date'])
+            resource_info.update(rinfo)
+
     ratings_data['dates'] = list(sorted(set(ratings_dates)))
     versus_data['ratings'] = ratings_data
 

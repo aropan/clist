@@ -2,16 +2,16 @@
 
 import re
 import urllib.parse
-from time import sleep
-from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from first import first
+from pprint import pprint
+from time import sleep
 
 import tqdm
+from first import first
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, FailOnGetResponse, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
 
 class Statistic(BaseModule):
