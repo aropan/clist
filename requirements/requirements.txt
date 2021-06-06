@@ -6,8 +6,8 @@ django-cprofile-middleware==1.0.5
 django-crispy-forms==1.11.1
 django-enumfield==2.0.2
 django-extensions==2.2.8
-django-json-widget==1.1.1
 django-jsonify==0.3.0
+django-json-widget==1.1.1
 django-ltree==0.5.2
 django-oauth-toolkit==1.4.0
 django-phonenumber-field==5.0.0

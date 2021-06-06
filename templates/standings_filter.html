@@ -58,6 +58,13 @@
 
     {% include 'fields_to_select.html' %}
 
+    {% if params.find_me %}
+    {% with find_me=request.GET.find_me %}
+    <input type="hidden" name="find_me" value="{{ find_me }}"/>
+    <button class="btn btn-default btn-sm{% if find_me %} active{% endif %}" name="find_me" value="{% if not find_me %}{{ params.find_me }}{% endif %}">Find me</button>
+    {% endwith %}
+    {% endif %}
+
     {% with orderby=request.GET|get_list:'orderby' %}
       {% for order in orderby %}
     <input type="hidden" name="orderby" value="{{ order }}"/>

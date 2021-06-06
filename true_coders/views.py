@@ -1,6 +1,8 @@
 import collections
+import functools
 import json
 import logging
+import operator
 import re
 
 import pytz
@@ -85,10 +87,17 @@ def get_profile_context(request, statistics, writers):
         )
         statistics = statistics.filter(filt)
 
-    filter_resources = filters.pop('resource', [])
-    for val in filter_resources:
-        history_resources = history_resources.filter(contest__resource__host=val)
-    search_resource = filter_resources[0] if len(filter_resources) == 1 else None
+        filter_resources = filters.pop('resource', [])
+        if not filter_resources:
+            field = 'contest__resource__host'
+            filter_resources = list(statistics.order_by(field).distinct(field).values_list(field, flat=True))
+
+        if filter_resources:
+            conditions = [Q(contest__resource__host=val) for val in filter_resources]
+            history_resources = history_resources.filter(functools.reduce(operator.ior, conditions))
+            search_resource = filter_resources[0] if len(filter_resources) == 1 else None
+    else:
+        search_resource = None
 
     if search_resource:
         writers = writers.filter(resource__host=search_resource)

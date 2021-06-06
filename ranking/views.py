@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import connection, models
 from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Value, When
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, window
 from django.http import HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -188,6 +188,25 @@ def _standings_highlight(statistics, options):
         'participants_info': participants_info,
     })
     return ret
+
+
+def _get_order_by(fields):
+    order_by = []
+    for field in fields:
+        if field.startswith('-'):
+            desc = True
+            field = field[1:]
+        else:
+            desc = False
+
+        order_field = models.F(field)
+        if desc:
+            order_field = order_field.desc()
+        else:
+            order_field = order_field.asc()
+
+        order_by.append(order_field)
+    return order_by
 
 
 @page_templates((
@@ -415,6 +434,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         per_page = 100500
     elif contest.n_statistics and contest.n_statistics < 500:
         per_page = contest.n_statistics
+    per_page_more = 200
+    paginate_on_scroll = True
+    force_both_scroll = False
 
     mod_penalty = {}
     first = statistics.first()
@@ -709,10 +731,49 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         num_rows_groupby = None
         map_colors_groupby = None
 
+    # find me
+    find_me = request.GET.get('find_me')
+    if find_me:
+        per_page_more = per_page
+        if not find_me.isdigit():
+            request.logger.error(f'find_me param should be number, found {find_me}')
+    if (
+        find_me and find_me.isdigit() and
+        groupby == 'none' and
+        'querystring_key' not in request.GET and
+        'standings_paging' not in request.GET
+    ):
+        my_stat = statistics.annotate(row_number=models.Window(expression=window.RowNumber(),
+                                                               order_by=_get_order_by(order)))
+        my_stat = my_stat.annotate(statistic_id=F('id'))
+        sql_query, sql_params = my_stat.query.sql_with_params()
+        my_stat = Statistics.objects.raw(
+            '''
+            SELECT * FROM ({}) ranking_statistics WHERE "statistic_id" = %s
+            '''.format(sql_query),
+            [*sql_params, int(find_me)],
+        )
+        my_stat = list(my_stat)
+        if my_stat:
+            row_number = my_stat[0].row_number
+            if row_number > per_page:
+                paging = (row_number - per_page - 1) // per_page_more + 2
+                old_mutable = request.GET._mutable
+                request.GET._mutable = True
+                request.GET['querystring_key'] = 'standings_paging'
+                request.GET['standings_paging'] = paging
+                request.GET._mutable = old_mutable
+            paginate_on_scroll = False
+            force_both_scroll = True
+        else:
+            request.logger.warning(f'Not found find = {find_me}')
+
     my_statistics = []
     if groupby == 'none' and coder:
         statistics = statistics.annotate(my_stat=SubqueryExists('account__coders', filter=Q(coder=coder)))
         my_statistics = statistics.filter(account__coders=coder).extra(select={'floating': True})
+        if my_statistics:
+            params['find_me'] = list(my_statistics)[0].pk
 
     context.update({
         'has_versus': has_versus,
@@ -731,6 +792,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
         'divisions_order': divisions_order,
         'has_country': has_country,
         'per_page': per_page,
+        'per_page_more': per_page_more,
+        'paginate_on_scroll': paginate_on_scroll,
+        'force_both_scroll': force_both_scroll,
         'with_row_num': with_row_num,
         'merge_problems': merge_problems,
         'fields_to_select': fields_to_select,

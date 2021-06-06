@@ -1,15 +1,28 @@
 {% load el_pagination_tags %}
 {% load preload_statistics %}
+{% load i18n %}
 
-{% lazy_paginate per_page,200 statistics using 'standings_paging' %}{% get_pages %}
+{% lazy_paginate per_page,per_page_more statistics using 'standings_paging' %}{% get_pages %}
+
+{% if pages.previous %}
+{% if force_both_scroll or request.GET.scroll_up %}
+<tr class="endless_container">
+    <td colspan="100%">
+        <a class="endless_more" href="{{ pages.previous.url }}&scroll_up=true" data-el-querystring-key="{{ pages.previous.querystring_key }}">{% trans "more" %}</a>
+        <span class="endless_loading" style="display: none;">loading</span>
+    </td>
+</tr>
+{% endif %}
+{% endif %}
 
 {% preload_statistics statistics contest.resource as preload_statistics_data %}
 {% for statistic in statistics|chain:my_statistics %}
 
 {% with tag=statistic.my_stat|then:"th"|default:"td" %}
 {% with addition=statistic.addition %}
-{% if statistic.my_stat and statistic.floating %}{% show_more_table %}{% endif %}
-<tr class="{{ request.GET.id }} {{ statistic.id }} {% if statistic.my_stat %}info my-stat{% elif versus_statistic_id == statistic.id %}success{% endif %}{% if statistic.floating %} floating hidden{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
+{% if statistic.my_stat and statistic.floating %}{% if force_both_scroll or not request.GET.scroll_up %}{% show_more_table %}{% endif %}
+{% endif %}
+<tr class="{{ statistic.id }} {% if statistic.my_stat %}info my-stat{% elif versus_statistic_id == statistic.id %}success{% endif %}{% if statistic.floating %} floating hidden{% endif %}{% if statistic.id == request.GET.find_me|toint %} find-me-row{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }}
     {% if addition.medal %}
@@ -226,7 +239,7 @@
 {% endfor %}
 
 {% if not my_statistics %}
-  {% show_more_table %}
+{% if force_both_scroll or not request.GET.scroll_up %}{% show_more_table %}{% endif %}
 {% endif %}
 
 {% if with_table_inner_scroll and merge_problems %}

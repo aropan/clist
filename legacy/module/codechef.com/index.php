@@ -73,6 +73,13 @@
             do {
                 $url = "/api/list/contests/$time?sort_by=END&sorting_order=desc&offset=$offset";
                 $data = curlexec($url, NULL, array("json_output" => 1));
+
+                if (!isset($data['contests'])) {
+                    var_dump($data);
+                    trigger_error("Unusual response data", E_USER_WARNING);
+                    break;
+                }
+
                 foreach ($data['contests'] as $c) {
                     $contests[] = array(
                         'start_time' => $c['contest_start_date_iso'],

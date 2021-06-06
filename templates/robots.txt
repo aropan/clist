@@ -15,7 +15,7 @@ Disallow: /oauth/
 Disallow: /auth/
 Disallow: /o/
 Crawl-Delay: 10
-Clean-param: next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&page&as_coder&country&period&querystring_key
+Clean-param: next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&page&as_coder&country&period&querystring_key&find_me
 Clean-param: versus&division&detail /standings/
 Clean-param: participants&teams /event/
 Clean-param: top_page&country_page&last_activity_page&most_participated_page /resource/

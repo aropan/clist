@@ -191,6 +191,7 @@
         {% endfor %}
         {% endif %}
       </div>
+      {% if paginate_on_scroll %}
       <script>
         var el = $('#table-inner-scroll')
         el.scroll(function() {
@@ -199,12 +200,13 @@
           }
         });
       </script>
+      {% endif %}
     {% else %}
       <div id="standings-groupby">
         {% include 'standings_groupby.html' %}
       </div>
     {% endif %}
-    <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
+    <script>$.endlessPaginate({paginateOnScroll: {% if paginate_on_scroll %}true{% else %}false{% endif %}, onCompleted: toggle_tooltip});</script>
   {% else %}
   <div class="alert alert-info">Empty data</div>
   {% endif %}
@@ -230,6 +232,15 @@
       }
     })
     $(window).trigger('resize')
+
+{% if force_both_scroll %}
+    var find_me_pos = $('.find-me-row').position()
+    var table_pos = el.position()
+    if (find_me_pos && table_pos) {
+      var target = find_me_pos.top - table_pos.top - el.find('thead').height()
+      el.animate({scrollTop: target}, 600);
+    }
+{% endif %}
   })
 </script>
 

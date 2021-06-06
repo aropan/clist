@@ -9,6 +9,12 @@
             $url = 'https://lightoj.com/api/v1/contests?page=' . $page . '&contestType=' . $type;
             $response = curlexec($url, null, array("http_header" => array('content-type: application/json'), "json_output" => 1));
 
+            if (!isset($response['data']['contests']['data'])) {
+                var_dump($response);
+                trigger_error("Unusual response", E_USER_WARNING);
+                break;
+            }
+
             foreach ($response['data']['contests']['data'] as $c) {
                 $title = $c['contestTitleStr'] . ' [' . $c['contestVisibilityStr'] . ', ' . $c['contestTypeStr'] . ', ' . $c['contestParticipationTypeStr'] . ']';
                 $contests[] = array(

@@ -6,6 +6,7 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
+from pprint import pprint  # noqa
 
 import coloredlogs
 import dateutil.parser
@@ -129,6 +130,7 @@ class Statistic(BaseModule):
                     rating['old_rating'] = prev_rating
                 prev_rating = int_rating
 
+            contest_data = [c for c in contest_data if 'contest' in c]
             contest_data.sort(key=lambda c: dateutil.parser.parse(c['contest']['endAt']))
             for d in contest_data:
                 if 'contest' not in d:
