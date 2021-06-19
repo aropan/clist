@@ -166,7 +166,9 @@
               {% for problem in problems %}
               <th class="problem-cell{% if problem.colspan %} subheader-score{% endif %}">
                 <small{% if problem.group %} title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>
+                  {% if problem.suburl %}<a href="{{ problem.suburl }}">{% endif %}
                   {% if problem.subname %}<div>{{ problem.subname }}</div>{% endif %}
+                  {% if problem.suburl %}</a>{% endif %}
                   {% if problem.full_score %}<div>{{  problem.full_score|floatformat }}</div>{% endif %}
                 </small>
                 {% if problem.n_teams is not None and with_detail %}
@@ -214,9 +216,21 @@
 
 <script>
   $(function() {
+
 {% if not contest.resource.info.standings.no_change_problem_width %}
-    var max_width = Math.max(...$('th.problem-cell:not(.header-score)').map(function() { return $(this).width() }), 0)
-    $('th.problem-cell:not(.header-score)').each(function () { $(this).width(max_width); })
+  {% if contest.resource.info.standings.avg_problem_width %}
+    var target_width = 0
+    var arr = $('th.problem-cell:not(.header-score)').map(function() { w = $(this).width(); target_width += w; return w })
+    var target_width = target_width / arr.length
+  {% else %}
+    var target_width = Math.max(...$('th.problem-cell:not(.header-score)').map(function() { return $(this).width() }), 0)
+  {% endif  %}
+
+    if ($('th.problem-cell.header-score').length) {
+      $('th.problem-cell.header-score').each(function () { $(this).width($(this).attr('colspan') * target_width) } )
+    } else {
+      $('th.problem-cell:not(.header-score)').each(function () { $(this).width(target_width); })
+    }
 {% endif %}
 
     var el = $('#table-inner-scroll')

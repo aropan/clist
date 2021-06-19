@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from lxml import etree
-from copy import deepcopy
 from collections import OrderedDict
+from copy import deepcopy
+
+from lxml import etree
 
 
 def merge_dicts(a, b):
@@ -76,6 +77,7 @@ class ParsedTable(object):
         xpath='//table//tr',
         as_list=False,
         with_duplicate_colspan=False,
+        ignore_wrong_header_number=True,
         unnamed_fields=(),
         header_mapping=(),
     ):
@@ -86,6 +88,7 @@ class ParsedTable(object):
         self.unnamed_fields = unnamed_fields
         self.unnamed_fields_idx = 0
         self.header_mapping = header_mapping
+        self.ignore_wrong_header_number = ignore_wrong_header_number
 
     def init_iter(self):
         self.n_rows = len(self.table) - 1
@@ -105,7 +108,9 @@ class ParsedTable(object):
             for c in self.header.columns:
                 if rs > int(c.attrs.get('rowspan', 0)):
                     for cs in range(c.colspan):
-                        columns.append(next(iter_row))
+                        col = next(iter_row)
+                        col.attrs['_top_column'] = c
+                        columns.append(col)
                 else:
                     columns.append(c)
             self.header.columns = columns
@@ -139,6 +144,9 @@ class ParsedTable(object):
 
             if len(row.columns) == len(self.header.columns):
                 break
+
+            if not self.ignore_wrong_header_number:
+                return row
 
         kv = []
         colspan = 0
