@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import re
-from urllib.parse import urljoin
-from pprint import pprint  # noqa
 from collections import OrderedDict, defaultdict
+from datetime import timedelta
+from pprint import pprint  # noqa
+from urllib.parse import urljoin
 
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import InitModuleException, ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
 class Statistic(BaseModule):
@@ -18,6 +19,7 @@ class Statistic(BaseModule):
             raise InitModuleException()
 
     def get_standings(self, users=None, statistics=None):
+        standings_data = None
         if not self.standings_url:
             page = REQ.get(urljoin(self.url, '/'))
 
@@ -29,60 +31,82 @@ class Statistic(BaseModule):
                 url = match.group('url')
                 page = REQ.get(url)
 
-            match = re.search(
-                '{}.*?<a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<'.format(
-                    re.escape(self.name),
-                    'Результаты прошедших тренировок'
-                ),
-                page,
-                re.DOTALL,
+            regex = '''
+            <a[^>]*href=["']?[^<"']*cid=(?P<cid>[0-9]+)[^>]*>[^>]*{}[^>]*</a>.*?
+            <a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<
+            '''.format(
+                re.escape(self.name),
+                re.escape('Результаты прошедших тренировок'),
             )
+            match = re.search(regex, page, re.DOTALL | re.IGNORECASE | re.VERBOSE)
+
             if not match:
                 raise ExceptionParseStandings('Not found standing url')
 
             url = match.group('url')
+            cid = match.group('cid')
+            last_standings_data = self.resource.info['parse']['last_standings_data'].get(cid, {})
             page = REQ.get(url)
 
-            date = self.start_time.strftime('%Y-%m-%d')
-            matches = re.findall(r'''
-                <tr[^>]*>[^<]*<td[^>]*>{}</td>[^<]*
-                <td[^>]*>(?P<title>[^<]*)</td>[^<]*
-                <td[^>]*>[^<]*<a[^>]*href\s*=["\s]*(?P<url>[^">]*)["\s]*[^>]*>
-            '''.format(date), page, re.MULTILINE | re.VERBOSE)
+            dates = [self.start_time, self.start_time - timedelta(days=1)]
+            dates = [d.strftime('%Y-%m-%d') for d in dates]
+            re_dates = '|'.join(dates)
 
-            urls = [(title, urljoin(url, u)) for title, u in matches]
-            if len(urls) > 1:
-                urls = [
-                    (title, urljoin(url, u)) for title, u in matches
-                    if not re.search(r'[0-9]\s*-\s*[0-9].*(?:[0-9]\s*-\s*[0-9].*\bкл\b|школа)', title, re.I)
-                ]
+            regex = r'''
+            <tr[^>]*>[^<]*<td[^>]*>\s*(?P<date>{})\s*</td>[^<]*
+            <td[^>]*>(?P<title>[^<]*)</td>[^<]*
+            <td[^>]*>[^<]*<a[^>]*href\s*=["\s]*(?P<url>[^">]*)["\s]*[^>]*>
+            '''.format(re_dates)
+            matches = re.findall(regex, page, re.MULTILINE | re.VERBOSE)
 
-            if not urls:
+            datas = [
+                {'date': date.strip(), 'title': title.strip(), 'url': urljoin(url, u)}
+                for date, title, u in matches
+            ]
+            if len(datas) > 1:
+                regex = r'[0-9]\s*-\s*[0-9].*(?:[0-9]\s*-\s*[0-9].*\bкл\b|школа)'
+                datas = [d for d in datas if not re.search(regex, d['title'], re.I)]
+
+            if last_standings_data:
+                datas = [d for d in datas if d['date'] <= last_standings_data['date']]
+
+            if not datas:
                 raise ExceptionParseStandings('Not found standing url')
 
-            if len(urls) > 1:
+            if len(datas) > 1:
+                _datas = [d for d in datas if d['date'] == dates[0]]
+                if _datas:
+                    datas = _datas
+
+            if len(datas) > 1:
                 ok = True
-                urls_set = set()
-                for _, u in urls:
-                    page = REQ.get(u)
+                urls_map = {}
+                for d in datas:
+                    url = d['url']
+                    page = REQ.get(url)
                     path = re.findall('<td[^>]*nowrap><a[^>]*href="(?P<href>[^"]*)"', page)
                     if len(path) < 2:
                         ok = False
-                    parent = urljoin(u, path[-2])
-                    urls_set.add(parent)
-                if len(urls_set) > 1:
-                    _, url = urls[0]
+                    parent = urljoin(url, path[-2])
+                    urls_map.setdefault(parent, d)
+                if len(urls_map) > 1:
+                    standings_data = datas[0]
                 elif not ok:
                     raise ExceptionParseStandings('Too much standing url')
                 else:
-                    url = urls_set.pop()
+                    standings_data = list(urls_map.values())[0]
             else:
-                _, url = urls[0]
+                standings_data = datas[0]
 
-            page = REQ.get(url)
+            page = REQ.get(standings_data['url'])
             self.standings_url = REQ.last_url
-        else:
+
+        try:
             page = REQ.get(self.standings_url)
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                raise ExceptionParseStandings('Not found response from standings url')
+            raise e
 
         def get_table(page):
             html_table = re.search('<table[^>]*bgcolor="silver"[^>]*>.*?</table>',
@@ -178,23 +202,29 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.standings_url,
             'problems': list(problems_info.values()),
+            'info_fields': ['_standings_data'],
         }
+
+        if result and standings_data:
+            standings['_standings_data'] = standings_data
+            self.resource.info['parse']['last_standings_data'][cid] = standings_data
+            self.resource.save()
 
         return standings
 
 
 if __name__ == '__main__':
-    import sys
     import os
+    import sys
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'
 
     from django import setup
     setup()
 
-    from clist.models import Contest
-
     from django.utils import timezone
+
+    from clist.models import Contest
 
     qs = Contest.objects \
         .filter(host='dl.gsu.by', end_time__lt=timezone.now()) \

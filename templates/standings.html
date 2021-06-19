@@ -140,7 +140,7 @@
               <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
                 <div title="{% if problem.group %}{{ problem.group }}{% else %}{{ problem|get_problem_name }}{% endif %}" data-placement="bottom" data-toggle="tooltip">
                 {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
-                <span{% if mod_penalty and not problem.n_accepted %} class="rej"{% endif %}>
+                <span{% if mod_penalty and not problem.n_accepted and contest.n_statistics %} class="rej"{% endif %}>
                 {% if problem.group %}
                   {{ problem.group|truncatechars:truncatechars_name_problem }}
                 {% else %}

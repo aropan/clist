@@ -33,7 +33,7 @@
     </td>
     <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
-        <a href="{% url 'clist:resource' stat.contest.resource.host %}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+        <a href="?search=resource:{{ stat.contest.resource.host }}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
         <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}">{{ stat.contest.title }}</a>
         <div class="problems">
             {% if stat.addition.hack %}

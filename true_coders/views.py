@@ -64,6 +64,7 @@ def get_profile_context(request, statistics, writers):
         .order_by('-contest__end_time')
 
     search = request.GET.get('search')
+    search_resource = None
     filters = {}
     if search:
         filt = get_iregex_filter(
@@ -96,8 +97,6 @@ def get_profile_context(request, statistics, writers):
             conditions = [Q(contest__resource__host=val) for val in filter_resources]
             history_resources = history_resources.filter(functools.reduce(operator.ior, conditions))
             search_resource = filter_resources[0] if len(filter_resources) == 1 else None
-    else:
-        search_resource = None
 
     if search_resource:
         writers = writers.filter(resource__host=search_resource)

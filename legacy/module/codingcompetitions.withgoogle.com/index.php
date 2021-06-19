@@ -27,7 +27,7 @@
     $competitions = array();
     foreach ($js_urls as $url) {
         $page = curlexec($url);
-        preg_match_all("/competition:'(?P<name>[^']*)',([^,]*,)?competition_year:'[0-9]{4}'(,calendar_link:'(?P<url>[^']*)')?/", $page, $matches, PREG_SET_ORDER);
+        preg_match_all("/competition:[\"'](?P<name>[^\"']*)[\"'],([^,]*,)?competition_year:[\"'][0-9]{4}[\"'](,calendar_link:[\"'](?P<url>[^\"']*)[\"'])?/", $page, $matches, PREG_SET_ORDER);
         foreach ($matches as $index => $match) {
             $competitions[$index + 1] = $match['name'];
             if (!isset($match['url'])) {

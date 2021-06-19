@@ -17,6 +17,7 @@
         return $ids;
     }
 
+    unset($year);
     for (;;) {
         $url = $URL;
         if (isset($year)) {
