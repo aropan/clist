@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from events.models import Participant
 from pyclist.admin import BaseModelAdmin, admin_register
-from true_coders.models import Coder, Filter, Organization, Party
+from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
 
 
 @admin_register(Coder)
@@ -80,3 +80,15 @@ class OrganizationAdmin(BaseModelAdmin):
         can_delete = False
         extra = 0
     inlines = [ParticipantInline]
+
+
+@admin_register(CoderList)
+class CoderListAdmin(BaseModelAdmin):
+    list_display = ['name', 'owner', 'uuid']
+    search_fields = ['name', 'owner', 'uuid']
+
+
+@admin_register(ListValue)
+class ListValueAdmin(BaseModelAdmin):
+    list_display = ['id', 'coder_list', 'coder', 'account', 'group_id']
+    search_fields = ['coder_list', 'coder', 'account', 'group_id']

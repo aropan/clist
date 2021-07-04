@@ -38,19 +38,12 @@
       </div>
     </div>
 
-    <input
-      name="detail"
-      type="checkbox"
-      data-size="small"
-      data-toggle="toggle"
-      data-on="Detail"
-      data-off="Short"
-      data-onstyle="default"
-      data-offstyle="default"
-      onchange="this.setAttribute('value', this.checked? 'true' : 'false'); this.checked = true; this.form.submit()"
-      {% if with_detail %}checked{% endif %}
-    >
-    <script>$('[data-toggle="toggle"]').removeAttr('data-toggle').bootstrapToggle();</script>
+    {% if not request.user.is_authenticated %}
+    <input type="hidden" name="detail" value="{% if with_detail %}true{% else %}false{% endif %}"/>
+    {% endif %}
+    <button class="btn btn-default btn-sm" name="detail" value="{% if with_detail %}false{% else %}true{% endif %}">
+      {% if with_detail %}Detail{% else %}Short{% endif %}
+    </button>
 
     {% if has_country or fields_to_select %}{% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}{% endif %}
 
@@ -60,7 +53,9 @@
 
     {% if params.find_me %}
     {% with find_me=request.GET.find_me %}
+    {% if find_me %}
     <input type="hidden" name="find_me" value="{{ find_me }}"/>
+    {% endif %}
     <button class="btn btn-default btn-sm{% if find_me %} active{% endif %}" name="find_me" value="{% if not find_me %}{{ params.find_me }}{% endif %}">Find me</button>
     {% endwith %}
     {% endif %}

@@ -110,6 +110,7 @@ class Statistic(BaseModule):
                 for w in problem_info.get('writers', []):
                     writers[w] += 1
 
+        @RateLimiter(max_calls=5, period=1)
         def fetch_page(page):
             url = api_ranking_url_format.format(page + 1)
             content = REQ.get(url)

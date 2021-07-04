@@ -381,6 +381,12 @@ def get_rating(resource, value):
     return rating
 
 
+@register.filter
+def get_new_rating_value(resource, value):
+    *_, value = resource.get_rating_color(value, ignore_old=True)
+    return value
+
+
 @register.simple_tag
 def coder_color_class(resource, *values):
     rating, *_ = resource.get_rating_color(values)
@@ -563,6 +569,13 @@ def concat(a, b):
 def to_template_value(value):
     if isinstance(value, bool):
         return f'<i class="fas fa-{"check" if value else "times"}"></i>'
+    return value
+
+
+@register.filter
+def to_template_filter_value(value):
+    if isinstance(value, bool):
+        return str(value).lower()
     return value
 
 

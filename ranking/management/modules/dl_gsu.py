@@ -41,7 +41,7 @@ class Statistic(BaseModule):
             match = re.search(regex, page, re.DOTALL | re.IGNORECASE | re.VERBOSE)
 
             if not match:
-                raise ExceptionParseStandings('Not found standing url')
+                raise ExceptionParseStandings('Not found standings urls list')
 
             url = match.group('url')
             cid = match.group('cid')
@@ -68,10 +68,10 @@ class Statistic(BaseModule):
                 datas = [d for d in datas if not re.search(regex, d['title'], re.I)]
 
             if last_standings_data:
-                datas = [d for d in datas if d['date'] <= last_standings_data['date']]
+                datas = [d for d in datas if d['date'] > last_standings_data['date']]
 
             if not datas:
-                raise ExceptionParseStandings('Not found standing url')
+                raise ExceptionParseStandings('Not found standings url')
 
             if len(datas) > 1:
                 _datas = [d for d in datas if d['date'] == dates[0]]

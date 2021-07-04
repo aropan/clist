@@ -26,7 +26,7 @@ from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.models import Account, Module, Statistics
 from tg.models import Chat
-from true_coders.models import Coder, Party
+from true_coders.models import Coder, CoderList, Party
 from true_coders.views import get_ratings_data
 from utils.colors import get_n_colors
 from utils.json_field import JSONF
@@ -389,6 +389,17 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             'nourl': True,
         }
 
+    lists = coder.my_list_set.all() if coder else None
+    if lists:
+        options_values = {str(v.uuid): v.name for v in lists}
+        fields_to_select['list'] = {
+            'values': [v for v in request.GET.getlist('list')],
+            'options': options_values,
+            'noajax': True,
+            'nogroupby': True,
+            'nourl': True,
+        }
+
     hidden_fields_values = [v for v in request.GET.getlist('field') if v]
     for v in hidden_fields_values:
         if v not in hidden_fields:
@@ -572,6 +583,21 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
                     filt |= Q(account__coders__in=chat.coders.all())
             # subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
             # statistics = statistics.annotate(chat_name=Subquery(subquery))
+        elif field == 'list':
+            for uuid in values:
+                try:
+                    coder_list = CoderList.objects.prefetch_related('values').get(uuid=uuid)
+                except Exception:
+                    request.logger.warning(f'Ignore list with uuid = "{uuid}"')
+                    continue
+                coders = set()
+                accounts = set()
+                for v in coder_list.values.all():
+                    if v.coder:
+                        coders.add(v.coder)
+                    if v.account and v.account.resource_id == contest.resource_id:
+                        accounts.add(v.account)
+                filt |= Q(account__coders__in=coders) | Q(account__in=accounts)
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})

@@ -1,7 +1,7 @@
 {% with template_value=value|to_template_value %}
 <span{% if value|get_type == 'bool' %} class="text-muted"{% endif %}>
 {% if fields_to_select and field in fields_to_select and value not in fields_to_select|get_item:field and not fields_to_select|get_item:field|get_item:'nourl' %}
-  <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value %}">{{ template_value|safe }}</a>
+  <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value|to_template_filter_value %}">{{ template_value|safe }}</a>
 {% else %}
   {% with intvalue=value|toint %}
   {% with types=fields_types|get_item:field %}

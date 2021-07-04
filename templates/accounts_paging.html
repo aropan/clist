@@ -1,0 +1,41 @@
+{% load el_pagination_tags %}
+
+{% lazy_paginate 50,200 accounts %}{% get_pages %}
+
+{% for account in accounts %}
+<tr{% if account.my_account %} class="info"{% endif %}>
+  <td class="text-muted">{{ forloop.counter0|add:pages.current_start_index }}</td>
+  <td class="account">
+    {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True %}
+
+    {% if perms.ranking.change_account %}
+    <a href="{% url 'admin:ranking_account_change' account.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    {% endif %}
+  </td>
+  <td>
+    {% if account.rating is not None %}
+    {% with coloring_field=account.resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'coloring_field' %}
+    {% with coloring_value=account.info|get_item:coloring_field|default:account.rating %}
+    <div class="{% coder_color_class account.resource coloring_value %}">
+        {% coder_color_circle account.resource coloring_value %}
+        {{ account.rating }}
+    </div>
+    {% endwith %}
+    {% endwith %}
+    {% else %}
+    &mdash;
+    {% endif %}
+  </td>
+  <td>{{ account.n_contests }}</td>
+  <td>{{ account.n_writers }}</td>
+  <td>
+    {% if account.last_activity is not None %}
+    <div title="{{ account.last_activity|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ account.last_activity|timezone:timezone|naturalday }}</div>
+    {% else %}
+    &mdash;
+    {% endif %}
+  </td>
+</tr>
+{% endfor %}
+{% show_more_table %}
+

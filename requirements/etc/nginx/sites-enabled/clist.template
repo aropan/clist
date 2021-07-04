@@ -76,6 +76,11 @@ server {
     proxy_pass http://devclist;
   }
 
+  location = /robots.txt {
+    add_header Content-Type text/plain;
+    return 200 "User-agent: *\nDisallow: /\n";
+  }
+
   location / {
     proxy_set_header Host ${DOLLAR}host;
     proxy_set_header X-Real-IP ${DOLLAR}remote_addr;

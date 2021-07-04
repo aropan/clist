@@ -1,4 +1,5 @@
 import re
+import uuid
 from datetime import timedelta
 
 from django.conf import settings as django_settings
@@ -245,6 +246,36 @@ class Filter(BaseModel):
             models.Index(fields=['coder']),
             models.Index(fields=['contest']),
             models.Index(fields=['coder', 'contest']),
+        ]
+
+
+class CoderList(BaseModel):
+    name = models.CharField(max_length=60)
+    owner = models.ForeignKey(Coder, related_name='my_list_set', on_delete=models.CASCADE, db_index=True)
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
+
+    def __str__(self):
+        return f'CoderList#{self.uuid}'
+
+
+class ListValue(BaseModel):
+    coder = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE)
+    account = models.ForeignKey('ranking.Account', null=True, blank=True, on_delete=models.CASCADE)
+    group_id = models.PositiveIntegerField()
+    coder_list = models.ForeignKey(CoderList, related_name='values', on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['coder_list', 'coder'],
+                condition=Q(coder__isnull=False),
+                name='unique_coder',
+            ),
+            models.UniqueConstraint(
+                fields=['coder_list', 'account', 'group_id'],
+                condition=Q(account__isnull=False),
+                name='unique_account',
+            ),
         ]
 
 

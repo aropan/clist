@@ -10,8 +10,8 @@ from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.db import transaction
-from django.db.models import BooleanField, Case, Count, F, IntegerField, OuterRef, Prefetch, Q, Value, When
+from django.db import IntegrityError, transaction
+from django.db.models import BooleanField, Case, Count, F, IntegerField, Max, OuterRef, Prefetch, Q, Value, When
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -26,13 +26,14 @@ from tastypie.models import ApiKey
 from clist.models import Contest, Resource
 from clist.templatetags.extras import format_time, get_timezones, query_transform
 from clist.templatetags.extras import slug as slugify
+from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
-from true_coders.models import Coder, Filter, Organization, Party
+from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
 from utils.regex import get_iregex_filter, verify_regex
 
 logger = logging.getLogger(__name__)
@@ -208,11 +209,7 @@ def profile(request, username, template='profile.html', extra_context=None):
     resources = Resource.objects \
         .prefetch_related(Prefetch(
             'account_set',
-            queryset=(
-                Account.objects
-                .filter(coders=coder)
-                .order_by('-n_contests')
-            ),
+            queryset=Account.objects.filter(coders=coder).order_by('-n_contests'),
             to_attr='coder_accounts',
         )) \
         .annotate(num_contests=SubquerySum('account__n_contests', filter=Q(coders=coder))) \
@@ -259,6 +256,62 @@ def account(request, key, host, template='profile.html', extra_context=None):
         context.update(extra_context)
 
     return render(request, template, context)
+
+
+def _get_data_mixed_profile(query):
+    statistics_filter = Q()
+    writers_filter = Q()
+    resources_filter = Q()
+    profiles = []
+    for v in query.split(','):
+        if ':' in v:
+            host, key = v.split(':', 1)
+            resource_filter = Q(resource__host=host) | Q(resource__short_host=host)
+            account = Account.objects.filter(resource_filter & Q(key=key)).first()
+            if account:
+                statistics_filter |= Q(account=account)
+                writers_filter |= Q(writers=account)
+                resources_filter |= Q(pk=account.pk)
+                profiles.append(account)
+        else:
+            coder = Coder.objects.filter(username=v).first()
+            if coder:
+                statistics_filter |= Q(account__coders=coder)
+                writers_filter |= Q(writers__coders=coder)
+                resources_filter |= Q(coders=coder)
+                profiles.append(coder)
+    statistics = Statistics.objects.filter(statistics_filter)
+    writers = Contest.objects.filter(writers_filter).order_by('-end_time')
+
+    resources = Resource.objects \
+        .prefetch_related(Prefetch(
+            'account_set',
+            queryset=Account.objects.filter(resources_filter).order_by('-n_contests'),
+            to_attr='coder_accounts',
+        )) \
+        .annotate(num_contests=SubquerySum('account__n_contests', filter=resources_filter)) \
+        .filter(num_contests__gt=0).order_by('-num_contests')
+
+    return {
+        'statistics': statistics,
+        'writers': writers,
+        'resources': resources,
+        'profiles': profiles,
+    }
+
+
+@page_templates((
+    ('profile_contests_paging.html', 'contest_page'),
+    ('profile_writers_paging.html', 'writers_page'),
+))
+@context_pagination()
+def profiles(request, query, template='profile.html'):
+    data = _get_data_mixed_profile(query)
+    context = get_profile_context(request, data['statistics'], data['writers'])
+    context['resources'] = data['resources']
+    context['profiles'] = data['profiles']
+    context['query'] = query
+    return template, context
 
 
 def get_ratings_data(request, username=None, key=None, host=None, statistics=None, date_from=None, date_to=None):
@@ -398,13 +451,17 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
     return ratings
 
 
-def ratings(request, username=None, key=None, host=None):
-    ratings_data = get_ratings_data(
-        request=request,
-        username=username,
-        key=key,
-        host=host,
-    )
+def ratings(request, username=None, key=None, host=None, query=None):
+    if query:
+        data = _get_data_mixed_profile(query)
+        ratings_data = get_ratings_data(request=request, statistics=data['statistics'])
+    else:
+        ratings_data = get_ratings_data(
+            request=request,
+            username=username,
+            key=key,
+            host=host,
+        )
     return JsonResponse(ratings_data)
 
 
@@ -446,6 +503,8 @@ def settings(request, tab=None):
     categories = coder.get_categories()
     custom_categories = {f'telegram:{c.chat_id}': c.title for c in coder.chat_set.filter(is_group=True)}
 
+    my_lists = coder.my_list_set.annotate(n_records=SubqueryCount('values'))
+
     return render(
         request,
         "settings.html",
@@ -456,6 +515,7 @@ def settings(request, tab=None):
             "coder": coder,
             "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,
+            "my_lists": my_lists,
             "categories": categories,
             "custom_categories": custom_categories,
             "coder_notifications": coder.notification_set.order_by('method'),
@@ -635,6 +695,35 @@ def change(request):
             id_ = int(request.POST.get("id", -1))
             filter_ = Filter.objects.get(pk=id_, coder=coder)
             filter_.delete()
+        except Exception as e:
+            return HttpResponseBadRequest(e)
+    elif name == "add-list":
+        if not value:
+            return HttpResponseBadRequest("empty list name")
+        if coder.my_list_set.count() >= 50:
+            return HttpResponseBadRequest("reached the limit number of lists")
+        if coder.my_list_set.filter(name=value):
+            return HttpResponseBadRequest("duplicate list name")
+        coder_list = CoderList.objects.create(owner=coder, name=value)
+        return HttpResponse(json.dumps({'id': coder_list.pk, 'name': coder_list.name}), content_type="application/json")
+    elif name == "edit-list":
+        if not value:
+            return HttpResponseBadRequest("empty list name")
+        if coder.my_list_set.filter(name=value):
+            return HttpResponseBadRequest("duplicate list name")
+        try:
+            pk = int(request.POST.get("id", -1))
+            coder_list = CoderList.objects.get(pk=pk, owner=coder)
+            coder_list.name = value
+            coder_list.save()
+        except Exception as e:
+            return HttpResponseBadRequest(e)
+        return HttpResponse(json.dumps({'id': coder_list.pk, 'name': coder_list.name}), content_type="application/json")
+    elif name == "delete-list":
+        try:
+            pk = int(request.POST.get("id", -1))
+            coder_list = CoderList.objects.get(pk=pk, owner=coder)
+            coder_list.delete()
         except Exception as e:
             return HttpResponseBadRequest(e)
     elif name in ("delete-notification", "reset-notification", ):
@@ -1153,3 +1242,181 @@ def party_contests(request, slug):
         return HttpResponseBadRequest("fail")
 
     return main(request, party=party)
+
+
+def view_list(request, uuid):
+    qs = CoderList.objects
+    qs = qs.prefetch_related('values__account__resource')
+    qs = qs.prefetch_related('values__coder')
+    coder_list = get_object_or_404(qs, uuid=uuid)
+    coder = request.user.coder if request.user.is_authenticated else None
+
+    is_owner = coder_list.owner == coder
+    can_modify = is_owner
+
+    if request.POST:
+        if not can_modify:
+            return HttpResponseBadRequest('Only the owner can change the list')
+        group_id = toint(request.POST.get('gid'))
+        if not group_id:
+            group_id = (coder_list.values.aggregate(val=Max('group_id')).get('val') or 0) + 1
+
+        def add_coder(c):
+            try:
+                ListValue.objects.create(coder_list=coder_list, coder=c, group_id=group_id)
+                request.logger.success(f'Added {c.username} coder to list')
+            except IntegrityError:
+                request.logger.warning(f'Coder {c.username} has already been added')
+
+        def add_account(a):
+            try:
+                ListValue.objects.create(coder_list=coder_list, account=a, group_id=group_id)
+                request.logger.success(f'Added {a.key} account to list')
+            except IntegrityError:
+                request.logger.warning(f'Account {a.key} has already been added')
+
+        if request.POST.get('coder'):
+            c = get_object_or_404(Coder, pk=request.POST.get('coder'))
+            add_coder(c)
+        elif request.POST.get('account'):
+            a = get_object_or_404(Account, pk=request.POST.get('account'))
+            add_account(a)
+        elif request.POST.get('delete_gid'):
+            group_id = request.POST.get('delete_gid')
+            deleted, *_ = coder_list.values.filter(group_id=group_id).delete()
+            if deleted:
+                request.logger.success('Deleted from list')
+            else:
+                request.logger.warning('Nothing has been deleted')
+        elif request.POST.get('raw'):
+            raw = request.POST.get('raw')
+            lines = raw.strip().split()
+
+            if request.POST.get('gid'):
+                if len(lines) > 1:
+                    request.logger.warning(f'Ignore {len(lines) - 1} line(s)')
+                lines = lines[:1]
+
+            for line in lines:
+                values = line.strip().split(',')
+                n_coders = 0
+                n_accounts = 0
+                for value in values:
+                    try:
+                        if ':' not in value:
+                            if n_coders:
+                                request.logger.warning(f'Coder must be one, value = "{value}"')
+                                continue
+                            coders = list(Coder.objects.filter(username=value))
+                            if not coders:
+                                request.logger.warning(f'Not found coder, value = "{value}"')
+                                continue
+                            if len(coders) > 1:
+                                request.logger.warning(f'Too many coders found = "{coders}", value = "{value}"')
+                                continue
+                            add_coder(coders[0])
+                            n_coders += 1
+                        else:
+                            host, account = value.split(':', 1)
+                            resources = list(Resource.objects.filter(Q(host=host) | Q(short_host=host)))
+                            if not resources:
+                                request.logger.warning(f'Not found host = "{host}", value = "{value}"')
+                                continue
+                            if len(resources) > 1:
+                                request.logger.warning(f'Too many resources found = "{resources}", value = "{value}"')
+                                continue
+                            resource = resources[0]
+                            accounts = list(Account.objects.filter(resource=resource, key=account))
+                            if not accounts:
+                                request.logger.warning(f'Not found account = "{account}", value = "{value}"')
+                                continue
+                            if len(accounts) > 1:
+                                request.logger.warning(f'Too many accounts found = "{accounts}", value = "{value}"')
+                                continue
+                            add_account(accounts[0])
+                            n_accounts += 1
+                    except Exception:
+                        request.logger.error(f'Some problem with value = "{value}"')
+                group_id += 1
+        return HttpResponseRedirect(request.path)
+
+    coder_values = {}
+    for v in coder_list.values.all():
+        data = coder_values.setdefault(v.group_id, {})
+        data.setdefault('list_values', []).append(v)
+
+    for data in coder_values.values():
+        vs = []
+        for v in data['list_values']:
+            if v.coder:
+                vs.append(v.coder.username)
+            elif v.account:
+                prefix = v.account.resource.short_host or v.account.resouce.host
+                vs.append(f'{prefix}:{v.account.key}')
+        data['versus'] = ','.join(vs)
+
+    context = {
+        'coder_list': coder_list,
+        'coder_values': coder_values,
+        'is_owner': is_owner,
+        'can_modify': can_modify,
+        'coder': coder,
+    }
+
+    if len(coder_values) > 1:
+        context['versus'] = '/vs/'.join([d['versus'] for d in coder_values.values()])
+
+    return render(request, 'coder_list.html', context)
+
+
+@page_template('accounts_paging.html')
+@context_pagination()
+def accounts(request, template='accounts.html'):
+    accounts = Account.objects.select_related('resource')
+    if request.user.is_authenticated:
+        coder = request.user.coder
+        accounts = accounts.annotate(my_account=Exists('coders', filter=Q(coder=coder)))
+    params = {}
+
+    search = request.GET.get('search')
+    if search:
+        filt = get_iregex_filter(search, 'name', 'key', logger=request.logger)
+        accounts = accounts.filter(filt)
+
+    countries = request.GET.getlist('country')
+    countries = set([c for c in countries if c])
+    if countries:
+        accounts = accounts.filter(country__in=countries)
+        params['countries'] = countries
+
+    resources = request.GET.getlist('resource')
+    resources = [r for r in resources if r]
+    if resources:
+        resources = Resource.objects.filter(pk__in=resources)
+        accounts = accounts.filter(resource__in=resources)
+        params['resources'] = resources
+
+    # ordering
+    orderby = request.GET.get('sort_column')
+    if orderby == 'account':
+        orderby = 'key'
+    elif orderby in ['rating', 'n_contests', 'n_writers', 'last_activity']:
+        pass
+    elif orderby:
+        request.logger.error(f'Not found `{orderby}` column for sorting')
+        orderby = []
+    orderby = orderby if not orderby or isinstance(orderby, list) else [orderby]
+    order = request.GET.get('sort_order')
+    if order in ['asc', 'desc']:
+        orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
+    elif order:
+        request.logger.error(f'Not found `{order}` order for sorting')
+    orderby = orderby or ['-created']
+    accounts = accounts.order_by(*orderby)
+
+    context = {
+        'accounts': accounts,
+        'params': params,
+    }
+
+    return template, context

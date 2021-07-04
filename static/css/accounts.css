@@ -1,0 +1,19 @@
+#accounts table.table th,
+#accounts table.table td
+{
+  text-align: center;
+  vertical-align: middle;
+}
+
+#accounts table.table .account {
+  text-align: left;
+}
+
+#accounts-filters > * {
+  margin-bottom: 5px;
+}
+
+#accounts table.table th > div {
+  display: inline-block;
+}
+

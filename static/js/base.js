@@ -183,7 +183,11 @@ function log_ajax_error(response) {
   if (typeof response.responseJSON !== 'undefined') {
     $.notify(response.responseJSON.message, 'error')
   } else {
-    $.notify("{status} {statusText}, more in console".format(response), "error")
-    console.log(response.responseText)
+    if (response.responseText.length < 50) {
+      $.notify("{status} {statusText}: {responseText}".format(response), "error")
+    } else {
+      $.notify("{status} {statusText}, more in console".format(response), "error")
+      console.log(response.responseText)
+    }
   }
 }

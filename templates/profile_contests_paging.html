@@ -18,6 +18,17 @@
         </div>{% if stat.addition.url %}</a>{% endif %}
     </td>
     <td>{{ stat.solving|floatformat }}</td>
+
+    <td>
+        {% with value=stat.contest.resource|get_new_rating_value:stat.addition %}
+        {% if value %}
+        <div class="{% coder_color_class stat.contest.resource stat.addition %}">
+            {% coder_color_circle stat.contest.resource stat.addition %}
+            {{ value }}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </td>
     <td>
         {% with value=stat.addition.rating_change %}
         {% with intvalue=value|toint %}

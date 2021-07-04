@@ -26,6 +26,14 @@
     margin-top: 3px;
 }
 
+#lists .list {
+    margin-top: 7px;
+}
+
+#lists .list .label {
+    font-size: 100%;
+}
+
 .tooltip.right .tooltip-inner {
     background-color: #fff;
     color: #000;

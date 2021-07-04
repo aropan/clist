@@ -509,6 +509,35 @@ $(function() {
         return false
     })
 
+    function process_list() {
+        name = $(this).attr('data-name')
+        id = $(this).attr('data-id')
+        bootbox.prompt({title: 'List name', value: $(this).attr('data-value'), callback: function(result) {
+            if (!result) {
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: $.fn.editable.defaults.url,
+                data: {
+                    pk: $.fn.editable.defaults.pk,
+                    name: name,
+                    value: result,
+                    id: id,
+                },
+                success: function(data) {
+                    window.location.replace(LISTS_URL);
+                },
+                error: function(response) {
+                    log_ajax_error(response)
+                },
+            })
+        }});
+    }
+
+    $('#add-list').click(process_list)
+    $('.edit-list').click(process_list)
+
     var ntf_form = $('#notification-form')
     var ntf_add = $('#add-notification')
     $('.edit-notification').click(function() {
@@ -554,6 +583,7 @@ $(function() {
     }
     $('.action-notification').click(sentAction)
     $('.action-filter').click(sentAction)
+    $('.action-list').click(sentAction)
 
     $("i[rel=tooltip]")
         .addClass('far fa-question-circle')

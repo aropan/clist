@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 
-{% block ogtitle %}{% block title %}Coders{% endblock %}{% endblock %}
-{% block description %}List of coders with functional filter and search{% endblock %}
+{% block ogtitle %}{% block title %}Accounts{% endblock %}{% endblock %}
+{% block description %}List of accounts with functional filter and search{% endblock %}
 
 {% block end-head %}
-<link href="{% static_ts 'css/coders.css' %}" rel="stylesheet">
+<link href="{% static_ts 'css/accounts.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 
 <div class="col-lg-10 col-lg-offset-1">
   <form class="form-inline" method="get" action="">
-  <div id="coders-filters" class="form-group">
+  <div id="accounts-filters" class="form-group">
     <div class="input-group input-group-sm">
       <input
         type="search"
         name="search"
         value="{{ request.GET.search }}"
         class="form-control"
-        placeholder="Regex filter to username"
+        placeholder="Regex filter to account"
         {% if request.GET.search %}
         autofocus
         onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"
@@ -47,35 +47,33 @@
   </form>
 
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
-  <div id="coders" class="panel panel-default table-responsive">
+  <div id="accounts" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
       <thead>
         <tr>
           <th>#</th>
-          <th class="username">
+          <th class="account">
+            <div class="resource-width-fixed"></div>
+            <div class="avatar-width-fixed"></div>
             <div class="flag-width-fixed"></div>
-            <div>Coder</div>
-            <div class="sortable-column" data-column="username"></div>
+            <div>Accounts</div>
+            <div class="sortable-column" data-column="account"></div>
           </th>
-          {% for resource in params.resources %}
           <th>
-            <a href="{% url 'clist:resource' resource.host %}">
-              <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="24" height="24"/>
-            </a>
-            <div class="sortable-column" data-column="resource_{{ resource.pk }}"></div>
+            <div>Rating</div>
+            <div class="sortable-column" data-column="rating"></div>
           </th>
-          {% endfor %}
           <th>
             <div>Contests<br/>number</div>
             <div class="sortable-column" data-column="n_contests"></div>
           </th>
           <th>
-            <div>Accounts<br/>number</div>
-            <div class="sortable-column" data-column="n_accounts"></div>
+            <div>Authors<br/>number</div>
+            <div class="sortable-column" data-column="n_writers"></div>
           </th>
           <th>
-            <div>Registration<br/>time</div>
-            <div class="sortable-column" data-column="created"></div>
+            <div>Last<br/>activity</div>
+            <div class="sortable-column" data-column="last_activity"></div>
           </th>
         </tr>
       </thead>
@@ -87,4 +85,5 @@
 </div>
 
 {% endblock %}
+
 

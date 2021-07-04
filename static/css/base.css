@@ -55,6 +55,13 @@ img.resource-icon {
   margin-top: 3px;
 }
 
+.resource-width-fixed {
+  max-width: 18px;
+  width: 18px;
+  display: inline-block;
+  text-align: center;
+}
+
 .service-icon-btn {
   width: 40px;
   cursor: default !important;

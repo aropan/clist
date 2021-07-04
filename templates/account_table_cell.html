@@ -1,17 +1,31 @@
+{% if with_resource %}
+  {% if with_fixed_width %}<div class="resource-width-fixed">{% endif %}
+    <a href="{% url_transform request resource=resource.pk %}">
+      <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+    </a>
+  {% if with_fixed_width %}</div>{% endif %}
+{% endif %}
+
+{% if with_fixed_width %}<div class="avatar-width-fixed">{% endif %}
 {% if resource.avatar_url %}
   {% call_method account 'avatar_url' resource as avatar_url %}
   {% if avatar_url %}
     <img class="account-avatar" src="{{ avatar_url }}"/>
   {% endif %}
 {% endif %}
+{% if with_fixed_width %}</div>{% endif %}
 
+{% if with_fixed_width %}<div class="flag-width-fixed">{% endif %}
 {% with country=account.country %}
 {% if country %}
 {% with code=account.info.custom_countries_|get_item:country.code|default:country.code %}
-<a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><img class="flag flag-{{ code|lower }}"/></a>
+<a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
+  <img class="flag flag-{{ code|lower }}"/>
+</a>
 {% endwith %}
 {% endif %}
 {% endwith %}
+{% if with_fixed_width %}</div>{% endif %}
 
 <span>
 {% coder_color_circle resource account.info %}

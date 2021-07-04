@@ -57,7 +57,7 @@ class Resource(BaseModel):
     def href(self, host=None):
         return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=host or self.host)
 
-    def get_rating_color(self, value):
+    def get_rating_color(self, value, ignore_old=False):
         if self.ratings and (value or isinstance(value, (int, float))):
             if isinstance(value, (list, tuple)):
                 for v in value:
@@ -68,6 +68,8 @@ class Resource(BaseModel):
                 fields = self.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
                 fields = [fields] if fields else self.RATING_FIELDS
                 for field in fields:
+                    if ignore_old and field.lower().startswith('old'):
+                        continue
                     if field in value:
                         ret = self.get_rating_color(value.get(field))
                         if ret[0]:

@@ -28,6 +28,7 @@
     ACE_CALENDARS = { {% for k, v in ace_calendars.items %}{% if forloop.counter0 %}, {% endif %}'{{ k }}': '{{ v.name }}'{% endfor %} }
 
     PREFERENCES_URL = "{% url 'coder:settings' 'preferences' %}"
+    LISTS_URL = "{% url 'coder:settings' 'lists' %}"
 
     SHARE_TO_CATEGORY = { 'disable': 'Disable' {% for k, v in notifications %}, '{{ k }}': '{{ v }}'{% endfor %} }
 
@@ -47,6 +48,7 @@
         <li{% if tab == 'social' %} class="active"{% endif %}><a href="#social-tab" data-toggle="tab">Social</a></li>
         <li{% if tab == 'accounts' %} class="active"{% endif %}><a href="#accounts-tab" data-toggle="tab">Accounts</a></li>
         <li{% if tab == 'filters' %} class="active"{% endif %}><a href="#filters-tab" data-toggle="tab">Filters</a></li>
+        <li{% if tab == 'lists' %} class="active"{% endif %}><a href="#lists-tab" data-toggle="tab">Lists</a></li>
         <li{% if tab == 'notifications' %} class="active"{% endif %}><a href="#notifications-tab" data-toggle="tab">Notifications</a></li>
     </ul>
 
@@ -146,6 +148,21 @@
                 {% endfor %}
             </div>
         </div>
+        <div id="lists-tab" class="tab-pane{% if tab == 'lists' %} active{% endif %}">
+            <div class="key">
+                <a href="#" id="add-list" data-name="add-list" class="btn btn-primary">Create</a>
+            </div>
+            <div id="lists" class="value">
+                {% for my_list in my_lists %}
+                <div class="list">
+                    <span class="label label-info">{{ my_list.name }}</span> with <span class="label label-info">{{ my_list.n_records }}</span> record(s)
+                    <a href="{% url 'coder:list' my_list.uuid %}" class="btn btn-primary btn-sm" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+                    <button href="#" data-name="edit-list" data-id="{{ my_list.id }}" data-value="{{ my_list.name }}" class="edit-list btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
+                    <button href="#" data-id="{{ my_list.id }}" data-action="delete-list" data-success="$div.remove();" class="action-list btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
         <div id="notifications-tab" class="tab-pane{% if tab == 'notifications' %} active{% endif %}">
             <div id="notifications" class="value">
                 {% if not notification_form.errors %}
@@ -162,9 +179,9 @@
                     <span class="checkin">
                     {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}
                     </span>
-                    <a href="#" data-id="{{ n.id }}" data-action="edit-notification" class="edit-notification btn btn-default"><i class="fas fa-pen"></i></a>
-                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-default"><i class="far fa-trash-alt"></i></a>
-                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-default"><i class="fas fa-sync-alt"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="edit-notification" class="edit-notification btn btn-warning btn-sm"><i class="fas fa-pen"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-primary btn-sm"><i class="fas fa-sync-alt"></i></a>
                     {% if perms.notification.change_notification %}
                       <a href="{% url 'admin:notification_notification_change' n.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
                     {% endif %}

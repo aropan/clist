@@ -16,7 +16,8 @@
 {% if coder %}
   {{ coder.user.username }} - Coder
 {% elif account %}
-  {% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} on {{ account.resource.host }} - Account{% endif %}
+  {% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} on {{ account.resource.host }} - Account
+  {% elif profiles %}{{ query }} - Profile{% endif %}
 {% endlinebreakless %}{% endblock %}{% endblock %}
 
 {% block description %}{% linebreakless %}
@@ -89,6 +90,15 @@ Number of competitions: {{ account.n_contests }}
       </a>
     {% endfor %}
   </div>
+{% elif profiles %}
+  <div>
+    <h2>
+      {{ query }}
+      {% if request.user.is_authenticated %}
+      <small><a href="{% url 'ranking:versus' query|add:"/vs/"|add:request.user.coder.username %}"><i class="fas fa-people-arrows"></i></a></small>
+      {% endif %}
+    </h2>
+  </div>
 {% endif %}
 
 <div class="row">
@@ -96,8 +106,8 @@ Number of competitions: {{ account.n_contests }}
 {% if resources and show_history_ratings %}
 <div{% if two_columns %} class="col-lg-6"{% endif %}>
 
-<div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% endif %}>
-<h3>Accounts{% if request.GET.search %} <a class="btn btn-xs btn-default" href="{% url 'coder:profile' coder.user.username %}">view all</a>{% endif %}</h3>
+<div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% elif not two_columns %} class="col-xs-12"{% endif %}>
+<h3>Accounts{% if request.GET.search and coder %} <a class="btn btn-xs btn-default" href="{% url 'coder:profile' coder.user.username %}">view all</a>{% endif %}</h3>
 <div id="list-accounts">
 {% if not search_resource %}
 
@@ -256,6 +266,7 @@ $(function(){
       <th>Rank</th>
       <th>Score</th>
       <th>Rating</th>
+      <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="right">&Delta;</th>
       <th class="date">Date</th>
       <th class="title">Event</th>
     </tr>

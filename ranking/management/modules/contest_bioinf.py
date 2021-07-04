@@ -22,8 +22,9 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None):
         if not self.standings_url:
             raise ExceptionParseStandings('Not set stnadings url')
+        is_final = self.name.lower().startswith('final round')
         now = datetime.utcnow().replace(tzinfo=pytz.utc)
-        if self.end_time + timedelta(days=3) < now:
+        if not is_final and self.end_time + timedelta(days=3) < now:
             raise ExceptionParseStandings('Too late')
 
         page = REQ.get(self.standings_url)
@@ -114,7 +115,7 @@ class Statistic(BaseModule):
             'problems': list(problems_info.values()),
         }
 
-        if self.name.lower().startswith('final round'):
+        if is_final:
             standings['options'] = {'medals': [{'name': k, 'count': 1} for k in ('gold', 'silver', 'bronze')]}
 
         return standings
