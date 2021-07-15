@@ -4,7 +4,7 @@
     $min_start_time = INF;
     $limit_start_time = time() - 90 * 24 * 60 * 60;
     for ($n_page = 1; $limit_start_time < $min_start_time || isset($_GET['parse_full_list']); $n_page += 1) {
-        $url = 'https://uriel.tlx.toki.id/api/v2/contests?page=' . $n_page;
+        $url = 'https://api.tlx.toki.id/v2/contests?page=' . $n_page;
         $json = curlexec($url, NULL, array("json_output" => 1));
 
         if (!isset($json['data'])) {
