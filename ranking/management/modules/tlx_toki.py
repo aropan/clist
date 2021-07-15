@@ -16,10 +16,10 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 class Statistic(BaseModule):
     STANDING_URL_FORMAT_ = '{0.url}/scoreboard'
     PROBLEM_URL_FORMAT_ = '{url}/problems/{short}'
-    CONFIG_URL_FORMAT_ = 'https://uriel.tlx.toki.id/api/v2/contest-web/slug/{slug}/with-config'
-    API_STANDINGS_URL_FORMAT_ = 'https://uriel.tlx.toki.id/api/v2/contests/{jid}/scoreboard?frozen=false&showClosedProblems=false'  # noqa
-    API_PROBLEMS_URL_FORMAT_ = 'https://uriel.tlx.toki.id/api/v2/contests/{jid}/problems'
-    API_HISTORY_URL_FORMAT_ = 'https://uriel.tlx.toki.id/api/v2/contest-history/public?username={handle}'
+    CONFIG_URL_FORMAT_ = 'https://api.tlx.toki.id/v2/contest-web/slug/{slug}/with-config'
+    API_STANDINGS_URL_FORMAT_ = 'https://api.tlx.toki.id/v2/contests/{jid}/scoreboard?frozen=false&showClosedProblems=false'  # noqa
+    API_PROBLEMS_URL_FORMAT_ = 'https://api.tlx.toki.id/v2/contests/{jid}/problems'
+    API_HISTORY_URL_FORMAT_ = 'https://api.tlx.toki.id/v2/contest-history/public?username={handle}'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
