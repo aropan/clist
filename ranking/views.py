@@ -55,23 +55,26 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     search = request.GET.get('search')
     if search is not None:
-        contests = contests.filter(get_iregex_filter(search,
-                                                     'title', 'host', 'resource__host',
-                                                     mapping={
-                                                         'slug': {'fields': ['slug']},
-                                                         'writer': {'fields': ['info__writers__contains']},
-                                                         'medal': {'fields': ['info__standings__medals'],
-                                                                   'suff': '__isnull',
-                                                                   'func': lambda v: False},
-                                                         'stage': {'fields': ['stage'],
-                                                                   'suff': '__isnull',
-                                                                   'func': lambda v: False},
-                                                         'coder': {'fields': ['statistics__account__coders__username']},
-                                                         'account': {'fields': ['statistics__account__key',
-                                                                                'statistics__account__name'],
-                                                                     'suff': '__iregex'},
-                                                     },
-                                                     logger=request.logger))
+        contests = contests.filter(get_iregex_filter(
+            search,
+            'title', 'host', 'resource__host',
+            mapping={
+                'name': {'fields': ['title__iregex']},
+                'slug': {'fields': ['slug']},
+                'resource': {'fields': ['host', 'resource__host'], 'suff': '__iregex'},
+                'writer': {'fields': ['info__writers__contains']},
+                'coder': {'fields': ['statistics__account__coders__username']},
+                'account': {'fields': ['statistics__account__key', 'statistics__account__name'], 'suff': '__iregex'},
+                'stage': {'fields': ['stage'], 'suff': '__isnull', 'func': lambda v: False},
+                'medal': {'fields': ['info__standings__medals'], 'suff': '__isnull', 'func': lambda v: False},
+            },
+            logger=request.logger,
+        ))
+
+    resources = [r for r in request.GET.getlist('resource') if r]
+    if resources:
+        contests = contests.filter(resource_id__in=resources)
+        resources = list(Resource.objects.filter(pk__in=resources))
 
     if request.user.is_authenticated:
         contests = contests.prefetch_related(Prefetch(
@@ -86,6 +89,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         'timeformat': get_timeformat(request),
         'all_standings': all_standings,
         'switch': switch,
+        'params': {
+            'resources': resources,
+        },
     }
 
     if extra_context is not None:
@@ -951,6 +957,11 @@ def get_versus_data(request, query, fields_to_select):
     for idx, whos in enumerate(opponents):
         filt = Q()
         us = []
+
+        n_accounts = 0
+        for who in whos:
+            n_accounts += ':' in who
+
         for who in whos:
             url = None
             if ':' in who:
@@ -966,7 +977,11 @@ def get_versus_data(request, query, fields_to_select):
                 if not coder:
                     request.logger.warning(f'Not found coder {who}')
                 else:
-                    filt |= Q(account__coders=coder)
+                    if n_accounts == 0:
+                        filt |= Q(account__coders=coder)
+                    else:
+                        accounts = list(coder.account_set.all())
+                        filt |= Q(account__in=accounts)
                     url = reverse('coder:profile', args=[coder.username])
             us.append(url)
         if not filt:
@@ -1142,6 +1157,7 @@ def versus(request, query):
         rdata = info['ratings']['data']
         for _, resource in ratings_resources:
             rinfo = rdata['resources'][resource]
+            rinfo.pop('highest', None)
             resource_info = ratings_data['resources'].setdefault(resource, {
                 'data': [],
                 'colors': rinfo.pop('colors'),

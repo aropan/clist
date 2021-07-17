@@ -30,7 +30,7 @@ class Statistic(BaseModule):
         page = REQ.get(self.standings_url)
 
         html_table = re.search('<table[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL).group(0)
-        table = parsed_table.ParsedTable(html_table, as_list=True, ignore_wrong_header_number=False)
+        table = parsed_table.ParsedTable(html_table, as_list=True, ignore_wrong_header_number=False, ignore_display_none=True)
 
         problems_info = OrderedDict()
 

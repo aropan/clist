@@ -22,6 +22,7 @@ from clist.models import Banner, Contest, Problem, ProblemTag, Resource
 from clist.templatetags.extras import (canonize, get_problem_key, get_problem_name, get_problem_short,
                                        get_timezone_offset, get_timezones, slug)
 from notification.management.commands import sendout_tasks
+from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating
 from true_coders.models import Coder, Filter, Party
 from utils.regex import get_iregex_filter, verify_regex
@@ -609,7 +610,8 @@ def update_problems(contest, problems=None, force=False):
 
 
 @page_template('problems_paging.html')
-def problems(request, template='problems.html', extra_context=None):
+@context_pagination()
+def problems(request, template='problems.html'):
     problems = Problem.objects.all()
     problems = problems.select_related('contest', 'resource')
     problems = problems.prefetch_related('tags')
@@ -618,28 +620,40 @@ def problems(request, template='problems.html', extra_context=None):
 
     search = request.GET.get('search')
     if search:
-        cond, problems = get_iregex_filter(search,
-                                           'name', 'contest__title', 'contest__host',
-                                           logger=request.logger,
-                                           mapping={
-                                               'name': {'fields': ['name__iregex']},
-                                               'contest': {'fields': ['contest__title__iregex']},
-                                               'resource': {'fields': ['resource__host__iregex']},
-                                               'tag': {'fields': ['problemtag__name__iregex'], 'exists': 'tags'},
-                                               'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
-                                               'rid': {'fields': ['resource_id'], 'func': lambda v: int(v)},
-                                               'pid': {'fields': ['id'], 'func': lambda v: int(v)},
-                                           },
-                                           queryset=problems)
+        cond, problems = get_iregex_filter(
+            search,
+            'name', 'contest__title', 'contest__host', 'contest__resource__host',
+            logger=request.logger,
+            mapping={
+                'name': {'fields': ['name__iregex']},
+                'contest': {'fields': ['contest__title__iregex']},
+                'resource': {'fields': ['resource__host__iregex']},
+                'tag': {'fields': ['problemtag__name__iregex'], 'exists': 'tags'},
+                'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
+                'rid': {'fields': ['resource_id'], 'func': lambda v: int(v)},
+                'pid': {'fields': ['id'], 'func': lambda v: int(v)},
+            },
+            queryset=problems,
+        )
         problems = problems.filter(cond)
+
+    resources = [r for r in request.GET.getlist('resource') if r]
+    if resources:
+        problems = problems.filter(contest__resource_id__in=resources)
+        resources = list(Resource.objects.filter(pk__in=resources))
+
+    tags = [r for r in request.GET.getlist('tag') if r]
+    if tags:
+        problems = problems.annotate(has_tag=Exists('tags', filter=Q(problemtag__pk__in=tags)))
+        problems = problems.filter(has_tag=True)
+        tags = list(ProblemTag.objects.filter(pk__in=tags))
 
     context = {
         'problems': problems,
-        'timeformat': get_timeformat(request),
-        'timezone': get_timezone(request),
+        'params': {
+            'resources': resources,
+            'tags': tags,
+        },
     }
 
-    if extra_context is not None:
-        context.update(extra_context)
-
-    return render(request, template, context)
+    return template, context

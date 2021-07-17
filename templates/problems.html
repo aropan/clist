@@ -10,22 +10,27 @@
 {% block content %}
 
 <div class="col-lg-10 col-lg-offset-1">
-  <form method="get" action="">
-  <div class="form-group input-group input-group-sm">
-    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to problem name, contest title, resource host or problem tag" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+  <form class="form-inline" id="problems-filter" method="get" action="">
+    <div class="input-group input-group-sm">
+      <div class="input-group-addon">Problem</div>
 
-    <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use name:{PROBLEM}, contest:{NAME}, resource:{HOST} or tag:{TAG}.<br>Use && and || and ! for difficult conditions.">
-      <i class="fas fa-info"></i>
-    </span>
+      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
 
-    <span class="input-group-btn">
-      <button class="btn btn-default" type="submit">
-        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-        Search
-      </button>
+      <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Problem regex. You can use name:{NAME}, contest:{NAME}, resource:{HOST} or tag:{TAG}.<br>Use && and || and ! for difficult conditions.">
+        <i class="fas fa-info"></i>
+      </div>
 
-    </span>
-  </div>
+      <div class="input-group-btn">
+        <button class="btn btn-default" type="submit">
+          <i class="fas fa-search"></i>
+          Search
+        </button>
+      </div>
+    </div>
+
+    {% include 'resource_filter.html' %}
+
+    {% include 'tag_filter.html' %}
   </form>
 
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>

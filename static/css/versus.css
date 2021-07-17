@@ -57,6 +57,18 @@ td.title-column span {
   min-width: 120px;
 }
 
+.versus-action {
+  position: absolute;
+  margin-top: -25px;
+  visibility: hidden;
+}
+
+:hover > .versus-action {
+  color: #337ab7;
+  visibility: visible;
+}
+
+
 /*
  * Make versus
  */

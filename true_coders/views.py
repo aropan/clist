@@ -23,7 +23,7 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
-from clist.models import Contest, Resource
+from clist.models import Contest, ProblemTag, Resource
 from clist.templatetags.extras import format_time, get_timezones, query_transform
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
@@ -51,7 +51,7 @@ def get_profile_context(request, statistics, writers):
         .order_by('-num_contests')
 
     stats = statistics \
-        .select_related('contest', 'account') \
+        .select_related('contest') \
         .filter(addition__medal__isnull=False) \
         .order_by('-contest__end_time')
     resource_medals = {}
@@ -263,6 +263,11 @@ def _get_data_mixed_profile(query):
     writers_filter = Q()
     resources_filter = Q()
     profiles = []
+
+    n_accounts = 0
+    for v in query.split(','):
+        n_accounts += ':' in v
+
     for v in query.split(','):
         if ':' in v:
             host, key = v.split(':', 1)
@@ -276,9 +281,15 @@ def _get_data_mixed_profile(query):
         else:
             coder = Coder.objects.filter(username=v).first()
             if coder:
-                statistics_filter |= Q(account__coders=coder)
-                writers_filter |= Q(writers__coders=coder)
-                resources_filter |= Q(coders=coder)
+                if n_accounts == 0:
+                    statistics_filter |= Q(account__coders=coder)
+                    writers_filter |= Q(writers__coders=coder)
+                    resources_filter |= Q(coders=coder)
+                else:
+                    accounts = list(coder.account_set.all())
+                    statistics_filter |= Q(account__in=accounts)
+                    writers_filter |= Q(writers__in=accounts)
+                    resources_filter |= Q(pk__in={a.pk for a in accounts})
                 profiles.append(coder)
     statistics = Statistics.objects.filter(statistics_filter)
     writers = Contest.objects.filter(writers_filter).order_by('-end_time')
@@ -843,6 +854,14 @@ def search(request, **kwargs):
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
+    elif query == 'tags':
+        qs = ProblemTag.objects.all()
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'name'))
+        qs = qs.order_by('name')
+
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'text': r.name} for r in qs]
     elif query == 'resources-for-add-account' and request.user.is_authenticated:
         coder = request.user.coder
         coder_accounts = coder.account_set.filter(resource=OuterRef('pk'))

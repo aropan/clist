@@ -151,6 +151,9 @@
         <div id="lists-tab" class="tab-pane{% if tab == 'lists' %} active{% endif %}">
             <div class="key">
                 <a href="#" id="add-list" data-name="add-list" class="btn btn-primary">Create</a>
+                {% if perms.true_coders.view_coderlist %}
+                  <a href="{% url 'admin:true_coders_coderlist_changelist' %}" class="external-database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                {% endif %}
             </div>
             <div id="lists" class="value">
                 {% for my_list in my_lists %}

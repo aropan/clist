@@ -153,6 +153,9 @@
                   {% if problem.full_score %}
                     <div class="small" title="Full score" data-placement="bottom" data-toggle="tooltip">{{ problem.full_score|floatformat }}</div>
                   {% endif %}
+                  {% if problem.first_ac_time %}
+                    <div class="small" title="First AC time" data-placement="bottom" data-toggle="tooltip">{{ problem.first_ac_time }}</div>
+                  {% endif %}
                   {% if problem.n_teams is not None and with_detail %}
                     {% include "standings_problem_progress.html" %}
                   {% endif %}
@@ -252,7 +255,15 @@
     var table_pos = el.position()
     if (find_me_pos && table_pos) {
       var target = find_me_pos.top - table_pos.top - el.find('thead').height()
-      el.animate({scrollTop: target}, 600);
+      {% with find_me=request.GET.find_me|toint %}
+      {% if find_me and find_me != params.find_me %}
+      var my_stat_pos = $('.my-stat').position()
+      if (my_stat_pos && my_stat_pos.top < find_me_pos.top) {
+          target -= $('.my-stat').height()
+      }
+      {% endif %}
+      {% endwith %}
+      el.animate({scrollTop: target}, 1000);
     }
 {% endif %}
   })

@@ -71,10 +71,11 @@
     }
 
     $CID = curl_init();
+    $USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0";
     curl_setopt($CID, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($CID, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($CID, CURLOPT_TIMEOUT, 15);
-    curl_setopt($CID, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0");
+    curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
     curl_setopt($CID, CURLOPT_COOKIEJAR, $cookiefile);
     curl_setopt($CID, CURLOPT_COOKIEFILE, $cookiefile);
     curl_setopt($CID, CURLOPT_SSL_VERIFYPEER, false);

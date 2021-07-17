@@ -11,35 +11,46 @@
 {% block content %}
 
 <div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
-  <form id="standings-filters" method="get" action="">
+  <form class="form-inline" id="standings-filters" method="get" action="">
     <div class="input-group input-group-sm">
-      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+      <div class="input-group-addon">Contest</div>
+
+      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+
+      <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Contest regex. You can use name:{NAME}, resource:{HOST}, writer:{HANDLE}, coder:{HANDLE}, account:{HANDLE}, stage: or medal:<br>Use && and || and ! for difficult conditions.">
+        <i class="fas fa-info"></i>
+      </div>
+
       <div class="input-group-btn">
         <button class="btn btn-default" type="submit">
-          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+          <i class="fas fa-search"></i>
           Search
         </button>
-
-        <input
-          {% if all_standings %}
-          data-on="Parsed"
-          data-off="All"
-          {% else %}
-          data-on="All"
-          data-off="Parsed"
-          {% endif %}
-
-          type="checkbox"
-          name="switch"
-          data-toggle="toggle"
-          data-onstyle="default"
-          data-offstyle="default"
-          data-size="small"
-          onchange="this.form.submit()"
-          {% if switch %}checked{% endif %}
-        />
       </div>
     </div>
+
+    <div class="input-group input-group-sm">
+      <input
+        {% if all_standings %}
+        data-on="Parsed"
+        data-off="All"
+        {% else %}
+        data-on="All"
+        data-off="Parsed"
+        {% endif %}
+
+        type="checkbox"
+        name="switch"
+        data-toggle="toggle"
+        data-onstyle="default"
+        data-offstyle="default"
+        data-size="small"
+        onchange="this.form.submit()"
+        {% if switch %}checked{% endif %}
+      />
+    </div>
+
+    {% include 'resource_filter.html' %}
 
   </form>
 

@@ -32,7 +32,7 @@
       />
       <div class="input-group-btn">
         <button class="btn btn-default" type="submit">
-          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+          <i class="fas fa-search"></i>
           Search
         </button>
       </div>
@@ -51,14 +51,14 @@
 
     {% include 'fields_to_select.html' %}
 
-    {% if params.find_me %}
-    {% with find_me=request.GET.find_me %}
+    {% with find_me=request.GET.find_me|toint %}
+    {% if find_me or params.find_me %}
     {% if find_me %}
     <input type="hidden" name="find_me" value="{{ find_me }}"/>
     {% endif %}
-    <button class="btn btn-default btn-sm{% if find_me %} active{% endif %}" name="find_me" value="{% if not find_me %}{{ params.find_me }}{% endif %}">Find me</button>
-    {% endwith %}
+    <button class="btn btn-default btn-sm{% if find_me %} active{% endif %}" name="find_me" value="{% if not find_me %}{{ params.find_me }}{% endif %}">Find{% if not find_me or find_me == params.find_me %} me{% endif %}</button>
     {% endif %}
+    {% endwith %}
 
     {% with orderby=request.GET|get_list:'orderby' %}
       {% for order in orderby %}

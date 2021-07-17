@@ -96,7 +96,7 @@
     }
 
     $calendar_ids = array_unique($calendar_ids);
-    if ($RID == -1) {
+    if (DEBUG) {
         print_r($calendar_ids);
     }
 
@@ -110,9 +110,12 @@
     $infos = array();
     foreach ($data['adventures'] as $adventure) {
         $competition = $competitions[$adventure['competition']];
+        $competition = strtolower($competition);
+        $competition = preg_replace('/\s+to\s+/', ' ', $competition);
+        $competition = preg_replace('/[^a-z]/', '', $competition);
         foreach ($adventure['challenges'] as $challenge) {
             $key = $challenge['start_ms'] / 1000;
-            $challenge['competition'] = preg_replace('/[^a-z]/', '', strtolower($competition));
+            $challenge['competition'] = $competition;
             $infos[$key] = $challenge;
         }
     }
@@ -134,16 +137,18 @@
             $timestamp = date("U", strtotime($item['start'][$date_key]));
             if (isset($infos[$timestamp])) {
                 $url = "$URL{$infos[$timestamp]['competition']}/round/{$infos[$timestamp]['id']}";
+                $host = "$HOST/{$infos[$timestamp]['competition']}";
                 unset($infos[$timestamp]);
             } else {
                 $url = $URL;
+                $host = $HOST;
             }
             $contests[] = array(
                 'start_time' => $item['start'][$date_key],
                 'end_time' => $item['end'][$date_key],
                 'title' => $title,
                 'url' => $url,
-                'host' => $HOST,
+                'host' => $host,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
                 'key' => $item['id'],

@@ -28,21 +28,13 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
 <h3 id="versus-title" class="text-center">
   <table>
   <tr>
-  {% for whos, urls in versus_data.opponents|zip:versus_data.urls %}
+  {% for whos in versus_data.opponents %}
     {% if forloop.counter0 %}<td>vs</td>{% endif %}
     <td>
       {% if versus_data.opponents|length > 2 %}
-      <a href="{{ request.path }}?remove={{ forloop.counter0 }}" class="remove-from-versus visible-on-hover"><i class="fas fa-times fa-xs"></i></a>
+      <a href="{{ request.path }}?remove={{ forloop.counter0 }}" class="versus-action"><i class="fas fa-times fa-xs"></i></a>
       {% endif %}
-      {% for val, href in whos|zip:urls %}
-      <div>
-        {% if href %}
-          <a href="{{ href }}">{{ val }}</a>
-        {% else %}
-          {{ val }}
-        {% endif %}
-      </div>
-      {% endfor %}
+      <a href="{% url 'coder:mixed_profile' whos|join:',' %}">{% for val in whos %}<div>{{ val }}</div>{% endfor %}</a>
     </td>
   {% endfor %}
     <td id="col_add_to_versus" rowspan="2">

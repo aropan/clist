@@ -420,6 +420,9 @@ class Stage(BaseModel):
 
                     if s.solving < 1e-9:
                         score = 0
+                        if placing:
+                            placing_ = get_placing(placing_scores, s)
+                            score = placing_.get('zero', 0)
                     else:
                         if placing:
                             placing_ = get_placing(placing_scores, s)

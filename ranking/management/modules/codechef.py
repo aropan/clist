@@ -6,7 +6,7 @@ import re
 import sys
 import time
 import traceback
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
 from urllib.parse import quote
@@ -24,6 +24,7 @@ class Statistic(BaseModule):
     STANDINGS_URL_FORMAT_ = 'https://www.codechef.com/rankings/{key}'
     API_CONTEST_URL_FORMAT_ = 'https://www.codechef.com/api/contests/{key}'
     API_RANKING_URL_FORMAT_ = 'https://www.codechef.com/api/rankings/{key}?sortBy=rank&order=asc&page={page}&itemsPerPage={per_page}'  # noqa
+    API_PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/api/contests/PRACTICE/problems/{code}'
     PROFILE_URL_FORMAT_ = 'https://www.codechef.com/users/{user}'
     TEAM_URL_FORMAT_ = 'https://www.codechef.com/teams/view/{user}'
 
@@ -68,12 +69,17 @@ class Statistic(BaseModule):
 
         problems_info = dict() if len(contest_infos) > 1 else list()
         hidden_fields = set()
+        problems_data = defaultdict(dict)
+        writers = defaultdict(int)
 
         for key, contest_info in contest_infos.items():
             url = self.STANDINGS_URL_FORMAT_.format(key=key)
             page = REQ.get(url)
             match = re.search('<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"', page)
+            if not match:
+                raise ExceptionParseStandings('not found csrf token')
             csrf_token = match.group(1)
+            headers = {'x-csrf-token': csrf_token, 'x-requested-with': 'XMLHttpRequest'}
 
             n_page = 0
             per_page = 150
@@ -94,10 +100,6 @@ class Statistic(BaseModule):
                     delay = 5
                     for _ in range(10):
                         try:
-                            headers = {
-                                'x-csrf-token': csrf_token,
-                                'x-requested-with': 'XMLHttpRequest',
-                            }
                             page = REQ.get(url, headers=headers)
                             data = json.loads(page)
                             assert data.get('status') != 'rate_limit_exceeded'
@@ -126,11 +128,31 @@ class Statistic(BaseModule):
                             if 'division' in contest_info:
                                 d = d.setdefault('division', OrderedDict())
                                 d = d.setdefault(contest_info['division'], [])
-                            d.append({
-                                'short': p['code'],
+                            code = p['code']
+                            problem_info = {
+                                'short': code,
                                 'name': p['name'],
-                                'url': f"https://www.codechef.com/problems/{p['code']}",
-                            })
+                                'url': f'https://www.codechef.com/problems/{code}',
+                            }
+                            d.append(problem_info)
+
+                            if code not in problems_data:
+                                problem_url = self.API_PROBLEM_URL_FORMAT_.format(code=code)
+                                page = REQ.get(problem_url, headers=headers)
+                                problem_data = json.loads(page)
+
+                                writer = problem_data.get('problem_author')
+                                if writer:
+                                    writers[writer] += 1
+                                    problems_data[code]['writers'] = [writer]
+
+                                tags = problem_data.get('tags')
+                                if tags:
+                                    matches = re.findall('<a[^>]*>([^<]+)</a>', tags)
+                                    problems_data[code]['tags'] = matches
+
+                            problem_info.update(problems_data[code])
+
                         n_total_page = data['availablePages']
                         pbar = tqdm.tqdm(total=n_total_page * len(urls))
                         contest_type = data['contest_info'].get('type')
@@ -207,6 +229,11 @@ class Statistic(BaseModule):
             'problems': problems_info,
             'hidden_fields': list(hidden_fields),
         }
+
+        if writers:
+            writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
+            standings['writers'] = writers
+
         return standings
 
     @staticmethod

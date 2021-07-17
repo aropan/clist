@@ -22,7 +22,16 @@
 {% with addition=statistic.addition %}
 {% if statistic.my_stat and statistic.floating %}{% if force_both_scroll or not request.GET.scroll_up %}{% show_more_table %}{% endif %}
 {% endif %}
-<tr class="{{ statistic.id }} {% if statistic.my_stat %}info my-stat{% elif versus_statistic_id == statistic.id %}success{% endif %}{% if statistic.floating %} floating hidden{% endif %}{% if statistic.id == request.GET.find_me|toint %} find-me-row{% endif %}"{% if colored_by_group_score %} data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}>
+<tr
+class="
+  {{ statistic.id }}
+  {% if statistic.my_stat %}my-stat{% endif %}
+  {% if statistic.floating %} floating hidden{% endif %}
+  {% if statistic.id == request.GET.find_me|toint %} find-me-row{% endif %}
+  {% if statistic.my_stat %}info{% elif versus_statistic_id == statistic.id %}success{% endif %}
+"
+{% if colored_by_group_score %}data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}
+>
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }}
     {% if addition.medal %}

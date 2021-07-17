@@ -21,9 +21,9 @@
 
     <td>
         {% with value=stat.contest.resource|get_new_rating_value:stat.addition %}
-        {% if value %}
-        <div class="{% coder_color_class stat.contest.resource stat.addition %}">
-            {% coder_color_circle stat.contest.resource stat.addition %}
+        {% if value is not None %}
+        <div class="{% coder_color_class stat.contest.resource value %}">
+            {% coder_color_circle stat.contest.resource value %}
             {{ value }}
         </div>
         {% endif %}
@@ -45,7 +45,7 @@
     <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
         <a href="?search=resource:{{ stat.contest.resource.host }}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
-        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}">{{ stat.contest.title }}</a>
+        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}?find_me={{ stat.pk }}{% if stat.addition.division %}&division={{ stat.addition.division }}{% endif %}">{{ stat.contest.title }}</a>
         <div class="problems">
             {% if stat.addition.hack %}
             {% with hack=stat.addition.hack %}

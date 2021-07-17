@@ -2,3 +2,7 @@
   text-align: center;
   white-space: nowrap;
 }
+
+#problems-filter > * {
+  margin-bottom: 5px;
+}

@@ -2,9 +2,20 @@
     require_once dirname(__FILE__) . "/../../config.php";
 
     function get_ids($page) {
-        preg_match_all('#<link[^>]*href="(?P<href>[^"]*static[^"]*fbcdn[^"]*)"[^>]*>#', $page, $matches);
+        preg_match_all('#<link[^>]*href="(?P<href>[^"]*rsrc[^"]*)"[^>]*>#', $page, $matches);
+        $urls = $matches['href'];
+        // preg_match_all('#{"type":"js","src":"(?P<href>[^"]*rsrc[^"]*)"#', $page, $matches);
+        // foreach ($matches['href'] as $u) {
+        //     $u = str_replace('\/', '/', $u);
+        //     $urls[] = $u;
+        // }
+        // $urls = array_unique($urls);
+
         $ids = array();
-        foreach ($matches['href'] as $u) {
+        foreach ($urls as $u) {
+            if (DEBUG) {
+                echo "get id url = $u\n";
+            }
             $p = curlexec($u);
             if (preg_match_all('#{id:"(?P<id>[^"]*)"(?:[^{}]*(?:{[^}]*})?)*}#', $p, $matches, PREG_SET_ORDER)) {
                 foreach ($matches as $match) {
@@ -17,20 +28,28 @@
         return $ids;
     }
 
+    curl_setopt($CID, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36');
+
     unset($year);
     for (;;) {
         $url = $URL;
         if (isset($year)) {
             $url .= $year;
         }
+        if (DEBUG) {
+            echo "url = $url\n";
+        }
         $page = curlexec($url);
 
         preg_match('#\["LSD",\[\],{"token":"(?P<token>[^"]*)"#', $page, $match);
         $lsd_token = $match['token'];
+        if (DEBUG) {
+            echo "LDS = $lsd_token\n";
+        }
 
         $ids = get_ids($page);
         if (!isset($ids['CodingCompetitionsContestSeasonRootQuery'])) {
-            continue;
+            break;
         }
 
         $url = 'https://www.facebook.com/api/graphql/';
@@ -93,4 +112,6 @@
     if (DEBUG) {
         print_r($contests);
     }
+
+    curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
 ?>

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import collections
-import json
 import itertools
-from pprint import pprint
+import json
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from contextlib import ExitStack
+from pprint import pprint
 
 import tqdm
 

@@ -95,12 +95,15 @@
             foreach ($matches as $match)
             {
                 foreach(
-                    array('date', 'date_start_time', 'date_end_time', 'start_time', 'end_time', 'duration', 'url', 'title', 'key')
+                    array('date', 'date_start_time', 'date_end_time', 'start_date', 'end_date', 'start_time', 'end_time', 'duration', 'url', 'title', 'key')
                     as $param
                 ) $match[$param] = isset($match[$param])? trim(($match[$param])) : '';
 
                 if ($match['date'] == "Сегодня") $match['date'] = date("Y-m-d", time() + $timezone_offset);
                 if ($match['date'] == "Завтра") $match['date'] = date("Y-m-d", time() + 24 * 60 * 60 + $timezone_offset);
+
+                if ($match['start_date'] && $match['start_time']) $match['start_time'] = $match['start_date'] . ' ' . $match['start_time'];
+                if ($match['end_date'] && $match['end_time']) $match['end_time'] = $match['end_date'] . ' ' . $match['end_time'];
 
                 $contest = array(
                     'start_time' => $match['date'] && $match['date_start_time']? $match['date'] . ' ' . $match['date_start_time'] : $match['start_time'],

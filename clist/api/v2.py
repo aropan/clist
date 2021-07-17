@@ -58,6 +58,7 @@ class ContestResource(BaseModelResource):
     resource = fields.CharField('resource__host',
                                 help_text='Unicode string data. Use comma to filter multiple resources')
     resource_id = fields.IntegerField('resource_id')
+    host = fields.CharField('host')
     event = fields.CharField('title')
     start = fields.DateTimeField('start_time')
     end = fields.DateTimeField('end_time')
@@ -77,6 +78,7 @@ class ContestResource(BaseModelResource):
             'id': ['exact', 'in'],
             'resource_id': ['exact', 'in'],
             'resource': ['exact'],
+            'host': ['exact', 'iregex', 'regex'],
             'event': ['exact', 'iregex', 'regex'],
             'start': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
             'end': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],

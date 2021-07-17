@@ -76,7 +76,7 @@ class Command(BaseCommand):
     ):
         now = timezone.now()
 
-        contests = contests.select_related('resource__module')
+        contests = contests.select_related('resource__module', 'timing')
 
         if not without_contest_filter:
             if with_check:
@@ -116,10 +116,7 @@ class Command(BaseCommand):
                         delay_on_success = timedelta(minutes=0)
                     elif c.end_time < now + delay_on_success:
                         delay_on_success = c.end_time - now + timedelta(seconds=5)
-                TimingContest.objects.update_or_create(
-                    contest=c,
-                    defaults={'statistic': now + delay_on_success}
-                )
+                TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
 
         if random_order:
             contests = list(contests)
@@ -217,6 +214,12 @@ class Command(BaseCommand):
 
                     result = standings.get('result', {})
                     if no_update_results:
+                        problems = standings.pop('problems', None)
+                        if problems:
+                            if contest.info.get('problems'):
+                                problems = plugin.merge_dict(problems, contest.info['problems'])
+                            update_problems(contest, problems)
+                        count += 1
                         continue
 
                     if result or users is not None:

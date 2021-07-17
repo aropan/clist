@@ -29,13 +29,23 @@
     $authorization = get_calendar_authorization();
     $calendar_parsed = false;
     if ($authorization) {
-        $calendar = "appirio.com_bhga3musitat85mhdrng9035jg@group.calendar.google.com";
-        $url = "https://www.googleapis.com/calendar/v3/calendars/" . urlencode($calendar) . "/events?timeMin=" . urlencode(date("c", time() - 7 * 24 * 60 * 60));
-        if ($debug_) {
-            echo "url = $url\n";
+        $url = 'https://www.topcoder.com/community/events';
+        $page = curlexec($url);
+
+        if (preg_match('#src="[^"]*calendar.google.com[^"]*embed[^"]*src=(?P<calendar>[^"&]*)#', $page, $match)) {
+            $calendar = urldecode($match['calendar']);
+            $url = "https://www.googleapis.com/calendar/v3/calendars/" . urlencode($calendar) . "/events?timeMin=" . urlencode(date("c", time() - 7 * 24 * 60 * 60));
+            if ($debug_) {
+                echo "url = $url\n";
+            }
+            $data = curlexec($url, NULL, array("http_header" => array("Authorization: $authorization"), "json_output" => 1));
+        } else {
+            $calendar = false;
         }
-        $data = curlexec($url, NULL, array("http_header" => array("Authorization: $authorization"), "json_output" => 1));
-        if (!isset($data["items"])) {
+
+        if (!$calendar) {
+            trigger_error("Not found calendar in $url", E_USER_WARNING);
+        } else if (!isset($data["items"])) {
             echo $data['error']['message'] . "\n";
         } else {
             $calendar_parsed = true;

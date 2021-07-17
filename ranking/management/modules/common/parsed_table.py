@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -78,6 +79,7 @@ class ParsedTable(object):
         as_list=False,
         with_duplicate_colspan=False,
         ignore_wrong_header_number=True,
+        ignore_display_none=False,
         unnamed_fields=(),
         header_mapping=(),
     ):
@@ -89,6 +91,7 @@ class ParsedTable(object):
         self.unnamed_fields_idx = 0
         self.header_mapping = header_mapping
         self.ignore_wrong_header_number = ignore_wrong_header_number
+        self.ignore_display_none = ignore_display_none
 
     def init_iter(self):
         self.n_rows = len(self.table) - 1
@@ -134,6 +137,9 @@ class ParsedTable(object):
 
             if self.with_duplicate_colspan:
                 row.columns = sum([[c] * c.colspan for c in row.columns], [])
+
+            if self.ignore_display_none:
+                row.columns = [c for c in row.columns if not re.search(r'display\s*:\s*none', c.attrs.get('style', ''))]
 
             while self.unnamed_fields_idx < len(self.unnamed_fields) and len(row.columns) > len(self.header.columns):
                 field = self.unnamed_fields[self.unnamed_fields_idx]

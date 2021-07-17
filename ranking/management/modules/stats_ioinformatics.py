@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import re
-from pprint import pprint
 from collections import OrderedDict
+from pprint import pprint
 
 from first import first
 
@@ -14,8 +14,8 @@ class Statistic(BaseModule):
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
-        if not self.url.startswith('http://stats.ioinformatics.org/olympiads/'):
-            raise InitModuleException(f'Url = {self.url} should be from stats.ioinformatics.org')
+        if '//stats.ioinformatics.org/olympiads/' not in self.url:
+            raise InitModuleException(f'Url {self.url} should be contains stats.ioinformatics.org/olympiads')
 
     def get_standings(self, users=None, statistics=None):
         result = {}

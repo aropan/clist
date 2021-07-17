@@ -103,9 +103,9 @@ Number of competitions: {{ account.n_contests }}
 
 <div class="row">
 
-{% if resources and show_history_ratings %}
 <div{% if two_columns %} class="col-lg-6"{% endif %}>
 
+{% if resources and show_history_ratings %}
 <div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% elif not two_columns %} class="col-xs-12"{% endif %}>
 <h3>Accounts{% if request.GET.search and coder %} <a class="btn btn-xs btn-default" href="{% url 'coder:profile' coder.user.username %}">view all</a>{% endif %}</h3>
 <div id="list-accounts">
@@ -163,6 +163,7 @@ Number of competitions: {{ account.n_contests }}
 {% endif %}
 </div>
 </div>
+{% endif %}
 
 {% if show_history_ratings and writers.exists %}
 <div{% if not two_columns %} class="col-md-6"{% endif %}>
@@ -181,7 +182,6 @@ Number of competitions: {{ account.n_contests }}
 {% endif %}
 
 </div>
-{% endif %}
 
 {% if show_history_ratings and history_resources %}
 <div{% if two_columns %} class="col-lg-6"{% else %} class="col-xs-12"{% endif %}>
@@ -190,8 +190,8 @@ Number of competitions: {{ account.n_contests }}
 <a id="expand-ratings" href="#" onclick=""><i class="fas fa-expand-arrows-alt"></i></a>
 <script>
   $('#expand-ratings').click(function() {
-    $(this).parent().closest('div').removeClass('col-lg-6').addClass('col-xs-12')
-    $('#list-accounts').parent().closest('div').removeClass('col-lg-6').addClass('col-xs-12')
+    $(this).closest('div.col-lg-6').removeClass('col-lg-6').addClass('col-xs-12')
+    $('#list-accounts').closest('div.col-lg-6').removeClass('col-lg-6').addClass('col-xs-12')
     $('#collapse-history-resources').click()
     $(this).remove()
     event.preventDefault()
@@ -251,7 +251,7 @@ $(function(){
   </span>
   <span class="input-group-btn">
     <button class="btn btn-default" type="submit">
-      <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+      <i class="fas fa-search"></i>
       Search
     </button>
   </span>
