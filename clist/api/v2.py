@@ -153,8 +153,8 @@ class StatisticsResource(BaseModelResource):
         excludes = ('total_count', )
         filtering = {
             'total_count': ['exact'],
-            'contest_id': ['exact'],
-            'account_id': ['exact'],
+            'contest_id': ['exact', 'in'],
+            'account_id': ['exact', 'in'],
             'coder_id': ['exact'],
             'place': ['exact', 'isnull'],
             'new_rating': ['isnull'],
@@ -173,7 +173,7 @@ class StatisticsResource(BaseModelResource):
         return filters
 
     def apply_filters(self, request, applicable_filters):
-        one_of = ['contest_id__exact', 'account_id__exact', 'coder_id']
+        one_of = ['contest_id__exact', 'contest_id__in', 'account_id__exact', 'account_id__in', 'coder_id']
         for k in one_of:
             if applicable_filters.get(f'{k}'):
                 break
@@ -251,8 +251,10 @@ def use_in_me_only(bundle, *args, **kwargs):
 
 
 def use_in_detail_only(bundle, *args, **kwargs):
+    with_accounts = bundle.request.GET.get('with_accounts') in ['true', '1', 'yes']
+    query_by_id = bool(bundle.request.GET.get('id') or bundle.request.GET.get('username'))
     url = reverse('clist:api:v2:api_dispatch_list', kwargs={'api_name': 'v2', 'resource_name': 'coder'})
-    return not (url == bundle.request.path or use_in_me_only(bundle, *args, **kwargs))
+    return with_accounts or query_by_id or not (url == bundle.request.path or use_in_me_only(bundle, *args, **kwargs))
 
 
 class CoderResource(BaseModelResource):
@@ -264,6 +266,7 @@ class CoderResource(BaseModelResource):
     email = fields.CharField('user__email', use_in=use_in_me_only)
     n_accounts = fields.IntegerField('n_accounts', use_in='list')
     accounts = fields.ManyToManyField(AccountResource, 'account_set', use_in=use_in_detail_only, full=True)
+    with_accounts = fields.BooleanField()
     total_count = fields.BooleanField()
 
     class Meta(BaseModelResource.Meta):
@@ -271,11 +274,13 @@ class CoderResource(BaseModelResource):
         object_class = Coder
         queryset = Coder.objects.all()
         resource_name = 'coder'
-        excludes = ('total_count')
+        excludes = ('total_count', )
         filtering = {
             'total_count': ['exact'],
             'country': ['exact'],
-            'username': ['exact', 'iregex', 'regex']
+            'id': ['exact', 'in'],
+            'username': ['exact', 'iregex', 'regex', 'in'],
+            'with_accounts': ['exact'],
         }
         extra_actions = [
             {
@@ -305,11 +310,13 @@ class CoderResource(BaseModelResource):
         for k in self.fields.keys():
             if k in bundle.data and not bundle.data[k] and isinstance(bundle.data[k], str):
                 bundle.data[k] = None
+        bundle.data.pop('with_accounts', None)
         return bundle
 
     def build_filters(self, filters=None, *args, **kwargs):
         filters = filters or {}
         me = filters.pop('me', None)
+        filters.pop('with_accounts', None)
         filters = super().build_filters(filters, *args, **kwargs)
         filters['me'] = me
         return filters
@@ -321,8 +328,7 @@ class CoderResource(BaseModelResource):
             qs = qs.filter(pk=request.user.coder.pk)
         qs = qs.select_related('user')
 
-        url = reverse('clist:api:v2:api_dispatch_list',
-                      kwargs={'api_name': 'v2', 'resource_name': self._meta.resource_name})
-        if url != request.path:
+        fake_bundle = type('obj', (object,), {'request': request})
+        if use_in_detail_only(fake_bundle):
             qs = qs.prefetch_related('account_set__resource')
         return qs

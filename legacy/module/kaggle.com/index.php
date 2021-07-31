@@ -15,6 +15,10 @@
                 trigger_error("Too many requests for parse kaggle.com", E_USER_WARNING);
                 return;
             }
+            if (!isset($data['fullCompetitionGroups'])) {
+                trigger_error("Not found competition groups", E_USER_WARNING);
+                return;
+            }
             $list_of_competitions_list = array_merge(
                 $data['fullCompetitionGroups'],
                 array($data['pagedCompetitionGroup'])

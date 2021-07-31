@@ -256,7 +256,7 @@ class Statistic(BaseModule):
                         page = None
                     break
                 except FailOnGetResponse as e:
-                    if e.args[0].code == 404:
+                    if e.code == 404:
                         page = None
                     else:
                         raise e

@@ -52,7 +52,9 @@ class Statistic(BaseModule):
             code = code.replace('_', '/')
             code = re.sub(r'[^A-Za-z0-9\+\/]', '', code)
             code += '=' * ((4 - len(code) % 4) % 4)
-            data = json.loads(base64.b64decode(code).decode())
+            code = base64.b64decode(code)
+            code = code.decode(errors='ignore')
+            data = json.loads(code)
             return data
 
         def get(offset, num):

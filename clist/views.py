@@ -191,7 +191,7 @@ def get_events(request):
                 'url': (
                     reverse('ranking:standings', args=(slug(contest.title), contest.pk))
                     if contest.has_statistics else
-                    (contest.standings_url if contest.end_time < now else contest.url)
+                    (contest.standings_url if contest.standings_url and contest.end_time < now else contest.url)
                 ),
                 'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),

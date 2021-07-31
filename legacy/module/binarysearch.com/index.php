@@ -4,6 +4,11 @@
     $url = 'https://binarysearch.com/api/contests';
     $json = curlexec($url, null, array("http_header" => array('content-type: application/json'), "json_output" => 1));
 
+    if (!isset($json['contests']) || !isset($json['eduContests'])) {
+        print_r($json);
+        trigger_error("Wrong json response", E_USER_WARNING);
+        return;
+    }
     $data_contests = array_merge($json['contests'], $json['eduContests']);
     foreach ($data_contests as $c) {
         if (empty($c['starting'])) {

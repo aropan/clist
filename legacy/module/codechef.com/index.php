@@ -35,7 +35,7 @@
                 continue;
             }
 
-            if (!preg_match('#/(?<key>[A-Za-z0-9_ ]+)/?$#', $url, $match)) {
+            if (!preg_match('#codechef.com/(?<key>[A-Za-z0-9_ ]+)/?$#', $url, $match)) {
                 continue;
             }
             $key = $match['key'];

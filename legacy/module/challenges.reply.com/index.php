@@ -15,8 +15,11 @@
             "pageSourceType" => "MODAL",
         );
         $data = curlexec($url, $data, array("json_output" => true));
-        if (strpos(strtolower($data["message"]), "success") === false) {
-            trigger_error("Invalid singin: ${data['message']}", E_USER_ERROR);
+        if (!isset($data["message"])) {
+            trigger_error("Invalid singin: $data", E_USER_WARNING);
+            return;
+        } else if (!isset($data["message"]) || strpos(strtolower($data["message"]), "success") === false) {
+            trigger_error("Invalid singin: ${data['message']}", E_USER_WARNING);
             return;
         }
     }

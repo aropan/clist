@@ -219,7 +219,8 @@ def _get_order_by(fields):
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
 ))
-def standings(request, title_slug=None, contest_id=None, template='standings.html', extra_context=None):
+def standings(request, title_slug=None, contest_id=None, contests_ids=None,
+              template='standings.html', extra_context=None):
     context = {}
 
     groupby = request.GET.get('groupby')
@@ -275,6 +276,9 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
             to_redirect = True
         else:
             return redirect(reverse('ranking:standings_list') + f'?search=slug:{title_slug}')
+    if contests_ids is not None:
+        contests_ids = list(map(toint, contests_ids.split(',')))
+        contest = contests.filter(pk=contests_ids[0]).first()
     if contest is None:
         return HttpResponseNotFound()
     if to_redirect:
@@ -300,7 +304,10 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     contest_fields = list(contest.info.get('fields', []))
     hidden_fields = list(contest.info.get('hidden_fields', []))
 
-    statistics = Statistics.objects.filter(contest=contest)
+    if contests_ids:
+        statistics = Statistics.objects.filter(contest_id__in=contests_ids)
+    else:
+        statistics = Statistics.objects.filter(contest=contest)
 
     options = contest.info.get('standings', {})
 
@@ -337,11 +344,12 @@ def standings(request, title_slug=None, contest_id=None, template='standings.htm
     )
 
     division = request.GET.get('division')
-    if division == 'any':
+    if division == 'any' or contests_ids:
         with_row_num = True
         if 'place_as_int' in order:
             order.remove('place_as_int')
             order.append('place_as_int')
+    if division == 'any':
         fixed_fields += (('division', 'Division'),)
 
     if 'team_id' in contest_fields and not groupby:

@@ -9,7 +9,6 @@ from datetime import timedelta
 from html import unescape
 from logging import getLogger
 from random import shuffle
-from traceback import format_exc
 
 from attrdict import AttrDict
 from django.core.management.base import BaseCommand
@@ -17,6 +16,7 @@ from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
 from tqdm import tqdm
+from traceback_with_variables import format_exc
 
 from clist.models import Contest, Resource, TimingContest
 from clist.templatetags.extras import canonize, get_number_from_str, get_problem_short
@@ -210,7 +210,8 @@ class Command(BaseCommand):
 
                     problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
 
-                    standings_hidden_fields = standings.pop('hidden_fields', {})
+                    standings_hidden_fields = standings.pop('hidden_fields', [])
+                    standings_hidden_fields_set = set(standings_hidden_fields)
 
                     result = standings.get('result', {})
                     if no_update_results:
@@ -473,7 +474,7 @@ class Command(BaseCommand):
                             addition = type(r)()
                             addition_was_ordereddict |= isinstance(addition, OrderedDict)
                             for k, v in r.items():
-                                is_hidden_field = k in standings_hidden_fields
+                                is_hidden_field = k in standings_hidden_fields_set
                                 if k[0].isalpha() and not re.match('^[A-Z]+$', k):
                                     k = k[0].upper() + k[1:]
                                     k = '_'.join(map(str.lower, re.findall('[A-ZА-Я][^A-ZА-Я]*', k)))
@@ -595,7 +596,7 @@ class Command(BaseCommand):
                             if canonize(fields) != canonize(contest.info.get('fields')):
                                 contest.info['fields'] = fields
 
-                            hidden_fields = list(hidden_fields)
+                            hidden_fields = [f for f in standings_hidden_fields if f in hidden_fields]
                             if hidden_fields and canonize(hidden_fields) != canonize(contest.info.get('hidden_fields')):
                                 contest.info['hidden_fields'] = hidden_fields
 
@@ -671,8 +672,8 @@ class Command(BaseCommand):
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 self.logger.error(f'contest = {contest.pk}, error = {e}, row = {r}')
+                self.logger.error(format_exc())
                 if stop_on_error:
-                    self.logger.error(format_exc())
                     break
             if not parsed:
                 if now < c.end_time and c.duration_in_secs <= limit_duration_in_secs:

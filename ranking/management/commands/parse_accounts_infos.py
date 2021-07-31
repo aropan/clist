@@ -5,7 +5,6 @@ import os
 import sys
 from datetime import timedelta
 from logging import getLogger
-from traceback import format_exc
 
 from attrdict import AttrDict
 from django.core.management.base import BaseCommand
@@ -14,6 +13,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django_super_deduper.merge import MergedModelInstance
 from tqdm import tqdm
+from traceback_with_variables import format_exc
 
 from clist.models import Resource
 from ranking.management.commands.common import account_update_contest_additions
@@ -148,6 +148,6 @@ class Command(BaseCommand):
                     for account in tqdm(accounts, desc='changing update time'):
                         account.updated = now + timedelta(days=1)
                         account.save()
-                self.logger.error(format_exc())
                 self.logger.error(f'resource = {resource}')
+                self.logger.error(format_exc())
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}')

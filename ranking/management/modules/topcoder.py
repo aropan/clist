@@ -4,16 +4,18 @@
 import html
 import json
 import re
+import xml.etree.ElementTree as ET
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
 from pprint import pprint
 from time import sleep
-from urllib.parse import parse_qs, urljoin
+from urllib.parse import parse_qs, quote, urljoin
 
 import tqdm
 from lxml import etree
 
+from clist.templatetags.extras import asfloat, toint
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -29,8 +31,7 @@ class Statistic(BaseModule):
 
         new_expires = int((datetime.now() + timedelta(days=100)).timestamp())
         for c in REQ.get_raw_cookies():
-            if 'topcoder.com' in c.domain:
-                print(c.name, datetime.fromtimestamp(c.expires))
+            if 'topcoder.com' in c.domain and c.expires is not None:
                 c.expires = max(c.expires, new_expires)
                 REQ.update_cookie(c)
         # cookies = {
@@ -86,6 +87,8 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
         result = {}
+        hidden_fields = []
+        fields_types = {}
         writers = defaultdict(int)
 
         start_time = self.start_time.replace(tzinfo=None)
@@ -132,58 +135,79 @@ class Statistic(BaseModule):
                 if match:
                     self.standings_url = urljoin(url, match.group('url'))
 
-        if not self.standings_url:
-            raise InitModuleException('Not set standings url for %s' % self.name)
+        for url in self.url, self.standings_url:
+            if url:
+                match = re.search('/challenges/(?P<cid>[0-9]+)', url)
+                if match:
+                    challenge_id = match.group('cid')
+                    break
+        else:
+            challenge_id = None
 
-        url = self.standings_url + '&nr=100000042'
-        page = REQ.get(url, time_out=100)
-        result_urls = re.findall(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>Results</a>', str(page), re.I)
-
-        if not result_urls:  # marathon match
-            match = re.search('<[^>]*>Problem:[^<]*<a[^>]*href="(?P<href>[^"]*)"[^>]*>(?P<name>[^<]*)<', page)
-            if not match:
-                raise ExceptionParseStandings('not found problem')
-            problem_name = match.group('name').strip()
-            problems_info = [{
-                'short': problem_name,
-                'url': urljoin(url, match.group('href').replace('&amp;', '&'))
-            }]
-            rows = etree.HTML(page).xpath("//table[contains(@class, 'stat')]//tr")
-            header = None
-            for row in rows:
-                r = parsed_table.ParsedTableRow(row)
-                if len(r.columns) < 8:
+        if challenge_id:  # marathon match
+            url = conf.TOPCODER_API_MM_URL_FORMAT.format(challenge_id)
+            page = REQ.get(url)
+            data = json.loads(page)
+            problems_info = []
+            hidden_fields.extend(['time', 'submits'])
+            fields_types = {'delta_rank': ['delta'], 'delta_score': ['delta']}
+            for row in data:
+                handle = row.pop('member')
+                if 'finalRank' not in row:
                     continue
-                values = [c.value.strip().replace(u'\xa0', '') for c in r.columns]
-                if header is None:
-                    header = values
+                r = result.setdefault(handle, OrderedDict())
+                r['member'] = handle
+                r['place'] = row.pop('finalRank')
+                r['provisional_rank'] = row.pop('provisionalRank')
+                r['delta_rank'] = r['provisional_rank'] - r['place']
+                submissions = row.pop('submissions')
+                for s in submissions:
+                    score = s.get('finalScore')
+                    if not score or score == '-':
+                        continue
+                    r['solving'] = score
+                    r['solved'] = {'solving': int(score > 0)}
+                    p_score = s.pop('provisionalScore')
+                    if isinstance(p_score, str):
+                        p_score = asfloat(p_score)
+                    if p_score is not None and p_score > 0:
+                        r['provisional_score'] = round(p_score, 2)
+                        r['delta_score'] = round(score - p_score, 2)
+                    r['time'] = s['created']
+                    break
+                else:
+                    result.pop(handle)
                     continue
-
-                d = OrderedDict(list(zip(header, values)))
-                handle = d.pop('Handle').strip()
-                d = self._dict_as_number(d)
-                if 'rank' not in d or users and handle not in users:
-                    continue
-                row = result.setdefault(handle, OrderedDict())
-                row.update(d)
-
-                score = row.pop('final_score' if 'final_score' in row else 'provisional_score')
-                row['member'] = handle
-                row['place'] = row.pop('rank')
-                row['solving'] = score
-                row['solved'] = {'solving': 1 if score > 0 else 0}
-
-                problems = row.setdefault('problems', {})
-                problem = problems.setdefault(problem_name, {})
-                problem['result'] = score
-
-                history_index = values.index('submission history')
-                if history_index:
-                    column = r.columns[history_index]
-                    href = column.node.xpath('a/@href')
-                    if href:
-                        problem['url'] = urljoin(url, href[0])
+                r['submits'] = len(submissions)
+            if not result:
+                raise ExceptionParseStandings('empty standings')
         else:  # single round match
+            if not self.standings_url:
+                raise InitModuleException('Not set standings url for %s' % self.name)
+            url = self.standings_url + '&nr=100000042'
+            page = REQ.get(url, time_out=100)
+            result_urls = re.findall(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>Results</a>', str(page), re.I)
+            if not result_urls:
+                raise ExceptionParseStandings('not found result urls')
+
+            dd_round_results = {}
+            match = re.search('rd=(?P<rd>[0-9]+)', url)
+            if match:
+                rd = match.group('rd')
+                url = f'https://www.topcoder.com/tc?module=BasicData&c=dd_round_results&rd={rd}'
+                try:
+                    dd_round_results_page = REQ.get(url)
+                    root = ET.fromstring(dd_round_results_page)
+                    for child in root:
+                        data = {}
+                        for field in child:
+                            data[field.tag] = field.text
+                        dd_round_results[data['handle']] = data
+                except FailOnGetResponse:
+                    pass
+
+            hidden_fields.extend(['coding_phase', 'challenge_phase', 'system_test', 'point_total', 'room'])
+
             matches = re.finditer('<table[^>]*>.*?</table>', page, re.DOTALL)
             problems_sets = []
             for match in matches:
@@ -395,16 +419,17 @@ class Statistic(BaseModule):
                         if handle is not None:
                             if handle not in result:
                                 LOG.error(f'{handle} not in result, url = {url}')
-                            result[handle]['url'] = url
+                            row = result[handle]
+                            row['url'] = url
                             if room:
-                                result[handle]['room'] = room
-                            result[handle]['problems'] = problems
-                            result[handle]['challenges'] = challenges
+                                row['room'] = room
+                            row['problems'] = problems
+                            row['challenges'] = challenges
                             for p in problems.values():
                                 if p.get('result', 0) > 1e-9:
-                                    result[handle]['solved']['solving'] += 1
+                                    row['solved']['solving'] += 1
                             if challenges:
-                                h = result[handle].setdefault('hack', {
+                                h = row.setdefault('hack', {
                                     'title': 'challenges',
                                     'successful': 0,
                                     'unsuccessful': 0,
@@ -412,10 +437,39 @@ class Statistic(BaseModule):
                                 for c in challenges:
                                     h['successful' if c['status'].lower() == 'yes' else 'unsuccessful'] += 1
 
+                if dd_round_results:
+                    fields = set()
+                    hidden_fields_set = set(hidden_fields)
+                    for data in result.values():
+                        for field in data.keys():
+                            fields.add(field)
+
+                    k_mapping = {'new_vol': 'new_volatility', 'advanced': None}
+                    for handle, data in dd_round_results.items():
+                        if handle not in result:
+                            continue
+                        row = result[handle]
+                        for k, v in data.items():
+                            k = k_mapping.get(k, k)
+                            if k and k not in fields:
+                                row[k] = v
+                                if k not in hidden_fields_set:
+                                    hidden_fields_set.add(k)
+                                    hidden_fields.append(k)
+                                ks = k.split('_')
+                                if ks[0] == 'level' and ks[-1] == 'language' and v and v.lower() != 'unspecified':
+                                    idx = {'one': 0, 'two': 1, 'three': 2}.get(ks[1], None)
+                                    d = problems_info
+                                    if len(problems_sets) > 1:
+                                        d = d['division'][row['division']]
+                                    if idx is not None and d[idx]['short'] in row['problems']:
+                                        row['problems'][d[idx]['short']]['language'] = v
         standings = {
             'result': result,
             'url': self.standings_url,
             'problems': problems_info,
+            'hidden_fields': hidden_fields,
+            'fields_types': fields_types,
             'options': {
                 'fixed_fields': [('hack', 'Challenges')],
             },
@@ -433,8 +487,17 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
+        dd_active_algorithm = {}
+        page = REQ.get('https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list')
+        root = ET.fromstring(page)
+        for child in root:
+            data = {}
+            for field in child:
+                data[field.tag] = field.text
+            dd_active_algorithm[data.pop('handle')] = data
+
         def fetch_profile(user):
-            url = f'http://api.topcoder.com/v2/users/{user}'
+            url = f'http://api.topcoder.com/v2/users/{quote(user)}'
             ret = {}
             for _ in range(2):
                 try:
@@ -455,6 +518,10 @@ class Statistic(BaseModule):
                 ret['handle'] = user
             if not ret.get('photoLink'):
                 ret.pop('photoLink', None)
+            if user in dd_active_algorithm:
+                data = dd_active_algorithm[user]
+                if 'alg_vol' in data:
+                    ret['volatility'] = toint(data['alg_vol'])
             return ret
 
         ret = []

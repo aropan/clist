@@ -107,7 +107,7 @@ content: '<div class="info"><div class="title">Request header</div><div class="t
 <div class="info">
     {% get_api_formats as formats %}
     <div class="title">format</div>
-    <div class="text">Supported {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}. Set format in url <samp>/api/v1/json/...</samp> or use param in get query <samp>/?format=json</samp>.</div>
+    <div class="text">Supported {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}. Set format in url <samp>/api/v2/json/...</samp> or use param in get query <samp>/?format=json</samp>.</div>
 </div>
 <div class="info">
     <div class="title">throttle</div>

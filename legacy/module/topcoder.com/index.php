@@ -1,13 +1,47 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
+    function choose_unique($parts, &$title) {
+        if (count($parts) != 2) {
+            return;
+        }
+        list($fs, $sc) = $parts;
+
+        $fs = explode(" ", $fs);
+        $sc = explode(" ", $sc);
+
+        if (count($fs) < count($sc)) {
+            list($fs, $sc) = array($sc, $fs);
+            $result = $parts[1];
+        } else {
+            $result = $parts[0];
+        }
+
+        $idx = 0;
+        for ($idx = 0, $i = 0; $i < count($fs) && $idx < count($sc); ++$i) {
+            if ($fs[$i] == $sc[$idx]) {
+                $idx += 1;
+            }
+        }
+        if ($idx == count($sc)) {
+            $title = $result;
+        }
+    }
+
     function get_algorithm_key(&$title) {
-        $title = preg_replace('#single\s*round\s*match#i', 'SRM', $title);
-        $title = preg_replace('#marathon\s*match#i', 'MM', $title);
-        if (preg_match('#\s+(test|testing)$#i', $title)) {
+        $parts = preg_split('#\s+-\s+#', $title);
+        choose_unique($parts, $title);
+        $title = preg_replace('#\bsingle\s*round\s*match\b#i', 'SRM', $title);
+        $title = preg_replace('#\btopcoder\s*open\b#i', 'TCO', $title);
+        $title = preg_replace('#\btopcoder\s*collegiate\s*challenge\b#i', 'TCCC', $title);
+        $title = preg_replace('#^mm\b#i', 'Marathon Match', $title);
+        $title = preg_replace('#([0-9])-([0-9])#', '\1\2', $title);
+        $title = preg_replace('#\s*-\s*#', ' ', $title);
+        $title = trim($title);
+        if (preg_match('#\b(test|testing|practice)\b$#i', $title)) {
             return false;
         }
-        if (!preg_match('#(?P<key>(?:(?:rookie\s*)?srm|mm)\s*[-/.0-9]*[0-9]|TCO[0-9]+.*(?:algorithm|marathon)?\s*round\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
+        if (!preg_match('#(?P<key>(?:(?:rookie\s*|beginner\s*)?srm|^marathon\s*match)\s*[-/.0-9]*[0-9]|^(?:[0-9]+\s?TCO|TCO\s?[0-9]+).*(?:algorithm|marathon)?\s*\b(?:match|round)\b\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
             return false;
         }
         return $match['key'];
@@ -111,10 +145,13 @@
             $params["limit"] = $limit;
             $query = http_build_query($params);
             $url = "https://api.topcoder.com/v4/challenges/?" . $query;
-            if ($debug_) {
-                echo "url = $url\n";
+            for ($attempt = 0; $attempt < 5; ++$attempt) {
+                $json = curlexec($url, null, array("json_output" => 1));
+                if (isset($json["result"]) && isset($json["result"]['content'])) {
+                    break;
+                }
+                sleep(10);
             }
-            $json = curlexec($url, null, array("json_output" => 1));
             if (isset($json["result"]) && isset($json["result"]['content'])) {
                 $stop = false;
                 foreach ($json["result"]['content'] as $c) {
@@ -136,19 +173,28 @@
                     $ids[$c['id']] = true;
 
                     $title = $c["name"];
-                    $key = get_algorithm_key($title);
-                    if (!$key) {
-                        if (!isset($c['technologies']) || !in_array("Data Science", array_values($c['technologies']))) {
+                    $track = $c['track'];
+                    $sub_track = $c['subTrack'];
+                    if ($track == 'DEVELOP') {
+                        if ($sub_track != 'DEVELOP_MARATHON_MATCH') {
                             continue;
                         }
+                    } else if ($track == 'DATA_SCIENCE') {
+                        if ($sub_track != 'MARATHON_MATCH') {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                    $key = get_algorithm_key($title);
+                    if (!$key || strpos($key, 'SRM') !== false) {
                         $key = "challenge=" . $c['id'];
                     }
-
                     $_contests[] = array(
                         "start_time" => $c["registrationStartDate"],
                         "end_time" => $c["submissionEndDate"],
                         "standings_url" => "https://www.topcoder.com/challenges/" . $c['id'] . "?tab=submissions",
-                        "title" => $c["name"],
+                        "title" => $title,
                         "url" => $url_scheme_host . "/challenges/" . $c['id'],
                         "key" => $key,
                     );
@@ -160,6 +206,7 @@
                     break;
                 }
             } else {
+                trigger_error("Incorrect json response", E_USER_WARNING);
                 break;
             }
         }
@@ -282,7 +329,7 @@
             if (!$add_from_stats) {
                 $now = time();
                 $date = strtotime($date_str);
-                if ($date < $now - 5 * 24 * 60 * 60 || $now - 1 * 24 * 60 * 60 < $date) {
+                if ($date < $now - 5 * 24 * 60 * 60) {
                     continue;
                 }
             }

@@ -1370,7 +1370,7 @@ def view_list(request, uuid):
             if v.coder:
                 vs.append(v.coder.username)
             elif v.account:
-                prefix = v.account.resource.short_host or v.account.resouce.host
+                prefix = v.account.resource.short_host or v.account.resource.host
                 vs.append(f'{prefix}:{v.account.key}')
         data['versus'] = ','.join(vs)
 
