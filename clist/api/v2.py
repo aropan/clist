@@ -1,6 +1,7 @@
 from django.conf.urls import re_path
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.db.models import IntegerField
+from django.db.models import IntegerField, JSONField
+from django.db.models.expressions import F
 from django.db.models.functions import Cast
 from django.urls import reverse
 from pytimeparse.timeparse import timeparse
@@ -72,7 +73,7 @@ class ContestResource(BaseModelResource):
         abstract = False
         queryset = Contest.visible.all()
         resource_name = 'contest'
-        excludes = ('filtered', 'category', 'total_count', )
+        excludes = ('filtered', 'category', 'total_count')
         filtering = {
             'total_count': ['exact'],
             'id': ['exact', 'in'],
@@ -144,15 +145,21 @@ class StatisticsResource(BaseModelResource):
     new_rating = fields.IntegerField('new_rating', null=True)
     old_rating = fields.IntegerField('old_rating', null=True)
     rating_change = fields.IntegerField('rating_change', null=True)
+    problems = fields.DictField('problems', null=True)
+    more_fields = fields.DictField('more_fields', null=True)
+    with_problems = fields.BooleanField()
+    with_more_fields = fields.BooleanField()
     total_count = fields.BooleanField()
 
     class Meta(BaseModelResource.Meta):
         abstract = False
         queryset = Statistics.objects.all()
         resource_name = 'statistics'
-        excludes = ('total_count', )
+        excludes = ('total_count', 'with_problems', 'with_more_fields', 'coder_id')
         filtering = {
             'total_count': ['exact'],
+            'with_problems': ['exact'],
+            'with_more_fields': ['exact'],
             'contest_id': ['exact', 'in'],
             'account_id': ['exact', 'in'],
             'coder_id': ['exact'],
@@ -166,7 +173,7 @@ class StatisticsResource(BaseModelResource):
     def build_filters(self, filters=None, *args, **kwargs):
         filters = filters or {}
         tmp = {}
-        for k in 'new_rating__isnull', 'rating_change__isnull', 'coder_id':
+        for k in 'new_rating__isnull', 'rating_change__isnull', 'coder_id', 'with_problems', 'with_more_fields':
             tmp[k] = filters.pop(k, None)
         filters = super().build_filters(filters, *args, **kwargs)
         filters.update(tmp)
@@ -183,6 +190,8 @@ class StatisticsResource(BaseModelResource):
         rating_change_isnull = applicable_filters.pop('rating_change__isnull', None)
         new_rating_isnull = applicable_filters.pop('new_rating__isnull', None)
         coder_id = applicable_filters.pop('coder_id', None)
+        with_problems = applicable_filters.pop('with_problems', None)
+        with_more_fields = applicable_filters.pop('with_more_fields', None)
 
         qs = super().apply_filters(request, applicable_filters)
         qs = qs.select_related('account', 'contest')
@@ -199,11 +208,36 @@ class StatisticsResource(BaseModelResource):
             .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
             .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField()))
 
+        if with_problems:
+            qs = qs.annotate(problems=Cast(KeyTextTransform('problems', 'addition'), JSONField()))
+
+        if with_more_fields:
+            qs = qs.annotate(more_fields=Cast(F('addition'), JSONField()))
+
         return qs
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
         bundle.data.pop('coder_id', None)
+        bundle.data.pop('with_problems', None)
+        bundle.data.pop('with_more_fields', None)
+
+        problems = bundle.data['problems']
+        if problems:
+            for problem in problems.values():
+                for k in list(problem.keys()):
+                    if k.startswith('_'):
+                        problem.pop(k, None)
+                for k in 'solution', 'external_solution':
+                    problem.pop(k, None)
+
+        more_fields = bundle.data['more_fields']
+        if more_fields:
+            for k in list(more_fields.keys()):
+                if k.startswith('_') or k in bundle.data:
+                    more_fields.pop(k, None)
+            for k in 'problems', 'solved':
+                more_fields.pop(k, None)
         return bundle
 
 
@@ -274,7 +308,7 @@ class CoderResource(BaseModelResource):
         object_class = Coder
         queryset = Coder.objects.all()
         resource_name = 'coder'
-        excludes = ('total_count', )
+        excludes = ('total_count', 'with_accounts')
         filtering = {
             'total_count': ['exact'],
             'country': ['exact'],
