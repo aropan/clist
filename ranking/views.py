@@ -402,6 +402,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             'nogroupby': True,
             'nourl': True,
         }
+    chat_options = fields_to_select.get('chat', {}).get('options', {})
+    for c in request.GET.getlist('chat'):
+        if c and c not in chat_options:
+            request.logger.warning(f'You are not a member of chat = {c}')
 
     lists = coder.my_list_set.all() if coder else None
     if lists:

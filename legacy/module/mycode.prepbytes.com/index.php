@@ -5,7 +5,7 @@
     $url = 'https://server.prepbytes.com/api/contest/getContestList';
     $response = curlexec($url, "", array("json_output" => 1));
     if (!isset($response['data']) || !isset($response['code']) || $response['code'] != 200) {
-        trigger_error('json = ' . json_encode($response));
+        trigger_error('json = ' . json_encode($response), E_USER_WARNING);
         return;
     }
 

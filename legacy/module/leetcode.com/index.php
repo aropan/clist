@@ -6,7 +6,7 @@
     $json = curlexec($url, $postfields, array("http_header" => array('content-type: application/json'), "json_output" => 1));
 
     if (!isset($json['data']) || !isset($json['data']['allContests'])) {
-        trigger_error('json = ' . json_encode($json));
+        trigger_error('json = ' . json_encode($json), E_USER_WARNING);
         return;
     }
 

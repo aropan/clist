@@ -49,8 +49,11 @@
 
     function normalize_title($title, $date) {
         $ret = strtolower($title);
+        $ret = preg_replace('/\b(algorithm|round|marathon|match)\b/', ' ', $ret);
         $ret = preg_replace('/[0-9]*([0-9]{2})\s*tco(\s+)/', 'tco\1\2', $ret);
         $ret = preg_replace('/tco\s*[0-9]*([0-9]{2})(\s+)/', 'tco\1\2', $ret);
+        $ret = preg_replace('/^[0-9]{2}([0-9]{2})(\s+)/', 'tco\1\2', $ret);
+        $ret = preg_replace('/ +/', ' ', $ret);
         return $ret;
     }
 
@@ -291,13 +294,24 @@
                         $date = date('m.d.Y', strtotime($c['start_time']) + $shift_day * 24 * 60 * 60);
                         foreach ($round_overview as $k => $ro) {
                             if ($ro['date'] == $date) {
-                                $w1 = explode(" ", normalize_title($c["title"], $date));
-                                $w2 = explode(" ", normalize_title($ro["title"], $date));
-                                $intersect = count(array_intersect($w1, $w2));
-                                $iou = $intersect / count(array_unique(array_merge($w1, $w2)));
-                                if ($intersect == count($w2)) {
-                                    $iou = 0.9 + $iou * 0.1;
+                                $a1 = explode(" ", normalize_title($c["title"], $date));
+                                $a2 = explode(" ", normalize_title($ro["title"], $date));
+                                $intersection = 0;
+                                foreach ($a1 as $w1) {
+                                    foreach ($a2 as $w2) {
+                                        if (is_numeric($w1) || is_numeric($w2)) {
+                                            if ($w1 == $w2) {
+                                                $intersection += 1;
+                                                break;
+                                            }
+                                        } else if (substr($w1, 0, strlen($w2)) == $w2 || substr($w2, 0, strlen($w1)) == $w1) {
+                                            $intersection += 1;
+                                            break;
+                                        }
+                                    }
                                 }
+                                $union = count($a1) + count($a2) - $intersection;
+                                $iou = $intersection / $union;
                                 if ($iou > $opt) {
                                     $opt = $iou;
                                     $t = $k;

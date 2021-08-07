@@ -432,6 +432,7 @@ ACE_CALENDARS_ = {
 ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
            'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']
+DEFAULT_MIN_N_PARTICIPATIONS_ = 3
 
 DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100

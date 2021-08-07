@@ -311,10 +311,10 @@ class CoderResource(BaseModelResource):
         excludes = ('total_count', 'with_accounts')
         filtering = {
             'total_count': ['exact'],
+            'with_accounts': ['exact'],
             'country': ['exact'],
             'id': ['exact', 'in'],
             'username': ['exact', 'iregex', 'regex', 'in'],
-            'with_accounts': ['exact'],
         }
         extra_actions = [
             {

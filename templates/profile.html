@@ -61,6 +61,7 @@ Number of competitions: {{ account.n_contests }}
 {% elif account %}
   <div>
     <h2>
+      <img src="{{ account.resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
       {% coder_color_circle account.resource account.info %}
       <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
       {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}

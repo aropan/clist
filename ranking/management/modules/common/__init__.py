@@ -41,7 +41,7 @@ class BaseModule(object, metaclass=ABCMeta):
     def __init__(self, **kwargs):
         contest = kwargs.pop('contest', None)
         if contest is not None:
-            self.__init__(
+            kwargs.update(dict(
                 pk=contest.pk,
                 name=contest.title,
                 url=contest.url,
@@ -51,7 +51,7 @@ class BaseModule(object, metaclass=ABCMeta):
                 end_time=contest.end_time,
                 info=contest.info,
                 resource=contest.resource,
-            )
+            ))
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -76,6 +76,9 @@ class BaseModule(object, metaclass=ABCMeta):
         if isinstance(delta, timedelta):
             delta = delta.total_seconds()
         delta = int(delta)
+
+        if delta < 0:
+            return '-' + BaseModule.to_time(-delta, num=num)
 
         if num == 2:
             return f'{delta // 60:02d}:{delta % 60:02d}'

@@ -17,9 +17,9 @@
   </div>
 {% endif %}
 
-{% if not team_id %}{% coder_color_circle resource addition account.info %}{% endif %}
+{% if not team_id and not addition.style %}{% coder_color_circle resource addition account.info %}{% endif %}
 
-<div class="handle-div{% if not team_id%} {% coder_color_class resource addition account.info %}{% endif %}" style="display: inline-block">
+<div class="handle-div{% if not team_id and not addition.style %} {% coder_color_class resource addition account.info %}{% endif %}" style="display: inline-block; {% if addition.style %}{% for k, v in addition.style.items %}{{k}}: {{v}}; {% endfor %}{% endif %}">
   {% with members=addition|get_item:"_members" %}
   {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in addition %}<a href="{{ addition|get_item:"_account_url" }}">{% endif %}
 

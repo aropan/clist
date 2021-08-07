@@ -8,7 +8,7 @@
         $json = curlexec($url, NULL, array("json_output" => 1));
 
         if (!isset($json['data'])) {
-            trigger_error('json = ' . json_encode($json));
+            trigger_error('json = ' . json_encode($json), E_USER_WARNING);
             return;
         }
 

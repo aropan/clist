@@ -95,19 +95,14 @@ def get_view_contests(request, coder):
 
     now = timezone.now()
     result = []
-    for group, query, order, limit in (
-        ("running", Q(start_time__lte=now, end_time__gte=now), "end_time", None),
-        ("coming", Q(start_time__gt=now), "start_time", None),
+    for group, query, order in (
+        ("running", Q(start_time__lte=now, end_time__gte=now), "end_time"),
+        ("coming", Q(start_time__gt=now), "start_time"),
     ):
         group_by_resource = {}
-        contests = base_contests.filter(query).order_by(order)
+        contests = base_contests.filter(query).order_by(order, 'title')
         contests = contests.select_related('resource')
         contests = contests.annotate(has_statistics=Exists('statistics'))
-        if limit:
-            contests = contests[:limit]
-        if order.startswith('-'):
-            contests = list(contests)
-            contests.reverse()
         for contest in contests:
             contest.state = group
             if group_list:
@@ -179,6 +174,7 @@ def get_events(request):
     contests = Contest.objects if party_slug else Contest.visible
     contests = contests.select_related('resource')
     contests = contests.annotate(has_statistics=Exists('statistics'))
+    contests = contests.order_by('start_time', 'title')
 
     now = timezone.now()
     try:
@@ -341,14 +337,12 @@ def resources(request):
 def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
-    min_rating = request.GET.get('min_rating')
-    max_rating = request.GET.get('max_rating')
 
     if request.user.is_authenticated:
         coder = request.user.coder
         coder_account = coder.account_set.filter(resource=resource, rating__isnull=False).first()
         coder_account_ids = set(coder.account_set.filter(resource=resource).values_list('id', flat=True))
-        show_coder_account_rating = not min_rating and not max_rating
+        show_coder_account_rating = True
     else:
         coder = None
         coder_account = None
@@ -381,10 +375,20 @@ def resource(request, host, template='resource.html', extra_context=None):
     delta_period = deltas_period.get(period, None)
     if delta_period:
         accounts = accounts.filter(last_activity__gte=now - delta_period)
-    if min_rating:
-        accounts = accounts.filter(rating__gte=int(min_rating))
-    if max_rating:
-        accounts = accounts.filter(rating__lte=int(max_rating))
+
+    default_variables = resource.info.get('default_variables', {})
+    params.setdefault('min_n_participations', settings.DEFAULT_MIN_N_PARTICIPATIONS_)
+    for field, operator in (
+        ('min_rating', 'rating__gte'),
+        ('max_rating', 'rating__lte'),
+        ('min_n_participations', 'n_contests__gte'),
+        ('max_n_participations', 'n_contests__lte'),
+    ):
+        value = request.GET.get(field, default_variables.get(field))
+        if value:
+            params[field] = value
+        if field in params:
+            accounts = accounts.filter(**{operator: params[field]})
 
     countries = accounts \
         .filter(country__isnull=False) \
@@ -396,6 +400,8 @@ def resource(request, host, template='resource.html', extra_context=None):
     coloring_field = resource.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
 
     width = 50
+    min_rating = params.get('min_rating')
+    max_rating = params.get('max_rating')
     if n_x_axis or min_rating and max_rating and int(max_rating) - int(min_rating) <= 100:
         width = 1
     rating_field = 'rating50' if width == 50 else 'rating'
@@ -442,9 +448,6 @@ def resource(request, host, template='resource.html', extra_context=None):
             })
         min_rating = ratings[0][rating_field]
         max_rating = ratings[-1][rating_field]
-        if coder_account and show_coder_account_rating:
-            min_rating = min(min_rating, coder_account.rating // width)
-            max_rating = max(max_rating, coder_account.rating // width)
         labels = list(range(min_rating * width, max_rating * width + 1, width))
 
     context = {

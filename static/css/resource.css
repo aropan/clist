@@ -15,8 +15,7 @@ table.table tr th {
   }
 }
 
-[name="min_rating"],
-[name="max_rating"] {
+#resource-filters .short-value {
   width: 70px !important;
 }
 

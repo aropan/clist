@@ -12,6 +12,7 @@ from pprint import pprint
 from time import sleep
 from urllib.parse import parse_qs, quote, urljoin
 
+import dateutil.parser
 import tqdm
 from lxml import etree
 
@@ -89,51 +90,67 @@ class Statistic(BaseModule):
         result = {}
         hidden_fields = []
         fields_types = {}
+        order = None
         writers = defaultdict(int)
 
         start_time = self.start_time.replace(tzinfo=None)
 
         if not self.standings_url and datetime.now() - start_time < timedelta(days=30):
+            opt = 0.61803398875
+
+            def canonize_title(value):
+                return set(re.split('[^A-Za-z0-9]+', value.lower()))
+
+            def process_match(date, title, url):
+                nonlocal opt
+
+                if abs(date - start_time) > timedelta(days=2):
+                    return
+
+                a1 = canonize_title(title)
+                a2 = canonize_title(self.name)
+                intersection = 0
+                for w1 in a1:
+                    for w2 in a2:
+                        if w1.isdigit() or w2.isdigit():
+                            if w1 == w2:
+                                intersection += 1
+                                break
+                        elif w1.startswith(w2) or w2.startswith(w1):
+                            intersection += 1
+                            break
+                union = len(a1) + len(a2) - intersection
+                iou = intersection / union
+                if iou > opt:
+                    opt = iou
+                    self.standings_url = url
+
+            url = 'https://www.topcoder.com/tc?module=MatchList&nr=100500'
+            page = REQ.get(url)
             re_round_overview = re.compile(
                 r'''
-(?:<td[^>]*>
-    (?:
-        [^<]*<a[^>]*href="(?P<url>[^"]*/stat[^"]*rd=(?P<rd>[0-9]+)[^"]*)"[^>]*>(?P<title>[^<]*)</a>[^<]*|
-        (?P<date>[0-9]+\.[0-9]+\.[0-9]+)
-    )</td>[^<]*
-){2}
+(?:<td[^>]*>(?:
+[^<]*<a[^>]*href="(?P<url>[^"]*/stat[^"]*rd=(?P<rd>[0-9]+)[^"]*)"[^>]*>(?P<title>[^<]*)</a>[^<]*|
+(?P<date>[0-9]+\.[0-9]+\.[0-9]+)
+)</td>[^<]*){2}
                 ''',
                 re.VERBOSE,
             )
-            for url in [
-                'https://www.topcoder.com/tc?module=MatchList&nr=100500',
-                'https://community.topcoder.com/longcontest/stats/?module=MatchList&nr=100500',
-            ]:
-                page = REQ.get(url)
-                matches = re_round_overview.finditer(str(page))
-                opt = 0.61803398875
-                for match in matches:
-                    date = datetime.strptime(match.group('date'), '%m.%d.%Y')
-                    if abs(date - start_time) < timedelta(days=2):
-                        title = match.group('title')
-                        intersection = len(set(title.split()) & set(self.name.split()))
-                        union = len(set(title.split()) | set(self.name.split()))
-                        iou = intersection / union
-                        if iou > opt:
-                            opt = iou
-                            self.standings_url = urljoin(url, match.group('url'))
-            if not self.standings_url:
-                url = 'https://community.topcoder.com/stat?c=round_overview&er=1&rd=3000'
-                page = REQ.get(url)
-                page = re.sub('Single Round Match', 'SRM', page, flags=re.I)
-                regex = r'''
-                    <option[^>]*value="(?P<url>[^"]*/stat[^"]*round_overview[^"]*)"[^>]*>
-                    \s*''' + self.name.replace(" ", r"\s+") + '''[^<]*
-                    </option>
-                '''
-                match = re.search(regex, page, flags=re.IGNORECASE | re.VERBOSE)
-                if match:
-                    self.standings_url = urljoin(url, match.group('url'))
+            matches = re_round_overview.finditer(str(page))
+            for match in matches:
+                date = datetime.strptime(match.group('date'), '%m.%d.%Y')
+                process_match(date, match.group('title'), urljoin(url, match.group('url')))
+
+            url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_round_list'
+            page = REQ.get(url)
+            root = ET.fromstring(page)
+            for child in root:
+                data = {}
+                for field in child:
+                    data[field.tag] = field.text
+                date = dateutil.parser.parse(data['date'])
+                url = 'https://www.topcoder.com/stat?c=round_overview&er=5&rd=' + data['round_id']
+                process_match(date, data['full_name'], url)
 
         for url in self.url, self.standings_url:
             if url:
@@ -149,21 +166,31 @@ class Statistic(BaseModule):
             page = REQ.get(url)
             data = json.loads(page)
             problems_info = []
-            hidden_fields.extend(['time', 'submits'])
+            hidden_fields.extend(['time', 'submits', 'style'])
             fields_types = {'delta_rank': ['delta'], 'delta_score': ['delta']}
+            order = ['place_as_int', '-solving', 'addition__provisional_rank', '-addition__provisional_score']
             for row in data:
                 handle = row.pop('member')
-                if 'finalRank' not in row:
-                    continue
                 r = result.setdefault(handle, OrderedDict())
                 r['member'] = handle
-                r['place'] = row.pop('finalRank')
-                r['provisional_rank'] = row.pop('provisionalRank')
-                r['delta_rank'] = r['provisional_rank'] - r['place']
+                r['place'] = row.pop('finalRank', None)
+                r['provisional_rank'] = row.pop('provisionalRank', None)
+                r['style'] = row.pop('style')
+                if r['place'] and r['provisional_rank']:
+                    r['delta_rank'] = r['provisional_rank'] - r['place']
                 submissions = row.pop('submissions')
+                has_solution = False
                 for s in submissions:
                     score = s.get('finalScore')
                     if not score or score == '-':
+                        if 'provisional_score' not in r:
+                            p_score = s.pop('provisionalScore', None)
+                            if isinstance(p_score, str):
+                                p_score = asfloat(p_score)
+                            if p_score is not None:
+                                r['provisional_score'] = round(p_score, 2) if p_score >= 0 else False
+                                r['time'] = s['created']
+                                has_solution = True
                         continue
                     r['solving'] = score
                     r['solved'] = {'solving': int(score > 0)}
@@ -174,9 +201,9 @@ class Statistic(BaseModule):
                         r['provisional_score'] = round(p_score, 2)
                         r['delta_score'] = round(score - p_score, 2)
                     r['time'] = s['created']
+                    has_solution = True
                     break
-                else:
-                    result.pop(handle)
+                if not has_solution:
                     continue
                 r['submits'] = len(submissions)
             if not result:
@@ -481,6 +508,9 @@ class Statistic(BaseModule):
 
         if re.search(r'\bfinals?(?:\s+rounds?)?$', self.name, re.I):
             standings['options']['medals'] = [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]
+
+        if order:
+            standings['options']['order'] = order
 
         return standings
 

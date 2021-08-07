@@ -55,12 +55,23 @@
             </select>
         </div>
 
-        {% if rating.data or request.GET.min_rating|length or request.GET.max_rating|length %}
+        {% if rating.data or params.min_rating or params.max_rating %}
         <div class="input-group input-group-sm">
-            <span class="input-group-addon">Min rating</span>
-            <input name="min_rating" type="number" class="form-control" value="{{ request.GET.min_rating }}"/>
-            <span class="input-group-addon">Max rating</span>
-            <input name="max_rating" type="number" class="form-control" value="{{ request.GET.max_rating }}"/>
+            <span class="input-group-addon">Rating</span>
+            <span class="input-group-addon">min</span>
+            <input name="min_rating" type="number" class="form-control short-value" value="{{ params.min_rating }}"/>
+            <span class="input-group-addon">max</span>
+            <input name="max_rating" type="number" class="form-control short-value" value="{{ params.max_rating }}"/>
+        </div>
+        {% endif %}
+
+        {% if rating.data or params.min_n_participations or params.max_n_participations %}
+        <div class="input-group input-group-sm">
+            <span class="input-group-addon">Number of participations</span>
+            <span class="input-group-addon">min</span>
+            <input name="min_n_participations" type="number" class="form-control short-value" value="{{ params.min_n_participations }}"/>
+            <span class="input-group-addon">max</span>
+            <input name="max_n_participations" type="number" class="form-control short-value" value="{{ params.max_n_participations }}"/>
         </div>
         {% endif %}
 

@@ -122,12 +122,17 @@ class Statistic(BaseModule):
                             row['_account_name'] = row.pop('name')
 
                         row['team_id'] = team_info['1']
-                        row['name'] = team_info['2'].decode('utf8')
+                        if not isinstance(team_info['2'], dict):
+                            row['name'] = team_info['2'].decode('utf8')
                         organization = team_info.get('3')
                         if organization and isinstance(organization, bytes):
                             row['organization'] = organization.decode('utf8')
-                        contest_slug = team_info['5']['4'].decode('utf8')
-                        row['_account_url'] = self.host + f'contests/{contest_slug}/teams/{row["team_id"]}'
+
+                        if '5' in team_info and '4' in team_info['5']:
+                            contest_slug = team_info['5']['4'].decode('utf8')
+                            row['_account_url'] = self.host + f'contests/{contest_slug}/teams/{row["team_id"]}'
+                        else:
+                            row['_account_url'] = self.url.rstrip('/') + f'/teams/{row["team_id"]}'
                         row['_members'] = team_info['members']
 
                     row['place'] = r.pop('3')
