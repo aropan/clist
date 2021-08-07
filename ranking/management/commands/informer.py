@@ -18,7 +18,7 @@ from django.utils.timezone import now
 
 from .parse_statistic import Command as ParserCommand
 from clist.models import Contest
-from clist.templatetags.extras import has_season
+from clist.templatetags.extras import get_problem_name, get_problem_short, has_season
 from ranking.models import Statistics
 from tg.bot import Bot, telegram
 
@@ -77,6 +77,7 @@ class Command(BaseCommand):
             updated = False
             has_hidden = False
             numbered = 0
+
             for stat in sorted(statistics, key=lambda s: s.place_as_int):
                 name_instead_key = resource.info.get('standings', {}).get('name_instead_key')
                 name_instead_key = stat.account.info.get('_name_instead_key', name_instead_key)
@@ -91,13 +92,18 @@ class Command(BaseCommand):
                 filtered = False
                 if args.query is not None and re.search(args.query, name, re.I):
                     filtered = True
+                if args.top and stat.place_as_int <= args.top:
+                    filtered = True
+
+                contest_problems = contest.info.get('problems')
+                division = stat.addition.get('division')
+                if division and 'division' in contest_problems:
+                    contest_problems = contest_problems['division'][division]
+                contest_problems = {get_problem_short(p): p for p in contest_problems}
 
                 message_id = None
                 key = str(stat.account.id)
                 if key in standings:
-                    if filtered:
-                        print(stat.modified, {k: v for k, v in standings[key].items() if k != 'problems'}, end=' | ')
-                        print(stat.place, stat.solving, end=' | ')
                     problems = standings[key]['problems']
                     message_id = standings[key].get('messageId')
 
@@ -119,6 +125,7 @@ class Command(BaseCommand):
                     has_first_ac = False
                     has_try_first_ac = False
                     has_new_accepted = False
+                    has_top = False
 
                     for k, v in stat.addition.get('problems', {}).items():
                         p_info = problems_info.setdefault(k, {})
@@ -126,7 +133,7 @@ class Command(BaseCommand):
                         result = v['result']
 
                         is_hidden = str(result).startswith('?')
-                        is_accepted = str(result).startswith('+')
+                        is_accepted = str(result).startswith('+') or v.get('binary', False)
                         try:
                             is_accepted = is_accepted or float(result) > 0 and not v.get('partial')
                         except Exception:
@@ -137,7 +144,8 @@ class Command(BaseCommand):
 
                         if p_result != result or is_hidden:
                             has_new_accepted |= is_accepted
-                            m = '%s%s %s' % (k, ('. ' + v['name']) if 'name' in v else '', result)
+                            short = k if k not in contest_problems else get_problem_name(contest_problems[k])
+                            m = '%s%s %s' % (short, ('. ' + v['name']) if 'name' in v else '', result)
 
                             if v.get('verdict'):
                                 m += ' ' + v['verdict']
@@ -159,11 +167,9 @@ class Command(BaseCommand):
                                             m += ' TRY FIRST AC'
                                             has_try_first_ac = True
                                 if args.top and stat.place_as_int <= args.top:
-                                    if not filtered:
-                                        m += f' TOP{args.top}'
-                                    filtered = True
+                                    has_top = True
                             p.append(m)
-                        if result.startswith('+'):
+                        if is_accepted:
                             p_info['accepted'] = True
                         has_hidden = has_hidden or is_hidden
 
@@ -178,6 +184,9 @@ class Command(BaseCommand):
                     msg = '%s. _%s_' % (place, telegram.utils.helpers.escape_markdown(name.replace('_', ' ')))
                     if p:
                         msg = '%s, %s' % (', '.join(p), msg)
+                    if has_top:
+                        msg += f' TOP{args.top}'
+
                     if abs(standings[key]['solving'] - stat.solving) > 1e-9:
                         msg += ' = %d' % stat.solving
                         if 'penalty' in stat.addition:

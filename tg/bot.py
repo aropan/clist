@@ -454,7 +454,9 @@ class Bot(telegram.Bot):
             msg['reply_markup'] = reply_markup
         if 'reply_markup' not in msg:
             msg['reply_markup'] = telegram.ReplyKeyboardRemove()
-        if reply_markup is False or getattr(self, 'chat_type', None) == 'channel':
+
+        chat_type = getattr(self, 'chat_type', None)
+        if reply_markup is False or chat_type is None or chat_type in ['group', 'supergroup', 'channel']:
             msg.pop('reply_markup', None)
 
         try:
