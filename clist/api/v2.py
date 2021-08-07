@@ -1,6 +1,8 @@
+import json
+
 from django.conf.urls import re_path
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.db.models import IntegerField, JSONField
+from django.db.models import CharField, IntegerField, JSONField
 from django.db.models.expressions import F
 from django.db.models.functions import Cast
 from django.urls import reverse
@@ -67,15 +69,18 @@ class ContestResource(BaseModelResource):
     href = fields.CharField('url')
     filtered = fields.BooleanField(help_text='Use user filters')
     category = fields.CharField(help_text=f'Category to filter (default: api, allowed {Filter.CATEGORIES})')
+    problems = fields.CharField('problems', null=True, help_text='Dict or List data')
+    with_problems = fields.BooleanField()
     total_count = fields.BooleanField()
 
     class Meta(BaseModelResource.Meta):
         abstract = False
         queryset = Contest.visible.all()
         resource_name = 'contest'
-        excludes = ('filtered', 'category', 'total_count')
+        excludes = ('filtered', 'category', 'total_count', 'with_problems')
         filtering = {
             'total_count': ['exact'],
+            'with_problems': ['exact'],
             'id': ['exact', 'in'],
             'resource_id': ['exact', 'in'],
             'resource': ['exact'],
@@ -93,6 +98,13 @@ class ContestResource(BaseModelResource):
         bundle = super().dehydrate(*args, **kwargs)
         bundle.data.pop('filtered')
         bundle.data.pop('category')
+
+        bundle.data.pop('with_problems', None)
+        problems = bundle.data.pop('problems')
+        if problems:
+            problems = json.loads(problems)
+        bundle.data['problems'] = problems
+
         return bundle
 
     def build_filters(self, filters=None, *args, **kwargs):
@@ -100,12 +112,15 @@ class ContestResource(BaseModelResource):
         filtered = filters.pop('filtered', None)
         category = filters.pop('category', 'api')
         resource = filters.pop('resource', None)
+        with_problems = filters.pop('with_problems', None)
         filters = super().build_filters(filters, *args, **kwargs)
         if filtered is not None:
             filters['filtered'] = filtered[-1]
             filters['category'] = category[-1]
         if resource:
             filters['resource__host__in'] = ','.join(resource).split(',')
+        if with_problems:
+            filters['with_problems'] = with_problems
         return filters
 
     def apply_filters(self, request, applicable_filters):
@@ -120,6 +135,7 @@ class ContestResource(BaseModelResource):
                 filtered = applicable_filters.pop(f).lower() in ['true', 'yes', '1']
             elif f == 'category':
                 category = applicable_filters.pop(f)
+        with_problems = applicable_filters.pop('with_problems', None)
 
         qs = super().apply_filters(request, applicable_filters)
         qs = qs.select_related('resource')
@@ -129,6 +145,9 @@ class ContestResource(BaseModelResource):
             if not filtered:
                 filter_ = ~filter_
             qs = qs.filter(filter_)
+
+        if with_problems and with_problems[0].lower() in ['yes', 'true', '1']:
+            qs = qs.annotate(problems=Cast(KeyTextTransform('problems', 'info'), CharField()))
 
         return qs
 
@@ -208,7 +227,7 @@ class StatisticsResource(BaseModelResource):
             .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
             .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField()))
 
-        if with_problems:
+        if with_problems and with_problems.lower() in ['yes', 'true', '1']:
             qs = qs.annotate(problems=Cast(KeyTextTransform('problems', 'addition'), JSONField()))
 
         if with_more_fields:
