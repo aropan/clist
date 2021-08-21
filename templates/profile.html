@@ -3,13 +3,6 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/profile.css' %}" rel="stylesheet">
-
-<script src="{% static_ts 'js/moment.min.js' %}"></script>
-<script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
-
-<link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/Chart.min.js' %}"></script>
-
 {% endblock %}
 
 {% block ogtitle %}{% block title %}{% linebreakless %}
@@ -61,9 +54,19 @@ Number of competitions: {{ account.n_contests }}
 {% elif account %}
   <div>
     <h2>
-      <img src="{{ account.resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
-      {% coder_color_circle account.resource account.info %}
+      <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|static_resize:'64x64' }}" width="30" height="30"/></a>
+
+      {% if account.resource.avatar_url %}
+        {% call_method account 'avatar_url' account.resource as avatar_url %}
+        {% if avatar_url %}
+          <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
+        {% endif %}
+      {% endif %}
+
+      {% coder_color_circle account.resource account.info size=28 %}
+
       <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+
       {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
       <small><a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></small>
       {% endif %}
@@ -117,8 +120,7 @@ Number of competitions: {{ account.n_contests }}
       <span class="account btn-group btn-group-sm">
         <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
         <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
-          {% coder_color_circle resource account.info %}
-          <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+          {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
 
           {% if resource.coder_accounts|length > 1 %}
           <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
@@ -145,8 +147,7 @@ Number of competitions: {{ account.n_contests }}
     {% for account in resource.coder_accounts %}
       <span class="account btn-group btn-group-sm">
         <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
-          {% coder_color_circle resource account.info %}
-          <span class="{% coder_color_class resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+          {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
 
           {% for s in account_medals|get_item:account.pk %}
             <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
@@ -206,14 +207,24 @@ Number of competitions: {{ account.n_contests }}
   <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|add:"-3" }} more</span></a>
   <div class="collapse" id="history-resources-collapsed">
 {% endif %}
-<div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-spinner fa-spin"></i></div>
-<canvas class="rating_history" id="{{ hr.host }}_rating" height="75vh">{{ hr }}</canvas>
+<div>
+  <div class="resource_fields">
+    <a href="{% url 'clist:resource' hr.host %}" title="{{ hr.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ hr.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+    <div class="input-group input-group-sm invisible">
+      <select id="resource_{{ hr.pk }}_fields">
+        <option></option>
+      </select>
+    </div>
+  </div>
+
+  <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-spinner fa-spin"></i></div>
+
+  <canvas class="rating_history" id="resource_{{ hr.pk }}_rating" height="75vh">{{ hr }}</canvas>
+</div>
 {% endfor %}
 {% if history_resources|length > 3 %}
   </div>
 {% endif %}
-
-{% include "create_chart_config.html" %}
 
 <script>
 $(function(){
@@ -224,16 +235,21 @@ $(function(){
     success: function (response) {
       for (var resource in response['data']['resources']) {
         $('[id="loading_' + resource + '_rating"]').remove()
-        config = create_chart_config(resource, response['data']['resources'][resource], response['data']['dates'])
-        new Chart(resource + '_rating', config)
+        var resource_info = response['data']['resources'][resource]
+        var resource_dates = response['data']['dates']
+        config = create_chart_config(resource_info, resource_dates)
+        const resource_rating_id = 'resource_' + resource_info['pk'] + '_rating'
+        const resource_fields_id = 'resource_' + resource_info['pk'] + '_fields'
+        var ctx = new Chart(resource_rating_id, config)
+        add_selection_chart_range(resource_rating_id, ctx)
+        add_selection_chart_fields(resource_info, resource_rating_id, resource_fields_id, resource_dates)
       }
-      $('.loading_rating').next().remove()
-      $('.loading_rating').remove()
+
+      $('.loading_rating').parent().remove()
     },
     error: function(data) {
       $.notify('{status} {statusText}'.format(data), 'error');
-      $('.loading_rating').next().remove()
-      $('.loading_rating').remove()
+      $('.loading_rating').parent().remove()
     },
   });
 });

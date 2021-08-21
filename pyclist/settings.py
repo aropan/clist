@@ -432,7 +432,6 @@ ACE_CALENDARS_ = {
 ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
            'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']
-DEFAULT_MIN_N_PARTICIPATIONS_ = 3
 
 DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
@@ -445,6 +444,8 @@ ISSUES_URL_ = 'https://github.com/aropan/clist/issues'
 NEWS_URL_ = 'https://t.me/s/clistbynews'
 DISCUSS_URL_ = 'https://t.me/clistbynews'
 DONATE_URL_ = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=47CJBL6B2XPM8&source=url'
+
+ADDITION_HIDE_FIELDS_ = {'problems', 'solved'}
 
 
 class NOTIFICATION_CONF:

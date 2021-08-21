@@ -103,7 +103,7 @@
             {% if contest.sub_contest %}
             <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
             {% endif %}
-            <a href="{{ contest.resource.href }}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+            <a href="{% url 'clist:resource' contest.resource.host %}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
             <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
           </span>
           {% if contest.state != "past" and add_to_calendar != "disable" %}

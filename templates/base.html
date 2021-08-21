@@ -65,10 +65,17 @@
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.1.4/jquery.floatThead.min.js"></script>
 
+        <script src="{% static_ts 'js/moment.min.js' %}"></script>
+        <script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
+
+        <script src="{% static_ts 'js/chart.js@3.5.0' %}"></script>
+        <script src="{% static_ts 'js/chartjs-adapter-moment@0.1.1' %}"></script>
+        <script src="{% static_ts 'js/chart-helper.js' %}"></script>
+
         {% block end-head %}{% endblock %}
     </head>
     <body>
-        <svg width="0" height="0" style="display: block"><defs><clipPath id="rating-clip"><circle cx="{{ svg_r|default:8 }}" cy="{{ svg_r|default:8 }}" r="{{ svg_r|add:-1|default:7 }}"/></clipPath></defs></svg>
+        {% include "rating-clip.html" %}
         {% block navbar %}{% include 'navbar.html' %}{% endblock %}
         {% block container %}
         <div class="container">

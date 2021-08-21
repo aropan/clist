@@ -227,7 +227,7 @@ class StatisticsResource(BaseModelResource):
             .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
             .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField()))
 
-        if with_problems and with_problems.lower() in ['yes', 'true', '1']:
+        if with_problems and with_problems[0].lower() in ['yes', 'true', '1']:
             qs = qs.annotate(problems=Cast(KeyTextTransform('problems', 'addition'), JSONField()))
 
         if with_more_fields:

@@ -2,7 +2,7 @@
     require_once dirname(__FILE__) . "/../../config.php";
 
     function get_ids($page) {
-        preg_match_all('#<link[^>]*href="(?P<href>[^"]*rsrc[^"]*)"[^>]*>#', $page, $matches);
+        preg_match_all('#<link[^>]*href="(?P<href>[^"]*rsrc[^"]*\.js\b[^"]*)"[^>]*>#', $page, $matches);
         $urls = $matches['href'];
         // preg_match_all('#{"type":"js","src":"(?P<href>[^"]*rsrc[^"]*)"#', $page, $matches);
         // foreach ($matches['href'] as $u) {
@@ -30,6 +30,17 @@
 
     curl_setopt($CID, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36');
 
+
+    $headers = array(
+        'pragma: no-cache',
+        'cache-control: no-cache',
+        'upgrade-insecure-requests: 1',
+        'sec-fetch-site: same-origin',
+        'sec-fetch-mode: navigate',
+        'sec-fetch-user: ?1',
+        'sec-fetch-dest: document',
+    );
+
     unset($year);
     for (;;) {
         $url = $URL;
@@ -39,7 +50,12 @@
         if (DEBUG) {
             echo "url = $url\n";
         }
-        $page = curlexec($url);
+        $page = curlexec($url, null, array("http_header" => $headers));
+
+        unset($fb_dtsg);
+        if (preg_match('#\["DTSGInitialData",\[\],{"token":"(?P<token>[^"]*)"#', $page, $match)) {
+            $fb_dtsg = $match['token'];
+        }
 
         preg_match('#\["LSD",\[\],{"token":"(?P<token>[^"]*)"#', $page, $match);
         $lsd_token = $match['token'];
@@ -70,6 +86,9 @@
                 "doc_id" => $ids['CodingCompetitionsContestSeriesRootQuery'],
             );
         }
+        if (isset($fb_dtsg)) {
+            $params['fb_dtsg'] = $fb_dtsg;
+        }
         $data = curlexec($url, $params, array("json_output" => 1));
 
         $contest_series = $data['data']['contestSeries'];
@@ -89,9 +108,17 @@
             $scoreboard_url = rtrim($url) . '/scoreboard';
             $scoreboard_page = curlexec($scoreboard_url);
             $node['scoreboard_ids'] = get_ids($scoreboard_page);
+
+            if (isset($node['duration_in_seconds'])) {
+                $duration = $node['duration_in_seconds'] / 60;
+            } else if (isset($node['duration_text']) && preg_match('#^(?P<hours>[0-9]+)\s+hours$#', $node['duration_text'], $match)) {
+                $duration = $match['hours'] * 60;
+            } else {
+                $duration = '00:00';
+            }
             $contests[] = array(
                 'start_time' => $node['start_time'],
-                'duration' => $node['duration_in_seconds'] / 60,
+                'duration' => $duration,
                 'title' => $node['name'] . ' ' . $year,
                 'url' => $url,
                 'host' => $HOST,

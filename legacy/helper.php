@@ -66,7 +66,7 @@
 
 
     $cookiefile = dirname(__FILE__) . '/cookie.file';
-    if (file_exists($cookiefile) && filesize($cookiefile) > 4 * 1024) {
+    if (file_exists($cookiefile) && filesize($cookiefile) > 4 * 1024 * 1024) {
         @unlink($cookiefile);
     }
 

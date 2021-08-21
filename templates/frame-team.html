@@ -11,7 +11,7 @@
   <style>{{ base_css }}</style>
 </head>
 <body>
-  <svg width="0" height="0" style="display: block"><defs><clipPath id="rating-clip"><circle cx="5" cy="5" r="4"/></clipPath></defs></svg>
+  <svg width="0" height="0" style="display: block"><defs><clipPath id="rating-clip-14"><circle cx="7" cy="7" r="6"/></clipPath></defs></svg>
 
   <div class="container">
     <script type="text/javascript">
@@ -88,7 +88,7 @@
             {% for p in team.ordered_participants %}
               {{ p.first_name_native }}
               {% for a in p.coder.account_set.all %}
-              {% coder_color_circle codeforces_resource a.info size=10 %}
+              {% coder_color_circle codeforces_resource a.info size=14 %}
               <a href="{{ codeforces_resource.profile_url|format_dict:a.dict_with_info }}" class="{% coder_color_class codeforces_resource a.info %}" target="_blank">{{ a.key }}</a>
               {% endfor %}
               {{ p.last_name_native }}{% if forloop.revcounter0 %}, {%endif %}

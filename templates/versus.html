@@ -14,13 +14,8 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
 {% block end-head %}
 <link href="{% static_ts 'css/versus.css' %}" rel="stylesheet">
 
-<script src="{% static_ts 'js/moment.min.js' %}"></script>
-<script src="{% static_ts 'js/moment-timezone.min.js' %}"></script>
 <script src="{% static_ts 'js/daterangepicker.js' %}"></script>
 <link href="{% static_ts 'css/daterangepicker-bs3.css' %}" rel="stylesheet">
-
-<link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/Chart.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -63,12 +58,27 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
 
 {% with ratings=versus_data.ratings %}
 {% for resource, resource_info in ratings.resources.items %}
-  {% if forloop.first %}{% include "create_chart_config.html" %}{% endif %}
-  <canvas class="rating_history" id="{{ resource }}_rating" height="75vh">{{ resource }}</canvas>
-  <script>
-    config = create_chart_config("{{ resource }}", {{ resource_info|to_json|safe }}, {{ ratings.dates|to_json|safe }})
-    new Chart('{{ resource }}_rating', config)
-  </script>
+<div>
+  <div class="resource_fields">
+    <a href="{% url 'clist:resource' resource_info.host %}" title="{{ resource_info.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ resource_info.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+    <div class="input-group input-group-sm invisible">
+      <select id="resource_{{ resource_info.pk }}_fields">
+        <option></option>
+      </select>
+    </div>
+  </div>
+
+  <canvas class="rating_history" id="resource_{{ resource_info.pk }}_rating" height="75vh">{{ resource }}</canvas>
+</div>
+<script>
+  var resource_info = {{ resource_info|to_json|safe }}
+  var resource_dates = {{ ratings.dates|to_json|safe }}
+  config = create_chart_config(resource_info, resource_dates)
+  var resource_rating_id = 'resource_{{ resource_info.pk }}_rating'
+  var ctx = new Chart(resource_rating_id, config)
+  add_selection_chart_range(resource_rating_id, ctx)
+  add_selection_chart_fields(resource_info, resource_rating_id, 'resource_{{ resource_info.pk }}_fields', resource_dates)
+</script>
 {% endfor %}
 {% endwith %}
 

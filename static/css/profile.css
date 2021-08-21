@@ -6,12 +6,17 @@
 
 #contests .title {
   text-align: left;
+  white-space: normal;
 }
 
-tr .date {
-  text-align: center;
+#contests tr td {
   white-space: nowrap;
 }
+
+#contests .problems {
+  white-space: nowrap;
+}
+
 
 #writers td {
   white-space: nowrap;

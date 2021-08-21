@@ -312,3 +312,40 @@ canvas.rating_history {
 .notifyjs-container .notifyjs-bootstrap-base {
   border: 1px solid #888;
 }
+
+
+/*
+ * rating graphs
+ */
+
+.resource_rating_close {
+  position: absolute;
+  padding-top: 10px;
+  z-index: 0;
+  cursor: pointer;
+}
+
+.resource_rating_hint {
+  position: absolute;
+  padding-top: 20px;
+  right: 20px;
+  z-index: 0;
+}
+
+.resource_rating_overlay {
+  position: absolute;
+  pointer-events: none;
+}
+
+.resource_fields {
+  position: absolute;
+  padding-top: 10px;
+  z-index: 0;
+}
+
+.resource_fields > div,
+.resource_fields .select2-container,
+.resource_fields .select2-selection,
+.resource_fields .select2-selection span {
+  display: inline !important;
+}

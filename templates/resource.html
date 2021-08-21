@@ -5,8 +5,6 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/resource.css' %}" rel="stylesheet">
-<link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/Chart.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -65,7 +63,6 @@
         </div>
         {% endif %}
 
-        {% if rating.data or params.min_n_participations or params.max_n_participations %}
         <div class="input-group input-group-sm">
             <span class="input-group-addon">Number of participations</span>
             <span class="input-group-addon">min</span>
@@ -73,7 +70,6 @@
             <span class="input-group-addon">max</span>
             <input name="max_n_participations" type="number" class="form-control short-value" value="{{ params.max_n_participations }}"/>
         </div>
-        {% endif %}
 
         <input type="submit" style="visibility: hidden;" />
 
@@ -145,46 +141,39 @@
                 },
                 options: {
                     responsive: true,
-                    legend: {
-                        display: false,
-                    },
-                    scales: {
-                        xAxes: [{
-                            gridLines: {
-                                display:false
-                            },
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                            },
-                        }],
-                    },
-                    tooltips: {
-                        position: 'nearest',
-                        callbacks: {
-                            title: function(tooltipItems, data) {
-                                var tooltipItem = tooltipItems[0]
-                                return data.datasets[tooltipItem.datasetIndex].title[tooltipItem.index]
-                            },
-                            label: function(tooltipItem, data) {
-                                return data.datasets[tooltipItem.datasetIndex].value[tooltipItem.index]
+                    plugins: {
+                        legend: { display: false},
+                        tooltip: {
+                            position: 'nearest',
+                            callbacks: {
+                                title: function(tooltipItems, data) {
+                                    var tooltipItem = tooltipItems[0]
+                                    return tooltipItem.dataset.title[tooltipItem.dataIndex]
+                                },
+                                label: function(tooltipItem, data) {
+                                    return tooltipItem.dataset.value[tooltipItem.dataIndex]
+                                },
                             },
                         },
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { ticks: { beginAtZero: true } },
                     },
                     onClick: function (e, item) {
                         if (!item) {
                           return;
                         }
                         item = item[0]
-                        rating = item._chart.data.datasets[item._datasetIndex].data[item._index]
+                        rating = e.chart.data.datasets[item.datasetIndex].data[item.index]
                         {% autoescape off %}
                         url = '{% url_transform request %}' + '&min_rating=' + rating['x'] + '&max_rating=' + (rating['x'] + {{ rating.width }} - 1)
                         {% endautoescape %}
                         window.location.assign(url);
                     },
                     onHover: (e, el) => {
-                        e.target.style.cursor = el[0] ? 'pointer' : 'default'
+                        var c = e.target || e.native.target
+                        c.style.cursor = el[0] ? 'pointer' : 'default'
                     },
                 },
 {% if rating.account %}
@@ -192,16 +181,16 @@
 {% with coloring_value=rating.account.info|get_item:coloring_field|default:rating.account.rating %}
                 plugins: [{
                     beforeDatasetsDraw: function (chart) {
-                        var ctx = chart.chart.ctx
-                        var y_axis = chart.chart.scales["y-axis-0"];
-                        var x_axis = chart.chart.scales["x-axis-0"];
+                        var ctx = chart.ctx
+                        var y_axis = chart.scales['y']
+                        var x_axis = chart.scales['x']
+                        var x_ticks = x_axis['ticks']
                         x_axis = {
-                            'min': x_axis.min,
-                            'max': x_axis.max + {{ rating.width }},
+                            'min': x_ticks[0].label,
+                            'max': x_ticks[x_ticks.length - 1].label + {{ rating.width }},
                             'left': x_axis.left,
                             'right': x_axis.right,
                         }
-
                         var x = get_x_chart({{ rating.account.rating }}, x_axis)
                         ctx.beginPath();
                         ctx.moveTo(x, y_axis.top);
@@ -218,12 +207,12 @@
             })
 
             $('#toggleLogScale input').change(function() {
-                var type = chart.options.scales.yAxes[0].type
+                var type = chart.options.scales.y.type
                 for (var i in chart.data.datasets[0].data) {
                     chart.data.datasets[0].data[i]['y'] += type == 'linear'? 1 : -1;
                 }
                 type = type == 'linear'? 'logarithmic' : 'linear'
-                chart.options.scales.yAxes[0].type = type
+                chart.options.scales.y.type = type
                 chart.update()
                 return false
             })

@@ -402,7 +402,7 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
         return ''
     color = rating['hex_rgb']
     radius = size // 2
-    width = size // 6
+    width = size // 10
     reverse_percent = resource.info.get('ratings', {}).get('reverse_circle_percent')
     if ('prev' if reverse_percent else 'next') not in rating:
         fill = f'<circle cx="{radius}" cy="{radius}" r="{size // 5}" style="fill: {color}"></circle>'
@@ -416,7 +416,7 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
         v = percent * (size - 2 * width) + width
         fill = f'''
 <path
-    clip-path="url(#rating-clip)"
+    clip-path="url(#rating-clip-{size})"
     d="M 0 {size} v-{round(v, 3)} h {size} 0 v{size} z"
     style="fill: {color}"
 />
@@ -427,6 +427,7 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
     if 'name' in rating:
         title += f'<br/>{rating["name"]}'
 
+    div_size = radius * 2 + width
     return mark_safe(
         f'''
         <div
@@ -436,8 +437,8 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
             data-html="true"
             style="display: inline-block; vertical-align: top; padding-top: 1px"
         >
-            <div style="height: {size}px; ">
-            <svg viewBox="0 0 {size} {size}" width="{size}" height="{size}">
+            <div style="height: {div_size}px; ">
+            <svg viewBox="-{width / 2} -{width / 2} {div_size} {div_size}" width="{div_size}" height="{div_size}">
                 <circle
                     style="stroke: {color}; fill: none; stroke-width: {width}px;"
                     cx="{radius}"
@@ -660,3 +661,8 @@ def split_account_key(value, regex):
             name = (value[:st] + value[fn:]).strip()
             subname = match.group('value')
             return name, subname
+
+
+@register.simple_tag
+def to_dict(**kwargs):
+    return dict(**kwargs)

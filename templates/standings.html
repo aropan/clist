@@ -10,9 +10,8 @@
 <script src="{% static_ts 'js/highlight.pack.js' %}"></script>
 
 {% if groupby and groupby != 'none' %}
-<link href="{% static_ts 'css/Chart.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/Chart.min.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/google-palette@1.1.0/palette.min.js"></script>
+<script src="{% static_ts 'js/Chart.min.js' %}"></script>
 <script src="{% static_ts 'js/addon-chart.js' %}"></script>
 {% endif %}
 
@@ -263,7 +262,17 @@
       }
       {% endif %}
       {% endwith %}
-      el.animate({scrollTop: target}, 1000);
+      var scroll_animate_time = 1000
+      var color_animate_time = 500
+      el.animate({scrollTop: target}, scroll_animate_time)
+
+      $('.find-me-row td').each(function() {
+        var el = $(this)
+        var color = el.css('background-color')
+        setTimeout(function() { el.animate({'background-color': '#d0e3f7'}, color_animate_time) }, scroll_animate_time)
+        setTimeout(function() { el.animate({'background-color': color}, color_animate_time) }, scroll_animate_time + color_animate_time)
+      })
+
     }
 {% endif %}
   })

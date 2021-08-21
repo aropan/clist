@@ -15,6 +15,7 @@
 {% endif %}
 {% if with_fixed_width %}</div>{% endif %}
 
+{% if not without_country %}
 {% if with_fixed_width %}<div class="flag-width-fixed">{% endif %}
 {% with country=account.country %}
 {% if country %}
@@ -26,10 +27,17 @@
 {% endif %}
 {% endwith %}
 {% if with_fixed_width %}</div>{% endif %}
+{% endif %}
 
 <span>
 {% coder_color_circle resource account.info %}
+
+{% if not without_url %}
 <a href="{{ account.url }}" class="{% coder_color_class resource account.info %}">
+{% else %}
+<span class="{% coder_color_class resource account.info %}">
+{% endif %}
+
   {% if account.name and account.key|has_season:account.name %}
     <span>{{ account.name }}</span>
   {% elif account.name and resource.info.standings.name_instead_key %}
@@ -37,5 +45,11 @@
   {% else %}
     <span{% if account.name %} title="{{ account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
   {% endif %}
+
+{% if not without_url %}
 </a>
+{% else %}
+</span>
+{% endif %}
+
 </span>

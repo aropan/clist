@@ -24,7 +24,7 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
 from clist.models import Contest, ProblemTag, Resource
-from clist.templatetags.extras import format_time, get_timezones, query_transform
+from clist.templatetags.extras import asfloat, format_time, get_timezones, query_transform
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
@@ -46,7 +46,9 @@ def get_profile_context(request, statistics, writers):
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
         .filter(Q(new_rating__isnull=False) | Q(contest__resource__info__ratings__external=True)) \
         .annotate(host=F('contest__resource__host')) \
-        .values('host') \
+        .annotate(pk=F('contest__resource__pk')) \
+        .annotate(icon=F('contest__resource__icon')) \
+        .values('pk', 'host', 'icon') \
         .annotate(num_contests=Count('contest')) \
         .order_by('-num_contests')
 
@@ -353,6 +355,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         .annotate(problems=KeyTextTransform('problems', 'contest__info')) \
         .annotate(division=KeyTextTransform('division', 'addition')) \
         .annotate(cid=F('contest__pk')) \
+        .annotate(sid=F('pk')) \
         .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField())) \
         .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0)) \
         .filter(new_rating__isnull=False) \
@@ -360,6 +363,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
 
     qs = qs.values(
         'cid',
+        'sid',
         'name',
         'date',
         'new_rating',
@@ -373,6 +377,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         'addition___rating_data',
         'resource',
         'stage',
+        'addition',
     )
 
     ratings = {
@@ -382,17 +387,45 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
 
     ratings['data']['resources'] = {}
 
+    def dict_to_float_values(data):
+        ret = {}
+        for k, v in data.items():
+            if k.startswith('_') or k in django_settings.ADDITION_HIDE_FIELDS_ or isinstance(v, (list, tuple)):
+                continue
+            if isinstance(v, dict):
+                d = dict_to_float_values(v)
+                for subk, subv in d.items():
+                    ret[f'{k}__{subk}'] = subv
+                continue
+            if isinstance(v, str):
+                v = asfloat(v)
+            if v is None:
+                continue
+            ret[k] = v
+        return ret
+
     qs = [stat for stat in qs if stat['stage'] is None and stat['resource'] in resources]
     n_resources = len({stat['resource'] for stat in qs})
     for stat in qs:
         if stat['addition___rating_data'] and n_resources > 1:
             continue
 
+        addition = stat.pop('addition', {})
+        addition['n_solved'] = stat['solved']
+        addition['place'] = stat['place']
+        addition['score'] = stat['score']
+        stat['values'] = dict_to_float_values(addition)
+
         resource = resources[stat['resource']]
         default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
+        default_info['pk'] = stat['resource']
+        default_info['host'] = resource.host
         default_info['colors'] = resource.ratings
+        default_info['icon'] = resource.icon
+        default_info['fields'] = set()
         resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
         resource_info.setdefault('data', [])
+        resource_info['fields'] |= set(stat['values'].keys())
 
         if stat['addition___rating_data']:
             data = resource.plugin.Statistic.get_rating_history(stat['addition___rating_data'],
@@ -405,7 +438,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         else:
             stat.pop('addition___rating_data')
             stat['slug'] = slugify(stat['name'])
-            division = stat.pop('division')
+            division = stat['division']
             problems = stat.pop('problems', {})
             if division and 'division' in problems:
                 problems = problems['division'][division]
@@ -424,7 +457,10 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
     for pk in resources_list:
         resource = resources[pk]
         default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
+        default_info['pk'] = pk
+        default_info['host'] = resource.host
         default_info['colors'] = resource.ratings
+        default_info['icon'] = resource.icon
         resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
         resource_info.setdefault('data', [])
         for stat in qs.filter(contest__resource__pk=pk).distinct('account__key'):
@@ -457,6 +493,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         resource_info['min'] = min([stat['new_rating'] for stat in resource_info['data']])
         resource_info['max'] = max([stat['new_rating'] for stat in resource_info['data']])
         resource_info['data'] = [resource_info['data']]
+        resource_info['fields'] = list(sorted(resource_info.get('fields', [])))
 
     ratings['data']['dates'] = list(sorted(set(dates)))
     return ratings

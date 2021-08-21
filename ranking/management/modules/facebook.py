@@ -2,41 +2,67 @@
 # -*- coding: utf-8 -*-
 
 import json
+import os
 import re
-import tqdm
-from datetime import datetime
-from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import datetime
+from pprint import pprint
 
 import pytz
+import tqdm
 
 from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
     API_GRAPH_URL_ = 'https://www.facebook.com/api/graphql/'
+    COOKIE_FILE_ = 'legacy/cookie.file'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if os.path.exists(self.COOKIE_FILE_):
+            with open(self.COOKIE_FILE_, 'r') as fo:
+                for line in fo.readlines():
+                    line = line.strip()
+                    args = line.split('\t')
+                    if len(args) < 3:
+                        continue
+                    domain, *_, name, value = args
+                    if 'facebook' not in domain:
+                        continue
+                    domain = domain.strip('#HttpOnly_')
+                    REQ.add_cookie(name, value, domain=domain)
 
     def get_standings(self, users=None, statistics=None):
         page = REQ.get(self.standings_url)
-        match = re.search(r'\["LSD",\[\],{"token":"(?P<token>[^"]*)"', page)
-        lsd_token = match.group('token')
+        matches = re.finditer(r'\["(?P<name>[^"]*)",\[\],{"token":"(?P<token>[^"]*)"', page)
+        tokens = {}
+        for match in matches:
+            tokens[match.group('name').lower()] = match.group('token')
 
         def query(name, variables):
+            params = {
+                'fb_dtsg': tokens.get('dtsginitialdata', ''),
+                'lsd': tokens['lsd'],
+                'fb_api_caller_class': 'RelayModern',
+                'fb_api_req_friendly_name': name,
+                'variables': json.dumps(variables),
+                'doc_id': self.info['parse']['scoreboard_ids'][name],
+            }
             ret = REQ.get(
                 self.API_GRAPH_URL_,
-                post={
-                    'lsd': lsd_token,
-                    'fb_api_caller_class': 'RelayModern',
-                    'fb_api_req_friendly_name': name,
-                    'variables': json.dumps(variables),
-                    'doc_id': self.info['parse']['scoreboard_ids'][name],
-                },
+                post=params,
                 headers={'accept-language': 'en-US,en;q=1.0'}
             )
-            return json.loads(ret)
+            try:
+                return json.loads(ret)
+            except Exception as e:
+                raise ExceptionParseStandings(f'Error on query {name} = {e}')
 
-        scoreboard_data = query('CodingCompetitionsContestScoreboardQuery', {'id': self.key})
+        variables = {'id': self.key, 'force_limited_data': False, 'show_all_submissions': False}
+        scoreboard_data = query('CodingCompetitionsContestScoreboardQuery', variables)
 
         problems_info = OrderedDict()
         for problem_set in scoreboard_data['data']['contest']['ordered_problem_sets']:
@@ -96,6 +122,10 @@ class Statistic(BaseModule):
                         if penalty:
                             r['penalty'] = self.to_time(penalty)
 
+                        country = row.pop('country_code_of_representation')
+                        if country:
+                            r['country'] = country
+
                         problems = r.setdefault('problems', {})
                         solved = 0
                         for problem in row.pop('problems'):
@@ -136,8 +166,7 @@ class Statistic(BaseModule):
                         profile_picture = row
                         for field in ('entrant_personal_info', 'individual_entrant_user', 'profile_picture', 'uri'):
                             profile_picture = profile_picture.get(field) or {}
-                        if profile_picture:
-                            r['info'] = {'profile_picture': profile_picture}
+                        r['info'] = {'profile_picture': profile_picture if profile_picture else None}
 
                         if has_users_filter:
                             users.remove(handle)

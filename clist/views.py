@@ -377,7 +377,6 @@ def resource(request, host, template='resource.html', extra_context=None):
         accounts = accounts.filter(last_activity__gte=now - delta_period)
 
     default_variables = resource.info.get('default_variables', {})
-    params.setdefault('min_n_participations', settings.DEFAULT_MIN_N_PARTICIPATIONS_)
     for field, operator in (
         ('min_rating', 'rating__gte'),
         ('max_rating', 'rating__lte'),
