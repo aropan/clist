@@ -79,10 +79,13 @@ class Statistic(BaseModule):
             k = k.strip().lower().replace(' ', '_')
             if not k or not v or v == 'N/A':
                 continue
-            if ',' in v:
-                v = float(v.replace(',', '.'))
-            elif re.match('^-?[0-9]+$', v):
-                v = int(v)
+            vi = toint(v)
+            if vi is not None:
+                v = vi
+            else:
+                vf = asfloat(v.replace(',', '.'))
+                if vf is not None:
+                    v = vf
             ret[k] = v
         return ret
 
@@ -229,7 +232,8 @@ class Statistic(BaseModule):
                         data = {}
                         for field in child:
                             data[field.tag] = field.text
-                        dd_round_results[data['handle']] = data
+                        handle = data.pop('handle')
+                        dd_round_results[handle] = self._dict_as_number(data)
                 except FailOnGetResponse:
                     pass
 
@@ -360,20 +364,20 @@ class Statistic(BaseModule):
                     if n_failed_fetch_info > 10:
                         return
                     delay = 10
-                    for _ in range(3):
+                    for _ in range(5):
                         try:
                             page = REQ.get(url, time_out=delay)
-                            break
+                            match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>',
+                                              page,
+                                              re.IGNORECASE)
+                            if match:
+                                break
                         except Exception:
                             sleep(delay + _)
                     else:
                         n_failed_fetch_info += 1
                         return
 
-                    match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE)
-                    if not match:
-                        n_failed_fetch_info += 1
-                        return
                     handle = html.unescape(match.group('handle').strip())
 
                     match = re.search(r'&nbsp;Room\s*(?P<room>[0-9]+)', page)
@@ -441,7 +445,7 @@ class Statistic(BaseModule):
                         url, handle, room, problems, challenges, n_sol = info
                         n_fetch_solution += n_sol
                         pbar.set_description(f'div{division} {url}')
-                        pbar.set_postfix(n_solution=n_fetch_solution)
+                        pbar.set_postfix(n_solution=n_fetch_solution, n_failed_fetch_info=n_failed_fetch_info)
                         pbar.update()
                         if handle is not None:
                             if handle not in result:
@@ -464,33 +468,36 @@ class Statistic(BaseModule):
                                 for c in challenges:
                                     h['successful' if c['status'].lower() == 'yes' else 'unsuccessful'] += 1
 
-                if dd_round_results:
-                    fields = set()
-                    hidden_fields_set = set(hidden_fields)
-                    for data in result.values():
-                        for field in data.keys():
-                            fields.add(field)
+            if dd_round_results:
+                fields = set()
+                hidden_fields_set = set(hidden_fields)
+                for data in result.values():
+                    for field in data.keys():
+                        fields.add(field)
 
-                    k_mapping = {'new_vol': 'new_volatility', 'advanced': None}
-                    for handle, data in dd_round_results.items():
-                        if handle not in result:
-                            continue
-                        row = result[handle]
-                        for k, v in data.items():
-                            k = k_mapping.get(k, k)
-                            if k and k not in fields:
-                                row[k] = v
-                                if k not in hidden_fields_set:
-                                    hidden_fields_set.add(k)
-                                    hidden_fields.append(k)
-                                ks = k.split('_')
-                                if ks[0] == 'level' and ks[-1] == 'language' and v and v.lower() != 'unspecified':
-                                    idx = {'one': 0, 'two': 1, 'three': 2}.get(ks[1], None)
-                                    d = problems_info
-                                    if len(problems_sets) > 1:
-                                        d = d['division'][row['division']]
-                                    if idx is not None and d[idx]['short'] in row['problems']:
-                                        row['problems'][d[idx]['short']]['language'] = v
+                k_mapping = {'new_vol': 'new_volatility', 'advanced': None}
+                for handle, data in dd_round_results.items():
+                    if handle not in result:
+                        continue
+                    row = result[handle]
+
+                    for k, v in data.items():
+                        k = k_mapping.get(k, k)
+                        if k and k not in fields:
+                            if k in {'new_rating', 'old_rating'} and not v:
+                                continue
+                            row[k] = v
+                            if k not in hidden_fields_set:
+                                hidden_fields_set.add(k)
+                                hidden_fields.append(k)
+                            ks = k.split('_')
+                            if ks[0] == 'level' and ks[-1] == 'language' and v and v.lower() != 'unspecified':
+                                idx = {'one': 0, 'two': 1, 'three': 2}.get(ks[1], None)
+                                d = problems_info
+                                if len(problems_sets) > 1:
+                                    d = d['division'][row['division']]
+                                if idx is not None and 0 <= idx < len(d) and d[idx]['short'] in row['problems']:
+                                    row['problems'][d[idx]['short']]['language'] = v
         standings = {
             'result': result,
             'url': self.standings_url,
@@ -552,6 +559,8 @@ class Statistic(BaseModule):
                 data = dd_active_algorithm[user]
                 if 'alg_vol' in data:
                     ret['volatility'] = toint(data['alg_vol'])
+                if 'alg_rating' in data:
+                    ret['rating'] = toint(data['alg_rating'])
             return ret
 
         ret = []

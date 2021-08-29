@@ -130,6 +130,8 @@ class ModuleAdmin(BaseModelAdmin):
                     'max_delay_after_end',
                     'delay_on_error',
                     'delay_on_success',
+                    'long_contest_idle',
+                    'long_contest_divider',
                     'path']
     list_filter = ['has_accounts_infos_update']
     search_fields = ['resource__host']

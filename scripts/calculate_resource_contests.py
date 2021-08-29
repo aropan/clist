@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
+import fire
 from tqdm import tqdm
 
 from clist.models import Contest, Resource
 from ranking.models import Account
 
 
-def run(*args):
-    resources = Resource.objects.all()
+def main(host=None):
+    resources = Resource.objects
+    if host:
+        resources = resources.filter(host__regex=host)
     total = resources.count()
 
     for resource in tqdm(resources.iterator(), total=total, desc='contests'):
@@ -26,3 +29,7 @@ def run(*args):
                 resource.n_accounts = count
                 resource.save()
             pbar.update()
+
+
+def run(*args):
+    fire.Fire(main, args)

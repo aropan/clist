@@ -90,6 +90,11 @@ class Command(BaseCommand):
                     for account, data in zip(accounts, infos):
                         with transaction.atomic():
                             if data.get('skip'):
+                                delta = data.get('delta')
+                                if delta:
+                                    count += 1
+                                    account.updated = now + delta
+                                    account.save()
                                 continue
                             count += 1
                             info = data['info']

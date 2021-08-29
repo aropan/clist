@@ -5,7 +5,7 @@ import collections
 import re
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pprint
 
 import tqdm
@@ -15,9 +15,6 @@ from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 
 
 class Statistic(BaseModule):
-
-    def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None):
         try:
@@ -235,7 +232,7 @@ class Statistic(BaseModule):
                     if info is None:
                         yield {'info': None}
                     else:
-                        yield {'skip': True}
+                        yield {'skip': True, 'delta': timedelta(days=365)}
                     continue
                 info = {
                     'info': info,

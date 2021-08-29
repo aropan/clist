@@ -74,6 +74,7 @@
     $USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0";
     curl_setopt($CID, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($CID, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($CID, CURLOPT_AUTOREFERER, true);
     curl_setopt($CID, CURLOPT_TIMEOUT, 15);
     curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
     curl_setopt($CID, CURLOPT_COOKIEJAR, $cookiefile);
@@ -81,6 +82,8 @@
     curl_setopt($CID, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($CID, CURLOPT_ENCODING, "gzip");
     curl_setopt($CID, CURLINFO_HEADER_OUT, true);
+    curl_setopt($CID, CURLOPT_VERBOSE, true);
+
 
     $COOKIE = array();
 
@@ -142,7 +145,7 @@
         else
         {
             $page = curl_exec($CID);
-            if (preg_match('#charset=([-a-z0-9]+)#i', $page, $match))
+            if (preg_match('#charset=["\']?([-a-z0-9]+)#i', $page, $match))
             {
                 $charset = $match[1];
                 if (!preg_match('#^utf.*8$#i', $charset))
@@ -175,7 +178,7 @@
             $a = $header["content-type"];
             $a = is_array($a)? $a : array($a);
             $content_type = implode(", ", $a);
-            if (strpos($content_type, "application/json") !== false || strpos($content_type, "text/javascript") !== false) {
+            if (strpos($content_type, "json") !== false || strpos($content_type, "text/javascript") !== false) {
                 $page = json_decode(substr($page, $sep + 4), true);
             }
         }

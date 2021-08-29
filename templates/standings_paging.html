@@ -19,7 +19,7 @@
 {% for statistic in statistics|chain:my_statistics %}
 
 {% with tag=statistic.my_stat|then:"th"|default:"td" %}
-{% with addition=statistic.addition %}
+{% with addition=statistic.addition_replacement|default:statistic.addition %}
 {% if statistic.my_stat and statistic.floating %}{% if force_both_scroll or not request.GET.scroll_up %}{% show_more_table %}{% endif %}
 {% endif %}
 <tr
@@ -48,10 +48,15 @@ class="
         data-placement="top"
         title="{% if advance.next %}{% if advance.contest or not contest.next_time %}Advanced{% else %}Supposedly advance{% endif %} to {{ advance.next }}{% if advance.contest %} (in {{ advance.contest }}){% endif %}{% elif advance.medal %}{{ advance.medal }}{% endif %}"
       {% endif %}
+    {% else %}
+      class="place-cell"
     {% endif %}
   >
-    {% if statistic.place is not None %}{{ statistic.place }}{% else %}-{% endif %}
+    {% with place=statistic.addition_replacement.place|default:statistic.place %}
+      {% if place is not None %}{{ place }}{% else %}-{% endif %}
+    {% endwith %}
     {% if with_row_num and not statistic.floating %}({{ forloop.counter0|add:pages.current_start_index }}){% endif %}
+    {% if other_contests %}{{ contests_ids|get_item:statistic.contest_id }}{% endif %}
   </{{ tag }}>
   {% endwith %}
   {% if data_1st_u %}
@@ -117,7 +122,7 @@ class="
   {% endwith %}
   {% endif %}
   <{{ tag }}>
-    <div>{{ statistic.solving|floatformat:'-2' }}</div>
+    <div>{{ statistic.addition_replacement.solving|default:statistic.solving|floatformat:'-2' }}</div>
   </{{ tag }}>
   {% if mod_penalty %}
   <{{ tag }}>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty|default:0 %}</{{ tag }}>

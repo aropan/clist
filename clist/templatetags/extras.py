@@ -666,3 +666,14 @@ def split_account_key(value, regex):
 @register.simple_tag
 def to_dict(**kwargs):
     return dict(**kwargs)
+
+
+@register.filter
+def as_number(value):
+    retf = asfloat(str(value).replace(',', '.'))
+    if retf is not None:
+        reti = toint(value)
+        if reti is not None:
+            return reti
+        return retf
+    return value

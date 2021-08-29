@@ -1,5 +1,8 @@
+{% if not without_paginate %}
 {% load el_pagination_tags %}
 {% lazy_paginate 50 contests %}
+{% endif %}
+
 {% for contest in contests %}
 <a href="{% if not contest.n_statistics and not contest.info.problems  %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="contest list-group-item list-group-item-action list-group-item-{% if not contest.has_module %}info{% elif not contest.n_statistics and not contest.info.problems %}danger{% elif contest.is_running %}success{% endif %}">
     <div>
@@ -38,4 +41,7 @@
     {% endfor %}
 </a>
 {% endfor %}
+
+{% if not without_paginate %}
 {% show_more %}
+{% endif %}

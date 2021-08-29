@@ -13,8 +13,6 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   } else {
     var min_rating = resource_info['min']
     var max_rating = resource_info['max']
-    var rating_labels = new Set($.map(resource_info['colors'], function(val) { return val['low']; }))
-    var max_rating_labels = Math.max(...$.map(resource_info['colors'], function(val) { return val['low']; }))
     var highest = resource_info['highest']
   }
 
@@ -26,17 +24,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   var datasets_colors = get_or_default(datasets_infos['colors'], [])
   var datasets_labels = get_or_default(datasets_infos['labels'], [])
   var coloring_field = get_or_default(resource_info['coloring_field'], 'new_rating')
-  var n_gen_y_axis_ticks = get_or_default(resource_info['n_gen_y_axis_ticks'], false)
-  if (n_gen_y_axis_ticks) {
-    var delta = Math.floor((max_rating - min_rating) / n_gen_y_axis_ticks)
-    var power = Math.max(0, Math.floor(Math.log10(delta)) - 1)
-    var div10 = Math.pow(10, power)
-    var y_axis_ticks_every = Math.floor(delta / div10) * div10
-  } else {
-    var y_axis_ticks_every = false
-  }
   var with_url = !get_or_default(resource_info['without_url'], false)
-
 
   var datasets = [].concat.apply([], $.map(resource_info['data'], function(data, index) {
     var dataset = {
@@ -50,7 +38,6 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
       pointHitRadius: get_or_default(resource_info['point_hit_radius'], 1),
       pointHoverRadius: 5,
       fill: false,
-      lineTension: 0,
       pointBackgroundColor: $.map(data, function(val) {
         for (var idx in resource_info['colors']) {
           var rating = resource_info['colors'][idx]
@@ -153,7 +140,12 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
     options: {
       responsive: true,
       interaction: {
-          mode: 'nearest',
+        mode: 'nearest',
+      },
+      elements: {
+        line: {
+          tension: 0,
+        },
       },
       scales: {
         x: {
@@ -163,44 +155,21 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
           },
         },
         y:
-          is_addition?
-          {
-            grid: {
-              display: true,
-            },
-            min: min_field,
-            max: max_field,
-            afterDataLimits(scale) {
-              var range = scale.max - scale.min;
-              var grace = range * 0.1;
-              scale.max += grace;
-              scale.min -= grace;
-            }
-          }
-          :
-          {
-            grid: {
-              display: get_or_default(resource_info['display_y_axis_gridlines'], false),
-            },
-            min: Math.floor((min_rating - 100) / 100) * 100,
-            max: Math.ceil((max_rating + 100) / 100) * 100,
-            ticks: {
-              stepSize: 50,
-              autoSkip: false,
-              callback: function(value, index) {
-                if (get_or_default(resource_info['without_y_axis_ticks'], false)) {
-                  return
-                }
-                if (y_axis_ticks_every) {
-                  return value % y_axis_ticks_every == 0? value : null
-                }
-                if ((value < max_rating_labels || value % 500) && !rating_labels.has(value)) {
-                  return
-                }
-                return value
-              },
+        {
+          min: is_addition? min_field : min_rating,
+          max: is_addition? max_field : max_rating,
+          ticks: {
+            callback: function(value, index) {
+              return +value.toFixed(2);
             },
           },
+          afterDataLimits(scale) {
+            var range = scale.max - scale.min;
+            var grace = range * 0.05;
+            scale.max += grace;
+            scale.min -= grace;
+          },
+        },
       },
       onClick: function (e, items) {
         if (!with_url) {
@@ -284,6 +253,8 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
           padding: 6,
           caretPadding: 0,
           caretSize: 0,
+          mode: get_or_default(resource_info['tooltip_mode'], 'index'),
+          intersect: false,
           callbacks: {
             title: function(tooltipItems) {
               for (var i = 0; i < tooltipItems.length; ++i) {
@@ -493,6 +464,25 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
     const x = evt.clientX - rect.left;
     const y = evt.clientY - rect.top;
     clear_overlay();
+    const clip_x = Math.max(Math.min(x, chart.chartArea.right), chart.chartArea.left);
+    const clip_y = Math.max(Math.min(y, chart.chartArea.bottom), chart.chartArea.top);
+    if (x < chart.chartArea.left + dragBorder || chart.chartArea.right - dragBorder < x) {
+      selectionContext.fillRect(chart.chartArea.left, clip_y, chart.chartArea.width, 1);
+    } else if (draged && dragX || y < chart.chartArea.top + dragBorder || chart.chartArea.bottom - dragBorder < y) {
+
+      const x_axis = chart.scales['x'];
+      const value = (clip_x - x_axis.left) / x_axis.width * (x_axis.max - x_axis.min) + x_axis.min;
+
+      $('.resource_rating_overlay').map((idx, overlay) => {
+        const canvas = overlay.nextSibling;
+        const chart = $(canvas).data('chart');
+        const x_axis = chart.scales['x'];
+        if (x_axis.min < value && value < x_axis.max) {
+          const x = (value - x_axis.min) / (x_axis.max - x_axis.min) * x_axis.width + x_axis.left;
+          overlay.getContext('2d').fillRect(x, chart.chartArea.top, 1, chart.chartArea.height);
+        }
+      });
+    }
     if (dragX || dragY) {
       selectionRect.endX = Math.max(Math.min(x, chart.chartArea.right), chart.chartArea.left);
       selectionRect.endY = Math.max(Math.min(y, chart.chartArea.bottom), chart.chartArea.top);
@@ -511,26 +501,6 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
           selectionContext.fillRect(chart.chartArea.left, selectionRect.startY, chart.chartArea.width, h);
         }
         draged = true;
-      }
-    } else {
-      const clip_x = Math.max(Math.min(x, chart.chartArea.right), chart.chartArea.left);
-      const clip_y = Math.max(Math.min(y, chart.chartArea.bottom), chart.chartArea.top);
-      if (x < chart.chartArea.left + dragBorder || chart.chartArea.right - dragBorder < x) {
-        selectionContext.fillRect(chart.chartArea.left, clip_y, chart.chartArea.width, 1);
-      } else if (y < chart.chartArea.top + dragBorder || chart.chartArea.bottom - dragBorder < y) {
-
-        const x_axis = chart.scales['x'];
-        const value = (clip_x - x_axis.left) / x_axis.width * (x_axis.max - x_axis.min) + x_axis.min;
-
-        $('.resource_rating_overlay').map((idx, overlay) => {
-          const canvas = overlay.nextSibling;
-          const chart = $(canvas).data('chart');
-          const x_axis = chart.scales['x'];
-          if (x_axis.min < value && value < x_axis.max) {
-            const x = (value - x_axis.min) / (x_axis.max - x_axis.min) * x_axis.width + x_axis.left;
-            overlay.getContext('2d').fillRect(x, chart.chartArea.top, 1, chart.chartArea.height);
-          }
-        });
       }
     }
   }

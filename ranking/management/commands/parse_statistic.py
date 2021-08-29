@@ -66,7 +66,6 @@ class Command(BaseCommand):
         stop_on_error=False,
         random_order=False,
         no_update_results=False,
-        limit_duration_in_secs=7 * 60 * 60,  # 7 hours
         title_regex=None,
         users=None,
         with_stats=True,
@@ -86,12 +85,17 @@ class Command(BaseCommand):
                     contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
                     started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
 
-                    query = Q()
-                    query &= (
+                    before_end_limit_query = (
                         Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
                         | Q(timing__statistic__isnull=True)
                     )
-                    query &= Q(end_time__lt=now - F('resource__module__min_delay_after_end'))
+                    after_start_limit_query = Q(end_time__lt=now - F('resource__module__min_delay_after_end'))
+                    long_contest_query = Q(
+                        stage__isnull=True,
+                        resource__module__long_contest_idle__isnull=False,
+                        start_time__lt=now - F('resource__module__long_contest_idle'),
+                    )
+                    query = before_end_limit_query & (after_start_limit_query | long_contest_query)
                     ended = contests.filter(query)
 
                     contests = started.union(ended)
@@ -112,9 +116,11 @@ class Command(BaseCommand):
                 module = c.resource.module
                 delay_on_success = module.delay_on_success or module.max_delay_after_end
                 if now < c.end_time:
-                    if c.end_time - c.start_time <= timedelta(seconds=limit_duration_in_secs):
-                        delay_on_success = timedelta(minutes=0)
-                    elif c.end_time < now + delay_on_success:
+                    if module.long_contest_divider:
+                        delay_on_success = c.duration / module.long_contest_divider
+                    if module.long_contest_idle and c.duration < module.long_contest_idle:
+                        delay_on_success = timedelta(minutes=1)
+                    if c.end_time < now + delay_on_success:
                         delay_on_success = c.end_time - now + timedelta(seconds=5)
                 TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
 
@@ -158,6 +164,7 @@ class Command(BaseCommand):
                     parsed = True
                     continue
 
+                now = timezone.now()
                 plugin = resource.plugin.Statistic(contest=contest)
 
                 with REQ:
@@ -200,7 +207,7 @@ class Command(BaseCommand):
                             contest.info['standings'] = standings_options
                             contest.save()
 
-                    info_fields = standings.pop('info_fields', []) + ['divisions_order']
+                    info_fields = standings.pop('info_fields', []) + ['divisions_order', 'divisions_addition']
                     for field in info_fields:
                         if standings.get(field) is not None and contest.info.get(field) != standings[field]:
                             contest.info[field] = standings[field]
@@ -249,6 +256,9 @@ class Command(BaseCommand):
                             for k, v in r.items():
                                 if isinstance(v, str) and chr(0x00) in v:
                                     r[k] = v.replace(chr(0x00), '')
+
+                            r.update(contest.info.get('parse', {}).get('addition', {}))
+
                             member = r.pop('member')
                             account_action = r.pop('action', None)
                             skip_result = r.get('_no_update_n_contests')
@@ -259,7 +269,11 @@ class Command(BaseCommand):
 
                             account, created = Account.objects.get_or_create(resource=resource, key=member)
 
-                            if not contest.info.get('_no_update_account_time') and not skip_result:
+                            if (
+                                not contest.info.get('_no_update_account_time') and
+                                not skip_result and
+                                contest.end_time < now
+                            ):
                                 stats = (statistics_by_key or {}).get(member, {})
                                 no_rating = with_stats and 'new_rating' not in stats and 'rating_change' not in stats
 
@@ -425,7 +439,9 @@ class Command(BaseCommand):
 
                             calc_time = contest.calculate_time or (
                                 contest.start_time <= now < contest.end_time and
-                                not contest.resource.info.get('parse', {}).get('no_calculate_time', False)
+                                not contest.resource.info.get('parse', {}).get('no_calculate_time', False) and
+                                resource.module.long_contest_idle and
+                                contest.duration < resource.module.long_contest_idle
                             )
 
                             advance = contest.info.get('advance')
@@ -471,6 +487,11 @@ class Command(BaseCommand):
                             }
                             defaults = {k: v for k, v in defaults.items() if v != '__unchanged__'}
 
+                            if 'is_rated' in r and not r['is_rated']:
+                                r.pop('old_rating', None)
+                                r.pop('rating_change', None)
+                                r.pop('new_rating', None)
+
                             addition = type(r)()
                             addition_was_ordereddict |= isinstance(addition, OrderedDict)
                             for k, v in r.items():
@@ -502,9 +523,6 @@ class Command(BaseCommand):
                                 if f not in fields_set:
                                     fields_set.add(f)
                                     fields.append(f)
-
-                            if 'is_rated' in addition and not addition['is_rated']:
-                                addition.pop('old_rating', None)
 
                             if not calc_time:
                                 defaults['addition'] = addition
@@ -564,19 +582,16 @@ class Command(BaseCommand):
                                 statistic.save()
 
                         if users is None:
-                            timing_statistic_delta = standings.get(
-                                'timing_statistic_delta',
-                                timedelta(minutes=30) if has_hidden and contest.end_time < now else None,
-                            )
-                            if timing_statistic_delta is not None:
+                            timing_statistic_delta = timedelta(minutes=30) if has_hidden else None
+                            timing_statistic_delta = standings.get('timing_statistic_delta', timing_statistic_delta)
+                            if contest.end_time < now and timing_statistic_delta is not None:
                                 contest.timing.statistic = timezone.now() + timing_statistic_delta
                                 contest.timing.save()
 
-                            if contest.start_time <= now:
-                                if now < contest.end_time:
-                                    contest.info['last_parse_statistics'] = now.strftime('%Y-%m-%d %H:%M:%S.%f+%Z')
-                                elif 'last_parse_statistics' in contest.info:
-                                    contest.info.pop('last_parse_statistics')
+                            if contest.start_time <= now and now < contest.end_time:
+                                contest.info['last_parse_statistics'] = now.strftime('%Y-%m-%d %H:%M:%S.%f+%Z')
+                            elif 'last_parse_statistics' in contest.info:
+                                contest.info.pop('last_parse_statistics')
 
                             if fields_set and not addition_was_ordereddict:
                                 fields.sort()
@@ -676,8 +691,14 @@ class Command(BaseCommand):
                 if stop_on_error:
                     break
             if not parsed:
-                if now < c.end_time and c.duration_in_secs <= limit_duration_in_secs:
-                    delay = timedelta(minutes=0)
+                if (
+                    now < c.end_time and
+                    resource.module.long_contest_idle and
+                    c.duration < resource.module.long_contest_idle
+                ):
+                    delay = timedelta(minutes=1)
+                elif now < c.end_time and resource.module.long_contest_divider:
+                    delay = c.duration / resource.module.long_contest_divider
                 else:
                     delay = resource.module.delay_on_error
                 contest.timing.statistic = timezone.now() + delay

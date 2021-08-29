@@ -28,8 +28,24 @@
         return $ids;
     }
 
-    curl_setopt($CID, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36');
+    $url = "https://www.facebook.com/";
+    $page = curlexec($url);
 
+    if (preg_match('#<form[^>]*action="(?P<url>[^"]*/login/[^"]*)"#', $page, $match)) {
+        $url = $match['url'];
+        preg_match_all('#<input[^>]*name="(?P<name>[^"]*)"[^>]*value="(?P<value>[^"]*)"#', $page, $matches, PREG_SET_ORDER);
+        $data = array();
+        foreach ($matches as $match) {
+            $data[$match['name']] = $match['value'];
+        }
+        require_once dirname(__FILE__) . "/secret.php";
+        $data['email'] = $FACEBOOK_USERNAME;
+        $data['pass'] = $FACEBOOK_PASSWORD;
+        unset($FACEBOOK_EMAIL);
+        unset($FACEBOOK_USERNAME);
+        unset($FACEBOOK_PASSWORD);
+        $page = curlexec($url, $data);
+    }
 
     $headers = array(
         'pragma: no-cache',

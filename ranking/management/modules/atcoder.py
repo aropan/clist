@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import functools
+import html
 import json
 import re
-import urllib.parse
-import html
-import functools
 import time
-from copy import deepcopy
-from pprint import pprint
-from datetime import timedelta, datetime
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
+from datetime import datetime, timedelta
+from pprint import pprint
 
-import pytz
 import arrow
+import pytz
 from first import first
-from tqdm import tqdm
 from ratelimiter import RateLimiter
+from tqdm import tqdm
 
-from ranking.management.modules.common import REQ, LOG, FailOnGetResponse, BaseModule, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules import conf
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):

@@ -55,7 +55,10 @@
   </form>
 
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
-  <div id="standings_list" class="list-group">
+  <div class="list-group standings_list">
+  {% include "standings_list_paging.html" with contests=stages without_paginate=True %}
+  </div>
+  <div class="list-group standings_list">
   {% include page_template %}
   </div>
 </div>

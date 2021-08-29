@@ -268,6 +268,8 @@ class Module(BaseModel):
     max_delay_after_end = models.DurationField()
     delay_on_error = models.DurationField()
     delay_on_success = models.DurationField(null=True, blank=True)
+    long_contest_idle = models.DurationField(default='06:00:00', null=True, blank=True)
+    long_contest_divider = models.IntegerField(default=12)
     multi_account_allowed = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
 

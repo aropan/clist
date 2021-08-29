@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import collections
 import json
 import time
-import collections
-from urllib.parse import quote_plus, urlparse
-from pprint import pprint
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from contextlib import ExitStack
-from ratelimiter import RateLimiter
+from pprint import pprint
+from urllib.parse import quote_plus, urlparse
 
+import arrow
 import tqdm
+from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, BaseModule
 
 
 class Statistic(BaseModule):
-    API_RANKING_URL_FORMAT_ = '{resource}/api/contest/info/{key}'
-    PROBLEM_URL_ = '{resource}/problem/{short}'
+    API_RANKING_URL_FORMAT_ = '{resource}/api/v2/contest/{key}'
+    PROBLEM_URL_ = '{resource}/problem/{code}'
     FETCH_USER_INFO_URL_ = '{resource}/api/user/info/{user}'
 
     def __init__(self, **kwargs):
@@ -36,12 +37,14 @@ class Statistic(BaseModule):
             return {'action': 'delete'} if e.args[0].code == 404 else {}
 
         data = json.loads(page)
+        data = data['data']['object']
 
         problems_info = []
         for p in data['problems']:
             info = {
-                'short': p['code'],
+                'short': p['label'],
                 'name': p['name'],
+                'code': p['code'],
             }
             info['url'] = self.PROBLEM_URL_.format(resource=resource, **info)
             if p.get('points'):
@@ -54,7 +57,9 @@ class Statistic(BaseModule):
         handles_to_get_new_rating = []
         has_rated = data.get('is_rated', True) or data.get('has_rating', True)
         has_rating = False
-        rankings = sorted(data['rankings'], key=lambda x: (-x['points'], x['cumtime']))
+        rankings = sorted(data['rankings'], key=lambda x: (-x['score'], x['cumulative_time']))
+        fields_types = {}
+        hidden_fields = set()
         for index, r in enumerate(rankings, start=1):
             solutions = r.pop('solutions')
             if not any(solutions):
@@ -64,12 +69,12 @@ class Statistic(BaseModule):
             row = result.setdefault(handle, collections.OrderedDict())
 
             row['member'] = handle
-            row['solving'] = r.pop('points')
-            cumtime = r.pop('cumtime')
-            if cumtime:
-                row['penalty'] = self.to_time(cumtime)
+            row['solving'] = r.pop('score')
+            cumulative_time = r.pop('cumulative_time')
+            if cumulative_time:
+                row['penalty'] = self.to_time(cumulative_time)
 
-            curr = (row['solving'], cumtime)
+            curr = (row['solving'], cumulative_time)
             if curr != prev:
                 prev = curr
                 rank = index - skip
@@ -80,7 +85,7 @@ class Statistic(BaseModule):
             for prob, sol in zip(data['problems'], solutions):
                 if not sol:
                     continue
-                p = problems.setdefault(prob['code'], {})
+                p = problems.setdefault(prob['label'], {})
                 if sol['points'] > 0 and prob.get('partial'):
                     p['partial'] = prob['points'] - sol['points'] > 1e-7
                     if not p['partial']:
@@ -98,6 +103,12 @@ class Statistic(BaseModule):
             if has_rated:
                 row['rating_change'] = None
                 row['new_rating'] = new_rating
+
+            for k, v in r.items():
+                hidden_fields.add(k)
+                if k.endswith('_time'):
+                    r[k] = arrow.get(v).timestamp
+                    fields_types.setdefault(k, ['time'])
 
             row.update({k: v for k, v in r.items() if k not in row})
 
@@ -117,7 +128,7 @@ class Statistic(BaseModule):
                 executor = stack.enter_context(PoolExecutor(max_workers=8))
                 pbar = stack.enter_context(tqdm.tqdm(total=len(handles_to_get_new_rating), desc='getting new rankings'))
 
-                @RateLimiter(max_calls=1, period=1)
+                @RateLimiter(max_calls=1, period=2)
                 def fetch_data(handle):
                     url = self.FETCH_USER_INFO_URL_.format(resource=resource, user=quote_plus(handle))
                     page = REQ.get(url)
@@ -142,10 +153,13 @@ class Statistic(BaseModule):
                     pbar.update()
 
         standings_url = hasattr(self, 'standings_url') and self.standings_url or self.url.rstrip('/') + '/ranking/'
+
         standings = {
             'result': result,
             'url': standings_url,
             'problems': problems_info,
+            'fields_types': fields_types,
+            'hidden_fields': list(hidden_fields),
         }
         return standings
 

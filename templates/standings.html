@@ -26,7 +26,7 @@
 
   {% with neighbors=contest.neighbors %}
   <h3 id="standings-title" class="text-center">
-    {% if with_neighbors %}
+    {% if not other_contests and with_neighbors %}
     {% for c in neighbors %}{% if c.end_time < contest.end_time %}{% include "standings_neighbors.html" with contest=c %}{% endif %}{% endfor %}
     {% endif %}
 
@@ -34,9 +34,11 @@
     Standings
     <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
     <span id="standings-url"></span>
-    <a href="{{ contest.standings_url|default:contest.url }}">{{ contest.title }}</a>
+    <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
 
-    <a href="?{% query_transform request "neighbors" with_neighbors|yesno:"off,on" with_replace=True %}" class="badge progress-bar-info"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></a>
+    {% if not other_contests %}
+    <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></a>
+    {% endif %}
 
     <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
       <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
@@ -47,7 +49,9 @@
     {% endif %}
     </div>
 
-    {% if with_neighbors %}
+    {% if other_contests %}
+    {% for c in other_contests %}{% include "standings_neighbors.html" with contest=c without_neighbors=True %}{% endfor %}
+    {% elif with_neighbors %}
     {% for c in neighbors %}{% if not c.end_time < contest.end_time %}{% include "standings_neighbors.html" with contest=c %}{% endif %}{% endfor %}
     {% endif %}
   </h3>

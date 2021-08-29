@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import json
-import os
 import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -12,6 +11,7 @@ from pprint import pprint
 import pytz
 import tqdm
 
+from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 
@@ -22,18 +22,14 @@ class Statistic(BaseModule):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if os.path.exists(self.COOKIE_FILE_):
-            with open(self.COOKIE_FILE_, 'r') as fo:
-                for line in fo.readlines():
-                    line = line.strip()
-                    args = line.split('\t')
-                    if len(args) < 3:
-                        continue
-                    domain, *_, name, value = args
-                    if 'facebook' not in domain:
-                        continue
-                    domain = domain.strip('#HttpOnly_')
-                    REQ.add_cookie(name, value, domain=domain)
+        REQ.get('https://facebook.com/')
+        form = REQ.form(action='/login/')
+        if form:
+            data = {
+                'email': conf.FACEBOOK_USERNAME,
+                'pass': conf.FACEBOOK_PASSWORD,
+            }
+            REQ.submit_form(data=data, form=form)
 
     def get_standings(self, users=None, statistics=None):
         page = REQ.get(self.standings_url)

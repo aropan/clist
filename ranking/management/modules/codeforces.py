@@ -275,6 +275,8 @@ class Statistic(BaseModule):
                         elif unofficial:
                             if users:
                                 r['place'] = '__unchanged__'
+                            elif 'team_id' not in r and 'OUT_OF_COMPETITION' in r.get('participant_type', []):
+                                r['place'] = None
                             else:
                                 if 'team_id' in r:
                                     if r['team_id'] not in teams_to_skip:
