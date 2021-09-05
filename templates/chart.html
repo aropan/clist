@@ -1,0 +1,101 @@
+<div class="pull-right">
+<span id="toggle-log-scale">
+  <input
+      type="checkbox"
+      data-toggle="toggle"
+      data-on="logarithmic"
+      data-off="linear"
+      data-onstyle="default active"
+      data-offstyle="default active"
+      data-size="mini"
+      />
+</span>
+<span id="toggle-type">
+  <input
+      type="checkbox"
+      data-toggle="toggle"
+      data-on="line"
+      data-off="bar"
+      data-onstyle="default active"
+      data-offstyle="default active"
+      data-size="mini"
+      />
+</span>
+<span>
+  <a href="{% url_transform request "chart_column" "" %}"><i class="fas fa-times"></i></a>
+</span>
+</div>
+
+<canvas id="chart"></canvas>
+
+<script>
+  {% if chart.fields %}
+  var bg_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.2, 1).map(function(hex) { return '#' + hex; })
+  var border_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.5, 1).map(function(hex) { return '#' + hex; })
+  {% endif %}
+  const data = {
+    labels: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}"{{ hist.bin }}"{% endfor %}],
+    datasets: [
+    {% if chart.fields %}
+      {% for field in chart.fields %}
+      {
+        data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:field }}'}{% endfor %}],
+        label: {% if chart.slice == 'country' %}'{{ field|get_country_name }}'{% else %}'{{ field }}'{% endif %},
+        backgroundColor: bg_colors[{{ forloop.counter0 }}],
+        borderColor: border_colors[{{ forloop.counter0 }}],
+        borderWidth: 1,
+      },
+      {% endfor %}
+    {% else %}
+      {
+        data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist.value }}'}{% endfor %}]
+      },
+    {% endif %}
+    ]
+  }
+
+  const config = {
+    type: 'bar',
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: {% if chart.fields %}true{% else %}false{% endif %},
+        },
+      },
+      scales: {
+        x: {
+          {% if chart.x_type %}
+          type: '{{ chart.x_type }}',
+          {% endif %}
+          grid: {
+              display: false,
+          },
+        },
+        y: {
+          type: 'linear',
+          ticks: {
+            callback: function(value, index) {
+              return +value.toFixed(2);
+            },
+          },
+        },
+      },
+    },
+  }
+
+  var ctx = document.getElementById('chart').getContext('2d');
+  var chart = new Chart(ctx, config);
+
+  $('#toggle-log-scale input').change(function() {
+    chart.options.scales.y.type = chart.options.scales.y.type == 'linear'? 'logarithmic' : 'linear'
+    chart.update()
+  })
+
+  $('#toggle-type input').change(function() {
+    chart.destroy();
+    config['type'] = config['type'] == 'bar'? 'line' : 'bar';
+    chart = new Chart(ctx, config);
+  })
+</script>

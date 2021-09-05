@@ -230,3 +230,12 @@ a.solution:hover span {
 a.versus-games:hover {
   cursor: pointer;
 }
+
+#parsed-time {
+  position: absolute;
+}
+
+#parsed-time .container {
+  margin-left: -15px;
+  margin-top: -20px;
+}

@@ -11,6 +11,7 @@ django-json-widget==1.1.1
 django-ltree==0.5.2
 django-oauth-toolkit==1.4.0
 django-phonenumber-field==5.0.0
+django-pivot==1.8.1
 django-postgres-reindex-command==2020.12.3
 django-print-sql==2018.3.6
 django-ratelimit==3.0.0

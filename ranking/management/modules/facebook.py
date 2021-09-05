@@ -18,7 +18,6 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
     API_GRAPH_URL_ = 'https://www.facebook.com/api/graphql/'
-    COOKIE_FILE_ = 'legacy/cookie.file'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

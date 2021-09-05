@@ -436,6 +436,8 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
   };
   var dragX = false;
   var dragY = false;
+  var highlightX = false;
+  var lineY = false;
   var draged = false;
   const stack_axes = [];
   const dragBorder = 30;
@@ -466,10 +468,17 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
     clear_overlay();
     const clip_x = Math.max(Math.min(x, chart.chartArea.right), chart.chartArea.left);
     const clip_y = Math.max(Math.min(y, chart.chartArea.bottom), chart.chartArea.top);
-    if (x < chart.chartArea.left + dragBorder || chart.chartArea.right - dragBorder < x) {
-      selectionContext.fillRect(chart.chartArea.left, clip_y, chart.chartArea.width, 1);
-    } else if (draged && dragX || y < chart.chartArea.top + dragBorder || chart.chartArea.bottom - dragBorder < y) {
 
+    var hX = draged && dragX || y < chart.chartArea.top + dragBorder || chart.chartArea.bottom - dragBorder < y;
+    var hY = x < chart.chartArea.left + dragBorder || chart.chartArea.right - dragBorder < x;
+    if (hX && hY) {
+      if (!highlightX) {
+        hX = false;
+      }
+    }
+
+    if (hX) {
+      highlightX = true;
       const x_axis = chart.scales['x'];
       const value = (clip_x - x_axis.left) / x_axis.width * (x_axis.max - x_axis.min) + x_axis.min;
 
@@ -482,7 +491,11 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
           overlay.getContext('2d').fillRect(x, chart.chartArea.top, 1, chart.chartArea.height);
         }
       });
+    } else if (hY) {
+      highlightX = false;
+      selectionContext.fillRect(chart.chartArea.left, clip_y, chart.chartArea.width, 1);
     }
+
     if (dragX || dragY) {
       selectionRect.endX = Math.max(Math.min(x, chart.chartArea.right), chart.chartArea.left);
       selectionRect.endY = Math.max(Math.min(y, chart.chartArea.bottom), chart.chartArea.top);

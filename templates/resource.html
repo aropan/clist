@@ -158,7 +158,13 @@
                     },
                     scales: {
                         x: { grid: { display: false } },
-                        y: { ticks: { beginAtZero: true } },
+                        y: {
+                            ticks: {
+                                callback: function(value, index) {
+                                    return +value.toFixed(2);
+                                },
+                            },
+                        },
                     },
                     onClick: function (e, item) {
                         if (!item) {
@@ -207,12 +213,7 @@
             })
 
             $('#toggleLogScale input').change(function() {
-                var type = chart.options.scales.y.type
-                for (var i in chart.data.datasets[0].data) {
-                    chart.data.datasets[0].data[i]['y'] += type == 'linear'? 1 : -1;
-                }
-                type = type == 'linear'? 'logarithmic' : 'linear'
-                chart.options.scales.y.type = type
+                chart.options.scales.y.type = chart.options.scales.y.type == 'linear'? 'logarithmic' : 'linear'
                 chart.update()
                 return false
             })

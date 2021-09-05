@@ -6,11 +6,10 @@
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
 
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
+<link href="{% static_ts 'css/highlight-9.18.1-default.min.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/highlight.pack.js' %}"></script>
 
 {% if groupby and groupby != 'none' %}
-<script src="https://cdn.jsdelivr.net/npm/google-palette@1.1.0/palette.min.js"></script>
 <script src="{% static_ts 'js/Chart.min.js' %}"></script>
 <script src="{% static_ts 'js/addon-chart.js' %}"></script>
 {% endif %}
@@ -23,7 +22,6 @@
 {% block content %}
 
 <div class="container">
-
   {% with neighbors=contest.neighbors %}
   <h3 id="standings-title" class="text-center">
     {% if not other_contests and with_neighbors %}
@@ -95,13 +93,24 @@
     {% endfor %}
   {% endif %}
   {% endwith %}
-  {% if contest.info.last_parse_statistics %} <small>updated {{ contest.info.last_parse_statistics|strptime:"%Y-%m-%d %H:%M:%S.%f+%Z"|timezone:timezone|naturaltime }}</small>{% endif %}
   </h4>
 </div>
 
 
 <div class="container">
   {% include "standings_filter.html" %}
+
+  {% if contest.parsed_time %}
+  <div id="parsed-time">
+    <div class="container">
+      <small class="text-muted pull-right">
+        updated
+        <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
+      </small>
+    </div>
+  </div>
+  {% endif %}
+
   {% if statistics.exists %}
     {% if not groupby or groupby == 'none' %}
     <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default{% if not with_table_inner_scroll %} table-responsive{% endif %}">

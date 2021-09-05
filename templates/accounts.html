@@ -39,16 +39,28 @@
       </span>
     </div>
 
-    {% include 'country_filter.html' with has_country=True %}
-    {% include 'resource_filter.html' %}
-
     {% if request.GET.sort_order %}
     <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
     <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>
     {% endif %}
+    {% if request.GET.chart_column %}
+    <input type="hidden" name="chart_column" value="{{ request.GET.chart_column }}"/>
+    {% endif %}
+    {% if chart and groupby %}
+    <input name="groupby" value="{{ groupby }}" type="hidden"/>
+    {% endif %}
+
+    {% include 'country_filter.html' with has_country=True groupby=groupby|default:chart %}
+    {% include 'resource_filter.html' with groupby=groupby|default:chart %}
   </div>
 
   </form>
+
+  {% if chart %}
+  <div>
+    {% include "chart.html" with chart=chart %}
+  </div>
+  {% endif %}
 
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
   <div id="accounts" class="panel panel-default table-responsive">
@@ -64,18 +76,22 @@
             <div class="sortable-column" data-column="account"></div>
           </th>
           <th>
+            <div class="chart-column" data-field="rating"></div>
             <div>Rating</div>
             <div class="sortable-column" data-column="rating"></div>
           </th>
           <th>
+            <div class="chart-column" data-field="n_contests"></div>
             <div>Contests<br/>number</div>
             <div class="sortable-column" data-column="n_contests"></div>
           </th>
           <th>
+            <div class="chart-column" data-field="n_writers"></div>
             <div>Authors<br/>number</div>
             <div class="sortable-column" data-column="n_writers"></div>
           </th>
           <th>
+            <div class="chart-column" data-field="last_activity"></div>
             <div>Last<br/>activity</div>
             <div class="sortable-column" data-column="last_activity"></div>
           </th>

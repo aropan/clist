@@ -42,24 +42,24 @@
             <ul class="nav navbar-nav navbar-right">
                 <li>
                     {% if user.is_authenticated %}
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user.username }}&nbsp;<i class="fa fa-caret-down"></i></a>
+                        {% if user.is_staff %}
+                        <li><a href="/admin/"><i class="fas fa-server"></i></a></li>
+                        {% endif %}
+                        <li><a href="{% url 'coder:profile' user.username %}">{{ user.username }}</a></li>
                     {% else %}
                         {% url 'auth:login' as login_url %}
-
                         {% if request.path != login_url %}
                         <li><a href="{{ login_url }}"><i class="fa fa-sign-in-alt">&nbsp;</i>Log in / Sign up</a></li>
                         {% endif %}
-
+                    {% endif %}
                         <li>
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>
-                    {% endif %}
 
                     <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
-                        <li><a{% if user.is_authenticated %} href="{% url 'coder:profile' user.username %}"{% endif %} class="authorized"><i class="fa fa-user"></i> Profile</a></li>
-                        {% if user.is_staff %}
-                        <li><a href="/admin/"><i class="fa fa-home"></i> Admin</a></li>
-                        {% endif %}
+                        {% if not user.is_authenticated %}
+                        <li><a href="{% url 'coder:my_profile' %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
                         <li role="separator" class="divider"></li>
+                        {% endif %}
                         <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
                         <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
                         <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
@@ -67,7 +67,6 @@
                         <li role="separator" class="divider"></li>
                         <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
                         <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fa fa-users"></i>&nbsp;Social</a></li>
-                        <li><a href="{% url 'coder:settings' 'accounts' %}" class="authorized"><i class="fa fa-globe"></i>&nbsp;Accounts</a></li>
                         <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
                         <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
                         <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>

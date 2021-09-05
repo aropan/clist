@@ -121,7 +121,7 @@ class Command(BaseCommand):
                     if module.long_contest_idle and c.duration < module.long_contest_idle:
                         delay_on_success = timedelta(minutes=1)
                     if c.end_time < now + delay_on_success:
-                        delay_on_success = c.end_time - now + timedelta(seconds=5)
+                        delay_on_success = c.end_time + module.min_delay_after_end - now
                 TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
 
         if random_order:
@@ -588,11 +588,6 @@ class Command(BaseCommand):
                                 contest.timing.statistic = timezone.now() + timing_statistic_delta
                                 contest.timing.save()
 
-                            if contest.start_time <= now and now < contest.end_time:
-                                contest.info['last_parse_statistics'] = now.strftime('%Y-%m-%d %H:%M:%S.%f+%Z')
-                            elif 'last_parse_statistics' in contest.info:
-                                contest.info.pop('last_parse_statistics')
-
                             if fields_set and not addition_was_ordereddict:
                                 fields.sort()
                             for rating_field in ('old_rating', 'rating_change', 'new_rating'):
@@ -624,6 +619,7 @@ class Command(BaseCommand):
                                 contest.calculate_time = True
 
                             contest.n_statistics = n_statistics.pop('__total__', 0)
+                            contest.parsed_time = now
 
                             problems = standings.pop('problems', None)
                             if problems is not None:
@@ -692,15 +688,18 @@ class Command(BaseCommand):
                     break
             if not parsed:
                 if (
-                    now < c.end_time and
+                    contest.n_statistics and
+                    now < contest.end_time and
                     resource.module.long_contest_idle and
-                    c.duration < resource.module.long_contest_idle
+                    contest.duration < resource.module.long_contest_idle
                 ):
                     delay = timedelta(minutes=1)
-                elif now < c.end_time and resource.module.long_contest_divider:
-                    delay = c.duration / resource.module.long_contest_divider
+                elif contest.n_statistics and now < contest.end_time and resource.module.long_contest_divider:
+                    delay = contest.duration / (resource.module.long_contest_divider ** 2)
                 else:
                     delay = resource.module.delay_on_error
+                if now < contest.end_time < now + delay:
+                    delay = contest.end_time + resource.module.min_delay_after_end - now
                 contest.timing.statistic = timezone.now() + delay
                 contest.timing.save()
             elif not no_update_results and (users is None or users):

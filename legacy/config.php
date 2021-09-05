@@ -31,7 +31,7 @@
     }
 
     define("LOGFILE", dirname(__FILE__) . "/logs/working/index.txt");
-    define("COUNTLINEINLOGFILE", 512);
+    define("COUNTLINEINLOGFILE", 32767);
     define("LOGREMOVEDDIR", dirname(__FILE__) . '/logs/removed/');
 
     foreach (array(CACHEDIR, dirname(LOGFILE), LOGREMOVEDDIR) as $dir) {

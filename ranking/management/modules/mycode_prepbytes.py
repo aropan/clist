@@ -55,7 +55,10 @@ class Statistic(BaseModule):
                 if data.get('code') != 200 or data.get('data') is None:
                     raise ExceptionParseStandings(f'resposnse = {data}')
                 for r in data['data']:
-                    handle = r.pop('user_id')
+                    handle = r.pop('user_id', r.pop('member', None))
+                    if not handle:
+                        logger.warning(f'skip row = {r}')
+                        continue
                     row = results.setdefault(handle, {'member': handle})
                     row['place'] = r.pop('rank')
                     row['solving'] = r.pop('score')
@@ -100,7 +103,7 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
 
-        @RateLimiter(max_calls=8, period=6)
+        @RateLimiter(max_calls=8, period=2)
         def fetch_user_info(user):
             page = REQ.get('https://server.prepbytes.com/api/profile/getProfileByUserId',
                            post=f'{{"userId":"{user}"}}',
@@ -132,17 +135,27 @@ class Statistic(BaseModule):
 
             contest_data = [c for c in contest_data if 'contest' in c]
             contest_data.sort(key=lambda c: dateutil.parser.parse(c['contest']['endAt']))
+
+            def get_values(data):
+                if data is None:
+                    return []
+                if isinstance(data, list):
+                    return data
+                if isinstance(data, dict):
+                    return data['values']
+                raise TypeError(f'Unknown data type = {type(data)}')
+
             for d in contest_data:
                 if 'contest' not in d:
                     continue
                 rating = ratings.setdefault(d['contest']['contestId'], {})
                 problems = rating.setdefault('problems', {})
-                for attempt in d['user'].get('attemptedProblemsIds', {}).get('values', []):
+                for attempt in get_values(d['user'].get('attemptedProblemsIds')):
                     p = problems.setdefault(attempt, {})
                     p['binary'] = False
                     p['result'] = '-'
                 n_solving = 0
-                for attempt in d['user'].get('solvedProblemsIds', {}).get('values', []):
+                for attempt in get_values(d['user'].get('solvedProblemsIds')):
                     p = problems.setdefault(attempt, {})
                     p['binary'] = True
                     p['result'] = '+'

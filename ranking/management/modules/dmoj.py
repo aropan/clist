@@ -13,36 +13,40 @@ import arrow
 import tqdm
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
-    API_RANKING_URL_FORMAT_ = '{resource}/api/v2/contest/{key}'
+    API_RANKING_URL_FORMATS_ = {
+        'v2': '{resource}/api/v2/contest/{key}',
+        'v1': '{resource}/api/contest/info/{key}',
+    }
     PROBLEM_URL_ = '{resource}/problem/{code}'
     FETCH_USER_INFO_URL_ = '{resource}/api/user/info/{user}'
 
-    def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
-
     def get_standings(self, users=None, statistics=None):
+        api_ranking_url_version = self.resource.info.get('statistics', {}).get('api_ranking_url_version', 'v2')
         resource = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(self.url))
-
         infos = self.__dict__
         infos['resource'] = resource
-        url = self.API_RANKING_URL_FORMAT_.format(**infos)
+        url = self.API_RANKING_URL_FORMATS_[api_ranking_url_version].format(**infos)
         try:
             time.sleep(1)
             page = REQ.get(url)
-        except Exception as e:
-            return {'action': 'delete'} if e.args[0].code == 404 else {}
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                return {'action': 'delete'}
+            raise ExceptionParseStandings('not found api ranking url')
 
         data = json.loads(page)
-        data = data['data']['object']
+        if 'data' in data and 'object' in data['data']:
+            data = data['data']['object']
 
         problems_info = []
-        for p in data['problems']:
+        for idx, p in enumerate(data.pop('problems'), start=1):
             info = {
-                'short': p['label'],
+                'short': p.get('label', str(idx)),
                 'name': p['name'],
                 'code': p['code'],
             }
@@ -55,9 +59,19 @@ class Statistic(BaseModule):
         prev = None
         skip = 0
         handles_to_get_new_rating = []
-        has_rated = data.get('is_rated', True) or data.get('has_rating', True)
+        has_rated = data.get('is_rated', True) and data.get('has_rating', True)
         has_rating = False
-        rankings = sorted(data['rankings'], key=lambda x: (-x['score'], x['cumulative_time']))
+
+        rankings = data.pop('rankings')
+        for r in rankings:
+            for src, dst in (
+                ('points', 'score'),
+                ('cumtime', 'cumulative_time'),
+            ):
+                if src in r:
+                    r[dst] = r.pop(src)
+        rankings = sorted(rankings, key=lambda x: (-x['score'], x['cumulative_time']))
+
         fields_types = {}
         hidden_fields = set()
         for index, r in enumerate(rankings, start=1):
@@ -82,10 +96,10 @@ class Statistic(BaseModule):
 
             solved = 0
             problems = row.setdefault('problems', {})
-            for prob, sol in zip(data['problems'], solutions):
+            for prob, sol in zip(problems_info, solutions):
                 if not sol:
                     continue
-                p = problems.setdefault(prob['label'], {})
+                p = problems.setdefault(prob['short'], {})
                 if sol['points'] > 0 and prob.get('partial'):
                     p['partial'] = prob['points'] - sol['points'] > 1e-7
                     if not p['partial']:

@@ -73,7 +73,6 @@ img.resource-icon {
 }
 
 .navbar-static-top .navbar-right .login-signup a.authorized {
-  cursor: not-allowed;
   opacity: 0.5;
 }
 
@@ -265,6 +264,26 @@ a.external-database-link {
 }
 
 *:hover > .sortable-column a {
+  visibility: visible;
+}
+
+/*
+ * chart column
+ */
+
+.chart-column {
+  position: absolute;
+  margin-top: -5px;
+  margin-left: -25px;
+  display: inline;
+  font-size: 20px;
+}
+
+.chart-column {
+  visibility: hidden;
+}
+
+*:hover > .chart-column {
   visibility: visible;
 }
 

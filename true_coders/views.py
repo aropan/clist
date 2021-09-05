@@ -34,6 +34,7 @@ from notification.forms import Notification, NotificationForm
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
+from utils.chart import make_chart
 from utils.regex import get_iregex_filter, verify_regex
 
 logger = logging.getLogger(__name__)
@@ -123,7 +124,7 @@ def get_profile_context(request, statistics, writers):
 
 
 @login_required
-def coder_profile(request):
+def my_profile(request):
     url = reverse('coder:profile', args=[request.user.coder.username])
     query = query_transform(request)
     if query:
@@ -1474,5 +1475,13 @@ def accounts(request, template='accounts.html'):
         'accounts': accounts,
         'params': params,
     }
+
+    chart_field = request.GET.get('chart_column')
+    groupby = request.GET.get('groupby')
+    if chart_field:
+        context['chart'] = make_chart(accounts, field=chart_field, groupby=groupby)
+        context['groupby'] = groupby
+    else:
+        context['chart'] = False
 
     return template, context

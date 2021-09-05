@@ -3,7 +3,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="google-site-verification" content="_r9dKPi1upFgyN6EgdU2g6yNRC7aza6qHyhdIPGomkE" />
-        <meta name="description" property="og:description" content="{% block description %}List and calendar of competitions in competitive programming. Also profiles, statistics and much more{% endblock %}">
+        <meta name="description" property="og:description" content="{% block description %}Events of competitive programming. Also coders, standings and more{% endblock %}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         {% if user.is_authenticated %}
@@ -71,6 +71,7 @@
         <script src="{% static_ts 'js/chart.js@3.5.0' %}"></script>
         <script src="{% static_ts 'js/chartjs-adapter-moment@0.1.1' %}"></script>
         <script src="{% static_ts 'js/chart-helper.js' %}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/google-palette@1.1.0/palette.min.js"></script>
 
         {% block end-head %}{% endblock %}
     </head>

@@ -12,6 +12,7 @@ from django.db.models.functions import Coalesce, Upper
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
+from django.utils import timezone
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
 from sql_util.utils import SubqueryCount, SubquerySum
@@ -699,6 +700,7 @@ class Stage(BaseModel):
                         fields.append(k)
             stage.statistics_set.exclude(pk__in=pks).delete()
             stage.n_statistics = len(results)
+            stage.parsed_time = timezone.now()
 
             stage.info['fields'] = list(fields)
 

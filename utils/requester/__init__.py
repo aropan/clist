@@ -370,7 +370,7 @@ class requester():
             makedirs(path.dirname(self.cookie_filename), exist_ok=True)
             self.cookiejar = MozillaCookieJar(self.cookie_filename)
             if path.exists(self.cookie_filename):
-                self.cookiejar.load()
+                self.cookiejar.load(ignore_discard=True, ignore_expires=True)
         else:
             self.cookiejar = MozillaCookieJar()
 
@@ -756,7 +756,7 @@ class requester():
 
     def save_cookie(self):
         if self.cookie_filename and hasattr(self, 'cookiejar'):
-            self.cookiejar.save(self.cookie_filename)
+            self.cookiejar.save(self.cookie_filename, ignore_discard=True, ignore_expires=True)
 
     def close(self):
         if self.proxer:

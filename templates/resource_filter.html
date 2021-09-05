@@ -1,6 +1,12 @@
 {% with resource_id=resource|default:"resource" %}
 <div class="input-group input-group-sm hidden" id="{{ resource_id }}-hidden">
+{% if groupby %}
+  <div class="input-group-btn">
+    <button class="btn btn-default{% if groupby == 'resource' %} active{% endif %}" name="groupby" value="{% if groupby != 'resource' %}resource{% endif %}">Resource</button>
+  </div>
+{% else %}
   <span class="input-group-addon">Resource</span>
+{% endif %}
 
   <select{% if not noname %} name="{{ resource_id }}"{% endif %} id="{{ resource_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}>
     <option></option>

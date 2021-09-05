@@ -37,6 +37,9 @@ class BaseModelResource(CommmonBaseModuelResource):
 class ResourceResource(BaseModelResource):
     name = fields.CharField('host')
     icon = fields.CharField('icon')
+    short = fields.CharField('short_host', null=True)
+    n_accounts = fields.IntegerField('n_accounts')
+    n_contests = fields.IntegerField('n_contests')
     total_count = fields.BooleanField()
 
     class Meta(BaseModelResource.Meta):
@@ -48,8 +51,11 @@ class ResourceResource(BaseModelResource):
             'total_count': ['exact'],
             'id': ['exact', 'in'],
             'name': ['exact', 'iregex', 'regex', 'in'],
+            'short': ['exact', 'iregex', 'regex', 'in'],
+            'n_accounts': ['exact', 'gt', 'lt', 'gte', 'lte'],
+            'n_contests': ['exact', 'gt', 'lt', 'gte', 'lte'],
         }
-        ordering = ['id', 'name', ]
+        ordering = ['id', 'name', 'n_accounts', 'n_contests']
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
@@ -65,6 +71,7 @@ class ContestResource(BaseModelResource):
     event = fields.CharField('title')
     start = fields.DateTimeField('start_time')
     end = fields.DateTimeField('end_time')
+    parsed_at = fields.DateTimeField('parsed_time', null=True)
     duration = fields.DateTimeField('duration_in_secs', help_text='Time delta: Ex: "864000" or "10 days"')
     href = fields.CharField('url')
     filtered = fields.BooleanField(help_text='Use user filters')
@@ -88,11 +95,12 @@ class ContestResource(BaseModelResource):
             'event': ['exact', 'iregex', 'regex'],
             'start': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
             'end': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
-            'duration': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
+            'parsed_at': ['exact', 'gt', 'lt', 'gte', 'lte'],
+            'duration': ['exact', 'gt', 'lt', 'gte', 'lte'],
             'filtered': ['exact'],
             'category': ['exact'],
         }
-        ordering = ['id', 'event', 'start', 'end', 'resource_id', 'duration']
+        ordering = ['id', 'event', 'start', 'end', 'resource_id', 'duration', 'parsed_at']
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)

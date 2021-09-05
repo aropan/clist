@@ -66,7 +66,7 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
 
-        @RateLimiter(max_calls=1, period=2)
+        @RateLimiter(max_calls=8, period=1)
         def fetch_user(user, account):
             try:
                 url = resource.profile_url.format(account=user)
@@ -78,6 +78,9 @@ class Statistic(BaseModule):
                 return user, False
 
             info = {}
+            match = re.search(r'<div[^>]*class="page-header"[^>]*>\s*<h2[^>]*>(?P<name>[^<]*)<', page)
+            if match:
+                info['name'] = match.group('name')
             match = re.search(r'<h2[^>]*>\s*<img[^>]*alt="(?P<country>[^"]*)"[^>]*>\s*(?P<name>[^<]*)<', page)
             if match:
                 info['country'] = match.group('country')
@@ -87,7 +90,7 @@ class Statistic(BaseModule):
                 info['avatar_url'] = urljoin(url, match.group('img'))
             return user, info
 
-        with PoolExecutor(max_workers=8) as executor:
+        with PoolExecutor(max_workers=6) as executor:
             for user, info in executor.map(fetch_user, users, accounts):
                 if pbar:
                     pbar.update()
