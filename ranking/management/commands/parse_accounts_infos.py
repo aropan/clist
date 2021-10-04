@@ -137,7 +137,7 @@ class Command(BaseCommand):
                             if info.get('name'):
                                 account.name = info['name']
                             if 'rating' in info:
-                                info['rating_ts'] = int(now.timestamp())
+                                info['_rating_time'] = int(now.timestamp())
                             delta = info.pop('delta', timedelta(days=365))
                             if data.get('replace_info'):
                                 for k, v in account.info.items():

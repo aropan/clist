@@ -77,3 +77,4 @@ fire==0.4.0
 lazy-load==0.8.2
 blackboxprotobuf==1.0.1
 traceback-with-variables==2.0.1
+flatten-dict==0.4.2

@@ -62,4 +62,7 @@
       e.preventDefault();
     }
   })
+  {% if data.nohidden %}
+  $('.field-to-select').removeClass('hidden');
+  {% endif %}
 </script>

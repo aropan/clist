@@ -11,7 +11,7 @@
   <div class="flag-width-fixed">
   {% if not team_id %}
   {% with country=account.country %}{% if country %}{% with code=account.info.custom_countries_|get_item:country.code|default:country.code %}
-    <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><img class="flag flag-{{ code|lower }}"/></a>
+  <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><div class="flag flag-{{ code|lower }}"></div></a>
   {% endwith %}{% endif %}{% endwith %}
   {% endif %}
   </div>
@@ -54,7 +54,7 @@
       {% if country_code %}
         <div class="flag-width-fixed">
           <a href="{% url_transform request country=country_code %}" title="{{ country_name }}" data-toggle="tooltip">
-            <img class="flag flag-{{ country_code|lower }}"/>
+            <div class="flag flag-{{ country_code|lower }}"></div>
           </a>
         </div>
       {% endif %}

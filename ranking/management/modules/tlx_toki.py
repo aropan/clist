@@ -80,7 +80,7 @@ class Statistic(BaseModule):
                 if style == 'ICPC':
                     r['penalty'] = row.pop('totalPenalties')
                     r['solving'] = row.pop('totalAccepted')
-                elif style == 'GCJ':
+                elif style == 'GCJ' or style == 'TROC':
                     penalty = row.pop('totalPenalties')
                     r['penalty'] = f'{penalty // 60:02d}:{penalty % 60:02d}'
                     r['solving'] = row.pop('totalPoints')

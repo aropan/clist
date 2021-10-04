@@ -677,3 +677,11 @@ def as_number(value):
             return reti
         return retf
     return value
+
+
+@register.filter
+def title_field(value):
+    value = re.sub('([A-Z]+)', r'_\1', value)
+    values = re.split('_+', value)
+    value = ' '.join([v.title() for v in values])
+    return value

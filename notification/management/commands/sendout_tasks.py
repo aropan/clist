@@ -70,7 +70,12 @@ class Command(BaseCommand):
         subject, message, context = self.get_message(method=method, data=data, coder=coder,  **kwargs)
         if method == settings.NOTIFICATION_CONF.TELEGRAM:
             if args:
-                self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
+                try:
+                    self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
+                except Unauthorized as e:
+                    if 'bot was kicked from' in str(e):
+                        if 'notification' in kwargs:
+                            kwargs['notification'].delete()
             elif coder.chat and coder.chat.chat_id:
                 try:
                     if not coder.settings.get('telegram', {}).get('unauthorized', False):

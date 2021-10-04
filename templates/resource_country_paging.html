@@ -10,7 +10,7 @@
       {{ forloop.counter0|add:pages.current_start_index }}
     </td>
     <td>
-      <a href="{% url_transform request country=code %}"><img class="flag flag-{{ code|lower }}"/> {{ name }}</a>
+      <a href="{% url_transform request country=code %}"><div class="flag flag-{{ code|lower }}"></div> {{ name }}</a>
     </td>
     <td>
       {{ country.count }}

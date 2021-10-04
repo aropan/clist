@@ -4,10 +4,9 @@
 import json
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from datetime import datetime
 
-from tqdm import tqdm
 from ratelimiter import RateLimiter
+from tqdm import tqdm
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.common.locator import Locator
@@ -171,9 +170,6 @@ class Statistic(BaseModule):
                     update['rating_change'] = rating['gain']
                     update['new_rating'] = rating['rating']
                     data['rating'] = update['new_rating']
-
-                if 'rating' in data:
-                    data['rating_ts'] = int(datetime.now().timestamp())
 
                 ret = {
                     'info': data,

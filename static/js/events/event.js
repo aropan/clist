@@ -91,7 +91,7 @@ $(function() {
             $result.text(data.text)
             if (data.id) {
                 var code = data.id.toLowerCase()
-                $result.prepend('<img class="flag flag-' + code + '"/>&nbsp;')
+                $result.prepend('<div class="flag flag-' + code + '"></div>')
             }
             return $result
         },

@@ -27,15 +27,11 @@
         updating {% if resource.enable %}auto{% else %}manually{% endif %}
     </div>
 
-    {% if resource.module.exists %}
-    <span class="badge progress-bar-warning">
-        parse statistic
-    </span>
+    <span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }} contest(s)</span>
+
+    {% if resource.module %}
+    <span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }} accounts(s)</span>
     {% endif %}
-
-    <span class="badge progress-bar-info">{{ resource.n_contests|intcomma }} contest(s)</span>
-
-    <span class="badge progress-bar-info">{{ resource.n_accounts|intcomma }} accounts(s)</span>
 </div>
 
 <br/>

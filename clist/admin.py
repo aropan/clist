@@ -113,7 +113,7 @@ class ResourceAdmin(BaseModelAdmin):
                            'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
-        [None, {'fields': ['info', 'ratings', 'has_rating_history']}],
+        [None, {'fields': ['info', 'ratings', 'has_rating_history', 'accounts_fields']}],
     ]
     list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', 'n_contests', 'n_accounts',
                     'modified']

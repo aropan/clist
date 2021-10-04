@@ -35,6 +35,17 @@
     &mdash;
     {% endif %}
   </td>
+    {% if custom_fields %}
+    {% for field in custom_fields.values %}
+    <td>
+      {% with k="info__"|add:field %}
+      {% with v=account|get_item:k %}
+      {% if v is not None %}{{ v }}{% else %}&mdash;{% endif %}
+      {% endwith %}
+      {% endwith %}
+    </td>
+    {% endfor %}
+    {% endif %}
 </tr>
 {% endfor %}
 {% show_more_table %}

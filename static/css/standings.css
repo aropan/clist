@@ -159,6 +159,7 @@ a.solution:hover span {
   position: sticky;
   position: -webkit-sticky;
   top: 0;
+  z-index: 1;
 }
 
 #table-inner-scroll .my-stat th {

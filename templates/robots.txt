@@ -16,8 +16,12 @@ Disallow: /singup/
 Disallow: /oauth/
 Disallow: /auth/
 Disallow: /o/
+Disallow: /event/*/frame/
+Disallow: /*?*_page=
+Disallow: /*?page=
+Disallow: /*&page=
+Disallow: /*?querystring_key=
+Disallow: /*&querystring_key=
 Crawl-Delay: 10
-Clean-param: next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&page&as_coder&country&resource&period&querystring_key&sort_column&sort_order
+Clean-param: next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&as_coder&country&resource&period&sort_column&sort_order
 Clean-param: versus&division&detail&find_me&chat&list&neighbors&advanced /standings/
-Clean-param: participants&teams /event/
-Clean-param: top_page&country_page&last_activity_page&most_participated_page /resource/

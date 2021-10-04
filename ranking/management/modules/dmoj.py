@@ -166,7 +166,7 @@ class Statistic(BaseModule):
                     result[handle]['contest_addition_update'] = contest_addition_update
                     pbar.update()
 
-        standings_url = hasattr(self, 'standings_url') and self.standings_url or self.url.rstrip('/') + '/ranking/'
+        standings_url = self.url.rstrip('/') + '/ranking/' if result else self.standings_url
 
         standings = {
             'result': result,

@@ -9,6 +9,11 @@
         while ($url) {
             $response = curlexec($url, null, array("http_header" => array('content-type: application/json'), "json_output" => 1));
 
+            if (!is_array($response) || !isset($response['results'])) {
+                trigger_error("Not found events in $url", E_USER_WARNING);
+                break;
+            }
+
             foreach ($response['results'] as $c) {
                 if (!preg_match('#(?P<id>[0-9]+)/?$#', $c['challenge'], $match)) {
                     continue;
@@ -32,7 +37,7 @@
                 );
             }
 
-            if ($type == 'past' && !isset($_GET['parse_full_list'])) {
+            if (!isset($response['next']) || $type == 'past' && !isset($_GET['parse_full_list'])) {
                 break;
             }
 
@@ -44,4 +49,3 @@
         print_r($contests);
     }
 ?>
-

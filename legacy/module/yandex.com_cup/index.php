@@ -53,7 +53,7 @@
 
             $contests[] = array(
                 'start_time' => $start_time,
-                'end_time' => $end_time,
+                'end_time' => strtotime($end_time) + 24 * 60 * 60,  # + day
                 'title' => $title,
                 'url' => $url,
                 'host' => $HOST,

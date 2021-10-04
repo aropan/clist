@@ -1,33 +1,38 @@
-<div class="pull-right">
-<span id="toggle-log-scale">
-  <input
-      type="checkbox"
-      data-toggle="toggle"
-      data-on="logarithmic"
-      data-off="linear"
-      data-onstyle="default active"
-      data-offstyle="default active"
-      data-size="mini"
-      />
-</span>
-<span id="toggle-type">
-  <input
-      type="checkbox"
-      data-toggle="toggle"
-      data-on="line"
-      data-off="bar"
-      data-onstyle="default active"
-      data-offstyle="default active"
-      data-size="mini"
-      />
-</span>
-<span>
-  <a href="{% url_transform request "chart_column" "" %}"><i class="fas fa-times"></i></a>
-</span>
+{% if chart or chart is None %}
+<div>
+  <div class="pull-right">
+  <span id="toggle-log-scale">
+    <input
+        type="checkbox"
+        data-toggle="toggle"
+        data-on="logarithmic"
+        data-off="linear"
+        data-onstyle="default active"
+        data-offstyle="default active"
+        data-size="mini"
+        />
+  </span>
+  <span id="toggle-type">
+    <input
+        type="checkbox"
+        data-toggle="toggle"
+        data-on="line"
+        data-off="bar"
+        data-onstyle="default active"
+        data-offstyle="default active"
+        data-size="mini"
+        />
+  </span>
+  <span>
+    <a href="{% url_transform request "chart_column" "" "groupby" "" "with_remove" 1 %}"><i class="fas fa-times"></i></a>
+  </span>
+  </div>
+
+  <canvas id="chart"></canvas>
 </div>
+{% endif %}
 
-<canvas id="chart"></canvas>
-
+{% if chart %}
 <script>
   {% if chart.fields %}
   var bg_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.2, 1).map(function(hex) { return '#' + hex; })
@@ -60,6 +65,12 @@
     options: {
       responsive: true,
       plugins: {
+        {% if chart.title %}
+        title: {
+          display: true,
+          text: '{{ chart.title }}',
+        },
+        {% endif %}
         legend: {
           display: {% if chart.fields %}true{% else %}false{% endif %},
         },
@@ -99,3 +110,4 @@
     chart = new Chart(ctx, config);
   })
 </script>
+{% endif %}

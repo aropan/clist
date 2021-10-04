@@ -11,7 +11,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import IntegrityError, transaction
-from django.db.models import BooleanField, Case, Count, F, IntegerField, Max, OuterRef, Prefetch, Q, Value, When
+from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, IntegerField, Max, OuterRef, Prefetch, Q,
+                              Value, When)
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -35,6 +36,7 @@ from pyclist.decorators import context_pagination
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
 from utils.chart import make_chart
+from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
 
 logger = logging.getLogger(__name__)
@@ -44,8 +46,6 @@ def get_profile_context(request, statistics, writers):
     history_resources = statistics \
         .filter(contest__resource__has_rating_history=True) \
         .filter(contest__stage__isnull=True) \
-        .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
-        .filter(Q(new_rating__isnull=False) | Q(contest__resource__info__ratings__external=True)) \
         .annotate(host=F('contest__resource__host')) \
         .annotate(pk=F('contest__resource__pk')) \
         .annotate(icon=F('contest__resource__icon')) \
@@ -61,7 +61,7 @@ def get_profile_context(request, statistics, writers):
     account_medals = {}
     for stat in stats:
         resource_medals.setdefault(stat.contest.resource_id, []).append(stat)
-        account_medals.setdefault(stat.account.id, []).append(stat)
+        account_medals.setdefault(stat.account_id, []).append(stat)
 
     statistics = statistics \
         .select_related('contest', 'contest__resource', 'account') \
@@ -1453,35 +1453,70 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.filter(resource__in=resources)
         params['resources'] = resources
 
-    # ordering
+    context = {'params': params}
+    table_fields = ('rating', 'n_contests', 'n_writers', 'last_activity')
+
+    chart_field = request.GET.get('chart_column')
+    groupby = request.GET.get('groupby')
+    fields = request.GET.getlist('field')
     orderby = request.GET.get('sort_column')
+    order = request.GET.get('sort_order')
+
+    # custom fields
+    custom_fields = set()
+    for resource in resources:
+        for k, v in resource.accounts_fields.get('types', {}).items():
+            if v == ['int'] and k not in table_fields:
+                custom_fields.add(k)
+    custom_fields = list(sorted(custom_fields))
+    if chart_field and chart_field not in table_fields:
+        if chart_field not in custom_fields:
+            chart_field = None
+        elif chart_field not in fields:
+            fields.append(chart_field)
+    if custom_fields:
+        context['custom_fields'] = {
+            'values': [v for v in fields if v and v in custom_fields],
+            'options': custom_fields,
+            'noajax': True,
+            'nogroupby': True,
+            'nourl': True,
+            'nohidden': True,
+        }
+        for field in context['custom_fields']['values']:
+            k = f'info__{field}'
+            if field == orderby or field == chart_field:
+                accounts = accounts.annotate(**{k: Cast(JSONF(k), BigIntegerField())})
+            else:
+                accounts = accounts.annotate(**{k: JSONF(k)})
+
+    # chart
+    if chart_field:
+        field = chart_field if chart_field in table_fields else f'info__{chart_field}'
+        context['chart'] = make_chart(accounts, field=field, groupby=groupby, logger=request.logger)
+        context['groupby'] = groupby
+    else:
+        context['chart'] = False
+    if context['chart']:
+        accounts = context['chart']['queryset']
+
+    # ordering
     if orderby == 'account':
         orderby = 'key'
-    elif orderby in ['rating', 'n_contests', 'n_writers', 'last_activity']:
+    elif orderby in table_fields:
         pass
+    elif orderby in custom_fields:
+        orderby = f'info__{orderby}'
     elif orderby:
         request.logger.error(f'Not found `{orderby}` column for sorting')
         orderby = []
     orderby = orderby if not orderby or isinstance(orderby, list) else [orderby]
-    order = request.GET.get('sort_order')
     if order in ['asc', 'desc']:
         orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
     elif order:
-        request.logger.error(f'Not found `{order}` order for sorting')
+        request.logger.warning(f'Not found `{order}` order for sorting')
     orderby = orderby or ['-created']
     accounts = accounts.order_by(*orderby)
-
-    context = {
-        'accounts': accounts,
-        'params': params,
-    }
-
-    chart_field = request.GET.get('chart_column')
-    groupby = request.GET.get('groupby')
-    if chart_field:
-        context['chart'] = make_chart(accounts, field=chart_field, groupby=groupby)
-        context['groupby'] = groupby
-    else:
-        context['chart'] = False
+    context['accounts'] = accounts
 
     return template, context

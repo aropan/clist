@@ -360,7 +360,7 @@ class Command(BaseCommand):
                             account_info = r.pop('info', {})
                             if account_info:
                                 if 'rating' in account_info:
-                                    account_info['rating_ts'] = int(now.timestamp())
+                                    account_info['_rating_time'] = int(now.timestamp())
                                 account.info.update(account_info)
                                 account.save()
 
@@ -527,11 +527,11 @@ class Command(BaseCommand):
                             if not calc_time:
                                 defaults['addition'] = addition
 
-                            rating_ts = int(min(contest.end_time, now).timestamp())
+                            rating_time = int(min(contest.end_time, now).timestamp())
                             if 'new_rating' in addition and (
-                                'rating_ts' not in account.info or account.info['rating_ts'] <= rating_ts
+                                '_rating_time' not in account.info or account.info['_rating_time'] <= rating_time
                             ):
-                                account.info['rating_ts'] = rating_ts
+                                account.info['_rating_time'] = rating_time
                                 account.info['rating'] = addition['new_rating']
                                 account.save()
 
@@ -606,7 +606,7 @@ class Command(BaseCommand):
                             if canonize(fields) != canonize(contest.info.get('fields')):
                                 contest.info['fields'] = fields
 
-                            hidden_fields = [f for f in standings_hidden_fields if f in hidden_fields]
+                            hidden_fields = list(hidden_fields)
                             if hidden_fields and canonize(hidden_fields) != canonize(contest.info.get('hidden_fields')):
                                 contest.info['hidden_fields'] = hidden_fields
 

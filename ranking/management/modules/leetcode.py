@@ -586,9 +586,6 @@ class Statistic(BaseModule):
                 if last_rating and 'rating' not in info:
                     info['rating'] = last_rating
 
-                if 'rating' in info:
-                    info['rating_ts'] = int(datetime.now().timestamp())
-
                 if 'global_ranking' in info:
                     global_ranking = int(re.split('[^0-9]', str(info['global_ranking']))[0])
                 elif 'currentGlobalRanking' in info:

@@ -214,7 +214,7 @@
                 {% for name, values in custom_countries.items %}
                     {% with value=coder.settings.custom_countries|get_item:name %}
                         {% for val in values %}
-                        <button class="btn btn-default custom-countries {% if coder.country.code != name %} hidden{% endif %}{% if value == val %} active{% endif %}" data-country="{{ name }}" data-value="{{ val }}"><img class="flag flag-{{ val|lower}}"></button>
+                        <button class="btn btn-default custom-countries {% if coder.country.code != name %} hidden{% endif %}{% if value == val %} active{% endif %}" data-country="{{ name }}" data-value="{{ val }}"><div class="flag flag-{{ val|lower}}"></div></button>
                         {% endfor %}
                     {% endwith %}
                 {% endfor %}

@@ -106,6 +106,19 @@
             $params['fb_dtsg'] = $fb_dtsg;
         }
         $data = curlexec($url, $params, array("json_output" => 1));
+        if (!is_array($data)) {
+            trigger_error("Wrong response data", E_USER_WARNING);
+            return;
+        }
+        if (isset($data['errors'])) {
+            $errors = array();
+            foreach ($data['errors'] as $_ => $e) {
+                $errors[] = $e['message'];
+            }
+            $error = implode('; ', $errors);
+            trigger_error("Error on get response = $error", E_USER_WARNING);
+            return;
+        }
 
         $contest_series = $data['data']['contestSeries'];
         if (isset($contest_series['latest_season'])) {

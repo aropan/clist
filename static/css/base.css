@@ -41,8 +41,16 @@ input[type="search"]::-webkit-search-cancel-button {
   text-align: center;
 }
 
-a img.flag {
+a div.flag {
   margin-top: -4px;
+}
+
+.select2-container div.flag {
+  margin-right: 8px;
+}
+
+.flag {
+  transform: scale(1.3);
 }
 
 /* Space out content a bit */

@@ -82,7 +82,13 @@
 
         <td><span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }}</span></td>
 
-        <td><span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }}</span></td>
+        <td>
+          {% if resource.module %}
+          <span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }}</span>
+          {% else %}
+          &#183;
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
     </table>

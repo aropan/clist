@@ -40,6 +40,7 @@ class Resource(BaseModel):
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
     icon = models.CharField(max_length=255, null=True, blank=True)
+    accounts_fields = models.JSONField(default=dict, blank=True)
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
