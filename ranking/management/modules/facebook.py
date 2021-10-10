@@ -59,6 +59,23 @@ class Statistic(BaseModule):
         variables = {'id': self.key, 'force_limited_data': False, 'show_all_submissions': False}
         scoreboard_data = query('CodingCompetitionsContestScoreboardQuery', variables)
 
+        def get_advance():
+            advancement = scoreboard_data['data']['contest'].get('advancement_requirement_text', '')
+
+            match = re.search('top (?P<place>[0-9]+) contestants', advancement)
+            if match:
+                return {'filter': [{'threshold': int(match.group('place')), 'operator': 'le', 'field': 'place'}]}
+
+            match = re.search('least (?P<score>[0-9]+) points', advancement)
+            if match:
+                return {'filter': [{'threshold': int(match.group('score')), 'operator': 'ge', 'field': 'solving'}]}
+
+            match = re.search('least (?P<count>[0-9]+) problem', advancement)
+            if match:
+                return {'filter': [{'threshold': int(match.group('count')), 'operator': 'ge', 'field': '_n_solved'}]}
+
+            return {}
+
         problems_info = OrderedDict()
         for problem_set in scoreboard_data['data']['contest']['ordered_problem_sets']:
             for problem in problem_set['ordered_problems_with_display_indices']:
@@ -157,6 +174,7 @@ class Statistic(BaseModule):
                                     p['external_solution'] = True
 
                         r['solved'] = {'solving': solved}
+                        r['_n_solved'] = solved
 
                         profile_picture = row
                         for field in ('entrant_personal_info', 'individual_entrant_user', 'profile_picture', 'uri'):
@@ -172,6 +190,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'problems': list(problems_info.values()),
+            'advance': get_advance(),
         }
 
         if re.search(r'\bfinals?\b', self.name, re.IGNORECASE):

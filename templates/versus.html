@@ -71,8 +71,8 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
   <canvas class="rating_history" id="resource_{{ resource_info.pk }}_rating" height="75vh">{{ resource }}</canvas>
 </div>
 <script>
-  var resource_info = {{ resource_info|to_json|safe }}
-  var resource_dates = {{ ratings.dates|to_json|safe }}
+  var resource_info = {{ resource_info|to_json }}
+  var resource_dates = {{ ratings.dates|to_json }}
   config = create_chart_config(resource_info, resource_dates)
   var resource_rating_id = 'resource_{{ resource_info.pk }}_rating'
   var ctx = new Chart(resource_rating_id, config)

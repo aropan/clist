@@ -117,7 +117,12 @@ def _standings_highlight(statistics, options):
         if more:
             more['n'] = 0
         for s in statistics:
-            match = re.search(data_1st_u['regex'], s.account.key)
+            if s.place_as_int is None:
+                continue
+            string = s.addition.get(data_1st_u['field']) if 'field' in data_1st_u else s.account.key
+            if string is None:
+                continue
+            match = re.search(data_1st_u['regex'], string)
             if not match:
                 continue
             k = match.group('key').strip()
@@ -509,11 +514,14 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     force_both_scroll = False
 
     mod_penalty = {}
+    enable_timeline = False
     first = statistics.first()
-    if first and all('time' not in k for k in contest_fields):
-        penalty = first.addition.get('penalty')
-        if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
-            mod_penalty.update({'solving': first.solving, 'penalty': penalty})
+    if first:
+        if all('time' not in k for k in contest_fields):
+            penalty = first.addition.get('penalty')
+            if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
+                mod_penalty.update({'solving': first.solving, 'penalty': penalty})
+        enable_timeline = any('time' in p for p in first.addition.get('problems', {}).values())
 
     params = {}
     if divisions_order:
@@ -888,6 +896,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'timeformat': get_timeformat(request),
         'with_neighbors': request.GET.get('neighbors') == 'on',
         'with_table_inner_scroll': not request.user_agent.is_mobile,
+        'enable_timeline': enable_timeline,
     })
 
     context.update(n_highlight_context)

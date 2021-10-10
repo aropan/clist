@@ -136,7 +136,12 @@
             $url = rtrim($URL, '/') . "/$year/${node['contest_vanity']}";
             $scoreboard_url = rtrim($url) . '/scoreboard';
             $scoreboard_page = curlexec($scoreboard_url);
-            $node['scoreboard_ids'] = get_ids($scoreboard_page);
+            $scoreboard_ids = get_ids($scoreboard_page);
+            if ($scoreboard_ids) {
+                $node['scoreboard_ids'] = $scoreboard_ids;
+            } else {
+                trigger_error("Not found scoreboard ids", E_USER_WARNING);
+            }
 
             if (isset($node['duration_in_seconds'])) {
                 $duration = $node['duration_in_seconds'] / 60;

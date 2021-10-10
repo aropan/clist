@@ -546,7 +546,7 @@ class requester():
                 else:
                     self.proxer.fail()
 
-            if not response_content_type.startswith('image/'):
+            if not response_content_type or not response_content_type.startswith('image/'):
                 matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
                 if matches and detect_charsets is not None:
                     charsets = [c.lower() for c in matches]

@@ -73,5 +73,60 @@
     <input type="hidden" name="versus" value="{{ request.GET.versus }}"/>
     <input type="hidden" name="id" value="{{ request.GET.id }}"/>
     {% endif %}
+
+    {% if enable_timeline and contest.resource.info.standings.timeline %}
+      <button onclick="this.remove(); show_timeline(); return false" class="btn btn-default btn-sm"><i class="fas fa-history"></i></button>
+
+      <div id="timeline-buttons" class="hidden">
+
+        <div class="btn-group">
+          <button onclick="set_timeline(0.0); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-backward"></i></button>
+          <button id="play-timeline" class="btn btn-default btn-sm"><i class="fas fa-play"></i></button>
+          <button onclick="set_timeline(1); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-forward"></i></button>
+        </div>
+
+        <div class="input-group input-group-sm">
+          <div class="input-group-addon">Duration</div>
+          <select id="timeline-duration">
+            <option value="100">100 ms</option>
+            <option value="500">500 ms</option>
+            <option value="1000" selected>1 sec</option>
+            <option value="2000">2 sec</option>
+            <option value="4000">4 sec</option>
+          </select>
+        </div>
+
+        <div class="input-group input-group-sm">
+          <div class="input-group-addon">Step</div>
+          <select id="timeline-step">
+            <option value="0.001">0.001%</option>
+            <option value="0.005">0.005%</option>
+            <option value="0.01">0.01%</option>
+            <option value="0.03" selected>0.03%</option>
+            <option value="0.1">0.1%</option>
+            <option value="0.2">0.2%</option>
+          </select>
+        </div>
+
+        <div class="input-group input-group-sm">
+          <div class="input-group-addon">Delay</div>
+          <select id="timeline-delay">
+            <option value="100">100 ms</option>
+            <option value="500">500 ms</option>
+            <option value="1000">1 sec</option>
+            <option value="2000" selected>2 sec</option>
+            <option value="4000">4 sec</option>
+            <option value="10000">10 sec</option>
+          </select>
+        </div>
+
+      </div>
+
+      <script>
+        $('#timeline-duration').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
+        $('#timeline-step').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
+        $('#timeline-delay').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
+      </script>
+    {% endif %}
   </div>
 </form>

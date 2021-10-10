@@ -5,6 +5,7 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/standings.js' %}"></script>
 
 <link href="{% static_ts 'css/highlight-9.18.1-default.min.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/highlight.pack.js' %}"></script>
@@ -16,11 +17,13 @@
 
 <script>page_load = $.now();</script>
 <script src="{% static_ts 'js/countdown.js' %}"></script>
+<script>contest_duration = {{ contest.duration_in_secs }}</script>
+<script>contest_max_percent = {% if contest.is_over %}1{% else %}{{ contest.duration_in_secs|substract:contest.next_time|divide:contest.duration_in_secs }}{% endif %}</script>
+<script>contest_timeline = {{ contest.resource.info.standings.timeline|default:"{}"|to_json }}</script>
 
 {% endblock %}
 
 {% block content %}
-
 <div class="container">
   {% with neighbors=contest.neighbors %}
   <h3 id="standings-title" class="text-center">
@@ -113,6 +116,14 @@
 
   {% if statistics.exists %}
     {% if not groupby or groupby == 'none' %}
+
+    <div id="timeline" class="progress">
+      <div class="progress-bar progress-bar-success" style="width: 100%">
+        <span id="timeline-text"></span>
+      </div>
+    </div>
+    <div id="timeline-tooltip" class="badge"></div>
+
     <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default{% if not with_table_inner_scroll %} table-responsive{% endif %}">
       <table class="standings table table-hover table-condensed table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}">
           <thead>
@@ -123,7 +134,7 @@
                 {% endwith %}
               </th>
               {% if data_1st_u %}
-              <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if data_1st_u.title %} title="{{ data_1st_u.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ data_1st_u.header|default:"1st U" }}</span></th>
+              <th class="first-u-cell"{% if merge_problems %} rowspan="2"{% endif %}><span{% if data_1st_u.title %} title="{{ data_1st_u.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ data_1st_u.header|default:"1st U" }}</span></th>
               {% endif %}
               <th{% if merge_problems %} rowspan="2"{% endif %} class="handle-cell">
                 {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
@@ -248,15 +259,15 @@
     }
 {% endif %}
 
-    var el = $('#table-inner-scroll')
-    var default_height = el.height()
+    var table_inner_scroll = $('#table-inner-scroll')
+    var default_height = table_inner_scroll.height()
     $(window).resize(function() {
-      if (el.length) {
-        var val = $(window).height() - el.offset().top - 50
+      if (table_inner_scroll.length) {
+        var val = $(window).height() - table_inner_scroll.offset().top - 50
         if (val < default_height) {
-          el.height(val)
+          table_inner_scroll.height(val)
         } else {
-          el.height(default_height)
+          table_inner_scroll.height(default_height)
         }
       }
     })
@@ -264,9 +275,10 @@
 
 {% if force_both_scroll %}
     var find_me_pos = $('.find-me-row').position()
-    var table_pos = el.position()
-    if (find_me_pos && table_pos) {
-      var target = find_me_pos.top - table_pos.top - el.find('thead').height()
+    if (find_me_pos) {
+      var el = table_inner_scroll.length? table_inner_scroll : $('html, body')
+      var table_pos = el.position()
+      var target = find_me_pos.top - table_pos.top - el.find('table.standings thead').height()
       {% with find_me=request.GET.find_me|toint %}
       {% if find_me and find_me != params.find_me %}
       var my_stat_pos = $('.my-stat').position()
@@ -280,12 +292,8 @@
       el.animate({scrollTop: target}, scroll_animate_time)
 
       $('.find-me-row td').each(function() {
-        var el = $(this)
-        var color = el.css('background-color')
-        setTimeout(function() { el.animate({'background-color': '#d0e3f7'}, color_animate_time) }, scroll_animate_time)
-        setTimeout(function() { el.animate({'background-color': color}, color_animate_time) }, scroll_animate_time + color_animate_time)
+        highlight_element($(this), scroll_animate_time, color_animate_time)
       })
-
     }
 {% endif %}
   })

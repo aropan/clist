@@ -543,7 +543,7 @@ def canonize(data):
 
 @register.filter
 def to_json(data):
-    return json.dumps(data)
+    return mark_safe(json.dumps(data))
 
 
 @register.filter

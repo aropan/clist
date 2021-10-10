@@ -95,10 +95,6 @@ $(function() {
   })
 })
 
-function update_sticky_header_problems_top() {
-  $('tr.header-problems th').css('top', $('tr.header-row:first').height())
-}
-
 $(function() {
   $('.sortable-column').each(function() {
     var url = new URL(window.location.href)
@@ -198,3 +194,27 @@ function log_ajax_error(response) {
     }
   }
 }
+
+
+;!(function ($) {
+  $.fn.classes = function (callback) {
+    var classes = [];
+    $.each(this, function (i, v) {
+      var splitClassName = (v.className || "").split(/\s+/);
+      var cs = []
+      for (var j = 0; j < splitClassName.length; j++) {
+        var className = splitClassName[j];
+        cs.push(className);
+        if (-1 === classes.indexOf(className)) {
+          classes.push(className);
+        }
+      }
+      if ('function' === typeof callback) {
+        for (var i in cs) {
+          callback(cs[i], v);
+        }
+      }
+    });
+    return classes;
+  };
+})(jQuery);

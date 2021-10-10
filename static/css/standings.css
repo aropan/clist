@@ -49,7 +49,7 @@ table.standings th {
 .standings tr.parity-border td,
 .standings tr.parity-border th
 {
-  border-top: 1px solid #999;
+  border-top: 1px solid #444;
 }
 
 .standings .first-ac,
@@ -202,6 +202,43 @@ a.solution:hover span {
   margin: 5px;
 }
 
+#timeline {
+  position: relative;
+  margin-bottom: 5px;
+  cursor: pointer;
+  display: none;
+}
+
+#timeline-buttons {
+  display: inline-block;
+}
+
+#timeline-buttons > * {
+ margin-bottom: 5px;
+}
+
+#timeline-text {
+  position: absolute;
+  color: black;
+  text-align: center;
+  left: 0;
+  right: 0;
+  user-select: none;
+}
+
+#timeline-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 100501;
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.problem-cell.problem-hidden::before {
+  content: "?";
+  color: #da2;
+}
+
 /*
  * versus games modal
  */
@@ -234,6 +271,7 @@ a.versus-games:hover {
 
 #parsed-time {
   position: absolute;
+  z-index: -1;
 }
 
 #parsed-time .container {

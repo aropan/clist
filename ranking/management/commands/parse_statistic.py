@@ -207,7 +207,8 @@ class Command(BaseCommand):
                             contest.info['standings'] = standings_options
                             contest.save()
 
-                    info_fields = standings.pop('info_fields', []) + ['divisions_order', 'divisions_addition']
+                    info_fields = standings.pop('info_fields', [])
+                    info_fields += ['divisions_order', 'divisions_addition', 'advance']
                     for field in info_fields:
                         if standings.get(field) is not None and contest.info.get(field) != standings[field]:
                             contest.info[field] = standings[field]

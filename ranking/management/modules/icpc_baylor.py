@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 
-import re
-import json
-from pprint import pprint
-from collections import OrderedDict
-from urllib.parse import urljoin
 import html
+import json
+import logging
+import re
+import traceback
+import urllib.parse
+from collections import OrderedDict
+from pprint import pprint
 
-from ranking.management.modules.common import REQ, BaseModule, parsed_table, FailOnGetResponse
+import coloredlogs
+from lxml import etree
+
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+
+logger = logging.getLogger(__name__)
+coloredlogs.install(logger=logger)
 
 
 class Statistic(BaseModule):
@@ -30,25 +38,12 @@ class Statistic(BaseModule):
     @staticmethod
     def _get_medals(year):
         default = OrderedDict([(k, 4) for k in ('gold', 'silver', 'bronze')])
-
-        main_url = 'https://icpc.baylor.edu/'
-        page = REQ.get(main_url)
-        match = re.search('src="(?P<js>/static/js/main.[^"]*.js)"', page)
-        if not match:
-            return default
-        js_url = match.group('js')
-
-        page = REQ.get(js_url)
-        match = re.search('XWIKI:"(?P<xwiki>[^"]*)"', page)
-        if not match:
-            return default
-        xwiki_url = match.group('xwiki')
-        xwiki_url = urljoin(main_url, xwiki_url).rstrip('/') + '/'
-
-        medal_result_url = urljoin(xwiki_url, f'community/results-{year}')
-
+        medal_result_url = f'https://icpc.global/api/help/cms/virtpublic/community/results-{year}'
         page = REQ.get(medal_result_url)
-        json_data = json.loads(page)
+        try:
+            json_data = json.loads(page)
+        except json.decoder.JSONDecodeError:
+            return default
         regex = '''<table[^>]*id=["']medalTable[^>]*>.*?</table>'''
         match = re.search(regex, json_data['content'], re.DOTALL)
         if not match:
@@ -71,8 +66,7 @@ class Statistic(BaseModule):
         return medals
 
     def get_standings(self, users=None, statistics=None):
-        year = self.start_time.year
-        year = year + 1 if self.start_time.month >= 9 else year
+        year = int(re.search(r'\b[0-9]{4}\b', self.key).group(0))
         season = '%d-%d' % (year - 1, year)
 
         standings_urls = []
@@ -81,6 +75,7 @@ class Statistic(BaseModule):
                 f'http://static.kattis.com/icpc/wf{year}/',
                 f'https://zibada.guru/finals/{year}/',
                 f'http://web.archive.org/web/{year}/https://icpc.baylor.edu/scoreboard/',
+                f'http://web.archive.org/web/{year}/https://icpc.global/scoreboard/',
             ):
                 try:
                     page = REQ.get(url)
@@ -88,6 +83,9 @@ class Statistic(BaseModule):
                     continue
 
                 if 'web.archive.org' in REQ.last_url and f'/{year}' not in REQ.last_url:
+                    continue
+
+                if not re.search(rf'\bworld\s*finals\s*{year}\b', page):
                     continue
 
                 standings_urls.append(url)
@@ -101,8 +99,8 @@ class Statistic(BaseModule):
             page = REQ.get(standings_url)
 
             result = {}
+            hidden_fields = set(self.info.get('hidden_fields')) | {'region'}
             problems_info = OrderedDict()
-            has_submission = False
 
             if 'zibada' in standings_url:
                 match = re.search(r' = (?P<data>[\{\[].*?);?\s*$', page, re.MULTILINE)
@@ -136,7 +134,6 @@ class Statistic(BaseModule):
                         result = problems.get(p_name, {}).get('result', '')
                         if not result.startswith('?') and status.startswith('?'):
                             continue
-                        has_submission = True
                         if status == '+':
                             attempt = int(attempt) - 1
                             p_info = problems_info[p_name]
@@ -205,7 +202,6 @@ class Statistic(BaseModule):
                                 else:
                                     time = None
                                 result = int(result)
-                            has_submission = True
                             problem = problems.setdefault(p_name, {})
                             if status == '+':
                                 problem['time'] = time
@@ -230,10 +226,13 @@ class Statistic(BaseModule):
             else:
                 regex = '''<table[^>]*(?:id=["']standings|class=["']scoreboard)[^>]*>.*?</table>'''
                 match = re.search(regex, page, re.DOTALL)
-                html_table = match.group(0)
-
-                table = parsed_table.ParsedTable(html_table)
+                if match:
+                    html_table = match.group(0)
+                    table = parsed_table.ParsedTable(html_table)
+                else:
+                    table = []
                 time_divider = 1
+                last_place = None
                 for r in table:
                     row = {}
                     problems = row.setdefault('problems', {})
@@ -247,6 +246,17 @@ class Statistic(BaseModule):
                         if k in ('rank', 'rk'):
                             row['place'] = v
                         elif k == 'team':
+                            for el in vs:
+                                logo = el.column.node.xpath('.//img/@src')
+                                if logo:
+                                    row.setdefault('info', {})['logo'] = urllib.parse.urljoin(standings_url, logo[0])
+                                    break
+                            for el in vs:
+                                region = el.column.node.xpath('.//*[@class="badge badge-warning"]')
+                                if region:
+                                    region = ''.join([s.strip() for s in region[0].xpath('text()')])
+                                    if region:
+                                        row['region'] = region
                             row['member'] = f'{v} {season}'
                             row['name'] = v
                         elif k == 'time':
@@ -272,10 +282,11 @@ class Statistic(BaseModule):
                             if not v:
                                 continue
 
-                            has_submission = True
-
                             p = problems.setdefault(k, {})
-                            if ' ' in v:
+                            if '+' in v:
+                                v = v.replace(' ', '')
+                                p['result'] = f'?{v}'
+                            elif ' ' in v:
                                 pnt, time = map(int, v.split())
                                 p['result'] = '+' if pnt == 1 else f'+{pnt - 1}'
                                 p['time'] = time
@@ -287,14 +298,91 @@ class Statistic(BaseModule):
                                     p['first_ac'] = True
                             else:
                                 p['result'] = f'-{v}'
+                    if row.get('place'):
+                        last_place = row['place']
+                    elif last_place:
+                        row['place'] = last_place
                     result[row['member']] = row
 
-            if not has_submission:
+                elements = etree.HTML(page).xpath('//div[@class="card-header"]/following-sibling::div[@class="card-body"]//li')  # noqa
+                for el in elements:
+                    name = ''.join([s.strip() for s in el.xpath('text()')])
+                    member = f'{name} {season}'
+                    row = result.setdefault(member, {'member': member, 'name': name})
+
+                    logo = el.xpath('./img/@src')
+                    if logo:
+                        row.setdefault('info', {})['logo'] = urllib.parse.urljoin(standings_url, logo[0])
+
+                    while el is not None:
+                        prv = el.getprevious()
+                        if prv is not None and prv.tag == 'div' and prv.get('class') == 'card-header':
+                            break
+                        el = el.getparent()
+                    if el is not None:
+                        region = ''.join([s.strip() for s in prv.xpath('text()')])
+                        row['region'] = region
+
+            if not result:
                 continue
+
+            if statistics:
+                for team, row in result.items():
+                    stat = statistics.get(team)
+                    if not stat:
+                        continue
+                    for k, v in stat.items():
+                        if k not in row:
+                            hidden_fields.add(k)
+                            row[k] = v
+
+            if any(['region' not in r for r in result.values()]):
+                try:
+                    url = f'https://icpc.global/api/team/wf/{year}/published'
+                    page = REQ.get(url, time_out=60)
+                    data = self._json_load(page)
+                except Exception:
+                    traceback.print_exc()
+                    data = None
+
+                if data:
+                    def canonize_name(name):
+                        name = name.lower()
+                        name = name.replace('&', ' and ')
+                        name = re.sub(r'\s{2,}', ' ', name)
+                        name = re.split(r'(?:\s-\s|\s-|-\s|,\s)', name)
+                        name = tuple(sorted([n.strip() for n in name]))
+                        return name
+
+                    matching = {}
+                    for key, row in result.items():
+                        name = row['name']
+                        matching.setdefault(name, key)
+                        name = canonize_name(name)
+                        matching.setdefault(name, key)
+
+                    for site in data:
+                        region = site['siteName']
+                        for team in site['teams']:
+                            name = team['university']
+                            if name not in matching:
+                                name = canonize_name(name)
+                            if name not in matching:
+                                name = tuple(sorted(name + canonize_name(team['name'])))
+                            if name not in matching:
+                                logger.warning(f'Not found team = {name}')
+                            else:
+                                row = result[matching[name]]
+                                row['region'] = region
+                                for k, v in team.items():
+                                    k = k.lower()
+                                    if k not in row:
+                                        hidden_fields.add(k)
+                                        row[k] = v
 
             first_ac_of_all = None
             for team in result.values():
-                for p_name, problem in team['problems'].items():
+                for p_name, problem in team.get('problems', {}).items():
                     p_info = problems_info[p_name]
                     if not problem['result'].startswith('+'):
                         continue
@@ -307,7 +395,7 @@ class Statistic(BaseModule):
                         p_info['has_first_ac'] = True
 
             for team in result.values():
-                for p_name, problem in team['problems'].items():
+                for p_name, problem in team.get('problems', {}).items():
                     p_info = problems_info[p_name]
                     if problem['result'].startswith('+'):
                         if p_info.get('has_first_ac') and not problem.get('first_ac'):
@@ -336,6 +424,7 @@ class Statistic(BaseModule):
                 'url': standings_url,
                 'problems': list(problems_info.values()),
                 'options': options,
+                'hidden_fields': list(hidden_fields),
             }
             return standings
 

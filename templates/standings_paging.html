@@ -24,6 +24,7 @@
 {% endif %}
 <tr
 class="
+  stat-cell
   {{ statistic.id }}
   {% if statistic.my_stat %}my-stat{% endif %}
   {% if statistic.floating %} floating hidden{% endif %}
@@ -61,19 +62,25 @@ class="
   {% endwith %}
   {% if data_1st_u %}
   {% with info=participants_info|get_item:statistic.id %}
-  <{{ tag }}>
-    <a href="{{ request.path }}?{% query_transform request search=info.search %}">
-    {% if info.n %}
-    <div>{% if info.prefix %}{{ info.prefix }}{% endif %}{{ info.n }}{% if info.q %} ({{ info.q }}){% endif %}</div>
-    {% else %}
-      <div class="text-muted">—</div>
+  <{{ tag }} class="first-u-cell">
+    {% if info.search %}
+      {% if data_1st_u.field %}
+      <a href="{{ request.path }}?{% query_transform request data_1st_u.field statistic.addition|get_item:data_1st_u.field %}">
+      {% else %}
+      <a href="{{ request.path }}?{% query_transform request search=info.search %}">
+      {% endif %}
+      {% if info.n %}
+      <div>{% if info.prefix %}{{ info.prefix }}{% endif %}{{ info.n }}{% if info.q %} ({{ info.q }}){% endif %}</div>
+      {% else %}
+        <div class="text-muted">—</div>
+      {% endif %}
+      {% if with_detail and info.t_solving is not None %}
+      <small class="text-muted">
+        {{ info.t_solving|floatformat:'-2' }}{% if info.t_penalty is not None %}<span class="text-{% if info.t_penalty >= 0 %}success{% else %}danger{% endif %}">{% if info.t_penalty >= 0 %}+{% endif %}{{ info.t_penalty }}{% endif %}</span>
+      </small>
+      {% endif %}
+      </a>
     {% endif %}
-    {% if with_detail and info.t_solving is not None %}
-    <small class="text-muted">
-      {{ info.t_solving|floatformat:'-2' }}<span class="text-{% if info.t_penalty >= 0 %}success{% else %}danger{% endif %}">{% if info.t_penalty >= 0 %}+{% endif %}{{ info.t_penalty }}</span>
-    </small>
-    {% endif %}
-    </a>
   </{{ tag }}>
   {% endwith %}
   {% endif %}
@@ -121,16 +128,16 @@ class="
   {% endif %}
   {% endwith %}
   {% endif %}
-  <{{ tag }}>
+  <{{ tag }} class="score-cell">
     <div>{{ statistic.addition_replacement.solving|default:statistic.solving|floatformat:'-2' }}</div>
   </{{ tag }}>
   {% if mod_penalty %}
-  <{{ tag }}>{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty|default:0 %}</{{ tag }}>
+  <{{ tag }} class="gap-cell">{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty|default:0 %}</{{ tag }}>
   {% endif %}
 
   {% for field in fields.keys %}
   {% with value=addition|get_item:field %}
-  <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% endif %}>
+  <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     <span{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
     <span>
@@ -154,7 +161,17 @@ class="
   {% for problem in problems %}
     {% with key=problem|get_problem_short  %}
     {% with stat=addition.problems|get_item:key %}
-    <{{ tag }} class="problem-cell{% if stat %}{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}">
+    <{{ tag }}
+      class="problem-cell{% if stat %} problem-cell-stat{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}"
+      {% if stat %}
+      data-score="{% if not problem.full_score or not stat.binary and not stat.result|slice:":1" == "+" %}{{ stat.result }}{% else %}{{ problem.full_score }}{% endif %}"
+      data-result="{{ stat.result }}"
+      data-penalty="{{ stat.time }}"
+      data-more-penalty="{{ stat.penalty }}"
+      data-problem-key="{{ key }}"
+      data-class="{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}"
+      {% endif %}
+    >
       {% if not stat %}
         <div>&#183;</div>
       {% else %}
@@ -191,7 +208,7 @@ class="
             {% elif stat.binary is not None %}
             <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}><i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i></span>
             {% elif with_detail and stat.subscores %}
-              <span>{% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %}{% if subscore.result is not None %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}</span>
+              <span>{% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %} class="{% if subscore.result %}acc{% else %}rej{% endif %}">{{ subscore.status }}</span>{% endfor %}</span>
             {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
               <span>{{ stat.result }}</span>
             {% else %}
@@ -261,23 +278,5 @@ class="
 {% endif %}
 
 {% if colored_by_group_score %}
-<script>
-    var prev = null
-    var idx = 0
-    $('.standings tr[data-result]').each(function(e) {
-      var node = $(this)
-      node.removeClass('odd')
-      node.removeClass('even')
-      node.removeClass('parity-border')
-      var result = node.attr('data-result')
-      if (result != prev) {
-        idx = 1 - idx
-        if (prev != null) {
-          node.addClass('parity-border')
-        }
-      }
-      node.addClass(idx? 'odd' : 'even')
-      prev = result
-    })
-</script>
+<script>color_by_group_score()</script>
 {% endif %}

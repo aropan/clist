@@ -74,7 +74,7 @@ class BaseModelAdmin(admin.ModelAdmin):
     paginator = CachingPaginator
 
     formfield_overrides = {
-        models.JSONField: {'widget': JSONEditorWidget(mode='tree')},
+        models.JSONField: {'widget': JSONEditorWidget(mode='code')},
     }
 
     def formfield_for_dbfield(self, db_field, **kwargs):

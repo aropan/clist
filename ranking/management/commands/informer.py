@@ -78,6 +78,7 @@ class Command(BaseCommand):
             has_hidden = False
             numbered = 0
 
+            statistics = [s for s in statistics if s.place_as_int is not None]
             for stat in sorted(statistics, key=lambda s: s.place_as_int):
                 name_instead_key = resource.info.get('standings', {}).get('name_instead_key')
                 name_instead_key = stat.account.info.get('_name_instead_key', name_instead_key)
@@ -144,7 +145,9 @@ class Command(BaseCommand):
 
                         if p_result != result or is_hidden:
                             has_new_accepted |= is_accepted
-                            short = k if k not in contest_problems else get_problem_name(contest_problems[k])
+                            short = k
+                            if k in contest_problems and k != get_problem_short(contest_problems[k]):
+                                short = get_problem_name(contest_problems[k])
                             m = '%s%s %s' % (short, ('. ' + v['name']) if 'name' in v else '', result)
 
                             if v.get('verdict'):
