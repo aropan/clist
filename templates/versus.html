@@ -119,7 +119,7 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
           class="solving-place"
           title='
             <div>Rank: {{ stat.place }}</div>
-            <div>Score: {{ stat.solving|floatformat:'-2' }}</div>
+            <div>Score: {{ stat.solving|scoreformat }}</div>
             {% if stat.addition.penalty is not None %}
             <div>Penalty: {{ stat.addition.penalty }}</div>
             {% endif %}
@@ -134,7 +134,7 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
           data-placement="top"
           data-html="true"
         >
-          {{ stat.solving|floatformat:'-2' }} ({{ stat.place }})
+          {{ stat.solving|scoreformat }} ({{ stat.place }})
           {% if stat.addition.medal %}<span class="{{ stat.addition.medal|lower }}-medal">&#9899;</span>{% endif %}
           {% if perms.ranking.statistics_change and stat %}
             <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>

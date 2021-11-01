@@ -1,40 +1,36 @@
 from collections import Counter
 
 import humanfriendly
-from django.db.models import Q, Prefetch
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseNotFound
-from django.shortcuts import render, get_object_or_404, redirect, resolve_url
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.mail import EmailMessage
-from django.views.decorators.clickjacking import xframe_options_exempt
-from django.utils.timezone import now, timedelta
+from django.db.models import Prefetch, Q
+from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.template.loader import get_template
-from django_countries import countries
+from django.utils.timezone import now, timedelta
 from django.views.decorators.cache import cache_page
-from phonenumber_field.phonenumber import PhoneNumber
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django_countries import countries
 from el_pagination.decorators import page_templates
+from phonenumber_field.phonenumber import PhoneNumber
 
 import true_coders.views
-from events.models import Event, Participant, Team, JoinRequest, TeamStatus, TshirtSize
-from clist.views import get_timezone, get_timeformat
 from clist.models import Resource
-from true_coders.models import Organization
+from clist.views import get_timeformat, get_timezone
+from events.models import Event, JoinRequest, Participant, Team, TeamStatus, TshirtSize
 from ranking.models import Account, Module
+from true_coders.models import Organization
 from utils.regex import get_iregex_filter
 
 
 def events(request):
-    return render(
-        request,
-        'events.html',
-        {
-            'events': Event.objects.order_by('-created'),
-        },
-    )
+    context = {
+        'events': Event.objects.order_by('-created'),
+    }
+    return render(request, 'events.html', context)
 
 
 @page_templates((
@@ -69,6 +65,8 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
 
     query = request.POST.get('query') or request.GET.get('query')
     if query is not None and not end_registration and coder:
+        if not request.META.get('HTTP_REFERER'):
+            return redirect(resolve_url('events:event-tab', slug=event.slug, tab='registration'))
         if query == 'skip-coach':
             if not team or team.author != participant:
                 messages.error(request, 'First you need to create a team')
@@ -146,72 +144,77 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                     else:
                         account.coders.add(coder)
                         account.save()
-            if ok:
+            if is_coach:
+                participant = Participant.objects.create(event=event, is_coach=True)
+            else:
+                participant, _ = Participant.objects.get_or_create(coder=coder, event=event)
+
+            org_created = False
+            try:
+                data = dict(list(request.POST.items()))
+                for field in active_fields:
+                    if data.get(field):
+                        data[field] = data[field].strip()
+                if 'phone-number' in active_fields:
+                    data['phone-number'] = phone_number.as_e164
+                if 'tshirt-size' in active_fields:
+                    data['tshirt-size'] = int(data['tshirt-size'])
+
+                if not is_coach and 'organization' in data:
+                    organization_name = data['organization']
+                    organization, org_created = Organization.objects.get_or_create(name=organization_name)
+                    if org_created:
+                        organization.name_ru = organization_name
+                        organization.author = coder
+                        organization.save()
+                    data['organization'] = organization
+
+                for object_, attr in (
+                    (user, 'first_name'),
+                    (user, 'last_name'),
+                    (user, 'email'),
+                    (coder, 'first_name_native'),
+                    (coder, 'last_name_native'),
+                    (coder, 'middle_name_native'),
+                    (coder, 'phone_number'),
+                    (coder, 'country'),
+                    (coder, 'date_of_birth'),
+                    (coder, 'organization'),
+                    (coder, 'tshirt_size'),
+                ):
+                    field = attr.replace('_', '-')
+                    if field not in active_fields:
+                        continue
+                    value = data[field]
+                    setattr(participant, attr, value)
+                    if not is_coach and object_:
+                        if attr == 'tshirt_size':
+                            value = participant.tshirt_size_value
+                        setattr(object_, attr, value or getattr(object_, attr))
+
+                for field in event.fields_info.get('addition_fields', []):
+                    field = field['name']
+                    if field not in active_fields:
+                        continue
+                    value = data[field]
+                    coder.addition_fields[field] = value
+                    participant.addition_fields[field] = value
+
+                participant.save()
+                user.save()
+                coder.save()
                 if is_coach:
-                    participant = Participant.objects.create(event=event, is_coach=True)
-                else:
-                    participant, _ = Participant.objects.get_or_create(coder=coder, event=event)
+                    team.coach = participant
+                    team.status = TeamStatus.PENDING
+                    team.save()
+            except Exception as e:
+                messages.error(request, str(e))
+                ok = False
 
-                created = False
-                try:
-                    data = dict(list(request.POST.items()))
-                    if 'phone-number' in active_fields:
-                        data['phone-number'] = phone_number.as_e164
-
-                    for field in active_fields:
-                        if data.get(field):
-                            data[field] = data[field].strip()
-
-                    if not is_coach and 'organization' in data:
-                        organization_name = data['organization']
-                        organization, created = Organization.objects.get_or_create(name=organization_name)
-                        if created:
-                            organization.name_ru = organization_name
-                            organization.author = coder
-                            organization.save()
-                        data['organization'] = organization
-
-                    for object_, attr in (
-                        (user, 'first_name'),
-                        (user, 'last_name'),
-                        (user, 'email'),
-                        (coder, 'first_name_native'),
-                        (coder, 'last_name_native'),
-                        (coder, 'middle_name_native'),
-                        (coder, 'phone_number'),
-                        (coder, 'country'),
-                        (coder, 'date_of_birth'),
-                        (coder, 'organization'),
-                        (None, 'tshirt_size'),
-                    ):
-                        field = attr.replace('_', '-')
-                        if field not in active_fields:
-                            continue
-                        value = data[field]
-                        if not is_coach and object_:
-                            setattr(object_, attr, value or getattr(object_, attr))
-                        setattr(participant, attr, value)
-
-                    for field in event.fields_info.get('addition_fields', []):
-                        field = field['name']
-                        if field not in active_fields:
-                            continue
-                        value = data[field]
-                        coder.addition_fields[field] = value
-                        participant.addition_fields[field] = value
-
-                    participant.save()
-                    user.save()
-                    coder.save()
-                    if is_coach:
-                        team.coach = participant
-                        team.status = TeamStatus.PENDING
-                        team.save()
-                except Exception as e:
-                    participant.delete()
-                    if created:
-                        organization.delete()
-                    messages.error(request, str(e))
+            if not ok:
+                participant.delete()
+                if org_created:
+                    organization.delete()
         elif query == 'create-team':
             team_name = request.POST.get('team')
             team_name_limit = event.limits.get('team_name_length')
@@ -289,6 +292,27 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                 else:
                     team.status = TeamStatus.ADD_COACH
                 team.save()
+        elif query == 'cancel-registration':
+            if has_join_requests:
+                request.logger.error('Cancel join requests before cancel registration')
+            elif team:
+                request.logger.error('Remove team before cancel registration')
+            elif not participant:
+                request.logger.error('Register before cancel registration')
+            else:
+                participant.delete()
+        elif query == 'looking-for':
+            if has_join_requests:
+                request.logger.error('Cancel join requests')
+            elif team:
+                request.logger.error('Remove team before')
+            elif not participant:
+                request.logger.error('Register before')
+            else:
+                participant.looking_for = not participant.looking_for
+                participant.save()
+        else:
+            request.logger.error(f'Unknown query "{query}"')
 
         return redirect(resolve_url('events:event-tab', slug=event.slug, tab='registration'))
 

@@ -13,7 +13,7 @@ import yaml
 from django import template
 from django.conf import settings
 from django.template.base import Node
-from django.template.defaultfilters import slugify, stringfilter
+from django.template.defaultfilters import floatformat, slugify, stringfilter
 from django.urls import reverse
 from django.utils.functional import keep_lazy
 from django.utils.safestring import mark_safe
@@ -355,7 +355,7 @@ def get_country_name(code):
 def get_country_code(name):
     if name is None or is_country_code(name):
         return name
-    return countries.by_name(name)
+    return countries.by_name(name) or countries.alpha2(name)
 
 
 @register.filter
@@ -685,3 +685,12 @@ def title_field(value):
     values = re.split('_+', value)
     value = ' '.join([v.title() for v in values])
     return value
+
+
+@register.filter
+def scoreformat(value):
+    str_value = str(value)
+    if not str_value or str_value[0] in ['+', '-', '?']:
+        return value
+    format_value = floatformat(value, -2)
+    return value if not format_value else format_value

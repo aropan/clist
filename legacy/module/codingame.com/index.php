@@ -55,10 +55,10 @@
     foreach ($pids as $pid) {
         $u = 'https://www.codingame.com/services/ChallengeRemoteService/findWorldCupByPublicId';
         $j = curlexec($u, $postfields='["' . $pid . '", null]', $http_header);
-        if (!isset($j['success']) || !isset($j['success']['challenge'])) {
+        if (!isset($j['challenge'])) {
             continue;
         }
-        $data = $j['success']['challenge'];
+        $data = $j['challenge'];
         $ok = true;
         foreach (array('date', 'publicId', 'title') as $key) {
             if (!isset($data[$key]) || empty($data[$key])) {

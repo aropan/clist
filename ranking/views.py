@@ -515,6 +515,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
     mod_penalty = {}
     enable_timeline = False
+    timeline = None
     first = statistics.first()
     if first:
         if all('time' not in k for k in contest_fields):
@@ -522,6 +523,16 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
                 mod_penalty.update({'solving': first.solving, 'penalty': penalty})
         enable_timeline = any('time' in p for p in first.addition.get('problems', {}).values())
+    if enable_timeline:
+        timeline = request.GET.get('timeline')
+        if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):
+            if ':' in timeline:
+                val = 0
+                for x in map(int, timeline.split(':')):
+                    val = val * 60 + x
+                timeline = f'{val / contest.duration_in_secs + 1e-6:.6f}'
+        else:
+            timeline = None
 
     params = {}
     if divisions_order:
@@ -540,6 +551,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                             for f in 'n_accepted', 'n_teams', 'n_partial', 'n_total':
                                 if f in p:
                                     _problems[k][f] = _problems[k].get(f, 0) + p[f]
+                            if 'full_score' in p:
+                                fs = str(_problems[k].get('full_score', ''))
+                                if fs:
+                                    fs += ' '
+                                fs += str(p['full_score'])
+                                _problems[k]['full_score'] = fs
                 problems = list(_problems.values())
             else:
                 problems = problems['division'][division]
@@ -897,6 +914,28 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'with_neighbors': request.GET.get('neighbors') == 'on',
         'with_table_inner_scroll': not request.user_agent.is_mobile,
         'enable_timeline': enable_timeline,
+        'timeline': timeline,
+        'timeline_durations': [
+            ('100', '100 ms'),
+            ('500', '500 ms'),
+            ('1000', '1 sec'),
+            ('2000', '2 sec'),
+            ('4000', '4 sec'),
+        ],
+        'timeline_steps': [
+            ('0.001', '0.1%'),
+            ('0.005', '0.5%'),
+            ('0.01', '1%'),
+            ('0.03', '3%'),
+            ('0.1', '10%'),
+        ],
+        'timeline_delays': [
+            ('500', '500 ms'),
+            ('1000', '1 sec'),
+            ('2000', '2 sec'),
+            ('4000', '4 sec'),
+            ('10000', '10 sec'),
+        ],
     })
 
     context.update(n_highlight_context)

@@ -37,37 +37,44 @@ class Statistic(BaseModule):
 
     @staticmethod
     def _get_medals(year):
-        default = OrderedDict([(k, 4) for k in ('gold', 'silver', 'bronze')])
-        medal_result_url = f'https://icpc.global/api/help/cms/virtpublic/community/results-{year}'
-        page = REQ.get(medal_result_url)
-        try:
-            json_data = json.loads(page)
-        except json.decoder.JSONDecodeError:
-            return default
-        regex = '''<table[^>]*id=["']medalTable[^>]*>.*?</table>'''
-        match = re.search(regex, json_data['content'], re.DOTALL)
-        if not match:
-            return default
 
-        html_table = match.group(0)
-        table = parsed_table.ParsedTable(html_table)
-        medals = OrderedDict()
-        fields = ('gold', 'silver', 'bronze')
-        for f in fields:
-            medals[f] = 0
-        for r in table:
-            _, v = next(iter(r.items()))
-            for attr in v.attrs.get('class', '').split():
-                if attr in fields:
-                    medals[attr] = medals.get(attr, 0) + 1
-                    break
-        if not medals:
-            return default
-        return medals
+        def get_from_icpc(year):
+            medal_result_url = f'https://icpc.global/api/help/cms/virtpublic/community/results-{year}'
+            page = REQ.get(medal_result_url)
+            try:
+                json_data = json.loads(page)
+            except json.decoder.JSONDecodeError:
+                return
+            regex = '''<table[^>]*id=["']medalTable[^>]*>.*?</table>'''
+            match = re.search(regex, json_data['content'], re.DOTALL)
+            if not match:
+                return
+
+            html_table = match.group(0)
+            table = parsed_table.ParsedTable(html_table)
+            medals = OrderedDict()
+            fields = ('gold', 'silver', 'bronze')
+            for f in fields:
+                medals[f] = 0
+            for r in table:
+                _, v = next(iter(r.items()))
+                for attr in v.attrs.get('class', '').split():
+                    if attr in fields:
+                        medals[attr] = medals.get(attr, 0) + 1
+                        break
+            if not medals:
+                return
+            return medals
+
+        ret = get_from_icpc(year)
+        return ret
 
     def get_standings(self, users=None, statistics=None):
         year = int(re.search(r'\b[0-9]{4}\b', self.key).group(0))
         season = '%d-%d' % (year - 1, year)
+
+        icpc_standings_url = f'https://icpc.global/community/results-{year}'
+        icpc_api_standings_url = f'https://icpc.global/api/help/cms/virtpublic/community/results-{year}'
 
         standings_urls = []
         if not self.standings_url:
@@ -76,6 +83,8 @@ class Statistic(BaseModule):
                 f'https://zibada.guru/finals/{year}/',
                 f'http://web.archive.org/web/{year}/https://icpc.baylor.edu/scoreboard/',
                 f'http://web.archive.org/web/{year}/https://icpc.global/scoreboard/',
+                f'https://cphof.org/standings/icpc/{year}',
+                icpc_api_standings_url,
             ):
                 try:
                     page = REQ.get(url)
@@ -85,21 +94,25 @@ class Statistic(BaseModule):
                 if 'web.archive.org' in REQ.last_url and f'/{year}' not in REQ.last_url:
                     continue
 
-                if not re.search(rf'\bworld\s*finals\s*{year}\b', page):
+                if not re.search(rf'\b(world\s*finals\s*{year}|{year}\s*world\s*finals)\b', page, re.IGNORECASE):
                     continue
 
                 standings_urls.append(url)
         else:
-            standings_urls.append(self.standings_url)
+            if self.standings_url == icpc_standings_url:
+                standings_urls.append(icpc_api_standings_url)
+            else:
+                standings_urls.append(self.standings_url)
 
         if not standings_urls:
             raise ExceptionParseStandings(f'Not found standings url year = {year}')
 
         for standings_url in standings_urls:
+            is_icpc_api_standings_url = standings_url == icpc_api_standings_url
             page = REQ.get(standings_url)
 
             result = {}
-            hidden_fields = set(self.info.get('hidden_fields')) | {'region'}
+            hidden_fields = set(self.info.get('hidden_fields', [])) | {'region'}
             problems_info = OrderedDict()
 
             if 'zibada' in standings_url:
@@ -224,15 +237,19 @@ class Statistic(BaseModule):
 
                 problems_info = OrderedDict(sorted(problems_info.items()))
             else:
-                regex = '''<table[^>]*(?:id=["']standings|class=["']scoreboard)[^>]*>.*?</table>'''
+                if is_icpc_api_standings_url:
+                    page = re.sub(r'</table>\s*<table>\s*(<tr[^>]*>\s*<t[^>]*>)', r'\1', page, flags=re.I)
+
+                regex = '''(?:<table[^>]*(?:id=["']standings|class=["']scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>'''  # noqa
                 match = re.search(regex, page, re.DOTALL)
                 if match:
                     html_table = match.group(0)
-                    table = parsed_table.ParsedTable(html_table)
+                    table = parsed_table.ParsedTable(html_table, with_not_full_row=is_icpc_api_standings_url)
                 else:
                     table = []
                 time_divider = 1
                 last_place = None
+                honorables = []
                 for r in table:
                     row = {}
                     problems = row.setdefault('problems', {})
@@ -243,25 +260,42 @@ class Statistic(BaseModule):
                             v = vs.value
                         k = k.lower().strip('.')
                         v = v.strip()
-                        if k in ('rank', 'rk'):
+                        if honorables:
+                            if v:
+                                honorables.append(v)
+                            continue
+                        if k in ('rank', 'rk', 'place'):
+                            if not isinstance(vs, list):
+                                medal = vs.column.node.xpath('.//img/@alt')
+                                if medal and medal[0].endswith('medal'):
+                                    row['medal'] = medal[0].split()[0]
+                            if v and not v[0].isdigit():
+                                honorables.append(v)
                             row['place'] = v
-                        elif k == 'team':
-                            for el in vs:
-                                logo = el.column.node.xpath('.//img/@src')
-                                if logo:
-                                    row.setdefault('info', {})['logo'] = urllib.parse.urljoin(standings_url, logo[0])
-                                    break
-                            for el in vs:
-                                region = el.column.node.xpath('.//*[@class="badge badge-warning"]')
-                                if region:
-                                    region = ''.join([s.strip() for s in region[0].xpath('text()')])
+                        elif k in ('team', 'name', 'university'):
+                            if isinstance(vs, list):
+                                for el in vs:
+                                    logo = el.column.node.xpath('.//img/@src')
+                                    if logo:
+                                        logo = urllib.parse.urljoin(standings_url, logo[0])
+                                        row.setdefault('info', {})['logo'] = logo
+                                        break
+                                for el in vs:
+                                    region = el.column.node.xpath('.//*[@class="badge badge-warning"]')
                                     if region:
-                                        row['region'] = region
-                            row['member'] = f'{v} {season}'
+                                        region = ''.join([s.strip() for s in region[0].xpath('text()')])
+                                        if region:
+                                            row['region'] = region
+                            if 'cphof' in standings_url:
+                                member = vs.column.node.xpath('.//a/text()')[0].strip()
+                                row['member'] = f'{member} {season}'
+                            else:
+                                row['member'] = f'{v} {season}'
                             row['name'] = v
-                        elif k == 'time':
-                            row['penalty'] = int(v)
-                        elif k == 'slv':
+                        elif k in ('time', 'penalty', 'total time (min)', 'minutes'):
+                            if v:
+                                row['penalty'] = int(v)
+                        elif k in ('slv', 'solved', '# solved'):
                             row['solving'] = int(v)
                         elif k == 'score':
                             if ' ' in v:
@@ -302,6 +336,8 @@ class Statistic(BaseModule):
                         last_place = row['place']
                     elif last_place:
                         row['place'] = last_place
+                    if 'member' not in row or row['member'].startswith(' '):
+                        continue
                     result[row['member']] = row
 
                 elements = etree.HTML(page).xpath('//div[@class="card-header"]/following-sibling::div[@class="card-body"]//li')  # noqa
@@ -322,6 +358,13 @@ class Statistic(BaseModule):
                     if el is not None:
                         region = ''.join([s.strip() for s in prv.xpath('text()')])
                         row['region'] = region
+
+                if result and honorables:
+                    for name in honorables:
+                        if 'honorable' in name.lower():
+                            continue
+                        row = dict(name=name, member=f'{name} {season}')
+                        result[row['member']] = row
 
             if not result:
                 continue
@@ -416,12 +459,13 @@ class Statistic(BaseModule):
             options = {'per_page': None}
             if not without_medals:
                 medals = self._get_medals(year)
-                medals = [{'name': k, 'count': v} for k, v in medals.items()]
-                options['medals'] = medals
+                if medals:
+                    medals = [{'name': k, 'count': v} for k, v in medals.items()]
+                    options['medals'] = medals
 
             standings = {
                 'result': result,
-                'url': standings_url,
+                'url': icpc_standings_url if is_icpc_api_standings_url else standings_url,
                 'problems': list(problems_info.values()),
                 'options': options,
                 'hidden_fields': list(hidden_fields),

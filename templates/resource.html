@@ -213,6 +213,9 @@
                 chart.update()
                 return false
             })
+{% if resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'y_scale' == 'logarithmic' %}
+            $('#toggleLogScale input').click()
+{% endif %}
         })
     </script>
     {% endif %}

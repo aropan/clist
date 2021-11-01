@@ -1,4 +1,5 @@
 {% autoescape off %}
+Newsletter for {{ coder.username }}.
 {% if contests.count < 7 %}
     {% if prefix %}{{ prefix }}. {% endif %}{% for c in contests %}{% if forloop.counter0 %}{% if forloop.revcounter0 %},{% else %} and{% endif %} {% endif %}{{ c.title }}{% endfor %}
 {% else %}

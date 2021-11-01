@@ -9,11 +9,8 @@
         for (; $url && !in_array($url, $urls);) {
             $urls[] = $url;
             $page = curlexec($url);
-            /* old regex for parse from page
-        #<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>[^<]*<td>(?<title>.*?)</td>(?:[^<]*<td[^>]*>(?P<authors>.*?)</td>)?[^<]*<td>[^<]*(?:-|<a href="http://timeanddate\.com/[^"]*" .*?>(?<start_time>[^<]*)</a>)[^<]*</td>[^<]*<td>(?<duration>[^<]*)</td>#s
-             */
             preg_match_all(
-                '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>[^<]*<td>.*?</td>[^<]*<td[^>]*>(?P<authors>.*?)</td>.*?</tr>#s',
+                '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>[^<]*<td[^>]*>.*?</td>[^<]*<td[^>]*>(?P<authors>.*?)</td>.*?</tr>#s',
                 $page,
                 $matches,
                 PREG_SET_ORDER
@@ -50,9 +47,6 @@
 
     $json['status'] == 'OK' or trigger_error("status = '${json['status']}' for $url");
     foreach ($json['result'] as $c) {
-        if (!isset($authors[$c['id']])) {
-            continue;
-        }
         $title = $c['name'];
         if (!isset($c['startTimeSeconds'])) {
             continue;
@@ -66,9 +60,12 @@
             'host' => $HOST,
             'key' => $c['id'],
             'rid' => $RID,
-            'info' => array('writers' => $authors[$c['id']]),
             'timezone' => $TIMEZONE
         );
+
+        if (isset($authors[$c['id']])) {
+            $contest['info'] = array('writers' => $authors[$c['id']]);
+        }
 
         if (isset($end_times[$c['id']])) {
             $contest['end_time'] = $end_times[$c['id']];

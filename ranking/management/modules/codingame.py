@@ -171,6 +171,7 @@ class Statistic(BaseModule):
                 for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries), desc='countries'):
                     process_data(data)
 
+        hidden_fields = list(hidden_fields)
         if self.end_time > now():
             hidden_fields.extend(['created', 'updated'])
 

@@ -78,6 +78,7 @@ class ParsedTable(object):
         xpath='//table//tr',
         as_list=False,
         with_duplicate_colspan=False,
+        with_not_full_row=False,
         ignore_wrong_header_number=True,
         ignore_display_none=False,
         unnamed_fields=(),
@@ -85,6 +86,7 @@ class ParsedTable(object):
     ):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
+        self.with_not_full_row = with_not_full_row
         self.table = etree.HTML(html).xpath(xpath)
         self.init_iter()
         self.unnamed_fields = unnamed_fields
@@ -149,6 +151,9 @@ class ParsedTable(object):
                 self.header.columns.append(column)
 
             if len(row.columns) == len(self.header.columns):
+                break
+
+            if self.with_not_full_row and len(row.columns) < len(self.header.columns):
                 break
 
             if not self.ignore_wrong_header_number:

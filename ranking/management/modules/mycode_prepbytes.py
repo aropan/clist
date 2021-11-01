@@ -86,11 +86,15 @@ class Statistic(BaseModule):
                     problem['tags'] = tags['topicwise']
             if p.get('topicWiseData'):
                 topic_wise_data = json.loads(p['topicWiseData'])
-                if topic_wise_data:
+                problem['url'] = f'https://mycode.prepbytes.com/submit/{p["problem_id"]}'
+                if isinstance(topic_wise_data, dict):
+                    contest_wise = topic_wise_data.get('contestwise')
+                    if contest_wise:
+                        contest = contest_wise[0]
+                        problem['url'] = f'https://mycode.prepbytes.com/contest/{contest}/problems/{p["problem_id"]}'
+                elif topic_wise_data:
                     topic = topic_wise_data[0]['topic']
                     problem['url'] = f'https://mycode.prepbytes.com/problems/{topic}/{p["problem_id"]}'
-                else:
-                    problem['url'] = f'https://mycode.prepbytes.com/submit/{p["problem_id"]}'
             problems.append(problem)
 
         ret = {

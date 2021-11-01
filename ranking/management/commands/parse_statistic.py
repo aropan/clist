@@ -334,7 +334,7 @@ class Command(BaseCommand):
 
                             no_update_name = r.pop('_no_update_name', False)
                             field_update_name = r.pop('_field_update_name', 'name')
-                            if r.get(field_update_name):
+                            if r.get(field_update_name) and 'team_id' not in r:
                                 r[field_update_name] = canonize_name(r[field_update_name])
                                 if (
                                     not no_update_name and
@@ -499,7 +499,7 @@ class Command(BaseCommand):
                                 is_hidden_field = k in standings_hidden_fields_set
                                 if k[0].isalpha() and not re.match('^[A-Z]+$', k):
                                     k = k[0].upper() + k[1:]
-                                    k = '_'.join(map(str.lower, re.findall('[A-ZА-Я][^A-ZА-Я]*', k)))
+                                    k = '_'.join(map(str.lower, re.findall('([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)', k)))
 
                                 if is_hidden_field:
                                     hidden_fields.add(k)
@@ -583,6 +583,10 @@ class Command(BaseCommand):
                                 statistic.save()
 
                         if users is None:
+                            if has_hidden != contest.has_hidden_results:
+                                contest.has_hidden_results = has_hidden
+                                contest.save()
+
                             timing_statistic_delta = timedelta(minutes=30) if has_hidden else None
                             timing_statistic_delta = standings.get('timing_statistic_delta', timing_statistic_delta)
                             if contest.end_time < now and timing_statistic_delta is not None:

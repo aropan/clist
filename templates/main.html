@@ -104,7 +104,7 @@
             <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
             {% endif %}
             <a href="{% url 'clist:resource' contest.resource.host %}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
-            <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
+            <a class="title_search" href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
           </span>
           {% if contest.state != "past" and add_to_calendar != "disable" %}
           <a class="data-ace" data-ace='{
@@ -130,7 +130,7 @@
           {% include "contest_inline_buttons.html" with contest=contest %}
 
           <div class="resource">
-            <a href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
+            <a class="resource_search" href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
           </div>
         </div>
       </div>

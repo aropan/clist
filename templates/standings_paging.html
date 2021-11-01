@@ -26,31 +26,24 @@
 class="
   stat-cell
   {{ statistic.id }}
-  {% if statistic.my_stat %}my-stat{% endif %}
+  {% if statistic.my_stat %}my-stat info{% endif %}
   {% if statistic.floating %} floating hidden{% endif %}
   {% if statistic.id == request.GET.find_me|toint %} find-me-row{% endif %}
-  {% if statistic.my_stat %}info{% elif versus_statistic_id == statistic.id %}success{% endif %}
+  {% if versus_statistic_id == statistic.id %}success{% endif %}
 "
-{% if colored_by_group_score %}data-result="{{ statistic.solving|floatformat:'-2' }}"{% endif %}
+{% if colored_by_group_score %}data-result="{{ statistic.solving|scoreformat }}"{% endif %}
+{% if addition.hack %}
+  {% if addition.hack.successful %}data-successful-challenge="{{ addition.hack.successful }}"{% endif %}
+  {% if addition.hack.unsuccessful %}data-unsuccessful-challenge="{{ addition.hack.unsuccessful }}"{% endif %}
+{% endif %}
 >
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }}
-    {% if addition.medal %}
-      class="place-cell {{ addition.medal|lower }}-medal"
-      {% with medal_title_field=addition|get_item:"_medal_title_field" %}
-      title="{% if medal_title_field %}{{ medal_title_field|strip:"_"|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
-      {% endwith %}
-      data-toggle="tooltip"
+    class="place-cell{% if advance %} advance{% if advance.class %} {{ advance.class }}{% endif %}{% endif %}"
+    {% if advance %}
       data-placement="top"
-    {% elif advance %}
-      class="place-cell advance{% if advance.class %} {{ advance.class }}{% endif %}"
-      {% if advance %}
-        data-toggle="tooltip"
-        data-placement="top"
-        title="{% if advance.next %}{% if advance.contest or not contest.next_time %}Advanced{% else %}Supposedly advance{% endif %} to {{ advance.next }}{% if advance.contest %} (in {{ advance.contest }}){% endif %}{% elif advance.medal %}{{ advance.medal }}{% endif %}"
-      {% endif %}
-    {% else %}
-      class="place-cell"
+      data-toggle="tooltip"
+      title="{% if advance.next %}{% if advance.contest or not contest.next_time %}Advanced{% else %}Supposedly advance{% endif %} to {{ advance.next }}{% if advance.contest %} (in {{ advance.contest }}){% endif %}{% elif advance.medal %}{{ advance.medal }}{% endif %}"
     {% endif %}
   >
     {% with place=statistic.addition_replacement.place|default:statistic.place %}
@@ -76,7 +69,7 @@ class="
       {% endif %}
       {% if with_detail and info.t_solving is not None %}
       <small class="text-muted">
-        {{ info.t_solving|floatformat:'-2' }}{% if info.t_penalty is not None %}<span class="text-{% if info.t_penalty >= 0 %}success{% else %}danger{% endif %}">{% if info.t_penalty >= 0 %}+{% endif %}{{ info.t_penalty }}{% endif %}</span>
+        {{ info.t_solving|scoreformat }}{% if info.t_penalty is not None %}<span class="text-{% if info.t_penalty >= 0 %}success{% else %}danger{% endif %}">{% if info.t_penalty >= 0 %}+{% endif %}{{ info.t_penalty }}{% endif %}</span>
       </small>
       {% endif %}
       </a>
@@ -89,7 +82,20 @@ class="
     {% if info and info.n and info.n <= standings_options.n_highlight or info and info.highlight %}bg-success{% endif %}
     {% endwith %}
   ">
-    {% include "standings_account.html" with account=statistic.account addition=addition resource=contest.resource %}
+    <div class="handle-cell-flex">
+      <span>
+        {% include "standings_account.html" with account=statistic.account addition=addition resource=contest.resource %}
+      </span>
+      {% if addition.medal %}
+      <span class="trophy{% if with_detail %} trophy-detail{% endif %} {{ addition.medal|lower }}-trophy"
+        data-placement="top"
+        data-toggle="tooltip"
+        {% with medal_title_field=addition|get_item:"_medal_title_field" %}
+        title="{% if medal_title_field %}{{ medal_title_field|strip:"_"|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
+        {% endwith %}
+      ><i class="fas fa-trophy"></i></span>
+      {% endif %}
+    </div>
   </{{ tag }}>
   {% if versus_data %}
   {% with versus_data_row=versus_data.stats|get_item:statistic.account.key %}
@@ -129,10 +135,15 @@ class="
   {% endwith %}
   {% endif %}
   <{{ tag }} class="score-cell">
-    <div>{{ statistic.addition_replacement.solving|default:statistic.solving|floatformat:'-2' }}</div>
+    <div>{{ statistic.addition_replacement.solving|default:statistic.solving|scoreformat }}</div>
   </{{ tag }}>
   {% if mod_penalty %}
-  <{{ tag }} class="gap-cell">{% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty|default:0 %}</{{ tag }}>
+  <{{ tag }} class="gap-cell">
+    <div>
+    {% if addition.penalty is None or statistic.solving is None %}&#183;{% else %}
+    {% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty %}{% endif %}
+    </div>
+  </{{ tag }}>
   {% endif %}
 
   {% for field in fields.keys %}
@@ -212,7 +223,7 @@ class="
             {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
               <span>{{ stat.result }}</span>
             {% else %}
-              <span{% if stat.verdict and 'time' in stat %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.result|floatformat:'-2' }}</span>
+              <span{% if stat.verdict and 'time' in stat %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.result|scoreformat }}</span>
             {% endif %}
 
             {% if stat.url or stat.solution or stat.external_solution %}</a>{% endif %}
@@ -227,7 +238,7 @@ class="
               title="{% for info in stat.extra_info %}{{ info }}<br/>{% endfor %}"
             {% endif %}
           >
-          {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|floatformat:'-2' }}
+          {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|scoreformat }}
           </div>
         {% endif %}
         {% if stat.penalty_score %}

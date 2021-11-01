@@ -70,15 +70,13 @@ function duration_to_text(duration) {
 
 var CURRENT_PERCENT = null
 var TOOLTIP_TIMER = null
+var TIMELINE_TIMER_ID = null
 const RESET_TOOLTIP_DURATION = 3000
 
-function step_timeline() {
-  if (CURRENT_PERCENT >= contest_max_percent) {
-    return
-  }
-  CURRENT_PERCENT += parseFloat($('#timeline-step').val())
+function step_timeline(multiplier = 1, stop = false) {
+  CURRENT_PERCENT += multiplier * parseFloat($('#timeline-step').val())
   set_timeline(CURRENT_PERCENT)
-  if (CURRENT_PERCENT >= contest_max_percent) {
+  if (stop && TIMELINE_TIMER_ID || !stop && CURRENT_PERCENT >= contest_max_percent) {
     $('#play-timeline').click()
   }
 }
@@ -88,24 +86,42 @@ function update_timeline_text(percent) {
   $('#timeline-text').text(duration_to_text(contest_duration * percent) + ' of ' + duration_to_text(contest_duration))
 }
 
+function shuffle_statistics_rows() {
+  var rows = $('.stat-cell').toArray()
+  shuffle(rows)
+  $('table.standings tbody').html(rows)
+}
+
 function set_timeline(percent, duration = null) {
   if (duration == null) {
     duration = parseInt($('#timeline-duration').val())
   }
-
-  if (TOOLTIP_TIMER) {
-    clearTimeout(TOOLTIP_TIMER)
+  if ($('.standings.invisible').length) {
+    duration = 0
   }
 
   percent = Math.max(percent, 0)
   percent = Math.min(percent, contest_max_percent)
   update_timeline_text(percent)
 
+  if (CURRENT_PERCENT == percent && (CURRENT_PERCENT <= 0 || CURRENT_PERCENT >= contest_max_percent)) {
+    return
+  }
   CURRENT_PERCENT = percent
   var current_time = contest_duration * percent
 
+  if (TOOLTIP_TIMER) {
+    clearTimeout(TOOLTIP_TIMER)
+  }
+
   $('.stat-cell').each((_, e) => {
-    $(e).attr('data-score', 0)
+    score = 0
+    if (contest_timeline['challenge_score']) {
+      score += parseFloat($(e).attr('data-successful-challenge') || 0) * contest_timeline['challenge_score']['successful']
+      score += parseFloat($(e).attr('data-unsuccessful-challenge') || 0) * contest_timeline['challenge_score']['unsuccessful']
+    }
+    $(e).attr('data-score', score)
+
     $(e).attr('data-penalty', 0)
     $(e).attr('data-more-penalty', 0)
     $(e).attr('data-last', 0)
@@ -127,24 +143,32 @@ function set_timeline(percent, duration = null) {
 
     var visible = true
     if (penalty) {
-      var times = penalty.split(':')
+      var times = penalty.split(/[:\s]+/)
       var factors = contest_timeline['time_factor'][times.length]
-      var time = times.reduce((r, t, i) => { return r + parseInt(t) * factors[i]; }, 0)
+      var time = times.reduce((r, t, i) => {
+        if (t.endsWith('д.')) {
+          t = parseInt(t) * 86400
+        } else if (t.endsWith('ч.')) {
+          t = parseInt(t) * 3600
+        } else if (t.endsWith('м.')) {
+          t = parseInt(t) * 60
+        } else {
+          t = parseInt(t) * factors[i]
+        }
+        return r + t
+      }, 0)
       visible = time <= current_time
+    } else {
+      visible = CURRENT_PERCENT >= contest_max_percent
     }
     var pvisible = $e.attr('data-visible')
     $e.attr('data-visible', visible)
 
-    var problem_result = $e.find('>')
     if (visible) {
-      problem_result.removeClass('hidden')
-      $e.removeClass('problem-hidden')
-      $e.addClass(toggle_class)
+      $e.removeClass('result-hidden')
       problem_status = 'danger'
     } else {
-      problem_result.addClass('hidden')
-      $e.addClass('problem-hidden')
-      $e.removeClass(toggle_class)
+      $e.addClass('result-hidden')
       problem_status = 'warning'
     }
 
@@ -195,11 +219,7 @@ function set_timeline(percent, duration = null) {
     }
 
     if (visible && pvisible === 'false') {
-      highlight_element($e, duration, duration, toggle_class, function() {
-        if (toggle_class && problem_result.hasClass('hidden')) {
-          $e.removeClass(toggle_class)
-        }
-      })
+      highlight_element($e, duration, duration / 2, toggle_class)
     }
 
     if (problem_status) {
@@ -301,6 +321,7 @@ function set_timeline(percent, duration = null) {
     $r.find('>.gap-cell').attr('data-text', Math.round(gap / 60))
 
     $r.attr('data-translate-y', 'translateY(' + (r.offsetTop - current_top) + 'px)')
+    $r.attr('data-scroll-top', current_top)
     current_top += r.offsetHeight
   })
 
@@ -311,24 +332,29 @@ function set_timeline(percent, duration = null) {
   $('table.standings tbody').html(rows)
   color_by_group_score('data-score')
 
+  scroll_to_find_me(duration, 0)
+
   setTimeout(() => { rows.css('transform', '') }, 1)
 
   TOOLTIP_TIMER = setTimeout(() => { toggle_tooltip_object($('table.standings [data-original-title]')) }, RESET_TOOLTIP_DURATION + duration)
 }
 
-function highlight_element(el, after, duration, before_toggle_class = false, callback = function(){}) {
+function highlight_element(el, after = 1000, duration = 500, before_toggle_class = false, callback = function(){}) {
+  if (!el.length) {
+    return
+  }
   var color = el.css('background-color')
   if (before_toggle_class) {
-    el.toggleClass(before_toggle_class)
+    el.removeClass(before_toggle_class)
   }
   setTimeout(function() {
     el.animate({'background-color': '#d0e3f7'}, duration, function() {
       el.animate({'background-color': color}, duration, function() {
         el.css('background', '')
         if (before_toggle_class) {
-          el.toggleClass(before_toggle_class)
+          el.addClass(before_toggle_class)
         }
-        callback()
+        callback(el)
       })
     })
   }, after)
@@ -338,21 +364,49 @@ function show_timeline() {
   $('#timeline-buttons').toggleClass('hidden')
   $('#timeline').show()
 
-  $('table.standings td').classes(function(c, e) {
+  $('table.standings tr > *').classes(function(c, e) {
     if (c.endsWith('-medal')) {
       $(e).removeClass(c)
     }
   })
+  $('table.standings .trophy').remove()
+
+  $('table.standings .handle-cell .help-message').remove()
+  $('table.standings .handle-cell.bg-success').removeClass('bg-success')
 
   $('.first-u-cell').remove()
 
-  update_timeline_text(contest_max_percent)
-  CURRENT_PERCENT = contest_max_percent
+  update_timeline_text(CURRENT_PERCENT)
+}
+
+function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500) {
+  var el = $('.find-me-row')
+  var find_me_pos = el.position()
+  if (find_me_pos) {
+    var table_inner_scroll = $('#table-inner-scroll')
+    var table = table_inner_scroll.length? table_inner_scroll : $('html, body')
+    var table_pos = table.position()
+    var element_top = parseInt(el.attr('data-scroll-top')) + table_pos.top - table.scrollTop() || find_me_pos.top
+    el.attr('data-scroll-top', '')
+    var target = element_top - (table_pos.top + table.height() / 2)
+    table.animate({scrollTop: target + table.scrollTop()}, scroll_animate_time)
+
+    if (color_animate_time) {
+      $('.find-me-row td').each(function() {
+        highlight_element($(this), scroll_animate_time, color_animate_time)
+      })
+    }
+  }
 }
 
 $(function() {
+  CURRENT_PERCENT = contest_max_percent
+
   $('#timeline').click(function(e) {
     var percent = (e.pageX - $(this).offset().left) / $(this).width()
+    if (TIMELINE_TIMER_ID) {
+      $('#play-timeline').click()
+    }
     set_timeline(percent)
   })
 
@@ -360,6 +414,8 @@ $(function() {
 
   $('#timeline').mousemove(function(e) {
     var percent = (e.pageX - $(this).offset().left) / $(this).width()
+    percent = Math.max(percent, 0)
+    percent = Math.min(percent, 1)
     $tooltip.css({'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() - 5})
     $tooltip.show()
     $tooltip.text(duration_to_text(contest_duration * percent))
@@ -369,7 +425,6 @@ $(function() {
     $tooltip.hide()
   })
 
-  var timer_id = null
   $play_timeline = $('#play-timeline')
 
   function toggle_play_timeline() {
@@ -377,22 +432,76 @@ $(function() {
   }
 
   $play_timeline.click(function(e) {
+    e.preventDefault()
     toggle_play_timeline()
-    if (timer_id) {
-      clearInterval(timer_id)
-      timer_id = null
+    if (TIMELINE_TIMER_ID) {
+      clearInterval(TIMELINE_TIMER_ID)
+      TIMELINE_TIMER_ID = null
     } else if (CURRENT_PERCENT >= contest_max_percent) {
       setTimeout(toggle_play_timeline, 100)
     } else {
-      timer_id = setInterval(step_timeline, $('#timeline-delay').val())
+      TIMELINE_TIMER_ID = setInterval(step_timeline, $('#timeline-delay').val())
     }
+  })
+
+  $share_timeline = $('#share-timeline')
+
+  $share_timeline.click(function(e) {
     e.preventDefault()
+    url = window.location.href
+    url = url.replace(/\btimeline=[^&]+&?/gi, '')
+    url = url.replace(/\bt_[a-z]+=[^&]+&?/gi, '')
+    url = url.replace(/[\?&]$/, '')
+    url += (url.indexOf('?') == -1? '?' : '&') + 'timeline=' + duration_to_text(contest_duration * CURRENT_PERCENT)
+    const keys = ['duration', 'step', 'delay']
+    keys.forEach(function(k) { el = $('#timeline-' + k); url += '&t_' + k + '=' + el.val() })
+
+    var dialog = bootbox.dialog({
+      title: "Share standings url with timeline",
+      message: '<div><input id="share-timeline-url" class="form-control"></intput></div>',
+      buttons: {
+        copy: {
+          label: 'Copy',
+          className: 'btn-default',
+          callback: function () {
+            $('#share-timeline-url').select()
+            document.execCommand('copy')
+          },
+        },
+        open: {
+          label: 'Open',
+          className: 'btn-default',
+          callback: function (result) {
+            var url = $('#share-timeline-url').val()
+            window.location.href = url
+          },
+        },
+      },
+    })
+    dialog.bind('shown.bs.modal', function() {
+      $('#share-timeline-url').focus().val(url)
+    })
   })
 
   $('#timeline-delay').change(function() {
-    if (timer_id) {
-      clearInterval(timer_id)
-      timer_id = setInterval(step_timeline, $(this).val())
+    if (TIMELINE_TIMER_ID) {
+      clearInterval(TIMELINE_TIMER_ID)
+      TIMELINE_TIMER_ID = setInterval(step_timeline, $(this).val())
     }
   })
+
+  $('#timeline-buttons button').keyup(function(event) {
+    if (event.key == 'h') {
+      $('#fast-backward-timeline').focus().click();
+    } else if (event.key == 'j') {
+      $('#step-forward-timeline').focus().click();
+    } else if (event.key == 'k') {
+      $('#step-backward-timeline').focus().click();
+    } else if (event.key == 'l') {
+      $('#fast-forward-timeline').focus().click();
+    } else if (event.key == 'g') {
+      $('#play-timeline').focus().click();
+    }
+    return false
+  });
 })

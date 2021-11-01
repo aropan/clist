@@ -39,11 +39,11 @@ $(function() {
         setTimeout(function() { editable.input.$input.select2('open'); }, 1);
     });
 
-    $('.value [type="checkbox"]:not([data-on])').each(function() {
+    $('#preferences-tab .value [type="checkbox"]:not([data-on])').each(function() {
         $(this).attr('data-on', 'Enabled')
         $(this).attr('data-off', 'Disabled')
     })
-    $('.value [type="checkbox"]').each(function() {
+    $('#preferences-tab .value [type="checkbox"]').each(function() {
         $(this).attr('checked', $(this).attr('data-value') == '1')
     }).bootstrapToggle({
         size: 'mini',
@@ -200,6 +200,7 @@ $(function() {
             this.$input = this.$tpl.find('input')
             this.$resources = this.$tpl.find('#resources')
             this.$contest = this.$tpl.find('#contest')
+            this.$party = this.$tpl.find('#party')
             this.$categories = this.$tpl.find('#categories')
 
             this.$tpl.find("i[rel=tooltip]")
@@ -229,6 +230,35 @@ $(function() {
                         return {
                             query: 'notpast',
                             title: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function (data, params) {
+                        return {
+                            results: data.items,
+                            pagination: {
+                                more: data.more
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+            })
+
+            this.$party.select2({
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select party',
+                ajax: {
+                    url: '/settings/search/',
+                    dataType: 'json',
+                    delay: 314,
+                    data: function (params) {
+                        return {
+                            query: 'party',
+                            name: params.term,
                             page: params.page || 1
                         };
                     },
@@ -292,13 +322,23 @@ $(function() {
                 html += value.resources.length + ' resource(s)'
             }
             if (value.contest) {
-                if (value.resources.length) {
+                if (html.slice(-1) != ' ') {
                     html += ','
                 }
                 if (value.contest__title) {
                     html += ' contest ' + value.contest__title;
                 } else {
                     html += ' contest_id ' + value.contest
+                }
+            }
+            if (value.party) {
+                if (html.slice(-1) != ' ') {
+                    html += ','
+                }
+                if (value.party__name) {
+                    html += ' party ' + value.party__name;
+                } else {
+                    html += ' party_id ' + value.party
                 }
             }
             if (value.duration && (value.duration.from || value.duration.to)) {
@@ -337,12 +377,14 @@ $(function() {
             this.$input.filter('[name="inverse-regex"]').attr('checked', value.inverse_regex)
             this.$input.filter('[name="to-show"]').attr('checked', value.to_show)
             this.$contest.select2('trigger', 'select', {data: {id: value.contest, text: value.contest__title}})
+            this.$party.select2('trigger', 'select', {data: {id: value.party, text: value.party__name}})
             this.$resources.val(value.resources).trigger('change')
             this.$categories.val(value.categories).trigger('change')
         },
 
         input2value: function() {
             contest_data = this.$contest.select2('data')
+            party_data = this.$party.select2('data')
             result = {
                 name: this.$input.filter('[name="name"]').val(),
                 id: parseInt(this.$input.filter('[name="id"]').val()),
@@ -356,6 +398,8 @@ $(function() {
                 resources: $.map(this.$resources.val() || [], function (v) { return parseInt(v) }),
                 contest: contest_data.length? contest_data[0].id : null,
                 contest__title: contest_data.length? contest_data[0].text : null,
+                party: party_data.length? party_data[0].id : null,
+                party__name: party_data.length? party_data[0].text : null,
                 categories: this.$categories.val() || [],
             }
             return result
@@ -438,6 +482,13 @@ $(function() {
         </div> \
         <i rel="tooltip" title="Use `Hide contest` option in preferences for a simple way to create contest filter"></i> \
     </div> \
+    <div class="h5">OR</div> \
+    <div class="filter-field"> \
+        <div class="input-group input-group-sm"> \
+            <span class="input-group-addon">Party</span> \
+            <select id="party" class="form-control" name="party"></select> \
+        </div> \
+    </div> \
 </div> \
         ',
         inputclass: '',
@@ -462,7 +513,10 @@ $(function() {
 
     function filterEditableHidden(e, editable) {
         var $button = $('[data-id="{0}"]'.format($(this).data('editable').value.id))
-        if ($(this).data('editable').value.resources.length == 0 && !$(this).data('editable').value.contest) {
+        if ($(this).data('editable').value.resources.length == 0
+            && !$(this).data('editable').value.contest
+            && !$(this).data('editable').value.party
+        ) {
             $button.click()
         } else {
             $button.removeClass('hidden')
@@ -546,6 +600,8 @@ $(function() {
         ntf_form.find('[name="method"]').val(ntf.find('[data-value="method"]').text())
         ntf_form.find('[name="period"]').val(ntf.find('[data-value="period"]').text())
         ntf_form.find('[name="before"]').val(ntf.find('[data-value="before"]').text())
+        ntf_form.find('[name="with_updates"]').prop('checked', ntf.find('[data-value="updates"]').length)
+        ntf_form.find('[name="with_results"]').prop('checked', ntf.find('[data-value="results"]').length)
         ntf_form.find('[name="add"]').val('Update')
         ntf_add.remove()
         ntf_form.show(300)

@@ -77,7 +77,7 @@
         <select {% if not disable %}id="tshirt-size"{% endif %} name="tshirt-size" class="form-control" required {% if disable %}disabled{% endif %}>
         <option></option>
         {% for k, v in tshirt_size.labels.items %}
-        <option value="{{ k }}" {% if k ==  coder.tshirt_size %}selected{% endif %}>{{ v }}</option>
+        <option value="{{ k }}" {% if coder.tshirt_size == k or coder.tshirt_size == v %}selected{% endif %}>{{ v }}</option>
         {% endfor %}
         </select>
     </div>

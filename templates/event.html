@@ -60,11 +60,15 @@
 
             <h3>Team name</h3>
             <form method="post">{% csrf_token %}
-                <div class="form-group">
-                    <select id="team" name="team" class="form-control" required></select>
-                </div>
+                {% if participant.looking_for %}
+                <button id="looking-for" type="submit" name="query" class="btn btn-primary" value="looking-for">I have the team</button>
+                {% else %}
+                <div class="form-group"><select id="team" name="team" class="form-control"></select></div>
                 <button id="create-team" type="submit" name="query" class="btn btn-primary" value="create-team" disabled>Create a new team</button>
                 <button id="join-team" type="submit" name="query" class="btn btn-primary" value="join-team" disabled>Join the team</button>
+                <button id="looking-for" type="submit" name="query" class="btn btn-primary" value="looking-for">I want to find a team</button>
+                {% endif %}
+                <button type="submit" name="query" class="btn btn-default pull-right" value="cancel-registration"{% if team or join_requests %} disabled{% endif %}>Cancel registration</button>
             </form>
             <hr/>
 
@@ -98,8 +102,8 @@
             {% endif %}
 
             {% if user.is_anonymous %}
-            <h3>Registration</h3>
-            <a href="{% url 'auth:login' %}?next={% url 'events:event' slug %}" class="btn btn-primary">Go to registration</a>
+            <h3>Only authorized users</h3>
+            <a href="{% url 'auth:login' %}?next={% url 'events:event' slug %}" class="btn btn-primary">Log in / Sign up</a>
             {% else %}
             <h3>Personal information</h3>
             {% if not participant %}

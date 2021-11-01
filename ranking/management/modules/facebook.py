@@ -44,7 +44,7 @@ class Statistic(BaseModule):
                 'fb_api_caller_class': 'RelayModern',
                 'fb_api_req_friendly_name': name,
                 'variables': json.dumps(variables),
-                'doc_id': self.info['parse']['scoreboard_ids'][name],
+                'doc_id': self.info['_scoreboard_ids'][name],
             }
             ret = REQ.get(
                 self.API_GRAPH_URL_,

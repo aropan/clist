@@ -86,6 +86,7 @@ class Participant(BaseModel):
     tshirt_size = enum.EnumField(TshirtSize, null=True, blank=True)
     is_coach = models.BooleanField(default=False)
     addition_fields = models.JSONField(default=dict, blank=True)
+    looking_for = models.BooleanField(default=False)
 
     objects = ParticipantManager()
 

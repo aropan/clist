@@ -16,7 +16,7 @@ from urllib.parse import urlencode, urljoin
 import pytz
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from utils.aes import AESModeOfOperation
 
@@ -114,6 +114,10 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.is_spectator_ranklist = self.standings_url and 'spectator/ranklist' in self.standings_url
+        if self.is_spectator_ranklist:
+            return
+
         cid = self.key
         if ':' in cid:
             cid, api = cid.split(':', 1)
@@ -124,7 +128,57 @@ class Statistic(BaseModule):
             raise InitModuleException(f'Contest id {cid} should be number')
         self.cid = cid
 
+    def get_standings_from_html(self):
+        url = urljoin(self.standings_url, '?lang=en')
+        page = REQ.get(url)
+        regex = '''<table[^>]*standings[^>]*>.*?</table>'''
+        match = re.search(regex, page, re.DOTALL)
+        html_table = match.group(0)
+        mapping = {
+            '#': 'place',
+            'Who': 'name',
+            '=': 'solving',
+            'Penalty': 'penalty',
+        }
+        table = parsed_table.ParsedTable(html_table, header_mapping=mapping)
+
+        season = self.get_season()
+
+        problems_info = OrderedDict()
+        result = {}
+        for r in table:
+            row = {}
+            problems = row.setdefault('problems', {})
+            for k, v in r.items():
+                if len(k) == 1:
+                    problems_info.setdefault(k, {'short': k})
+                    if v.value:
+                        p = problems.setdefault(k, {})
+                        v = v.value
+                        if ' ' in v:
+                            v, p['time'] = v.split()
+                        p['result'] = v
+                elif v.value:
+                    if k == 'penalty':
+                        row[k] = int(v.value)
+                    elif v.value:
+                        row[k] = v.value
+            if 'solving' not in row:
+                continue
+            row['member'] = row['name'] + ' ' + season
+            result[row['member']] = row
+
+        standings = {
+            'result': result,
+            'url': self.standings_url,
+            'problems': list(problems_info.values()),
+        }
+        return standings
+
     def get_standings(self, users=None, statistics=None):
+
+        if self.is_spectator_ranklist:
+            return self.get_standings_from_html()
 
         contest_url = self.url.replace('contests', 'contest')
         standings_url = contest_url.rstrip('/') + '/standings'
@@ -173,10 +227,12 @@ class Statistic(BaseModule):
             if users is not None and not users:
                 continue
 
-            grouped = any(
-                'teamId' in row['party'] and row['party']['participantType'] in self.PARTICIPANT_TYPES
-                for row in data['result']['rows']
-            )
+            grouped = any('teamId' in row['party'] for row in data['result']['rows'])
+            if grouped:
+                grouped = all(
+                    'teamId' in row['party'] or row['party']['participantType'] not in self.PARTICIPANT_TYPES
+                    for row in data['result']['rows']
+                )
 
             place = None
             last = None
@@ -234,13 +290,17 @@ class Statistic(BaseModule):
                     for i, s in enumerate(row['problemResults']):
                         k = result_problems[i]['index']
                         points = float(s['points'])
+                        if contest_type == 'IOI' and 'pointsInfo' in s:
+                            points = float(s['pointsInfo'] or '0')
 
                         n = s.get('rejectedAttemptCount')
                         if n is not None and contest_type == 'ICPC' and points + n > 0:
                             points = f'+{"" if n == 0 else n}' if points > 0 else f'-{n}'
 
                         u = upsolve
-                        if s['type'] == 'FINAL' and (points or n):
+                        if s['type'] == 'PRELIMINARY':
+                            p = {'result': f'?{n + 1}'}
+                        elif points or n:
                             if not points:
                                 points = f'-{n}'
                                 n = None
@@ -251,8 +311,6 @@ class Statistic(BaseModule):
                                     p['partial'] = points < full_score
                             elif contest_type == 'CF' and n:
                                 p['penalty_score'] = n
-                        elif s['type'] == 'PRELIMINARY':
-                            p = {'result': f'?{n + 1}'}
                         else:
                             continue
 
@@ -270,6 +328,10 @@ class Statistic(BaseModule):
                             a.update(p)
 
                     if row['rank'] and not upsolve:
+                        score = row['points']
+                        if contest_type == 'IOI' and 'pointsInfo' in row:
+                            score = float(row['pointsInfo'] or '0')
+
                         if is_gym:
                             r['place'] = row['rank']
                         elif unofficial:
@@ -284,12 +346,13 @@ class Statistic(BaseModule):
                                         idx += 1
                                 else:
                                     idx += 1
-                                value = (row['points'], row.get('penalty'))
+                                value = (score, row.get('penalty'))
                                 if last != value:
                                     last = value
                                     place = idx
                                 r['place'] = place
-                        r['solving'] = row['points']
+
+                        r['solving'] = score
                         if contest_type == 'ICPC':
                             r['penalty'] = row['penalty']
 

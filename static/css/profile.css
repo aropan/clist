@@ -1,3 +1,4 @@
+#writers .date,
 #contests td,
 #contests th {
   text-align: center;
@@ -13,13 +14,19 @@
   white-space: nowrap;
 }
 
-#contests .problems {
+#writers td {
   white-space: nowrap;
 }
 
+.rank div {
+  display: inline-block;
+}
 
-#writers td {
-  white-space: nowrap;
+.rank-progress {
+  margin-bottom: 0px;
+  border: 1px solid #5cb85c;
+  width: 20px;
+  height: 10px;
 }
 
 #contests .endless_container {
@@ -55,10 +62,6 @@
 #list-accounts .btn-group {
   display: inline-block;
   margin: 2px;
-}
-
-.title .problems {
-  display: inline;
 }
 
 input[type="search"]::-webkit-search-cancel-button {

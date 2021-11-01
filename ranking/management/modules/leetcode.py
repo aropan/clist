@@ -119,7 +119,6 @@ class Statistic(BaseModule):
         hidden_fields = set()
         result = {}
         stop = False
-        timing_statistic_delta = None
         rank_index0 = False
         if users is None or users:
             if users:
@@ -205,18 +204,6 @@ class Statistic(BaseModule):
                     if n_added == 0:
                         stop = True
 
-                # if statistics is not None and solutions_for_get:
-                #     if statistics:
-                #         for s, d in tqdm.tqdm(executor.map(Statistic.fetch_submission, solutions_for_get),
-                #                               total=len(solutions_for_get),
-                #                               desc='getting solutions'):
-                #             if not d:
-                #                 continue
-                #             short = problems_info[str(s['question_id'])]['short']
-                #             result[s['handle']]['problems'][short].update({'language': d['lang']})
-                #     elif result:
-                #         timing_statistic_delta = timedelta(minutes=15)
-
         standings = {
             'result': result,
             'url': standings_url,
@@ -226,8 +213,6 @@ class Statistic(BaseModule):
         if writers:
             writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
             standings['writers'] = writers
-        if timing_statistic_delta:
-            standings['timing_statistic_delta'] = timing_statistic_delta
         return standings
 
     @staticmethod

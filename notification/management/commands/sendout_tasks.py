@@ -1,21 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import re
 from copy import deepcopy
 from datetime import timedelta
 from logging import getLogger
-from smtplib import SMTPResponseException
+from smtplib import SMTPDataError, SMTPResponseException
+from time import sleep
 from traceback import format_exc
 
 import tqdm
+import yaml
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail.backends.smtp import EmailBackend
+from django.core.mail.message import EmailMultiAlternatives
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Case, PositiveSmallIntegerField, Prefetch, Q, When
 from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django_print_sql import print_sql_decorator
+from filelock import FileLock
 from telegram.error import Unauthorized
 from webpush import send_user_notification
 from webpush.utils import WebPushException
@@ -31,6 +37,14 @@ logger = getLogger('notification.sendout.tasks')
 class Command(BaseCommand):
     help = 'Send out all unsent tasks'
     TELEGRAM_BOT = Bot()
+    CONFIG_FILE = __file__ + '.yaml'
+    N_STOP_EMAIL_FAILED_LIMIT = 5
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.email_connection = None
+        self.n_messages_sent = 0
+        self.config = None
 
     def add_arguments(self, parser):
         parser.add_argument('--coders', nargs='+')
@@ -45,10 +59,11 @@ class Command(BaseCommand):
             context = deepcopy(data.get('context', {}))
             context.update({
                 'contests': contests,
-                'domain': settings.HTTPS_HOST_,
+                'domain': settings.MAIN_HOST_,
             })
             context.update(kwargs)
             subject = render_to_string('subject', context).strip()
+            subject = re.sub(r'\s+', ' ', subject)
             context['subject'] = subject
             method = method.split(':', 1)[0]
             message = render_to_string('message/%s' % method, context).strip()
@@ -89,14 +104,22 @@ class Command(BaseCommand):
             elif 'notification' in kwargs:
                 kwargs['notification'].delete()
         elif method == settings.NOTIFICATION_CONF.EMAIL:
-            send_mail(
-                subject,
-                message,
-                'CLIST <noreply@clist.by>',
-                [coder.user.email],
-                fail_silently=False,
-                html_message=message,
+            if self.n_messages_sent % 20 == 0:
+                if self.n_messages_sent:
+                    sleep(10)
+                self.email_connection = EmailBackend()
+            mail = EmailMultiAlternatives(
+                subject=subject,
+                body=message,
+                from_email='CLIST <noreply@clist.by>',
+                to=[coder.user.email],
+                bcc=['noreply@clist.by'],
+                connection=self.email_connection,
+                alternatives=[(message, 'text/html')],
             )
+            mail.send()
+            self.n_messages_sent += 1
+            sleep(2)
         elif method == settings.NOTIFICATION_CONF.WEBBROWSER:
             payload = {
                 'head': subject,
@@ -120,11 +143,35 @@ class Command(BaseCommand):
                         delete_info = kwargs['notification'].delete()
                         logger.error(f'{str(e)} = {delete_info}')
 
+    def load_config(self):
+        if os.path.exists(self.CONFIG_FILE):
+            with open(self.CONFIG_FILE, 'r') as fo:
+                self.config = yaml.safe_load(fo)
+        else:
+            self.config = {}
+        self.config.setdefault('stop_email', {})
+        self.config['stop_email'].setdefault('n_failed', 0)
+
+    def save_config(self):
+        lock = FileLock(self.CONFIG_FILE)
+        with lock.acquire(timeout=60):
+            with open(self.CONFIG_FILE, 'w') as fo:
+                yaml.dump(self.config, fo, indent=2)
+
     @print_sql_decorator()
     @transaction.atomic
     def handle(self, *args, **options):
+        self.load_config()
         coders = options.get('coders')
         dryrun = options.get('dryrun')
+
+        stop_email = settings.STOP_EMAIL_ and not dryrun
+        if (
+            self.config['stop_email']['n_failed'] >= self.N_STOP_EMAIL_FAILED_LIMIT
+            and now() - self.config['stop_email']['failed_time'] < timedelta(hours=2)
+        ):
+            stop_email = True
+        clear_email_task = False
 
         delete_info = Task.objects.filter(
             Q(is_sent=True, modified__lte=now() - timedelta(days=1)) |
@@ -132,10 +179,7 @@ class Command(BaseCommand):
         ).delete()
         logger.info(f'Tasks cleared: {delete_info}')
 
-        if dryrun:
-            qs = Task.objects.all()
-        else:
-            qs = Task.unsent.all()
+        qs = Task.unsent.all()
         qs = qs.select_related('notification__coder')
         qs = qs.prefetch_related(
             Prefetch(
@@ -144,20 +188,32 @@ class Command(BaseCommand):
                 to_attr='cchat',
             )
         )
-        if settings.STOP_EMAIL_:
+        if stop_email:
             qs = qs.exclude(notification__method='email')
 
         if coders:
             qs = qs.filter(notification__coder__username__in=coders)
 
         if dryrun:
-            qs = qs.order_by('-modified')[:1]
+            qs = qs.order_by('modified')
+        else:
+            qs = qs.annotate(weight=Case(
+                When(notification__method='email', then=1),
+                default=0,
+                output_field=PositiveSmallIntegerField(),
+            ))
+            qs = qs.order_by('weight', 'modified')
 
         done = 0
         failed = 0
-        stop_email = settings.STOP_EMAIL_
+        deleted = 0
         for task in tqdm.tqdm(qs.iterator(), 'sending'):
             if stop_email and task.notification.method == settings.NOTIFICATION_CONF.EMAIL:
+                if clear_email_task:
+                    contests = task.addition.get('contests', [])
+                    if contests and not Contest.objects.filter(pk__in=contests, start_time__gt=now()).exists():
+                        task.delete()
+                        deleted += 1
                 continue
 
             try:
@@ -179,11 +235,21 @@ class Command(BaseCommand):
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False
                 task.save()
-                if isinstance(e, SMTPResponseException):
+                if isinstance(e, (SMTPResponseException, SMTPDataError)):
                     stop_email = True
+
+                    if self.n_messages_sent:
+                        self.config['stop_email']['n_failed'] = 1
+                    else:
+                        self.config['stop_email']['n_failed'] += 1
+                    if self.config['stop_email']['n_failed'] >= self.N_STOP_EMAIL_FAILED_LIMIT:
+                        clear_email_task = True
+
+                    self.config['stop_email']['failed_time'] = now()
 
             if task.is_sent:
                 done += 1
             else:
                 failed += 1
-        logger.info(f'Done: {done}, failed: {failed}')
+        logger.info(f'Done: {done}, failed: {failed}, deleted: {deleted}')
+        self.save_config()

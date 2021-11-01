@@ -5,6 +5,21 @@
 {% for stat in statistics %}
 <tr class="contest{% if stat.addition.medal %} {{ stat.addition.medal|lower }}-medal{% endif %}{% if stat.contest.is_running %} success{% endif %}" id="cid-{{ stat.contest.id }}">
     <td>
+    {% with division=stat.addition.division %}
+    {% with n_total=stat.contest.info.problems.n_statistics|get_item:division|default:stat.contest.n_statistics %}
+        {% if n_total and stat.place_as_int %}
+        {% with percent=stat.place_as_int|multiply:100|divide:n_total %}
+        <div class="pull-left">
+            <div class="rank-progress progress progress-bar-vertical" title="Top: {{ percent|floatformat:"1" }}%<br>Rank: {{ stat.place }}<br>Total: {{ n_total }}" data-toggle="tooltip" data-placement="top" data-html="true">
+              <div class="progress-bar progress-bar-success" style="width: {{ 100|substract:percent|floatformat:"3" }}%"></div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endif %}
+    {% endwith %}
+    {% endwith %}
+    </td>
+    <td class="rank">
         {% if stat.addition.url %}<a href="{{ stat.addition.url }}">{% endif %}
         <div data-toggle="tooltip" data-placement="top" data-html="true" title="
             handle: {{ stat.account.key }}<br/>
@@ -15,9 +30,13 @@
             {% endfor %}
         ">
             {{ stat.place|default:"-" }}
-        </div>{% if stat.addition.url %}</a>{% endif %}
+        </div>
+        {% if stat.addition.url %}</a>{% endif %}
     </td>
-    <td>{{ stat.solving|floatformat }}</td>
+
+    <td>
+        {{ stat.solving|floatformat }}
+    </td>
 
     <td>
         {% with value=stat.contest.resource|get_new_rating_value:stat.addition %}
@@ -43,33 +62,33 @@
         {% endwith %}
     </td>
     <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
+    <td><a href="?search=resource:{{ stat.contest.resource.host }}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a></td>
     <td class="title col-md-9 col-sm-8">
-        <a href="?search=resource:{{ stat.contest.resource.host }}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
-        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}?find_me={{ stat.pk }}{% if stat.addition.division %}&division={{ stat.addition.division }}{% endif %}">{{ stat.contest.title }}</a>
-        <div class="problems">
-            {% if stat.addition.hack %}
-            {% with hack=stat.addition.hack %}
-            <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>
-                {{ hack.successful|default:"" }}{% if hack.successful and hack.unsuccessful %} : {% endif %}{% if hack.unsuccessful %}-{{ hack.unsuccessful}}{% endif %}
-            </span>
-            {% endwith %}
-            {% endif %}
+        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}?{% if not without_findme %}find_me={{ stat.pk }}{% endif %}{% if stat.addition.division %}{% if not without_findme %}&{% endif %}division={{ stat.addition.division }}{% endif %}">{{ stat.contest.title }}</a>
+        {% if stat.addition.hack %}
+        {% with hack=stat.addition.hack %}
+        <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>
+            {{ hack.successful|default:"0" }} : {% if hack.unsuccessful %}-{{ hack.unsuccessful }}{% else %}0{% endif %}
+        </span>
+        {% endwith %}
+        {% endif %}
+        <span class="problems">
             {% if 'problems' in stat.addition %}
                 {% if stat.contest.info.problems %}
                   {% for problem in stat.contest.info.problems|get_division_problems:stat.addition %}
                     {% with key=problem|get_problem_short  %}
                     {% with stat=stat.addition.problems|get_item:key %}
-                      {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url %}
+                      {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url full_score=problem.full_score %}
                     {% endwith %}
                     {% endwith %}
                   {% endfor %}
                 {% else %}
                   {% for k, v in stat.addition.problems.items|sort %}
-                  {% include 'problem_stat.html' with short=k name=k stat=v problem_url=None %}
+                  {% include 'problem_stat.html' with short=k name=k stat=v problem_url=None full_score=None %}
                   {% endfor %}
                 {% endif %}
             {% endif %}
-        </div>
+        </span>
         {% if perms.ranking.change_statistics %}
         <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
         {% endif %}

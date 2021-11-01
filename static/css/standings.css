@@ -81,6 +81,10 @@ table.standings th {
   color: #ccab04 !important;
 }
 
+.trophy-detail {
+  font-size: 25px;
+}
+
 .standings .text-bg-success {
   color: #4ba823 !important;
 }
@@ -102,6 +106,12 @@ table.standings .handle-cell .handle-div {
   white-space: normal;
 }
 
+.handle-cell > .handle-cell-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .standings thead th {
   border: none !important;
 }
@@ -118,10 +128,7 @@ table.standings .handle-cell .handle-div {
   box-shadow: inset 1px 0 #d0d0d0, inset 0 -1px #d0d0d0;
 }
 
-a.coder,
-.standings td a,
-.standings .my-stat th a
-{
+a.coder, .standings td a {
   color: inherit !important;
 }
 
@@ -162,9 +169,18 @@ a.solution:hover span {
   z-index: 1;
 }
 
+.standings tr.find-me-row td {
+  font-weight: bold;
+}
+
 #table-inner-scroll .my-stat th {
   top: -2px;
   bottom: 0;
+}
+
+.standings .my-stat th a
+{
+  color: inherit !important;
 }
 
 .my-stat th {
@@ -234,9 +250,14 @@ a.solution:hover span {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-.problem-cell.problem-hidden::before {
+.problem-cell.result-hidden::before {
   content: "?";
   color: #da2;
+}
+
+.standings .result-hidden * {
+  background: inherit !important;
+  display: none !important;
 }
 
 /*

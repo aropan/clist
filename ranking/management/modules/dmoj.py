@@ -76,7 +76,7 @@ class Statistic(BaseModule):
         hidden_fields = set()
         for index, r in enumerate(rankings, start=1):
             solutions = r.pop('solutions')
-            if not any(solutions):
+            if not any(solutions) and not r.get('new_rating'):
                 skip += 1
                 continue
             handle = r.pop('user')
@@ -100,14 +100,14 @@ class Statistic(BaseModule):
                 if not sol:
                     continue
                 p = problems.setdefault(prob['short'], {})
-                if sol['points'] > 0 and prob.get('partial'):
-                    p['partial'] = prob['points'] - sol['points'] > 1e-7
-                    if not p['partial']:
-                        solved += 1
+                if sol['points'] > 0 and prob.get('full_score'):
+                    p['partial'] = prob['full_score'] > sol['points']
                 p['result'] = sol.pop('points')
                 t = sol.pop('time')
                 if t:
                     p['time'] = self.to_time(t)
+                if p['result'] > 0 and not p.get('partial', False):
+                    solved += 1
 
             r.pop('is_disqualified', None)
             r.pop('tiebreaker', None)

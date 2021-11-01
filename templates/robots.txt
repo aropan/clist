@@ -24,4 +24,4 @@ Disallow: /*?querystring_key=
 Disallow: /*&querystring_key=
 Crawl-Delay: 10
 Clean-param: next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&as_coder&country&resource&period&sort_column&sort_order
-Clean-param: versus&division&detail&find_me&chat&list&neighbors&advanced /standings/
+Clean-param: timeline&t_duration&t_step&t_delay&versus&division&detail&find_me&chat&list&neighbors&advanced /standings/

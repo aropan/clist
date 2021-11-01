@@ -3,16 +3,17 @@
 
 import logging
 from datetime import timedelta
+from traceback import format_exc
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
-from notification.models import Notification, Task
-from traceback import format_exc
-from clist.models import Contest, TimingContest
 from tqdm import tqdm
 
+from clist.models import Contest, TimingContest
+from notification.models import Notification, Task
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class Command(BaseCommand):
 
                 qs = Contest.visible.filter(start_time__gte=now)
 
-                if updates and notify.last_time:
+                if updates and notify.last_time and notify.with_updates:
                     qs_updates = updates.filter(
                         filt,
                         start_time__gte=now + before,

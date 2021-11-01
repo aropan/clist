@@ -31,6 +31,7 @@ class Coder(BaseModel):
     addition_fields = models.JSONField(default=dict, blank=True)
     n_accounts = models.IntegerField(default=0, db_index=True)
     n_contests = models.IntegerField(default=0, db_index=True)
+    tshirt_size = models.CharField(max_length=10, default=None, null=True, blank=True)
 
     class Meta:
         indexes = [
@@ -95,6 +96,8 @@ class Coder(BaseModel):
                 query &= query_regex
             if filter_.contest_id:
                 query &= Q(pk=filter_.contest_id)
+            if filter_.party_id:
+                query &= Q(rating__party_id=filter_.party_id)
 
             if filter_.to_show:
                 show |= query
@@ -118,10 +121,6 @@ class Coder(BaseModel):
             name = chat.get_group_name()
             ret.append(('telegram:{}'.format(chat.chat_id), name))
         return ret
-
-    def get_tshirt_size(self):
-        p = self.participant_set.order_by('-modified').first()
-        return p.tshirt_size_value if p is not None else None
 
     def account_set_order_by_pk(self):
         return self.account_set.select_related('resource').order_by('pk')
@@ -204,6 +203,7 @@ class Filter(BaseModel):
     to_show = models.BooleanField(default=True)
     resources = models.JSONField(default=list, blank=True)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE, default=None, null=True, blank=True, db_index=True)
+    party = models.ForeignKey(Party, on_delete=models.CASCADE, default=None, null=True, blank=True, db_index=True)
     categories = ArrayField(models.CharField(max_length=20), blank=True, default=_get_default_categories)
 
     def __str__(self):
@@ -233,12 +233,15 @@ class Filter(BaseModel):
             "regex": self.regex or "",
             "resources": self.resources,
             "contest": self.contest_id,
+            "party": self.party_id,
             "categories": self.categories,
             "inverse_regex": self.inverse_regex,
             "to_show": self.to_show,
         }
         if self.contest_id:
             ret['contest__title'] = self.contest.title
+        if self.party_id:
+            ret['party__name'] = self.party.name
         return ret
 
     class Meta:

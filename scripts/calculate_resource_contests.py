@@ -13,7 +13,7 @@ def main(host=None):
         resources = resources.filter(host__regex=host)
     total = resources.count()
 
-    for resource in tqdm(resources.iterator(), total=total, desc='contests'):
+    for resource in tqdm(resources.iterator(), total=total, desc='resources'):
         count = Contest.objects.filter(resource=resource).count()
         if count != resource.n_contests:
             print(resource, resource.n_contests, count)

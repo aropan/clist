@@ -340,17 +340,18 @@ COUNTRIES_OVERRIDE = {
     'CZ': {'names': ['Czech Republic', 'Czechia', 'Чехия']},
     'MK': {'names': ['Macedonia', 'North Macedonia', 'Македония']},
     'PS': {'names': ['Palestine', 'Palestine, State of', 'Палестина']},
-    'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея']},
+    'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея', 'Korea, Republic of']},
     'MO': {'names': ['Macao', 'Macau', 'Макао']},
     'US': {'names': ['United States of America', 'United States', 'America', 'Virgin Islands', 'UM', 'United States Minor Outlying Islands', 'Соединенные Штаты Америки', 'США']},  # noqa
     'VN': {'names': ['Vietnam', 'Viet Nam', 'Вьетнам']},
     'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Scotland', 'Northern Ireland', 'Wales', 'Великобритания', 'Англия', 'Шотландия']},  # noqa
-    'MD': {'names': ['Moldova', 'Молдова', 'Молдавия']},
+    'MD': {'names': ['Moldova', 'Молдова', 'Молдавия', 'Republic of Moldova', 'Moldova, Republic of']},
     'KG': {'names': ['Kyrgyzstan', 'Кыргызстан', 'Киргизия']},
     'RS': {'names': ['Serbia', 'Srbija', 'Сербия']},
     'HR': {'names': ['Croatia', 'Hrvatska', 'Хорватия']},
     'CN': {'names': ['China', '中国', 'Китай']},
     'PL': {'names': ['Poland', 'Republic of Poland', 'Польша']},
+    'RU': {'names': ['Russia', 'Россия', 'Russian Federation', 'Российская Федерация']},
 }
 DISABLED_COUNTRIES = {'UM'}
 
@@ -414,8 +415,8 @@ GROUP_LIST_ = True
 HIDE_CONTEST_ = False
 DEFAULT_TIME_ZONE_ = 'UTC'
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
-HTTP_HOST_ = 'http://' + HOST_
 HTTPS_HOST_ = 'https://' + HOST_
+MAIN_HOST_ = 'https://clist.by'
 EMAIL_PREFIX_SUBJECT_ = '[Clist] '
 STOP_EMAIL_ = getattr(conf, 'STOP_EMAIL', False)
 TIME_FORMAT_ = '%d.%m %a %H:%M'

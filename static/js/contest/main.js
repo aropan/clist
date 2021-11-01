@@ -13,8 +13,8 @@ function filterCallbackList(regex) {
         })
         var count = 0
         $('.contest').each(function() {
-            var title = $(this).find('.event a[title]:first').attr('title')
-            var host = $(this).find('.resource a:first').text()
+            var title = $(this).find('.event .title_search').attr('title')
+            var host = $(this).find('.event .resource_search').text()
             if (regex.test(title) || regex.test(host)) {
                 $(this).addClass('onfilter').removeClass('nofilter')
                 count += 1

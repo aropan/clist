@@ -203,6 +203,7 @@ class Contest(models.Model):
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
     parsed_time = models.DateTimeField(null=True, blank=True)
+    has_hidden_results = models.BooleanField(null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)

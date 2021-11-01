@@ -112,6 +112,10 @@
             $url = url_merge($prev_url, $url);
         }
 
+        if (DEBUG) {
+            echo "url = $url\n";
+        }
+
         // echo "curl_setopt(CURLOPT_URL, $url)\n";
         empty($url) && die("Empty URL on " . __FILE__ . ":" . __LINE__);
         curl_setopt($CID, CURLOPT_URL, $url);

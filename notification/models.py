@@ -39,6 +39,8 @@ class Notification(BaseModel):
     method = models.CharField(max_length=256, null=False)
     before = models.IntegerField(null=False, validators=[MinValueValidator(0), MaxValueValidator(1000000)])
     period = models.CharField(max_length=16, choices=PERIOD_CHOICES, null=False)
+    with_updates = models.BooleanField(default=True)
+    with_results = models.BooleanField(default=False)
     last_time = models.DateTimeField(null=True, blank=True)
     secret = models.CharField(max_length=50, blank=True, null=True)
 

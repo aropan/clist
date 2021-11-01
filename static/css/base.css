@@ -340,7 +340,6 @@ canvas.rating_history {
   border: 1px solid #888;
 }
 
-
 /*
  * rating graphs
  */
@@ -375,4 +374,36 @@ canvas.rating_history {
 .resource_fields .select2-selection,
 .resource_fields .select2-selection span {
   display: inline !important;
+}
+
+/*
+ * trophy
+ */
+
+.gold-trophy {
+  color: #f9d923 !important;
+}
+
+.silver-trophy {
+  color: silver !important;
+}
+
+.bronze-trophy {
+  color: #c08e55 !important;
+}
+
+.honorable-trophy {
+  color: #d0e3f7 !important;
+}
+
+.trophy {
+  text-shadow: 0 0 1px #000;
+}
+
+/*
+ * vertical progress bar
+ */
+
+.progress-bar-vertical {
+  transform: rotate(-90deg);
 }

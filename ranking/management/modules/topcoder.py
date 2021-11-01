@@ -102,7 +102,11 @@ class Statistic(BaseModule):
             opt = 0.61803398875
 
             def canonize_title(value):
-                return set(re.split('[^A-Za-z0-9]+', value.lower()))
+                value = value.lower()
+                value = re.sub(r'\s+-[^-]+$', '', value)
+                value = re.sub(r'\bsingle\s+round\s+match\b', 'srm', value)
+                value = re.sub(r'\bmarathon\s+match\b', 'srm', value)
+                return set(re.split('[^A-Za-z0-9]+', value))
 
             def process_match(date, title, url):
                 nonlocal opt
@@ -258,6 +262,7 @@ class Statistic(BaseModule):
                 url = urljoin(self.standings_url, result_url + '&em=1000000042')
                 url = url.replace('&amp;', '&')
                 division = int(parse_qs(url)['dn'][0])
+                division_str = 'I' * division
 
                 with PoolExecutor(max_workers=3) as executor:
                     def fetch_problem(p):
@@ -280,6 +285,26 @@ class Statistic(BaseModule):
                                         p[key] = re.findall('(?<=>)[^<>,]+(?=<)', value)
                                 for w in p.get('writers', []):
                                     writers[w] += 1
+
+                                info = p.setdefault('info', {})
+                                matches = re.finditer('<table[^>]*paddingTable2[^>]*>.*?</table>', page, re.DOTALL)
+                                for match in matches:
+                                    html_table = match.group(0)
+                                    rows = parsed_table.ParsedTable(html_table)
+                                    for row in rows:
+                                        key, value = None, None
+                                        for k, v in row.items():
+                                            if k == "":
+                                                key = v.value
+                                            elif k and division_str in k.split():
+                                                value = v.value
+                                        if key and value:
+                                            key = re.sub(' +', '_', key.lower())
+                                            info[key] = value
+                                            if key == 'point_value':
+                                                value = toint(value) or asfloat(value)
+                                                if value is not None:
+                                                    p['full_score'] = value
                             except Exception as e:
                                 errors.add(f'error parse problem info {p}: {e}')
                                 sleep(5 + attempt)
@@ -294,7 +319,7 @@ class Statistic(BaseModule):
                         d = problems_info
                         if len(problems_sets) > 1:
                             d = d.setdefault('division', OrderedDict())
-                            d = d.setdefault('I' * division, [])
+                            d = d.setdefault(division_str, [])
                         d.append(p)
 
                 if not users and users is not None:

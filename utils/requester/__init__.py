@@ -30,6 +30,7 @@ from sys import stderr
 from time import sleep
 
 import chardet
+from filelock import FileLock
 from fp.fp import FreeProxy
 
 logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
@@ -756,7 +757,9 @@ class requester():
 
     def save_cookie(self):
         if self.cookie_filename and hasattr(self, 'cookiejar'):
-            self.cookiejar.save(self.cookie_filename, ignore_discard=True, ignore_expires=True)
+            lock = FileLock(self.cookie_filename)
+            with lock.acquire(timeout=60):
+                self.cookiejar.save(self.cookie_filename, ignore_discard=True, ignore_expires=True)
 
     def close(self):
         if self.proxer:

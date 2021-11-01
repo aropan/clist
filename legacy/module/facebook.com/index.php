@@ -132,15 +132,14 @@
         }
 
         foreach ($season['season_contests']['nodes'] as $node) {
+            $info = array('parse' => $node);
             $year = $node['contest_season']['season_vanity'];
             $url = rtrim($URL, '/') . "/$year/${node['contest_vanity']}";
             $scoreboard_url = rtrim($url) . '/scoreboard';
             $scoreboard_page = curlexec($scoreboard_url);
             $scoreboard_ids = get_ids($scoreboard_page);
             if ($scoreboard_ids) {
-                $node['scoreboard_ids'] = $scoreboard_ids;
-            } else {
-                trigger_error("Not found scoreboard ids", E_USER_WARNING);
+                $info['_scoreboard_ids'] = $scoreboard_ids;
             }
 
             if (isset($node['duration_in_seconds'])) {
@@ -160,7 +159,7 @@
                 'timezone' => $TIMEZONE,
                 'key' => $node['id'],
                 'standings_url' => $scoreboard_url,
-                'info' => array('parse' => $node),
+                'info' => $info,
             );
         }
 

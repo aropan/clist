@@ -129,8 +129,8 @@ Number of competitions: {{ account.n_contests }}
           {% endif %}
 
           {% for s in resource_medals|get_item:resource.pk %}
-            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
-              &#9899;
+            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
+              <i class="fas fa-trophy"></i>
             </span>
           {% endfor %}
         </a>
@@ -280,11 +280,13 @@ $(function(){
 <div class="panel panel-default table-responsive">
   <table id="contests" class="table table-hover table-striped table-condensed">
     <tr>
+      <th></th>
       <th>Rank</th>
       <th>Score</th>
       <th>Rating</th>
       <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="right">&Delta;</th>
       <th class="date">Date</th>
+      <th></th>
       <th class="title">Event</th>
     </tr>
     {% include 'profile_contests_paging.html' %}

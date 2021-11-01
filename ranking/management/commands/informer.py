@@ -235,15 +235,15 @@ class Command(BaseCommand):
                 is_over = contest.end_time < now()
                 if is_over and not has_hidden:
                     break
-                tick = 60 if is_over else 1
-                limit = now() + timedelta(seconds=args.delay * tick)
+                tick = 60 if is_over else args.delay
+                limit = now() + timedelta(seconds=tick)
                 size = 1
                 while now() < limit:
                     value = humanize.naturaldelta(limit - now())
                     out = f'{value:{size}s}'
                     size = len(value)
                     print(out, end='\r')
-                    time.sleep(tick)
+                    time.sleep(1)
                 print()
 
             iteration += 1

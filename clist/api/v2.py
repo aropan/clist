@@ -33,6 +33,21 @@ class BaseModelResource(CommmonBaseModuelResource):
         bundle.data.pop('total_count', None)
         return bundle
 
+    def apply_sorting(self, *args, **kwargs):
+        ret = super().apply_sorting(*args, **kwargs)
+        ordering = getattr(ret.query, 'order_by', None)
+        if ordering:
+            new_ordering = []
+            for field in ordering:
+                if field[0] == '-':
+                    order = 'desc'
+                    field = field[1:]
+                else:
+                    order = 'asc'
+                new_ordering.append(getattr(F(field), order)(nulls_last=True))
+            ret = ret.order_by(*new_ordering)
+        return ret
+
 
 class ResourceResource(BaseModelResource):
     name = fields.CharField('host')

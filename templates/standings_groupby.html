@@ -8,9 +8,7 @@
           {% for key, field in fields.items %}
           <th>
             {% with rev_key="-"|add:key %}
-            <span
-              {% if key in labels_groupby %}title="{{ labels_groupby|get_item:key }}" data-placement="bottom" data-toggle="tooltip"{% endif %}
-            >
+            <span{% if key in labels_groupby %} title="{{ labels_groupby|get_item:key }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>
               {{ field }}
             </span>
             <a

@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
+import json
 import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
 from urllib.parse import urljoin
 
 from ratelimiter import RateLimiter
+from tqdm import tqdm
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
@@ -50,6 +53,7 @@ class Statistic(BaseModule):
         html_table = match.group(0)
         table = parsed_table.ParsedTable(html_table)
 
+        team_id = 0
         for r in table:
             row = {}
             problems = row.setdefault('problems', {})
@@ -72,14 +76,6 @@ class Statistic(BaseModule):
 
             if not team.value:
                 continue
-
-            url = team.column.node.xpath('.//a/@href')
-            if url:
-                row['member'] = url[0].split('/')[-1]
-                row['name'] = team.value
-            else:
-                row['member'] = team.value + ' ' + season
-                row['name'] = team.value
 
             if 'Slv.' in r:
                 row['solving'] = int(r.pop('Slv.').value)
@@ -123,7 +119,23 @@ class Statistic(BaseModule):
             if not problems:
                 continue
 
-            result[row['member']] = row
+            urls = team.column.node.xpath('.//a/@href')
+            if not urls:
+                row['member'] = team.value + ' ' + season
+                row['name'] = team.value
+                result[row['member']] = row
+                continue
+
+            commas = team.value.count(',')
+            members = [url.split('/')[-1] for url in urls]
+            row['name'] = re.sub(r'\s+,', ',', team.value)
+            if len(members) > 1 or commas:
+                row['_members'] = [{'account': m} for m in members]
+                team_id += 1
+                row['team_id'] = team_id
+            for member in members:
+                row['member'] = member
+                result[row['member']] = deepcopy(row)
 
         standings = {
             'result': result,
@@ -134,7 +146,42 @@ class Statistic(BaseModule):
         return standings
 
     @staticmethod
+    def get_all_users_infos():
+        base_url = 'https://open.kattis.com/ranklist'
+        page = REQ.get(base_url)
+        users = set()
+
+        def parse_users(page):
+            nonlocal users
+            matches = re.finditer('<a[^>]*href="/users/(?P<member>[^"/]*)"[^>]*>(?P<name>[^<]*)</a>', page)
+            for match in matches:
+                member = match.group('member')
+                if member in users:
+                    continue
+                users.add(member)
+                name = match.group('name').strip()
+                yield {'member': member, 'info': {'name': name}}
+
+        yield from parse_users(page)
+
+        urls = re.findall(r'url\s*:\s*(?P<url>"[^"]+")', page)
+
+        def fetch_url(url):
+            url = json.loads(url)
+            url = urljoin(base_url, url)
+            page = REQ.get(url)
+            yield from parse_users(page)
+
+        with PoolExecutor(max_workers=10) as executor, tqdm(total=len(urls), desc='urls') as pbar:
+            for gen in executor.map(fetch_url, urls):
+                yield from gen
+                pbar.update()
+
+    @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
+
+        if not users:
+            yield from Statistic.get_all_users_infos()
 
         @RateLimiter(max_calls=10, period=1)
         def fetch_profle_page(user):
@@ -165,13 +212,14 @@ class Statistic(BaseModule):
                     continue
 
                 info = {}
-                match = re.search(r'<div[^>]*country-flag[^>]*>\s*<a[^>]*href="(?P<href>[^"]*)"', page)
-                if match:
-                    info['country'] = match.group('href').rstrip('/').split('/')[-1]
-
-                match = re.search(r'<span[^>]*university-logo[^>]*>\s*<a[^>]*title="(?P<title>[^"]*)"', page)
-                if match:
-                    info['university'] = match.group('title')
+                for field, regex in (
+                    ('country', r'<div[^>]*country-flag[^>]*>\s*<a[^>]*href="[^"]*/countries/(?P<val>[^"/]*)/?"'),
+                    ('subdivision', r'<div[^>]*subdivision-flag[^>]*>\s*<[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),
+                    ('university', r'<span[^>]*university-logo[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),
+                ):
+                    match = re.search(regex, page)
+                    if match:
+                        info[field] = match.group('val')
 
                 regex = '<table>.*?</table>'
                 match = re.search(regex, page, re.DOTALL)
@@ -191,4 +239,9 @@ class Statistic(BaseModule):
                 match = re.search(r'''<div[^>]*class="user-img"[^>]*url\('(?P<url>[^']*)'\)''', page)
                 if match:
                     info['avatar_url'] = urljoin(url, match.group('url'))
+                if 'score' in info:
+                    info['rating'] = int(info['score'])
+                if 'rank' in info:
+                    info['rank'] = int(info['rank'])
+
                 yield {'info': info}

@@ -6,6 +6,7 @@ import sys
 from datetime import timedelta
 from logging import getLogger
 
+import arrow
 from attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -35,6 +36,7 @@ class Command(BaseCommand):
         parser.add_argument('-f', '--force', action='store_true', help='get accounts with min updated time')
         parser.add_argument('-l', '--limit', default=None, type=int,
                             help='limit users for one resource (default is 1000)')
+        parser.add_argument('-a', '--all', action='store_true', help='get all accounts and create if needed')
 
     @staticmethod
     def _get_plugin(module):
@@ -59,25 +61,31 @@ class Command(BaseCommand):
 
         now = timezone.now()
         for resource in resources:
-            accounts = resource.account_set
-
-            if args.query:
-                accounts = accounts.filter(Q(key__iregex=args.query) | Q(name__iregex=args.query))
-            elif args.force:
-                accounts = accounts.order_by('updated')
-            else:
-                accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
-
-            count, total = 0, accounts.count()
             resource_info = resource.info.get('accounts', {})
-            if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):
-                limit = resource_info.get('limit') or args.limit or 1000
-                accounts = accounts[:limit]
-            accounts = list(accounts)
 
-            if not accounts:
-                continue
+            if args.all:
+                accounts = []
+                total = 0
+            else:
+                accounts = resource.account_set
 
+                if args.query:
+                    accounts = accounts.filter(Q(key__iregex=args.query) | Q(name__iregex=args.query))
+                elif args.force:
+                    accounts = accounts.order_by('updated')
+                else:
+                    accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
+                total = accounts.count()
+
+                if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):
+                    limit = resource_info.get('limit') or args.limit or 1000
+                    accounts = accounts[:limit]
+                accounts = list(accounts)
+
+                if not accounts:
+                    continue
+
+            count = 0
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -87,7 +95,16 @@ class Command(BaseCommand):
                         pbar=pbar,
                     )
 
+                    if args.all:
+                        def inf_none():
+                            while True:
+                                yield None
+                        accounts = inf_none()
+
                     for account, data in zip(accounts, infos):
+                        if args.all:
+                            member = data.pop('member')
+                            account, created = Account.objects.get_or_create(key=member, resource=resource)
                         with transaction.atomic():
                             if data.get('skip'):
                                 delta = data.get('delta')
@@ -138,7 +155,8 @@ class Command(BaseCommand):
                                 account.name = info['name']
                             if 'rating' in info:
                                 info['_rating_time'] = int(now.timestamp())
-                            delta = info.pop('delta', timedelta(days=365))
+                            delta = timedelta(**resource_info.get('delta', {'days': 365}))
+                            delta = info.pop('delta', delta)
                             if data.get('replace_info'):
                                 for k, v in account.info.items():
                                     if k.endswith('_') and k not in info:
@@ -146,12 +164,13 @@ class Command(BaseCommand):
                                 account.info = info
                             else:
                                 account.info.update(info)
-                            account.updated = now + delta
+                            account.updated = arrow.get(now + delta).ceil('day').datetime
                             account.save()
             except Exception:
-                if not has_param:
+                if not has_param and not args.all:
+                    updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
                     for account in tqdm(accounts, desc='changing update time'):
-                        account.updated = now + timedelta(days=1)
+                        account.updated = updated
                         account.save()
                 self.logger.error(f'resource = {resource}')
                 self.logger.error(format_exc())

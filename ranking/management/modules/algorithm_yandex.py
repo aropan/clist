@@ -11,6 +11,7 @@ class Statistic(yandex.Statistic):
         standings = super().get_standings(*args, **kwargs)
 
         if re.search(r'\bfinals?\b', self.name, re.I):
-            options = standings.setdefault('options', {})
-            options['medals'] = [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]
+            if 'medals' not in standings.get('options', {}) and 'medals' not in self.info.get('standings', {}):
+                options = standings.setdefault('options', {})
+                options['medals'] = [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]
         return standings

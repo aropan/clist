@@ -179,6 +179,11 @@
                     <span class="label label-info" data-value="method"{% if n.method in custom_categories %} title="{{ custom_categories|get_item:n.method }}"{% endif %} data-toggle="tooltip">{{ n.method }}</span>
                     before <span class="label label-info" data-value="before">{{ n.before }}</span> minute(s)
                     once a <span class="label label-info" data-value="period">{{ n.get_period_display|lower }}</span>
+                    {% if n.with_updates or n.with_results %}
+                    with
+                    {% if n.with_updates %}<span class="label label-info" data-value="updates">updates</span>{% endif %}
+                    {% if n.with_results %}<span class="label label-info" data-value="results">results</span>{% endif %}
+                    {% endif %}
                     <span class="checkin">
                     {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}
                     </span>

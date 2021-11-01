@@ -78,6 +78,7 @@ class Statistic(BaseModule):
                                 problems.pop(letter)
                                 continue
                             res = v.value.split(' ', 1)[0]
+                            res = res.replace(',', '')
                         p['result'] = res
                         p['time'] = v.value.split(' ', 1)[-1]
                         if 'table__cell_firstSolved_true' in v.attrs['class']:
@@ -107,7 +108,7 @@ class Statistic(BaseModule):
                     elif 'table__header_type_penalty' in v.attrs['class']:
                         row['penalty'] = int(v.value) if re.match('^-?[0-9]+$', v.value) else v.value
                     elif 'table__header_type_score' in v.attrs['class']:
-                        row['solving'] = float(v.value)
+                        row['solving'] = float(v.value.replace(',', ''))
                 if has_solved:
                     row['solved'] = {'solving': solved}
                 if not problems:

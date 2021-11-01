@@ -75,57 +75,81 @@
     {% endif %}
 
     {% if enable_timeline and contest.resource.info.standings.timeline %}
-      <button onclick="this.remove(); show_timeline(); return false" class="btn btn-default btn-sm"><i class="fas fa-history"></i></button>
+      {% if timeline %}
+      <input type="hidden" name="timeline" value="{{ request.GET.timeline }}"/>
+      {% endif %}
+
+      <button id="show-timeline" onclick="this.remove(); show_timeline(); $('#step-backward-timeline').focus(); return false" class="btn btn-default btn-sm"><i class="fas fa-history"></i></button>
 
       <div id="timeline-buttons" class="hidden">
 
         <div class="btn-group">
-          <button onclick="set_timeline(0.0); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-backward"></i></button>
+          <button id="fast-backward-timeline" onclick="step_timeline(0, true); set_timeline(0.0); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-backward"></i></button>
+          <button id="step-backward-timeline" onclick="step_timeline(-1, true); return false" class="btn btn-default btn-sm"><i class="fas fa-step-backward"></i></button>
           <button id="play-timeline" class="btn btn-default btn-sm"><i class="fas fa-play"></i></button>
-          <button onclick="set_timeline(1); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-forward"></i></button>
+          <button id="step-forward-timeline" onclick="step_timeline(1, true); return false" class="btn btn-default btn-sm"><i class="fas fa-step-forward"></i></button>
+          <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-forward"></i></button>
         </div>
 
         <div class="input-group input-group-sm">
           <div class="input-group-addon">Duration</div>
-          <select id="timeline-duration">
-            <option value="100">100 ms</option>
-            <option value="500">500 ms</option>
-            <option value="1000" selected>1 sec</option>
-            <option value="2000">2 sec</option>
-            <option value="4000">4 sec</option>
+          {% with value=request.GET.t_duration %}
+          <select id="timeline-duration"{% if value %} name="t_duration"{% endif %}>
+            {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
+            {% for k, v in timeline_durations %}
+            <option value="{{ k }}"{% if not value and forloop.revcounter == 2 %} selected{% endif %}>{{ v }}</option>
+            {% endfor %}
           </select>
+          {% endwith %}
         </div>
 
         <div class="input-group input-group-sm">
           <div class="input-group-addon">Step</div>
-          <select id="timeline-step">
-            <option value="0.001">0.001%</option>
-            <option value="0.005">0.005%</option>
-            <option value="0.01">0.01%</option>
-            <option value="0.03" selected>0.03%</option>
-            <option value="0.1">0.1%</option>
-            <option value="0.2">0.2%</option>
+          {% with value=request.GET.t_step %}
+          <select id="timeline-step"{% if value %} name="t_step"{% endif %}>
+            {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
+            {% for k, v in timeline_steps %}
+            <option value="{{ k }}"{% if not value and forloop.revcounter == 2 %} selected{% endif %}>{{ v }}</option>
+            {% endfor %}
           </select>
+          {% endwith %}
         </div>
 
         <div class="input-group input-group-sm">
           <div class="input-group-addon">Delay</div>
-          <select id="timeline-delay">
-            <option value="100">100 ms</option>
-            <option value="500">500 ms</option>
-            <option value="1000">1 sec</option>
-            <option value="2000" selected>2 sec</option>
-            <option value="4000">4 sec</option>
-            <option value="10000">10 sec</option>
+          {% with value=request.GET.t_delay %}
+          <select id="timeline-delay"{% if value %} name="t_delay"{% endif %}>
+            {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
+            {% for k, v in timeline_delays %}
+            <option value="{{ k }}"{% if not value and forloop.revcounter == 2 %} selected{% endif %}>{{ v }}</option>
+            {% endfor %}
           </select>
+          {% endwith %}
         </div>
 
+        <button id="share-timeline" class="btn btn-default btn-sm"><i class="fas fa-share-square"></i></button>
       </div>
+
 
       <script>
         $('#timeline-duration').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
         $('#timeline-step').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
         $('#timeline-delay').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
+        {% if timeline %}
+        $(function() {
+          shuffle_statistics_rows()
+          $('#show-timeline').click()
+          {% if timeline == 'play' %}
+          $('#fast-backward-timeline').click()
+          $('#play-timeline').click()
+          {% elif timeline|asfloat is not None %}
+          CURRENT_PERCENT = null
+          set_timeline({{ timeline|asfloat }})
+          {% endif %}
+          $('.standings.invisible').removeClass('invisible').css({opacity: 0.0, visibility: "visible"}).animate({opacity: 1.0}, 1000);
+          highlight_element($('.find-me-row'))
+        })
+        {% endif %}
       </script>
     {% endif %}
   </div>

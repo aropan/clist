@@ -227,6 +227,9 @@ def profile(request, username, template='profile.html', extra_context=None):
     context['coder'] = coder
     context['resources'] = resources
 
+    if request.user.is_authenticated and request.user.coder == coder:
+        context['without_findme'] = True
+
     if extra_context is not None:
         context.update(extra_context)
     return render(request, template, context)
@@ -254,6 +257,9 @@ def account(request, key, host, template='profile.html', extra_context=None):
     else:
         add_account_button = True
     context['add_account_button'] = add_account_button
+
+    if request.user.is_authenticated and request.user.coder in account.coders.all():
+        context['without_findme'] = True
 
     if extra_context is not None:
         context.update(extra_context)
@@ -531,13 +537,14 @@ def settings(request, tab=None):
                     return HttpResponseRedirect(django_settings.HTTPS_HOST_ + reverse('telegram:me'))
                 notification.coder = coder
                 notification.save()
-                return HttpResponseRedirect(reverse('coder:settings') + '#notifications-tab')
+                request.logger.success(f'{"Updated" if pk else "Created"} notification')
+                return HttpResponseRedirect(reverse('coder:settings', kwargs=dict(tab='notifications')))
 
     if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
         coder = Coder.objects.get(user__username=request.GET['as_coder'])
 
     resources = Resource.objects.all()
-    coder.filter_set.filter(resources=[], contest__isnull=True).delete()
+    coder.filter_set.filter(resources=[], contest__isnull=True, party__isnull=True).delete()
 
     services = Service.objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
 
@@ -717,8 +724,15 @@ def change(request):
             else:
                 filter_.contest = None
 
-            field = "Resources and contest"
-            if not filter_.resources and not filter_.contest:
+            field = "Party"
+            party_id = request.POST.get("value[party]", None)
+            if party_id:
+                filter_.party = Party.objects.get(pk=party_id)
+            else:
+                filter_.party = None
+
+            field = "Resources and contest and party"
+            if not filter_.resources and not filter_.contest and not filter_.party:
                 raise Exception("empty")
 
             categories = [c['id'] for c in coder.get_categories()]
@@ -1015,6 +1029,11 @@ def search(request, **kwargs):
         qs = Contest.objects.filter(title__iregex=verify_regex(title), end_time__gte=timezone.now())
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c.id, 'text': c.title} for c in qs]
+    elif query == 'party':
+        name = request.GET.get('name')
+        qs = Party.objects.filter(name__iregex=verify_regex(name))
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': c.id, 'text': c.name} for c in qs]
     elif query == 'field-to-select':
         contest = get_object_or_404(Contest, pk=request.GET.get('cid'))
         text = request.GET.get('text')

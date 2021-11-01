@@ -1,7 +1,9 @@
 {% with events=participant.coder.participant_set %}
 <div class="list-group-item">
   {% if with_admin %}
-    <a href="{% url 'admin:events_participant_change' participant.id %}" class="external-database-link" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+    <span class="pull-right">
+      <a href="{% url 'admin:events_participant_change' participant.id %}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+    </span>
   {% endif %}
 
   <strong class="name">
@@ -21,6 +23,9 @@
   {% endif %}
   {% if events.count %}
   with <a class="small" href="#events-{{ participant.pk }}{{ collapse_suffix }}" data-toggle="collapse">{{ events.count }} event(s)</a>
+  {% endif %}
+  {% if participant.looking_for %}
+  <i class="fas fa-search" title="Looking for a team" data-toggle="tooltip"></i>
   {% endif %}
 </div>
 

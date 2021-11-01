@@ -3,7 +3,7 @@ django-add-default-value==0.6.0
 django-cache-machine==1.1.0
 django_countries==7.0.0
 django-cprofile-middleware==1.0.5
-django-crispy-forms==1.11.1
+django-crispy-forms==1.13.0
 django-enumfield==2.0.2
 django-extensions==2.2.8
 django-jsonify==0.3.0
@@ -78,3 +78,4 @@ lazy-load==0.8.2
 blackboxprotobuf==1.0.1
 traceback-with-variables==2.0.1
 flatten-dict==0.4.2
+filelock==3.3.0

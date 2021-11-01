@@ -2,8 +2,8 @@
 
 import re
 import urllib.parse
-from pprint import pprint
 from collections import OrderedDict
+from pprint import pprint
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
@@ -44,6 +44,7 @@ class Statistic(BaseModule):
 
         for r in table:
             row = OrderedDict()
+            other = OrderedDict()
             problems = row.setdefault('problems', {})
             for key, v in list(r.items()):
                 if re.match('^Stage [0-9]+$', key):
@@ -103,7 +104,10 @@ class Statistic(BaseModule):
                     row['member'] = v.value if ' ' not in v.value else v.value + ' ' + self.season
                     row['name'] = v.value
                 else:
-                    row[key] = v.value
+                    other[key] = v.value
+            for k, v in other.items():
+                if k.lower() not in row:
+                    row[k] = v
             if 'solving' not in row:
                 row['solving'] = row.pop('Rating', 0)
             result[row['member']] = row
