@@ -75,7 +75,10 @@
                 {% for contest in future %}
                     <li{% if contest.is_coming %} class="disabled"{% endif %}>
                         <a class="small" href="#" data-href="{{ contest.url }}" data-toggle="tab">
-                            <div>{{ contest.title|truncatechars:33 }}</div>
+                            <div>
+                                <img src="{{ r.contest.resource.icon|static_resize:'32x32' }}" width="18" height="18"/>
+                                {{ contest.title|truncatechars:33 }}
+                            </div>
                             <div>{% if contest.is_coming %}starts{% else %}ends{% endif %} in <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span></div>
                         </a>
                     </li>
@@ -83,7 +86,10 @@
                 {% for r in results %}
                     {% if not forloop.first %}
                     <li{% if not r.standings %} class="disabled"{% endif %}>
-                        <a title="{{ r.contest.title }}" href="#{{ r.contest.id }}" data-toggle="tab"{% if not r.standings %} data-href="{{ r.contest.url }}"{% endif %}>{{ r.contest.title|truncatechars:33 }}</a>
+                        <a title="{{ r.contest.title }}" href="#{{ r.contest.id }}" data-toggle="tab"{% if not r.standings %} data-href="{{ r.contest.actual_url }}"{% endif %}>
+                            <img src="{{ r.contest.resource.icon|static_resize:'32x32' }}" width="18" height="18"/>
+                            {{ r.contest.title|truncatechars:33 }}
+                        </a>
                     </li>
                     {% endif %}
                 {% endfor %}

@@ -93,7 +93,7 @@ class="
         {% with medal_title_field=addition|get_item:"_medal_title_field" %}
         title="{% if medal_title_field %}{{ medal_title_field|strip:"_"|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
         {% endwith %}
-      ><i class="fas fa-trophy"></i></span>
+      >{% include "trophy.html" with statistic=statistic %}</span>
       {% endif %}
     </div>
   </{{ tag }}>

@@ -467,7 +467,7 @@ $(function() {
             <span class="input-group-btn"> \
                 <button id="select-all-resources" class="btn btn-default"><i class="fa fa-check"></i></button> \
                 <button id="deselect-all-resources" class="btn btn-default"><i class="fa fa-times"></i></button> \
-                <button id="inverse-resources" class="btn btn-default"><i class="fa fa-retweet"></i></button> \
+                <button id="inverse-resources" class="btn btn-default" title="inverse"><i class="fas fa-sync-alt"></i></button> \
             </span> \
         </div> \
         <div class="filter-field-resources"> \
@@ -565,7 +565,7 @@ $(function() {
 
     function process_list() {
         name = $(this).attr('data-name')
-        id = $(this).attr('data-id')
+        id = $(this).attr('data-id') || ''
         bootbox.prompt({title: 'List name', value: $(this).attr('data-value'), callback: function(result) {
             if (!result) {
                 return;
@@ -591,6 +591,96 @@ $(function() {
 
     $('#add-list').click(process_list)
     $('.edit-list').click(process_list)
+
+    function process_calendar() {
+        name = $(this).attr('data-name')
+        id = $(this).attr('data-id') || ''
+        value = $(this).attr('data-value') || ''
+        category = $(this).attr('data-category') || ''
+        resources = JSON.parse($(this).attr('data-resources') || "[]")
+
+        var category_select = '<option></option>';
+        CATEGORIES.forEach(el => { category_select += '<option value="' + el['id'] + '"' + (category == el['id']? ' selected' : '') + '>' + el['text'] + '</option>' })
+
+        var resources_select = '<option></option>';
+        RESOURCES.forEach(el => { resources_select += '<option value="' + el['id'] + '"' + ($.inArray(parseInt(el['id']), resources) !== -1? ' selected' : '') + '>' + el['text'] + '</option>' })
+
+        var form = $(`
+          <form>
+            <div class="form-group">
+              <label class="control-label">Calendar name</label>
+              <input class="form-control" placeholder="Name" autocomplete="off" name="name" value="` + value + `" required maxlength="64">
+              <small class="form-text text-muted">Required field</small>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Filter</label>
+              <select class="form-control" name="category">` + category_select + `</select>
+              <small class="form-text text-muted">Used to filter contests. Configure <a href="` + FILTERS_URL + `" target="_blank">here</a>. Optional field</small>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Resources <a class="inverse-resources btn btn-default btn-xs" title="inverse"><i class="fas fa-sync-alt"></i></a></label>
+              <select class="form-control" name="resources" multiple>` + resources_select + `</select>
+              <small class="form-text text-muted">Additional filter for resource. Full list <a href="` + RESOURCES_URL + `" target="_blank">here</a>. Optional field</small>
+            </div>
+          </form>
+        `);
+        form.find('select').select2({width: '100%'})
+        form.find('.inverse-resources').click(() => {
+            var resources = form.find('select[name=resources]')
+            resources.val(
+                $.grep(
+                    $.map(RESOURCES, function(resource) { return resource.id }),
+                    function(id) { return $.inArray(id, resources.val()) === -1 }
+                )
+            ).trigger('change')
+            return false
+        })
+
+        bootbox.confirm(form, function(result) {
+            if (!result) {
+                return;
+            }
+            var input = form.find('input[name=name]')
+            if (!input[0].checkValidity()) {
+                input.closest('.form-group').addClass('has-error')
+                return false;
+            }
+            value = form.find('input[name=name]').val()
+            category = form.find('select[name=category]').val()
+            resources = form.find('select[name=resources]').val()
+            $.ajax({
+                type: 'POST',
+                url: $.fn.editable.defaults.url,
+                data: {
+                    pk: $.fn.editable.defaults.pk,
+                    name: name,
+                    value: value,
+                    category: category,
+                    resources: resources,
+                    id: id,
+                },
+                success: function(data) {
+                    window.location.replace(CALENDARS_URL);
+                },
+                error: function(response) {
+                    log_ajax_error(response)
+                },
+            })
+        })
+        $('.bootbox.modal').removeAttr('tabindex')
+    }
+
+    function copy_calendar_url() {
+        copyTextToClipboard($(this).attr('data-url'))
+        var help = $(this).parent().find('.copy-url-help')
+        help.removeClass('hidden')
+        help.fadeIn('fast')
+        setTimeout(() => help.fadeOut('slow'), 1000)
+    }
+
+    $('#add-calendar').click(process_calendar)
+    $('.edit-calendar').click(process_calendar)
+    $('.copy-calendar-url').click(copy_calendar_url)
 
     var ntf_form = $('#notification-form')
     var ntf_add = $('#add-notification')
@@ -640,6 +730,7 @@ $(function() {
     $('.action-notification').click(sentAction)
     $('.action-filter').click(sentAction)
     $('.action-list').click(sentAction)
+    $('.action-calendar').click(sentAction)
 
     $("i[rel=tooltip]")
         .addClass('far fa-question-circle')
@@ -684,49 +775,50 @@ $(function() {
 
     $errorAccountTab = $('#error-account-tab')
     var $listAccount = $('#list-accounts')
+
+    function deleteAccount() {
+        var $this = $(this)
+        var $account = $this.closest('.account')
+        bootbox.confirm({
+            size: 'small',
+            message: $account.text() + "<br/><br/><b>Delete Account?</b>",
+            callback: function(result) {
+                if (result) {
+                    $.ajax({
+                        type: 'POST',
+                        url: $.fn.editable.defaults.url,
+                        data: {
+                            pk: $.fn.editable.defaults.pk,
+                            name: 'delete-account',
+                            id: $account.find('.delete-account').attr('data-id'),
+                        },
+                        success: function(data) {
+                            $account.remove()
+                        },
+                        error: function(data) {
+                            $errorAccountTab.show().html(data.responseText)
+                            setTimeout(function() { $errorAccountTab.hide(500) }, 3000)
+                        },
+                    })
+                }
+            }
+        })
+    }
+
     function addAccount(index, element) {
         var h4 = $('<h4>')
-            .append($('<a>', {class: 'delete-account btn btn-default btn-xs'}).append($('<i>', {class: 'far fa-trash-alt'})))
-            .append($('<span>', {text: ' '}))
-            .append($('<a>', {class: 'small', href: 'http://' + element.resource, text: element.resource}))
+            .append($('<a>', {class: 'delete-account btn btn-default btn-xs'}).attr('data-id', element.pk).append($('<i>', {class: 'far fa-trash-alt'})))
             .append($('<span>', {text: ' '}))
             .append($('<span>', {text: element.account + (element.name && element.account.indexOf(element.name) == -1? ' | ' + element.name : '')}))
+            .append($('<span>', {text: ' '}))
+            .append($('<a>', {class: 'small', href: 'http://' + element.resource, text: element.resource}))
 
         var $block = $('<div class="account">').append(h4)
-
-        $block.find('.delete-account').click(function() {
-            var $this = $(this)
-            var $account = $this.closest('.account')
-            bootbox.confirm({
-                size: 'small',
-                message: $account.text() + "<br/><br/><b>Delete Account?</b>",
-                callback: function(result) {
-                    if (result) {
-                        $.ajax({
-                            type: 'POST',
-                            url: $.fn.editable.defaults.url,
-                            data: {
-                                pk: $.fn.editable.defaults.pk,
-                                name: 'delete-account',
-                                resource: element.resource,
-                                value: element.account,
-                            },
-                            success: function(data) {
-                                $account.remove()
-                            },
-                            error: function(data) {
-                                $errorAccountTab.show().html(data.responseText)
-                                setTimeout(function() { $errorAccountTab.hide(500) }, 3000)
-                            },
-                        })
-                    }
-                }
-            })
-        })
-
+        $block.find('.delete-account').click(deleteAccount)
         $listAccount.prepend($block)
     }
-    $.each(ACCOUNTS, addAccount)
+    // $.each(ACCOUNTS, addAccount)
+    $('.delete-account').click(deleteAccount)
 
     var $search = $('#add-account-search')
     $search.select2({

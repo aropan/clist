@@ -1,7 +1,9 @@
+import uuid
 from datetime import timedelta
 
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -80,4 +82,12 @@ class Task(BaseModel):
     unsent = UnsentManager()
 
     def __str__(self):
-        return '{0.notification}'.format(self)
+        return 'task of {0.notification}'.format(self)
+
+
+class Calendar(BaseModel):
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
+    name = models.CharField(max_length=64)
+    category = models.CharField(max_length=256, null=True)
+    resources = ArrayField(models.PositiveIntegerField(), null=True)
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)

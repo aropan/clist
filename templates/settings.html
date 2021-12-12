@@ -29,6 +29,9 @@
 
     PREFERENCES_URL = "{% url 'coder:settings' 'preferences' %}"
     LISTS_URL = "{% url 'coder:settings' 'lists' %}"
+    FILTERS_URL = "{% url 'coder:settings' 'filters' %}"
+    CALENDARS_URL = "{% url 'coder:settings' 'calendars' %}"
+    RESOURCES_URL = "{% url 'clist:resources' %}"
 
     SHARE_TO_CATEGORY = { 'disable': 'Disable' {% for k, v in notifications %}, '{{ k }}': '{{ v }}'{% endfor %} }
 
@@ -50,6 +53,7 @@
         <li{% if tab == 'filters' %} class="active"{% endif %}><a href="#filters-tab" data-toggle="tab">Filters</a></li>
         <li{% if tab == 'lists' %} class="active"{% endif %}><a href="#lists-tab" data-toggle="tab">Lists</a></li>
         <li{% if tab == 'notifications' %} class="active"{% endif %}><a href="#notifications-tab" data-toggle="tab">Notifications</a></li>
+        <li{% if tab == 'calendars' %} class="active"{% endif %}><a href="#calendars-tab" data-toggle="tab">Calendars</a></li>
     </ul>
 
     <div class="tab-content">
@@ -169,8 +173,13 @@
         <div id="notifications-tab" class="tab-pane{% if tab == 'notifications' %} active{% endif %}">
             <div id="notifications" class="value">
                 {% if not notification_form.errors %}
+                <div>
                 <a id="add-notification" class="btn btn-primary" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>
+                {% if perms.notification.view_notification %}
+                  <a href="{% url 'admin:notification_notification_changelist' %}" class="external-database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
                 {% endif %}
+                {% endif %}
+                </div>
                 <div id="notification-form"{% if not notification_form.errors %} class="collapse"{% endif %}>
                     {% crispy notification_form %}
                 </div>
@@ -276,6 +285,52 @@
             </div>
             <div id="error-account-tab" class="alert alert-danger"></div>
             <div id="list-accounts">
+                {% for account in coder.account_set_order_by_pk reversed %}
+                <div class="account">
+                    <h4>
+                        <a class="delete-account btn btn-default btn-xs" data-id="{{ account.pk }}"><i class="far fa-trash-alt"></i></a>
+                        <img src="{{ account.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+                        {% include "account_table_cell.html" with account=account addition=None resource=account.resource %}
+                        <a class="small" href="{% url 'clist:resource' account.resource.host %}">{{ account.resource.host }}</a>
+                    </h4>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="calendars-tab" class="tab-pane{% if tab == 'calendars' %} active{% endif %}">
+            <div class="key">
+                <a href="#" id="add-calendar" data-name="add-calendar" class="btn btn-primary">Create</a>
+                {% if perms.notification.view_calendar %}
+                  <a href="{% url 'admin:notification_calendar_changelist' %}" class="external-database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                {% endif %}
+            </div>
+            <div id="calendars" class="value">
+                {% for calendar in coder.calendar_set.all %}
+                <div class="calendar">
+                    <span class="label label-info">{{ calendar.name }}</span>
+                    {% if calendar.category or calendar.resources %}
+                        with
+                        {% if calendar.category %}<span class="label label-info">{{ calendar.category }}</span> filter{% endif %}
+                        {% if calendar.resources %}
+                        {% if calendar.category %}and{% endif %}
+                        <a data-toggle="collapse" href="#calendar-{{ calendar.pk}}-resources" onclick="$(this).remove()"><span class="label label-info">{{ calendar.resources|length }}</span></a>
+                        <span class="collapse" id="calendar-{{ calendar.pk}}-resources">
+                        {% for resource in resources %}
+                            {% if resource.id in calendar.resources %}
+                                <span class="label label-info">{{ resource.host }}</span>
+                            {% endif %}
+                        {% endfor %}
+                        </span>
+                        resource(s)
+                        {% endif %}
+                    {% endif %}
+                    <a data-url="{{ main_host_url }}{% url 'notification:calendar' calendar.uuid %}" class="copy-calendar-url btn btn-primary btn-sm" target="_blank"><i class="fas fa-link"></i></a>
+                    <a href="{% url 'notification:calendar' calendar.uuid %}" class="btn btn-primary btn-sm" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+                    <button href="#" data-name="edit-calendar" data-id="{{ calendar.id }}" data-value="{{ calendar.name }}" data-category="{{ calendar.category }}" data-resources="{{ calendar.resources|jsonify }}" class="edit-calendar btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
+                    <button href="#" data-id="{{ calendar.id }}" data-action="delete-calendar" data-success="$div.remove();" class="action-calendar btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
+                    <a class="copy-url-help btn btn-success btn-sm hidden" disabled>URL copied</a>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>

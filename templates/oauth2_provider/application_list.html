@@ -3,9 +3,7 @@
 {% load i18n %}
 {% block content %}
     <div class="block-center">
-        <div class="pull-right">
-            <a class="text-muted small" href="https://django-oauth-toolkit.readthedocs.io/en/latest/getting_started.html#authorization-code">Documentation</a>
-        </div>
+        <a class="pull-right" href="https://django-oauth-toolkit.readthedocs.io/en/latest/getting_started.html#authorization-code">Documentation</a>
         <h3 class="block-center-heading">{% trans "Your applications" %}</h3>
         {% if applications %}
             <ul>
@@ -18,5 +16,7 @@
         {% else %}
             <p>{% trans "No applications defined" %}. <a href="{% url 'oauth2_provider:register' %}">{% trans "Click here" %}</a> {% trans "if you want to register a new one" %}</p>
         {% endif %}
+        <hr/>
+        <h3><a href="{% url 'oauth2_provider:authorized-token-list' %}">{% trans "Your tokens" %}</a></h3>
     </div>
 {% endblock content %}

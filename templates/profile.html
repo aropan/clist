@@ -38,6 +38,25 @@ Number of competitions: {{ account.n_contests }}
 
 {% if coder %}
   <h2>
+    {% if search_resource %}
+      {% with resource=resources.0 %}
+        {% if resource %}
+          <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|static_resize:'64x64' }}" width="30" height="30"/></a>
+
+          {% for account in resource.coder_accounts %}
+            {% if resource.avatar_url %}
+              {% call_method account 'avatar_url' resource as avatar_url %}
+              {% if avatar_url %}
+                <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
+              {% endif %}
+            {% endif %}
+
+            {% coder_color_circle resource account.info size=28 %}
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    {% endif %}
+
     {% if coder.user.first_name or coder.user.last_name %}
       {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
     {% endif %}
@@ -117,27 +136,29 @@ Number of competitions: {{ account.n_contests }}
 
   {% for resource in resources %}
     {% with account=resource.coder_accounts.0 %}
-      <span class="account btn-group btn-group-sm">
-        <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
-        <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
-          {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
+      {% if account %}
+        <span class="account btn-group btn-group-sm">
+          <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+          <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
+            {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
 
-          {% if resource.coder_accounts|length > 1 %}
-          <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
-            +{{ resource.coder_accounts|length|add:-1 }}
-          </span>
-          {% endif %}
-
-          {% for s in resource_medals|get_item:resource.pk %}
-            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
-              <i class="fas fa-trophy"></i>
+            {% if resource.coder_accounts|length > 1 %}
+            <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
+              +{{ resource.coder_accounts|length|add:-1 }}
             </span>
-          {% endfor %}
-        </a>
-        {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-        <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-        {% endif %}
-      </span>
+            {% endif %}
+
+            {% for s in resource_medals|get_item:resource.pk %}
+              <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
+                {% include "trophy.html" with statistic=s %}
+              </span>
+            {% endfor %}
+          </a>
+          {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
+          <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+          {% endif %}
+        </span>
+      {% endif %}
     {% endwith %}
   {% endfor %}
 

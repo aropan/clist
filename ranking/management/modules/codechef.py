@@ -190,6 +190,12 @@ class Statistic(BaseModule):
                                     else:
                                         v[t] = f'-{penalty}'
 
+                                if v.get('time'):
+                                    time_in_seconds = 0
+                                    for t in str(v['time']).split(':'):
+                                        time_in_seconds = time_in_seconds * 60 + int(t)
+                                    v['time_in_seconds'] = time_in_seconds
+
                                 problems[k] = v
                             row['solved'] = {'solving': solved, 'upsolving': upsolved}
                         country = d.pop('country_code')

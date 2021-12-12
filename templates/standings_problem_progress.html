@@ -6,6 +6,7 @@
   {% if n_hidden %}<br/>Number of hidden: {{ n_hidden }} ({{ n_hidden|multiply:100|divide:n_statistics|floatformat:"2" }})%){% endif %}
   {% if n_accepted != problem.n_teams %}<br/>Number of tries: {{ problem.n_teams }} ({{ problem.n_teams|default:0|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
   <br/>Total: {{ n_statistics }}
+  {% if problem.first_ac %}<br/>First accepted: {{ problem.first_ac.time }}{% endif %}
 " data-toggle="tooltip" data-html="true" data-placement="bottom" data-problem-key="{{ problem|get_problem_short }}">
   <div class="progress-bar progress-bar-success" style="width: {{ n_accepted|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
   <div class="progress-bar progress-bar-info" style="width: {{ n_partial|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>

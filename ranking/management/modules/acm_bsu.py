@@ -4,8 +4,7 @@
 import collections
 from pprint import pprint
 
-from ranking.management.modules.common import REQ, DOT
-from ranking.management.modules.common import BaseModule, parsed_table
+from ranking.management.modules.common import DOT, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 
 
@@ -25,11 +24,12 @@ class Statistic(BaseModule):
         page = REQ.get(self.standings_url)
         table = parsed_table.ParsedTable(html=page, xpath="//table[@class='ir-contest-standings']//tr")
         problems_info = collections.OrderedDict()
+        has_plus = False
         for r in table:
             row = collections.OrderedDict()
             problems = row.setdefault('problems', {})
             ioi_total_fields = ['Sum', 'Сумма']
-            ioi_style = any((f in r for f in ioi_total_fields))
+            # ioi_style = any((f in r for f in ioi_total_fields))
             for k, v in list(r.items()):
                 classes = v.attrs['class'].split()
                 if 'ir-column-contestant' in classes:
@@ -49,12 +49,12 @@ class Statistic(BaseModule):
                     p = problems.setdefault(letter, {})
                     values = v.value.replace('−', '-').split(' ')
                     p['result'] = values[0]
+                    if p['result'].startswith('+'):
+                        has_plus = True
+                    elif v.column.node.xpath('.//*[@class="ir-rejected"]'):
+                        p['partial'] = True
                     if len(values) > 1:
                         p['time'] = values[1]
-                    if ioi_style and p['result'].isdigit():
-                        val = int(p['result'])
-                        if val:
-                            p['partial'] = val < 100
                 else:
                     row[k.lower()] = v.value
             if not problems or users and row['member'] not in users:
@@ -67,6 +67,21 @@ class Statistic(BaseModule):
                 member += f'-{idx}'
                 row['member'] = member
             result[member] = row
+
+        if not has_plus:
+            for row in result.values():
+                solved = 0
+                for p in row['problems'].values():
+                    if p.get('partial'):
+                        continue
+                    try:
+                        score = float(p['result'])
+                        if score > 0:
+                            solved += 1
+                    except Exception:
+                        pass
+                row['solved'] = {'solving': solved}
+
         standings = {
             'result': result,
             'url': self.standings_url,

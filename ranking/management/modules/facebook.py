@@ -29,6 +29,9 @@ class Statistic(BaseModule):
                 'pass': conf.FACEBOOK_PASSWORD,
             }
             REQ.submit_form(data=data, form=form)
+            form = REQ.form(action='/login/')
+            if form and 'validate-password' in form['url']:
+                REQ.submit_form(data=data, form=form)
 
     def get_standings(self, users=None, statistics=None):
         page = REQ.get(self.standings_url)
@@ -60,7 +63,10 @@ class Statistic(BaseModule):
         scoreboard_data = query('CodingCompetitionsContestScoreboardQuery', variables)
 
         def get_advance():
-            advancement = scoreboard_data['data']['contest'].get('advancement_requirement_text', '')
+            advancement = scoreboard_data['data']['contest'].get('advancement_requirement_text')
+
+            if not advancement:
+                return {}
 
             match = re.search('top (?P<place>[0-9]+) contestants', advancement)
             if match:
@@ -167,6 +173,7 @@ class Statistic(BaseModule):
                                     p['verdict'] = verdict
 
                             if problem:
+                                p['time_in_seconds'] = problem['submission_time_after_contest_start']
                                 p['time'] = self.to_time(problem['submission_time_after_contest_start'])
                                 url = problem['submission_source_code_download_uri']
                                 if url:

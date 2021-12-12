@@ -1,7 +1,8 @@
+import bisect
 import colorsys
 import copy
 import re
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import arrow
 from django.conf import settings
@@ -20,7 +21,10 @@ from ratelimit.decorators import ratelimit
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import get_country_name, get_problem_short, query_transform, slug, toint
+from clist.templatetags.extras import (format_time, get_country_name, get_problem_short, get_problem_title, is_solved,
+                                       query_transform, slug, time_in_seconds, timestamp_to_datetime)
+from clist.templatetags.extras import timezone as set_timezone
+from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -28,6 +32,7 @@ from ranking.models import Account, Module, Statistics
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, Party
 from true_coders.views import get_ratings_data
+from utils.chart import make_bins, make_histogram
 from utils.colors import get_n_colors
 from utils.json_field import JSONF
 from utils.list_as_queryset import ListAsQueryset
@@ -222,6 +227,182 @@ def _get_order_by(fields):
     return order_by
 
 
+def standings_charts(request, context):
+    default_n_bins = 51
+    contest = context['contest']
+    problems = context['problems']
+    statistics = context['statistics']
+    timeline = context['contest_timeline']
+    params = context['params']
+
+    statistics = statistics.prefetch_related(None)
+    statistics = statistics.select_related(None)
+    statistics = statistics.order_by()
+
+    find_me = request.GET.get('find_me')
+    my_stat_pk = toint(find_me) if find_me else params.get('find_me')
+
+    charts = []
+
+    mapping_fields_values = dict(
+        new_rating='_ratings',
+        old_rating='_ratings',
+    )
+    fields_values = defaultdict(list)
+    fields_types = defaultdict(set)
+    problems_values = defaultdict(list)
+    scores_values = []
+    int_scores = True
+    my_values = {}
+    for stat in statistics:
+        if stat.addition.get('_no_update_n_contests'):
+            continue
+        is_my_stat = stat.pk == my_stat_pk
+        if is_my_stat:
+            my_values['__stat'] = stat
+        if stat.solving is not None:
+            int_scores = int_scores and abs(round(stat.solving) - stat.solving) < 1e-9
+            scores_values.append(stat.solving)
+            if is_my_stat:
+                my_values['score'] = stat.solving
+        for field, value in stat.addition.items():
+            if field == 'rating_change':
+                value = toint(value)
+            if value is None:
+                continue
+            if field in mapping_fields_values:
+                fields_values[mapping_fields_values[field]].append(value)
+            fields_types[field].add(type(value))
+            fields_values[field].append(value)
+            if is_my_stat and field not in ['score', 'problems']:
+                my_values[field] = value
+        for key, info in stat.addition.get('problems', {}).items():
+            if info.get('partial'):
+                continue
+            result = info.get('result')
+            if not is_solved(result):
+                continue
+            time = info.get('time')
+            if time is None:
+                continue
+
+            time = time_in_seconds(timeline, time)
+            problems_values[key].append(time)
+            if is_my_stat:
+                my_values.setdefault('problems', {})[key] = time
+
+    if scores_values:
+        if int_scores:
+            scores_values = [round(x) for x in scores_values]
+        hist, bins = make_histogram(scores_values, n_bins=default_n_bins)
+        scores_chart = dict(
+            field='scores',
+            bins=bins,
+            data=[{'bin': b, 'value': v} for v, b in zip(hist, bins)],
+            my_value=my_values.get('score'),
+        )
+        charts.append(scores_chart)
+
+    if problems_values and contest.duration_in_secs:
+        def timeline_format(t):
+            rounding = timeline.get('penalty_rounding', 'floor-minute')
+            if rounding == 'floor-minute':
+                t = int(t / 60)
+                ret = f'{t // 60}:{t % 60:02d}'
+            else:
+                ret = f'{t // 60 // 60}:{t // 60 % 60:02d}:{t % 60:02d}'
+            return ret
+
+        problems_bins = make_bins(0, contest.duration_in_secs, n_bins=default_n_bins)
+        problems_chart = dict(
+            field='solved_problems',
+            type='line',
+            fields=[],
+            labels={},
+            bins=problems_bins,
+            data=[{'bin': timeline_format(b)} for b in problems_bins[:-1]],
+            tension=0.5,
+            point_radius=0,
+            border_width=2,
+            legend={'position': 'right'},
+        )
+        total_values = []
+        my_data = []
+        for problem in problems:
+            short = get_problem_short(problem)
+            hist, _ = make_histogram(values=problems_values[short], bins=problems_bins)
+            val = 0
+            for h, d in zip(hist, problems_chart['data']):
+                val += h
+                d[short] = val
+            total_values.extend(problems_values[short])
+            problems_chart['fields'].append(short)
+            problems_chart['labels'][short] = get_problem_title(problem)
+
+            if short in my_values.get('problems', {}):
+                idx = bisect.bisect(problems_bins, my_values['problems'][short]) - 1
+                my_data.append({'x': problems_bins[idx], 'y': problems_chart['data'][idx][short], 'field': short})
+        if my_data:
+            my_data.sort(key=lambda d: (d['x'], -d['y']))
+            for d in my_data:
+                d['x'] = timeline_format(d['x'])
+            problems_chart['my_dataset'] = {
+                'data': my_data,
+                'point_radius': 4,
+                'point_hover_radius': 8,
+                'label': my_values['__stat'].account.key,
+            }
+
+        total_solved_chart = copy.deepcopy(problems_chart)
+        total_solved_chart.update(dict(
+            field='total_solved',
+            fields=False,
+            labels=False,
+            my_dataset=None,
+        ))
+        hist, _ = make_histogram(values=total_values, bins=problems_bins)
+        val = 0
+        for h, d in zip(hist, total_solved_chart['data']):
+            val += h
+            d['value'] = val
+        charts.extend([problems_chart, total_solved_chart])
+
+    for field in contest.info.get('fields', []):
+        types = fields_types.get(field)
+        if field.startswith('_') or not types:
+            continue
+        if len(types) != 1 or next(iter(types)) not in [int, float]:
+            continue
+        if not fields_values[field]:
+            continue
+
+        if field in mapping_fields_values:
+            values = fields_values[mapping_fields_values[field]]
+            bins = make_bins(min(values), max(values), n_bins=default_n_bins)
+            hist, bins = make_histogram(fields_values[field], bins=bins)
+        else:
+            hist, bins = make_histogram(fields_values[field], n_bins=default_n_bins)
+
+        chart = dict(
+            field=field,
+            bins=bins,
+            data=[{'bin': b, 'value': v} for v, b in zip(hist, bins)],
+            my_value=my_values.get(field),
+        )
+
+        field_types = context['fields_types'].get(field, [])
+        if 'timestamp' in field_types:
+            for d in chart['data']:
+                t = timestamp_to_datetime(d['bin'])
+                t = set_timezone(t, context['timezone'])
+                t = format_time(t, context['timeformat'])
+                d['bin'] = t
+
+        charts.append(chart)
+
+    context['charts'] = charts
+
+
 @page_templates((
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
@@ -365,6 +546,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     division = request.GET.get('division')
     if division == 'any' or contests_ids:
         with_row_num = True
+        if 'penalty' in contest_fields:
+            order.append('addition__penalty')
         if 'place_as_int' in order:
             order.remove('place_as_int')
             order.append('place_as_int')
@@ -380,9 +563,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         division = divisions_order[0]
     division_addition = contest.info.get('divisions_addition', {}).get(division, {}).copy()
 
-    if 'team_id' in contest_fields and not groupby:
-        order.append('addition__name')
-        statistics = statistics.distinct(*[f.lstrip('-') for f in order])
+    # FIXME: addition__name
+    # if 'team_id' in contest_fields and not groupby:
+    #     order.append('addition__name')
+    #     statistics = statistics.distinct(*[f.lstrip('-') for f in order])
 
     if inplace_division and division != divisions_order[0]:
         fields_types = division_addition['fields_types']
@@ -548,15 +732,24 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                         if k not in _problems:
                             _problems[k] = p
                         else:
+                            _pk = _problems[k]
                             for f in 'n_accepted', 'n_teams', 'n_partial', 'n_total':
                                 if f in p:
-                                    _problems[k][f] = _problems[k].get(f, 0) + p[f]
+                                    _pk[f] = _pk.get(f, 0) + p[f]
+
+                            if 'first_ac' in p:
+                                in_seconds = p['first_ac']['in_seconds']
+                                if 'first_ac' not in _pk or in_seconds + 1e-9 < _pk['first_ac']['in_seconds']:
+                                    _pk['first_ac'] = copy.deepcopy(p['first_ac'])
+                                elif 'first_ac' in _pk and in_seconds - 1e-9 < _pk['first_ac']['in_seconds']:
+                                    _pk['first_ac']['accounts'].extend(p['first_ac']['accounts'])
+
                             if 'full_score' in p:
-                                fs = str(_problems[k].get('full_score', ''))
+                                fs = str(_pk.get('full_score', ''))
                                 if fs:
                                     fs += ' '
                                 fs += str(p['full_score'])
-                                _problems[k]['full_score'] = fs
+                                _pk['full_score'] = fs
                 problems = list(_problems.values())
             else:
                 problems = problems['division'][division]
@@ -582,8 +775,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             last = p
             last['colspan'] = 1
 
-    # own_stat = statistics.filter(account__coders=coder).first() if coder else None
-
     # filter by search
     search = request.GET.get('search')
     if search:
@@ -595,7 +786,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                                            Q(account__coders__in=party.admins.all()) |
                                            Q(account__coders=party.author))
         else:
-            cond = get_iregex_filter(search, 'account__key', 'addition__name', logger=request.logger)
+            cond = get_iregex_filter(search, 'account__key', logger=request.logger)  # FIXME: add addition__name
             statistics = statistics.filter(cond)
 
     # filter by country
@@ -914,6 +1105,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'with_neighbors': request.GET.get('neighbors') == 'on',
         'with_table_inner_scroll': not request.user_agent.is_mobile,
         'enable_timeline': enable_timeline,
+        'contest_timeline': contest.get_timeline_info(),
         'timeline': timeline,
         'timeline_durations': [
             ('100', '100 ms'),
@@ -942,6 +1134,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
     if extra_context is not None:
         context.update(extra_context)
+
+    if groupby == 'none' and request.GET.get('charts'):
+        standings_charts(request, context)
+        context['with_table_inner_scroll'] = False
 
     return render(request, template, context)
 

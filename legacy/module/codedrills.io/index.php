@@ -26,6 +26,9 @@
 
     foreach ($data as $c) {
         $c = $c[1];
+        if (is_array($c[3]) || is_array($c[4]) || is_array($c[11][6][6]) || is_array($c[11][6][7])) {
+            continue;
+        }
         $title = trim(strval($c[3]));
         $slug = trim(strval($c[4]));
         $contests[] = array(

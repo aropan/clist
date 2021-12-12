@@ -2,9 +2,10 @@
 
 import re
 import urllib.parse
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from pprint import pprint
 
+from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 
@@ -42,6 +43,7 @@ class Statistic(BaseModule):
         )
         stages = {m.group('day'): urllib.parse.urljoin(self.standings_url, m.group('url')) for m in matches}
 
+        fields_types = defaultdict(set)
         for r in table:
             row = OrderedDict()
             other = OrderedDict()
@@ -104,6 +106,9 @@ class Statistic(BaseModule):
                     row['member'] = v.value if ' ' not in v.value else v.value + ' ' + self.season
                     row['name'] = v.value
                 else:
+                    t = as_number(v.value)
+                    if t:
+                        fields_types[key].add(type(t))
                     other[key] = v.value
             for k, v in other.items():
                 if k.lower() not in row:
@@ -111,6 +116,16 @@ class Statistic(BaseModule):
             if 'solving' not in row:
                 row['solving'] = row.pop('Rating', 0)
             result[row['member']] = row
+
+        for field, types in fields_types.items():
+            if len(types) != 1:
+                continue
+            field_type = next(iter(types))
+            if field_type not in [int, float]:
+                continue
+            for row in result.values():
+                if field in row:
+                    row[field] = as_number(row[field])
 
         standings = {
             'result': result,

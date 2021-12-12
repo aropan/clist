@@ -105,7 +105,10 @@ class Statistic(BaseModule):
                 value = value.lower()
                 value = re.sub(r'\s+-[^-]+$', '', value)
                 value = re.sub(r'\bsingle\s+round\s+match\b', 'srm', value)
-                value = re.sub(r'\bmarathon\s+match\b', 'srm', value)
+                value = re.sub(r'\bmarathon\s+match\b', 'mm', value)
+                value = re.sub(r'[0-9]*([0-9]{2})\s*tco(\s+)', r'tco\1\2', value)
+                value = re.sub(r'tco\s*[0-9]*([0-9]{2})(\s+)', r'tco\1\2', value)
+                value = re.sub(r'^[0-9]{2}([0-9]{2})(\s+)', r'tco\1\2', value)
                 return set(re.split('[^A-Za-z0-9]+', value))
 
             def process_match(date, title, url):
@@ -430,6 +433,11 @@ class Statistic(BaseModule):
                             d.pop('result')
                         if re.match('^[0.:]+$', d['time']):
                             d.pop('time')
+                        else:
+                            time_in_seconds = 0
+                            for t in d['time'].split(':'):
+                                time_in_seconds = time_in_seconds * 60 + asfloat(t)
+                            d['time_in_seconds'] = time_in_seconds
 
                         solution = (statistics or {}).get(handle, {}).get('problems', {}).get(short, {}).get('solution')
                         if not solution:

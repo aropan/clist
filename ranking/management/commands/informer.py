@@ -235,7 +235,7 @@ class Command(BaseCommand):
                 is_over = contest.end_time < now()
                 if is_over and not has_hidden:
                     break
-                tick = 60 if is_over else args.delay
+                tick = args.delay * 5 if is_over else args.delay
                 limit = now() + timedelta(seconds=tick)
                 size = 1
                 while now() < limit:

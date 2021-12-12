@@ -32,6 +32,7 @@ from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
+from notification.models import Calendar
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
@@ -216,7 +217,7 @@ def profile(request, username, template='profile.html', extra_context=None):
             to_attr='coder_accounts',
         )) \
         .annotate(num_contests=SubquerySum('account__n_contests', filter=Q(coders=coder))) \
-        .filter(num_contests__gt=0).order_by('-num_contests')
+        .order_by('-num_contests')
 
     writers = Contest.objects.filter(writers__coders=coder)
     context = get_profile_context(request, statistics, writers)
@@ -543,7 +544,7 @@ def settings(request, tab=None):
     if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
         coder = Coder.objects.get(user__username=request.GET['as_coder'])
 
-    resources = Resource.objects.all()
+    resources = coder.get_ordered_resources()
     coder.filter_set.filter(resources=[], contest__isnull=True, party__isnull=True).delete()
 
     services = Service.objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
@@ -715,7 +716,7 @@ def change(request):
             field = "Resources"
             filter_.resources = list(map(int, request.POST.getlist("value[resources][]", [])))
             if Resource.objects.filter(pk__in=filter_.resources).count() != len(filter_.resources):
-                raise Exception("invalid id")
+                raise Exception("invalid resources")
 
             field = "Contest"
             contest_id = request.POST.get("value[contest]", None)
@@ -789,6 +790,46 @@ def change(request):
             coder_list.delete()
         except Exception as e:
             return HttpResponseBadRequest(e)
+    elif name in ["add-calendar", "edit-calendar"]:
+        try:
+            pk = int(request.POST.get("id") or -1)
+
+            if not value:
+                return HttpResponseBadRequest("empty calendar name")
+            if name == "add-calendar" and coder.calendar_set.count() >= 50:
+                return HttpResponseBadRequest("reached the limit number of calendar")
+            if coder.calendar_set.filter(name=value).exclude(pk=pk):
+                return HttpResponseBadRequest("duplicate calendar name")
+
+            category = request.POST.get("category") or None
+            if category:
+                categories = [c['id'] for c in coder.get_categories()]
+                if category not in categories:
+                    return HttpResponseBadRequest("not found calendar filter")
+
+            resources = [int(x) for x in request.POST.getlist("resources[]", []) if x]
+            if resources and Resource.objects.filter(pk__in=resources).count() != len(resources):
+                raise Exception("invalid resources")
+
+            if name == "add-calendar":
+                calendar = Calendar.objects.create(coder=coder, name=value, category=category, resources=resources)
+            elif name == "edit-calendar":
+                calendar = Calendar.objects.get(pk=pk, coder=coder)
+                calendar.name = value
+                calendar.category = category
+                calendar.resources = resources
+                calendar.save()
+        except Exception as e:
+            return HttpResponseBadRequest(e)
+        return HttpResponse(json.dumps({'id': calendar.pk, 'name': calendar.name, 'filter': calendar.category}),
+                            content_type="application/json")
+    elif name == "delete-calendar":
+        try:
+            pk = int(request.POST.get("id", -1))
+            calendar = Calendar.objects.get(pk=pk, coder=coder)
+            calendar.delete()
+        except Exception as e:
+            return HttpResponseBadRequest(e)
     elif name in ("delete-notification", "reset-notification", ):
         try:
             id_ = int(request.POST.get("id", -1))
@@ -843,11 +884,15 @@ def change(request):
         except Exception as e:
             return HttpResponseBadRequest(e)
     elif name == "delete-account":
-        if not value:
-            return HttpResponseBadRequest("empty account value")
         try:
-            host = request.POST.get("resource")
-            account = Account.objects.get(resource__host=host, key=value)
+            pk = request.POST.get("id")
+            if pk:
+                account = Account.objects.get(pk=int(pk))
+            else:
+                if not value:
+                    return HttpResponseBadRequest("empty account value")
+                host = request.POST.get("resource")
+                account = Account.objects.get(resource__host=host, key=value)
             account.coders.remove(coder)
         except Exception as e:
             return HttpResponseBadRequest(e)
@@ -1188,7 +1233,7 @@ def party(request, slug, tab='ranking'):
     results = []
     total = {}
 
-    contests = Contest.objects.filter(rating__party=party)
+    contests = Contest.objects.filter(rating__party=party).select_related('resource')
     future = contests.filter(end_time__gt=timezone.now()).order_by('start_time')
 
     statistics = Statistics.objects.filter(
@@ -1197,7 +1242,7 @@ def party(request, slug, tab='ranking'):
         contest__end_time__lt=timezone.now(),
     ) \
         .order_by('-contest__end_time') \
-        .select_related('contest', 'account') \
+        .select_related('contest', 'account', 'contest__resource') \
         .prefetch_related('account__coders', 'account__coders__user')
 
     contests_standings = collections.OrderedDict(
@@ -1473,7 +1518,8 @@ def accounts(request, template='accounts.html'):
         params['resources'] = resources
 
     context = {'params': params}
-    table_fields = ('rating', 'n_contests', 'n_writers', 'last_activity')
+    addition_table_fields = ('modified', 'updated')
+    table_fields = ('rating', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
     groupby = request.GET.get('groupby')
@@ -1493,21 +1539,6 @@ def accounts(request, template='accounts.html'):
             chart_field = None
         elif chart_field not in fields:
             fields.append(chart_field)
-    if custom_fields:
-        context['custom_fields'] = {
-            'values': [v for v in fields if v and v in custom_fields],
-            'options': custom_fields,
-            'noajax': True,
-            'nogroupby': True,
-            'nourl': True,
-            'nohidden': True,
-        }
-        for field in context['custom_fields']['values']:
-            k = f'info__{field}'
-            if field == orderby or field == chart_field:
-                accounts = accounts.annotate(**{k: Cast(JSONF(k), BigIntegerField())})
-            else:
-                accounts = accounts.annotate(**{k: JSONF(k)})
 
     # chart
     if chart_field:
@@ -1516,8 +1547,25 @@ def accounts(request, template='accounts.html'):
         context['groupby'] = groupby
     else:
         context['chart'] = False
-    if context['chart']:
-        accounts = context['chart']['queryset']
+
+    # custom fields
+    options = custom_fields + list(addition_table_fields)
+    context['custom_fields'] = {
+        'values': [v for v in fields if v and v in options],
+        'options': options,
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nohidden': True,
+    }
+    for field in context['custom_fields']['values']:
+        if field not in custom_fields:
+            continue
+        k = f'info__{field}'
+        if field == orderby or field == chart_field:
+            accounts = accounts.annotate(**{k: Cast(JSONF(k), BigIntegerField())})
+        else:
+            accounts = accounts.annotate(**{k: JSONF(k)})
 
     # ordering
     if orderby == 'account':
@@ -1537,5 +1585,6 @@ def accounts(request, template='accounts.html'):
     orderby = orderby or ['-created']
     accounts = accounts.order_by(*orderby)
     context['accounts'] = accounts
+    context['resources_custom_fields'] = custom_fields
 
     return template, context

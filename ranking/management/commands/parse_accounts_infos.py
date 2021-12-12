@@ -86,6 +86,8 @@ class Command(BaseCommand):
                     continue
 
             count = 0
+            n_rename = 0
+            n_remove = 0
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -118,7 +120,8 @@ class Command(BaseCommand):
                             if info is None:
                                 _, info = account.delete()
                                 info = {k: v for k, v in info.items() if v}
-                                pbar.set_postfix(warning=f'Remove user {account} = {info}')
+                                n_remove += 1
+                                pbar.set_postfix(warning=f'{n_remove}: Remove user {account} = {info}')
                                 continue
 
                             params = data.pop('contest_addition_update_params', {})
@@ -136,6 +139,8 @@ class Command(BaseCommand):
                             if 'rename' in data:
                                 other, created = Account.objects.get_or_create(resource=account.resource,
                                                                                key=data['rename'])
+                                n_rename += 1
+                                pbar.set_postfix(rename=f'{n_rename}: Rename {account} to {other}')
                                 new = MergedModelInstance.create(other, [account])
                                 account.delete()
                                 account = new
@@ -174,4 +179,5 @@ class Command(BaseCommand):
                         account.save()
                 self.logger.error(f'resource = {resource}')
                 self.logger.error(format_exc())
-            self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}')
+            self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}'
+                             f', removed: {n_remove}, renamed: {n_rename}')

@@ -26,15 +26,27 @@
     }
 
     foreach ($json['result'] as $c) {
-        if (!isset($c['startTimeSeconds'])) {
-            continue;
+        if (isset($c['startTimeSeconds'])) {
+            $start_time = $c['startTimeSeconds'];
+        } else {
+            if (!empty($c['season'])) {
+                list($year, $_) = explode('-', $c['season']);
+            } else if (preg_match('#(?P<year>^[0-9]{4}\b|\b[0-9]{4}$)#', $c['name'], $match)) {
+                $year = $match['year'];
+            } else {
+                continue;
+            }
+            $start_time = strtotime("$year-09-02");
+            if ($start_time > time()) {
+                $start_time = strtotime(($year - 1) . "-09-02\n");
+            }
         }
         $title = $c['name'];
         if (isset($authors[$c['id']])) {
             $title .= '. ' . $authors[$c['id']];
         }
         $contests[] = array(
-            'start_time' => $c['startTimeSeconds'],
+            'start_time' => $start_time,
             'duration' => $c['durationSeconds'] / 60,
             'title' => $title,
             'url' => 'http://codeforces.com/gym/' . $c['id'],

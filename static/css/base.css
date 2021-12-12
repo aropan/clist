@@ -2,6 +2,10 @@ a {
   text-decoration: none !important;
 }
 
+.text-weight-normal {
+  font-weight: normal;
+}
+
 /*
  * Search
  */
@@ -293,6 +297,15 @@ a.external-database-link {
 
 *:hover > .chart-column {
   visibility: visible;
+}
+
+.chart-buttons {
+  position: absolute;
+  right: 35px;
+}
+
+.chart {
+  margin: 20px;
 }
 
 /*

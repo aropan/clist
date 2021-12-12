@@ -170,6 +170,7 @@ class Statistic(BaseModule):
                 if code == 404:
                     return None
                 return {}
+            page = page.replace(r'\u0000', '')
             data = json.loads(page)
             if not data:
                 return None
@@ -182,7 +183,9 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=Statistic.MAX_WORKERS) as executor:
             profiles = executor.map(fetch_profile, users)
-            for user, account, data in tqdm(zip(users, accounts, profiles), total=len(users), desc='getting users'):
+            for user, account, data in zip(users, accounts, profiles):
+                if pbar:
+                    pbar.update()
                 if not data:
                     if data is None:
                         yield {'info': None}

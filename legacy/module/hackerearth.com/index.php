@@ -23,7 +23,7 @@
         $contest_page = curlexec($en_url);
 
         $info = array();
-        if (preg_match('#<h1[^>]*class="event-[^"]*"[^>]*>(?:[^<]*<[^/]+[^>]*>)*<i[^>]* class="[^"]*fa-star[^"]*"[^>]*>[^<]*</i>(?P<label>[^<]*)#', $contest_page, $match)) {
+        if (preg_match('#<h1[^>]*class="event-[^"]*"[^>]*>(?:[^<]*<[^/][^>]*>[^<]*)<i[^>]*class="[^"]*fa-star[^"]*"[^>]*>[^<]*</i>(?P<label>[^<]*)#', $contest_page, $match)) {
             $label = trim($match['label']);
             $label = ucfirst(strtolower($label));
             $title .= ". " . $label;

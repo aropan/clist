@@ -1,5 +1,5 @@
+from notification.models import Calendar, Notification, Task
 from pyclist.admin import BaseModelAdmin, admin_register
-from notification.models import Notification, Task
 
 
 @admin_register(Notification)
@@ -17,3 +17,9 @@ class TaskAdmin(BaseModelAdmin):
     list_display = ['notification', 'created', 'modified', 'is_sent']
     list_filter = ['notification__method', 'is_sent']
     search_fields = ['notification__coder__user__username', 'notification__method', 'subject', 'message']
+
+
+@admin_register(Calendar)
+class CalendarAdmin(BaseModelAdmin):
+    list_display = ['name', 'coder', 'category', 'resources', 'uuid', 'created', 'modified']
+    search_fields = ['name', 'coder__username', 'category']

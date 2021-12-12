@@ -19,7 +19,7 @@
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script>contest_duration = {{ contest.duration_in_secs }}</script>
 <script>contest_max_percent = {% if contest.is_over or not contest.duration_in_secs %}1{% else %}{{ contest.duration_in_secs|substract:contest.next_time|divide:contest.duration_in_secs }}{% endif %}</script>
-<script>contest_timeline = {{ contest.resource.info.standings.timeline|default:"{}"|to_json }}</script>
+<script>contest_timeline = {{ contest_timeline|default:"{}"|to_json }}</script>
 
 {% endblock %}
 
@@ -153,7 +153,9 @@
   </div>
   {% endif %}
 
-  {% if statistics.exists %}
+  {% if charts %}
+    {% include "standings_charts.html" with charts=charts %}
+  {% elif statistics.exists %}
     {% if not groupby or groupby == 'none' %}
 
     <div id="timeline" class="progress">
@@ -217,6 +219,9 @@
                   {% endif %}
                   {% if problem.first_ac_time %}
                     <div class="small" title="First AC time" data-placement="bottom" data-toggle="tooltip">{{ problem.first_ac_time }}</div>
+                  {% endif %}
+                  {% if problem.subtext %}
+                    <div class="text-muted small text-weight-normal" {% if problem.subtext.title %} title="{{ problem.subtext.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ problem.subtext.text }}</div>
                   {% endif %}
                   {% if problem.n_teams is not None and with_detail %}
                     {% include "standings_problem_progress.html" %}

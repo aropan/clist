@@ -16,7 +16,6 @@ from django.conf import settings
 from django.core.mail.backends.smtp import EmailBackend
 from django.core.mail.message import EmailMultiAlternatives
 from django.core.management.base import BaseCommand
-from django.db import transaction
 from django.db.models import Case, PositiveSmallIntegerField, Prefetch, Q, When
 from django.template.loader import render_to_string
 from django.utils.timezone import now
@@ -90,7 +89,9 @@ class Command(BaseCommand):
                 except Unauthorized as e:
                     if 'bot was kicked from' in str(e):
                         if 'notification' in kwargs:
-                            kwargs['notification'].delete()
+                            delete_info = kwargs['notification'].delete()
+                            logger.error(f'{str(e)}, delete info = {delete_info}')
+                            return 'removed'
             elif coder.chat and coder.chat.chat_id:
                 try:
                     if not coder.settings.get('telegram', {}).get('unauthorized', False):
@@ -102,7 +103,9 @@ class Command(BaseCommand):
                         coder.settings.setdefault('telegram', {})['unauthorized'] = True
                         coder.save()
             elif 'notification' in kwargs:
-                kwargs['notification'].delete()
+                delete_info = kwargs['notification'].delete()
+                logger.error(f'Strange notification, delete info = {delete_info}')
+                return 'removed'
         elif method == settings.NOTIFICATION_CONF.EMAIL:
             if self.n_messages_sent % 20 == 0:
                 if self.n_messages_sent:
@@ -141,7 +144,8 @@ class Command(BaseCommand):
                 if '403 Forbidden' in str(e):
                     if 'notification' in kwargs:
                         delete_info = kwargs['notification'].delete()
-                        logger.error(f'{str(e)} = {delete_info}')
+                        logger.error(f'{str(e)}, delete info = {delete_info}')
+                        return 'removed'
 
     def load_config(self):
         if os.path.exists(self.CONFIG_FILE):
@@ -159,7 +163,6 @@ class Command(BaseCommand):
                 yaml.dump(self.config, fo, indent=2)
 
     @print_sql_decorator()
-    @transaction.atomic
     def handle(self, *args, **options):
         self.load_config()
         coders = options.get('coders')
@@ -174,8 +177,8 @@ class Command(BaseCommand):
         clear_email_task = False
 
         delete_info = Task.objects.filter(
-            Q(is_sent=True, modified__lte=now() - timedelta(days=1)) |
-            Q(modified__lte=now() - timedelta(days=7))
+            Q(is_sent=True, modified__lte=now() - timedelta(hours=1)) |
+            Q(created__lte=now() - timedelta(days=1))
         ).delete()
         logger.info(f'Tasks cleared: {delete_info}')
 
@@ -217,13 +220,11 @@ class Command(BaseCommand):
                 continue
 
             try:
-                task.is_sent = True
-                task.save()
                 notification = task.notification
                 coder = notification.coder
                 method = notification.method
 
-                self.send_message(
+                status = self.send_message(
                     coder,
                     method,
                     task.addition,
@@ -231,6 +232,11 @@ class Command(BaseCommand):
                     message=task.message,
                     notification=notification,
                 )
+                if status == 'removed':
+                    continue
+
+                task.is_sent = True
+                task.save()
             except Exception as e:
                 logger.error('Exception sendout task:\n%s' % format_exc())
                 task.is_sent = False

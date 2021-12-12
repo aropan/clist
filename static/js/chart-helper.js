@@ -213,6 +213,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
           display: resource_info['data'].length > 1,
           position: 'right',
           labels: {
+            usePointStyle: true,
             generateLabels: function() {
               var ci = this.chart
               ret = datasets_labels.map(function(label, index) {

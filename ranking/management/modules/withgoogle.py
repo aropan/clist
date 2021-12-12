@@ -125,7 +125,8 @@ class Statistic(BaseModule):
                         tid = task_info['task_id']
                         p = problems.setdefault(tid, {})
                         if task_info['penalty_micros'] > 0:
-                            p['time'] = self.to_time(task_info['penalty_micros'] / 10**6)
+                            p['time_in_seconds'] = task_info['penalty_micros'] / 10**6
+                            p['time'] = self.to_time(p['time_in_seconds'])
                         p['result'] = task_info['score']
                         if p['result'] and p['result'] != problems_info[tid]['full_score']:
                             p['partial'] = True
@@ -183,7 +184,8 @@ class Statistic(BaseModule):
                             problem['language'] = language
                         if 'time' not in problem:
                             delta_ms = attempt['timestamp_ms'] - challenge['start_ms']
-                            problem['time'] = self.to_time(delta_ms / 10**3)
+                            problem['time_in_seconds'] = delta_ms / 10**3
+                            problem['time'] = self.to_time(problem['time_in_seconds'])
                     row['_with_subscores'] = True
 
         standings = {
@@ -293,6 +295,7 @@ class Statistic(BaseModule):
                             else:
                                 solved += 1
                                 p['result'] = '+' if attempt == 1 else f'+{attempt - 1}'
+                                p['time_in_seconds'] = time
                                 p['time'] = time2str(time)
                     r['solved'] = {'solving': solved}
 

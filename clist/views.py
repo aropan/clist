@@ -409,7 +409,10 @@ def resource(request, host, template='resource.html', extra_context=None):
 
     if n_x_axis:
         rs = ratings.aggregate(max_rating=Max(rating_field), min_rating=Min(rating_field))
-        width = max((rs['max_rating'] - rs['min_rating']) // n_x_axis, 1)
+        if rs['max_rating'] is not None:
+            width = max((rs['max_rating'] - rs['min_rating']) // n_x_axis, 1)
+        else:
+            width = 1
         ratings = ratings.annotate(ratingw=F(rating_field) / width)
         rating_field = 'ratingw'
 

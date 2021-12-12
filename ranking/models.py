@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 
 import tqdm
 from django.db import models, transaction
-from django.db.models import F, Sum
+from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce, Upper
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -45,6 +45,7 @@ class Account(BaseModel):
 
     def dict(self):
         return {
+            'pk': self.pk,
             'account': self.key,
             'resource': self.resource.host,
             'name': self.name,
@@ -289,12 +290,21 @@ class Stage(BaseModel):
     def update(self):
         stage = self.contest
 
+        filter_params = dict(self.filter_params)
+        spec_filter_params = dict()
+        for field in ('info__fields_types__new_rating__isnull',):
+            if field in filter_params:
+                spec_filter_params[field] = filter_params.pop(field)
+
         contests = Contest.objects.filter(
             resource=self.contest.resource,
             start_time__gte=self.contest.start_time,
             end_time__lte=self.contest.end_time,
-            **self.filter_params,
+            **filter_params,
         ).exclude(pk=self.contest.pk)
+
+        if spec_filter_params:
+            contests = contests.filter(Q(**spec_filter_params) | Q(end_time__gt=timezone.now()))
 
         contests = contests.order_by('start_time')
         contests = contests.prefetch_related('writers')
@@ -320,6 +330,9 @@ class Stage(BaseModel):
                     kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)}
                 ),
             }
+
+            if contest.end_time > timezone.now():
+                info['subtext'] = {'text': 'upcoming', 'title': str(contest.end_time)}
 
             for division in contest.info.get('divisions_order', []):
                 if division not in divisions_order:
@@ -513,7 +526,7 @@ class Stage(BaseModel):
                         val = field_values.get(field, row.get(field))
                         if val is None:
                             val = getattr(s, field)
-                        if val:
+                        if val is not None:
                             problem['status'] = val
                     else:
                         for field in order_by:
@@ -528,8 +541,9 @@ class Stage(BaseModel):
 
                     pbar.update()
 
-        for writer in contest.writers.all():
-            account_keys[writer.key] = writer
+                for writer in contest.writers.all():
+                    account_keys[writer.key] = writer
+
         total = sum([len(contest.info.get('writers', [])) for contest in contests])
         with tqdm.tqdm(total=total, desc=f'getting writers for stage {stage}') as pbar, print_sql(count_only=True):
             writers = set()

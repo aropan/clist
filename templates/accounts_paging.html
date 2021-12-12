@@ -38,9 +38,15 @@
     {% if custom_fields %}
     {% for field in custom_fields.values %}
     <td>
-      {% with k="info__"|add:field %}
+      {% with k=resources_custom_fields|contains:field|iftrue:"info__"|default:""|add:field %}
       {% with v=account|get_item:k %}
-      {% if v is not None %}{{ v }}{% else %}&mdash;{% endif %}
+      {% if v is None %}
+        &mdash;
+      {% elif v|get_type == "datetime" %}
+        <div title="{{ v|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ v|timezone:timezone|naturalday }}</div>
+      {% else %}
+        {{ v }}
+      {% endif %}
       {% endwith %}
       {% endwith %}
     </td>

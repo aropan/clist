@@ -6,12 +6,13 @@ from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Count, Q, signals
+from django.db.models import Count, F, Q, signals
 from django.dispatch import receiver
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
+from sql_util.utils import SubquerySum
 
-from clist.models import Contest
+from clist.models import Contest, Resource
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 
@@ -138,6 +139,11 @@ class Coder(BaseModel):
 
     def get_account(self, host):
         return self.account_set.filter(resource__host=host).first()
+
+    def get_ordered_resources(self):
+        return Resource.objects \
+            .annotate(n=SubquerySum('account__n_contests', filter=Q(coders=self))) \
+            .order_by(F('n').desc(nulls_last=True), '-has_rating_history', '-n_contests')
 
 
 @receiver(signals.pre_save, sender=Coder)

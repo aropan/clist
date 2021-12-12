@@ -1,113 +1,228 @@
 {% if chart or chart is None %}
-<div>
-  <div class="pull-right">
-  <span id="toggle-log-scale">
-    <input
-        type="checkbox"
-        data-toggle="toggle"
-        data-on="logarithmic"
-        data-off="linear"
-        data-onstyle="default active"
-        data-offstyle="default active"
-        data-size="mini"
-        />
-  </span>
-  <span id="toggle-type">
-    <input
-        type="checkbox"
-        data-toggle="toggle"
-        data-on="line"
-        data-off="bar"
-        data-onstyle="default active"
-        data-offstyle="default active"
-        data-size="mini"
-        />
-  </span>
-  <span>
-    <a href="{% url_transform request "chart_column" "" "groupby" "" "with_remove" 1 %}"><i class="fas fa-times"></i></a>
-  </span>
+<div id="chart_{{ chart.field }}">
+  <div class="chart-buttons">
+    <span class="toggle-log-scale">
+      <input
+          type="checkbox"
+          data-toggle="toggle"
+          data-on="logarithmic"
+          data-off="linear"
+          data-onstyle="default active"
+          data-offstyle="default active"
+          data-size="mini"
+          />
+    </span>
+    <span class="toggle-type">
+      <input
+          type="checkbox"
+          data-toggle="toggle"
+          data-on="line"
+          data-off="bar"
+          data-onstyle="default active"
+          data-offstyle="default active"
+          data-size="mini"
+          />
+    </span>
+    {% if expand_class %}
+    <span>
+      <button class="btn btn-xs btn-default expand-chart"><i class="fas fa-expand-arrows-alt"></i></button>
+    </span>
+    {% endif %}
+    {% if not without_close_chart %}
+    <span>
+      <a href="{% url_transform request "chart_column" "" "with_remove" 1 %}"><i class="fas fa-times"></i></a>
+    </span>
+    {% endif %}
   </div>
 
-  <canvas id="chart"></canvas>
+  <canvas class="chart"></canvas>
 </div>
 {% endif %}
 
 {% if chart %}
 <script>
-  {% if chart.fields %}
-  var bg_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.2, 1).map(function(hex) { return '#' + hex; })
-  var border_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.5, 1).map(function(hex) { return '#' + hex; })
-  {% endif %}
-  const data = {
-    labels: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}"{{ hist.bin }}"{% endfor %}],
-    datasets: [
+  function add_chart() {
     {% if chart.fields %}
-      {% for field in chart.fields %}
-      {
-        data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:field }}'}{% endfor %}],
-        label: {% if chart.slice == 'country' %}'{{ field|get_country_name }}'{% else %}'{{ field }}'{% endif %},
-        backgroundColor: bg_colors[{{ forloop.counter0 }}],
-        borderColor: border_colors[{{ forloop.counter0 }}],
-        borderWidth: 1,
-      },
-      {% endfor %}
-    {% else %}
-      {
-        data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist.value }}'}{% endfor %}]
-      },
+    var bg_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.2, 1).map(function(hex) { return '#' + hex; })
+    var border_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.5, 1).map(function(hex) { return '#' + hex; })
     {% endif %}
-    ]
-  }
-
-  const config = {
-    type: 'bar',
-    data: data,
-    options: {
-      responsive: true,
-      plugins: {
-        {% if chart.title %}
-        title: {
-          display: true,
-          text: '{{ chart.title }}',
+    var data = {
+      labels: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}"{{ hist.bin }}"{% endfor %}],
+      datasets: [
+      {% if chart.fields %}
+        {% if chart.my_dataset %}
+        {
+            data: [{% for d in chart.my_dataset.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ d.x }}', 'y': '{{ d.y }}'}{% endfor %}],
+            label: "{{ chart.my_dataset.label|escapejs }}",
+            {% if chart.tension %}
+            cubicInterpolationMode: 'monotone',
+            tension: {{ chart.tension }},
+            {% endif %}
+            pointBackgroundColor: [{% for d in chart.my_dataset.data %}{% if forloop.counter0 %},{% endif %}border_colors[{{ chart.fields|index:d.field }}]{% endfor %}],
+            {% if chart.my_dataset.point_radius is not None %}
+            pointRadius: {{ chart.my_dataset.point_radius }},
+            pointHoverRadius: {{ chart.my_dataset.point_hover_radius|default:chart.my_dataset.point_radius }},
+            {% endif %}
         },
         {% endif %}
-        legend: {
-          display: {% if chart.fields %}true{% else %}false{% endif %},
-        },
-      },
-      scales: {
-        x: {
-          {% if chart.x_type %}
-          type: '{{ chart.x_type }}',
+        {% for field in chart.fields %}
+        {
+          data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:field }}'}{% endfor %}],
+          label: {% if chart.labels %}'{{ chart.labels|get_item:field|escapejs }}'{% elif chart.slice == 'country' %}'{{ field|get_country_name|escapejs }}'{% else %}'{{ field|escapejs }}'{% endif %},
+          backgroundColor: bg_colors[{{ forloop.counter0 }}],
+          borderColor: border_colors[{{ forloop.counter0 }}],
+          borderWidth: {{ chart.border_width|default:1 }},
+          hoverBorderWidth: {{ chart.border_width|default:1|multiply:2 }},
+          {% if chart.tension %}
+          cubicInterpolationMode: 'monotone',
+          tension: {{ chart.tension }},
           {% endif %}
-          grid: {
-              display: false,
+          {% if chart.point_radius is not None %}
+          pointRadius: {{ chart.point_radius }},
+          pointHoverRadius: {{ chart.point_hover_radius|default:chart.point_radius }},
+          {% endif %}
+        },
+        {% endfor %}
+      {% else %}
+        {
+          data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist.value }}'}{% endfor %}],
+          borderWidth: {{ chart.border_width|default:1 }},
+          {% if chart.tension %}
+          cubicInterpolationMode: 'monotone',
+          tension: {{ chart.tension }},
+          {% endif %}
+          {% if chart.point_radius is not None %}
+          pointRadius: {{ chart.point_radius }},
+          {% endif %}
+        },
+      {% endif %}
+
+      ]
+    }
+
+    var config = {
+      type: '{{ chart.type|default:"bar" }}',
+      data: data,
+      options: {
+        responsive: true,
+        interaction: {
+          mode: '{{ chart.mode|default:"nearest" }}',
+          intersect: false,
+        },
+        {% if chart.fields %}
+        hover: {
+          mode: '{{ chart.hover_mode|default:"dataset" }}',
+          intersect: false,
+        },
+        {% endif %}
+        plugins: {
+          title: {
+            display: true,
+            text: '{{ chart.title|default:chart.field|title_field }}',
+          },
+          legend: {
+            display: {% if chart.fields %}true{% else %}false{% endif %},
+            position: '{{ chart.legend.position|default:"top" }}',
+            labels: {
+              usePointStyle: true,
+            },
           },
         },
-        y: {
-          type: 'linear',
-          ticks: {
-            callback: function(value, index) {
-              return +value.toFixed(2);
+        scales: {
+          x: {
+            {% if chart.x_type %}
+            type: '{{ chart.x_type }}',
+            {% endif %}
+            grid: {
+              display: false,
+            },
+          },
+          y: {
+            type: '{{ chart.y_type|default:"linear" }}',
+            ticks: {
+              callback: function(value, index) {
+                return +value.toFixed(2);
+              },
             },
           },
         },
       },
-    },
+      plugins: [
+        {% if chart.my_dataset %}
+        {
+          beforeDraw: function(chart) {
+            var legends = chart.legend.legendItems;
+            legends[0].fillStyle = 'rgba(0, 0, 0, 0.1)'
+          },
+        },
+        {% endif %}
+        {% if chart.my_value is not None %}
+        {
+          beforeDatasetsDraw: function(chart) {
+            var ctx = chart.ctx
+            var y_axis = chart.scales['y']
+            var x_axis = chart.scales['x']
+            var x_ticks = x_axis['ticks']
+            x_axis = {
+                'min': {{ chart.bins|first }},
+                'max': {{ chart.bins|last }},
+                'left': x_axis.left,
+                'right': x_axis.right,
+            }
+
+            var draw_x = function(x, color) {
+              ctx.beginPath()
+              ctx.moveTo(x, y_axis.top)
+              ctx.lineTo(x, y_axis.bottom)
+              ctx.lineWidth = 2
+              ctx.strokeStyle = color
+              ctx.stroke()
+              ctx.closePath()
+            }
+
+            var x = get_x_chart({{ chart.my_value }}, x_axis)
+            draw_x(x, '#c9e1f1')
+          },
+        },
+        {% endif %}
+      ],
+    }
+
+    var ctx = $('#chart_{{ chart.field }} canvas')[0].getContext('2d');
+    var chart = new Chart(ctx, config);
+
+    $('#chart_{{ chart.field }} .toggle-log-scale').change(function() {
+      chart.options.scales.y.type = chart.options.scales.y.type == 'linear'? 'logarithmic' : 'linear'
+      chart.update()
+    })
+
+    $('#chart_{{ chart.field }} .toggle-type input').change(function() {
+      chart.destroy();
+      config['type'] = config['type'] == 'bar'? 'line' : 'bar';
+      chart = new Chart(ctx, config);
+    })
+
+    {% if expand_class %}
+    $('#chart_{{ chart.field }} .expand-chart').click(function() {
+      var $div = $(this).closest("{{ expand_class }}")
+
+      var classes = $div.attr('class')
+      if ($div.attr('data-class')) {
+          classes = $div.attr('data-class');
+      } else {
+          classes = $div.attr('class').replace(/\s(col[^\s]+)-[0-9]+/, ' $1-12')
+      }
+      $div.attr('data-class', $div.attr('class'))
+      $div.attr('class', classes)
+
+      $(this).closest("{{ expand_class }}").attr('class', classes)
+      $(this).find('i').toggleClass('fa-expand-arrows-alt')
+      $(this).find('i').toggleClass('fa-compress-arrows-alt')
+
+      $('html, body').animate({scrollTop: $div.offset().top}, 500)
+    })
+    {% endif %}
   }
-
-  var ctx = document.getElementById('chart').getContext('2d');
-  var chart = new Chart(ctx, config);
-
-  $('#toggle-log-scale input').change(function() {
-    chart.options.scales.y.type = chart.options.scales.y.type == 'linear'? 'logarithmic' : 'linear'
-    chart.update()
-  })
-
-  $('#toggle-type input').change(function() {
-    chart.destroy();
-    config['type'] = config['type'] == 'bar'? 'line' : 'bar';
-    chart = new Chart(ctx, config);
-  })
+  add_chart()
 </script>
 {% endif %}

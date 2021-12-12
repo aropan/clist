@@ -1,0 +1,5 @@
+{% for chart in charts %}
+<div class="standings-chart col-lg-6">
+{% include 'chart.html' with chart=chart without_close_chart=True expand_class=".standings-chart" %}
+</div>
+{% endfor %}

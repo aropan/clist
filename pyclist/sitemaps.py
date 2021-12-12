@@ -2,8 +2,8 @@ from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
 from clist.models import Contest
-from ranking.models import Statistics
 from clist.templatetags.extras import slug
+from ranking.models import Statistics
 
 
 class BaseSitemap(Sitemap):
@@ -16,18 +16,21 @@ class StaticViewSitemap(BaseSitemap):
     changefreq = 'daily'
 
     def items(self):
-        return ['clist:main', 'clist:resources', 'ranking:standings_list', 'clist:problems', 'coder:coders']
+        return ['clist:main', 'clist:resources', 'ranking:standings_list', 'clist:problems', 'coder:coders',
+                'clist:api:latest:index']
 
     def location(self, item):
         return reverse(item)
 
 
 class StandingsSitemap(BaseSitemap):
-    priority = 0.7
     limit = 1000
 
     def items(self):
         return Contest.objects.filter(n_statistics__gt=0).order_by('-end_time')
+
+    def priority(self, contest):
+        return round(0.7 + (0.2 if 'medal' in contest.info.get('fields', []) else 0.0), 2)
 
     def lastmod(self, contest):
         return contest.updated
@@ -53,7 +56,7 @@ class AccountsSitemap(BaseSitemap):
         return Statistics.objects.filter(place_as_int__lte=10).order_by('-created').select_related('account__resource')
 
     def priority(self, stat):
-        return round(0.5 - 0.1 * (stat.place_as_int - 1) / 10, 2)
+        return round(0.5 - 0.1 * (stat.place_as_int - 1) / 10 + (0.4 if 'medal' in stat.addition else 0.0), 2)
 
     def lastmod(self, stat):
         return stat.created

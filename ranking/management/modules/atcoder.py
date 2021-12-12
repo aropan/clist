@@ -256,7 +256,7 @@ class Statistic(BaseModule):
 
             rows = data['StandingsData']
             for row in rows:
-                if not row['TaskResults']:
+                if not row['TaskResults'] and not row.get('IsRated'):
                     continue
                 handle = row.pop('UserScreenName')
                 if users is not None and handle not in users:
@@ -296,6 +296,7 @@ class Statistic(BaseModule):
                         p['result'] = v['Score'] / 100.
 
                         seconds = v['Elapsed'] // 10**9
+                        p['time_in_seconds'] = seconds
                         p['time'] = f'{seconds // 60}:{seconds % 60:02d}'
 
                         if v['Penalty'] > 0:

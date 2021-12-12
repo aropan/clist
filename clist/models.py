@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
@@ -364,6 +365,19 @@ class Contest(models.Model):
         else:
             qs = []
         return qs
+
+    def get_timeline_info(self):
+        ret = self.resource.info.get('standings', {}).get('timeline', {})
+        ret.update(self.info.get('standings', {}).get('timeline', {}))
+        return ret
+
+    @property
+    def actual_url(self):
+        if self.n_statistics:
+            return reverse('ranking:standings', args=(slug(self.title), self.pk))
+        if self.standings_url:
+            return self.standings_url
+        return self.url
 
 
 class Problem(BaseModel):

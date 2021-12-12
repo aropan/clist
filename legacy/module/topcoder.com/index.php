@@ -37,11 +37,12 @@
         $title = preg_replace('#^mm\b#i', 'Marathon Match', $title);
         $title = preg_replace('#([0-9])-([0-9])#', '\1\2', $title);
         $title = preg_replace('#\s*-\s*#', ' ', $title);
+        $title = preg_replace('#.?(TCO[0-9]+)\s*Finals[^\s]?#', '\1', $title);
         $title = trim($title);
         if (preg_match('#\b(test|testing|practice)\b$#i', $title)) {
             return false;
         }
-        if (!preg_match('#(?P<key>(?:(?:rookie\s*|beginner\s*)?srm|^marathon\s*match)\s*[-/.0-9]*[0-9]|^(?:[0-9]+\s?TCO|TCO\s?[0-9]+).*(?:algorithm|marathon)?\s*\b(?:match|round)\b\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
+        if (!preg_match('#(?P<key>(?:(?:rookie\s*|beginner\s*)?srm|^marathon\s*match)\s*[-/.0-9]*[0-9]|^(?:[0-9]+\s?TCO|TCO\s?[0-9]+).*(?:(?:(?:algorithm|marathon)(?:.*\bfinals?\b)?)|\b(?:match|round)\b)\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
             return false;
         }
         return $match['key'];
@@ -49,7 +50,7 @@
 
     function normalize_title($title, $date) {
         $ret = strtolower($title);
-        $ret = preg_replace('/\b(algorithm|round|marathon|match)\b/', ' ', $ret);
+        $ret = preg_replace('/\b(algo|algorithm|round|marathon|match)\b/', ' ', $ret);
         $ret = preg_replace('/[0-9]*([0-9]{2})\s*tco(\s+)/', 'tco\1\2', $ret);
         $ret = preg_replace('/tco\s*[0-9]*([0-9]{2})(\s+)/', 'tco\1\2', $ret);
         $ret = preg_replace('/^[0-9]{2}([0-9]{2})(\s+)/', 'tco\1\2', $ret);

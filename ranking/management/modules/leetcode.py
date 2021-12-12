@@ -137,7 +137,7 @@ class Statistic(BaseModule):
                     n_added = 0
                     for row, submissions in zip(data['total_rank'], data['submissions']):
                         handle = row.pop('user_slug').lower()
-                        if users and handle not in users or handle in result:
+                        if users is not None and handle not in users or handle in result:
                             continue
                         row.pop('contest_id')
                         row.pop('global_ranking')
@@ -167,7 +167,9 @@ class Statistic(BaseModule):
                         for i, (k, s) in enumerate(submissions.items(), start=1):
                             short = problems_info[k]['short']
                             p = problems.setdefault(short, problems_stats.get(short, {}))
-                            p['time'] = self.to_time(datetime.fromtimestamp(s['date']) - start_time)
+                            time = datetime.fromtimestamp(s['date']) - start_time
+                            p['time_in_seconds'] = time.total_seconds()
+                            p['time'] = self.to_time(time)
                             if s['status'] == 10:
                                 solved += 1
                                 p['result'] = '+' + str(s['fail_count'] or '')
@@ -201,6 +203,7 @@ class Statistic(BaseModule):
                                 if k in stat:
                                     r[k] = stat[k]
                         n_added += 1
+
                     if n_added == 0:
                         stop = True
 

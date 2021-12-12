@@ -18,6 +18,7 @@ urlpatterns = [
     re_path(r'', include('ranking.urls')),
     re_path(r'', include('events.urls')),
     re_path(r'', include('chats.urls')),
+    re_path(r'', include('notification.urls')),
 
     re_path(r'^telegram/', include('tg.urls')),
 

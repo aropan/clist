@@ -74,7 +74,14 @@
     <input type="hidden" name="id" value="{{ request.GET.id }}"/>
     {% endif %}
 
-    {% if enable_timeline and contest.resource.info.standings.timeline %}
+    {% if groupby == 'none' %}
+    {% if request.GET.charts %}
+    <input type="hidden" name="charts" value="{{ request.GET.charts }}"/>
+    {% endif %}
+    <button class="btn btn-default btn-sm{% if request.GET.charts %} active{% endif %}" name="charts"{% if not request.GET.charts %} value="on"{% endif %}><i class="fas fa-chart-bar"></i></button>
+    {% endif %}
+
+    {% if enable_timeline and contest.resource.info.standings.timeline and groupby == 'none' %}
       {% if timeline %}
       <input type="hidden" name="timeline" value="{{ request.GET.timeline }}"/>
       {% endif %}
@@ -129,7 +136,6 @@
 
         <button id="share-timeline" class="btn btn-default btn-sm"><i class="fas fa-share-square"></i></button>
       </div>
-
 
       <script>
         $('#timeline-duration').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})

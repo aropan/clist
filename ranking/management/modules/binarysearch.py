@@ -137,7 +137,9 @@ class Statistic(BaseModule):
         with PoolExecutor(max_workers=8) as executor, Locator() as locator:
             stop = False
             profiles = executor.map(fetch_profile, users)
-            for user, account, data in tqdm(zip(users, accounts, profiles), total=len(users), desc='getting users'):
+            for user, account, data in zip(users, accounts, profiles):
+                if pbar:
+                    pbar.update()
                 if stop:
                     break
                 if not data:

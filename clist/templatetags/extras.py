@@ -122,7 +122,7 @@ def countdown(timer):
     h = timer // 3600
     m = timer % 3600 // 60
     s = timer % 60
-    d = (h + 12) / 24
+    d = (h + 12) // 24
     c = 0
     if d > 2:
         return "%d days" % d
@@ -290,6 +290,13 @@ def get_problem_header(problem):
     for k in ['short', 'name', 'code']:
         if k in problem:
             return problem[k]
+
+
+@register.filter
+def get_problem_title(problem):
+    short = get_problem_header(problem)
+    name = get_problem_name(problem)
+    return f'{short}. {name}' if short != name else name
 
 
 @register.simple_tag
@@ -670,12 +677,17 @@ def to_dict(**kwargs):
 
 @register.filter
 def as_number(value):
-    retf = asfloat(str(value).replace(',', '.'))
+    valf = str(value).replace(',', '.')
+    retf = asfloat(valf)
     if retf is not None:
         reti = toint(value)
         if reti is not None:
             return reti
         return retf
+    if valf and valf[-1] == '%':
+        percentf = asfloat(valf[:-1])
+        if percentf is not None:
+            return percentf / 100
     return value
 
 
@@ -694,3 +706,32 @@ def scoreformat(value):
         return value
     format_value = floatformat(value, -2)
     return value if not format_value else format_value
+
+
+@register.filter
+def index(arr, value):
+    return arr.index(value)
+
+
+@register.filter
+def contains(arr, value):
+    return value in arr
+
+
+@register.filter
+def iftrue(val, ret):
+    if val:
+        return ret
+
+
+def time_in_seconds(timeline, val):
+    times = re.split(r'[:\s]+', val)
+    factors = timeline.get('time_factor', {}).get(str(len(times)))
+    time = 0
+    for idx, val in enumerate(times):
+        val = asfloat(val)
+        if factors:
+            time += val * factors[idx]
+        else:
+            time = time * 60 + val
+    return time

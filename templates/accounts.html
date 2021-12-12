@@ -44,6 +44,10 @@
     <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>
     {% endif %}
 
+    {% if request.GET.chart_column %}
+    <input type="hidden" name="chart_column" value="{{ request.GET.chart_column }}"/>
+    {% endif %}
+
     {% include 'country_filter.html' with has_country=True groupby=groupby|default:chart %}
     {% include 'resource_filter.html' with groupby=groupby|default:chart %}
 

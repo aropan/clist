@@ -3,7 +3,7 @@
 {% load i18n %}
 {% block content %}
     <div class="block-center">
-    <h1>{% trans "Tokens" %}</h1>
+        <h1>{% trans "Tokens" %}</h1>
         <ul>
         {% for authorized_token in authorized_tokens %}
             <li>
@@ -19,5 +19,7 @@
             <li>{% trans "There are no authorized tokens yet." %}</li>
         {% endfor %}
         </ul>
+        <hr/>
+        <h3><a href="{% url 'oauth2_provider:list' %}">{% trans "Your applications" %}</a></h3>
     </div>
 {% endblock %}

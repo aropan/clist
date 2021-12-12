@@ -66,12 +66,13 @@
                         <li><a href="{{ discuss_url }}" target="_blank"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
                         <li role="separator" class="divider"></li>
                         <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
-                        <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fa fa-users"></i>&nbsp;Social</a></li>
+                        <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fas fa-info-circle"></i>&nbsp;Social</a></li>
+                        <li><a href="{% url 'coder:settings' 'accounts' %}"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
                         <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
                         <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
                         <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
+                        <li><a href="{% url 'coder:settings' 'calendars' %}" class="authorized"><i class="far fa-calendar-alt"></i>&nbsp;Calendars</a></li>
                         <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'coder:accounts' %}"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
                         <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
                         <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>
                         {% if user.is_authenticated %}

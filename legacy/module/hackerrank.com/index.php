@@ -4,6 +4,11 @@
     $urls = array($URL, 'https://hackerrank.com/rest/contests/college');
     foreach ($urls as $url) {
         $json = curlexec($url, NULL, array('json_output' => true));
+        if (!is_array($json['models'])) {
+            print_r($json);
+            trigger_error("Expected array ['models']", E_USER_WARNING);
+            continue;
+        }
         foreach ($json['models'] as $model)
         {
             $contests[] = array(
@@ -22,6 +27,11 @@
     $url = 'https://hackerrank.com/api/hrw/resources/competitions?filter%5Bstatus%5D=published';
     while ($url) {
         $json = curlexec($url, NULL, array('json_output' => true));
+        if (!is_array($json['data'])) {
+            print_r($json);
+            trigger_error("Expected array ['data']", E_USER_WARNING);
+            continue;
+        }
         foreach ($json['data'] as $c) {
             $attrs = $c['attributes'];
             $contests[] = array(

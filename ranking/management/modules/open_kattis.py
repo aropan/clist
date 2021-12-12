@@ -70,9 +70,9 @@ class Statistic(BaseModule):
                         continue
                     classes = classes[0].split()
                     if 'country-flag' in classes:
-                        row['country'] = addition.column.node.xpath('.//img/@alt')[0]
+                        row['country'] = str(addition.column.node.xpath('.//img/@alt')[0])
                     elif 'university-logo' in classes:
-                        row['university'] = addition.column.node.xpath('.//img/@alt')[0]
+                        row['university'] = str(addition.column.node.xpath('.//img/@alt')[0])
 
             if not team.value:
                 continue

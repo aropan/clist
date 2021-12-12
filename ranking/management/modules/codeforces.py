@@ -15,6 +15,7 @@ from urllib.parse import urlencode, urljoin
 
 import pytz
 
+from clist.templatetags.extras import as_number
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -158,15 +159,43 @@ class Statistic(BaseModule):
                         if ' ' in v:
                             v, p['time'] = v.split()
                         p['result'] = v
+                elif k == 'name':
+                    f = v.column.node.xpath('.//img[@class="standings-flag"]/@title')
+                    if f:
+                        row['country'] = f[0]
+                    a = v.column.node.xpath('.//a')
+                    if not a:
+                        row[k] = v.value
+                        row['member'] = row['name'] + ' ' + season
+                    else:
+                        for el in a:
+                            href = el.attrib.get('href')
+                            if not href:
+                                continue
+                            key, val = href.strip('/').split('/')
+                            if key == 'team':
+                                row['name'] = el.text
+                                row['team_id'] = val
+                                row['_account_url'] = urljoin(url, href)
+                            elif key == 'profile':
+                                row.setdefault('members', []).append(val)
                 elif v.value:
                     if k == 'penalty':
                         row[k] = int(v.value)
                     elif v.value:
                         row[k] = v.value
+
             if 'solving' not in row:
                 continue
-            row['member'] = row['name'] + ' ' + season
-            result[row['member']] = row
+
+            if 'members' in row:
+                if 'team_id' in row:
+                    row['_members'] = [{'account': m} for m in row['members']]
+                for member in row.pop('members'):
+                    result[member] = deepcopy(row)
+                    result[member]['member'] = member
+            else:
+                result[row['member']] = row
 
         standings = {
             'result': result,
@@ -263,7 +292,7 @@ class Statistic(BaseModule):
 
                     r['member'] = handle
                     if 'room' in party:
-                        r['room'] = str(party['room'])
+                        r['room'] = as_number(party['room'])
 
                     r.setdefault('participant_type', []).append(party['participantType'])
                     r['_no_update_n_contests'] = all(pt not in self.PARTICIPANT_TYPES for pt in r['participant_type'])
@@ -319,6 +348,7 @@ class Statistic(BaseModule):
                             if time > duration_seconds:
                                 u = True
                             else:
+                                p['time_in_seconds'] = time
                                 time /= 60
                                 p['time'] = '%02d:%02d' % (time / 60, time % 60)
                         a = problems.setdefault(k, {})
@@ -495,6 +525,10 @@ class Statistic(BaseModule):
             },
         }
 
+        if re.search('^educational codeforces round', self.name, re.IGNORECASE):
+            standings['options'].setdefault('timeline', {}).update({'attempt_penalty': 10 * 60,
+                                                                    'challenge_score': False})
+
         if phase != 'FINISHED' and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc):
             standings['timing_statistic_delta'] = timedelta(minutes=15)
         return standings
@@ -574,16 +608,11 @@ class Statistic(BaseModule):
         return ret
 
 
-if __name__ == '__main__':
-    pprint(Statistic(url='https://codeforces.com/contest/1119/', key='1119').get_result('tourist'))
-    pprint(Statistic(url='https://codeforces.com/contest/1270/', key='1270').get_result('CodeMazz'))
-    pprint(Statistic(url='https://codeforces.com/contest/1200/', key='1200').get_result('hloya_ygrt'))
-    pprint(Statistic(url='https://codeforces.com/contest/1200/', key='1200').get_result('rui-de'))
-    pprint(Statistic(url='https://codeforces.com/contest/1164/', key='1164').get_result('abisheka'))
-    pprint(Statistic(url='https://codeforces.com/contest/1202', key='1202').get_result('kmjp'))
-    pprint(Statistic(url='https://codeforces.com/contest/1198', key='1198').get_result('yosupo'))
-    pprint(Statistic(url='https://codeforces.com/contest/1198', key='1198').get_result('tourist'))
-    pprint(Statistic(url='https://codeforces.com/contest/1160/', key='1160').get_result('Rafbill'))
-    pprint(Statistic(url='https://codeforces.com/contest/1/', key='1').get_result('spartac'))
-    pprint(Statistic(url='https://codeforces.com/contest/1250/', key='1250').get_result('maroonrk'))
-    pprint(Statistic(url='https://codeforces.com/contest/1250/', key='1250').get_result('sigma425'))
+def run(*args):
+    standings = Statistic(
+        url='http://codeforces.com/group/u45n6JRJMl/contest/206201',
+        key='206201:aropan',
+        standings_url=None,
+        info={}
+    ).get_standings()
+    pprint(standings)

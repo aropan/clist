@@ -6,10 +6,59 @@ from django.db.models.functions import Cast
 from django_pivot.histogram import get_column_values, histogram
 
 from clist.templatetags.extras import title_field
+from utils.json_field import JSONF
 
 
-def make_chart(qs, field, groupby=None, logger=None, n_bins=50):
+def make_bins(src, dst, n_bins, logger=None, field=None):
+    if isinstance(src, str):
+        if not dst:
+            logger and logger.warning(f'One of border is empty, field = {field}')
+            return
+        st = ord(src[0]) + 1 if src else 32
+        fn = ord(dst[0])
+        bins = [src] + [chr(int(round(st + (fn - st) * i / (n_bins - 1)))) for i in range(n_bins)] + [dst]
+    else:
+        bins = [src + (dst - src) * i / (n_bins - 1) for i in range(n_bins)]
+    if isinstance(src, int):
+        bins = [int(round(b)) for b in bins]
+    elif isinstance(src, float):
+        bins = [round(b, 2) for b in bins]
+    bins = list(sorted(set(bins)))
+    if isinstance(src, int) and len(bins) < n_bins:
+        bins.append(bins[-1] + 1)
+    elif len(bins) == 1:
+        bins.append(bins[-1])
+    return bins
+
+
+def make_histogram(values, n_bins=None, bins=None, src=None, dst=None):
+    if bins is None:
+        if src is None:
+            src = min(values)
+        if dst is None:
+            dst = max(values)
+        bins = make_bins(src, dst, n_bins)
+    idx = 0
+    ret = [0] * (len(bins) - 1)
+    for x in sorted(values):
+        while idx + 1 < len(bins) and bins[idx + 1] <= x:
+            idx += 1
+        if idx == len(ret):
+            if bins[idx] == x:
+                idx -= 1
+            else:
+                break
+        ret[idx] += 1
+    return ret, bins
+
+
+def make_chart(qs, field, groupby=None, logger=None, n_bins=50, cast=None):
     context = {'title': title_field(field) + (f' (slice by {groupby})' if groupby else '')}
+
+    if cast == 'int':
+        cast = IntegerField()
+    else:
+        cast = None
 
     if '__' in field:
         related_fields = set()
@@ -25,10 +74,14 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=50):
         if related_field in related_fields or '___' in field:
             logger and logger.error(f'use of an invalid field = {field}')
             return
-        qs = qs.annotate(value=Cast(F(field), IntegerField()))
+        qs = qs.annotate(value=Cast(JSONF(field), IntegerField()))
     else:
-        qs = qs.annotate(value=F(field))
+        if cast:
+            qs = qs.annotate(value=Cast(F(field), cast))
+        else:
+            qs = qs.annotate(value=F(field))
     context['queryset'] = qs
+    context['field'] = field
 
     qs = qs.filter(value__isnull=False)
 
@@ -51,21 +104,10 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=50):
 
     src = qs.earliest('value').value
     dst = qs.latest('value').value
-    if isinstance(src, str):
-        if not dst:
-            logger and logger.warning(f'One of border is empty, field = {field}')
-            return
-        st = ord(src[0]) + 1 if src else 32
-        fn = ord(dst[0])
-        bins = [src] + [chr(int(round(st + (fn - st) * i / (n_bins - 1)))) for i in range(n_bins)] + [dst]
-        bins = list(sorted(set(bins)))
-    else:
-        bins = [src + (dst - src) * i / (n_bins - 1) for i in range(n_bins)]
+    bins = make_bins(src=src, dst=dst, n_bins=n_bins, logger=logger, field=field)
 
     if isinstance(src, datetime):
         context['x_type'] = 'time'
-    elif isinstance(src, int):
-        bins = [int(round(b)) for b in bins]
 
     context['data'] = histogram(qs, 'value', bins=bins, slice_on=slice_on, choices='minimum')
     return context

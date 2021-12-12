@@ -24,6 +24,11 @@
                     }
                 }
             }
+            if (preg_match_all('#__d\("(?P<name>[^_]*)_facebookRelayOperation"[^_]*exports="(?P<id>[^"]*)"#', $p, $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $match) {
+                    $ids[$match['name']] = $match['id'];
+                }
+            }
         }
         return $ids;
     }

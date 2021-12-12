@@ -184,7 +184,9 @@ function set_timeline(percent, duration = null) {
         if (penalty) {
           last = parseFloat(stat.attr('data-last'))
           stat.attr('data-last', Math.max(last, time))
-          time += score == '+'? 0 : parseInt(score) * 1200
+          var attempt_penalty = contest_timeline['attempt_penalty']
+          attempt_penalty = attempt_penalty === undefined? 1200 : attempt_penalty
+          time += score == '+'? 0 : parseInt(score) * attempt_penalty
         }
         score = 1
       } else {
@@ -219,7 +221,13 @@ function set_timeline(percent, duration = null) {
     }
 
     if (visible && pvisible === 'false') {
-      highlight_element($e, duration, duration / 2, toggle_class)
+      $e.addClass(toggle_class)
+      highlight_element($e, duration, duration / 2, toggle_class, function() {
+        return $e.attr('data-visible') !== 'false'
+      })
+    }
+    if (!visible && pvisible !== 'false') {
+      $e.removeClass(toggle_class)
     }
 
     if (problem_status) {
@@ -339,7 +347,7 @@ function set_timeline(percent, duration = null) {
   TOOLTIP_TIMER = setTimeout(() => { toggle_tooltip_object($('table.standings [data-original-title]')) }, RESET_TOOLTIP_DURATION + duration)
 }
 
-function highlight_element(el, after = 1000, duration = 500, before_toggle_class = false, callback = function(){}) {
+function highlight_element(el, after = 1000, duration = 500, before_toggle_class = false, callback = undefined) {
   if (!el.length) {
     return
   }
@@ -351,10 +359,9 @@ function highlight_element(el, after = 1000, duration = 500, before_toggle_class
     el.animate({'background-color': '#d0e3f7'}, duration, function() {
       el.animate({'background-color': color}, duration, function() {
         el.css('background', '')
-        if (before_toggle_class) {
+        if (callback === undefined || callback(el) !== false) {
           el.addClass(before_toggle_class)
         }
-        callback(el)
       })
     })
   }, after)
@@ -363,6 +370,7 @@ function highlight_element(el, after = 1000, duration = 500, before_toggle_class
 function show_timeline() {
   $('#timeline-buttons').toggleClass('hidden')
   $('#timeline').show()
+  $('.standings .endless_container').remove()
 
   $('table.standings tr > *').classes(function(c, e) {
     if (c.endsWith('-medal')) {
@@ -377,6 +385,7 @@ function show_timeline() {
   $('.first-u-cell').remove()
 
   update_timeline_text(CURRENT_PERCENT)
+  $(window).trigger('resize')
 }
 
 function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500) {
