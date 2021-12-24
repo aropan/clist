@@ -27,7 +27,7 @@
         'start_time' => $start_time,
         'duration' => '00:00',
         'title' => $title,
-        'url' => url_merge($URL, "/$year/day/$day"),
+        'url' => url_merge($URL, "/$year"),
         'host' => $HOST,
         'rid' => $RID,
         'timezone' => "UTC",
@@ -65,7 +65,7 @@
         }
     }
 
-    if ($RID === -1) {
+    if (DEBUG) {
         print_r($contests);
     }
 ?>

@@ -157,6 +157,10 @@ def get_events(request):
         if categories == ['calendar'] and '0' not in ignore_filters:
             query &= Q(duration_in_secs__lt=timedelta(days=1).total_seconds())
 
+    past_action = settings.PAST_CALENDAR_DEFAULT_ACTION_
+    if coder:
+        past_action = coder.settings.get('past_action_in_calendar', past_action)
+
     start_time = arrow.get(request.POST.get('start', timezone.now())).datetime
     end_time = arrow.get(request.POST.get('end', timezone.now() + timedelta(days=31))).datetime
     query = query & Q(end_time__gte=start_time) & Q(start_time__lte=end_time)
@@ -176,10 +180,17 @@ def get_events(request):
     contests = contests.annotate(has_statistics=Exists('statistics'))
     contests = contests.order_by('start_time', 'title')
 
+    if past_action == 'hide':
+        contests = contests.filter(end_time__gte=timezone.now())
+
     now = timezone.now()
     try:
         result = []
         for contest in contests.filter(query):
+            color = contest.resource.color
+            if past_action not in ['show', 'hide'] and contest.end_time < now:
+                color = contest.resource.info.get('get_events', {}).get('colors', {}).get(past_action, color)
+
             c = {
                 'id': contest.pk,
                 'title': contest.title,
@@ -193,7 +204,7 @@ def get_events(request):
                 'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'countdown': contest.next_time_to(now),
                 'hr_duration': contest.hr_duration,
-                'color': contest.resource.color,
+                'color': color,
                 'icon': contest.resource.icon,
             }
             result.append(c)
@@ -583,6 +594,8 @@ def update_problems(contest, problems=None, force=False):
                 'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
                 'time': contest.start_time,
             }
+            if 'visible' in problem_info:
+                defaults['visible'] = problem_info['visible']
 
             problem, created = Problem.objects.update_or_create(
                 contest=contest,
@@ -610,6 +623,7 @@ def update_problems(contest, problems=None, force=False):
 
             if problem.id in old_problem_ids:
                 old_problem_ids.remove(problem.id)
+
     if old_problem_ids:
         Problem.objects.filter(id__in=old_problem_ids).delete()
 

@@ -103,6 +103,19 @@ $(function() {
         setTimeout(function() { editable.input.$input.select2('open'); }, 1);
     });
 
+    $('#past-action-in-calendar').editable({
+        type: 'select',
+        showbuttons: false,
+        source: PAST_CALENDAR_ACTIONS,
+    }).on('shown', function(e, editable){
+        editable.input.$input.select2({
+            width: 250,
+            placeholder: 'Select action',
+            val: editable.input.$input.val(),
+        });
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+    });
+
     event_limit_source = ['true', 'false']
     for (i = 1; i < 20; ++i) { event_limit_source.push(i.toString()) }
     $('#event-limit-calendar').editable({

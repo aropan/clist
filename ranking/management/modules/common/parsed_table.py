@@ -61,9 +61,13 @@ class ParsedTableCol(object):
 
 class ParsedTableRow(object):
 
-    def __init__(self, row):
-        self.attrs = dict(list(row.items()))
-        self.columns = list(map(ParsedTableCol, iter(row)))
+    def __init__(self, row=None):
+        if row is not None:
+            self.attrs = dict(list(row.items()))
+            self.columns = list(map(ParsedTableCol, iter(row)))
+        else:
+            self.attrs = {}
+            self.columns = []
         self.node = row
 
     def __str__(self):
@@ -83,22 +87,27 @@ class ParsedTable(object):
         ignore_display_none=False,
         unnamed_fields=(),
         header_mapping=(),
+        without_header=False,
     ):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
         self.with_not_full_row = with_not_full_row
         self.table = etree.HTML(html).xpath(xpath)
-        self.init_iter()
         self.unnamed_fields = unnamed_fields
         self.unnamed_fields_idx = 0
         self.header_mapping = header_mapping
         self.ignore_wrong_header_number = ignore_wrong_header_number
         self.ignore_display_none = ignore_display_none
+        self.without_header = without_header
+        self.init_iter()
 
     def init_iter(self):
         self.n_rows = len(self.table) - 1
         self.iter_table = iter(self.table)
-        self.header = ParsedTableRow(next(self.iter_table))
+        if self.without_header:
+            self.header = ParsedTableRow()
+        else:
+            self.header = ParsedTableRow(next(self.iter_table))
 
         rowspan = 1
         for c in self.header.columns:

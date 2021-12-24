@@ -1,0 +1,4 @@
+{% load el_pagination_tags %}
+{% if force_both_scroll or not request.GET.scroll_up %}
+{% show_more_table %}
+{% endif %}

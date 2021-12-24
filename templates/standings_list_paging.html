@@ -7,6 +7,7 @@
 <a href="{% if not contest.n_statistics and not contest.info.problems  %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="contest list-group-item list-group-item-action list-group-item-{% if not contest.has_module %}info{% elif not contest.n_statistics and not contest.info.problems %}danger{% elif contest.is_running %}success{% endif %}">
     <div>
     <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+    {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
     {{ contest.title }}
     {% if contest.n_statistics and not contest.stats %}<small>({{ contest.n_statistics }})</small>{% endif %}
     <small class="pull-right">

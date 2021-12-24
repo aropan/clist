@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db.models import F, IntegerField
+from django.db.models import F, FloatField, IntegerField
 from django.db.models.fields.related import RelatedField
 from django.db.models.functions import Cast
 from django_pivot.histogram import get_column_values, histogram
@@ -57,6 +57,8 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=50, cast=None):
 
     if cast == 'int':
         cast = IntegerField()
+    elif cast == 'float':
+        cast = FloatField()
     else:
         cast = None
 
@@ -74,7 +76,8 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=50, cast=None):
         if related_field in related_fields or '___' in field:
             logger and logger.error(f'use of an invalid field = {field}')
             return
-        qs = qs.annotate(value=Cast(JSONF(field), IntegerField()))
+        cast = cast or IntegerField()
+        qs = qs.annotate(value=Cast(JSONF(field), cast))
     else:
         if cast:
             qs = qs.annotate(value=Cast(F(field), cast))

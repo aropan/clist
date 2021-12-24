@@ -35,7 +35,13 @@
     </td>
 
     <td>
-        {{ stat.solving|floatformat }}
+        {% with score=stat.solving|floatformat %}
+        {% if score|length > 10 %}
+            {{ stat.solving|stringformat:".2e" }}
+        {% else %}
+            {{ score }}
+        {% endif %}
+        {% endwith %}
     </td>
 
     <td>
@@ -64,7 +70,7 @@
     <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td><a href="?search=resource:{{ stat.contest.resource.host }}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a></td>
     <td class="title col-md-9 col-sm-8">
-        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}?{% if not without_findme %}find_me={{ stat.pk }}{% endif %}{% if stat.addition.division %}{% if not without_findme %}&{% endif %}division={{ stat.addition.division }}{% endif %}">{{ stat.contest.title }}</a>
+        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}{% if not without_findme %}?find_me={{ stat.pk }}{% endif %}">{{ stat.contest.title }}</a>
         {% if stat.addition.hack %}
         {% with hack=stat.addition.hack %}
         <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>

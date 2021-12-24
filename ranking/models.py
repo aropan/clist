@@ -338,6 +338,13 @@ class Stage(BaseModel):
                 if division not in divisions_order:
                     divisions_order.append(division)
 
+            if self.score_params.get('regex_problem_name'):
+                match = re.search(self.score_params.get('regex_problem_name'), contest.title)
+                if match:
+                    info['short'] = match.group(1)
+            if self.score_params.get('abbreviation_problem_name'):
+                info['short'] = ''.join(re.findall(r'(\b[A-Z]|[0-9])', info.get('short', contest.title)))
+
             problems = contest.info.get('problems', [])
             if not detail_problems:
                 full_score = None
@@ -360,18 +367,12 @@ class Stage(BaseModel):
                         full_score += problem.get('full_score', 1)
                 if full_score is not None:
                     info['full_score'] = full_score
-                if self.score_params.get('regex_problem_name'):
-                    match = re.search(self.score_params.get('regex_problem_name'), contest.title)
-                    if match:
-                        info['short'] = match.group(1)
-                if self.score_params.get('abbreviation_problem_name'):
-                    info['short'] = ''.join(re.findall(r'(\b[A-Z]|[0-9])', info.get('short', contest.title)))
                 problems_infos[str(contest.pk)] = info
             else:
                 for problem in problems:
                     problem = dict(problem)
                     add_prefix_to_problem_short(problem, f'{idx}.')
-                    problem['group'] = info['name']
+                    problem['group'] = info.get('short', info['name'])
                     problem['url'] = info['url']
                     problems_infos[get_problem_short(problem)] = problem
 

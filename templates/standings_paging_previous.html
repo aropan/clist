@@ -1,0 +1,10 @@
+{% if pages.previous %}
+{% if force_both_scroll or request.GET.scroll_up %}
+<tr class="endless_container">
+    <td colspan="100%">
+        <a class="endless_more" href="{{ pages.previous.url }}&scroll_up=true" data-el-querystring-key="{{ pages.previous.querystring_key }}">more</a>
+        <span class="endless_loading" style="display: none;">loading</span>
+    </td>
+</tr>
+{% endif %}
+{% endif %}

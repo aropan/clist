@@ -295,7 +295,7 @@ class Statistic(BaseModule):
                         r['room'] = as_number(party['room'])
 
                     r.setdefault('participant_type', []).append(party['participantType'])
-                    r['_no_update_n_contests'] = all(pt not in self.PARTICIPANT_TYPES for pt in r['participant_type'])
+                    r['_no_update_n_contests'] = 'CONTESTANT' not in r['participant_type']
 
                     if is_ghost_team and member['name']:
                         r['name'] = member['name']

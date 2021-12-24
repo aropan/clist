@@ -559,6 +559,13 @@ def chain(value, arg):
 
 
 @register.filter
+def chain_rev(args, rev):
+    if rev:
+        args = reversed(args)
+    return itertools.chain(*args)
+
+
+@register.filter
 def then(value, arg):
     return arg if value else None
 
@@ -735,3 +742,14 @@ def time_in_seconds(timeline, val):
         else:
             time = time * 60 + val
     return time
+
+
+@register.simple_tag(takes_context=True)
+def get_country_from_account(context, account):
+    country = account.country
+    custom_countries = account.info.get('custom_countries_')
+    if custom_countries and context['request'].user.is_authenticated and country.code in custom_countries:
+        setattr(country, 'flag_code', custom_countries[country.code])
+    else:
+        setattr(country, 'flag_code', country.code)
+    return country

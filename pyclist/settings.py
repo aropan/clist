@@ -435,6 +435,8 @@ ACE_CALENDARS_ = {
     'yahoo': {'id': 2, 'name': 'Yahoo'},
     'outlook': {'id': 3, 'name': 'Outlook'},
 }
+PAST_CALENDAR_ACTIONS_ = ['lighten', 'show', 'hide', 'darken']
+PAST_CALENDAR_DEFAULT_ACTION_ = PAST_CALENDAR_ACTIONS_[0]
 ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
            'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']

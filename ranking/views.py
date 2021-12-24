@@ -52,8 +52,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     if request.user.is_authenticated:
         all_standings = request.user.coder.settings.get('all_standings')
 
-    switch = 'switch' in request.GET
-    if bool(all_standings) == bool(switch):
+    switch = request.GET.get('switch')
+    if bool(all_standings) == bool(switch) and switch != 'all' or switch == 'parsed':
+        contests = contests.filter(Q(invisible=False) | Q(stage__isnull=False))
         contests = contests.filter(n_statistics__gt=0, has_module=True)
         if request.user.is_authenticated:
             contests = contests.filter(request.user.coder.get_contest_filter(['list']))
@@ -72,6 +73,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                 'account': {'fields': ['statistics__account__key', 'statistics__account__name'], 'suff': '__iregex'},
                 'stage': {'fields': ['stage'], 'suff': '__isnull', 'func': lambda v: False},
                 'medal': {'fields': ['info__standings__medals'], 'suff': '__isnull', 'func': lambda v: False},
+                'year': {'fields': ['start_time__year', 'end_time__year']},
             },
             logger=request.logger,
         ))
@@ -440,6 +442,14 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             query.setlist('orderby', updated_orderby)
             return redirect(f'{request.path}?{query.urlencode()}')
 
+    find_me = request.GET.get('find_me')
+    if find_me:
+        if not find_me.isdigit():
+            request.logger.error(f'find_me param should be number, found {find_me}')
+            find_me = False
+        else:
+            find_me = int(find_me)
+
     contests = Contest.objects
     to_redirect = False
     contest = None
@@ -511,6 +521,15 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
     options = contest.info.get('standings', {})
 
+    per_page = options.get('per_page', 50)
+    if per_page is None:
+        per_page = 100500
+    elif contest.n_statistics and contest.n_statistics < 500:
+        per_page = contest.n_statistics
+    per_page_more = 200
+    if find_me:
+        per_page_more = per_page
+
     order = None
     resource_standings = contest.resource.info.get('standings', {})
     order = copy.copy(options.get('order', resource_standings.get('order')))
@@ -560,13 +579,23 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     if division == 'any':
         fixed_fields += (('division', 'Division'),)
     elif divisions_order and division not in divisions_order:
-        division = divisions_order[0]
+        if find_me:
+            values = statistics.filter(pk=find_me).values('addition__division')
+        elif coder:
+            values = statistics.filter(account__coders=coder).values('addition__division')
+        else:
+            values = None
+        if values:
+            division = values[0]['addition__division']
+        if division not in divisions_order:
+            division = divisions_order[0]
+
     division_addition = contest.info.get('divisions_addition', {}).get(division, {}).copy()
 
-    # FIXME: addition__name
-    # if 'team_id' in contest_fields and not groupby:
-    #     order.append('addition__name')
-    #     statistics = statistics.distinct(*[f.lstrip('-') for f in order])
+    # FIXME extra per_page
+    if contest.n_statistics and per_page >= contest.n_statistics and 'team_id' in contest_fields and not groupby:
+        order.append('addition__name')
+        statistics = statistics.distinct(*[f.lstrip('-') for f in order])
 
     if inplace_division and division != divisions_order[0]:
         fields_types = division_addition['fields_types']
@@ -688,25 +717,20 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             'nofilter': True,
         }
 
-    per_page = options.get('per_page', 50)
-    if per_page is None:
-        per_page = 100500
-    elif contest.n_statistics and contest.n_statistics < 500:
-        per_page = contest.n_statistics
-    per_page_more = 200
     paginate_on_scroll = True
     force_both_scroll = False
 
     mod_penalty = {}
     enable_timeline = False
     timeline = None
-    first = statistics.first()
-    if first:
-        if all('time' not in k for k in contest_fields):
-            penalty = first.addition.get('penalty')
-            if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
-                mod_penalty.update({'solving': first.solving, 'penalty': penalty})
-        enable_timeline = any('time' in p for p in first.addition.get('problems', {}).values())
+    if contest.duration_in_secs:
+        first = statistics.first()
+        if first:
+            if all('time' not in k for k in contest_fields):
+                penalty = first.addition.get('penalty')
+                if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
+                    mod_penalty.update({'solving': first.solving, 'penalty': penalty})
+            enable_timeline = any('time' in p for p in first.addition.get('problems', {}).values())
     if enable_timeline:
         timeline = request.GET.get('timeline')
         if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):
@@ -1024,48 +1048,51 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         map_colors_groupby = None
 
     # find me
-    find_me = request.GET.get('find_me')
-    if find_me:
-        per_page_more = per_page
-        if not find_me.isdigit():
-            request.logger.error(f'find_me param should be number, found {find_me}')
-    if (
-        find_me and find_me.isdigit() and
-        groupby == 'none' and
-        'querystring_key' not in request.GET and
-        'standings_paging' not in request.GET
-    ):
-        my_stat = statistics.annotate(row_number=models.Window(expression=window.RowNumber(),
-                                                               order_by=_get_order_by(order)))
-        my_stat = my_stat.annotate(statistic_id=F('id'))
-        sql_query, sql_params = my_stat.query.sql_with_params()
-        my_stat = Statistics.objects.raw(
+    if find_me and groupby == 'none':
+        find_me_stat = statistics.annotate(row_number=models.Window(expression=window.RowNumber(),
+                                                                    order_by=_get_order_by(order)))
+        find_me_stat = find_me_stat.annotate(statistic_id=F('id'))
+        sql_query, sql_params = find_me_stat.query.sql_with_params()
+        find_me_stat = Statistics.objects.raw(
             '''
             SELECT * FROM ({}) ranking_statistics WHERE "statistic_id" = %s
             '''.format(sql_query),
-            [*sql_params, int(find_me)],
+            [*sql_params, find_me],
         )
-        my_stat = list(my_stat)
-        if my_stat:
-            row_number = my_stat[0].row_number
-            if row_number > per_page:
+        find_me_stat = list(find_me_stat)
+        if find_me_stat:
+            find_me_stat = find_me_stat[0]
+            row_number = find_me_stat.row_number
+            paging_free = 'querystring_key' not in request.GET and 'standings_paging' not in request.GET
+            if paging_free and row_number > per_page:
                 paging = (row_number - per_page - 1) // per_page_more + 2
                 old_mutable = request.GET._mutable
                 request.GET._mutable = True
                 request.GET['querystring_key'] = 'standings_paging'
                 request.GET['standings_paging'] = paging
                 request.GET._mutable = old_mutable
+                force_both_scroll = True
             paginate_on_scroll = False
-            force_both_scroll = True
         else:
             request.logger.warning(f'Not found find = {find_me}')
+    else:
+        find_me_stat = None
 
     my_statistics = []
     if groupby == 'none' and coder:
         statistics = statistics.annotate(my_stat=SubqueryExists('account__coders', filter=Q(coder=coder)))
         my_statistics = statistics.filter(account__coders=coder).extra(select={'floating': True})
         if my_statistics:
-            params['find_me'] = list(my_statistics)[0].pk
+            my_stat = list(my_statistics)[0]
+            params['find_me'] = my_stat.pk
+            if (
+                my_stat.place_as_int and
+                find_me_stat and
+                (not find_me_stat.place_as_int or find_me_stat.place_as_int > my_stat.place_as_int)
+            ):
+                context['my_statistics_rev'] = True
+
+    inner_scroll = not request.user_agent.is_mobile and 'safari' not in request.user_agent.browser.family.lower()
 
     context.update({
         'has_versus': has_versus,
@@ -1103,7 +1130,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'with_neighbors': request.GET.get('neighbors') == 'on',
-        'with_table_inner_scroll': not request.user_agent.is_mobile,
+        'with_table_inner_scroll': inner_scroll,
         'enable_timeline': enable_timeline,
         'contest_timeline': contest.get_timeline_info(),
         'timeline': timeline,

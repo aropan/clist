@@ -185,13 +185,15 @@ class Command(BaseCommand):
                     standings = plugin.get_standings(users=users, statistics=statistics_by_key)
 
                 with transaction.atomic():
-                    if 'url' in standings and standings['url'] != contest.standings_url:
-                        contest.standings_url = standings['url']
-                        contest.save()
-
-                    if 'title' in standings and standings['title'] != contest.title:
-                        contest.title = standings['title']
-                        contest.save()
+                    for field, attr in (
+                        ('url', 'standings_url'),
+                        ('contest_url', 'url'),
+                        ('title', 'title'),
+                        ('invisible', 'invisible'),
+                    ):
+                        if field in standings and standings[field] != getattr(contest, attr):
+                            setattr(contest, attr, standings[field])
+                            contest.save()
 
                     if 'options' in standings:
                         contest_options = contest.info.get('standings', {})
@@ -494,6 +496,9 @@ class Command(BaseCommand):
                                 if account_info:
                                     if 'rating' in account_info:
                                         account_info['_rating_time'] = int(now.timestamp())
+                                    if 'name' in account_info:
+                                        account.name = account_info.pop('name')
+
                                     account.info.update(account_info)
                                     account.save()
 
@@ -618,7 +623,8 @@ class Command(BaseCommand):
                                     contest.start_time <= now < contest.end_time and
                                     not contest.resource.info.get('parse', {}).get('no_calculate_time', False) and
                                     resource.module.long_contest_idle and
-                                    contest.duration < resource.module.long_contest_idle
+                                    contest.duration < resource.module.long_contest_idle and
+                                    'penalty' in fields_set
                                 )
 
                                 if not try_calculate_time:

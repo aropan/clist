@@ -10,13 +10,13 @@
 {% if has_country %}
   <div class="flag-width-fixed">
   {% if not team_id %}
-  {% with country=account.country %}{% if country %}{% with code=account.info.custom_countries_|get_item:country.code|default:country.code %}
-  <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><div class="flag flag-{{ code|lower }}"></div></a>
-  {% endwith %}{% endif %}{% endwith %}
+    {% get_country_from_account account as country %}{% if country %}
+    <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><div class="flag flag-{{ country.flag_code|lower }}"></div></a>
+    {% endif %}
   {% else %}
-  {% with code=statistic.addition.country|get_country_code %}{% if code %}
-  <a href="{% url_transform request country=code %}" title="{{ statistic.addition.country }}" data-toggle="tooltip"><div class="flag flag-{{ code|lower }}"></div></a>
-  {% endif %}{% endwith %}
+    {% with code=statistic.addition.country|get_country_code %}{% if code %}
+    <a href="{% url_transform request country=code %}" title="{{ statistic.addition.country }}" data-toggle="tooltip"><div class="flag flag-{{ code|lower }}"></div></a>
+    {% endif %}{% endwith %}
   {% endif %}
   </div>
 {% endif %}
@@ -39,7 +39,8 @@
 
   {% if account.url and not team_id or '_account_url' in addition %}</a>{% endif %}
 
-  {% if members %}:
+  {% if members %}
+    {% if with_detail %}<br/>{% else %}:{% endif %}
     {% for member in members %}
       {% if forloop.counter0 %}|{% endif %}
       {% with account=preload_statistics_data.accounts|get_item:member.account %}

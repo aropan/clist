@@ -1,5 +1,4 @@
 import calendar
-import colorsys
 import itertools
 import logging
 import os
@@ -20,6 +19,7 @@ from PIL import Image, UnidentifiedImageError
 from clist.templatetags.extras import slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
+from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
 
 
 class Resource(BaseModel):
@@ -92,8 +92,7 @@ class Resource(BaseModel):
         if self.color is None:
             values = []
             for r in Resource.objects.filter(color__isnull=False):
-                color = [int(r.color[i:i + 2], 16) / 255. for i in range(1, 6, 2)]
-                h, _, _ = colorsys.rgb_to_hls(*color)
+                h, *_ = rgb_to_hls(*color_to_rgb(r.color))
                 values.append(h)
             values.sort()
 
@@ -103,15 +102,23 @@ class Resource(BaseModel):
             for val in values:
                 delta, middle, prv = val - prv, (val + prv) * .5, val
                 opt = max(opt, (delta, middle))
-            h = opt[1] % 1
-            color = colorsys.hls_to_rgb(h, .6, .5)
-
-            self.color = '#' + ''.join(f'{int(c * 255):02x}' for c in color).upper()
+            self.color = rgb_to_color(*hls_to_rgb(opt[1] % 1, .6, .5))
+            self.update_get_events_colors()
 
         if self.icon is None:
             self.update_icon()
 
         super().save(*args, **kwargs)
+
+    def update_get_events_colors(self, force=False, alpha=0.7):
+        if self.info.get('get_events', {}).get('colors') and not force:
+            return
+        hue, lightness, saturation = rgb_to_hls(*color_to_rgb(self.color))
+        colors = {
+            'lighten': rgb_to_color(*hls_to_rgb(*lighten_hls(hue, lightness, saturation, alpha))),
+            'darken': rgb_to_color(*hls_to_rgb(*darken_hls(hue, lightness, saturation, alpha))),
+        }
+        self.info.setdefault('get_events', {})['colors'] = colors
 
     def update_icon(self):
 
@@ -409,7 +416,7 @@ class Problem(BaseModel):
         ]
 
     def save(self, *args, **kwargs):
-        self.visible = bool(self.url) or self.key != self.name
+        self.visible = self.visible and (bool(self.url) or self.key != self.name)
         super().save(*args, **kwargs)
 
 

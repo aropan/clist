@@ -11,8 +11,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import IntegrityError, transaction
-from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, IntegerField, Max, OuterRef, Prefetch, Q,
-                              Value, When)
+from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
+                              Prefetch, Q, Value, When)
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_profile_context(request, statistics, writers):
+    statistics = statistics.filter(contest__invisible=False)
     history_resources = statistics \
         .filter(contest__resource__has_rating_history=True) \
         .filter(contest__stage__isnull=True) \
@@ -581,6 +582,7 @@ def settings(request, tab=None):
             "modules": Module.objects.select_related('resource').order_by('resource__id').all(),
             "ace_calendars": django_settings.ACE_CALENDARS_,
             "custom_countries": django_settings.CUSTOM_COUNTRIES_,
+            "past_calendar_actions": django_settings.PAST_CALENDAR_ACTIONS_,
             "tab": tab,
         },
     )
@@ -631,6 +633,12 @@ def change(request):
         if value not in django_settings.ACE_CALENDARS_.keys():
             return HttpResponseBadRequest("invalid add-to-calendar value")
         coder.settings["add_to_calendar"] = value
+        coder.save()
+    elif name == "past-action-in-calendar":
+        value = request.POST.get("value", None)
+        if value not in django_settings.PAST_CALENDAR_ACTIONS_:
+            return HttpResponseBadRequest("invalid past-action-in-calendar value")
+        coder.settings["past_action_in_calendar"] = value
         coder.save()
     elif name == "event-limit-calendar":
         value = request.POST.get("value", None)
@@ -1529,9 +1537,11 @@ def accounts(request, template='accounts.html'):
 
     # custom fields
     custom_fields = set()
+    fields_types = {}
     for resource in resources:
         for k, v in resource.accounts_fields.get('types', {}).items():
-            if v == ['int'] and k not in table_fields:
+            if v == ['int'] or v == ['float'] and k not in table_fields:
+                fields_types[k] = v
                 custom_fields.add(k)
     custom_fields = list(sorted(custom_fields))
     if chart_field and chart_field not in table_fields:
@@ -1542,8 +1552,13 @@ def accounts(request, template='accounts.html'):
 
     # chart
     if chart_field:
-        field = chart_field if chart_field in table_fields else f'info__{chart_field}'
-        context['chart'] = make_chart(accounts, field=field, groupby=groupby, logger=request.logger)
+        if chart_field in table_fields:
+            field = chart_field
+            cast = None
+        else:
+            field = f'info__{chart_field}'
+            cast = fields_types[chart_field][0]
+        context['chart'] = make_chart(accounts, field=field, groupby=groupby, cast=cast, logger=request.logger)
         context['groupby'] = groupby
     else:
         context['chart'] = False
@@ -1563,7 +1578,11 @@ def accounts(request, template='accounts.html'):
             continue
         k = f'info__{field}'
         if field == orderby or field == chart_field:
-            accounts = accounts.annotate(**{k: Cast(JSONF(k), BigIntegerField())})
+            types = fields_types[field]
+            if types == ['int']:
+                accounts = accounts.annotate(**{k: Cast(JSONF(k), BigIntegerField())})
+            elif types == ['float']:
+                accounts = accounts.annotate(**{k: Cast(JSONF(k), FloatField())})
         else:
             accounts = accounts.annotate(**{k: JSONF(k)})
 

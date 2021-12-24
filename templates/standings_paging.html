@@ -1,27 +1,21 @@
 {% load el_pagination_tags %}
 {% load preload_statistics %}
-{% load i18n %}
 
 {% lazy_paginate per_page,per_page_more statistics using 'standings_paging' %}{% get_pages %}
 
-{% if pages.previous %}
-{% if force_both_scroll or request.GET.scroll_up %}
-<tr class="endless_container">
-    <td colspan="100%">
-        <a class="endless_more" href="{{ pages.previous.url }}&scroll_up=true" data-el-querystring-key="{{ pages.previous.querystring_key }}">{% trans "more" %}</a>
-        <span class="endless_loading" style="display: none;">loading</span>
-    </td>
-</tr>
-{% endif %}
+{% with rev=my_statistics_rev|default:False %}
+
+{% if not my_statistics or not rev %}
+{% include "standings_paging_previous.html" %}
 {% endif %}
 
 {% preload_statistics statistics contest.resource as preload_statistics_data %}
-{% for statistic in statistics|chain:my_statistics %}
+{% with statistics_chained=statistics|pass_arg:my_statistics|chain_rev:rev %}
+{% for statistic in statistics_chained %}
 
 {% with tag=statistic.my_stat|then:"th"|default:"td" %}
 {% with addition=statistic.addition_replacement|default:statistic.addition %}
-{% if statistic.my_stat and statistic.floating %}{% if force_both_scroll or not request.GET.scroll_up %}{% show_more_table %}{% endif %}
-{% endif %}
+{% if statistic.my_stat and statistic.floating and not rev %}{% include "standings_paging_next.html" %}{% endif %}
 <tr
 class="
   stat-cell
@@ -173,7 +167,7 @@ class="
     {% with key=problem|get_problem_short  %}
     {% with stat=addition.problems|get_item:key %}
     <{{ tag }}
-      class="problem-cell{% if stat %} problem-cell-stat{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}"
+      class="problem-cell{% if stat %} problem-cell-stat{% if '_class' in stat %} {{ stat|get_item:"_class" }}{% elif stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}"
       {% if stat %}
       data-score="{% if not problem.full_score or not stat.binary and not stat.result|slice:":1" == "+" %}{{ stat.result }}{% else %}{{ problem.full_score }}{% endif %}"
       data-result="{{ stat.result }}"
@@ -259,18 +253,21 @@ class="
     {% endwith %}
   {% endfor %}
 </tr>
+{% if statistic.my_stat and statistic.floating and rev %}{% include "standings_paging_previous.html" %}{% endif %}
 {% endwith %}
 {% endwith %}
 
 {% if statistic.my_stat %}
-  {% if not statistic.floating and 'Safari' not in request.user_agent.browser.family and 'iOS' not in request.user_agent.os.family %}
-    <script>$(function() { $('#table-inner-scroll .my-stat th').css({'top': $('#table-inner-scroll thead').height() - 1 }) })</script>
-  {% endif %}
+  <script>$(function() { $('#table-inner-scroll .my-stat th').css({'top': $('#table-inner-scroll thead').height() - 1}) })</script>
   <script>
     $(function() {
       var selector = $('tr.my-stat.floating')
       if (!$('tr.my-stat:not(.floating)').length) {
+{% if rev %}
+        selector = selector.not(':first')
+{% else %}
         selector = selector.not(':last')
+{% endif %}
       }
       selector.remove()
       $('tr.my-stat.floating').removeClass('hidden')
@@ -279,9 +276,10 @@ class="
 {% endif %}
 
 {% endfor %}
+{% endwith %}
 
-{% if not my_statistics %}
-{% if force_both_scroll or not request.GET.scroll_up %}{% show_more_table %}{% endif %}
+{% if not my_statistics or rev %}
+{% include "standings_paging_next.html" %}
 {% endif %}
 
 {% if with_table_inner_scroll and merge_problems %}
@@ -291,3 +289,5 @@ class="
 {% if colored_by_group_score %}
 <script>color_by_group_score()</script>
 {% endif %}
+
+{% endwith %}

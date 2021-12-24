@@ -4,7 +4,7 @@ function filterCallbackCalendar(value) {
 
 $(function() {
     function get_calendar_height() {
-        return $(window).height() - ($('#calendar').closest('.tab-content').position().top + 30)
+        return $(window).height() - ($('#calendar').closest('.tab-content').position().top + 20)
     }
 
     $(window).resize(function() {
@@ -86,7 +86,7 @@ $(function() {
                     $(val).html(getFormatTime(countdown - ($.now() - page_load) / 1000))
                 })
             })
-            var icon = $('<img src="/imagefit/static_resize/32x32/' + event.extendedProps.icon + '" height="13" width="13">&nbsp;</img>')
+            var icon = $('<img src="/imagefit/static_resize/32x32/' + event.extendedProps.icon + '" height="14" width="14">&nbsp;</img>')
             icon.prependTo(element.querySelector('.fc-content'))
             if (contest_toggle) {
                 var toggle_part_contest_link = $('<i class="party-check fa-fw far" data-contest-id="' + event.id + '">&nbsp;</i>')
@@ -159,8 +159,8 @@ $(function() {
     $spam_filter.bootstrapToggle({
         on: 'Filtered long',
         off: 'Disabled fitler',
-        onstyle: 'info',
-        offstyle: 'default',
+        onstyle: 'default active',
+        offstyle: 'default active',
         size: 'small',
         width: 106,
         height: 30,

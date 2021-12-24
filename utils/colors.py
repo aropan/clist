@@ -2,8 +2,34 @@
 
 import colorsys
 
-from skimage import color
 import numpy as np
+from skimage import color
+
+
+def color_to_rgb(color):
+    return [int(color[i:i + 2], 16) / 255. for i in range(1, 6, 2)]
+
+
+def rgb_to_color(*args):
+    return '#' + ''.join(f'{int(c * 255):02x}' for c in args).upper()
+
+
+def rgb_to_hls(*args):
+    return colorsys.rgb_to_hls(*args)
+
+
+def hls_to_rgb(*args):
+    return colorsys.hls_to_rgb(*args)
+
+
+def lighten_hls(hue, lightness, saturation, alpha):
+    lightness = 1 - (1 - lightness) * (1 - alpha)
+    return hue, lightness, saturation
+
+
+def darken_hls(hue, lightness, saturation, alpha):
+    lightness *= 1 - alpha
+    return hue, lightness, saturation
 
 
 def get_n_colors(n, ignore_colors=[]):

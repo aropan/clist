@@ -148,8 +148,9 @@
                     (int)(trim($contest['start_time']) == '') +
                     (int)(trim($contest['end_time']) == '') +
                     (int)(trim($contest['duration']) == '') > 1
-                )
+                ) {
                     continue;
+                }
 
                 if (!parse_url($contest['url'], PHP_URL_HOST))
                 {

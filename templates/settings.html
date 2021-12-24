@@ -27,6 +27,8 @@
 
     ACE_CALENDARS = { {% for k, v in ace_calendars.items %}{% if forloop.counter0 %}, {% endif %}'{{ k }}': '{{ v.name }}'{% endfor %} }
 
+    PAST_CALENDAR_ACTIONS = {{ past_calendar_actions|jsonify }}
+
     PREFERENCES_URL = "{% url 'coder:settings' 'preferences' %}"
     LISTS_URL = "{% url 'coder:settings' 'lists' %}"
     FILTERS_URL = "{% url 'coder:settings' 'filters' %}"
@@ -87,10 +89,13 @@
             </div>
             <div class="value"><input type="checkbox" id="view-mode" data-on="List" data-off="Calendar" data-onstyle="info" data-offstyle="info" data-value="{% if coder.settings.view_mode == "list" %}1{% else %}0{% endif %}"/></div>
 
-            <div class="key">Filter long contest for calendar
+            <div class="key">Filter long contest in calendar
                 <i rel="tooltip" title="Hide contests with long duration and add button to view them."></i>
             </div>
             <div class="value"><input type="checkbox" id="calendar-filter-long" data-value="{{ coder.settings.calendar_filter_long}}"/></div>
+
+            <div class="key">Past events action in calendar</div>
+            <div class="value"><a href="#" id="past-action-in-calendar" data-value="{{ coder.settings.past_action_in_calendar }}"></a></div>
 
             <div class="key">Day event limit in calendar</div>
             <div class="value"><a href="#" id="event-limit-calendar" data-value="{{ coder.settings.event_limit_calendar }}"></a></div>

@@ -58,29 +58,34 @@
                     if (!empty($url)) {
                         $url = url_merge($URL, $url);
                     }
+                    $standings_url = false;
                     foreach ($c['Actions'] as $a) {
                         if ($a['Text'] == 'Scoreboard' && !empty($a['Url'])) {
                             $standings_url = url_merge($URL, $a['Url']);
                             if (empty($url)) {
                                 $url = $standings_url;
                             }
+                            break;
                         }
                     }
                     $title = $c['Name']['Text'];
                     if (in_array($tournament_id, $tournament_ids)) {
                         $title .= ' [events]';
                     }
-                    $contests[] = array(
+                    $contest = array(
                         'start_time' => $c['ContestStart'],
                         'end_time' => $c['ContestEnd'],
                         'title' => $title,
                         'url' => $url,
-                        'standings_url' => $standings_url,
                         'host' => $HOST,
                         'rid' => $RID,
                         'timezone' => $TIMEZONE,
                         'key' => $c['Id'],
                     );
+                    if (!empty($standings_url)) {
+                        $contest['standings_url'] = $standings_url;
+                    }
+                    $contests[] = $contest;
                 }
             } else {
                 trigger_error("Missing rows for tournament url = $tournament_url", E_USER_WARNING);
