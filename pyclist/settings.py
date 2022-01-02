@@ -107,6 +107,7 @@ MIDDLEWARE = (
     'django.middleware.security.SecurityMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
     'pyclist.middleware.RequestLoggerMiddleware',
+    'pyclist.middleware.Lightrope',
 )
 
 if DEBUG:

@@ -88,6 +88,7 @@ class ParsedTable(object):
         unnamed_fields=(),
         header_mapping=(),
         without_header=False,
+        strip_empty_columns=False,
     ):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
@@ -99,6 +100,7 @@ class ParsedTable(object):
         self.ignore_wrong_header_number = ignore_wrong_header_number
         self.ignore_display_none = ignore_display_none
         self.without_header = without_header
+        self.strip_empty_columns = strip_empty_columns
         self.init_iter()
 
     def init_iter(self):
@@ -158,6 +160,10 @@ class ParsedTable(object):
 
                 column = ParsedTableCol(FakeTableCol(field.get('value', ''), field.get('attrs', {})))
                 self.header.columns.append(column)
+
+            if self.strip_empty_columns:
+                while len(row.columns) > len(self.header.columns) and not row.columns[-1].value:
+                    row.columns.pop(-1)
 
             if len(row.columns) == len(self.header.columns):
                 break

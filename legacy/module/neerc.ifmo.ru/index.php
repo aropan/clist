@@ -33,7 +33,7 @@
             }
             $key = preg_replace('/[^- a-zA-Z0-9]/', '', $title);
             $key = preg_replace('/[- ]+/', ' ', $key);
-            $key = strtolower($key);
+            $key = mb_strtolower($key);
 
             $contests[] = array(
                 'start_time' => "$year-09-02",

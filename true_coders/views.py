@@ -44,7 +44,6 @@ logger = logging.getLogger(__name__)
 
 
 def get_profile_context(request, statistics, writers):
-    statistics = statistics.filter(contest__invisible=False)
     history_resources = statistics \
         .filter(contest__resource__has_rating_history=True) \
         .filter(contest__stage__isnull=True) \
@@ -221,6 +220,8 @@ def profile(request, username, template='profile.html', extra_context=None):
         .order_by('-num_contests')
 
     writers = Contest.objects.filter(writers__coders=coder)
+
+    statistics = statistics.filter(contest__invisible=False)
     context = get_profile_context(request, statistics, writers)
 
     if context['search_resource']:
@@ -329,7 +330,9 @@ def _get_data_mixed_profile(query):
 @context_pagination()
 def profiles(request, query, template='profile.html'):
     data = _get_data_mixed_profile(query)
-    context = get_profile_context(request, data['statistics'], data['writers'])
+    statistics = data['statistics']
+    statistics = statistics.filter(contest__invisible=False)
+    context = get_profile_context(request, statistics, data['writers'])
     context['resources'] = data['resources']
     context['profiles'] = data['profiles']
     context['query'] = query

@@ -39,8 +39,8 @@ class Statistic(BaseModule):
         def find_related(statistics):
             infos = deepcopy(self.info.get('standings', {}).get('parse', {}))
 
-            if 'related' in infos and Contest.objects.get(pk=infos['related']):
-                options['parse']['related'] = infos['related']
+            if '_related' in infos and Contest.objects.get(pk=infos['_related']):
+                options['parse']['_related'] = infos['_related']
                 return
 
             related = None
@@ -56,13 +56,15 @@ class Statistic(BaseModule):
                 host = infos.get('series')
 
             ignore_n_statistics = False
+            ignore_title = None
             for mapping in host_mapping:
                 if re.search(mapping['regex'], host):
                     host = mapping['host']
+                    ignore_title = mapping.get('ignore_title')
                     ignore_n_statistics = mapping.get('ignore_n_statistics', ignore_n_statistics)
                     break
             if host:
-                delta_start = timedelta(days=2)
+                delta_start = timedelta(days=3)
                 qs = Contest.objects.filter(resource__host=host)
                 qs = qs.filter(
                     Q(start_time__gte=self.start_time - delta_start, start_time__lte=self.start_time + delta_start) |
@@ -78,11 +80,21 @@ class Statistic(BaseModule):
                     delta_n = round(n_statistics * 0.15)
                     qs = qs.filter(n_statistics__gte=n_statistics - delta_n, n_statistics__lte=n_statistics + delta_n)
 
+                if ignore_title:
+                    qs = qs.exclude(title__iregex=ignore_title)
+
+                if len(qs) > 1:
+                    first = None
+                    for stat in statistics.values():
+                        if stat.get('place') == '1':
+                            first = stat['member'].split(':', 1)[-1]
+                    qs = qs.filter(statistics__place_as_int=1, statistics__account__key=first)
+
                 if len(qs) == 1:
                     related = qs.first().pk
 
             if related is not None:
-                options['parse']['related'] = related
+                options['parse']['_related'] = related
                 standings['invisible'] = True
             else:
                 standings['invisible'] = False
@@ -146,8 +158,9 @@ class Statistic(BaseModule):
                 for k, v in stat.items():
                     if k not in row:
                         row[k] = v
-                if '_member' in row:
+                if '_member' in row and '_info' in row:
                     row['member'] = row['_member']
+                    row['info'] = row['_info']
                     return row
 
             page = REQ.get(url)
@@ -167,9 +180,16 @@ class Statistic(BaseModule):
                 if match:
                     info['prize_money'] = as_number(match.group('val'))
 
+                match = re.search(r'>country:</[^>]*>(?:\s*<[^>]*>)*\s*<a[^>]*href="[^"]*/country/(?P<country>[^"]*)"',
+                                  page, re.IGNORECASE)
+                if match:
+                    info['country'] = match.group('country')
+
             match = re.search('<h3[^>]*>(?P<name>[^>]*)<', page)
             info['name'] = match.group('name').strip()
+
             row['_member'] = row['member']
+            row['_info'] = dict(info)
 
             return row
 

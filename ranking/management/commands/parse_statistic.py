@@ -103,7 +103,8 @@ class Command(BaseCommand):
             elif title_regex:
                 contests = contests.filter(title__iregex=title_regex)
             else:
-                contests = contests.filter(end_time__lt=now - F('resource__module__min_delay_after_end'))
+                condition = Q(end_time__lt=now - F('resource__module__min_delay_after_end')) | Q(n_statistics__gt=0)
+                contests = contests.filter(condition)
 
         if freshness_days is not None:
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
@@ -708,6 +709,7 @@ class Command(BaseCommand):
                                 timing_delta = timing_delta or timedelta(minutes=10)
                             timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
                             if timing_delta is not None:
+                                self.logger.info(f'Statistic timing delta = {timing_delta}')
                                 contest.timing.statistic = timezone.now() + timing_delta
                                 contest.timing.save()
 

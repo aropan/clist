@@ -3,31 +3,29 @@
 import io
 import random
 import re
-from pprint import pprint
 from collections import OrderedDict
-from datetime import datetime
+from datetime import timedelta
+from pprint import pprint
 
 import pytesseract
+from dateutil.relativedelta import relativedelta
+from django.utils import timezone
 from first import first
 from PIL import Image
-from dateutil.relativedelta import relativedelta
 
-
+from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
-from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):
-
-    def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None):
         if not self.standings_url:
             self.standings_url = f'https://projecteuler.net/fastest={self.key}'
 
-        page = REQ.get(self.standings_url)
+        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'  # noqa
+        page = REQ.get(self.standings_url, headers={'User-Agent': user_agent})
 
         sign_out = re.search('<form[^>]*action="sign_out"[^>]*>', page)
         if not sign_out:
@@ -90,7 +88,7 @@ class Statistic(BaseModule):
                                 field += 's'
                             params[field] = int(value)
                         rel_delta = relativedelta(**params)
-                        now = datetime.utcnow()
+                        now = timezone.now()
                         delta = now - (now - rel_delta)
                         row['penalty'] = f'{delta.total_seconds() / 60:.2f}'
                     elif k == 'User':
@@ -112,6 +110,14 @@ class Statistic(BaseModule):
             'url': self.standings_url,
             'problems': problems_info,
         }
+
+        if len(result) < 100:
+            delta = timezone.now() - self.start_time
+            if delta < timedelta(days=1):
+                standings['timing_statistic_delta'] = timedelta(minutes=60)
+            elif delta < timedelta(days=30):
+                standings['timing_statistic_delta'] = timedelta(days=1)
+
         return standings
 
 

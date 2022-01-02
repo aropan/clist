@@ -732,7 +732,7 @@ def iftrue(val, ret):
 
 
 def time_in_seconds(timeline, val):
-    times = re.split(r'[:\s]+', val)
+    times = re.split(r'[:\s]+', str(val))
     factors = timeline.get('time_factor', {}).get(str(len(times)))
     time = 0
     for idx, val in enumerate(times):
@@ -753,3 +753,9 @@ def get_country_from_account(context, account):
     else:
         setattr(country, 'flag_code', country.code)
     return country
+
+
+@register.simple_tag
+def use_lightrope():
+    time = now()
+    return time.month == 12 and time.day > 20 or time.month == 1 and time.day < 10

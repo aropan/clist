@@ -1,0 +1,82 @@
+<link href="{% static_ts 'css/lightrope.css' %}" rel="stylesheet">
+{% with lightrope=request.session.lightrope %}
+<ul id="lightrope" class="lightrope{% if lightrope %} lightrope-{{ lightrope }} lightrope-ready{% else %} lightrope-on{% endif %}"></ul>
+<script>
+  $(function() {
+    var n_lightrope = $(window).width() / 52 - 1
+    $('#lightrope').empty()
+    for (var i = 0; i < n_lightrope; ++i) {
+        $('#lightrope').append($('<li{% if not lightrope %} class="hidden-light"{% endif %}></li>'))
+    }
+
+    var lightrope_value = {% if lightrope %}'lightrope-{{ lightrope }}'{% else %}false{% endif %}
+    var update_timer = false
+    var set_lightrope = function(value) {
+      if (lightrope_value) {
+        $('#lightrope').removeClass(lightrope_value)
+      }
+      lightrope_value = 'lightrope-' + value
+      $('#lightrope').addClass(lightrope_value)
+
+      if (update_timer) {
+          clearTimeout(update_timer)
+      }
+      update_timer = setTimeout(
+        function() {
+          $.post('/', {'lightrope': value}).fail(function (response) {
+            log_ajax_error(response)
+          })
+        },
+        1000,
+      )
+    }
+
+    $('#lightrope li').hover(function () {
+      if ($(this).hasClass('hidden-light')) {
+        $('#lightrope').removeClass('lightrope-on')
+        $(this).fadeTo('slow', 1)
+        $(this).removeClass('hidden-light')
+        if ($('#lightrope .hidden-light').length == 0) {
+          $('#lightrope').addClass('lightrope-ready')
+          set_lightrope('off')
+        }
+      }
+    })
+
+    var lightrope_highlight = function() {
+      var hidden_lights = $('#lightrope li.hidden-light')
+      var length = hidden_lights.length
+      if (length <= 1) {
+          return;
+      }
+      var random_index = Math.floor(Math.random() * length)
+      var light = hidden_lights.eq(random_index)
+      light.fadeTo('slow', 1)
+      if (light.hasClass('hidden-light')) {
+        light.fadeTo('slow', 0)
+      }
+      setup_lightrope_highlight()
+    }
+    var setup_lightrope_highlight = function() {
+      var length = $('#lightrope li.hidden-light').length
+      if (length) {
+        var delta = Math.random() * 10000 / Math.sqrt(length)
+        setTimeout(lightrope_highlight, 1000 + delta)
+      }
+    }
+    setup_lightrope_highlight()
+
+    $('#lightrope').click(function() {
+      if ($(this).hasClass('lightrope-ready')) {
+        if (!lightrope_value || lightrope_value == 'lightrope-off') {
+          set_lightrope('on')
+        } else if (lightrope_value == 'lightrope-on') {
+          set_lightrope('disable')
+        } else if (lightrope_value == 'lightrope-disable') {
+          set_lightrope('off')
+        }
+      }
+    })
+  })
+</script>
+{% endwith %}

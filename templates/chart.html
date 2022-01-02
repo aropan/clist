@@ -47,7 +47,9 @@
     var border_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.5, 1).map(function(hex) { return '#' + hex; })
     {% endif %}
     var data = {
+      {% if chart.data %}
       labels: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}"{{ hist.bin }}"{% endfor %}],
+      {% endif %}
       datasets: [
       {% if chart.fields %}
         {% if chart.my_dataset %}
@@ -63,11 +65,20 @@
             pointRadius: {{ chart.my_dataset.point_radius }},
             pointHoverRadius: {{ chart.my_dataset.point_hover_radius|default:chart.my_dataset.point_radius }},
             {% endif %}
+            {% if chart.show_line is not None %}
+            showLine: {{ chart.show_line|lower }},
+            {% endif %}
         },
         {% endif %}
         {% for field in chart.fields %}
         {
-          data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:field }}'}{% endfor %}],
+          {% if chart.datas and field in chart.datas %}
+          {% with datas=chart.datas|get_item:field %}
+            data: [{% for x, y in datas.items %}{% if forloop.counter0 %},{% endif %}{'x': '{{ x }}', 'y': '{{ y }}'}{% endfor %}],
+          {% endwith %}
+          {% else %}
+            data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{% if field in hist %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:field }}'}{% endif %}{% endfor %}],
+          {% endif %}
           label: {% if chart.labels %}'{{ chart.labels|get_item:field|escapejs }}'{% elif chart.slice == 'country' %}'{{ field|get_country_name|escapejs }}'{% else %}'{{ field|escapejs }}'{% endif %},
           backgroundColor: bg_colors[{{ forloop.counter0 }}],
           borderColor: border_colors[{{ forloop.counter0 }}],
@@ -80,6 +91,9 @@
           {% if chart.point_radius is not None %}
           pointRadius: {{ chart.point_radius }},
           pointHoverRadius: {{ chart.point_hover_radius|default:chart.point_radius }},
+          {% endif %}
+          {% if chart.show_line is not None %}
+          showLine: {{ chart.show_line|lower }},
           {% endif %}
         },
         {% endfor %}
@@ -127,12 +141,47 @@
               usePointStyle: true,
             },
           },
+          tooltip: {
+            usePointStyle: true,
+            callbacks: {
+              {% if chart.x_ticks_time_rounding %}
+              title: function(context) {
+                context = context[0]
+                return context.chart.config.options.scales.x.ticks.callback(context.parsed.x)
+              },
+              {% endif %}
+              label: function(context) {
+                return (context.dataset.label? context.dataset.label + ': ' : '') + context.formattedValue
+              },
+            },
+          },
         },
         scales: {
           x: {
             {% if chart.x_type %}
             type: '{{ chart.x_type }}',
             {% endif %}
+
+            {% if chart.x_ticks_time_rounding %}
+            ticks: {
+              callback: function(value) {
+                {% if chart.x_ticks_time_rounding == 'floor-minute' %}
+                  value = Math.floor(value / 60)
+                  var ret = Math.floor(value / 60)
+                  var mod = value % 60
+                  ret += ':' + (mod < 10? '0' : '') + mod
+                {% else %}
+                  var ret = Math.floor(value / 60 / 60)
+                  var mod = Math.floor(value / 60 % 60)
+                  ret += ':' + (mod < 10? '0' : '') + mod
+                  var mod = value % 60
+                  ret += ':' + (mod < 10? '0' : '') + mod
+                {% endif %}
+                return ret
+              }
+            },
+            {% endif %}
+
             grid: {
               display: false,
             },
@@ -141,7 +190,7 @@
             type: '{{ chart.y_type|default:"linear" }}',
             ticks: {
               callback: function(value, index) {
-                return +value.toFixed(2);
+                return +value.toFixed(2)
               },
             },
           },

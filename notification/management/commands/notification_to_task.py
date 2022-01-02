@@ -87,9 +87,11 @@ class Command(BaseCommand):
                     self.process(notify, qs_updates, 'UPD')
                     qs = qs.filter(~Q(pk__in=[c.pk for c in qs_updates]))
 
+                qs = qs.filter(filt).order_by('start_time')
                 if notify.last_time:
                     qs = qs.filter(start_time__gte=notify.last_time + before)
-                qs = qs.filter(filt).order_by('start_time')
+                else:
+                    qs = qs.filter(created__gte=now - before, end_time__gte=now)
 
                 first = qs.first()
                 if not first:

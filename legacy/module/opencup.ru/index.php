@@ -51,10 +51,10 @@
             $title = trim(strip_tags($match['title']));
             $words = explode(" ", $title);
             $titles = explode(" of ", $title);
-            $q = strtolower(end($titles));
+            $q = mb_strtolower(end($titles));
             foreach ($results as $t => $u) {
                 $ts = explode(" of ", $t);
-                $p = strtolower(end($ts));
+                $p = mb_strtolower(end($ts));
                 $res = levenshtein($p, $q);
                 if ($res < $opt) {
                     $opt = $res;

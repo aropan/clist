@@ -29,12 +29,16 @@
         $url = rtrim($url, '/');
         $URLS[] = $url;
     }
+
     $year = date('Y');
-    for ($i = 0; $i < 10; ++$i) {
+    for ($i = -1; $i < 10; ++$i) {
         $y = $year - $i;
         $URLS[] = "http://snws$y.snarknews.info";
         $URLS[] = "http://snss$y.snarknews.info";
-        if (!isset($_GET['parse_full_list'])) {
+        $s = substr($y, 2);
+        $URLS[] = "http://contests.snarknews.info/index.cgi?data=newstape&menu=index&head=index&mod=snss$s&class=snss$s";
+        $URLS[] = "http://contests.snarknews.info/index.cgi?data=newstape&menu=index&head=index&mod=snws$s&class=snws$s";
+        if ($i >= 0 && !isset($_GET['parse_full_list'])) {
             break;
         }
     }
@@ -76,6 +80,32 @@
             continue;
         }
 
+        preg_match_all('#
+            >(?P<round>[^<]*)тур\s*&\#187;\s*
+            (?:<[^>]*>\s*)+
+            (?:<li[^>]*>[^\n]*?</li>\s*)*
+            <li[^>]*>\s*<a[^>]*href="(?P<url>[^"]*standing[^"]*)"[^>]*>\s*Результаты\s*</a>
+            #xi', $page, $matches, PREG_SET_ORDER,
+        );
+
+        foreach ($matches as $m) {
+            $round = mb_strtolower(trim($m['round']));
+            $round = preg_replace(
+                array('#первый#', '#второй#', '#третий#', '#четв[её]+ртый#', '#пятый#', '#шестой#', '#седьмой#', '#восьмой#', '#девятый#'),
+                array('1', '2', '3', '4', '5', '6', '7', '8', '9'),
+                $round,
+            );
+            $round = intval($round);
+            if (isset($standings_url[$round])) {
+                $headers = get_headers($standings_url[$round], true);
+                if (!stripos($headers[0], 'error')) {
+                    continue;
+                }
+            }
+            $u = url_merge($url, $m['url']);
+            $standings_url[$round] = $u;
+        }
+
         if (DEBUG) {
             echo "Standings urls: ";
             print_r($standings_url);
@@ -83,7 +113,7 @@
 
         $page = curlexec($schedule_url);
 
-        if (!preg_match('#<td class="maintext">[^<]*<center>[^<]*<table border=1>.*?</table>#s', $page, $match)) continue;
+        if (!preg_match('#<td class="maintext">([^<]*<h2[^>]*>[^\n]*</h2>)?[^<]*<center>[^<]*<table border=1>.*?</table>#s', $page, $match)) continue;
         $table = $match[0];
 
         if (!preg_match('#<font[^>]*>(?<title>.*?)</font>#', $page, $match)) continue;
@@ -102,11 +132,16 @@
         foreach ($matches[0] as $i => $value)
         {
             $title = trim(strip_tags($matches['title'][$i])) . '. ' . $event_title;
+            $start_time = trim(strip_tags($matches['start_time'][$i]));
+            $end_time = trim(strip_tags($matches['end_time'][$i]));
+            if (stripos($page, "финиш") !== false) {
+                $end_time = "";
+            }
 
             $contest = array(
                 'title' => $title,
-                'start_time' => trim(strip_tags($matches['start_time'][$i])),
-                'end_time' => trim(strip_tags($matches['end_time'][$i])),
+                'start_time' => $start_time,
+                'end_time' => $end_time,
                 'duration_in_secs' => (60 + 20) * 60,
                 'url' => $i < count($urls)? $urls[$i] : $url,
                 'host' => $HOST,
@@ -125,8 +160,5 @@
 
             $contests[] = $contest;
         }
-    }
-    if ($RID == -1) {
-        // print_r($contests);
     }
 ?>

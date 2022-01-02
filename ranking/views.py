@@ -239,6 +239,7 @@ def standings_charts(request, context):
 
     statistics = statistics.prefetch_related(None)
     statistics = statistics.select_related(None)
+    statistics = statistics.select_related('account')
     statistics = statistics.order_by()
 
     find_me = request.GET.get('find_me')
@@ -253,21 +254,38 @@ def standings_charts(request, context):
     fields_values = defaultdict(list)
     fields_types = defaultdict(set)
     problems_values = defaultdict(list)
+    top_values = []
     scores_values = []
     int_scores = True
     my_values = {}
-    for stat in statistics:
-        if stat.addition.get('_no_update_n_contests'):
+    is_stage = hasattr(contest, 'stage') and contest.stage is not None
+
+    full_scores = dict()
+    for problem in problems:
+        if 'full_score' not in problem:
             continue
+        short = get_problem_short(problem)
+        full_scores[short] = problem['full_score']
+
+    for stat in statistics:
+        if not is_stage and stat.addition.get('_no_update_n_contests'):
+            continue
+
+        addition = stat.addition
+        name = addition['name'] if context.get('name_instead_key') and addition.get('name') else stat.account.key
+
         is_my_stat = stat.pk == my_stat_pk
         if is_my_stat:
             my_values['__stat'] = stat
+            my_values['__label'] = name
+
         if stat.solving is not None:
             int_scores = int_scores and abs(round(stat.solving) - stat.solving) < 1e-9
             scores_values.append(stat.solving)
             if is_my_stat:
                 my_values['score'] = stat.solving
-        for field, value in stat.addition.items():
+
+        for field, value in addition.items():
             if field == 'rating_change':
                 value = toint(value)
             if value is None:
@@ -278,7 +296,11 @@ def standings_charts(request, context):
             fields_values[field].append(value)
             if is_my_stat and field not in ['score', 'problems']:
                 my_values[field] = value
-        for key, info in stat.addition.get('problems', {}).items():
+
+        is_top = stat.place_as_int is not None and stat.place_as_int <= 5 or is_my_stat
+
+        scores_info = {'name': name, 'place': stat.place_as_int, 'key': stat.account.key, 'times': [], 'scores': []}
+        for key, info in addition.get('problems', {}).items():
             if info.get('partial'):
                 continue
             result = info.get('result')
@@ -293,6 +315,17 @@ def standings_charts(request, context):
             if is_my_stat:
                 my_values.setdefault('problems', {})[key] = time
 
+            if is_top:
+                if context.get('relative_problem_time') and 'absolute_time' in info:
+                    time = time_in_seconds(timeline, info['absolute_time'])
+                is_binary = info.get('binary') or str(result).startswith('+')
+                if is_binary:
+                    result = full_scores.get(key, 1)
+                scores_info['times'].append(time)
+                scores_info['scores'].append(result)
+        if is_top and scores_info['times']:
+            top_values.append(scores_info)
+
     if scores_values:
         if int_scores:
             scores_values = [round(x) for x in scores_values]
@@ -305,7 +338,12 @@ def standings_charts(request, context):
         )
         charts.append(scores_chart)
 
-    if problems_values and contest.duration_in_secs:
+    if context.get('relative_problem_time'):
+        total_problem_time = max([max(v) for v in problems_values.values()], default=0)
+    else:
+        total_problem_time = contest.duration_in_secs
+
+    if problems_values and total_problem_time:
         def timeline_format(t):
             rounding = timeline.get('penalty_rounding', 'floor-minute')
             if rounding == 'floor-minute':
@@ -315,7 +353,7 @@ def standings_charts(request, context):
                 ret = f'{t // 60 // 60}:{t // 60 % 60:02d}:{t % 60:02d}'
             return ret
 
-        problems_bins = make_bins(0, contest.duration_in_secs, n_bins=default_n_bins)
+        problems_bins = make_bins(0, total_problem_time, n_bins=default_n_bins)
         problems_chart = dict(
             field='solved_problems',
             type='line',
@@ -352,7 +390,7 @@ def standings_charts(request, context):
                 'data': my_data,
                 'point_radius': 4,
                 'point_hover_radius': 8,
-                'label': my_values['__stat'].account.key,
+                'label': my_values['__label'],
             }
 
         total_solved_chart = copy.deepcopy(problems_chart)
@@ -368,6 +406,34 @@ def standings_charts(request, context):
             val += h
             d['value'] = val
         charts.extend([problems_chart, total_solved_chart])
+
+    if top_values:
+        top_values.sort(key=lambda s: s['place'])
+        top_bins = make_bins(0, contest.duration_in_secs, n_bins=default_n_bins)
+        top_chart = dict(
+            field='top_scores',
+            type='scatter',
+            fields=[],
+            labels={},
+            bins=top_bins,
+            datas={},
+            tension=0.5,
+            point_radius=2,
+            border_width=2,
+            show_line=True,
+            legend={'position': 'right'},
+            x_ticks_time_rounding=timeline.get('penalty_rounding', 'floor-minute'),
+        )
+        for scores_info in top_values:
+            field = scores_info['key']
+            datas = top_chart['datas'].setdefault(field, {0: 0})
+            val = 0
+            for t, d in sorted(zip(scores_info['times'], scores_info['scores'])):
+                val += d
+                datas[t] = val
+            top_chart['fields'].append(field)
+            top_chart['labels'][field] = f"{scores_info['place']}. {scores_info['name']}"
+        charts.append(top_chart)
 
     for field in contest.info.get('fields', []):
         types = fields_types.get(field)
@@ -1093,6 +1159,14 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 context['my_statistics_rev'] = True
 
     inner_scroll = not request.user_agent.is_mobile and 'safari' not in request.user_agent.browser.family.lower()
+
+    relative_problem_time = contest.resource.info.get('standings', {}).get('relative_problem_time')
+    relative_problem_time = contest.info.get('standings', {}).get('relative_problem_time', relative_problem_time)
+    context['relative_problem_time'] = relative_problem_time
+
+    name_instead_key = contest.resource.info.get('standings', {}).get('name_instead_key')
+    name_instead_key = contest.info.get('standings', {}).get('name_instead_key', name_instead_key)
+    context['name_instead_key'] = name_instead_key
 
     context.update({
         'has_versus': has_versus,

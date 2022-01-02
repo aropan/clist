@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 import re
-import logging
-from functools import partial
 from collections import OrderedDict
+from datetime import timedelta
+from functools import partial
 
-import yaml
 import tqdm
-from geopy.geocoders import Nominatim
+import yaml
 from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 
-from ranking.management.modules.common import REQ, DOT, SPACE, BaseModule, parsed_table
+from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
-
 
 logging.getLogger('geopy').setLevel(logging.INFO)
 
@@ -82,7 +82,7 @@ class Statistic(BaseModule):
             'uid': 'uid',
         }
 
-        table = parsed_table.ParsedTable(html_table)
+        table = parsed_table.ParsedTable(html_table, strip_empty_columns=True)
 
         locations = None
         if os.path.exists(self.LOCATION_CACHE_FILE):
@@ -149,7 +149,14 @@ class Statistic(BaseModule):
                             v = v.value
                             if SPACE in v:
                                 v, t = v.split(SPACE, 1)
-                                p['time'] = t
+                                t = t.strip()
+                                m = re.match(r'^\((?P<val>[0-9]+)\)$', t)
+                                if m:
+                                    t = int(m.group('val'))
+                                    if t > 1:
+                                        p['attempts'] = t - 1
+                                else:
+                                    p['time'] = t
 
                             try:
                                 score = float(v)
@@ -227,8 +234,10 @@ class Statistic(BaseModule):
                             locs.append(row['city'])
                         if 'extra' in row:
                             extra = row['extra']
-                            extra = re.sub(r'\s*(Не РФ|Not RF):\s*', ' ', extra, re.IGNORECASE)
-                            locs.extend(extra.split(','))
+                            extra = re.sub(r'\s*(Не\s*РФ|Not\s*RF|Участник\s*вне\s*конкурса):\s*',
+                                           ' ', extra, re.IGNORECASE)
+                            extra = re.sub('<[^>]*>', '', extra)
+                            locs.extend(re.split('[,:]', extra))
                         for loc in locs:
                             loc = re.sub(r'\s*[0-9]+\s*', ' ', loc)
                             loc = loc.strip()
@@ -275,4 +284,7 @@ class Statistic(BaseModule):
                 'diploma_number',
             ],
         }
+        if not statistics and result:
+            standings['timing_statistic_delta'] = timedelta(minutes=5)
+
         return standings

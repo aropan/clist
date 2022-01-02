@@ -317,6 +317,7 @@ class Statistic(BaseModule):
 
                     problems = r.setdefault('problems', {})
                     for i, s in enumerate(row['problemResults']):
+
                         k = result_problems[i]['index']
                         points = float(s['points'])
                         if contest_type == 'IOI' and 'pointsInfo' in s:
@@ -530,7 +531,7 @@ class Statistic(BaseModule):
                                                                     'challenge_score': False})
 
         if phase != 'FINISHED' and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc):
-            standings['timing_statistic_delta'] = timedelta(minutes=15)
+            standings['timing_statistic_delta'] = timedelta(minutes=3)
         return standings
 
     @staticmethod

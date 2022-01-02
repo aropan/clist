@@ -24,9 +24,29 @@ class Statistic(BaseModule):
                 return {'action': 'delete', 'force': True}
             raise e
 
-        page = REQ.get(self.url.strip('/') + '/statistics')
-        table = parsed_table.ParsedTable(html=page)
-        problem_names = [list(r.values())[0].value for r in table]
+        match = re.search(r'<h3>Problems</h3>(?:\s*<[^>]*>)*\s*(?P<table><table[^>]*>.*?</table>)', page, re.I | re.S)
+        problem_names = []
+        if match:
+            problem_page = match.group('table')
+            matches = re.finditer('>(?P<name>[^<]+)<', problem_page)
+            with_letter = True
+            for match in matches:
+                name = match.group('name').strip()
+                if not name:
+                    continue
+                if not re.search(r'^[A-Z]\.', name):
+                    with_letter = False
+                problem_names.append(name)
+            if with_letter:
+                problem_names = [n.split('.', 1)[1].strip() for n in problem_names]
+
+        try:
+            page = REQ.get(self.url.strip('/') + '/statistics')
+            table = parsed_table.ParsedTable(html=page)
+            problem_names = [list(r.values())[0].value for r in table]
+        except FailOnGetResponse as e:
+            if e.code != 404 or not problem_names:
+                raise e
 
         standings_url = self.url.strip('/') + '/standings'
         next_url = standings_url

@@ -10,7 +10,6 @@ import urllib.parse
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import datetime, timedelta
-from pprint import pprint
 
 import arrow
 import pytz
@@ -130,21 +129,21 @@ class Statistic(BaseModule):
                         eps = 1e-9
                         if upsolve:
                             problem = problem.setdefault('upsolving', {})
-
                             st = submissions_times.setdefault((user, task), problem.get('submission_time'))
-                            if score > 0:
-                                row['result'] = score
-                            elif problem_score < eps:
-                                if (
-                                    (not st or st < row['submission_time'])
-                                    and row['submission_time'] != problem.get('submission_time')
-                                ):
-                                    row['result'] = problem_score - 1
+                            problem_score = problem.get('result', 0)
+                            if 'submission_time' not in problem:
+                                problem_score = 0
 
-                        if 'submission_time' in problem and row['submission_time'] < problem['submission_time']:
+                            if score > eps:
+                                row['result'] = score
+                            elif problem_score < eps and (not st or st < row['submission_time']):
+                                problem['result'] = problem_score - 1
+                                row.pop('result', None)
+
+                        if 'submission_time' in problem and row['submission_time'] <= problem['submission_time']:
                             continue
 
-                        if problem_score > eps and abs(problem_score - score) > eps:
+                        if problem_score > eps and problem_score > score:
                             continue
 
                         problem.update(row)
@@ -254,8 +253,7 @@ class Statistic(BaseModule):
             has_rated = False
             has_new_rating = False
 
-            rows = data['StandingsData']
-            for row in rows:
+            for row in data['StandingsData']:
                 if not row['TaskResults'] and not row.get('IsRated'):
                     continue
                 handle = row.pop('UserScreenName')
@@ -280,15 +278,14 @@ class Statistic(BaseModule):
                 r['url'] = self.SUBMISSIONS_URL_.format(self) + f'?f.User={handle}'
 
                 stats = (statistics or {}).get(handle, {})
-                problems = r.setdefault('problems', {})
+                problems = r.setdefault('problems', stats.get('problems', {}))
                 solving = 0
                 task_results = row.pop('TaskResults', {})
-                no_url = False
                 for k, v in task_results.items():
                     if 'Score' not in v:
                         continue
                     letter = task_info[k]['short']
-                    p = problems.setdefault(letter, stats.get('problems', {}).get(letter, {}))
+                    p = problems.setdefault(letter, {})
 
                     if v['Score'] > 0:
                         solving += 1
@@ -303,10 +300,7 @@ class Statistic(BaseModule):
                             p['penalty'] = v['Penalty']
                     else:
                         p['result'] = -v['Failure']
-                    no_url = no_url or 'url' not in p
                 r['solved'] = {'solving': solving}
-                if problems and no_url and self.info.get('_submissions_info', {}).get('last_submission_time', -1) > 0:
-                    fusers.append(handle)
 
                 row.update(r)
                 row.pop('Additional', None)
@@ -330,6 +324,64 @@ class Statistic(BaseModule):
                     has_rated = True
                     if r.get('NewRating') is not None:
                         has_new_rating = True
+
+            url = f'{self.STANDING_URL_.format(self)}/virtual/json'
+            page = self._get(url)
+            data = json.loads(page)
+
+            for row in data['StandingsData']:
+                if not row['TaskResults']:
+                    continue
+                handle = row.pop('UserScreenName')
+                if users is not None and handle not in users:
+                    continue
+                r = result.setdefault(handle, collections.OrderedDict())
+                r['member'] = handle
+                if row.pop('UserIsDeleted', None):
+                    r['action'] = 'delete'
+                    continue
+
+                r['country'] = row.pop('Country')
+                if 'UserName' in row:
+                    r['name'] = row.pop('UserName')
+                r['url'] = self.SUBMISSIONS_URL_.format(self) + f'?f.User={handle}'
+
+                stats = (statistics or {}).get(handle, {})
+                problems = r.setdefault('problems', stats.get('problems', {}))
+                task_results = row.pop('TaskResults', {})
+                for k, v in task_results.items():
+                    if 'Score' not in v:
+                        continue
+                    letter = task_info[k]['short']
+                    p = problems.setdefault(letter, {})
+                    p = p.setdefault('upsolving', {})
+                    p_result = p.get('result', 0)
+                    score = v['Score'] / 100.
+                    if score > 0 and score > p_result:
+                        p['result'] = score
+
+                        seconds = v['Elapsed'] // 10**9
+                        p['time_in_seconds'] = seconds
+                        p['time'] = f'{seconds // 60}:{seconds % 60:02d}'
+
+                        if v['Penalty'] > 0:
+                            p['penalty'] = v['Penalty']
+                    elif score <= 0 and p_result <= 0 and -v['Failure'] < p_result:
+                        p['result'] = -v['Failure']
+
+            if self.info.get('_submissions_info', {}).get('last_submission_time', -1) > 0:
+                for r in result.values():
+                    problems = r.get('problems', {})
+                    if not problems:
+                        continue
+                    no_url = False
+                    for p in problems.values():
+                        u = p.get('upsolving', {})
+                        if 'result' in p and 'url' not in p or 'result' in u and 'url' not in u:
+                            no_url = True
+                            break
+                    if no_url:
+                        fusers.append(r['member'])
 
             if statistics:
                 for member, row in statistics.items():
@@ -381,7 +433,7 @@ class Statistic(BaseModule):
 
         for row in result.values():
             has_result = any('result' in p for p in row.get('problems', {}).values())
-            if has_result:
+            if has_result or row.get('IsRated'):
                 row.pop('_no_update_n_contests', None)
             else:
                 row['_no_update_n_contests'] = True
@@ -454,10 +506,3 @@ class Statistic(BaseModule):
             raise ExceptionParseStandings('Not found source code')
         solution = html.unescape(match.group('source'))
         return {'solution': solution}
-
-
-if __name__ == '__main__':
-    statistic = Statistic(url='https://atcoder.jp/contests/abc150', key='abc150')
-    pprint(statistic.get_result('Geothermal'))
-    statistic = Statistic(url='https://atcoder.jp/contests/agc031', key='agc031')
-    pprint(statistic.get_result('tourist'))

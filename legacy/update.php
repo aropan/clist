@@ -125,18 +125,12 @@
                     $contest['end_time'] = str_replace(' at ', ' ', $contest['end_time']);
                 }
 
-                if ($resource['host'] == 'projecteuler.net' && strpos(parse_url($contest['url'], PHP_URL_HOST), $resource['host']) === false) {
-                    $contest['url'] = 'http://' . $resource['host'] . '/';
-                }
-
                 if ($resource['host'] == 'stats.ioinformatics.org') {
                     $contest['url'] = '/' . $contest['url'];
                 }
 
                 if ($resource['host'] == 'acm.hdu.edu.cn' && empty($contest['duration']))
                     $contest['duration'] = '05:00';
-                if ($resource['host'] == 'projecteuler.net' && empty($contest['duration']))
-                    $contest['duration'] = '00:00';
                 if ($resource['host'] == 'opencup.ru' && empty($contest['duration']))
                     $contest['duration'] = '05:00';
                 if ($resource['host'] == 'facebook.com/hackercup' && empty($contest['duration']) && empty($contest['end_time']))

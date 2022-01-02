@@ -177,6 +177,4 @@
     if (DEBUG) {
         print_r($contests);
     }
-
-    curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
 ?>

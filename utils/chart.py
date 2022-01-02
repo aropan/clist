@@ -31,7 +31,7 @@ def make_bins(src, dst, n_bins, logger=None, field=None):
     return bins
 
 
-def make_histogram(values, n_bins=None, bins=None, src=None, dst=None):
+def make_histogram(values, n_bins=None, bins=None, src=None, dst=None, deltas=None):
     if bins is None:
         if src is None:
             src = min(values)
@@ -40,7 +40,9 @@ def make_histogram(values, n_bins=None, bins=None, src=None, dst=None):
         bins = make_bins(src, dst, n_bins)
     idx = 0
     ret = [0] * (len(bins) - 1)
-    for x in sorted(values):
+    if deltas is None:
+        deltas = [1] * len(values)
+    for x, delta in sorted(zip(values, deltas)):
         while idx + 1 < len(bins) and bins[idx + 1] <= x:
             idx += 1
         if idx == len(ret):
@@ -48,7 +50,7 @@ def make_histogram(values, n_bins=None, bins=None, src=None, dst=None):
                 idx -= 1
             else:
                 break
-        ret[idx] += 1
+        ret[idx] += delta
     return ret, bins
 
 

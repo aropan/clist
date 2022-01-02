@@ -171,7 +171,7 @@ class="
       {% if stat %}
       data-score="{% if not problem.full_score or not stat.binary and not stat.result|slice:":1" == "+" %}{{ stat.result }}{% else %}{{ problem.full_score }}{% endif %}"
       data-result="{{ stat.result }}"
-      data-penalty="{{ stat.time }}"
+      data-penalty="{% if relative_problem_time and stat.absolute_time %}{{ stat.absolute_time }}{% else %}{{ stat.time }}{% endif %}"
       data-more-penalty="{{ stat.penalty }}"
       data-problem-key="{{ key }}"
       data-class="{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}"
@@ -235,8 +235,12 @@ class="
           {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|scoreformat }}
           </div>
         {% endif %}
-        {% if stat.penalty_score %}
-          <div class="inline">({{ stat.penalty_score }})</div>
+        {% if with_detail %}
+          {% if stat.penalty_score %}
+            <div class="inline">({{ stat.penalty_score }})</div>
+          {% elif stat.attempts %}
+            <div class="inline">({{ stat.attempts }})</div>
+          {% endif %}
         {% endif %}
         </div>
 

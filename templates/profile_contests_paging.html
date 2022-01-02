@@ -70,6 +70,7 @@
     <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td><a href="?search=resource:{{ stat.contest.resource.host }}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a></td>
     <td class="title col-md-9 col-sm-8">
+        {% if stat.contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
         <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}{% if not without_findme %}?find_me={{ stat.pk }}{% endif %}">{{ stat.contest.title }}</a>
         {% if stat.addition.hack %}
         {% with hack=stat.addition.hack %}

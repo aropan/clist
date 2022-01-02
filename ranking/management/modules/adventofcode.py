@@ -67,12 +67,15 @@ class Statistic(BaseModule):
                     times[k].append(res['get_star_ts'])
 
                     day_start_time = datetime(year=year, month=12, day=int(day), tzinfo=tz)
-                    delta = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc) - day_start_time
+                    time = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc)
 
                     problems[k] = {
                         'ts': res['get_star_ts'],
-                        'time': self.to_time(delta),
+                        'time': self.to_time(time - day_start_time),
+                        'absolute_time': self.to_time(time - day_start_time.replace(day=1)),
                     }
+            if not problems:
+                result.pop(handle)
 
         for v in times.values():
             v.sort()
@@ -195,7 +198,9 @@ class Statistic(BaseModule):
             problem = row.setdefault('problems', {}).setdefault(k, {})
             problem['result'] = score
             time = f'''{self.start_time.year} {match.group('time')} -05:00'''
-            problem['time'] = self.to_time(arrow.get(time, 'YYYY MMM D  HH:mm:ss ZZ') - self.start_time)
+            time = arrow.get(time, 'YYYY MMM D  HH:mm:ss ZZ') - self.start_time
+            problem['time'] = self.to_time(time)
+            problem['absolute_time'] = self.to_time(time + self.start_time - self.start_time.replace(day=1))
             if rank == 1:
                 problem['first_ac'] = True
             if rank <= 3:
