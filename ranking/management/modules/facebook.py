@@ -186,7 +186,7 @@ class Statistic(BaseModule):
                         profile_picture = row
                         for field in ('entrant_personal_info', 'individual_entrant_user', 'profile_picture', 'uri'):
                             profile_picture = profile_picture.get(field) or {}
-                        r['info'] = {'profile_picture': profile_picture if profile_picture else None}
+                        r['info'] = {'download_avatar_url_': profile_picture if profile_picture else None}
 
                         if has_users_filter:
                             users.remove(handle)

@@ -215,6 +215,9 @@ STATIC_ROOT = path.join(BASE_DIR, 'nginx/static/')
 REPO_STATIC_ROOT = path.join(BASE_DIR, 'static/')
 STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = path.join(BASE_DIR, 'nginx/media/')
+
 STATICFILES_DIRS = [
     path.join(BASE_DIR, 'static'),
     path.join(BASE_DIR, 'third_party/x-editable/dist/bootstrap3-editable'),

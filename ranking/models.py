@@ -1,11 +1,15 @@
 import ast
 import collections
+import hashlib
+import os
 import re
 from copy import deepcopy
 from pydoc import locate
 from urllib.parse import urljoin
 
+import requests
 import tqdm
+from django.conf import settings
 from django.db import models, transaction
 from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce, Upper
@@ -90,11 +94,49 @@ class Account(BaseModel):
         unique_together = ('resource', 'key')
 
 
+def download_avatar_url(account):
+    download_avatar_url = account.info.pop('download_avatar_url_', None)
+    if not download_avatar_url:
+        return
+
+    checksum_field = account.resource.info.get('standings', {}).get('download_avatar_checksum_field')
+    if checksum_field:
+        headers = requests.head(download_avatar_url).headers
+        checksum_value = headers[checksum_field]
+        checksum_field += '_'
+        if checksum_value == account.info.get(checksum_field):
+            return
+
+    response = requests.get(download_avatar_url)
+    if response.status_code != 200:
+        return
+
+    ext = re.search('[^/]*$', response.headers['Content-Type']).group()
+    folder = re.sub('[./]', '_', account.resource.host)
+    hashname = hashlib.md5(download_avatar_url.encode()).hexdigest()
+    hashname = hashname[:2] + '/' + hashname[2:4] + '/' + hashname[4:]
+    relpath = os.path.join('avatars', folder, f'{hashname}.{ext}')
+    filepath = os.path.join(settings.MEDIA_ROOT, relpath)
+
+    avatar_relpath_field = 'avatar_relpath_'
+    if avatar_relpath_field in account.info:
+        os.remove(os.path.join(settings.MEDIA_ROOT, account.info.pop(avatar_relpath_field)))
+
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, 'wb') as fo:
+        fo.write(response.content)
+
+    account.info[avatar_relpath_field] = relpath
+    if checksum_field:
+        account.info[checksum_field] = checksum_value
+
+
 @receiver(pre_save, sender=Account)
 def set_account_rating(sender, instance, *args, **kwargs):
     if 'rating' in instance.info:
         instance.rating = instance.info['rating']
         instance.rating50 = instance.rating / 50 if instance.rating is not None else None
+    download_avatar_url(instance)
 
 
 @receiver(post_save, sender=Account)

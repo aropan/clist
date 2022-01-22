@@ -364,7 +364,7 @@ class Command(BaseCommand):
                             member = r.pop('member')
                             skip_result = r.get('_no_update_n_contests')
 
-                            account, account_created = Account.objects.get_or_create(resource=resource, key=member)
+                            account, account_created = resource.account_set.get_or_create(key=member)
 
                             stats = (statistics_by_key or {}).get(member, {})
 

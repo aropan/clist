@@ -120,6 +120,12 @@ server {
     root $PROJECT_DIR/nginx/;
   }
 
+  location /media/ {
+    access_log off;
+    log_not_found off;
+    root $PROJECT_DIR/nginx/;
+  }
+
   location /ws/ {
     proxy_http_version 1.1;
     proxy_set_header Upgrade ${DOLLAR}http_upgrade;
