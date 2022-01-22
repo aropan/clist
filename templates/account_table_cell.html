@@ -1,11 +1,12 @@
 {% if with_resource %}
   {% if with_fixed_width %}<div class="resource-width-fixed">{% endif %}
-    <a href="{% url_transform request resource=resource.pk %}">
+    {% if request %}<a href="{% url_transform request resource=resource.pk %}">{% endif %}
       <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
-    </a>
+    {% if request %}</a>{% endif %}
   {% if with_fixed_width %}</div>{% endif %}
 {% endif %}
 
+{% if not without_avatar %}
 {% if with_fixed_width %}<div class="avatar-width-fixed">{% endif %}
 {% if resource.avatar_url %}
   {% call_method account 'avatar_url' resource as avatar_url %}
@@ -14,6 +15,7 @@
   {% endif %}
 {% endif %}
 {% if with_fixed_width %}</div>{% endif %}
+{% endif %}
 
 {% if not without_country %}
   {% if with_fixed_width %}<div class="flag-width-fixed">{% endif %}
@@ -29,7 +31,7 @@
 {% coder_color_circle resource account.info %}
 
 {% if not without_url %}
-<a href="{{ account.url }}" class="{% coder_color_class resource account.info %}">
+<a href="{% if with_account_default_url %}{% url 'coder:account' account.key account.resource.host %}{% else %}{{ account.url }}{% endif %}" class="{% coder_color_class resource account.info %}">
 {% else %}
 <span class="{% coder_color_class resource account.info %}">
 {% endif %}

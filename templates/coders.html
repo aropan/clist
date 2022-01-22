@@ -42,6 +42,8 @@
     {% include 'country_filter.html' with has_country=True %}
     {% include 'resource_filter.html' %}
 
+    {% include "field_to_select.html" with field='virtual' data=virtual_field %}
+
     {% if request.GET.sort_order %}
     <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
     <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>

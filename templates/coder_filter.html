@@ -2,12 +2,17 @@
 <div class="input-group input-group-sm hidden" id="{{ coder_id }}-hidden">
   <span class="input-group-addon">Coder</span>
 
-  <select name="{{ coder_id }}" id="{{ coder_id }}" onchange="this.form.submit()"{% if not nomultiply %} multiple{% endif %}>
+  <select name="{{ coder_id }}" id="{{ coder_id }}"{% if not submit %} onchange="this.form.submit(){% endif %}"{% if not nomultiply %} multiple{% endif %}>
     <option></option>
     {% for coder in coders %}
       <option value="{{ coder.pk }}" selected>{{ coder.username }}</option>
     {% endfor %}
   </select>
+  {% if submit %}
+  <span class="input-group-btn">
+    <button class="btn btn-default" type="submit" name="action" value="{{ submit }}"{% if not coders %} disabled{% endif %}>{{ submit|title }}</button>
+  </span>
+  {% endif %}
 </div>
 
 <script>
@@ -46,12 +51,21 @@
       cache: true,
     },
   }).on('select2:unselecting', function() {
+    {% if submit %}
+    $('button[name="action"][value="{{ submit }}"]').prop('disabled', true)
+    {% endif %}
     $(this).data('unselecting', true);
   }).on('select2:opening', function(e) {
+    console.log(43)
     if ($(this).data('unselecting')) {
+      console.log(44)
       $(this).removeData('unselecting');
       e.preventDefault();
     }
+  }).on('select2:selecting', function(e) {
+    {% if submit %}
+    $('button[name="action"][value="{{ submit }}"]').prop('disabled', false)
+    {% endif %}
   })
   $('#{{ coder_id }}-hidden').removeClass('hidden');
 </script>

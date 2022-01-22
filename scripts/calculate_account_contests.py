@@ -4,7 +4,7 @@
 import fire
 from django.db.models import Q
 from django.utils import timezone
-from sql_util.utils import SubqueryCount, SubqueryMax
+from sql_util.utils import SubqueryCount
 from tqdm import tqdm
 
 from clist.models import Resource
@@ -20,7 +20,7 @@ def main(host=None):
     with tqdm(total=total, desc='resources') as pbar_resource:
         for resource in resources.iterator():
             start_time = timezone.now()
-            accounts = Account.objects.filter(resource=resource)
+            accounts = Account.objects.filter(resource=resource, coders__isnull=False)
             qs = accounts.annotate(
                 count=SubqueryCount(
                     'statistics',
@@ -29,18 +29,9 @@ def main(host=None):
                         Q(addition___no_update_n_contests=False)
                     ),
                 ),
-            ).annotate(
-                last=SubqueryMax(
-                    'statistics__contest__start_time',
-                    filter=(
-                        Q(statistics__addition___no_update_n_contests__isnull=True) |
-                        Q(statistics__addition___no_update_n_contests=False)
-                    ),
-                ),
             )
             total = 0
             n_contests_diff = 0
-            n_last_act_diff = 0
             with tqdm(desc='accounts') as pbar:
                 for a in qs.iterator():
                     total += 1
@@ -48,10 +39,6 @@ def main(host=None):
                     if a.count != a.n_contests:
                         n_contests_diff += 1
                         a.n_contests = a.count
-                        to_save = True
-                    if a.last != a.last_activity:
-                        n_last_act_diff += 1
-                        a.last_activity = a.last
                         to_save = True
                     if to_save:
                         a.save()
@@ -63,7 +50,6 @@ def main(host=None):
                 time=timezone.now() - start_time,
                 total=accounts.count(),
                 n_contests_diff=n_contests_diff,
-                n_last_act_diff=n_last_act_diff,
             )
             pbar_resource.update()
         pbar_resource.close()

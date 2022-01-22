@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from os import path
 from urllib.parse import quote_plus
 
+import arrow
 import pytz
 import six
 import yaml
@@ -70,6 +71,11 @@ def replace(value, new):
 @register.filter
 def url(value):
     return reverse(value)
+
+
+@register.filter
+def parse_time(time):
+    return arrow.get(time)
 
 
 @register.filter
@@ -683,7 +689,7 @@ def to_dict(**kwargs):
 
 
 @register.filter
-def as_number(value):
+def as_number(value, force=False):
     valf = str(value).replace(',', '.')
     retf = asfloat(valf)
     if retf is not None:
@@ -695,6 +701,8 @@ def as_number(value):
         percentf = asfloat(valf[:-1])
         if percentf is not None:
             return percentf / 100
+    if force:
+        return None
     return value
 
 
@@ -759,3 +767,39 @@ def get_country_from_account(context, account):
 def use_lightrope():
     time = now()
     return time.month == 12 and time.day > 20 or time.month == 1 and time.day < 10
+
+
+@register.simple_tag
+def get_notification_messages_badges(user, path):
+    if not user or user.is_anonymous or path == reverse('notification:messages'):
+        return ''
+    coder = getattr(user, 'coder', None)
+    if not coder:
+        return ''
+    messages = coder.messages_set.filter(is_read=False)
+    badges = defaultdict(int)
+    for message in messages:
+        badges[message.level or 'info'] += 1
+    ret = []
+    for badge, count in badges.items():
+        ret.append(f'<span class="badge progress-bar-{badge}">{count}</span>')
+    ret = '\n'.join(ret)
+    return mark_safe(ret)
+
+
+@register.filter
+def filter_by_resource(coders, resource):
+    ret = []
+    seen = set()
+    for coder in coders:
+        opt = None
+        for account in coder.resource_accounts:
+            if account.resource_id != resource.pk:
+                continue
+            if opt is None or opt.n_contests < account.n_contests:
+                opt = account
+        if opt is None or opt.pk in seen:
+            continue
+        seen.add(opt.pk)
+        ret.append(opt)
+    return ret

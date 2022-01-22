@@ -18,7 +18,7 @@ from pyclist.models import BaseManager, BaseModel
 
 
 class Coder(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
     username = models.CharField(max_length=255, unique=True, blank=True)
     first_name_native = models.CharField(max_length=255, blank=True)
     last_name_native = models.CharField(max_length=255, blank=True)
@@ -33,6 +33,7 @@ class Coder(BaseModel):
     n_accounts = models.IntegerField(default=0, db_index=True)
     n_contests = models.IntegerField(default=0, db_index=True)
     tshirt_size = models.CharField(max_length=10, default=None, null=True, blank=True)
+    is_virtual = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         indexes = [
@@ -144,6 +145,10 @@ class Coder(BaseModel):
         return Resource.objects \
             .annotate(n=SubquerySum('account__n_contests', filter=Q(coders=self))) \
             .order_by(F('n').desc(nulls_last=True), '-has_rating_history', '-n_contests')
+
+    @property
+    def display_name(self):
+        return self.settings['display_name'] if self.is_virtual else self.username
 
 
 @receiver(signals.pre_save, sender=Coder)

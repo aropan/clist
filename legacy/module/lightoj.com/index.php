@@ -16,6 +16,9 @@
             }
 
             foreach ($response['data']['contests']['data'] as $c) {
+                if ($c['contestVisibilityStr'] == 'private') {
+                    continue;
+                }
                 $title = $c['contestTitleStr'] . ' [' . $c['contestVisibilityStr'] . ', ' . $c['contestTypeStr'] . ', ' . $c['contestParticipationTypeStr'] . ']';
                 $contests[] = array(
                     'start_time' => $c['contestStartTimestamp'],

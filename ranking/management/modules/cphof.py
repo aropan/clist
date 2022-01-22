@@ -1,21 +1,68 @@
 #!/usr/bin/env python
 
+import html
 import re
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import timedelta
-from urllib.parse import unquote, urljoin, urlparse
+from pprint import pprint  # noqa
+from urllib.parse import quote, unquote, urljoin, urlparse
 
+from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 from tqdm import tqdm
 
-from clist.models import Contest
+from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number
+from notification.models import NotificationMessage
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseAccounts
+from true_coders.models import Coder
 
 
 class Statistic(BaseModule):
+
+    @staticmethod
+    def _parse_profile_page(url):
+        page = REQ.get(url)
+        info = {}
+
+        if 'university' in url:
+            handle = unquote(urlparse(url).path)
+            handle = handle.strip('/')
+            handle = handle.replace('/', ':')
+            info['member'] = handle
+        else:
+            match = re.search('<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"[^>]*>', page)
+            handle = match.group('handle')
+            info['member'] = html.unescape(handle)
+
+            match = re.search(r'>[^<]*prize[^<]*money[^<]*(?:<[^>]*>)*[^<]*\$(?P<val>[.0-9]+)', page, re.IGNORECASE)
+            if match:
+                info['prize_money'] = as_number(match.group('val'))
+
+            match = re.search(r'>country:</[^>]*>(?:\s*<[^>]*>)*\s*<a[^>]*href="[^"]*/country/(?P<country>[^"]*)"',
+                              page, re.IGNORECASE)
+            if match:
+                info['country'] = match.group('country')
+
+        accounts = set()
+        match = re.search(r'<div[^>]*>\s*External\s*Profiles.*?</div>[^<]*</div>', page, re.DOTALL)
+        if match:
+            matches = re.finditer('<a[^>]*href="(?P<url>[^"]*)"[^>]*>', match.group(0))
+            for match in matches:
+                url = match.group('url')
+                url = url.strip('/')
+                _, _, host, *_, key = url.split('/')
+                host = host.strip('www.')
+                accounts.add((host, key))
+        info['accounts'] = [{'host': host, 'key': key} for host, key in accounts]
+
+        match = re.search('<h3[^>]*>(?P<name>[^>]*)<', page)
+        info['name'] = html.unescape(match.group('name').strip())
+        return info
 
     def get_standings(self, users=None, statistics=None):
         standings_url = self.standings_url or self.url
@@ -39,8 +86,7 @@ class Statistic(BaseModule):
         def find_related(statistics):
             infos = deepcopy(self.info.get('standings', {}).get('parse', {}))
 
-            if '_related' in infos and Contest.objects.get(pk=infos['_related']):
-                options['parse']['_related'] = infos['_related']
+            if self.contest.related_id is not None:
                 return
 
             related = None
@@ -91,13 +137,11 @@ class Statistic(BaseModule):
                     qs = qs.filter(statistics__place_as_int=1, statistics__account__key=first)
 
                 if len(qs) == 1:
-                    related = qs.first().pk
+                    related = qs.first()
 
             if related is not None:
-                options['parse']['_related'] = related
-                standings['invisible'] = True
-            else:
-                standings['invisible'] = False
+                self.contest.related = related
+                self.contest.save()
 
         regex = '<table[^>]*class="[^"]*table[^"]*"[^>]*>.*?</table>'
         match = re.search(regex, page, re.DOTALL)
@@ -121,7 +165,7 @@ class Statistic(BaseModule):
                 if ':' in val:
                     val = val.rsplit(': ', 1)[0]
                 row['team_id'] = val
-            row['name'] = val
+            row['name'] = html.unescape(val)
 
             val = r.pop('Score').value.strip()
             row['solving'] = as_number(val) if val and val != '?' else 0
@@ -158,39 +202,16 @@ class Statistic(BaseModule):
                 for k, v in stat.items():
                     if k not in row:
                         row[k] = v
-                if '_member' in row and '_info' in row:
+                if '_member' in row and '_info' in row and 'name' in row['_info']:
                     row['member'] = row['_member']
-                    row['info'] = row['_info']
+                    row['info'] = dict(row['_info'])
                     return row
 
-            page = REQ.get(url)
-            info = row.setdefault('info', {})
+            info = Statistic._parse_profile_page(url)
+            row.setdefault('info', {}).update(info)
 
-            if 'university' in url:
-                handle = unquote(urlparse(url).path)
-                handle = handle.strip('/')
-                handle = handle.replace('/', ':')
-                row['member'] = handle
-            else:
-                match = re.search('<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"[^>]*>', page)
-                handle = match.group('handle')
-                row['member'] = handle
-
-                match = re.search(r'>[^<]*prize[^<]*money[^<]*(?:<[^>]*>)*[^<]*\$(?P<val>[.0-9]+)', page, re.IGNORECASE)
-                if match:
-                    info['prize_money'] = as_number(match.group('val'))
-
-                match = re.search(r'>country:</[^>]*>(?:\s*<[^>]*>)*\s*<a[^>]*href="[^"]*/country/(?P<country>[^"]*)"',
-                                  page, re.IGNORECASE)
-                if match:
-                    info['country'] = match.group('country')
-
-            match = re.search('<h3[^>]*>(?P<name>[^>]*)<', page)
-            info['name'] = match.group('name').strip()
-
-            row['_member'] = row['member']
-            row['_info'] = dict(info)
-
+            row['_member'] = row['member'] = info['member']
+            row['_info'] = dict(row['info'])
             return row
 
         result = {}
@@ -213,3 +234,176 @@ class Statistic(BaseModule):
 
         standings['result'] = result
         return standings
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        def normalize(val):
+            val = val.strip()
+            val = val.lower()
+            val = re.sub(r'\(.*\)$', '', val)
+            return val
+
+        def is_similar_sets(a, b):
+            a = set(a)
+            a.discard('')
+            b = set(b)
+            b.discard('')
+
+            if a.issubset(b) or b.issubset(a):
+                return True
+
+            intersection = len(a & b)
+            union = len(a | b)
+            iou = intersection / union
+            return iou > .7
+
+        def is_similar_names(a, b):
+            a = normalize(a)
+            b = normalize(b)
+            if is_similar_sets(a.split(), b.split()):
+                return True
+            a = re.split(r'\W+', a)
+            b = re.split(r'\W+', b)
+            if is_similar_sets(a, b):
+                return True
+            return False
+
+        def link_accounts(info, user, cphof_resource, cphof_account):
+            stats = cphof_account.statistics_set.select_related('contest__related__resource')
+            stats = stats.order_by('-contest__end_time')
+
+            accounts_set = {cphof_account}
+
+            related_accounts = info.setdefault('_related', {})
+            related_accounts.update(cphof_account.info.get('_related', {}))
+
+            def add_account(related, host, key, name=None):
+                if related is None:
+                    for resource in Resource.objects.filter(host__regex=host):
+                        if '/' in resource.host:
+                            continue
+                        if '.' not in host and host not in resource.host.split('.'):
+                            continue
+                        break
+                    else:
+                        return
+                else:
+                    resource = related.resource
+
+                account = resource.account_set.filter(key=key).first()
+                if account is None and resource.host == 'codeforces.com':
+                    profile_url = resource.profile_url.format(account=key)
+                    for _ in range(3):
+                        try:
+                            location = REQ.geturl(profile_url)
+                            if not location.endswith('//codeforces.com/'):
+                                key = location.rstrip('/').split('/')[-1]
+                                account = resource.account_set.filter(key__iexact=key).first()
+                            break
+                        except Exception as e:
+                            print(f'Error on get {profile_url} = {e}')
+                if account is None and related is not None and name is not None:
+                    s = list(related.statistics_set.filter(place=stat.place))
+                    if len(s) == 1:
+                        s = s[0]
+                        account = s.account
+                        account_name = account.name or s.addition.get('name') or account.key
+                        if not is_similar_names(account_name, name):
+                            print(f'Different names in {related}:\n{name}\n{account_name}')
+                if account is None:
+                    return
+                accounts_set.add(account)
+
+            for stat in stats:
+                profile_url = stat.addition['_profile_url']
+                _, key = profile_url.split('/profile/', 1)
+                key = unquote(key)
+                host, key = key.split(':', 1)
+                add_account(stat.contest.related, host, key, stat.addition.get('name'))
+
+            for account in info['accounts']:
+                add_account(None, account['host'], account['key'])
+
+            coders_set = set()
+            new_accounts = []
+            for account in accounts_set:
+                skip = False
+                resource = account.resource
+                if resource.module is None or not resource.module.multi_account_allowed:
+                    for coder in account.coders.all():
+                        coders_set.add(coder)
+                        skip = skip or not coder.is_virtual
+                if skip:
+                    continue
+                new_accounts.append(account)
+
+            n_virtual = 0
+            for c in coders_set:
+                if c.is_virtual:
+                    n_virtual += 1
+
+            if len(coders_set) - n_virtual > 1:
+                raise ExceptionParseAccounts(f'Too many coders for {user}: {coders_set}'
+                                             f' ({n_virtual} of {len(coders_set)} virtual)')
+
+            if len(coders_set) - n_virtual == 1:
+                coders_set_ = set()
+                for c in coders_set:
+                    if c.is_virtual:
+                        c.delete()
+                    else:
+                        coders_set_.add(c)
+                coders_set = coders_set_
+
+            if len(coders_set) > 1:
+                raise ExceptionParseAccounts(f'Too many coders for {user}: {coders_set}')
+
+            if len(coders_set) == 0:
+                username = f'{settings.VIRTUAL_CODER_PREFIX_}{cphof_account.pk}'
+                coder, created = Coder.objects.get_or_create(username=username, is_virtual=True)
+            else:
+                coder = next(iter(coders_set))
+
+            if coder.is_virtual:
+                coder.country = cphof_account.country
+                coder.settings['display_name'] = cphof_account.name
+                coder.save()
+
+            if not new_accounts:
+                return
+
+            related_accounts = info.setdefault('_related', {})
+            related_accounts.update(cphof_account.info.get('_related', {}))
+
+            added_accounts = []
+            for account in new_accounts:
+                pk = str(account.pk)
+                if related_accounts.get(pk) == coder.pk:
+                    continue
+                related_accounts[pk] = coder.pk
+                if account.coders.filter(pk=coder.pk).exists():
+                    continue
+                account.coders.add(coder)
+                added_accounts.append(account)
+
+            if not coder.is_virtual and added_accounts:
+                profile_url = cphof_resource.profile_url.format(**cphof_account.dict_with_info())
+                msg = f'Account data taken from <a href="{profile_url}" class="alert-link">cphof.org</a>.'
+                NotificationMessage.link_accounts(to=coder, accounts=added_accounts, message=msg)
+
+        cphof_resource = resource
+        for user, cphof_account in zip(users, accounts):
+            if pbar:
+                pbar.update()
+            if user.startswith('university:'):
+                yield {'info': {}}
+                continue
+
+            profile_url = cphof_resource.profile_url.format(account=quote(cphof_account.key))
+            info = Statistic._parse_profile_page(profile_url)
+
+            with transaction.atomic():
+                link_accounts(info, user, cphof_resource, cphof_account)
+
+            yield {'info': info, 'replace_info': True}

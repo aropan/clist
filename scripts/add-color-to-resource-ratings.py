@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import colorsys
-import logging
 import re
 from pprint import pprint
 
@@ -11,9 +10,6 @@ from clist.models import Resource
 
 
 def run(*args):
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
     sheet = cssutils.parseFile('static/css/base.css')
 
     selector_coloring = {}

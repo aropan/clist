@@ -7,7 +7,7 @@
 
 {% block ogtitle %}{% block title %}{% linebreakless %}
 {% if coder %}
-  {{ coder.user.username }} - Coder
+  {{ coder.display_name }} - Coder
 {% elif account %}
   {% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} on {{ account.resource.host }} - Account
   {% elif profiles %}{{ query }} - Profile{% endif %}
@@ -60,7 +60,7 @@ Number of competitions: {{ account.n_contests }}
     {% if coder.user.first_name or coder.user.last_name %}
       {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
     {% endif %}
-    {{ coder.user.username }}
+    {{ coder.display_name }}
 
     {% if request.user.is_authenticated and request.user.coder != coder %}
     <small><a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a></small>
@@ -70,6 +70,14 @@ Number of competitions: {{ account.n_contests }}
       <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
   </h2>
+  {% if search_resource %}
+  <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
+    {% if coder.user.first_name or coder.user.last_name %}
+      {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+    {% endif %}
+    {{ coder.display_name }}
+  </a>
+  {% endif %}
 {% elif account %}
   <div>
     <h2>
@@ -105,12 +113,12 @@ Number of competitions: {{ account.n_contests }}
       {% endif %}
     </h2>
     {% for coder in account.coders.all %}
-      <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.user.username %}">
-        {% if coder.user.first_name or coder.user.last_name %}
-          {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
-        {% endif %}
-        {{ coder.user.username }}
-      </a>
+    <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
+      {% if coder.user.first_name or coder.user.last_name %}
+        {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+      {% endif %}
+      {{ coder.display_name }}
+    </a>
     {% endfor %}
   </div>
 {% elif profiles %}
@@ -130,7 +138,7 @@ Number of competitions: {{ account.n_contests }}
 
 {% if resources and show_history_ratings %}
 <div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% elif not two_columns %} class="col-xs-12"{% endif %}>
-<h3>Accounts{% if request.GET.search and coder %} <a class="btn btn-xs btn-default" href="{% url 'coder:profile' coder.user.username %}">view all</a>{% endif %}</h3>
+<h3>Accounts</h3>
 <div id="list-accounts">
 {% if not search_resource %}
 
@@ -143,15 +151,18 @@ Number of competitions: {{ account.n_contests }}
             {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
 
             {% if resource.coder_accounts|length > 1 %}
-            <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{{ a.key }}</div>{% endfor %}">
+            <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
               +{{ resource.coder_accounts|length|add:-1 }}
             </span>
+
             {% endif %}
 
             {% for s in resource_medals|get_item:resource.pk %}
+              {% if not s.contest.related_id %}
               <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
                 {% include "trophy.html" with statistic=s %}
               </span>
+              {% endif %}
             {% endfor %}
           </a>
           {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
@@ -171,8 +182,8 @@ Number of competitions: {{ account.n_contests }}
           {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
 
           {% for s in account_medals|get_item:account.pk %}
-            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="{{ s.addition.medal|lower }}-medal no-user-select">
-              &#9899;
+            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
+              {% include "trophy.html" with statistic=s %}
             </span>
           {% endfor %}
         </a>
@@ -255,7 +266,11 @@ $(function(){
     dataType: 'json',
     success: function (response) {
       for (var resource in response['data']['resources']) {
-        $('[id="loading_' + resource + '_rating"]').remove()
+        var loading = $('[id="loading_' + resource + '_rating"]')
+        if (!loading.length) {
+          continue
+        }
+        loading.remove()
         var resource_info = response['data']['resources'][resource]
         var resource_dates = response['data']['dates']
         config = create_chart_config(resource_info, resource_dates)

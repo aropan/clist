@@ -17,3 +17,14 @@
   display: inline-block;
 }
 
+#accounts table.table td:not(.account) {
+  white-space: nowrap;
+}
+
+#accounts .has_coders {
+  color: #999;
+}
+
+#accounts input[type=checkbox][name=accounts] {
+  transform: scale(1.5);
+}

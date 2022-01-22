@@ -80,3 +80,4 @@ blackboxprotobuf==1.0.1
 traceback-with-variables==2.0.1
 flatten-dict==0.4.2
 filelock==3.3.0
+tailslide==0.1.1

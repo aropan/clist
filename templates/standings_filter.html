@@ -51,6 +51,8 @@
 
     {% include 'fields_to_select.html' %}
 
+    {% include 'resource_filter.html' with groupby=False %}
+
     {% with find_me=request.GET.find_me|toint %}
     {% if find_me or params.find_me %}
     {% if find_me %}

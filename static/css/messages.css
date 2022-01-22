@@ -1,0 +1,13 @@
+.alert.read {
+  background-color: #f7f7f7;
+  border-color: #eee;
+}
+
+.alert {
+  position: relative;
+}
+
+.alert .created_at {
+  position: absolute;
+  right: 10px;
+}

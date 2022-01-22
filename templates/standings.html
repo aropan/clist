@@ -62,7 +62,7 @@
   })
 </script>
 
-<div class="container">
+<div>
   {% with neighbors=contest.neighbors %}
   <h3 id="standings-title" class="text-center">
     {% if not other_contests and with_neighbors %}
@@ -88,6 +88,13 @@
     {% endif %}
     </div>
 
+    {% if contest.related is not None %}
+    {% include "standings_neighbors.html" with contest=contest.related without_neighbors=True with_related=True %}
+    {% endif %}
+    {% for related in contest.related_set.all %}
+      {% include "standings_neighbors.html" with contest=related without_neighbors=True with_related=True %}
+    {% endfor %}
+
     {% if other_contests %}
     {% for c in other_contests %}{% include "standings_neighbors.html" with contest=c without_neighbors=True %}{% endfor %}
     {% elif with_neighbors %}
@@ -110,11 +117,12 @@
   <script>
     function update_neighbors_standings_url_offset() {
       $('.neighbors-standings-url').each(function(idx, el) {
-        $(el).offset({left: $('#standings-url').offset().left - $(el).children('.neighbors-standings-url-date').width()})
+        $(el).offset({left: $('#standings-url').offset().left - $(el).children('.neighbors-standings-url-before').width()})
         $(el).width($('#standings-title').width() - $(el).offset().left)
       })
     }
     update_neighbors_standings_url_offset()
+    $(window).resize(update_neighbors_standings_url_offset)
   </script>
 
   {% if contest.is_running and not contest.is_over %}
@@ -138,17 +146,15 @@
 </div>
 
 
-<div class="container">
+<div>
   {% include "standings_filter.html" %}
 
   {% if contest.parsed_time %}
-  <div id="parsed-time">
-    <div class="container">
-      <small class="text-muted pull-right">
-        updated
-        <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
-      </small>
-    </div>
+  <div id="parsed-time" class="container">
+    <small class="text-muted pull-right">
+      updated
+      <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
+    </small>
   </div>
   {% endif %}
 
@@ -226,7 +232,18 @@
                     <div class="small" title="First AC time" data-placement="bottom" data-toggle="tooltip">{{ problem.first_ac_time }}</div>
                   {% endif %}
                   {% if problem.subtext %}
-                    <div class="text-muted small text-weight-normal" {% if problem.subtext.title %} title="{{ problem.subtext.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ problem.subtext.text }}</div>
+                    <div
+                      class="text-muted small text-weight-normal"
+                      {% if problem.subtext.text == 'upcoming' %}
+                      {% with upcoming=problem.subtext.title|parse_time|timezone:timezone %}
+                      title="{{ problem.subtext.title }}<br>{{ upcoming|naturaltime }}" data-placement="bottom" data-toggle="tooltip" data-html="true"
+                      {% endwith %}
+                      {% elif problem.subtext.title %}
+                      title="{{ problem.subtext.title }}" data-placement="bottom" data-toggle="tooltip"
+                      {% endif %}
+                    >
+                      {{ problem.subtext.text }}
+                    </div>
                   {% endif %}
                   {% if problem.n_teams is not None and with_detail %}
                     {% include "standings_problem_progress.html" %}

@@ -7,9 +7,11 @@ import re
 import traceback
 import urllib.parse
 from collections import OrderedDict
+from datetime import timedelta
 from pprint import pprint
 
 import coloredlogs
+from django.utils.timezone import now
 from lxml import etree
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
@@ -108,6 +110,9 @@ class Statistic(BaseModule):
             raise ExceptionParseStandings(f'Not found standings url year = {year}')
 
         for standings_url in standings_urls:
+            if str(year) not in standings_url and now() - self.start_time > timedelta(days=30) and statistics:
+                continue
+
             is_icpc_api_standings_url = standings_url == icpc_api_standings_url
             page = REQ.get(standings_url)
 
@@ -145,11 +150,10 @@ class Statistic(BaseModule):
                         team = teams.setdefault(tid, {})
                         problems = team.setdefault('problems', {})
                         result = problems.get(p_name, {}).get('result', '')
-                        if not result.startswith('?') and status.startswith('?'):
+                        if not result.startswith('?') and status.startswith('?') or result.startswith('+'):
                             continue
                         if status == '+':
                             attempt = int(attempt) - 1
-                            p_info = problems_info[p_name]
                         problems[p_name] = {
                             'time': time,
                             'result': '+' if status == '+' and attempt == 0 else f'{status}{attempt}',
@@ -249,7 +253,6 @@ class Statistic(BaseModule):
                     table = []
                 time_divider = 1
                 last_place = None
-                honorables = []
                 for r in table:
                     row = {}
                     problems = row.setdefault('problems', {})
@@ -260,17 +263,11 @@ class Statistic(BaseModule):
                             v = vs.value
                         k = k.lower().strip('.')
                         v = v.strip()
-                        if honorables:
-                            if v:
-                                honorables.append(v)
-                            continue
                         if k in ('rank', 'rk', 'place'):
                             if not isinstance(vs, list):
                                 medal = vs.column.node.xpath('.//img/@alt')
                                 if medal and medal[0].endswith('medal'):
                                     row['medal'] = medal[0].split()[0]
-                            if v and not v[0].isdigit():
-                                honorables.append(v)
                             row['place'] = v
                         elif k in ('team', 'name', 'university'):
                             if isinstance(vs, list):
@@ -286,6 +283,8 @@ class Statistic(BaseModule):
                                         region = ''.join([s.strip() for s in region[0].xpath('text()')])
                                         if region:
                                             row['region'] = region
+                                            if v.lower().startswith(region.lower()):
+                                                v = v[len(region):].strip()
                             if 'cphof' in standings_url:
                                 member = vs.column.node.xpath('.//a/text()')[0].strip()
                                 row['member'] = f'{member} {season}'
@@ -293,14 +292,14 @@ class Statistic(BaseModule):
                                 row['member'] = f'{v} {season}'
                             row['name'] = v
                         elif k in ('time', 'penalty', 'total time (min)', 'minutes'):
-                            if v:
+                            if v and v != '?':
                                 row['penalty'] = int(v)
                         elif k in ('slv', 'solved', '# solved'):
                             row['solving'] = int(v)
                         elif k == 'score':
                             if ' ' in v:
                                 row['solving'], row['penalty'] = map(int, v.split())
-                            else:
+                            elif v != '?':
                                 row['solving'] = int(v)
                         elif len(k) == 1:
                             k = k.title()
@@ -358,13 +357,6 @@ class Statistic(BaseModule):
                     if el is not None:
                         region = ''.join([s.strip() for s in prv.xpath('text()')])
                         row['region'] = region
-
-                if result and honorables:
-                    for name in honorables:
-                        if 'honorable' in name.lower():
-                            continue
-                        row = dict(name=name, member=f'{name} {season}')
-                        result[row['member']] = row
 
             if not result:
                 continue

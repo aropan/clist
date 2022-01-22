@@ -109,7 +109,7 @@ def _get(url, *args, **kwargs):
 
 
 class Statistic(BaseModule):
-    PARTICIPANT_TYPES = ['CONTESTANT', 'OUT_OF_COMPETITION']
+    PARTICIPANT_TYPES = {'CONTESTANT', 'OUT_OF_COMPETITION'}
     SUBMISSION_URL_FORMAT_ = '{url}/submission/{sid}'
 
     def __init__(self, **kwargs):
@@ -368,7 +368,7 @@ class Statistic(BaseModule):
                         elif unofficial:
                             if users:
                                 r['place'] = '__unchanged__'
-                            elif 'team_id' not in r and 'OUT_OF_COMPETITION' in r.get('participant_type', []):
+                            elif 'team_id' not in r and not (self.PARTICIPANT_TYPES & set(r['participant_type'])):
                                 r['place'] = None
                             else:
                                 if 'team_id' in r:
@@ -440,8 +440,6 @@ class Statistic(BaseModule):
 
             if 'verdict' in submission:
                 v = submission['verdict'].upper()
-                if v == 'PARTIAL':
-                    info['partial'] = True
                 info['verdict'] = ''.join(s[0].upper() for s in v.split('_')) if len(v) > 3 else v.upper()
 
             if 'programmingLanguage' in submission:
@@ -483,6 +481,8 @@ class Statistic(BaseModule):
                         v = 0 if v == '+' else int(v)
                         v = v + 1 if v >= 0 else v - 1
                         p['result'] = f'{"+" if v > 0 else ""}{v}'
+                r = as_number(p.get('result'), force=True)
+                p['partial'] = not is_accepted and p.get('partial', True) and r and r > 0
 
         result = {
             k: v for k, v in result.items()
@@ -536,20 +536,25 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
+        assert resource is None or 'gym' not in resource.host
+
         handles = ';'.join(users)
 
-        len_limit = 1000
+        len_limit = 2000
         if len(handles) > len_limit:
             s = 0
             for i in range(len(users)):
                 s += len(users[i])
                 if s > len_limit:
-                    return Statistic.get_users_infos(users[:i], pbar) + Statistic.get_users_infos(users[i:], pbar)
+                    return (
+                        Statistic.get_users_infos(users[:i], pbar=pbar) +
+                        Statistic.get_users_infos(users[i:], pbar=pbar)
+                    )
 
         removed = []
         last_index = 0
         orig_users = list(users)
-        while True:
+        for _ in range(len(users) * 2):
             handles = ';'.join(users)
             data = _query(method='user.info', params={'handles': handles})
             if data['status'] == 'OK':
@@ -569,6 +574,9 @@ class Statistic(BaseModule):
                     last_index = index
             else:
                 raise NameError(f'data = {data}')
+        else:
+            raise ValueError(f'Many failed query, data = {data}')
+
         if pbar is not None:
             pbar.update(len(users) - last_index)
 
@@ -587,6 +595,7 @@ class Statistic(BaseModule):
                     data.pop('avatar')
                 if data.get('titlePhoto', '').endswith('/no-title.jpg'):
                     data.pop('titlePhoto')
+            data['name'] = ' '.join([data[f] for f in ['firstName', 'lastName'] if data.get(f)])
             ret.append({'info': data})
             if data and data['handle'] != orig:
                 ret[-1]['rename'] = data['handle']

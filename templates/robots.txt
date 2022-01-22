@@ -1,5 +1,5 @@
 User-agent: *
-Crawl-Delay: 10
+Crawl-Delay: 120
 Sitemap: https://clist.by/sitemap.xml
 Disallow: /api/
 Allow: /api/v1/doc
@@ -10,6 +10,7 @@ Disallow: /solutions/
 Disallow: /settings/
 Disallow: /list/
 Disallow: /calendar/
+Disallow: /messages/
 Disallow: /profile/
 Disallow: /telegram/
 Disallow: /login/
@@ -28,6 +29,8 @@ Disallow: /*&country=*?country=
 Disallow: /*?country=*?country=
 Disallow: /*&resource=*?resource=
 Disallow: /*?resource=*?resource=
+Disallow: /*&tag=*?tag=
+Disallow: /*?tag=*?tag=
 Clean-param: page&querystring_key&next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&as_coder&period&sort_column&sort_order&chart_column
 Disallow: /*&page=
 Disallow: /*?page=
@@ -82,3 +85,6 @@ Disallow: /standings/*&neighbors=
 Disallow: /standings/*?neighbors=
 Disallow: /standings/*&advanced=
 Disallow: /standings/*?advanced=
+Disallow: /standings/*&resource=
+Disallow: /standings/*?resource=
+Disallow: /standings/*?*&

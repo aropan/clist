@@ -36,8 +36,8 @@
         $URLS[] = "http://snws$y.snarknews.info";
         $URLS[] = "http://snss$y.snarknews.info";
         $s = substr($y, 2);
-        $URLS[] = "http://contests.snarknews.info/index.cgi?data=newstape&menu=index&head=index&mod=snss$s&class=snss$s";
         $URLS[] = "http://contests.snarknews.info/index.cgi?data=newstape&menu=index&head=index&mod=snws$s&class=snws$s";
+        $URLS[] = "http://contests.snarknews.info/index.cgi?data=newstape&menu=index&head=index&mod=snss$s&class=snss$s";
         if ($i >= 0 && !isset($_GET['parse_full_list'])) {
             break;
         }
@@ -98,8 +98,11 @@
             $round = intval($round);
             if (isset($standings_url[$round])) {
                 $headers = get_headers($standings_url[$round], true);
-                if (!stripos($headers[0], 'error')) {
-                    continue;
+                if (stripos($headers[0], 'error') === false) {
+                    $content = file_get_contents($standings_url[$round], FALSE, NULL, 0, 20);
+                    if (stripos($content, 'wrong') === false) {
+                        continue;
+                    }
                 }
             }
             $u = url_merge($url, $m['url']);

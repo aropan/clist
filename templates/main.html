@@ -18,7 +18,7 @@
 
 {% block content %}
 
-<div id="timezone-and-filter" class="row">
+<div id="timezone-and-filter">
   {% if not request.GET.timezone %}
   {% if not request.user.is_authenticated or request.user.coder.settings.check_timezone != 0 %}
     {% include "check_timezone.js" %}
@@ -52,7 +52,7 @@
   <div class="tab-pane{% if viewmode == "list" %} active{% endif %}" id="list-view">
     {% if contests %}
     <div id="contests">
-      <div class="row hidden-xs">
+      <div class="header row hidden-xs">
         <div class="col-md-5 col-sm-4">
           <div class="col-md-5 col-sm-12 header-start-time">Start/End Time</div>
           <div class="col-md-3 col-sm-6 header-duration">Duration</div>
@@ -72,7 +72,7 @@
       {% for contest in contests %}
       {% with rid=contest.resource.id|stringformat:"s"  %}
       {% with group=contest.state|add:"-"|add:rid %}
-      <div class="row contest {{ contest.state }}{% if contest.state == 'running' %} bg-success{% elif contest.state == 'past' %} text-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
+      <div class="contest row {{ contest.state }}{% if contest.state == 'running' %} bg-success{% elif contest.state == 'past' %} text-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
         <div class="col-md-5 col-sm-4">
           <div class="col-md-5 col-sm-12 start-time">
             {% if contest.state == 'coming' %}
@@ -139,14 +139,12 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="row alert alert-info text-center">List of competitions is empty</div>
+    <div class="alert alert-info text-center">List of competitions is empty</div>
     {% endif %}
   </div>
   <div class="tab-pane{% if viewmode == "calendar" %} active{% endif %}" id="calendar-view">
-    <div class="row">
-      <div id="calendar"></div>
-      <div id="loading">loading...</div>
-    </div>
+    <div id="calendar"></div>
+    <div id="loading">loading...</div>
   </div>
 </div>
 

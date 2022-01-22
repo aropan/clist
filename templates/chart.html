@@ -43,8 +43,10 @@
 <script>
   function add_chart() {
     {% if chart.fields %}
-    var bg_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.2, 1).map(function(hex) { return '#' + hex; })
-    var border_colors = palette('rainbow', {{ chart.fields|length }}, 0, 0.5, 1).map(function(hex) { return '#' + hex; })
+    {% with n_pallete=chart.fields|length|multiply:4|divide:3 %}
+    var bg_colors = palette('rainbow', {{ n_pallete }}, 0, 0.2, 1).map(function(hex) { return '#' + hex; })
+    var border_colors = palette('rainbow', {{ n_pallete }}, 0, 0.5, 1).map(function(hex) { return '#' + hex; })
+    {% endwith %}
     {% endif %}
     var data = {
       {% if chart.data %}

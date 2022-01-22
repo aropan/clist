@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Messages{% endblock %}{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/messages.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+{% if notification_messages %}
+  {% for message in notification_messages %}
+  {% ifchanged message.is_read %}
+    {% if forloop.counter0 %}<hr/>{% endif %}
+  {% endifchanged %}
+  <div class="text-center alert alert-{{ message.level|default:"info" }}{% if message.is_read %} read{% endif %}">
+    <small class="created_at text-muted pull-right">
+      <span title="{{ message.created|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+        <small>{{ message.created|timezone:timezone|naturaltime }}</small>
+      </span>
+    </small>
+    <span class="text{% if message.is_read %} text-muted small{% endif %}">{{ message.text|safe }}<span>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="row alert alert-info text-center">There are no messages</div>
+{% endif %}
+
+{% endblock %}

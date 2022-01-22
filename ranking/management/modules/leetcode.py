@@ -251,9 +251,9 @@ class Statistic(BaseModule):
             return '-cn' in profile_url['_data_region']
 
         @lru_cache()
-        def get_all_contests():
+        def get_all_contests(data_region=''):
             page = Statistic._get(
-                'https://leetcode.com/graphql',
+                f'https://leetcode{data_region}.com/graphql',
                 post=b'{"variables":{},"query":"{allContests{titleSlug}}"}',
                 content_type='application/json',
             )
@@ -326,7 +326,7 @@ class Statistic(BaseModule):
                             page = Statistic._get(
                                 'https://leetcode.com/graphql',
                                 post=b'''
-                            {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String\u0021) {  userContestRanking(username: $username) {    attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }    rating    ranking    __typename  }}"}''',  # noqa
+                                {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {    attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }    rating    ranking    __typename  }}"}''',  # noqa
                                 content_type='application/json',
                             )
                             page = json.loads(page)['data']
@@ -424,7 +424,8 @@ class Statistic(BaseModule):
                 state = {}
 
             last_page = state.setdefault('last_page', 0)
-            # n_accounts_to_paging = state.setdefault('n_accounts_to_paging', 10)
+
+            # n_accounts_to_paging = state.setdefault('n_accounts_to_paging', 1000)
             # pages_per_update = state.setdefault('pages_per_update', 200)
             # if len(accounts) > n_accounts_to_paging:
             #     if (
@@ -452,7 +453,7 @@ class Statistic(BaseModule):
             #     if 'global_ranking_page' in a.info:
             #         page = a.info['global_ranking_page']
             #         pages.add(page)
-            #         if len(accounts) > n_accounts_to_paging:
+            #         if stop:
             #             a.info.pop('global_ranking_page')
             #             a.save()
 
@@ -565,10 +566,11 @@ class Statistic(BaseModule):
                 if ratings and titles:
                     for rating, ranking, title in zip(ratings, rankings, titles):
                         if ranking > 0 or prev_rating != rating and (prev_rating is not None or rating != 1500):
-                            int_rating = int(rating)
+                            int_rating = round(rating)
                             update = contest_addition_update.setdefault(title, OrderedDict())
                             update['rating_change'] = int_rating - last_rating if last_rating is not None else None
                             update['new_rating'] = int_rating
+                            update['raw_rating'] = rating
                             last_rating = int_rating
                         prev_rating = rating
                 if last_rating and 'rating' not in info:

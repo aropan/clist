@@ -4,94 +4,72 @@
 {% block ogtitle %}{% block title %}Resources{% endblock %}{% endblock %}
 {% block description %}List of all resources with calendar url to export, number of contests, number of accounts and technical information{% endblock %}
 
-{% block content %}
-<style>
-  .resources table td,
-  .resources table th {
-    text-align: center;
-    vertical-align: middle !important;
-  }
-  .resources table td img {
-    vertical-align: top;
-    margin-top: 3px;
-  }
-  .resources table tr td:first-child {
-    text-align: right;
-  }
-  .resources table td {
-    white-space: nowrap;
-  }
-  .resources.panel {
-    padding: 0px;
-  }
-  .resources .badge {
-    min-width: 30px;
-  }
-</style>
+{% block end-head %}
+<link href="{% static_ts 'css/resources.css' %}" rel="stylesheet">
+{% endblock %}
 
-<div class="container">
-  <div class="resources panel panel-default table-responsive col-md-12 col-lg-8 col-lg-offset-2">
-    <table class="table table-condensed table-float-head table-striped">
-      <tr>
-        <th>Resource</th>
-        <th>Url</th>
-        <th>Google<br/>calendar</th>
-        <th>Auto<br/>update</th>
-        <th>Rating</th>
-        <th>Contests<br/>number</th>
-        <th>Accounts<br/>number</th>
-      </tr>
-      {% for resource in resources %}
-      <tr>
-        <td>
-          <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
-          <a class="host lead" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
-        </td>
-        <td>
-          <a href="{{ resource.href }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-        </td>
-        <td>
-          {% if resource.uid %}
-            <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
-              <i class="far fa-calendar-alt"></i>
-            </a>
+{% block content %}
+<div class="resources panel panel-default table-responsive col-md-12 col-lg-8 col-lg-offset-2">
+  <table class="table table-condensed table-float-head table-striped">
+    <tr>
+      <th>Resource</th>
+      <th>Url</th>
+      <th>Google<br/>calendar</th>
+      <th>Auto<br/>update</th>
+      <th>Rating</th>
+      <th>Contests<br/>number</th>
+      <th>Accounts<br/>number</th>
+    </tr>
+    {% for resource in resources %}
+    <tr>
+      <td>
+        <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
+        <a class="host lead" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
+      </td>
+      <td>
+        <a href="{{ resource.href }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+      </td>
+      <td>
+        {% if resource.uid %}
+          <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
+            <i class="far fa-calendar-alt"></i>
+          </a>
+        {% else %}
+          <i class="fas fa-times"></i>
+        {% endif %}
+      </td>
+
+      <td>
+        <span class="badge progress-bar-{% if resource.enable %}success{% else %}info{% endif %}">
+          {% if resource.enable %}
+            <i class="fas fa-check"></i>
           {% else %}
             <i class="fas fa-times"></i>
           {% endif %}
-        </td>
+        </span>
+      </td>
 
-        <td>
-          <span class="badge progress-bar-{% if resource.enable %}success{% else %}info{% endif %}">
-            {% if resource.enable %}
-              <i class="fas fa-check"></i>
-            {% else %}
-              <i class="fas fa-times"></i>
-            {% endif %}
-          </span>
-        </td>
-
-        <td>
-          <span class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}info{% endif %}">
-            {% if resource.has_rating_history %}
-              <i class="fas fa-check"></i>
-            {% else %}
-              <i class="fas fa-times"></i>
-            {% endif %}
-          </span>
-        </td>
-
-        <td><span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }}</span></td>
-
-        <td>
-          {% if resource.module %}
-          <span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }}</span>
+      <td>
+        <span class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}info{% endif %}">
+          {% if resource.has_rating_history %}
+            <i class="fas fa-check"></i>
           {% else %}
-          &#183;
+            <i class="fas fa-times"></i>
           {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
+        </span>
+      </td>
+
+      <td><span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }}</span></td>
+
+      <td>
+        {% if resource.module %}
+        <span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }}</span>
+        {% else %}
+        &#183;
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
 </div>
 {% endblock %}

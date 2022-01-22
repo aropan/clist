@@ -31,3 +31,8 @@ table.table.problems tr .title {
 #resource-filters > * {
   margin-bottom: 5px;
 }
+
+#resource-tables {
+  display: flex;
+  flex-wrap: wrap;
+}

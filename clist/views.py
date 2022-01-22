@@ -138,9 +138,11 @@ def get_events(request):
     if referer:
         parsed = urlparse(referer)
         query_dict = parse_qs(parsed.query)
+
         as_coder = query_dict.get('as_coder')
         if as_coder and request.user.has_perm('as_coder'):
             coder = Coder.objects.get(user__username=as_coder[0])
+
         has_filter = 'filter' in query_dict
         categories = query_dict.get('filter', categories)
 

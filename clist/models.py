@@ -185,13 +185,21 @@ class Resource(BaseModel):
                 self.plugin_ = __import__(self.module.path.replace('/', '.'), fromlist=['Statistic'])
         return self.plugin_
 
+    def with_single_account(self):
+        return not self.module or not self.module.multi_account_allowed
+
 
 class VisibleContestManager(BaseManager):
     def get_queryset(self):
-        return super(VisibleContestManager, self).get_queryset().filter(invisible=0).filter(stage__isnull=True)
+        return super().get_queryset().filter(invisible=0).filter(stage__isnull=True)
 
 
-class Contest(models.Model):
+class SignificantContestManager(VisibleContestManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(related__isnull=True)
+
+
+class Contest(BaseModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     title = models.CharField(max_length=2048)
     slug = models.CharField(max_length=2048, null=True, blank=True, db_index=True)
@@ -212,6 +220,7 @@ class Contest(models.Model):
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
     parsed_time = models.DateTimeField(null=True, blank=True)
     has_hidden_results = models.BooleanField(null=True, blank=True)
+    related = models.ForeignKey('Contest', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_set')
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -220,6 +229,7 @@ class Contest(models.Model):
 
     objects = BaseManager()
     visible = VisibleContestManager()
+    significant = SignificantContestManager()
 
     class Meta:
         unique_together = ('resource', 'key', )

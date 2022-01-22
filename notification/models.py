@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import timedelta
 
@@ -7,6 +8,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from pyclist.models import BaseModel
@@ -91,3 +93,39 @@ class Calendar(BaseModel):
     category = models.CharField(max_length=256, null=True)
     resources = ArrayField(models.PositiveIntegerField(), null=True)
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
+
+
+class NotificationMessage(BaseModel):
+    to = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='messages_set')
+    text = models.TextField()
+    level = models.TextField(null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    sender = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE, related_name='sender_set')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['to', 'is_read']),
+        ]
+        verbose_name = 'Message'
+
+    @staticmethod
+    def link_accounts(to, accounts, message=None, sender=None):
+        text = 'New accounts have been linked to you. Check your <a href="/coder/" class="alert-link">profile page</a>.'
+        if message:
+            text += ' ' + message
+        text = f'<div>{text}</div>'
+
+        for account in accounts:
+            context = {
+                'account': account,
+                'resource': account.resource,
+                'with_resource': True,
+                'without_country': True,
+                'with_account_default_url': True,
+            }
+            rendered_account = render_to_string('account_table_cell.html', context)
+            rendered_account = re.sub(r'\s*\n+', r'\n', rendered_account)
+            text += f'<div>{rendered_account}</div>'
+
+        NotificationMessage.objects.create(to=to, text=text, sender=sender)

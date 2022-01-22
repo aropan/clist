@@ -3,28 +3,14 @@
 
     $url = 'https://api.prod.codedrills.io/site/io.codedrills.proto.site.ContentViewService/UserContentPreviews';
     $page = curlexec($url, 'AAAAAAUSAQMwAQ==', array("http_header" => array('Content-Type: application/grpc-web-text', 'Accept: application/grpc-web-text'), 'no_header' => true));
-    $data = base64_decode($page);
-    $a = str_split(substr($data, 0, 5));
-    $size = 0;
-    foreach ($a as $val) {
-        $size = ($size << 8) + ord($val);
-    }
-
-    $data = substr($data, 5, $size);
-
     $file = tmpfile();
-    fwrite($file, $data, $size);
+    fwrite($file, $page);
     $path = stream_get_meta_data($file)['uri'];
+    $python_bin = getenv('PYTHON_BIN');
+    exec($python_bin . " " . dirname(__FILE__) . "/decode.py $path $path");
+    $data = json_decode(file_get_contents($path), true);
 
-    exec("protoc --decode_raw < $path", $output);
-    $output = implode("\n", $output);
-    $output = preg_replace('#^1 {#m', '-', $output);
-    $output = preg_replace('#([0-9]+) {#', '\1:', $output);
-    $output = preg_replace('#^\s*}\s*$#m', '', $output);
-
-    $data = yaml_parse($output);
-
-    foreach ($data as $c) {
+    foreach ($data[1] as $c) {
         $c = $c[1];
         if (is_array($c[3]) || is_array($c[4]) || is_array($c[11][6][6]) || is_array($c[11][6][7])) {
             continue;

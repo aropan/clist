@@ -1,3 +1,6 @@
-<div class="neighbors-standings-url">
-  <span class="neighbors-standings-url-date"><small title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</small>&nbsp;</span><a href="{% url 'ranking:standings_by_id' contest.pk %}{% if not without_neighbors %}?{% query_transform request 'neighbors' 'on' 'with_replace' True %}{% endif %}">{{ contest.title }}</a>
+<div class="neighbors-standings-url{% if with_related %} small{% endif %}">
+  {% if with_related %}<span class="neighbors-standings-url-before">related&nbsp;</span>{% endif %}<a href="{% url 'ranking:standings_by_id' contest.pk %}{% if not without_neighbors %}?{% query_transform request 'neighbors' 'on' 'with_replace' True %}{% endif %}">{{ contest.title }}</a>
+  <span class="neighbors-standings-url-date">
+    <small title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</small>
+  </span>
 </div>

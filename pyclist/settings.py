@@ -456,6 +456,8 @@ DONATE_URL_ = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button
 
 ADDITION_HIDE_FIELDS_ = {'problems', 'solved'}
 
+VIRTUAL_CODER_PREFIX_ = '∨'
+
 
 class NOTIFICATION_CONF:
     EMAIL = 'email'

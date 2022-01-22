@@ -92,8 +92,9 @@ class Account(BaseModel):
 
 @receiver(pre_save, sender=Account)
 def set_account_rating(sender, instance, *args, **kwargs):
-    instance.rating = instance.info.get('rating')
-    instance.rating50 = instance.rating / 50 if instance.rating is not None else None
+    if 'rating' in instance.info:
+        instance.rating = instance.info['rating']
+        instance.rating50 = instance.rating / 50 if instance.rating is not None else None
 
 
 @receiver(post_save, sender=Account)
@@ -513,6 +514,8 @@ class Stage(BaseModel):
                         if 'cast' in field:
                             val = locate(field['cast'])(val)
                         field_values[out] = val
+                        if field.get('skip'):
+                            continue
                         if field.get('accumulate'):
                             val = round(val + ast.literal_eval(str(row.get(out, 0))), 2)
                         row[out] = val
@@ -539,7 +542,6 @@ class Stage(BaseModel):
                                 continue
                             problem['status'] = status
                             break
-
                     pbar.update()
 
                 for writer in contest.writers.all():

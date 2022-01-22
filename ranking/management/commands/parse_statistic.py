@@ -305,7 +305,7 @@ class Command(BaseCommand):
                                         contest.info.get('default_problem_full_score')
                                         or contest.resource.info.get('statistics', {}).get('default_problem_full_score')
                                     )
-                                    if default_full_score:
+                                    if default_full_score and v['result'] and v['result'][0].isdigit():
                                         if 'partial' not in v and default_full_score - float(v['result']) > 1e-9:
                                             v['partial'] = True
                                         if not v.get('partial'):
@@ -418,7 +418,7 @@ class Command(BaseCommand):
                                 wait_rating = resource_statistics.get('wait_rating')
 
                                 if no_rating and wait_rating and has_statistics:
-                                    updated = now + timedelta(hours=1)
+                                    updated = now + timedelta(minutes=10)
                                     title_re = wait_rating.get('title_re')
                                     if (
                                         (
@@ -473,7 +473,8 @@ class Command(BaseCommand):
                                     r[field_update_name] = canonize_name(r[field_update_name])
                                     if (
                                         not no_update_name and
-                                        account.name != r[field_update_name]
+                                        account.name != r[field_update_name] and
+                                        account.key != r[field_update_name]
                                     ):
                                         account.name = r[field_update_name]
                                         account.save()
@@ -498,7 +499,8 @@ class Command(BaseCommand):
                                     if 'rating' in account_info:
                                         account_info['_rating_time'] = int(now.timestamp())
                                     if 'name' in account_info:
-                                        account.name = account_info.pop('name')
+                                        name = account_info.pop('name')
+                                        account.name = name if name and name != account.key else None
 
                                     account.info.update(account_info)
                                     account.save()

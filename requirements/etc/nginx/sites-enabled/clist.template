@@ -5,8 +5,6 @@ server {
 
   charset utf-8;
 
-  location = /favicon.ico { access_log off; log_not_found off; }
-
   root $PROJECT_DIR/legacy/;
 
   rewrite ^/(calendar|list)/?(.*)?${DOLLAR} /${DOLLAR}2?view=${DOLLAR}1;
@@ -31,7 +29,7 @@ server {
   location ~ (exchange-code|index)\.php {
     try_files ${DOLLAR}uri = 404;
     include fastcgi_params;
-    fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
+    fastcgi_pass unix:/var/run/php/php-fpm.sock;
     fastcgi_index index.php;
 
     fastcgi_param  SCRIPT_FILENAME  ${DOLLAR}document_root${DOLLAR}fastcgi_script_name;
@@ -95,8 +93,15 @@ upstream channels-backend {
   server localhost:${CHANNELS_PORT};
 }
 
+log_format timed_combined ''
+  '${DOLLAR}remote_addr - ${DOLLAR}remote_user [${DOLLAR}time_local] '
+  '"${DOLLAR}request" ${DOLLAR}status ${DOLLAR}body_bytes_sent '
+  '"${DOLLAR}http_referer" "${DOLLAR}http_user_agent" '
+  '${DOLLAR}request_time ${DOLLAR}upstream_response_time ${DOLLAR}upstream_connect_time ${DOLLAR}upstream_header_time '
+  '${DOLLAR}pipe';
+
 server {
-  access_log /var/log/nginx/clist-access.log;
+  access_log /var/log/nginx/clist-access.log timed_combined;
   error_log /var/log/nginx/clist-error.log;
 
   server_name ${DOMAIN};
@@ -107,11 +112,11 @@ server {
     root /var/www/html;
   }
 
-  location = /favicon.ico { access_log off; log_not_found off; }
-
   rewrite ^/api/v([0-9]+)/(json|jsonp|yaml|xml|plist)/(.*)${DOLLAR} /api/v${DOLLAR}1/${DOLLAR}3?format=${DOLLAR}2&${DOLLAR}args last;
 
   location /static/ {
+    access_log off;
+    log_not_found off;
     root $PROJECT_DIR/nginx/;
   }
 

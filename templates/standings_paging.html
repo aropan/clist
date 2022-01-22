@@ -79,6 +79,21 @@ class="
     <div class="handle-cell-flex">
       <span>
         {% include "standings_account.html" with account=statistic.account addition=addition resource=contest.resource %}
+        {% for resource in params.resources %}
+        <div class="small">
+          {% with statistic.account.resource_coders|filter_by_resource:resource as accounts %}
+            {% if accounts %}
+              <img src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+              {% for account in accounts %}
+                {% if forloop.counter0 %}|{% endif %}
+                <span class="{% coder_color_class resource account.info %}">
+                {% include "account_table_cell.html" with account=account addition=None resource=resource without_avatar=True without_country=True with_fixed_width=False %}
+                </span>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+        </div>
+        {% endfor %}
       </span>
       {% if addition.medal %}
       <span class="trophy{% if with_detail %} trophy-detail{% endif %} {{ addition.medal|lower }}-trophy"

@@ -54,9 +54,11 @@
     {% if custom_fields %}
     {% include "field_to_select.html" with field="field" data=custom_fields %}
     {% endif %}
-  </div>
 
-  </form>
+    {% if perms.ranking.link_account %}
+    {% include "coder_filter.html" with nomultiply=True submit="link" coders=params.link_coders %}
+    {% endif %}
+  </div>
 
   {% include "chart.html" with chart=chart %}
 
@@ -72,6 +74,9 @@
             <div class="flag-width-fixed"></div>
             <div>Accounts</div>
             <div class="sortable-column" data-column="account"></div>
+          </th>
+          <th>
+            <div>Coder</div>
           </th>
           <th>
             <div class="chart-column" data-field="rating"></div>
@@ -109,6 +114,8 @@
       </tbody>
     </table>
   </div>
+
+  </form>
 </div>
 
 {% endblock %}

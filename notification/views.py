@@ -1,11 +1,13 @@
 from datetime import timedelta
 
-from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
 from django.utils.timezone import now
 from django_ical.views import ICalFeed
 
 from clist.models import Contest
 from notification.models import Calendar
+from true_coders.models import Coder
 
 
 class EventFeed(ICalFeed):
@@ -44,3 +46,24 @@ class EventFeed(ICalFeed):
 
     def item_updateddate(self, item):
         return item.modified
+
+
+@login_required
+def messages(request):
+    if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
+        coder = Coder.objects.get(user__username=request.GET['as_coder'])
+        update = False
+    else:
+        coder = request.user.coder
+        update = True
+
+    messages = coder.messages_set.order_by('-created')
+    context = {
+        'notification_messages': messages,
+    }
+    response = render(request, 'notification_messages.html', context)
+
+    if update:
+        messages.filter(is_read=False).update(is_read=True, read_at=now())
+
+    return response

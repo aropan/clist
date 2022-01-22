@@ -23,13 +23,15 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
 <h3 id="versus-title" class="text-center">
   <table>
   <tr>
-  {% for whos in versus_data.opponents %}
+  {% for whos, display_names in versus_data.opponents|zip:versus_data.display_names %}
     {% if forloop.counter0 %}<td>vs</td>{% endif %}
     <td>
       {% if versus_data.opponents|length > 2 %}
       <a href="{{ request.path }}?remove={{ forloop.counter0 }}" class="versus-action"><i class="fas fa-times fa-xs"></i></a>
       {% endif %}
-      <a href="{% url 'coder:mixed_profile' whos|join:',' %}">{% for val in whos %}<div>{{ val }}</div>{% endfor %}</a>
+      <a href="{% if whos|length > 1 or ':' in whos.0 %}{% url 'coder:mixed_profile' whos|join:',' %}{% else %}{% url 'coder:profile' whos.0 %}{% endif %}">
+      {% for val in display_names %}<div class="text-nowrap">{{ val }}</div>{% endfor %}
+      </a>
     </td>
   {% endfor %}
     <td id="col_add_to_versus" rowspan="2">
@@ -135,7 +137,11 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
           data-html="true"
         >
           {{ stat.solving|scoreformat }} ({{ stat.place }})
-          {% if stat.addition.medal %}<span class="{{ stat.addition.medal|lower }}-medal">&#9899;</span>{% endif %}
+          {% if stat.addition.medal %}
+            <span class="trophy {{ stat.addition.medal|lower }}-trophy no-user-select">
+              {% include "trophy.html" with statistic=stat %}
+            </span>
+          {% endif %}
           {% if perms.ranking.statistics_change and stat %}
             <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
           {% endif %}

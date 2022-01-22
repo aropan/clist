@@ -8,3 +8,7 @@ class InitModuleException(Exception):
 
 class ExceptionParseStandings(Exception):
     pass
+
+
+class ExceptionParseAccounts(Exception):
+    pass

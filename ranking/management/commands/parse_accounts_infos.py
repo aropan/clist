@@ -10,9 +10,10 @@ import arrow
 from attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.utils import timezone
 from django_super_deduper.merge import MergedModelInstance
+from tailslide import Percentile
 from tqdm import tqdm
 from traceback_with_variables import format_exc
 
@@ -37,6 +38,9 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--limit', default=None, type=int,
                             help='limit users for one resource (default is 1000)')
         parser.add_argument('-a', '--all', action='store_true', help='get all accounts and create if needed')
+        parser.add_argument('--update-new-year', action='store_true', help='force update new year accounts')
+        parser.add_argument('--min-rating', default=None, type=int, help='minimum rating')
+        parser.add_argument('--min-n-contests', default=None, type=int, help='minimum number of contests')
 
     @staticmethod
     def _get_plugin(module):
@@ -62,6 +66,8 @@ class Command(BaseCommand):
         now = timezone.now()
         for resource in resources:
             resource_info = resource.info.get('accounts', {})
+            if resource_info.get('skip'):
+                continue
 
             if args.all:
                 accounts = []
@@ -71,14 +77,43 @@ class Command(BaseCommand):
 
                 if args.query:
                     accounts = accounts.filter(Q(key__iregex=args.query) | Q(name__iregex=args.query))
-                elif args.force:
-                    accounts = accounts.order_by('updated')
-                else:
-                    accounts = accounts.filter(Q(updated__isnull=True) | Q(updated__lte=now))
+                elif not args.force:
+                    condition = Q(updated__isnull=True) | Q(updated__lte=now)
+                    if resource_info.get('force_on_new_year') or args.update_new_year:
+                        days = abs(now - now.replace(month=1, day=1)).days
+                        days = min(364 - days, days)
+                        if days <= 14 or args.update_new_year:
+                            new_year_condition = Q(coders__isnull=False)
+
+                            rating95 = accounts.aggregate(rating95=Percentile('rating', .95))['rating95']
+                            if rating95 is not None:
+                                new_year_condition |= Q(rating__gt=rating95)
+
+                            if args.update_new_year:
+                                update = accounts.filter(new_year_condition).exclude(condition).update(updated=now)
+                                self.logger.info(f'update new year = {update}')
+                                return
+
+                            condition |= new_year_condition & Q(modified__lt=now - timedelta(days=1))
+
+                    accounts = accounts.filter(condition)
+
+                if args.min_rating:
+                    accounts = accounts.filter(rating__gte=args.min_rating)
+                if args.min_n_contests:
+                    accounts = accounts.filter(n_contests__gte=args.min_n_contests)
+
                 total = accounts.count()
 
+                accounts = accounts.annotate(priority=Case(
+                    When(coders__isnull=False, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ))
+                accounts = accounts.order_by('-priority', 'updated')
+
                 if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):
-                    limit = resource_info.get('limit') or args.limit or 1000
+                    limit = args.limit or resource_info.get('limit') or 1000
                     accounts = accounts[:limit]
                 accounts = list(accounts)
 
@@ -141,9 +176,13 @@ class Command(BaseCommand):
                                                                                key=data['rename'])
                                 n_rename += 1
                                 pbar.set_postfix(rename=f'{n_rename}: Rename {account} to {other}')
+                                n_contests = other.n_contests + account.n_contests
+                                n_writers = other.n_writers + account.n_writers
                                 new = MergedModelInstance.create(other, [account])
                                 account.delete()
                                 account = new
+                                account.n_contests = n_contests
+                                account.n_writers = n_writers
                                 account.save()
 
                             coders = data.pop('coders', [])
@@ -156,19 +195,31 @@ class Command(BaseCommand):
 
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])
-                            if info.get('name'):
-                                account.name = info['name']
+                            if 'name' in info:
+                                name = info.pop('name')
+                                account.name = name if name and name != account.key else None
                             if 'rating' in info:
                                 info['_rating_time'] = int(now.timestamp())
                             delta = timedelta(**resource_info.get('delta', {'days': 365}))
                             delta = info.pop('delta', delta)
-                            if data.get('replace_info'):
-                                for k, v in account.info.items():
-                                    if k.endswith('_') and k not in info:
+
+                            extra = info.pop('data_', {})
+                            if isinstance(extra, dict):
+                                for k, v in extra.items():
+                                    if k and k not in info and k[0] != '_' and k[-1] != '_':
                                         info[k] = v
-                                account.info = info
-                            else:
-                                account.info.update(info)
+
+                            for k, v in account.info.items():
+                                if k and (k[0] == '_' or k[-1] == '_') and k not in info:
+                                    info[k] = v
+                            outdated = account.info.pop('outdated_', {})
+                            outdated.update(account.info)
+                            for k in info.keys():
+                                if k in outdated:
+                                    outdated.pop(k)
+                            info['outdated_'] = outdated
+                            account.info = info
+
                             account.updated = arrow.get(now + delta).ceil('day').datetime
                             account.save()
             except Exception:

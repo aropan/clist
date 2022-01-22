@@ -896,6 +896,23 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         statistics = statistics.filter(cond)
         params['countries'] = countries
 
+    # add resource accounts info
+    resources = [r for r in request.GET.getlist('resource') if r]
+    if resources:
+        resources = list(Resource.objects.filter(pk__in=resources))
+        params['resources'] = resources
+
+        resource_coders = Coder.objects.prefetch_related(Prefetch(
+            'account_set',
+            to_attr='resource_accounts',
+            queryset=Account.objects.filter(resource__in=resources),
+        ))
+        statistics = statistics.prefetch_related(Prefetch(
+            'account__coders',
+            to_attr='resource_coders',
+            queryset=resource_coders,
+        ))
+
     # filter by field to select
     for field, field_to_select in fields_to_select.items():
         values = field_to_select.get('values')
@@ -1345,9 +1362,11 @@ def get_versus_data(request, query, fields_to_select):
 
     filters = []
     urls = []
+    display_names = []
     for idx, whos in enumerate(opponents):
         filt = Q()
         us = []
+        ds = []
 
         n_accounts = 0
         for who in whos:
@@ -1355,6 +1374,7 @@ def get_versus_data(request, query, fields_to_select):
 
         for who in whos:
             url = None
+            display_name = who
             if ':' in who:
                 host, key = who.split(':', 1)
                 account = Account.objects.filter(Q(resource__host=host) | Q(resource__short_host=host), key=key).first()
@@ -1374,9 +1394,12 @@ def get_versus_data(request, query, fields_to_select):
                         accounts = list(coder.account_set.all())
                         filt |= Q(account__in=accounts)
                     url = reverse('coder:profile', args=[coder.username])
+                    display_name = coder.display_name
+            ds.append(display_name)
             us.append(url)
         if not filt:
             filt = Q(pk=-1)
+        display_names.append(ds)
         urls.append(us)
         filters.append(base_filter & filt)
 
@@ -1403,6 +1426,7 @@ def get_versus_data(request, query, fields_to_select):
     return {
         'infos': infos,
         'opponents': opponents,
+        'display_names': display_names,
         'urls': urls,
         'filters': filters,
         'contests_ids': contests_ids,
@@ -1447,7 +1471,7 @@ def versus(request, query):
     versus_data = get_versus_data(request, query, fields_to_select)
 
     # filter contests
-    contests = Contest.visible.filter(pk__in=versus_data['contests_ids']).order_by('-end_time')
+    contests = Contest.significant.filter(pk__in=versus_data['contests_ids']).order_by('-end_time')
     contests = contests.select_related('resource')
 
     search = request.GET.get('search')

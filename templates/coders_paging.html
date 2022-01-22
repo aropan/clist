@@ -19,7 +19,7 @@
     {% endwith %}
 
     <span{% if coder.user.first_name or coder.user.last_name %} data-toggle="tooltip" data-title="{{ coder.user.first_name }} {{ coder.user.last_name }}"{% endif %}>
-      <a href="{% url 'coder:profile' coder.username %}">{{ coder.username }}</a>
+      <a href="{% url 'coder:profile' coder.username %}">{{ coder.display_name }}</a>
     </span>
 
     {% if perms.true_coders.change_coder %}

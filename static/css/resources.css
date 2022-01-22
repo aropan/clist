@@ -1,0 +1,26 @@
+.resources table td,
+.resources table th {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.resources table td img {
+  vertical-align: top;
+  margin-top: 3px;
+}
+
+.resources table tr td:first-child {
+  text-align: right;
+}
+
+.resources table td {
+  white-space: nowrap;
+}
+
+.resources.panel {
+  padding: 0px;
+}
+
+.resources .badge {
+  min-width: 30px;
+}

@@ -42,6 +42,7 @@ class BaseModule(object, metaclass=ABCMeta):
         contest = kwargs.pop('contest', None)
         if contest is not None:
             kwargs.update(dict(
+                contest=contest,
                 pk=contest.pk,
                 name=contest.title,
                 url=contest.url,

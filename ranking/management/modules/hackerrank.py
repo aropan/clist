@@ -183,7 +183,7 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=Statistic.MAX_WORKERS) as executor:
             profiles = executor.map(fetch_profile, users)
-            for user, account, data in zip(users, accounts, profiles):
+            for user, data in zip(users, profiles):
                 if pbar:
                     pbar.update()
                 if not data:
@@ -210,7 +210,7 @@ class Statistic(BaseModule):
                 if avatar_url:
                     info['avatar_url'] = avatar_url
 
-                info['data'] = data
+                info['name'] = data.pop('name', None)
 
                 contest_addition_update = {}
 
@@ -232,6 +232,8 @@ class Statistic(BaseModule):
                                 update['rating_change'] = new_rating - info['rating']
                             update['new_rating'] = new_rating
                             info['rating'] = new_rating
+
+                info['data_'] = data
 
                 ret = {
                     'info': info,

@@ -290,12 +290,12 @@
 
         if (!isset($contest['key']) || !$contest['key']) $contest['key'] = date("Y", $contest['start_time']) . " " . $contest['title'];
 
-        if (!empty($contest['duration_in_secs'])) {
-            $contest['end_time'] += $contest['duration_in_secs'];
-        } else if (!empty($contest['duration'])) {
-            $contest['duration_in_secs'] = $contest['duration'];
-        } else {
-            $contest['duration_in_secs'] = $contest['end_time'] - $contest['start_time'];
+        if (empty($contest['duration_in_secs'])) {
+            if (!empty($contest['duration'])) {
+                $contest['duration_in_secs'] = $contest['duration'];
+            } else {
+                $contest['duration_in_secs'] = $contest['end_time'] - $contest['start_time'];
+            }
         }
 
         $contest['start_time'] = date('Y-m-d H:i:s', $contest['start_time']);

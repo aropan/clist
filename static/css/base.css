@@ -6,6 +6,15 @@ a {
   font-weight: normal;
 }
 
+img#logo {
+  margin: -2px;
+  height: 24px;
+}
+
+.nav-tabs li .badge {
+  font-size: 10px;
+}
+
 /*
  * Search
  */

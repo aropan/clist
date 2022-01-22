@@ -8,10 +8,10 @@ import time
 import traceback
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from pprint import pprint
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 import arrow
+import requests
 import tqdm
 from ratelimiter import RateLimiter
 
@@ -252,6 +252,7 @@ class Statistic(BaseModule):
                 Statistic.TEAM_URL_FORMAT_,
             ):
                 page = None
+                page_url = None
                 url = format_url.format(user=quote(user))
                 try:
                     ret = REQ.get(url, return_url=True)
@@ -266,10 +267,10 @@ class Statistic(BaseModule):
                         page = None
                     else:
                         raise e
-            return page
+            return page, page_url
 
         with PoolExecutor(max_workers=4) as executor:
-            for user, page in zip(users, executor.map(fetch_profle_page, users)):
+            for user, (page, url) in zip(users, executor.map(fetch_profle_page, users)):
                 if pbar:
                     pbar.update()
 
@@ -321,6 +322,14 @@ class Statistic(BaseModule):
                         value = match.group('value').strip()
                         info[key] = value
 
+                    match = re.search(r'''<header[^>]*>\s*<img[^>]*src=["'](?P<src>[^"']*)["'][^>]*>\s*<h1''', page)
+                    if match:
+                        src = urljoin(url, match.group('src'))
+                        if 'default' not in src.split('/')[-1]:
+                            response = requests.head(src)
+                            if response.status_code < 400 and response.headers.get('Content-Length', '0') != '0':
+                                info['avatar_url'] = src
+
                     contest_addition_update_params = {}
                     update = contest_addition_update_params.setdefault('update', {})
                     by = contest_addition_update_params.setdefault('by', ['key'])
@@ -364,36 +373,7 @@ class Statistic(BaseModule):
                     ret = {
                         'info': info,
                         'contest_addition_update_params': contest_addition_update_params,
+                        'replace_info': True,
                     }
 
                 yield ret
-
-
-if __name__ == "__main__":
-    statictic = Statistic(
-        name='December Cook-Off 2019',
-        url='https://www.codechef.com/COOK113?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK113',
-        key='COOK113',
-        standings_url=None,
-    )
-    pprint(statictic.get_result('lgm_1234'))
-    statictic = Statistic(
-        name='August Challenge 2019',
-        url='https://www.codechef.com/AUG19?utm_source=contest_listing&utm_medium=link&utm_campaign=AUG19',
-        key='AUG19',
-        standings_url=None,
-    )
-    pprint(statictic.get_result('lumc_'))
-    statictic = Statistic(
-        url='https://www.codechef.com/COOK109?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK109',
-        key='COOK109',
-        standings_url=None,
-    )
-    pprint(statictic.get_result('uwi'))
-    statictic = Statistic(
-        name='February Cook-Off 2015',
-        url='https://www.codechef.com/COOK55?utm_source=contest_listing&utm_medium=link&utm_campaign=COOK55',
-        key='COOK55',
-        standings_url=None,
-    )
-    pprint(statictic.get_result('aropan', 'mateusz95', 'ridowan007'))

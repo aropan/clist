@@ -11,8 +11,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import IntegrityError, transaction
-from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
-                              Prefetch, Q, Value, When)
+from django.db.models import (BigIntegerField, BooleanField, Case, Count, ExpressionWrapper, F, FloatField,
+                              IntegerField, Max, OuterRef, Prefetch, Q, Value, When)
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -32,7 +32,7 @@ from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
-from notification.models import Calendar
+from notification.models import Calendar, NotificationMessage
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
@@ -43,17 +43,7 @@ from utils.regex import get_iregex_filter, verify_regex
 logger = logging.getLogger(__name__)
 
 
-def get_profile_context(request, statistics, writers):
-    history_resources = statistics \
-        .filter(contest__resource__has_rating_history=True) \
-        .filter(contest__stage__isnull=True) \
-        .annotate(host=F('contest__resource__host')) \
-        .annotate(pk=F('contest__resource__pk')) \
-        .annotate(icon=F('contest__resource__icon')) \
-        .values('pk', 'host', 'icon') \
-        .annotate(num_contests=Count('contest')) \
-        .order_by('-num_contests')
-
+def get_profile_context(request, statistics, writers, resources):
     stats = statistics \
         .select_related('contest') \
         .filter(addition__medal__isnull=False) \
@@ -73,8 +63,7 @@ def get_profile_context(request, statistics, writers):
     filters = {}
     if search:
         filt = get_iregex_filter(
-            search,
-            'contest__resource__host', 'contest__title',
+            search, 'contest__title', 'contest__resource__host',
             mapping={
                 'writer': {'fields': ['contest__info__writers__contains']},
                 'contest': {'fields': ['contest__title__iregex']},
@@ -99,8 +88,8 @@ def get_profile_context(request, statistics, writers):
             filter_resources = list(statistics.order_by(field).distinct(field).values_list(field, flat=True))
 
         if filter_resources:
-            conditions = [Q(contest__resource__host=val) for val in filter_resources]
-            history_resources = history_resources.filter(functools.reduce(operator.ior, conditions))
+            conditions = [Q(host=host) for host in filter_resources]
+            resources = resources.filter(functools.reduce(operator.ior, conditions))
             search_resource = filter_resources[0] if len(filter_resources) == 1 else None
 
     if search_resource:
@@ -108,9 +97,15 @@ def get_profile_context(request, statistics, writers):
     writers = writers.order_by('-end_time')
     writers = writers.annotate(has_statistics=Exists('statistics'))
 
+    if not search_resource:
+        statistics = statistics.filter(contest__invisible=False)
+
+    history_resources = list(resources.filter(has_rating_history=True))
+
     context = {
         'statistics': statistics,
         'writers': writers,
+        'resources': list(resources),
         'two_columns': len(history_resources) > 1,
         'history_resources': history_resources,
         'show_history_ratings': not filters,
@@ -160,6 +155,21 @@ def coders(request, template='coders.html'):
         coders = coders.filter(Q(country__in=countries) | Q(filter_country=True))
         params['countries'] = countries
 
+    virtual = request.GET.get('virtual') or 'hide'
+    if virtual == 'hide':
+        coders = coders.filter(is_virtual=False)
+    elif virtual == 'only':
+        coders = coders.filter(is_virtual=True)
+    virtual_field = {
+        'values': [virtual],
+        'options': ['hide', 'show', 'only'],
+        'nomultiply': True,
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nohidden': True,
+    }
+
     resources = request.GET.getlist('resource')
     if resources:
         resources = [r for r in resources if r]
@@ -198,6 +208,7 @@ def coders(request, template='coders.html'):
     context = {
         'coders': coders,
         'params': params,
+        'virtual_field': virtual_field,
     }
     return template, context
 
@@ -207,34 +218,17 @@ def coders(request, template='coders.html'):
     ('profile_writers_paging.html', 'writers_page'),
 ))
 def profile(request, username, template='profile.html', extra_context=None):
-    coder = get_object_or_404(Coder, user__username=username)
-    statistics = Statistics.objects.filter(account__coders=coder)
-
-    resources = Resource.objects \
-        .prefetch_related(Prefetch(
-            'account_set',
-            queryset=Account.objects.filter(coders=coder).order_by('-n_contests'),
-            to_attr='coder_accounts',
-        )) \
-        .annotate(num_contests=SubquerySum('account__n_contests', filter=Q(coders=coder))) \
-        .order_by('-num_contests')
-
-    writers = Contest.objects.filter(writers__coders=coder)
-
-    statistics = statistics.filter(contest__invisible=False)
-    context = get_profile_context(request, statistics, writers)
-
-    if context['search_resource']:
-        resources = resources.filter(host=context['search_resource'])
-
+    coder = get_object_or_404(Coder, username=username)
+    data = _get_data_mixed_profile(request, [username])
+    context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['coder'] = coder
-    context['resources'] = resources
 
     if request.user.is_authenticated and request.user.coder == coder:
         context['without_findme'] = True
 
     if extra_context is not None:
         context.update(extra_context)
+
     return render(request, template, context)
 
 
@@ -245,10 +239,9 @@ def profile(request, username, template='profile.html', extra_context=None):
 def account(request, key, host, template='profile.html', extra_context=None):
     accounts = Account.objects.select_related('resource').prefetch_related('coders')
     account = get_object_or_404(accounts, key=key, resource__host=host)
-    statistics = Statistics.objects.filter(account=account)
 
-    writers = Contest.objects.filter(writers=account).order_by('-end_time')
-    context = get_profile_context(request, statistics, writers)
+    data = _get_data_mixed_profile(request, [account.resource.host + ':' + account.key])
+    context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['account'] = account
 
     add_account_button = False
@@ -270,25 +263,31 @@ def account(request, key, host, template='profile.html', extra_context=None):
     return render(request, template, context)
 
 
-def _get_data_mixed_profile(query):
+def _get_data_mixed_profile(request, query):
     statistics_filter = Q()
     writers_filter = Q()
-    resources_filter = Q()
+    accounts_filter = Q()
     profiles = []
 
+    if not isinstance(query, (list, tuple)):
+        query = query.split(',')
+
+    if len(query) > 20:
+        query = query[:20]
+        request.logger.warning('The query is truncated to the first 20 records')
+
     n_accounts = 0
-    for v in query.split(','):
+    for v in query:
         n_accounts += ':' in v
 
-    for v in query.split(','):
+    for v in query:
         if ':' in v:
             host, key = v.split(':', 1)
-            resource_filter = Q(resource__host=host) | Q(resource__short_host=host)
-            account = Account.objects.filter(resource_filter & Q(key=key)).first()
+            account = Account.objects.filter(Q(resource__host=host) | Q(resource__short_host=host), key=key).first()
             if account:
                 statistics_filter |= Q(account=account)
                 writers_filter |= Q(writers=account)
-                resources_filter |= Q(pk=account.pk)
+                accounts_filter |= Q(pk=account.pk)
                 profiles.append(account)
         else:
             coder = Coder.objects.filter(username=v).first()
@@ -296,24 +295,31 @@ def _get_data_mixed_profile(query):
                 if n_accounts == 0:
                     statistics_filter |= Q(account__coders=coder)
                     writers_filter |= Q(writers__coders=coder)
-                    resources_filter |= Q(coders=coder)
+                    accounts_filter |= Q(coders=coder)
                 else:
                     accounts = list(coder.account_set.all())
                     statistics_filter |= Q(account__in=accounts)
                     writers_filter |= Q(writers__in=accounts)
-                    resources_filter |= Q(pk__in={a.pk for a in accounts})
+                    accounts_filter |= Q(pk__in={a.pk for a in accounts})
                 profiles.append(coder)
-    statistics = Statistics.objects.filter(statistics_filter)
-    writers = Contest.objects.filter(writers_filter).order_by('-end_time')
 
-    resources = Resource.objects \
-        .prefetch_related(Prefetch(
-            'account_set',
-            queryset=Account.objects.filter(resources_filter).order_by('-n_contests'),
-            to_attr='coder_accounts',
-        )) \
-        .annotate(num_contests=SubquerySum('account__n_contests', filter=resources_filter)) \
-        .filter(num_contests__gt=0).order_by('-num_contests')
+    if not profiles:
+        statistics = Statistics.objects.none()
+        writers = Contest.objects.none()
+        resources = Resource.objects.none()
+    else:
+        statistics = Statistics.objects.filter(statistics_filter)
+        writers = Contest.objects.filter(writers_filter).select_related('resource').order_by('-end_time')
+
+        resources = Resource.objects \
+            .prefetch_related(Prefetch(
+                'account_set',
+                queryset=Account.objects.filter(accounts_filter).order_by('-n_contests'),
+                to_attr='coder_accounts',
+            )) \
+            .annotate(num_contests=SubquerySum('account__n_contests', filter=accounts_filter)) \
+            .annotate(num_accounts=SubqueryCount('account', filter=accounts_filter)) \
+            .filter(num_accounts__gt=0).order_by('-num_contests')
 
     return {
         'statistics': statistics,
@@ -329,11 +335,8 @@ def _get_data_mixed_profile(query):
 ))
 @context_pagination()
 def profiles(request, query, template='profile.html'):
-    data = _get_data_mixed_profile(query)
-    statistics = data['statistics']
-    statistics = statistics.filter(contest__invisible=False)
-    context = get_profile_context(request, statistics, data['writers'])
-    context['resources'] = data['resources']
+    data = _get_data_mixed_profile(request, query)
+    context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['profiles'] = data['profiles']
     context['query'] = query
     return template, context
@@ -342,7 +345,7 @@ def profiles(request, query, template='profile.html'):
 def get_ratings_data(request, username=None, key=None, host=None, statistics=None, date_from=None, date_to=None):
     if statistics is None:
         if username is not None:
-            coder = get_object_or_404(Coder, user__username=username)
+            coder = get_object_or_404(Coder, username=username)
             statistics = Statistics.objects.filter(account__coders=coder)
         else:
             account = get_object_or_404(Account, key=key, resource__host=host)
@@ -513,7 +516,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
 
 def ratings(request, username=None, key=None, host=None, query=None):
     if query:
-        data = _get_data_mixed_profile(query)
+        data = _get_data_mixed_profile(request, query)
         ratings_data = get_ratings_data(request=request, statistics=data['statistics'])
     else:
         ratings_data = get_ratings_data(
@@ -546,7 +549,7 @@ def settings(request, tab=None):
                 return HttpResponseRedirect(reverse('coder:settings', kwargs=dict(tab='notifications')))
 
     if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
-        coder = Coder.objects.get(user__username=request.GET['as_coder'])
+        coder = Coder.objects.get(username=request.GET['as_coder'])
 
     resources = coder.get_ordered_resources()
     coder.filter_set.filter(resources=[], contest__isnull=True, party__isnull=True).delete()
@@ -882,14 +885,24 @@ def change(request):
             if account.coders.filter(pk=coder.id).first():
                 raise Exception('Account is already connect to this coder')
 
-            module = Module.objects.filter(resource=resource).first()
-            if not module or not module.multi_account_allowed:
+            if resource.with_single_account():
                 if coder.account_set.filter(resource=resource).exists():
                     raise Exception('Allow only one account for this resource')
-                if account.coders.count():
+                if account.coders.filter(is_virtual=False).exists():
                     raise Exception('Account is already connect')
 
+            if resource.with_single_account():
+                virtual = account.coders.filter(is_virtual=True).first()
+                if virtual:
+                    accounts = list(virtual.account_set.all())
+                    for a in accounts:
+                        a.coders.add(coder)
+                    virtual.account_set.clear()
+                    NotificationMessage.link_accounts(to=coder, accounts=accounts)
+                    virtual.delete()
+
             account.coders.add(coder)
+            account.updated = timezone.now()
             account.save()
             return HttpResponse(json.dumps(account.dict()), content_type="application/json")
         except Exception as e:
@@ -905,6 +918,8 @@ def change(request):
                 host = request.POST.get("resource")
                 account = Account.objects.get(resource__host=host, key=value)
             account.coders.remove(coder)
+            account.updated = timezone.now()
+            account.save()
         except Exception as e:
             return HttpResponseBadRequest(e)
     elif name == "pre-delete-user":
@@ -1026,6 +1041,7 @@ def search(request, **kwargs):
 
         qs = qs.annotate(disabled=Case(
             When(coders=coder, then=Value(True)),
+            When(coders__is_virtual=True, has_multi=False, then=Value(False)),
             When(coders__isnull=False, has_multi=False, then=Value(True)),
             default=Value(False),
             output_field=BooleanField(),
@@ -1505,10 +1521,40 @@ def view_list(request, uuid):
 @context_pagination()
 def accounts(request, template='accounts.html'):
     accounts = Account.objects.select_related('resource')
+    accounts = accounts.annotate(has_coders=ExpressionWrapper(
+        Q(coders__isnull=False),
+        output_field=BooleanField()
+    ))
     if request.user.is_authenticated:
         coder = request.user.coder
         accounts = accounts.annotate(my_account=Exists('coders', filter=Q(coder=coder)))
     params = {}
+
+    action = request.GET.get('action')
+    if request.user.has_perm('link_account'):
+        link_coder = request.GET.get('coder')
+        if link_coder:
+            link_coder = Coder.objects.get(pk=link_coder)
+            params['link_coders'] = [link_coder]
+        link_accounts = request.GET.getlist('accounts')
+        if link_accounts:
+            params['link_accounts'] = set(link_accounts)
+        if action == 'link':
+            if link_accounts and link_coder:
+                link_accounts = Account.objects.filter(pk__in=link_accounts)
+                coder_url = reverse('coder:profile', args=[coder.username])
+                message = f'Added by <a href="{coder_url}">{coder.display_name}</a>.'
+                linked_accounts = []
+                for a in link_accounts:
+                    if a.coders.filter(pk=link_coder.pk).exists():
+                        continue
+                    a.coders.add(link_coder)
+                    linked_accounts.append(a)
+                if linked_accounts and not link_coder.is_virtual:
+                    NotificationMessage.link_accounts(link_coder, linked_accounts, message=message, sender=coder)
+                    request.logger.success(f'Linked {len(linked_accounts)} account(s) to {link_coder.username}')
+            query = query_transform(request, with_remove=True, accounts=None, action=None)
+            return HttpResponseRedirect(f'{request.path}?{query}')
 
     search = request.GET.get('search')
     if search:

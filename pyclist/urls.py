@@ -37,6 +37,8 @@ urlpatterns = [
     path('sitemap.xml',
          sitemap if settings.DEBUG else cache_page(86400)(sitemap),
          {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+
+    re_path(r'^privacy/$', TemplateView.as_view(template_name='privacy.html')),
 ]
 
 
