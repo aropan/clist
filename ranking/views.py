@@ -21,8 +21,8 @@ from ratelimit.decorators import ratelimit
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import (format_time, get_country_name, get_problem_short, get_problem_title, is_solved,
-                                       query_transform, slug, time_in_seconds, timestamp_to_datetime)
+from clist.templatetags.extras import (as_number, format_time, get_country_name, get_problem_short, get_problem_title,
+                                       is_solved, query_transform, slug, time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone
@@ -240,7 +240,6 @@ def standings_charts(request, context):
     statistics = statistics.prefetch_related(None)
     statistics = statistics.select_related(None)
     statistics = statistics.select_related('account')
-    statistics = statistics.order_by()
 
     find_me = request.GET.get('find_me')
     my_stat_pk = toint(find_me) if find_me else params.get('find_me')
@@ -297,7 +296,7 @@ def standings_charts(request, context):
             if is_my_stat and field not in ['score', 'problems']:
                 my_values[field] = value
 
-        is_top = stat.place_as_int is not None and stat.place_as_int <= 5 or is_my_stat
+        is_top = len(top_values) < 5 or is_my_stat
 
         scores_info = {'name': name, 'place': stat.place_as_int, 'key': stat.account.key, 'times': [], 'scores': []}
         for key, info in addition.get('problems', {}).items():
@@ -306,11 +305,15 @@ def standings_charts(request, context):
             result = info.get('result')
             if not is_solved(result):
                 continue
-            time = info.get('time')
-            if time is None:
-                continue
 
-            time = time_in_seconds(timeline, time)
+            if 'time_in_seconds' in info:
+                time = info['time_in_seconds']
+            else:
+                time = info.get('time')
+                if time is None:
+                    continue
+                time = time_in_seconds(timeline, time)
+
             problems_values[key].append(time)
             if is_my_stat:
                 my_values.setdefault('problems', {})[key] = time
@@ -322,7 +325,7 @@ def standings_charts(request, context):
                 if is_binary:
                     result = full_scores.get(key, 1)
                 scores_info['times'].append(time)
-                scores_info['scores'].append(result)
+                scores_info['scores'].append(as_number(result))
         if is_top and scores_info['times']:
             top_values.append(scores_info)
 
@@ -350,6 +353,8 @@ def standings_charts(request, context):
                 t = int(t / 60)
                 ret = f'{t // 60}:{t % 60:02d}'
             else:
+                if rounding == 'floor-second':
+                    t = int(t)
                 ret = f'{t // 60 // 60}:{t // 60 % 60:02d}:{t % 60:02d}'
             return ret
 
@@ -408,7 +413,6 @@ def standings_charts(request, context):
         charts.extend([problems_chart, total_solved_chart])
 
     if top_values:
-        top_values.sort(key=lambda s: s['place'])
         top_bins = make_bins(0, contest.duration_in_secs, n_bins=default_n_bins)
         top_chart = dict(
             field='top_scores',
@@ -432,7 +436,7 @@ def standings_charts(request, context):
                 val += d
                 datas[t] = val
             top_chart['fields'].append(field)
-            top_chart['labels'][field] = f"{scores_info['place']}. {scores_info['name']}"
+            top_chart['labels'][field] = f"{scores_info['place'] or '-'}. {scores_info['name']}"
         charts.append(top_chart)
 
     for field in contest.info.get('fields', []):
@@ -577,6 +581,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     contest_fields = contest.info.get('fields', []).copy()
     fields_types = contest.info.get('fields_types', {}).copy()
     hidden_fields = list(contest.info.get('hidden_fields', []))
+    hidden_fields_values = [v for v in request.GET.getlist('field') if v]
     problems = contest.info.get('problems', {})
     inplace_division = '_division_addition' in contest_fields
 
@@ -698,9 +703,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     map_fields_to_select = {'rating_change': 'rating'}
     for f in sorted(contest_fields):
         f = f.strip('_')
-        if f.lower() in [
-            'institution', 'room', 'affiliation', 'city', 'languages', 'school', 'class', 'job', 'region',
-            'rating_change', 'advanced', 'company', 'language', 'league', 'onsite', 'degree', 'university', 'list',
+        fk = f.lower()
+        hidden_f = fk in ['languages', 'verdicts'] and (fk not in hidden_fields or fk in hidden_fields_values)
+        if hidden_f or fk in [
+            'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region', 'rating_change',
+            'advanced', 'company', 'language', 'league', 'onsite', 'degree', 'university', 'list',
+            'group', 'group_ex',
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})
@@ -739,7 +747,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             'nourl': True,
         }
 
-    hidden_fields_values = [v for v in request.GET.getlist('field') if v]
     for v in hidden_fields_values:
         if v not in hidden_fields:
             hidden_fields.append(v)
@@ -926,6 +933,9 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                     filt = Q(**{'addition___languages__isnull': False})
                     break
                 filt |= Q(**{'addition___languages__contains': [lang]})
+        elif field == 'verdicts':
+            for verdict in values:
+                filt |= Q(**{'addition___verdicts__contains': [verdict]})
         elif field == 'rating':
             for q in values:
                 if q not in field_to_select['options']:
@@ -1005,7 +1015,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
         participants_info = n_highlight_context.get('participants_info')
         n_highlight = options.get('n_highlight')
-        advanced_by_participants_info = participants_info and n_highlight and groupby != 'languages'
+        problems_groupby = ['languages', 'verdicts']
+        advanced_by_participants_info = participants_info and n_highlight and groupby not in problems_groupby
 
         fields = OrderedDict()
         fields['groupby'] = groupby.title()
@@ -1020,16 +1031,17 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
         orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
 
-        if groupby == 'languages':
+        if groupby in problems_groupby:
+            groupby_field = groupby[:-1]
             _, before_params = statistics.query.sql_with_params()
             querysets = []
             for problem in problems:
                 key = get_problem_short(problem)
-                field = f'addition__problems__{key}__language'
+                field = f'addition__problems__{key}__{groupby_field}'
                 score = f'addition__problems__{key}__result'
                 qs = statistics \
                     .filter(**{f'{field}__isnull': False, f'{score}__isnull': False}) \
-                    .annotate(language=Cast(JSONF(field), models.TextField())) \
+                    .annotate(**{groupby_field: Cast(JSONF(field), models.TextField())}) \
                     .annotate(score=Case(
                         When(**{f'{score}__startswith': '+'}, then=1),
                         When(**{f'{score}__startswith': '-'}, then=0),
@@ -1099,10 +1111,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
         statistics = statistics.order_by(*orderby)
 
-        if groupby == 'languages':
+        if groupby in problems_groupby:
             query, sql_params = statistics.query.sql_with_params()
-            query = query.replace(f'"ranking_statistics"."{field}" AS "groupby"', '"language" AS "groupby"')
-            query = query.replace(f'GROUP BY "ranking_statistics"."{field}"', 'GROUP BY "language"')
+            query = query.replace(f'"ranking_statistics"."{field}" AS "groupby"', f'"{groupby_field}" AS "groupby"')
+            query = query.replace(f'GROUP BY "ranking_statistics"."{field}"', f'GROUP BY "{groupby_field}"')
             query = query.replace('"ranking_statistics".', '')
             query = query.replace('AVG("solving") AS "avg_score"', 'AVG("score") AS "avg_score"')
             query = query.replace('COUNT("id") AS "n_accounts"', 'COUNT("sid") AS "n_accounts"')
@@ -1520,17 +1532,23 @@ def versus(request, query):
         contests = contests.filter(resource_id__in=rids)
 
     # scoring by contests
+    def cmp(a: tuple, b: tuple) -> bool:
+        for x, y in zip(a, b):
+            if x is not None and y is not None:
+                return x < y
+        return False
+
     scores = versus_data.setdefault('scores', {})
     for contest in reversed(contests):
         best = None
         indices = []
         for idx, info in enumerate(versus_data['infos']):
             stat = info['contests'][contest.pk]
-            score = (stat.place_as_int, -stat.solving)
-            if best is None or score < best:
+            score = (stat.place_as_int, -stat.solving, stat.addition.get('penalty'))
+            if best is None or cmp(score, best):
                 best = score
-                indices = []
-            if score == best:
+                indices = [idx]
+            elif not cmp(best, score):
                 indices.append(idx)
         for idx in indices:
             info = versus_data['infos'][idx]
@@ -1630,6 +1648,10 @@ def make_versus(request):
         else:
             values = Account.objects.filter(pk__in=values).select_related('resource')
 
+        values = list(values)
+        if not values:
+            continue
+
         if key not in n_versus_mapping:
             n_versus_mapping[key] = n_versus
             n_versus += 1
@@ -1651,6 +1673,7 @@ def make_versus(request):
             request.logger.warning(f'Unknown opponents type {key}')
             continue
         whos.append(who)
+
     url = reverse('ranking:versus', args=['/vs/'.join(whos)]) if len(whos) > 1 else None
 
     context = {

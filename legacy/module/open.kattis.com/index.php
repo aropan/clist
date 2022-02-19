@@ -22,13 +22,13 @@
             preg_match_all('#
                 <tr[^>]*>\s*
                     <td[^>]*>\s*
-                        <div[^>]*>.*?</div>\s*
+                        (?:<[^>]*>\s*)+
                         <a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<title>[^<]*)</a>\s*
                     </td>\s*
                     (?:<td[^>]*>[0-9:\s]+</td>\s*)??
                     <td[^>]*>(?P<duration>[^<]*)</td>\s*
                     <td[^>]*>(?P<date>[^<]*)</td>\s*
-                    (?:<td[^>]*>\s*(?:<form[^>]*>.*?</form>\s*)?</td>\s*)?
+                    (?:<[^>]*>\s*|<button[^>]*>[^<]*</button>)*
                 </tr>
                 #msx',
                 $match[0],
@@ -38,8 +38,16 @@
             foreach ($matches as $data) {
                 $key = explode('/', $data['url']);
                 $key = end($key);
+                $date = trim($data['date']);
+                if (substr_count($date, ' ') == 1) {
+                    $date = strtotime($date);
+                    $day = 24 * 60 * 60;
+                    if ($date + $day < time()) {
+                        $date += $day;
+                    }
+                }
                 $contests[] = array(
-                    $v => $data['date'],
+                    $v => $date,
                     'title' => $data['title'],
                     'duration' => preg_replace('#^([0-9]+:[0-9]+):[0-9]+$#', '$1', $data['duration']),
                     'url' => url_merge($clean_url, $data['url']),

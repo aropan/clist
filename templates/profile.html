@@ -165,9 +165,7 @@ Number of competitions: {{ account.n_contests }}
               {% endif %}
             {% endfor %}
           </a>
-          {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-          <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-          {% endif %}
+          {% include "profile_account_actions.html" with account=account resource=account.resource %}
         </span>
       {% endif %}
     {% endwith %}
@@ -187,9 +185,7 @@ Number of competitions: {{ account.n_contests }}
             </span>
           {% endfor %}
         </a>
-        {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-        <a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-        {% endif %}
+        {% include "profile_account_actions.html" with account=account resource=account.resource %}
       </span>
     {% endfor %}
   {% endfor %}
@@ -249,7 +245,7 @@ Number of competitions: {{ account.n_contests }}
     </div>
   </div>
 
-  <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-spinner fa-spin"></i></div>
+  <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
 
   <canvas class="rating_history" id="resource_{{ hr.pk }}_rating" height="75vh">{{ hr }}</canvas>
 </div>
@@ -296,9 +292,10 @@ $(function(){
 <div class="col-xs-12">
 <h3>Contests</h3>
 
-<form method="get" action="">
+<form class="form-inline" method="get" action="">
 <div class="input-group">
-  <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter to contest name or resource host" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+  <div class="input-group-addon">Results</div>
+  <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
   <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
     <i class="fas fa-info"></i>
   </span>
@@ -309,8 +306,10 @@ $(function(){
     </button>
   </span>
 </div>
+{% if custom_fields %}
+{% include "field_to_select.html" with field="field" data=custom_fields nosm=True %}
+{% endif %}
 </form>
-<br/>
 
 {% if statistics.exists %}
 <div class="panel panel-default table-responsive">
@@ -322,6 +321,13 @@ $(function(){
       <th>Rating</th>
       <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="right">&Delta;</th>
       <th class="date">Date</th>
+
+      {% if custom_fields %}
+      {% for field in custom_fields.values %}
+      <th>{{ field|title_field|split:" "|join:"<br>" }}</th>
+      {% endfor %}
+      {% endif %}
+
       <th></th>
       <th class="title">Event</th>
     </tr>

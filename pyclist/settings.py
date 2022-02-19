@@ -431,7 +431,7 @@ STOP_EMAIL_ = getattr(conf, 'STOP_EMAIL', False)
 TIME_FORMAT_ = '%d.%m %a %H:%M'
 LIMIT_N_TOKENS_VIEW = 3
 LIMIT_TOKENS_VIEW_WAIT_IN_HOURS = 24
-YES_ = ['', '1', 'yes', 'true']
+YES_ = {'', '1', 'yes', 'true'}
 ACE_CALENDARS_ = {
     'enable': {'id': 'enable', 'name': 'Enable'},
     'disable': {'id': 'disable', 'name': 'Disable'},
@@ -460,6 +460,8 @@ DONATE_URL_ = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button
 ADDITION_HIDE_FIELDS_ = {'problems', 'solved'}
 
 VIRTUAL_CODER_PREFIX_ = '∨'
+
+DEFAULT_API_THROTTLE_AT_ = 10
 
 
 class NOTIFICATION_CONF:

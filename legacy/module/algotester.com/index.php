@@ -8,7 +8,7 @@
 
     preg_match_all('#<a[^>]*href="(?P<href>[^"]*/Contest/ViewScoreboard/(?P<id>[0-9]+))[^"]*"#', $page, $matches, PREG_SET_ORDER);
     $seen = array();
-    $scoreboard_urls = array();
+    $scoreboard_urls = array('https://algotester.com/en');
     foreach ($matches as $match) {
         if (isset($seen[$match['id']])) {
             continue;
@@ -20,7 +20,7 @@
     $seen = array();
     $tournament_ids = array();
     foreach ($scoreboard_urls as $scoreboard_url) {
-        $page = curlexec($scoreboard_url);
+        $page = curlexec($scoreboard_url, null, array('no_logmsg' => true));
         preg_match_all('#<a[^>]*href="(?P<href>[^"]*/Tournament/Display/(?P<id>[0-9]+))[^"]*"#', $page, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $match) {
@@ -32,22 +32,17 @@
         }
     }
 
-    if ($parse_full_list) {
-        $ids = range(1, 100500);
-    } else {
-        $ids = $tournament_ids;
-    }
-
+    $ids = range(1, 100500);
     $n_success = 0;
     foreach ($ids as $tournament_id) {
-        if ($parse_full_list && 2 * $n_success < $tournament_id - 10) {
+        if (1.1 * $n_success < $tournament_id - 10) {
             break;
         }
         $offset = 0;
         $limit = 100;
         do {
             $tournament_url = "https://algotester.com/en/Contest/TournamentList/$tournament_id?actions=23&offset=$offset&limit=$limit";
-            $data = curlexec($tournament_url, NULL, array("http_header" => array("X-Requested-With: XMLHttpRequest"), "json_output" => 1));
+            $data = curlexec($tournament_url, NULL, array("no_logmsg" => true, "http_header" => array("X-Requested-With: XMLHttpRequest"), "json_output" => 1));
             if (!isset($data['total'])) {
                 break;
             }
@@ -68,10 +63,11 @@
                             break;
                         }
                     }
-                    $title = $c['Name']['Text'];
-                    if (in_array($tournament_id, $tournament_ids)) {
-                        $title .= ' [events]';
+                    if (empty($url)) {
+                        $url = "https://algotester.com/en/Tournament/Display/$tournament_id";
                     }
+                    $title = $c['Name']['Text'];
+                    $invisible = in_array($tournament_id, $tournament_ids)? 'false' : 'true';
                     $contest = array(
                         'start_time' => $c['ContestStart'],
                         'end_time' => $c['ContestEnd'],
@@ -81,6 +77,7 @@
                         'rid' => $RID,
                         'timezone' => $TIMEZONE,
                         'key' => $c['Id'],
+                        'invisible' => $invisible,
                     );
                     if (!empty($standings_url)) {
                         $contest['standings_url'] = $standings_url;

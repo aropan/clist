@@ -3,22 +3,25 @@
     <channel>
     <title>Contests list on {$smarty.server.HTTP_HOST}</title>
     <link>http://{$smarty.server.HTTP_HOST}/</link>
-    <description>List of the competition for sports programming from the following resources: {$data.resources|join:", "}</description>
+    <description>List of the competition for sports programming from the following resources: {", "|join:$data.resources}</description>
     <managingEditor>aropan@clist.by (Aleksey Ropan)</managingEditor>
     <webMaster>aropan@clist.by (Aleksey Ropan)</webMaster>
     <pubDate>{$smarty.now|date_format:"%a, %e %b %G %T %Z"}</pubDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
-    <atom:link href="http://{$smarty.server.HTTP_HOST}{$smarty.server.REQUEST_URI|escape}" rel="self" type="application/rss+xml" />
+    <atom:link href="https://{$smarty.server.HTTP_HOST}{$smarty.server.REQUEST_URI|escape}" rel="self" type="application/rss+xml" />
 {foreach from=$data.contests item=contest}
     <item>
       <title>{$contest.title}</title>
       <link>{$contest.url|escape}</link>
       <description><![CDATA[
-        <font size="+1"><b>{$contest.title}</b></font><br>
-        <br>
-        Start: <b>{$contest.date.start.time}</b> <a href="{$contest.date.start.url|escape}">#</a><br>
-        Finish: <b>{$contest.date.end.time}</b> <a href="{$contest.date.end.url|escape}">#</a><br>
+        {if $contest.standings_url}
+        <a href="{$contest.standings_url|escape}">Standings</a><br>
+        {/if}
+        Start time: <a href="{$contest.date.start.url|escape}">{$contest.date.start.time}</a><br>
+        End time: <a href="{$contest.date.end.url|escape}">{$contest.date.end.time}</a><br>
+        {if $contest.duration}
         Duratinon: {$contest.duration}<br>
+        {/if}
         Resource: <a href="http://{$contest.resource}">{$contest.resource}</a><br>
       ]]></description>
       <author>{$contest.resource}</author>

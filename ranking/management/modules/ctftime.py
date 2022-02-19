@@ -57,13 +57,15 @@ class Statistic(BaseModule):
                 if 'solving' in row:
                     row['percent'] = f'{row["solving"] * 100 / max_score:.2f}'
 
+        options = {}
         has_medals = not re.search(r'\bqual', self.name, flags=re.I) and re.search(r'\bfinal', self.name, flags=re.I)
-        medals = [{'name': 'gold', 'count': 1}] if has_medals else []
+        if has_medals:
+            options['medals'] = [{'name': 'gold', 'count': 1}]
 
         return dict(
             standings_url=self.url,
             result=results,
-            options={'medals': medals},
+            options=options,
         )
 
     @staticmethod

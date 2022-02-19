@@ -1,21 +1,28 @@
 import json
 
+import arrow
 from django.conf.urls import re_path
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.db.models import CharField, IntegerField, JSONField
+from django.db.models import CharField, IntegerField, JSONField, Value
 from django.db.models.expressions import F
 from django.db.models.functions import Cast
 from django.urls import reverse
-from pytimeparse.timeparse import timeparse
+from django.utils.timezone import now
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 from tastypie.utils import trailing_slash
 
 from clist.api.common import BaseModelResource as CommmonBaseModuelResource
+from clist.api.common import is_true_value
 from clist.api.paginator import EstimatedCountPaginator
+from clist.api.serializers import ContestAtomSerializer, use_in_atom_format
 from clist.models import Contest, Resource
+from clist.templatetags.extras import format_time, hr_timedelta
+from clist.templatetags.extras import timezone as set_timezone
+from pyclist.context_processors import coder_time_info
 from ranking.models import Account, Statistics
 from true_coders.models import Coder, Filter
+from utils.datetime import parse_duration
 
 
 class BaseModelResource(CommmonBaseModuelResource):
@@ -56,12 +63,13 @@ class ResourceResource(BaseModelResource):
     n_accounts = fields.IntegerField('n_accounts')
     n_contests = fields.IntegerField('n_contests')
     total_count = fields.BooleanField()
+    url = fields.CharField('url', use_in=use_in_atom_format)
 
     class Meta(BaseModelResource.Meta):
         abstract = False
         queryset = Resource.objects.all()
         resource_name = 'resource'
-        excludes = ('total_count', )
+        excludes = ('total_count', 'url')
         filtering = {
             'total_count': ['exact'],
             'id': ['exact', 'in'],
@@ -87,6 +95,8 @@ class ContestResource(BaseModelResource):
     start = fields.DateTimeField('start_time')
     end = fields.DateTimeField('end_time')
     parsed_at = fields.DateTimeField('parsed_time', null=True)
+    upcoming = fields.BooleanField(help_text='Boolean data (default true if format is atom). Filter upcoming contests')  # noqa
+    format_time = fields.BooleanField(help_text='Boolean data (default true if format is atom). Convert time to user timezone and timeformat')  # noqa
     duration = fields.DateTimeField('duration_in_secs', help_text='Time delta: Ex: "864000" or "10 days"')
     href = fields.CharField('url')
     filtered = fields.BooleanField(help_text='Use user filters')
@@ -94,15 +104,25 @@ class ContestResource(BaseModelResource):
     problems = fields.CharField('problems', null=True, help_text='Dict or List data')
     with_problems = fields.BooleanField()
     total_count = fields.BooleanField()
+    releated_resource = fields.ForeignKey(ResourceResource, 'resource', use_in=use_in_atom_format, full=True)
+    updated = fields.DateTimeField('updated', use_in=use_in_atom_format)
+    start_time = fields.DateTimeField('start_time', use_in=use_in_atom_format)
+    start_time__during = fields.DateTimeField(help_text='Time delta: Ex: "864000" or "10 days" (default "1 day" if format is atom)')  # noqa
+    end_time__during = fields.DateTimeField(help_text='Time delta: Ex: "864000" or "10 days"')
 
     class Meta(BaseModelResource.Meta):
         abstract = False
         queryset = Contest.visible.all()
         resource_name = 'contest'
-        excludes = ('filtered', 'category', 'total_count', 'with_problems')
+        excludes = ('filtered', 'category', 'total_count', 'with_problems', 'upcoming', 'format_time',
+                    'releated_resource', 'updated', 'start_time', 'start_time__during', 'end_time__during')
         filtering = {
             'total_count': ['exact'],
             'with_problems': ['exact'],
+            'upcoming': ['exact'],
+            'format_time': ['exact'],
+            'start_time__during': ['exact'],
+            'end_time__during': ['exact'],
             'id': ['exact', 'in'],
             'resource_id': ['exact', 'in'],
             'resource': ['exact'],
@@ -116,6 +136,7 @@ class ContestResource(BaseModelResource):
             'category': ['exact'],
         }
         ordering = ['id', 'event', 'start', 'end', 'resource_id', 'duration', 'parsed_at']
+        serializer = ContestAtomSerializer()
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
@@ -128,49 +149,82 @@ class ContestResource(BaseModelResource):
             problems = json.loads(problems)
         bundle.data['problems'] = problems
 
+        bundle.data.pop('upcoming', None)
+        bundle.data.pop('format_time', None)
+        bundle.data.pop('start_time__during', None)
+        bundle.data.pop('end_time__during', None)
+
+        format_time_info = getattr(bundle.obj, 'format_time_info', None)
+        if format_time_info:
+            start = set_timezone(arrow.get(bundle.data['start']), format_time_info['timezone'])
+            bundle.data['start'] = format_time(start, format_time_info['timeformat'])
+            end = set_timezone(arrow.get(bundle.data['end']), format_time_info['timezone'])
+            bundle.data['end'] = format_time(end, format_time_info['timeformat'])
+            bundle.data['duration'] = hr_timedelta(bundle.data['duration'])
+
         return bundle
 
     def build_filters(self, filters=None, *args, **kwargs):
         filters = filters or {}
+        upcoming = filters.pop('upcoming', None)
         filtered = filters.pop('filtered', None)
         category = filters.pop('category', 'api')
         resource = filters.pop('resource', None)
         with_problems = filters.pop('with_problems', None)
+        format_time = filters.pop('format_time', None)
+        start_time__during = filters.pop('start_time__during', None)
+        end_time__during = filters.pop('end_time__during', None)
         filters = super().build_filters(filters, *args, **kwargs)
         if filtered is not None:
             filters['filtered'] = filtered[-1]
             filters['category'] = category[-1]
         if resource:
             filters['resource__host__in'] = ','.join(resource).split(',')
+        if upcoming:
+            filters['upcoming'] = upcoming[-1]
         if with_problems:
-            filters['with_problems'] = with_problems
+            filters['with_problems'] = with_problems[-1]
+        if format_time:
+            filters['format_time'] = format_time[-1]
+        if start_time__during:
+            filters['start_time__during'] = start_time__during[-1]
+        if end_time__during:
+            filters['end_time__during'] = end_time__during[-1]
         return filters
 
     def apply_filters(self, request, applicable_filters):
-        filtered = None
-        category = 'api'
+        is_atom = request.GET.get('format') in ['atom', 'rss']
         for f in list(applicable_filters.keys()):
             if f.startswith('duration'):
-                v = applicable_filters.pop(f)
-                v = int(v) if v.isdigit() else timeparse(v)
-                applicable_filters[f] = v
-            elif f == 'filtered':
-                filtered = applicable_filters.pop(f).lower() in ['true', 'yes', '1']
-            elif f == 'category':
-                category = applicable_filters.pop(f)
+                applicable_filters[f] = parse_duration(applicable_filters[f]).total_seconds()
+        filtered = applicable_filters.pop('filtered', None)
+        category = applicable_filters.pop('category', 'api')
+        upcoming = applicable_filters.pop('upcoming', 'true' if is_atom else None)
         with_problems = applicable_filters.pop('with_problems', None)
+        format_time = applicable_filters.pop('format_time', 'true' if is_atom else None)
+
+        if is_atom and 'start_time__during' not in applicable_filters:
+            applicable_filters['start_time__during'] = '1 day'
 
         qs = super().apply_filters(request, applicable_filters)
         qs = qs.select_related('resource')
 
         if filtered is not None and request.user:
             filter_ = request.user.coder.get_contest_filter([category])
-            if not filtered:
+            if not is_true_value(filtered):
                 filter_ = ~filter_
             qs = qs.filter(filter_)
 
-        if with_problems and with_problems[0].lower() in ['yes', 'true', '1']:
+        if is_true_value(with_problems):
             qs = qs.annotate(problems=Cast(KeyTextTransform('problems', 'info'), CharField()))
+
+        if is_true_value(format_time):
+            time_info = coder_time_info(request)
+            qs = qs.annotate(format_time_info=Value(time_info, JSONField()))
+
+        if upcoming is not None:
+            query = 'end_time__gt' if is_true_value(upcoming) else 'end_time__lte'
+            qs = qs.filter(**{query: now()})
 
         return qs
 
@@ -216,7 +270,9 @@ class StatisticsResource(BaseModelResource):
         filters = filters or {}
         tmp = {}
         for k in 'new_rating__isnull', 'rating_change__isnull', 'coder_id', 'with_problems', 'with_more_fields':
-            tmp[k] = filters.pop(k, None)
+            val = filters.pop(k, None)
+            if val:
+                tmp[k] = val[0]
         filters = super().build_filters(filters, *args, **kwargs)
         filters.update(tmp)
         return filters
@@ -238,22 +294,22 @@ class StatisticsResource(BaseModelResource):
         qs = super().apply_filters(request, applicable_filters)
         qs = qs.select_related('account', 'contest')
 
-        if rating_change_isnull:
-            qs = qs.filter(addition__rating_change__isnull=rating_change_isnull[0] in ['true', '1', 'yes'])
-        if new_rating_isnull:
-            qs = qs.filter(addition__new_rating__isnull=new_rating_isnull[0] in ['true', '1', 'yes'])
-        if coder_id:
-            qs = qs.filter(account__coders=coder_id[0])
+        if rating_change_isnull is not None:
+            qs = qs.filter(addition__rating_change__isnull=is_true_value(rating_change_isnull))
+        if new_rating_isnull is not None:
+            qs = qs.filter(addition__new_rating__isnull=is_true_value(new_rating_isnull))
+        if coder_id is not None:
+            qs = qs.filter(account__coders=coder_id)
 
         qs = qs \
             .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
             .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
             .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField()))
 
-        if with_problems and with_problems[0].lower() in ['yes', 'true', '1']:
+        if is_true_value(with_problems):
             qs = qs.annotate(problems=Cast(KeyTextTransform('problems', 'addition'), JSONField()))
 
-        if with_more_fields:
+        if is_true_value(with_more_fields):
             qs = qs.annotate(more_fields=Cast(F('addition'), JSONField()))
 
         return qs
@@ -327,7 +383,7 @@ def use_in_me_only(bundle, *args, **kwargs):
 
 
 def use_in_detail_only(bundle, *args, **kwargs):
-    with_accounts = bundle.request.GET.get('with_accounts') in ['true', '1', 'yes']
+    with_accounts = is_true_value(bundle.request.GET.get('with_accounts'))
     query_by_id = bool(bundle.request.GET.get('id') or bundle.request.GET.get('username'))
     url = reverse('clist:api:v2:api_dispatch_list', kwargs={'api_name': 'v2', 'resource_name': 'coder'})
     return with_accounts or query_by_id or not (url == bundle.request.path or use_in_me_only(bundle, *args, **kwargs))

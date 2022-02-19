@@ -1,0 +1,14 @@
+{% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
+<a class="btn btn-default" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+{% endif %}
+
+{% if resource.module.has_accounts_infos_update %}
+{% with delta=account.updated|timedelta_with_now %}
+{% if delta.days < 1 %}
+<a class="btn btn-default" target="_blank" disabled>
+<span title="{% if 0 < delta.total_seconds %} within {{ account.updated|naturaltime }}{% else %}in progress{% endif %}" data-toggle="tooltip" data-placement="top">
+  <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
+</a>
+{% endif %}
+{% endwith %}
+{% endif %}

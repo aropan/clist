@@ -154,6 +154,7 @@ a.solution:hover span {
   overflow-y: auto;
 }
 
+.my-stat .advance,
 .advance {
   font-weight: bold;
 }
@@ -197,10 +198,6 @@ a.solution:hover span {
   margin-bottom: 10px;
 }
 
-#standings-filters > * {
-  margin-bottom: 5px;
-}
-
 #standings-groupby > div {
   padding: 0px;
 }
@@ -227,10 +224,6 @@ a.solution:hover span {
 
 #timeline-buttons {
   display: inline-block;
-}
-
-#timeline-buttons > * {
- margin-bottom: 5px;
 }
 
 #timeline-text {

@@ -15,6 +15,16 @@ img#logo {
   font-size: 10px;
 }
 
+.btn-group,
+.input-group {
+  margin-bottom: 5px;
+}
+
+[disabled],
+:disabled {
+  cursor: default !important;
+}
+
 /*
  * Search
  */

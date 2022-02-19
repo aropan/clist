@@ -110,7 +110,7 @@ class Command(BaseCommand):
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
 
         if limit:
-            contests = contests.order_by('-start_time')[:limit]
+            contests = contests.order_by('-end_time')[:limit]
 
         with transaction.atomic():
             for c in contests:
@@ -118,8 +118,8 @@ class Command(BaseCommand):
                 delay_on_success = module.delay_on_success or module.max_delay_after_end
                 if now < c.end_time:
                     if module.long_contest_divider:
-                        delay_on_success = c.duration / module.long_contest_divider
-                    if module.long_contest_idle and c.duration < module.long_contest_idle:
+                        delay_on_success = c.full_duration / module.long_contest_divider
+                    if module.long_contest_idle and c.full_duration < module.long_contest_idle:
                         delay_on_success = timedelta(minutes=1)
                     if c.end_time < now + delay_on_success:
                         delay_on_success = c.end_time + module.min_delay_after_end - now
@@ -181,8 +181,8 @@ class Command(BaseCommand):
                         for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
                             if with_stats:
                                 statistics_by_key[s.account.key] = s.addition
+                                has_statistics = True
                             statistics_ids.add(s.pk)
-                            has_statistics = with_stats
                     standings = plugin.get_standings(users=users, statistics=statistics_by_key)
 
                 with transaction.atomic():
@@ -248,7 +248,7 @@ class Command(BaseCommand):
                         d_problems = {}
                         teams_viewed = set()
                         has_hidden = False
-                        languages = set()
+                        problems_values = defaultdict(set)
                         hidden_fields = set()
                         medals_skip = set()
 
@@ -360,6 +360,9 @@ class Command(BaseCommand):
 
                             results.append(r)
 
+                        resource_statistics = contest.resource.info.get('statistics', {})
+                        wait_rating = resource_statistics.get('wait_rating')
+
                         for r in tqdm(results, desc=f'update results {contest}'):
                             member = r.pop('member')
                             skip_result = r.get('_no_update_n_contests')
@@ -409,13 +412,12 @@ class Command(BaseCommand):
                                     contest.end_time > now
                                 ):
                                     return
+
                                 nonlocal n_upd_account_time
                                 no_rating = with_stats and 'new_rating' not in stats and 'rating_change' not in stats
 
-                                resource_statistics = contest.resource.info.get('statistics', {})
                                 updated_delta = resource_statistics.get('account_updated_delta', {'days': 1})
                                 updated = now + timedelta(**updated_delta)
-                                wait_rating = resource_statistics.get('wait_rating')
 
                                 if no_rating and wait_rating and has_statistics:
                                     updated = now + timedelta(minutes=10)
@@ -508,13 +510,18 @@ class Command(BaseCommand):
                             def update_stat_info():
                                 problems = r.get('problems', {})
 
-                                _languages = set()
-                                for problem in problems.values():
-                                    if problem.get('language'):
-                                        languages.add(problem['language'])
-                                        _languages.add(problem['language'])
-                                if '_languages' not in r and _languages:
-                                    r['_languages'] = list(sorted(_languages))
+                                for field, out in (
+                                    ('language', '_languages'),
+                                    ('verdict', '_verdicts'),
+                                ):
+                                    values = set()
+                                    for problem in problems.values():
+                                        value = problem.get(field)
+                                        if value:
+                                            problems_values[out].add(value)
+                                            values.add(value)
+                                    if out not in r and values:
+                                        r[out] = list(values)
 
                                 advance = contest.info.get('advance')
                                 if advance:
@@ -626,7 +633,7 @@ class Command(BaseCommand):
                                     contest.start_time <= now < contest.end_time and
                                     not contest.resource.info.get('parse', {}).get('no_calculate_time', False) and
                                     resource.module.long_contest_idle and
-                                    contest.duration < resource.module.long_contest_idle and
+                                    contest.full_duration < resource.module.long_contest_idle and
                                     'penalty' in fields_set
                                 )
 
@@ -704,11 +711,21 @@ class Command(BaseCommand):
                                 contest.has_hidden_results = has_hidden
                                 contest.save()
 
+                            for field, values in problems_values.items():
+                                if values:
+                                    field = field.strip('_')
+                                    values = list(sorted(values))
+                                    if canonize(values) != canonize(contest.info.get(field)):
+                                        contest.info[field] = values
+                                    hidden_fields.add(field)
+
                             timing_delta = standings.get('timing_statistic_delta')
                             if now < contest.end_time:
                                 timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
                             if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
                                 timing_delta = timing_delta or timedelta(minutes=10)
+                            if wait_rating and not has_statistics and results:
+                                timing_delta = timing_delta or timedelta(hours=2)
                             timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
                             if timing_delta is not None:
                                 self.logger.info(f'Statistic timing delta = {timing_delta}')
@@ -770,11 +787,6 @@ class Command(BaseCommand):
 
                                 update_problems(contest, problems=standings_problems, force=force_problems)
 
-                            if languages:
-                                languages = list(sorted(languages))
-                                if canonize(languages) != canonize(contest.info.get('languages')):
-                                    contest.info['languages'] = languages
-
                             contest.save()
 
                             progress_bar.set_postfix(n_fields=len(fields))
@@ -819,11 +831,11 @@ class Command(BaseCommand):
                     contest.n_statistics and
                     now < contest.end_time and
                     resource.module.long_contest_idle and
-                    contest.duration < resource.module.long_contest_idle
+                    contest.full_duration < resource.module.long_contest_idle
                 ):
                     delay = timedelta(minutes=1)
                 elif contest.n_statistics and now < contest.end_time and resource.module.long_contest_divider:
-                    delay = contest.duration / (resource.module.long_contest_divider ** 2)
+                    delay = contest.full_duration / (resource.module.long_contest_divider ** 2)
                 else:
                     delay = resource.module.delay_on_error
                 if now < contest.end_time < now + delay:

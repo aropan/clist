@@ -472,7 +472,12 @@ class requester():
                 headers = {}
             if self.ref_url and 'Referer' not in headers:
                 headers.update({"Referer": self.ref_url})
-            if not self.last_url or urllib.parse.urlparse(self.last_url).netloc != urllib.parse.urlparse(url).netloc:
+            if self.last_url:
+                prev = urllib.parse.urlparse(self.last_url)
+                curr = urllib.parse.urlparse(url)
+                if prev.netloc != curr.netloc or prev.path != curr.path:
+                    self.opener.addheaders = self._init_opener_headers
+            else:
                 self.opener.addheaders = self._init_opener_headers
             if headers:
                 h = dict(self.opener.addheaders)

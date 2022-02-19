@@ -9,10 +9,6 @@
   text-align: left;
 }
 
-#coders-filters > * {
-  margin-bottom: 5px;
-}
-
 #coders table.table th > div {
   display: inline-block;
 }

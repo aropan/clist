@@ -298,10 +298,13 @@
 
         //        if ($dduration && ($hduration + $mduration))
         //            $duration = sprintf("%d days<br>%02d:%02d", $dduration, $hduration, $mduration); else
-                if ($dduration > 1)
+                if ($dduration > 1) {
                     $duration = sprintf("%d days", (int)(($duration + 17280) / (24 * 60 * 60)));
-                else
+                } else if ($duration > 0) {
                     $duration = sprintf("%02d:%02d", $hduration, $mduration);
+                } else {
+                    $duration = "";
+                }
 
                 $title = $contest['title'];
 
@@ -388,6 +391,7 @@
                 $data_contest['date']['timeLeft'] = $time_left;
                 $data_contest['title'] = $contest['title'];
                 $data_contest['url'] = $contest['url'];
+                $data_contest['standings_url'] = $contest['n_statistics']? 'https://clist.by/standings/' . $contest['id'] . '/' : $contest['standings_url'];
                 $data_contest['resource'] = $contest['host'];
                 $data_contest['status'] = $state;
                 $data_contest['guid'] = md5($contest['key']);
@@ -436,7 +440,6 @@
     switch ($view)
     {
         case 'rss':
-//            print_r($data);
             $smarty->caching = 1;
             $smarty->display('rss.xml');
             break;

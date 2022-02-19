@@ -173,6 +173,9 @@
                   var mod = value % 60
                   ret += ':' + (mod < 10? '0' : '') + mod
                 {% else %}
+                  {% if chart.x_ticks_time_rounding == 'floor-second' %}
+                  value = Math.floor(value)
+                  {% endif %}
                   var ret = Math.floor(value / 60 / 60)
                   var mod = Math.floor(value / 60 % 60)
                   ret += ':' + (mod < 10? '0' : '') + mod

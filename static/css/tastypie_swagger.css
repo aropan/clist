@@ -86,3 +86,7 @@
     font-family: "Droid Sans", sans-serif;
     max-width: none !important;
 }
+
+samp {
+    color: #888;
+}

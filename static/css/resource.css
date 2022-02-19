@@ -28,11 +28,9 @@ table.table.problems tr .title {
   text-align: left;
 }
 
-#resource-filters > * {
-  margin-bottom: 5px;
-}
-
-#resource-tables {
-  display: flex;
-  flex-wrap: wrap;
+@media (min-width: 992px) {
+  #resource-tables {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }

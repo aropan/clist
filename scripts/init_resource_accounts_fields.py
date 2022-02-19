@@ -26,7 +26,7 @@ def main(host=None):
                 info = info['info']
                 info = flatten(info, reducer=make_reducer(delimiter='__'))
                 for k, v in info.items():
-                    if k.startswith('_') or k.endswith('_') or '___' in k:
+                    if Account.is_special_info_field(k) or '___' in k:
                         continue
                     fields_types[k].add(type(v).__name__)
                 pbar.update()

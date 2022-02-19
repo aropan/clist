@@ -15,7 +15,7 @@ from urllib.parse import urlencode, urljoin
 
 import pytz
 
-from clist.templatetags.extras import as_number
+from clist.templatetags.extras import as_number, is_solved
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -317,7 +317,6 @@ class Statistic(BaseModule):
 
                     problems = r.setdefault('problems', {})
                     for i, s in enumerate(row['problemResults']):
-
                         k = result_problems[i]['index']
                         points = float(s['points'])
                         if contest_type == 'IOI' and 'pointsInfo' in s:
@@ -469,11 +468,12 @@ class Statistic(BaseModule):
                 problems = r.setdefault('problems', {})
                 k = submission['problem']['index']
                 p = problems.setdefault(k, {})
+
                 if upsolve:
                     p = p.setdefault('upsolving', {})
-                if 'submission_id' not in p:
+                if 'submission_id' not in p and ('result' not in p or is_solved(p['result']) <= is_accepted):
                     p.update(info)
-                    if 'result' not in p:
+                    if 'result' not in p or is_solved(p['result']) != is_accepted:
                         p['result'] = '+' if is_accepted else '-1'
                 elif upsolve:
                     v = str(p.get('result'))

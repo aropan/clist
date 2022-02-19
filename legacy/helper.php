@@ -44,24 +44,33 @@
     }
 
     $PREV_TIME = microtime_float();
-    $PREV_MSG = "\n";
+    $NLOGMSG = 0;
+
+    function crop_logmsg() {
+        $all_lines = file(LOGFILE);
+        $lines = array_slice($all_lines , -COUNTLINEINLOGFILE);
+        file_put_contents(LOGFILE, implode('', $lines));
+    }
 
     function logmsg($msg = '')
     {
         global $PREV_TIME;
-        global $PREV_MSG;
+        global $NLOGMSG;
 
         $curr_time = microtime_float();
-        $a = file_exists(LOGFILE)? file(LOGFILE) : array();
-        if (count($a)) $a = array_slice($a, 1);
-        file_put_contents(LOGFILE,
-            $msg . "\n" .
-            date('d.m  H:i:s   ', $curr_time) . sprintf("+%-7.2lf-  ", $curr_time - $PREV_TIME) . $PREV_MSG . "\n" .
-            implode(array_slice($a, 0, COUNTLINEINLOGFILE - 1))
-        );
+        $msg = date('d.m  H:i:s   ', $curr_time) . sprintf("+%-7.2lf-  ", $curr_time - $PREV_TIME) . $msg . "\n";
 
-        $PREV_MSG = $msg;
+        $fp = fopen(LOGFILE, 'a');
+        fwrite($fp, $msg);
+        fclose($fp);
+
+        if ($NLOGMSG == 0) {
+            register_shutdown_function('crop_logmsg');
+        }
+
+
         $PREV_TIME = $curr_time;
+        $NLOGMSG += 1;
     }
 
 
@@ -132,7 +141,6 @@
             curl_setopt($CID, CURLOPT_HEADER, true);
         }
 
-        logmsg("URL: " . (CACHE? "[cached] " : "") . "`$url`");
         $cachefile = CACHEDIR . "/" . parse_url($url, PHP_URL_HOST) . "-" . md5(preg_replace("#/?timeMin=[^&]*#", "", $url)) . ".html";
         if ($postfields !== NULL)
         {
@@ -160,9 +168,15 @@
                     }
                 }
             }
-            file_put_contents($cachefile, $page);
-            if (substr(sprintf("%o", fileperms($cachefile)), -4) != "0766")
-                chmod($cachefile, 0766);
+            if (CACHE) {
+                file_put_contents($cachefile, $page);
+                if (substr(sprintf("%o", fileperms($cachefile)), -4) != "0766") {
+                    chmod($cachefile, 0766);
+                }
+            }
+        }
+        if (!isset($params["no_logmsg"])) {
+            logmsg("URL: " . (CACHE? "[cached] " : "") . "`$url`");
         }
         if (curl_errno($CID)) {
             logmsg('ERROR ' . curl_errno($CID) . ': ' . curl_error($CID));

@@ -59,7 +59,6 @@ def get_profile_context(request, statistics, writers, resources):
         .order_by('-contest__end_time')
 
     search = request.GET.get('search')
-    search_resource = None
     filters = {}
     if search:
         filt = get_iregex_filter(
@@ -90,7 +89,10 @@ def get_profile_context(request, statistics, writers, resources):
         if filter_resources:
             conditions = [Q(host=host) for host in filter_resources]
             resources = resources.filter(functools.reduce(operator.ior, conditions))
-            search_resource = filter_resources[0] if len(filter_resources) == 1 else None
+
+    history_resources = list(resources.filter(has_rating_history=True))
+    resources = list(resources)
+    search_resource = resources[0] if len(resources) == 1 else None
 
     if search_resource:
         writers = writers.filter(resource__host=search_resource)
@@ -100,7 +102,26 @@ def get_profile_context(request, statistics, writers, resources):
     if not search_resource:
         statistics = statistics.filter(contest__invisible=False)
 
-    history_resources = list(resources.filter(has_rating_history=True))
+    # custom fields
+    custom_fields = None
+    if search_resource:
+        stat = statistics.filter(contest__stage__isnull=True).first()
+        if stat:
+            options = []
+            for k in stat.addition.keys():
+                if Statistics.is_special_addition_field(k):
+                    continue
+                options.append(k)
+            options.sort()
+            fields = request.GET.getlist('field')
+            custom_fields = {
+                'values': [v for v in fields if v and v in options],
+                'options': options,
+                'noajax': True,
+                'nogroupby': True,
+                'nourl': True,
+                'nohidden': True,
+            }
 
     context = {
         'statistics': statistics,
@@ -114,6 +135,7 @@ def get_profile_context(request, statistics, writers, resources):
         'search_resource': search_resource,
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
+        'custom_fields': custom_fields,
     }
 
     return context
@@ -280,15 +302,14 @@ def _get_data_mixed_profile(request, query):
     for v in query:
         n_accounts += ':' in v
 
+    account_prefilter = Q()
+    n_coder = 0
     for v in query:
         if ':' in v:
             host, key = v.split(':', 1)
-            account = Account.objects.filter(Q(resource__host=host) | Q(resource__short_host=host), key=key).first()
-            if account:
-                statistics_filter |= Q(account=account)
-                writers_filter |= Q(writers=account)
-                accounts_filter |= Q(pk=account.pk)
-                profiles.append(account)
+            account_prefilter |= (Q(resource__host=host) | Q(resource__short_host=host)) & Q(key=key)
+        elif n_coder:
+            request.logger.warning(f'Coder {v} was skipped: only the first one is used')
         else:
             coder = Coder.objects.filter(username=v).first()
             if coder:
@@ -302,6 +323,14 @@ def _get_data_mixed_profile(request, query):
                     writers_filter |= Q(writers__in=accounts)
                     accounts_filter |= Q(pk__in={a.pk for a in accounts})
                 profiles.append(coder)
+                n_coder += 1
+
+    if account_prefilter:
+        for account in Account.objects.filter(account_prefilter):
+            statistics_filter |= Q(account=account)
+            writers_filter |= Q(writers=account)
+            accounts_filter |= Q(pk=account.pk)
+            profiles.append(account)
 
     if not profiles:
         statistics = Statistics.objects.none()
@@ -317,6 +346,7 @@ def _get_data_mixed_profile(request, query):
                 queryset=Account.objects.filter(accounts_filter).order_by('-n_contests'),
                 to_attr='coder_accounts',
             )) \
+            .select_related('module') \
             .annotate(num_contests=SubquerySum('account__n_contests', filter=accounts_filter)) \
             .annotate(num_accounts=SubqueryCount('account', filter=accounts_filter)) \
             .filter(num_accounts__gt=0).order_by('-num_contests')
@@ -1115,6 +1145,9 @@ def search(request, **kwargs):
         if field == 'languages':
             qs = contest.info.get('languages', [])
             qs = ['any'] + [q for q in qs if not text or text.lower() in q.lower()]
+        elif field == 'verdicts':
+            qs = contest.info.get('verdicts', [])
+            qs = [q for q in qs if not text or text.lower() in q.lower()]
         elif field == 'rating':
             qs = ['rated', 'unrated']
         elif f'_{field}' in contest.info:

@@ -286,8 +286,10 @@ class Contest(BaseModel):
     @property
     def duration(self):
         return timedelta(seconds=self.duration_in_secs)
-        # Fix for virtual contest
-        # return self.end_time - self.start_time
+
+    @property
+    def full_duration(self):
+        return self.end_time - self.start_time
 
     @property
     def hr_duration(self):

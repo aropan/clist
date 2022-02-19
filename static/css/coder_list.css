@@ -16,3 +16,8 @@
 #coder-list {
   margin-top: 5px;
 }
+
+#add-list-value textarea,
+#raw-submit {
+  margin-bottom: 5px;
+}

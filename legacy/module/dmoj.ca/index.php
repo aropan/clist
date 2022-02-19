@@ -23,7 +23,7 @@
                 }
                 $contests[] = array(
                     'start_time' => $data['start_time'],
-                    'duration' => $data['time_limit'],
+                    'duration_in_secs' => $data['time_limit'],
                     'end_time' => $data['end_time'],
                     'title' => $data['name'] . (isset($data['is_rated']) && $data['is_rated']? '. Rated' : ''),
                     'url' => $prefix_contest . $key,

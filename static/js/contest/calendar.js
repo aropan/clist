@@ -17,7 +17,7 @@ $(function() {
         customButtons: customButtonDesc,
         header: {
             left: 'title',
-            right: customButtonGroup + ' today dayGridMonth,timeGridWeek,listWeek prev,next'
+            right: customButtonGroup + ' today,dayGridMonth,timeGridWeek,listWeek prev,next'
         },
         titleFormat: '{MMMM {D}}, YYYY',
         firstDay: 1,

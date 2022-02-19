@@ -136,6 +136,7 @@ function set_timeline(percent, duration = null) {
     var $e = $(e)
     var score = e.getAttribute('data-score')
     var penalty = e.getAttribute('data-penalty')
+    var penalty_in_seconds = e.getAttribute('data-penalty-in-seconds')
     var result = e.getAttribute('data-result')
     var more_penalty = e.getAttribute('data-more-penalty')
     var toggle_class = e.getAttribute('data-class')
@@ -144,19 +145,26 @@ function set_timeline(percent, duration = null) {
     var visible = true
     if (penalty) {
       var times = penalty.split(/[:\s]+/)
-      var factors = contest_timeline['time_factor'][times.length]
-      var time = times.reduce((r, t, i) => {
-        if (t.endsWith('д.')) {
-          t = parseInt(t) * 86400
-        } else if (t.endsWith('ч.')) {
-          t = parseInt(t) * 3600
-        } else if (t.endsWith('м.')) {
-          t = parseInt(t) * 60
-        } else {
-          t = parseInt(t) * factors[i]
-        }
-        return r + t
-      }, 0)
+      if (times.length in contest_timeline['time_factor']) {
+        var factors = contest_timeline['time_factor'][times.length]
+        var time = times.reduce((r, t, i) => {
+          if (t.endsWith('д.')) {
+            t = parseInt(t) * 86400
+          } else if (t.endsWith('ч.')) {
+            t = parseInt(t) * 3600
+          } else if (t.endsWith('м.')) {
+            t = parseInt(t) * 60
+          } else {
+            t = parseInt(t) * factors[i]
+          }
+          return r + t
+        }, 0)
+      } else if (penalty_in_seconds) {
+        var time = parseFloat(penalty_in_seconds)
+      } else {
+        var time = 0
+        console.log('Unknown problem time')
+      }
       visible = time <= current_time
     } else {
       visible = CURRENT_PERCENT >= contest_max_percent
@@ -195,14 +203,6 @@ function set_timeline(percent, duration = null) {
       score += parseFloat(stat.attr('data-score'))
       stat.attr('data-score', score)
       if (penalty) {
-        var rounding = contest_timeline['penalty_rounding'] || 'floor-minute'
-        if (rounding == 'none') {
-        } else if (rounding == 'floor-minute') {
-          time = Math.floor(time / 60)
-        } else {
-          console.log('Unknown rounding:', rounding)
-        }
-
         var agg = contest_timeline['penalty_aggregate'] || 'sum'
         if (agg == 'max') {
           time = Math.max(time, parseFloat(stat.attr('data-penalty')))
@@ -251,6 +251,16 @@ function set_timeline(percent, duration = null) {
     if (more_penalty) {
       penalty += more_penalty * more_penalty_factor
       $(e).attr('data-penalty', penalty)
+    }
+
+    var rounding = contest_timeline['penalty_rounding'] || 'floor-minute'
+    if (rounding == 'none') {
+    } else if (rounding == 'floor-minute') {
+      penalty = Math.floor(penalty / 60)
+    } else if (rounding == 'floor-second') {
+      penalty = Math.floor(penalty)
+    } else {
+      console.log('Unknown rounding:', rounding)
     }
 
     if (format == 1) {
@@ -325,7 +335,7 @@ function set_timeline(percent, duration = null) {
     var $r = $(r)
     $r.find('>.place-cell').attr('data-text', place + 1)
 
-    var gap = (get_row_penalty(r) - get_row_penalty(first)) * 60 + (get_row_score(first) - get_row_score(r)) * current_time
+    var gap = (get_row_penalty(r) - get_row_penalty(first)) + (get_row_score(first) - get_row_score(r)) * current_time
     $r.find('>.gap-cell').attr('data-text', Math.round(gap / 60))
 
     $r.attr('data-translate-y', 'translateY(' + (r.offsetTop - current_top) + 'px)')

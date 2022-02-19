@@ -4,6 +4,10 @@
     ini_set('error_reporting', E_ALL);
 //    ini_set("max_execution_time", 0);
 
+    define("DEBUG", isset($_GET['debug']) && isset($_SERVER['SHELL']) && $_SERVER['SHELL'] == '/bin/bash');
+    define("CACHE", DEBUG);
+    define("CACHEDIR", dirname(__FILE__) . "/cache");
+
     require_once "db.class.php";
     require_once "libs/smarty/libs/Smarty.class.php";
     date_default_timezone_set("UTC");
@@ -16,10 +20,6 @@
     $smarty->cache_dir = 'smarty/cache/';
     $smarty->caching = 1500;
 
-    define("DEBUG", isset($_GET['debug']) && isset($_SERVER['SHELL']) && $_SERVER['SHELL'] == '/bin/bash');
-    define("CACHE", DEBUG);
-
-    define("CACHEDIR", dirname(__FILE__) . "/cache");
     $files = glob(CACHEDIR . "/*");
     $now = time();
     foreach ($files as $file) {
@@ -31,7 +31,7 @@
     }
 
     define("LOGFILE", dirname(__FILE__) . "/logs/working/index.txt");
-    define("COUNTLINEINLOGFILE", 32767);
+    define("COUNTLINEINLOGFILE", 10000);
     define("LOGREMOVEDDIR", dirname(__FILE__) . '/logs/removed/');
 
     foreach (array(CACHEDIR, dirname(LOGFILE), LOGREMOVEDDIR) as $dir) {

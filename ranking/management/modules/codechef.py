@@ -65,6 +65,16 @@ class Statistic(BaseModule):
         else:
             contest_infos = {self.key: {}}
 
+        options = {}
+
+        rules = data.get('rules')
+        attempt_penalty = 10 * 60
+        if rules:
+            match = re.search(r'(?P<penalty>[0-9]+)(?:\s*<[^>]*>)?\s*penalty\s*minute', rules, re.I)
+            if match:
+                attempt_penalty = int(match.group('penalty')) * 60
+                options.setdefault('timeline', {}).update({'attempt_penalty': attempt_penalty})
+
         result = {}
 
         problems_info = dict() if len(contest_infos) > 1 else list()
@@ -73,8 +83,8 @@ class Statistic(BaseModule):
         writers = defaultdict(int)
 
         for key, contest_info in contest_infos.items():
-            url = self.STANDINGS_URL_FORMAT_.format(key=key)
-            page = REQ.get(url)
+            standings_url = self.STANDINGS_URL_FORMAT_.format(key=key)
+            page = REQ.get(standings_url)
             match = re.search('<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"', page)
             if not match:
                 raise ExceptionParseStandings('not found csrf token')
@@ -85,7 +95,7 @@ class Statistic(BaseModule):
             per_page = 150
             n_total_page = None
             pbar = None
-            contest_type = None
+            ranking_type = None
             while n_total_page is None or n_page < n_total_page:
                 n_page += 1
                 time.sleep(2)
@@ -155,7 +165,7 @@ class Statistic(BaseModule):
 
                         n_total_page = data['availablePages']
                         pbar = tqdm.tqdm(total=n_total_page * len(urls))
-                        contest_type = data['contest_info'].get('type')
+                        ranking_type = data['contest_info']['ranking_type']
 
                     for d in data['list']:
                         handle = d.pop('user_handle')
@@ -183,17 +193,22 @@ class Statistic(BaseModule):
                                 solved += 1 if v.get('result', 0) > 0 else 0
                                 upsolved += 1 if v.get('upsolving', 0) > 0 else 0
 
-                                if contest_type == '1' and 'penalty' in v:
+                                if ranking_type == '1' and 'penalty' in v and v[t] == 1:
                                     penalty = v.pop('penalty')
                                     if v[t] > 0:
                                         v[t] = f'+{"" if penalty == 0 else penalty}'
                                     else:
                                         v[t] = f'-{penalty}'
+                                else:
+                                    penalty = 0
 
                                 if v.get('time'):
                                     time_in_seconds = 0
                                     for t in str(v['time']).split(':'):
                                         time_in_seconds = time_in_seconds * 60 + int(t)
+                                    if penalty and attempt_penalty:
+                                        time_in_seconds -= penalty * attempt_penalty
+                                    v['time'] = self.to_time(time_in_seconds, num=3)
                                     v['time_in_seconds'] = time_in_seconds
 
                                 problems[k] = v
@@ -234,6 +249,7 @@ class Statistic(BaseModule):
             'url': self.url,
             'problems': problems_info,
             'hidden_fields': list(hidden_fields),
+            'options': options,
         }
 
         if writers:

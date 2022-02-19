@@ -11,13 +11,22 @@
         $title = $item['title'];
 
         $url = $item['url'];
-        $en_url = preg_replace('#hackerearth.com/(ru|en-us/)?#', 'hackerearth.com/en-us/', $url);
+        $en_url = preg_replace('#hackerearth.com/(ru/|en-us/)?#', 'hackerearth.com/en-us/', $url);
         $url = str_replace('/ru/', '/', $url);
+
+        if (strpos($url, '/hiring/') !== false) {
+            continue;
+        }
+
+        if (preg_match('#/challenges/(?P<type>[^/]*)/#', $url, $match) && stripos($title, $match['type']) === false) {
+            $title .= '. ' . ucfirst($match['type']);
+        }
 
         if (!preg_match('#/([^/]*)/?$#', $url, $match)) {
             trigger_error("No set id for event '$title', url = '$url'", E_USER_WARNING);
             continue;
         }
+
         $key = $match[1];
         $is_sprint_key = strpos($url, '/sprints/') !== false;
         $contest_page = curlexec($en_url);
@@ -30,6 +39,12 @@
             $info['_no_update_account_time'] = stripos($label, 'rated') === false;
         } else {
             $info['_no_update_account_time'] = true;
+        }
+
+        preg_match('#\bis\b.*\brated\b.*\bcontest\b#', $contest_page, $is_rated);
+        if ($info['_no_update_account_time'] && $is_rated) {
+            $title .= ". Rated contest";
+            $info['_no_update_account_time'] = false;
         }
 
         if (preg_match_all('#<div[^>]*time-location[^>]*>\s*<div[^>]*location[^>]*>.*?(?:\s*</div[^>]*>){3}#sm', $contest_page, $matches)) {

@@ -107,11 +107,15 @@ content: '<div class="info"><div class="title">Request header</div><div class="t
 <div class="info">
     {% get_api_formats as formats %}
     <div class="title">format</div>
-    <div class="text">Supported {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}. Set format in url <samp>/api/v2/json/...</samp> or use param in get query <samp>/?format=json</samp>.</div>
+    <div class="text">Supported {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}. Set format in url <samp>/api/v2/json/...</samp> or use param in GET query <samp>?format=json</samp>.</div>
+</div>
+<div class="info" id="atom-and-rss">
+    <div class="title">atom and rss</div>
+    <div class="text">Query <samp>/api/v2/contest/</samp> only. Using <samp>?format=atom</samp> or <samp>?format=rss</samp>. Preset params for atom and rss format: <samp>?upcoming=true&format_time=true&start_time__during=1 day</samp>. Set <samp>timezone</samp> and <samp>timeformat</samp> using GET query also or <a href="{% url "coder:settings" "preferences" %}">preferences</a>.</div>
 </div>
 <div class="info">
     <div class="title">throttle</div>
-    <div class="text">10 requests per minute.</div>
+    <div class="text">{% if user.is_authenticated and user.coder.settings.api_throttle_at %}<strike>{{ default_api_throttle_at }}</strike> {{ user.coder.settings.api_throttle_at }}{% else %}{{ default_api_throttle_at }}{% endif %} requests per minute.</div>
 </div>
 <div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
 

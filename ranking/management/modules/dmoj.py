@@ -96,6 +96,8 @@ class Statistic(BaseModule):
 
             solved = 0
             problems = row.setdefault('problems', {})
+            if solutions and not problems_info:
+                problems_info = [{'short': str(idx + 1)} for idx in range(len(solutions))]
             for prob, sol in zip(problems_info, solutions):
                 if not sol:
                     continue

@@ -76,11 +76,11 @@
         <div class="col-md-5 col-sm-4">
           <div class="col-md-5 col-sm-12 start-time">
             {% if contest.state == 'coming' %}
-            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.start_time|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}">
+            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest.start_time|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}&msg={{ contest.title|urlencode }}">
               {{ contest.start_time|timezone:timezone|format_time:time_format }}
             </a>
             {% else %}
-            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.title|iriencode }}&amp;iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}">
+            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}&msg={{ contest.title|urlencode }}">
               {{ contest.end_time|timezone:timezone|format_time:time_format }}
             </a>
             {% endif %}

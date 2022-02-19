@@ -1,9 +1,15 @@
+from django.conf import settings
 from django.http import HttpResponse
 from tastypie import fields, http
+from tastypie.authentication import ApiKeyAuthentication, MultiAuthentication, SessionAuthentication
 from tastypie.resources import NamespacedModelResource as ModelResource
-from tastypie.authentication import ApiKeyAuthentication, SessionAuthentication, MultiAuthentication
 from tastypie_oauth.authentication import OAuth2ScopedAuthentication
-from tastypie.throttle import CacheThrottle
+
+from clist.api.throttle import CustomCacheThrottle
+
+
+def is_true_value(value):
+    return value and value.lower() in settings.YES_
 
 
 def build_content_type(format, encoding='utf-8'):
@@ -45,7 +51,7 @@ class BaseModelResource(ModelResource):
         allowed_methods = ['get']
         fields = ['id']
 
-        throttle = CacheThrottle(throttle_at=10, timeframe=60)
+        throttle = CustomCacheThrottle(throttle_at=settings.DEFAULT_API_THROTTLE_AT_, timeframe=60)
 
         authentication = MultiAuthentication(
             ApiKeyAuthentication(),

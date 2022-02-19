@@ -10,56 +10,58 @@
 
 {% block content %}
 
-<div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
-  <form class="form-inline" id="standings-filters" method="get" action="">
-    <div class="input-group input-group-sm">
-      <div class="input-group-addon">Contest</div>
+<div class="row">
+  <div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
+    <form class="form-inline" id="standings-filters" method="get" action="">
+      <div class="input-group input-group-sm">
+        <div class="input-group-addon">Contest</div>
 
-      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+        <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
 
-      <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Contest regex. You can use name:{NAME}, resource:{HOST}, writer:{HANDLE}, coder:{HANDLE}, account:{HANDLE}, year:{YEAR}, stage: or medal:<br>Use && and || and ! for difficult conditions.">
-        <i class="fas fa-info"></i>
+        <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Contest regex. You can use name:{NAME}, resource:{HOST}, writer:{HANDLE}, coder:{HANDLE}, account:{HANDLE}, year:{YEAR}, stage: or medal:<br>Use && and || and ! for difficult conditions.">
+          <i class="fas fa-info"></i>
+        </div>
+
+        <div class="input-group-btn">
+          <button class="btn btn-default" type="submit">
+            <i class="fas fa-search"></i>
+            Search
+          </button>
+        </div>
       </div>
 
-      <div class="input-group-btn">
-        <button class="btn btn-default" type="submit">
-          <i class="fas fa-search"></i>
-          Search
-        </button>
+      <div class="input-group input-group-sm">
+        <input
+          {% if all_standings %}
+          data-on="Parsed"
+          data-off="All"
+          {% else %}
+          data-on="All"
+          data-off="Parsed"
+          {% endif %}
+
+          type="checkbox"
+          name="switch"
+          data-toggle="toggle"
+          data-onstyle="default"
+          data-offstyle="default"
+          data-size="small"
+          onchange="this.form.submit()"
+          {% if switch %}checked{% endif %}
+        />
       </div>
+
+      {% include 'resource_filter.html' %}
+
+    </form>
+
+    <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
+    <div class="list-group standings_list">
+    {% include "standings_list_paging.html" with contests=stages without_paginate=True %}
     </div>
-
-    <div class="input-group input-group-sm">
-      <input
-        {% if all_standings %}
-        data-on="Parsed"
-        data-off="All"
-        {% else %}
-        data-on="All"
-        data-off="Parsed"
-        {% endif %}
-
-        type="checkbox"
-        name="switch"
-        data-toggle="toggle"
-        data-onstyle="default"
-        data-offstyle="default"
-        data-size="small"
-        onchange="this.form.submit()"
-        {% if switch %}checked{% endif %}
-      />
+    <div class="list-group standings_list">
+    {% include page_template %}
     </div>
-
-    {% include 'resource_filter.html' %}
-
-  </form>
-
-  <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
-  <div class="list-group standings_list">
-  {% include "standings_list_paging.html" with contests=stages without_paginate=True %}
-  </div>
-  <div class="list-group standings_list">
-  {% include page_template %}
   </div>
 </div>
 

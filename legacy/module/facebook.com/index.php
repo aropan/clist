@@ -1,7 +1,10 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
+    $required_urls = array();
+
     function get_ids($page) {
+        global $required_urls;
         preg_match_all('#<link[^>]*href="(?P<href>[^"]*rsrc[^"]*\.js\b[^"]*)"[^>]*>#', $page, $matches);
         $urls = $matches['href'];
         // preg_match_all('#{"type":"js","src":"(?P<href>[^"]*rsrc[^"]*)"#', $page, $matches);
@@ -11,12 +14,31 @@
         // }
         // $urls = array_unique($urls);
 
+        $urls_ = array_fill(0, count($urls), null);
+        $offset = 0;
+        foreach (array(true, false) as $state) {
+            foreach ($urls as $url) {
+                if ($state == isset($required_urls[$url])) {
+                    $urls_[$offset++] = $url;
+                }
+            }
+        }
+        $urls = $urls_;
+
         $ids = array();
+        $required_ids = array(
+            "CodingCompetitionsContestSeasonRootQuery",
+            "CodingCompetitionsContestSeriesRootQuery",
+            "CodingCompetitionsContestScoreboardQuery",
+            "CCEScoreboardQuery",
+        );
+
         foreach ($urls as $u) {
             if (DEBUG) {
                 echo "get id url = $u\n";
             }
-            $p = curlexec($u);
+            $url = $u;
+            $p = curlexec($u, null, array('no_logmsg' => true));
             if (preg_match_all('#{id:"(?P<id>[^"]*)"(?:[^{}]*(?:{[^}]*})?)*}#', $p, $matches, PREG_SET_ORDER)) {
                 foreach ($matches as $match) {
                     if (preg_match('#,name:"(?P<name>[^"]*)"#', $match[0], $m)) {
@@ -28,6 +50,21 @@
                 foreach ($matches as $match) {
                     $ids[$match['name']] = $match['id'];
                 }
+            }
+
+            $required_ids_ = array();
+            foreach ($required_ids as $id) {
+                if (!isset($ids[$id])) {
+                    $required_ids_[] = $id;
+                }
+            }
+            if (count($required_ids) != count($required_ids_)) {
+                $required_urls[$url] = true;
+            }
+            $required_ids = $required_ids_;
+
+            if (!count($required_ids)) {
+                break;
             }
         }
         return $ids;

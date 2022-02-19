@@ -52,6 +52,7 @@ class BaseModule(object, metaclass=ABCMeta):
                 end_time=contest.end_time,
                 info=contest.info,
                 resource=contest.resource,
+                invisible=contest.invisible,
             ))
         for k, v in kwargs.items():
             setattr(self, k, v)

@@ -29,6 +29,8 @@ from utils.regex import get_iregex_filter, verify_regex
 
 
 def get_timeformat(request):
+    if "time_format" in request.GET:
+        return request.GET["time_format"]
     ret = settings.TIME_FORMAT_
     if request.user.is_authenticated and hasattr(request.user, "coder"):
         ret = request.user.coder.settings.get("time_format", ret)
@@ -87,7 +89,7 @@ def get_view_contests(request, coder):
 
     group = request.GET.get('group')
     if group is not None:
-        group_list = bool(group)
+        group_list = group and group.lower() in settings.YES_
 
     base_contests = Contest.visible.filter(user_contest_filter)
     if request.user.has_perm('reset_contest_statistic_timing'):
@@ -482,13 +484,13 @@ def resource(request, host, template='resource.html', extra_context=None):
                 'contests': contests.filter(end_time__lt=now).order_by('-end_time'),
                 'field': 'end_time',
             },
-            'running': {
-                'contests': contests.filter(start_time__lt=now, end_time__gt=now).order_by('end_time'),
-                'field': 'time_left',
-            },
             'coming': {
                 'contests': contests.filter(start_time__gt=now).order_by('start_time'),
                 'field': 'start_time',
+            },
+            'running': {
+                'contests': contests.filter(start_time__lt=now, end_time__gt=now).order_by('end_time'),
+                'field': 'time_left',
             },
         },
         'contest_key': None,

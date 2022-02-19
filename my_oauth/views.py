@@ -21,6 +21,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from flatten_dict import flatten
 
 from my_oauth.models import Service, Token
 from true_coders.models import Coder
@@ -57,20 +58,14 @@ def unlink(request, name):
 def process_data(request, service, access_token, data):
     d = deepcopy(data)
     d.update(access_token)
+    d = flatten(d, reducer='underscore')
 
-    for e in ('email', 'default_email', ):
-        email = d.get(e, None)
-        if email:
-            break
-
+    email = d.get(service.email_field, None)
     user_id = d.get(service.user_id_field, None)
     if not email or not user_id:
         raise Exception('Email or User ID not found.')
 
-    token, created = Token.objects.get_or_create(
-        service=service,
-        user_id=user_id,
-    )
+    token, created = Token.objects.get_or_create(service=service, user_id=user_id)
     token.access_token = access_token
     token.data = data
     token.email = email

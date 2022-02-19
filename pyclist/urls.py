@@ -2,9 +2,10 @@ from django.conf import settings
 from django.conf.urls import include, re_path
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
+from django.templatetags.static import static
 from django.urls import path
 from django.views.decorators.cache import cache_page
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView
 
 from pyclist.sitemaps import sitemaps
 from pyclist.views import test
@@ -39,6 +40,7 @@ urlpatterns = [
          {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 
     re_path(r'^privacy/$', TemplateView.as_view(template_name='privacy.html')),
+    re_path(r'^favicon/$', RedirectView.as_view(url=static('img/favicon/favicon-32x32.png')), name='favicon'),
 ]
 
 

@@ -206,18 +206,20 @@ class Command(BaseCommand):
                             extra = info.pop('data_', {})
                             if isinstance(extra, dict):
                                 for k, v in extra.items():
-                                    if k and k not in info and k[0] != '_' and k[-1] != '_':
+                                    if k not in info and not Account.is_special_info_field(k):
                                         info[k] = v
 
                             for k, v in account.info.items():
-                                if k and (k[0] == '_' or k[-1] == '_') and k not in info:
+                                if k not in info and Account.is_special_info_field(k):
                                     info[k] = v
+
                             outdated = account.info.pop('outdated_', {})
                             outdated.update(account.info)
                             for k in info.keys():
                                 if k in outdated:
                                     outdated.pop(k)
                             info['outdated_'] = outdated
+
                             account.info = info
 
                             account.updated = arrow.get(now + delta).ceil('day').datetime

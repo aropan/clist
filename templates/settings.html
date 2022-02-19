@@ -64,7 +64,7 @@
             <div class="value"><a href="#" id="theme" data-value="{{ coder.settings.theme|default:"default" }}"></a></div>
 
             <div class="key">Timezone
-                <i rel="tooltip" title="For a single viewing in another timezone using /?timezone=..."></i>
+                <i rel="tooltip" title="Using url query ?timezone=... for one-time use."></i>
             </div>
             <div class="value"><a href="#" id="timezone" data-value="{{ coder.timezone }}"></a></div>
 
@@ -74,7 +74,7 @@
             <div class="value"><input type="checkbox" id="check-timezone" data-value="{{ coder.settings.check_timezone }}"/></div>
 
             <div class="key">Time format
-                <i rel="tooltip" title="Format start time. Default: '%d.%m %a %H:%M'"></i>
+                <i rel="tooltip" title="Format start time. Default: '%d.%m %a %H:%M'. Using url query ?time_format=... for one-time use."></i>
             </div>
             <div class="value"><a href="#" id="time-format" data-value="{{ coder.settings.time_format }}"></a></div>
 
@@ -85,7 +85,7 @@
             <div class="value"><a href="#" id="share-to-category" data-value="{{ coder.settings.share_to_category }}"></a></div>
 
             <div class="key">View mode
-                <i rel="tooltip" title="For a single viewing in another mode using /?view=..."></i>
+                <i rel="tooltip" title="Using url query ?view=... for one-time use."></i>
             </div>
             <div class="value"><input type="checkbox" id="view-mode" data-on="List" data-off="Calendar" data-onstyle="info" data-offstyle="info" data-value="{% if coder.settings.view_mode == "list" %}1{% else %}0{% endif %}"/></div>
 
@@ -101,7 +101,7 @@
             <div class="value"><a href="#" id="event-limit-calendar" data-value="{{ coder.settings.event_limit_calendar }}"></a></div>
 
             <div class="key">Group in list mode view
-                <i rel="tooltip" title="Group contests by resource. Use GET query group=1 for once."></i>
+                <i rel="tooltip" title="Group contests by resource. Use GET query group=yes or group=no for once."></i>
             </div>
             <div class="value"><input type="checkbox" id="group-in-list" data-value="{{ coder.settings.group_in_list }}"/></div>
 
@@ -237,7 +237,7 @@
                         {% endfor %}
                     {% endwith %}
                 {% endfor %}
-                <i id="custom_countries_loading" class="fas fa-spinner fa-pulse hidden"></i>
+                <i id="custom_countries_loading" class="fas fa-circle-notch fa-spin hidden"></i>
 
             </div>
 

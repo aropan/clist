@@ -386,7 +386,9 @@
                 echo "\t<span style='padding-left: 50px'>" .
                     "{$contest['title']} [{$contest['key']}] <{$contest['url']}></span><br>\n";
             }
-            $db->delete("clist_contest", $query);
+            if (!DEBUG) {
+                $db->delete("clist_contest", $query);
+            }
         }
     }
     logmsg();

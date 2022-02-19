@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Count, F, Q, signals
 from django.dispatch import receiver
@@ -155,6 +156,9 @@ class Coder(BaseModel):
 def init_coder_username(instance, **kwargs):
     if not instance.username:
         instance.username = instance.user.username
+    if 'api_throttle_at' in instance.settings:
+        limit_key = str(instance.username) + '[limit]'
+        cache.delete(limit_key)
 
 
 @receiver(signals.pre_delete, sender=Coder)

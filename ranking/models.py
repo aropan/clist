@@ -75,6 +75,17 @@ class Account(BaseModel):
             except KeyError:
                 pass
 
+    @staticmethod
+    def is_special_info_field(field):
+        if not field:
+            return False
+        if field[0] == '_' or field[-1] == '_':
+            return True
+        if field in {'profile_url'}:
+            return True
+        if 'email' in field.lower():
+            return True
+
     class Meta:
         indexes = [
             GistIndexTrgrmOps(fields=['key']),
@@ -268,6 +279,14 @@ class Statistics(BaseModel):
     upsolving = models.FloatField(default=0, blank=True)
     addition = models.JSONField(default=dict, blank=True)
     url = models.TextField(null=True, blank=True)
+
+    @staticmethod
+    def is_special_addition_field(field):
+        if not field:
+            return False
+        if field[0] == '_' or field[-1] == '_':
+            return True
+        return field in settings.ADDITION_HIDE_FIELDS_
 
     def __str__(self):
         return f'{self.account_id} on {self.contest_id} = {self.solving} + {self.upsolving}'
@@ -640,22 +659,47 @@ class Stage(BaseModel):
                 inp = field['field']
                 out = field.get('out', inp)
 
-                common_problems = dict()
-                for account, row in results.items():
-                    problems = {k for k, p in row['problems'].items() if p.get('status') != 'W'}
-                    key = row[group]
-                    common_problems[key] = problems if key not in common_problems else (problems & common_problems[key])
+                excluding = bool(exclude_advances and field.get('exclude_advances'))
 
-                for account, row in results.items():
+                groups = collections.defaultdict(list)
+                for row in results.values():
                     key = row[group]
-                    problems = common_problems[key]
-                    value = 0
-                    for k in problems:
-                        value += float(row['problems'].get(k, {}).get(inp, 0))
-                    for k, v in row['problems'].items():
-                        if k not in problems and v.get('status') != 'W':
-                            v['status_tag'] = 'strike'
-                    row[out] = round(value, 2)
+                    groups[key].append(row)
+
+                advancement_position = 1
+                for key, rows in sorted(groups.items(), key=lambda kv: kv[0], reverse=True):
+                    common_problems = None
+                    for row in rows:
+                        handle = row['member'].key
+                        if excluding and handle in exclude_advances:
+                            exclude_advance = exclude_advances[handle]
+                            for advance in advances.get('options', []):
+                                if advance['next'] == exclude_advance['next']:
+                                    exclude_advance['skip'] = True
+                                    break
+                                if advancement_position in advance['places']:
+                                    break
+                            if exclude_advance.get('skip'):
+                                continue
+
+                        problems = {k for k, p in row['problems'].items() if p.get('status') != 'W'}
+                        common_problems = problems if common_problems is None else (problems & common_problems)
+                    if common_problems is None:
+                        for row in rows:
+                            problems = {k for k, p in row['problems'].items() if p.get('status') != 'W'}
+                            common_problems = problems if common_problems is None else (problems & common_problems)
+
+                    for row in rows:
+                        handle = row['member'].key
+                        if excluding and not exclude_advances.get(handle, {}).get('skip', False):
+                            advancement_position += 1
+                        value = 0
+                        for k in common_problems:
+                            value += float(row['problems'].get(k, {}).get(inp, 0))
+                        for k, v in row['problems'].items():
+                            if k not in common_problems and v.get('status') != 'W':
+                                v['status_tag'] = 'strike'
+                        row[out] = round(value, 2)
 
         results = list(results.values())
         if n_best:

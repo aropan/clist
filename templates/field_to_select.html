@@ -1,4 +1,4 @@
-<div class="input-group input-group-sm field-to-select hidden">
+<div class="input-group{% if not nosm %} input-group-sm{% endif %} field-to-select hidden">
   {% if data.nogroupby %}
     <span class="input-group-addon">{{ data.title|default:field|title }}</span>
   {% else %}
