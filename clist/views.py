@@ -452,6 +452,8 @@ def resource(request, host, template='resource.html', extra_context=None):
             high = low + width - 1
 
             val = rating.get('coloring_field', low)
+            if val is None:
+                continue
             while val > resource.ratings[idx]['high']:
                 idx += 1
             while idx and val <= resource.ratings[idx - 1]['high']:

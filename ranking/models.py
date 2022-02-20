@@ -561,12 +561,12 @@ class Stage(BaseModel):
 
                     field_values = {}
                     for field in fields:
-                        inp = field['field']
-                        out = field.get('out', inp)
                         if field.get('skip_on_mapping_account_by_coder') and has_mapping_account_by_coder:
                             continue
                         if 'type' in field:
                             continue
+                        inp = field['field']
+                        out = field.get('out', inp)
                         if field.get('first') and out in row or (inp not in s.addition and not hasattr(s, inp)):
                             continue
                         val = s.addition[inp] if inp in s.addition else getattr(s, inp)
@@ -654,6 +654,8 @@ class Stage(BaseModel):
 
         for field in fields:
             t = field.get('type')
+            if t is None:
+                continue
             if t == 'points_for_common_problems':
                 group = field['group']
                 inp = field['field']
@@ -700,6 +702,27 @@ class Stage(BaseModel):
                             if k not in common_problems and v.get('status') != 'W':
                                 v['status_tag'] = 'strike'
                         row[out] = round(value, 2)
+            elif t == 'region_by_country':
+                out = field['out']
+
+                mapping_regions = dict()
+                for regional_event in field['data']:
+                    for region in regional_event['regions']:
+                        mapping_regions[region['code']] = {'regional_event': regional_event, 'region': region}
+
+                for row in results.values():
+                    country = row['member'].country
+                    if not country:
+                        continue
+                    code = country.code
+                    if code not in mapping_regions:
+                        continue
+                    row[out] = mapping_regions[code]['regional_event']['name']
+            else:
+                raise ValueError(f'Unknown field type = {t}')
+
+        hidden_fields = [field.get('out', field.get('inp')) for field in fields if field.get('hidden')]
+        stage.info['hidden_fields'] = hidden_fields
 
         results = list(results.values())
         if n_best:
