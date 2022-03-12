@@ -58,7 +58,7 @@ ratelimiter==1.2.0
 bootstrap-admin==0.4.4
 docutils==0.16
 image==1.5.32
-pillow==9.0.0
+pillow==9.0.1
 olefile==0.46
 sqlparse==0.3.0
 pytesseract==0.3.7
