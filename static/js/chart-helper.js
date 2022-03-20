@@ -156,8 +156,8 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
         },
         y:
         {
-          min: is_addition? min_field : min_rating,
-          max: is_addition? max_field : max_rating,
+          min: (is_addition? min_field : min_rating) - 1,
+          max: (is_addition? max_field : max_rating) + 1,
           ticks: {
             callback: function(value, index) {
               return +value.toFixed(2);
@@ -206,7 +206,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
       plugins: {
         title: {
           display: true,
-          text: resource_info['host'] + (is_addition? ' (' + y_field + ')' : ''),
+          text: resource_info['host'] + (is_addition? ' (' + y_field + ')' : '') + (resource_info['kind']?  ' (' + resource_info['kind'] + ')' : ''),
           font: { size: 16 },
         },
         legend: {

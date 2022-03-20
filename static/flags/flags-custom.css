@@ -1,5 +1,5 @@
 .flag.flag-bpr {
-  background: url('bpr.png') no-repeat !important;
+  background: url('/static/flags/bpr.png') no-repeat !important;
 }
 
 .custom-countries.active {
