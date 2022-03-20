@@ -282,8 +282,10 @@
             continue;
         }
 
-        if (time() + 365 * 24 * 60 * 60 < $contest['end_time']) continue;
-        if (!DEBUG && !isset($_GET['skip_check_time'])) {
+        if (time() + 365 * 24 * 60 * 60 < $contest['end_time']) {
+            continue;
+        }
+        if (!DEBUG && !isset($_GET['skip_check_time']) && !isset($contest['skip_check_time'])) {
             if ($contest['end_time'] < $contest['start_time']) continue;
             if ($contest['end_time'] + 31 * 24 * 60 * 60 < time()) continue;
         }
@@ -311,6 +313,7 @@
         unset($contest['timezone']);
         unset($contest['rid']);
         unset($contest['duplicate']);
+        unset($contest['skip_check_time']);
 
         $info = false;
         if (isset($contest['info'])) {

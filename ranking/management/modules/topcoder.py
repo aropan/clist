@@ -8,7 +8,6 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
-from pprint import pprint
 from time import sleep
 from urllib.parse import parse_qs, quote, urljoin
 
@@ -605,43 +604,3 @@ class Statistic(BaseModule):
                     pbar.update()
                 ret.append({'info': data})
         return ret
-
-
-if __name__ == "__main__":
-    # statictic = Statistic(
-    #     name='TCO19 SRM 752',
-    #     standings_url='https://www.topcoder.com/stat?module=MatchList&nr=200&sr=1&c=round_overview&er=5&rd=17420',
-    #     key='TCO19 SRM 752. 06.03.2019',
-    #     start_time=datetime.strptime('06.03.2019', '%d.%m.%Y'),
-    # )
-    # pprint(statictic.get_standings(users=['tourist']))
-    # pprint(statictic.get_standings())
-    # pprint(Statistic.get_users_infos(['aropan']))
-    # statictic = Statistic(
-    #     name='SRM 767',
-    #     standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17684',
-    #     key='SRM 767. 18.09.2019',
-    #     start_time=datetime.strptime('18.09.2019', '%d.%m.%Y'),
-    # )
-    # pprint(statictic.get_result())
-    statictic = Statistic(
-        name='Mathmania - Codefest 18',
-        standings_url='https://www.topcoder.com/stat?module=MatchList&c=round_overview&er=5&rd=17259',
-        key='Mathmania - Codefest 18. 01.09.2018',
-        start_time=datetime.strptime('01.09.2018', '%d.%m.%Y'),
-    )
-    pprint(statictic.get_result('tourist'))
-    # statictic = Statistic(
-    #     name='Marathon Match Beta',
-    #     standings_url='https://community.topcoder.com/longcontest/stats/?module=ViewOverview&rd=9874',
-    #     key='Marathon Match Beta. 15.12.2005',
-    #     start_time=datetime.strptime('15.12.2005', '%d.%m.%Y'),
-    # )
-    # statictic.get_standings()
-    # statictic = Statistic(
-    #     name='2',
-    #     standings_url='https://community.topcoder.com/longcontest/stats/?module=ViewOverview&rd=9874',
-    #     key='Marathon Match Beta. 15.12.2005',
-    #     start_time=datetime.strptime('15.12.2005', '%d.%m.%Y'),
-    # )
-    # pprint(statictic.get_standings()['problems'])

@@ -50,7 +50,7 @@
         $main_title = trim($main_title);
         $season = str_replace("/", "-20", explode(" ", trim($season))[0]);
 
-        preg_match_all('#<p>\s*<font[^>]*>\s*(?:[0-9]+-)?(?P<date>(?:[0-9]+.?)+)[^<]*</font>[^<]*(?:<a[^>]*>[^<]*</a>[^<]*)*<a[^>]*href="(?P<url>[^"]*/[^"]*(?:res|standing)[^"]*)"[^>]*>[^<]*результат[^<]*</a>#', $page, $matches, PREG_SET_ORDER);
+        preg_match_all('#<p>\s*<font[^>]*>\s*(?:[0-9]+-)?(?P<date>(?:[0-9]+.?)+)[^<]*</font>[^<]*(?:(?:<[^>]*>[^<]*</[^>]*>|<br>)[^<]*)*<a[^>]*href\s*=\s*"(?P<url>[^"]*/[^"]*(?:res|standing)[^"]*)"[^>]*>[^<]*результат[^<]*</a>#', $page, $matches, PREG_SET_ORDER);
 
         $standings = array();
         $used = array();

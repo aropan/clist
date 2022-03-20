@@ -236,6 +236,7 @@ Number of competitions: {{ account.n_contests }}
   <div class="collapse" id="history-resources-collapsed">
 {% endif %}
 <div>
+  {% if not hr.kind %}
   <div class="resource_fields">
     <a href="{% url 'clist:resource' hr.host %}" title="{{ hr.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ hr.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
     <div class="input-group input-group-sm invisible">
@@ -244,10 +245,11 @@ Number of competitions: {{ account.n_contests }}
       </select>
     </div>
   </div>
+  {% endif %}
 
   <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
 
-  <canvas class="rating_history" id="resource_{{ hr.pk }}_rating" height="75vh">{{ hr }}</canvas>
+  <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}" height="75vh">{{ hr }}</canvas>
 </div>
 {% endfor %}
 {% if history_resources|length > 3 %}
@@ -262,19 +264,29 @@ $(function(){
     dataType: 'json',
     success: function (response) {
       for (var resource in response['data']['resources']) {
-        var loading = $('[id="loading_' + resource + '_rating"]')
-        if (!loading.length) {
-          continue
-        }
-        loading.remove()
         var resource_info = response['data']['resources'][resource]
+        var resource_rating_id = 'resource_' + resource_info['pk'] + '_rating'
+
+        if (resource_info['kind']) {
+          resource_rating_id += '_' + resource_info['kind']
+        }
+
+        var major = $('#' + resource_rating_id)
+        if (!major.length) {
+          continue;
+        }
+        $('[id="loading_' + resource + '_rating"]').remove()
+
         var resource_dates = response['data']['dates']
         config = create_chart_config(resource_info, resource_dates)
-        const resource_rating_id = 'resource_' + resource_info['pk'] + '_rating'
-        const resource_fields_id = 'resource_' + resource_info['pk'] + '_fields'
+
         var ctx = new Chart(resource_rating_id, config)
         add_selection_chart_range(resource_rating_id, ctx)
-        add_selection_chart_fields(resource_info, resource_rating_id, resource_fields_id, resource_dates)
+
+        if (!resource_info['kind']) {
+          var resource_fields_id = 'resource_' + resource_info['pk'] + '_fields'
+          add_selection_chart_fields(resource_info, resource_rating_id, resource_fields_id, resource_dates)
+        }
       }
 
       $('.loading_rating').parent().remove()
@@ -296,7 +308,7 @@ $(function(){
 <div class="input-group">
   <div class="input-group-addon">Results</div>
   <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-  <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
+  <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL}, type:{TYPE} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
     <i class="fas fa-info"></i>
   </span>
   <span class="input-group-btn">

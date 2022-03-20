@@ -12,6 +12,7 @@
 
             $regex = '#
                 <tr[^>]*>(?:\s*<[^>]*>)+(?P<start_time>[^<]*)(?:<[^>]*>\s*)+
+                (?:<span[^>]*title="(?P<rating_type>[^"]*)"[^>]*>[^<]*</span>\s*)?
                 (?:<span[^>]*class="(?P<class>[^"]*)"[^>]*>[^<]*</span>\s*)?
                 <a[^>]*href=[\"\'](?P<url>[^\"\']*/(?P<key>[^/]*))[\"\'][^>]*>(?P<title>[^<]*)(?:<[^>]*>\s*)+
                 (?P<duration>[0-9]+(?::[0-9]+)+)
@@ -45,7 +46,7 @@
                     }
                 }
 
-                $contests[] = array(
+                $contest = array(
                     'start_time' => $c['start_time'],
                     'duration' => $c['duration'],
                     'title' => $title,
@@ -53,8 +54,14 @@
                     'host' => $HOST . $host,
                     'rid' => $RID,
                     'timezone' => $TIMEZONE,
-                    'key' => $k
+                    'key' => $k,
                 );
+
+                if (!empty($c['rating_type'])) {
+                    $contest['kind'] = strtolower($c['rating_type']);
+                }
+
+                $contests[] = $contest;
             }
 
             $url = false;

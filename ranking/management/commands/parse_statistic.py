@@ -158,6 +158,7 @@ class Command(BaseCommand):
             total += 1
             parsed = False
             user_info_has_rating = {}
+            is_major_kind = resource.is_major_kind(contest.kind)
             try:
                 r = {}
 
@@ -499,7 +500,10 @@ class Command(BaseCommand):
                                 account_info = r.pop('info', {})
                                 if account_info:
                                     if 'rating' in account_info:
-                                        account_info['_rating_time'] = int(now.timestamp())
+                                        if is_major_kind:
+                                            account_info['_rating_time'] = int(now.timestamp())
+                                        else:
+                                            account_info.pop('rating')
                                     if 'name' in account_info:
                                         name = account_info.pop('name')
                                         account.name = name if name and name != account.key else None
@@ -622,8 +626,10 @@ class Command(BaseCommand):
                                         fields.append(f)
 
                                 rating_time = int(min(contest.end_time, now).timestamp())
-                                if 'new_rating' in addition and (
-                                    '_rating_time' not in account.info or account.info['_rating_time'] <= rating_time
+                                if (
+                                    is_major_kind
+                                    and 'new_rating' in addition
+                                    and account.info.get('_rating_time', -1) <= rating_time
                                 ):
                                     account.info['_rating_time'] = rating_time
                                     account.info['rating'] = addition['new_rating']
@@ -647,7 +653,8 @@ class Command(BaseCommand):
 
                                 if not created:
                                     nonlocal calculate_time
-                                    statistics_ids.remove(statistic.pk)
+                                    if statistics_ids:
+                                        statistics_ids.remove(statistic.pk)
 
                                     if try_calculate_time:
                                         p_problems = statistic.addition.get('problems', {})

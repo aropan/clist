@@ -81,7 +81,7 @@ class Account(BaseModel):
             return False
         if field[0] == '_' or field[-1] == '_':
             return True
-        if field in {'profile_url'}:
+        if field in {'profile_url', 'rating'}:
             return True
         if 'email' in field.lower():
             return True

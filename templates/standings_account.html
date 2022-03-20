@@ -39,21 +39,6 @@
 
   {% if account.url and not team_id or '_account_url' in addition %}</a>{% endif %}
 
-  {% if members %}
-    {% if with_detail %}<br/>{% else %}:{% endif %}
-    {% for member in members %}
-      {% if forloop.counter0 %}|{% endif %}
-      {% with account=preload_statistics_data.accounts|get_item:member.account %}
-      <span class="{% coder_color_class resource account.info %}">
-      {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}" class="coder">{% endif %}
-        <span>{{ member.name|truncatechars:30|default:member.account }}</span>
-      {% if account.url or resource.profile_url %}</a>{% endif %}
-      </span>
-      {% endwith %}
-    {% endfor %}
-  {% endif %}
-  {% endwith %}
-
   {% for country_name in addition|get_item:"_countries" %}
     {% with country_code=country_name|get_country_code %}
       {% if country_code %}
@@ -65,6 +50,26 @@
       {% endif %}
     {% endwith %}
   {% endfor %}
+
+  {% if members %}
+    {% if with_detail %}<div class="small">{% else %}<div class="small inline">:{% endif %}
+    {% for member in members %}
+      {% if forloop.counter0 %}|{% endif %}
+      {% if member %}
+        {% with account=preload_statistics_data.accounts|get_item:member.account %}
+        <span class="{% coder_color_class resource account.info %}">
+        {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}" class="coder">{% endif %}
+          <span>{{ member.name|truncatechars:30|default:member.account }}</span>
+        {% if account.url or resource.profile_url %}</a>{% endif %}
+        </span>
+        {% endwith %}
+      {% else %}
+        ?
+      {% endif %}
+    {% endfor %}
+    </div>
+  {% endif %}
+  {% endwith %}
 </div>
 
 {% if addition.url %}

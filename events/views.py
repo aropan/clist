@@ -1,6 +1,7 @@
 from collections import Counter
 
 import humanfriendly
+from csp.decorators import csp_exempt
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -487,6 +488,7 @@ def team_admin_view(request, slug, team_id):
 
 @cache_page(1 if settings.DEBUG else 30 * 60)
 @xframe_options_exempt
+@csp_exempt
 def frame(request, slug, status):
     event = get_object_or_404(Event, slug=slug)
     statuses = []

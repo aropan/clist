@@ -68,6 +68,7 @@ def get_profile_context(request, statistics, writers, resources):
                 'contest': {'fields': ['contest__title__iregex']},
                 'resource': {'fields': ['contest__resource__host']},
                 'account': {'fields': ['account__key']},
+                'type': {'fields': ['contest__kind']},
                 'medal': {
                     'fields': ['addition__medal'],
                     'func': lambda v: False if not v or v == 'any' else v,
@@ -90,7 +91,21 @@ def get_profile_context(request, statistics, writers, resources):
             conditions = [Q(host=host) for host in filter_resources]
             resources = resources.filter(functools.reduce(operator.ior, conditions))
 
-    history_resources = list(resources.filter(has_rating_history=True))
+    kinds_resources = collections.defaultdict(dict)
+    for stat in statistics.order_by().distinct('contest__resource__host', 'contest__kind'):
+        resource = stat.contest.resource
+        kind = stat.contest.kind
+        kind = None if resource.is_major_kind(kind) else kind
+        kinds_resources[resource.pk][kind] = {
+            'host': resource.host,
+            'pk': resource.pk,
+            'icon': resource.icon,
+            'kind': kind,
+        }
+    history_resources = list()
+    for resource in resources.filter(has_rating_history=True):
+        history_resources.extend(kinds_resources[resource.pk].values())
+
     resources = list(resources)
     search_resource = resources[0] if len(resources) == 1 else None
 
@@ -389,6 +404,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
     qs = statistics \
         .annotate(date=F('contest__end_time')) \
         .annotate(name=F('contest__title')) \
+        .annotate(kind=F('contest__kind')) \
         .annotate(stage=F('contest__stage')) \
         .annotate(resource=F('contest__resource')) \
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
@@ -410,6 +426,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         'cid',
         'sid',
         'name',
+        'kind',
         'date',
         'new_rating',
         'old_rating',
@@ -462,13 +479,18 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         stat['values'] = dict_to_float_values(addition)
 
         resource = resources[stat['resource']]
+        is_major_kind = resource.is_major_kind(stat['kind'])
+
         default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
         default_info['pk'] = stat['resource']
+        default_info['kind'] = None if is_major_kind else stat['kind']
         default_info['host'] = resource.host
         default_info['colors'] = resource.ratings
         default_info['icon'] = resource.icon
         default_info['fields'] = set()
-        resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
+
+        resource_key = resource.host if is_major_kind else f'{resource.host} ({stat["kind"]})'
+        resource_info = ratings['data']['resources'].setdefault(resource_key, default_info)
         resource_info.setdefault('data', [])
         resource_info['fields'] |= set(stat['values'].keys())
 

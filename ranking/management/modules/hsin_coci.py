@@ -2,11 +2,13 @@
 
 import re
 import urllib.parse
+from collections import OrderedDict
 from pprint import pprint  # noqa
-from collections import defaultdict, OrderedDict
 
-from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.excepts import InitModuleException, ExceptionParseStandings
+from clist.models import Resource
+from clist.templatetags.extras import as_number
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
 class Statistic(BaseModule):
@@ -44,84 +46,72 @@ class Statistic(BaseModule):
                 raise ExceptionParseStandings('Not found result url')
 
         page = REQ.get(standings_url)
-        standings_url = REQ.ref_url
+        standings_url = REQ.last_url
+
+        page = page.replace('&nbsp;', ' ')
+        mapping = {
+            'RANK': 'place',
+            'CONTESTANT': 'name',
+            'COUNTRY': 'country',
+            'SCORE': 'solving',
+        }
+        table = parsed_table.ParsedTable(page, as_list=True, header_mapping=mapping, with_not_full_row=True)
+
+        resource = Resource.objects.get(host__regex='coci')
 
         result = {}
-        header = None
         problems_info = OrderedDict()
-        problems_max_score = defaultdict(float)
-        for match in re.findall(r'<tr[^>]*>.*?<\/tr>', page, re.DOTALL):
-            match = match.replace('&nbsp;', ' ')
-
-            member = None
-            fields = []
-            problems_data = []
-
-            tds = re.findall(r'<t[hd][^>]*>(?P<td>.*?)<\/t[hd]>', match)
-            idx = 0
-            for i, td in enumerate(tds):
-                value = re.sub('<[^>]*>', '', td)
-
-                attrs = dict(m.group('key', 'value') for m in re.finditer('(?P<key>[a-z]*)="(?P<value>[^"]*)"', td))
-                if 'title' in attrs:
-                    idx += 1
-                    value = (f'{idx}', attrs.get('title', value))
-
-                if 'href' in attrs:
-                    match = re.search('solutions/(?P<member>[^/]*)/', attrs['href'])
-                    if match:
-                        member = match.group('member')
-                        problems_data.append((i, urllib.parse.urljoin(standings_url, attrs['href'])))
-                fields.append(value)
-
-            if not header:
-                header = fields
-                problems_info = [{'short': v[0], 'name': v[1]} for v in header if isinstance(v, tuple)]
-                continue
-            if not member:
-                continue
-
-            row = dict(list(zip(header, fields)))
-
-            r = result.setdefault(member, {})
-            r['member'] = member
-            r['place'] = row['RANK']
-            r['country'] = row['COUNTRY']
-            r['solving'] = int(float(row['SCORE']))
-
+        for row in table:
+            r = dict()
             problems = r.setdefault('problems', {})
-            for pn, url in problems_data:
-                short = header[pn][0]
-                value = row[header[pn]]
-                if re.match('^[0-9.]+$', value):
-                    p = problems.setdefault(short, {})
-                    p['result'] = value
-                    p['url'] = url
-                    problems_max_score[short] = max(problems_max_score[short], float(p['result']))
+            pid = 0
+            solving = 0
+            for k, v in row:
+                name = v.header.node.xpath('.//acronym/@title')
+                if name:
+                    name = name[0]
+                    pid += 1
+                    short = str(pid)
+                    problem_info = problems_info.setdefault(short, {'short': short, 'name': name})
+                    value = as_number(v.value, force=True)
+                    if value is not None:
+                        p = problems.setdefault(short, {})
+                        solving += value
+                        p['result'] = value
+                        problem_info['max_score'] = max(problem_info.get('max_score', 0), value)
 
-        problems_max_score = dict(problems_max_score)
+                        href = v.column.node.xpath('.//a/@href')
+                        if href:
+                            href = href[0]
+                            p['url'] = urllib.parse.urljoin(standings_url, href)
+                            match = re.search('solutions/(?P<member>[^/]*)/', href)
+                            r['member'] = match.group('member')
+                elif k == 'solving':
+                    r[k] = as_number(v.value)
+                else:
+                    r[k] = v.value
+            if 'solving' not in r:
+                r['solving'] = solving
+            if 'member' not in r:
+                accounts = resource.account_set.filter(name=r['name']).values('key')
+                if len(accounts) == 1:
+                    r['member'] = accounts[0]['key']
+                else:
+                    r['member'] = r['name']
+            result[r['member']] = r
+
         for v in result.values():
             solving = 0
             for k, r in v['problems'].items():
-                s = float(r.get('result', -1))
-                if abs(problems_max_score[k] - s) < 1e-9:
+                if abs(problems_info[k]['max_score'] - r['result']) < 1e-9:
                     solving += 1
-                elif s > 1e-9:
+                elif r['result'] > 1e-9:
                     r['partial'] = True
             v['solved'] = {'solving': solving}
 
         ret.update({
             'result': result,
             'url': standings_url,
-            'problems': problems_info,
+            'problems': list(problems_info.values()),
         })
         return ret
-
-
-if __name__ == '__main__':
-    pprint(Statistic(
-        name='CROATIAN OLYMPIAD IN INFORMATICS',
-        url='http://hsin.hr/coci/archive/2013_2014/',
-        key='2013-2014 CO',
-        standings_url=None,
-    ).get_standings())

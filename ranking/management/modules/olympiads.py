@@ -41,7 +41,7 @@ class Statistic(BaseModule):
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
         match = re.search(regex, page, re.DOTALL)
         if not match:
-            regex = r'<table\s*(?:align="center"\s*)?border="1"\s*(?:align="center"\s*)?>.*?</table>'
+            regex = r'<table\s*(?:align="center"\s*)?border\s*=\s*"?1"?\s*(?:align="center"\s*)?>.*?</table>'
             matches = re.finditer(regex, page, re.DOTALL)
             for match in matches:
                 pass

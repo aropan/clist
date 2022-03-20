@@ -29,17 +29,18 @@
   $(function() {
 
 {% if not contest.resource.info.standings.no_change_problem_width %}
-  {% if contest.resource.info.standings.avg_problem_width %}
+    var problem_selector = 'tr.header-row th.problem-cell:not(.header-score):not(.problem-cell-stat), tr.header-problems th.problem-cell:not(.header-score):not(.problem-cell-stat)'
+  {% if contest.resource.info.standings.avg_problem_width or contest.info.standings.avg_problem_width %}
     var target_width = 0
-    var arr = $('th.problem-cell:not(.header-score)').map(function() { w = $(this).width(); target_width += w; return w })
+    var arr = $(problem_selector).map(function() { w = $(this).width(); target_width += w; return w })
     var target_width = target_width / arr.length
   {% else %}
-    var target_width = Math.max(...$('th.problem-cell:not(.header-score)').map(function() { return $(this).width() }), 0)
+    var target_width = Math.max(...$(problem_selector).map(function() { return $(this).width() }), 0)
   {% endif  %}
     if ($('th.problem-cell.header-score').length) {
       $('th.problem-cell.header-score').each(function () { $(this).css('max-width', $(this).attr('colspan') * target_width) })
     }
-    $('th.problem-cell:not(.header-score)').each(function () { $(this).width(target_width); })
+    $(problem_selector).each(function () { $(this).width(target_width); })
 {% endif %}
 
     var table_inner_scroll = $('#table-inner-scroll')
@@ -230,6 +231,9 @@
                   {% endif %}
                   {% if problem.first_ac_time %}
                     <div class="small" title="First AC time" data-placement="bottom" data-toggle="tooltip">{{ problem.first_ac_time }}</div>
+                  {% endif %}
+                  {% if problem.max_score %}
+                    <div class="small" title="Max score" data-placement="bottom" data-toggle="tooltip">{{ problem.max_score }}</div>
                   {% endif %}
                   {% if problem.subtext %}
                     <div

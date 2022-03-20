@@ -451,9 +451,9 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
 
         key_value_re = re.compile(
-            '''
+            r'''
             <tr>[^<]*<th[^>]*class="no-break"[^>]*>(?P<key>[^<]*)</th>[^<]*
-            <td[^>]*>(?:<[^>]*>)*(?P<value>[^<]*)(?:</[^>]*>)*</td>[^<]*</tr>
+            <td[^>]*>(?:\s*<[^>]*>)*(?P<value>[^<]+)
             ''',
             re.VERBOSE,
         )
@@ -481,6 +481,8 @@ class Statistic(BaseModule):
             match = avatar_re.search(page)
             if match:
                 ret['avatar'] = match.group('url')
+            if 'Rating' in ret:
+                ret['rating'] = int(ret['Rating'])
             return ret
 
         with PoolExecutor(max_workers=8) as executor:

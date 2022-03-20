@@ -16,7 +16,7 @@ from random import choice
 import flag
 import tqdm
 
-from clist.templatetags.extras import get_country_name
+from clist.templatetags.extras import get_country_name, get_problem_key
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
@@ -64,17 +64,24 @@ class Statistic(BaseModule):
             return decode(content)
 
         data = get(1, 1)
-        problems_info = [
-            {
+        problems_info = []
+        for task in data['challenge']['tasks']:
+            problem_info = {
                 'url': os.path.join(self.url, task['id']),
                 'code': task['id'],
                 'name': task['title'],
-                'full_score': sum([test['value'] for test in task['tests']])
             }
-            for task in data['challenge']['tasks']
-        ]
-        problems_info.sort(key=lambda t: (t['full_score'], t['name']))
-        problems_info = OrderedDict([(t['code'], t) for t in problems_info])
+            if 'name' in task['tests'][0]:
+                problem_info.pop('code')
+                problem_info['group'] = problem_info['name']
+                for subtask in task['tests']:
+                    name = subtask['name']
+                    problem_info['short'] = name.split()[0]
+                    problem_info['subname'] = name
+                    problems_info.append(dict(problem_info))
+            else:
+                problem_info['full_score'] = sum([test['value'] for test in task['tests']])
+                problems_info.append(problem_info)
 
         are_results_final = data['challenge']['are_results_final']
 
@@ -84,61 +91,131 @@ class Statistic(BaseModule):
         def fetch_page(page):
             return get(page * num_consecutive_users + 1, num_consecutive_users)
 
+        n_forbidden = 0
+
         def fetch_attempts(handle):
             query = f'{{"nickname":{json.dumps(handle)},"include_non_final_results":true}}'
             url = api_attempts_url_format + encode(query)
             try:
                 content = REQ.get(url)
                 data = decode(content)
-            except FailOnGetResponse:
+            except FailOnGetResponse as e:
+                if e.code == 403:
+                    nonlocal n_forbidden
+                    n_forbidden += 1
                 data = None
             return handle, data
 
         result = {}
-        with PoolExecutor(max_workers=8) as executor:
+        neverland_ids = []
+        stop = False
+        if users:
+            users = set(users)
+        with PoolExecutor(max_workers=1 if users else 8) as executor:
             handles_for_getting_attempts = []
             for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page, desc='paging'):
+                if stop:
+                    break
                 for row in data['user_scores']:
-                    if not row['task_info']:
+                    if not row['task_info'] or stop:
                         continue
                     handle = row.pop('displayname')
                     if users and handle not in users:
                         continue
+                    if users:
+                        users.remove(handle)
+                        stop = not users
+
+                    competitor = row.pop('competitor', {})
+                    competitor_type = competitor.get('type')
+                    if competitor_type == 2:
+                        handle = f'{handle}, {self.get_season()}'
 
                     r = result.setdefault(handle, {})
                     r['member'] = handle
                     r['place'] = row.pop('rank')
                     r['solving'] = row.pop('score_1')
-                    r['penalty'] = self.to_time(-row.pop('score_2') / 10**6)
-                    if '/round/' in self.url:
-                        query = encode(handle)
-                        url = self.url.replace('/round/', '/submissions/').rstrip('/') + f'/{query}'
-                        r['url'] = url.rstrip('=')
 
-                    country = row.pop('country', None)
-                    if country:
-                        r['country'] = country
+                    if competitor_type == 1 or competitor_type is None:
+                        if row['score_2']:
+                            r['penalty'] = self.to_time(-row.pop('score_2') / 10**6)
+                        if '/round/' in self.url:
+                            r['url'] = self.url.replace('/round/', '/submissions/').rstrip('/') + f'/{competitor["id"]}'
+                        country = row.pop('country', None)
+                        if country:
+                            r['country'] = country
+                        if len(competitor['neverland_ids']) != 1:
+                            raise ExceptionParseStandings(f'Unusual neverland_ids = {competitor["neverland_ids"]}')
+                        r['info'] = {'neverland_id': competitor['neverland_ids'][0]}
+                    elif competitor_type == 2:
+                        if row['score_2']:
+                            r['penalty'] = self.to_time(-row.pop('score_2') / 10**6 - self.start_time.timestamp())
+                        r['_countries'] = competitor['country']
+                        r['_skip_for_problem_stat'] = True
+                        r['name'] = competitor['displayname']
+                        r['_neverland_ids'] = competitor['neverland_ids']
+                        neverland_ids.extend(r['_neverland_ids'])
+                    else:
+                        raise ExceptionParseStandings(f'unknown competitor_type = "{competitor_type}"')
+
+                    if r['solving'] == 0 and 'penalty' not in r:
+                        result.pop(handle)
+                        continue
 
                     solved = 0
                     problems = r.setdefault('problems', {})
+
+                    task_infos = []
                     for task_info in row['task_info']:
-                        tid = task_info['task_id']
-                        p = problems.setdefault(tid, {})
-                        if task_info['penalty_micros'] > 0:
+                        if task_info['score_by_test']:
+                            for score in task_info['score_by_test']:
+                                task_info['score'] = score
+                                task_infos.append(dict(task_info))
+                        else:
+                            task_infos.append(dict(task_info))
+
+                    for pid, task_info in enumerate(task_infos):
+                        problem_info = problems_info[pid]
+                        key = get_problem_key(problem_info)
+                        p = problems.setdefault(key, {})
+                        if task_info.get('penalty_micros', 0) > 0:
                             p['time_in_seconds'] = task_info['penalty_micros'] / 10**6
                             p['time'] = self.to_time(p['time_in_seconds'])
                         p['result'] = task_info['score']
-                        if p['result'] and p['result'] != problems_info[tid]['full_score']:
+                        if p['result'] and 'full_score' in problem_info and p['result'] != problem_info['full_score']:
                             p['partial'] = True
-                        if task_info['penalty_attempts']:
+                        if task_info.get('penalty_attempts', 0):
                             p['penalty'] = task_info['penalty_attempts']
-                        solved += task_info['tests_definitely_solved']
+                        solved += task_info.get('tests_definitely_solved', 0)
                     r['solved'] = {'solving': solved}
 
-                    if statistics and handle in statistics and statistics[handle].get('_with_subscores'):
+                    if statistics and handle in statistics:
                         result[handle] = self.merge_dict(r, statistics.pop(handle))
                     else:
                         handles_for_getting_attempts.append(handle)
+
+            neverland_ids_set = set()
+            for row in result.values():
+                if '_members' not in row or '_neverland_ids' not in row:
+                    continue
+                for key, nid in zip(row['_members'], row['_neverland_ids']):
+                    if key is None:
+                        continue
+                    neverland_ids_set.add(nid)
+            neverland_ids = [nid for nid in neverland_ids if nid not in neverland_ids_set]
+
+            if neverland_ids:
+                if len(neverland_ids) > 200:
+                    neverland_ids = neverland_ids[:200]
+
+                accounts = self.resource.account_set.filter(info__neverland_id__in=set(neverland_ids))
+                accounts = accounts.values_list('key', 'info__neverland_id')
+                accounts = {nid: key for key, nid in accounts}
+                for row in result.values():
+                    members = row.setdefault('_members', [None] * len(row['_neverland_ids']))
+                    for idx, nid in enumerate(row['_neverland_ids']):
+                        if nid in accounts:
+                            members[idx] = {'account': accounts[nid]}
 
             if are_results_final:
                 for handle, data in tqdm.tqdm(
@@ -146,6 +223,8 @@ class Statistic(BaseModule):
                     total=len(handles_for_getting_attempts),
                     desc='attempting'
                 ):
+                    if n_forbidden > 3:
+                        break
                     if data is None:
                         continue
                     challenge = data['challenge']
@@ -178,7 +257,10 @@ class Statistic(BaseModule):
                             continue
 
                         problem['subscores'] = subscores
-                        problem['solution'] = attempt.pop('src_content').replace('\u0000', '')
+                        if 'src_content' in attempt:
+                            problem['solution'] = attempt.pop('src_content').replace('\u0000', '')
+                        elif 'source_file' in attempt and 'url' in attempt['source_file']:
+                            problem['url'] = attempt['source_file']
                         language = attempt.get('src_language__str')
                         if language:
                             problem['language'] = language
@@ -188,10 +270,12 @@ class Statistic(BaseModule):
                             problem['time'] = self.to_time(problem['time_in_seconds'])
                     row['_with_subscores'] = True
 
+        problems_info.sort(key=lambda t: (t.get('full_score'), t['name']))
+
         standings = {
             'result': result,
             'url': standings_url,
-            'problems': list(problems_info.values()),
+            'problems': problems_info,
         }
 
         if self.start_time.year >= 2020:

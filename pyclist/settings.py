@@ -106,6 +106,7 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'csp.middleware.CSPMiddleware',
     'pyclist.middleware.RequestLoggerMiddleware',
     'pyclist.middleware.Lightrope',
 )
@@ -415,6 +416,35 @@ OAUTH2_PROVIDER = {
     'DEFAULT_SCOPES': ['read'],
 }
 
+
+CSRF_COOKIE_SECURE = True
+
+# HTTP Strict Transport Security
+SECURE_HSTS_SECONDS = 300
+# FIXME
+# SECURE_HSTS_SECONDS = 15768000
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+
+# Content Security Policy
+CSP_DEFAULT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "data:")
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")
+CSP_IMG_SRC = CSP_DEFAULT_SRC
+CSP_CONNECT_SRC = CSP_DEFAULT_SRC
+
+# CSP Yandex counter
+CSP_SCRIPT_SRC += ('https://mc.yandex.ru', 'https://yastatic.net', )
+CSP_IMG_SRC += ('https://mc.yandex.ru', )
+CSP_CONNECT_SRC += ('https://mc.yandex.ru', )
+
+# CSP Google counter
+CSP_SCRIPT_SRC += ('https://www.google-analytics.com', 'https://www.googletagmanager.com', )
+CSP_IMG_SRC += ('https://www.google-analytics.com', )
+CSP_CONNECT_SRC += ('https://www.google-analytics.com', )
+
+# X-XSS-Protection
+SECURE_BROWSER_XSS_FILTER = True
+
 # CONSTANTS
 VIEWMODE_ = 'list'
 OPEN_NEW_TAB_ = False
@@ -439,8 +469,8 @@ ACE_CALENDARS_ = {
     'yahoo': {'id': 2, 'name': 'Yahoo'},
     'outlook': {'id': 3, 'name': 'Outlook'},
 }
-PAST_CALENDAR_ACTIONS_ = ['lighten', 'show', 'hide', 'darken']
-PAST_CALENDAR_DEFAULT_ACTION_ = PAST_CALENDAR_ACTIONS_[0]
+PAST_CALENDAR_ACTIONS_ = ['show', 'lighten', 'darken', 'lighten-day', 'darken-day', 'hide']
+PAST_CALENDAR_DEFAULT_ACTION_ = 'lighten'
 ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
            'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']

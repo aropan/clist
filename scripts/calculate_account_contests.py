@@ -11,7 +11,7 @@ from clist.models import Resource
 from ranking.models import Account
 
 
-def main(host=None):
+def main(host=None, full=False):
     resources = Resource.objects.order_by('n_accounts')
     if host:
         resources = resources.filter(host__regex=host)
@@ -20,7 +20,9 @@ def main(host=None):
     with tqdm(total=total, desc='resources') as pbar_resource:
         for resource in resources.iterator():
             start_time = timezone.now()
-            accounts = Account.objects.filter(resource=resource, coders__isnull=False)
+            accounts = Account.objects.filter(resource=resource)
+            if not full:
+                accounts = Account.objects.filter(coders__isnull=False)
             qs = accounts.annotate(
                 count=SubqueryCount(
                     'statistics',
@@ -55,5 +57,5 @@ def main(host=None):
         pbar_resource.close()
 
 
-def run(*args):
+def run(args):
     fire.Fire(main, args)

@@ -114,14 +114,14 @@
         $competition = preg_replace('/\s+to\s+/', ' ', $competition);
         $competition = preg_replace('/[^a-z]/', '', $competition);
         foreach ($adventure['challenges'] as $challenge) {
-            $key = $challenge['start_ms'] / 1000;
+            $key = $challenge['end_ms'] / 1000;
             $challenge['competition'] = $competition;
             $infos[$key] = $challenge;
         }
     }
 
     foreach ($calendar_ids as $calendar_id) {
-        $url = "https://www.googleapis.com/calendar/v3/calendars/" . urlencode($calendar_id) . "/events?timeMin=" . urlencode(date('c', time() - 3 * 24 * 60 * 60));
+        $url = "https://www.googleapis.com/calendar/v3/calendars/" . urlencode($calendar_id) . "/events?timeMin=" . urlencode(date('c', time() - 7 * 24 * 60 * 60));
         $data = curlexec($url, NULL, array("http_header" => array("Authorization: $authorization"), "json_output" => 1));
         if (!isset($data['items'])) {
             continue;
@@ -134,8 +134,10 @@
             $date_key = isset($item['start']['dateTime'])? "dateTime" : "date";
             $title = trim(preg_replace('/\s*[0-9]{4}\s*/', ' ', $item['summary']));
 
-            $timestamp = date("U", strtotime($item['start'][$date_key]));
-            if (isset($infos[$timestamp])) {
+            $skip_match_by_end = preg_match('/(registration|announce)/i', $title, $match);
+
+            $timestamp = date("U", strtotime($item['end'][$date_key]));
+            if (!$skip_match_by_end && isset($infos[$timestamp])) {
                 $url = "$URL{$infos[$timestamp]['competition']}/round/{$infos[$timestamp]['id']}";
                 $host = "$HOST/{$infos[$timestamp]['competition']}";
                 unset($infos[$timestamp]);

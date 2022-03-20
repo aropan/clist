@@ -188,6 +188,9 @@ class Resource(BaseModel):
     def with_single_account(self):
         return not self.module or not self.module.multi_account_allowed
 
+    def is_major_kind(self, kind):
+        return not kind or kind == self.info.get('major_kind')
+
 
 class VisibleContestManager(BaseManager):
     def get_queryset(self):
@@ -201,6 +204,7 @@ class SignificantContestManager(VisibleContestManager):
 
 class Contest(BaseModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    kind = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     title = models.CharField(max_length=2048)
     slug = models.CharField(max_length=2048, null=True, blank=True, db_index=True)
     title_path = PathField(null=True, blank=True, db_index=True)

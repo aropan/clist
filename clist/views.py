@@ -186,6 +186,11 @@ def get_events(request):
 
     if past_action == 'hide':
         contests = contests.filter(end_time__gte=timezone.now())
+    elif 'day' in past_action:
+        threshold = timezone.now() - timedelta(days=1) + timedelta(minutes=offset)
+        start_day = threshold.replace(hour=0, minute=0, second=0, microsecond=0)
+        contests = contests.filter(end_time__gte=start_day)
+        past_action = past_action.split('-')[0]
 
     now = timezone.now()
     try:
