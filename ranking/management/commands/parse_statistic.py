@@ -296,7 +296,12 @@ class Command(BaseCommand):
                                         p = p.setdefault(r['division'], {})
                                     p = p.setdefault(k, {})
 
-                                    scored = str(v['result']).startswith('+')
+                                    result_str = str(v['result'])
+                                    is_accepted = result_str.startswith('+')
+                                    is_hidden = result_str.startswith('?')
+                                    is_score = result_str and result_str[0].isdigit()
+
+                                    scored = is_accepted
                                     try:
                                         scored = scored or float(v['result']) > 0
                                     except Exception:
@@ -306,7 +311,7 @@ class Command(BaseCommand):
                                         contest.info.get('default_problem_full_score')
                                         or contest.resource.info.get('statistics', {}).get('default_problem_full_score')
                                     )
-                                    if default_full_score and v['result'] and v['result'][0].isdigit():
+                                    if default_full_score and is_score:
                                         if 'partial' not in v and default_full_score - float(v['result']) > 1e-9:
                                             v['partial'] = True
                                         if not v.get('partial'):
@@ -347,7 +352,7 @@ class Command(BaseCommand):
                                         p['n_accepted'] = p.get('n_accepted', 0) + 1
                                     elif scored and v.get('partial'):
                                         p['n_partial'] = p.get('n_partial', 0) + 1
-                                    elif str(v['result']).startswith('?'):
+                                    elif is_hidden:
                                         p['n_hidden'] = p.get('n_hidden', 0) + 1
 
                                 if 'default_problem_full_score' in contest.info and solved and 'solved' not in r:

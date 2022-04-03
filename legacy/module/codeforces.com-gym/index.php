@@ -18,7 +18,9 @@
 
     $url = 'http://codeforces.com/api/contest.list?gym=true&lang=en';
     $json = curlexec($url, NULL, array('json_output' => true));
-
+    if (!is_array($json)) {
+        return;
+    }
     if ($json['status'] != 'OK') {
         $json_str = print_r($json, true);
         trigger_error("status = ${json['status']}, json = $json_str", E_USER_WARNING);

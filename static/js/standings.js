@@ -418,6 +418,10 @@ function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500)
   }
 }
 
+function update_trophy_font_size() {
+  $('.handle-cell .trophy-detail').each((_, e) => { $(e).css("font-size", Math.max(14, $(e).closest('.handle-cell').height() / 2)) })
+}
+
 $(function() {
   CURRENT_PERCENT = contest_max_percent
 

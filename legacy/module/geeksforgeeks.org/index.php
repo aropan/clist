@@ -5,7 +5,11 @@
         $url = "https://practiceapi.geeksforgeeks.org/api/v1/events/?type=contest&page_number=$page&sub_type=all";
 
         $response = curlexec($url, null, array("json_output" => 1));
+        if ($response == false) {
+            break;
+        }
         if (!isset($response['results'])) {
+            var_dump($response);
             trigger_error('json = ' . json_encode($response), E_USER_WARNING);
             return;
         }

@@ -76,7 +76,7 @@
             $offset = 0;
             $limit = 20;
             do {
-                $url = "/api/list/contests/$time?sort_by=START&sorting_order=desc&offset=$offset";
+                $url = "/api/list/contests/$time?sort_by=START&sorting_order=desc&offset=$offset&mode=all";
                 $data = curlexec($url, NULL, array("json_output" => 1));
 
                 if (!isset($data['contests'])) {

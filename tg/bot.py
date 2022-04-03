@@ -29,6 +29,10 @@ class ArgumentParserError(Exception):
     pass
 
 
+class ArgumentCommandError(Exception):
+    pass
+
+
 class NeedHelpError(Exception):
     pass
 
@@ -42,6 +46,8 @@ class ThrowingArgumentParser(argparse.ArgumentParser):
         raise NeedHelpError(self.format_help())
 
     def error(self, message):
+        if 'argument command: invalid choice' in message:
+            raise ArgumentCommandError(message)
         raise ArgumentParserError(message)
 
 
@@ -431,6 +437,8 @@ class Bot(telegram.Bot):
             except telegram.error.BadRequest:
                 pass
 
+        except ArgumentCommandError:
+            pass
         except ArgumentParserError as e:
             yield 'I\'m sorry, could you clarify:\n' + escape(str(e))
         except NeedHelpError as e:

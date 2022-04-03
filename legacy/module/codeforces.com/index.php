@@ -44,7 +44,9 @@
 
     $url = 'http://codeforces.com/api/contest.list?lang=en';
     $json = curlexec($url, NULL, array('json_output' => true));
-
+    if (!is_array($json)) {
+        return;
+    }
     $json['status'] == 'OK' or trigger_error("status = '${json['status']}' for $url");
     foreach ($json['result'] as $c) {
         $title = $c['name'];

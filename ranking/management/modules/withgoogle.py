@@ -65,12 +65,14 @@ class Statistic(BaseModule):
 
         data = get(1, 1)
         problems_info = []
+        problems_order = []
         for task in data['challenge']['tasks']:
             problem_info = {
                 'url': os.path.join(self.url, task['id']),
                 'code': task['id'],
                 'name': task['title'],
             }
+            problems_order.append(problem_info['code'])
             if 'name' in task['tests'][0]:
                 problem_info.pop('code')
                 problem_info['group'] = problem_info['name']
@@ -89,6 +91,8 @@ class Statistic(BaseModule):
         n_page = (data['full_scoreboard_size'] - 1) // num_consecutive_users + 1
 
         def fetch_page(page):
+            if stop:
+                return
             return get(page * num_consecutive_users + 1, num_consecutive_users)
 
         n_forbidden = 0
@@ -165,9 +169,14 @@ class Statistic(BaseModule):
                     solved = 0
                     problems = r.setdefault('problems', {})
 
+                    task_infos_map = {task_info['task_id']: task_info for task_info in row['task_info']}
+                    ordered_task_info = [task_infos_map.get(tid) for tid in problems_order]
+
                     task_infos = []
-                    for task_info in row['task_info']:
-                        if task_info['score_by_test']:
+                    for task_info in ordered_task_info:
+                        if task_info is None:
+                            task_infos.append(None)
+                        elif task_info['score_by_test']:
                             for score in task_info['score_by_test']:
                                 task_info['score'] = score
                                 task_infos.append(dict(task_info))
@@ -175,6 +184,8 @@ class Statistic(BaseModule):
                             task_infos.append(dict(task_info))
 
                     for pid, task_info in enumerate(task_infos):
+                        if task_info is None:
+                            continue
                         problem_info = problems_info[pid]
                         key = get_problem_key(problem_info)
                         p = problems.setdefault(key, {})
@@ -182,42 +193,42 @@ class Statistic(BaseModule):
                             p['time_in_seconds'] = task_info['penalty_micros'] / 10**6
                             p['time'] = self.to_time(p['time_in_seconds'])
                         p['result'] = task_info['score']
-                        if p['result'] and 'full_score' in problem_info and p['result'] != problem_info['full_score']:
-                            p['partial'] = True
+                        if p['result'] and 'full_score' in problem_info:
+                            p['partial'] = p['result'] != problem_info['full_score']
                         if task_info.get('penalty_attempts', 0):
                             p['penalty'] = task_info['penalty_attempts']
                         solved += task_info.get('tests_definitely_solved', 0)
                     r['solved'] = {'solving': solved}
 
-                    if statistics and handle in statistics:
+                    if statistics and handle in statistics and are_results_final:
                         result[handle] = self.merge_dict(r, statistics.pop(handle))
                     else:
                         handles_for_getting_attempts.append(handle)
 
-            neverland_ids_set = set()
-            for row in result.values():
-                if '_members' not in row or '_neverland_ids' not in row:
-                    continue
-                for key, nid in zip(row['_members'], row['_neverland_ids']):
-                    if key is None:
-                        continue
-                    neverland_ids_set.add(nid)
-            neverland_ids = [nid for nid in neverland_ids if nid not in neverland_ids_set]
-
-            if neverland_ids:
-                if len(neverland_ids) > 200:
-                    neverland_ids = neverland_ids[:200]
-
-                accounts = self.resource.account_set.filter(info__neverland_id__in=set(neverland_ids))
-                accounts = accounts.values_list('key', 'info__neverland_id')
-                accounts = {nid: key for key, nid in accounts}
-                for row in result.values():
-                    members = row.setdefault('_members', [None] * len(row['_neverland_ids']))
-                    for idx, nid in enumerate(row['_neverland_ids']):
-                        if nid in accounts:
-                            members[idx] = {'account': accounts[nid]}
-
             if are_results_final:
+                neverland_ids_set = set()
+                for row in result.values():
+                    if '_members' not in row or '_neverland_ids' not in row:
+                        continue
+                    for key, nid in zip(row['_members'], row['_neverland_ids']):
+                        if key is None:
+                            continue
+                        neverland_ids_set.add(nid)
+                neverland_ids = [nid for nid in neverland_ids if nid not in neverland_ids_set]
+
+                if neverland_ids:
+                    if len(neverland_ids) > 200:
+                        neverland_ids = neverland_ids[:200]
+
+                    accounts = self.resource.account_set.filter(info__neverland_id__in=set(neverland_ids))
+                    accounts = accounts.values_list('key', 'info__neverland_id')
+                    accounts = {nid: key for key, nid in accounts}
+                    for row in result.values():
+                        members = row.setdefault('_members', [None] * len(row['_neverland_ids']))
+                        for idx, nid in enumerate(row['_neverland_ids']):
+                            if nid in accounts:
+                                members[idx] = {'account': accounts[nid]}
+
                 for handle, data in tqdm.tqdm(
                     executor.map(fetch_attempts, handles_for_getting_attempts),
                     total=len(handles_for_getting_attempts),

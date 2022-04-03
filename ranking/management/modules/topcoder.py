@@ -593,6 +593,9 @@ class Statistic(BaseModule):
                     ret['volatility'] = toint(data['alg_vol'])
                 if 'alg_rating' in data:
                     ret['rating'] = toint(data['alg_rating'])
+            for rating in ret['ratingSummary']:
+                if rating['name'].lower() == 'algorithm' and 'rating' not in ret:
+                    ret['rating'] = rating['rating']
             return ret
 
         ret = []

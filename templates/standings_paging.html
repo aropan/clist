@@ -33,7 +33,7 @@ class="
 >
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }}
-    class="place-cell{% if advance %} advance{% if advance.class %} {{ advance.class }}{% endif %}{% endif %}"
+    class="place-cell{% if advance and not addition.medal %} advance{% if advance.class %} {{ advance.class }}{% endif %}{% endif %}"
     {% if advance %}
       data-placement="top"
       data-toggle="tooltip"
@@ -161,7 +161,14 @@ class="
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     <span{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
     <span>
-      {% if field in addition and not value.empty %}
+      {% if field == 'global_rating' and statistic.new_global_rating is not None %}
+        {{ statistic.new_global_rating }}
+        {% if statistic.global_rating_change is not None %}
+        <span class="rating-change{% if statistic.global_rating_change %} rating-change-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}{% endif %}">
+          <i class="fas fa-angle-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}"></i>{{ statistic.global_rating_change|abs }}
+        </span>
+        {% endif %}
+      {% elif field in addition and not value.empty %}
         {% if field == 'hack' %}
           <small>
           {% if addition.hack.successful %}<div class="inline acc">+{{ addition.hack.successful }}</div>{% endif %}
@@ -309,5 +316,7 @@ class="
 {% if colored_by_group_score %}
 <script>color_by_group_score()</script>
 {% endif %}
+
+<script>$(update_trophy_font_size)</script>
 
 {% endwith %}

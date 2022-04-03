@@ -118,7 +118,8 @@
   <script>
     function update_neighbors_standings_url_offset() {
       $('.neighbors-standings-url').each(function(idx, el) {
-        $(el).offset({left: $('#standings-url').offset().left - $(el).children('.neighbors-standings-url-before').width()})
+        var before_width = $(el).children('.neighbors-standings-url-before').width() || 0
+        $(el).offset({left: $('#standings-url').offset().left - before_width})
         $(el).width($('#standings-title').width() - $(el).offset().left)
       })
     }
