@@ -689,6 +689,9 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     for k, v in fixed_fields:
         if k in contest_fields:
             fields[k] = v
+    if 'global_rating' in hidden_fields_values:
+        fields['new_global_rating'] = 'new_global_rating'
+        fields['global_rating_change'] = 'global_rating_change'
 
     n_highlight_context = _standings_highlight(statistics, options)
 
@@ -756,11 +759,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if inplace_division and division != divisions_order[0] else
         contest_fields
     )
+    special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
+                      'medal']
     for k in addition_fields:
         if (
             k in fields
-            or k in ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division']
-            or k == 'medal' and ('_medal_title_field' not in contest_fields or inplace_division)
+            or k in special_fields
             or 'country' in k and k not in hidden_fields_values
             or k in ['name', 'place', 'solving'] and k not in hidden_fields_values
             or k.startswith('_')
@@ -780,6 +784,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             field = field.title()
         fields[k] = field
 
+    if contest.is_rated and 'global_rating' not in hidden_fields:
+        hidden_fields.append('global_rating')
     if hidden_fields:
         fields_to_select['field'] = {
             'values': hidden_fields_values,

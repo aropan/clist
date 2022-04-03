@@ -35,6 +35,7 @@ class Coder(BaseModel):
     n_contests = models.IntegerField(default=0, db_index=True)
     tshirt_size = models.CharField(max_length=10, default=None, null=True, blank=True)
     is_virtual = models.BooleanField(default=False, db_index=True)
+    global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
 
     class Meta:
         indexes = [

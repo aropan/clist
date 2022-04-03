@@ -1,0 +1,12 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block bootstrap_admin_css %}
+<link rel="stylesheet" href="{% static 'css/bootstrap-3.3.7.min.css' %}">
+{% endblock bootstrap_admin_css %}
+
+{% block bootstrap_admin_js %}
+  <script>if (typeof jQuery === 'undefined' && django && django.jQuery) {jQuery = django.jQuery;}</script>
+  <script src="{% static 'js/bootstrap-3.3.7.min.js' %}"></script>
+  <script src="{% static 'bootstrap_admin/js/base.js' %}"></script>
+{% endblock bootstrap_admin_js %}

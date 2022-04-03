@@ -76,7 +76,7 @@ class Command(BaseCommand):
                 accounts = resource.account_set
 
                 if args.query:
-                    accounts = accounts.filter(Q(key__iregex=args.query) | Q(name__iregex=args.query))
+                    accounts = accounts.filter(Q(key=args.query) | Q(name=args.query))
                 elif not args.force:
                     condition = Q(updated__isnull=True) | Q(updated__lte=now)
                     if resource_info.get('force_on_new_year') or args.update_new_year:
@@ -123,6 +123,7 @@ class Command(BaseCommand):
             count = 0
             n_rename = 0
             n_remove = 0
+            n_deferred = 0
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -143,6 +144,8 @@ class Command(BaseCommand):
                             member = data.pop('member')
                             account, created = Account.objects.get_or_create(key=member, resource=resource)
                         with transaction.atomic():
+                            if 'delta' in data or 'delta' in data.get('info', {}):
+                                n_deferred += 1
                             if data.get('skip'):
                                 delta = data.get('delta')
                                 if delta:
@@ -233,4 +236,4 @@ class Command(BaseCommand):
                 self.logger.error(f'resource = {resource}')
                 self.logger.error(format_exc())
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}'
-                             f', removed: {n_remove}, renamed: {n_rename}')
+                             f', removed: {n_remove}, renamed: {n_rename}, deferred: {n_deferred}')

@@ -43,6 +43,7 @@ class Account(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
+    global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource_id))
@@ -279,6 +280,8 @@ class Statistics(BaseModel):
     upsolving = models.FloatField(default=0, blank=True)
     addition = models.JSONField(default=dict, blank=True)
     url = models.TextField(null=True, blank=True)
+    new_global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
+    global_rating_change = models.IntegerField(null=True, blank=True, default=None)
 
     @staticmethod
     def is_special_addition_field(field):
@@ -771,6 +774,7 @@ class Stage(BaseModel):
             placing_infos = {}
             score_advance = None
             place_advance = 0
+            place_index = 0
             for row in tqdm.tqdm(results, desc=f'update statistics for stage {stage}'):
                 row['_no_update_n_contests'] = True
                 division = row.get('division', 'none')
@@ -783,10 +787,11 @@ class Stage(BaseModel):
                     placing_info['place'] = placing_info['index']
 
                 if advances and ('divisions' not in advances or division in advances['divisions']):
+                    place_index += 1
                     tmp = score_advance, place_advance
                     if curr_score != score_advance:
                         score_advance = curr_score
-                        place_advance += 1
+                        place_advance = place_index
 
                     for advance in advances.get('options', []):
                         handle = row['member'].key
@@ -838,4 +843,6 @@ class Stage(BaseModel):
             stage.info['divisions_order'] = divisions_order
 
         stage.info['problems'] = list(problems_infos.values())
+        if stage.is_rated is None:
+            stage.is_rated = False
         stage.save()

@@ -225,6 +225,7 @@ class Contest(BaseModel):
     parsed_time = models.DateTimeField(null=True, blank=True)
     has_hidden_results = models.BooleanField(null=True, blank=True)
     related = models.ForeignKey('Contest', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_set')
+    is_rated = models.BooleanField(null=True, blank=True, default=None, db_index=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -251,11 +252,26 @@ class Contest(BaseModel):
             GistIndexTrgrmOps(fields=['title']),
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prev_is_rated = self.is_rated
+
     def save(self, *args, **kwargs):
         if self.duration_in_secs is None:
             self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
         self.slug = slug(self.title)
         self.title_path = self.slug.replace('-', '.')
+
+        if self.is_rated is None:
+            fields = self.info.get('fields', [])
+            is_rated = self.related_id is None and ('new_rating' in fields or 'rating_change' in fields)
+            if is_rated:
+                self.is_rated = True
+        if not self.is_rated and self.prev_is_rated:
+            stats = self.statistics_set
+            stats = stats.filter(new_global_rating__isnull=False)
+            stats.update(new_global_rating=None, global_rating_change=None)
+
         return super(Contest, self).save(*args, **kwargs)
 
     def is_over(self):

@@ -8,7 +8,7 @@ from true_coders.models import Coder, CoderList, Filter, ListValue, Organization
 @admin_register(Coder)
 class CoderAdmin(BaseModelAdmin):
     search_fields = ['username', 'settings']
-    list_display = ['username', 'timezone', 'settings']
+    list_display = ['username', 'global_rating', 'timezone', 'settings']
     list_filter = ['party', 'account__resource']
 
     def clean_settings(self, request, queryset):

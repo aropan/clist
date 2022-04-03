@@ -222,7 +222,7 @@ def coders(request, template='coders.html'):
 
     # ordering
     orderby = request.GET.get('sort_column')
-    if orderby in ['username', 'created', 'n_accounts', 'n_contests']:
+    if orderby in ['username', 'global_rating', 'created', 'n_accounts', 'n_contests']:
         pass
     elif orderby and orderby.startswith('resource_'):
         _, pk = orderby.split('_')
@@ -239,7 +239,7 @@ def coders(request, template='coders.html'):
         orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
     elif order:
         request.logger.error(f'Not found `{order}` order for sorting')
-    orderby = orderby or ['-created']
+    orderby = orderby or [F('global_rating').desc(nulls_last=True), '-created']
     coders = coders.order_by(*orderby)
 
     context = {
@@ -259,6 +259,8 @@ def profile(request, username, template='profile.html', extra_context=None):
     data = _get_data_mixed_profile(request, [username])
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['coder'] = coder
+    # if coder.global_rating is not None:
+    #     context['history_resources'].insert(0, dict(django_settings.CLIST_RESOURCE_DICT_))
 
     if request.user.is_authenticated and request.user.coder == coder:
         context['without_findme'] = True
@@ -387,11 +389,13 @@ def profiles(request, query, template='profile.html'):
     return template, context
 
 
-def get_ratings_data(request, username=None, key=None, host=None, statistics=None, date_from=None, date_to=None):
+def get_ratings_data(request, username=None, key=None, host=None, statistics=None, date_from=None, date_to=None,
+                     with_global=False):
     if statistics is None:
         if username is not None:
             coder = get_object_or_404(Coder, username=username)
             statistics = Statistics.objects.filter(account__coders=coder)
+            with_global = True
         else:
             account = get_object_or_404(Account, key=key, resource__host=host)
             statistics = Statistics.objects.filter(account=account)
@@ -401,46 +405,42 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
 
     resources = {r.pk: r for r in Resource.objects.filter(has_rating_history=True)}
 
-    qs = statistics \
-        .annotate(date=F('contest__end_time')) \
-        .annotate(name=F('contest__title')) \
-        .annotate(kind=F('contest__kind')) \
-        .annotate(stage=F('contest__stage')) \
-        .annotate(resource=F('contest__resource')) \
-        .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField())) \
-        .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField())) \
-        .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField())) \
-        .annotate(score=F('solving')) \
-        .annotate(addition_solved=KeyTextTransform('solved', 'addition')) \
-        .annotate(solved=Cast(KeyTextTransform('solving', 'addition_solved'), IntegerField())) \
-        .annotate(problems=KeyTextTransform('problems', 'contest__info')) \
-        .annotate(division=KeyTextTransform('division', 'addition')) \
-        .annotate(cid=F('contest__pk')) \
-        .annotate(sid=F('pk')) \
-        .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField())) \
-        .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0)) \
-        .filter(new_rating__isnull=False) \
-        .order_by('date') \
-
-    qs = qs.values(
-        'cid',
-        'sid',
-        'name',
-        'kind',
-        'date',
-        'new_rating',
-        'old_rating',
-        'rating_change',
-        'place',
-        'score',
-        'solved',
-        'problems',
-        'division',
-        'addition___rating_data',
-        'resource',
-        'stage',
-        'addition',
+    base_qs = (
+        statistics
+        .annotate(date=F('contest__end_time'))
+        .annotate(name=F('contest__title'))
+        .annotate(kind=F('contest__kind'))
+        .annotate(resource=F('contest__resource'))
+        .annotate(score=F('solving'))
+        .annotate(addition_solved=KeyTextTransform('solved', 'addition'))
+        .annotate(solved=Cast(KeyTextTransform('solving', 'addition_solved'), IntegerField()))
+        .annotate(problems=KeyTextTransform('problems', 'contest__info'))
+        .annotate(division=KeyTextTransform('division', 'addition'))
+        .annotate(cid=F('contest__pk'))
+        .annotate(sid=F('pk'))
+        .filter(contest__is_rated=True)
+        .order_by('date')
     )
+
+    qs = (
+        base_qs
+        .annotate(rating_change=Cast(KeyTextTransform('rating_change', 'addition'), IntegerField()))
+        .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField()))
+        .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField()))
+        .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField()))
+        .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0))
+        .filter(new_rating__isnull=False)
+    )
+
+    qs_values = (
+        'cid', 'sid', 'name', 'kind', 'date',
+        'new_rating', 'old_rating', 'rating_change',
+        'place', 'score', 'solved',
+        'problems', 'division', 'addition___rating_data',
+        'resource', 'addition',
+    )
+
+    qs = qs.values(*qs_values)
 
     ratings = {
         'status': 'ok',
@@ -466,8 +466,20 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             ret[k] = v
         return ret
 
-    qs = [stat for stat in qs if stat['stage'] is None and stat['resource'] in resources]
+    qs = [stat for stat in qs if stat['resource'] in resources]
     n_resources = len({stat['resource'] for stat in qs})
+
+    if with_global:
+        global_qs = (
+            base_qs
+            .annotate(rating_change=F('global_rating_change'))
+            .annotate(new_rating=F('new_global_rating'))
+            .annotate(old_rating=Value(None, IntegerField(null=True)))
+            .annotate(resource=Value(0, IntegerField()))
+            .filter(new_rating__isnull=False)
+        )
+        qs.extend(global_qs.values(*qs_values))
+
     for stat in qs:
         if stat['addition___rating_data'] and n_resources > 1:
             continue
@@ -478,18 +490,22 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         addition['score'] = stat['score']
         stat['values'] = dict_to_float_values(addition)
 
-        resource = resources[stat['resource']]
-        is_major_kind = resource.is_major_kind(stat['kind'])
-
-        default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
-        default_info['pk'] = stat['resource']
-        default_info['kind'] = None if is_major_kind else stat['kind']
-        default_info['host'] = resource.host
-        default_info['colors'] = resource.ratings
-        default_info['icon'] = resource.icon
+        if stat['resource'] == 0:  # global rating
+            resource = None
+            default_info = dict(django_settings.CLIST_RESOURCE_DICT_)
+            resource_key = default_info['host']
+        else:
+            resource = resources[stat['resource']]
+            is_major_kind = resource.is_major_kind(stat['kind'])
+            default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
+            default_info['pk'] = stat['resource']
+            default_info['kind'] = None if is_major_kind else stat['kind']
+            default_info['host'] = resource.host
+            default_info['colors'] = resource.ratings
+            default_info['icon'] = resource.icon
+            resource_key = resource.host if is_major_kind else f'{resource.host} ({stat["kind"]})'
         default_info['fields'] = set()
 
-        resource_key = resource.host if is_major_kind else f'{resource.host} ({stat["kind"]})'
         resource_info = ratings['data']['resources'].setdefault(resource_key, default_info)
         resource_info.setdefault('data', [])
         resource_info['fields'] |= set(stat['values'].keys())

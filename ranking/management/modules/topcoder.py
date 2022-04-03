@@ -582,8 +582,8 @@ class Statistic(BaseModule):
                     pass
                 sleep(1)
             if 'handle' not in ret:
-                if not ret:
-                    ret['delta'] = timedelta(days=30)
+                if not ret or 'error' in ret:
+                    ret['delta'] = timedelta(days=7)
                 ret['handle'] = user
             if not ret.get('photoLink'):
                 ret.pop('photoLink', None)
@@ -593,7 +593,7 @@ class Statistic(BaseModule):
                     ret['volatility'] = toint(data['alg_vol'])
                 if 'alg_rating' in data:
                     ret['rating'] = toint(data['alg_rating'])
-            for rating in ret['ratingSummary']:
+            for rating in ret.get('ratingSummary', []):
                 if rating['name'].lower() == 'algorithm' and 'rating' not in ret:
                     ret['rating'] = rating['rating']
             return ret

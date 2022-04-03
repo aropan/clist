@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
-import urllib.parse
 import json
+import re
 import time
+import urllib.parse
 import zlib
-from base64 import b64encode, b64decode
+from base64 import b64decode, b64encode
 from collections import OrderedDict
-from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import datetime, timedelta
 
-import tqdm
 import pytz
+import tqdm
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, FailOnGetResponse, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -210,7 +210,8 @@ class Statistic(BaseModule):
                         prev = rating['rating']
                     row[f'delta_ema={alpha}'] = f'{ema:.2f}'
                 if not passed:
-                    row['new_rating'] = ratings[-1]['rating']
+                    info = row.setdefault('info', {})
+                    info['rating'] = ratings[-1]['rating']
 
             submissions = rating_changes.get('submissions')
             if submissions:

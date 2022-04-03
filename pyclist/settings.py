@@ -262,9 +262,15 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler',
         },
-        'console': {
+        'console-debug': {
             'level': 'DEBUG',
             'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'console-info': {
+            'level': 'INFO',
+            'filters': ['require_debug_false'],
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
@@ -325,7 +331,7 @@ LOGGING = {
             'propagate': False,
         },
         '': {
-            'handlers': ['console', 'development', 'production'],
+            'handlers': ['console-debug', 'console-info', 'development', 'production'],
             'level': 'INFO',
         },
     },
@@ -420,11 +426,9 @@ OAUTH2_PROVIDER = {
 CSRF_COOKIE_SECURE = True
 
 # HTTP Strict Transport Security
-SECURE_HSTS_SECONDS = 300
-# FIXME
-# SECURE_HSTS_SECONDS = 15768000
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_SECONDS = 15768000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 # Content Security Policy
 CSP_DEFAULT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "data:")
@@ -456,6 +460,13 @@ DEFAULT_TIME_ZONE_ = 'UTC'
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
 HTTPS_HOST_ = 'https://' + HOST_
 MAIN_HOST_ = 'https://clist.by'
+CLIST_RESOURCE_DICT_ = {
+    'host': HOST_,
+    'pk': 0,
+    'icon': 'img/favicon/favicon-32x32.png',
+    'kind': 'global_rating',
+    'colors': [],
+}
 EMAIL_PREFIX_SUBJECT_ = '[Clist] '
 STOP_EMAIL_ = getattr(conf, 'STOP_EMAIL', False)
 TIME_FORMAT_ = '%d.%m %a %H:%M'

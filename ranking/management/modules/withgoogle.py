@@ -16,7 +16,7 @@ from random import choice
 import flag
 import tqdm
 
-from clist.templatetags.extras import get_country_name, get_problem_key
+from clist.templatetags.extras import as_number, get_country_name, get_problem_key
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
@@ -41,6 +41,23 @@ class Statistic(BaseModule):
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
         api_attempts_url_format = self.API_ATTEMPTS_URL_FORMAT_.format(**self.__dict__)
 
+        def get_advance(challenge):
+            advancement = challenge.get('additional_info')
+            if advancement:
+                for operator, field, regex in (
+                    ('le', 'place', 'top (?P<value>[0-9]+) contestants'),
+                    ('ge', 'solving', 'least (?P<value>[0-9]+) points'),
+                    ('ge', 'solving', '(?P<value>[0-9]+) points or more'),
+                ):
+                    match = re.search(regex, advancement)
+                    if match:
+                        threshold = as_number(match.group('value'))
+                        return {
+                            'title': advancement,
+                            'filter': [{'threshold': threshold, 'operator': operator, 'field': field}],
+                        }
+            return {}
+
         def encode(value):
             ret = base64.b64encode(value.encode()).decode()
             ret = ret.replace('+', '-')
@@ -64,9 +81,12 @@ class Statistic(BaseModule):
             return decode(content)
 
         data = get(1, 1)
+        challenge = data['challenge']
+        are_results_final = challenge['are_results_final']
+
         problems_info = []
         problems_order = []
-        for task in data['challenge']['tasks']:
+        for task in challenge['tasks']:
             problem_info = {
                 'url': os.path.join(self.url, task['id']),
                 'code': task['id'],
@@ -84,8 +104,6 @@ class Statistic(BaseModule):
             else:
                 problem_info['full_score'] = sum([test['value'] for test in task['tests']])
                 problems_info.append(problem_info)
-
-        are_results_final = data['challenge']['are_results_final']
 
         num_consecutive_users = 200
         n_page = (data['full_scoreboard_size'] - 1) // num_consecutive_users + 1
@@ -238,7 +256,6 @@ class Statistic(BaseModule):
                         break
                     if data is None:
                         continue
-                    challenge = data['challenge']
                     if not challenge.get('are_results_final'):
                         break
                     tasks = {t['id']: t for t in challenge['tasks']}
@@ -287,9 +304,10 @@ class Statistic(BaseModule):
             'result': result,
             'url': standings_url,
             'problems': problems_info,
+            'advance': get_advance(challenge),
         }
 
-        if self.start_time.year >= 2020:
+        if self.start_time.year >= 2020 and not standings['advance']:
             match = re.search(r'\bcode.*jam\b.*\bround\b.*\b(?P<round>[123])[A-Z]?$', self.name, flags=re.I)
             if match:
                 r = match.group('round')
