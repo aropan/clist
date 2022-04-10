@@ -53,8 +53,8 @@
     $pids = array_unique($pids);
 
     foreach ($pids as $pid) {
-        $u = 'https://www.codingame.com/services/ChallengeRemoteService/findWorldCupByPublicId';
-        $j = curlexec($u, $postfields='["' . $pid . '", null]', $http_header);
+        $u = 'https://www.codingame.com/services/Challenge/findWorldCupByPublicId';
+        $j = curlexec($u, $postfields='["' . $pid . '"]', $http_header);
         if (!isset($j['challenge'])) {
             continue;
         }

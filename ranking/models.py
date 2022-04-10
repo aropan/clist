@@ -322,8 +322,8 @@ def count_account_contests(signal, instance, **kwargs):
     elif signal is post_save and kwargs['created']:
         instance.account.n_contests += 1
 
-        if not instance.account.last_activity or instance.account.last_activity < instance.contest.start_time:
-            instance.account.last_activity = instance.contest.start_time
+        if not instance.account.last_activity or instance.account.last_activity < instance.contest.end_time:
+            instance.account.last_activity = instance.contest.end_time
 
         instance.account.save()
 
@@ -766,6 +766,8 @@ class Stage(BaseModel):
             reverse=True,
         )
 
+        additions = deepcopy(stage.info.get('additions', {}))
+
         with transaction.atomic():
             fields_set = set()
             fields = list()
@@ -776,6 +778,9 @@ class Stage(BaseModel):
             place_advance = 0
             place_index = 0
             for row in tqdm.tqdm(results, desc=f'update statistics for stage {stage}'):
+                for field in [row.get('member'), row.get('name')]:
+                    row.update(additions.pop(field, {}))
+
                 row['_no_update_n_contests'] = True
                 division = row.get('division', 'none')
                 placing_info = placing_infos.setdefault(division, {})

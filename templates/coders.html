@@ -63,6 +63,12 @@
             <div>Coder</div>
             <div class="sortable-column" data-column="username"></div>
           </th>
+          {% if enable_global_rating %}
+          <th>
+            <div>Global<br/>rating</div>
+            <div class="sortable-column" data-column="global_rating"></div>
+          </th>
+          {% endif %}
           {% for resource in params.resources %}
           <th>
             <a href="{% url 'clist:resource' resource.host %}">

@@ -68,7 +68,7 @@ class Statistic(BaseModule):
 
         standings = {
             'result': result,
-            'url': f'https://sort-me.org/tasks/result?archive=1&result={self.key}',
+            'url': self.standings_url or f'https://sort-me.org/tasks/result?archive=1&result={self.key}',
             'problems': list(problems_info.values()),
         }
 

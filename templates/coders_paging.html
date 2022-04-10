@@ -26,6 +26,15 @@
     <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
   </td>
+  {% if enable_global_rating %}
+  <td>
+    {% if coder.has_global_rating %}
+      {{ coder.global_rating }}
+    {% else %}
+      &#183;
+    {% endif %}
+  </td>
+  {% endif %}
   {% for resource in params.resources %}
   <td>
     {% with rating_key=resource.pk|slugify|add:'_rating' n_contests_key=resource.pk|slugify|add:'_n_contests' rating_coloring_key=resource.pk|slugify|add:'_coloring_rating' %}

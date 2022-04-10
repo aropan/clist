@@ -57,7 +57,7 @@
     })
     $(window).trigger('resize')
 
-{% if force_both_scroll and not timeline %}
+{% if not timeline %}
     scroll_to_find_me()
 {% endif %}
   })

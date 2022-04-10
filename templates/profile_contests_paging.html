@@ -51,22 +51,54 @@
             {% coder_color_circle stat.contest.resource value %}
             {{ value }}
         </div>
+        {% else %}
+        <small class='text-muted'>&#183;</small>
         {% endif %}
         {% endwith %}
     </td>
     <td>
         {% with value=stat.addition.rating_change %}
         {% with intvalue=value|toint %}
+        {% if intvalue or 'rating_change' in stat.addition %}
             <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
             {% if intvalue %}
-              <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+                <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
             {% else %}
-              {{ value }}
+                {{ value }}
             {% endif %}
             </span>
+        {% else %}
+            <small class='text-muted'>&#183;</small>
+        {% endif %}
         {% endwith %}
         {% endwith %}
     </td>
+    {% if coder.has_global_rating %}
+    <td>
+        {% if stat.new_global_rating is not None %}
+            {{ stat.new_global_rating }}
+        {% else %}
+            <small class='text-muted'>&#183;</small>
+        {% endif %}
+    </td>
+    <td>
+        {% if stat.global_rating_change is not None %}
+            {% with value=stat.global_rating_change %}
+            {% with intvalue=value|toint %}
+            <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
+            {% if intvalue %}
+                <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+            {% else %}
+                {{ value }}
+            {% endif %}
+            </span>
+            {% endwith %}
+            {% endwith %}
+        {% else %}
+            <small class='text-muted'>&#183;</small>
+        {% endif %}
+    </td>
+    {% endif %}
     <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
     {% if custom_fields %}
     {% for field in custom_fields.values %}

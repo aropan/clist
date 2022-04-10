@@ -152,6 +152,10 @@ class Coder(BaseModel):
     def display_name(self):
         return self.settings['display_name'] if self.is_virtual else self.username
 
+    @property
+    def has_global_rating(self):
+        return django_settings.ENABLE_GLOBAL_RATING_ and self.global_rating is not None
+
 
 @receiver(signals.pre_save, sender=Coder)
 def init_coder_username(instance, **kwargs):

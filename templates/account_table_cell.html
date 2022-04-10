@@ -37,11 +37,11 @@
 {% endif %}
 
   {% if account.name and account.key|has_season:account.name %}
-    <span>{{ account.name }}</span>
+    <span>{% trim_to account.name trim_length %}</span>
   {% elif account.name and resource.info.standings.name_instead_key %}
-    <span>{{ account.name }}</span>
+    <span>{% trim_to account.name trim_length %}</span>
   {% else %}
-    <span{% if account.name %} title="{{ account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
+    <span{% if account.name %} title="{{ account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{% trim_to account.key trim_length %}</span>
   {% endif %}
 
 {% if not without_url %}

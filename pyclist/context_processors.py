@@ -12,6 +12,7 @@ def global_settings(request):
         'donate_url': settings.DONATE_URL_,
         'main_host_url': settings.MAIN_HOST_,
         'default_api_throttle_at': settings.DEFAULT_API_THROTTLE_AT_,
+        'enable_global_rating': settings.ENABLE_GLOBAL_RATING_,
         'DEBUG': settings.DEBUG,
     }
 

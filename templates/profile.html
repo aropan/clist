@@ -142,13 +142,64 @@ Number of competitions: {{ account.n_contests }}
 <div id="list-accounts">
 {% if not search_resource %}
 
+  <table id="table-accounts" class="table center table-hover table-condensed">
+{% for resource in resources %}
+  {% with account=resource.coder_accounts.0 %}
+  {% if account and account.rating is not None %}
+    <tr>
+      <td>
+        <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
+          <img src="{{ resource.icon|static_resize:'32x32' }}" width="15" height="15"/>
+        </a>
+      </td>
+      <td>
+        <span class="{% coder_color_class resource account.info %}">
+          {{ account.rating }}
+        </span>
+      </td>
+      <td class="text-left nowrap">
+        <a href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
+          {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True with_fixed_width=True %}
+
+          {% if resource.coder_accounts|length > 1 %}
+          <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
+            +{{ resource.coder_accounts|length|add:-1 }}
+          </span>
+          {% endif %}
+        </a>
+      </td>
+      <td>
+        {% include "profile_account_actions.html" with account=account resource=account.resource without_btn=True %}
+      </td>
+      <td>
+        <span title="Number of contests" data-toggle="tooltip">
+          {{ resource.num_contests }}
+        </span>
+      </td>
+      <td class="text-left">
+        {% for s in resource_medals|get_item:resource.pk %}
+          {% if not s.contest.related_id %}
+          <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
+            {% include "trophy.html" with statistic=s %}
+          </span>
+          {% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+  {% endif %}
+  {% endwith %}
+{% endfor %}
+  </table>
+
   {% for resource in resources %}
     {% with account=resource.coder_accounts.0 %}
-      {% if account %}
+      {% if account and account.rating is None %}
         <span class="account btn-group btn-group-sm">
-          <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+          <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
+            <img src="{{ resource.icon|static_resize:'32x32' }}" width="15" height="15"/>
+          </a>
           <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
-            {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
+            {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True trim_length=20 %}
 
             {% if resource.coder_accounts|length > 1 %}
             <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
@@ -271,11 +322,11 @@ $(function(){
           resource_rating_id += '_' + resource_info['kind']
         }
 
-        var major = $('#' + resource_rating_id)
-        if (!major.length) {
+        var canvas = $('#' + resource_rating_id)
+        if (!canvas.length) {
           continue;
         }
-        $('[id="loading_' + resource + '_rating"]').remove()
+        canvas.siblings('.loading_rating').remove()
 
         var resource_dates = response['data']['dates']
         config = create_chart_config(resource_info, resource_dates)
@@ -288,7 +339,6 @@ $(function(){
           add_selection_chart_fields(resource_info, resource_rating_id, resource_fields_id, resource_dates)
         }
       }
-
       $('.loading_rating').parent().remove()
     },
     error: function(data) {
@@ -331,7 +381,11 @@ $(function(){
       <th>Rank</th>
       <th>Score</th>
       <th>Rating</th>
-      <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="right">&Delta;</th>
+      <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
+      {% if coder.has_global_rating %}
+      <th>Global</th>
+      <th title="Global rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
+      {% endif %}
       <th class="date">Date</th>
 
       {% if custom_fields %}

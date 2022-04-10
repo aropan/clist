@@ -8,12 +8,13 @@ from urllib.parse import urljoin
 
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 
 
 class Statistic(BaseModule):
     API_STANDING_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/leader_board/competition/'
     API_PROBLEM_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/details/public/'
+    API_PROFILE_URL_FORMAT_ = '/api/v1/user/{}/'
 
     def get_standings(self, users=None, statistics=None):
         standings_url = urljoin(self.url, '?tab=leaderboard')
@@ -45,7 +46,10 @@ class Statistic(BaseModule):
             for r in data['results']:
                 row = collections.OrderedDict()
                 row['place'] = r.pop('actual_rank')
-                user = r.pop('course_user_mapping').pop('user')
+                if 'user' in r:
+                    user = r.pop('user')
+                elif 'course_user_mapping' in r:
+                    user = r.pop('course_user_mapping').pop('user')
                 row['member'] = user.pop('username')
                 row['name'] = user.pop('first_name') + ' ' + user.pop('last_name')
                 row['penalty'] = r.pop('penalty')
@@ -53,7 +57,19 @@ class Statistic(BaseModule):
                 last_solved = r.pop('latest_solved_question_timestamp')
                 if last_solved is not None:
                     row['last_solved'] = last_solved / 1000
-                row['info'] = user.pop('profile')
+                country = r.pop('country', {}).get('code')
+                if country:
+                    row['country'] = country
+                college = r.pop('college', {}).get('name')
+                if college:
+                    row['college'] = college
+
+                info = user.pop('profile', {})
+                rating = user.get('contest_rating')
+                if rating is not None:
+                    info['rating'] = rating
+                if info:
+                    row['info'] = info
 
                 problems = row.setdefault('problems', {})
                 for p in r.pop('assignment_course_user_question_mappings'):
@@ -84,8 +100,61 @@ class Statistic(BaseModule):
         ret = {
             'url': standings_url,
             'fields_types': {'last_solved': ['time']},
-            'hidden_fields': ['last_solved'],
+            'hidden_fields': ['last_solved', 'college'],
             'problems': list(problems_infos.values()),
             'result': results,
         }
         return ret
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        @RateLimiter(max_calls=5, period=1)
+        def fetch_user(user):
+            url = urljoin(resource.url, Statistic.API_PROFILE_URL_FORMAT_.format(user))
+            try:
+                page = REQ.get(url)
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return user, None, {}
+                return user, False, {}
+
+            data = json.loads(page)
+            contest_ratings = data.pop('contest_ratings', [])
+            data.update(data.pop('profile', {}))
+
+            info = {}
+            avatar = data.pop('avatar', None)
+            if avatar:
+                info['avatar'] = avatar
+            info['data_'] = data
+
+            ratings = {}
+            for stat in contest_ratings:
+                course = stat['course']
+                key = f'{course["hash"]}/{course["assignment_hash"]}'
+                rating = ratings.setdefault(key, collections.OrderedDict())
+                rating['new_rating'] = stat['rating']
+                rating['rating_change'] = stat['rating_delta']
+
+            return user, info, ratings
+
+        with PoolExecutor(max_workers=8) as executor:
+            for user, info, ratings in executor.map(fetch_user, users):
+                if pbar:
+                    pbar.update()
+                if not info:
+                    if info is None:
+                        yield {'info': None}
+                    else:
+                        yield {'skip': True}
+                    continue
+                info = {
+                    'info': info,
+                    'contest_addition_update_params': {
+                        'update': ratings,
+                        'by': 'key',
+                        'clear_rating_change': True,
+                    },
+                }
+                yield info

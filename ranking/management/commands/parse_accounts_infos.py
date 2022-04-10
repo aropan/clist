@@ -144,7 +144,7 @@ class Command(BaseCommand):
                             member = data.pop('member')
                             account, created = Account.objects.get_or_create(key=member, resource=resource)
                         with transaction.atomic():
-                            if 'delta' in data or 'delta' in data.get('info', {}):
+                            if 'delta' in data or 'delta' in (data.get('info') or {}):
                                 n_deferred += 1
                             if data.get('skip'):
                                 delta = data.get('delta')

@@ -317,6 +317,10 @@ LOGGING = {
             'handlers': ['null'],
             'propagate': False,
         },
+        'googleapiclient.discovery': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
         'django': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
@@ -503,6 +507,8 @@ ADDITION_HIDE_FIELDS_ = {'problems', 'solved'}
 VIRTUAL_CODER_PREFIX_ = '∨'
 
 DEFAULT_API_THROTTLE_AT_ = 10
+
+ENABLE_GLOBAL_RATING_ = DEBUG
 
 
 class NOTIFICATION_CONF:

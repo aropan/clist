@@ -711,7 +711,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if hidden_f or fk in [
             'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region', 'rating_change',
             'advanced', 'company', 'language', 'league', 'onsite', 'degree', 'university', 'list',
-            'group', 'group_ex',
+            'group', 'group_ex', 'college',
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})
@@ -784,7 +784,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             field = field.title()
         fields[k] = field
 
-    if contest.is_rated and 'global_rating' not in hidden_fields:
+    if contest.is_rated and 'global_rating' not in hidden_fields and settings.ENABLE_GLOBAL_RATING_:
         hidden_fields.append('global_rating')
     if hidden_fields:
         fields_to_select['field'] = {

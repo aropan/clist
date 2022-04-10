@@ -112,7 +112,7 @@ class Statistic(BaseModule):
             html_table = re.search('<table[^>]*bgcolor="silver"[^>]*>.*?</table>',
                                    page,
                                    re.MULTILINE | re.DOTALL).group(0)
-            table = parsed_table.ParsedTable(html_table)
+            table = parsed_table.ParsedTable(html_table, as_list=True)
             return table
 
         table = get_table(page)
@@ -121,26 +121,56 @@ class Statistic(BaseModule):
         max_score = defaultdict(float)
 
         scoring = False
+        is_olymp = False
+
+        def get_uid(v):
+            nonlocal is_olymp
+            hrefs = v.column.node.xpath('a/@href')
+            if not hrefs:
+                return
+            href = hrefs[0]
+            match = re.search(r'olympResultsShowUserRank.*u\.id=(?P<uid>[0-9]+)', href)
+            if match:
+                is_olymp = True
+                return 'olymp' + match.group('uid')
+            match = re.search('[0-9]+$', href)
+            return match.group(0)
+
+        def is_problem(v):
+            hrefs = v.header.node.xpath('a/@href')
+            return any('sortid' not in href.lower() for href in hrefs)
 
         result = {}
         for r in table:
             row = OrderedDict()
             problems = row.setdefault('problems', {})
-            for k, v in list(r.items()):
+            pid = 0
+            for k, v in r:
                 if k == 'Имя':
-                    href = v.column.node.xpath('a/@href')
-                    if not href:
+                    uid = get_uid(v)
+                    if uid is None:
                         continue
-                    uid = re.search('[0-9]+$', href[0]).group(0)
                     row['member'] = uid
-                    row['name'] = v.value
+                    row['name'] = v.column.node.xpath('a/text()')[0]
+                    if uid.startswith('olymp'):
+                        info = row.setdefault('info', {})
+                        info['_no_profile_url'] = True
                 elif k == 'Место':
                     row['place'] = v.value
                 elif k == 'Время':
                     row['penalty'] = int(v.value)
                 elif k in ['Сумма', 'Задачи']:
-                    row['solving'] = float(v.value)
-                elif re.match('^[a-zA-Z0-9]+$', k):
+                    if v.value:
+                        row['solving'] = float(v.value)
+                elif k == 'Область':
+                    row['region'] = v.value
+                elif k == 'Класс':
+                    match = re.search('^[0-9]+', v.value)
+                    row['class'] = int(match.group(0)) if match else v.value
+                elif is_problem(v):
+                    if is_olymp:
+                        pid += 1
+                        k = str(pid)
                     problems_info[k] = {'short': k}
                     if v.value:
                         p = problems.setdefault(k, {})
@@ -159,9 +189,27 @@ class Statistic(BaseModule):
                     href = v.column.node.xpath('.//a/@href')
                     if href:
                         row['url'] = urljoin(self.standings_url, href[0])
+            diploma = row.pop('Диплом', None)
+            if diploma:
+                match = re.search(r'(?P<diploma>[0-9]+)\s+ст', diploma)
+                if match:
+                    diploma = int(match.group('diploma'))
+                    row.update({
+                        "medal": ["gold", "silver", "bronze"][diploma - 1],
+                        "_diploma": "I" * diploma,
+                        "_medal_title_field": "_diploma",
+                    })
+                elif diploma.lower().replace(' ', '') == 'п.о.':
+                    row.update({
+                        "medal": "honorable",
+                        "_honorable": "mention",
+                        "_medal_title_field": "_honorable"
+                    })
+            if 'member' not in row:
+                continue
             result[row['member']] = row
 
-        if scoring:
+        if scoring and not is_olymp:
             match = re.search(r'<b[^>]*>\s*<a[^>]*href="(?P<url>[^"]*)"[^>]*>ACM</a>\s*</b>', page)
             if match:
                 page = REQ.get(match.group('url'))
@@ -170,11 +218,10 @@ class Statistic(BaseModule):
                     uid = None
                     for k, v in list(r.items()):
                         if k == 'Имя':
-                            href = v.column.node.xpath('a/@href')
-                            if not href:
+                            uid = get_uid(v)
+                            if uid is None:
                                 continue
-                            uid = re.search('[0-9]+$', href[0]).group(0)
-                        elif re.match('^[a-zA-Z0-9]+$', k) and uid and v.value:
+                        elif is_problem(v) and uid and v.value:
                             if v.value[0] == '-':
                                 result[uid]['problems'][k]['partial'] = True
                             elif v.value[0] == '+':

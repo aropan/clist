@@ -79,11 +79,7 @@ class Command(BaseCommand):
                 qs = Contest.visible.filter(start_time__gte=now)
 
                 if updates and notify.last_time and notify.with_updates:
-                    qs_updates = updates.filter(
-                        filt,
-                        start_time__gte=now + before,
-                        start_time__lt=notify.last_time + before,
-                    )
+                    qs_updates = updates.filter(filt, start_time__lt=min(now, notify.last_time) + before)
                     self.process(notify, qs_updates, 'UPD')
                     qs = qs.filter(~Q(pk__in=[c.pk for c in qs_updates]))
 

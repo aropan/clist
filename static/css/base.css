@@ -25,6 +25,12 @@ img#logo {
   cursor: default !important;
 }
 
+table.center {
+  width: inherit;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /*
  * Search
  */
@@ -261,6 +267,10 @@ a.external-database-link {
 :hover > a.external-database-link {
   color: #337ab7;
   visibility: visible;
+}
+
+.nowrap {
+  white-space: nowrap !important;
 }
 
 /*

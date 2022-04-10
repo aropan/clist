@@ -3,8 +3,9 @@
 import os
 
 import yaml
-from geopy.geocoders import Nominatim
+from filelock import FileLock
 from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 
 
 class Locator:
@@ -16,6 +17,7 @@ class Locator:
         self.locations_file = locations_file
         geolocator = Nominatim(user_agent="clist.by", timeout=5)
         self.geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1, max_retries=3)
+        self.lock_file = FileLock(self.locations_file)
 
     def get_country(self, location):
         if not location:
@@ -35,10 +37,11 @@ class Locator:
         return country
 
     def __enter__(self):
+        self.lock_file.acquire()
         self.locations = {}
         if os.path.exists(self.locations_file):
             with open(self.locations_file, 'r') as fo:
-                data = yaml.safe_load(fo)
+                data = yaml.safe_load(fo) or dict()
                 self.locations = {k: v for k, v in data.items() if v}
         if self.locations is None:
             self.locations = {}
@@ -47,3 +50,4 @@ class Locator:
     def __exit__(self, *args, **kwargs):
         with open(self.locations_file, 'wb') as fo:
             yaml.dump(self.locations, fo, encoding='utf8', allow_unicode=True)
+        self.lock_file.release()

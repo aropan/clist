@@ -155,18 +155,24 @@ class="
   </{{ tag }}>
   {% endif %}
 
+  {% with advance_url=addition|get_item:"_advance_url" advance_medal=addition|get_item:"_advance_medal" advance_icon=addition|get_item:"_advance_icon" %}
   {% for field in fields.keys %}
   {% with value=addition|get_item:field %}
   <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
-    <span{% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}>
-    <span>
+    <span
+      {% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}
+      {% if field == 'advance' and advance_medal %} class="trophy {{ advance_medal|lower }}-trophy"{% endif %}
+    >
+      {% if field == 'advance' and advance_url %}<a href="{{ advance_url }}">{% endif %}
       {% if field == 'new_global_rating' and statistic.new_global_rating is not None %}
         {{ statistic.new_global_rating }}
       {% elif field == 'global_rating_change' and statistic.global_rating_change is not None %}
         <span class="rating-change{% if statistic.global_rating_change %} rating-change-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}{% endif %}">
           <i class="fas fa-angle-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}"></i>{{ statistic.global_rating_change|abs }}
         </span>
+      {% elif field == 'advance' and advance_icon %}
+        <i class="{{ advance_icon }}"></i>
       {% elif field in addition and not value.empty %}
         {% if field == 'hack' %}
           <small>
@@ -179,10 +185,12 @@ class="
       {% else %}
         <small class='text-muted'>&#183;</small>
       {% endif %}
+      {% if field == 'advance' and advance_url %}</a>{% endif %}
     </span>
   </{{ tag }}>
   {% endwith %}
   {% endfor %}
+  {% endwith %}
 
   {% for problem in problems %}
     {% with key=problem|get_problem_short  %}

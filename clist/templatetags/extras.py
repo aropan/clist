@@ -803,3 +803,13 @@ def filter_by_resource(coders, resource):
         seen.add(opt.pk)
         ret.append(opt)
     return ret
+
+
+@register.simple_tag
+def trim_to(value, length):
+    if not length or len(value) - 3 < length:
+        return value
+    half = length // 2
+    trimmed_value = value[:half].strip() + '...' + value[-half:].strip()
+    ret = f'<span title="{value}" data-toggle="tooltip">{trimmed_value}</span>'
+    return mark_safe(ret)

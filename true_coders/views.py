@@ -239,7 +239,8 @@ def coders(request, template='coders.html'):
         orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
     elif order:
         request.logger.error(f'Not found `{order}` order for sorting')
-    orderby = orderby or [F('global_rating').desc(nulls_last=True), '-created']
+    main_field = 'global_rating' if django_settings.ENABLE_GLOBAL_RATING_ else 'n_contests'
+    orderby = orderby or [F(main_field).desc(nulls_last=True), '-created']
     coders = coders.order_by(*orderby)
 
     context = {
@@ -259,8 +260,8 @@ def profile(request, username, template='profile.html', extra_context=None):
     data = _get_data_mixed_profile(request, [username])
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['coder'] = coder
-    # if coder.global_rating is not None:
-    #     context['history_resources'].insert(0, dict(django_settings.CLIST_RESOURCE_DICT_))
+    if coder.has_global_rating:
+        context['history_resources'].insert(0, dict(django_settings.CLIST_RESOURCE_DICT_))
 
     if request.user.is_authenticated and request.user.coder == coder:
         context['without_findme'] = True
