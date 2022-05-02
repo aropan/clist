@@ -18,7 +18,7 @@ from django.utils.timezone import now
 
 from .parse_statistic import Command as ParserCommand
 from clist.models import Contest
-from clist.templatetags.extras import get_problem_name, get_problem_short, has_season
+from clist.templatetags.extras import get_problem_name, get_problem_short, has_season, md_italic_escape
 from ranking.models import Statistics
 from tg.bot import Bot, telegram
 
@@ -184,7 +184,7 @@ class Command(BaseCommand):
                         numbered += 1
                         place = '%s (%s)' % (place, numbered)
 
-                    msg = '%s. _%s_' % (place, telegram.utils.helpers.escape_markdown(name.replace('_', ' ')))
+                    msg = '%s. _%s_' % (place, md_italic_escape(name))
                     if p:
                         msg = '%s, %s' % (', '.join(p), msg)
                     if has_top:
@@ -220,12 +220,15 @@ class Command(BaseCommand):
                                     logger.error(str(e))
                                     break
 
-                standings[key] = {
+                data = {
                     'solving': stat.solving,
                     'place': stat.place,
                     'problems': stat.addition.get('problems', {}),
-                    'messageId': message_id,
                 }
+                if message_id is not None:
+                    data['messageId'] = message_id
+                standings[key] = data
+
             if args.dump is not None and (updated or not os.path.exists(args.dump)):
                 standings_dump = json.dumps(standings, indent=2)
                 with open(args.dump, 'w') as fo:

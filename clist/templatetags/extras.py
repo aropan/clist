@@ -43,7 +43,7 @@ def get_item(data, key):
     if isinstance(data, (dict, defaultdict, OrderedDict)):
         return data.get(key)
     if isinstance(data, (list, tuple)):
-        return data[key]
+        return data[key] if -len(data) <= key < len(data) else None
     return getattr(data, key, None)
 
 
@@ -210,7 +210,12 @@ def get_api_formats():
 
 @register.filter
 def md_escape(value, clear=False):
-    return re.sub(r'([*_`\[\]])', '' if clear else r'\\\1', value)
+    return re.sub(r'([*_`\[])', '' if clear else r'\\\1', value)
+
+
+@register.filter
+def md_italic_escape(value):
+    return value.replace('_', '_\\__')
 
 
 @register.filter(name='sort')
@@ -262,25 +267,36 @@ def get_division_problems(problem, info):
     return problem
 
 
+def get_problem_field(problem, field):
+    if isinstance(problem, dict):
+        return field in problem, problem.get(field)
+    else:
+        value = getattr(problem, field, None)
+        return value is not None, value
+
+
 @register.filter
 def get_problem_key(problem):
     for k in ['code', 'short', 'name']:
-        if k in problem:
-            return problem[k]
+        has, value = get_problem_field(problem, k)
+        if has:
+            return value
 
 
 @register.filter
 def get_problem_name(problem):
     for k in ['name', 'short', 'code']:
-        if k in problem:
-            return problem[k]
+        has, value = get_problem_field(problem, k)
+        if has:
+            return value
 
 
 @register.filter
 def get_problem_short(problem):
     for k in ['short', 'code', 'name']:
-        if k in problem:
-            return problem[k]
+        has, value = get_problem_field(problem, k)
+        if has:
+            return value
 
 
 @register.filter
@@ -293,9 +309,12 @@ def add_prefix_to_problem_short(problem, prefix):
 
 @register.filter
 def get_problem_header(problem):
+    if '_header' in problem:
+        return problem[problem['_header']]
     for k in ['short', 'name', 'code']:
-        if k in problem:
-            return problem[k]
+        has, value = get_problem_field(problem, k)
+        if has:
+            return value
 
 
 @register.filter
@@ -303,6 +322,31 @@ def get_problem_title(problem):
     short = get_problem_header(problem)
     name = get_problem_name(problem)
     return f'{short}. {name}' if short != name else name
+
+
+@register.simple_tag
+def get_problem_solution(problem):
+    ret = {}
+    for contest in problem.contests.all():
+        for statistic in contest.statistics_set.all():
+            problems = contest.info.get('problems', [])
+            if 'division' in problems:
+                division = statistic.addition.get('division')
+                problems = problems['division']
+                if division not in problems:
+                    continue
+                problems = problems[division]
+
+            ret = {'statistic': statistic}
+
+            for p in problems:
+                key = get_problem_key(p)
+                if key == problem.key:
+                    short = get_problem_short(p)
+                    ret['result'] = statistic.addition.get('problems', {}).get(short)
+                    ret['key'] = short
+                    return ret
+    return ret
 
 
 @register.simple_tag
@@ -622,6 +666,8 @@ def is_solved(value):
     if not value:
         return False
     if isinstance(value, dict):
+        if value.get('partial'):
+            return False
         value = value.get('result', 0)
     if isinstance(value, str):
         if value.startswith('+'):
@@ -739,17 +785,33 @@ def iftrue(val, ret):
         return ret
 
 
+@register.filter
 def time_in_seconds(timeline, val):
     times = re.split(r'[:\s]+', str(val))
     factors = timeline.get('time_factor', {}).get(str(len(times)))
     time = 0
-    for idx, val in enumerate(times):
-        val = asfloat(val)
-        if factors:
+    for idx, part in enumerate(times):
+        val = asfloat(part)
+        if val is None and (match := re.match(r'(?P<val>[0-9]+)(?P<factor>[дмчс])\.?', part)):
+            val = asfloat(match.group('val'))
+            factor = {'д': 24 * 60 * 60, 'ч': 60 * 60, 'м': 60, 'с': 1}[match.group('factor')]
+            time += val * factor
+        elif factors:
             time += val * factors[idx]
         else:
             time = time * 60 + val
     return time
+
+
+def time_in_seconds_format(timeline, seconds, num=2):
+    factors = timeline.get('time_factor', {})[str(num)]
+    ret = []
+    for idx, factor in enumerate(factors):
+        val = seconds // factor
+        seconds %= factor
+        val = f'{val:02}' if idx else f'{val}'
+        ret.append(val)
+    return ':'.join(ret)
 
 
 @register.simple_tag(takes_context=True)
@@ -813,3 +875,8 @@ def trim_to(value, length):
     trimmed_value = value[:half].strip() + '...' + value[-half:].strip()
     ret = f'<span title="{value}" data-toggle="tooltip">{trimmed_value}</span>'
     return mark_safe(ret)
+
+
+@register.simple_tag
+def win_probability(a, b):
+    return 1 / (1 + 10 ** ((a - b) / 400))

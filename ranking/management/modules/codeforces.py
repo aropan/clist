@@ -256,12 +256,10 @@ class Statistic(BaseModule):
             if users is not None and not users:
                 continue
 
-            grouped = any('teamId' in row['party'] for row in data['result']['rows'])
-            if grouped:
-                grouped = all(
-                    'teamId' in row['party'] or row['party']['participantType'] not in self.PARTICIPANT_TYPES
-                    for row in data['result']['rows']
-                )
+            grouped = any(
+                'teamId' in row['party'] and row['party']['participantType'] in self.PARTICIPANT_TYPES
+                for row in data['result']['rows']
+            )
 
             place = None
             last = None
@@ -532,6 +530,10 @@ class Statistic(BaseModule):
 
         if phase != 'FINISHED' and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc):
             standings['timing_statistic_delta'] = timedelta(minutes=3)
+
+        if grouped:
+            standings['grouped_team'] = grouped
+
         return standings
 
     @staticmethod

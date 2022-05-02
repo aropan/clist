@@ -1,5 +1,7 @@
+import math
 import re
 from datetime import timedelta
+from queue import SimpleQueue
 from urllib.parse import parse_qs, urlparse
 
 import arrow
@@ -8,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.commands import dumpdata
-from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, Q
+from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Cast, Ln
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -16,15 +18,16 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from el_pagination.decorators import page_template, page_templates
-from sql_util.utils import Exists
+from sql_util.utils import Exists, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, Resource
 from clist.templatetags.extras import (canonize, get_problem_key, get_problem_name, get_problem_short,
                                        get_timezone_offset, get_timezones, slug)
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
-from ranking.models import Account, Rating
+from ranking.models import Account, Rating, Statistics
 from true_coders.models import Coder, Filter, Party
+from utils.chart import make_chart
 from utils.regex import get_iregex_filter, verify_regex
 
 
@@ -343,6 +346,38 @@ def resources(request):
     return render(request, 'resources.html', {'resources': resources})
 
 
+def resource_problem_rating_chart(resource):
+    prev = 0
+    step = 0
+    for rating in resource.ratings[:-1]:
+        step = math.gcd(step, rating['next'] - prev)
+        prev = rating['next']
+    problems = resource.problem_set.all()
+    problem_rating_chart = make_chart(problems, 'rating', n_bins=20, cast='int', step=step)
+    if not problem_rating_chart:
+        return
+
+    data = problem_rating_chart['data']
+    idx = 0
+    for rating in resource.ratings:
+        while idx < len(data) and int(data[idx]['bin']) <= rating['high']:
+            data[idx]['bgcolor'] = rating['hex_rgb']
+            if idx + 1 < len(data):
+                data[idx]['title'] = f"{data[idx]['bin']}..{int(data[idx + 1]['bin']) - 1}"
+            else:
+                data[idx]['title'] = data[idx]['bin']
+            if 'name' in rating:
+                data[idx]['subtitle'] = rating['name']
+            idx += 1
+
+    problem_rating_chart['mode'] = 'index'
+    problem_rating_chart['hover_mode'] = 'index'
+    problem_rating_chart['border_color'] = '#fff'
+    problem_rating_chart['bar_percentage'] = 1.0
+    problem_rating_chart['category_percentage'] = 1.0
+    return problem_rating_chart
+
+
 @page_templates((
     ('resource_country_paging.html', 'country_page'),
     ('resource_last_activity_paging.html', 'last_activity_page'),
@@ -513,8 +548,10 @@ def resource(request, host, template='resource.html', extra_context=None):
         'problems': resource.problem_set.filter(url__isnull=False).order_by('-time', 'contest_id', 'index'),
     }
 
-    if extra_context is not None:
+    if extra_context.get('page_template'):
         context.update(extra_context)
+    elif resource.has_problem_rating:
+        context['problem_rating_chart'] = resource_problem_rating_chart(resource)
 
     return render(request, template, context)
 
@@ -571,95 +608,145 @@ def update_problems(contest, problems=None, force=False):
     contest.info['problems'] = problems
     contest.save()
 
-    problems = contest.info.get('problems')
-    if not problems or hasattr(contest, 'stage'):
+    if hasattr(contest, 'stage'):
         return
-    if 'division' in problems:
-        problem_sets = problems['division'].items()
-    else:
-        problem_sets = [(None, problems)]
+
+    contests_set = {contest.pk}
+    contests_queue = SimpleQueue()
+    contests_queue.put(contest)
 
     old_problem_ids = set(contest.problem_set.values_list('id', flat=True))
     added_problems = dict()
-    for division, problem_set in problem_sets:
-        last_group = None
-        for index, problem_info in enumerate(problem_set, start=1):
-            key = get_problem_key(problem_info)
-            short = get_problem_short(problem_info)
-            name = get_problem_name(problem_info)
-            if short == name or short == key:
-                short = None
-            if last_group is not None and last_group == problem_info.get('group'):
-                continue
-            last_group = problem_info.get('group')
 
-            added_problem = added_problems.get(key)
+    while not contests_queue.empty():
+        current_contest = contests_queue.get()
 
-            defaults = {
-                'index': index if not added_problem else None,
-                'short': short,
-                'name': name,
-                'divisions': getattr(added_problem, 'divisions', []) + [division] if division else None,
-                'url': problem_info.get('url'),
-                'n_tries': problem_info.get('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
-                'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
-                'time': contest.start_time,
-            }
-            if 'visible' in problem_info:
-                defaults['visible'] = problem_info['visible']
+        problems = current_contest.info.get('problems')
+        if 'division' in problems:
+            problem_sets = problems['division'].items()
+        else:
+            problem_sets = [(None, problems)]
 
-            problem, created = Problem.objects.update_or_create(
-                contest=contest,
-                resource=contest.resource,
-                key=key,
-                defaults=defaults,
-            )
+        for division, problem_set in problem_sets:
+            last_group = None
+            for index, problem_info in enumerate(problem_set, start=1):
+                key = get_problem_key(problem_info)
+                short = get_problem_short(problem_info)
+                name = get_problem_name(problem_info)
+                if last_group is not None and last_group == problem_info.get('group'):
+                    continue
+                last_group = problem_info.get('group')
+                problem_contest = contest if 'code' not in problem_info else None
 
-            old_tags = set(problem.tags.all())
-            if 'tags' in problem_info:
-                if '' in problem_info['tags']:
-                    problem_info['tags'].remove('')
-                    contest.save()
+                added_problem = added_problems.get(key)
+                if current_contest != contest and not added_problem:
+                    continue
 
-                for name in problem_info['tags']:
-                    tag, _ = ProblemTag.objects.get_or_create(name=name)
-                    if tag in old_tags:
-                        old_tags.discard(tag)
-                    else:
-                        problem.tags.add(tag)
-            for tag in old_tags:
-                problem.tags.remove(tag)
+                defaults = {
+                    'index': index if getattr(added_problem, 'index', index) == index else None,
+                    'short': short if getattr(added_problem, 'short', short) == short else None,
+                    'name': name,
+                    'divisions': getattr(added_problem, 'divisions', []) + ([division] if division else []),
+                    'url': problem_info.get('url') or getattr(added_problem, 'url', None),
+                    'n_tries': problem_info.get('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
+                    'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
+                    'n_partial': problem_info.get('n_partial', 0) + getattr(added_problem, 'n_partial', 0),
+                    'n_hidden': problem_info.get('n_hidden', 0) + getattr(added_problem, 'n_hidden', 0),
+                    'n_total': problem_info.get('n_total', 0) + getattr(added_problem, 'n_total', 0),
+                    'time': max(contest.start_time, getattr(added_problem, 'time', contest.start_time)),
+                }
+                if getattr(added_problem, 'rating', None) is not None:
+                    problem_info['rating'] = added_problem.rating
+                elif 'rating' in problem_info:
+                    defaults['rating'] = problem_info['rating']
+                if 'visible' in problem_info:
+                    defaults['visible'] = problem_info['visible']
 
-            added_problems[key] = problem
+                problem, created = Problem.objects.update_or_create(
+                    contest=problem_contest,
+                    resource=contest.resource,
+                    key=key,
+                    defaults=defaults,
+                )
+                problem.contests.add(contest)
 
-            if problem.id in old_problem_ids:
-                old_problem_ids.remove(problem.id)
+                old_tags = set(problem.tags.all())
+                if 'tags' in problem_info:
+                    if '' in problem_info['tags']:
+                        problem_info['tags'].remove('')
+                        contest.save()
+
+                    for name in problem_info['tags']:
+                        tag, _ = ProblemTag.objects.get_or_create(name=name)
+                        if tag in old_tags:
+                            old_tags.discard(tag)
+                        else:
+                            problem.tags.add(tag)
+                if not added_problem:
+                    for tag in old_tags:
+                        problem.tags.remove(tag)
+
+                added_problems[key] = problem
+
+                if problem.id in old_problem_ids:
+                    old_problem_ids.remove(problem.id)
+
+                for c in problem.contests.all():
+                    if c.pk in contests_set:
+                        continue
+                    contests_set.add(c.pk)
+                    contests_queue.put(c)
+        current_contest.save()
 
     if old_problem_ids:
-        Problem.objects.filter(id__in=old_problem_ids).delete()
+        for problem in Problem.objects.filter(id__in=old_problem_ids):
+            problem.contests.remove(contest)
+            if problem.contests.count() == 0:
+                problem.delete()
+
+    return True
 
 
 @page_template('problems_paging.html')
 @context_pagination()
 def problems(request, template='problems.html'):
     problems = Problem.objects.all()
-    problems = problems.select_related('contest', 'resource')
+    problems = problems.select_related('resource')
+    problems = problems.prefetch_related('contests')
     problems = problems.prefetch_related('tags')
-    problems = problems.order_by('-time', 'contest_id', 'index')
-    problems = problems.filter(contest__end_time__lt=timezone.now(), visible=True)
+    problems = problems.annotate(min_contest_id=SubqueryMin('contests__id'))
+    problems = problems.order_by('-time', '-min_contest_id', 'rating', 'index', 'short')
+    problems = problems.filter(visible=True)
+
+    show_tags = True
+    if request.user.is_authenticated:
+        coder = request.user.coder
+        show_tags = coder.settings.get('show_tags', show_tags)
+        statistics = Statistics.objects.filter(account__coders=coder)
+        accounts = Account.objects.filter(coders=coder, rating__isnull=False, resource=OuterRef('resource'))
+        accounts = accounts.order_by('rating').values('rating')[:1]
+        problems = problems.annotate(account_rating=Subquery(accounts))
+    else:
+        coder = None
+        statistics = Statistics.objects.none()
+    problems = problems.prefetch_related(Prefetch('contests__statistics_set', queryset=statistics))
+
+    show_tags_value = str(request.GET.get('show_tags', '')).lower()
+    if show_tags_value:
+        show_tags = show_tags_value in settings.YES_
 
     search = request.GET.get('search')
     if search:
         cond, problems = get_iregex_filter(
             search,
-            'name', 'contest__title', 'contest__host', 'contest__resource__host',
+            'name',
             logger=request.logger,
             mapping={
                 'name': {'fields': ['name__iregex']},
-                'contest': {'fields': ['contest__title__iregex']},
+                'contest': {'fields': ['contest__title__iregex'], 'exists': 'contests'},
                 'resource': {'fields': ['resource__host__iregex']},
                 'tag': {'fields': ['problemtag__name__iregex'], 'exists': 'tags'},
-                'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
+                'cid': {'fields': ['contest__pk'], 'exists': 'contests', 'func': lambda v: int(v)},
                 'rid': {'fields': ['resource_id'], 'func': lambda v: int(v)},
                 'pid': {'fields': ['id'], 'func': lambda v: int(v)},
             },
@@ -669,7 +756,7 @@ def problems(request, template='problems.html'):
 
     resources = [r for r in request.GET.getlist('resource') if r]
     if resources:
-        problems = problems.filter(contest__resource_id__in=resources)
+        problems = problems.filter(resource_id__in=resources)
         resources = list(Resource.objects.filter(pk__in=resources))
 
     tags = [r for r in request.GET.getlist('tag') if r]
@@ -680,6 +767,8 @@ def problems(request, template='problems.html'):
 
     context = {
         'problems': problems,
+        'coder': coder,
+        'show_tags': show_tags,
         'params': {
             'resources': resources,
             'tags': tags,

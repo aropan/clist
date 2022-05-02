@@ -10,7 +10,9 @@ from html import unescape
 from logging import getLogger
 from random import shuffle
 
+import arrow
 from attrdict import AttrDict
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Q
@@ -19,7 +21,8 @@ from tqdm import tqdm
 from traceback_with_variables import format_exc
 
 from clist.models import Contest, Resource, TimingContest
-from clist.templatetags.extras import canonize, get_number_from_str, get_problem_short
+from clist.templatetags.extras import (canonize, get_number_from_str, get_problem_key, get_problem_short,
+                                       time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
@@ -30,11 +33,9 @@ from ranking.models import Account, Module, Stage, Statistics
 
 class Command(BaseCommand):
     help = 'Parsing statistics'
-    SUCCESS_TIME_DELTA_ = timedelta(days=7)
-    UNSUCCESS_TIME_DELTA_ = timedelta(days=1)
 
     def __init__(self, *args, **kw):
-        super(Command, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.logger = getLogger('ranking.parse.statistic')
 
     def add_arguments(self, parser):
@@ -49,12 +50,14 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
         parser.add_argument('-u', '--users', nargs='*', default=None, help='users for parse statistics')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
+        parser.add_argument('--with-problems', action='store_true', default=False, help='Contests with problems')
         parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
         parser.add_argument('--no-update-results', action='store_true', default=False, help='Do not update results')
         parser.add_argument('--update-without-new-rating', action='store_true', default=False, help='Update account')
         parser.add_argument('--stage', action='store_true', default=False, help='Stage contests')
         parser.add_argument('--division', action='store_true', default=False, help='Contests with divisions')
         parser.add_argument('--force-problems', action='store_true', default=False, help='Force update problems')
+        parser.add_argument('--updated-before', help='Updated before date')
 
     def parse_statistic(
         self,
@@ -214,7 +217,7 @@ class Command(BaseCommand):
                             contest.save()
 
                     info_fields = standings.pop('info_fields', [])
-                    info_fields += ['divisions_order', 'divisions_addition', 'advance']
+                    info_fields += ['divisions_order', 'divisions_addition', 'advance', 'grouped_team', 'fields_values']
                     for field in info_fields:
                         if standings.get(field) is not None and contest.info.get(field) != standings[field]:
                             contest.info[field] = standings[field]
@@ -222,21 +225,18 @@ class Command(BaseCommand):
 
                     update_writers(contest, standings.pop('writers', None))
 
-                    problems_time_format = standings.pop('problems_time_format', '{M}:{s:02d}')
-
                     standings_hidden_fields = standings.pop('hidden_fields', [])
                     standings_hidden_fields_set = set(standings_hidden_fields)
 
-                    result = standings.get('result', {})
                     if no_update_results:
                         contest_problems = standings.pop('problems', None)
                         if contest_problems:
-                            if contest.info.get('problems'):
-                                contest_problems = plugin.merge_dict(contest_problems, contest.info['problems'])
-                            update_problems(contest, contest_problems)
+                            contest_problems = plugin.merge_dict(contest_problems, contest.info.get('problems'))
+                            update_problems(contest, contest_problems, force=force_problems)
                         count += 1
                         continue
 
+                    result = standings.get('result', {})
                     parse_info = contest.info.get('parse', {})
 
                     if result or users is not None:
@@ -309,7 +309,7 @@ class Command(BaseCommand):
 
                                     default_full_score = (
                                         contest.info.get('default_problem_full_score')
-                                        or contest.resource.info.get('statistics', {}).get('default_problem_full_score')
+                                        or resource.info.get('statistics', {}).get('default_problem_full_score')
                                     )
                                     if default_full_score and is_score:
                                         if 'partial' not in v and default_full_score - float(v['result']) > 1e-9:
@@ -332,15 +332,25 @@ class Command(BaseCommand):
                                     if r.get('_skip_for_problem_stat') or skip_result:
                                         continue
 
-                                    if ac:
-                                        if v.get('time') and 'time_in_seconds' in v:
-                                            time_in_seconds = v['time_in_seconds']
+                                    if ac and v.get('time'):
+                                        if contest.info.get('with_time_from_timeline') and 'time_in_seconds' not in v:
+                                            timeline = resource.info.get('standings', {}).get('timeline', {})
+                                            if timeline:
+                                                v['time_in_seconds'] = time_in_seconds(timeline, v['time'])
+
+                                        if v.get('first_ac') or v.get('first_ac_of_all'):
                                             first_ac = p.setdefault('first_ac', {})
-                                            delta = time_in_seconds - first_ac.get('in_seconds', -1)
+                                            first_ac['in_seconds'] = -1
+                                            first_ac['time'] = v['time']
+                                            first_ac['accounts'] = [r['member']]
+                                        elif 'time_in_seconds' in v:
+                                            in_seconds = v['time_in_seconds']
+                                            first_ac = p.setdefault('first_ac', {})
+                                            delta = in_seconds - first_ac.get('in_seconds', -1)
                                             if 'in_seconds' in first_ac and abs(delta) < 1e-9:
                                                 first_ac['accounts'].append(r['member'])
                                             if 'in_seconds' not in first_ac or delta < 0:
-                                                first_ac['in_seconds'] = time_in_seconds
+                                                first_ac['in_seconds'] = in_seconds
                                                 first_ac['time'] = v['time']
                                                 first_ac['accounts'] = [r['member']]
 
@@ -366,8 +376,8 @@ class Command(BaseCommand):
 
                             results.append(r)
 
-                        resource_statistics = contest.resource.info.get('statistics', {})
-                        wait_rating = resource_statistics.get('wait_rating')
+                        resource_statistics = resource.info.get('statistics', {})
+                        wait_rating = resource_statistics.get('wait_rating', {})
 
                         for r in tqdm(results, desc=f'update results {contest}'):
                             member = r.pop('member')
@@ -425,44 +435,60 @@ class Command(BaseCommand):
                                 updated_delta = resource_statistics.get('account_updated_delta', {'days': 1})
                                 updated = now + timedelta(**updated_delta)
 
-                                if no_rating and wait_rating and has_statistics:
-                                    updated = now + timedelta(minutes=10)
-                                    title_re = wait_rating.get('title_re')
-                                    if (
-                                        (
-                                            contest.end_time + timedelta(days=wait_rating['days']) > now
-                                            or update_without_new_rating
-                                        )
-                                        and (not title_re or re.search(title_re, contest.title))
-                                        and updated < account.updated
-                                    ):
-                                        division = r.get('division')
-                                        if division not in user_info_has_rating:
-                                            generator = plugin.get_users_infos([member], contest.resource, [account])
-                                            try:
-                                                user_info = next(generator)
-                                                params = user_info.get('contest_addition_update_params', {})
-                                                field = user_info.get('contest_addition_update_by') or params.get('by') or 'key'  # noqa
-                                                updates = user_info.get('contest_addition_update') or params.get('update') or {}  # noqa
-                                                if not isinstance(field, (list, tuple)):
-                                                    field = [field]
-                                                user_info_has_rating[division] = False
-                                                for f in field:
-                                                    if getattr(contest, f) in updates:
-                                                        user_info_has_rating[division] = True
-                                                        break
-                                            except Exception:
-                                                self.logger.error(format_exc())
-                                                user_info_has_rating[division] = False
+                                title_re = wait_rating.get('title_re')
+                                if title_re and not re.search(title_re, contest.title):
+                                    return
 
-                                        if user_info_has_rating[division]:
-                                            n_upd_account_time += 1
-                                            account.updated = updated
-                                            account.save()
+                                has_coder = wait_rating.get('has_coder')
+                                top_rank_percent = wait_rating.get('top_rank_percent')
+                                assert bool(has_coder is None) == bool(top_rank_percent is None)
+                                if has_coder and top_rank_percent:
+                                    rank = get_number_from_str(r.get('place'))
+                                    n_top_rank = len(result) * top_rank_percent
+                                    if (rank is None or rank > n_top_rank) and not account.coders.exists():
+                                        return
+
+                                if no_rating and wait_rating:
+                                    updated = now + timedelta(minutes=10)
+
+                                if updated > account.updated:
+                                    return
+
+                                update_on_parsed_time = (
+                                    (contest.parsed_time is None or contest.parsed_time < contest.end_time)
+                                    and now < contest.end_time + timedelta(days=1)
+                                )
+
+                                wait_days = wait_rating.get('days')
+                                if no_rating and wait_rating and contest.end_time + timedelta(days=wait_days) > now:
+                                    division = r.get('division')
+                                    if division not in user_info_has_rating:
+                                        generator = plugin.get_users_infos([member], resource, [account])
+                                        try:
+                                            user_info = next(generator)
+                                            params = user_info.get('contest_addition_update_params', {})
+                                            field = user_info.get('contest_addition_update_by') or params.get('by') or 'key'  # noqa
+                                            updates = user_info.get('contest_addition_update') or params.get('update') or {}  # noqa
+                                            if not isinstance(field, (list, tuple)):
+                                                field = [field]
+                                            user_info_has_rating[division] = False
+                                            for f in field:
+                                                if getattr(contest, f) in updates:
+                                                    user_info_has_rating[division] = True
+                                                    break
+                                        except Exception:
+                                            self.logger.error(format_exc())
+                                            user_info_has_rating[division] = False
+
+                                    if user_info_has_rating[division]:
+                                        n_upd_account_time += 1
+                                        account.updated = updated
+                                        account.save()
                                 elif (
                                     account_created
-                                    or (not has_statistics and updated < account.updated)
-                                    or (update_without_new_rating and updated < account.updated and no_rating)
+                                    or not has_statistics
+                                    or update_on_parsed_time
+                                    or (update_without_new_rating and no_rating)
                                 ):
                                     n_upd_account_time += 1
                                     account.updated = updated
@@ -545,7 +571,7 @@ class Command(BaseCommand):
                                         r[k] = getattr(operator, cond['operator'])(value, cond['threshold'])
 
                                 medals = contest.info.get('standings', {}).get('medals')
-                                if medals:
+                                if medals and contest.end_time < now:
                                     k = 'medal'
                                     r.pop(k, None)
                                     if 'place' in r:
@@ -634,7 +660,8 @@ class Command(BaseCommand):
                                 if (
                                     is_major_kind
                                     and 'new_rating' in addition
-                                    and account.info.get('_rating_time', -1) <= rating_time
+                                    and ('rating' not in account.info
+                                         or account.info.get('_rating_time', -1) <= rating_time)
                                 ):
                                     account.info['_rating_time'] = rating_time
                                     account.info['rating'] = addition['new_rating']
@@ -642,7 +669,7 @@ class Command(BaseCommand):
 
                                 try_calculate_time = contest.calculate_time or (
                                     contest.start_time <= now < contest.end_time and
-                                    not contest.resource.info.get('parse', {}).get('no_calculate_time', False) and
+                                    not resource.info.get('parse', {}).get('no_calculate_time', False) and
                                     resource.module.long_contest_idle and
                                     contest.full_duration < resource.module.long_contest_idle and
                                     'penalty' in fields_set
@@ -666,16 +693,8 @@ class Command(BaseCommand):
 
                                         ts = int((now - contest.start_time).total_seconds())
                                         ts = min(ts, contest.duration_in_secs)
-                                        values = {
-                                            'D': ts // (24 * 60 * 60),
-                                            'H': ts // (60 * 60),
-                                            'h': ts // (60 * 60) % 24,
-                                            'M': ts // 60,
-                                            'm': ts // 60 % 60,
-                                            'S': ts,
-                                            's': ts % 60,
-                                        }
-                                        time = problems_time_format.format(**values)
+                                        timeline = resource.info.get('standings', {}).get('timeline', {})
+                                        time = time_in_seconds_format(timeline, ts, num=2)
 
                                         for k, v in problems.items():
                                             v_result = v.get('result', '')
@@ -779,36 +798,50 @@ class Command(BaseCommand):
 
                             standings_problems = standings.pop('problems', None)
                             if standings_problems is not None:
+                                problems_ratings = {}
+                                problems = contest.info.get('problems', [])
+                                if 'division' in problems:
+                                    problems = sum(problems['division'].values(), [])
+                                for problem in problems:
+                                    if 'rating' in problem:
+                                        problems_ratings[get_problem_key(problem)] = problem['rating']
+
                                 if 'division' in standings_problems:
                                     for d, ps in standings_problems['division'].items():
                                         for p in ps:
-                                            k = get_problem_short(p)
-                                            if k:
-                                                p.update(d_problems.get(d, {}).get(k, {}))
-                                                p['n_total'] = n_statistics[d]
+                                            key = get_problem_key(p)
+                                            short = get_problem_short(p)
+                                            if not short:
+                                                continue
+                                            p.update(d_problems.get(d, {}).get(short, {}))
+                                            p['n_total'] = n_statistics[d]
+                                            if key in problems_ratings:
+                                                p['rating'] = problems_ratings[key]
                                     if isinstance(standings_problems['division'], OrderedDict):
                                         divisions_order = list(standings_problems['division'].keys())
                                         standings_problems['divisions_order'] = divisions_order
                                     standings_problems['n_statistics'] = n_statistics
                                 else:
                                     for p in standings_problems:
-                                        k = get_problem_short(p)
-                                        if k:
-                                            p.update(d_problems.get(k, {}))
-                                            p['n_total'] = contest.n_statistics
+                                        key = get_problem_key(p)
+                                        short = get_problem_short(p)
+                                        if not short:
+                                            continue
+                                        p.update(d_problems.get(short, {}))
+                                        p['n_total'] = contest.n_statistics
+                                        if key in problems_ratings:
+                                            p['rating'] = problems_ratings[key]
 
                                 update_problems(contest, problems=standings_problems, force=force_problems)
-
                             contest.save()
-
+                            if resource.has_problem_rating and contest.end_time < now:
+                                call_command('calculate_problem_rating', contest=contest.pk)
                             progress_bar.set_postfix(n_fields=len(fields))
                     else:
                         standings_problems = standings.pop('problems', None)
                         if standings_problems is not None and standings_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
-                            if not users:
-                                contest.info['problems'] = {}
-                            update_problems(contest, problems=standings_problems, force=force_problems)
+                            update_problems(contest, problems=standings_problems, force=force_problems or not users)
 
                     action = standings.get('action')
                     if action is not None:
@@ -859,7 +892,7 @@ class Command(BaseCommand):
                     ~Q(pk__in=stages_ids),
                     contest__start_time__lte=contest.start_time,
                     contest__end_time__gte=contest.end_time,
-                    contest__resource=contest.resource,
+                    contest__resource=resource,
                 )
                 for stage in stages:
                     if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
@@ -902,6 +935,12 @@ class Command(BaseCommand):
 
         if args.division:
             contests = contests.filter(info__problems__division__isnull=False)
+
+        if args.with_problems:
+            contests = contests.exclude(problem_set=None)
+
+        if args.updated_before:
+            contests = contests.filter(updated__lt=arrow.get(args.updated_before).datetime)
 
         self.parse_statistic(
             contests=contests,

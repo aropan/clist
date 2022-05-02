@@ -410,6 +410,7 @@ class requester():
         files=None,
         return_url=False,
         return_last_url=False,
+        return_json=False,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -586,6 +587,10 @@ class requester():
         self.file_cache_clear()
         self.response = response
         self.last_url = last_url
+
+        if return_json and response_content_type.startswith('application/json'):
+            page = json.loads(page)
+
         return (page, last_url) if return_url else page
 
     @property

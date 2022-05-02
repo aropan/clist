@@ -57,5 +57,5 @@ def main(host=None, full=False):
         pbar_resource.close()
 
 
-def run(args):
+def run(*args):
     fire.Fire(main, args)

@@ -12,6 +12,7 @@
           data-size="mini"
           />
     </span>
+    {% if not without_toggle_type %}
     <span class="toggle-type">
       <input
           type="checkbox"
@@ -23,6 +24,7 @@
           data-size="mini"
           />
     </span>
+    {% endif %}
     {% if expand_class %}
     <span>
       <button class="btn btn-xs btn-default expand-chart"><i class="fas fa-expand-arrows-alt"></i></button>
@@ -102,6 +104,18 @@
       {% else %}
         {
           data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist.value }}'}{% endfor %}],
+          {% if chart.data and chart.data.0.bgcolor %}
+          backgroundColor: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}'{{ hist.bgcolor }}'{% endfor %}],
+          {% endif %}
+          {% if chart.data and chart.data.0.title %}
+          title: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}'{{ hist.title }}'{% endfor %}],
+          {% endif %}
+          {% if chart.data and chart.data.0.subtitle %}
+          subtitle: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}'{{ hist.subtitle }}'{% endfor %}],
+          {% endif %}
+          {% if chart.border_color is not None %}
+          borderColor: '{{ chart.border_color  }}',
+          {% endif %}
           borderWidth: {{ chart.border_width|default:1 }},
           {% if chart.tension %}
           cubicInterpolationMode: 'monotone',
@@ -109,6 +123,12 @@
           {% endif %}
           {% if chart.point_radius is not None %}
           pointRadius: {{ chart.point_radius }},
+          {% endif %}
+          {% if chart.bar_percentage is not None %}
+          barPercentage: {{ chart.bar_percentage }},
+          {% endif %}
+          {% if chart.category_percentage is not None %}
+          categoryPercentage: {{ chart.category_percentage }},
           {% endif %}
         },
       {% endif %}
@@ -151,9 +171,30 @@
                 context = context[0]
                 return context.chart.config.options.scales.x.ticks.callback(context.parsed.x)
               },
+              {% elif not chart.fields and chart.data.0.title %}
+              title: function(context) {
+                context = context[0]
+                if (context.dataset.title) {
+                  return Array.isArray(context.dataset.title)? context.dataset.title[context.dataIndex] : context.dataset.title
+                }
+              },
               {% endif %}
+              beforeBody: function(context) {
+                context = context[0]
+                if (context.dataset.subtitle) {
+                  return Array.isArray(context.dataset.subtitle)? context.dataset.subtitle[context.dataIndex] : context.dataset.subtitle
+                }
+              },
               label: function(context) {
-                return (context.dataset.label? context.dataset.label + ': ' : '') + context.formattedValue
+                ret = context.formattedValue
+                if (context.dataset.label) {
+                  if (Array.isArray(context.dataset.label)) {
+                    ret = context.dataset.label[context.dataIndex] + ': ' + ret
+                  } else {
+                    ret = context.dataset.label + ': ' + ret
+                  }
+                }
+                return ret
               },
             },
           },

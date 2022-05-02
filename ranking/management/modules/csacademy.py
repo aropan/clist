@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
-import json
 import itertools
+import json
+import re
 from collections import OrderedDict
 from pprint import pprint
 
@@ -14,6 +14,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://csacademy.com/contest/scoreboard_state/?contestId={key}'
     API_STANDINGS_URL_FORMAT_ = '{url}scoreboard/'
+    PROBLEM_URL_FORMAT_ = 'https://csacademy.com/contest/archive/task/{name}/'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -46,6 +47,7 @@ class Statistic(BaseModule):
                 'code': str(t['id']),
                 'name': str(t['longName']),
                 'full_score': t['pointsWorth'],
+                'url': self.PROBLEM_URL_FORMAT_.format(name=t['name']),
             }
             for t in data['state']['contesttask']
         }

@@ -299,6 +299,13 @@
     </div>
     {% endif %}
 
+    {% if resource.has_problem_rating and problem_rating_chart %}
+    <div class="col-md-6 col-lg-4" id="problem-rating-chart">
+        <h4>Problem rating distribution</h4>
+        {% include 'chart.html' with chart=problem_rating_chart without_close_chart=True without_toggle_type=True expand_class="#problem-rating-chart" %}
+    </div>
+    {% endif %}
+
     {% for name, data in contests.items %}
     {% if data.contests.exists %}
     <div class="col-md-6 col-lg-4">

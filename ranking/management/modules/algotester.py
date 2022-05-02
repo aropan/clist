@@ -1,3 +1,4 @@
+import html
 import json
 import re
 from collections import OrderedDict
@@ -34,8 +35,8 @@ class Statistic(BaseModule):
                     code = str(problem['Id'])
                     problem_info = problems_infos.setdefault(code, {})
                     problem_info['code'] = code
-                    problem_info['short'] = problem['Name']
-                    problem_info['name'] = problem['Problem']
+                    problem_info['short'] = html.unescape(problem['Name'])
+                    problem_info['name'] = html.unescape(problem['Problem'])
                     for action in problem['Actions']:
                         if action['Text'] == 'View':
                             problem_info['url'] = urljoin(url, action['Url'])
@@ -53,7 +54,9 @@ class Statistic(BaseModule):
                     code = formatter[len('formatter'):]
                     short = match.group('field')
                     name = match.group('value')
-                    problems_infos[code] = {'code': code, 'short': short, 'name': name}
+                    problems_infos[code] = {'code': code,
+                                            'short': html.unescape(short),
+                                            'name': html.unescape(name)}
 
         @RateLimiter(max_calls=5, period=1)
         def fetch_page(page):

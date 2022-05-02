@@ -294,6 +294,12 @@ class Statistics(BaseModel):
     def __str__(self):
         return f'{self.account_id} on {self.contest_id} = {self.solving} + {self.upsolving}'
 
+    def get_old_rating(self):
+        if 'old_rating' in self.addition:
+            return self.addition['old_rating']
+        if 'new_rating' in self.addition and 'rating_change' in self.addition:
+            return self.addition['new_rating'] - self.addition['rating_change']
+
     class Meta:
         verbose_name_plural = 'Statistics'
         unique_together = ('account', 'contest')

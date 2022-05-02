@@ -235,9 +235,7 @@ class Statistic(BaseModule):
                 neverland_ids = [nid for nid in neverland_ids if nid not in neverland_ids_set]
 
                 if neverland_ids:
-                    if len(neverland_ids) > 200:
-                        neverland_ids = neverland_ids[:200]
-
+                    neverland_ids = neverland_ids[:min(300, len(neverland_ids))]
                     accounts = self.resource.account_set.filter(info__neverland_id__in=set(neverland_ids))
                     accounts = accounts.values_list('key', 'info__neverland_id')
                     accounts = {nid: key for key, nid in accounts}

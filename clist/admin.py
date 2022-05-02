@@ -114,22 +114,28 @@ class ResourceAdmin(BaseModelAdmin):
                            'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
-        [None, {'fields': ['info', 'ratings', 'has_rating_history', 'accounts_fields']}],
+        [None, {'fields': ['info', 'ratings', 'has_rating_history', 'has_problem_rating', 'avg_rating',
+                           'accounts_fields']}],
     ]
-    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', 'n_contests', 'n_accounts',
-                    'modified']
+    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', '_has_problem_rating',
+                    'n_contests', 'n_accounts', 'modified']
     search_fields = ['host', 'url']
     list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone']
 
     def _has_profile_url(self, obj):
         return bool(obj.profile_url)
     _has_profile_url.boolean = True
-    _has_profile_url.short_description = 'Has profile url'
+    _has_profile_url.short_description = 'Profile url'
 
     def _has_rating(self, obj):
         return bool(obj.ratings)
     _has_rating.boolean = True
-    _has_rating.short_description = 'Has rating'
+    _has_rating.short_description = 'Rating'
+
+    def _has_problem_rating(self, obj):
+        return obj.has_problem_rating
+    _has_problem_rating.boolean = True
+    _has_problem_rating.short_description = 'Prating'
 
     def get_list_display(self, request):
         ret = super().get_list_display(request)

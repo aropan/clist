@@ -393,7 +393,11 @@ if DEBUG:
     ]
 
     def show_toolbar_callback(request):
-        return not request.is_ajax() and 'disable_djtb' not in request.GET
+        return (
+            not request.is_ajax() and
+            'disable_djtb' not in request.GET and
+            (not DEBUG or request.user.is_authenticated)
+        )
 
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_TOOLBAR_CALLBACK': show_toolbar_callback,
@@ -476,7 +480,7 @@ STOP_EMAIL_ = getattr(conf, 'STOP_EMAIL', False)
 TIME_FORMAT_ = '%d.%m %a %H:%M'
 LIMIT_N_TOKENS_VIEW = 3
 LIMIT_TOKENS_VIEW_WAIT_IN_HOURS = 24
-YES_ = {'', '1', 'yes', 'true'}
+YES_ = {'', '1', 'yes', 'true', 't', 'y'}
 ACE_CALENDARS_ = {
     'enable': {'id': 'enable', 'name': 'Enable'},
     'disable': {'id': 'disable', 'name': 'Disable'},

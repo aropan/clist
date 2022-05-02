@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import html
 import json
 import re
 import sys
@@ -24,8 +25,10 @@ class Statistic(BaseModule):
     STANDINGS_URL_FORMAT_ = 'https://www.codechef.com/rankings/{key}'
     API_CONTEST_URL_FORMAT_ = 'https://www.codechef.com/api/contests/{key}'
     API_RANKING_URL_FORMAT_ = 'https://www.codechef.com/api/rankings/{key}?sortBy=rank&order=asc&page={page}&itemsPerPage={per_page}'  # noqa
-    API_PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/api/contests/PRACTICE/problems/{code}'
+    API_PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/api/contests/{key}/problems/{code}'
     PROFILE_URL_FORMAT_ = 'https://www.codechef.com/users/{user}'
+    PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/problems/{code}'
+    CONTEST_PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/{key}/problems/{code}'
     TEAM_URL_FORMAT_ = 'https://www.codechef.com/teams/view/{user}'
 
     def __init__(self, **kwargs):
@@ -85,7 +88,13 @@ class Statistic(BaseModule):
         for key, contest_info in contest_infos.items():
             standings_url = self.STANDINGS_URL_FORMAT_.format(key=key)
             page = REQ.get(standings_url)
-            match = re.search('<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"', page)
+            for regex in (
+                'window.csrfToken="([^"]*)",',
+                '<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"',
+            ):
+                match = re.search(regex, page)
+                if match:
+                    break
             if not match:
                 raise ExceptionParseStandings('not found csrf token')
             csrf_token = match.group(1)
@@ -139,17 +148,23 @@ class Statistic(BaseModule):
                                 d = d.setdefault('division', OrderedDict())
                                 d = d.setdefault(contest_info['division'], [])
                             code = p['code']
+
                             problem_info = {
+                                'code': code,
                                 'short': code,
-                                'name': p['name'],
-                                'url': f'https://www.codechef.com/problems/{code}',
+                                'name': html.unescape(p['name']),
+                                'url': self.PROBLEM_URL_FORMAT_.format(code=code),
                             }
                             d.append(problem_info)
 
                             if code not in problems_data:
-                                problem_url = self.API_PROBLEM_URL_FORMAT_.format(code=code)
-                                page = REQ.get(problem_url, headers=headers)
-                                problem_data = json.loads(page)
+                                problem_url = self.API_PROBLEM_URL_FORMAT_.format(key='PRACTICE', code=code)
+                                problem_data = REQ.get(problem_url, headers=headers, return_json=True)
+
+                                if problem_data.get('status') == 'error':
+                                    problem_info['url'] = self.CONTEST_PROBLEM_URL_FORMAT_.format(key=key, code=code)
+                                    problem_url = self.API_PROBLEM_URL_FORMAT_.format(key=key, code=code)
+                                    problem_data = REQ.get(problem_url, headers=headers, return_json=True)
 
                                 writer = problem_data.get('problem_author')
                                 if writer:

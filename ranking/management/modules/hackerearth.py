@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
 import json
+import re
 import urllib.parse
-from datetime import datetime, timedelta
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from time import sleep
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import datetime, timedelta
 from pprint import pprint
 from threading import Lock
+from time import sleep
 
 import tqdm
 from first import first
 
-from ranking.management.modules.common import REQ, BaseModule, parsed_table, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules import conf
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -207,7 +207,7 @@ class Statistic(BaseModule):
         else:
             page, problems_info = fetch_page(1)
             pages = re.findall('<a[^>]*href="[^"]*/page/([0-9]+)/?"', page)
-            max_page_index = int(pages[-1]) if pages else 1
+            max_page_index = max(map(int, pages)) if pages else 1
 
             if users is None or users:
                 with PoolExecutor(max_workers=8) as executor:
@@ -305,8 +305,8 @@ class Statistic(BaseModule):
 
 
 if __name__ == "__main__":
-    import sys
     import os
+    import sys
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'
@@ -314,9 +314,9 @@ if __name__ == "__main__":
     from django import setup
     setup()
 
-    from clist.models import Contest
-
     from django.utils import timezone
+
+    from clist.models import Contest
 
     contests = Contest.objects \
         .filter(title="ACM ICPC Practice Contest") \

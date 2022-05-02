@@ -249,14 +249,14 @@ class Statistic(BaseModule):
             problems_sets = []
             for match in matches:
                 problems = re.findall(
-                    '<a[^>]*href="(?P<href>[^"]*c=problem_statement[^"]*)"[^>]*>(?P<name>[^/]*)</a>',
+                    '<a[^>]*href="(?P<href>[^"]*(?:c=problem_statement[^"]*|pm=(?P<key>[0-9]+)[^"]*){2})"[^>]*>(?P<name>[^/]*)</a>',  # noqa
                     match.group(),
                     re.IGNORECASE,
                 )
                 if problems:
                     problems_sets.append([
-                        {'short': n, 'url': urljoin(url, u)}
-                        for u, n in problems
+                        {'short': n, 'url': urljoin(url, u), 'code': k}
+                        for u, k, n in problems
                     ])
 
             problems_info = dict() if len(problems_sets) > 1 else list()

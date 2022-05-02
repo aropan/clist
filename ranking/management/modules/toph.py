@@ -5,6 +5,7 @@ import collections
 import re
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
 from datetime import datetime, timedelta
 from pprint import pprint
 
@@ -12,6 +13,7 @@ import tqdm
 import yaml
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -24,29 +26,48 @@ class Statistic(BaseModule):
                 return {'action': 'delete', 'force': True}
             raise e
 
-        match = re.search(r'<h3>Problems</h3>(?:\s*<[^>]*>)*\s*(?P<table><table[^>]*>.*?</table>)', page, re.I | re.S)
-        problem_names = []
-        if match:
-            problem_page = match.group('table')
-            matches = re.finditer('>(?P<name>[^<]+)<', problem_page)
-            with_letter = True
-            for match in matches:
-                name = match.group('name').strip()
-                if not name:
-                    continue
-                if not re.search(r'^[A-Z]\.', name):
-                    with_letter = False
-                problem_names.append(name)
-            if with_letter:
-                problem_names = [n.split('.', 1)[1].strip() for n in problem_names]
-
         try:
-            page = REQ.get(self.url.strip('/') + '/statistics')
-            table = parsed_table.ParsedTable(html=page)
-            problem_names = [list(r.values())[0].value for r in table]
+            page = REQ.get(f'/problems/contests/{self.key}')
         except FailOnGetResponse as e:
-            if e.code != 404 or not problem_names:
-                raise e
+            if e.code == 404:
+                raise ExceptionParseStandings('not found problems')
+            raise e
+
+        table = parsed_table.ParsedTable(html=page, without_header=True, ignore_wrong_header_number=False)
+        contest_problems = []
+        with_letter = True
+        writers = collections.defaultdict(int)
+        for r in table:
+            r = r.columns[0]
+            problem = {}
+            name = r.node.xpath('.//h4/text()')[0]
+            name = re.sub(r'\s+', ' ', name).strip()
+            problem['name'] = name
+            if not re.match(r'^[A-Z][0-9]*\.', name):
+                with_letter = False
+
+            href = r.node.xpath('./a/@href')
+            if href:
+                url = urllib.parse.urljoin(REQ.last_url, href[0])
+                problem['url'] = url
+                problem['code'] = url.strip('/').split('/')[-1]
+
+            problem['writers'] = r.node.xpath('.//a[contains(@class, "handle")]/text()')
+            for writer in problem['writers']:
+                writers[writer] += 1
+
+            tags = problem.setdefault('tags', [])
+            for tag in r.node.xpath('.//a[contains(@href, "/tags/")]/text()'):
+                tag = re.sub('([^A-Z])([A-Z])', r'\1-\2', tag).lower()
+                tags.append(tag)
+            contest_problems.append(problem)
+        if with_letter:
+            for problem in contest_problems:
+                short, name = [s.strip() for s in problem['name'].split('.', 1)]
+                problem['name'] = name
+                problem['short'] = short
+
+        writers = [w for w, _ in sorted(writers.items(), key=lambda r: -r[1])]
 
         standings_url = self.url.strip('/') + '/standings'
         next_url = standings_url
@@ -56,6 +77,7 @@ class Statistic(BaseModule):
         problems_info = collections.OrderedDict()
         n_page = 1
         has_penalty = False
+        rank = 0
         while next_url:
             page = REQ.get(next_url)
             table = parsed_table.ParsedTable(html=page)
@@ -64,6 +86,7 @@ class Statistic(BaseModule):
                 row = {}
                 problems = row.setdefault('problems', {})
                 pind = 0
+                rank += 1
                 for k, v in r.items():
                     if k == '#':
                         row['place'] = v.value
@@ -73,8 +96,12 @@ class Statistic(BaseModule):
                         row['name'] = name.value
                         hrefs = name.column.node.xpath('.//a[contains(@href,"/u/")]/@href')
                         if hrefs:
-                            row['member'] = hrefs[0].split('/')[-1]
+                            row['member'] = [h.rstrip('/').split('/')[-1] for h in hrefs]
                             row['info'] = {'is_virtual': False}
+                            if len(row['member']) > 1:
+                                row['name'] = re.sub(r'\s+,', ',', row['name'])
+                                row['team_id'] = f'{self.pk}_{rank}'
+                                row['_members'] = [{'account': m} for m in row['member']]
                         else:
                             to_get_handle = True
                             row['member'] = f'{row["name"]}, {row["place"]}, {self.start_time.year}'
@@ -112,7 +139,8 @@ class Statistic(BaseModule):
                         if (
                             len(letter) == 1
                             or re.match('^[A-Z][0-9]+$', letter)
-                            or pind < len(problem_names) and problem_names[pind] == letter
+                            or pind < len(contest_problems) and (contest_problems[pind].get('name') == letter or
+                                                                 contest_problems[pind].get('short') == letter)
                         ):
                             if v.value:
                                 title = v.column.node.xpath('.//div[@title]/@title')[0]
@@ -173,10 +201,22 @@ class Statistic(BaseModule):
                         pind += 1
                 if not problems:
                     continue
-                if users and row['member'] not in users:
-                    continue
 
-                results[row['member']] = row
+                if isinstance(row['member'], list):
+                    rows = []
+                    members = row['member']
+                    for member in members:
+                        r = deepcopy(row)
+                        r['member'] = member
+                        rows.append(r)
+
+                else:
+                    rows = [row]
+
+                for row in rows:
+                    if users and row['member'] not in users:
+                        continue
+                    results[row['member']] = row
             n_page += 1
             match = re.search(f'<a[^>]*href="(?P<href>[^"]*standings[^"]*)"[^>]*>{n_page}</a>', page)
             next_url = urllib.parse.urljoin(next_url, match.group('href')) if match else None
@@ -199,15 +239,17 @@ class Statistic(BaseModule):
                     pbar.update()
 
         problems = []
-        for info, name in zip(problems_info.values(), problem_names):
-            info['name'] = name
+        for info, contest_info in zip(problems_info.values(), contest_problems):
+            info.update(contest_info)
             problems.append(info)
 
         ret = {
             'url': standings_url,
             'problems': problems,
             'result': results,
+            'writers': writers,
         }
+
         return ret
 
     @staticmethod

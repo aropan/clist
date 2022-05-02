@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
+import html
 import re
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pprint
+
+from django.utils.timezone import now
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import InitModuleException
@@ -99,7 +102,7 @@ class Statistic(BaseModule):
                     row['university'] = u
             result[row['member']] = row
 
-        if statistics and self.info.get('use_icpc.kimden.online'):
+        if statistics and self.info.get('use_icpc.kimden.online') and self.end_time + timedelta(days=10) > now():
             team_regions = {}
 
             def canonize_name(name):
@@ -132,13 +135,14 @@ class Statistic(BaseModule):
                     for match in matches:
                         classes = match.group('class').split()
                         name = match.group('name')
+                        name = html.unescape(name)
                         name = canonize_name(name)
                         for c in classes:
                             if c in regions:
                                 team_regions[name] = regions[c]
                                 break
                 team_name = canonize_name(team_name)
-                return team_regions[team_name]
+                return team_regions.get(team_name)
 
             for row in result.values():
                 stat = statistics.get(row['member'])

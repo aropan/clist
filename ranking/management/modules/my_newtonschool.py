@@ -13,14 +13,15 @@ from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 
 class Statistic(BaseModule):
     API_STANDING_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/leader_board/competition/'
-    API_PROBLEM_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/details/public/'
+    API_PROBLEMS_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/details/public/'
+    API_PROBLEM_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/question/h/{}/details/'
     API_PROFILE_URL_FORMAT_ = '/api/v1/user/{}/'
 
     def get_standings(self, users=None, statistics=None):
         standings_url = urljoin(self.url, '?tab=leaderboard')
 
         hashes = self.key.split('/')
-        url = urljoin(self.url, self.API_PROBLEM_URL_FORMAT_.format(*hashes))
+        url = urljoin(self.url, self.API_PROBLEMS_URL_FORMAT_.format(*hashes))
         page = REQ.get(url)
         data = json.loads(page)
         problems_infos = collections.OrderedDict()

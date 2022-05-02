@@ -1,4 +1,25 @@
-.problem-date, .problem-resource {
+.problem-date-column,
+.problem-result-column,
+.problem-rating-column,
+.problem-luck-column,
+.problem-progress-column {
   text-align: center;
   white-space: nowrap;
+}
+
+#problems table td {
+  vertical-align: middle;
+}
+
+.hidden-tag {
+  cursor: pointer;
+}
+
+.problem-progress {
+  height: 8px;
+  margin: 0px;
+}
+
+#problems a.solution {
+  color: inherit !important;
 }

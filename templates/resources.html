@@ -6,10 +6,11 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/resources.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/resources.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-<div class="resources panel panel-default table-responsive col-md-12 col-lg-8 col-lg-offset-2">
+<div id="resources" class="panel panel-default table-responsive col-md-12 col-lg-8 col-lg-offset-2">
   <table class="table table-condensed table-float-head table-striped">
     <tr>
       <th>Resource</th>
@@ -17,14 +18,17 @@
       <th>Google<br/>calendar</th>
       <th>Auto<br/>update</th>
       <th>Rating</th>
+      <th>Problem<br/>rating</th>
       <th>Contests<br/>number</th>
       <th>Accounts<br/>number</th>
     </tr>
     {% for resource in resources %}
     <tr>
       <td>
-        <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
-        <a class="host lead" href="{% url 'clist:resource' resource.host %}">{{ resource.host }}</a>
+        <a class="host lead" href="{% url 'clist:resource' resource.host %}">
+          <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
+          {{ resource.host }}
+        </a>
       </td>
       <td>
         <a href="{{ resource.href }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
@@ -40,7 +44,7 @@
       </td>
 
       <td>
-        <span class="badge progress-bar-{% if resource.enable %}success{% else %}info{% endif %}">
+        <span class="badge progress-bar-{% if resource.enable %}success{% else %}info{% endif %}" data-column="auto-update">
           {% if resource.enable %}
             <i class="fas fa-check"></i>
           {% else %}
@@ -50,7 +54,7 @@
       </td>
 
       <td>
-        <span class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}info{% endif %}">
+        <span class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}info{% endif %}" data-column="rating">
           {% if resource.has_rating_history %}
             <i class="fas fa-check"></i>
           {% else %}
@@ -59,11 +63,27 @@
         </span>
       </td>
 
-      <td><span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }}</span></td>
+      <td>
+        <span class="badge progress-bar-{% if resource.has_problem_rating %}success{% else %}info{% endif %}" data-column="problem-rating">
+          {% if resource.has_problem_rating %}
+            <i class="fas fa-check"></i>
+          {% else %}
+            <i class="fas fa-times"></i>
+          {% endif %}
+        </span>
+      </td>
+
+      <td>
+        <span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}" data-column="statistics-update">
+          {{ resource.n_contests|intcomma }}
+        </span>
+      </td>
 
       <td>
         {% if resource.module %}
-        <span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }}</span>
+        <span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}" data-column="accounts-update">
+          {{ resource.n_accounts|intcomma }}
+        </span>
         {% else %}
         &#183;
         {% endif %}

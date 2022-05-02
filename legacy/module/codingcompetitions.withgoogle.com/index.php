@@ -25,12 +25,14 @@
 
     $calendar_ids = array();
     $competitions = array();
+    $missed_calendars = array();
     foreach ($js_urls as $url) {
         $page = curlexec($url);
         preg_match_all("/competition:[\"'](?P<name>[^\"']*)[\"'],([^,]*,)?competition_year:[\"'][0-9]{4}[\"'](,calendar_link:[\"'](?P<url>[^\"']*)[\"'])?/", $page, $matches, PREG_SET_ORDER);
         foreach ($matches as $index => $match) {
             $competitions[$index + 1] = $match['name'];
             if (!isset($match['url'])) {
+                $missed_calendars[] = $match['name'];
                 continue;
             }
             $url = redirect_url($match['url']);
@@ -100,6 +102,17 @@
         print_r($calendar_ids);
     }
 
+    $normalize_title = function($title) {
+        if (preg_match('#\b[0-9]{4}\b#', $title, $match)) {
+            $year = $match[0];
+            $title = str_replace($year, '', $title) . ' ' . $year;
+        }
+        $title = trim($title);
+        $title = strtolower($title);
+        $title = preg_replace('#\s+#', ' ', $title);
+        return $title;
+    };
+
     $url = 'https://codejam.googleapis.com/poll?p=e30';
     $page = curlexec($url, NULL, array('no_header' => true));
     $page = str_replace('_', '/', $page);
@@ -116,7 +129,34 @@
         foreach ($adventure['challenges'] as $challenge) {
             $key = $challenge['end_ms'] / 1000;
             $challenge['competition'] = $competition;
+
+            $missed = false;
+            foreach ($missed_calendars as $_ => $i) {
+                if (strpos($adventure['title'], $i) !== false) {
+                    $missed = true;
+                    break;
+                }
+            }
+
+            $title = strpos($challenge['title'], $adventure['title']) === false? $adventure['title'] . ' ' . $challenge['title'] : $challenge['title'];
+            $title = $normalize_title($title);
+
+            if ($missed) {
+                $contests[] = array(
+                    'start_time' => $challenge['start_ms'] / 1000,
+                    'end_time' => $challenge['end_ms'] / 1000,
+                    'title' => $challenge['title'],
+                    'url' => "$URL{$challenge['competition']}/round/{$challenge['id']}",
+                    'host' => "$HOST/{$challenge['competition']}",
+                    'rid' => $RID,
+                    'timezone' => $TIMEZONE,
+                    'key' => $challenge['id'],
+                );
+                continue;
+            }
+
             $infos[$key] = $challenge;
+            $infos[$title] = $challenge;
         }
     }
 
@@ -132,22 +172,36 @@
             }
 
             $date_key = isset($item['start']['dateTime'])? "dateTime" : "date";
+            $normalized_title = $normalize_title($item['summary']);
             $title = trim(preg_replace('/\s*[0-9]{4}\s*/', ' ', $item['summary']));
 
             $skip_match_by_end = preg_match('/(registration|announce)/i', $title, $match);
 
             $timestamp = date("U", strtotime($item['end'][$date_key]));
-            if (!$skip_match_by_end && isset($infos[$timestamp])) {
-                $url = "$URL{$infos[$timestamp]['competition']}/round/{$infos[$timestamp]['id']}";
-                $host = "$HOST/{$infos[$timestamp]['competition']}";
+
+            $start = $item['start'][$date_key];
+            $end = $item['end'][$date_key];
+            if (!$skip_match_by_end && isset($infos[$normalized_title])) {
+                $info = $infos[$normalized_title];
+                unset($infos[$normalized_title]);
+                $url = "$URL{$info['competition']}/round/{$info['id']}";
+                $host = "$HOST/{$info['competition']}";
+                $start = $info['start_ms'] / 1000;
+                $end = $info['end_ms'] / 1000;
+            } else if (!$skip_match_by_end && isset($infos[$timestamp])) {
+                $info = $infos[$timestamp];
                 unset($infos[$timestamp]);
+                $url = "$URL{$info['competition']}/round/{$info['id']}";
+                $host = "$HOST/{$info['competition']}";
+                $start = $info['start_ms'] / 1000;
+                $end = $info['end_ms'] / 1000;
             } else {
                 $url = $URL;
                 $host = $HOST;
             }
             $contests[] = array(
-                'start_time' => $item['start'][$date_key],
-                'end_time' => $item['end'][$date_key],
+                'start_time' => $start,
+                'end_time' => $end,
                 'title' => $title,
                 'url' => $url,
                 'host' => $host,
@@ -161,4 +215,6 @@
     if ($RID === -1) {
         print_r($contests);
     }
+
+    unset($normalize_title);
 ?>

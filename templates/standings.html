@@ -97,7 +97,7 @@
     {% endfor %}
 
     {% if other_contests %}
-    {% for c in other_contests %}{% include "standings_neighbors.html" with contest=c without_neighbors=True %}{% endfor %}
+    {% for c in other_contests %}{% include "standings_neighbors.html" with contest=c without_neighbors=True with_icon=True %}{% endfor %}
     {% elif with_neighbors %}
     {% for c in neighbors %}{% if not c.end_time < contest.end_time %}{% include "standings_neighbors.html" with contest=c %}{% endif %}{% endfor %}
     {% endif %}
@@ -209,17 +209,23 @@
               </th>
               {% endif %}
               {% for key, field in fields.items %}
-              <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if advance.title and key == 'advanced' %} title="{{ advance.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{% for f in field.split %}<div>{{ f }}</div>{% endfor %}</span></th>
+              <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if advance.title and key == 'advanced' %} title="{{ advance.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{% for f in field.split %}<div>{{ f }}</div>{% with value=contest.info.fields_values|get_item:key %}{% if value is not None %}<div class="small">{{ value }}</div>{% endif %}{% endwith %}{% endfor %}</span></th>
               {% endfor %}
 
               {% for problem in problems %}
               {% if not problem.skip %}
               <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
-                <div title="{% if problem.group %}{{ problem.group }}{% else %}{{ problem|get_problem_name }}{% endif %}" data-placement="bottom" data-toggle="tooltip">
+                <div class="nowrap" title="{% if problem.group %}{{ problem.group }}{% else %}{{ problem|get_problem_name }}{% endif %}" data-placement="bottom" data-toggle="tooltip">
+                {% if problem.rating is not None %}
+                {% coder_color_circle contest.resource problem.rating size=12 %}
+                {% endif %}
+
                 {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
                 <span{% if mod_penalty and not problem.n_accepted and contest.n_statistics %} class="rej"{% endif %}>
                 {% if problem.group %}
                   {{ problem.group|truncatechars:truncatechars_name_problem }}
+                {% elif merge_problems %}
+                  {{ problem|get_problem_name|truncatechars:truncatechars_name_problem }}
                 {% else %}
                   {{ problem|get_problem_header|truncatechars:truncatechars_name_problem }}
                 {% endif %}
@@ -250,8 +256,10 @@
                       {{ problem.subtext.text }}
                     </div>
                   {% endif %}
-                  {% if problem.n_teams is not None and with_detail %}
+                  {% if with_detail %}
+                  {% if problem.n_teams is not None or other_contests %}
                     {% include "standings_problem_progress.html" %}
+                  {% endif %}
                   {% endif %}
                 {% endif %}
               </th>
@@ -268,8 +276,10 @@
                   {% if problem.suburl %}</a>{% endif %}
                   {% if problem.full_score %}<div>{{ problem.full_score|floatformat|default:problem.full_score }}</div>{% endif %}
                 </small>
-                {% if problem.n_teams is not None and with_detail %}
+                {% if with_detail %}
+                {% if problem.n_teams is not None or other_contests %}
                   {% include "standings_problem_progress.html" %}
+                {% endif %}
                 {% endif %}
               </th>
               {% endfor %}

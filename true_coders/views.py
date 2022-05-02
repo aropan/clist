@@ -13,7 +13,7 @@ from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import IntegrityError, transaction
 from django.db.models import (BigIntegerField, BooleanField, Case, Count, ExpressionWrapper, F, FloatField,
                               IntegerField, Max, OuterRef, Prefetch, Q, Value, When)
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Length
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -695,6 +695,11 @@ def change(request):
             return HttpResponseBadRequest("invalid check timezone value")
         coder.settings["check_timezone"] = int(value)
         coder.save()
+    elif name == "show-tags":
+        if value not in ["0", "1", ]:
+            return HttpResponseBadRequest("invalid show tags value")
+        coder.settings["show_tags"] = int(value)
+        coder.save()
     elif name == "time-format":
         try:
             format_time(timezone.now(), value)
@@ -1015,7 +1020,7 @@ def change(request):
         with transaction.atomic():
             user.delete()
     else:
-        return HttpResponseBadRequest("unknown query")
+        return HttpResponseBadRequest(f"unknown query = {name}")
 
     return HttpResponse("accepted")
 
@@ -1093,18 +1098,8 @@ def search(request, **kwargs):
         order = ['disabled']
         if 'user' in request.GET:
             re_search = request.GET.get('user')
-            exact_qs = qs.filter(key__iexact=re_search)
-            if exact_qs.exists():
-                qs = exact_qs
-            else:
-                qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
-                search_striped = re_search.rstrip('$').lstrip('^')
-                qs = qs.annotate(match=Case(
-                    When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField(),
-                ))
-                order.append('-match')
+            qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
+            order.append(Length('key'))
 
         qs = qs.annotate(has_multi=F('resource__module__multi_account_allowed'))
 

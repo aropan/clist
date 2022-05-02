@@ -38,10 +38,12 @@ class Resource(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     ratings = models.JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
+    has_problem_rating = models.BooleanField(default=False)
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
     icon = models.CharField(max_length=255, null=True, blank=True)
     accounts_fields = models.JSONField(default=dict, blank=True)
+    avg_rating = models.FloatField(default=None, null=True, blank=True)
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
@@ -412,15 +414,19 @@ class Contest(BaseModel):
 
     @property
     def actual_url(self):
-        if self.n_statistics:
+        if self.n_statistics or self.info.get('problems'):
             return reverse('ranking:standings', args=(slug(self.title), self.pk))
         if self.standings_url:
             return self.standings_url
         return self.url
 
+    def is_major_kind(self):
+        return self.resource.is_major_kind(self.kind)
+
 
 class Problem(BaseModel):
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE, related_name='+')
+    contests = models.ManyToManyField(Contest, blank=True, related_name='problem_set')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     time = models.DateTimeField()
     index = models.SmallIntegerField(null=True)
@@ -432,8 +438,10 @@ class Problem(BaseModel):
     n_tries = models.IntegerField(default=None, null=True, blank=True)
     n_accepted = models.IntegerField(default=None, null=True, blank=True)
     n_partial = models.IntegerField(default=None, null=True, blank=True)
+    n_hidden = models.IntegerField(default=None, null=True, blank=True)
     n_total = models.IntegerField(default=None, null=True, blank=True)
     visible = models.BooleanField(default=True, null=False)
+    rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
 
     def __str__(self):
         return "%s [%d]" % (self.name, self.id)
@@ -444,12 +452,17 @@ class Problem(BaseModel):
         indexes = [
             models.Index(fields=['resource_id', 'url', '-time', 'contest_id', 'index']),
             models.Index(fields=['-time', 'contest_id', 'index']),
+            models.Index(fields=['resource_id', 'rating']),
             GistIndexTrgrmOps(fields=['name']),
         ]
 
     def save(self, *args, **kwargs):
         self.visible = self.visible and (bool(self.url) or self.key != self.name)
         super().save(*args, **kwargs)
+
+    @property
+    def code(self):
+        return self.key
 
 
 class ProblemTag(BaseModel):

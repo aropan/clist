@@ -1,5 +1,3 @@
-
-
 $(function() {
   $('#coder-list .add-account').click(function() {
     event.preventDefault()

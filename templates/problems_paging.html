@@ -4,21 +4,60 @@
 
 {% for problem in problems %}
 <tr>
-    <td class="problem-date">
+    <td class="problem-date-column">
         <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div>
     </td>
-    <td>
-        <a href="{% url_transform request resource=problem.resource.id %}"><img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
-        <a href="{% url 'ranking:standings' problem.contest.title|slug problem.contest.pk %}">{% if problem.short and problem.short != problem.name %}{{ problem.short }}. {% endif %}{{ problem.name }}</a>
-        <a href="{% if problem.url %}{{ problem.url }}{% else %}{{ problem.contest.url }}{% endif %}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-
-        {% if perms.clist.change_problem %}
-        <a href="{% url 'admin:clist_problem_change' problem.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    <td class="problem-rating-column">
+        {% if problem.rating is not None %}
+        {% coder_color_circle problem.resource problem.rating %}
+        <span class="{% coder_color_class problem.resource problem.rating %}">
+            {{ problem.rating }}
+        </span>
         {% endif %}
     </td>
+    <td class="problem-progress-column">
+        {% include 'standings_problem_progress.html' with problem=problem contest="" %}
+    </td>
+    <td>
+        <div class="nowrap">
+            <a href="{% url_transform request resource=problem.resource.id %}">
+                <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+            </a>
+            {% if problem.url %}<a href="{{ problem.url }}" target="_blank">{% endif %}
+            {% trim_to problem.name 50 %}
+            {% if problem.url %}</a>{% endif %}
+
+            {% if perms.clist.change_problem %}
+            <a href="{% url 'admin:clist_problem_change' problem.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+            {% endif %}
+        </div>
+    </td>
+    <td>
+        {% for contest in problem.contests.all %}
+        <div class="small nowrap text-muted">
+            <a href="{{ contest.actual_url }}">{% trim_to contest.title 20 %}</a>
+        </div>
+        {% endfor %}
+    </td>
+    {% if coder %}
+    <td class="problem-luck-column">
+        {% if problem.rating is not None and problem.account_rating is not None %}
+        {% win_probability problem.rating problem.account_rating as prob %}
+        {{ prob|multiply:100|floatformat:2 }}%
+        {% endif %}
+    </td>
+    {% get_problem_solution problem as solution %}
+    <td class="problem-result-column {% if solution.result|is_solved %}success{% elif solution.result.partial %}info{% elif solution.result.result|slice:":1" == "?" %}warning{% elif solution.result %}danger{% endif %}">
+        {% if not solution %}
+        {% else %}
+            {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result with_detail=False key=solution.key %}
+        {% endif %}
+    </td>
+    {% endif %}
     <td>
         {% for tag in problem.tags.all %}
-        <a href="{% url_transform request tag=tag.id %}" class="badge progress-bar-info">{{ tag.name }}</a>
+        {% ifchanged %}<span class="hidden-tag unevent-hidden-tag badge progress-bar-info{% if show_tags %} hidden{% endif %}">&nbsp;</span>{% endifchanged %}
+        <a href="{% url_transform request tag=tag.id %}" class="tag badge progress-bar-info{% if not show_tags %} hidden{% endif %}">{{ tag.name }}</a>
         {% endfor %}
     </td>
 </tr>
@@ -27,3 +66,4 @@
 {% show_more_table %}
 
 <script>$(function() { $(window).trigger('resize') })</script> <!-- tags column auto width -->
+<script>add_hidden_tag_event()</script>

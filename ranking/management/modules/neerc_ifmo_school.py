@@ -9,11 +9,9 @@ from datetime import datetime
 from pprint import pprint
 
 import tqdm
-import yaml
-from geopy.extra.rate_limiter import RateLimiter
-from geopy.geocoders import Nominatim
 
 from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.neerc_ifmo_helper import parse_xml
 
 logging.getLogger('geopy').setLevel(logging.INFO)
@@ -26,9 +24,6 @@ class Statistic(BaseModule):
         super(Statistic, self).__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None):
-        geolocator = Nominatim(user_agent="clist.by")
-        geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1, max_retries=3)
-
         year = self.start_time.year
         year = year if self.start_time.month >= 9 else year - 1
         season = '%d-%d' % (year, year + 1)
@@ -45,8 +40,18 @@ class Statistic(BaseModule):
         page = REQ.get(self.standings_url)
 
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
-        html_table = re.search(regex, page, re.DOTALL).group(0)
-        table = parsed_table.ParsedTable(html_table)
+        html_table = re.search(regex, page, re.DOTALL)
+        if not html_table:
+            regex = '<table[^>]*(?:border[^>]*|cellspacing[^>]*|cellpadding[^>]*){3}>.*?</table>'
+            html_table = re.search(regex, page, re.DOTALL)
+        header_mapping = {
+            'Team': 'name',
+            'Rank': 'place',
+            'R': 'place',
+            'Time': 'penalty',
+            '=': 'solving',
+        }
+        table = parsed_table.ParsedTable(html_table.group(0), as_list=True, header_mapping=header_mapping)
         mapping_key = {
             'rank': 'place',
             'rankl': 'place',
@@ -54,41 +59,27 @@ class Statistic(BaseModule):
             'solved': 'solving',
         }
 
-        locations = None
-        if os.path.exists(self.LOCATION_CACHE_FILE):
-            with open(self.LOCATION_CACHE_FILE, 'r') as fo:
-                locations = yaml.safe_load(fo)
-        if locations is None:
-            locations = {}
-
-        def get_location(loc_info):
-            loc_info = re.sub(r'[.,\s]+', ' ', loc_info).strip().lower()
-            if loc_info not in locations:
-                try:
-                    locations[loc_info] = {
-                        'ru': geocode(loc_info, language='ru').address,
-                        'en': geocode(loc_info, language='en').address,
-                    }
-                except Exception:
-                    pass
-
-            return locations.get(loc_info)
-
-        def get_country(address):
-            *_, country = map(str.strip, address['en'].split(','))
-            if country.startswith('The '):
-                country = country[4:]
-            return country
-
-        try:
+        with Locator() as locator:
             result = {}
             problems_info = OrderedDict()
             for r in tqdm.tqdm(table):
                 row = OrderedDict()
                 problems = row.setdefault('problems', {})
-                for k, v in list(r.items()):
-                    c = v.attrs['class'].split()[0]
+                ignore_class = False
+                n_problem = 0
+                for k, v in r:
+                    c = (v.attrs.get('class', '').split() or [''])[0]
+                    if ignore_class or len(c) < 2:
+                        if not k:
+                            continue
+                        ignore_class = True
+                        if 'name' in row and len(k) == 1 and n_problem is not False:
+                            c = 'problem'
+                        else:
+                            c = k
                     if c in ['problem', 'ioiprob']:
+                        if n_problem is not False:
+                            n_problem += 1
                         problems_info[k] = {'short': k}
                         if 'title' in v.attrs:
                             problems_info[k]['name'] = v.attrs['title']
@@ -110,19 +101,21 @@ class Statistic(BaseModule):
                                 p['time'] = t
                             p['result'] = v
                     else:
+                        if n_problem:
+                            n_problem = False
                         c = mapping_key.get(c, c).lower()
                         row[c] = v.value.strip()
                         if xml_result and c == 'name':
                             problems.update(xml_result[v.value])
 
-                        if c in ('diploma', 'medal'):
+                        if c in ('diploma', 'medal', 'd'):
                             medal = row.pop(c, None)
                             if medal:
-                                if medal in ['З', 'G']:
+                                if medal in ['1', 'З', 'G']:
                                     row['medal'] = 'gold'
-                                elif medal in ['С', 'S']:
+                                elif medal in ['2', 'С', 'S']:
                                     row['medal'] = 'silver'
-                                elif medal in ['Б', 'B']:
+                                elif medal in ['3', 'Б', 'B']:
                                     row['medal'] = 'bronze'
                                 else:
                                     row[k.lower()] = medal
@@ -160,16 +153,16 @@ class Statistic(BaseModule):
                         n_loc_infos = len(loc_infos)
                         for idx in range(n_loc_infos):
                             loc_info = ', '.join(loc_infos[:n_loc_infos - idx])
-                            address = get_location(loc_info)
-                            if address:
-                                break
-                        else:
-                            address = None
-
-                        if address:
-                            row['country'] = get_country(address)
-                            if ', ' in address['ru']:
-                                row['city'], *_ = map(str.strip, address['ru'].split(','))
+                            address = locator.get_address(loc_info, lang='ru')
+                            if not address:
+                                continue
+                            country = locator.get_country(loc_info, lang='ru')
+                            if country:
+                                row['country'] = country
+                            city = locator.get_city(loc_info, lang='ru')
+                            if city:
+                                row['city'] = city
+                            break
                         break
 
                     solved = [p for p in list(problems.values()) if p['result'] == '100']
@@ -197,18 +190,14 @@ class Statistic(BaseModule):
 
                             countries = defaultdict(int)
                             for loc in locs:
-                                address = get_location(loc)
-                                if address:
-                                    country = get_country(address)
+                                country = locator.get_country(loc, lang='ru')
+                                if country:
                                     countries[country] += 1
                             if len(countries) == 1:
                                 country = list(countries.keys())[0]
                                 row['country'] = country
 
                 result[row['member']] = row
-        finally:
-            with open(self.LOCATION_CACHE_FILE, 'wb') as fo:
-                yaml.dump(locations, fo, encoding='utf8', allow_unicode=True)
 
         standings = {
             'result': result,

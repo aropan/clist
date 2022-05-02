@@ -389,6 +389,8 @@ function show_timeline() {
   })
   $('table.standings .trophy').remove()
 
+  $('.other-problem-progress').remove()
+
   $('table.standings .handle-cell .help-message').remove()
   $('table.standings .handle-cell.bg-success').removeClass('bg-success')
 

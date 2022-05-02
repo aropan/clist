@@ -200,88 +200,20 @@ class="
       {% if stat %}
       data-score="{% if not problem.full_score or not stat.binary and not stat.result|slice:":1" == "+" %}{{ stat.result }}{% else %}{{ problem.full_score }}{% endif %}"
       data-result="{{ stat.result }}"
+      {% if other_contests and contest_timeline %}
+      {% with other_timeline=contests_timelines|get_item:statistic.contest_id %}
+      data-penalty="{% if stat.time %}{% if other_timeline %}{{ other_timeline|time_in_seconds:stat.time|divide:contest_timeline.time_factor.1.0 }}{% else %}{{ stat.time }}{% endif %}{% endif %}"
+      {% endwith %}
+      {% else %}
       data-penalty="{% if relative_problem_time and stat.absolute_time %}{{ stat.absolute_time }}{% else %}{{ stat.time }}{% endif %}"
+      {% endif %}
       data-penalty-in-seconds="{{ stat.time_in_seconds }}"
       data-more-penalty="{{ stat.penalty }}"
       data-problem-key="{{ key }}"
       data-class="{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}"
       {% endif %}
     >
-      {% if not stat %}
-        <div>&#183;</div>
-      {% else %}
-        <div>
-        {% if stat.result is not None %}
-          <div
-            class="inline
-            {% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %}
-              text-muted
-            {% elif stat.binary is None and with_detail and stat.subscores %}
-            {% elif stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}
-              {% if stat.partial %}par{% else %}acc{% endif %}
-            {% elif stat.result|slice:":1" == "?" %}
-              hid
-            {% elif stat.result|slice:":1" == "-" or stat.result|asfloat:0 < 0 %}
-              rej
-            {% endif %}
-            "
-            {% if not with_detail %}
-              {% if stat.status or stat.time or stat.upsolving or stat.verdict or stat.language %}
-                title='{% include "standings_paging_detail.html" with stat=stat small=False %}'
-                data-toggle="tooltip"
-                data-placement="top"
-                data-html="true"
-              {% endif %}
-            {% endif %}
-          >
-            {% if stat.url or stat.solution or stat.external_solution %}
-            <a class="solution"{% if stat.solution or stat.external_solution %} onClick="return viewSolution(this);"{% endif %} data-url="{% if stat.url %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" href="{% if stat.solution or stat.external_solution %}{% url 'ranking:solution' statistic.pk key %}{% else %}{{ stat.url }}{% endif %}" target="_blank">
-            {% endif %}
-
-            {% if stat.icon %}
-              <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.icon|safe }}</span>
-            {% elif stat.binary is not None %}
-            <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}><i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i></span>
-            {% elif with_detail and stat.subscores %}
-              <span>{% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %} class="{% if subscore.result %}acc{% else %}rej{% endif %}">{{ subscore.status }}</span>{% endfor %}</span>
-            {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
-              <span>{{ stat.result }}</span>
-            {% else %}
-              <span{% if stat.verdict and 'time' in stat %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.result|scoreformat }}</span>
-            {% endif %}
-
-            {% if stat.url or stat.solution or stat.external_solution %}</a>{% endif %}
-          </div>
-        {% endif %}
-        {% if stat.extra_score is not None %}
-          <div class="inline"
-            {% if stat.extra_info %}
-              data-toggle="tooltip"
-              data-placement="top"
-              data-html="true"
-              title="{% for info in stat.extra_info %}{{ info }}<br/>{% endfor %}"
-            {% endif %}
-          >
-          {% if stat.extra_score >= 0 %}+{% endif %}{{ stat.extra_score|scoreformat }}
-          </div>
-        {% endif %}
-        {% if with_detail %}
-          {% if stat.penalty_score %}
-            <div class="inline">({{ stat.penalty_score }})</div>
-          {% elif stat.attempts %}
-            <div class="inline">({{ stat.attempts }})</div>
-          {% endif %}
-        {% endif %}
-        </div>
-
-        {% if with_detail or 'result' not in stat and 'extra_score' not in stat %}
-          {% include "standings_paging_detail.html" with stat=stat small=True sid=statistic.pk problem_key=key %}
-        {% endif %}
-
-        {% if stat.language and request.GET.languages %}
-          <small{% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %} class="text-muted"{% endif %}><div class="language">{{ stat.language }}</div></small>
-        {% endif %}
-      {% endif %}
+      {% include "standings_problem_stat.html" with stat=stat %}
     </{{ tag }}>
     {% endwith %}
     {% endwith %}

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import html
 import re
 import urllib.parse
 from collections import OrderedDict
@@ -83,7 +84,7 @@ class Statistic(BaseModule):
                                 title = first(v.header.node.xpath('a[@title]/@title'))
                                 url = first(v.header.node.xpath('a[@href]/@href'))
                                 if title:
-                                    problems_info[k]['name'] = title
+                                    problems_info[k]['name'] = html.unescape(title)
                                 if url:
                                     problems_info[k]['url'] = urllib.parse.urljoin(self.standings_url, url)
 

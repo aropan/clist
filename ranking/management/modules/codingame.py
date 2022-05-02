@@ -10,7 +10,9 @@ from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
 from functools import partial
+from math import isclose
 from pprint import pprint
+from statistics import mean
 from urllib.parse import urljoin
 
 import pytz
@@ -27,7 +29,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None):
         page = REQ.get(
             self.host + 'services/Challenge/findWorldCupByPublicId',
-            post=f'["{self.key}", null]',
+            post=f'["{self.key}"]',
             content_type='application/json',
         )
         data = json.loads(page)
@@ -68,12 +70,13 @@ class Statistic(BaseModule):
                     countries = countries.replace('name:', '"name":')
                     countries = json.loads(countries)
                     countries = [c['id'] for c in countries]
-            if leagues_names is None:
-                m = re.search(r'N=(?P<array>\[(?:"[^"]*",?)+\])', page)
-                if m:
-                    leagues_names = [league.title() for league in json.loads(m.group('array'))]
+            if leagues_names is None and (m := re.search('"league":(?P<array>{"league":.*?})[^"]', page)):
+                leagues = json.loads(m.group('array'))
+                leagues.pop('league', None)
+                leagues_names = [league.split()[0].title() for league in leagues.values()]
             if countries is not None and leagues_names is not None:
                 break
+
         if countries is None:
             raise ExceptionParseStandings('not found countries')
 
@@ -92,6 +95,7 @@ class Statistic(BaseModule):
         languages = list(data.get('programmingLanguages', {}).keys())
 
         opening = {}
+        percentages = []
         with PoolExecutor(max_workers=8) as executor:
             hidden_fields = set()
             result = {}
@@ -160,6 +164,11 @@ class Statistic(BaseModule):
                             if field in stat and field not in r:
                                 r[field] = stat[field]
 
+                    if 'percentage' in row:
+                        row['percentage'] = min(row['percentage'], 100)
+                        row['_skip_provisional_rank'] = row['percentage'] < 100
+                        percentages.append(row['percentage'])
+
             process_data(data)
 
             if len(data['users']) >= 1000:
@@ -179,6 +188,7 @@ class Statistic(BaseModule):
             'url': standings_url,
             'result': result,
             'fields_types': {'updated': ['timestamp'], 'created': ['timestamp']},
+            'fields_values': {},
             'hidden_fields': hidden_fields,
             'info_fields': ['_league', '_challenge', '_has_versus', '_opening'],
             '_league': leagues,
@@ -192,13 +202,22 @@ class Statistic(BaseModule):
                     ('clashes_count', 'clashes_count'),
                     ('created', 'Submit Time'),
                 ],
-                'medals': [
-                    {'name': 'gold', 'count': 1},
-                    {'name': 'silver', 'count': 1},
-                    {'name': 'bronze', 'count': 1},
-                ],
             },
         }
+
+        if self.end_time < now():
+            standings['options']['medals'] = [
+                {'name': 'gold', 'count': 1},
+                {'name': 'silver', 'count': 1},
+                {'name': 'bronze', 'count': 1},
+            ]
+
+        if percentages and self.end_time < now() < self.end_time + timedelta(days=1):
+            percentage = mean(percentages)
+            if not isclose(percentage, 100):
+                standings['fields_values']['percentage'] = round(percentage, 2)
+                standings['timing_statistic_delta'] = timedelta(minutes=30)
+                standings['options'].pop('medals', None)
 
         if challenge.get('type') == 'BATTLE':
             standings['_has_versus'] = {'enable': True}

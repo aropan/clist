@@ -71,6 +71,7 @@
         }
 
         $duration = NULL;
+        $end_time = NULL;
         if (isset($data['descriptionJson'])) {
             $description = json_decode($data['descriptionJson'], true);
             if (isset($description['challengeOptions'])) {
@@ -82,7 +83,10 @@
                 }
             }
         }
-        if (!isset($duration)) {
+        if (isset($data['endApplicationsDate']) && $data['endApplicationsDate']) {
+            $duration = NULL;
+            $end_time = $data['endApplicationsDate'] / 1000;
+        } else if (!isset($duration)) {
             if (isset($data['lateTimeMax']) && $data['lateTimeMax']) {
                 $duration = $data['lateTimeMax'] / 60.0;
             } else {
@@ -100,6 +104,7 @@
 
         $contests[] = array(
             'start_time' => $data['date'] / 1000,
+            'end_time' => $end_time,
             'duration' => $duration,
             'title' => $data['title'],
             'url' => $prefix_contest . $data['publicId'],

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import html
 import os
 import re
 from collections import OrderedDict
@@ -63,7 +64,7 @@ class Statistic(BaseModule):
                         p = problems_info.setdefault(letter, {'short': letter})
                         names = v.header.node.xpath('.//span/@title')
                         if len(names) == 1:
-                            p['name'] = names[0]
+                            p['name'] = html.unescape(names[0])
 
                         p = problems.setdefault(letter, {})
                         n = v.column.node
@@ -74,13 +75,14 @@ class Statistic(BaseModule):
                             res = '-'
                             p['binary'] = False
                         else:
-                            if ' ' not in v.value:
+                            if ' ' not in v.value and not v.value.startswith('?'):
                                 problems.pop(letter)
                                 continue
                             res = v.value.split(' ', 1)[0]
                             res = res.replace(',', '')
                         p['result'] = res
-                        p['time'] = v.value.split(' ', 1)[-1]
+                        if ' ' in v.value:
+                            p['time'] = v.value.split(' ', 1)[-1]
                         if 'table__cell_firstSolved_true' in v.attrs['class']:
                             p['first_ac'] = True
 

@@ -12,7 +12,7 @@ from ranking.models import Account
 
 
 def main(host=None):
-    resources = Resource.objects
+    resources = Resource.objects.all()
     if host:
         resources = resources.filter(host__regex=host)
 
@@ -22,6 +22,14 @@ def main(host=None):
         for resource in resources.iterator():
             fields_types = defaultdict(set)
             pbar.set_postfix(resource=resource)
+
+            ratings = []
+            for rating in resource.account_set.filter(rating__isnull=False).values('rating').iterator():
+                ratings.append(rating['rating'])
+            if ratings:
+                resource.avg_rating = sum(ratings) / len(ratings)
+                resource.save()
+
             for info in resource.account_set.values('info').iterator():
                 info = info['info']
                 info = flatten(info, reducer=make_reducer(delimiter='__'))

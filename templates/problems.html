@@ -5,6 +5,12 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/problems.css' %}" rel="stylesheet">
+<link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/problems.js' %}"></script>
+
+<script>
+  coder_pk = {% if coder %}{{ coder.pk }}{% else %}undefined{% endif %}
+</script>
 {% endblock %}
 
 {% block content %}
@@ -31,6 +37,22 @@
     {% include 'resource_filter.html' %}
 
     {% include 'tag_filter.html' %}
+
+    <div class="input-group input-group-sm">
+      <input
+        id="show-tags"
+        type="checkbox"
+        data-style="show-tags"
+        data-toggle="toggle"
+        data-size="small"
+        data-on="Hide"
+        data-off="Show"
+        data-onstyle="default"
+        data-offstyle="default"
+        {% if show_tags %} checked{% endif %}
+      >
+    </div>
+
   </form>
 
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
@@ -38,8 +60,15 @@
     <table class="table table-hover table-striped table-float-head">
       <thead>
         <tr>
-          <th class="problem-date">Date</th>
+          <th class="problem-date-column">Date</th>
+          <th class="problem-rating-column">Rating</th>
+          <th class="problem-progress-column">Progress</th>
           <th>Name</th>
+          <th>Contest</th>
+          {% if coder %}
+          <th class="problem-luck-column">Luck</th>
+          <th class="problem-result-column">Result</th>
+          {% endif %}
           <th>Tags</th>
         </tr>
       </thead>

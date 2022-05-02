@@ -26,7 +26,7 @@ class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
     RESULTS_URL_ = '{0.url}/results'
     SUBMISSIONS_URL_ = '{0.url}/submissions'
-    PROBLEM_URL_ = '{0.url}/tasks/{1}_{2}'
+    PROBLEM_URL_ = '{0.url}/tasks/{1}'
     HISTORY_URL_ = '{0.scheme}://{0.netloc}/users/{1}/history'
     DEFAULT_LAST_SUBMISSION_TIME = -1
     DEFAULT_LAST_PAGE = 1
@@ -244,11 +244,22 @@ class Statistic(BaseModule):
             task_info = collections.OrderedDict()
             for t in data['TaskInfo']:
                 k = t['TaskScreenName']
+                url = self.PROBLEM_URL_.format(self, k)
                 task_info[k] = {
+                    'code': k,
                     'short': t['Assignment'],
                     'name': t['TaskName'],
-                    'url': self.PROBLEM_URL_.format(self, self.key.replace('-', '_'), t['Assignment'].lower()),
+                    'url': url,
                 }
+
+            def get_problem_full_score(info):
+                page = REQ.get(info['url'])
+                match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
+                if match:
+                    info['full_score'] = int(match.group('score'))
+
+            with PoolExecutor(max_workers=8) as executor:
+                executor.map(get_problem_full_score, task_info.values())
 
             has_rated = False
             has_new_rating = False

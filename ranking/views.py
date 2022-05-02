@@ -235,6 +235,7 @@ def standings_charts(request, context):
     problems = context['problems']
     statistics = context['statistics']
     timeline = context['contest_timeline']
+    contests_timelines = context['contests_timelines'] or {}
     params = context['params']
 
     statistics = statistics.prefetch_related(None)
@@ -296,6 +297,7 @@ def standings_charts(request, context):
             if is_my_stat and field not in ['score', 'problems']:
                 my_values[field] = value
 
+        stat_timeline = contests_timelines.get(stat.contest_id, timeline)
         is_top = len(top_values) < 5 or is_my_stat
 
         scores_info = {'name': name, 'place': stat.place_as_int, 'key': stat.account.key, 'times': [], 'scores': []}
@@ -312,7 +314,7 @@ def standings_charts(request, context):
                 time = info.get('time')
                 if time is None:
                     continue
-                time = time_in_seconds(timeline, time)
+                time = time_in_seconds(stat_timeline, time)
 
             problems_values[key].append(time)
             if is_my_stat:
@@ -320,7 +322,7 @@ def standings_charts(request, context):
 
             if is_top:
                 if context.get('relative_problem_time') and 'absolute_time' in info:
-                    time = time_in_seconds(timeline, info['absolute_time'])
+                    time = time_in_seconds(stat_timeline, info['absolute_time'])
                 is_binary = info.get('binary') or str(result).startswith('+')
                 if is_binary:
                     result = full_scores.get(key, 1)
@@ -553,9 +555,16 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 contests_ids.append(cid)
         contest = contests.filter(pk=contests_ids[0]).first()
         other_contests = list(contests.filter(pk__in=contests_ids[1:]))
-        contests_ids = {c.pk: i for i, c in enumerate([contest] + other_contests, start=1)}
+        contests_ids = {}
+        contests_timelines = {}
+        for i, c in enumerate([contest] + other_contests, start=1):
+            contests_ids[c.pk] = i
+            timeline = c.resource.info.get('standings', {}).get('timeline')
+            if timeline:
+                contests_timelines[c.pk] = timeline
     else:
         other_contests = []
+        contests_timelines = {}
     if contest is None:
         return HttpResponseNotFound()
     if to_redirect:
@@ -580,6 +589,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
     contest_fields = contest.info.get('fields', []).copy()
     fields_types = contest.info.get('fields_types', {}).copy()
+    fields_values = contest.info.get('fields_values', {}).copy()
     hidden_fields = list(contest.info.get('hidden_fields', []))
     hidden_fields_values = [v for v in request.GET.getlist('field') if v]
     problems = contest.info.get('problems', {})
@@ -593,7 +603,9 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     options = contest.info.get('standings', {})
 
     per_page = options.get('per_page', 50)
-    if per_page is None:
+    if contests_ids:
+        per_page = 50
+    elif per_page is None:
         per_page = 100500
     elif contest.n_statistics and contest.n_statistics < 500:
         per_page = contest.n_statistics
@@ -664,7 +676,11 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     division_addition = contest.info.get('divisions_addition', {}).get(division, {}).copy()
 
     # FIXME extra per_page
-    if contest.n_statistics and per_page >= contest.n_statistics and 'team_id' in contest_fields and not groupby:
+    if (
+        contest.n_statistics and
+        (per_page >= contest.n_statistics and 'team_id' in contest_fields or contest.info.get('grouped_team')) and
+        not groupby
+    ):
         order.append('addition__name')
         statistics = statistics.distinct(*[f.lstrip('-') for f in order])
 
@@ -692,8 +708,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     if 'global_rating' in hidden_fields_values:
         fields['new_global_rating'] = 'new_global_rating'
         fields['global_rating_change'] = 'global_rating_change'
+        hidden_fields.append('global_rating')
+        hidden_fields_values.remove('global_rating')
 
-    n_highlight_context = _standings_highlight(statistics, options)
+    n_highlight_context = _standings_highlight(statistics, options) if not contests_ids else {}
 
     # field to select
     fields_to_select_defaults = {
@@ -709,9 +727,9 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         fk = f.lower()
         hidden_f = fk in ['languages', 'verdicts'] and (fk not in hidden_fields or fk in hidden_fields_values)
         if hidden_f or fk in [
-            'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region', 'rating_change',
-            'advanced', 'company', 'language', 'league', 'onsite', 'degree', 'university', 'list',
-            'group', 'group_ex', 'college',
+            'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
+            'rating_change', 'raw_rating', 'advanced', 'company', 'language', 'league', 'onsite',
+            'degree', 'university', 'list', 'group', 'group_ex', 'college',
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})
@@ -750,9 +768,11 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             'nourl': True,
         }
 
-    for v in hidden_fields_values:
-        if v not in hidden_fields:
-            hidden_fields.append(v)
+    if request.user.has_perm('view_statistics_hidden_fields'):
+        for v in hidden_fields_values:
+            if v not in hidden_fields:
+                fields[v] = v
+                hidden_fields.append(v)
 
     addition_fields = (
         division_addition['fields']
@@ -768,10 +788,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             or 'country' in k and k not in hidden_fields_values
             or k in ['name', 'place', 'solving'] and k not in hidden_fields_values
             or k.startswith('_')
-            or k in hidden_fields and k not in hidden_fields_values
+            or k in hidden_fields and k not in hidden_fields_values and k not in fields_values
         ):
             continue
-        if with_detail or k in hidden_fields_values:
+        if with_detail or k in hidden_fields_values or k in fields_values:
             fields[k] = k
         else:
             hidden_fields.append(k)
@@ -889,7 +909,9 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                                            Q(account__coders__in=party.admins.all()) |
                                            Q(account__coders=party.author))
         else:
-            cond = get_iregex_filter(search, 'account__key', logger=request.logger)  # FIXME: add addition__name
+            cond = get_iregex_filter(search,
+                                     'account__key', 'account__name',
+                                     logger=request.logger)  # FIXME: add addition__name
             statistics = statistics.filter(cond)
 
     # filter by country
@@ -1213,6 +1235,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'contest': contest,
         'contests_ids': contests_ids,
         'other_contests': other_contests,
+        'contests_timelines': contests_timelines,
         'statistics': statistics,
         'my_statistics': my_statistics,
         'problems': problems,
