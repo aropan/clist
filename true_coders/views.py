@@ -11,9 +11,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db import IntegrityError, transaction
-from django.db.models import (BigIntegerField, BooleanField, Case, Count, ExpressionWrapper, F, FloatField,
-                              IntegerField, Max, OuterRef, Prefetch, Q, Value, When)
-from django.db.models.functions import Cast, Length
+from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
+                              Prefetch, Q, Value, When)
+from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -599,7 +599,7 @@ def ratings(request, username=None, key=None, host=None, query=None):
 
 @login_required
 def settings(request, tab=None):
-    coder = request.user.coder
+    coder = request.as_coder or request.user.coder
     notification_form = NotificationForm(coder)
     if request.method == 'POST':
         if request.POST.get('action', None) == 'notification':
@@ -616,9 +616,6 @@ def settings(request, tab=None):
                 notification.save()
                 request.logger.success(f'{"Updated" if pk else "Created"} notification')
                 return HttpResponseRedirect(reverse('coder:settings', kwargs=dict(tab='notifications')))
-
-    if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
-        coder = Coder.objects.get(username=request.GET['as_coder'])
 
     resources = coder.get_ordered_resources()
     coder.filter_set.filter(resources=[], contest__isnull=True, party__isnull=True).delete()
@@ -950,18 +947,21 @@ def change(request):
         coder.last_name_native = value
         coder.save()
     elif name == "add-account":
-        if not value:
-            return HttpResponseBadRequest("empty account value")
         try:
-            resource_id = int(request.POST.get("resource"))
-            resource = Resource.objects.get(pk=resource_id)
-            account = Account.objects.get(resource=resource, key=value)
+            if "resource" in request.POST:
+                resource_id = int(request.POST.get("resource"))
+                resource = Resource.objects.get(pk=resource_id)
+                account = Account.objects.get(resource=resource, key=value)
+            else:
+                account = Account.objects.get(pk=request.POST.get("id"))
+                resource = account.resource
+
             if account.coders.filter(pk=coder.id).first():
-                raise Exception('Account is already connect to this coder')
+                raise Exception('Account is already connect to you')
 
             if resource.with_single_account():
                 if coder.account_set.filter(resource=resource).exists():
-                    raise Exception('Allow only one account for this resource')
+                    raise Exception('Allow only one account for resource')
                 if account.coders.filter(is_virtual=False).exists():
                     raise Exception('Account is already connect')
 
@@ -1085,46 +1085,6 @@ def search(request, **kwargs):
             }
             for r in qs
         ]
-    elif query == 'accounts-for-add-account' and request.user.is_authenticated:
-        coder = request.user.coder
-
-        qs = Account.objects.all()
-        resource = request.GET.get('resource')
-        if resource:
-            qs = qs.filter(resource__id=int(resource))
-        else:
-            qs = qs.select_related('resource')
-
-        order = ['disabled']
-        if 'user' in request.GET:
-            re_search = request.GET.get('user')
-            qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
-            order.append(Length('key'))
-
-        qs = qs.annotate(has_multi=F('resource__module__multi_account_allowed'))
-
-        qs = qs.annotate(disabled=Case(
-            When(coders=coder, then=Value(True)),
-            When(coders__is_virtual=True, has_multi=False, then=Value(False)),
-            When(coders__isnull=False, has_multi=False, then=Value(True)),
-            default=Value(False),
-            output_field=BooleanField(),
-        ))
-
-        qs = qs.order_by(*order, 'pk')
-
-        qs = qs[(page - 1) * count:page * count]
-        ret = []
-        for r in qs:
-            fields = {
-                'id': r.key,
-                'text': f'{r.key} - {r.name}' if r.name and r.key.find(r.name) == -1 else r.key,
-                'disabled': r.disabled,
-            }
-            if not resource:
-                fields['text'] += f', {r.resource.host}'
-                fields['resource'] = {'id': r.resource.pk, 'text': r.resource.host}
-            ret.append(fields)
     elif query == 'organization':
         qs = Organization.objects.all()
 
@@ -1588,10 +1548,7 @@ def view_list(request, uuid):
 @context_pagination()
 def accounts(request, template='accounts.html'):
     accounts = Account.objects.select_related('resource')
-    accounts = accounts.annotate(has_coders=ExpressionWrapper(
-        Q(coders__isnull=False),
-        output_field=BooleanField()
-    ))
+    accounts = accounts.annotate(has_coders=Exists('coders'))
     if request.user.is_authenticated:
         coder = request.user.coder
         accounts = accounts.annotate(my_account=Exists('coders', filter=Q(coder=coder)))

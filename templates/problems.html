@@ -27,10 +27,7 @@
       </div>
 
       <div class="input-group-btn">
-        <button class="btn btn-default" type="submit">
-          <i class="fas fa-search"></i>
-          Search
-        </button>
+        <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
       </div>
     </div>
 
@@ -45,15 +42,32 @@
         data-style="show-tags"
         data-toggle="toggle"
         data-size="small"
-        data-on="Hide"
-        data-off="Show"
+        data-on='{% icon_to 'show' 'Show tags' %}'
+        data-off='{% icon_to 'hide' 'Hide tags' %}'
         data-onstyle="default"
         data-offstyle="default"
         {% if show_tags %} checked{% endif %}
       >
     </div>
+    <script>$('#show-tags').bootstrapToggle()</script>
 
+
+    {% include "field_to_select.html" with field='chart' data=chart_select %}
+
+    {% with values=coder.settings.range_filter %}
+
+    {% include 'range_filter.html' with name='luck' value_key='problems' from=0 to=100 default_from=42 default_to=60 disabled=coder|iffalse %}
+
+    {% include 'range_filter.html' with name='rating' value_key='problems' from=0 to=5000 %}
+
+    <div class="input-group input-group-sm hidden">
+      <button id="range-filter-apply" class="btn btn-primary btn-sm">Apply</button>
+    </div>
+
+    {% endwith %}
   </form>
+
+  {% include "chart.html" with chart=chart get_query_chart='chart' %}
 
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
   <div id="problems" class="panel panel-default table-responsive">
@@ -62,11 +76,11 @@
         <tr>
           <th class="problem-date-column">Date</th>
           <th class="problem-rating-column">Rating</th>
-          <th class="problem-progress-column">Progress</th>
+          <th class="problem-progress-column">Stats</th>
           <th>Name</th>
           <th>Contest</th>
           {% if coder %}
-          <th class="problem-luck-column">Luck</th>
+          <th class="problem-luck-column" title="Probability to solve problem<br>If the problem rating equals your rating then probability is 50%." data-html="true" data-toggle="tooltip" >Luck</th>
           <th class="problem-result-column">Result</th>
           {% endif %}
           <th>Tags</th>

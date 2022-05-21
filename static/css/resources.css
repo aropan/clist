@@ -9,10 +9,6 @@
   margin-top: 3px;
 }
 
-#resources table tr td:first-child {
-  text-align: right;
-}
-
 #resources table td {
   white-space: nowrap;
 }
@@ -27,4 +23,8 @@
 
 #resources [data-column] {
   cursor: pointer;
+}
+
+#resources .resource .external-database-link {
+  margin-top: 5px;
 }

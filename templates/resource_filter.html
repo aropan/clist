@@ -2,10 +2,14 @@
 <div class="input-group input-group-sm hidden" id="{{ resource_id }}-hidden">
 {% if groupby %}
   <div class="input-group-btn">
-    <button class="btn btn-default{% if groupby == 'resource' %} active{% endif %}" name="groupby" value="{% if groupby != 'resource' %}resource{% endif %}">Resource</button>
+    <button class="btn btn-default{% if groupby == 'resource' %} active{% endif %}" name="groupby" value="{% if groupby != 'resource' %}resource{% endif %}">
+      {% icon_to 'resource' %}
+    </button>
   </div>
 {% else %}
-  <span class="input-group-addon">Resource</span>
+  <span class="input-group-addon">
+    {% icon_to 'resource' %}
+  </span>
 {% endif %}
 
   <select{% if not noname %} name="{{ resource_id }}"{% endif %} id="{{ resource_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}>

@@ -108,6 +108,7 @@ MIDDLEWARE = (
     'django_user_agents.middleware.UserAgentMiddleware',
     'csp.middleware.CSPMiddleware',
     'pyclist.middleware.RequestLoggerMiddleware',
+    'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',
 )
 
@@ -215,6 +216,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = path.join(BASE_DIR, 'nginx/static/')
 REPO_STATIC_ROOT = path.join(BASE_DIR, 'static/')
 STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
+
+STATICFILES_STORAGE = 'static_compress.CompressedStaticFilesStorage'
+STATIC_COMPRESS_METHODS = ['gz']
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = path.join(BASE_DIR, 'nginx/media/')
@@ -513,6 +518,43 @@ VIRTUAL_CODER_PREFIX_ = '∨'
 DEFAULT_API_THROTTLE_AT_ = 10
 
 ENABLE_GLOBAL_RATING_ = DEBUG
+
+FONTAWESOME_ICONS_ = {
+    'institution': '<i class="fa-fw fas fa-university"></i>',
+    'country': '<i class="fa-fw fas fa-flag"></i>',
+    'room': '<i class="fa-fw fas fa-door-open"></i>',
+    'affiliation': '<i class="fa-fw fas fa-user-friends"></i>',
+    'city': '<i class="fa-fw fas fa-city"></i>',
+    'school': '<i class="fa-fw fas fa-school"></i>',
+    'class': '<i class="fa-fw fas fa-user-graduate"></i>',
+    'job': '<i class="fa-fw fas fa-building"></i>',
+    'rating': '<i class="fa-fw fas fa-chart-line"></i>',
+    'region': '<i class="fa-fw fas fa-map-signs"></i>',
+    'chat': '<i class="fa-fw fas fa-user-friends"></i>',
+    'advanced': '<i class="fa-fw far fa-check-circle"></i>',
+    'company': '<i class="fa-fw fas fa-building"></i>',
+    'language': '<i class="fa-fw fas fa-code"></i>',
+    'league': '<i class="fa-fw fas fa-chess"></i>',
+    'degree': '<i class="fa-fw fas fa-user-graduate"></i>',
+    'university': '<i class="fa-fw fas fa-university"></i>',
+    'list': '<i class="fa-fw fas fa-list"></i>',
+    'group': '<i class="fa-fw fas fa-user-friends"></i>',
+    'group_ex': '<i class="fa-fw fas fa-user-friends"></i>',
+    'college': '<i class="fa-fw fas fa-university"></i>',
+    'resource': '<i class="fa-fw fas fa-at"></i>',
+    'field': '<i class="fa-fw fas fa-database"></i>',
+    'find_me': '<i class="fa-fw fas fa-crosshairs"></i>',
+    'search': '<i class="fa-fw fas fa-search"></i>',
+    'detail_info': '<i class="fa-fw fas fa-info"></i>',
+    'short_info': '<i class="fa-fw fas fa-times"></i>',
+    'luck': '<i class="fa-fw fas fa-dice"></i>',
+    'tag': '<i class="fa-fw fas fa-tag"></i>',
+    'hide': '<i class="fa-fw far fa-eye-slash"></i>',
+    'show': '<i class="fa-fw far fa-eye"></i>',
+    'period': '<i class="fa-fw far fa-clock"></i>',
+    'n_participations': {'icon': '<i class="fa-fw fas fa-running"></i>', 'title': 'Number of participations'},
+    'chart': '<i class="fa-fw fas fa-chart-bar"></i>',
+}
 
 
 class NOTIFICATION_CONF:

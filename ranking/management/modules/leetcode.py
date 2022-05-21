@@ -220,19 +220,21 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_source_code(contest, problem):
-        with REQ(
-            with_proxy=True,
-            args_proxy={
-                'time_limit': 3,
-                'n_limit': 30,
-                'filepath_proxies': os.path.join(os.path.dirname(__file__), '.leetcode.proxies'),
-                'connect': partial(Statistic.fetch_submission, problem, raise_on_error=True),
-            },
-        ) as req:
-            _, data = req.proxer.get_connect_ret()
-
+        _, data = Statistic.fetch_submission(problem, raise_on_error=False)
         if not data:
-            return {}
+            with REQ(
+                with_proxy=True,
+                args_proxy={
+                    'time_limit': 3,
+                    'n_limit': 30,
+                    'filepath_proxies': os.path.join(os.path.dirname(__file__), '.leetcode.proxies'),
+                    'connect': partial(Statistic.fetch_submission, problem, raise_on_error=True),
+                },
+            ) as req:
+                _, data = req.proxer.get_connect_ret()
+
+            if not data:
+                return {}
 
         data['solution'] = data.pop('code', None)
         data['language'] = data.pop('lang', None)

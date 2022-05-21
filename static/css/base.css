@@ -8,7 +8,6 @@ a {
 
 img#logo {
   margin: -2px;
-  height: 24px;
 }
 
 .nav-tabs li .badge {
@@ -448,4 +447,31 @@ canvas.rating_history {
 
 .progress-bar-vertical {
   transform: rotate(-90deg);
+}
+
+
+/*
+ * range slider
+ */
+
+.range-filter.input-group {
+  margin-bottom: 0px;
+}
+
+.range-filter .range-slider {
+  width: 200px;
+  display: inline-block;
+  height: 24px;
+}
+
+.range-filter .range-slider .ui-slider-handle {
+  padding: 5px;
+  text-align: center;
+  width: auto;
+  min-width: 30px;
+  height: 30px;
+}
+
+.range-filter .range-slider .ui-slider-handle:hover {
+  z-index: 5;
 }

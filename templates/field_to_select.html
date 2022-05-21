@@ -1,9 +1,13 @@
 <div class="input-group{% if not nosm %} input-group-sm{% endif %} field-to-select hidden">
   {% if data.nogroupby %}
-    <span class="input-group-addon">{{ data.title|default:field|title }}</span>
+    <span class="input-group-addon">
+      {% icon_to field data.title|default:field|title %}
+    </span>
   {% else %}
   <div class="input-group-btn">
-    <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">{{ data.title|default:field|title }}</button>
+    <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">
+      {% icon_to field data.title|default:field|title %}
+    </button>
   </div>
   {% endif %}
   <select name="{{ field }}" id="{{ field }}" onchange="this.form.submit()"{% if not data.nomultiply %} multiple{% endif %}>
@@ -55,14 +59,12 @@
     },
     {% endif %}
   }).on('select2:unselecting', function() {
-    $(this).data('unselecting', true);
+    $(this).data('unselecting', true)
   }).on('select2:opening', function(e) {
     if ($(this).data('unselecting')) {
-      $(this).removeData('unselecting');
-      e.preventDefault();
+      $(this).removeData('unselecting')
+      e.preventDefault()
     }
   })
-  {% if data.nohidden %}
-  $('.field-to-select').removeClass('hidden');
-  {% endif %}
+  $('#{{ field }}').closest('.field-to-select').removeClass('hidden')
 </script>

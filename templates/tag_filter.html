@@ -1,6 +1,6 @@
 {% with tag_id=tag|default:"tag" %}
 <div class="input-group input-group-sm hidden" id="{{ tag_id }}-hidden">
-  <span class="input-group-addon">Tag</span>
+  <span class="input-group-addon">{% icon_to 'tag' %}</span>
 
   <select{% if not noname %} name="{{ tag_id }}"{% endif %} id="{{ tag_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}>
     <option></option>

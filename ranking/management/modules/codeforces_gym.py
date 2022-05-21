@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from pprint import pprint
+
 from ranking.management.modules import codeforces
 
 
 class Statistic(codeforces.Statistic):
-    pass
+
+    @staticmethod
+    def get_users_infos(*args, **kwargs):
+        return []
 
 
 if __name__ == '__main__':

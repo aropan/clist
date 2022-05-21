@@ -122,10 +122,7 @@
             <div class="input-group">
               <input name="team_search" value="{{ request.GET.team_search }}" class="form-control" placeholder="Regex filter to name, organization, participant or coach" {% if request.GET.team_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
               <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">
-                  <i class="fas fa-search"></i>
-                  Search
-                </button>
+                <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
               </span>
             </div>
             </form>
@@ -142,10 +139,7 @@
             <div class="input-group">
               <input name="participant_search" value="{{ request.GET.participant_search }}" class="form-control" placeholder="Regex filter to first name, last name, team and organization" {% if request.GET.participant_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
               <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">
-                  <i class="fas fa-search"></i>
-                  Search
-                </button>
+                <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
               </span>
             </div>
             </form>
@@ -169,10 +163,7 @@
                 <div class="input-group">
                   <input name="team_search" value="{{ request.GET.team_search }}" class="form-control" placeholder="Regex filter to name, organization, participant or coach" {% if request.GET.team_search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
                   <span class="input-group-btn">
-                    <button class="btn btn-default" type="submit">
-                      <i class="fas fa-search"></i>
-                      Search
-                    </button>
+                    <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
                   </span>
                 </div>
                 </form>

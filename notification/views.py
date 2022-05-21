@@ -7,7 +7,6 @@ from django_ical.views import ICalFeed
 
 from clist.models import Contest
 from notification.models import Calendar
-from true_coders.models import Coder
 
 
 class EventFeed(ICalFeed):
@@ -50,12 +49,8 @@ class EventFeed(ICalFeed):
 
 @login_required
 def messages(request):
-    if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
-        coder = Coder.objects.get(user__username=request.GET['as_coder'])
-        update = False
-    else:
-        coder = request.user.coder
-        update = True
+    coder = request.as_coder or request.user.coder
+    update = not bool(request.as_coder)
 
     messages = coder.messages_set.order_by('-created')
     context = {

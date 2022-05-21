@@ -21,7 +21,7 @@ from tqdm import tqdm
 from traceback_with_variables import format_exc
 
 from clist.models import Contest, Resource, TimingContest
-from clist.templatetags.extras import (canonize, get_number_from_str, get_problem_key, get_problem_short,
+from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
                                        time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
 from ranking.management.commands.common import account_update_contest_additions
@@ -49,6 +49,7 @@ class Command(BaseCommand):
         parser.add_argument('-o', '--only-new', action='store_true', default=False, help='parse without statistics')
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
         parser.add_argument('-u', '--users', nargs='*', default=None, help='users for parse statistics')
+        parser.add_argument('-q', '--query', help='Query to filter contets')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
         parser.add_argument('--with-problems', action='store_true', default=False, help='Contests with problems')
         parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
@@ -58,6 +59,7 @@ class Command(BaseCommand):
         parser.add_argument('--division', action='store_true', default=False, help='Contests with divisions')
         parser.add_argument('--force-problems', action='store_true', default=False, help='Force update problems')
         parser.add_argument('--updated-before', help='Updated before date')
+        parser.add_argument('-cid', '--contest-id', help='Contest id')
 
     def parse_statistic(
         self,
@@ -75,12 +77,20 @@ class Command(BaseCommand):
         update_without_new_rating=None,
         without_contest_filter=False,
         force_problems=False,
+        contest_id=None,
+        query=None,
     ):
         now = timezone.now()
 
         contests = contests.select_related('resource__module', 'timing')
 
-        if not without_contest_filter:
+        if query:
+            query = eval(query, {'Q': Q, 'F': F}, {})
+            contests = contests.filter(query)
+
+        if contest_id:
+            contests = contests.filter(pk=contest_id)
+        elif not without_contest_filter:
             if with_check:
                 if previous_days is not None:
                     contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
@@ -217,7 +227,8 @@ class Command(BaseCommand):
                             contest.save()
 
                     info_fields = standings.pop('info_fields', [])
-                    info_fields += ['divisions_order', 'divisions_addition', 'advance', 'grouped_team', 'fields_values']
+                    info_fields += ['divisions_order', 'divisions_addition', 'advance', 'grouped_team', 'fields_values',
+                                    'default_problem_full_score']
                     for field in info_fields:
                         if standings.get(field) is not None and contest.info.get(field) != standings[field]:
                             contest.info[field] = standings[field]
@@ -238,6 +249,9 @@ class Command(BaseCommand):
 
                     result = standings.get('result', {})
                     parse_info = contest.info.get('parse', {})
+                    resource_statistics = resource.info.get('statistics', {})
+                    wait_rating = resource_statistics.get('wait_rating', {})
+                    has_hidden = False
 
                     if result or users is not None:
                         fields_set = set()
@@ -248,7 +262,6 @@ class Command(BaseCommand):
                         n_statistics = defaultdict(int)
                         d_problems = {}
                         teams_viewed = set()
-                        has_hidden = False
                         problems_values = defaultdict(set)
                         hidden_fields = set()
                         medals_skip = set()
@@ -312,12 +325,18 @@ class Command(BaseCommand):
                                         or resource.info.get('statistics', {}).get('default_problem_full_score')
                                     )
                                     if default_full_score and is_score:
-                                        if 'partial' not in v and default_full_score - float(v['result']) > 1e-9:
-                                            v['partial'] = True
-                                        if not v.get('partial'):
-                                            solved['solving'] += 1
-                                        if 'full_score' not in p:
-                                            p['full_score'] = default_full_score
+                                        v_result = as_number(v['result'])
+                                        if default_full_score == 'max':
+                                            p['max_score'] = max(p.get('max_score', 0), v_result)
+                                        elif default_full_score == 'min':
+                                            p['min_score'] = min(p.get('min_score', float('inf')), v_result)
+                                        else:
+                                            if 'full_score' not in p:
+                                                p['full_score'] = default_full_score
+                                            if 'partial' not in v and p['full_score'] - v_result > 1e-9:
+                                                v['partial'] = True
+                                            if not v.get('partial'):
+                                                solved['solving'] += 1
                                     ac = scored and not v.get('partial', False)
 
                                     if contest.info.get('with_last_submit_time') and scored:
@@ -375,9 +394,6 @@ class Command(BaseCommand):
                             update_problems_info()
 
                             results.append(r)
-
-                        resource_statistics = resource.info.get('statistics', {})
-                        wait_rating = resource_statistics.get('wait_rating', {})
 
                         for r in tqdm(results, desc=f'update results {contest}'):
                             member = r.pop('member')
@@ -750,19 +766,6 @@ class Command(BaseCommand):
                                         contest.info[field] = values
                                     hidden_fields.add(field)
 
-                            timing_delta = standings.get('timing_statistic_delta')
-                            if now < contest.end_time:
-                                timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
-                            if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
-                                timing_delta = timing_delta or timedelta(minutes=10)
-                            if wait_rating and not has_statistics and results:
-                                timing_delta = timing_delta or timedelta(hours=2)
-                            timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
-                            if timing_delta is not None:
-                                self.logger.info(f'Statistic timing delta = {timing_delta}')
-                                contest.timing.statistic = timezone.now() + timing_delta
-                                contest.timing.save()
-
                             if fields_set and not addition_was_ordereddict:
                                 fields.sort()
                             for rating_field in ('old_rating', 'rating_change', 'new_rating'):
@@ -835,13 +838,26 @@ class Command(BaseCommand):
                                 update_problems(contest, problems=standings_problems, force=force_problems)
                             contest.save()
                             if resource.has_problem_rating and contest.end_time < now:
-                                call_command('calculate_problem_rating', contest=contest.pk)
+                                call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
                             progress_bar.set_postfix(n_fields=len(fields))
                     else:
                         standings_problems = standings.pop('problems', None)
                         if standings_problems is not None and standings_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
                             update_problems(contest, problems=standings_problems, force=force_problems or not users)
+
+                    timing_delta = standings.get('timing_statistic_delta')
+                    if now < contest.end_time:
+                        timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
+                    if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
+                        timing_delta = timing_delta or timedelta(minutes=10)
+                    if wait_rating and not has_statistics and results:
+                        timing_delta = timing_delta or timedelta(hours=2)
+                    timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
+                    if timing_delta is not None:
+                        self.logger.info(f'Statistic timing delta = {timing_delta}')
+                        contest.timing.statistic = timezone.now() + timing_delta
+                        contest.timing.save()
 
                     action = standings.get('action')
                     if action is not None:
@@ -956,4 +972,6 @@ class Command(BaseCommand):
             with_stats=not args.no_stats,
             update_without_new_rating=args.update_without_new_rating,
             force_problems=args.force_problems,
+            contest_id=args.contest_id,
+            query=args.query,
         )

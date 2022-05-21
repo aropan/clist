@@ -111,6 +111,7 @@ def _get(url, *args, **kwargs):
 class Statistic(BaseModule):
     PARTICIPANT_TYPES = {'CONTESTANT', 'OUT_OF_COMPETITION'}
     SUBMISSION_URL_FORMAT_ = '{url}/submission/{sid}'
+    PROBLEM_STATUS_URL_FORMAT_ = '/problemset/status/{cid}/problem/{short}'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -251,6 +252,15 @@ class Statistic(BaseModule):
                     d['tags'] = tags
                 d['url'] = urljoin(standings_url.rstrip('/'), f"problem/{d['short']}")
 
+                status_url = self.PROBLEM_STATUS_URL_FORMAT_.format(cid=self.cid, short=d['short'])
+                status_url = urljoin(self.url, status_url)
+                page = _get(status_url)
+                if not is_gym:
+                    match = re.search(r'<div[^>]*>\s*Problem\s*(?P<code>[0-9A-Z]+)\s*-', page)
+                    if match:
+                        d['code'] = match.group('code')
+                        if self.cid not in d['code']:
+                            d['_no_problem_url'] = True
                 problems_info[d['short']] = d
 
             if users is not None and not users:
@@ -263,6 +273,8 @@ class Statistic(BaseModule):
 
             place = None
             last = None
+            first_score = None
+            last_score = None
             idx = 0
             teams_to_skip = set()
             for row in data['result']['rows']:
@@ -378,6 +390,9 @@ class Statistic(BaseModule):
                                 if last != value:
                                     last = value
                                     place = idx
+                                if first_score is None:
+                                    first_score = score
+                                last_score = score
                                 r['place'] = place
 
                         r['solving'] = score
@@ -426,6 +441,7 @@ class Statistic(BaseModule):
             if data['status'] == 'OK':
                 submissions.extend(data['result'])
 
+        has_accepted = False
         for submission in submissions:
             party = submission['author']
 
@@ -443,8 +459,13 @@ class Statistic(BaseModule):
                 info['language'] = submission['programmingLanguage']
 
             is_accepted = info.get('verdict') == 'OK'
+            has_accepted |= is_accepted
             if not is_accepted and 'passedTestCount' in submission:
                 info['test'] = submission['passedTestCount'] + 1
+
+            if contest_type == 'IOI' and is_accepted:
+                k = submission['problem']['index']
+                problems_info[k].setdefault('full_score', submission['points'])
 
             if is_gym:
                 upsolve = False
@@ -524,12 +545,21 @@ class Statistic(BaseModule):
             },
         }
 
+        if (
+            contest_type == 'IOI'
+            and phase == 'FINISHED'
+            and not has_accepted
+            and all('full_score' not in problem for problem in problems_info.values())
+            and len({problem['name'] for problem in problems_info.values()}) == 1
+        ):
+            standings['default_problem_full_score'] = 'max' if first_score > last_score else 'min'
+
         if re.search('^educational codeforces round', self.name, re.IGNORECASE):
             standings['options'].setdefault('timeline', {}).update({'attempt_penalty': 10 * 60,
                                                                     'challenge_score': False})
 
         if phase != 'FINISHED' and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc):
-            standings['timing_statistic_delta'] = timedelta(minutes=3)
+            standings['timing_statistic_delta'] = timedelta(minutes=5)
 
         if grouped:
             standings['grouped_team'] = grouped

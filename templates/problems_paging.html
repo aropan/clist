@@ -35,7 +35,7 @@
     <td>
         {% for contest in problem.contests.all %}
         <div class="small nowrap text-muted">
-            <a href="{{ contest.actual_url }}">{% trim_to contest.title 20 %}</a>
+            <a href="{{ contest.actual_url }}">{% trim_to contest.title 25 %}</a>
         </div>
         {% endfor %}
     </td>

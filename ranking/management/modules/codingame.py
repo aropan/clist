@@ -256,7 +256,8 @@ class Statistic(BaseModule):
                 for offset in range(0, len(dates), size):
                     chunk = list(range(offset, min(len(dates), offset + size)))
                     ratings = [hist['points'][idx] for idx in chunk]
-                    new_rating = round(sum(ratings) / len(ratings), 2)
+                    # new_rating = round(sum(ratings) / len(ratings), 2)
+                    new_rating = ratings[-1]
                     st = chunk[0]
                     fn = chunk[-1]
                     r = {

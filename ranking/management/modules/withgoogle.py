@@ -180,26 +180,29 @@ class Statistic(BaseModule):
                     else:
                         raise ExceptionParseStandings(f'unknown competitor_type = "{competitor_type}"')
 
-                    if r['solving'] == 0 and 'penalty' not in r:
-                        result.pop(handle)
-                        continue
-
-                    solved = 0
-                    problems = r.setdefault('problems', {})
-
                     task_infos_map = {task_info['task_id']: task_info for task_info in row['task_info']}
                     ordered_task_info = [task_infos_map.get(tid) for tid in problems_order]
 
                     task_infos = []
+                    has_solution = False
                     for task_info in ordered_task_info:
                         if task_info is None:
                             task_infos.append(None)
-                        elif task_info['score_by_test']:
+                            continue
+                        has_solution = True
+                        if task_info['score_by_test']:
                             for score in task_info['score_by_test']:
                                 task_info['score'] = score
                                 task_infos.append(dict(task_info))
                         else:
                             task_infos.append(dict(task_info))
+
+                    if r['solving'] == 0 and 'penalty' not in r and not has_solution:
+                        result.pop(handle)
+                        continue
+
+                    solved = 0
+                    problems = r.setdefault('problems', {})
 
                     for pid, task_info in enumerate(task_infos):
                         if task_info is None:
@@ -286,7 +289,7 @@ class Statistic(BaseModule):
                         if 'src_content' in attempt:
                             problem['solution'] = attempt.pop('src_content').replace('\u0000', '')
                         elif 'source_file' in attempt and 'url' in attempt['source_file']:
-                            problem['url'] = attempt['source_file']
+                            problem['url'] = attempt['source_file']['url']
                         language = attempt.get('src_language__str')
                         if language:
                             problem['language'] = language
@@ -543,6 +546,11 @@ class Statistic(BaseModule):
         if re.search(r'\bfinal\S*(?:\s+round)?$', self.name, re.I):
             ret['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
         return ret
+
+    @staticmethod
+    def get_source_code(contest, problem):
+        solution = REQ.get(problem['url'])
+        return {'solution': solution}
 
 
 if __name__ == "__main__":

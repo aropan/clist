@@ -759,7 +759,7 @@ $(function() {
 
     var $resource = $('select#add-account-resource')
     $resource.select2({
-        width: '50%',
+        width: '40%',
         allowClear: true,
         placeholder: 'Search resource by regex',
         data: SELECTED_RESOURCE,
@@ -830,47 +830,31 @@ $(function() {
         $block.find('.delete-account').click(deleteAccount)
         $listAccount.prepend($block)
     }
-    // $.each(ACCOUNTS, addAccount)
     $('.delete-account').click(deleteAccount)
 
     var $search = $('#add-account-search')
-    $search.select2({
-        width: '50%',
-        allowClear: true,
-        placeholder: 'Search handle by regex',
-        data: SELECTED_ACCOUNT,
-        ajax: {
-            url: '/settings/search/',
-            dataType: 'json',
-            delay: 314,
-            data: function (params) {
-                return {
-                    query: 'accounts-for-add-account',
-                    user: params.term,
-                    resource: $resource.val(),
-                    page: params.page || 1
-                };
-            },
-            processResults: function (data, params) {
-                return {
-                    results: data.items,
-                    pagination: {
-                        more: data.more
-                    }
-                };
-            },
-        },
-        minimumInputLength: 1
-    }).on('select2:select', function (e) {
-        var account = $search.select2('data')[0]
-        if (account.resource) {
-            $resource.append('<option selected="selected" value="' + account.resource.id + '">' + account.resource.text+ '</option>')
-        }
-    });
+    $search.css({'width': '40%'});
 
     var $button = $('#add-account')
+    var $loading = $('#add-account-loading')
+
+    function update_advanced_search() {
+        $advanced_search = $('#add-account-advanced-search')
+        href = ACCOUNTS_ADVANCED_SEARCH_URL
+        if ($resource.val()) {
+            href += '&resource=' + $resource.val()
+        }
+        if ($search.val()) {
+            href += '&search=' + encodeURIComponent($search.val())
+        }
+        $advanced_search.attr('href', href)
+    }
+    $resource.on('change', update_advanced_search)
+    $search.on('keyup', update_advanced_search)
+    update_advanced_search()
 
     $button.click(function() {
+        $loading.removeClass('hidden')
         $.ajax({
             type: 'POST',
             url: $.fn.editable.defaults.url,
@@ -881,16 +865,25 @@ $(function() {
                 value: $search.val(),
             },
             success: function(data) {
+                $loading.addClass('hidden')
                 addAccount(-1, data)
                 $resource.val(null).trigger('change');
                 $search.val(null).trigger('change');
 
             },
             error: function(data) {
+                $loading.addClass('hidden')
                 $errorAccountTab.show().html(data.responseText)
                 setTimeout(function() { $errorAccountTab.hide(500) }, 3000)
             },
         })
+    })
+
+    $search.keypress(function(e) {
+        if (e.which == 13 ) {
+            e.preventDefault()
+            $button.click()
+        }
     })
 
     var $search_org = $('#organization-search')

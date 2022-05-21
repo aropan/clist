@@ -6,6 +6,8 @@
         $url = $URL . $query;
 
         $url_parsed = array();
+        $n_contests = 0;
+
         do {
             $page = curlexec($url);
             $url_parsed[$url] = true;
@@ -27,6 +29,7 @@
                     continue;
                 }
                 $seen[$k] = true;
+                $n_contests += 1;
 
                 $title = $c['title'];
                 if (!empty($c['class'])) {
@@ -74,6 +77,10 @@
                 }
             }
         } while (isset($_GET['parse_full_list']) && $url);
+
+        if (!$n_contests) {
+            break;
+        }
     }
 
     if ($RID === -1) {

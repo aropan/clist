@@ -24,11 +24,14 @@
     </tr>
     {% for resource in resources %}
     <tr>
-      <td>
-        <a class="host lead" href="{% url 'clist:resource' resource.host %}">
+      <td class="resource">
+        <a class="lead" href="{% url 'clist:resource' resource.host %}">
           <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
           {{ resource.host }}
         </a>
+        {% if perms.clist.change_resource %}
+          <a href="{% url 'admin:clist_resource_change' resource.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+        {% endif %}
       </td>
       <td>
         <a href="{{ resource.href }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>

@@ -5,9 +5,14 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/accounts.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/accounts.js' %}"></script>
 {% endblock %}
 
 {% block content %}
+
+<script>
+  CODER_PK = {{ request.user.coder.pk|default:-1 }}
+</script>
 
 <div class="col-lg-10 col-lg-offset-1">
   <form class="form-inline" method="get" action="">
@@ -32,10 +37,7 @@
       </div>
 
       <span class="input-group-btn">
-        <button class="btn btn-default" type="submit">
-          <i class="fas fa-search"></i>
-          Search
-        </button>
+        <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
       </span>
     </div>
 
@@ -53,6 +55,23 @@
 
     {% if custom_fields %}
     {% include "field_to_select.html" with field="field" data=custom_fields %}
+    {% endif %}
+
+    {% if request.user.is_authenticated %}
+    {% if request.GET.add_account %}
+    <input type="hidden" name="add_account" value="{{ request.GET.add_account }}"/>
+    {% endif %}
+    <div class="input-group input-group-sm">
+      <button
+        class="btn btn-default btn-sm{% if request.GET.add_account %} active{% endif %}"
+        name="add_account"{% if not request.GET.add_account %}
+        value="on"{% endif %}
+        title="Buttons to add/delete account"
+        data-toggle="tooltip"
+      >
+        <i class="text-muted fas fa-user-plus"></i>
+      </button>
+    </div>
     {% endif %}
 
     {% if perms.ranking.link_account %}

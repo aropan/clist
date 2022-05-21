@@ -1321,14 +1321,14 @@ def solutions(request, sid, problem_key):
     stat = problems[problem_key]
 
     if 'solution' not in stat:
-        if stat.get('external_solution'):
-            plugin = statistic.contest.resource.plugin
+        resource = statistic.contest.resource
+        if stat.get('external_solution') or resource.info.get('standings', {}).get('external_solution'):
             try:
-                source_code = plugin.Statistic.get_source_code(statistic.contest, stat)
+                source_code = resource.plugin.Statistic.get_source_code(statistic.contest, stat)
                 stat.update(source_code)
             except (NotImplementedError, ExceptionParseStandings, FailOnGetResponse):
                 return HttpResponseNotFound()
-        else:
+        elif not stat.get('url'):
             return HttpResponseNotFound()
 
     return render(

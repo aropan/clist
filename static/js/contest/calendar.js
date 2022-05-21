@@ -23,6 +23,7 @@ $(function() {
         firstDay: 1,
         timezone: timezone,
         events: function (fetchInfo, successCallback, failureCallback) {
+            var url = new URL(window.location.href)
             $.ajax({
                 url: '/get/events/',
                 type: 'POST',
@@ -33,6 +34,8 @@ $(function() {
                     categories: ['calendar'],
                     party: $('#party-name').attr('data-slug'),
                     search_query: $('#filter [type="text"]').val(),
+                    resource: url.searchParams.getAll('resource'),
+                    status: url.searchParams.get('status'),
                     ignore_filters:
                         $('.ignore-filter')
                         .filter(function () { return $(this).attr('data-value') == '1' })

@@ -18,6 +18,7 @@ django-postgres-reindex-command==2020.12.3
 django-print-sql==2018.3.6
 django-ratelimit==3.0.0
 django-sql-utils==0.6.1
+django-static-compress==2.0.0
 django-static-fontawesome==5.14.0.0
 django-super-deduper==0.1.4
 django-tastypie==0.14.3
@@ -71,7 +72,7 @@ flake8==3.8.4
 isort==5.7.0
 emoji-country-flag==1.2.4
 gitpython==3.1.14
-free-proxy==1.0.3
+free-proxy==1.0.6
 coloredlogs==15.0
 twisted[http2,tls]==22.4.0
 channels_redis==3.2.0

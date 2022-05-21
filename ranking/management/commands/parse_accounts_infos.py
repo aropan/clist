@@ -10,7 +10,7 @@ import arrow
 from attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models import Case, F, IntegerField, Q, Value, When
 from django.utils import timezone
 from django_super_deduper.merge import MergedModelInstance
 from tailslide import Percentile
@@ -38,6 +38,7 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--limit', default=None, type=int,
                             help='limit users for one resource (default is 1000)')
         parser.add_argument('-a', '--all', action='store_true', help='get all accounts and create if needed')
+        parser.add_argument('-t', '--top', action='store_true', help='top accounts priority')
         parser.add_argument('--update-new-year', action='store_true', help='force update new year accounts')
         parser.add_argument('--min-rating', default=None, type=int, help='minimum rating')
         parser.add_argument('--min-n-contests', default=None, type=int, help='minimum number of contests')
@@ -110,7 +111,10 @@ class Command(BaseCommand):
                     default=Value(0),
                     output_field=IntegerField(),
                 ))
-                accounts = accounts.order_by('-priority', 'updated')
+                order = ['-priority', 'updated']
+                if args.top:
+                    order = [F('rating').desc(nulls_last=True)] + order
+                accounts = accounts.order_by(*order)
 
                 if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):
                     limit = args.limit or resource_info.get('limit') or 1000

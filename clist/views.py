@@ -1,4 +1,3 @@
-import math
 import re
 from datetime import timedelta
 from queue import SimpleQueue
@@ -8,7 +7,6 @@ import arrow
 import pytz
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.commands import dumpdata
 from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Cast, Ln
@@ -21,13 +19,14 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, Resource
-from clist.templatetags.extras import (canonize, get_problem_key, get_problem_name, get_problem_short,
-                                       get_timezone_offset, get_timezones, slug)
+from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
+                                       get_timezone_offset, get_timezones, rating_from_probability, slug)
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
 from true_coders.models import Coder, Filter, Party
-from utils.chart import make_chart
+from utils.chart import make_bins, make_chart
+from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
 
 
@@ -98,12 +97,19 @@ def get_view_contests(request, coder):
     if request.user.has_perm('reset_contest_statistic_timing'):
         base_contests = base_contests.select_related('timing')
 
+    resources = [r for r in request.GET.getlist('resource') if r]
+    if resources:
+        base_contests = base_contests.filter(resource_id__in=resources)
+
     now = timezone.now()
     result = []
+    status = request.GET.get('status')
     for group, query, order in (
         ("running", Q(start_time__lte=now, end_time__gte=now), "end_time"),
         ("coming", Q(start_time__gt=now), "start_time"),
     ):
+        if status and group != status:
+            continue
         group_by_resource = {}
         contests = base_contests.filter(query).order_by(order, 'title')
         contests = contests.select_related('resource')
@@ -130,14 +136,14 @@ def get_view_contests(request, coder):
 
 @require_POST
 def get_events(request):
-    if request.user.is_authenticated:
-        coder = request.user.coder
-    else:
-        coder = None
+    coder = request.user.coder if request.user.is_authenticated else None
 
     categories = request.POST.getlist('categories')
     ignore_filters = request.POST.getlist('ignore_filters')
+    resources = [r for r in request.POST.getlist('resource') if r]
+    status = request.POST.get('status')
     has_filter = False
+    now = timezone.now()
 
     referer = request.META.get('HTTP_REFERER')
     if referer:
@@ -155,7 +161,9 @@ def get_events(request):
     offset = get_timezone_offset(tzname)
 
     query = Q()
-    if coder:
+    if resources:
+        query = Q(resource_id__in=resources)
+    elif coder:
         query = coder.get_contest_filter(categories, ignore_filters)
     elif has_filter:
         query = Coder.get_contest_filter(None, categories, ignore_filters)
@@ -168,8 +176,8 @@ def get_events(request):
     if coder:
         past_action = coder.settings.get('past_action_in_calendar', past_action)
 
-    start_time = arrow.get(request.POST.get('start', timezone.now())).datetime
-    end_time = arrow.get(request.POST.get('end', timezone.now() + timedelta(days=31))).datetime
+    start_time = arrow.get(request.POST.get('start', now)).datetime
+    end_time = arrow.get(request.POST.get('end', now + timedelta(days=31))).datetime
     query = query & Q(end_time__gte=start_time) & Q(start_time__lte=end_time)
 
     search_query = request.POST.get('search_query', None)
@@ -188,14 +196,18 @@ def get_events(request):
     contests = contests.order_by('start_time', 'title')
 
     if past_action == 'hide':
-        contests = contests.filter(end_time__gte=timezone.now())
+        contests = contests.filter(end_time__gte=now)
     elif 'day' in past_action:
-        threshold = timezone.now() - timedelta(days=1) + timedelta(minutes=offset)
+        threshold = now - timedelta(days=1) + timedelta(minutes=offset)
         start_day = threshold.replace(hour=0, minute=0, second=0, microsecond=0)
         contests = contests.filter(end_time__gte=start_day)
         past_action = past_action.split('-')[0]
 
-    now = timezone.now()
+    if status == 'coming':
+        contests = contests.filter(start_time__gt=now)
+    elif status == 'running':
+        contests = contests.filter(start_time__lte=now, end_time__gte=now)
+
     try:
         result = []
         for contest in contests.filter(query):
@@ -250,10 +262,7 @@ def main(request, party=None):
     share_to_category = None
 
     if request.user.is_authenticated:
-        if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
-            coder = Coder.objects.get(user__username=request.GET['as_coder'])
-        else:
-            coder = request.user.coder
+        coder = request.as_coder or request.user.coder
         viewmode = coder.settings.get("view_mode", viewmode)
         hide_contest = coder.settings.get("hide_contest", hide_contest)
         open_new_tab = coder.settings.get("open_new_tab", open_new_tab)
@@ -269,6 +278,8 @@ def main(request, party=None):
 
     action = request.GET.get("action")
     if action is not None:
+        if request.as_coder:
+            return HttpResponseBadRequest("forbidden")
         if action == "party-contest-toggle" and request.user.is_authenticated:
             party = get_object_or_404(Party.objects.for_user(request.user), slug=request.GET.get("party"), author=coder)
             contest = get_object_or_404(Contest, pk=request.GET.get("pk"))
@@ -336,6 +347,19 @@ def main(request, party=None):
     return render(request, "main.html", context)
 
 
+def update_coder_range_filter(coder, values, name):
+    if not coder or not values:
+        return
+    range_filter = coder.settings.setdefault('range_filter', {}).setdefault(name, {})
+    to_save = False
+    for k, v in values.items():
+        if v is not None and range_filter.get(k) != v:
+            range_filter[k] = v
+            to_save = True
+    if to_save:
+        coder.save()
+
+
 def resources(request):
     resources = Resource.objects
     resources = resources.select_related('module')
@@ -347,11 +371,7 @@ def resources(request):
 
 
 def resource_problem_rating_chart(resource):
-    prev = 0
-    step = 0
-    for rating in resource.ratings[:-1]:
-        step = math.gcd(step, rating['next'] - prev)
-        prev = rating['next']
+    step = resource.rating_step()
     problems = resource.problem_set.all()
     problem_rating_chart = make_chart(problems, 'rating', n_bins=20, cast='int', step=step)
     if not problem_rating_chart:
@@ -432,82 +452,77 @@ def resource(request, host, template='resource.html', extra_context=None):
         accounts = accounts.filter(last_activity__gte=now - delta_period)
 
     default_variables = resource.info.get('default_variables', {})
+    range_filter_values = {}
     for field, operator in (
-        ('min_rating', 'rating__gte'),
-        ('max_rating', 'rating__lte'),
-        ('min_n_participations', 'n_contests__gte'),
-        ('max_n_participations', 'n_contests__lte'),
+        ('rating_from', 'rating__gte'),
+        ('rating_to', 'rating__lte'),
+        ('n_participations_from', 'n_contests__gte'),
+        ('n_participations_to', 'n_contests__lte'),
     ):
-        value = request.GET.get(field, default_variables.get(field))
-        if value:
-            params[field] = value
-        if field in params:
-            accounts = accounts.filter(**{operator: params[field]})
-
-    countries = accounts \
-        .filter(country__isnull=False) \
-        .values('country') \
-        .annotate(count=Count('country')) \
-        .order_by('-count', 'country')
-
-    n_x_axis = resource.info.get('ratings', {}).get('chartjs', {}).get('n_x_axis')
-    coloring_field = resource.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
-
-    width = 50
-    min_rating = params.get('min_rating')
-    max_rating = params.get('max_rating')
-    if n_x_axis or min_rating and max_rating and int(max_rating) - int(min_rating) <= 100:
-        width = 1
-    rating_field = 'rating50' if width == 50 else 'rating'
-
-    ratings = accounts.filter(**{f'{rating_field}__isnull': False})
-
-    if n_x_axis:
-        rs = ratings.aggregate(max_rating=Max(rating_field), min_rating=Min(rating_field))
-        if rs['max_rating'] is not None:
-            width = max((rs['max_rating'] - rs['min_rating']) // n_x_axis, 1)
+        value = as_number(request.GET.get(field), force=True)
+        if value is not None:
+            range_filter_values[field] = value
         else:
-            width = 1
-        ratings = ratings.annotate(ratingw=F(rating_field) / width)
-        rating_field = 'ratingw'
+            value = default_variables.get(field)
+        if value is not None:
+            params[field] = value
+            accounts = accounts.filter(**{operator: value})
+    update_coder_range_filter(coder, range_filter_values, resource.host)
 
-    annotations = {'count': Count(rating_field)}
-    if coloring_field:
-        ratings = ratings.annotate(rank=Cast(KeyTextTransform(coloring_field, 'info'), IntegerField()))
-        annotations['coloring_field'] = Avg('rank')
+    countries = (accounts
+                 .filter(country__isnull=False)
+                 .values('country')
+                 .annotate(count=Count('country'))
+                 .order_by('-count', 'country'))
 
-    ratings = ratings \
-        .values(rating_field) \
-        .annotate(**annotations) \
-        .order_by(rating_field)
+    min_rating = 0
+    max_rating = 5000
+    if resource.ratings:
+        values = resource.account_set.aggregate(min_rating=Min('rating'), max_rating=Max('rating'))
+        min_rating = values['min_rating']
+        max_rating = values['max_rating']
+        ratings = accounts.filter(rating__isnull=False)
+        rating_field = 'rating'
 
-    ratings = list(ratings)
+        n_x_axis = resource.info.get('ratings', {}).get('chartjs', {}).get('n_x_axis')
+        if n_x_axis:
+            n_bins = n_x_axis
+            step = None
+        else:
+            n_bins = 30
+            step = resource.rating_step()
 
-    labels = []
-    data = []
-    if ratings and resource.ratings:
-        idx = 0
-        for rating in ratings:
-            low = rating[rating_field] * width
-            high = low + width - 1
+        coloring_field = resource.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
+        if coloring_field:
+            ratings = ratings.annotate(rank=Cast(JSONF(f'info__{coloring_field}'), IntegerField()))
+            aggregations = {'coloring_field': Avg('rank')}
+        else:
+            aggregations = None
 
-            val = rating.get('coloring_field', low)
-            if val is None:
-                continue
-            while val > resource.ratings[idx]['high']:
-                idx += 1
-            while idx and val <= resource.ratings[idx - 1]['high']:
-                idx -= 1
+        rating_chart = make_chart(ratings, rating_field, n_bins=n_bins, step=step, aggregations=aggregations)
 
-            data.append({
-                'title': f'{low}..{high}',
-                'rating': low,
-                'count': rating['count'],
-                'info': resource.ratings[idx],
-            })
-        min_rating = ratings[0][rating_field]
-        max_rating = ratings[-1][rating_field]
-        labels = list(range(min_rating * width, max_rating * width + 1, width))
+        if rating_chart:
+            data = rating_chart['data']
+            for idx, row in enumerate(data):
+                row['rating'] = row.pop('bin')
+                row['count'] = row.pop('value')
+
+            idx = 0
+            for row in data:
+                if coloring_field:
+                    if 'coloring_field' not in row or row['coloring_field'] is None:
+                        row['info'] = resource.ratings[idx]
+                        continue
+                    val = row['coloring_field']
+                else:
+                    val = int(row['rating'])
+                while val > resource.ratings[idx]['high']:
+                    idx += 1
+                while val < resource.ratings[idx]['low']:
+                    idx -= 1
+                row['info'] = resource.ratings[idx]
+    else:
+        rating_chart = None
 
     context = {
         'resource': resource,
@@ -516,23 +531,26 @@ def resource(request, host, template='resource.html', extra_context=None):
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
         'countries': countries,
         'rating': {
-            'labels': labels,
-            'data': data,
+            'chart': rating_chart,
             'account': coder_account if show_coder_account_rating else None,
-            'width': width,
+            'min': min_rating,
+            'max': max_rating,
         },
         'contests': {
             'past': {
                 'contests': contests.filter(end_time__lt=now).order_by('-end_time'),
                 'field': 'end_time',
+                'url': reverse('ranking:standings_list') + f'?resource={resource.pk}',
             },
             'coming': {
                 'contests': contests.filter(start_time__gt=now).order_by('start_time'),
                 'field': 'start_time',
+                'url': reverse('clist:main') + f'?resource={resource.pk}&view=list&group=no&status=coming',
             },
             'running': {
                 'contests': contests.filter(start_time__lt=now, end_time__gt=now).order_by('end_time'),
                 'field': 'time_left',
+                'url': reverse('clist:main') + f'?resource={resource.pk}&view=list&group=no&status=running',
             },
         },
         'contest_key': None,
@@ -642,12 +660,17 @@ def update_problems(contest, problems=None, force=False):
                 if current_contest != contest and not added_problem:
                     continue
 
+                if problem_info.get('_no_problem_url'):
+                    url = getattr(added_problem, 'url', None) or problem_info.get('url')
+                else:
+                    url = problem_info.get('url') or getattr(added_problem, 'url', None)
+
                 defaults = {
                     'index': index if getattr(added_problem, 'index', index) == index else None,
                     'short': short if getattr(added_problem, 'short', short) == short else None,
                     'name': name,
                     'divisions': getattr(added_problem, 'divisions', []) + ([division] if division else []),
-                    'url': problem_info.get('url') or getattr(added_problem, 'url', None),
+                    'url': url,
                     'n_tries': problem_info.get('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
                     'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
                     'n_partial': problem_info.get('n_partial', 0) + getattr(added_problem, 'n_partial', 0),
@@ -720,15 +743,23 @@ def problems(request, template='problems.html'):
 
     show_tags = True
     if request.user.is_authenticated:
-        coder = request.user.coder
+        coder = request.as_coder or request.user.coder
+        has_update_coder = not bool(request.as_coder)
         show_tags = coder.settings.get('show_tags', show_tags)
         statistics = Statistics.objects.filter(account__coders=coder)
         accounts = Account.objects.filter(coders=coder, rating__isnull=False, resource=OuterRef('resource'))
         accounts = accounts.order_by('rating').values('rating')[:1]
         problems = problems.annotate(account_rating=Subquery(accounts))
+        problem_rating_accounts = (
+            coder.account_set
+            .filter(rating__isnull=False, resource__has_problem_rating=True)
+            .select_related('resource')
+        )
     else:
         coder = None
+        has_update_coder = False
         statistics = Statistics.objects.none()
+        problem_rating_accounts = []
     problems = problems.prefetch_related(Prefetch('contests__statistics_set', queryset=statistics))
 
     show_tags_value = str(request.GET.get('show_tags', '')).lower()
@@ -749,21 +780,108 @@ def problems(request, template='problems.html'):
                 'cid': {'fields': ['contest__pk'], 'exists': 'contests', 'func': lambda v: int(v)},
                 'rid': {'fields': ['resource_id'], 'func': lambda v: int(v)},
                 'pid': {'fields': ['id'], 'func': lambda v: int(v)},
+                'n_accepted':  {'fields': ['n_accepted']},
+                'n_partial':  {'fields': ['n_partial']},
+                'n_hidden':  {'fields': ['n_hidden']},
+                'n_total':  {'fields': ['n_total']},
             },
             queryset=problems,
         )
         problems = problems.filter(cond)
 
+    range_filter_values = {}
+
     resources = [r for r in request.GET.getlist('resource') if r]
     if resources:
         problems = problems.filter(resource_id__in=resources)
+        if coder:
+            problem_rating_accounts = problem_rating_accounts.filter(resource__pk__in=resources)
         resources = list(Resource.objects.filter(pk__in=resources))
+
+    luck_from = as_number(request.GET.get('luck_from'), force=True)
+    luck_to = as_number(request.GET.get('luck_to'), force=True)
+    if luck_from is not None or luck_to is not None:
+        luck_filter = Q()
+        for account in problem_rating_accounts:
+            cond = Q(resource=account.resource)
+            if luck_from is not None:
+                range_filter_values['luck_from'] = luck_from
+                rating_to = rating_from_probability(account.rating, luck_from / 100)
+                cond &= Q(rating__lte=rating_to)
+            if luck_to is not None:
+                range_filter_values['luck_to'] = luck_to
+                rating_from = rating_from_probability(account.rating, luck_to / 100)
+                cond &= Q(rating__gte=rating_from)
+            luck_filter |= cond
+        if luck_filter:
+            problems = problems.filter(luck_filter)
+
+    rating_from = as_number(request.GET.get('rating_from'), force=True)
+    rating_to = as_number(request.GET.get('rating_to'), force=True)
+    if rating_from is not None or rating_to is not None:
+        rating_filter = Q()
+        if rating_from is not None:
+            range_filter_values['rating_from'] = rating_from
+            rating_filter &= Q(rating__gte=rating_from)
+        if rating_to is not None:
+            range_filter_values['rating_to'] = rating_to
+            rating_filter &= Q(rating__lte=rating_to)
+        problems = problems.filter(rating_filter)
+
+    if has_update_coder:
+        update_coder_range_filter(coder, range_filter_values, 'problems')
 
     tags = [r for r in request.GET.getlist('tag') if r]
     if tags:
         problems = problems.annotate(has_tag=Exists('tags', filter=Q(problemtag__pk__in=tags)))
         problems = problems.filter(has_tag=True)
         tags = list(ProblemTag.objects.filter(pk__in=tags))
+
+    chart_select = {
+        'values': [v for v in request.GET.getlist('chart') if v],
+        'options': ['date', 'rating'] + (['luck'] if coder else []),
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nofilter': True,
+        'nomultiply': True,
+    }
+    chart_field = request.GET.get('chart')
+    if chart_field == 'rating':
+        resource = resources[0] if resources and len(resources) == 1 and resources[0].has_rating_history else None
+        step = resource.rating_step() if resource else None
+        chart = make_chart(problems, field='rating', step=step, logger=request.logger)
+        if resource:
+            for data in chart['data']:
+                val = as_number(data['bin'], force=True)
+                if val is None:
+                    continue
+                for rating in resource.ratings:
+                    if rating['low'] <= val <= rating['high']:
+                        data['bgcolor'] = rating['hex_rgb']
+                        break
+    elif chart_field == 'date':
+        chart = make_chart(problems, field='time', logger=request.logger)
+    elif chart_field == 'luck' and coder:
+        luck_from = 0 if luck_from is None else luck_from
+        luck_to = 100 if luck_to is None else luck_to
+        bins = make_bins(float(luck_from), float(luck_to), n_bins=41)
+        data = [{'bin': b, 'value': 0} for b in bins[:-1]]
+
+        for account in problem_rating_accounts:
+            ratings = [round(rating_from_probability(account.rating, b / 100)) for b in bins[::-1]]
+            c = make_chart(problems.filter(resource=account.resource), field='rating', bins=ratings)
+            if c is None:
+                continue
+            for row, d in zip(data, c['data'][::-1]):
+                row['value'] += d['value']
+        chart = {
+            'field': 'luck',
+            'data': data,
+            'bins': bins,
+        }
+    else:
+        chart = None
 
     context = {
         'problems': problems,
@@ -773,6 +891,8 @@ def problems(request, template='problems.html'):
             'resources': resources,
             'tags': tags,
         },
+        'chart_select': chart_select,
+        'chart': chart,
     }
 
     return template, context

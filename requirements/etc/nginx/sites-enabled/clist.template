@@ -5,6 +5,10 @@ server {
 
   charset utf-8;
 
+  if (${DOLLAR}host != "legacy.${DOMAIN}") {
+    return 404;
+  }
+
   root $PROJECT_DIR/legacy/;
 
   rewrite ^/(calendar|list)/?(.*)?${DOLLAR} /${DOLLAR}2?view=${DOLLAR}1;
@@ -115,6 +119,9 @@ server {
   rewrite ^/api/v([0-9]+)/(json|jsonp|yaml|xml|plist)/(.*)${DOLLAR} /api/v${DOLLAR}1/${DOLLAR}3?format=${DOLLAR}2&${DOLLAR}args last;
 
   location /static/ {
+    gzip_static on;
+    gzip_types *;
+    expires 30d;
     access_log off;
     log_not_found off;
     root $PROJECT_DIR/nginx/;

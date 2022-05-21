@@ -240,7 +240,10 @@
                     <div class="small" title="First AC time" data-placement="bottom" data-toggle="tooltip">{{ problem.first_ac_time }}</div>
                   {% endif %}
                   {% if problem.max_score %}
-                    <div class="small" title="Max score" data-placement="bottom" data-toggle="tooltip">{{ problem.max_score }}</div>
+                    <div class="small" title="Max score" data-placement="bottom" data-toggle="tooltip">{{ problem.max_score|scoreformat }}</div>
+                  {% endif %}
+                  {% if problem.min_score %}
+                    <div class="small" title="Min score" data-placement="bottom" data-toggle="tooltip">{{ problem.min_score|scoreformat }}</div>
                   {% endif %}
                   {% if problem.subtext %}
                     <div

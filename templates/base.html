@@ -2,6 +2,7 @@
 <html{% block html %}{% endblock %}>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta charset="utf-8">
         <meta name="google-site-verification" content="_r9dKPi1upFgyN6EgdU2g6yNRC7aza6qHyhdIPGomkE" />
         <meta name="description" property="og:description" content="{% block description %}Events of competitive programming. Also coders, standings and more{% endblock %}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,6 +32,7 @@
 
         <script src="{% static_ts 'js/jquery-3.6.0.min.js' %}"></script>
         <script src="{% static_ts 'js/jquery-ui.min.js' %}"></script>
+        <link href="{% static_ts 'css/jquery-ui.min.css' %}" rel="stylesheet">
         <script src="{% static_ts 'js/ie-emulation-modes-warning.js' %}"></script>
 
         <link href="{% static_ts 'css/base.css' %}" rel="stylesheet">
@@ -81,7 +83,6 @@
         <script src="{% static_ts 'js/chartjs-adapter-moment@0.1.1' %}"></script>
         <script src="{% static_ts 'js/chart-helper.js' %}"></script>
         <script src="{% static_ts 'js/palette-1.1.0.min.js' %}"></script>
-
         {% block end-head %}{% endblock %}
     </head>
     <body>

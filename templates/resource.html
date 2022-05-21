@@ -41,49 +41,36 @@
         {% include 'country_filter.html' %}
 
         <div class="input-group input-group-sm">
-            <span class="input-group-addon">Period</span>
+            <span class="input-group-addon">{% icon_to 'period' %}</span>
             <select name="period" onchange="this.form.submit()">
                 {% for p in periods %}
                     <option value="{{ p }}"{% if p == params.period %} selected{% endif %}>{{ p }}</option>
                 {% endfor %}
             </select>
         </div>
+        <script>$('select[name="period"]').select2({theme: 'bootstrap', placeholder: 'select period'})</script>
 
-        {% if rating.data or params.min_rating or params.max_rating %}
-        <div class="input-group input-group-sm">
-            <span class="input-group-addon">Rating</span>
-            <span class="input-group-addon">min</span>
-            <input name="min_rating" type="number" class="form-control short-value" value="{{ params.min_rating }}"/>
-            <span class="input-group-addon">max</span>
-            <input name="max_rating" type="number" class="form-control short-value" value="{{ params.max_rating }}"/>
-        </div>
+        {% if rating.chart.data or request.GET.rating_from or request.GET.rating_to %}
+        {% include 'range_filter.html' with name='rating' value_key=resource.host from=rating.min to=rating.max %}
         {% endif %}
 
-        <div class="input-group input-group-sm">
-            <span class="input-group-addon">Number of participations</span>
-            <span class="input-group-addon">min</span>
-            <input name="min_n_participations" type="number" class="form-control short-value" value="{{ params.min_n_participations }}"/>
-            <span class="input-group-addon">max</span>
-            <input name="max_n_participations" type="number" class="form-control short-value" value="{{ params.max_n_participations }}"/>
+        {% include 'range_filter.html' with name='n_participations' value_key=resource.host from=0 to=resource.n_contests %}
+
+        <div class="input-group input-group-sm hidden">
+          <button id="range-filter-apply" class="btn btn-primary btn-sm">Apply</button>
         </div>
 
         <input type="submit" style="visibility: hidden;" />
-
-        <script>
-        $(function() {
-            $('select[name="period"]').select2({
-                theme: 'bootstrap',
-                placeholder: 'select period',
-            })
-        })
-        </script>
     </div>
 </form>
 
 <div id="resource-tables" class="row">
     {% if top.exists %}
     <div class="col-md-6 col-lg-4">
-        <h4>Top rating</h4>
+        <h4>
+            Top rating
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc"><i class="fas fa-list"></i></a>
+        </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
                 <tr>
@@ -97,7 +84,7 @@
     </div>
     {% endif %}
 
-    {% if rating.data %}
+    {% if rating.chart.data %}
     <div class="col-md-6 col-lg-8">
         <h4>
             Rating distribution
@@ -125,14 +112,14 @@
             var chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: [{% for label in rating.labels %}{% if forloop.counter0 %},{% endif %}{{ label }}{% endfor %}],
+                    labels: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}{{ r.rating }}{% endfor %}],
                     datasets: [{
-                        data: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}{'x':{{ r.rating }},'y':{{ r.count }}}{% endfor %}],
-                        title: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}'{{ r.title }}'{% endfor %}],
-                        value: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}{{ r.count }}{% endfor %}],
+                        data: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}{'x':{{ r.rating }},'y':{{ r.count }}}{% endfor %}],
+                        title: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}'{{ r.title }}'{% endfor %}],
+                        value: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}{{ r.count }}{% endfor %}],
                         barPercentage: 0.9,
                         categoryPercentage: 1.0,
-                        backgroundColor: [{% for r in rating.data %}{% if forloop.counter0 %},{% endif %}'{{ r.info.hex_rgb }}'{% endfor %}],
+                        backgroundColor: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}'{{ r.info.hex_rgb }}'{% endfor %}],
                     }],
                 },
                 options: {
@@ -167,9 +154,12 @@
                           return;
                         }
                         item = item[0]
-                        rating = e.chart.data.datasets[item.datasetIndex].data[item.index]
+                        data = e.chart.data.datasets[item.datasetIndex].data
+                        rating = data[item.index]
+                        from = rating['x']
+                        to = item.index + 1 < data.length? data[item.index + 1]['x'] - 1 : {{ rating.chart.bins|last }}
                         {% autoescape off %}
-                        url = '{% url_transform request %}' + '&min_rating=' + rating['x'] + '&max_rating=' + (rating['x'] + {{ rating.width }} - 1)
+                        url = '{% url_transform request %}' + '&rating_from=' + from + '&rating_to=' + to
                         {% endautoescape %}
                         window.location.assign(url);
                     },
@@ -188,8 +178,8 @@
                         var x_axis = chart.scales['x']
                         var x_ticks = x_axis['ticks']
                         x_axis = {
-                            'min': x_ticks[0].label,
-                            'max': x_ticks[x_ticks.length - 1].label + {{ rating.width }},
+                            'min': {{ rating.chart.bins|first }},
+                            'max': {{ rating.chart.bins|last }},
                             'left': x_axis.left,
                             'right': x_axis.right,
                         }
@@ -220,7 +210,7 @@
     </script>
     {% endif %}
 
-    {% if has_country %}
+    {% if has_country and countries.exists %}
     <div id="countries" class="col-md-6 col-lg-4">
         <h4>Country distribution</h4>
         <div class="panel panel-default table-responsive">
@@ -238,7 +228,10 @@
 
     {% if last_activities.exists %}
     <div class="col-md-6 col-lg-4">
-        <h4>Last activity</h4>
+        <h4>
+            Last activity
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=last_activity&sort_order=desc"><i class="fas fa-list"></i></a>
+        </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
                 <tr>
@@ -254,7 +247,10 @@
 
     {% if most_participated.exists %}
     <div class="col-md-6 col-lg-4">
-        <h4>Most participated</h4>
+        <h4>
+            Most participated
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_contests&sort_order=desc"><i class="fas fa-list"></i></a>
+        </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
                 <tr>
@@ -270,7 +266,10 @@
 
     {% if most_writer.exists %}
     <div class="col-md-6 col-lg-4">
-        <h4>Most writer</h4>
+        <h4>
+            Most writer
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_writers&sort_order=desc"><i class="fas fa-list"></i></a>
+        </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
                 <tr>
@@ -286,7 +285,10 @@
 
     {% if problems.exists %}
     <div class="col-md-6 col-lg-4">
-        <h4>Problems</h4>
+        <h4>
+            Problems
+            <a href="{% url 'clist:problems' %}?resource={{ resource.pk }}"><i class="fas fa-list"></i></a>
+        </h4>
         <div class="panel panel-default table-responsive">
             <table class="problems table table-hover table-condensed table-striped">
                 <tr>
@@ -301,7 +303,10 @@
 
     {% if resource.has_problem_rating and problem_rating_chart %}
     <div class="col-md-6 col-lg-4" id="problem-rating-chart">
-        <h4>Problem rating distribution</h4>
+        <h4>
+            Problem rating distribution
+            <a href="{% url 'clist:problems' %}?resource={{ resource.pk }}&chart=rating"><i class="fas fa-chart-bar"></i></a>
+        </h4>
         {% include 'chart.html' with chart=problem_rating_chart without_close_chart=True without_toggle_type=True expand_class="#problem-rating-chart" %}
     </div>
     {% endif %}
@@ -309,7 +314,10 @@
     {% for name, data in contests.items %}
     {% if data.contests.exists %}
     <div class="col-md-6 col-lg-4">
-        <h4>{{ name|title }} contests</h4>
+        <h4>
+            {{ name|title }} contests
+            {% if data.url %}<a href="{{ data.url }}"><i class="fas fa-list"></i></a>{% endif %}
+        </h4>
         <div class="panel panel-default table-responsive">
             <table class="contests table table-hover table-condensed table-striped">
                 <tr>

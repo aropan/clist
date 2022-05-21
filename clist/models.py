@@ -1,6 +1,7 @@
 import calendar
 import itertools
 import logging
+import math
 import os
 import re
 from datetime import datetime, timedelta
@@ -192,6 +193,14 @@ class Resource(BaseModel):
 
     def is_major_kind(self, kind):
         return not kind or kind == self.info.get('major_kind')
+
+    def rating_step(self):
+        prev = 0
+        step = 0
+        for rating in self.ratings[:-1]:
+            step = math.gcd(step, rating['next'] - prev)
+            prev = rating['next']
+        return step
 
 
 class VisibleContestManager(BaseManager):

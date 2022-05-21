@@ -2,7 +2,4 @@
   {% for field, data in fields_to_select.items %}
     {% include "field_to_select.html" with field=field data=data %}
   {% endfor %}
-  <script>
-    $('.field-to-select').removeClass('hidden');
-  </script>
 {% endif %}

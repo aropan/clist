@@ -1,4 +1,4 @@
-{% if chart or chart is None %}
+{% if chart %}
 <div id="chart_{{ chart.field }}">
   <div class="chart-buttons">
     <span class="toggle-log-scale">
@@ -32,16 +32,14 @@
     {% endif %}
     {% if not without_close_chart %}
     <span>
-      <a href="{% url_transform request "chart_column" "" "with_remove" 1 %}"><i class="fas fa-times"></i></a>
+      <a href="{% url_transform request get_query_chart|default:"chart_column" "" "with_remove" 1 %}"><i class="fas fa-times"></i></a>
     </span>
     {% endif %}
   </div>
 
   <canvas class="chart"></canvas>
 </div>
-{% endif %}
 
-{% if chart %}
 <script>
   function add_chart() {
     {% if chart.fields %}
@@ -124,12 +122,8 @@
           {% if chart.point_radius is not None %}
           pointRadius: {{ chart.point_radius }},
           {% endif %}
-          {% if chart.bar_percentage is not None %}
-          barPercentage: {{ chart.bar_percentage }},
-          {% endif %}
-          {% if chart.category_percentage is not None %}
-          categoryPercentage: {{ chart.category_percentage }},
-          {% endif %}
+          barPercentage: {{ chart.bar_percentage|default:1.0 }},
+          categoryPercentage: {{ chart.category_percentage|default:0.8 }},
         },
       {% endif %}
 
@@ -142,7 +136,9 @@
       options: {
         responsive: true,
         interaction: {
-          mode: '{{ chart.mode|default:"nearest" }}',
+          {% with default_mode=chart.fields|iftrue:'nearest'|default:'index' %}
+          mode: '{{ chart.mode|default:default_mode }}',
+          {% endwith %}
           intersect: false,
         },
         {% if chart.fields %}

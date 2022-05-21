@@ -1,6 +1,7 @@
+import re
 from datetime import datetime
 
-from django.db.models import F, FloatField, IntegerField
+from django.db.models import Case, F, FloatField, IntegerField, Q, Value, When
 from django.db.models.fields.related import RelatedField
 from django.db.models.functions import Cast
 from django_pivot.histogram import get_column_values, histogram
@@ -20,12 +21,13 @@ def make_bins(src, dst, n_bins, logger=None, field=None, step=None):
         bins = [src] + [chr(int(round(st + (fn - st) * i / (n_bins - 1)))) for i in range(n_bins)] + [dst]
     else:
         if step is not None:
-            src -= src % step
-            dst += (step - dst % step) % step
-            delta = (dst - src) / (n_bins - 1)
             for divisor in get_divisors(step, reverse=True):
+                n_src = src - src % divisor
+                n_dst = dst + (divisor - dst % divisor) % divisor
+                delta = (n_dst - n_src) / (n_bins - 1)
                 if divisor <= delta:
-                    n_bins = (dst - src) // divisor + 1
+                    src, dst = n_src, n_dst
+                    n_bins = (n_dst - n_src) // divisor + 1
                     break
         bins = [src + (dst - src) * i / (n_bins - 1) for i in range(n_bins)]
     if isinstance(src, int):
@@ -63,7 +65,14 @@ def make_histogram(values, n_bins=None, bins=None, src=None, dst=None, deltas=No
     return ret, bins
 
 
-def make_chart(qs, field, groupby=None, logger=None, n_bins=50, cast=None, step=None):
+def make_beetween(column, value, start, end=None):
+    if end is None:
+        return When(Q(**{column + '__gte': start}), then=Value(value))
+    else:
+        return When(Q(**{column + '__gte': start, column + '__lt': end}), then=Value(value))
+
+
+def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=None, aggregations=None, bins=None):
     context = {'title': title_field(field) + (f' (slice by {groupby})' if groupby else '')}
 
     if cast == 'int':
@@ -118,10 +127,43 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=50, cast=None, step=
 
     src = qs.earliest('value').value
     dst = qs.latest('value').value
-    bins = make_bins(src=src, dst=dst, n_bins=n_bins, logger=logger, field=field, step=step)
+
+    bins = bins or make_bins(src=src, dst=dst, n_bins=n_bins, logger=logger, field=field, step=step)
 
     if isinstance(src, datetime):
         context['x_type'] = 'time'
 
+    context['bins'] = bins.copy()
+    bins.pop(-1)
     context['data'] = histogram(qs, 'value', bins=bins, slice_on=slice_on, choices='minimum')
+
+    for idx, row in enumerate(context['data']):
+        if isinstance(src, datetime):
+            st = re.findall('([0-9]+|.)', str(context['bins'][idx]))
+            fn = re.findall('([0-9]+|.)', str(context['bins'][idx + 1]))
+            title = ''
+            n_diff = 0
+            for lhs, rhs in zip(st, fn):
+                title += lhs
+                if lhs != rhs:
+                    n_diff += 1
+                    if n_diff == 2:
+                        break
+            row['title'] = title
+        else:
+            interval = ']' if idx + 1 == len(context['data']) else ')'
+            row['title'] = f"[{context['bins'][idx]}..{context['bins'][idx + 1]}{interval}"
+
+    if aggregations:
+        whens = [
+            make_beetween('value', k, bins[k], bins[k + 1] if k + 1 < len(bins) else None)
+            for k in range(len(bins))
+        ]
+        qs = qs.annotate(k=Case(*whens, output_field=IntegerField()))
+        qs = qs.order_by('k').values('k')
+        for field, aggregate in aggregations.items():
+            result = qs.annotate(**{field: aggregate})
+            for record in result:
+                context['data'][record['k']][field] = record[field]
+
     return context

@@ -23,10 +23,7 @@
         </div>
 
         <div class="input-group-btn">
-          <button class="btn btn-default" type="submit">
-            <i class="fas fa-search"></i>
-            Search
-          </button>
+          <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
         </div>
       </div>
 
@@ -50,6 +47,7 @@
           {% if switch %}checked{% endif %}
         />
       </div>
+      <script>$('input[name="switch"]').bootstrapToggle()</script>
 
       {% include 'resource_filter.html' %}
 

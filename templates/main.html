@@ -37,7 +37,8 @@
          data-offstyle="default active"
          data-size="mini"
          {% if viewmode == 'list' %}checked{% endif %}
-         >
+       >
+      <script>$('#toggle-view').bootstrapToggle()</script>
     </div>
       <div id="filter" class="input-group input-group-xs">
         <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>

@@ -11,6 +11,24 @@
     {% if perms.ranking.change_account %}
     <a href="{% url 'admin:ranking_account_change' account.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
+
+    {% if request.user.is_authenticated and request.GET.add_account %}
+    <div class="buttons pull-right">
+      <button
+        class="btn btn-primary btn-xs add-account{% if account.my_account %} hidden{% endif %}"
+        data-id="{{ account.pk }}"
+        data-action="add-account"
+        data-message="Account added"
+      ><i class="fas fa-user-plus fa-fw"></i></button>
+      <button
+        class="btn btn-danger btn-xs delete-account{% if not account.my_account %} hidden{% endif %}"
+        data-id="{{ account.pk }}"
+        data-action="delete-account"
+        data-message="Account deleted"
+      ><i class="far fa-trash-alt fa-fw"></i></button>
+      <i class="loading-account fas fa-circle-notch fa-spin hidden fa-fw fa-lg"></i>
+    </div>
+    {% endif %}
   </td>
   <td>
     {% if not account.has_coders and perms.ranking.link_account %}
@@ -62,4 +80,4 @@
 </tr>
 {% endfor %}
 {% show_more_table %}
-
+<script>init_account_buttons()</script>

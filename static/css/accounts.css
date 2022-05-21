@@ -24,3 +24,9 @@
 #accounts input[type=checkbox][name=accounts] {
   transform: scale(1.5);
 }
+
+#accounts .buttons {
+  width: 30px;
+  margin: -1px;
+  text-align: center;
+}

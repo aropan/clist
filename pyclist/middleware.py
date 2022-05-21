@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirec
 from django.middleware import csrf
 from django.urls import reverse
 
+from true_coders.models import Coder
 from utils.request_logger import RequestLogger
 
 
@@ -57,6 +58,20 @@ def Lightrope(get_response):
                     coder.save()
             return HttpResponse('ok')
 
+        response = get_response(request)
+        return response
+
+    return middleware
+
+
+def SetAsCoder(get_response):
+
+    def middleware(request):
+        if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
+            as_coder = Coder.objects.get(user__username=request.GET['as_coder'])
+        else:
+            as_coder = None
+        setattr(request, 'as_coder', as_coder)
         response = get_response(request)
         return response
 

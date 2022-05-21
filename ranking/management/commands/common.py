@@ -1,6 +1,7 @@
 import functools
 import json
 import operator
+from datetime import timedelta
 
 import tqdm
 from django.db.models import Q
@@ -44,10 +45,11 @@ def account_update_contest_additions(
 
     total = 0
     for stat in tqdm.tqdm(qs.iterator(), desc=f'updating additions for {account.key}', position=1):
+        contest = stat.contest
         total += 1
         addition = dict(stat.addition)
         for field in fields:
-            key = getattr(stat.contest, field)
+            key = getattr(contest, field)
             if key in contest_addition_update:
                 ordered_dict = contest_addition_update[key]
                 break
@@ -62,8 +64,11 @@ def account_update_contest_additions(
 
         to_save = False
         for k in ordered_dict.keys():
-            if k not in stat.contest.info['fields']:
-                stat.contest.info['fields'].append(k)
+            if k not in contest.info['fields']:
+                contest.info['fields'].append(k)
                 to_save = True
         if to_save:
-            stat.contest.save()
+            contest.save()
+            if contest.end_time + timedelta(days=31) > timezone.now():
+                contest.timing.statistic = timezone.now() + timedelta(minutes=10)
+                contest.timing.save()

@@ -101,6 +101,7 @@ class Account(BaseModel):
             models.Index(fields=['resource', 'n_contests', 'rating']),
             models.Index(fields=['resource', 'n_contests', 'rating50']),
             models.Index(fields=['resource', 'n_contests', 'country']),
+            models.Index(fields=['resource', 'n_writers']),
         ]
 
         unique_together = ('resource', 'key')
@@ -798,8 +799,9 @@ class Stage(BaseModel):
                     placing_info['place'] = placing_info['index']
 
                 if advances and ('divisions' not in advances or division in advances['divisions']):
+                    tmp = score_advance, place_advance, place_index
+
                     place_index += 1
-                    tmp = score_advance, place_advance
                     if curr_score != score_advance:
                         score_advance = curr_score
                         place_advance = place_index
@@ -821,7 +823,7 @@ class Stage(BaseModel):
                             break
 
                     if tmp is not None:
-                        score_advance, place_advance = tmp
+                        score_advance, place_advance, place_index = tmp
                 account = row.pop('member')
                 solving = row.pop('score')
                 stat, created = Statistics.objects.update_or_create(

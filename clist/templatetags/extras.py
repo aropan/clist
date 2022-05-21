@@ -1,5 +1,6 @@
 import itertools
 import json
+import math
 import re
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
@@ -739,7 +740,7 @@ def as_number(value, force=False):
     valf = str(value).replace(',', '.')
     retf = asfloat(valf)
     if retf is not None:
-        reti = toint(value)
+        reti = toint(valf)
         if reti is not None:
             return reti
         return retf
@@ -780,8 +781,14 @@ def contains(arr, value):
 
 
 @register.filter
-def iftrue(val, ret):
+def iftrue(val, ret=True):
     if val:
+        return ret
+
+
+@register.filter
+def iffalse(val, ret=True):
+    if not val:
         return ret
 
 
@@ -880,3 +887,27 @@ def trim_to(value, length):
 @register.simple_tag
 def win_probability(a, b):
     return 1 / (1 + 10 ** ((a - b) / 400))
+
+
+@register.simple_tag
+def rating_from_probability(b, p, min_rating=0, max_rating=5000):
+    if p <= 0:
+        return max_rating
+    if p >= 1:
+        return min_rating
+    a = math.log10(1 / p - 1) * 400 + b
+    return min(max(a, min_rating), max_rating)
+
+
+@register.simple_tag
+def icon_to(value, default=None, icons=None):
+    icons = icons or settings.FONTAWESOME_ICONS_
+    default = default or value.title()
+    if value in icons:
+        value = icons[value]
+        if isinstance(value, dict):
+            value, default = value['icon'], value.get('title', default)
+        ret = f'<span title="{default}" data-toggle="tooltip">{value}</span>'
+        return mark_safe(ret)
+    else:
+        return default

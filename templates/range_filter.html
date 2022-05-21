@@ -1,0 +1,70 @@
+{% with values=coder.settings.range_filter|get_item:value_key range_id=name|add:"-range" from_key=name|add:"_from" to_key=name|add:"_to" %}
+{% with from_val=request.GET|get_item:from_key to_val=request.GET|get_item:to_key %}
+{% with default_from=default_from|default:from default_to=default_to|default:to %}
+{% with default_from_val=values|get_item:from_key|default_if_none:default_from default_to_val=values|get_item:to_key|default_if_none:default_to %}
+{% with show=from_val|default:to_val|get_type|is_equal:'str'|toint %}
+<div class="input-group input-group-sm">
+  <button class="range-filter-show btn btn-default btn-sm{% if show %} active{% endif %}" data-id="{{ range_id }}"{% if disabled %} disabled{% endif %}>
+    {% icon_to name default=icon_title %}
+  </button>
+</div>
+<div class="range-filter input-group input-group-sm{% if not show %} hidden{% endif %}">
+  <input type="hidden" id="{{ from_key }}">
+  <input type="hidden" id="{{ to_key }}">
+  <div class="range-slider" id="{{ range_id }}"></div>
+</div>
+
+<script>
+$slider = $("#{{ range_id }}").slider({
+  range: true,
+  min: {{ from }},
+  max: {{ to }},
+  step: {{ step|default:1}},
+  values: [
+    {{ from_val|as_number:1|default_if_none:default_from_val }},
+    {{ to_val|as_number:1|default_if_none:default_to_val }},
+  ],
+  slide: function(event, ui) {
+    if (typeof(event) != 'number') {
+      $('#range-filter-apply').parent().removeClass('hidden')
+    }
+    if (event) {
+      $('#{{ from_key }}').prop('name', '{{ from_key }}')
+      $('#{{ to_key }}').prop('name', '{{ to_key }}')
+      $('#{{ from_key }}').val(ui.values[0])
+      $('#{{ to_key }}').val(ui.values[1])
+    }
+    $('#{{ range_id }} > span')[0].innerHTML = ui.values[0]
+    $('#{{ range_id }} > span')[1].innerHTML = ui.values[1]
+
+    if (typeof(event) != 'object') {
+      $slider = $("#{{ range_id }}")
+      slider_rect = $slider[0].getBoundingClientRect()
+      padding_left = slider_rect.left - $slider.find('.ui-slider-handle:first')[0].getBoundingClientRect().left
+      padding_right = $slider.find('.ui-slider-handle:last')[0].getBoundingClientRect().right - slider_rect.right
+      if (padding_left > 0) $slider.css('margin-left', padding_left)
+      if (padding_right > 0) $slider.css('margin-right', padding_right)
+    }
+  }
+})
+$slider = $("#{{ range_id }}")
+$slider.slider('option', 'slide').call($slider, {{ show }}, {values: $slider.slider('values')})
+
+$('button[data-id="{{ range_id }}"]').click(function() {
+  $(this).toggleClass('active')
+  $parent = $('#{{ range_id }}').parent()
+  if ($parent.hasClass('hidden')) {
+    $parent.removeClass('hidden')
+    $slider = $("#{{ range_id }}")
+    $slider.slider('option', 'slide').call($slider, true, {values: $slider.slider('values')})
+    return false
+  }
+  $('#{{ from_key }}').remove()
+  $('#{{ to_key }}').remove()
+})
+</script>
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}

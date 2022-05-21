@@ -38,10 +38,11 @@
     SHARE_TO_CATEGORY = { 'disable': 'Disable' {% for k, v in notifications %}, '{{ k }}': '{{ v }}'{% endfor %} }
 
     SELECTED_RESOURCE = {% if selected_resource %}[{'id': {{ selected_resource.pk }}, 'text': '{{ selected_resource.host }}'}]{% else %}[]{% endif %}
-    SELECTED_ACCOUNT = {% if selected_account %}[{'id': '{{ selected_account.key }}', 'text': '{{ selected_account.key }}{% if selected_account.name %} - {{ selected_account.name }}{% endif %}'}]{% else %}[]{% endif %}
+
+    ACCOUNTS_ADVANCED_SEARCH_URL = "{% url 'coder:accounts' %}?add_account=on"
 </script>
 
-<script src="{% static_ts 'js/settings/main.js' %}"></script>
+<script src="{% static_ts 'js/settings.js' %}"></script>
 
 <link href="{% static_ts 'css/awesome-bootstrap-checkbox.css' %}" rel="stylesheet">
 
@@ -176,7 +177,7 @@
             </div>
         </div>
         <div id="notifications-tab" class="tab-pane{% if tab == 'notifications' %} active{% endif %}">
-            <div id="notifications" class="value">
+            <div>
                 {% if not notification_form.errors %}
                 <div>
                 <a id="add-notification" class="btn btn-primary" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>
@@ -188,9 +189,12 @@
                 <div id="notification-form"{% if not notification_form.errors %} class="collapse"{% endif %}>
                     {% crispy notification_form %}
                 </div>
+            </div>
+            <div id="notifications" class="value">
                 {% for n in coder_notifications %}
                 <div class="notification">
-                    <span class="label label-info" data-value="method"{% if n.method in custom_categories %} title="{{ custom_categories|get_item:n.method }}"{% endif %} data-toggle="tooltip">{{ n.method }}</span>
+                    <span class="label label-info" data-value="method"{% if n.method in custom_categories %} title="{{ n.method }}"{% endif %} data-toggle="tooltip">
+                        {% if n.method in custom_categories %}{{ custom_categories|get_item:n.method }}{% else %}{{ n.method }}{% endif %}</span>
                     before <span class="label label-info" data-value="before">{{ n.before }}</span> minute(s)
                     once a <span class="label label-info" data-value="period">{{ n.get_period_display|lower }}</span>
                     {% if n.with_updates or n.with_results %}
@@ -238,7 +242,6 @@
                     {% endwith %}
                 {% endfor %}
                 <i id="custom_countries_loading" class="fas fa-circle-notch fa-spin hidden"></i>
-
             </div>
 
             {% with chat=coder.chat %}
@@ -284,9 +287,11 @@
             <div class="key">Resource</div>
             <div class="value"><select class="form-control" id="add-account-resource"></select></div>
             <div class="key">Handle</div>
-            <div class="value"><select class="form-control" id="add-account-search"></select></div>
+            <div class="value"><input type="text" class="form-control" id="add-account-search"{% if selected_account %} value="{{ selected_account.key }}"{% endif %}></div>
             <div class="text-left">
                 <button class="btn btn-primary" id="add-account">Add</button>
+                <a class="btn btn-default" id="add-account-advanced-search" target="_blank">Advanced Search</a>
+                <i id="add-account-loading" class="hidden fas fa-spinner fa-spin"></i>
             </div>
             <div id="error-account-tab" class="alert alert-danger"></div>
             <div id="list-accounts">

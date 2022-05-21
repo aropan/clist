@@ -207,8 +207,7 @@
 
         if (isset($contest['duration']) && ($contest['duration'] || is_numeric($contest['duration'])))
         {
-            if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+)hr)?(?:\s*(?<min>\d+)min)?#', $contest['duration'], $match) && $match[0])
-            {
+            if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+)(?:hr|h))?(?:\s*(?<min>\d+)(?:min|m))?#', $contest['duration'], $match) && $match[0]) {
                 foreach (array('d', 'hr', 'min') as $arg)
                     if (!isset($match[$arg]) || empty($match[$arg])) $match[$arg] = 0;
                 $contest['duration'] = (($match['d'] * 24 + $match['hr']) * 60 + $match['min']) * 60;

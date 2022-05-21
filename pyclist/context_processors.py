@@ -14,6 +14,7 @@ def global_settings(request):
         'default_api_throttle_at': settings.DEFAULT_API_THROTTLE_AT_,
         'enable_global_rating': settings.ENABLE_GLOBAL_RATING_,
         'DEBUG': settings.DEBUG,
+        'icons': settings.FONTAWESOME_ICONS_,
     }
 
 
