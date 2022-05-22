@@ -865,7 +865,7 @@ def problems(request, template='problems.html'):
     elif chart_field == 'luck' and coder:
         luck_from = 0 if luck_from is None else luck_from
         luck_to = 100 if luck_to is None else luck_to
-        bins = make_bins(float(luck_from), float(luck_to), n_bins=41)
+        bins = make_bins(float(luck_from), float(luck_to), n_bins=40)
         data = [{'bin': b, 'value': 0} for b in bins[:-1]]
 
         for account in problem_rating_accounts:

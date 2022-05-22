@@ -472,6 +472,16 @@ canvas.rating_history {
   height: 30px;
 }
 
-.range-filter .range-slider .ui-slider-handle:hover {
+.range-filter .range-slider .ui-slider-handle.ui-state-focus,
+.range-filter .range-slider .ui-slider-handle.ui-state-active {
+  z-index: 6;
+}
+
+.range-filter .range-slider .ui-slider-handle.ui-state-hover {
   z-index: 5;
+}
+
+.range-filter .range-slider .ui-slider-handle .typing {
+  margin: -6px;
+  padding: 5px;
 }

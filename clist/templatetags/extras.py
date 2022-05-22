@@ -764,7 +764,7 @@ def title_field(value):
 @register.filter
 def scoreformat(value):
     str_value = str(value)
-    if not str_value or str_value[0] in ['+', '-', '?']:
+    if not str_value or str_value[0] in ['+', '?']:
         return value
     format_value = floatformat(value, -2)
     return value if not format_value else format_value

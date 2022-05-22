@@ -249,7 +249,7 @@
         {% endif %}
         {% if chart.my_value is not None %}
         {
-          beforeDatasetsDraw: function(chart) {
+          afterDatasetDraw: function(chart) {
             var ctx = chart.ctx
             var y_axis = chart.scales['y']
             var x_axis = chart.scales['x']
@@ -271,8 +271,31 @@
               ctx.closePath()
             }
 
-            var x = get_x_chart({{ chart.my_value }}, x_axis)
+            var val = {{ chart.my_value }}
+            if ({{ chart.shift_my_value|default:'false'|lower }}) {
+                val += 0.5
+            }
+            var x = get_x_chart(val, x_axis)
             draw_x(x, '#c9e1f1')
+
+            var y = y_axis.top
+            var width = {{ chart.my_value|scoreformat|length }} * 8 + 10
+            var height = 20
+            var rx = Math.min(Math.max(x_axis.left, x - width / 2), x_axis.right - width)
+            var ry = y - height / 3
+            var cx = rx + width / 2
+            var cy = ry + height / 2
+
+            ctx.fillStyle = '#fff'
+            ctx.fillRect(rx, ry, width, height)
+            ctx.lineWidth = 2
+            ctx.strokeStyle = '#c9e1f1'
+            ctx.strokeRect(rx, ry, width, height)
+
+            ctx.font = '12px Comic Sans MS'
+            ctx.textAlign = 'center'
+            ctx.fillStyle = 'black'
+            ctx.fillText("{{ chart.my_value|scoreformat }}", cx, cy + 4)
           },
         },
         {% endif %}

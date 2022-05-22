@@ -230,7 +230,7 @@ def _get_order_by(fields):
 
 
 def standings_charts(request, context):
-    default_n_bins = 51
+    default_n_bins = 20
     contest = context['contest']
     problems = context['problems']
     statistics = context['statistics']
@@ -338,6 +338,7 @@ def standings_charts(request, context):
         scores_chart = dict(
             field='scores',
             bins=bins,
+            shift_my_value=int_scores and bins[-1] - bins[0] == len(bins) - 1,
             data=[{'bin': b, 'value': v} for v, b in zip(hist, bins)],
             my_value=my_values.get('score'),
         )
@@ -445,7 +446,10 @@ def standings_charts(request, context):
         types = fields_types.get(field)
         if field.startswith('_') or not types:
             continue
-        if len(types) != 1 or next(iter(types)) not in [int, float]:
+        if len(types) != 1:
+            continue
+        field_type = next(iter(types))
+        if field_type not in [int, float]:
             continue
         if not fields_values[field]:
             continue
@@ -460,6 +464,7 @@ def standings_charts(request, context):
         chart = dict(
             field=field,
             bins=bins,
+            shift_my_value=field_type is int and bins[-1] - bins[0] == len(bins) - 1,
             data=[{'bin': b, 'value': v} for v, b in zip(hist, bins)],
             my_value=my_values.get(field),
         )
@@ -1297,6 +1302,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     if groupby == 'none' and request.GET.get('charts'):
         standings_charts(request, context)
         context['with_table_inner_scroll'] = False
+        context['disable_switches'] = True
 
     return render(request, template, context)
 

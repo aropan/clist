@@ -12,7 +12,7 @@
   </span>
 {% endif %}
 
-  <select{% if not noname %} name="{{ resource_id }}"{% endif %} id="{{ resource_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}>
+<select{% if not noname %} name="{{ resource_id }}"{% endif %} id="{{ resource_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
     <option></option>
     {% for resource in params.resources %}
       <option value="{{ resource.pk }}" selected>{{ resource.host }}</option>

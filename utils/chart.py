@@ -12,6 +12,7 @@ from utils.math import get_divisors
 
 
 def make_bins(src, dst, n_bins, logger=None, field=None, step=None):
+    n_bins += 1
     if isinstance(src, str):
         if not dst:
             logger and logger.warning(f'One of border is empty, field = {field}')
@@ -129,11 +130,11 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
     dst = qs.latest('value').value
 
     bins = bins or make_bins(src=src, dst=dst, n_bins=n_bins, logger=logger, field=field, step=step)
+    context['bins'] = bins.copy()
 
     if isinstance(src, datetime):
         context['x_type'] = 'time'
 
-    context['bins'] = bins.copy()
     bins.pop(-1)
     context['data'] = histogram(qs, 'value', bins=bins, slice_on=slice_on, choices='minimum')
 

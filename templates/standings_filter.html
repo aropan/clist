@@ -43,13 +43,13 @@
 
     {% include 'fields_to_select.html' %}
 
-    {% include 'resource_filter.html' with groupby=False %}
+    {% include 'resource_filter.html' with groupby=False disabled=disable_switches %}
 
     {% if not request.user.is_authenticated %}
     <input type="hidden" name="detail" value="{% if with_detail %}true{% else %}false{% endif %}"/>
     {% endif %}
     <div class="input-group input-group-sm">
-      <button class="btn btn-default btn-sm{% if with_detail %} active{% endif %}" name="detail" value="{% if with_detail %}false{% else %}true{% endif %}">
+      <button class="btn btn-default btn-sm{% if with_detail %} active{% endif %}" name="detail" value="{% if with_detail %}false{% else %}true{% endif %}"{% if disable_switches %} disabled{% endif %}>
         {% icon_to 'detail_info' default='Detail' %}
       </button>
     </div>
@@ -60,7 +60,7 @@
     <input type="hidden" name="find_me" value="{{ find_me }}"/>
     {% endif %}
     <div class="input-group input-group-sm">
-      <button class="btn btn-default btn-sm{% if find_me %} active{% endif %}" name="find_me" value="{% if not find_me %}{{ params.find_me }}{% endif %}">
+      <button class="btn btn-default btn-sm{% if find_me %} active{% endif %}" name="find_me" value="{% if not find_me %}{{ params.find_me }}{% endif %}"{% if disable_switches %} disabled{% endif %}>
         {% if not find_me or find_me == params.find_me %}
         {% icon_to 'find_me' default='Find me' %}
         {% else %}
@@ -100,7 +100,7 @@
       {% endif %}
 
       <div class="input-group input-group-sm">
-        <button id="show-timeline" onclick="this.remove(); show_timeline(); $('#step-backward-timeline').focus(); return false" class="btn btn-default btn-sm"><i class="fas fa-history"></i></button>
+        <button id="show-timeline" onclick="this.remove(); show_timeline(); $('#step-backward-timeline').focus(); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}><i class="fas fa-history"></i></button>
       </div>
 
       <div id="timeline-buttons" class="hidden">
