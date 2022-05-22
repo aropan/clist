@@ -73,10 +73,22 @@ def get_info_key(statistic):
 
 
 def is_skip(statistic):
-    return (
-        statistic.account.info.get('is_team')
+    return bool(
+        statistic.account.info.get('is_team') and not statistic.account.info.get('members')
         or statistic.addition.get('team_id') and not statistic.addition.get('_members')
     )
+
+
+def get_team(statistic):
+    if 'team_id' in statistic.addition and statistic.addition.get('_members'):
+        team_id = statistic.addition['team_id']
+        handles = [m['account'] for m in statistic.addition['_members']]
+    elif statistic.account.info.get('is_team') and statistic.account.info.get('members'):
+        team_id = statistic.account.pk
+        handles = statistic.account.info['members']
+    else:
+        team_id, handles = None, None
+    return team_id, handles
 
 
 def get_solved(result, problem):
@@ -157,6 +169,7 @@ class Command(BaseCommand):
         parser.add_argument('-n', '--dryrun', action='store_true', help='do not update')
         parser.add_argument('-o', '--onlynew', action='store_true', help='update new only')
         parser.add_argument('--update-contest-on-missing-account', action='store_true')
+        parser.add_argument('--ignore-missing-account', action='store_true')
 
     def handle(self, *args, **options):
         self.logger.info(f'options = {options}')
@@ -187,13 +200,23 @@ class Command(BaseCommand):
             contests = contests[:args.limit]
 
         ratings = []
+        n_done = 0
+        n_total = 0
+        n_skip_hash = 0
+        n_skip_missing = 0
         for contest in tqdm.tqdm(contests, total=contests.count(), desc='contests'):
             resource = contest.resource
             rating_adjustment = resource.info.get('ratings', {}).get('adjustment')
+            problems_ratings_info = resource.info.get('ratings', {}).get('problems', {})
+            ignore_missing_account = (
+                args.ignore_missing_account
+                or problems_ratings_info.get('ignore_missing_account')
+            )
 
             if not contest.is_major_kind():
                 self.logger.warning(f'skip not major kind contest = {contest}')
                 continue
+            n_total += 1
 
             statistics = get_statistics(contest)
 
@@ -242,6 +265,7 @@ class Command(BaseCommand):
                 not args.force and
                 contest.info.get('_problems_ratings_hash') == problems_ratings_hash
             ):
+                n_skip_hash += 1
                 self.logger.warning(f'skip unchanged hash contest = {contest}')
                 continue
 
@@ -254,27 +278,36 @@ class Command(BaseCommand):
                     if is_skip(stat):
                         continue
 
-                    if 'team_id' in stat.addition:
-                        if stat.addition['team_id'] in team_ids:
+                    team_id, handles = get_team(stat)
+                    if team_id is not None:
+                        if team_id in team_ids:
                             continue
-                        team_ids.add(stat.addition['team_id'])
+                        team_ids.add(team_id)
                         ratings = []
                         n_contests_values = []
-                        for member in stat.addition['_members']:
-                            account = resource.account_set.filter(key=member['account']).first()
+                        for handle in handles:
+                            account = resource.account_set.filter(key=handle).first()
                             if account is None:
-                                missing_account = True
-                                if args.update_contest_on_missing_account:
+                                self.logger.info(f'missing account = {handle}')
+                                if not missing_account and args.update_contest_on_missing_account:
                                     current_contest.timing.statistic = None
                                     current_contest.timing.save()
-                                break
-                            old_rating = account_get_old_rating(account, current_contest)
-                            n_contests = account_get_n_contests(account, current_contest)
-                            old_rating = adjust_rating(rating_adjustment, account, old_rating, n_contests)
+                                missing_account = True
+
+                                if not ignore_missing_account:
+                                    break
+                                old_rating = resource.avg_rating
+                                n_contests = 0
+                            else:
+                                old_rating = account_get_old_rating(account, current_contest)
+                                n_contests = account_get_n_contests(account, current_contest)
+                                old_rating = adjust_rating(rating_adjustment, account, old_rating, n_contests)
                             ratings.append((1, old_rating))
                             n_contests_values.append(n_contests)
-                        if missing_account:
+                        if missing_account and not ignore_missing_account:
                             break
+                        if not ratings:
+                            continue
                         old_rating = get_rating(ratings, target=0.5)
                         n_contests = max(n_contests_values)
                     else:
@@ -296,7 +329,8 @@ class Command(BaseCommand):
                     info['wratings'].append((1, old_rating))
                     info['places'][stat.place_as_int] += 1
 
-            if missing_account:
+            if missing_account and not ignore_missing_account:
+                n_skip_missing += 1
                 self.logger.warning(f'skip by missing account = {contest}')
                 continue
 
@@ -314,10 +348,11 @@ class Command(BaseCommand):
                     if is_skip(stat):
                         continue
 
-                    if 'team_id' in stat.addition:
-                        if stat.addition['team_id'] not in team_ids:
+                    team_id, _ = get_team(stat)
+                    if team_id is not None:
+                        if team_id not in team_ids:
                             continue
-                        team_ids.remove(stat.addition['team_id'])
+                        team_ids.remove(team_id)
 
                     info = contests_divisions_data[get_info_key(stat)]
                     cache = caches.setdefault(get_info_key(stat), {})
@@ -368,4 +403,7 @@ class Command(BaseCommand):
                 update_problems(contest, problems, force=True)
                 contest.info['_problems_ratings_hash'] = problems_ratings_hash
                 contest.save()
+                n_done += 1
                 self.logger.info(f'done contest = {contest}')
+        self.logger.info(f'done = {n_done}, skip hash = {n_skip_hash}, skip missing = {n_skip_missing}'
+                         f' of total = {n_total}')

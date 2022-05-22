@@ -126,6 +126,13 @@ class Statistic(BaseModule):
                     val = html.unescape(match.group('val').strip())
                     ret[key] = val
 
+            for field in 'region', 'district':
+                if ret.get(field):
+                    country = locator.get_country(ret[field], lang='ru')
+                    if country:
+                        ret['country'] = country
+                        break
+
             return ret
 
         with PoolExecutor(max_workers=8) as executor, Locator() as locator:
@@ -138,11 +145,6 @@ class Statistic(BaseModule):
                     else:
                         yield {'skip': True}
                     continue
-
-                if data.get('region'):
-                    country = locator.get_country(data['region'], lang='ru')
-                    if country:
-                        data['country'] = country
 
                 ret = {
                     'info': data,
