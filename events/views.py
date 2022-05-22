@@ -22,7 +22,7 @@ import true_coders.views
 from clist.models import Resource
 from clist.views import get_timeformat, get_timezone
 from events.models import Event, JoinRequest, Participant, Team, TeamStatus, TshirtSize
-from ranking.models import Account, Module
+from ranking.models import Account
 from true_coders.models import Organization
 from utils.regex import get_iregex_filter
 
@@ -133,8 +133,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
                     elif coder.account_set.filter(resource=resource).exists():
                         error = f'Codeforces handle {handle} is already connect'
                     else:
-                        module = Module.objects.filter(resource=resource).first()
-                        if not module or not module.multi_account_allowed:
+                        if resource.with_single_account():
                             if coder.account_set.filter(resource=resource).exists():
                                 error = 'Allow only one account for this resource'
                             elif account.coders.count():

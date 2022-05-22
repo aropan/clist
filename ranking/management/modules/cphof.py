@@ -329,8 +329,7 @@ class Statistic(BaseModule):
             new_accounts = []
             for account in accounts_set:
                 skip = False
-                resource = account.resource
-                if resource.module is None or not resource.module.multi_account_allowed:
+                if account.resource.with_single_account():
                     for coder in account.coders.all():
                         coders_set.add(coder)
                         skip = skip or not coder.is_virtual

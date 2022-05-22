@@ -40,6 +40,8 @@ class Resource(BaseModel):
     ratings = models.JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
     has_problem_rating = models.BooleanField(default=False)
+    has_multi_account = models.BooleanField(default=False)
+    has_accounts_infos_update = models.BooleanField(default=False)
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
     icon = models.CharField(max_length=255, null=True, blank=True)
@@ -189,7 +191,10 @@ class Resource(BaseModel):
         return self.plugin_
 
     def with_single_account(self):
-        return not self.module or not self.module.multi_account_allowed
+        return not self.has_multi_account
+
+    def with_multi_account(self):
+        return self.has_multi_account
 
     def is_major_kind(self, kind):
         return not kind or kind == self.info.get('major_kind')

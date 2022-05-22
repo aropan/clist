@@ -286,9 +286,8 @@ def account(request, key, host, template='profile.html', extra_context=None):
 
     add_account_button = False
     if request.user.is_authenticated:
-        module = getattr(account.resource, 'module', None)
         coder_accounts = request.user.coder.account_set.filter(resource=account.resource)
-        if module and (module.multi_account_allowed or not coder_accounts.first()):
+        if account.resource.with_multi_account() or not coder_accounts.first():
             add_account_button = True
     else:
         add_account_button = True
@@ -1065,7 +1064,7 @@ def search(request, **kwargs):
 
         qs = Resource.objects \
             .annotate(has_coder_account=Exists(coder_accounts)) \
-            .annotate(has_multi=F('module__multi_account_allowed')) \
+            .annotate(has_multi=F('has_multi_account')) \
             .annotate(disabled=Case(
                 When(module__isnull=True, then=Value(True)),
                 When(has_coder_account=True, has_multi=False, then=Value(True)),

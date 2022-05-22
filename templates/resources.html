@@ -84,7 +84,7 @@
 
       <td>
         {% if resource.module %}
-        <span class="badge progress-bar-{% if resource.module.has_accounts_infos_update %}success{% else %}info{% endif %}" data-column="accounts-update">
+        <span class="badge progress-bar-{% if resource.has_accounts_infos_update %}success{% else %}info{% endif %}" data-column="accounts-update">
           {{ resource.n_accounts|intcomma }}
         </span>
         {% else %}

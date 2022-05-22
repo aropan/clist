@@ -60,7 +60,7 @@ class Command(BaseCommand):
                 filt |= Q(host__iregex=r)
             resources = Resource.objects.filter(filt)
         else:
-            resources = Resource.objects.filter(module__has_accounts_infos_update=True)
+            resources = Resource.objects.filter(has_accounts_infos_update=True)
 
         countrier = Countrier()
 

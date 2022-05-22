@@ -125,8 +125,6 @@ class StageAdmin(BaseModelAdmin):
 @admin_register(Module)
 class ModuleAdmin(BaseModelAdmin):
     list_display = ['resource',
-                    'multi',
-                    'account_update',
                     'min_delay_after_end',
                     'max_delay_after_end',
                     'delay_on_error',
@@ -134,13 +132,4 @@ class ModuleAdmin(BaseModelAdmin):
                     'long_contest_idle',
                     'long_contest_divider',
                     'path']
-    list_filter = ['multi_account_allowed', 'has_accounts_infos_update']
     search_fields = ['resource__host']
-
-    def multi(self, obj):
-        return obj.multi_account_allowed
-    multi.boolean = True
-
-    def account_update(self, obj):
-        return obj.has_accounts_infos_update
-    account_update.boolean = True

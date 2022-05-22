@@ -118,14 +118,15 @@ class ResourceAdmin(BaseModelAdmin):
                            'accounts_fields']}],
     ]
     list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', '_has_problem_rating',
-                    'n_contests', 'n_accounts', 'modified']
+                    '_has_accounts_infos_update', '_has_multi_account', 'n_contests', 'n_accounts', 'modified']
     search_fields = ['host', 'url']
-    list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone']
+    list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone', 'has_problem_rating',
+                   'has_accounts_infos_update', 'has_multi_account']
 
     def _has_profile_url(self, obj):
         return bool(obj.profile_url)
     _has_profile_url.boolean = True
-    _has_profile_url.short_description = 'Profile url'
+    _has_profile_url.short_description = 'PUrl'
 
     def _has_rating(self, obj):
         return bool(obj.ratings)
@@ -135,7 +136,17 @@ class ResourceAdmin(BaseModelAdmin):
     def _has_problem_rating(self, obj):
         return obj.has_problem_rating
     _has_problem_rating.boolean = True
-    _has_problem_rating.short_description = 'Prating'
+    _has_problem_rating.short_description = 'PRating'
+
+    def _has_accounts_infos_update(self, obj):
+        return obj.has_accounts_infos_update
+    _has_accounts_infos_update.boolean = True
+    _has_accounts_infos_update.short_description = 'AUpdate'
+
+    def _has_multi_account(self, obj):
+        return obj.has_multi_account
+    _has_multi_account.boolean = True
+    _has_multi_account.short_description = 'AMulti'
 
     def get_list_display(self, request):
         ret = super().get_list_display(request)
