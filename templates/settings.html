@@ -18,6 +18,7 @@
 
     RESOURCES = [ {% for r in resources %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ r.id }}', 'text': '{{ r.host }}'}{% endfor %} ]
     CATEGORIES = [ {% for c in categories %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ c.id }}', 'text': '{{ c.text }}'}{% endfor %} ]
+    EVENT_DESCRIPTIONS = [ {% for id, text in event_description.choices %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ id }}', 'text': '{{ text }}'}{% endfor %} ]
 
     ACCOUNTS_RESOURCES = [ {% for m in modules %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ m.resource.id }}', 'text': '{{ m.resource.host }}'}{% endfor %} ]
     ACCOUNTS = [ {% for a in coder.account_set_order_by_pk %}{% if forloop.counter0 %}, {% endif %}{{ a.dict|jsonify }}{% endfor %} ]
@@ -309,13 +310,13 @@
         </div>
         <div id="calendars-tab" class="tab-pane{% if tab == 'calendars' %} active{% endif %}">
             <div class="key">
-                <a href="#" id="add-calendar" data-name="add-calendar" class="btn btn-primary">Create</a>
+                <a href="#" id="add-calendar" data-name="add-calendar" class="btn btn-primary" data-descriptions="[{{ event_description.URL }}]">Create</a>
                 {% if perms.notification.view_calendar %}
                   <a href="{% url 'admin:notification_calendar_changelist' %}" class="external-database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
                 {% endif %}
             </div>
             <div id="calendars" class="value">
-                {% for calendar in coder.calendar_set.all %}
+                {% for calendar in calendars %}
                 <div class="calendar">
                     <span class="label label-info">{{ calendar.name }}</span>
                     {% if calendar.category or calendar.resources %}
@@ -334,9 +335,9 @@
                         resource(s)
                         {% endif %}
                     {% endif %}
-                    <a data-url="{{ main_host_url }}{% url 'notification:calendar' calendar.uuid %}" class="copy-calendar-url btn btn-primary btn-sm" target="_blank"><i class="fas fa-link"></i></a>
+                    <a data-url="{{ host_url }}{% url 'notification:calendar' calendar.uuid %}" class="copy-calendar-url btn btn-primary btn-sm" target="_blank"><i class="fas fa-link"></i></a>
                     <a href="{% url 'notification:calendar' calendar.uuid %}" class="btn btn-primary btn-sm" target="_blank"><i class="fas fa-external-link-alt"></i></a>
-                    <button href="#" data-name="edit-calendar" data-id="{{ calendar.id }}" data-value="{{ calendar.name }}" data-category="{{ calendar.category }}" data-resources="{{ calendar.resources|jsonify }}" class="edit-calendar btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
+                    <button href="#" data-name="edit-calendar" data-id="{{ calendar.id }}" data-value="{{ calendar.name }}" data-category="{{ calendar.category }}" data-resources="{{ calendar.resources|jsonify }}" data-descriptions="{{ calendar.descriptions|jsonify }}" class="edit-calendar btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
                     <button href="#" data-id="{{ calendar.id }}" data-action="delete-calendar" data-success="$div.remove();" class="action-calendar btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
                     <a class="copy-url-help btn btn-success btn-sm hidden" disabled>URL copied</a>
                 </div>

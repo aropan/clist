@@ -88,10 +88,26 @@ class Task(BaseModel):
 
 
 class Calendar(BaseModel):
+
+    class EventDescription(models.IntegerChoices):
+        URL = 1
+        HOST = 2
+        DURATION = 3
+
+        @classmethod
+        def extract(cls, event, description):
+            if description == cls.URL:
+                return f'url: {event.actual_url}'
+            if description == cls.HOST:
+                return f'host: {event.host}'
+            if description == cls.DURATION:
+                return f'duration: {event.hr_duration}'
+
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
-    category = models.CharField(max_length=256, null=True)
-    resources = ArrayField(models.PositiveIntegerField(), null=True)
+    category = models.CharField(max_length=256, null=True, blank=True)
+    resources = ArrayField(models.PositiveIntegerField(), null=True, blank=True)
+    descriptions = ArrayField(models.PositiveSmallIntegerField(choices=EventDescription.choices), null=True, blank=True)
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
 
 

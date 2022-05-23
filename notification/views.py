@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 from django.utils.timezone import now
@@ -11,19 +12,26 @@ from notification.models import Calendar
 
 class EventFeed(ICalFeed):
 
+    product_id = 'CLIST'
+    timezone = 'UTC'
+
     def __call__(self, request, uuid, *args, **kwargs):
         self.request = request
         self.uuid = uuid
+        self.calendar = get_object_or_404(Calendar.objects.select_related('coder'), uuid=self.uuid)
+        self.title = self.calendar.name
+
+        contests = Contest.visible.filter(end_time__gt=now() - timedelta(days=31))
+        if self.calendar.category:
+            contests = contests.filter(self.calendar.coder.get_contest_filter(self.calendar.category))
+        if self.calendar.resources:
+            contests = contests.filter(resource_id__in=self.calendar.resources)
+        self.contests = contests
+
         return super().__call__(request, *args, **kwargs)
 
     def items(self):
-        calendar = get_object_or_404(Calendar.objects.select_related('coder'), uuid=self.uuid)
-        contests = Contest.visible.filter(end_time__gt=now() - timedelta(days=31))
-        if calendar.category:
-            contests = contests.filter(calendar.coder.get_contest_filter(calendar.category))
-        if calendar.resources:
-            contests = contests.filter(resource_id__in=calendar.resources)
-        return contests
+        return self.contests
 
     def item_title(self, item):
         return item.title
@@ -32,10 +40,16 @@ class EventFeed(ICalFeed):
         return item.pk
 
     def item_description(self, item):
-        return item.host
+        ret = [Calendar.EventDescription.extract(item, desc) for desc in self.calendar.descriptions]
+        return '\n'.join(ret)
 
     def item_link(self, item):
-        return item.actual_url
+        if Calendar.EventDescription.URL not in self.calendar.descriptions:
+            return item.actual_url
+        return settings.HTTPS_HOST_
+
+    def item_location(self, item):
+        return item.host
 
     def item_start_datetime(self, item):
         return item.start_time

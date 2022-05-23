@@ -646,6 +646,8 @@ def settings(request, tab=None):
             "services": services,
             "my_lists": my_lists,
             "categories": categories,
+            "calendars": coder.calendar_set.order_by('-modified'),
+            "event_description": Calendar.EventDescription,
             "custom_categories": custom_categories,
             "coder_notifications": coder.notification_set.order_by('method'),
             "notifications": coder.get_notifications(),
@@ -893,15 +895,21 @@ def change(request):
 
             resources = [int(x) for x in request.POST.getlist("resources[]", []) if x]
             if resources and Resource.objects.filter(pk__in=resources).count() != len(resources):
-                raise Exception("invalid resources")
+                return HttpResponseBadRequest("invalid resources")
+
+            descriptions = [int(x) for x in request.POST.getlist("descriptions[]", []) if x]
+            if len(set(descriptions)) != len(descriptions):
+                return HttpResponseBadRequest("duplicate description elements")
 
             if name == "add-calendar":
-                calendar = Calendar.objects.create(coder=coder, name=value, category=category, resources=resources)
+                calendar = Calendar.objects.create(coder=coder, name=value, category=category, resources=resources,
+                                                   descriptions=descriptions)
             elif name == "edit-calendar":
                 calendar = Calendar.objects.get(pk=pk, coder=coder)
                 calendar.name = value
                 calendar.category = category
                 calendar.resources = resources
+                calendar.descriptions = descriptions
                 calendar.save()
         except Exception as e:
             return HttpResponseBadRequest(e)

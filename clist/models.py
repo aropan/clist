@@ -429,7 +429,7 @@ class Contest(BaseModel):
     @property
     def actual_url(self):
         if self.n_statistics or self.info.get('problems'):
-            return reverse('ranking:standings', args=(slug(self.title), self.pk))
+            return settings.HTTPS_HOST_ + reverse('ranking:standings', args=(slug(self.title), self.pk))
         if self.standings_url:
             return self.standings_url
         return self.url

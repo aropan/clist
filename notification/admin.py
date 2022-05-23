@@ -21,7 +21,7 @@ class TaskAdmin(BaseModelAdmin):
 
 @admin_register(Calendar)
 class CalendarAdmin(BaseModelAdmin):
-    list_display = ['name', 'coder', 'category', 'resources', 'uuid', 'created', 'modified']
+    list_display = ['name', 'coder', 'category', 'resources', 'descriptions', 'created', 'modified']
     search_fields = ['name', 'coder__username', 'category']
 
 

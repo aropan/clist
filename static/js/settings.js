@@ -611,12 +611,28 @@ $(function() {
         value = $(this).attr('data-value') || ''
         category = $(this).attr('data-category') || ''
         resources = JSON.parse($(this).attr('data-resources') || "[]")
+        descriptions = JSON.parse($(this).attr('data-descriptions') || "[]")
 
-        var category_select = '<option></option>';
+        var category_select = '<option></option>'
         CATEGORIES.forEach(el => { category_select += '<option value="' + el['id'] + '"' + (category == el['id']? ' selected' : '') + '>' + el['text'] + '</option>' })
 
-        var resources_select = '<option></option>';
+        var resources_select = ''
         RESOURCES.forEach(el => { resources_select += '<option value="' + el['id'] + '"' + ($.inArray(parseInt(el['id']), resources) !== -1? ' selected' : '') + '>' + el['text'] + '</option>' })
+
+        var descriptions_select_after = ''
+        var descriptions_options = {}
+        EVENT_DESCRIPTIONS.forEach(el => {
+            var has = $.inArray(parseInt(el['id']), descriptions) !== -1
+            var option = '<option value="' + el['id'] + '"' + (has? ' selected' : '') + '>' + el['text'] + '</option>'
+            if (has) {
+                descriptions_options[el['id']] = option
+            } else {
+                descriptions_select_after += option
+            }
+        })
+        var descriptions_select_before = ''
+        descriptions.forEach(id => { descriptions_select_before += descriptions_options[id] })
+        var descriptions_select = descriptions_select_before + descriptions_select_after
 
         var form = $(`
           <form>
@@ -635,9 +651,43 @@ $(function() {
               <select class="form-control" name="resources" multiple>` + resources_select + `</select>
               <small class="form-text text-muted">Additional filter for resource. Full list <a href="` + RESOURCES_URL + `" target="_blank">here</a>. Optional field</small>
             </div>
+            <div class="form-group">
+              <label class="control-label">Event description</label>
+              <select class="form-control" name="descriptions" multiple>` + descriptions_select + `</select>
+              <small class="form-text text-muted">Order sensitive. Optional field</small>
+            </div>
           </form>
         `);
         form.find('select').select2({width: '100%'})
+        var $select_descriptions = $(form.find('select[name=descriptions]')[0])
+        $select_descriptions.select2({
+            width: '100%',
+            sorter: function(items) {
+                var sorted_items = []
+                items.forEach((item, idx) => {
+                    sorted_items[item.sorter_index ?? idx] = item
+                })
+                ret = []
+                ret.push(...sorted_items.filter(i => i.selected ))
+                ret.push(...sorted_items.filter(i => !i.selected ))
+                var new_order = {}
+                ret.forEach((item, idx) => {
+                    item.sorter_index = idx
+                    new_order[item.id] = idx
+                })
+                var new_options = []
+                $options = $select_descriptions.children('option').detach()
+                $options.each((idx, option) => {
+                    var $option = $(option)
+                    var id = $option.attr('value')
+                    new_options[new_order[id]] = $option
+                })
+                $select_descriptions.append(new_options)
+                $select_descriptions.trigger('change.select2')
+                return ret
+            },
+        })
+
         form.find('.inverse-resources').click(() => {
             var resources = form.find('select[name=resources]')
             resources.val(
@@ -661,6 +711,7 @@ $(function() {
             value = form.find('input[name=name]').val()
             category = form.find('select[name=category]').val()
             resources = form.find('select[name=resources]').val()
+            descriptions = form.find('select[name=descriptions]').val()
             $.ajax({
                 type: 'POST',
                 url: $.fn.editable.defaults.url,
@@ -670,6 +721,7 @@ $(function() {
                     value: value,
                     category: category,
                     resources: resources,
+                    descriptions: descriptions,
                     id: id,
                 },
                 success: function(data) {
