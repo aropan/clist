@@ -554,6 +554,7 @@ FONTAWESOME_ICONS_ = {
     'period': '<i class="fa-fw far fa-clock"></i>',
     'n_participations': {'icon': '<i class="fa-fw fas fa-running"></i>', 'title': 'Number of participations'},
     'chart': '<i class="fa-fw fas fa-chart-bar"></i>',
+    'ghost': '<i class="fs-fw fas fa-ghost"></i>',
 }
 
 

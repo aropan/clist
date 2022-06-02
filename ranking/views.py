@@ -722,6 +722,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     fields_to_select_defaults = {
         'rating': {'options': ['rated', 'unrated'], 'noajax': True, 'nomultiply': True, 'nourl': True},
         'advanced': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
+        'ghost': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
         'highlight': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
     }
 
@@ -734,7 +735,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if hidden_f or fk in [
             'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
             'rating_change', 'raw_rating', 'advanced', 'company', 'language', 'league', 'onsite',
-            'degree', 'university', 'list', 'group', 'group_ex', 'college',
+            'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
         ]:
             f = map_fields_to_select.get(f, f)
             field_to_select = fields_to_select.setdefault(f, {})

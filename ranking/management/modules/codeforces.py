@@ -213,7 +213,11 @@ class Statistic(BaseModule):
         contest_url = self.url.replace('contests', 'contest')
         standings_url = contest_url.rstrip('/') + '/standings'
 
+        participant_types = self.PARTICIPANT_TYPES.copy()
         is_gym = '/gym/' in self.url
+        if is_gym:
+            participant_types.add('VIRTUAL')
+
         result = {}
 
         domain_users = {}
@@ -252,22 +256,23 @@ class Statistic(BaseModule):
                     d['tags'] = tags
                 d['url'] = urljoin(standings_url.rstrip('/'), f"problem/{d['short']}")
 
-                status_url = self.PROBLEM_STATUS_URL_FORMAT_.format(cid=self.cid, short=d['short'])
-                status_url = urljoin(self.url, status_url)
-                page = _get(status_url)
                 if not is_gym:
+                    status_url = self.PROBLEM_STATUS_URL_FORMAT_.format(cid=self.cid, short=d['short'])
+                    status_url = urljoin(self.url, status_url)
+                    page = _get(status_url)
                     match = re.search(r'<div[^>]*>\s*Problem\s*(?P<code>[0-9A-Z]+)\s*-', page)
                     if match:
                         d['code'] = match.group('code')
                         if self.cid not in d['code']:
                             d['_no_problem_url'] = True
+
                 problems_info[d['short']] = d
 
             if users is not None and not users:
                 continue
 
             grouped = any(
-                'teamId' in row['party'] and row['party']['participantType'] in self.PARTICIPANT_TYPES
+                'teamId' in row['party'] and row['party']['participantType'] in participant_types
                 for row in data['result']['rows']
             )
 
@@ -280,34 +285,31 @@ class Statistic(BaseModule):
             for row in data['result']['rows']:
                 party = row['party']
 
-                if is_gym and not party['members']:
-                    is_ghost_team = True
+                is_ghost = row.get('ghost') or (is_gym and not party['members'])
+                if is_ghost:
                     name = party['teamName']
                     party['members'] = [{
                         'handle': f'{name} {self.get_season()}',
                         'name': name,
                     }]
-                else:
-                    is_ghost_team = False
 
                 for member in party['members']:
-                    if is_gym:
-                        upsolve = False
-                    else:
-                        upsolve = party['participantType'] not in self.PARTICIPANT_TYPES
+                    upsolve = party['participantType'] not in participant_types
 
                     handle = member['handle']
 
                     r = result.setdefault(handle, OrderedDict())
 
                     r['member'] = handle
+                    if is_gym:
+                        r['ghost'] = is_ghost
                     if 'room' in party:
                         r['room'] = as_number(party['room'])
 
                     r.setdefault('participant_type', []).append(party['participantType'])
-                    r['_no_update_n_contests'] = 'CONTESTANT' not in r['participant_type']
+                    r['_no_update_n_contests'] = not bool(participant_types | set(r['participant_type']))
 
-                    if is_ghost_team and member['name']:
+                    if is_ghost and member['name']:
                         r['name'] = member['name']
                         r['_no_update_name'] = True
                     elif grouped and (not upsolve and not is_gym or 'name' not in r):
@@ -377,7 +379,7 @@ class Statistic(BaseModule):
                         elif unofficial:
                             if users:
                                 r['place'] = '__unchanged__'
-                            elif 'team_id' not in r and not (self.PARTICIPANT_TYPES & set(r['participant_type'])):
+                            elif 'team_id' not in r and not (participant_types & set(r['participant_type'])):
                                 r['place'] = None
                             else:
                                 if 'team_id' in r:
@@ -467,10 +469,7 @@ class Statistic(BaseModule):
                 k = submission['problem']['index']
                 problems_info[k].setdefault('full_score', submission['points'])
 
-            if is_gym:
-                upsolve = False
-            else:
-                upsolve = party['participantType'] not in self.PARTICIPANT_TYPES
+            upsolve = party['participantType'] not in participant_types
 
             if (
                 'relativeTimeSeconds' in submission

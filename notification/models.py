@@ -97,11 +97,11 @@ class Calendar(BaseModel):
         @classmethod
         def extract(cls, event, description):
             if description == cls.URL:
-                return f'url: {event.actual_url}'
+                return f'Link: {event.actual_url}'
             if description == cls.HOST:
-                return f'host: {event.host}'
+                return f'Host: {event.host}'
             if description == cls.DURATION:
-                return f'duration: {event.hr_duration}'
+                return f'Duration: {event.hr_duration}'
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)

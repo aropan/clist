@@ -54,11 +54,11 @@ class Statistic(BaseModule):
                             c = i[0].attrib['class']
                             if 'strava' in c:
                                 if v.value == '0':
-                                    r['rating_change'] = '0'
+                                    r['rating_change'] = 0
                                 elif v.value != '-':
                                     new_rating, rating_change = v.value.split()
                                     r['new_rating'] = int(new_rating)
-                                    r['rating_change'] = rating_change
+                                    r['rating_change'] = int(rating_change)
                             elif 'tasks' in c:
                                 r['solving'] = v.value
                     elif f == 'ball':

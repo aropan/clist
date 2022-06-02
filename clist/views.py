@@ -851,7 +851,7 @@ def problems(request, template='problems.html'):
         resource = resources[0] if resources and len(resources) == 1 and resources[0].has_rating_history else None
         step = resource.rating_step() if resource else None
         chart = make_chart(problems, field='rating', step=step, logger=request.logger)
-        if resource:
+        if resource and chart:
             for data in chart['data']:
                 val = as_number(data['bin'], force=True)
                 if val is None:
