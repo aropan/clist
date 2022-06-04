@@ -7,7 +7,7 @@ from datetime import timedelta
 from logging import getLogger
 
 import arrow
-from attrdict import AttrDict
+from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Case, F, IntegerField, Q, Value, When

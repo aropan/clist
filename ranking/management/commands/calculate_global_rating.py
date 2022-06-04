@@ -5,7 +5,7 @@ from logging import getLogger
 
 import humanize
 import tqdm
-from attrdict import AttrDict
+from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import OuterRef, Q, Subquery

@@ -12,7 +12,7 @@ from pprint import pprint  # noqa
 
 import coloredlogs
 import humanize
-from attrdict import AttrDict
+from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 

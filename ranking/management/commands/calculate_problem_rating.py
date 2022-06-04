@@ -7,7 +7,7 @@ from logging import getLogger
 from pprint import pprint  # noqa
 
 import tqdm
-from attrdict import AttrDict
+from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils.timezone import now
