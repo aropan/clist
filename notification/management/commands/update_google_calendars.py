@@ -1,24 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from googleapiclient.http import BatchHttpRequest
+from datetime import datetime, timedelta
 
-import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../api/google-calendar')))  # noqa
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))  # noqa
-os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'  # noqa
-
-from django import setup
-setup()  # noqa
-
-from common import service
-from clist.models import Resource
-from clist.models import Contest
+from django.core.management.base import BaseCommand
 from django.utils import timezone
+from googleapiclient.http import BatchHttpRequest
 from pytz import UTC
 
-from datetime import datetime, timedelta
+from legacy.api.google_calendar.common import service
+
+from clist.models import Contest, Resource
 
 batch = BatchHttpRequest()
 
@@ -93,58 +84,57 @@ def get_time_with_tz(time, tz=UTC):
     return timezone.make_aware(datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ"), tz)
 
 
-def main():
-    now = timezone.now()
-    print(now)
-    print()
-    current = now - timedelta(days=8)
+class Command(BaseCommand):
+    help = 'Update google calendars'
 
-    calendars = {entry["id"]: entry for entry in get_all_calendars()}
+    def handle(self, *args, **options):
+        now = timezone.now()
+        print(now)
+        print()
+        current = now - timedelta(days=8)
 
-    print(f"Calendars ({len(calendars)}):")
-    for c in sorted(list(calendars.values()), key=lambda c: c['summary']):
-        print("    %(summary)s, %(id)s" % c)
+        calendars = {entry["id"]: entry for entry in get_all_calendars()}
 
-    resources_uids = set()
-    for r in Resource.objects.all():
-        if r.uid:
-            if r.uid not in calendars:
-                raise Exception("Calendar with id='%s' not found, resource %s" % (r.uid, r.host))
-            if calendars[r.uid]["summary"] != r.host:
-                print("!   %s" % r)
-                create_resource_calendar(r, r.uid)
-        else:
-            print("+   %s" % r)
-            create_resource_calendar(r)
-        resources_uids.add(r.uid)
+        print(f"Calendars ({len(calendars)}):")
+        for c in sorted(list(calendars.values()), key=lambda c: c['summary']):
+            print("    %(summary)s, %(id)s" % c)
 
-    for uid, cal in calendars.items():
-        if cal['summary'] == 'CLIST':
-            continue
-        if uid not in resources_uids:
-            print(f"-   {cal['summary']}")
-            service.calendarList().delete(calendarId=uid).execute()
+        resources_uids = set()
+        for r in Resource.objects.all():
+            if r.uid:
+                if r.uid not in calendars:
+                    raise Exception("Calendar with id='%s' not found, resource %s" % (r.uid, r.host))
+                if calendars[r.uid]["summary"] != r.host:
+                    print("!   %s" % r)
+                    create_resource_calendar(r, r.uid)
+            else:
+                print("+   %s" % r)
+                create_resource_calendar(r)
+            resources_uids.add(r.uid)
 
-    for r in Resource.objects.all():
-        events = {entry["id"]: entry for entry in get_all_events(calendarId=r.uid, timeMin=current.isoformat())}
-        contests = Contest.visible.filter(resource=r, end_time__gt=current)
+        for uid, cal in calendars.items():
+            if cal['summary'] == 'CLIST':
+                continue
+            if uid not in resources_uids:
+                print(f"-   {cal['summary']}")
+                service.calendarList().delete(calendarId=uid).execute()
 
-        print("%s <%d event(s), %d contest(s)>:" % (r, len(events), len(contests)))
-        for c in contests:
-            if not c.uid or c.uid not in events:
-                create_contest_event(r.uid, c)
-                print("+   %s" % c)
-            elif get_time_with_tz(events[c.uid]["updated"]) < c.modified - timedelta(minutes=1):
-                entry = create_contest_event(r.uid, c, c.uid)
-                updated = get_time_with_tz(entry["updated"])
-                if c.modified - updated > timedelta(minutes=1):
-                    print("!   %s" % c)
+        for r in Resource.objects.all():
+            events = {entry["id"]: entry for entry in get_all_events(calendarId=r.uid, timeMin=current.isoformat())}
+            contests = Contest.visible.filter(resource=r, end_time__gt=current)
 
-        for e in list(events.values()):
-            if not Contest.visible.filter(resource=r, uid=e["id"]):
-                print("-   %s" % e["summary"])
-                service.events().delete(calendarId=r.uid, eventId=e["id"]).execute()
+            print("%s <%d event(s), %d contest(s)>:" % (r, len(events), len(contests)))
+            for c in contests:
+                if not c.uid or c.uid not in events:
+                    create_contest_event(r.uid, c)
+                    print("+   %s" % c)
+                elif get_time_with_tz(events[c.uid]["updated"]) < c.modified - timedelta(minutes=1):
+                    entry = create_contest_event(r.uid, c, c.uid)
+                    updated = get_time_with_tz(entry["updated"])
+                    if c.modified - updated > timedelta(minutes=1):
+                        print("!   %s" % c)
 
-
-if __name__ == "__main__":
-    main()
+            for e in list(events.values()):
+                if not Contest.visible.filter(resource=r, uid=e["id"]):
+                    print("-   %s" % e["summary"])
+                    service.events().delete(calendarId=r.uid, eventId=e["id"]).execute()

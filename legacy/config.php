@@ -41,7 +41,7 @@
         }
     }
 
-    define("CALENDARCREDENTIALSFILE", dirname(__FILE__) . "/api/google-calendar/credentials");
+    define("CALENDARCREDENTIALSFILE", dirname(__FILE__) . "/api/google_calendar/credentials");
 
     require_once "helper.php";
 ?>

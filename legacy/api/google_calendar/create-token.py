@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
+from os import path, remove
+
+import conf
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
-from os import path, remove
-import conf
 
 
 def main():
@@ -16,7 +17,7 @@ def main():
         client_id=conf.client_id,
         client_secret=conf.client_secret,
         scope="https://www.googleapis.com/auth/calendar",
-        redirect_uri="https://legacy.clist.by/api/google-calendar/exchange-code.php",
+        redirect_uri="https://legacy.clist.by/api/google_calendar/exchange-code.php",
         access_type="offline",
         prompt="consent",
     )

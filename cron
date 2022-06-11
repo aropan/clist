@@ -1,0 +1,17 @@
+PROJECT_DIR=/usr/src/clist
+
+# 7,21,42 * * * * cd $PROJECT_DIR && run-one ./legacy/update.sh >logs/command/update.log 2>&1
+
+# 7,25,42 * * * * /usr/src/legacy/update.bash >logs/update/index.html 2>&1
+# */1 * * * * cd $PROJECT_DIR && run-one ./manage.py notification_to_task >logs/command/notification_to_task.log 2>&1
+# */1 * * * * cd $PROJECT_DIR && run-one ./manage.py sendout_tasks        >logs/command/sendout_tasks.log 2>&1
+# */5 * * * * cd $PROJECT_DIR && run-one ./manage.py parse_statistic      >logs/command/parse_statistic.log 2>&1
+# */4 * * * * cd $PROJECT_DIR && run-one ./manage.py parse_accounts_infos >logs/command/parse_accounts_infos.log 2>&1
+#  15 * * * * cd $PROJECT_DIR && run-one ./manage.py update_auto_rating   >logs/command/update_auto_rating.log 2>&1
+# */5 * * * * cd $PROJECT_DIR && run-one ./manage.py check_logs           >logs/check_logs.log 2>&1
+
+# # 58 3 14-20 * * [ "$(date '+\%u')" -eq 4 ] && cd $PROJECT_DIR && run-one ./manage.py runscript calculate_account_contests >logs/command/calculate_account_contests.log 2>&1
+# 58 4 * * 4 cd $PROJECT_DIR && run-one ./manage.py runscript calculate_coder_n_accounts_and_coder_n_contests >logs/command/calculate_coder_n_accounts_and_coder_n_contests.log 2>&1
+# 58 5 * * 4 cd $PROJECT_DIR && run-one ./manage.py runscript calculate_resource_contests >logs/command/calculate_resource_contests.log 2>&1
+
+# # 55 5 * * 3 cd $PROJECT_DIR && run-one ./manage.py reindex >logs/command/reindex.log 2>&1

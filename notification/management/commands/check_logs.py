@@ -75,6 +75,8 @@ class Command(BaseCommand):
             if not os.path.exists(log_file):
                 continue
             key = os.path.basename(log_file)
+            if key == 'check_logs.log':
+                continue
             regex = r'^[^-\{\+\!\n]*\b(error\b|exception\b[^\(]).*$'
             self._check(log_file, regex, command_cache, key)
 

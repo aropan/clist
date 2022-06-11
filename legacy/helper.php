@@ -58,7 +58,7 @@
         global $NLOGMSG;
 
         $curr_time = microtime_float();
-        $msg = date('d.m  H:i:s   ', $curr_time) . sprintf("+%-7.2lf-  ", $curr_time - $PREV_TIME) . $msg . "\n";
+        $msg = date('d.m  H:i:s   ', intval($curr_time)) . sprintf("+%-7.2lf-  ", $curr_time - $PREV_TIME) . $msg . "\n";
 
         $fp = fopen(LOGFILE, 'a');
         fwrite($fp, $msg);
@@ -164,7 +164,10 @@
                 {
                     if (mb_check_encoding($page, $charset))
                     {
-                        $page = iconv($charset, 'utf8//TRANSLIT', $page);
+                        $converted = iconv($charset, 'utf8//TRANSLIT', $page);
+                        if ($converted != false) {
+                            $page = $converted;
+                        }
                     }
                 }
             }

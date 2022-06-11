@@ -277,7 +277,7 @@
             $contest['title']
         );
 
-        if (!isset($contest['start_time']) || !isset($contest['end_time'])) {
+        if (empty($contest['start_time']) || empty($contest['end_time'])) {
             continue;
         }
 

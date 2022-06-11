@@ -45,7 +45,10 @@ DEFAULT_FROM_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['clist.by', 'dev.clist.by', 'localhost']
+if 'ALLOWED_HOSTS' in environ:
+    ALLOWED_HOSTS = environ['ALLOWED_HOSTS'].split()
+else:
+    ALLOWED_HOSTS = ['clist.by']
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
@@ -53,7 +56,7 @@ SECRET_KEY = conf.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = 'DJANGO_RUNSERVER_DEBUG' in environ
+DEBUG = environ.get('DJANGO_ENV') == 'dev'
 
 # Application definition
 
@@ -166,11 +169,11 @@ CHANNEL_LAYERS = {
 DATABASES_ = {
     'postgresql': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': conf.DB_NAME,
-        'USER': conf.DB_USER,
-        'PASSWORD': conf.DB_PASSWORD,
-        'HOST': conf.DB_HOST,
-        'PORT': conf.DB_PORT,
+        'NAME': environ['POSTGRES_DB'],
+        'USER': environ['POSTGRES_USER'],
+        'PASSWORD': environ['POSTGRES_PASSWORD'],
+        'HOST': environ['POSTGRES_HOST'],
+        'PORT': environ['POSTGRES_PORT'],
     },
 }
 
@@ -183,7 +186,7 @@ DATABASES.update(DATABASES_)
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': '127.0.0.1:11211',
+        'LOCATION': 'cache:11211',
     }
 }
 
@@ -213,7 +216,7 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = path.join(BASE_DIR, 'nginx/static/')
+STATIC_ROOT = path.join(BASE_DIR, 'staticfiles')
 REPO_STATIC_ROOT = path.join(BASE_DIR, 'static/')
 STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
 
@@ -222,7 +225,7 @@ STATIC_COMPRESS_METHODS = ['gz']
 
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = path.join(BASE_DIR, 'nginx/media/')
+MEDIA_ROOT = path.join(BASE_DIR, 'mediafiles')
 
 STATICFILES_DIRS = [
     path.join(BASE_DIR, 'static'),

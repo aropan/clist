@@ -2,23 +2,13 @@
     $is_debug = true;
     class db
     {
-        private $host = 'localhost';
-        private $name = 'database';
-        private $port = '5432';
-        private $user = '';
-        private $password = '';
-
         function __construct()
         {
-            $conf_file = dirname(__FILE__) . '/pyclist.conf';
-
-            foreach (explode("\n", trim(file_get_contents($conf_file))) as $line) {
-                if (substr($line, 0, 3) == "DB_") {
-                    list($key, $value) = explode(" = ", $line);
-                    $key = strtolower(substr($key, 3));
-                    $this->$key = $value;
-                }
-            }
+            $this->host = getenv('POSTGRES_HOST');
+            $this->name = getenv('POSTGRES_DB');
+            $this->port = getenv('POSTGRES_PORT');
+            $this->user = getenv('POSTGRES_USER');
+            $this->password = getenv('POSTGRES_PASSWORD');
 
             //$this->link = mysqli_connect($this->host, $this->user, $this->password, $this->name);
             $this->link = pg_connect("host={$this->host} port={$this->port} user={$this->user} password={$this->password} dbname={$this->name} options='--client_encoding=UTF8'");

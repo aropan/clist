@@ -31,6 +31,7 @@
         } else {
             $timezone = '';
         }
+        $timezone = str_replace('CUT', 'UTC', $timezone);
         list($start_time, $end_time) = explode(' - ', $time);
         $start_time = trim($date . " " . $start_time . " " . $timezone);
         $end_time = trim($date . " " . $end_time . " " . $timezone);
@@ -43,14 +44,17 @@
         if (empty($date)) {
             if ($is_past) {
                 $y = $year;
-                while (strtotime($start_time . ', ' . $y) - 2 * $month > $prev) {
+                while ($y > 0 && strtotime($start_time . ', ' . $y) - 2 * $month > $prev) {
                     $y -= 1;
                 }
             } else {
                 $y = $year;
-                while (strtotime($start_time . ', ' . $y) < $now) {
+                while ($y < 5000 && strtotime($start_time . ', ' . $y) < $now) {
                     $y += 1;
                 }
+            }
+            if ($y == 0 || $y == 5000) {
+                continue;
             }
             $start_time .= ', ' . $y;
             while (strtotime($end_time. ', ' . $y) < strtotime($start_time)) {

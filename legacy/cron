@@ -1,0 +1,1 @@
+# 7,25,42 * * * * /usr/src/legacy/update.bash >logs/update/index.html 2>&1

@@ -1,8 +1,1 @@
-certificate
-cache
-uwsgi.sock
-nginx/static
-nginx/media
-environment
-.envs
-.envrc
+.env.prod
