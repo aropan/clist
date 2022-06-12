@@ -1,36 +1,3 @@
-[submodule "third_party/x-editable"]
-	path = third_party/x-editable
-	url = ../../vitalets/x-editable.git
-[submodule "third_party/select2"]
-	path = third_party/select2
-	url = ../../select2/select2.git
-[submodule "third_party/select2-bootstrap-theme"]
-	path = third_party/select2-bootstrap-theme
-	url = ../../select2/select2-bootstrap-theme.git
-[submodule "third_party/BootstrapXL"]
-	path = third_party/BootstrapXL
-	url = ../../marcvannieuwenhuijzen/BootstrapXL.git
-[submodule "third_party/awesome-bootstrap-checkbox"]
-	path = third_party/awesome-bootstrap-checkbox
-	url = ../../flatlogic/awesome-bootstrap-checkbox.git
-[submodule "third_party/bootbox"]
-	path = third_party/bootbox
-	url = ../../makeusabrew/bootbox.git
-[submodule "third_party/fullcalendar"]
-	path = third_party/fullcalendar
-	url = ../../fullcalendar/fullcalendar.git
-[submodule "third_party/moment"]
-	path = third_party/moment
-	url = ../../moment/moment.git
-[submodule "third_party/moment-timezone"]
-	path = third_party/moment-timezone
-	url = ../../moment/moment-timezone.git
 [submodule "legacy/libs/smarty"]
 	path = legacy/libs/smarty
 	url = ../../smarty-php/smarty.git
-[submodule "third_party/Chart.js"]
-	path = third_party/Chart.js
-	url = ../../chartjs/Chart.js.git
-[submodule "third_party/bootswatch"]
-	path = third_party/bootswatch
-	url = ../../thomaspark/bootswatch.git

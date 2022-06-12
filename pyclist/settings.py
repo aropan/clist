@@ -237,7 +237,6 @@ MEDIA_ROOT = path.join(BASE_DIR, 'mediafiles')
 
 STATICFILES_DIRS = [
     path.join(BASE_DIR, 'static'),
-    path.join(BASE_DIR, 'third_party/select2/dist'),
 ]
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
