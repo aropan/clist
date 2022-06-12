@@ -237,7 +237,6 @@ MEDIA_ROOT = path.join(BASE_DIR, 'mediafiles')
 
 STATICFILES_DIRS = [
     path.join(BASE_DIR, 'static'),
-    path.join(BASE_DIR, 'third_party/x-editable/dist/bootstrap3-editable'),
     path.join(BASE_DIR, 'third_party/select2/dist'),
 ]
 
