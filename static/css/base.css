@@ -258,12 +258,12 @@ html {
   color: #f00;
 }
 
-a.external-database-link {
+a.database-link {
   position: absolute;
   margin-left: 5px;
 }
 
-:hover > a.external-database-link {
+:hover > a.database-link {
   color: #337ab7;
   visibility: visible;
 }

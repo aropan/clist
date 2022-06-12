@@ -11,7 +11,7 @@ from pprint import pprint
 from random import choice
 from string import ascii_lowercase
 from time import sleep, time
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlparse
 
 import pytz
 
@@ -573,10 +573,10 @@ class Statistic(BaseModule):
 
         len_limit = 2000
         if len(handles) > len_limit:
-            s = 0
+            total_len = 0
             for i in range(len(users)):
-                s += len(users[i])
-                if s > len_limit:
+                total_len += len(users[i])
+                if total_len > len_limit:
                     return (
                         Statistic.get_users_infos(users[:i], pbar=pbar) +
                         Statistic.get_users_infos(users[i:], pbar=pbar)
@@ -594,12 +594,12 @@ class Statistic(BaseModule):
                 handle = data['comment'].split()[-3]
                 location = REQ.geturl(f'https://codeforces.com/profile/{handle}')
                 index = users.index(handle)
-                if location.endswith('//codeforces.com/'):
-                    removed.append((index, users[index]))
-                    users.pop(index)
-                else:
+                if urlparse(location).path.rstrip('/'):
                     target = location.rstrip('/').split('/')[-1]
                     users[index] = target
+                else:
+                    removed.append((index, users[index]))
+                    users.pop(index)
                 if pbar is not None:
                     pbar.update(index - last_index)
                     last_index = index

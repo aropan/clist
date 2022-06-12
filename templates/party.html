@@ -15,7 +15,7 @@
 <h3 id="party-name" data-slug="{{ party.slug }}">
     <a href="{% url 'coder:parties' %}"><i class="fas fa-chevron-left"></i></a> {{ party.name }}
     {% if perms.true_coders.change_party %}
-      <a href="{% url 'admin:true_coders_party_change' party.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+      <a href="{% url 'admin:true_coders_party_change' party.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
 </h3>
 

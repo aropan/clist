@@ -52,7 +52,7 @@ def unlink(request, name):
         messages.error(request, 'Not enough services')
     else:
         coder.token_set.filter(service__name=name).delete()
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(reverse('coder:settings', kwargs=dict(tab='social')))
 
 
 def process_data(request, service, access_token, data):
@@ -140,7 +140,9 @@ def response(request, name):
 
 
 def login(request):
-    redirect_url = request.GET.get('next', 'clist:main')
+    redirect_url = request.GET.get('next')
+    if not redirect_url or not redirect_url.startwith('/'):
+        redirect_url = 'clist:main'
     if request.user.is_authenticated:
         return redirect(redirect_url)
 

@@ -163,7 +163,7 @@
             <div class="key">
                 <a href="#" id="add-list" data-name="add-list" class="btn btn-primary">Create</a>
                 {% if perms.true_coders.view_coderlist %}
-                  <a href="{% url 'admin:true_coders_coderlist_changelist' %}" class="external-database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                  <a href="{% url 'admin:true_coders_coderlist_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
                 {% endif %}
             </div>
             <div id="lists" class="value">
@@ -183,7 +183,7 @@
                 <div>
                 <a id="add-notification" class="btn btn-primary" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>
                 {% if perms.notification.view_notification %}
-                  <a href="{% url 'admin:notification_notification_changelist' %}" class="external-database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                  <a href="{% url 'admin:notification_notification_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
                 {% endif %}
                 {% endif %}
                 </div>
@@ -210,7 +210,7 @@
                     <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></a>
                     <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-primary btn-sm"><i class="fas fa-sync-alt"></i></a>
                     {% if perms.notification.change_notification %}
-                      <a href="{% url 'admin:notification_notification_change' n.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+                      <a href="{% url 'admin:notification_notification_change' n.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -312,7 +312,7 @@
             <div class="key">
                 <a href="#" id="add-calendar" data-name="add-calendar" class="btn btn-primary" data-descriptions="[{{ event_description.URL }}]">Create</a>
                 {% if perms.notification.view_calendar %}
-                  <a href="{% url 'admin:notification_calendar_changelist' %}" class="external-database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                  <a href="{% url 'admin:notification_calendar_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
                 {% endif %}
             </div>
             <div id="calendars" class="value">

@@ -6,7 +6,7 @@
           {% for g in versus_data_row.games %}
           <tr class="{% if g.result == 'win' %}success{% elif g.result == 'lose' %}danger{% elif g.result == 'draw' %}warning{% endif %}">
           {% if g.url %}
-          <td><a href="{{ g.url }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>
+          <td><a href="{{ g.url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a></td>
           {% endif %}
           <td>{{ forloop.revcounter }}</td>
           {% for f in versus_data.games.fields %}

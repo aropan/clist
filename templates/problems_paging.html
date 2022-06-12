@@ -28,7 +28,7 @@
             {% if problem.url %}</a>{% endif %}
 
             {% if perms.clist.change_problem %}
-            <a href="{% url 'admin:clist_problem_change' problem.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+            <a href="{% url 'admin:clist_problem_change' problem.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
             {% endif %}
         </div>
     </td>

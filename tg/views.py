@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.views.generic.base import View
+
 from tg.bot import Bot
 from tg.models import Chat
 
@@ -26,7 +28,7 @@ def me(request):
 def unlink(request):
     coder = request.user.coder
     coder.chat.delete()
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(reverse('coder:settings', kwargs=dict(tab='social')))
 
 
 class Incoming(View):

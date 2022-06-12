@@ -30,11 +30,11 @@
           {{ resource.host }}
         </a>
         {% if perms.clist.change_resource %}
-          <a href="{% url 'admin:clist_resource_change' resource.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+          <a href="{% url 'admin:clist_resource_change' resource.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
         {% endif %}
       </td>
       <td>
-        <a href="{{ resource.href }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+        <a href="{{ resource.href }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
       </td>
       <td>
         {% if resource.uid %}

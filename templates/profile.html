@@ -67,7 +67,7 @@ Number of competitions: {{ account.n_contests }}
     {% endif %}
 
     {% if perms.true_coders.change_coder %}
-      <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+      <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
   </h2>
   {% if search_resource %}
@@ -109,7 +109,7 @@ Number of competitions: {{ account.n_contests }}
       {% endif %}
 
       {% if perms.ranking.change_account %}
-        <a href="{% url 'admin:ranking_account_change' account.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+        <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
       {% endif %}
     </h2>
     {% for coder in account.coders.all %}

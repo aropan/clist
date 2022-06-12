@@ -12,14 +12,14 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li><a href="{{ news_url }}" target="_blank">News</a></li>
+                <li><a href="{{ news_url }}" target="_blank" rel="noopener noreferrer">News</a></li>
                 <li><a href="{% url 'clist:resources' %}">Resources</a></li>
                 <li><a href="{% url 'ranking:standings_list' %}">Standings</a></li>
                 <li><a href="{% url 'clist:problems' %}">Problems</a></li>
                 <li><a href="{% url 'coder:coders' %}">Coders</a></li>
                 <li><a href="{% url 'coder:accounts' %}">Accounts</a></li>
                 <li><a href="{% url 'ranking:make_versus' %}">Versus</a></li>
-                <li><a href="{{ issues_url }}" target="_blank">Issues</a></li>
+                <li><a href="{{ issues_url }}" target="_blank" rel="noopener noreferrer">Issues</a></li>
                 {% block banner %}
                     {% for b in banners %}
                         {% if not b.template %}
@@ -68,8 +68,8 @@
                         {% endif %}
                         <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
                         <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
-                        <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
-                        <li><a href="{{ discuss_url }}" target="_blank"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
+                        <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
+                        <li><a href="{{ discuss_url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
                         <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
                         <li role="separator" class="divider"></li>
                         <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>

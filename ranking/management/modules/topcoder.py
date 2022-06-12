@@ -31,7 +31,7 @@ class Statistic(BaseModule):
 
         new_expires = int((datetime.now() + timedelta(days=100)).timestamp())
         for c in REQ.get_raw_cookies():
-            if 'topcoder.com' in c.domain and c.expires is not None:
+            if c.domain and c.domain.endswith('.topcoder.com') and c.expires is not None:
                 c.expires = max(c.expires, new_expires)
                 REQ.update_cookie(c)
         # cookies = {

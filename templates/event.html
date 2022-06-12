@@ -16,7 +16,7 @@
     <h3 id="name">
         {{ event.name }}
         {% if perms.events.event_change %}
-        <a href="{% url 'admin:events_event_change' event.pk %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+        <a href="{% url 'admin:events_event_change' event.pk %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
         {% endif %}
     </h3>
     <ul class="nav nav-tabs">

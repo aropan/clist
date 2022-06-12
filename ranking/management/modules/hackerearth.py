@@ -88,7 +88,7 @@ class Statistic(BaseModule):
 
             url = self.RANKING_URL_FORMAT_.format(event_id=event_id, page=page_index)
             page = self._get(url)
-            page = re.sub('<!--.*?-->', '', page)
+            page = re.sub('<!--.*?-->', '', page, flags=re.DOTALL)
 
             table = parsed_table.ParsedTable(page)
 

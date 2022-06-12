@@ -5,10 +5,10 @@ import json
 import logging
 import re
 import traceback
-import urllib.parse
 from collections import OrderedDict
 from datetime import timedelta
 from pprint import pprint
+from urllib.parse import urljoin, urlparse
 
 import coloredlogs
 from django.utils.timezone import now
@@ -93,7 +93,7 @@ class Statistic(BaseModule):
                 except FailOnGetResponse:
                     continue
 
-                if 'web.archive.org' in REQ.last_url and f'/{year}' not in REQ.last_url:
+                if urlparse(REQ.last_url).hostname == 'web.archive.org' and f'/{year}' not in REQ.last_url:
                     continue
 
                 if not re.search(rf'\b(world\s*finals\s*{year}|{year}\s*world\s*finals)\b', page, re.IGNORECASE):
@@ -274,7 +274,7 @@ class Statistic(BaseModule):
                                 for el in vs:
                                     logo = el.column.node.xpath('.//img/@src')
                                     if logo:
-                                        logo = urllib.parse.urljoin(standings_url, logo[0])
+                                        logo = urljoin(standings_url, logo[0])
                                         row.setdefault('info', {})['logo'] = logo
                                         break
                                 for el in vs:
@@ -347,7 +347,7 @@ class Statistic(BaseModule):
 
                     logo = el.xpath('./img/@src')
                     if logo:
-                        row.setdefault('info', {})['logo'] = urllib.parse.urljoin(standings_url, logo[0])
+                        row.setdefault('info', {})['logo'] = urljoin(standings_url, logo[0])
 
                     while el is not None:
                         prv = el.getprevious()

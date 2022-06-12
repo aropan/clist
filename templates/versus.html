@@ -143,7 +143,7 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
             </span>
           {% endif %}
           {% if perms.ranking.statistics_change and stat %}
-            <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+            <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
           {% endif %}
         </div>
         {% if rated %}

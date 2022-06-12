@@ -9,7 +9,7 @@
     {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True %}
 
     {% if perms.ranking.change_account %}
-    <a href="{% url 'admin:ranking_account_change' account.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
 
     {% if request.user.is_authenticated and request.GET.add_account %}

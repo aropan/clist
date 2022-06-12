@@ -16,7 +16,7 @@
   <small><a href="{% url 'ranking:versus' versus %}"><i class="fas fa-people-arrows"></i></a></small>
   {% endif %}
   {% if perms.true_coders.change_coderlist %}
-    <a href="{% url 'admin:true_coders_coderlist_change' coder_list.id %}" class="external-database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+    <a href="{% url 'admin:true_coders_coderlist_change' coder_list.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
   {% endif %}
 </h2>
 

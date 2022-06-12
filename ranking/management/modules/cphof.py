@@ -297,7 +297,7 @@ class Statistic(BaseModule):
                     for _ in range(3):
                         try:
                             location = REQ.geturl(profile_url)
-                            if not location.endswith('//codeforces.com/'):
+                            if urlparse(location).path.rstrip('/'):
                                 key = location.rstrip('/').split('/')[-1]
                                 account = resource.account_set.filter(key__iexact=key).first()
                             break
