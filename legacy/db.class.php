@@ -4,19 +4,17 @@
     {
         function __construct()
         {
-            $this->host = getenv('POSTGRES_HOST');
-            $this->name = getenv('POSTGRES_DB');
-            $this->port = getenv('POSTGRES_PORT');
-            $this->user = getenv('POSTGRES_USER');
-            $this->password = getenv('POSTGRES_PASSWORD');
+            $env = parse_ini_file("/run/secrets/env");
+            $this->host = $env['POSTGRES_HOST'];
+            $this->dbname = $env['POSTGRES_DB'];
+            $this->port = $env['POSTGRES_PORT'];
+            $this->username = $env['POSTGRES_USER'];
+            $this->password = $env['POSTGRES_PASSWORD'];
 
-            //$this->link = mysqli_connect($this->host, $this->user, $this->password, $this->name);
-            $this->link = pg_connect("host={$this->host} port={$this->port} user={$this->user} password={$this->password} dbname={$this->name} options='--client_encoding=UTF8'");
+            $this->link = pg_connect("host={$this->host} port={$this->port} user={$this->username} password={$this->password} dbname={$this->dbname} options='--client_encoding=UTF8'");
 
-            //mysqli_connect_errno() && die('Ошибка соединения: ' . mysqli_connect_error());
             $this->link || die('Connection error');
 
-            //mysqli_set_charset($this->link, 'utf8');
             pg_client_encoding($this->link) == "UTF8" || die('Encoding is not UTF8');
             $this->query("SET TIME ZONE 'UTC';");
         }

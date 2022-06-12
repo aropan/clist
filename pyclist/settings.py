@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
+import configparser
 import tempfile
 import warnings
-from os import environ, path
+from os import path
 
 from django.core.paginator import UnorderedObjectListWarning
 from django.utils.translation import gettext_lazy as _
@@ -23,9 +24,13 @@ from pyclist import conf
 # disable UnorderedObjectListWarning when using autocomplete_fields
 warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
 
-
 # Build paths inside the project like this: path.join(BASE_DIR, ...)
 BASE_DIR = path.dirname(path.dirname(path.abspath(__file__)))
+
+env_pasrer = configparser.ConfigParser()
+with open("/run/secrets/env") as fo:
+    env_pasrer.read_string(f'[top]\n{fo.read()}')
+    env = env_pasrer['top']
 
 ADMINS = conf.ADMINS
 
@@ -45,8 +50,8 @@ DEFAULT_FROM_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-if 'ALLOWED_HOSTS' in environ:
-    ALLOWED_HOSTS = environ['ALLOWED_HOSTS'].split()
+if 'ALLOWED_HOSTS' in env:
+    ALLOWED_HOSTS = env['ALLOWED_HOSTS'].split()
 else:
     ALLOWED_HOSTS = ['clist.by']
 
@@ -56,7 +61,7 @@ SECRET_KEY = conf.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = environ.get('DJANGO_ENV') == 'dev'
+DEBUG = env.get('DJANGO_ENV') == 'dev'
 
 # Application definition
 
@@ -169,11 +174,11 @@ CHANNEL_LAYERS = {
 DATABASES_ = {
     'postgresql': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': environ['POSTGRES_DB'],
-        'USER': environ['POSTGRES_USER'],
-        'PASSWORD': environ['POSTGRES_PASSWORD'],
-        'HOST': environ['POSTGRES_HOST'],
-        'PORT': environ['POSTGRES_PORT'],
+        'NAME': env['POSTGRES_DB'],
+        'USER': env['POSTGRES_USER'],
+        'PASSWORD': env['POSTGRES_PASSWORD'],
+        'HOST': env['POSTGRES_HOST'],
+        'PORT': env['POSTGRES_PORT'],
     },
 }
 

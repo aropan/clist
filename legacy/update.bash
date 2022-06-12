@@ -3,7 +3,7 @@
 set -x -e
 
 exec 200>/tmp/update.lock
-flock -n 200 || { echo "Script is already running"; exit 0; }
+flock -n 200 || { date; echo "Script is already running"; exit 0; }
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 

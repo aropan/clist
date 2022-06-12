@@ -1,1 +1,3 @@
-# 7,25,42 * * * * /usr/src/legacy/update.bash >logs/update/index.html 2>&1
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+7,25,42 * * * * /usr/src/legacy/update.bash >/usr/src/legacy/logs/cron/update.log 2>&1

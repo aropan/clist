@@ -8,11 +8,11 @@ services:
       - static_volume:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
       - .:/usr/src/clist/
-    env_file:
-      - ./.env.prod
     depends_on:
       - db
       - cache
+    secrets:
+      - env
   cache:
     image: memcached
   legacy:
@@ -20,10 +20,10 @@ services:
     volumes:
       - shared_socket:/sharedsocket/
       - ./legacy:/usr/src/legacy/
-    env_file:
-      - ./.env.prod
     depends_on:
       - db
+    secrets:
+      - env
   db:
     image: postgres:14.3-alpine
     volumes:
@@ -31,18 +31,30 @@ services:
     env_file:
       - ./.env.prod
   nginx:
-    build: ./nginx
+    image: nginx:alpine
     volumes:
       - shared_socket:/sharedsocket/
       - static_volume:/staticfiles/
       - media_volume:/mediafiles/
       - ./legacy:/usr/src/legacy/
+      - ./nginx/conf.d:/etc/nginx/conf.d/
+      - certbot_www:/var/www/certbot/
+      - certbot_conf:/etc/letsencrypt/
     ports:
-      - 58042:80
-      - 58043:81
       - 80:80
+      - 443:443
     depends_on:
       - web
+      - legacy
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot_www:/var/www/certbot/
+      - certbot_conf:/etc/letsencrypt/
+
+secrets:
+  env:
+    file: ./.env.prod
 
 
 volumes:
@@ -50,3 +62,5 @@ volumes:
   shared_socket:
   static_volume:
   media_volume:
+  certbot_www:
+  certbot_conf:

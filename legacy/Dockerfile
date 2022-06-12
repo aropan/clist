@@ -20,3 +20,5 @@ RUN crontab /etc/cron.d/clist
 
 ENV APPDIR=/usr/src/legacy
 WORKDIR $APPDIR
+
+CMD bash -c "cron && php-fpm"
