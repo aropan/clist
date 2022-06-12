@@ -15,6 +15,10 @@ RUN apt update -y
 # Decode raw protobuf message while parse some resources
 RUN apt install -y protobuf-compiler
 
+# Setup tesseract
+RUN apt install -y tesseract-ocr tesseract-ocr-eng
+RUN find / -name "tessdata" | grep tesseract | head -n 1 | xargs -I {} wget --quiet -O "{}/eng.traineddata" https://raw.githubusercontent.com/tesseract-ocr/tessdata/main/eng.traineddata
+
 RUN apt install -y cron
 # Copy hello-cron file to the cron.d directory
 COPY cron /etc/cron.d/clist
@@ -22,6 +26,14 @@ COPY cron /etc/cron.d/clist
 RUN chmod 0644 /etc/cron.d/clist
 # Apply cron job
 RUN crontab /etc/cron.d/clist
+
+# Django bash completion
+RUN apt install -y bash-completion
+RUN wget -O /etc/bash_completion.d/django_bash_completion.sh https://raw.github.com/django/django/master/extras/django_bash_completion
+RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/.bashrc
+
+# vim
+RUN apt install -y vim
 
 ENV APPDIR=/usr/src/clist
 # COPY . .
