@@ -2,7 +2,7 @@ js/moment.min.js linguist-vendored
 
 js/moment-timezone.min.js linguist-vendored
 
-bootswatch/ linguist-vendored
+bootswatch/** linguist-vendored
 
 css/bootstrap-editable.css linguist-vendored
 js/bootstrap-editable.js linguist-vendored
@@ -21,4 +21,27 @@ css/select2-bootstrap.min.css linguist-vendored
 
 js/bootbox.min.js linguist-vendored
 
-fullcalendar/ linguist-vendored
+fullcalendar/** linguist-vendored
+
+css/select2.css linguist-vendored
+css/select2.min.css linguist-vendored
+js/i18n/** linguist-vendored
+js/select2.js linguist-vendored
+js/select2.full.js linguist-vendored
+js/select2.full.min.js linguist-vendored
+js/select2.js linguist-vendored
+js/select2.min.js linguist-vendored
+
+js/AddCalEvent.js linguist-vendored
+css/AddCalEvent.css linguist-vendored
+
+js/daterangepicker.js linguist-vendored
+css/daterangepicker-bs3.css linguist-vendored
+
+js/jquery.cookie.js linguist-vendored
+
+js/jquery.timeago.js linguist-vendored
+
+js/notify.js linguist-vendored
+
+js/chartjs-adapter-moment@0.1.1 linguist-vendored
