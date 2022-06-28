@@ -28,7 +28,7 @@ django-environ==0.9.0
 pytest-django==3.8.0
 phonenumbers==8.10.6
 psycopg2-binary==2.9.3
-arrow==0.13.2
+arrow==0.15.1
 tqdm==4.31.1
 requests==2.21.0
 pytimeparse==1.1.8
