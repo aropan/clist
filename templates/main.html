@@ -26,7 +26,7 @@
   {% endif %}
   <div id="time-view-search">
     <div id="time" class="small text-muted">{{ now|timezone:timezone|format_time:"%A, %H:%M:%S%z" }}</div>
-    <div class="btn-group">
+    <div>
       <input
          id="toggle-view"
          type="checkbox"
@@ -40,12 +40,12 @@
        >
       <script>$('#toggle-view').bootstrapToggle()</script>
     </div>
-      <div id="filter" class="input-group input-group-xs">
-        <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
-        <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
-          <i class="fa fa-search"></i>
-        </span>
-      </div>
+    <div id="filter" class="input-group input-group-xs">
+      <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
+      <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
+        <i class="fa fa-search"></i>
+      </span>
+    </div>
   </div>
 </div>
 

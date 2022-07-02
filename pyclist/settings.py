@@ -120,6 +120,7 @@ MIDDLEWARE = (
 )
 
 if DEBUG:
+    DEBUG_PERMISSION_EXCLUDE_PATHS = {'static', 'imagefit'}
     MIDDLEWARE += (
         'pyclist.middleware.DebugPermissionOnlyMiddleware',
         'django_cprofile_middleware.middleware.ProfilerMiddleware',
@@ -381,7 +382,6 @@ DISABLED_COUNTRIES = {'UM'}
 if DEBUG:
     MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
-    INTERNAL_IPS = ['dev.clist.by', 'localhost', '127.0.0.1', '::1']
     DEBUG_TOOLBAR_PANELS = [
       'debug_toolbar.panels.history.HistoryPanel',
       'debug_toolbar.panels.versions.VersionsPanel',
@@ -400,7 +400,9 @@ if DEBUG:
     ]
 
     def show_toolbar_callback(request):
+        first_path = request.path.split('/')[1]
         return (
+            first_path not in DEBUG_PERMISSION_EXCLUDE_PATHS and
             not request.is_ajax() and
             'disable_djtb' not in request.GET and
             (not DEBUG or request.user.is_authenticated)

@@ -11,7 +11,7 @@ def DebugPermissionOnlyMiddleware(get_response):
 
     def middleware(request):
         first_path = request.path.split('/')[1]
-        if first_path not in ('static', 'imagefit', 'favicon.ico'):
+        if first_path not in settings.DEBUG_PERMISSION_EXCLUDE_PATHS:
             if not request.user.is_authenticated:
                 if first_path not in ('login', 'signup', 'oauth', 'calendar'):
                     return HttpResponseRedirect(reverse('auth:login') + f'?next={request.path}')
@@ -19,6 +19,12 @@ def DebugPermissionOnlyMiddleware(get_response):
                 return HttpResponseForbidden()
 
         response = get_response(request)
+        if (
+            response.status_code >= 400 and
+            (not request.user.is_authenticated or not request.user.has_perm('auth.view_debug'))
+        ):
+            return HttpResponseForbidden()
+
         return response
 
     return middleware
