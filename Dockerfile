@@ -1,14 +1,7 @@
-FROM python:3.10
+FROM python:3.10 as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-
-RUN pip install --upgrade pip
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-RUN pip install "uwsgi==2.0.20"
-RUN pip install "supervisor==4.2.4"
-RUN pip install "daphne==3.0.2"
 
 RUN apt update -y
 
@@ -35,9 +28,19 @@ RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/
 # vim
 RUN apt install -y vim
 
+# Setup python requirements
+RUN pip install "pip==21.3.1"
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 ENV APPDIR=/usr/src/clist
-# COPY . .
 WORKDIR $APPDIR
 
+FROM base as dev
+CMD python manage.py runserver 0.0.0.0:10042
+
+FROM base as prod
+RUN pip install "uwsgi==2.0.20" "supervisor==4.2.4" "daphne==3.0.2"
+COPY . $APPDIR
 COPY supervisord.conf /etc/supervisord.conf
 CMD supervisord -c /etc/supervisord.conf

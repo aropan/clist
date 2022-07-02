@@ -10,13 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
-import configparser
 import tempfile
 import warnings
-from os import environ, path
+from os import path
 
 from django.core.paginator import UnorderedObjectListWarning
 from django.utils.translation import gettext_lazy as _
+from environ import Env
 from stringcolor import cs
 
 from pyclist import conf
@@ -27,13 +27,9 @@ warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
 # Build paths inside the project like this: path.join(BASE_DIR, ...)
 BASE_DIR = path.dirname(path.dirname(path.abspath(__file__)))
 
+env = Env()
 if path.exists('/run/secrets/env'):
-    env_pasrer = configparser.ConfigParser()
-    with open('/run/secrets/env') as fo:
-        env_pasrer.read_string(f'[top]\n{fo.read()}')
-        env = env_pasrer['top']
-else:
-    env = environ
+    env.read_env('/run/secrets/env')
 
 ADMINS = conf.ADMINS
 
@@ -54,7 +50,7 @@ DEFAULT_FROM_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 if 'ALLOWED_HOSTS' in env:
-    ALLOWED_HOSTS = env['ALLOWED_HOSTS'].split()
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS').split()
 else:
     ALLOWED_HOSTS = ['clist.by']
 
@@ -64,7 +60,7 @@ SECRET_KEY = conf.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = env.get('DJANGO_ENV') == 'dev'
+DEBUG = env('DJANGO_ENV') == 'dev'
 
 # Application definition
 
@@ -177,11 +173,11 @@ CHANNEL_LAYERS = {
 DATABASES_ = {
     'postgresql': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env['POSTGRES_DB'],
-        'USER': env['POSTGRES_USER'],
-        'PASSWORD': env['POSTGRES_PASSWORD'],
-        'HOST': env['POSTGRES_HOST'],
-        'PORT': env['POSTGRES_PORT'],
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': env('POSTGRES_HOST'),
+        'PORT': env('POSTGRES_PORT'),
     },
 }
 
@@ -225,6 +221,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [path.join(BASE_DIR, 'static')]
 REPO_STATIC_ROOT = path.join(BASE_DIR, 'static/')
 STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
 
@@ -234,10 +231,6 @@ STATIC_COMPRESS_METHODS = ['gz']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = path.join(BASE_DIR, 'mediafiles')
-
-STATICFILES_DIRS = [
-    path.join(BASE_DIR, 'static'),
-]
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
 

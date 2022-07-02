@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.conf.urls import include, re_path
+from django.conf.urls.static import static as url_static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.templatetags.static import static
@@ -46,7 +47,11 @@ urlpatterns = [
 
 if settings.DEBUG:
     import debug_toolbar
-    urlpatterns = [
-        re_path(r'^__debug__/', include(debug_toolbar.urls)),
-        re_path(r'__test__/', test, name='__test__'),
-    ] + urlpatterns
+    urlpatterns = (
+        [
+            re_path(r'^__debug__/', include(debug_toolbar.urls)),
+            re_path(r'^__test__/', test, name='__test__'),
+        ]
+        + url_static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+        + urlpatterns
+    )

@@ -2,23 +2,38 @@ version: '3.8'
 
 services:
   web:
-    build: .
+    build:
+      context: .
+      target: prod
     volumes:
-      - shared_socket:/sharedsocket/
       - static_volume:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
-      - .:/usr/src/clist/
     depends_on:
       - db
       - cache
     secrets:
       - env
+    environment:
+      - DJANGO_ENV=prod
+  dev:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/usr/src/clist/
+      - ./static:/usr/src/clist/staticfiles/
+    depends_on:
+      - db
+    secrets:
+      - env
+    environment:
+      - DJANGO_ENV=dev
+      - ALLOWED_HOSTS=dev.clist.by localhost
   cache:
     image: memcached
   legacy:
     build: ./legacy
     volumes:
-      - shared_socket:/sharedsocket/
       - ./legacy:/usr/src/legacy/
     depends_on:
       - db
@@ -33,7 +48,6 @@ services:
   nginx:
     image: nginx:alpine
     volumes:
-      - shared_socket:/sharedsocket/
       - static_volume:/staticfiles/
       - media_volume:/mediafiles/
       - ./legacy:/usr/src/legacy/
@@ -59,7 +73,6 @@ secrets:
 
 volumes:
   postgres_data:
-  shared_socket:
   static_volume:
   media_volume:
   certbot_www:
