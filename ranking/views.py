@@ -734,7 +734,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         hidden_f = fk in ['languages', 'verdicts'] and (fk not in hidden_fields or fk in hidden_fields_values)
         if hidden_f or fk in [
             'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
-            'rating_change', 'raw_rating', 'advanced', 'company', 'language', 'league', 'onsite',
+            'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
             'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
         ]:
             f = map_fields_to_select.get(f, f)
@@ -786,7 +786,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         contest_fields
     )
     special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
-                      'medal']
+                      'medal', 'raw_rating']
     for k in addition_fields:
         if (
             k in fields

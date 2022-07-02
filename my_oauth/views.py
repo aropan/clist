@@ -141,7 +141,7 @@ def response(request, name):
 
 def login(request):
     redirect_url = request.GET.get('next')
-    if not redirect_url or not redirect_url.startwith('/'):
+    if not redirect_url or not redirect_url.startswith('/'):
         redirect_url = 'clist:main'
     if request.user.is_authenticated:
         return redirect(redirect_url)

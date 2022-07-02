@@ -23,10 +23,20 @@
     }
     $datas = array_merge($datas, array_slice($data, 0, 3));
 
+    $url = 'https://www.codingame.com/services/FeaturedEvent/findUpcomingAndOngoingFeaturedEvents';
+    $data = curlexec($url, '[null]', $http_header);
+    $datas = array_merge($datas, $data);
+    if (!is_array($data)) {
+        trigger_error("data = $data from $url", E_USER_WARNING);
+        return;
+    }
+
     $pids = array();
     foreach ($datas as $a) {
         if (isset($a['publicId'])) {
             $pids[] = $a['publicId'];
+        } else if (isset($a['challengePublicId'])) {
+            $pids[] = $a['challengePublicId'];
         }
     }
 
