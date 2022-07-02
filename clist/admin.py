@@ -71,7 +71,8 @@ class ContestAdmin(BaseModelAdmin):
     parse_statistic.short_description = 'Parse statistic'
 
     fieldsets = [
-        [None, {'fields': ['title', 'slug', 'title_path', 'kind', 'resource', 'host', 'url', 'standings_url']}],
+        [None, {'fields': ['title', 'slug', 'title_path', 'kind', 'resource', 'host', 'url', 'standings_url',
+                           'registration_url']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['n_statistics', 'parsed_time', 'has_hidden_results', 'calculate_time',

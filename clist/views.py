@@ -20,7 +20,7 @@ from sql_util.utils import Exists, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
-                                       get_timezone_offset, get_timezones, rating_from_probability, slug)
+                                       get_timezone_offset, get_timezones, rating_from_probability)
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
@@ -113,7 +113,6 @@ def get_view_contests(request, coder):
         group_by_resource = {}
         contests = base_contests.filter(query).order_by(order, 'title')
         contests = contests.select_related('resource')
-        contests = contests.annotate(has_statistics=Exists('statistics'))
         for contest in contests:
             contest.state = group
             if group_list:
@@ -192,7 +191,6 @@ def get_events(request):
 
     contests = Contest.objects if party_slug else Contest.visible
     contests = contests.select_related('resource')
-    contests = contests.annotate(has_statistics=Exists('statistics'))
     contests = contests.order_by('start_time', 'title')
 
     if past_action == 'hide':
@@ -219,11 +217,7 @@ def get_events(request):
                 'id': contest.pk,
                 'title': contest.title,
                 'host': contest.host,
-                'url': (
-                    reverse('ranking:standings', args=(slug(contest.title), contest.pk))
-                    if contest.has_statistics else
-                    (contest.standings_url if contest.standings_url and contest.end_time < now else contest.url)
-                ),
+                'url': contest.actual_url,
                 'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
                 'countdown': contest.next_time_to(now),
@@ -426,7 +420,7 @@ def resource(request, host, template='resource.html', extra_context=None):
 
     params = {}
 
-    contests = resource.contest_set.annotate(has_statistics=Exists('statistics'))
+    contests = resource.contest_set.all()
 
     accounts = Account.objects.filter(resource=resource)
 

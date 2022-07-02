@@ -234,6 +234,7 @@ class Contest(BaseModel):
     edit = models.CharField(max_length=100, null=True, blank=True)
     invisible = models.BooleanField(default=False, db_index=True)
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
+    registration_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
     info = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
@@ -430,6 +431,8 @@ class Contest(BaseModel):
     def actual_url(self):
         if self.n_statistics or self.info.get('problems'):
             return settings.HTTPS_HOST_ + reverse('ranking:standings', args=(slug(self.title), self.pk))
+        if self.registration_url and self.is_coming():
+            return self.registration_url
         if self.standings_url:
             return self.standings_url
         return self.url

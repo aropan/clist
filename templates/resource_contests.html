@@ -19,7 +19,7 @@
     </td>
     <td class="title">
       {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
-      <a href="{% if not contest.has_statistics %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}"{% if contest.is_over and not contest.has_statistics %} class="text-muted"{% endif %}>
+      <a href="{{ contest.actual_url }}"{% if contest.is_over and not contest.n_statistics %} class="text-muted"{% endif %}>
         {{ contest.title }}
       <a>
     </td>
