@@ -40,24 +40,24 @@ class Statistic(BaseModule):
         for r in table:
             r = r.columns[0]
             problem = {}
-            name = r.node.xpath('.//h4/text()')[0]
+            name = r.node.xpath('.//a/text()')[0]
             name = re.sub(r'\s+', ' ', name).strip()
             problem['name'] = name
             if not re.match(r'^[A-Z][0-9]*\.', name):
                 with_letter = False
 
-            href = r.node.xpath('./a/@href')
+            href = r.node.xpath('.//a[starts-with(@href,"/p/")]/@href')
             if href:
                 url = urllib.parse.urljoin(REQ.last_url, href[0])
                 problem['url'] = url
                 problem['code'] = url.strip('/').split('/')[-1]
 
-            problem['writers'] = r.node.xpath('.//a[contains(@class, "handle")]/text()')
+            problem['writers'] = r.node.xpath('.//a[contains(@class,"handle")]/text()')
             for writer in problem['writers']:
                 writers[writer] += 1
 
             tags = problem.setdefault('tags', [])
-            for tag in r.node.xpath('.//a[contains(@href, "/tags/")]/text()'):
+            for tag in r.node.xpath('.//a[contains(@href,"/tags/")]/text()'):
                 tag = re.sub('([^A-Z])([A-Z])', r'\1-\2', tag).lower()
                 tags.append(tag)
             contest_problems.append(problem)
@@ -93,28 +93,31 @@ class Statistic(BaseModule):
                     elif not k:
                         name, *infos, score = v
 
-                        row['name'] = name.value
+                        texts = name.column.node.xpath('.//a[contains(@class,"handle")]/text()')
+                        row['name'] = texts[0] if texts else name.value
                         hrefs = name.column.node.xpath('.//a[contains(@href,"/u/")]/@href')
                         if hrefs:
                             row['member'] = [h.rstrip('/').split('/')[-1] for h in hrefs]
                             row['info'] = {'is_virtual': False}
                             if len(row['member']) > 1:
-                                row['name'] = re.sub(r'\s+,', ',', row['name'])
+                                row['name'] = re.sub(r'\s+,', ',', name.value)
                                 row['team_id'] = f'{self.pk}_{rank}'
                                 row['_members'] = [{'account': m} for m in row['member']]
                         else:
                             to_get_handle = True
                             row['member'] = f'{row["name"]}, {row["place"]}, {self.start_time.year}'
                             row['info'] = {'is_virtual': True}
-                        flag = score.row.node.xpath(".//span[contains(@class, 'flag')]/@class")
-                        if flag:
-                            for f in flag[0].split():
-                                if f == 'flag-icon':
-                                    continue
-                                for p in 'flag-icon-', 'flag-':
-                                    if f.startswith(p):
-                                        row['country'] = f[len(p):]
-                                        break
+
+                        for field in v:
+                            flag = field.row.node.xpath(".//span[contains(@class,'flag')]/@class")
+                            if flag:
+                                for f in flag[0].split():
+                                    if f == 'flag-icon':
+                                        continue
+                                    for p in 'flag-icon-', 'flag-':
+                                        if f.startswith(p):
+                                            row['country'] = f[len(p):]
+                                            break
 
                         title = score.column.node.xpath('.//div[@title]/@title')[0]
                         row['solving'], penalty = title.replace(',', '').split()
@@ -123,15 +126,28 @@ class Statistic(BaseModule):
                         row['penalty'] = penalty
                         has_penalty |= bool(penalty)
 
-                        for info in infos:
-                            if 'rating' in info.attrs['class'].split():
-                                cs = info.column.node.xpath('.//*/@class')
+                        for field in v:
+                            if 'rating' in field.attrs.get('class', '').split():
+                                cs = field.column.node.xpath('.//*/@class')
                                 if cs:
                                     cs = cs[0].split()
                                     if 'fa-angle-double-up' in cs or 'font-green' in cs:
-                                        row['rating_change'] = int(info.value)
+                                        row['rating_change'] = int(field.value)
+                                        break
                                     if 'fa-angle-double-down' in cs or 'text-muted' in cs:
-                                        row['rating_change'] = -int(info.value)
+                                        row['rating_change'] = -int(field.value)
+                                        break
+                            trending = field.column.node.xpath('.//img[contains(@src,"/trending-")]/@src')
+                            if trending:
+                                value = field.value.split()[-1]
+                                if '-up-' in trending[0]:
+                                    row['rating_change'] = int(value)
+                                elif '-down-' in trending[0]:
+                                    row['rating_change'] = -int(value)
+                                else:
+                                    raise ExceptionParseStandings(f'Unknown trending = {trending[0]}')
+                                break
+
                     else:
                         letter = k.rsplit(' ', 1)[0].strip()
                         if letter not in problems_info:
@@ -196,6 +212,7 @@ class Statistic(BaseModule):
                                 if (
                                     v.column.node.xpath('.//a/div/*[contains(@class,"fa fa-star")]')
                                     or v.column.node.xpath('.//a/div/img[contains(@src,"checkmark-done-sharp")]')
+                                    or v.column.node.xpath('.//a/div/img[contains(@src,"/star.svg")]')
                                 ):
                                     p['first_ac'] = True
                         pind += 1
@@ -218,7 +235,7 @@ class Statistic(BaseModule):
                         continue
                     results[row['member']] = row
             n_page += 1
-            match = re.search(f'<a[^>]*href="(?P<href>[^"]*standings[^"]*)"[^>]*>{n_page}</a>', page)
+            match = re.search(rf'<a[^>]*href="(?P<href>[^"]*standings[^"]*|\?[^"]*)"[^>]*>{n_page}</a>', page)
             next_url = urllib.parse.urljoin(next_url, match.group('href')) if match else None
 
         if not has_penalty:
