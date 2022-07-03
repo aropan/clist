@@ -11,7 +11,6 @@ from logging import getLogger
 from random import shuffle
 
 import arrow
-from utils.attrdict import AttrDict
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -29,6 +28,7 @@ from ranking.management.commands.countrier import Countrier
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.models import Account, Module, Stage, Statistics
+from utils.attrdict import AttrDict
 
 
 class Command(BaseCommand):
@@ -446,7 +446,9 @@ class Command(BaseCommand):
                                     return
 
                                 nonlocal n_upd_account_time
-                                no_rating = with_stats and 'new_rating' not in stats and 'rating_change' not in stats
+                                no_rating = with_stats and (
+                                    ('new_rating' in stats) + ('rating_change' in stats) + ('old_rating' in stats) < 2
+                                )
 
                                 updated_delta = resource_statistics.get('account_updated_delta', {'days': 1})
                                 updated = now + timedelta(**updated_delta)

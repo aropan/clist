@@ -40,7 +40,11 @@ class Statistic(BaseModule):
         for r in table:
             r = r.columns[0]
             problem = {}
-            name = r.node.xpath('.//a/text()')[0]
+
+            name = r.node.xpath('.//a/text()')
+            if not name:
+                name = r.node.xpath('.//div/text()')
+            name = name[0]
             name = re.sub(r'\s+', ' ', name).strip()
             problem['name'] = name
             if not re.match(r'^[A-Z][0-9]*\.', name):
@@ -231,9 +235,16 @@ class Statistic(BaseModule):
                     rows = [row]
 
                 for row in rows:
-                    if users and row['member'] not in users:
+                    handle = row['member']
+                    if users and handle not in users:
                         continue
-                    results[row['member']] = row
+
+                    stats = statistics.get(handle, {})
+                    for f in 'old_rating', 'rating_change', 'new_rating':
+                        if f in stats and f not in row:
+                            row[f] = stats[f]
+
+                    results[handle] = row
             n_page += 1
             match = re.search(rf'<a[^>]*href="(?P<href>[^"]*standings[^"]*|\?[^"]*)"[^>]*>{n_page}</a>', page)
             next_url = urllib.parse.urljoin(next_url, match.group('href')) if match else None
