@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  web:
+  prod:
     build:
       context: .
       target: prod
@@ -11,10 +11,10 @@ services:
     depends_on:
       - db
       - cache
+      - nginx
     secrets:
-      - env
-    environment:
-      - DJANGO_ENV=prod
+      - db_conf
+    restart: always
   dev:
     build:
       context: .
@@ -24,11 +24,9 @@ services:
       - ./static:/usr/src/clist/staticfiles/
     depends_on:
       - db
+      - nginx
     secrets:
-      - env
-    environment:
-      - DJANGO_ENV=dev
-      - ALLOWED_HOSTS=dev.clist.by localhost
+      - db_conf
   cache:
     image: memcached
   legacy:
@@ -37,14 +35,15 @@ services:
       - ./legacy:/usr/src/legacy/
     depends_on:
       - db
+      - nginx
     secrets:
-      - env
+      - db_conf
   db:
     image: postgres:14.3-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ./.env.prod
+      - ./.env.db
   nginx:
     image: nginx:alpine
     volumes:
@@ -57,18 +56,17 @@ services:
     ports:
       - 80:80
       - 443:443
-    depends_on:
-      - web
-      - legacy
   certbot:
     image: certbot/certbot:latest
     volumes:
       - certbot_www:/var/www/certbot/
       - certbot_conf:/etc/letsencrypt/
+    depends_on:
+      - nginx
 
 secrets:
-  env:
-    file: ./.env.prod
+  db_conf:
+    file: ./.env.db
 
 
 volumes:

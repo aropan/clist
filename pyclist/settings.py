@@ -28,8 +28,8 @@ warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
 BASE_DIR = path.dirname(path.dirname(path.abspath(__file__)))
 
 env = Env()
-if path.exists('/run/secrets/env'):
-    env.read_env('/run/secrets/env')
+env.read_env(env('DJANGO_ENV_FILE'))
+env.read_env('/run/secrets/db_conf')
 
 ADMINS = conf.ADMINS
 
@@ -49,10 +49,7 @@ DEFAULT_FROM_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-if 'ALLOWED_HOSTS' in env:
-    ALLOWED_HOSTS = env('ALLOWED_HOSTS').split()
-else:
-    ALLOWED_HOSTS = ['clist.by']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 

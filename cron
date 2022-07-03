@@ -1,4 +1,5 @@
 PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+DJANGO_ENV_FILE=.env.prod
 
 # 7,25,42 * * * * /usr/src/legacy/update.bash >logs/update/index.html 2>&1
 

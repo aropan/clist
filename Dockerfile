@@ -30,10 +30,12 @@ WORKDIR $APPDIR
 
 
 FROM base as dev
+ENV DJANGO_ENV_FILE .env.dev
 CMD python manage.py runserver 0.0.0.0:10042
 
 
 FROM base as prod
+ENV DJANGO_ENV_FILE .env.prod
 RUN apt install -y cron
 # Copy hello-cron file to the cron.d directory
 COPY cron /etc/cron.d/clist

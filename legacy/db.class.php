@@ -4,12 +4,12 @@
     {
         function __construct()
         {
-            $env = parse_ini_file("/run/secrets/env");
-            $this->host = $env['POSTGRES_HOST'];
-            $this->dbname = $env['POSTGRES_DB'];
-            $this->port = $env['POSTGRES_PORT'];
-            $this->username = $env['POSTGRES_USER'];
-            $this->password = $env['POSTGRES_PASSWORD'];
+            $db_conf = parse_ini_file("/run/secrets/db_conf");
+            $this->host = $db_conf['POSTGRES_HOST'];
+            $this->dbname = $db_conf['POSTGRES_DB'];
+            $this->port = $db_conf['POSTGRES_PORT'];
+            $this->username = $db_conf['POSTGRES_USER'];
+            $this->password = $db_conf['POSTGRES_PASSWORD'];
 
             $this->link = pg_connect("host={$this->host} port={$this->port} user={$this->username} password={$this->password} dbname={$this->dbname} options='--client_encoding=UTF8'");
 
