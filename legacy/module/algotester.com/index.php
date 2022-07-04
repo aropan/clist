@@ -32,6 +32,11 @@
         }
     }
 
+    if (empty($tournament_ids)) {
+        trigger_error("Missing tournament ids", E_USER_WARNING);
+        return;
+    }
+
     $ids = range(1, 100500);
     $n_success = 0;
     foreach ($ids as $tournament_id) {

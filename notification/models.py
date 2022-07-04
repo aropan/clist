@@ -45,6 +45,7 @@ class Notification(BaseModel):
     period = models.CharField(max_length=16, choices=PERIOD_CHOICES, null=False)
     with_updates = models.BooleanField(default=True)
     with_results = models.BooleanField(default=False)
+    with_virtual = models.BooleanField(default=False)
     last_time = models.DateTimeField(null=True, blank=True)
     secret = models.CharField(max_length=50, blank=True, null=True)
 

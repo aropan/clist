@@ -185,8 +185,8 @@
                 {% if perms.notification.view_notification %}
                   <a href="{% url 'admin:notification_notification_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
                 {% endif %}
-                {% endif %}
                 </div>
+                {% endif %}
                 <div id="notification-form"{% if not notification_form.errors %} class="collapse"{% endif %}>
                     {% crispy notification_form %}
                 </div>
@@ -194,14 +194,15 @@
             <div id="notifications" class="value">
                 {% for n in coder_notifications %}
                 <div class="notification">
-                    <span class="label label-info" data-value="method"{% if n.method in custom_categories %} title="{{ n.method }}"{% endif %} data-toggle="tooltip">
+                    <span class="label label-info" data-value="method" data-val="{{ n.method }}"{% if n.method in custom_categories %} title="{{ n.method }}"{% endif %} data-toggle="tooltip">
                         {% if n.method in custom_categories %}{{ custom_categories|get_item:n.method }}{% else %}{{ n.method }}{% endif %}</span>
                     before <span class="label label-info" data-value="before">{{ n.before }}</span> minute(s)
                     once a <span class="label label-info" data-value="period">{{ n.get_period_display|lower }}</span>
-                    {% if n.with_updates or n.with_results %}
+                    {% if n.with_updates or n.with_results or n.with_virtual %}
                     with
                     {% if n.with_updates %}<span class="label label-info" data-value="updates">updates</span>{% endif %}
                     {% if n.with_results %}<span class="label label-info" data-value="results">results</span>{% endif %}
+                    {% if n.with_virtual %}<span class="label label-info" data-value="virtual">virtual</span>{% endif %}
                     {% endif %}
                     <span class="checkin">
                     {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}

@@ -7,13 +7,15 @@ from traceback import format_exc
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import Case, DateTimeField, F, Q, When
+from django.db.models.functions import Cast
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 
 from clist.models import Contest, TimingContest
 from notification.models import Notification, Task
+from utils.datetime import Epoch
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,7 @@ class Command(BaseCommand):
 
         now = timezone.now()
         if dryrun:
-            logger.debug(f'now = {now}')
+            logger.info(f'now = {now}')
 
         notifies = Notification.objects.all()
         if coders is not None:
@@ -63,9 +65,12 @@ class Command(BaseCommand):
         if not updates:
             notifies = notifies.filter(last_time__isnull=False, last_time__lte=now)
         elif dryrun:
-            logger.debug(f'updates = {updates}')
+            logger.info(f'updates = {updates}')
 
         notifies = notifies.select_related('coder')
+
+        contests = Contest.visible.annotate(duration_time=Epoch(F('end_time') - F('start_time')))
+
         for notify in tqdm(notifies.iterator()):
             try:
                 if ':' in notify.method:
@@ -76,48 +81,65 @@ class Command(BaseCommand):
 
                 before = timedelta(minutes=notify.before)
 
-                qs = Contest.visible.filter(start_time__gte=now)
+                qs = contests.filter(end_time__gte=now)
 
                 if updates and notify.last_time and notify.with_updates:
                     qs_updates = updates.filter(filt, start_time__lt=min(now, notify.last_time) + before)
                     self.process(notify, qs_updates, 'UPD')
                     qs = qs.filter(~Q(pk__in=[c.pk for c in qs_updates]))
 
-                qs = qs.filter(filt).order_by('start_time')
-                if notify.last_time:
-                    qs = qs.filter(start_time__gte=notify.last_time + before)
+                qs = qs.filter(filt)
+
+                if notify.with_virtual:
+                    one_day = timedelta(days=1)
+                    if_virtual = (~Q(duration_time=F('duration_in_secs'))
+                                  & Q(duration_time__gt=one_day.total_seconds(), start_time__lt=now))
+                    qs = qs.annotate(
+                        time=Case(
+                            When(start_time__gte=now, then=F('start_time')),
+                            When(if_virtual, then=Cast(F('end_time') - one_day + before, output_field=DateTimeField())),
+                            default=None,
+                        )
+                    )
                 else:
-                    qs = qs.filter(created__gte=now - before, end_time__gte=now)
+                    qs = qs.filter(start_time__gte=now).annotate(time=F('start_time'))
+
+                qs = qs.filter(time__isnull=False).order_by('time')
+
+                if notify.last_time:
+                    qs = qs.filter(time__gte=notify.last_time + before)
+                else:
+                    qs = qs.filter(time__gte=now + before)
 
                 first = qs.first()
                 if not first:
                     if dryrun:
-                        logger.debug(f'last_time = {notify.last_time} to none')
+                        logger.info(f'last_time = {notify.last_time} to none')
                     else:
-                        notify.last_time = None
+                        notify.last_time = now + timedelta(hours=1)
                         notify.save()
                     continue
 
-                delta = first.start_time - (now + before)
+                delta = first.time - (now + before)
                 if delta > timedelta(minutes=3):
-                    new_time = first.start_time - before - timedelta(minutes=1)
+                    new_time = first.time - before - timedelta(minutes=1)
                     if dryrun:
-                        logger.debug(f'last_time = {notify.last_time} to {new_time}')
+                        logger.info(f'last_time = {notify.last_time} to {new_time}')
                     else:
                         notify.last_time = new_time
                         notify.save()
                     continue
 
                 if notify.period == Notification.EVENT:
-                    last = first.start_time - now + timedelta(seconds=1)
+                    last = first.time - now + timedelta(seconds=1)
                 else:
                     last = before + notify.get_delta()
-                qs = qs.filter(start_time__lt=now + last)
+                qs = qs.filter(time__lt=now + last)
 
                 new_time = now + last - before
                 if dryrun:
-                    logger.debug(f'qs = {qs}')
-                    logger.debug(f'last_time = {notify.last_time} to {new_time}')
+                    logger.info(f'qs = {qs}')
+                    logger.info(f'last_time = {notify.last_time} to {new_time}')
                 else:
                     self.process(notify, qs)
                     notify.last_time = new_time

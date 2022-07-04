@@ -17,10 +17,12 @@ class NotificationForm(ModelForm):
             'period': ('Frequency of notifications'),
             'with_updates': ('Notify about updates'),
             'with_results': ('Notify about results'),
+            'with_virtual': ('Notify about end of the virtual a day before'),
         }
         labels = {
             'with_updates': 'Updates',
             'with_results': 'Results',
+            'with_virtual': 'Virtual',
         }
 
     def __init__(self, coder, *args, **kwargs):
@@ -40,6 +42,7 @@ class NotificationForm(ModelForm):
         Field('period', css_class='input-sm'),
         Field('with_updates', template='crispy_forms/boolean_field.html'),
         Field('with_results', template='crispy_forms/boolean_field.html'),
+        Field('with_virtual', template='crispy_forms/boolean_field.html'),
         Hidden('action', 'notification'),
         Hidden('pk', ''),
         FormActions(Submit('add', 'Add', css_class='btn-primary'))

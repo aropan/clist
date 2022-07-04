@@ -752,11 +752,12 @@ $(function() {
     $('.edit-notification').click(function() {
         var ntf = $(this).closest('.notification')
         ntf_form.find('[name="pk"]').val($(this).attr('data-id'))
-        ntf_form.find('[name="method"]').val(ntf.find('[data-value="method"]').text())
+        ntf_form.find('[name="method"]').val(ntf.find('[data-value="method"]').attr('data-val'))
         ntf_form.find('[name="period"]').val(ntf.find('[data-value="period"]').text())
         ntf_form.find('[name="before"]').val(ntf.find('[data-value="before"]').text())
         ntf_form.find('[name="with_updates"]').prop('checked', ntf.find('[data-value="updates"]').length)
         ntf_form.find('[name="with_results"]').prop('checked', ntf.find('[data-value="results"]').length)
+        ntf_form.find('[name="with_virtual"]').prop('checked', ntf.find('[data-value="virtual"]').length)
         ntf_form.find('[name="add"]').val('Update')
         ntf_add.remove()
         ntf_form.show(300)
