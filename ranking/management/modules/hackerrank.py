@@ -194,7 +194,7 @@ class Statistic(BaseModule):
                     continue
 
                 data = {k: v for k, v in data.items() if v is not None and (v or not isinstance(v, str))}
-                assert user == data['username']
+                assert user.lower() == data['username'].lower()
 
                 info = {}
 

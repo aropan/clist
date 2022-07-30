@@ -317,7 +317,7 @@ class Statistic(BaseModule):
         user_id = statistic.addition.get('user_id')
 
         if use_cache:
-            cache_key = f'codingame__versus_data__{user_id}'
+            cache_key = f'codingame__versus_data__{statistic.pk}'
             if cache_key in cache:
                 return True, cache.get(cache_key)
 

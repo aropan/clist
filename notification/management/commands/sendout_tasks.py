@@ -21,7 +21,7 @@ from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django_print_sql import print_sql_decorator
 from filelock import FileLock
-from telegram.error import Unauthorized
+from telegram.error import ChatMigrated, Unauthorized
 from webpush import send_user_notification
 from webpush.utils import WebPushException
 
@@ -92,6 +92,11 @@ class Command(BaseCommand):
                             delete_info = kwargs['notification'].delete()
                             logger.error(f'{str(e)}, delete info = {delete_info}')
                             return 'removed'
+                except ChatMigrated as e:
+                    new_char_id = str(e).strip().split()[-1]
+                    notification = kwargs['notification']
+                    notification.method = f'telegram:{new_char_id}'
+                    notification.save()
             elif coder.chat and coder.chat.chat_id:
                 try:
                     if not coder.settings.get('telegram', {}).get('unauthorized', False):

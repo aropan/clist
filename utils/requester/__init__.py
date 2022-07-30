@@ -411,6 +411,7 @@ class requester():
         return_url=False,
         return_last_url=False,
         return_json=False,
+        ignore_codes=None,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -471,8 +472,8 @@ class requester():
                 sleep(v_time_sleep)
             if not headers:
                 headers = {}
-            if self.ref_url and 'Referer' not in headers:
-                headers.update({"Referer": self.ref_url})
+            if self.last_url and 'Referer' not in headers:
+                headers.update({"Referer": self.last_url})
             if self.last_url:
                 prev = urllib.parse.urlparse(self.last_url)
                 curr = urllib.parse.urlparse(url)
@@ -507,27 +508,31 @@ class requester():
                     post_urlencoded if post else None,
                     timeout=time_out,
                 )
-                last_url = response.geturl() if response else url
-                if return_last_url:
-                    return last_url
-                if response.info().get("Content-Encoding", None) == "gzip":
-                    buf = BytesIO(response.read())
-                    page = GzipFile(fileobj=buf).read()
-                else:
-                    page = response.read()
-                self.time_response = datetime.utcnow() - time_start
-                if self.verify_word and self.verify_word not in page:
-                    raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
             except Exception as err:
-                self.print('[error]', str(err)[:80])
-                self.error = err
-                if self.assert_on_fail:
-                    if self.proxer:
-                        self.proxer.fail(err)
-                    raise FailOnGetResponse(err)
+                if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
+                    response = err
                 else:
-                    traceback.print_exc()
-                return
+                    self.print('[error]', str(err)[:80])
+                    self.error = err
+                    if self.assert_on_fail:
+                        if self.proxer:
+                            self.proxer.fail(err)
+                        raise FailOnGetResponse(err)
+                    else:
+                        traceback.print_exc()
+                    return
+
+            last_url = response.geturl() if response else url
+            if return_last_url:
+                return last_url
+            if response.info().get("Content-Encoding", None) == "gzip":
+                buf = BytesIO(response.read())
+                page = GzipFile(fileobj=buf).read()
+            else:
+                page = response.read()
+            self.time_response = datetime.utcnow() - time_start
+            if self.verify_word and self.verify_word not in page:
+                raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
 
             response_content_type = response.info().get('Content-Type')
 

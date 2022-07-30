@@ -406,7 +406,7 @@
         return "$scheme$user$pass$host$port$path$query$fragment";
     }
 
-    function url_merge($original, $new)
+    function url_merge($original, $new, $clear_query = false)
     {
         if (is_string($original)) {
             $original = parse_url($original);
@@ -435,7 +435,11 @@
             $new['path'] = $path . $new['path'];
         }
         $result = array_merge($original, $new);
-        $result['query'] = $qs;
+        if ($clear_query) {
+            unset($result['query']);
+        } else {
+            $result['query'] = $qs;
+        }
         foreach ($result as $k => $v) {
             if ($v === null) {
                 unset($result[$k]);

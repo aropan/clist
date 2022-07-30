@@ -121,6 +121,7 @@ class Statistic(BaseModule):
                     problem['time_in_seconds'] = penalty
                     problem['partial'] = not res['IsAccepted']
                     problem['attempts'] = res['Attempts']
+                    problem['pending'] = res['PendingAttempts']
                     if not problem['partial']:
                         solved += 1
                 r['solved'] = {'solving': solved}
@@ -137,12 +138,13 @@ class Statistic(BaseModule):
             for r in result.values():
                 for problem in r['problems'].values():
                     attempts = problem.pop('attempts')
-                    if not problem['result']:
-                        problem['result'] = f'-{attempts}'
-                    elif attempts:
-                        problem['result'] = f'+{attempts}'
+                    pending = problem.pop('pending')
+                    if problem['result']:
+                        problem['result'] = f'+{attempts}' if attempts else '+'
+                    elif pending:
+                        problem['result'] = f'?{pending}'
                     else:
-                        problem['result'] = '+'
+                        problem['result'] = f'-{attempts}'
 
         standings = {
             'result': result,

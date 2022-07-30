@@ -89,7 +89,7 @@ class Statistic(BaseModule):
             standings_url = self.STANDINGS_URL_FORMAT_.format(key=key)
             page = REQ.get(standings_url)
             for regex in (
-                'window.csrfToken="([^"]*)",',
+                r'window.csrfToken\s*=\s*"([^"]*)"',
                 '<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"',
             ):
                 match = re.search(regex, page)
@@ -159,7 +159,10 @@ class Statistic(BaseModule):
 
                             if code not in problems_data:
                                 problem_url = self.API_PROBLEM_URL_FORMAT_.format(key='PRACTICE', code=code)
-                                problem_data = REQ.get(problem_url, headers=headers, return_json=True)
+                                problem_data = REQ.get(problem_url,
+                                                       headers=headers,
+                                                       return_json=True,
+                                                       ignore_codes={404})
 
                                 if problem_data.get('status') == 'error':
                                     problem_info['url'] = self.CONTEST_PROBLEM_URL_FORMAT_.format(key=key, code=code)

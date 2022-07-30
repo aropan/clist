@@ -409,6 +409,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         statistics
         .annotate(date=F('contest__end_time'))
         .annotate(name=F('contest__title'))
+        .annotate(key=F('contest__key'))
         .annotate(kind=F('contest__kind'))
         .annotate(resource=F('contest__resource'))
         .annotate(score=F('solving'))
@@ -429,11 +430,11 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField()))
         .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField()))
         .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0))
-        .filter(new_rating__isnull=False)
+        .filter(Q(new_rating__isnull=False) | Q(addition___rating_data__isnull=False))
     )
 
     qs_values = (
-        'cid', 'sid', 'name', 'kind', 'date',
+        'cid', 'sid', 'name', 'key', 'kind', 'date',
         'new_rating', 'old_rating', 'rating_change',
         'place', 'score', 'solved',
         'problems', 'division', 'addition___rating_data',

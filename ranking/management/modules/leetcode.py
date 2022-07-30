@@ -199,7 +199,7 @@ class Statistic(BaseModule):
                         hidden_fields |= set(row.keys())
                         if statistics and handle in statistics:
                             stat = statistics[handle]
-                            for k in ('rating_change', 'new_rating'):
+                            for k in ('rating_change', 'new_rating', 'raw_rating'):
                                 if k in stat:
                                     r[k] = stat[k]
                         n_added += 1

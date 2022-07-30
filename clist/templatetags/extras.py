@@ -211,7 +211,7 @@ def get_api_formats():
 
 @register.filter
 def md_escape(value, clear=False):
-    return re.sub(r'([*_`\[])', '' if clear else r'\\\1', value)
+    return re.sub(r'([*_`\[\]])', '' if clear else r'\\\1', value)
 
 
 @register.filter
@@ -635,6 +635,12 @@ def concat(a, b):
 def to_template_value(value):
     if isinstance(value, bool):
         return f'<i class="fas fa-{"check" if value else "times"}"></i>'
+    if isinstance(value, float):
+        value_str = str(value)
+        if '.' in value_str:
+            length = len(value_str.split('.')[-1])
+            if length > 3:
+                return f'<span title="{value}" data-toggle="tooltip">{value:.3f}</span>'
     return value
 
 

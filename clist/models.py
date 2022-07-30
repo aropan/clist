@@ -281,7 +281,11 @@ class Contest(BaseModel):
 
         if self.is_rated is None:
             fields = self.info.get('fields', [])
-            is_rated = self.related_id is None and ('new_rating' in fields or 'rating_change' in fields)
+            is_rated = self.related_id is None and (
+                'new_rating' in fields or
+                'rating_change' in fields or
+                '_rating_data' in fields
+            )
             if is_rated:
                 self.is_rated = True
         if not self.is_rated and self.prev_is_rated:

@@ -4,7 +4,7 @@
     ini_set('error_reporting', E_ALL);
 //    ini_set("max_execution_time", 0);
 
-    define("DEBUG", isset($_GET['debug']) && isset($_SERVER['SHELL']) && $_SERVER['SHELL'] == '/bin/bash');
+    define("DEBUG", isset($_GET['debug']) && isset($_SERVER['argv']));
     define("CACHE", DEBUG);
     define("CACHEDIR", dirname(__FILE__) . "/cache");
 

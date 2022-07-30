@@ -41,16 +41,17 @@ class Statistic(BaseModule):
             r = r.columns[0]
             problem = {}
 
-            name = r.node.xpath('.//a/text()')
+            div = r.node.xpath('.//div')[0]
+            name = div.xpath('.//a/text()')
             if not name:
-                name = r.node.xpath('.//div/text()')
+                name = div.xpath('text()')
             name = name[0]
             name = re.sub(r'\s+', ' ', name).strip()
             problem['name'] = name
             if not re.match(r'^[A-Z][0-9]*\.', name):
                 with_letter = False
 
-            href = r.node.xpath('.//a[starts-with(@href,"/p/")]/@href')
+            href = div.xpath('.//a[starts-with(@href,"/p/")]/@href')
             if href:
                 url = urllib.parse.urljoin(REQ.last_url, href[0])
                 problem['url'] = url
@@ -123,8 +124,7 @@ class Statistic(BaseModule):
                                             row['country'] = f[len(p):]
                                             break
 
-                        title = score.column.node.xpath('.//div[@title]/@title')[0]
-                        row['solving'], penalty = title.replace(',', '').split()
+                        row['solving'], penalty = score.column.node.xpath('.//text()')
                         if penalty.isdigit():
                             penalty = int(penalty)
                         row['penalty'] = penalty

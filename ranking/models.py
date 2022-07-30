@@ -309,6 +309,7 @@ class Statistics(BaseModel):
             models.Index(fields=['place_as_int', '-solving']),
             models.Index(fields=['place_as_int', '-created']),
             models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
+            models.Index(fields=['contest', 'account']),
         ]
 
 

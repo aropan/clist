@@ -82,7 +82,7 @@ class Command(BaseCommand):
     ):
         now = timezone.now()
 
-        contests = contests.select_related('resource__module', 'timing')
+        contests = contests.select_related('resource__module')
 
         if query:
             query = eval(query, {'Q': Q, 'F': F}, {})
@@ -125,18 +125,17 @@ class Command(BaseCommand):
         if limit:
             contests = contests.order_by('-end_time')[:limit]
 
-        with transaction.atomic():
-            for c in contests:
-                module = c.resource.module
-                delay_on_success = module.delay_on_success or module.max_delay_after_end
-                if now < c.end_time:
-                    if module.long_contest_divider:
-                        delay_on_success = c.full_duration / module.long_contest_divider
-                    if module.long_contest_idle and c.full_duration < module.long_contest_idle:
-                        delay_on_success = timedelta(minutes=1)
-                    if c.end_time < now + delay_on_success:
-                        delay_on_success = c.end_time + module.min_delay_after_end - now
-                TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
+        for c in contests:
+            module = c.resource.module
+            delay_on_success = module.delay_on_success or module.max_delay_after_end
+            if now < c.end_time:
+                if module.long_contest_divider:
+                    delay_on_success = c.full_duration / module.long_contest_divider
+                if module.long_contest_idle and c.full_duration < module.long_contest_idle:
+                    delay_on_success = timedelta(minutes=1)
+                if c.end_time < now + delay_on_success:
+                    delay_on_success = c.end_time + module.min_delay_after_end - now
+            TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
 
         if random_order:
             contests = list(contests)
@@ -178,7 +177,6 @@ class Command(BaseCommand):
                 if hasattr(contest, 'stage'):
                     contest.stage.update()
                     count += 1
-                    parsed = True
                     continue
 
                 now = timezone.now()
@@ -395,11 +393,20 @@ class Command(BaseCommand):
 
                             results.append(r)
 
+                        members = [r['member'] for r in results]
+                        accounts = resource.account_set.filter(key__in=members)
+                        accounts = {a.key: a for a in accounts}
+
                         for r in tqdm(results, desc=f'update results {contest}'):
                             member = r.pop('member')
                             skip_result = r.get('_no_update_n_contests')
 
-                            account, account_created = resource.account_set.get_or_create(key=member)
+                            account_created = member not in accounts
+                            if account_created:
+                                account = Account.objects.create(resource=resource, key=member)
+                                accounts[member] = account
+                            else:
+                                account = accounts[member]
 
                             stats = (statistics_by_key or {}).get(member, {})
 
@@ -853,13 +860,19 @@ class Command(BaseCommand):
                         timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
                     if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
                         timing_delta = timing_delta or timedelta(minutes=10)
-                    if wait_rating and not has_statistics and results:
-                        timing_delta = timing_delta or timedelta(hours=2)
+                    if wait_rating and not has_statistics and results and 'days' in wait_rating:
+                        timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
                     timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
                     if timing_delta is not None:
                         self.logger.info(f'Statistic timing delta = {timing_delta}')
-                        contest.timing.statistic = timezone.now() + timing_delta
-                        contest.timing.save()
+                        next_timing_statistic = timezone.now() + timing_delta
+                        if next_timing_statistic < contest.timing.statistic:
+                            contest.timing.statistic = next_timing_statistic
+                            contest.timing.save()
+                        contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
+                    else:
+                        contest.info.pop('_timing_statistic_delta_seconds', None)
+                    contest.save()
 
                     action = standings.get('action')
                     if action is not None:
@@ -903,6 +916,13 @@ class Command(BaseCommand):
                     delay = resource.module.delay_on_error
                 if now < contest.end_time < now + delay:
                     delay = contest.end_time + resource.module.min_delay_after_end - now
+
+                if '_timing_statistic_delta_seconds' in contest.info:
+                    timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
+                    if resource.module.long_contest_divider:
+                        timing_delta /= resource.module.long_contest_divider
+                    delay = min(delay, timing_delta)
+
                 contest.timing.statistic = timezone.now() + delay
                 contest.timing.save()
             elif not no_update_results and (users is None or users):

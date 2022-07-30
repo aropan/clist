@@ -8,10 +8,10 @@ services:
     volumes:
       - static_volume:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
+      - prod_logs:/usr/src/clist/logs/
     depends_on:
       - db
       - cache
-      - nginx
     secrets:
       - db_conf
   dev:
@@ -23,7 +23,6 @@ services:
       - ./static:/usr/src/clist/staticfiles/
     depends_on:
       - db
-      - nginx
     secrets:
       - db_conf
   cache:
@@ -34,15 +33,35 @@ services:
       - ./legacy:/usr/src/legacy/
     depends_on:
       - db
-      - nginx
     secrets:
       - db_conf
+  pgadmin:
+    image: dpage/pgadmin4
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    env_file:
+      - ./.env.db
+    depends_on:
+      - db
+    ports:
+      - 5050:80
   db:
     image: postgres:14.3-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - ./.env.db
+    command: >
+      postgres
+      -c max_connections=50
+      -c shared_buffers=1GB
+      -c work_mem=20MB
+      -c maintenance_work_mem=200MB
+      -c effective_cache_size=2GB
+      -c checkpoint_timeout=30min
+      -c max_wal_size=4GB
+      -c min_wal_size=320MB
+      -c bgwriter_delay=20
   nginx:
     image: nginx:alpine
     volumes:
@@ -67,10 +86,11 @@ secrets:
   db_conf:
     file: ./.env.db
 
-
 volumes:
   postgres_data:
+  pgadmin_data:
   static_volume:
   media_volume:
+  prod_logs:
   certbot_www:
   certbot_conf:

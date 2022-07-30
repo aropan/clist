@@ -1037,7 +1037,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                                       pk=versus_statistic_id)
         versus_status, versus_data = plugin.get_versus(statistic)
         if versus_status:
-            statistics = statistics.filter(account__key__in=versus_data['stats'].keys())
+            statistics = statistics.filter(account__resource=contest.resource,
+                                           account__key__in=versus_data['stats'].keys())
             with_row_num = True
         else:
             request.logger.warning(versus_data)

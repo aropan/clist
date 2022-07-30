@@ -626,7 +626,7 @@ class Statistic(BaseModule):
                     data.pop('avatar')
                 if data.get('titlePhoto', '').endswith('/no-title.jpg'):
                     data.pop('titlePhoto')
-            data['name'] = ' '.join([data[f] for f in ['firstName', 'lastName'] if data.get(f)])
+                data['name'] = ' '.join([data[f] for f in ['firstName', 'lastName'] if data.get(f)])
             ret.append({'info': data})
             if data and data['handle'] != orig:
                 ret[-1]['rename'] = data['handle']

@@ -9,12 +9,14 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
+        if not self.standings_url:
+            raise ExceptionParseStandings('not set standings url')
+
         season = self.get_season()
 
         def standings_page(req):
             return req.get(self.standings_url)
 
-        print(self.standings_url)
         with REQ(
             with_proxy=True,
             args_proxy=dict(

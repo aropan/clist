@@ -189,6 +189,9 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
         'LOCATION': 'cache:11211',
+        'OPTIONS': {
+            'server_max_value_length': 1024 * 1024 * 10,
+        },
     }
 }
 
