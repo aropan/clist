@@ -64,6 +64,12 @@ def pass_arg(_1, _2):
 
 
 @register.filter
+def ifelse(value, default):
+    value, cond = value
+    return value if cond else default
+
+
+@register.filter
 def replace(value, new):
     value, old = value
     return value.replace(old, new)
@@ -827,15 +833,22 @@ def time_in_seconds_format(timeline, seconds, num=2):
     return ':'.join(ret)
 
 
-@register.simple_tag(takes_context=True)
-def get_country_from_account(context, account):
-    country = account.country
-    custom_countries = account.info.get('custom_countries_')
+def get_country_from(context, country, custom_countries):
     if custom_countries and context['request'].user.is_authenticated and country.code in custom_countries:
         setattr(country, 'flag_code', custom_countries[country.code])
     else:
         setattr(country, 'flag_code', country.code)
     return country
+
+
+@register.simple_tag(takes_context=True)
+def get_country_from_account(context, account):
+    return get_country_from(context, account.country, account.info.get('custom_countries_'))
+
+
+@register.simple_tag(takes_context=True)
+def get_country_from_coder(context, coder):
+    return get_country_from(context, coder.country, coder.settings.get('custom_countries'))
 
 
 @register.simple_tag

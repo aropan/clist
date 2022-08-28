@@ -92,7 +92,8 @@ def process_access_token(request, service, response):
 
     data = {}
     for data_uri in service.data_uri.split():
-        response = requests.get(data_uri % access_token, headers=headers)
+        url = data_uri % access_token
+        response = requests.get(url, headers=headers)
 
         if response.status_code != requests.codes.ok:
             raise Exception('Response status code not equal ok.')

@@ -505,7 +505,7 @@ def resource(request, host, template='resource.html', extra_context=None):
             for row in data:
                 if coloring_field:
                     if 'coloring_field' not in row or row['coloring_field'] is None:
-                        row['info'] = resource.ratings[idx]
+                        row['hex_rgb'] = '#eee'
                         continue
                     val = row['coloring_field']
                 else:
@@ -514,7 +514,7 @@ def resource(request, host, template='resource.html', extra_context=None):
                     idx += 1
                 while val < resource.ratings[idx]['low']:
                     idx -= 1
-                row['info'] = resource.ratings[idx]
+                row['hex_rgb'] = resource.ratings[idx]['hex_rgb']
     else:
         rating_chart = None
 

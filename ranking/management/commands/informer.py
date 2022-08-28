@@ -12,15 +12,15 @@ from pprint import pprint  # noqa
 
 import coloredlogs
 import humanize
-from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 
 from .parse_statistic import Command as ParserCommand
 from clist.models import Contest
-from clist.templatetags.extras import get_problem_name, get_problem_short, has_season, md_italic_escape
+from clist.templatetags.extras import get_problem_name, get_problem_short, has_season, md_escape, md_italic_escape
 from ranking.models import Statistics
 from tg.bot import Bot, telegram
+from utils.attrdict import AttrDict
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
@@ -67,7 +67,9 @@ class Command(BaseCommand):
             parser_command.parse_statistic(contest, without_contest_filter=True)
             contest = contest.first()
             resource = contest.resource
-            statistics = list(Statistics.objects.filter(contest=contest))
+            qs = Statistics.objects.filter(contest=contest)
+            qs = qs.prefetch_related('account')
+            statistics = list(qs)
 
             for p in problems_info.values():
                 if p.get('accepted') or not p.get('n_hidden'):
@@ -75,7 +77,7 @@ class Command(BaseCommand):
                 p['n_hidden'] = 0
 
             updated = False
-            has_hidden = False
+            has_hidden = contest.has_hidden_results
             numbered = 0
 
             statistics = [s for s in statistics if s.place_as_int is not None]
@@ -102,123 +104,127 @@ class Command(BaseCommand):
                     contest_problems = contest_problems['division'][division]
                 contest_problems = {get_problem_short(p): p for p in contest_problems}
 
-                message_id = None
                 key = str(stat.account.id)
-                if key in standings:
-                    problems = standings[key]['problems']
-                    message_id = standings[key].get('messageId')
+                standings_key = standings.get(key, {})
+                problems = standings_key.get('problems', {})
+                message_id = standings_key.get('messageId')
 
-                    def delete_message():
-                        nonlocal message_id
-                        if message_id:
-                            for iteration in range(1, 5):
-                                try:
-                                    bot.delete_message(chat_id=args.tid, message_id=message_id)
-                                    message_id = None
+                def delete_message():
+                    nonlocal message_id
+                    if message_id:
+                        for iteration in range(1, 5):
+                            try:
+                                bot.delete_message(chat_id=args.tid, message_id=message_id)
+                                message_id = None
+                                break
+                            except telegram.error.BadRequest as e:
+                                logger.warning(str(e))
+                                if 'Message to delete not found' in str(e):
                                     break
-                                except telegram.error.TimedOut as e:
-                                    logger.warning(str(e))
-                                    time.sleep(iteration)
-                                    continue
+                                raise e
+                            except telegram.error.TimedOut as e:
+                                logger.warning(str(e))
+                                time.sleep(iteration)
+                                continue
 
-                    p = []
-                    has_update = False
-                    has_first_ac = False
-                    has_try_first_ac = False
-                    has_new_accepted = False
-                    has_top = False
+                p = []
+                has_update = False
+                has_first_ac = False
+                has_try_first_ac = False
+                has_new_accepted = False
+                has_top = False
 
-                    for k, v in stat.addition.get('problems', {}).items():
-                        p_info = problems_info.setdefault(k, {})
-                        p_result = problems.get(k, {}).get('result')
-                        result = v['result']
+                for k, v in stat.addition.get('problems', {}).items():
+                    p_info = problems_info.setdefault(k, {})
+                    p_result = problems.get(k, {}).get('result')
+                    result = v['result']
 
-                        is_hidden = str(result).startswith('?')
-                        is_accepted = str(result).startswith('+') or v.get('binary', False)
+                    is_hidden = str(result).startswith('?')
+                    is_accepted = str(result).startswith('+') or v.get('binary', False)
+                    try:
+                        is_accepted = is_accepted or float(result) > 0 and not v.get('partial')
+                    except Exception:
+                        pass
+
+                    if is_hidden:
+                        p_info['n_hidden'] = p_info.get('n_hidden', 0) + 1
+
+                    if p_result != result or is_hidden:
+                        has_new_accepted |= is_accepted
+                        short = k
+                        contest_problem = contest_problems.get(k, {})
+                        if contest_problem and ('short' not in contest_problem or short != get_problem_short(contest_problem)):  # noqa
+                            short = get_problem_name(contest_problems[k])
+                            short = md_escape(short)
+                        if 'url' in contest_problem:
+                            short = '[%s](%s)' % (short, contest_problem['url'])
+
+                        m = '%s%s %s' % (short, ('. ' + v['name']) if 'name' in v else '', result)
+
+                        if v.get('verdict'):
+                            m += ' ' + v['verdict']
+
+                        if p_result != result:
+                            has_update = True
+                            if iteration:
+                                if p_info.get('show_hidden') == key:
+                                    delete_message()
+                                    if not is_hidden:
+                                        p_info.pop('show_hidden')
+                                if not p_info.get('accepted'):
+                                    if is_accepted:
+                                        m += ' FIRST ACCEPTED'
+                                        has_first_ac = True
+                                    elif is_hidden and not p_info.get('show_hidden'):
+                                        p_info['show_hidden'] = key
+                                        m += ' TRY FIRST AC'
+                                        has_try_first_ac = True
+                            if args.top and stat.place_as_int <= args.top:
+                                has_top = True
+                        p.append(m)
+                    if is_accepted:
+                        p_info['accepted'] = True
+                    has_hidden = has_hidden or is_hidden
+
+                prev_place = standings_key.get('place')
+                place = stat.place
+                if has_new_accepted and prev_place:
+                    place = '%s->%s' % (prev_place, place)
+                if args.numbered is not None and re.search(args.numbered, stat.account.key, re.I):
+                    numbered += 1
+                    place = '%s (%s)' % (place, numbered)
+
+                msg = '%s. _%s_' % (place, md_italic_escape(name))
+                if p:
+                    msg = '%s, %s' % (', '.join(p), msg)
+                if has_top:
+                    msg += f' TOP{args.top}'
+
+                if 'solving' not in standings_key or abs(standings_key['solving'] - stat.solving) > 1e-9:
+                    msg += ' = %d' % stat.solving
+                    if 'penalty' in stat.addition:
+                        msg += f' ({stat.addition["penalty"]})'
+
+                if has_update or has_first_ac or has_try_first_ac:
+                    updated = True
+
+                if filtered:
+                    print(stat.place, stat.solving, end=' | ')
+                    print(msg)
+                if not args.dryrun and (filtered and has_update or has_first_ac or has_try_first_ac):
+                    delete_message()
+                    for iteration in range(1, 5):
                         try:
-                            is_accepted = is_accepted or float(result) > 0 and not v.get('partial')
-                        except Exception:
-                            pass
-
-                        if is_hidden:
-                            p_info['n_hidden'] = p_info.get('n_hidden', 0) + 1
-
-                        if p_result != result or is_hidden:
-                            has_new_accepted |= is_accepted
-                            short = k
-                            if k in contest_problems and k != get_problem_short(contest_problems[k]):
-                                short = get_problem_name(contest_problems[k])
-                            m = '%s%s %s' % (short, ('. ' + v['name']) if 'name' in v else '', result)
-
-                            if v.get('verdict'):
-                                m += ' ' + v['verdict']
-
-                            if p_result != result:
-                                m = '*%s*' % m
-                                has_update = True
-                                if iteration:
-                                    if p_info.get('show_hidden') == key:
-                                        delete_message()
-                                        if not is_hidden:
-                                            p_info.pop('show_hidden')
-                                    if not p_info.get('accepted'):
-                                        if is_accepted:
-                                            m += ' FIRST ACCEPTED'
-                                            has_first_ac = True
-                                        elif is_hidden and not p_info.get('show_hidden'):
-                                            p_info['show_hidden'] = key
-                                            m += ' TRY FIRST AC'
-                                            has_try_first_ac = True
-                                if args.top and stat.place_as_int <= args.top:
-                                    has_top = True
-                            p.append(m)
-                        if is_accepted:
-                            p_info['accepted'] = True
-                        has_hidden = has_hidden or is_hidden
-
-                    prev_place = standings[key].get('place')
-                    place = stat.place
-                    if has_new_accepted and prev_place:
-                        place = '%s->%s' % (prev_place, place)
-                    if args.numbered is not None and re.search(args.numbered, stat.account.key, re.I):
-                        numbered += 1
-                        place = '%s (%s)' % (place, numbered)
-
-                    msg = '%s. _%s_' % (place, md_italic_escape(name))
-                    if p:
-                        msg = '%s, %s' % (', '.join(p), msg)
-                    if has_top:
-                        msg += f' TOP{args.top}'
-
-                    if abs(standings[key]['solving'] - stat.solving) > 1e-9:
-                        msg += ' = %d' % stat.solving
-                        if 'penalty' in stat.addition:
-                            msg += f' ({stat.addition["penalty"]})'
-
-                    if has_update or has_first_ac or has_try_first_ac:
-                        updated = True
-
-                    if filtered:
-                        print(stat.place, stat.solving, end=' | ')
-
-                    if filtered:
-                        print(msg)
-
-                    if filtered and has_update or has_first_ac or has_try_first_ac:
-                        if not args.dryrun:
-                            delete_message()
-                            for iteration in range(1, 5):
-                                try:
-                                    message = bot.send_message(msg=msg, chat_id=args.tid)
-                                    message_id = message.message_id
-                                    break
-                                except telegram.error.TimedOut as e:
-                                    logger.warning(str(e))
-                                    time.sleep(iteration * 3)
-                                    continue
-                                except telegram.error.BadRequest as e:
-                                    logger.error(str(e))
-                                    break
+                            message = bot.send_message(msg=msg, chat_id=args.tid)
+                            message_id = message.message_id
+                            break
+                        except telegram.error.TimedOut as e:
+                            logger.warning(str(e))
+                            time.sleep(iteration * 3)
+                            continue
+                        except telegram.error.BadRequest as e:
+                            logger.error(str(e))
+                            break
 
                 data = {
                     'solving': stat.solving,

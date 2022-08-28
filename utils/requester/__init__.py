@@ -10,6 +10,7 @@ import logging
 import mimetypes
 import random
 import re
+import ssl
 import string
 import traceback
 import urllib.error
@@ -375,8 +376,11 @@ class requester():
         else:
             self.cookiejar = MozillaCookieJar()
 
-        self.http_cookie_processor = urllib.request.HTTPCookieProcessor(self.cookiejar)
-        self.opener = urllib.request.build_opener(self.http_cookie_processor)
+        http_cookie_processor = urllib.request.HTTPCookieProcessor(self.cookiejar)
+        context = ssl.create_default_context()
+        context.set_ciphers('DEFAULT')
+        https_handler = urllib.request.HTTPSHandler(context=context)
+        self.opener = urllib.request.build_opener(http_cookie_processor, https_handler)
         self.proxer = None
 
     def set_proxy(self, proxy, filepath_proxies=default_filepath_proxies, **kwargs):
@@ -411,6 +415,7 @@ class requester():
         return_url=False,
         return_last_url=False,
         return_json=False,
+        force_json=False,
         ignore_codes=None,
     ):
         prefix = "local-file:"
@@ -510,6 +515,7 @@ class requester():
                 )
             except Exception as err:
                 if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
+                    force_json = False
                     response = err
                 else:
                     self.print('[error]', str(err)[:80])
@@ -593,7 +599,7 @@ class requester():
         self.response = response
         self.last_url = last_url
 
-        if return_json and response_content_type.startswith('application/json'):
+        if return_json and response_content_type.startswith('application/json') or force_json:
             page = json.loads(page)
 
         return (page, last_url) if return_url else page

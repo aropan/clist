@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.common.parsed_table import ParsedTable
 
@@ -41,7 +41,7 @@ class Statistic(BaseModule):
                         if not v.value:
                             break
                         r['place'] = v.value
-                    elif f == 'fullname':
+                    elif f.startswith('fullname'):
                         a = v.column.node.xpath('.//a')[0]
                         r['member'] = re.search('profile/(?P<key>[^/]+)', a.attrib['href']).group('key')
                         r['name'] = a.text
@@ -109,7 +109,12 @@ class Statistic(BaseModule):
         @RateLimiter(max_calls=5, period=1)
         def fetch_profile(handle):
             url = resource.profile_url.format(account=handle)
-            page = REQ.get(url)
+            try:
+                page = REQ.get(url)
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return None
+                raise e
 
             ret = {}
             match = re.search('<img[^>]*src="(?P<avatar>[^"]*)"[^>]*id="avatar"', page)

@@ -24,6 +24,11 @@
 
     foreach ($matches as $match)
     {
+        $title = trim($match['title']);
+        if (preg_match('#\bioi\b|\btraining\b.*\bcamp\b#i', $title)) {
+            continue;
+        }
+
         $date = strtotime("{$match['start_time']}, $start_year");
         $year = $mindate <= $date? $start_year : $end_year;
 
@@ -34,8 +39,6 @@
 
         $start_time = "{$match['start_time']}, $year";
         $end_time = date('M j, Y', strtotime("{$match['end_time']}, $year") + 24 * 60 * 60);
-
-        $title = trim($match['title']);
 
         $c = array(
             'start_time' => $start_time,

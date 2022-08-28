@@ -34,6 +34,7 @@ class Statistic(BaseModule):
                 REQ.submit_form(data=data, form=form)
 
     def get_standings(self, users=None, statistics=None):
+        is_final = bool(re.search(r'\bfinals?\b', self.name, re.IGNORECASE))
         page = REQ.get(self.standings_url)
         matches = re.finditer(r'\["(?P<name>[^"]*)",\[\],{"token":"(?P<token>[^"]*)"', page)
         tokens = {}
@@ -47,8 +48,10 @@ class Statistic(BaseModule):
                 'fb_api_caller_class': 'RelayModern',
                 'fb_api_req_friendly_name': name,
                 'variables': json.dumps(variables),
+                'server_timestamps': True,
                 'doc_id': self.info['_scoreboard_ids'][name],
             }
+
             ret = REQ.get(
                 self.API_GRAPH_URL_,
                 post=params,
@@ -95,7 +98,7 @@ class Statistic(BaseModule):
                 }
                 problems_info[info['code']] = info
 
-        limit = 1000
+        limit = 50
         total = scoreboard_data['data']['contest']['entrant_performance_summaries']['count']
 
         has_hidden = False
@@ -115,6 +118,9 @@ class Statistic(BaseModule):
                         'count': limit,
                         'friends_only': False,
                         'force_limited_data': False,
+                        'country_filter': None,
+                        'show_all_submissions': False,
+                        'substring_filter': '',
                     })
                     return data
 
@@ -194,13 +200,18 @@ class Statistic(BaseModule):
                                 stop = True
                                 break
 
+                        if not problems and not is_final:
+                            result.pop(handle)
+                            continue
+
         standings = {
             'result': result,
             'problems': list(problems_info.values()),
             'advance': get_advance(),
+            'has_hidden': has_hidden,
         }
 
-        if re.search(r'\bfinals?\b', self.name, re.IGNORECASE):
+        if is_final:
             if has_hidden or datetime.utcnow().replace(tzinfo=pytz.utc) < self.end_time:
                 standings['options'] = {'medals': []}
             else:

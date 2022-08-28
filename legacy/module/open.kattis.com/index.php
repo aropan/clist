@@ -16,7 +16,7 @@
                 'Past' => 'end_time'
             ) as $t => $v
         ) {
-            if (!preg_match("#<h2>$t</h2>\s*<table[^>]*>.*?</table>#s", $page, $match)) {
+            if (!preg_match("#<h2[^>]*>$t</h2>([^<]*<[^/][^>]*>)*\s*<table[^>]*>.*?</table>#s", $page, $match)) {
                 continue;
             }
             preg_match_all('#
@@ -24,6 +24,7 @@
                     <td[^>]*>\s*
                         (?:<[^>]*>\s*)+
                         <a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<title>[^<]*)</a>\s*
+                        (?:</[^>]*>\s*)+
                     </td>\s*
                     (?:<td[^>]*>[0-9:\s]+</td>\s*)??
                     <td[^>]*>(?P<duration>[^<]*)</td>\s*

@@ -302,8 +302,6 @@ def standings_charts(request, context):
 
         scores_info = {'name': name, 'place': stat.place_as_int, 'key': stat.account.key, 'times': [], 'scores': []}
         for key, info in addition.get('problems', {}).items():
-            if info.get('partial'):
-                continue
             result = info.get('result')
             if not is_solved(result):
                 continue
@@ -316,18 +314,23 @@ def standings_charts(request, context):
                     continue
                 time = time_in_seconds(stat_timeline, time)
 
+            if is_top:
+                top_time = time
+                if context.get('relative_problem_time') and 'absolute_time' in info:
+                    top_time = time_in_seconds(stat_timeline, info['absolute_time'])
+                is_binary = info.get('binary') or str(result).startswith('+')
+                if is_binary:
+                    result = full_scores.get(key, 1)
+                scores_info['times'].append(top_time)
+                scores_info['scores'].append(as_number(result))
+
+            if info.get('partial'):
+                continue
+
             problems_values[key].append(time)
             if is_my_stat:
                 my_values.setdefault('problems', {})[key] = time
 
-            if is_top:
-                if context.get('relative_problem_time') and 'absolute_time' in info:
-                    time = time_in_seconds(stat_timeline, info['absolute_time'])
-                is_binary = info.get('binary') or str(result).startswith('+')
-                if is_binary:
-                    result = full_scores.get(key, 1)
-                scores_info['times'].append(time)
-                scores_info['scores'].append(as_number(result))
         if is_top and scores_info['times']:
             top_values.append(scores_info)
 
@@ -686,7 +689,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         (per_page >= contest.n_statistics and 'team_id' in contest_fields or contest.info.get('grouped_team')) and
         not groupby
     ):
-        order.append('addition__name')
+        if 'team_id' in contest_fields:
+            order.append('addition__team_id')
+        else:
+            order.append('addition__name')
         statistics = statistics.distinct(*[f.lstrip('-') for f in order])
 
     if inplace_division and division != divisions_order[0]:

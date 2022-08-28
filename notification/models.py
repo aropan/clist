@@ -4,6 +4,8 @@ from datetime import timedelta
 
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -11,11 +13,22 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from clist.models import Contest
 from pyclist.models import BaseModel
+from ranking.models import Account
 from true_coders.models import Coder
 
 
-class Notification(BaseModel):
+class TaskNotification(BaseModel):
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
+    method = models.CharField(max_length=256, null=False)
+    enable = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+
+class Notification(TaskNotification):
 
     EVENT = 'event'
     HOUR = 'hour'
@@ -39,8 +52,6 @@ class Notification(BaseModel):
         MONTH: timedelta(days=31),
     }
 
-    coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
-    method = models.CharField(max_length=256, null=False)
     before = models.IntegerField(null=False, validators=[MinValueValidator(0), MaxValueValidator(1000000)])
     period = models.CharField(max_length=16, choices=PERIOD_CHOICES, null=False)
     with_updates = models.BooleanField(default=True)
@@ -70,18 +81,34 @@ class Notification(BaseModel):
             raise ValidationError('WebBrowser method must have Event period.')
 
 
+class Subscription(TaskNotification):
+    contest = models.ForeignKey(Contest, db_index=True, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, db_index=True, on_delete=models.CASCADE)
+
+    class Meta:
+        indexes = [models.Index(fields=['contest', 'account'])]
+        unique_together = ('coder', 'method', 'contest', 'account')
+
+
 class Task(BaseModel):
-    notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
+    notification_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    notification_object_id = models.PositiveIntegerField()
+    notification = GenericForeignKey('notification_content_type', 'notification_object_id')
+
     subject = models.CharField(max_length=4096, null=True, blank=True)
     message = models.TextField(null=True, blank=True)
     addition = models.JSONField(default=dict, blank=True)
     is_sent = models.BooleanField(default=False)
 
-    class UnsentManager(models.Manager):
+    class ObjectsManager(models.Manager):
         def get_queryset(self):
-            return super(Task.UnsentManager, self).get_queryset().filter(is_sent=False)
+            return super().get_queryset().prefetch_related('notification__coder')
 
-    objects = models.Manager()
+    class UnsentManager(ObjectsManager):
+        def get_queryset(self):
+            return super().get_queryset().filter(is_sent=False)
+
+    objects = ObjectsManager()
     unsent = UnsentManager()
 
     def __str__(self):

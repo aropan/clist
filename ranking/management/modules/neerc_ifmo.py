@@ -85,7 +85,7 @@ class Statistic(BaseModule):
                     row['name'] = v.value
                 else:
                     row[k] = v.value
-            for f in 'diploma', 'medal':
+            for f in 'diploma', 'medal', 'qual':
                 medal = row.pop(f, None) or row.pop(f.title(), None)
                 if medal:
                     if medal in ['З', 'G']:
@@ -94,6 +94,12 @@ class Statistic(BaseModule):
                         row['medal'] = 'silver'
                     elif medal in ['Б', 'B']:
                         row['medal'] = 'bronze'
+                    else:
+                        row.update({
+                            "medal": "honorable",
+                            "_honorable": medal,
+                            "_medal_title_field": "_honorable"
+                        })
                     break
             if university_regex:
                 match = re.search(university_regex, row['name'])

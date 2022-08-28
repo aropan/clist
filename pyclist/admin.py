@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection, models, transaction
@@ -53,15 +54,18 @@ def admin_register(*args, **kwargs):
         admin_class = admin.register(*args, **kwargs)(admin_class)
 
         model = next(iter(args))
-        if BaseModel in model.__bases__:
+        if any(issubclass(b, BaseModel) for b in model.__bases__):
             autocomplete_fields = getattr(admin_class, 'autocomplete_fields', None)
             if autocomplete_fields is not None:
                 autocomplete_fields = list(autocomplete_fields)
                 for field in model._meta.get_fields():
                     if field.name in autocomplete_fields:
                         continue
-                    if isinstance(field, models.fields.related.RelatedField):
-                        autocomplete_fields.append(field.name)
+                    if not isinstance(field, models.fields.related.RelatedField):
+                        continue
+                    if field.related_model is ContentType:
+                        continue
+                    autocomplete_fields.append(field.name)
                 setattr(admin_class, 'autocomplete_fields', autocomplete_fields)
 
         return admin_class

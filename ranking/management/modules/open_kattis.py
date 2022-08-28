@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import html
 import json
 import re
 from collections import OrderedDict
@@ -10,14 +11,13 @@ from urllib.parse import urljoin
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
+from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
 
 class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
-        season = self.get_season()
-
         url = self.url.split('?')[0].rstrip('/')
         standings_url = url + '/standings'
         problems_url = url + '/problems'
@@ -31,10 +31,10 @@ class Statistic(BaseModule):
             if e.code == 404:
                 return {'action': 'delete'}
 
-        regex = '<table[^>]*id="contest_problem_list"[^>]*>.*?</table>'
-        match = re.search(regex, page, re.DOTALL)
-        if match:
-            html_table = match.group(0)
+        regex = '<table[^>]*>.*?</table>'
+        entry = re.search(regex, page, re.DOTALL)
+        if entry:
+            html_table = entry.group(0)
             table = parsed_table.ParsedTable(html_table)
 
             for r in table:
@@ -48,12 +48,12 @@ class Statistic(BaseModule):
 
         page = REQ.get(standings_url)
 
-        regex = '<table[^>]*id="standings"[^>]*>.*?</table>'
-        match = re.search(regex, page, re.DOTALL)
-        html_table = match.group(0)
+        regex = '<table[^>]*class="[^"]*standings-table[^"]*"[^>]*>.*?</table>'
+        entry = re.search(regex, page, re.DOTALL)
+        html_table = entry.group(0)
         table = parsed_table.ParsedTable(html_table)
 
-        team_id = 0
+        rows = []
         for r in table:
             row = {}
             problems = row.setdefault('problems', {})
@@ -63,19 +63,24 @@ class Statistic(BaseModule):
 
             team = r.pop('Team')
             if isinstance(team, list):
+                if 'place' not in row:
+                    v, *team = team
+                    row['place'] = v.value
                 team, *more = team
                 for addition in more:
-                    classes = addition.column.node.xpath('@class')
-                    if not classes:
-                        continue
-                    classes = classes[0].split()
-                    if 'country-flag' in classes:
-                        row['country'] = str(addition.column.node.xpath('.//img/@alt')[0])
-                    elif 'university-logo' in classes:
-                        row['university'] = str(addition.column.node.xpath('.//img/@alt')[0])
-
+                    for img in addition.column.node.xpath('.//img'):
+                        alt = img.attrib.get('alt', '')
+                        if not alt:
+                            continue
+                        src = img.attrib.get('src', '')
+                        if '/countries/' in src:
+                            row['country'] = alt
+                        elif '/universities/' in src:
+                            row['university'] = alt
             if not team.value:
                 continue
+
+            row['name'] = team.value
 
             if 'Slv.' in r:
                 row['solving'] = int(r.pop('Slv.').value)
@@ -86,8 +91,6 @@ class Statistic(BaseModule):
                 row['penalty'] = int(r.pop('Time').value)
 
             for k, v in r.items():
-                if len(k) > 1:
-                    print('\n', k, v.value, standings_url, '\n')
                 if len(k) == 1:
                     if not v.value:
                         continue
@@ -102,7 +105,7 @@ class Statistic(BaseModule):
                     classes = v.column.node.xpath('@class')[0].split()
 
                     pending = 'pending' in classes
-                    first = 'solvedfirst' in classes
+                    first = 'solvedfirst' in classes or bool(v.column.node.xpath('.//i[contains(@class,"cell-first")]'))
                     solved = first or 'solved' in classes
 
                     if solved:
@@ -120,26 +123,37 @@ class Statistic(BaseModule):
                 continue
 
             urls = team.column.node.xpath('.//a/@href')
-            if not urls:
-                row['member'] = team.value + ' ' + season
-                row['name'] = team.value
-                result[row['member']] = row
-                continue
+            assert len(urls) == 1
+            url = urls[0]
+            assert url.startswith('/contests/')
+            row['_account_url'] = urljoin(standings_url, url)
+            rows.append(row)
 
-            commas = team.value.count(',')
-            members = [url.split('/')[-1] for url in urls]
-            row['name'] = re.sub(r'\s+,', ',', team.value)
-            if len(members) > 1 or commas:
-                row['_members'] = [{'account': m} for m in members]
-                team_id += 1
-                row['team_id'] = team_id
-            for member in members:
-                row['member'] = member
-                result[row['member']] = deepcopy(row)
+        with PoolExecutor(max_workers=10) as executor:
+
+            def fetch_members(row):
+                page = REQ.get(row['_account_url'])
+                entry = re.search('"team_members":(?P<members>.*),$', page, re.MULTILINE)
+                members = json.loads(entry.group('members'))
+                assert members
+
+                row['_members'] = [{'account': m.get('username'), 'name': m['name']} for m in members]
+                entry = re.search(r'"team_id":\s*(?P<team_id>[0-9]+),$', page, re.MULTILINE)
+                row['team_id'] = entry.group('team_id')
+                return members, row
+
+            for members, row in executor.map(fetch_members, rows):
+                real_members = [m for m in members if m.get('username')]
+                if real_members:
+                    members = real_members
+
+                for member in members:
+                    row['member'] = member['username']
+                    result[row['member']] = deepcopy(row)
 
         standings = {
             'result': result,
-            'url': self.standings_url,
+            'url': standings_url,
             'problems': list(problems_info.values()),
             'hidden_fields': ['university'],
         }
@@ -153,13 +167,13 @@ class Statistic(BaseModule):
 
         def parse_users(page):
             nonlocal users
-            matches = re.finditer('<a[^>]*href="/users/(?P<member>[^"/]*)"[^>]*>(?P<name>[^<]*)</a>', page)
-            for match in matches:
-                member = match.group('member')
+            entries = re.finditer('<a[^>]*href="/users/(?P<member>[^"/]*)"[^>]*>(?P<name>[^<]*)</a>', page)
+            for entry in entries:
+                member = entry.group('member')
                 if member in users:
                     continue
                 users.add(member)
-                name = match.group('name').strip()
+                name = entry.group('name').strip()
                 yield {'member': member, 'info': {'name': name}}
 
         yield from parse_users(page)
@@ -216,15 +230,21 @@ class Statistic(BaseModule):
                     ('country', r'<div[^>]*country-flag[^>]*>\s*<a[^>]*href="[^"]*/countries/(?P<val>[^"/]*)/?"'),
                     ('subdivision', r'<div[^>]*subdivision-flag[^>]*>\s*<[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),
                     ('university', r'<span[^>]*university-logo[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),
+
+                    ('country', r'<div>\s*<a[^>]*href="[^"]*/countries/(?P<val>[^"/]*)/?"'),
+                    ('subdivision', r'<div[^>]*>\s*<[^>]*>\s*<a[^>]*href="[^"]*/countries(?:/[^"/]*){,2}/?"[^>]*title="(?P<val>[^"]*)"'),  # noqa
+                    ('university', r'<div[^>]*>\s*<a[^>]*href="[^"]*/universities/[^"]*"[^>]*title="(?P<val>[^"]*)"'),
+                    ('name', r'<a[^>]*href="/users/[^"]*"[^>]*>[^<]*<span[^>]*>(?P<val>[^<]*)</span>'),
                 ):
-                    match = re.search(regex, page)
-                    if match:
-                        info[field] = match.group('val')
+                    entry = re.search(regex, page)
+                    if entry:
+                        value = html.unescape(entry.group('val'))
+                        info[field] = value
 
                 regex = '<table>.*?</table>'
-                match = re.search(regex, page, re.DOTALL)
-                if match:
-                    html_table = match.group(0)
+                entry = re.search(regex, page, re.DOTALL)
+                if entry:
+                    html_table = entry.group(0)
                     table = parsed_table.ParsedTable(html_table)
                     rows = list(table)
                     if len(rows) == 1:
@@ -235,10 +255,29 @@ class Statistic(BaseModule):
                             except ValueError:
                                 value = v.value
                             info[k.lower()] = value
+                entries = re.finditer(
+                    r'''
+                      <span[^>]*class="info_label"[^>]*>(?P<key>[^<]+)</span>\s*
+                      <span[^>]*class="important_number"[^>]*>(?P<value>[^<]+)</span>
+                    ''',
+                    page,
+                    re.VERBOSE,
+                )
+                for entry in entries:
+                    k = entry.group('key').lower()
+                    v = entry.group('value').strip()
+                    if v:
+                        info[k] = as_number(v)
 
-                match = re.search(r'''<div[^>]*class="user-img"[^>]*url\('(?P<url>[^']*)'\)''', page)
-                if match:
-                    info['avatar_url'] = urljoin(url, match.group('url'))
+                for regex in (
+                    r'''<div[^>]*class="user-img"[^>]*url\('(?P<url>[^']*)'\)''',
+                    r'<object[^>]*data="(?P<url>/images/users/[^"]*)"[^>]*>',
+                ):
+                    entry = re.search(regex, page)
+                    if entry:
+                        info['avatar_url'] = urljoin(url, entry.group('url'))
+                        break
+
                 if 'score' in info:
                     info['rating'] = int(info['score'])
                 if 'rank' in info:

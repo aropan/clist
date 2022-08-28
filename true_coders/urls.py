@@ -6,7 +6,7 @@ app_name = 'coder'
 
 urlpatterns = [
     re_path(r'^settings/$', views.settings, name='settings'),
-    re_path(r'^settings/(?P<tab>preferences|social|accounts|filters|notifications|lists|calendars)/$',
+    re_path(r'^settings/(?P<tab>preferences|social|accounts|filters|notifications|lists|calendars|subscriptions)/$',
             views.settings,
             name='settings'),
     re_path(r'^settings/notifications/unsubscribe/$', views.unsubscribe, name='unsubscribe'),

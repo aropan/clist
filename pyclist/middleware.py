@@ -2,6 +2,7 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.middleware import csrf
 from django.urls import reverse
+from django.utils.timezone import now
 
 from true_coders.models import Coder
 from utils.request_logger import RequestLogger
@@ -79,6 +80,19 @@ def SetAsCoder(get_response):
             as_coder = None
         setattr(request, 'as_coder', as_coder)
         response = get_response(request)
+        return response
+
+    return middleware
+
+
+def UpdateCoderLastActivity(get_response):
+
+    def middleware(request):
+        response = get_response(request)
+        if request.user.is_authenticated:
+            coder = request.user.coder
+            coder.last_activity = now()
+            coder.save(update_fields=['last_activity'])
         return response
 
     return middleware

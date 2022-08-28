@@ -136,10 +136,18 @@ class="
       </div>
     </{{ tag }}>
     {% endwith %}
+    {% for field in versus_data.fields %}
+    {% with value=versus_data_row|get_item:field %}
+    <{{ tag }}>{% include "field_value.html" %}</{{ tag }}>
+    {% endwith %}
+    {% endfor %}
   {% else %}
     <{{ tag }}></{{ tag }}>
     <{{ tag }}></{{ tag }}>
     <{{ tag }}></{{ tag }}>
+    {% for field in versus_data.fields %}
+    <{{ tag }}></{{ tag }}>
+    {% endfor %}
   {% endif %}
   {% endwith %}
   {% endif %}

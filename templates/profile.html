@@ -112,6 +112,13 @@ Number of competitions: {{ account.n_contests }}
         <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
       {% endif %}
     </h2>
+    {% if show_add_account_message %}
+    {% if add_account_button %}
+    <div class="text-center alert alert-warning"><b><a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key }}">Add the account</a></b> to your profile to update the rating</div>
+    {% else %}
+    <div class="text-center alert alert-info">The account rating not updated because not added to profile</div>
+    {% endif %}
+    {% endif %}
     {% for coder in account.coders.all %}
     <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
       {% if coder.user.first_name or coder.user.last_name %}
@@ -145,7 +152,7 @@ Number of competitions: {{ account.n_contests }}
   <table id="table-accounts" class="table center table-hover table-condensed">
 {% for resource in resources %}
   {% with account=resource.coder_accounts.0 %}
-  {% if account and account.rating is not None %}
+  {% if account and account.rating is not None and resource.has_rating_history %}
     <tr>
       <td>
         <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
@@ -193,7 +200,7 @@ Number of competitions: {{ account.n_contests }}
 
   {% for resource in resources %}
     {% with account=resource.coder_accounts.0 %}
-      {% if account and account.rating is None %}
+      {% if account and account.rating is None or account and not resource.has_rating_history %}
         <span class="account btn-group btn-group-sm">
           <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
             <img src="{{ resource.icon|static_resize:'32x32' }}" width="15" height="15"/>

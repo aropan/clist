@@ -6,17 +6,14 @@
 <tr{% if request.user.is_authenticated and coder.username == request.user.username %} class="info"{% endif %}>
   <td class="text-muted">{{ forloop.counter0|add:pages.current_start_index }}</td>
   <td class="username">
-    {% with country=coder.country %}
-      <div class="flag-width-fixed">
-      {% if country %}
-      {% with code=coder.settings.custom_countries|get_item:country.code|default:country.code %}
-      <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
-        <div class="flag flag-{{ code|lower }}"></div>
-      </a>
-      {% endwith %}
-      {% endif %}
-      </div>
-    {% endwith %}
+    {% get_country_from_coder coder as country %}
+    <div class="flag-width-fixed">
+    {% if country %}
+    <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
+      <div class="flag flag-{{ country.flag_code|lower }}"></div>
+    </a>
+    {% endif %}
+    </div>
 
     <span{% if coder.user.first_name or coder.user.last_name %} data-toggle="tooltip" data-title="{{ coder.user.first_name }} {{ coder.user.last_name }}"{% endif %}>
       <a href="{% url 'coder:profile' coder.username %}">{{ coder.display_name }}</a>

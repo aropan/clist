@@ -55,6 +55,14 @@ class ParsedTableCol(object):
     def colspan(self):
         return int(self.attrs.get('colspan', 1))
 
+    @property
+    def rowspan(self):
+        return int(self.attrs.get('rowspan', 1))
+
+    @property
+    def rowspaned(self):
+        return int(self.attrs.get('rowspaned', 1))
+
     def __str__(self):
         return f'attrs = {self.attrs}, value = {self.value}'
 
@@ -102,6 +110,7 @@ class ParsedTable(object):
         self.without_header = without_header
         self.strip_empty_columns = strip_empty_columns
         self.init_iter()
+        self.last_row = None
 
     def init_iter(self):
         self.n_rows = len(self.table) - 1
@@ -148,6 +157,12 @@ class ParsedTable(object):
             nxt = next(self.iter_table)
             row = ParsedTableRow(nxt)
 
+            if self.last_row is not None:
+                for index, c in enumerate(self.last_row.columns):
+                    if c.rowspaned < c.rowspan:
+                        c.attrs['rowspaned'] = str(c.rowspaned + 1)
+                        row.columns.insert(index, c)
+
             if self.with_duplicate_colspan:
                 row.columns = sum([[c] * c.colspan for c in row.columns], [])
 
@@ -164,6 +179,8 @@ class ParsedTable(object):
             if self.strip_empty_columns:
                 while len(row.columns) > len(self.header.columns) and not row.columns[-1].value:
                     row.columns.pop(-1)
+
+            self.last_row = row
 
             if len(row.columns) == len(self.header.columns):
                 break

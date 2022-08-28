@@ -2,6 +2,7 @@
 
 import html
 import json
+import math
 import re
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -55,7 +56,8 @@ class Statistic(BaseModule):
         iter_time_delta = timedelta(hours=3)
         is_running = self.start_time < now() < self.end_time + iter_time_delta or not statistics
         is_raic = bool(re.search(r'^Code.*[0-9]{4}.*\[ai\]', self.name))
-        is_round = is_raic and bool(re.search('round', self.name, re.I))
+        is_final = is_raic and bool(re.search('финал|final', self.name, re.I))
+        is_round = is_raic and (is_final or bool(re.search('раунд|round', self.name, re.I)))
 
         query_params = f'?period={period}&page_size=500&round={self.key}'
         api_standings_url = urljoin(self.url, f'/api_v2/contests/{slug}/result/{query_params}')
@@ -72,7 +74,8 @@ class Statistic(BaseModule):
                 user = row.pop('user')
                 r['member'] = user['login']
                 if user.get('cropping'):
-                    r['info'] = {'avatar_path': user['cropping']}
+                    avatar_url = urljoin(api_standings_url, user['cropping'])
+                    r['info'] = {'avatar_url': avatar_url}
                 names = [user.get(field) for field in ('first_name', 'last_name') if user.get(field)]
                 if names:
                     r['name'] = ' '.join(names)
@@ -95,9 +98,10 @@ class Statistic(BaseModule):
                         if k not in r and k in stat:
                             r[k] = stat[k]
 
+        eps = 1e-12
         battles_cache = cache.get(cache_key, set())
-        if is_running:
-            task_id = self._get_task_id(self.key)
+        task_id = self._get_task_id(self.key)
+        if is_running and task_id:
             page_size = 108
 
             def fetch_battle(page=None):
@@ -108,14 +112,12 @@ class Statistic(BaseModule):
                 return data
 
             num_workers = 10
-            eps = 1e-12
-
             with PoolExecutor(max_workers=num_workers) as executor, tqdm() as pbar:
                 futures = []
                 stop = False
                 page = 1
                 n_pages = None
-                first_created_at = None
+                last_found_created_at = None
                 while not stop and (n_pages is None or futures and page <= n_pages):
                     for _ in range(2):
                         if n_pages is not None and page + len(futures) > n_pages or len(futures) >= 2 * num_workers:
@@ -128,12 +130,15 @@ class Statistic(BaseModule):
                     found = False
                     created_at = None
                     for battle in data['results']:
-                        if created_at is None:
-                            created_at = arrow.get(battle['created_at'])
-                        if battle['id'] in battles_cache:
+                        created_at = arrow.get(battle['created_at'])
+                        created_at_timestamp = created_at.timestamp
+                        if last_found_created_at is None:
+                            last_found_created_at = created_at
+                        if not battle['is_ranked'] or battle['id'] in battles_cache or not battle['battle_results']:
                             continue
                         battles_cache.add(battle['id'])
                         found = True
+                        last_found_created_at = created_at
 
                         battle_result = battle['battle_results']
                         n_players = len(battle_result)
@@ -145,15 +150,21 @@ class Statistic(BaseModule):
                             r = result[handle]
 
                             solution = battle_result[i]['solution']
-                            r.setdefault('solution_id', -1)
-                            if solution['id'] > r['solution_id']:
+                            if 'solution_id' not in r or (
+                                solution['id'] != r['solution_id'] and created_at_timestamp > r['last_battle']
+                            ):
                                 r['solution_id'] = solution['id']
                                 r['solution_external_id'] = solution['external_id']
+                                r['last_battle'] = created_at_timestamp
+                                r['first_battle'] = created_at_timestamp
                                 r['language_id'] = solution['language']['id']
                                 r['language'] = solution['language']['name']
                                 r['games_number'] = 0
                                 r['total_scores'] = 0
                                 r['total_places'] = 0
+                            if r['solution_id'] == solution['id']:
+                                r['first_battle'] = min(r['first_battle'], created_at_timestamp)
+                                r['last_battle'] = max(r['last_battle'], created_at_timestamp)
 
                             points = 0
                             for j in range(n_players):
@@ -166,10 +177,10 @@ class Statistic(BaseModule):
                                     points += 2
                             place = n_players - points / 2
 
-                            r.setdefault('games_number', 0)
                             r.setdefault('total_games', 0)
+                            r.setdefault('games_number', r['total_games'])
 
-                            if is_round or solution['id'] == r['solution_id'] and battle['is_ranked']:
+                            if is_round or solution['id'] == r['solution_id']:
                                 r['games_number'] += 1
                                 r['total_scores'] += battle_result[i]['score']
                                 r['total_places'] += place
@@ -179,18 +190,26 @@ class Statistic(BaseModule):
                                 r.setdefault('total_points', 0)
                                 r['total_points'] += points
 
-                    if first_created_at is None:
-                        first_created_at = created_at
-                    if not found and (created_at is None or first_created_at - created_at > iter_time_delta):
+                    if not found and (created_at is None or last_found_created_at - created_at > iter_time_delta):
                         stop = True
 
                     pbar.update()
                     page += 1
             cache.set(cache_key, battles_cache, timeout=timedelta(hours=6).total_seconds())
 
-        if is_round:
+        if is_raic and task_id:
             for r in result.values():
-                r['leaderboard_points'] = round(r['solving'])
+                if not r.get('games_number'):
+                    continue
+                r['average_score'] = r['total_scores'] / r['games_number']
+                r['average_place'] = r['total_places'] / r['games_number']
+
+        if is_round and task_id:
+            for r in result.values():
+                if not math.isclose(r['solving'], r['total_points']):
+                    r['leaderboard_points'] = round(r['solving'])
+                if r.get('games_number') == r.get('total_games'):
+                    r.pop('games_number', None)
                 if not r.get('total_games'):
                     r['solving'] = 0
                 else:
@@ -207,18 +226,12 @@ class Statistic(BaseModule):
                         last_rank = rank
                     result[row['member']]['place'] = last_rank
 
-        if is_raic:
-            for r in result.values():
-                if not r.get('games_number'):
-                    continue
-                r['average_score'] = r['total_scores'] / r['games_number']
-                r['average_place'] = r['total_places'] / r['games_number']
-
         ret = {
             'url': standings_url,
             'result': result,
+            'fields_types': {'first_battle': ['timestamp'], 'last_battle': ['timestamp']},
             'hidden_fields': ['average_points', 'solution_id', 'solution_external_id', 'language_id',
-                              'total_scores', 'total_places'],
+                              'total_scores', 'total_places', 'last_battle', 'first_battle'],
             'info_fields': ['_has_versus'],
         }
 
@@ -228,11 +241,21 @@ class Statistic(BaseModule):
                 threshold = [300, 50][int(match.group('round')) - 1]
                 ret['advance'] = {'filter': [{'threshold': threshold, 'operator': 'le', 'field': 'place'}]}
 
-        if is_running and is_raic:
+        if is_raic and is_running:
             ret['timing_statistic_delta'] = timedelta(minutes=10)
 
-        if is_raic:
+        if is_raic and task_id:
             ret['_has_versus'] = {'enable': True}
+
+        if is_final and not is_running:
+            ret['options'] = {
+                'medals': [
+                    {'name': 'gold', 'count': 1},
+                    {'name': 'silver', 'count': 1},
+                    {'name': 'bronze', 'count': 1},
+                    {'name': 'honorable', 'count': 3},
+                ]
+            }
 
         return ret
 
@@ -257,6 +280,7 @@ class Statistic(BaseModule):
         index = 0
         solution_id = None
         stop = False
+        seen = set()
         while not stop and (total is None or page * page_size < total):
             page += 1
             url = f'/api_v2/battles/task/{task_id}?page={page}&page_size={page_size}&search={member}'
@@ -267,6 +291,10 @@ class Statistic(BaseModule):
             for dbattle in data['results']:
                 if not dbattle['is_ranked']:
                     continue
+                if dbattle['id'] in seen:
+                    continue
+                seen.add(dbattle['id'])
+
                 url = dbattle['visualizer_url']
                 url += f'?replay=/api_v2/battles/{dbattle["id"]}/get_result_file/'
                 players = []
@@ -321,6 +349,8 @@ class Statistic(BaseModule):
                         result = 'win' if me['position'] < opponent['position'] else 'lose'
                     game_info['result'] = result
                     stat['total'] += 1
+                    stat['total_scores'] += me['score']
+                    stat['total_deltas'] += me['score'] - opponent['score']
                     stat[result] += 1
                     stat.setdefault('games', []).append(game_info)
                     if result == 'win':
@@ -345,10 +375,19 @@ class Statistic(BaseModule):
                 )
                 my.setdefault('games', []).append(game_info)
 
+        fields = OrderedDict()
+        for r in stats.values():
+            if 'total_scores' in r:
+                r['average_score'] = r['total_scores'] / r['total']
+                r['average_delta'] = r['total_deltas'] / r['total']
+                fields['average_score'] = True
+                fields['average_delta'] = True
+
         cache_time_seconds = 300
         results = {
             'stats': stats,
             'games': {'fields': ['index', 'players', 'game_id']},
+            'fields': list(fields.keys()),
             'cache_time': (now() + timedelta(seconds=cache_time_seconds)).timestamp(),
         }
         if use_cache:

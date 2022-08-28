@@ -55,7 +55,7 @@
     {% if with_detail %}<div class="small">{% else %}<div class="small inline">:{% endif %}
     {% for member in members %}
       {% if forloop.counter0 %}|{% endif %}
-      {% if member %}
+      {% if member and member.account %}
         {% with account=preload_statistics_data.accounts|get_item:member.account %}
         <span class="{% coder_color_class resource account.info %}">
         {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}" class="coder">{% endif %}

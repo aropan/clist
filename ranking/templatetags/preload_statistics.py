@@ -13,7 +13,7 @@ def preload_statistics(statistics, resource):
     members = []
     for s in statistics:
         if '_members' in s.addition:
-            members.extend([m['account'] for m in s.addition['_members'] if m])
+            members.extend([m['account'] for m in s.addition['_members'] if m and 'account' in m])
     if members:
         qs = Account.objects.filter(resource=resource, key__in=set(members))
         ret['accounts'] = defaultdict(dict)

@@ -4,6 +4,7 @@ import json
 import logging
 import operator
 import re
+from datetime import datetime, timedelta
 
 import pytz
 from django.conf import settings as django_settings
@@ -18,6 +19,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedire
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
 from el_pagination.decorators import page_template, page_templates
@@ -32,7 +34,7 @@ from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
-from notification.models import Calendar, NotificationMessage
+from notification.models import Calendar, NotificationMessage, Subscription
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
@@ -292,6 +294,22 @@ def account(request, key, host, template='profile.html', extra_context=None):
     else:
         add_account_button = True
     context['add_account_button'] = add_account_button
+
+    wait_rating = account.resource.info.get('statistics', {}).get('wait_rating', {})
+    context['show_add_account_message'] = (
+        wait_rating.get('has_coder')
+        and account.resource.has_rating_history
+        and not account.coders.all()
+        and (
+            account.last_activity is None
+            or '_rating_time' not in account.info
+            or (
+                account.last_activity
+                - make_aware(datetime.fromtimestamp(account.info['_rating_time']))
+                > timedelta(days=wait_rating.get('days', 7))
+            )
+        )
+    )
 
     if request.user.is_authenticated and request.user.coder in account.coders.all():
         context['without_findme'] = True
@@ -648,6 +666,7 @@ def settings(request, tab=None):
             "my_lists": my_lists,
             "categories": categories,
             "calendars": coder.calendar_set.order_by('-modified'),
+            "subscriptions": coder.subscription_set.order_by('-modified'),
             "event_description": Calendar.EventDescription,
             "custom_categories": custom_categories,
             "coder_notifications": coder.notification_set.order_by('method'),
@@ -884,7 +903,7 @@ def change(request):
             if not value:
                 return HttpResponseBadRequest("empty calendar name")
             if name == "add-calendar" and coder.calendar_set.count() >= 50:
-                return HttpResponseBadRequest("reached the limit number of calendar")
+                return HttpResponseBadRequest("reached the limit number of calendars")
             if coder.calendar_set.filter(name=value).exclude(pk=pk):
                 return HttpResponseBadRequest("duplicate calendar name")
 
@@ -934,6 +953,26 @@ def change(request):
                 n.save()
         except Exception as e:
             return HttpResponseBadRequest(e)
+    elif name == "add-subscription":
+        if coder.subscription_set.count() >= 50:
+            return HttpResponseBadRequest("reached the limit number of subscriptions")
+        contest = get_object_or_404(Contest, pk=request.POST.get("contest"))
+        account = get_object_or_404(Account, pk=request.POST.get("account"))
+        method = request.POST.get("method")
+        categories = [k for k, v in coder.get_notifications()]
+        if method not in categories:
+            return HttpResponseBadRequest("invalid method value")
+        sub, created = Subscription.objects.get_or_create(
+            coder=coder,
+            method=method,
+            contest=contest,
+            account=account,
+        )
+        return HttpResponse("created" if created else "ok")
+    elif name == "delete-subscription":
+        pk = int(request.POST.get("id", -1))
+        sub = Subscription.objects.get(pk=pk, coder=coder)
+        sub.delete()
     elif name == "first-name":
         if not value:
             return HttpResponseBadRequest("empty first name")
@@ -1128,9 +1167,35 @@ def search(request, **kwargs):
             qs = [(c, n) for c, n in countries if name in n.lower()]
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c, 'text': n} for c, n in qs]
+    elif query == 'account-for-add-subscription':
+        contest = get_object_or_404(Contest, pk=request.GET.get('contest'))
+        qs = contest.statistics_set.select_related('account')
+        search = request.GET.get('search')
+        if search:
+            qs = qs.filter(Q(account__key__icontains=search) | Q(account__name__icontains=search))
+        qs = qs.order_by('place', '-solving')
+        qs = qs[(page - 1) * count:page * count]
+        ret = [
+            {
+                'id': s.account.id,
+                'text': f'{s.account.key}, {s.account.name}' if s.account.name else s.account.key,
+            }
+            for s in qs
+        ]
+    elif query == 'contest-for-add-subscription':
+        qs = Contest.objects.filter(n_statistics__gt=0, end_time__gte=timezone.now())
+        regex = request.GET.get('regex')
+        if regex:
+            qs = qs.filter(title__iregex=verify_regex(regex))
+        qs = qs.order_by('-end_time', 'pk')
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': c.id, 'text': c.title} for c in qs]
     elif query == 'notpast':
-        title = request.GET.get('title')
-        qs = Contest.objects.filter(title__iregex=verify_regex(title), end_time__gte=timezone.now())
+        qs = Contest.objects.filter(end_time__gte=timezone.now())
+        regex = request.GET.get('regex')
+        if regex:
+            qs = qs.filter(title__iregex=verify_regex(regex))
+        qs = qs.order_by('-end_time', 'pk')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c.id, 'text': c.title} for c in qs]
     elif query == 'party':

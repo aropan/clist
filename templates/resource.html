@@ -119,7 +119,7 @@
                         value: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}{{ r.count }}{% endfor %}],
                         barPercentage: 0.9,
                         categoryPercentage: 1.0,
-                        backgroundColor: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}'{{ r.info.hex_rgb }}'{% endfor %}],
+                        backgroundColor: [{% for r in rating.chart.data %}{% if forloop.counter0 %},{% endif %}'{{ r.hex_rgb }}'{% endfor %}],
                     }],
                 },
                 options: {
@@ -170,7 +170,7 @@
                 },
 {% if rating.account %}
 {% with coloring_field=resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'coloring_field' %}
-{% with coloring_value=rating.account.info|get_item:coloring_field|default:rating.account.rating %}
+{% with coloring_value=rating.account.info|get_item:coloring_field|pass_arg:coloring_field|ifelse:rating.account.rating %}
                 plugins: [{
                     beforeDatasetsDraw: function (chart) {
                         var ctx = chart.ctx

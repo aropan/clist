@@ -40,7 +40,7 @@
   <td>
     {% if account.rating is not None %}
     {% with coloring_field=account.resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'coloring_field' %}
-    {% with coloring_value=account.info|get_item:coloring_field|default:account.rating %}
+    {% with coloring_value=account.info|get_item:coloring_field|pass_arg:coloring_field|ifelse:account.rating %}
     <div class="{% coder_color_class account.resource coloring_value %}">
         {% coder_color_circle account.resource coloring_value %}
         {{ account.rating }}

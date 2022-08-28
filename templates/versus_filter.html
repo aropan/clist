@@ -17,7 +17,7 @@
     {% include "resource_filter.html" %}
 
     <div class="input-group input-group-sm">
-      <span class="input-group-addon">Date</span>
+      <span class="input-group-addon">{% icon_to 'date' %}</span>
       <input type="text" autocomplete="off" class="input-sm form-control" name="daterange"{% if request.GET.daterange %} value="{{ request.GET.daterange }}"{% endif %} style="width: 170px"/>
     </div>
     <script type="text/javascript">

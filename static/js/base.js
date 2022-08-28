@@ -239,3 +239,33 @@ function copyTextToClipboard(text) {
   document.execCommand('copy')
   $temp.remove()
 }
+
+function select2_ajax_conf(query, field, addition_params) {
+  return {
+    url: '/settings/search/',
+    dataType: 'json',
+    delay: 314,
+    data: function (params) {
+      var ret = {
+        query: query,
+        page: params.page || 1
+      }
+      ret[field] = params.term
+      if (addition_params !== undefined) {
+        for (var key in addition_params) {
+          ret[key] = addition_params[key].val()
+        }
+      }
+      return ret
+    },
+    processResults: function (data, params) {
+      return {
+        results: data.items,
+        pagination: {
+          more: data.more
+        }
+      }
+    },
+    cache: true,
+  }
+}

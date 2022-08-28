@@ -217,6 +217,8 @@ class Statistic(BaseModule):
                 r['submits'] = len(submissions)
             if not result:
                 raise ExceptionParseStandings('empty standings')
+            if len(result) < 3:
+                raise ExceptionParseStandings('not enough participants')
         else:  # single round match
             if not self.standings_url:
                 raise InitModuleException('Not set standings url for %s' % self.name)

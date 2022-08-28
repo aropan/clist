@@ -21,6 +21,7 @@ services:
     volumes:
       - .:/usr/src/clist/
       - ./static:/usr/src/clist/staticfiles/
+      - media_volume:/usr/src/clist/mediafiles/
     depends_on:
       - db
     secrets:

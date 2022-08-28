@@ -6,6 +6,7 @@ import operator
 import re
 from collections import OrderedDict, defaultdict
 from datetime import timedelta
+from functools import lru_cache
 from html import unescape
 from logging import getLogger
 from random import shuffle
@@ -175,7 +176,7 @@ class Command(BaseCommand):
                 r = {}
 
                 if hasattr(contest, 'stage'):
-                    contest.stage.update()
+                    stages_ids.append(contest.stage.pk)
                     count += 1
                     continue
 
@@ -203,6 +204,7 @@ class Command(BaseCommand):
                         ('contest_url', 'url'),
                         ('title', 'title'),
                         ('invisible', 'invisible'),
+                        ('duration_in_secs', 'duration_in_secs'),
                     ):
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
@@ -234,14 +236,15 @@ class Command(BaseCommand):
 
                     update_writers(contest, standings.pop('writers', None))
 
-                    standings_hidden_fields = standings.pop('hidden_fields', [])
+                    standings_hidden_fields = list(standings.pop('hidden_fields', []))
+                    standings_hidden_fields_mapping = dict()
                     standings_hidden_fields_set = set(standings_hidden_fields)
 
+                    standings_problems = standings.pop('problems', None)
                     if no_update_results:
-                        contest_problems = standings.pop('problems', None)
-                        if contest_problems:
-                            contest_problems = plugin.merge_dict(contest_problems, contest.info.get('problems'))
-                            update_problems(contest, contest_problems, force=force_problems)
+                        if standings_problems:
+                            standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
+                            update_problems(contest, standings_problems, force=force_problems)
                         count += 1
                         continue
 
@@ -249,11 +252,12 @@ class Command(BaseCommand):
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics', {})
                     wait_rating = resource_statistics.get('wait_rating', {})
-                    has_hidden = False
+                    has_hidden = standings.pop('has_hidden', False)
 
                     if result or users is not None:
                         fields_set = set()
                         fields_types = defaultdict(set)
+                        fields_preceding = defaultdict(set)
                         fields = list()
                         addition_was_ordereddict = False
                         calculate_time = False
@@ -303,8 +307,10 @@ class Command(BaseCommand):
                                         continue
 
                                     p = d_problems
-                                    if 'division' in standings.get('problems', {}):
+                                    standings_p = standings_problems
+                                    if standings_p and 'division' in standings_p:
                                         p = p.setdefault(r['division'], {})
+                                        standings_p = standings_p.get(r['division'], [])
                                     p = p.setdefault(k, {})
 
                                     result_str = str(v['result'])
@@ -325,12 +331,17 @@ class Command(BaseCommand):
                                     if default_full_score and is_score:
                                         v_result = as_number(v['result'])
                                         if default_full_score == 'max':
-                                            p['max_score'] = max(p.get('max_score', 0), v_result)
+                                            p['max_score'] = max(p.get('max_score', float('-inf')), v_result)
                                         elif default_full_score == 'min':
                                             p['min_score'] = min(p.get('min_score', float('inf')), v_result)
                                         else:
                                             if 'full_score' not in p:
-                                                p['full_score'] = default_full_score
+                                                for i in standings_p:
+                                                    if get_problem_key(i) == k and 'full_score' in i:
+                                                        p['full_score'] = i['full_score']
+                                                        break
+                                                else:
+                                                    p['full_score'] = default_full_score
                                             if 'partial' not in v and p['full_score'] - v_result > 1e-9:
                                                 v['partial'] = True
                                             if not v.get('partial'):
@@ -629,7 +640,7 @@ class Command(BaseCommand):
 
                                 for k, v in problems.items():
                                     p = d_problems
-                                    if 'division' in standings.get('problems', {}):
+                                    if standings_problems and 'division' in standings_problems:
                                         p = p.setdefault(r['division'], {})
                                     p = p.setdefault(k, {})
                                     if 'first_ac' not in p:
@@ -649,17 +660,22 @@ class Command(BaseCommand):
                                 addition = type(r)()
                                 nonlocal addition_was_ordereddict
                                 addition_was_ordereddict |= isinstance(addition, OrderedDict)
+                                previous_fields = set()
                                 for k, v in r.items():
-                                    is_hidden_field = k in standings_hidden_fields_set
-                                    if k[0].isalpha() and not re.match('^[A-Z]+$', k):
+                                    orig_k = k
+                                    is_hidden_field = orig_k in standings_hidden_fields_set
+                                    if k[0].isalpha() and not re.match('^[A-Z]+([0-9]+)?$', k):
                                         k = k[0].upper() + k[1:]
                                         k = '_'.join(map(str.lower, re.findall('([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)', k)))
 
                                     if is_hidden_field:
+                                        standings_hidden_fields_mapping[orig_k] = k
                                         hidden_fields.add(k)
                                     if k not in fields_set:
                                         fields_set.add(k)
                                         fields.append(k)
+                                    fields_preceding[k] |= previous_fields
+                                    previous_fields.add(k)
 
                                     if (k in Resource.RATING_FIELDS or k == 'rating_change') and v is None:
                                         continue
@@ -680,6 +696,7 @@ class Command(BaseCommand):
                                     if f not in fields_set:
                                         fields_set.add(f)
                                         fields.append(f)
+                                    fields_preceding[f] |= previous_fields
 
                                 rating_time = int(min(contest.end_time, now).timestamp())
                                 if (
@@ -773,7 +790,9 @@ class Command(BaseCommand):
                                     values = list(sorted(values))
                                     if canonize(values) != canonize(contest.info.get(field)):
                                         contest.info[field] = values
-                                    hidden_fields.add(field)
+                                    if field not in hidden_fields:
+                                        standings_hidden_fields.append(field)
+                                        hidden_fields.add(field)
 
                             if fields_set and not addition_was_ordereddict:
                                 fields.sort()
@@ -790,10 +809,24 @@ class Command(BaseCommand):
                                 self.logger.info(f'Delete info: {delete_info}')
                                 progress_bar.set_postfix(deleted=str(delete_info))
 
+                            for f in fields_preceding.keys():
+                                fields.remove(f)
+                            while fields_preceding:
+                                k = None
+                                for f, v in fields_preceding.items():
+                                    if k is None or (len(v) < len(fields_preceding[k])):
+                                        k = f
+                                fields.append(k)
+                                fields_preceding.pop(k)
+                                for f, v in fields_preceding.items():
+                                    v.discard(k)
+
                             if canonize(fields) != canonize(contest.info.get('fields')):
                                 contest.info['fields'] = fields
 
-                            hidden_fields = list(hidden_fields)
+                            standings_hidden_fields = [standings_hidden_fields_mapping.get(f, f)
+                                                       for f in standings_hidden_fields]
+                            hidden_fields = [field for field in standings_hidden_fields if field in hidden_fields]
                             if hidden_fields and canonize(hidden_fields) != canonize(contest.info.get('hidden_fields')):
                                 contest.info['hidden_fields'] = hidden_fields
 
@@ -808,7 +841,6 @@ class Command(BaseCommand):
                             contest.n_statistics = n_statistics.pop('__total__', 0)
                             contest.parsed_time = now
 
-                            standings_problems = standings.pop('problems', None)
                             if standings_problems is not None:
                                 problems_ratings = {}
                                 problems = contest.info.get('problems', [])
@@ -850,7 +882,6 @@ class Command(BaseCommand):
                                 call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
                             progress_bar.set_postfix(n_fields=len(fields))
                     else:
-                        standings_problems = standings.pop('problems', None)
                         if standings_problems is not None and standings_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
                             update_problems(contest, problems=standings_problems, force=force_problems or not users)
@@ -936,10 +967,19 @@ class Command(BaseCommand):
                     if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
                         stages_ids.append(stage.pk)
 
-        for stage in tqdm(Stage.objects.filter(pk__in=stages_ids),
-                          total=len(stages_ids),
-                          desc='getting stages'):
-            stage.update()
+        @lru_cache(maxsize=None)
+        def update_stage(stage):
+            exclude_stages = stage.score_params.get('advances', {}).get('exclude_stages', [])
+            ret = stage.pk in stages_ids
+            for s in Stage.objects.filter(pk__in=exclude_stages):
+                if update_stage(s):
+                    ret = True
+            if ret:
+                stage.update()
+            return ret
+
+        for stage in tqdm(Stage.objects.filter(pk__in=stages_ids), total=len(stages_ids), desc='getting stages'):
+            update_stage(stage)
 
         progress_bar.close()
         self.logger.info(f'Parsed statistic: {count} of {total}')

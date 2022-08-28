@@ -26,14 +26,18 @@
 .filter-field,
 .notification,
 #lists .list,
-#calendars .calendar
+#list-accounts .account,
+#calendars .calendar,
+#subscriptions .subscription
 {
     margin-top: 7px;
 }
 
 .notification .label,
 #lists .list .label,
-#calendars .calendar .label {
+#calendars .calendar .label,
+#subscriptions .subscription .label
+{
     font-size: 100%;
 }
 

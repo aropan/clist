@@ -34,8 +34,10 @@
     LISTS_URL = "{% url 'coder:settings' 'lists' %}"
     FILTERS_URL = "{% url 'coder:settings' 'filters' %}"
     CALENDARS_URL = "{% url 'coder:settings' 'calendars' %}"
+    SUBSCRIPTIONS_URL = "{% url 'coder:settings' 'subscriptions' %}"
     RESOURCES_URL = "{% url 'clist:resources' %}"
 
+    SUBSCRIPTIONS_METHODS = [ {% for k, v in notifications %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ k }}', 'text': '{{ v }}'}{% endfor %} ]
     SHARE_TO_CATEGORY = { 'disable': 'Disable' {% for k, v in notifications %}, '{{ k }}': '{{ v }}'{% endfor %} }
 
     SELECTED_RESOURCE = {% if selected_resource %}[{'id': {{ selected_resource.pk }}, 'text': '{{ selected_resource.host }}'}]{% else %}[]{% endif %}
@@ -58,6 +60,7 @@
         <li{% if tab == 'lists' %} class="active"{% endif %}><a href="#lists-tab" data-toggle="tab">Lists</a></li>
         <li{% if tab == 'notifications' %} class="active"{% endif %}><a href="#notifications-tab" data-toggle="tab">Notifications</a></li>
         <li{% if tab == 'calendars' %} class="active"{% endif %}><a href="#calendars-tab" data-toggle="tab">Calendars</a></li>
+        <li{% if tab == 'subscriptions' %} class="active"{% endif %}><a href="#subscriptions-tab" data-toggle="tab">Subscriptions</a></li>
     </ul>
 
     <div class="tab-content">
@@ -147,7 +150,10 @@
                     {% for cid in f.categories %}
                         {% if forloop.counter0 %}|{% endif %}
                         {% for c in categories %}
-                            {% if c.id == cid %}{{ c.text }}{% endif %}
+                            {% if c.id == cid %}
+                                {{ c.text }}
+                                <a href="{% url "clist:main" %}?filter={{ c.id }}" class="btn btn-default btn-xs"><i class="fas fa-external-link-alt"></i></a>
+                            {% endif %}
                         {% endfor %}
                     {% endfor %}
                 </div>
@@ -299,12 +305,9 @@
             <div id="list-accounts">
                 {% for account in coder.account_set_order_by_pk reversed %}
                 <div class="account">
-                    <h4>
-                        <a class="delete-account btn btn-default btn-xs" data-id="{{ account.pk }}"><i class="far fa-trash-alt"></i></a>
-                        <img src="{{ account.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
-                        {% include "account_table_cell.html" with account=account addition=None resource=account.resource %}
-                        <a class="small" href="{% url 'clist:resource' account.resource.host %}">{{ account.resource.host }}</a>
-                    </h4>
+                    <a class="delete-account btn btn-default btn-xs" data-id="{{ account.pk }}"><i class="far fa-trash-alt"></i></a>
+                    {% include "account_table_cell.html" with account=account addition=None without_url_transform=True resource=account.resource with_resource=True %}
+                    <a class="text-muted small" href="{% url 'clist:resource' account.resource.host %}">{{ account.resource.host }}</a>
                 </div>
                 {% endfor %}
             </div>
@@ -341,6 +344,24 @@
                     <button href="#" data-name="edit-calendar" data-id="{{ calendar.id }}" data-value="{{ calendar.name }}" data-category="{{ calendar.category }}" data-resources="{{ calendar.resources|jsonify }}" data-descriptions="{{ calendar.descriptions|jsonify }}" class="edit-calendar btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
                     <button href="#" data-id="{{ calendar.id }}" data-action="delete-calendar" data-success="$div.remove();" class="action-calendar btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
                     <a class="copy-url-help btn btn-success btn-sm hidden" disabled>URL copied</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="subscriptions-tab" class="tab-pane{% if tab == 'subscriptions' %} active{% endif %}">
+            <div class="key">
+                <a href="#" id="add-subscription" data-name="add-subscription" class="btn btn-primary">Create</a>
+                {% if perms.notification.view_subscription %}
+                  <a href="{% url 'admin:notification_subscription_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                {% endif %}
+            </div>
+            <div id="subscriptions" class="value">
+                {% for sub in subscriptions %}
+                <div class="subscription">
+                    <a href="{{ sub.contest.actual_url }}" class="label label-info">{{ sub.contest.title }}</a>
+                    on <span class="account">{% include "account_table_cell.html" with account=sub.account resource=sub.account.resource without_country=True without_avatar=True without_circle=True %}</span>
+                    with <span class="label label-info">{{ sub.method }}</span>
+                    <button href="#" data-id="{{ sub.id }}" data-action="delete-subscription" data-success="$div.remove();" class="action-subscription btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
                 </div>
                 {% endfor %}
             </div>

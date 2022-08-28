@@ -10,7 +10,9 @@
       {% elif 'delta' in types %} class="rating-change{% if value %} rating-change-{% if value > 0 %}up{% else %}down{% endif %}{% endif %}"
       {% endif %}
     >
-      {% if field == 'rating_change' and intvalue %}
+      {% if value is None %}
+        <small class='text-muted'>&#183;</small>
+      {% elif field == 'rating_change' and intvalue %}
         <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
       {% elif 'delta' in types and value %}
         <i class="fas fa-angle-{% if value > 0 %}up{% else %}down{% endif %}"></i>{{ value|abs }}
@@ -22,6 +24,10 @@
         <span title="{{ template_value|timestamp_to_datetime|timezone:timezone|naturaltime }}" data-toggle="tooltip">
           {{ template_value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}
         <span>
+      {% elif 'dict' in types and value and 'icon' in value and 'url' in value %}
+        <span title="{{ value.url }}" data-toggle="tooltip">
+          <a href="{{ value.url }}"><img src="{{ value.icon }}" height="16px"></a>
+        </span>
       {% else %}
         {{ template_value|safe }}
       {% endif %}

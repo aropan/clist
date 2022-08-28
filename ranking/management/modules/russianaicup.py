@@ -55,6 +55,8 @@ class Statistic(BaseModule):
         return t // 1000 - Statistic.TIMESTAMP_DELTA
 
     def get_standings(self, users=None, statistics=None):
+        raise ExceptionParseStandings('Is outdated')
+
         standings_url = self.standings_url
         standings_url = re.sub('.*/(http.*)', r'\1', standings_url)
 
@@ -255,6 +257,7 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
+        raise ExceptionParseStandings('Is outdated')
 
         @RateLimiter(max_calls=10, period=1)
         def fetch_profile(user):

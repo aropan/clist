@@ -16,7 +16,7 @@ from django.conf import settings
 from django.core.mail.backends.smtp import EmailBackend
 from django.core.mail.message import EmailMultiAlternatives
 from django.core.management.base import BaseCommand
-from django.db.models import Case, PositiveSmallIntegerField, Prefetch, Q, When
+from django.db.models import Prefetch, Q
 from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django_print_sql import print_sql_decorator
@@ -46,7 +46,6 @@ class Command(BaseCommand):
         self.config = None
 
     def add_arguments(self, parser):
-        parser.add_argument('--coders', nargs='+')
         parser.add_argument('--dryrun', action='store_true', default=False)
 
     def get_message(self, method, data, **kwargs):
@@ -170,7 +169,6 @@ class Command(BaseCommand):
     @print_sql_decorator()
     def handle(self, *args, **options):
         self.load_config()
-        coders = options.get('coders')
         dryrun = options.get('dryrun')
 
         stop_email = settings.STOP_EMAIL_ and not dryrun
@@ -188,7 +186,6 @@ class Command(BaseCommand):
         logger.info(f'Tasks cleared: {delete_info}')
 
         qs = Task.unsent.all()
-        qs = qs.select_related('notification__coder')
         qs = qs.prefetch_related(
             Prefetch(
                 'notification__coder__chat_set',
@@ -196,71 +193,63 @@ class Command(BaseCommand):
                 to_attr='cchat',
             )
         )
-        if stop_email:
-            qs = qs.exclude(notification__method='email')
 
-        if coders:
-            qs = qs.filter(notification__coder__username__in=coders)
-
-        if dryrun:
-            qs = qs.order_by('modified')
-        else:
-            qs = qs.annotate(weight=Case(
-                When(notification__method='email', then=1),
-                default=0,
-                output_field=PositiveSmallIntegerField(),
-            ))
-            qs = qs.order_by('weight', 'modified')
+        qs = qs.order_by('modified')
 
         done = 0
         failed = 0
         deleted = 0
-        for task in tqdm.tqdm(qs.iterator(), 'sending'):
-            if stop_email and task.notification.method == settings.NOTIFICATION_CONF.EMAIL:
-                if clear_email_task:
-                    contests = task.addition.get('contests', [])
-                    if contests and not Contest.objects.filter(pk__in=contests, start_time__gt=now()).exists():
-                        task.delete()
-                        deleted += 1
-                continue
-
-            try:
-                notification = task.notification
-                coder = notification.coder
-                method = notification.method
-
-                status = self.send_message(
-                    coder,
-                    method,
-                    task.addition,
-                    subject=task.subject,
-                    message=task.message,
-                    notification=notification,
-                )
-                if status == 'removed':
+        for is_email_iteration in range(2):
+            for task in tqdm.tqdm(qs.iterator(), 'sending'):
+                is_email = task.notification.method == settings.NOTIFICATION_CONF.EMAIL
+                if is_email_iteration != is_email:
                     continue
 
-                task.is_sent = True
-                task.save()
-            except Exception as e:
-                logger.error('Exception sendout task:\n%s' % format_exc())
-                task.is_sent = False
-                task.save()
-                if isinstance(e, (SMTPResponseException, SMTPDataError)):
-                    stop_email = True
+                if stop_email and is_email:
+                    if clear_email_task:
+                        contests = task.addition.get('contests', [])
+                        if contests and not Contest.objects.filter(pk__in=contests, start_time__gt=now()).exists():
+                            task.delete()
+                            deleted += 1
+                    continue
 
-                    if self.n_messages_sent:
-                        self.config['stop_email']['n_failed'] = 1
-                    else:
-                        self.config['stop_email']['n_failed'] += 1
-                    if self.config['stop_email']['n_failed'] >= self.N_STOP_EMAIL_FAILED_LIMIT:
-                        clear_email_task = True
+                try:
+                    notification = task.notification
+                    coder = notification.coder
+                    method = notification.method
 
-                    self.config['stop_email']['failed_time'] = now()
+                    status = self.send_message(
+                        coder,
+                        method,
+                        task.addition,
+                        subject=task.subject,
+                        message=task.message,
+                        notification=notification,
+                    )
+                    if status == 'removed':
+                        continue
 
-            if task.is_sent:
-                done += 1
-            else:
-                failed += 1
+                    task.is_sent = True
+                    task.save()
+                except Exception as e:
+                    logger.error('Exception sendout task:\n%s' % format_exc())
+                    task.is_sent = False
+                    task.save()
+                    if isinstance(e, (SMTPResponseException, SMTPDataError)):
+                        stop_email = True
+
+                        if self.n_messages_sent:
+                            self.config['stop_email']['n_failed'] = 1
+                        else:
+                            self.config['stop_email']['n_failed'] += 1
+                        if self.config['stop_email']['n_failed'] >= self.N_STOP_EMAIL_FAILED_LIMIT:
+                            clear_email_task = True
+
+                        self.config['stop_email']['failed_time'] = now()
+
+                if task.is_sent:
+                    done += 1
+                else:
+                    failed += 1
         logger.info(f'Done: {done}, failed: {failed}, deleted: {deleted}')
         self.save_config()

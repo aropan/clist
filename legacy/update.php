@@ -340,6 +340,9 @@
         {
             $fields .= ",$field";
             $values .= ",'$value'";
+            if ($contest['host'] == 'stats.ioinformatics.org' && $field == 'duration_in_secs') {
+                continue;
+            }
             $update .= ",$field='$value'";
         }
 

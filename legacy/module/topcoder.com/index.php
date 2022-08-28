@@ -344,7 +344,7 @@
             if (!$add_from_stats) {
                 $now = time();
                 $date = strtotime($date_str);
-                if ($date < $now - 5 * 24 * 60 * 60) {
+                if ($date < $now - 21 * 24 * 60 * 60) {
                     continue;
                 }
             }

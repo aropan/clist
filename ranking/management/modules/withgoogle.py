@@ -257,7 +257,7 @@ class Statistic(BaseModule):
                         break
                     if data is None:
                         continue
-                    if not challenge.get('are_results_final'):
+                    if not are_results_final:
                         break
                     tasks = {t['id']: t for t in challenge['tasks']}
 
@@ -306,6 +306,7 @@ class Statistic(BaseModule):
             'url': standings_url,
             'problems': problems_info,
             'advance': get_advance(challenge),
+            'has_hidden': not are_results_final,
         }
 
         if self.start_time.year >= 2020 and not standings['advance']:
@@ -544,7 +545,11 @@ class Statistic(BaseModule):
         else:
             raise InitModuleException(f'url = {self.url}')
         if re.search(r'\bfinal\S*(?:\s+round)?$', self.name, re.I):
-            ret['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
+            options = ret.setdefault('options', {})
+            if ret.get('has_hidden'):
+                options['medals'] = []
+            else:
+                options['medals'] = [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]
         return ret
 
     @staticmethod

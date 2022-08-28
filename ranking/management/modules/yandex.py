@@ -64,7 +64,13 @@ class Statistic(BaseModule):
                         p = problems_info.setdefault(letter, {'short': letter})
                         names = v.header.node.xpath('.//span/@title')
                         if len(names) == 1:
-                            p['name'] = html.unescape(names[0])
+                            name = html.unescape(names[0])
+                            sample = re.search(r'\((?P<full>[0-9]+)\s*балл.{,3}\)$', name, re.I)
+                            if sample:
+                                st, _ = sample.span()
+                                name = name[:st].strip()
+                                p['full_score'] = int(sample.group('full'))
+                            p['name'] = name
 
                         p = problems.setdefault(letter, {})
                         n = v.column.node

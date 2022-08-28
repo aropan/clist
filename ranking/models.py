@@ -133,7 +133,9 @@ def download_avatar_url(account):
 
     avatar_relpath_field = 'avatar_relpath_'
     if avatar_relpath_field in account.info:
-        os.remove(os.path.join(settings.MEDIA_ROOT, account.info.pop(avatar_relpath_field)))
+        old_filepath = os.path.join(settings.MEDIA_ROOT, account.info.pop(avatar_relpath_field))
+        if os.path.exists(old_filepath):
+            os.remove(old_filepath)
 
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'wb') as fo:
@@ -356,7 +358,7 @@ class Stage(BaseModel):
     score_params = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
-        return '%s' % (self.contest)
+        return 'Stage#%d %s' % (self.pk, self.contest)
 
     def update(self):
         stage = self.contest

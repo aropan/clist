@@ -14,6 +14,8 @@
             }
         }
     }
+    $year = date('Y');
+    $urls[] = "https://icfpcontest$year.github.io/";
     $urls = array_unique($urls);
 
     $parsed_urls = [];

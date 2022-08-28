@@ -7,7 +7,6 @@ from datetime import timedelta
 from logging import getLogger
 
 import arrow
-from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Case, F, IntegerField, Q, Value, When
@@ -22,6 +21,7 @@ from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
 from ranking.models import Account
 from true_coders.models import Coder
+from utils.attrdict import AttrDict
 
 
 class Command(BaseCommand):
@@ -151,11 +151,10 @@ class Command(BaseCommand):
                             if 'delta' in data or 'delta' in (data.get('info') or {}):
                                 n_deferred += 1
                             if data.get('skip'):
-                                delta = data.get('delta')
-                                if delta:
-                                    count += 1
-                                    account.updated = now + delta
-                                    account.save()
+                                delta = data.get('delta') or timedelta(days=100)
+                                count += 1
+                                account.updated = now + delta
+                                account.save()
                                 continue
                             count += 1
                             info = data['info']
@@ -217,7 +216,7 @@ class Command(BaseCommand):
                                         info[k] = v
 
                             for k, v in account.info.items():
-                                if k not in info and Account.is_special_info_field(k):
+                                if args.all or k not in info and Account.is_special_info_field(k):
                                     info[k] = v
 
                             outdated = account.info.pop('outdated_', {})

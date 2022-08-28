@@ -14,6 +14,7 @@ import tempfile
 import warnings
 from os import path
 
+import pycountry
 from django.core.paginator import UnorderedObjectListWarning
 from django.utils.translation import gettext_lazy as _
 from environ import Env
@@ -111,6 +112,7 @@ MIDDLEWARE = (
     'django.middleware.security.SecurityMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
     'csp.middleware.CSPMiddleware',
+    'pyclist.middleware.UpdateCoderLastActivity',
     'pyclist.middleware.RequestLoggerMiddleware',
     'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',
@@ -375,8 +377,43 @@ COUNTRIES_OVERRIDE = {
     'CN': {'names': ['China', '中国', 'Китай']},
     'PL': {'names': ['Poland', 'Republic of Poland', 'Польша']},
     'RU': {'names': ['Russia', 'Россия', 'Russian Federation', 'Российская Федерация']},
+    'SU': {'names': ['Soviet Union', 'Советский Союз']},
 }
 DISABLED_COUNTRIES = {'UM'}
+
+
+ALPHA2_FIXES_MAPPING = {
+    'AIDJ': 'A0',
+    'BQAQ': 'B0',
+    'BYAA': 'B1',
+    'GEHH': 'G0',
+    'SKIN': 'S0',
+    'CSXX': 'Y0',
+}
+
+for country in pycountry.historic_countries:
+    code = ALPHA2_FIXES_MAPPING.pop(country.alpha_4, country.alpha_2)
+    assert not pycountry.countries.get(alpha_2=code)
+
+    override = COUNTRIES_OVERRIDE.setdefault(code, {})
+    assert not override.get('alpha3')
+    names = [name.strip() for name in country.name.split(',')]
+    assert names
+    if names[-1].endswith(' of'):
+        assert len(names) > 1
+        names[-1] += ' ' + names[0]
+    names = [name for name in names if not pycountry.countries.get(name=name)]
+
+    override.setdefault('names', []).extend(names)
+    if not pycountry.countries.get(alpha_3=country.alpha_3):
+        override.setdefault('alpha3', country.alpha_3)
+    if hasattr(country, 'numeric'):
+        override.setdefault('numeric', country.numeric)
+
+
+CUSTOM_COUNTRIES_ = {
+    'BY': ['BY', 'BPR'],
+}
 
 # DJANGO DEBUG TOOLBAR
 if DEBUG:
@@ -506,10 +543,6 @@ THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journa
 DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
 
-CUSTOM_COUNTRIES_ = {
-    'BY': ['BY', 'BPR'],
-}
-
 ISSUES_URL_ = 'https://github.com/aropan/clist/issues'
 NEWS_URL_ = 'https://t.me/s/clistbynews'
 DISCUSS_URL_ = 'https://t.me/clistbynews'
@@ -533,11 +566,13 @@ FONTAWESOME_ICONS_ = {
     'class': '<i class="fa-fw fas fa-user-graduate"></i>',
     'job': '<i class="fa-fw fas fa-building"></i>',
     'rating': '<i class="fa-fw fas fa-chart-line"></i>',
+    'medal': '<i class="fa-fw fas fa-medal"></i>',
     'region': '<i class="fa-fw fas fa-map-signs"></i>',
     'chat': '<i class="fa-fw fas fa-user-friends"></i>',
     'advanced': '<i class="fa-fw far fa-check-circle"></i>',
     'company': '<i class="fa-fw fas fa-building"></i>',
     'language': '<i class="fa-fw fas fa-code"></i>',
+    'languages': '<i class="fa-fw fas fa-code"></i>',
     'league': '<i class="fa-fw fas fa-chess"></i>',
     'degree': '<i class="fa-fw fas fa-user-graduate"></i>',
     'university': '<i class="fa-fw fas fa-university"></i>',
@@ -551,11 +586,13 @@ FONTAWESOME_ICONS_ = {
     'search': '<i class="fa-fw fas fa-search"></i>',
     'detail_info': '<i class="fa-fw fas fa-info"></i>',
     'short_info': '<i class="fa-fw fas fa-times"></i>',
+    'score_in_row': '<i class="fa-fw fas fa-balance-scale"></i>',
     'luck': '<i class="fa-fw fas fa-dice"></i>',
     'tag': '<i class="fa-fw fas fa-tag"></i>',
     'hide': '<i class="fa-fw far fa-eye-slash"></i>',
     'show': '<i class="fa-fw far fa-eye"></i>',
     'period': '<i class="fa-fw far fa-clock"></i>',
+    'date': '<i class="fa-fw far fa-calendar-alt"></i>',
     'n_participations': {'icon': '<i class="fa-fw fas fa-running"></i>', 'title': 'Number of participations'},
     'chart': '<i class="fa-fw fas fa-chart-bar"></i>',
     'ghost': '<i class="fs-fw fas fa-ghost"></i>',

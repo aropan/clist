@@ -235,27 +235,8 @@ $(function() {
                 width: '100%',
                 theme: 'bootstrap',
                 placeholder: 'Select contest',
-                ajax: {
-                    url: '/settings/search/',
-                    dataType: 'json',
-                    delay: 314,
-                    data: function (params) {
-                        return {
-                            query: 'notpast',
-                            title: params.term,
-                            page: params.page || 1
-                        };
-                    },
-                    processResults: function (data, params) {
-                        return {
-                            results: data.items,
-                            pagination: {
-                                more: data.more
-                            }
-                        };
-                    },
-                    cache: true
-                },
+                allowClear: true,
+                ajax: select2_ajax_conf('notpast', 'regex'),
                 minimumInputLength: 2,
             })
 
@@ -264,27 +245,8 @@ $(function() {
                 width: '100%',
                 theme: 'bootstrap',
                 placeholder: 'Select party',
-                ajax: {
-                    url: '/settings/search/',
-                    dataType: 'json',
-                    delay: 314,
-                    data: function (params) {
-                        return {
-                            query: 'party',
-                            name: params.term,
-                            page: params.page || 1
-                        };
-                    },
-                    processResults: function (data, params) {
-                        return {
-                            results: data.items,
-                            pagination: {
-                                more: data.more
-                            }
-                        };
-                    },
-                    cache: true
-                },
+                allowClear: true,
+                ajax: select2_ajax_conf('party', 'name'),
                 minimumInputLength: 2,
             })
 
@@ -419,12 +381,12 @@ $(function() {
         },
 
         activate: function () {
-            this.$input[0].focus()
             this.$input.keypress(function (e) {
                 if (e.which == 13) {
                     return false;
                 }
             })
+            this.$input.filter('[name="name"]').focus()
         },
     })
 
@@ -512,6 +474,7 @@ $(function() {
     filterEditableOptions = {
         type: 'filter',
         showbuttons: 'bottom',
+        onblur: 'ignore',
         error: function(data) {
             $('.editable-error-block')
                 .addClass('alert')
@@ -521,7 +484,13 @@ $(function() {
     }
 
     function filterEditableShown(e, editable) {
-        $('[data-id="{0}"]'.format(editable.value.id)).addClass('hidden')
+        var $button = $('[data-id="{0}"]'.format(editable.value.id))
+        $button.addClass('hidden')
+
+        $close_button = $button.parent().find('.editable-cancel')
+        $close_button.attr('disabled', 'disabled')
+        $('#filters .editable-cancel:not([disabled])').click()
+        $close_button.removeAttr('disabled')
     }
 
     function filterEditableHidden(e, editable) {
@@ -725,7 +694,7 @@ $(function() {
                     id: id,
                 },
                 success: function(data) {
-                    window.location.replace(CALENDARS_URL);
+                    window.location.replace(CALENDARS_URL)
                 },
                 error: function(response) {
                     log_ajax_error(response)
@@ -746,6 +715,89 @@ $(function() {
     $('#add-calendar').click(process_calendar)
     $('.edit-calendar').click(process_calendar)
     $('.copy-calendar-url').click(copy_calendar_url)
+
+    function process_subscription() {
+        name = $(this).attr('data-name')
+
+        var form = $(`
+          <form>
+            <div class="form-group">
+              <label class="control-label">Contest</label>
+              <select class="form-control" name="contest"></select>
+              <small class="form-text text-muted">Required field</small>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Account</label>
+              <select class="form-control" name="account"></select>
+              <small class="form-text text-muted">Will be available after selecting a contest. Required field</small>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Method</label>
+              <select class="form-control" name="method"></select>
+              <small class="form-text text-muted">Required field</small>
+            </div>
+          </form>
+        `);
+
+        var $select_contest = form.find('select[name=contest]')
+        $select_contest.select2({
+            dropdownAutoWidth : true,
+            width: '100%',
+            theme: 'bootstrap',
+            placeholder: 'Select contest',
+            ajax: select2_ajax_conf('contest-for-add-subscription', 'regex'),
+            minimumInputLength: 0,
+        })
+        $select_contest.on('change', () => {
+            $select_account.prop('disabled', false)
+            $select_account.val(null).trigger('change')
+        })
+
+        var $select_account = form.find('select[name=account]')
+        $select_account.select2({
+            dropdownAutoWidth : true,
+            width: '100%',
+            theme: 'bootstrap',
+            placeholder: 'Select account',
+            ajax: select2_ajax_conf('account-for-add-subscription', 'search', {contest: $select_contest}),
+            disabled: true,
+            minimumInputLength: 0,
+        })
+
+        var $select_method = form.find('select[name=method]')
+        $select_method.select2({
+            data: SUBSCRIPTIONS_METHODS,
+            width: '100%',
+            theme: 'bootstrap',
+            placeholder: 'Select method',
+        })
+
+        bootbox.confirm(form, function(result) {
+            if (!result) {
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: $.fn.editable.defaults.url,
+                data: {
+                    pk: $.fn.editable.defaults.pk,
+                    name: name,
+                    contest: $select_contest.val(),
+                    account: $select_account.val(),
+                    method: $select_method.val(),
+                },
+                success: function(data) {
+                    window.location.replace(SUBSCRIPTIONS_URL)
+                },
+                error: function(response) {
+                    log_ajax_error(response)
+                },
+            })
+        })
+        $('.bootbox.modal').removeAttr('tabindex')
+    }
+
+    $('#add-subscription').click(process_subscription)
 
     var ntf_form = $('#notification-form')
     var ntf_add = $('#add-notification')
@@ -797,6 +849,7 @@ $(function() {
     $('.action-filter').click(sentAction)
     $('.action-list').click(sentAction)
     $('.action-calendar').click(sentAction)
+    $('.action-subscription').click(sentAction)
 
     $("i[rel=tooltip]")
         .addClass('far fa-question-circle')
@@ -872,14 +925,13 @@ $(function() {
     }
 
     function addAccount(index, element) {
-        var h4 = $('<h4>')
+        var $block = $('<div class="account">')
             .append($('<a>', {class: 'delete-account btn btn-default btn-xs'}).attr('data-id', element.pk).append($('<i>', {class: 'far fa-trash-alt'})))
             .append($('<span>', {text: ' '}))
             .append($('<span>', {text: element.account + (element.name && element.account.indexOf(element.name) == -1? ' | ' + element.name : '')}))
             .append($('<span>', {text: ' '}))
-            .append($('<a>', {class: 'small', href: 'http://' + element.resource, text: element.resource}))
+            .append($('<a>', {class: 'text-muted small', href: 'http://' + element.resource, text: element.resource}))
 
-        var $block = $('<div class="account">').append(h4)
         $block.find('.delete-account').click(deleteAccount)
         $listAccount.prepend($block)
     }
@@ -888,8 +940,8 @@ $(function() {
     var $search = $('#add-account-search')
     $search.css({'width': '40%'});
 
-    var $button = $('#add-account')
-    var $loading = $('#add-account-loading')
+    var $add_account_button = $('#add-account')
+    var $add_account_loading = $('#add-account-loading')
 
     function update_advanced_search() {
         $advanced_search = $('#add-account-advanced-search')
@@ -906,8 +958,8 @@ $(function() {
     $search.on('keyup', update_advanced_search)
     update_advanced_search()
 
-    $button.click(function() {
-        $loading.removeClass('hidden')
+    $add_account_button.click(function() {
+        $add_account_loading.removeClass('hidden')
         $.ajax({
             type: 'POST',
             url: $.fn.editable.defaults.url,
@@ -918,14 +970,14 @@ $(function() {
                 value: $search.val(),
             },
             success: function(data) {
-                $loading.addClass('hidden')
+                $add_account_loading.addClass('hidden')
                 addAccount(-1, data)
                 $resource.val(null).trigger('change');
                 $search.val(null).trigger('change');
 
             },
             error: function(data) {
-                $loading.addClass('hidden')
+                $add_account_loading.addClass('hidden')
                 $errorAccountTab.show().html(data.responseText)
                 setTimeout(function() { $errorAccountTab.hide(500) }, 3000)
             },
@@ -935,7 +987,7 @@ $(function() {
     $search.keypress(function(e) {
         if (e.which == 13 ) {
             e.preventDefault()
-            $button.click()
+            $add_account_button.click()
         }
     })
 

@@ -16,11 +16,11 @@
 <div>
 {% if 'status' in stat and 'time' in stat and stat.result is None and stat.extra_score is None and with_detail or 'status' in stat and 'time' in stat and not small %}
   <div>{% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}</div>
-  <div>{{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}</div>
+  <div>{{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}{% if stat.attempt %} ({{ stat.attempt }}){% endif %}</div>
 {% elif 'status' in stat and 'time' not in stat or 'status' in stat and stat.result|asfloat:0 <= 0 %}
   {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
 {% elif 'time' in stat %}
-  {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}
+  {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}{% if stat.attempt %} ({{ stat.attempt }}){% endif %}
 {% elif 'upsolving' in stat %}
   {% if small and stat.verdict and not stat.binary and not stat.icon %}
   <div
