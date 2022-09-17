@@ -1,0 +1,7 @@
+{% list_data_field_to_select as list_data %}
+{% if list_data %}
+  <span id="profile_list_filter" class="hidden">
+    {% include "field_to_select.html" with field='list' data=list_data nosm=True %}
+  </span>
+  <a onclick="$('#profile_list_filter').removeClass('hidden'); $(this).remove(); $('.tooltip').tooltip('hide'); return false;">{% icon_to 'list' %}</a>
+{% endif %}

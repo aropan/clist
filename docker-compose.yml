@@ -8,7 +8,7 @@ services:
     volumes:
       - static_volume:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
-      - prod_logs:/usr/src/clist/logs/
+      - ./logs/production:/usr/src/clist/logs/
     depends_on:
       - db
       - cache
@@ -75,13 +75,16 @@ services:
     ports:
       - 80:80
       - 443:443
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
   certbot:
     image: certbot/certbot:latest
     volumes:
+      - ./logs/letsencrypt:/var/log/letsencrypt
       - certbot_www:/var/www/certbot/
       - certbot_conf:/etc/letsencrypt/
     depends_on:
       - nginx
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 1d & wait $${!}; done;'"
 
 secrets:
   db_conf:
@@ -92,6 +95,5 @@ volumes:
   pgadmin_data:
   static_volume:
   media_volume:
-  prod_logs:
   certbot_www:
   certbot_conf:

@@ -50,12 +50,14 @@ class Statistic(BaseModule):
             else:
                 mapping = {
                     'Rank': 'place',
+                    'Position': 'place',
                     '': 'place',
                     'Score': 'solving',
                     'score': 'solving',
                     'Total Score': 'solving',
                     'Team': 'name',
                     'name': 'name',
+                    'Team Name': 'name',
                     'score + unspent LAM': 'unspent_lam',
                 }
                 xpath = division_data.get('xpath', '//table//tr')

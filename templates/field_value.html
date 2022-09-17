@@ -24,9 +24,17 @@
         <span title="{{ template_value|timestamp_to_datetime|timezone:timezone|naturaltime }}" data-toggle="tooltip">
           {{ template_value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}
         <span>
-      {% elif 'dict' in types and value and 'icon' in value and 'url' in value %}
+      {% elif field == 'analysis' and 'dict' in types and value and 'url' in value %}
         <span title="{{ value.url }}" data-toggle="tooltip">
-          <a href="{{ value.url }}"><img src="{{ value.icon }}" height="16px"></a>
+          <a href="{{ value.url }}">
+          {% if not value.icon %}
+            <i class="text-muted fas fa-external-link-alt"></i>
+          {% elif value.icon|startswith:"http" %}
+            <img src="{{ value.icon }}" height="16px">
+          {% else %}
+            {% icon_to value.icon html_class="text-muted" %}
+          {% endif %}
+          </a>
         </span>
       {% else %}
         {{ template_value|safe }}

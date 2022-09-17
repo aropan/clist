@@ -56,11 +56,7 @@
 
         {% include 'range_filter.html' with name='n_participations' value_key=resource.host from=0 to=resource.n_contests %}
 
-        <div class="input-group input-group-sm hidden">
-          <button id="range-filter-apply" class="btn btn-primary btn-sm">Apply</button>
-        </div>
-
-        <input type="submit" style="visibility: hidden;" />
+        {% include 'range_filter_apply.html' %}
     </div>
 </form>
 
@@ -70,6 +66,7 @@
         <h4>
             Top rating
             <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc"><i class="fas fa-list"></i></a>
+            <a href="{% url 'clist:resources_top' %}">{% icon_to 'top' %}</a>
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">

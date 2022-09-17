@@ -1,0 +1,21 @@
+#resources-top table td,
+#resources-top table th {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+#resources-top th.host {
+  text-align: left;
+}
+
+#resources-top table td {
+  white-space: nowrap;
+}
+
+#resources-top .hover {
+  background-color: #dff0d8;
+}
+
+#resources-top .fixed {
+  background-color: #d9edf7;
+}

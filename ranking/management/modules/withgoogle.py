@@ -106,7 +106,10 @@ class Statistic(BaseModule):
                 problems_info.append(problem_info)
 
         num_consecutive_users = 200
-        n_page = (data['full_scoreboard_size'] - 1) // num_consecutive_users + 1
+        if 'full_scoreboard_size' in data:
+            n_page = (data['full_scoreboard_size'] - 1) // num_consecutive_users + 1
+        else:
+            n_page = 0
 
         def fetch_page(page):
             if stop:

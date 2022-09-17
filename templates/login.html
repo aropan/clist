@@ -26,7 +26,7 @@
         </style>
         {% for service in services %}
             <div class="mbtn-group-justified btn-group">
-                <a class="btn btn-default active icon service-icon-btn"><i class="fab {{ service.fa_icon }}"></i></a>
+                <a class="btn btn-default active icon service-icon-btn">{% icon_to service.name %}</a>
                 <a href="{% url 'auth:query' service.name %}" class="btn btn-default">
                     <div class="text-left">{{ service.title }}</div>
                 </a>

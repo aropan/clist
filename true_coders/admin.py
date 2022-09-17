@@ -85,10 +85,10 @@ class OrganizationAdmin(BaseModelAdmin):
 @admin_register(CoderList)
 class CoderListAdmin(BaseModelAdmin):
     list_display = ['name', 'owner', 'uuid']
-    search_fields = ['name', 'owner', 'uuid']
+    search_fields = ['name', 'owner__username', 'uuid']
 
 
 @admin_register(ListValue)
 class ListValueAdmin(BaseModelAdmin):
     list_display = ['id', 'coder_list', 'coder', 'account', 'group_id']
-    search_fields = ['coder_list', 'coder', 'account', 'group_id']
+    search_fields = ['coder_list__name', 'coder_list__uuid', 'coder__username', 'account__key', 'account__name']

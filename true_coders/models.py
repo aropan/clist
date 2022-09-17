@@ -2,6 +2,7 @@ import re
 import uuid
 from datetime import timedelta
 
+from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
@@ -280,6 +281,30 @@ class CoderList(BaseModel):
 
     def __str__(self):
         return f'CoderList#{self.uuid}'
+
+    @staticmethod
+    def accounts_filter(request):
+        values = [v for v in request.GET.getlist('list')]
+        coders = set()
+        accounts = set()
+        for uuid in values:
+            try:
+                coder_list = CoderList.objects.prefetch_related('values').get(uuid=uuid)
+            except Exception:
+                request.logger.warning(f'Ignore list with uuid = "{uuid}"')
+                continue
+            for v in coder_list.values.select_related('coder').select_related('account'):
+                if v.coder:
+                    coders.add(v.coder.pk)
+                if v.account:
+                    accounts.add(v.account.pk)
+        ret = Q()
+        if coders:
+            Account = apps.get_model('ranking', 'Account')
+            accounts |= set(Account.objects.filter(coders__pk__in=coders).values_list('pk', flat=True))
+        if accounts:
+            ret |= Q(pk__in=accounts)
+        return ret
 
 
 class ListValue(BaseModel):

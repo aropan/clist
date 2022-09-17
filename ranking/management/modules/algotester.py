@@ -8,11 +8,15 @@ from urllib.parse import urljoin
 from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
+        if self.standings_url is None:
+            raise ExceptionParseStandings('Standings url is none')
+
         cid = self.standings_url.strip('/').split('/')[-1]
         limit = 100
 
@@ -127,6 +131,8 @@ class Statistic(BaseModule):
                 r['solved'] = {'solving': solved}
 
         data = fetch_page(1)
+        if 'rows' not in data:
+            raise ExceptionParseStandings(json.dumps(data))
         proccess_data(data)
 
         with PoolExecutor(max_workers=4) as executor:

@@ -8,14 +8,14 @@ import pytz
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.management.commands import dumpdata
-from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
-from django.db.models.functions import Cast, Ln
+from django.db.models import Avg, Count, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from el_pagination.decorators import page_template, page_templates
+from el_pagination.decorators import QS_KEY, page_template, page_templates
 from sql_util.utils import Exists, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, Resource
@@ -24,7 +24,7 @@ from clist.templatetags.extras import (as_number, canonize, get_problem_key, get
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
-from true_coders.models import Coder, Filter, Party
+from true_coders.models import Coder, CoderList, Filter, Party
 from utils.chart import make_bins, make_chart
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
@@ -355,13 +355,75 @@ def update_coder_range_filter(coder, values, name):
 
 
 def resources(request):
-    resources = Resource.objects
+    resources = Resource.priority_objects.all()
     resources = resources.select_related('module')
-    resources = resources.annotate(has_rating_i=Cast('has_rating_history', IntegerField()))
-    resources = resources.annotate(has_rating_f=Cast('has_rating_i', FloatField()))
-    resources = resources.annotate(priority=Ln(F('n_contests') + 1) + Ln(F('n_accounts') + 1) + 2 * F('has_rating_f'))
-    resources = resources.order_by('-priority')
     return render(request, 'resources.html', {'resources': resources})
+
+
+@page_templates((('resources_top_paging.html', None),))
+@context_pagination()
+def resources_top(request, template='resources_top.html'):
+    params = {}
+    accounts_filter = Q()
+
+    resources = Resource.priority_objects.filter(has_rating_history=True)
+    resources_ids = [r for r in request.GET.getlist('resource') if r]
+    if resources_ids:
+        params['resources'] = list(Resource.objects.filter(pk__in=resources_ids))
+        resources = resources.filter(pk__in=resources_ids)
+
+    countries = request.GET.getlist('country')
+    countries = set([c for c in countries if c])
+    if countries:
+        params['countries'] = countries
+        accounts_filter &= Q(country__in=countries)
+
+    qs_key = request.GET.get(QS_KEY)
+    if qs_key:
+        _, host = qs_key.split('__')
+        resources = resources.filter(host=host)
+
+    list_filter = CoderList.accounts_filter(request)
+    if list_filter:
+        qs = Account.objects.filter(list_filter).filter(rating__isnull=False).values_list('pk', flat=True)
+        accounts_filter &= Q(pk__in=set(qs))
+
+    for field, operator in (
+        ('last_activity_from', 'last_activity__lte'),
+        ('last_activity_to', 'last_activity__gte'),
+    ):
+        value = as_number(request.GET.get(field), force=True)
+        if value is None:
+            continue
+        value = timezone.now() - timedelta(days=value)
+        accounts_filter &= Q(**{operator: value})
+
+    resources = list(resources)
+    for resource in resources:
+        accounts = resource.account_set.filter(rating__isnull=False).order_by('-rating')
+        accounts = accounts.filter(accounts_filter)
+        accounts = accounts.prefetch_related('coders')
+        setattr(resource, 'accounts', accounts)
+
+    if request.user.is_authenticated:
+        coder = request.as_coder or request.user.coder
+        coder_accounts_ids = set(coder.account_set.values_list('id', flat=True))
+    else:
+        coder_accounts_ids = set()
+
+    earliest_last_activity = Account.objects.filter(rating__isnull=False).earliest('last_activity').last_activity
+
+    context = {
+        'resources': resources,
+        'params': params,
+        'coder_accounts_ids': coder_accounts_ids,
+        'last_activity': {
+            'from': 0,
+            'to': (timezone.now() - earliest_last_activity).days + 1,
+        },
+    }
+
+    return render(request, template, context)
 
 
 def resource_problem_rating_chart(resource):
@@ -410,12 +472,12 @@ def resource(request, host, template='resource.html', extra_context=None):
     if request.user.is_authenticated:
         coder = request.user.coder
         coder_account = coder.account_set.filter(resource=resource, rating__isnull=False).first()
-        coder_account_ids = set(coder.account_set.filter(resource=resource).values_list('id', flat=True))
+        coder_accounts_ids = set(coder.account_set.filter(resource=resource).values_list('id', flat=True))
         show_coder_account_rating = True
     else:
         coder = None
         coder_account = None
-        coder_account_ids = set()
+        coder_accounts_ids = set()
         show_coder_account_rating = False
 
     params = {}
@@ -521,7 +583,7 @@ def resource(request, host, template='resource.html', extra_context=None):
     context = {
         'resource': resource,
         'coder': coder,
-        'coder_accounts_ids': coder_account_ids,
+        'coder_accounts_ids': coder_accounts_ids,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
         'countries': countries,
         'rating': {

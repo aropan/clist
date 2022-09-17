@@ -27,3 +27,12 @@ function init_account_buttons() {
     })
   })
 }
+
+function init_clickable_has_coders() {
+  $('.has_coders.clickable').click(function(e) {
+    var checkbox = $(this).next()
+    checkbox.removeClass('hidden')
+    checkbox.click()
+    $(this).remove()
+  })
+}

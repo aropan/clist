@@ -16,6 +16,7 @@ def global_settings(request):
         'enable_global_rating': settings.ENABLE_GLOBAL_RATING_,
         'DEBUG': settings.DEBUG,
         'icons': settings.FONTAWESOME_ICONS_,
+        'coder_list_n_values_limit': settings.CODER_LIST_N_VALUES_LIMIT_,
     }
 
 

@@ -1,8 +1,8 @@
 {% if with_resource %}
   {% if with_fixed_width %}<div class="resource-width-fixed">{% endif %}
-    {% if not without_url_transform %}<a href="{% url_transform request resource=resource.pk %}">{% endif %}
+    {% if not without_url_transform and request %}<a href="{% url_transform request resource=resource.pk %}">{% endif %}
       <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
-    {% if not without_url_transform %}</a>{% endif %}
+    {% if not without_url_transform and request %}</a>{% endif %}
   {% if with_fixed_width %}</div>{% endif %}
 {% endif %}
 
@@ -20,9 +20,9 @@
 {% if not without_country %}
   {% if with_fixed_width %}<div class="flag-width-fixed">{% endif %}
   {% get_country_from_account account as country %}{% if country %}
-  {% if not without_url_transform %}<a href="{% url_transform request country=country.code %}">{% endif %}
+  {% if not without_url_transform and request %}<a href="{% url_transform request country=country.code %}">{% endif %}
     <div class="flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></div>
-  {% if not without_url_transform %}</a>{% endif %}
+  {% if not without_url_transform and request %}</a>{% endif %}
   {% endif %}
   {% if with_fixed_width %}</div>{% endif %}
 {% endif %}

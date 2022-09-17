@@ -1,0 +1,27 @@
+{% load el_pagination_tags %}
+
+{% with resource=resource|default:resources.0 %}
+{% with accounts=resource.accounts %}
+{% with using_value="top_page"|add:"__"|add:resource.host %}
+{% lazy_paginate 10,10 accounts using using_value %}
+{% get_pages %}
+{% for account in accounts %}
+  {% with coders=account.coders.all %}
+  <tr class="to-hover{% if account.id in coder_accounts_ids %} fixed{% endif %}"{% if coders %} data-coder="{{ coders.0.pk }}"{% endif %}>
+    <td>
+      {{ forloop.counter0|add:pages.current_start_index }}
+    </td>
+    <td>
+      {% include 'account_table_cell.html' with resource=resource trim_length=20 %}
+    </td>
+    <td>
+      {{ account.rating }}
+    </td>
+  </tr>
+  {% endwith %}
+{% endfor %}
+{% show_more_table %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+<script>resources_top_setup_hover()</script>

@@ -827,7 +827,7 @@ class Command(BaseCommand):
                             standings_hidden_fields = [standings_hidden_fields_mapping.get(f, f)
                                                        for f in standings_hidden_fields]
                             hidden_fields = [field for field in standings_hidden_fields if field in hidden_fields]
-                            if hidden_fields and canonize(hidden_fields) != canonize(contest.info.get('hidden_fields')):
+                            if canonize(hidden_fields) != canonize(contest.info.get('hidden_fields')):
                                 contest.info['hidden_fields'] = hidden_fields
 
                             fields_types = {k: list(v) for k, v in fields_types.items()}

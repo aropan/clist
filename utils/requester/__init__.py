@@ -55,17 +55,23 @@ class FailOnGetResponse(Exception):
     def code(self):
         return getattr(self.args[0], 'code', None)
 
-    def __str__(self):
-        err = self.args[0]
-        if not hasattr(self, 'error_'):
-            self.error_ = super().__str__()
+    @property
+    def response(self):
+        if not hasattr(self, 'response_'):
+            err = self.args[0]
             if hasattr(err, 'fp'):
-                response = err.fp.read()
-                try:
-                    response = json.loads(response)
-                except Exception:
-                    pass
-                self.error_ += ', response = ' + str(response)
+                if err.info().get('Content-Encoding', None) == 'gzip':
+                    buf = BytesIO(err.read())
+                    self.response_ = GzipFile(fileobj=buf).read()
+                else:
+                    self.response_ = err.read()
+            else:
+                self.response_ = None
+        return self.response_
+
+    def __str__(self):
+        if not hasattr(self, 'error_'):
+            self.error_ = super().__str__() + ', response = ' + str(self.response)
         return self.error_
 
 

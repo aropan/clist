@@ -6,19 +6,29 @@
     $data = curlexec($url, NULL, $http_header);
 
     foreach ($data['contests'] as $k => $c) {
-        $u = url_merge($url, $c['link']);
+        $title = $c['name'];
+        $u = $c['link'];
+        $standings_url = url_merge($url, $u);
+        $registration_url = null;
+        if (preg_match('#^(?P<title>.*)\[(?P<url>acm.bsu.by/[^\]]*)\]$#', $title, $match)) {
+            $title = trim($match['title']);
+            $u = url_merge($url, '//' . $match['url']);
+            $registration_url = $u;
+        } else {
+            $u = url_merge($url, $u);
+        }
         $contest = array(
-            'title' => $c['name'],
+            'title' => $title,
             'start_time' => $c['startTime'],
             'end_time' => $c['endTime'],
             'url' => $u,
-            'standings_url' => $u,
+            'standings_url' => $standings_url,
+            'registration_url' => $registration_url,
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
             'key' => $c['id'],
         );
-
         $contests[] = $contest;
     }
 ?>

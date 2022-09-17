@@ -1,3 +1,7 @@
+#profile-header h2 {
+  height: 40px;
+}
+
 #writers .date,
 #contests td,
 #contests th {

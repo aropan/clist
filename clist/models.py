@@ -11,7 +11,8 @@ import requests
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
+from django.db.models.functions import Cast, Ln
 from django.urls import reverse
 from django.utils import timezone
 from django_ltree.fields import PathField
@@ -21,6 +22,17 @@ from clist.templatetags.extras import slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
+
+
+class PriorityResourceManager(BaseManager):
+    def get_queryset(self):
+        ret = super().get_queryset()
+        ret = ret.annotate(rval=Cast(Cast('has_rating_history', models.IntegerField()), models.FloatField()))
+        ret = ret.annotate(pval=Cast(Cast('has_problem_rating', models.IntegerField()), models.FloatField()))
+        priority = Ln(F('n_contests') + 1) + Ln(F('n_accounts') + 1) + 4 * (F('rval') + F('pval'))
+        ret = ret.annotate(priority=priority)
+        ret = ret.order_by('-priority')
+        return ret
 
 
 class Resource(BaseModel):
@@ -51,6 +63,7 @@ class Resource(BaseModel):
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
     objects = BaseManager()
+    priority_objects = PriorityResourceManager()
 
     class Meta:
         indexes = [

@@ -9,7 +9,7 @@ import dateutil.parser
 from ratelimiter import RateLimiter
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -60,7 +60,12 @@ class Statistic(BaseModule):
 
             return data
 
-        data = fetch_and_process_page(0)
+        try:
+            data = fetch_and_process_page(0)
+        except FailOnGetResponse as e:
+            if e.code == 403:
+                raise ExceptionParseStandings(str(e))
+            raise e
         total = data['results']['rows_count']
         per_page = len(data['results']['ranks_list'])
         if not total or not per_page:

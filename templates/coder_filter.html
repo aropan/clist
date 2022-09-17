@@ -56,9 +56,7 @@
     {% endif %}
     $(this).data('unselecting', true);
   }).on('select2:opening', function(e) {
-    console.log(43)
     if ($(this).data('unselecting')) {
-      console.log(44)
       $(this).removeData('unselecting');
       e.preventDefault();
     }

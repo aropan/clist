@@ -65,6 +65,8 @@ class Statistic(BaseModule):
 
                 regex = '<table[^>]*>.*?</table>'
                 match = re.search(regex, page, re.DOTALL)
+                if not match:
+                    continue
                 html_table = match.group(0)
                 table = parsed_table.ParsedTable(html_table)
                 for r in table:

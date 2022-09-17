@@ -33,6 +33,9 @@
   <td>
     {% if not account.has_coders and perms.ranking.link_account %}
     <input type="checkbox" name="accounts" value="{{ account.pk }}"{% if account.pk|slugify in params.link_accounts %} checked{% endif %}>
+    {% elif perms.ranking.link_account %}
+    <i class="has_coders fas fa-check clickable"></i>
+    <input class="hidden" type="checkbox" name="accounts" value="{{ account.pk }}">
     {% else %}
     <i class="has_coders fas fa-{% if account.has_coders %}check{% else %}times{% endif %}"></i>
     {% endif %}
@@ -81,3 +84,4 @@
 {% endfor %}
 {% show_more_table %}
 <script>init_account_buttons()</script>
+<script>init_clickable_has_coders()</script>

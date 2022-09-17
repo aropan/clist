@@ -4,6 +4,7 @@ import json
 import logging
 import operator
 import re
+from collections import Counter
 from datetime import datetime, timedelta
 
 import pytz
@@ -16,7 +17,7 @@ from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, Flo
                               Prefetch, Q, Value, When)
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import make_aware
@@ -36,6 +37,7 @@ from my_oauth.models import Service
 from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
 from pyclist.decorators import context_pagination
+from pyclist.middleware import RedirectException
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
 from utils.chart import make_chart
@@ -332,6 +334,18 @@ def _get_data_mixed_profile(request, query):
     if len(query) > 20:
         query = query[:20]
         request.logger.warning('The query is truncated to the first 20 records')
+
+    if request.user.is_authenticated:
+        coder_list = request.POST.get('list')
+        if coder_list:
+            coder = request.user.coder
+            coder_list = get_object_or_404(CoderList, owner=coder, uuid=coder_list)
+            url = reverse('coder:list', args=(str(coder_list.uuid),))
+            request.session['view_list_request_post'] = {
+                'raw': ','.join(query),
+                'uuid': str(coder_list.uuid),
+            }
+            raise RedirectException(redirect(url))
 
     n_accounts = 0
     for v in query:
@@ -1502,14 +1516,20 @@ def view_list(request, uuid):
     is_owner = coder_list.owner == coder
     can_modify = is_owner
 
-    if request.POST:
+    request_post = request.session.pop('view_list_request_post', None) or request.POST
+    if request_post:
         if not can_modify:
             return HttpResponseBadRequest('Only the owner can change the list')
-        group_id = toint(request.POST.get('gid'))
+        if 'uuid' in request_post and request_post['uuid'] != uuid:
+            return HttpResponseBadRequest('Wrong uuid value')
+        group_id = toint(request_post.get('gid'))
         if not group_id:
             group_id = (coder_list.values.aggregate(val=Max('group_id')).get('val') or 0) + 1
 
         def add_coder(c):
+            if ListValue.objects.filter(coder_list=coder_list).count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
+                request.logger.warning(f'Limit reached. Coder {c.username} not added')
+                return
             try:
                 ListValue.objects.create(coder_list=coder_list, coder=c, group_id=group_id)
                 request.logger.success(f'Added {c.username} coder to list')
@@ -1517,30 +1537,33 @@ def view_list(request, uuid):
                 request.logger.warning(f'Coder {c.username} has already been added')
 
         def add_account(a):
+            if ListValue.objects.filter(coder_list=coder_list).count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
+                request.logger.warning(f'Limit reached. Account {a.key} not added')
+                return
             try:
                 ListValue.objects.create(coder_list=coder_list, account=a, group_id=group_id)
                 request.logger.success(f'Added {a.key} account to list')
             except IntegrityError:
                 request.logger.warning(f'Account {a.key} has already been added')
 
-        if request.POST.get('coder'):
-            c = get_object_or_404(Coder, pk=request.POST.get('coder'))
+        if request_post.get('coder'):
+            c = get_object_or_404(Coder, pk=request_post.get('coder'))
             add_coder(c)
-        elif request.POST.get('account'):
-            a = get_object_or_404(Account, pk=request.POST.get('account'))
+        elif request_post.get('account'):
+            a = get_object_or_404(Account, pk=request_post.get('account'))
             add_account(a)
-        elif request.POST.get('delete_gid'):
-            group_id = request.POST.get('delete_gid')
+        elif request_post.get('delete_gid'):
+            group_id = request_post.get('delete_gid')
             deleted, *_ = coder_list.values.filter(group_id=group_id).delete()
             if deleted:
                 request.logger.success('Deleted from list')
             else:
                 request.logger.warning('Nothing has been deleted')
-        elif request.POST.get('raw'):
-            raw = request.POST.get('raw')
+        elif request_post.get('raw'):
+            raw = request_post.get('raw')
             lines = raw.strip().split()
 
-            if request.POST.get('gid'):
+            if request_post.get('gid'):
                 if len(lines) > 1:
                     request.logger.warning(f'Ignore {len(lines) - 1} line(s)')
                 lines = lines[:1]
@@ -1657,6 +1680,13 @@ def accounts(request, template='accounts.html'):
     if search:
         filt = get_iregex_filter(search, 'name', 'key', logger=request.logger)
         accounts = accounts.filter(filt)
+        if request.user.has_perm('link_account'):
+            coders_counter = Counter(accounts.filter(has_coders=True).values_list('coders__pk', flat=True))
+            most_coder = coders_counter.most_common()
+            if most_coder:
+                link_coder, _ = most_coder[0]
+                link_coder = Coder.objects.get(pk=link_coder)
+                params['link_coders'] = [link_coder]
 
     countries = request.GET.getlist('country')
     countries = set([c for c in countries if c])

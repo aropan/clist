@@ -36,6 +36,9 @@ Number of competitions: {{ account.n_contests }}
 
 {% block content %}
 
+<form method="post" class="form-inline" action="">{% csrf_token %}
+
+<div id="profile-header">
 {% if coder %}
   <h2>
     {% if search_resource %}
@@ -63,8 +66,10 @@ Number of competitions: {{ account.n_contests }}
     {{ coder.display_name }}
 
     {% if request.user.is_authenticated and request.user.coder != coder %}
-    <small><a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a></small>
+    <a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:coder.username %}">{% icon_to 'versus' %}</a>
     {% endif %}
+
+    {% include "profile_list_filter.html" %}
 
     {% if perms.true_coders.change_coder %}
       <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
@@ -79,65 +84,68 @@ Number of competitions: {{ account.n_contests }}
   </a>
   {% endif %}
 {% elif account %}
-  <div>
-    <h2>
-      <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|static_resize:'64x64' }}" width="30" height="30"/></a>
+  <h2>
+    <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|static_resize:'64x64' }}" width="30" height="30"/></a>
 
-      {% if account.resource.avatar_url %}
-        {% call_method account 'avatar_url' account.resource as avatar_url %}
-        {% if avatar_url %}
-          <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
-        {% endif %}
+    {% if account.resource.avatar_url %}
+      {% call_method account 'avatar_url' account.resource as avatar_url %}
+      {% if avatar_url %}
+        <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
       {% endif %}
+    {% endif %}
 
-      {% coder_color_circle account.resource account.info size=28 %}
+    {% coder_color_circle account.resource account.info size=28 %}
 
-      <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+    <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 
-      {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-      <small><a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a></small>
-      {% endif %}
+    {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
+    <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+    {% endif %}
 
-      {% if request.user.is_authenticated %}
-      {% with hostname=account.resource.short_host|default:account.resource.host %}
-      <small><a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:hostname|add:":"|add:account.key %}"><i class="fas fa-people-arrows"></i></a></small>
-      {% endwith %}
-      {% endif %}
+    {% if request.user.is_authenticated %}
+    {% with hostname=account.resource.short_host|default:account.resource.host %}
+    <a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:hostname|add:":"|add:account.key %}">{% icon_to 'versus' %}</i></a>
+    {% endwith %}
+    {% endif %}
 
-      {% if add_account_button %}
-      <small><a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key}}"><i class="fas fa-user-plus"></i></a></small>
-      {% endif %}
-
-      {% if perms.ranking.change_account %}
-        <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
-      {% endif %}
-    </h2>
-    {% if show_add_account_message %}
     {% if add_account_button %}
-    <div class="text-center alert alert-warning"><b><a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key }}">Add the account</a></b> to your profile to update the rating</div>
-    {% else %}
-    <div class="text-center alert alert-info">The account rating not updated because not added to profile</div>
+    <a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key}}"><i class="fas fa-user-plus"></i></a>
     {% endif %}
+
+    {% include "profile_list_filter.html" %}
+
+    {% if perms.ranking.change_account %}
+      <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
     {% endif %}
-    {% for coder in account.coders.all %}
-    <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
-      {% if coder.user.first_name or coder.user.last_name %}
-        {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
-      {% endif %}
-      {{ coder.display_name }}
-    </a>
-    {% endfor %}
-  </div>
+  </h2>
+  {% if show_add_account_message %}
+  {% if add_account_button %}
+  <div class="text-center alert alert-warning"><b><a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key }}">Add the account</a></b> to your profile to update the rating</div>
+  {% else %}
+  <div class="text-center alert alert-info">The account rating not updated because not added to profile</div>
+  {% endif %}
+  {% endif %}
+  {% for coder in account.coders.all %}
+  <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
+    {% if coder.user.first_name or coder.user.last_name %}
+      {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+    {% endif %}
+    {{ coder.display_name }}
+  </a>
+  {% endfor %}
 {% elif profiles %}
-  <div>
-    <h2>
-      {{ query }}
-      {% if request.user.is_authenticated %}
-      <small><a href="{% url 'ranking:versus' query|add:"/vs/"|add:request.user.coder.username %}"><i class="fas fa-people-arrows"></i></a></small>
-      {% endif %}
-    </h2>
-  </div>
+  <h2>
+    {{ query }}
+
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'ranking:versus' query|add:"/vs/"|add:request.user.coder.username %}">{% icon_to 'versus' %}</i></a>
+    {% endif %}
+
+    {% include "profile_list_filter.html" %}
+  </h2>
 {% endif %}
+</div>
+</form>
 
 <div class="row">
 

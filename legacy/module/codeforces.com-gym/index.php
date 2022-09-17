@@ -21,6 +21,10 @@
     if (!is_array($json)) {
         return;
     }
+    if (strpos($url, 'gym=true') === false) {
+        trigger_error("Not found gym in $url", E_USER_WARNING);
+        return;
+    }
     if ($json['status'] != 'OK') {
         $json_str = print_r($json, true);
         trigger_error("status = ${json['status']}, json = $json_str", E_USER_WARNING);

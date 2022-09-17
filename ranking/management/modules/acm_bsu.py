@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import re
 from pprint import pprint
 
+from django.utils.timezone import now
+
+from clist.templatetags.extras import as_number
 from ranking.management.modules.common import DOT, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 
@@ -18,9 +22,11 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
+        is_challenge = bool(re.search(r'\bchallenge\b', self.name, re.I))
+        is_running = now() < self.end_time
+        has_provisional = False
 
         result = {}
-
         page = REQ.get(self.standings_url)
         table = parsed_table.ParsedTable(html=page, xpath="//table[@class='ir-contest-standings']//tr")
         problems_info = collections.OrderedDict()
@@ -59,6 +65,7 @@ class Statistic(BaseModule):
                     row[k.lower()] = v.value
             if not problems or users and row['member'] not in users:
                 continue
+
             member = row['member']
             if member in result:
                 idx = 0
@@ -66,6 +73,20 @@ class Statistic(BaseModule):
                     idx += 1
                 member += f'-{idx}'
                 row['member'] = member
+
+            if is_challenge:
+                stats = (statistics or {}).get(member, {})
+                for k in self.info.get('fields', []):
+                    if k not in row and k in stats:
+                        row[k] = stats[k]
+                if 'provisional_rank' not in row or is_running:
+                    row['provisional_rank'] = as_number(row['place'])
+                row['delta_rank'] = row['provisional_rank'] - as_number(row['place'])
+                if 'provisional_score' not in row or is_running:
+                    row['provisional_score'] = row['solving']
+                row['delta_score'] = row['solving'] - row['provisional_score']
+                has_provisional |= bool(row['delta_rank']) or bool(row['delta_score'])
+
             result[member] = row
 
         if not has_plus:
@@ -82,9 +103,18 @@ class Statistic(BaseModule):
                         pass
                 row['solved'] = {'solving': solved}
 
+        hidden_fields = []
+        fields_types = {}
+        if is_challenge:
+            fields_types.update({'delta_rank': ['delta'], 'delta_score': ['delta']})
+            if not has_provisional:
+                hidden_fields.extend(['provisional_rank', 'delta_rank', 'provisional_score', 'delta_score'])
+
         standings = {
             'result': result,
             'url': self.standings_url,
+            'hidden_fields': hidden_fields,
+            'fields_types': fields_types,
             'problems': list(problems_info.values()),
             'problems_time_format': '{H}:{m:02d}',
         }

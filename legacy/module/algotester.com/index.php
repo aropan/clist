@@ -3,18 +3,32 @@
 
     $parse_full_list = isset($_GET['parse_full_list']);
 
-    $url = 'https://algotester.com/en/Home/Events';
-    $page = curlexec($url);
+    $urls = array('https://algotester.com/en/Home/Events');
 
-    preg_match_all('#<a[^>]*href="(?P<href>[^"]*/Contest/ViewScoreboard/(?P<id>[0-9]+))[^"]*"#', $page, $matches, PREG_SET_ORDER);
-    $seen = array();
-    $scoreboard_urls = array('https://algotester.com/en');
+    $url = 'https://algotester.com/en';
+    $page = curlexec($url);
+    preg_match_all('#<a[^>]*href="(?P<href>/[^"/]*/?)"[^>]*>#', $page, $matches, PREG_SET_ORDER);
     foreach ($matches as $match) {
-        if (isset($seen[$match['id']])) {
+        if (preg_match('#/(en|uk|logo)/?#i', $match['href'])) {
             continue;
         }
-        $seen[$match['id']] = true;
-        $scoreboard_urls[] = url_merge($url, $match['href']);
+        $urls[] = url_merge($url, $match['href']);
+    }
+    $urls = array_unique($urls);
+
+    $scoreboard_urls = array('https://algotester.com/en');
+    $seen = array();
+    foreach ($urls as $url) {
+        $page = curlexec($url);
+
+        preg_match_all('#<a[^>]*href="(?P<href>[^"]*/Contest/(ViewScoreboard|Display)/(?P<id>[0-9]+))[^"]*"#', $page, $matches, PREG_SET_ORDER);
+        foreach ($matches as $match) {
+            if (isset($seen[$match['id']])) {
+                continue;
+            }
+            $seen[$match['id']] = true;
+            $scoreboard_urls[] = url_merge($url, $match['href']);
+        }
     }
 
     $seen = array();

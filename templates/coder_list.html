@@ -35,8 +35,8 @@
         <span class="or">or</span>
         <div class="form-group">
           <textarea class="form-control" rows="1" name="raw" id="raw-value" placeholder="coder_1
-  host_2:account_2,host_3:account_3
-  ..."></textarea>
+host_2:account_2,host_3:account_3
+..."></textarea>
           <button class="btn btn-primary btn-sm" type="submit" id="raw-submit" disabled>Add</button>
         </div>
       </div>
@@ -49,7 +49,10 @@
               <th>#</th>
               <th><i class="fas fa-external-link-alt"></i></th>
               <th>VS</th>
-              <th class="value">Coder/Accounts</th>
+              <th class="value">
+                Coder/Accounts
+                <span class="small text-muted">({{ coder_values|length }} of {{ coder_list_n_values_limit }})</span>
+              </th>
               {% for resource in params.resources %}
               <th>
                 <a href="{% url 'clist:resource' resource.host %}">

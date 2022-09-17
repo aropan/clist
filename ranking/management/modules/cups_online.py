@@ -58,6 +58,7 @@ class Statistic(BaseModule):
         is_raic = bool(re.search(r'^Code.*[0-9]{4}.*\[ai\]', self.name))
         is_final = is_raic and bool(re.search('финал|final', self.name, re.I))
         is_round = is_raic and (is_final or bool(re.search('раунд|round', self.name, re.I)))
+        is_long = self.end_time - self.start_time > timedelta(days=60)
 
         query_params = f'?period={period}&page_size=500&round={self.key}'
         api_standings_url = urljoin(self.url, f'/api_v2/contests/{slug}/result/{query_params}')
@@ -241,7 +242,7 @@ class Statistic(BaseModule):
                 threshold = [300, 50][int(match.group('round')) - 1]
                 ret['advance'] = {'filter': [{'threshold': threshold, 'operator': 'le', 'field': 'place'}]}
 
-        if is_raic and is_running:
+        if is_raic and is_running and not is_long:
             ret['timing_statistic_delta'] = timedelta(minutes=10)
 
         if is_raic and task_id:

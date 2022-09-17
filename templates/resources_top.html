@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block ogtitle %}{% block title %}Top - Resources{% endblock %}{% endblock %}
+{% block description %}List of top accounts for resources{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/resources-top.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/resources-top.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<script>$.endlessPaginate({onCompleted: toggle_tooltip});</script>
+
+<form class="form-inline" method="get" action="">
+  <div id="resources-top-filters" class="form-group">
+    {% include 'country_filter.html' with has_country=True %}
+    {% include 'resource_filter.html' %}
+    {% include 'list_filter.html' %}
+
+    {% include 'range_filter.html' with name='last_activity' icon_title="Last activity days ago" value_key=None from=last_activity.from to=last_activity.to %}
+    {% include 'range_filter_apply.html' %}
+  </div>
+</form>
+
+<div id="resources-top" class="row">
+{% for resource in resources %}
+  <div class="col-sm-6 col-md-4 col-lg-3">
+    <div class="panel panel-default table-responsive">
+        <table class="table table-hover table-condensed table-striped">
+            <tr>
+              <th class="host" colspan="100%">
+                <a class="lead" href="{% url 'clist:resource' resource.host %}">
+                  <img src="{{ resource.icon|static_resize:'64x64' }}" width="24" height="24"/>
+                  {{ resource.host }}
+                </a>
+              </th>
+            </tr>
+            <tr>
+              <th>N</th>
+              <th>Handle</th>
+              <th>Rating</th>
+            </tr>
+            {% include 'resources_top_paging.html' with resource=resource %}
+        </table>
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+{% endblock %}

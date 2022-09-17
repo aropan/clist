@@ -549,7 +549,7 @@ def order_by(value, orderby):
 
 @register.filter
 def order_by_desc(value, orderby):
-    return value.order_by('-' + orderby)
+    return value.order_by(f'-{orderby}')
 
 
 @register.filter
@@ -919,14 +919,37 @@ def rating_from_probability(b, p, min_rating=0, max_rating=5000):
 
 
 @register.simple_tag
-def icon_to(value, default=None, icons=None):
+def icon_to(value, default=None, icons=None, html_class=None):
     icons = icons or settings.FONTAWESOME_ICONS_
-    default = default or value.title()
+    default = default or value.title().replace('_', ' ')
     if value in icons:
         value = icons[value]
         if isinstance(value, dict):
-            value, default = value['icon'], value.get('title', default)
-        ret = f'<span title="{default}" data-toggle="tooltip">{value}</span>'
+            value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
+        inner = ''
+        if default is not None:
+            inner += f' title="{default}" data-toggle="tooltip"'
+        if html_class:
+            inner += f' class="{html_class}"'
+        ret = f'<span{inner}>{value}</span>'
         return mark_safe(ret)
     else:
         return default
+
+
+@register.simple_tag(takes_context=True)
+def list_data_field_to_select(context):
+    request = context['request']
+    coder = getattr(request.user, 'coder', None)
+    lists = coder.my_list_set.all() if coder else None
+    if not coder or not lists:
+        return
+    options_values = {str(v.uuid): v.name for v in lists}
+    ret = {
+        'values': [v for v in request.GET.getlist('list')],
+        'options': options_values,
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+    }
+    return ret

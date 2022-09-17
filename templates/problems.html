@@ -60,9 +60,7 @@
 
     {% include 'range_filter.html' with name='rating' value_key='problems' from=0 to=5000 %}
 
-    <div class="input-group input-group-sm hidden">
-      <button id="range-filter-apply" class="btn btn-primary btn-sm">Apply</button>
-    </div>
+    {% include 'range_filter_apply.html' %}
 
     {% endwith %}
   </form>

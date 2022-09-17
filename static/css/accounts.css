@@ -21,6 +21,10 @@
   color: #999;
 }
 
+#accounts .has_coders.clickable {
+  cursor: pointer;
+}
+
 #accounts input[type=checkbox][name=accounts] {
   transform: scale(1.5);
 }

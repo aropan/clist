@@ -9,6 +9,7 @@ from datetime import datetime
 from pprint import pprint
 
 import pytz
+import requests
 import tqdm
 
 from ranking.management.modules import conf
@@ -221,7 +222,7 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_source_code(contest, problem):
-        solution = REQ.get(problem['url'], headers={'referer': 'https://www.facebook.com/'})
+        solution = requests.get(problem['url']).content.decode('utf8')
         return {'solution': solution}
 
 

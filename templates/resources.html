@@ -13,7 +13,10 @@
 <div id="resources" class="panel panel-default table-responsive col-md-12 col-lg-8 col-lg-offset-2">
   <table class="table table-condensed table-float-head table-striped">
     <tr>
-      <th>Resource</th>
+      <th>
+        Resource
+        <a href="{% url 'clist:resources_top' %}">{% icon_to 'top' %}</a>
+      </th>
       <th>Url</th>
       <th>Google<br/>calendar</th>
       <th>Auto<br/>update</th>
