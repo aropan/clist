@@ -24,14 +24,27 @@
     border-collapse: separate;
 }
         </style>
-        {% for service in services %}
+
+{% if services %}
+    {% for service in services %}
             <div class="mbtn-group-justified btn-group">
                 <a class="btn btn-default active icon service-icon-btn">{% icon_to service.name %}</a>
                 <a href="{% url 'auth:query' service.name %}" class="btn btn-default">
                     <div class="text-left">{{ service.title }}</div>
                 </a>
             </div>
-        {% endfor %}
+    {% endfor %}
+{% else %}
+            <form method="post">{% csrf_token %}
+                <div class="form-group">
+                    <input type="text" name="username" class="form-control" placeholder="Username" value="">
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" class="form-control" placeholder="Password">
+                </div>
+                <button type="submit" name="action" tabindex="3" class="btn btn-primary" value="login">Log In</button>
+            </form>
+{% endif %}
         </div>
     </div>
 </div>

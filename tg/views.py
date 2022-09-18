@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
@@ -11,7 +12,7 @@ from tg.models import Chat
 @login_required
 def me(request):
     coder = request.user.coder
-    url = 'https://telegram.me/ClistBot?start'
+    url = f'https://telegram.me/{settings.TELEGRAM_BOTNAME}?start'
 
     chat = coder.chat
     if chat is None:

@@ -96,6 +96,13 @@
       </td>
     </tr>
     {% endfor %}
+
+    {% if not resources %}
+    <tr>
+      <td class="alert alert-info text-center" colspan="100%">List of resources is empty</td>
+    </tr>
+    {% endif %}
   </table>
 </div>
+
 {% endblock %}

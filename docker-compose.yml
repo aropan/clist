@@ -26,6 +26,8 @@ services:
       - db
     secrets:
       - db_conf
+    ports:
+      - ${CLIST_DEV_PORT:-10042}:10042
   cache:
     image: memcached
   legacy:

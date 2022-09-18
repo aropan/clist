@@ -17,7 +17,7 @@ from django.core.management.commands import dumpdata
 from django.db import transaction
 from django.db.models import Count, Q
 from django.forms.models import model_to_dict
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -148,6 +148,16 @@ def login(request):
         return redirect(redirect_url)
 
     services = Service.active_objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
+    if not services:
+        action = request.POST.get('action')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if action == 'login':
+            user = auth.authenticate(request, username=username, password=password)
+            if user is None:
+                return HttpResponseBadRequest('Authentication failed')
+            auth.login(request, user)
+            return redirect(redirect_url)
 
     request.session['next'] = redirect_url
     return render(
@@ -155,6 +165,24 @@ def login(request):
         'login.html',
         {'services': services},
     )
+
+
+USERNAME_EMPTY_ERROR = 'Username can not be empty.'
+USERNAME_LONG_ERROR = '30 characters or fewer.'
+USERNAME_WRONG_ERROR = 'Username may contain alphanumeric, _, @, +, . and - characters.'
+USERNAME_EXIST_ERROR = 'User already exist.'
+
+
+def username_error(username):
+    if not username:
+        return USERNAME_EMPTY_ERROR
+    elif len(username) > 30:
+        return USERNAME_LONG_ERROR
+    elif not re.match(r'^[\-A-Za-z0-9_@\+\.]{1,30}$', username):
+        return USERNAME_WRONG_ERROR
+    elif User.objects.filter(username__iexact=username).exists():
+        return USERNAME_EXIST_ERROR
+    return False
 
 
 def signup(request, action=None):
@@ -192,15 +220,11 @@ def signup(request, action=None):
 
         if request.POST and 'signup' in request.POST:
             username = request.POST.get('username', None)
-            if not username:
-                context['error'] = 'Username can not be empty.'
-            elif len(username) > 30:
-                context['error'] = '30 characters or fewer.'
-            elif not re.match(r'^[\-A-Za-z0-9_@\+\.]{1,30}$', username):
-                context['error'] = 'Username may contain alphanumeric, _, @, +, . and - characters.'
-            elif User.objects.filter(username__iexact=username).exists():
-                q_token = q_token | Q(coder__user__username__iexact=username)
-                context['error'] = 'User already exist.'
+            error = username_error(username)
+            if error:
+                context['error'] = error
+                if error == USERNAME_EXIST_ERROR:
+                    q_token = q_token | Q(coder__user__username__iexact=username)
             else:
                 with transaction.atomic():
                     user = User.objects.create_user(username, token.email)

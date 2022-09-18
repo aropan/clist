@@ -62,7 +62,8 @@ class Bot(telegram.Bot):
     ADMIN_CHAT_ID = settings.TELEGRAM_ADMIN_CHAT_ID
 
     def __init__(self, *args, **kw):
-        super(Bot, self).__init__(settings.TELEGRAM_TOKEN, *args, **kw)
+        if settings.TELEGRAM_TOKEN is not None:
+            super(Bot, self).__init__(settings.TELEGRAM_TOKEN, *args, **kw)
         self.logger = logging.getLogger('telegrambot')
         self.logger.setLevel(logging.DEBUG)
 
@@ -265,7 +266,7 @@ class Bot(telegram.Bot):
                     is_group=True,
                 )
                 if created:
-                    msg = '%s is new admin @ClistBot for "%s".' % (self.coder.user, chat.title)
+                    msg = '%s is new admin @%s for "%s".' % (self.coder.user, settings.TELEGRAM_NAME, chat.title)
                     delattr(self, 'group_')
                 else:
                     msg = 'Hmmmm, problem with set new admin.'
@@ -382,7 +383,7 @@ class Bot(telegram.Bot):
                 if isinstance(s, argparse._SubParsersAction)
                 for choice in list(s.choices.keys())
             )
-            regex = '(^%s)%s' % (regex, settings.TELEGRAM_NAME)
+            regex = '(^%s)@%s' % (regex, settings.TELEGRAM_NAME)
             query = re.sub(regex, r'\1', query)
 
             args = self.parser.parse_args(shlex.split(query))
@@ -554,7 +555,7 @@ class Bot(telegram.Bot):
         )
 
     def get_help(self):
-        return '#Help @ClistBot\n\n' + '\n\n'.join(
+        return '#Help @' + settings.TELEGRAM_NAME + '\n\n' + '\n\n'.join(
             '##%s\n```\n#!text\n%s```' % (choice[1:], subparser.format_help())
             for s in self.parser._subparsers._actions
             if isinstance(s, argparse._SubParsersAction)

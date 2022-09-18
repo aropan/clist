@@ -68,7 +68,7 @@
                         {% endif %}
                         <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
                         <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
-                        <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@ClistBot</a></li>
+                        <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
                         <li><a href="{{ discuss_url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
                         <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
                         <li role="separator" class="divider"></li>

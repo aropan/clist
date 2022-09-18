@@ -5,19 +5,14 @@ ADMINS = (
 EMAIL_HOST = '{str}'
 EMAIL_HOST_USER = '{str:email}'
 EMAIL_HOST_PASSWORD = '{str}'
-EMAIL_PORT = {int}
-EMAIL_USE_TLS = {bool}
-STOP_EMAIL = {bool}
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+STOP_EMAIL = True
 
-SECRET_KEY = '{str}'
-TELEGRAM_TOKEN = '{int}:{str}'
+SECRET_KEY = '{str}'  # random-string
+TELEGRAM_TOKEN = None  # '{int}:{str}'
+TELEGRAM_NAME = 'ClistBot'
 TELEGRAM_ADMIN_CHAT_ID = {int}
-
-DB_HOST = '{str}'
-DB_PORT = '{int}'
-DB_NAME = '{str}'
-DB_USER = '{str}'
-DB_PASSWORD = '{str}'
 
 WEBPUSH_SETTINGS = {
     'VAPID_PUBLIC_KEY': '{str}',
