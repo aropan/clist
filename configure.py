@@ -38,7 +38,7 @@ def fill_template(target_file):
         logger.info(f'File {target_file} already exists')
         return
 
-    logger.info('Generating {target_file}...')
+    logger.info(f'Generating {target_file}...')
 
     generated = ''
     n_sep_skip = 0
@@ -80,7 +80,7 @@ def run_command(cmd):
 
 def main():
     fill_template('.env.db')
-    fill_template('pyclist/conf.py')
+    fill_template('src/pyclist/conf.py')
     run_command('docker-compose build dev')
     run_command('docker-compose run dev ./manage.py migrate contenttypes')
     run_command('docker-compose run dev ./manage.py migrate auth')
