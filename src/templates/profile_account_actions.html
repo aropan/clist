@@ -1,11 +1,11 @@
 {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-<a{% if not without_btn %} class="btn btn-default"{% endif %} href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+<a{% if not without_btn %} class="btn btn-default"{% endif %} href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
 {% endif %}
 
 {% if resource.has_accounts_infos_update %}
 {% with delta=account.updated|timedelta_with_now %}
 {% if delta.days < 1 %}
-<a{% if not without_btn %} class="btn btn-default"{% endif %} target="_blank" disabled>
+<a{% if not without_btn %} class="btn btn-default"{% endif %} target="_blank" rel="noopener" disabled>
 <span title="{% if 0 < delta.total_seconds %} within {{ account.updated|naturaltime }}{% else %}in progress{% endif %}" data-toggle="tooltip" data-placement="top">
   <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
 </a>

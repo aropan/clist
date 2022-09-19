@@ -169,14 +169,14 @@
             <div class="key">
                 <a href="#" id="add-list" data-name="add-list" class="btn btn-primary">Create</a>
                 {% if perms.true_coders.view_coderlist %}
-                  <a href="{% url 'admin:true_coders_coderlist_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                  <a href="{% url 'admin:true_coders_coderlist_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
                 {% endif %}
             </div>
             <div id="lists" class="value">
                 {% for my_list in my_lists %}
                 <div class="list">
                     <span class="label label-info">{{ my_list.name }}</span> with <span class="label label-info">{{ my_list.n_records }}</span> record(s)
-                    <a href="{% url 'coder:list' my_list.uuid %}" class="btn btn-primary btn-sm" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+                    <a href="{% url 'coder:list' my_list.uuid %}" class="btn btn-primary btn-sm" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
                     <button href="#" data-name="edit-list" data-id="{{ my_list.id }}" data-value="{{ my_list.name }}" class="edit-list btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
                     <button href="#" data-id="{{ my_list.id }}" data-action="delete-list" data-success="$div.remove();" class="action-list btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
                 </div>
@@ -189,7 +189,7 @@
                 <div>
                 <a id="add-notification" class="btn btn-primary" onclick="$(this).remove(); $('#notification-form').show(300)">Create</a>
                 {% if perms.notification.view_notification %}
-                  <a href="{% url 'admin:notification_notification_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                  <a href="{% url 'admin:notification_notification_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
                 {% endif %}
                 </div>
                 {% endif %}
@@ -217,7 +217,7 @@
                     <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$div.remove();" class="action-notification btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></a>
                     <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$div.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-primary btn-sm"><i class="fas fa-sync-alt"></i></a>
                     {% if perms.notification.change_notification %}
-                      <a href="{% url 'admin:notification_notification_change' n.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+                      <a href="{% url 'admin:notification_notification_change' n.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -298,7 +298,7 @@
             <div class="value"><input type="text" class="form-control" id="add-account-search"{% if selected_account %} value="{{ selected_account.key }}"{% endif %}></div>
             <div class="text-left">
                 <button class="btn btn-primary" id="add-account">Add</button>
-                <a class="btn btn-default" id="add-account-advanced-search" target="_blank">Advanced Search</a>
+                <a class="btn btn-default" id="add-account-advanced-search" target="_blank" rel="noopener">Advanced Search</a>
                 <i id="add-account-loading" class="hidden fas fa-spinner fa-spin"></i>
             </div>
             <div id="error-account-tab" class="alert alert-danger"></div>
@@ -316,7 +316,7 @@
             <div class="key">
                 <a href="#" id="add-calendar" data-name="add-calendar" class="btn btn-primary" data-descriptions="[{{ event_description.URL }}]">Create</a>
                 {% if perms.notification.view_calendar %}
-                  <a href="{% url 'admin:notification_calendar_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                  <a href="{% url 'admin:notification_calendar_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
                 {% endif %}
             </div>
             <div id="calendars" class="value">
@@ -339,8 +339,8 @@
                         resource(s)
                         {% endif %}
                     {% endif %}
-                    <a data-url="{{ host_url }}{% url 'notification:calendar' calendar.uuid %}" class="copy-calendar-url btn btn-primary btn-sm" target="_blank"><i class="fas fa-link"></i></a>
-                    <a href="{% url 'notification:calendar' calendar.uuid %}" class="btn btn-primary btn-sm" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+                    <a data-url="{{ host_url }}{% url 'notification:calendar' calendar.uuid %}" class="copy-calendar-url btn btn-primary btn-sm" target="_blank" rel="noopener"><i class="fas fa-link"></i></a>
+                    <a href="{% url 'notification:calendar' calendar.uuid %}" class="btn btn-primary btn-sm" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
                     <button href="#" data-name="edit-calendar" data-id="{{ calendar.id }}" data-value="{{ calendar.name }}" data-category="{{ calendar.category }}" data-resources="{{ calendar.resources|jsonify }}" data-descriptions="{{ calendar.descriptions|jsonify }}" class="edit-calendar btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
                     <button href="#" data-id="{{ calendar.id }}" data-action="delete-calendar" data-success="$div.remove();" class="action-calendar btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
                     <a class="copy-url-help btn btn-success btn-sm hidden" disabled>URL copied</a>
@@ -352,7 +352,7 @@
             <div class="key">
                 <a href="#" id="add-subscription" data-name="add-subscription" class="btn btn-primary">Create</a>
                 {% if perms.notification.view_subscription %}
-                  <a href="{% url 'admin:notification_subscription_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank"><i class="fas fa-database"></i></a>
+                  <a href="{% url 'admin:notification_subscription_changelist' %}" class="database-link invisible btn btn-default btn-xs" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
                 {% endif %}
             </div>
             <div id="subscriptions" class="value">

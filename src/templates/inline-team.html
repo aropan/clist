@@ -1,4 +1,4 @@
-<{% if without_detail_url %}div{% else %}a{% endif %} class="team list-group-item status-{{ team.status }}"{% if not without_detail_url %} href="{% url 'events:team-details' slug=slug team_id=team.id %}" target="_blank"{% endif %}>
+<{% if without_detail_url %}div{% else %}a{% endif %} class="team list-group-item status-{{ team.status }}"{% if not without_detail_url %} href="{% url 'events:team-details' slug=slug team_id=team.id %}" target="_blank" rel="noopener"{% endif %}>
   <strong class="name">
     {{ team.title }}
   </strong>
@@ -15,7 +15,7 @@
       {% for p in team.ordered_participants %}
         {% for a in p.coder.account_set.all %}
         {% coder_color_circle codeforces_resource a.info size=12 %}
-        <{% if with_profile_url %}a href="{{ codeforces_resource.profile_url|format_dict:a.dict_with_info }}" target="_blank"{% else %}span{% endif %} class="{% coder_color_class codeforces_resource a.info %}">{{ a.key }}</{% if with_profile_url %}a{% else %}span{% endif %}>
+        <{% if with_profile_url %}a href="{{ codeforces_resource.profile_url|format_dict:a.dict_with_info }}" target="_blank" rel="noopener"{% else %}span{% endif %} class="{% coder_color_class codeforces_resource a.info %}">{{ a.key }}</{% if with_profile_url %}a{% else %}span{% endif %}>
         {% endfor %}
         {% if with_profile_url %}<a href="{% url 'coder:profile' p.coder %}">{% endif %}{{ p.first_name }} {{ p.last_name }}{% if with_profile_url %}</a>{% endif %}{% if forloop.revcounter0 %}, {% endif %}
       {% endfor %}

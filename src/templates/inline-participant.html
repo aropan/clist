@@ -2,7 +2,7 @@
 <div class="list-group-item">
   {% if with_admin %}
     <span class="pull-right">
-      <a href="{% url 'admin:events_participant_change' participant.id %}" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+      <a href="{% url 'admin:events_participant_change' participant.id %}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
     </span>
   {% endif %}
 
@@ -16,7 +16,7 @@
   {% endif %}
   {% if participant.team %}
   in <strong>
-    {% if with_admin %}<a href="{% url 'events:team-details' slug=slug team_id=participant.team.id %}" target="_blank">{% endif %}
+    {% if with_admin %}<a href="{% url 'events:team-details' slug=slug team_id=participant.team.id %}" target="_blank" rel="noopener">{% endif %}
       {{ participant.team.name }}
     {% if with_admin %}</a>{% endif %}
   </strong>
@@ -32,7 +32,7 @@
 <div class="list-group collapse" id="events-{{ participant.pk }}{{ collapse_suffix }}">
 {% for p in events.all %}
   {% with team=p.team %}
-  <{% if with_admin %}a href="{% url 'events:team-details' slug=p.event.slug team_id=team.id %}" target="_blank"{% else %}div{% endif %} class="list-group-item">
+  <{% if with_admin %}a href="{% url 'events:team-details' slug=p.event.slug team_id=team.id %}" target="_blank" rel="noopener"{% else %}div{% endif %} class="list-group-item">
     <strong class="name">{{ team.title }}</strong>
     <span class="badge progress-bar-{{ team_status.classes|get_item:team.status }}">{{ team_status.labels|get_item:team.status }}</span>
     <div>

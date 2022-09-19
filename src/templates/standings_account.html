@@ -91,7 +91,7 @@
 {% endif %}
 
 {% if perms.ranking.statistics_change and statistic %}
-  <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+  <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
 {% endif %}
 
 {% endwith %}

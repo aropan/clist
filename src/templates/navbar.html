@@ -24,7 +24,7 @@
                     {% for b in banners %}
                         {% if not b.template %}
                             <li>
-                                <a href="{{ b.url }}" target="_blank"{% if b.data.style %} style="{{ b.data.style }}"{% endif %}>
+                                <a href="{{ b.url }}" target="_blank" rel="noopener"{% if b.data.style %} style="{{ b.data.style }}"{% endif %}>
                                     <strong>{{ b.name }}</strong> {{ b.data.text }}
                                     <strong
                                         title="{{ b.end_time|timezone:timezone|format_time:time_format }}"

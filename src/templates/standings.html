@@ -85,7 +85,7 @@
     </span>
 
     {% if perms.clist.change_contest %}
-      <a href="{% url 'admin:clist_contest_change' contest.id %}" class="database-link invisible" target="_blank"><i class="fas fa-database"></i></a>
+      <a href="{% url 'admin:clist_contest_change' contest.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
     {% endif %}
     </div>
 
@@ -345,7 +345,7 @@ function viewSolution(a) {
     type: 'get',
     success: function(response) {
       $('#viewSolutionModal .modal-content').html(response)
-      $('#viewSolutionModal .modal-content .modal-footer').prepend('<a href="' + href + '" target="_blank" class="btn btn-default btn-sm"><i class="fas fa-external-link-alt"></i></a>')
+      $('#viewSolutionModal .modal-content .modal-footer').prepend('<a href="' + href + '" target="_blank" rel="noopener" class="btn btn-default btn-sm"><i class="fas fa-external-link-alt"></i></a>')
       document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
     },
     error: function(response) {

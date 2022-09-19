@@ -105,7 +105,7 @@
             <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
             {% endif %}
             <a href="{% url 'clist:resource' contest.resource.host %}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
-            <a class="title_search" href="{{ contest.actual_url }}"{% if open_new_tab %} target="_blank"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
+            <a class="title_search" href="{{ contest.actual_url }}"{% if open_new_tab %} target="_blank" rel="noopener"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
           </span>
           {% if contest.state != "past" and add_to_calendar != "disable" %}
           <a class="data-ace" data-ace='{
