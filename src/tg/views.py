@@ -12,7 +12,7 @@ from tg.models import Chat
 @login_required
 def me(request):
     coder = request.user.coder
-    url = f'https://telegram.me/{settings.TELEGRAM_BOTNAME}?start'
+    url = f'https://telegram.me/{settings.TELEGRAM_NAME}?start'
 
     chat = coder.chat
     if chat is None:
