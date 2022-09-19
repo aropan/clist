@@ -19,9 +19,10 @@ services:
       context: .
       target: dev
     volumes:
-      - .:/usr/src/clist/
-      - ./static:/usr/src/clist/staticfiles/
+      - ./src/:/usr/src/clist/
+      - ./src/static:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
+      - ./logs/development:/usr/src/clist/logs/
     depends_on:
       - db
     secrets:
