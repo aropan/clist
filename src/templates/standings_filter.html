@@ -1,4 +1,4 @@
-<form class="form-inline" method="get" action="">
+<form class="form-inline fullscreen-hidden" method="get" action="">
   <div id="standings-filters" class="form-group">
     {% if divisions_order %}
     <div class="input-group input-group-sm">
@@ -90,9 +90,16 @@
     <input type="hidden" name="charts" value="{{ request.GET.charts }}"/>
     {% endif %}
     <div class="input-group input-group-sm">
-      <button class="btn btn-default btn-sm{% if request.GET.charts %} active{% endif %}" name="charts"{% if not request.GET.charts %} value="on"{% endif %}><i class="fas fa-chart-bar"></i></button>
+      <button class="btn btn-default btn-sm{% if request.GET.charts %} active{% endif %}" name="charts"{% if not request.GET.charts %} value="on"{% endif %}>{% icon_to 'charts' %}</button>
     </div>
     {% endif %}
+
+    {% if request.GET.fullscreen %}
+    <input type="hidden" name="fullscreen" value="{{ request.GET.fullscreen }}"/>
+    {% endif %}
+    <div class="input-group input-group-sm">
+      <button class="btn btn-default btn-sm{% if request.GET.fullscreen %} active{% endif %}" name="fullscreen"{% if not request.GET.fullscreen %} value="on"{% endif %}>{% icon_to 'fullscreen' %}</button>
+    </div>
 
     {% if enable_timeline and contest.resource.info.standings.timeline and groupby == 'none' %}
       {% if timeline %}

@@ -30,3 +30,7 @@ def coder_time_info(request):
         'timeformat': get_timeformat(request),
         'timezone': get_timezone(request),
     }
+
+
+def fullscreen(request):
+    return {'fullscreen': request.GET.get('fullscreen') in settings.YES_}

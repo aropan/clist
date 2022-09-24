@@ -460,3 +460,7 @@ canvas.rating_history {
   margin: -6px;
   padding: 5px;
 }
+
+.fullscreen .fullscreen-hidden {
+  display: none;
+}

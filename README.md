@@ -1,6 +1,6 @@
 ### Run locally
 
-You need `python3` (the fresher the better) and `docker` (wtih `docker-compose`).
+You need `python3` (more fresher is better) and `docker` (wtih `docker-compose`).
 
 * Clone fork with `--recursive`:
 ```

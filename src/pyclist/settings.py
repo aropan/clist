@@ -142,6 +142,7 @@ TEMPLATES = [
                 'pyclist.context_processors.global_settings',
                 'pyclist.context_processors.bootstrap_admin',
                 'pyclist.context_processors.coder_time_info',
+                'pyclist.context_processors.fullscreen',
             ],
             'builtins': [
                 'pyclist.templatetags.staticfiles',
@@ -526,7 +527,7 @@ STOP_EMAIL_ = getattr(conf, 'STOP_EMAIL', False)
 TIME_FORMAT_ = '%d.%m %a %H:%M'
 LIMIT_N_TOKENS_VIEW = 3
 LIMIT_TOKENS_VIEW_WAIT_IN_HOURS = 24
-YES_ = {'', '1', 'yes', 'true', 't', 'y'}
+YES_ = {'', '1', 'yes', 'y', 'true', 't', 'on'}
 ACE_CALENDARS_ = {
     'enable': {'id': 'enable', 'name': 'Enable'},
     'disable': {'id': 'disable', 'name': 'Disable'},
@@ -601,6 +602,8 @@ FONTAWESOME_ICONS_ = {
     'top': {'icon': '<i class="fas fa-list-ol"></i>', 'title': 'Top for resource'},
     'versus': '<i class="fas fa-people-arrows"></i>',
     'last_activity': '<i class="fa-fw far fa-clock"></i>',
+    'fullscreen': '<i class="fas fa-expand-arrows-alt"></i>',
+    'charts': '<i class="fas fa-chart-bar"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

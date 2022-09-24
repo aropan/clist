@@ -63,8 +63,6 @@ class Statistic(BaseModule):
                         p['time'] = values[1]
                 else:
                     row[k.lower()] = v.value
-            if not problems or users and row['member'] not in users:
-                continue
 
             member = row['member']
             if member in result:
@@ -86,6 +84,12 @@ class Statistic(BaseModule):
                     row['provisional_score'] = row['solving']
                 row['delta_score'] = row['solving'] - row['provisional_score']
                 has_provisional |= bool(row['delta_rank']) or bool(row['delta_score'])
+
+            if not (problems or (is_challenge and stats)):
+                continue
+
+            if users and row['member'] not in users:
+                continue
 
             result[member] = row
 

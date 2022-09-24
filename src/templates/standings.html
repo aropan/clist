@@ -47,7 +47,7 @@
     var default_height = table_inner_scroll.height()
     $(window).resize(function() {
       if (table_inner_scroll.length) {
-        var val = $(window).height() - table_inner_scroll.offset().top - 50
+          var val = $(window).height() - table_inner_scroll.offset().top - {% if fullscreen %}0{% else %}50{% endif %}
         if (val < default_height) {
           table_inner_scroll.height(val)
         } else {
@@ -63,7 +63,7 @@
   })
 </script>
 
-<div>
+<div class="fullscreen-hidden">
   {% with neighbors=contest.neighbors %}
   <h3 id="standings-title" class="text-center">
     {% if not other_contests and with_neighbors %}

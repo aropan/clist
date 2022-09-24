@@ -85,11 +85,11 @@
         <script src="{% static_ts 'js/palette-1.1.0.min.js' %}"></script>
         {% block end-head %}{% endblock %}
     </head>
-    <body>
+    <body{% if fullscreen %} class="fullscreen"{% endif %}>
         {% block navbar %}{% include 'navbar.html' %}{% endblock %}
         <div class="rating-clips">{% include "rating-clip.html" %}</div>
         {% block container %}
-        <div class="container">
+        <div{% if not fullscreen %} class="container"{% endif %}>
         {% block banner %}
             {% for b in banners %}
                 {% if b.template %}

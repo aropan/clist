@@ -96,6 +96,7 @@ class Statistic(BaseModule):
 
         opening = {}
         percentages = []
+        has_codinpoints = False
         with PoolExecutor(max_workers=8) as executor:
             hidden_fields = set()
             result = {}
@@ -104,6 +105,7 @@ class Statistic(BaseModule):
                 nonlocal hidden_fields
                 nonlocal result
                 nonlocal opening
+                nonlocal has_codinpoints
                 for row in data['users']:
                     if 'codingamer' not in row:
                         continue
@@ -146,9 +148,9 @@ class Statistic(BaseModule):
                                 hidden_fields.add(field)
 
                     if 'updateTime' in row:
-                        row['updated'] = row.pop('updateTime') / 1000
+                        row['update_time'] = row.pop('updateTime') / 1000
                     if 'creationTime' in row:
-                        row['created'] = row.pop('creationTime') / 1000
+                        row['submit_time'] = row.pop('creationTime') / 1000
 
                     row.pop('public_handle', None)
                     row.pop('test_session_handle', None)
@@ -169,6 +171,8 @@ class Statistic(BaseModule):
                         row['_skip_provisional_rank'] = row['percentage'] < 100
                         percentages.append(row['percentage'])
 
+                    has_codinpoints |= bool(row.get('codinpoints'))
+
             process_data(data)
 
             if len(data['users']) >= 1000:
@@ -180,14 +184,16 @@ class Statistic(BaseModule):
                 for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries), desc='countries'):
                     process_data(data)
 
-        hidden_fields = list(hidden_fields)
         if self.end_time > now():
-            hidden_fields.extend(['created', 'updated'])
+            hidden_fields.discard('submit_time')
+        if self.end_time > now() or not has_codinpoints:
+            hidden_fields.add('codinpoints')
+        hidden_fields = list(hidden_fields)
 
         standings = {
             'url': standings_url,
             'result': result,
-            'fields_types': {'updated': ['timestamp'], 'created': ['timestamp']},
+            'fields_types': {'update_time': ['timestamp'], 'submit_time': ['timestamp']},
             'fields_values': {},
             'hidden_fields': hidden_fields,
             'info_fields': ['_league', '_challenge', '_has_versus', '_opening'],
@@ -200,7 +206,6 @@ class Statistic(BaseModule):
                     ('league_rank', 'league_rank'),
                     ('language', 'Language'),
                     ('clashes_count', 'clashes_count'),
-                    ('created', 'Submit Time'),
                 ],
             },
         }
