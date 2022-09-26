@@ -20,6 +20,7 @@ services:
       target: dev
     volumes:
       - ./src/:/usr/src/clist/
+      - ./legacy/api/:/usr/src/clist/legacy/api/
       - ./src/static:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
       - ./logs/development:/usr/src/clist/logs/

@@ -48,6 +48,7 @@ RUN crontab /etc/cron.d/clist
 
 RUN pip install "uwsgi==2.0.20" "supervisor==4.2.4" "daphne==3.0.2"
 COPY ./src/ $APPDIR
+COPY ./legacy/api/ $APPDIR/legacy/api/
 COPY ./uwsgi.ini $APPDIR
 COPY supervisord.conf /etc/supervisord.conf
 CMD supervisord -c /etc/supervisord.conf
