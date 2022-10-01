@@ -686,7 +686,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     # FIXME extra per_page
     if (
         contest.n_statistics and
-        (per_page >= contest.n_statistics and 'team_id' in contest_fields or contest.info.get('grouped_team')) and
+        (contest.n_statistics <= 1000 and 'team_id' in contest_fields or contest.info.get('grouped_team')) and
         not groupby
     ):
         if 'team_id' in contest_fields:

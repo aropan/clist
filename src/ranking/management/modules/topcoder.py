@@ -358,6 +358,8 @@ class Statistic(BaseModule):
 
                     row['member'] = handle
                     row['place'] = row.pop('division_placed', None)
+                    if not row['place']:
+                        row.pop('place')
                     row['solving'] = row['point_total']
                     row['solved'] = {'solving': 0}
                     row['division'] = 'I' * division

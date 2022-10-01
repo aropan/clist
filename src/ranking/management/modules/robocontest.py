@@ -8,8 +8,9 @@ from urllib.parse import urljoin
 
 from ratelimiter import RateLimiter
 
+from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.common.locator import Locator
+# from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.common.parsed_table import ParsedTable
 
 
@@ -91,6 +92,9 @@ class Statistic(BaseModule):
                 if not r.get('member'):
                     continue
 
+                if not problems and not as_number(r['score']):
+                    continue
+
                 result[r['member']] = r
                 nothing = False
 
@@ -131,16 +135,17 @@ class Statistic(BaseModule):
                     val = html.unescape(match.group('val').strip())
                     ret[key] = val
 
-            for field in 'region', 'district':
-                if ret.get(field):
-                    country = locator.get_country(ret[field], lang='ru')
-                    if country:
-                        ret['country'] = country
-                        break
+            # for field in 'region', 'district':
+            #     if ret.get(field):
+            #         country = locator.get_country(ret[field], lang='ru')
+            #         if country:
+            #             ret['country'] = country
+            #             break
 
             return ret
 
-        with PoolExecutor(max_workers=8) as executor, Locator() as locator:
+        # with PoolExecutor(max_workers=8) as executor, Locator() as locator:
+        with PoolExecutor(max_workers=8) as executor:
             for data in executor.map(fetch_profile, users):
                 if pbar:
                     pbar.update()

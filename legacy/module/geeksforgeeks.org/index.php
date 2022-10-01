@@ -9,7 +9,6 @@
             break;
         }
         if (!isset($response['results'])) {
-            var_dump($response);
             trigger_error('json = ' . json_encode($response), E_USER_WARNING);
             return;
         }

@@ -5,6 +5,11 @@
     $http_header = array('http_header' => array('content-type: application/json'), 'json_output' => true);
     $data = curlexec($url, NULL, $http_header);
 
+    if (!isset($data['contests'])) {
+        trigger_error('json = ' . json_encode($data), E_USER_WARNING);
+        return;
+    }
+
     foreach ($data['contests'] as $k => $c) {
         $title = $c['name'];
         $u = $c['link'];

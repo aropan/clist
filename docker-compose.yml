@@ -9,6 +9,7 @@ services:
       - static_volume:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
       - ./logs/production:/usr/src/clist/logs/
+      - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
       - db
       - cache
@@ -24,6 +25,7 @@ services:
       - ./src/static:/usr/src/clist/staticfiles/
       - media_volume:/usr/src/clist/mediafiles/
       - ./logs/development:/usr/src/clist/logs/
+      - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
       - db
     secrets:

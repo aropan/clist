@@ -61,17 +61,23 @@ class Statistic(BaseModule):
             try:
                 page = self._get(url)
                 break
-            except FailOnGetResponse:
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return
                 time.sleep(attempt)
         else:
             return
 
         regex = '<table[^>]*>.*?</table>'
-        html_table = re.search(regex, page, re.DOTALL).group(0)
-        table = parsed_table.ParsedTable(html_table, with_duplicate_colspan=True)
-
-        pages = re.findall(r'''<a[^>]*href=["'][^"']*/submissions\?[^"']*page=([0-9]+)[^"']*["'][^>]*>[0-9]+</a>''', page)  # noqa
-        n_page = max(map(int, pages))
+        entry = re.search(regex, page, re.DOTALL)
+        if entry:
+            html_table = entry.group(0)
+            table = parsed_table.ParsedTable(html_table, with_duplicate_colspan=True)
+            pages = re.findall(r'''<a[^>]*href=["'][^"']*/submissions\?[^"']*page=([0-9]+)[^"']*["'][^>]*>[0-9]+</a>''', page)  # noqa
+            n_page = max(map(int, pages))
+        else:
+            table = []
+            n_page = c_page - 1
 
         return url, page, table, c_page, n_page
 
@@ -184,8 +190,8 @@ class Statistic(BaseModule):
                         last_submission_time if last_page == self.DEFAULT_LAST_PAGE else last_page_st
 
     def get_standings(self, users=None, statistics=None):
-
         result = {}
+        standings_url = self.standings_url or self.STANDING_URL_.format(self)
 
         if users and statistics:
             fusers = users
@@ -213,7 +219,12 @@ class Statistic(BaseModule):
                 writers = [w for w in writers if w and w != '?']
 
             url = f'{self.RESULTS_URL_.format(self)}/'
-            page = self._get(url)
+            try:
+                page = self._get(url)
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return {'action': 'delete'}
+                raise e
 
             match = re.search(r'var\s*results\s*=\s*(\[[^\n]*\]);$', page, re.MULTILINE)
             data = json.loads(match.group(1))
@@ -232,14 +243,39 @@ class Statistic(BaseModule):
                         r[k] = row[k]
                 results[handle] = r
 
-            url = f'{self.STANDING_URL_.format(self)}/json'
             try:
-                page = self._get(url)
+                page = self._get(f'{standings_url}/json')
+                data = json.loads(page)
             except FailOnGetResponse as e:
                 if e.code == 404:
-                    return {'action': 'delete'}
-                raise e
-            data = json.loads(page)
+                    data = {}
+                else:
+                    raise e
+
+            if not data:
+                standings_url = f'{self.STANDING_URL_.format(self)}/team'
+                page = self._get(f'{standings_url}/json')
+                data = json.loads(page)
+
+            new_data = []
+            teams = []
+            handles = []
+            for row in data['StandingsData']:
+                if not row['IsTeam']:
+                    new_data.append(row)
+                    continue
+                teams.append(row)
+                handles.extend(row['Affiliation'].split(', '))
+            if self.resource.account_set.filter(key__in=handles).exists():
+                for row in teams:
+                    handles = row.pop('Affiliation').split(', ')
+                    row['team_id'] = row.pop('UserScreenName')
+                    row['_members'] = [{'account': m} for m in handles]
+                    for handle in handles:
+                        r = deepcopy(row)
+                        r['UserScreenName'] = handle
+                        new_data.append(r)
+            data['StandingsData'] = new_data
 
             task_info = collections.OrderedDict()
             for t in data['TaskInfo']:
@@ -312,6 +348,14 @@ class Statistic(BaseModule):
                     else:
                         p['result'] = -v['Failure']
                 r['solved'] = {'solving': solving}
+                r['IsTeam'] = row.pop('IsTeam')
+
+                if 'team_id' in row:
+                    r['team_id'] = row.pop('team_id')
+                    r['_members'] = row.pop('_members')
+
+                if r['IsTeam']:
+                    continue
 
                 row.update(r)
                 row.pop('Additional', None)
@@ -336,11 +380,17 @@ class Statistic(BaseModule):
                     if r.get('NewRating') is not None:
                         has_new_rating = True
 
-            url = f'{self.STANDING_URL_.format(self)}/virtual/json'
-            page = self._get(url)
-            data = json.loads(page)
+            try:
+                url = f'{self.STANDING_URL_.format(self)}/virtual/json'
+                page = self._get(url)
+                data = json.loads(page)
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    data = {}
+                else:
+                    raise e
 
-            for row in data['StandingsData']:
+            for row in data.get('StandingsData', []):
                 if not row['TaskResults']:
                     continue
                 handle = row.pop('UserScreenName')
@@ -405,7 +455,7 @@ class Statistic(BaseModule):
 
             standings = {
                 'result': result,
-                'url': self.STANDING_URL_.format(self),
+                'url': standings_url,
                 'problems': list(task_info.values()),
                 'writers': writers,
             }

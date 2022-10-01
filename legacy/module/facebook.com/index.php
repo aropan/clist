@@ -178,7 +178,8 @@
             $year = $node['contest_season']['season_vanity'];
             $url = rtrim($URL, '/') . "/$year/${node['contest_vanity']}";
             $scoreboard_url = rtrim($url) . '/scoreboard';
-            $scoreboard_page = curlexec($scoreboard_url);
+            $url_ = $scoreboard_url;
+            $scoreboard_page = curlexec($url_);
             $scoreboard_ids = get_ids($scoreboard_page);
             if ($scoreboard_ids) {
                 $info['_scoreboard_ids'] = $scoreboard_ids;

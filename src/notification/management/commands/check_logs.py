@@ -23,8 +23,9 @@ class Command(BaseCommand):
 
     def _check(self, filepath, regex, cache, key, href=None, flags=re.MULTILINE | re.IGNORECASE):
         if not os.path.exists(filepath):
+            logger.warning(f'skip {filepath}')
             return
-        logger.info(f'log file is {filepath}')
+        logger.info(f'check {filepath}')
         with open(filepath, 'r') as fo:
             errors = []
             for m in re.finditer(
@@ -47,38 +48,39 @@ class Command(BaseCommand):
                     self._bot.admin_message(msg)
             else:
                 cache.pop(key, None)
-        logger.info('done')
 
     def __init__(self):
         self._bot = Bot()
 
     def handle(self, *args, **options):
         logger.info('start')
-        cache_filepath = os.path.join(os.path.dirname(__file__), '.cache.yaml')
+        cache_filepath = os.path.join('./logs/cache.yaml')
         if os.path.exists(cache_filepath):
             with open(cache_filepath, 'r') as fo:
                 cache = yaml.safe_load(fo)
         else:
             cache = {}
+        check_logs_cache = cache.setdefault('check_logs', {})
 
         self._check(
-            './legacy/logs/update/index.html',
+            './logs/legacy/update/index.html',
             regex=r'php[\w\s]*:.*$',
-            cache=cache,
-            key='update-file-error-hash',
+            cache=check_logs_cache,
+            key='legacy/update/index.html',
             href='https://legacy.clist.by/logs/update/',
         )
 
-        command_cache = cache.setdefault('command', {})
-        files = list(glob.glob('./logs/command/**/*.log', recursive=True))
+        files = []
+        files.extend(glob.glob('./logs/*/**/*.log', recursive=True))
+        files.extend(glob.glob('./logs/*/**/*.txt', recursive=True))
         for log_file in files:
-            if not os.path.exists(log_file):
+            if log_file.endswith('check_logs.log'):
                 continue
-            key = os.path.basename(log_file)
-            if key == 'check_logs.log':
+            if '/legacy/removed/' in log_file:
                 continue
+            key = os.path.relpath(log_file, 'logs')
             regex = r'^[^-\{\+\!\n]*\b(error\b|exception\b[^\(]).*$'
-            self._check(log_file, regex, command_cache, key)
+            self._check(log_file, regex, check_logs_cache, key)
 
         cache = yaml.dump(cache, default_flow_style=False)
         with open(cache_filepath, 'w') as fo:
