@@ -23,6 +23,10 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+    @property
+    def channel_group_name(self):
+        return f'{self.__class__.__name__.upper()}__{self.pk}'
+
 
 class BaseManager(models.Manager):
 

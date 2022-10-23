@@ -188,7 +188,7 @@ def username_error(username):
 def signup(request, action=None):
     context = {}
     token_id = request.session.pop('token_id', None)
-    if token_id:
+    if token_id and not request.user.is_authenticated:
         try:
             token = Token.objects.get(id=token_id)
         except Token.DoesNotExist:
@@ -254,11 +254,7 @@ def signup(request, action=None):
             return redirect(request.session.pop('next', 'clist:main'))
         return redirect('auth:login')
 
-    return render(
-        request,
-        'signup.html',
-        context,
-    )
+    return render(request, 'signup.html', context)
 
 
 def logout(request):

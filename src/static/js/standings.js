@@ -530,3 +530,11 @@ $(function() {
     return false
   });
 })
+
+/*
+ * Standings live
+ */
+
+$(function() {
+  const standings_socket = new WebSocket('wss://' + window.location.host + '/ws/contest/?pk=' + contest_pk)
+})

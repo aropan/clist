@@ -17,9 +17,12 @@
 
 <script>page_load = $.now();</script>
 <script src="{% static_ts 'js/countdown.js' %}"></script>
-<script>contest_duration = {{ contest.duration_in_secs }}</script>
-<script>contest_max_percent = {% if contest.is_over or not contest.duration_in_secs %}1{% else %}{{ contest.duration_in_secs|substract:contest.next_time|divide:contest.duration_in_secs }}{% endif %}</script>
-<script>contest_timeline = {{ contest_timeline|default:"{}"|to_json }}</script>
+<script>
+  contest_duration = {{ contest.duration_in_secs }}
+  contest_max_percent = {% if contest.is_over or not contest.duration_in_secs %}1{% else %}{{ contest.duration_in_secs|substract:contest.next_time|divide:contest.duration_in_secs }}{% endif %}
+  contest_timeline = {{ contest_timeline|default:"{}"|to_json }}
+  contest_pk = {{ contest.pk }}
+</script>
 
 {% endblock %}
 
@@ -151,19 +154,19 @@
 <div>
   {% include "standings_filter.html" %}
 
-  {% if contest.parsed_time %}
-  <div id="parsed-time" class="container">
-    <small class="text-muted pull-right">
-      updated
-      <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
-    </small>
-  </div>
-  {% endif %}
-
   {% if charts %}
     {% include "standings_charts.html" with charts=charts %}
   {% elif statistics.exists %}
     {% if not groupby or groupby == 'none' %}
+
+    {% if contest.parsed_time %}
+    <div id="parsed-time">
+      <small class="text-muted pull-right">
+        updated
+        <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
+      </small>
+    </div>
+    {% endif %}
 
     {% if contest.resource.info.standings.style %}
     <style>

@@ -88,19 +88,27 @@
     <body{% if fullscreen %} class="fullscreen"{% endif %}>
         {% block navbar %}{% include 'navbar.html' %}{% endblock %}
         <div class="rating-clips">{% include "rating-clip.html" %}</div>
-        {% block container %}
-        <div{% if not fullscreen %} class="container"{% endif %}>
-        {% block banner %}
-            {% for b in banners %}
-                {% if b.template %}
-                    {% include b.template with banner=b %}
-                {% endif %}
-            {% endfor %}
-        {% endblock %}
-        {% block content %}
-        {% endblock %}
+
+        <div class="container__main">
+            {% block container %}
+            <div{% if not fullscreen %} class="container container__left"{% endif %}>
+            {% block banner %}
+                {% for b in banners %}
+                    {% if b.template %}
+                        {% include b.template with banner=b %}
+                    {% endif %}
+                {% endfor %}
+            {% endblock %}
+
+            {% block content %}
+
+            {% endblock %}
+            </div>
+            {% endblock %}
+            <div class="resizer hidden" id="drag_me"></div>
+            <div class="container__right hidden"></div>
         </div>
-        {% endblock %}
+
         {% include 'messages.html' %}
 
         {% if user.is_authenticated %}

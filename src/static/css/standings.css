@@ -279,12 +279,7 @@ a.versus-games:hover {
   cursor: pointer;
 }
 
-#parsed-time {
-  position: absolute;
-  z-index: -1;
-}
-
-#parsed-time {
-  margin-left: -15px;
+#parsed-time .pull-right {
   margin-top: -20px;
+  height: 20px;
 }
