@@ -810,6 +810,7 @@ $(function() {
         ntf_form.find('[name="with_updates"]').prop('checked', ntf.find('[data-value="updates"]').length)
         ntf_form.find('[name="with_results"]').prop('checked', ntf.find('[data-value="results"]').length)
         ntf_form.find('[name="with_virtual"]').prop('checked', ntf.find('[data-value="virtual"]').length)
+        ntf_form.find('[name="clear_on_delete"]').prop('checked', ntf.find('[data-value="clear"]').length)
         ntf_form.find('[name="add"]').val('Update')
         ntf_add.remove()
         ntf_form.show(300)

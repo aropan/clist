@@ -9,7 +9,7 @@ from pprint import pprint
 from flatten_dict import flatten
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -38,8 +38,13 @@ class Statistic(BaseModule):
         url = self.API_STANDINGS_URL_FORMAT_.format(jid=jid, page=1)
         data = json.loads(REQ.get(url))
 
-        problems_url = self.API_PROBLEMS_URL_FORMAT_.format(jid=jid)
-        problems_data = json.loads(REQ.get(problems_url))
+        try:
+            problems_url = self.API_PROBLEMS_URL_FORMAT_.format(jid=jid)
+            problems_data = json.loads(REQ.get(problems_url))
+        except FailOnGetResponse as e:
+            if e.code == 403:
+                raise ExceptionParseStandings(e)
+            raise e
 
         problems_info = []
         state = data['data']['scoreboard']['state']

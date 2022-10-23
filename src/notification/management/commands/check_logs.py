@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 error = m.group(0)
                 if re.search('contest = ', error):
                     continue
-                logger.error(error)
+                logger.warning(error)
                 errors.append(error)
             if errors:
                 errors = '\n'.join(errors)

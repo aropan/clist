@@ -90,9 +90,10 @@ def UpdateCoderLastActivity(get_response):
     def middleware(request):
         response = get_response(request)
         if request.user.is_authenticated:
-            coder = request.user.coder
-            coder.last_activity = now()
-            coder.save(update_fields=['last_activity'])
+            coder = Coder.objects.filter(pk=request.user.coder.pk).first()
+            if coder:
+                coder.last_activity = now()
+                coder.save(update_fields=['last_activity'])
         return response
 
     return middleware

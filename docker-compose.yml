@@ -12,7 +12,7 @@ services:
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
       - db
-      - cache
+      - memcached
     secrets:
       - db_conf
   dev:
@@ -32,7 +32,7 @@ services:
       - db_conf
     ports:
       - ${CLIST_DEV_PORT:-10042}:10042
-  cache:
+  memcached:
     image: memcached
   legacy:
     build: ./legacy
@@ -69,6 +69,7 @@ services:
       -c max_wal_size=4GB
       -c min_wal_size=320MB
       -c bgwriter_delay=20
+    shm_size: 2gb
   nginx:
     image: nginx:alpine
     volumes:

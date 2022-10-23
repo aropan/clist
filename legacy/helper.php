@@ -547,4 +547,14 @@
 
         return $text;
     }
+
+    function short_message($data) {
+        if (is_array($data)) {
+            $data = json_encode($data);
+        }
+        $lines = preg_split("/[\n\r]+/", $data);
+        $line = trim($lines[0]);
+        $line = mb_strimwidth($line, 0, 75, '...');
+        return $line;
+    }
 ?>

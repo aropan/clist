@@ -204,11 +204,12 @@
                         {% if n.method in custom_categories %}{{ custom_categories|get_item:n.method }}{% else %}{{ n.method }}{% endif %}</span>
                     before <span class="label label-info" data-value="before">{{ n.before }}</span> minute(s)
                     once a <span class="label label-info" data-value="period">{{ n.get_period_display|lower }}</span>
-                    {% if n.with_updates or n.with_results or n.with_virtual %}
+                    {% if n.with_updates or n.with_results or n.with_virtual or n.clear_on_delete %}
                     with
                     {% if n.with_updates %}<span class="label label-info" data-value="updates">updates</span>{% endif %}
                     {% if n.with_results %}<span class="label label-info" data-value="results">results</span>{% endif %}
                     {% if n.with_virtual %}<span class="label label-info" data-value="virtual">virtual</span>{% endif %}
+                    {% if n.clear_on_delete %}<span class="label label-info" data-value="clear">clear</span>{% endif %}
                     {% endif %}
                     <span class="checkin">
                     {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}

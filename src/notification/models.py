@@ -1,15 +1,18 @@
 import re
+import traceback
 import uuid
 from datetime import timedelta
 
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -23,6 +26,11 @@ class TaskNotification(BaseModel):
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     method = models.CharField(max_length=256, null=False)
     enable = models.BooleanField(default=True)
+
+    @property
+    def method_type(self):
+        ret, *_ = self.method.split(':', 1)
+        return ret
 
     class Meta:
         abstract = True
@@ -57,8 +65,16 @@ class Notification(TaskNotification):
     with_updates = models.BooleanField(default=True)
     with_results = models.BooleanField(default=False)
     with_virtual = models.BooleanField(default=False)
+    clear_on_delete = models.BooleanField(default=True)
     last_time = models.DateTimeField(null=True, blank=True)
     secret = models.CharField(max_length=50, blank=True, null=True)
+
+    tasks = GenericRelation(
+        'Task',
+        object_id_field='notification_object_id',
+        content_type_field='notification_content_type',
+        related_query_name='periodical_notification',
+    )
 
     def __str__(self):
         return '{0.method}@{0.coder}: {0.before} {0.period}'.format(self)
@@ -85,6 +101,13 @@ class Subscription(TaskNotification):
     contest = models.ForeignKey(Contest, db_index=True, on_delete=models.CASCADE)
     account = models.ForeignKey(Account, db_index=True, on_delete=models.CASCADE)
 
+    tasks = GenericRelation(
+        'Task',
+        object_id_field='notification_object_id',
+        content_type_field='notification_content_type',
+        related_query_name='subscription',
+    )
+
     class Meta:
         indexes = [models.Index(fields=['contest', 'account'])]
         unique_together = ('coder', 'method', 'contest', 'account')
@@ -98,6 +121,7 @@ class Task(BaseModel):
     subject = models.CharField(max_length=4096, null=True, blank=True)
     message = models.TextField(null=True, blank=True)
     addition = models.JSONField(default=dict, blank=True)
+    response = models.JSONField(default=dict, blank=True, null=True)
     is_sent = models.BooleanField(default=False)
 
     class ObjectsManager(models.Manager):
@@ -113,6 +137,23 @@ class Task(BaseModel):
 
     def __str__(self):
         return 'task of {0.notification}'.format(self)
+
+
+@receiver(pre_delete, sender=Task)
+def delete_task(sender, instance, **kwargs):
+    notification = instance.periodical_notification.first()
+    if (
+        notification is not None
+        and notification.clear_on_delete
+        and notification.method_type == django_settings.NOTIFICATION_CONF.TELEGRAM
+        and instance.response
+    ):
+        from tg.bot import Bot
+        bot = Bot()
+        try:
+            bot.delete_message(instance.response['chat']['id'], instance.response['message_id'])
+        except Exception:
+            traceback.print_exc()
 
 
 class Calendar(BaseModel):

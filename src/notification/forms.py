@@ -18,11 +18,13 @@ class NotificationForm(ModelForm):
             'with_updates': ('Notify about updates'),
             'with_results': ('Notify about results'),
             'with_virtual': ('Notify about end of the virtual a day before'),
+            'clear_on_delete':  ('Delete message in a day (only for telegram, need delete message permission)'),
         }
         labels = {
             'with_updates': 'Updates',
             'with_results': 'Results',
             'with_virtual': 'Virtual',
+            'clear_on_delete': 'Clear'
         }
 
     def __init__(self, coder, *args, **kwargs):
@@ -43,6 +45,7 @@ class NotificationForm(ModelForm):
         Field('with_updates', template='crispy_forms/boolean_field.html'),
         Field('with_results', template='crispy_forms/boolean_field.html'),
         Field('with_virtual', template='crispy_forms/boolean_field.html'),
+        Field('clear_on_delete', template='crispy_forms/boolean_field.html'),
         Hidden('action', 'notification'),
         Hidden('pk', ''),
         FormActions(Submit('add', 'Add', css_class='btn-primary'))

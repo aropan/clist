@@ -22,6 +22,11 @@
         );
     };
 
+    if (!is_array($data)) {
+        trigger_error('message = ' . short_message($data), E_USER_WARNING);
+        return;
+    }
+
     foreach ($data as $c) {
         $key = intval($c['id']);
         $max_id = max($max_id, $key);

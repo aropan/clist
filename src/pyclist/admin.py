@@ -1,10 +1,12 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection, models, transaction
+from django.db.models.fields.related import RelatedField
 from django_json_widget.widgets import JSONEditorWidget
 
 from pyclist.models import BaseModel
@@ -61,7 +63,9 @@ def admin_register(*args, **kwargs):
                 for field in model._meta.get_fields():
                     if field.name in autocomplete_fields:
                         continue
-                    if not isinstance(field, models.fields.related.RelatedField):
+                    if not isinstance(field, RelatedField):
+                        continue
+                    if isinstance(field, GenericRelation):
                         continue
                     if field.related_model is ContentType:
                         continue

@@ -17,8 +17,8 @@ RUN apt install -y bash-completion
 RUN wget -O /etc/bash_completion.d/django_bash_completion.sh https://raw.github.com/django/django/master/extras/django_bash_completion
 RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/.bashrc
 
-# vim
-RUN apt install -y vim
+# Useful packages
+RUN apt install -y lsof htop vim
 
 # Setup python requirements
 RUN pip install "pip==22.1.2"
@@ -38,17 +38,21 @@ CMD python manage.py runserver 0.0.0.0:10042
 
 FROM base as prod
 ENV DJANGO_ENV_FILE .env.prod
-RUN apt install -y cron
-# Copy hello-cron file to the cron.d directory
+RUN pip install "uwsgi==2.0.20" "supervisor==4.2.4" "daphne==3.0.2"
+RUN apt install -y cron redis-server
+
+COPY ./src/ $APPDIR/
+COPY ./legacy/api/ $APPDIR/legacy/api/
+
 COPY cron /etc/cron.d/clist
-# Give execution rights on the cron job
 RUN chmod 0644 /etc/cron.d/clist
-# Apply cron job
 RUN crontab /etc/cron.d/clist
 
-RUN pip install "uwsgi==2.0.20" "supervisor==4.2.4" "daphne==3.0.2"
-COPY ./src/ $APPDIR
-COPY ./legacy/api/ $APPDIR/legacy/api/
-COPY ./uwsgi.ini $APPDIR
+COPY ./uwsgi.ini $APPDIR/
+
+RUN mkdir /run/daphne
+
+COPY ./redis.conf /etc/redis/redis.conf
+
 COPY supervisord.conf /etc/supervisord.conf
 CMD supervisord -c /etc/supervisord.conf

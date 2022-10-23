@@ -47,6 +47,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--dryrun', action='store_true', default=False)
+        parser.add_argument('--force', action='store_true', default=False)
+        parser.add_argument('--coders', nargs='+')
 
     def get_message(self, method, data, **kwargs):
         subject_ = kwargs.pop('subject', None)
@@ -81,10 +83,12 @@ class Command(BaseCommand):
     def send_message(self, coder, method, data, **kwargs):
         method, *args = method.split(':', 1)
         subject, message, context = self.get_message(method=method, data=data, coder=coder,  **kwargs)
+        response = None
         if method == settings.NOTIFICATION_CONF.TELEGRAM:
             if args:
                 try:
-                    self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
+                    response = self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
+                    response = response.to_dict()
                 except Unauthorized as e:
                     if 'bot was kicked from' in str(e):
                         if 'notification' in kwargs:
@@ -99,7 +103,8 @@ class Command(BaseCommand):
             elif coder.chat and coder.chat.chat_id:
                 try:
                     if not coder.settings.get('telegram', {}).get('unauthorized', False):
-                        self.TELEGRAM_BOT.send_message(message, coder.chat.chat_id, reply_markup=False)
+                        response = self.TELEGRAM_BOT.send_message(message, coder.chat.chat_id, reply_markup=False)
+                        response = response.to_dict()
                 except Unauthorized as e:
                     if 'bot was blocked by the user' in str(e):
                         coder.chat.delete()
@@ -151,6 +156,11 @@ class Command(BaseCommand):
                         logger.error(f'{str(e)}, delete info = {delete_info}')
                         return 'removed'
 
+        task = kwargs.get('task')
+        if task is not None and response:
+            task.response = response
+            task.save()
+
     def load_config(self):
         if os.path.exists(self.CONFIG_FILE):
             with open(self.CONFIG_FILE, 'r') as fo:
@@ -170,6 +180,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.load_config()
         dryrun = options.get('dryrun')
+        coders = options.get('coders')
 
         stop_email = settings.STOP_EMAIL_ and not dryrun
         if (
@@ -180,12 +191,12 @@ class Command(BaseCommand):
         clear_email_task = False
 
         delete_info = Task.objects.filter(
-            Q(is_sent=True, modified__lte=now() - timedelta(hours=1)) |
-            Q(created__lte=now() - timedelta(days=1))
+            Q(is_sent=True, modified__lte=now() - timedelta(days=1)) |
+            Q(created__lte=now() - timedelta(days=2))
         ).delete()
         logger.info(f'Tasks cleared: {delete_info}')
 
-        qs = Task.unsent.all()
+        qs = Task.objects.all() if coders and options.get('force') else Task.unsent.all()
         qs = qs.prefetch_related(
             Prefetch(
                 'notification__coder__chat_set',
@@ -193,6 +204,8 @@ class Command(BaseCommand):
                 to_attr='cchat',
             )
         )
+        if coders:
+            qs = qs.filter(periodical_notification__coder__username__in=coders)
 
         qs = qs.order_by('modified')
 
@@ -224,6 +237,7 @@ class Command(BaseCommand):
                         task.addition,
                         subject=task.subject,
                         message=task.message,
+                        task=task,
                         notification=notification,
                     )
                     if status == 'removed':

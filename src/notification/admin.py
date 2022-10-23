@@ -23,7 +23,7 @@ class SubscriptionAdmin(BaseModelAdmin):
 class TaskAdmin(BaseModelAdmin):
     list_display = ['notification', 'created', 'modified', 'is_sent']
     list_filter = ['is_sent']
-    search_fields = ['subject', 'message']
+    search_fields = ['subject', 'message', 'periodical_notification__coder__username', 'subscription__coder__username']
 
 
 @admin_register(Calendar)

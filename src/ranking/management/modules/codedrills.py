@@ -135,7 +135,7 @@ class Statistic(BaseModule):
                     'short': chr(ord('A') + idx),
                     'url': self.host + 'problems/' + p.pop('4').decode('utf8'),
                 }
-                for label in to_list(p['11'].pop('2')):
+                for label in to_list(p['11'].pop('2', [])):
                     label = label.decode('utf8')
                     if '/' not in label:
                         continue

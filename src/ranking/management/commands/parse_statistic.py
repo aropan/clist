@@ -254,6 +254,7 @@ class Command(BaseCommand):
                     wait_rating = resource_statistics.get('wait_rating', {})
                     has_hidden = standings.pop('has_hidden', False)
 
+                    results = []
                     if result or users is not None:
                         fields_set = set()
                         fields_types = defaultdict(set)
@@ -276,7 +277,6 @@ class Command(BaseCommand):
                             for k, v in additions.items():
                                 result[k] = dict(v)
 
-                        results = []
                         for r in result.values():
                             for k, v in r.items():
                                 if isinstance(v, str) and chr(0x00) in v:

@@ -29,7 +29,7 @@ BASE_DIR = path.dirname(path.dirname(path.abspath(__file__)))
 
 env = Env()
 env.read_env(env('DJANGO_ENV_FILE'))
-env.read_env('/run/secrets/db_conf')
+env.read_env(env('DJANGO_DB_CONF', default='/run/secrets/db_conf'))
 
 ADMINS = conf.ADMINS
 
@@ -157,14 +157,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'pyclist.wsgi.application'
 
 ASGI_APPLICATION = 'pyclist.asgi.application'
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
+if DEBUG:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [('0.0.0.0', 'redis')]},
         },
-    },
-}
+    }
 
 
 # Database
@@ -191,7 +196,7 @@ DATABASES.update(DATABASES_)
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': 'cache:11211',
+        'LOCATION': 'memcached:11211',
         'OPTIONS': {
             'server_max_value_length': 1024 * 1024 * 10,
         },
