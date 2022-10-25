@@ -1,3 +1,4 @@
+{% if data %}
 <div class="input-group{% if not nosm %} input-group-sm{% endif %} field-to-select hidden">
   {% if data.nogroupby %}
     <span class="input-group-addon">
@@ -68,3 +69,4 @@
   })
   $('#{{ field }}').closest('.field-to-select').removeClass('hidden')
 </script>
+{% endif %}

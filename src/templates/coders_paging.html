@@ -57,6 +57,19 @@
   <td>{{ coder.n_contests }}</td>
   <td>{{ coder.n_accounts }}</td>
   <td><div title="{{ coder.created|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ coder.created|timezone:timezone|naturalday }}</div></td>
+  {% for field in custom_fields.values %}
+  <td>
+    {% with account=coder.resource_account.0 %}
+      {{ account.info|get_item:field }}
+    {% endwith %}
+  </td>
+  {% endfor %}
+  {% if view_coder_chat %}
+  {% with chat=coder.non_group_chats.0 %}
+  <td>{{ chat.title }}</td>
+  <td>{% if chat.name %}{{ chat.name }}{% endif %}</td>
+  {% endwith  %}
+  {% endif %}
 </tr>
 {% endfor %}
 {% show_more_table %}

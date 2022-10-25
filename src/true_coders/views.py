@@ -39,6 +39,7 @@ from notification.models import Calendar, NotificationMessage, Subscription
 from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
 from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
+from tg.models import Chat
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
 from utils.chart import make_chart
 from utils.json_field import JSONF
@@ -211,6 +212,38 @@ def coders(request, template='coders.html'):
         'nohidden': True,
     }
 
+    chat_fields = None
+    view_coder_chat = None
+    if request.user.is_authenticated:
+        coder = request.user.coder
+        chats = coder.chats.all()
+        if chats:
+            options_values = {c.chat_id: c.title for c in chats}
+            chat_fields = {
+                'values': [v for v in request.GET.getlist('chat') if v and v in options_values],
+                'options': options_values,
+                'noajax': True,
+                'nogroupby': True,
+                'nourl': True,
+                'nohidden': True,
+            }
+
+            filt = Q()
+            for value in chat_fields['values']:
+                chat = Chat.objects.filter(chat_id=value, is_group=True).first()
+                filt |= Q(pk__in=chat.coders.all())
+            coders = coders.filter(filt)
+
+            if request.user.has_perm('view_coder_chat') and chat_fields['values']:
+                view_coder_chat = True
+                coders = coders.prefetch_related(
+                    Prefetch(
+                        'chat_set',
+                        queryset=Chat.objects.filter(is_group=False),
+                        to_attr='non_group_chats',
+                    )
+                )
+
     resources = request.GET.getlist('resource')
     if resources:
         resources = [r for r in resources if r]
@@ -223,6 +256,26 @@ def coders(request, template='coders.html'):
             coders = coders.annotate(**{f'{r.pk}_rating': SubqueryMax('account__rating', filter=Q(resource=r))})
             coders = coders.annotate(**{f'{r.pk}_n_contests': SubquerySum('account__n_contests', filter=Q(resource=r))})
         params['resources'] = resources
+
+    custom_fields = None
+    if len(resources) == 1:
+        resource = resources[0]
+        options = list(resource.accounts_fields.get('types', {}).keys())
+        custom_fields = {
+            'values': [v for v in request.GET.getlist('field') if v and v in options],
+            'options': options,
+            'noajax': True,
+            'nogroupby': True,
+            'nourl': True,
+            'nohidden': True,
+        }
+        coders = coders.prefetch_related(
+            Prefetch(
+                'account_set',
+                queryset=resource.account_set.order_by('-n_contests'),
+                to_attr='resource_account',
+            )
+        )
 
     # ordering
     orderby = request.GET.get('sort_column')
@@ -251,6 +304,9 @@ def coders(request, template='coders.html'):
         'coders': coders,
         'params': params,
         'virtual_field': virtual_field,
+        'chat_fields': chat_fields,
+        'custom_fields': custom_fields,
+        'view_coder_chat': view_coder_chat,
     }
     return template, context
 

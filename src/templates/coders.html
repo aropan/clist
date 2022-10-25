@@ -40,6 +40,8 @@
     {% include 'resource_filter.html' %}
 
     {% include "field_to_select.html" with field='virtual' data=virtual_field %}
+    {% include "field_to_select.html" with field='chat' data=chat_fields %}
+    {% include "field_to_select.html" with field='field' data=custom_fields %}
 
     {% if request.GET.sort_order %}
     <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
@@ -86,6 +88,15 @@
             <div>Registration<br/>time</div>
             <div class="sortable-column" data-column="created"></div>
           </th>
+          {% for field in custom_fields.values %}
+          <th>
+            <div>{{ field|title_field }}</div>
+          </th>
+          {% endfor %}
+          {% if view_coder_chat %}
+          <th><div>Chat</div></th>
+          <th><div>Name</div></th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
