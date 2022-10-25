@@ -40,6 +40,8 @@
             if (strpos($end_time, $year) === false) {
                 $end_time .= " $year";
             }
+            $start_time = '12:00 ' . $start_time;
+            $end_time = strtotime($end_time) + 24 * 60 * 60;
 
             $month = date('n', strtotime($start_time));
             if ($month >= 9) {
@@ -48,12 +50,34 @@
                 $season = ($year - 1) . "-" . ($year + 0);
             }
 
+            $duration = null;
+            if (preg_match('#algorithm#i', $category['name'])) {
+                if (preg_match('#marathon#i', $stage['title'])) {
+                    $duration = 7 * 24 * 60;  // 7 days
+                } else if (preg_match('#sprint#i', $stage['title'])) {
+                    $duration = 120;  // 120 minutes
+                } else if (preg_match('#final#i', $stage['title'])) {
+                    $duration = 180;
+                }
+            } else if (preg_match('#back-?end#i', $category['name'])) {
+                $duration = 300;
+            } else if (preg_match('#front-?end#i', $category['name'])) {
+                $duration = 300;
+            } else if (preg_match('#analytics#i', $category['name'])) {
+                $duration = 180;
+            } else if (preg_match('#mobile#i', $category['name'])) {
+                if (preg_match('#qualifying#i', $stage['title'])) {
+                    $duration = 120;
+                }
+            }
+
             $title = $category['name'] . '. ' . $stage['title'];
             $key = $category['type'] . ' ' . strtolower($stage['title']) . ' ' . $season;
 
             $contests[] = array(
                 'start_time' => $start_time,
-                'end_time' => strtotime($end_time) + 24 * 60 * 60,  # + day
+                'end_time' => $end_time,
+                'duration' => $duration,
                 'title' => $title,
                 'url' => $url,
                 'host' => $HOST,
