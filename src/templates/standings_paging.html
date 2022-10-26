@@ -220,6 +220,7 @@ class="
       data-problem-key="{{ key }}"
       data-class="{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}"
       {% endif %}
+      data-problem-full-score="{{ problem.full_score }}"
     >
       {% include "standings_problem_stat.html" with stat=stat %}
     </{{ tag }}>

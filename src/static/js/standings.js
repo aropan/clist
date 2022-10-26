@@ -92,7 +92,7 @@ function shuffle_statistics_rows() {
   $('table.standings tbody').html(rows)
 }
 
-function set_timeline(percent, duration = null) {
+function set_timeline(percent = null, duration = null, scroll_to_element = null) {
   if (duration == null) {
     duration = parseInt($('#timeline-duration').val())
   }
@@ -100,14 +100,18 @@ function set_timeline(percent, duration = null) {
     duration = 0
   }
 
-  percent = Math.max(percent, 0)
-  percent = Math.min(percent, contest_max_percent)
-  update_timeline_text(percent)
+  if (percent == null) {
+    percent = CURRENT_PERCENT
+  } else {
+    percent = Math.max(percent, 0)
+    percent = Math.min(percent, contest_max_percent)
+    update_timeline_text(percent)
 
-  if (CURRENT_PERCENT == percent && (CURRENT_PERCENT <= 0 || CURRENT_PERCENT >= contest_max_percent)) {
-    return
+    if (CURRENT_PERCENT == percent && (CURRENT_PERCENT <= 0 || CURRENT_PERCENT >= contest_max_percent)) {
+      return
+    }
+    CURRENT_PERCENT = percent
   }
-  CURRENT_PERCENT = percent
   var current_time = contest_duration * percent
 
   if (TOOLTIP_TIMER) {
@@ -183,7 +187,7 @@ function set_timeline(percent, duration = null) {
     if (visible && (score.startsWith('+') || parseFloat(score) > 0)) {
       problem_status = $e.find('.par').length? 'info' : 'success'
 
-      if (result.startsWith('+') && contest_timeline['penalty_more'] && !more_penalty) {
+      if (result && result.startsWith('+') && contest_timeline['penalty_more'] && !more_penalty) {
         more_penalty = result == '+'? 0 : parseInt(result)
       }
 
@@ -349,8 +353,9 @@ function set_timeline(percent, duration = null) {
 
   $('table.standings tbody').html(rows)
   color_by_group_score('data-score')
+  $('.accepted-switcher').click(switcher_click)
 
-  scroll_to_find_me(duration, 0)
+  scroll_to_find_me(duration, 0, scroll_to_element)
 
   setTimeout(() => { rows.css('transform', '') }, 1)
 
@@ -377,6 +382,91 @@ function highlight_element(el, after = 1000, duration = 500, before_toggle_class
   }, after)
 }
 
+SWITCHER_CLICK_WITHOUT_UPDATE = false
+
+function switcher_click(el) {
+  var stat = $(this)
+  if (stat.attr('data-score-switcher') === undefined) {
+    stat.attr('data-result-switcher', stat.attr('data-result') || '')
+    stat.attr('data-score-switcher', stat.attr('data-score') || '')
+    stat.attr('data-penalty-switcher', stat.attr('data-penalty') || '')
+
+    var result = stat.attr('data-result')
+    var penalty = Math.floor(contest_duration * CURRENT_PERCENT)
+    if (!result) {
+      result = '+'
+    } else if (result.startsWith('-')) {
+      result = '+' + result.substring(1)
+    }
+    var has_result_penalty = result && result.startsWith('+') && result != '+'
+
+    stat.attr('data-result', result)
+    var score = stat.attr('data-problem-full-score')
+    if (score) {
+      if (contest_timeline['full_score_reduction_factor']) {
+        score = Math.floor(score - score * contest_timeline['full_score_reduction_factor'] * penalty / 60)
+      }
+      if (contest_timeline['penalty_score_more'] && has_result_penalty) {
+        score -= contest_timeline['penalty_score_more'] * parseFloat(result)
+      }
+      if (contest_timeline['guaranteed_full_score_factor']) {
+        score = Math.max(score, stat.attr('data-problem-full-score') * contest_timeline['guaranteed_full_score_factor'])
+      }
+    } else {
+      score = result
+    }
+    stat.attr('data-score', score)
+
+    var factors = contest_timeline['time_factor']
+    if (factors) {
+      var format = contest_timeline['penalty_format'] || 2
+      penalty = factors[format].map(function(val, idx) {
+        var ret = Math.floor(penalty / val)
+        ret = idx? ret % (factors[format][idx - 1] / factors[format][idx]) : ret
+        ret = idx && ret < 10? '0' + ret : ret
+        return ret
+      }).join(':')
+    }
+    stat.attr('data-penalty', penalty)
+
+    if (stat.attr('data-problem-full-score') && contest_timeline['penalty_score_more'] && has_result_penalty) {
+      score += ' ('  + parseInt(result) + ')'
+    }
+    if (contest_timeline['penalty_more'] && score != result && has_result_penalty) {
+      penalty += result
+    }
+
+    stat.children().addClass('hidden')
+    stat.prepend('<div class="swi">' + score + '</div><small class="text-muted"><div>' + penalty + '</div></small>')
+
+    if (!stat.hasClass('problem-cell-stat')) {
+      stat.addClass('problem-cell-stat')
+      stat.addClass('problem-cell-stat-switcher')
+    }
+  } else {
+    stat.attr('data-result', stat.attr('data-result-switcher'))
+    stat.attr('data-score', stat.attr('data-score-switcher'))
+    stat.attr('data-penalty', stat.attr('data-penalty-switcher'))
+    stat.removeAttr('data-result-switcher')
+    stat.removeAttr('data-score-switcher')
+    stat.removeAttr('data-penalty-switcher')
+
+    stat.children().toggleClass('hidden')
+    stat.children('.hidden').remove()
+
+    if (stat.hasClass('problem-cell-stat-switcher')) {
+      stat.removeClass('result-hidden')
+      stat.removeClass('problem-cell-stat')
+      stat.removeClass('problem-cell-stat-switcher')
+    }
+  }
+  $('#erase-switchers-timeline').prop('disabled', $('.problem-cell[data-result-switcher]').length == 0)
+  if (!SWITCHER_CLICK_WITHOUT_UPDATE) {
+    set_timeline(null, null, stat.closest('tr'))
+  }
+  $('.tooltip').tooltip('hide')
+}
+
 function show_timeline() {
   $('#timeline-buttons').toggleClass('hidden')
   $('#timeline').show()
@@ -396,12 +486,15 @@ function show_timeline() {
 
   $('.first-u-cell').remove()
 
+  $('td.problem-cell').addClass('accepted-switcher')
+  $('.accepted-switcher').click(switcher_click)
+
   update_timeline_text(CURRENT_PERCENT)
   $(window).trigger('resize')
 }
 
-function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500) {
-  var el = $('.find-me-row')
+function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500, el = null) {
+  var el = el || $('.find-me-row')
   var find_me_pos = el.position()
   if (find_me_pos) {
     var table_inner_scroll = $('#table-inner-scroll')
@@ -410,6 +503,7 @@ function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500)
     var element_top = parseInt(el.attr('data-scroll-top')) + table_pos.top - table.scrollTop() || find_me_pos.top
     el.attr('data-scroll-top', '')
     var target = element_top - (table_pos.top + table.height() / 2)
+    table.stop()
     table.animate({scrollTop: target + table.scrollTop()}, scroll_animate_time)
 
     if (color_animate_time) {

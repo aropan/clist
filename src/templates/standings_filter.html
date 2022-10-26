@@ -118,6 +118,7 @@
           <button id="play-timeline" class="btn btn-default btn-sm"><i class="fas fa-play"></i></button>
           <button id="step-forward-timeline" onclick="step_timeline(1, true); return false" class="btn btn-default btn-sm"><i class="fas fa-step-forward"></i></button>
           <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-forward"></i></button>
+          <button id="erase-switchers-timeline" onclick="SWITCHER_CLICK_WITHOUT_UPDATE = true; $('.problem-cell[data-result-switcher]').click(); set_timeline(); SWITCHER_CLICK_WITHOUT_UPDATE = false; return false" class="btn btn-default btn-sm" disabled><i class="fas fa-eraser"></i></button>
         </div>
 
         <div class="input-group input-group-sm">

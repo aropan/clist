@@ -46,6 +46,11 @@ table.standings th {
   font-weight: bold;
 }
 
+.swi {
+  color: #f0f;
+  font-weight: bold;
+}
+
 .standings tr.parity-border td,
 .standings tr.parity-border th
 {
@@ -247,6 +252,14 @@ a.solution:hover span {
 .standings .result-hidden * {
   background: inherit !important;
   display: none !important;
+}
+
+.accepted-switcher {
+  cursor: pointer;
+}
+
+.problem-cell.accepted-switcher:hover {
+  background-color: #fef;
 }
 
 /*

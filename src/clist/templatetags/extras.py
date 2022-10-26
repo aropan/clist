@@ -217,7 +217,11 @@ def get_api_formats():
 
 @register.filter
 def md_escape(value, clear=False):
-    return re.sub(r'([*_`\[\]])', '' if clear else r'\\\1', value)
+    ret = ' ' + value
+    repl = r'\1' if clear else r'\1\\\2'
+    ret = re.sub(r'([^\\])([*_`\[])', repl, ret)
+    ret = ret[1:]
+    return ret
 
 
 @register.filter

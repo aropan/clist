@@ -274,8 +274,8 @@ function select2_ajax_conf(query, field, addition_params) {
 $(function() {
   // Query the element
   const resizer = document.getElementById('drag_me');
-  const leftSide = resizer.previousElementSibling;
-  const rightSide = resizer.nextElementSibling;
+  const leftSide = resizer? resizer.previousElementSibling : null;
+  const rightSide = resizer? resizer.nextElementSibling : null;
 
   // The current position of mouse
   let drag_me_x = 0;
@@ -329,6 +329,8 @@ $(function() {
   };
 
   // Attach the handler
-  resizer.addEventListener('mousedown', mouseDownHandler);
+  if (resizer) {
+    resizer.addEventListener('mousedown', mouseDownHandler);
+  }
 
 })

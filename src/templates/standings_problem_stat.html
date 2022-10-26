@@ -26,7 +26,7 @@
       {% endif %}
     >
       {% if stat.url or stat.solution or stat.external_solution %}
-      <a class="solution" onClick="return viewSolution(this);" data-url="{% if stat.url %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" href="{% url 'ranking:solution' statistic.pk key %}" target="_blank" rel="noopener noreferrer">
+      <a class="solution" onClick="event.stopPropagation(); return viewSolution(this)" data-url="{% if stat.url %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" href="{% url 'ranking:solution' statistic.pk key %}" target="_blank" rel="noopener noreferrer">
       {% endif %}
 
       {% if stat.icon %}

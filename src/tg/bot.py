@@ -57,6 +57,19 @@ def escape(*args):
     return tuple(map(md_escape, args))
 
 
+def fix_url_text(msg):
+
+    def url_text_repl(entry):
+        text = entry.group(1)
+        url = entry.group(2)
+        text = re.sub(r'\\', '', text)
+        text = re.sub(r'\[', '((', text)
+        text = re.sub(r'\]', '))', text)
+        return f'[{text}]({url})'
+
+    return re.sub(r'\[(.*?)\]\((.*?)\)', url_text_repl, msg)
+
+
 class Bot(telegram.Bot):
     MAX_LENGTH_MESSAGE = 4096
     ADMIN_CHAT_ID = settings.TELEGRAM_ADMIN_CHAT_ID
@@ -347,9 +360,10 @@ class Bot(telegram.Bot):
             list_p.add_argument('-s', '--sort-by', help='Sorting by field', choices=ContestResource.Meta.ordering)
             list_p.add_argument('-r', '--reverse-sort', help='Reversing sort by field',  action='store_true')
             list_p.add_argument('-o', '--offset', help='Offset start slice', type=int, default=0)
-            list_p.add_argument('-l', '--limit', help='Limit slice', type=int, default=5)
+            list_p.add_argument('-l', '--limit', help='Limit slice', type=int, default=10)
             list_p.add_argument('-c', '--coming', help='Only coming events', action='store_true')
-            list_p.add_argument('-lb', '--label', help='Labeling contest chars', nargs=3, default=['', '*', '[past]'])
+            list_p.add_argument('-lb', '--label', help='Labeling contest chars', nargs=3,
+                                default=['', '[running]', '[past]'])
             list_p.add_argument('-np', '--no-paging', help='Paging view', action='store_true')
             list_p.add_argument('-i', '--ignore-filters', help='Ignore filters', action='store_true')
 
@@ -453,6 +467,7 @@ class Bot(telegram.Bot):
             msg = {'text': msg}
         if not msg['text']:
             return
+        msg['text'] = fix_url_text(msg['text'])
         if len(msg['text']) > self.MAX_LENGTH_MESSAGE:
             msg['text'] = msg['text'][:self.MAX_LENGTH_MESSAGE - 3] + '...'
 
