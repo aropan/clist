@@ -19,7 +19,7 @@
       } else if (!empty($round['url'])) {
         $u = $round['url'];
       } else if (!empty($contest['url'])) {
-        $u = $round['url'];
+        $u = $contest['url'];
       } else {
         $u = url_merge($url, '/contests', true);
       }
