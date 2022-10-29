@@ -11,6 +11,7 @@
 
 {% block content %}
 <script>$.endlessPaginate({onCompleted: toggle_tooltip});</script>
+<script>versus_url = "{% url 'ranking:make_versus' %}"</script>
 
 <form class="form-inline" method="get" action="">
   <div id="resources-top-filters" class="form-group">
@@ -20,6 +21,10 @@
 
     {% include 'range_filter.html' with name='last_activity' icon_title="Last activity days ago" value_key=None from=last_activity.from to=last_activity.to %}
     {% include 'range_filter_apply.html' %}
+
+    <div class="input-group input-group-sm">
+      <a id="versus-fixed" class="btn btn-default btn-sm" href="" disabled>{% icon_to 'versus' %}</a>
+    </div>
   </div>
 </form>
 

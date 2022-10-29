@@ -7,7 +7,7 @@
 {% get_pages %}
 {% for account in accounts %}
   {% with coders=account.coders.all %}
-  <tr class="to-hover{% if account.id in coder_accounts_ids %} fixed{% endif %}"{% if coders %} data-coder="{{ coders.0.pk }}"{% endif %}>
+  <tr class="to-hover{% if account.id in coder_accounts_ids %} fixed{% endif %}"{% if coders %} data-coder="{{ coders.0.pk }}"{% else %} data-account="{{ account.pk }}"{% endif %}>
     <td>
       {{ forloop.counter0|add:pages.current_start_index }}
     </td>
