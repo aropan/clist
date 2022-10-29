@@ -83,6 +83,8 @@ class Command(BaseCommand):
     def send_message(self, coder, method, data, **kwargs):
         method, *args = method.split(':', 1)
         subject, message, context = self.get_message(method=method, data=data, coder=coder,  **kwargs)
+        if not message:
+            return
         response = None
         if method == settings.NOTIFICATION_CONF.TELEGRAM:
             if args:
