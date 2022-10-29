@@ -348,7 +348,7 @@ def count_account_contests(signal, instance, **kwargs):
 class Module(BaseModel):
     resource = models.OneToOneField(Resource, on_delete=models.CASCADE)
     path = models.CharField(max_length=255)
-    min_delay_after_end = models.DurationField()
+    min_delay_after_end = models.DurationField(null=True, blank=True)
     max_delay_after_end = models.DurationField()
     delay_on_error = models.DurationField()
     delay_on_success = models.DurationField(null=True, blank=True)

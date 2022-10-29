@@ -103,13 +103,26 @@ class Command(BaseCommand):
                         Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
                         | Q(timing__statistic__isnull=True)
                     )
-                    after_start_limit_query = Q(end_time__lt=now - F('resource__module__min_delay_after_end'))
+
+                    after_start_limit_query = Q(
+                        resource__module__min_delay_after_end__isnull=False,
+                        end_time__lt=now - F('resource__module__min_delay_after_end'),
+                    )
+                    start_limit = now - (F('end_time') - F('start_time')) / F('resource__module__long_contest_divider')
+                    after_start_divider_query = Q(
+                        stage__isnull=True,
+                        resource__module__min_delay_after_end__isnull=True,
+                        resource__module__long_contest_divider__isnull=False,
+                        start_time__lt=start_limit,
+                    )
                     long_contest_query = Q(
                         stage__isnull=True,
                         resource__module__long_contest_idle__isnull=False,
                         start_time__lt=now - F('resource__module__long_contest_idle'),
                     )
-                    query = before_end_limit_query & (after_start_limit_query | long_contest_query)
+                    after_start_query = after_start_limit_query | after_start_divider_query | long_contest_query
+
+                    query = before_end_limit_query & after_start_query
                     ended = contests.filter(query)
 
                     contests = started.union(ended)
@@ -132,9 +145,7 @@ class Command(BaseCommand):
             if now < c.end_time:
                 if module.long_contest_divider:
                     delay_on_success = c.full_duration / module.long_contest_divider
-                if module.long_contest_idle and c.full_duration < module.long_contest_idle:
-                    delay_on_success = timedelta(minutes=1)
-                if c.end_time < now + delay_on_success:
+                if c.end_time < now + delay_on_success and module.min_delay_after_end:
                     delay_on_success = c.end_time + module.min_delay_after_end - now
             TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
 
@@ -878,7 +889,12 @@ class Command(BaseCommand):
 
                                 update_problems(contest, problems=standings_problems, force=force_problems)
                             contest.save()
-                            if resource.has_problem_rating and contest.end_time < now:
+                            if (
+                                resource.has_problem_rating and
+                                contest.end_time < now and
+                                not contest.has_hidden_results and
+                                not standings.get('timing_statistic_delta')
+                            ):
                                 call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
                             progress_bar.set_postfix(n_fields=len(fields))
                     else:
@@ -890,7 +906,7 @@ class Command(BaseCommand):
                     if now < contest.end_time:
                         timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
                     if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
-                        timing_delta = timing_delta or timedelta(minutes=10)
+                        timing_delta = timing_delta or timedelta(minutes=30)
                     if wait_rating and not has_statistics and results and 'days' in wait_rating:
                         timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
                     timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
@@ -934,29 +950,20 @@ class Command(BaseCommand):
                 if stop_on_error:
                     break
             if not parsed:
-                if (
-                    contest.n_statistics and
-                    now < contest.end_time and
-                    resource.module.long_contest_idle and
-                    contest.full_duration < resource.module.long_contest_idle
-                ):
-                    delay = timedelta(minutes=1)
-                elif contest.n_statistics and now < contest.end_time and resource.module.long_contest_divider:
-                    delay = contest.full_duration / (resource.module.long_contest_divider ** 2)
-                else:
-                    delay = resource.module.delay_on_error
+                delay = resource.module.delay_on_error
+                if now < contest.end_time and resource.module.long_contest_divider:
+                    delay = min(delay, contest.full_duration / resource.module.long_contest_divider)
                 if now < contest.end_time < now + delay:
-                    delay = contest.end_time + resource.module.min_delay_after_end - now
-
+                    delay = min(delay, contest.end_time + resource.module.min_delay_after_end - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
-                    if resource.module.long_contest_divider:
+                    if now < contest.end_time and resource.module.long_contest_divider:
                         timing_delta /= resource.module.long_contest_divider
                     delay = min(delay, timing_delta)
 
                 contest.timing.statistic = timezone.now() + delay
                 contest.timing.save()
-            elif not no_update_results and (users is None or users):
+            elif not no_update_results and not users:
                 stages = Stage.objects.filter(
                     ~Q(pk__in=stages_ids),
                     contest__start_time__lte=contest.start_time,

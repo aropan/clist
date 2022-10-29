@@ -150,19 +150,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     if (penalty) {
       var times = penalty.split(/[:\s]+/)
       if (times.length in contest_timeline['time_factor']) {
-        var factors = contest_timeline['time_factor'][times.length]
-        var time = times.reduce((r, t, i) => {
-          if (t.endsWith('д.')) {
-            t = parseInt(t) * 86400
-          } else if (t.endsWith('ч.')) {
-            t = parseInt(t) * 3600
-          } else if (t.endsWith('м.')) {
-            t = parseInt(t) * 60
-          } else {
-            t = parseInt(t) * factors[i]
-          }
-          return r + t
-        }, 0)
+        var time = parse_factors_time(contest_timeline['time_factor'], penalty)
       } else if (penalty_in_seconds) {
         var time = parseFloat(penalty_in_seconds)
       } else {
@@ -384,6 +372,29 @@ function highlight_element(el, after = 1000, duration = 500, before_toggle_class
 
 SWITCHER_CLICK_WITHOUT_UPDATE = false
 
+
+function parse_factors_time(timeline_factors, penalty) {
+  var times = penalty.split(/[:\s]+/)
+  if (times.length in timeline_factors) {
+    var factors = timeline_factors[times.length]
+    var time = times.reduce((r, t, i) => {
+      if (t.endsWith('д.')) {
+        t = parseInt(t) * 86400
+      } else if (t.endsWith('ч.')) {
+        t = parseInt(t) * 3600
+      } else if (t.endsWith('м.')) {
+        t = parseInt(t) * 60
+      } else {
+        t = parseInt(t) * factors[i]
+      }
+      return r + t
+    }, 0)
+    return time
+  } else {
+    return undefined
+  }
+}
+
 function switcher_click(el) {
   var stat = $(this)
   if (stat.attr('data-score-switcher') === undefined) {
@@ -393,15 +404,23 @@ function switcher_click(el) {
 
     var result = stat.attr('data-result')
     var penalty = Math.floor(contest_duration * CURRENT_PERCENT)
+    var score = stat.attr('data-problem-full-score')
     if (!result) {
       result = '+'
     } else if (result.startsWith('-')) {
       result = '+' + result.substring(1)
+    } else if (result.startsWith('?')) {
+      result = result.substring(1)
+      if (result) {
+        result = (parseFloat(result) - 1)
+      }
+      result = '+' + (result || '')
+      penalty = parse_factors_time(contest_timeline['time_factor'], stat.attr('data-penalty')) || penalty
     }
+
     var has_result_penalty = result && result.startsWith('+') && result != '+'
 
     stat.attr('data-result', result)
-    var score = stat.attr('data-problem-full-score')
     if (score) {
       if (contest_timeline['full_score_reduction_factor']) {
         score = Math.floor(score - score * contest_timeline['full_score_reduction_factor'] * penalty / 60)

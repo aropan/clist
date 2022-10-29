@@ -339,7 +339,7 @@ class Statistic(BaseModule):
                             points = f'+{"" if n == 0 else n}' if points > 0 else f'-{n}'
 
                         u = upsolve
-                        if s['type'] == 'PRELIMINARY':
+                        if s['type'] == 'PRELIMINARY' and phase == 'SYSTEM_TEST':
                             p = {'result': f'?{n + 1}'}
                         elif points or n:
                             if not points:
@@ -557,7 +557,11 @@ class Statistic(BaseModule):
             standings['options'].setdefault('timeline', {}).update({'attempt_penalty': 10 * 60,
                                                                     'challenge_score': False})
 
-        if phase != 'FINISHED' and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc):
+        now = datetime.utcnow().replace(tzinfo=pytz.utc)
+        if (
+            phase != 'FINISHED' and self.end_time + timedelta(hours=3) > now or
+            abs(self.end_time - now) < timedelta(minutes=15)
+        ):
             standings['timing_statistic_delta'] = timedelta(minutes=5)
 
         if grouped:
