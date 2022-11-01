@@ -123,10 +123,11 @@ def response(request, name):
             raise KeyError('Not found state')
         del request.session['state']
         args = model_to_dict(service)
-        args.update(dict(list(request.GET.items())))
+        get_args = list(request.GET.items())
+        args.update(dict(get_args))
         args['redirect_uri'] = settings.HTTPS_HOST_ + reverse('auth:response', args=(name, ))
         if 'code' not in args:
-            raise ValueError('Not found code')
+            raise ValueError(f'Not found code. Received {get_args}')
 
         if service.token_post:
             post = json.loads(service.token_post % args)
