@@ -188,7 +188,7 @@ def username_error(username):
 def signup(request, action=None):
     context = {}
     token_id = request.session.pop('token_id', None)
-    if token_id and not request.user.is_authenticated:
+    if token_id:
         try:
             token = Token.objects.get(id=token_id)
         except Token.DoesNotExist:
