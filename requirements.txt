@@ -74,7 +74,6 @@ emoji-country-flag==1.2.4
 gitpython==3.1.14
 free-proxy==1.0.6
 coloredlogs==15.0
-twisted[http2,tls]==22.4.0
 channels_redis==3.2.0
 fire==0.4.0
 lazy-load==0.8.2
