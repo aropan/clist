@@ -20,6 +20,13 @@
                 <li><a href="{% url 'coder:accounts' %}">Accounts</a></li>
                 <li><a href="{% url 'ranking:make_versus' %}">Versus</a></li>
                 <li><a href="{{ issues_url }}" target="_blank" rel="noopener noreferrer">Issues</a></li>
+                <li class="dropdown-menu-hover">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Donate <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="https://www.patreon.com/clist">{% icon_to "patreon" %}&nbsp;Patreon</a></li>
+                        <li><a href="https://ko-fi.com/clist"><i class="fas fa-mug-hot ko-fi"></i>&nbsp;Ko-fi</a></li>
+                    </ul>
+                </li>
                 {% block banner %}
                     {% for b in banners %}
                         {% if not b.template %}
@@ -55,43 +62,40 @@
                         <li><a href="{{ login_url }}"><i class="fa fa-sign-in-alt">&nbsp;</i>Log in / Sign up</a></li>
                         {% endif %}
                     {% endif %}
-                        <li>
+                        <li class="dropdown-menu-hover">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                                 {{ notification_messages_badges }}
                                 <i class="fa fa-caret-down"></i>
                             </a>
 
-                    <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
-                        {% if not user.is_authenticated %}
-                        <li><a href="{% url 'coder:my_profile' %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
-                        <li role="separator" class="divider"></li>
-                        {% endif %}
-                        <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
-                        <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
-                        <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
-                        <li><a href="{{ discuss_url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
-                        <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
-                        <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fas fa-info-circle"></i>&nbsp;Social</a></li>
-                        <li><a href="{% url 'coder:settings' 'accounts' %}"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
-                        <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
-                        <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
-                        <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
-                        <li><a href="{% url 'coder:settings' 'calendars' %}" class="authorized"><i class="far fa-calendar-alt"></i>&nbsp;Calendars</a></li>
-                        <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i></i>&nbsp;Atom&RSS</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
-                        <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>
-                        {% if user.is_authenticated %}
-                        <li role="separator" class="divider"></li>
-                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Log out</a></li>
-                        {% endif %}
-                    </ul>
-
-                    {% if not user.is_authenticated %}
+                            <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
+                                {% if not user.is_authenticated %}
+                                <li><a href="{% url 'coder:my_profile' %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
+                                <li role="separator" class="divider"></li>
+                                {% endif %}
+                                <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
+                                <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
+                                <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
+                                <li><a href="{{ discuss_url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
+                                <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
+                                <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fas fa-info-circle"></i>&nbsp;Social</a></li>
+                                <li><a href="{% url 'coder:settings' 'accounts' %}"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
+                                <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
+                                <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
+                                <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
+                                <li><a href="{% url 'coder:settings' 'calendars' %}" class="authorized"><i class="far fa-calendar-alt"></i>&nbsp;Calendars</a></li>
+                                <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i></i>&nbsp;Atom&RSS</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
+                                <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>
+                                {% if user.is_authenticated %}
+                                <li role="separator" class="divider"></li>
+                                <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Log out</a></li>
+                                {% endif %}
+                            </ul>
                         </li>
-                    {% endif %}
                 </li>
             </ul>
         </div>

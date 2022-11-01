@@ -91,6 +91,12 @@ img.resource-icon {
   opacity: 0.5;
 }
 
+@media (min-width: 768px) {
+  .dropdown-menu-hover:hover .dropdown-menu {
+    display: block;
+  }
+}
+
 html * {
   outline: 0 !important;
 }
@@ -494,3 +500,16 @@ canvas.rating_history {
   margin-left: -9px;
 }
 */
+
+/*
+ * Donate
+ * and Ko-fi font awesome
+ */
+
+.ko-fi::after {
+  content: '\f004';
+  font-size: 6px;
+  color: #fff;
+  position: absolute;
+  margin: 6px -12px;
+}
