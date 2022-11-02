@@ -16,13 +16,13 @@
         <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
       {% elif 'delta' in types and value %}
         <i class="fas fa-angle-{% if value > 0 %}up{% else %}down{% endif %}"></i>{{ value|abs }}
-      {% elif 'timestamp' in types %}
-        <span title="{{ template_value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
-          {{ template_value|timestamp_to_datetime|timezone:timezone|naturaltime }}
+      {% elif 'timestamp' in types and value %}
+        <span title="{{ value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+          {{ value|timestamp_to_datetime|timezone:timezone|naturaltime }}
         <span>
       {% elif 'time' in types %}
-        <span title="{{ template_value|timestamp_to_datetime|timezone:timezone|naturaltime }}" data-toggle="tooltip">
-          {{ template_value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}
+        <span title="{{ value|timestamp_to_datetime|timezone:timezone|naturaltime }}" data-toggle="tooltip">
+          {{ value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}
         <span>
       {% elif field == 'analysis' and 'dict' in types and value and 'url' in value %}
         <span title="{{ value.url }}" data-toggle="tooltip">
