@@ -609,6 +609,7 @@ FONTAWESOME_ICONS_ = {
     'last_activity': '<i class="fa-fw far fa-clock"></i>',
     'fullscreen': '<i class="fas fa-expand-arrows-alt"></i>',
     'charts': '<i class="fas fa-chart-bar"></i>',
+    'update': '<i class="fas fa-sync"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

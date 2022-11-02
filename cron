@@ -7,7 +7,7 @@ DJANGO_ENV_FILE=.env.prod
 */1 * * * * /usr/src/clist/run-manage.bash notification_to_task
 */1 * * * * /usr/src/clist/run-manage.bash sendout_tasks
 */5 * * * * /usr/src/clist/run-manage.bash parse_statistic
-*/4 * * * * /usr/src/clist/run-manage.bash parse_accounts_infos
+*/2 * * * * /usr/src/clist/run-manage.bash parse_accounts_infos
  15 * * * * /usr/src/clist/run-manage.bash update_auto_rating
 */5 * * * * /usr/src/clist/run-manage.bash check_logs
 

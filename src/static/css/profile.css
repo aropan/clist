@@ -111,3 +111,8 @@ table tr.contest.bronze-medal {
 table tr.contest.honorable-medal {
   background: #d0e3f7;
 }
+
+.profile-list-filter-open,
+.update-account {
+  cursor: pointer;
+}

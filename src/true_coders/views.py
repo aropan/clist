@@ -7,6 +7,7 @@ import re
 from collections import Counter
 from datetime import datetime, timedelta
 
+import humanize
 import pytz
 from django.conf import settings as django_settings
 from django.contrib import messages
@@ -24,6 +25,7 @@ from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
 from el_pagination.decorators import page_template, page_templates
+from ratelimit.core import get_usage
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
@@ -325,6 +327,7 @@ def profile(request, username, template='profile.html', extra_context=None):
 
     if request.user.is_authenticated and request.user.coder == coder:
         context['without_findme'] = True
+        context['this_is_me'] = True
 
     if extra_context is not None:
         context.update(extra_context)
@@ -371,6 +374,7 @@ def account(request, key, host, template='profile.html', extra_context=None):
 
     if request.user.is_authenticated and request.user.coder in account.coders.all():
         context['without_findme'] = True
+        context['this_is_me'] = True
 
     if extra_context is not None:
         context.update(extra_context)
@@ -1113,6 +1117,25 @@ def change(request):
             account.save()
         except Exception as e:
             return HttpResponseBadRequest(e)
+    elif name == "update-account":
+        try:
+            pk = request.POST.get('id')
+            account = Account.objects.get(pk=int(pk), coders=coder)
+        except Exception as e:
+            return HttpResponseBadRequest(e)
+
+        now = timezone.now()
+        if not account.updated or now < account.updated:
+            usage = get_usage(request, group='update-account', key='user', rate='10/h', increment=True)
+            if usage['should_limit']:
+                delta = timedelta(seconds=usage['time_left'])
+                return HttpResponseBadRequest(f'Try again in {humanize.naturaldelta(delta)}', status=429)
+
+            account.updated = now
+            account.save()
+        else:
+            return HttpResponseBadRequest('Already updated')
+
     elif name == "pre-delete-user":
         class RollbackException(Exception):
             pass
