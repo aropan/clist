@@ -76,22 +76,30 @@ def get_timezone(request):
     return request.session.get("timezone", settings.DEFAULT_TIME_ZONE_)
 
 
+def get_group_list(request):
+    ret = settings.GROUP_LIST_
+    coder = request.user.coder if request.user.is_authenticated else None
+    if coder:
+        ret = bool(coder.settings.get("group_in_list", ret))
+
+    group = request.GET.get('group')
+    if group is not None:
+        ret = group and group.lower() in settings.YES_
+
+    return ret
+
+
 def get_view_contests(request, coder):
     user_contest_filter = Q()
-    group_list = settings.GROUP_LIST_
+    group_list = get_group_list(request)
 
     if coder:
         categories = request.GET.getlist('filter', ['list'])
         user_contest_filter = coder.get_contest_filter(categories)
-        group_list = bool(coder.settings.get("group_in_list", group_list))
     else:
         categories = request.GET.getlist('filter')
         if categories:
             user_contest_filter = Coder.get_contest_filter(None, categories)
-
-    group = request.GET.get('group')
-    if group is not None:
-        group_list = group and group.lower() in settings.YES_
 
     base_contests = Contest.visible.filter(user_contest_filter)
     if request.user.has_perm('reset_contest_statistic_timing'):

@@ -5,6 +5,7 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/standings_list.js' %}"></script>
 <script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
 {% endblock %}
 
@@ -58,6 +59,7 @@
     {% include "standings_list_paging.html" with contests=stages without_paginate=True %}
     </div>
     <div class="list-group standings_list">
+    {% include "standings_list_paging.html" with contests=running_contests contests_groups=grouped_running_contests without_paginate=True %}
     {% include page_template %}
     </div>
   </div>

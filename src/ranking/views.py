@@ -25,7 +25,7 @@ from clist.templatetags.extras import (as_number, format_time, get_country_name,
                                        is_solved, query_transform, slug, time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint
-from clist.views import get_timeformat, get_timezone
+from clist.views import get_group_list, get_timeformat, get_timezone
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.models import Account, Module, Statistics
@@ -91,9 +91,12 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         ))
 
     active_stage_query = Q(stage__isnull=False, end_time__gt=timezone.now())
+    stages = contests.filter(active_stage_query)
+    contests = contests.exclude(active_stage_query)
+
     context = {
-        'stages': contests.filter(active_stage_query),
-        'contests': contests.exclude(active_stage_query),
+        'stages': stages,
+        'contests': contests,
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'all_standings': all_standings,
@@ -102,6 +105,28 @@ def standings_list(request, template='standings_list.html', extra_context=None):
             'resources': resources,
         },
     }
+
+    if get_group_list(request):
+        running_contest_query = Q(end_time__gt=timezone.now())
+        running_contests = contests.filter(running_contest_query)
+        contests = contests.exclude(running_contest_query)
+
+        running_contests_ = []
+        grouped_running_contests = defaultdict(list)
+        for contest in reversed(running_contests):
+            if contest.resource not in grouped_running_contests:
+                running_contests_.append(contest)
+            grouped_running_contests[contest.resource].append(contest)
+        for values in grouped_running_contests.values():
+            values.reverse()
+            values.pop(-1)
+        running_contests = running_contests_
+
+        context.update({
+            'grouped_running_contests': grouped_running_contests,
+            'running_contests': running_contests,
+            'contests': contests,
+        })
 
     if extra_context is not None:
         context.update(extra_context)
