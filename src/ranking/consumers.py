@@ -1,7 +1,7 @@
 from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.shortcuts import get_object_or_404
 
 from clist.models import Contest
@@ -12,7 +12,7 @@ def get_contest(pk):
     return get_object_or_404(Contest, pk=pk)
 
 
-class ContestConsumer(AsyncWebsocketConsumer):
+class ContestConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         params = parse_qs(self.scope['query_string'].decode())
         self.contest = await get_contest(pk=params['pk'][0])
@@ -25,3 +25,6 @@ class ContestConsumer(AsyncWebsocketConsumer):
     @property
     def group_name(self):
         return self.contest.channel_group_name
+
+    async def standings(self, data):
+        await self.send_json(data)

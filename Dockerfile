@@ -33,7 +33,8 @@ WORKDIR $APPDIR
 
 FROM base as dev
 ENV DJANGO_ENV_FILE .env.dev
-CMD python manage.py runserver 0.0.0.0:10042
+RUN apt install -y redis-server
+CMD redis-server --daemonize yes; python manage.py runserver 0.0.0.0:10042
 
 
 FROM base as prod

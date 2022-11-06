@@ -644,10 +644,20 @@ $(function() {
   });
 })
 
+
 /*
  * Standings live
  */
 
 $(function() {
   const standings_socket = new WebSocket('wss://' + window.location.host + '/ws/contest/?pk=' + contest_pk)
+
+  standings_socket.onmessage = function(e) {
+    const data = JSON.parse(e.data)
+    console.log('wss message', data)
+  }
+
+  standings_socket.onopen = function(e) {
+    console.log('wss connected')
+  }
 })

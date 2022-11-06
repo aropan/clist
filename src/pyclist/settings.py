@@ -157,19 +157,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'pyclist.wsgi.application'
 
 ASGI_APPLICATION = 'pyclist.asgi.application'
-if DEBUG:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer",
-        }
-    }
-else:
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {'hosts': [('0.0.0.0', 'redis')]},
-        },
-    }
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {'hosts': [('0.0.0.0', 'redis')]},
+    },
+}
 
 
 # Database
