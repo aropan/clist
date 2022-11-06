@@ -5,6 +5,7 @@ import re
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+from functools import reduce
 from os import path
 from urllib.parse import quote_plus
 
@@ -42,7 +43,9 @@ def get_item(data, key):
     if not data:
         return None
     if isinstance(data, (dict, defaultdict, OrderedDict)):
-        return data.get(key)
+        if key in data or '.' not in str(key):
+            return data.get(key)
+        return reduce(lambda d, k: d.get(k) if d else None, str(key).split('.'), data)
     if isinstance(data, (list, tuple)):
         return data[key] if -len(data) <= key < len(data) else None
     return getattr(data, key, None)

@@ -8,6 +8,7 @@ import zlib
 from base64 import b64decode, b64encode
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
 from datetime import datetime, timedelta
 from functools import partial
 from math import isclose
@@ -35,24 +36,32 @@ class Statistic(BaseModule):
         data = json.loads(page)
         challenge = data.get('challenge', {})
         clash_hubs = challenge.get('clashHubs')
+        is_clash = bool(clash_hubs)
+        escape_url = challenge.get('externalUrl', '')
+        is_escape = '://escape.' in escape_url
 
-        def get_leaderboard(url, column="", value=""):
+        def get_leaderboard(url, column="", value="", limit=None):
             active = 'true' if column else 'false'
             filt = f'{{"active":{active},"column":"{column}","filter":"{value}"}}'
-            if clash_hubs:
+            if is_clash:
                 post = f'[1,{filt},null,true,"global",{clash_hubs[0]["clashHubId"]}]'
+            elif is_escape:
+                handle = escape_url.split('/')[-1]
+                post = '{"operationName":"GeneralLeaderboard","variables":{"handle":"' + handle + '","limit":' + str(limit) + ',"fromEventStart":true},"query":"query GeneralLeaderboard($handle: String\u0021, $groupIds: [String\u0021], $fromEventStart: Boolean, $search: String, $limit: Int) { liveEventLeaderboard( eventHandle: $handle groupIds: $groupIds fromEventStart: $fromEventStart search: $search limit: $limit ) { totalCount teams { id group { id name } rank timeSinceEventStart gameSession { id status previousElapsedTime timePenalty hints { category unlocked total } players(type: Player) { id creationTime type alive user { id nickname avatar type company { id region } } } checkpoints { id completed } } teamName } } } "}' # noqa
             else:
                 post = f'["{self.key}",null,"global",{filt}]'
             page = REQ.get(url, post=post, content_type='application/json')
             data = json.loads(page)
             return data
 
-        if clash_hubs:
+        if is_clash:
             url = self.host + 'services/Leaderboards/getClashLeaderboard'
+        elif is_escape:
+            url = urljoin(escape_url, '/graphql')
         else:
             url = self.host + 'services/Leaderboards/getFilteredChallengeLeaderboard'
 
-        data = get_leaderboard(url)
+        data = get_leaderboard(url, limit=1)
 
         standings_url = os.path.join(self.url, 'leaderboard')
 
@@ -94,6 +103,7 @@ class Statistic(BaseModule):
 
         languages = list(data.get('programmingLanguages', {}).keys())
 
+        grouped_team = False
         opening = {}
         percentages = []
         has_codinpoints = False
@@ -173,16 +183,114 @@ class Statistic(BaseModule):
 
                     has_codinpoints |= bool(row.get('codinpoints'))
 
-            process_data(data)
+            def process_escape_data(data):
+                nonlocal result
+                nonlocal hidden_fields
 
-            if len(data['users']) >= 1000:
-                fetch_data = partial(get_leaderboard, url, "LANGUAGE")
-                for data in tqdm.tqdm(executor.map(fetch_data, languages), total=len(languages), desc='languages'):
-                    process_data(data)
+                game_session = data.pop('gameSession')
+                for k, v in game_session.items():
+                    if k not in data:
+                        data[k] = v
 
-                fetch_data = partial(get_leaderboard, url, "COUNTRY")
-                for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries), desc='countries'):
-                    process_data(data)
+                row = defaultdict()
+
+                players = data.pop('players')
+                row['place'] = data.pop('rank')
+                row['name'] = data.pop('teamName')
+                row['team_id'] = data.pop('id')
+                score = data.pop('timeSinceEventStart')
+                row['solving'] = score
+                row['time'] = self.to_time(score // 1000, 3)
+
+                for k, v in data.items():
+                    if k not in row:
+                        row[k] = v
+                        hidden_fields.add(k)
+
+                row['_members'] = [{'name': p['user']['nickname']} for p in players]
+
+                for member in row['_members']:
+                    r = deepcopy(row)
+                    handle = member['name']
+                    r['member'] = handle
+                    result[handle] = r
+
+            def search_user(handle):
+                data = REQ.get(
+                    self.host + '/services/search/search',
+                    post=f'["{handle}", "en", "USER"]',
+                    content_type='application/json',
+                    return_json=True,
+                )
+                for rec in data:
+                    if rec['name'] == handle and rec['type'] == 'USER':
+                        break
+                else:
+                    return
+
+                public_handle = rec['id']
+                data = REQ.get(
+                    self.host + '/services/CodinGamer/findCodingamePointsStatsByHandle',
+                    post=f'["{public_handle}"]',
+                    content_type='application/json',
+                    return_json=True,
+                )
+
+                result[handle].setdefault('info', {})['profile_url'] = {'public_handle': public_handle, 'name': handle}
+
+                return str(data['codingamer']['userId'])
+
+            if is_escape:
+                limit = min(500, data['data']['liveEventLeaderboard']['totalCount'])
+                data = get_leaderboard(url, limit=limit)
+                data = data['data']['liveEventLeaderboard']
+                for team in data['teams']:
+                    process_escape_data(team)
+
+                names_mapping = {}
+                if statistics is not None:
+                    for row in statistics.values():
+                        for member in row['_members']:
+                            if 'account' in member:
+                                names_mapping[member['name']] = member['account']
+
+                names = [name for name in result.keys() if name not in names_mapping]
+
+                names_mapping.update({
+                    name: key
+                    for name, key in
+                    self.resource.account_set.filter(name__in=names).values_list('name', 'key')
+                })
+
+                names = [name for name in names if name not in names_mapping]
+
+                for name, key in tqdm.tqdm(
+                    zip(names, executor.map(search_user, names)),
+                    total=len(names),
+                    desc='search names',
+                ):
+                    if key is None:
+                        continue
+                    names_mapping[name] = key
+
+                result = {names_mapping[k]: v for k, v in result.items() if k in names_mapping}
+                for row in result.values():
+                    row['member'] = names_mapping[row['member']]
+                    for member in row['_members']:
+                        if member['name'] in names_mapping:
+                            member['account'] = names_mapping[member['name']]
+                grouped_team = True
+            else:
+                process_data(data)
+
+                if len(data['users']) >= 1000:
+                    fetch_data = partial(get_leaderboard, url, "LANGUAGE")
+                    for data in tqdm.tqdm(executor.map(fetch_data, languages), total=len(languages), desc='languages'):
+                        process_data(data)
+
+                    fetch_data = partial(get_leaderboard, url, "COUNTRY")
+                    for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries), desc='countries'):
+                        process_data(data)
 
         if self.end_time > now():
             hidden_fields.discard('submit_time')
@@ -208,6 +316,7 @@ class Statistic(BaseModule):
                     ('clashes_count', 'clashes_count'),
                 ],
             },
+            'grouped_team': grouped_team,
         }
 
         if self.end_time < now():
@@ -251,6 +360,9 @@ class Statistic(BaseModule):
             info = points_stats.pop('codingamer')
             info.setdefault('points', {}).update(points_stats.pop('codingamePointsRankingDto'))
             info.update({k: v for k, v in points_stats.items() if not isinstance(v, list)})
+
+            if 'pseudo' in info:
+                info['name'] = info['pseudo']
 
             if hist is not None:
                 dates = hist.pop('dates')

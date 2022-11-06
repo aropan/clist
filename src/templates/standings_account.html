@@ -63,6 +63,8 @@
         {% if account.url or resource.profile_url %}</a>{% endif %}
         </span>
         {% endwith %}
+      {% elif member and member.name %}
+        {{ member.name }}
       {% else %}
         ?
       {% endif %}

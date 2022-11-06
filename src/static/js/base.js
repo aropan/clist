@@ -131,7 +131,7 @@ $(function() {
 })
 
 function inline_button() {
-  $('.reset-timing-statistic').click(function(e) {
+  $('.reset-timing-statistic').removeClass('reset-timing-statistic').click(function(e) {
     e.preventDefault()
     var btn = $(this)
     $.post('/standings/action/', {action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')}).done(function(data) {
@@ -139,7 +139,7 @@ function inline_button() {
     })
   })
 
-  $('.database-href').click(function(e) {
+  $('.database-href').removeClass('database-href').click(function(e) {
     var btn = $(this)
     window.open(btn.attr('data-href'), "_blank");
     return false

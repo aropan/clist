@@ -236,7 +236,7 @@ def coders(request, template='coders.html'):
                 filt |= Q(pk__in=chat.coders.all())
             coders = coders.filter(filt)
 
-            if request.user.has_perm('view_coder_chat') and chat_fields['values']:
+            if request.user.has_perm('true_coders.view_coder_chat') and chat_fields['values']:
                 view_coder_chat = True
                 coders = coders.prefetch_related(
                     Prefetch(
@@ -1120,7 +1120,10 @@ def change(request):
     elif name == "update-account":
         try:
             pk = request.POST.get('id')
-            account = Account.objects.get(pk=int(pk), coders=coder)
+            if request.user.has_perm('ranking.update_account'):
+                account = Account.objects.get(pk=int(pk))
+            else:
+                account = Account.objects.get(pk=int(pk), coders=coder)
         except Exception as e:
             return HttpResponseBadRequest(e)
 
@@ -1730,7 +1733,7 @@ def accounts(request, template='accounts.html'):
     params = {}
 
     action = request.GET.get('action')
-    if request.user.has_perm('link_account'):
+    if request.user.has_perm('ranking.link_account'):
         link_coder = request.GET.get('coder')
         if link_coder:
             link_coder = Coder.objects.get(pk=link_coder)
@@ -1759,7 +1762,7 @@ def accounts(request, template='accounts.html'):
     if search:
         filt = get_iregex_filter(search, 'name', 'key', logger=request.logger)
         accounts = accounts.filter(filt)
-        if request.user.has_perm('link_account'):
+        if request.user.has_perm('ranking.link_account'):
             coders_counter = Counter(accounts.filter(has_coders=True).values_list('coders__pk', flat=True))
             most_coder = coders_counter.most_common()
             if most_coder:

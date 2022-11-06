@@ -121,7 +121,7 @@ Number of competitions: {{ account.n_contests }}
 
     {% include "profile_list_filter.html" %}
 
-    {% if account.resource.has_accounts_infos_update and this_is_me %}
+    {% if account.resource.has_accounts_infos_update and this_is_me or perms.ranking.update_account %}
     <a class="update-account" data-account-id="{{ account.pk }}">{% icon_to 'update' %}</a>
     {% endif %}
 
