@@ -543,11 +543,6 @@ THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journa
 DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
 
-ISSUES_URL_ = 'https://github.com/aropan/clist/issues'
-NEWS_URL_ = 'https://t.me/s/clistbynews'
-DISCUSS_URL_ = 'https://t.me/clistbynews'
-DONATE_URL_ = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=47CJBL6B2XPM8&source=url'
-
 ADDITION_HIDE_FIELDS_ = {'problems', 'solved'}
 
 VIRTUAL_CODER_PREFIX_ = '∨'
@@ -604,6 +599,11 @@ FONTAWESOME_ICONS_ = {
     'fullscreen': '<i class="fas fa-expand-arrows-alt"></i>',
     'charts': '<i class="fas fa-chart-bar"></i>',
     'update': '<i class="fas fa-sync"></i>',
+    'open_in_tab': '<i class="fas fa-external-link-alt"></i>',
+    'copy': '<i class="far fa-copy"></i>',
+    'copied': '<i class="fas fa-copy"></i>',
+    'pin': '<i class="far fa-star"></i>',
+    'unpin': '<i class="fas fa-star"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

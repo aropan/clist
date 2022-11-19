@@ -11,7 +11,7 @@
     </button>
   </div>
   {% endif %}
-  <select name="{{ field }}" id="{{ field }}" onchange="this.form.submit()"{% if not data.nomultiply %} multiple{% endif %}>
+  <select name="{{ field }}" id="{{ field }}" onchange="this.form.submit()"{% if not data.nomultiply %} multiple{% endif %}{% if disabled or data.disabled %} disabled{% endif %}>
   {% if data.options %}
     <option></option>
     {% for v in data.options %}

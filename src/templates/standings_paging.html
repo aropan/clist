@@ -13,18 +13,12 @@
 {% with statistics_chained=statistics|pass_arg:my_statistics|chain_rev:rev %}
 {% for statistic in statistics_chained %}
 
-{% with tag=statistic.my_stat|then:"th"|default:"td" %}
+{% with tag="td" %}
 {% with addition=statistic.addition_replacement|default:statistic.addition %}
 {% if statistic.my_stat and statistic.floating and not rev %}{% include "standings_paging_next.html" %}{% endif %}
 <tr
-class="
-  stat-cell
-  {{ statistic.id }}
-  {% if statistic.my_stat %}my-stat info{% endif %}
-  {% if statistic.floating %} floating hidden{% endif %}
-  {% if statistic.id == request.GET.find_me|toint %} find-me-row{% endif %}
-  {% if versus_statistic_id == statistic.id %}success{% endif %}
-"
+class="stat-cell {{ statistic.id }}{% if statistic.my_stat %} my-stat info starred{% endif %}{% if statistic.floating %} floating hidden{% endif %}{% if statistic.id == request.GET.find_me|toint %} find-me-row{% endif %}{% if versus_statistic_id == statistic.id %} success{% endif %}"
+data-statistic-id="{{ statistic.id }}"
 {% if colored_by_group_score %}data-result="{{ statistic.solving|scoreformat }}"{% endif %}
 {% if addition.hack %}
   {% if addition.hack.successful %}data-successful-challenge="{{ addition.hack.successful }}"{% endif %}
@@ -233,7 +227,6 @@ class="
 {% endwith %}
 
 {% if statistic.my_stat %}
-  <script>$(function() { $('#table-inner-scroll .my-stat th').css({'top': $('#table-inner-scroll thead').height() - 1}) })</script>
   <script>
     $(function() {
       var selector = $('tr.my-stat.floating')
@@ -253,6 +246,8 @@ class="
 {% endfor %}
 {% endwith %}
 
+{% if not without_paginate %}
+
 {% if not my_statistics or rev %}
 {% include "standings_paging_next.html" %}
 {% endif %}
@@ -266,5 +261,8 @@ class="
 {% endif %}
 
 <script>$(update_trophy_font_size)</script>
+<script>$(apply_starring)</script>
+
+{% endif %}
 
 {% endwith %}

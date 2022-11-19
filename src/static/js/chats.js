@@ -50,7 +50,7 @@ chat_socket.onmessage = function(e) {
 };
 
 chat_socket.onclose = function(e) {
-  console.error('Chat socket closed unexpectedly')
+  console.error('Socket closed unexpectedly')
   $('#chat-message-input').remove()
   $('#typing-textbox').append($('<button id="chat-message-input" onclick="location.reload()">Disconnected. Refresh the page to reconnect</button>'))
   bootbox.confirm({

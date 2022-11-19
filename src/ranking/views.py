@@ -5,14 +5,17 @@ import re
 from collections import OrderedDict, defaultdict
 
 import arrow
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import connection, models
 from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Value, When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast, window
-from django.http import HttpResponseNotFound, JsonResponse
+from django.http import HttpRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -510,6 +513,182 @@ def standings_charts(request, context):
     context['charts'] = charts
 
 
+def render_standings_paging(contest, statistics, with_detail=True):
+    n_total = None
+    if isinstance(statistics, list):
+        per_page = contest.standings_per_page
+        if per_page > len(statistics):
+            n_total = len(statistics)
+            statistics = statistics[:per_page]
+        statistics = Statistics.objects.filter(pk__in=statistics)
+
+    divisions_order = get_standings_divisions_order(contest)
+    division = divisions_order[0] if divisions_order else None
+    if division:
+        statistics = statistics.filter(addition__division=division)
+
+    problems = get_standings_problems(contest, division)
+
+    fields = get_standings_fields(contest, division=division, with_detail=with_detail)
+
+    statistics = statistics.prefetch_related('account')
+
+    mod_penalty = get_standings_mod_penalty(contest, problems, statistics)
+    colored_by_group_score = contest.info.get('standings', {}).get('colored_by_group_score')
+
+    context = {
+        'request': HttpRequest(),
+        'contest': contest,
+        'statistics': statistics,
+        'problems': problems,
+        'fields': fields,
+        'without_paginate': True,
+        'my_statistics': [],
+        'contest_timeline': contest.get_timeline_info(),
+        'with_detail': with_detail,
+        'per_page': contest.standings_per_page,
+        'per_page_more': 0,
+        'mod_penalty': mod_penalty,
+        'colored_by_group_score': mod_penalty or colored_by_group_score,
+    }
+    return {
+        'page': get_template('standings_paging.html').render(context),
+        'total': n_total or statistics.count(),
+    }
+
+
+def update_standings_socket(contest, statistics):
+    rendered = render_standings_paging(contest, statistics)
+    channel_layer = get_channel_layer()
+    context = {
+        'type': 'standings',
+        'rows': rendered['page'],
+        'n_total': rendered['total'],
+        'time_percentage': contest.time_percentage,
+    }
+    async_to_sync(channel_layer.group_send)(contest.channel_group_name, context)
+
+
+def get_standings_divisions_order(contest):
+    problems = contest.info.get('problems', {})
+    if 'division' in problems:
+        divisions_order = list(problems.get('divisions_order', sorted(contest.info['problems']['division'].keys())))
+    elif 'divisions_order' in contest.info:
+        divisions_order = contest.info['divisions_order']
+    else:
+        divisions_order = []
+    return divisions_order
+
+
+def get_standings_mod_penalty(contest, problems, statistics):
+    mod_penalty = None
+    contest_fields = contest.info.get('fields', [])
+    if contest.duration_in_secs and all('time' not in k for k in contest_fields):
+        first = statistics.first()
+        if first:
+            penalty = first.addition.get('penalty')
+            if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
+                mod_penalty = {'solving': first.solving, 'penalty': penalty}
+    if mod_penalty:
+        for p in problems:
+            if 'full_score' in p and isinstance(p['full_score'], (int, float)) and abs(p['full_score'] - 1) > 1e-9:
+                mod_penalty = None
+                break
+    return mod_penalty
+
+
+def get_standings_problems(contest, division):
+    divisions_order = get_standings_divisions_order(contest)
+    problems = contest.info.get('problems', {})
+    if 'division' in problems:
+        if division == 'any':
+            _problems = OrderedDict()
+            for div in reversed(divisions_order):
+                for p in problems['division'].get(div, []):
+                    k = get_problem_short(p)
+                    if k not in _problems:
+                        _problems[k] = p
+                    else:
+                        _pk = _problems[k]
+                        for f in 'n_accepted', 'n_teams', 'n_partial', 'n_total':
+                            if f in p:
+                                _pk[f] = _pk.get(f, 0) + p[f]
+
+                        if 'first_ac' in p:
+                            in_seconds = p['first_ac']['in_seconds']
+                            if 'first_ac' not in _pk or in_seconds + 1e-9 < _pk['first_ac']['in_seconds']:
+                                _pk['first_ac'] = copy.deepcopy(p['first_ac'])
+                            elif 'first_ac' in _pk and in_seconds - 1e-9 < _pk['first_ac']['in_seconds']:
+                                _pk['first_ac']['accounts'].extend(p['first_ac']['accounts'])
+
+                        if 'full_score' in p:
+                            fs = str(_pk.get('full_score', ''))
+                            if fs:
+                                fs += ' '
+                            fs += str(p['full_score'])
+                            _pk['full_score'] = fs
+            problems = list(_problems.values())
+        else:
+            problems = problems['division'][division]
+    return problems
+
+
+def get_standings_fields(contest, division, with_detail, hidden_fields=None, hidden_fields_values=None):
+    contest_fields = contest.info.get('fields', [])
+    fields_values = contest.info.get('fields_values', {})
+    options = contest.info.get('standings', {})
+    divisions_order = get_standings_divisions_order(contest)
+    division_addition = contest.info.get('divisions_addition', {}).get(division, {})
+    inplace_division = '_division_addition' in contest_fields
+
+    fixed_fields = (
+        ('penalty', 'Penalty'),
+        ('total_time', 'Time'),
+        ('advanced', 'Advance'),
+    )
+    fixed_fields += tuple(options.get('fixed_fields', []))
+    if not with_detail:
+        fixed_fields += (('rating_change', 'Rating change'), )
+    if division == 'any':
+        fixed_fields += (('division', 'Division'),)
+
+    fields = OrderedDict()
+    for k, v in fixed_fields:
+        if k in contest_fields:
+            fields[k] = v
+
+    division_addition_fields = inplace_division and divisions_order and division != divisions_order[0]
+    addition_fields = division_addition['fields'] if division_addition_fields else contest_fields
+    special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
+                      'medal', 'raw_rating']
+    hidden_fields = hidden_fields or list(contest.info.get('hidden_fields', []))
+    hidden_fields_values = hidden_fields_values or set()
+    for k in addition_fields:
+        if (
+            k in fields
+            or k in special_fields
+            or 'country' in k and k not in hidden_fields_values
+            or k in ['name', 'place', 'solving'] and k not in hidden_fields_values
+            or k.startswith('_')
+            or k in hidden_fields and k not in hidden_fields_values and k not in fields_values
+        ):
+            continue
+        if with_detail or k in hidden_fields_values or k in fields_values:
+            fields[k] = k
+        else:
+            hidden_fields.append(k)
+
+    for k, field in fields.items():
+        if k != field:
+            continue
+        field = ' '.join(k.split('_'))
+        if field and not field[0].isupper():
+            field = field.title()
+        fields[k] = field
+
+    return fields
+
+
 @page_templates((
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
@@ -523,8 +702,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         groupby = None
 
     query = request.GET.copy()
+    switched_fields = {'timeline', 'charts', 'fullscreen'}
     for k, v in request.GET.items():
-        if not v or k == 'groupby' and v == 'none':
+        if (
+            not v and k not in switched_fields or
+            k == 'groupby' and v == 'none' or
+            k in switched_fields and v == 'off'
+        ):
             query.pop(k, None)
     if request.GET.urlencode() != query.urlencode():
         query = query.urlencode()
@@ -622,10 +806,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
     contest_fields = contest.info.get('fields', []).copy()
     fields_types = contest.info.get('fields_types', {}).copy()
-    fields_values = contest.info.get('fields_values', {}).copy()
     hidden_fields = list(contest.info.get('hidden_fields', []))
     hidden_fields_values = [v for v in request.GET.getlist('field') if v]
-    problems = contest.info.get('problems', {})
     inplace_division = '_division_addition' in contest_fields
 
     if contests_ids:
@@ -635,16 +817,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
     options = contest.info.get('standings', {})
 
-    per_page = options.get('per_page', 50)
-    if contests_ids:
-        per_page = 50
-    elif per_page is None:
-        per_page = 100500
-    elif contest.n_statistics and contest.n_statistics < 500:
-        per_page = contest.n_statistics
-    per_page_more = 200
-    if find_me:
-        per_page_more = per_page
+    per_page = 50 if contests_ids else contest.standings_per_page
+    per_page_more = per_page if find_me else 200
 
     order = None
     resource_standings = contest.resource.info.get('standings', {})
@@ -658,14 +832,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         order = ['place_as_int', '-solving']
 
     # fixed fields
-    fixed_fields = (
-        ('penalty', 'Penalty'),
-        ('total_time', 'Time'),
-        ('advanced', 'Advance'),
-    )
-    fixed_fields += tuple(options.get('fixed_fields', []))
-    if not with_detail:
-        fixed_fields += (('rating_change', 'Rating change'), )
 
     statistics = statistics \
         .select_related('account') \
@@ -679,6 +845,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     )
 
     division = request.GET.get('division')
+    divisions_order = get_standings_divisions_order(contest)
+
     if division == 'any' or contests_ids:
         with_row_num = True
         if 'penalty' in contest_fields:
@@ -686,15 +854,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if 'place_as_int' in order:
             order.remove('place_as_int')
             order.append('place_as_int')
-    if 'division' in problems:
-        divisions_order = list(problems.get('divisions_order', sorted(contest.info['problems']['division'].keys())))
-    elif 'divisions_order' in contest.info:
-        divisions_order = contest.info['divisions_order']
-    else:
-        divisions_order = []
-    if division == 'any':
-        fixed_fields += (('division', 'Division'),)
-    elif divisions_order and division not in divisions_order:
+    if division != 'any' and divisions_order and division not in divisions_order:
         if find_me:
             values = statistics.filter(pk=find_me).values('addition__division')
         elif coder:
@@ -737,15 +897,23 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     order.append('pk')
     statistics = statistics.order_by(*order)
 
-    fields = OrderedDict()
-    for k, v in fixed_fields:
-        if k in contest_fields:
-            fields[k] = v
+    fields = get_standings_fields(
+        contest,
+        division=division,
+        with_detail=with_detail,
+        hidden_fields=hidden_fields,
+        hidden_fields_values=hidden_fields_values,
+    )
     if 'global_rating' in hidden_fields_values:
         fields['new_global_rating'] = 'new_global_rating'
         fields['global_rating_change'] = 'global_rating_change'
         hidden_fields.append('global_rating')
         hidden_fields_values.remove('global_rating')
+    if request.user.has_perm('ranking.view_statistics_hidden_fields'):
+        for v in hidden_fields_values:
+            if v not in hidden_fields:
+                fields[v] = v
+                hidden_fields.append(v)
 
     n_highlight_context = _standings_highlight(statistics, options) if not contests_ids else {}
 
@@ -805,42 +973,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             'nourl': True,
         }
 
-    if request.user.has_perm('view_statistics_hidden_fields'):
-        for v in hidden_fields_values:
-            if v not in hidden_fields:
-                fields[v] = v
-                hidden_fields.append(v)
-
-    addition_fields = (
-        division_addition['fields']
-        if inplace_division and division != divisions_order[0] else
-        contest_fields
-    )
-    special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
-                      'medal', 'raw_rating']
-    for k in addition_fields:
-        if (
-            k in fields
-            or k in special_fields
-            or 'country' in k and k not in hidden_fields_values
-            or k in ['name', 'place', 'solving'] and k not in hidden_fields_values
-            or k.startswith('_')
-            or k in hidden_fields and k not in hidden_fields_values and k not in fields_values
-        ):
-            continue
-        if with_detail or k in hidden_fields_values or k in fields_values:
-            fields[k] = k
-        else:
-            hidden_fields.append(k)
-
-    for k, field in fields.items():
-        if k != field:
-            continue
-        field = ' '.join(k.split('_'))
-        if field and not field[0].isupper():
-            field = field.title()
-        fields[k] = field
-
     if contest.is_rated and 'global_rating' not in hidden_fields and settings.ENABLE_GLOBAL_RATING_:
         hidden_fields.append('global_rating')
     if hidden_fields:
@@ -867,8 +999,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
                     mod_penalty.update({'solving': first.solving, 'penalty': penalty})
             enable_timeline = any('time' in p for p in first.addition.get('problems', {}).values())
-    if enable_timeline:
-        timeline = request.GET.get('timeline')
+    if enable_timeline and 'timeline' in request.GET:
+        timeline = request.GET.get('timeline') or '1'
         if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):
             if ':' in timeline:
                 val = 0
@@ -878,48 +1010,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         else:
             timeline = None
 
-    params = {}
-    if divisions_order:
-        if not inplace_division:
-            divisions_order.append('any')
-        params['division'] = division
-        if 'division' in problems:
-            if division == 'any':
-                _problems = OrderedDict()
-                for div in reversed(divisions_order):
-                    for p in problems['division'].get(div, []):
-                        k = get_problem_short(p)
-                        if k not in _problems:
-                            _problems[k] = p
-                        else:
-                            _pk = _problems[k]
-                            for f in 'n_accepted', 'n_teams', 'n_partial', 'n_total':
-                                if f in p:
-                                    _pk[f] = _pk.get(f, 0) + p[f]
-
-                            if 'first_ac' in p:
-                                in_seconds = p['first_ac']['in_seconds']
-                                if 'first_ac' not in _pk or in_seconds + 1e-9 < _pk['first_ac']['in_seconds']:
-                                    _pk['first_ac'] = copy.deepcopy(p['first_ac'])
-                                elif 'first_ac' in _pk and in_seconds - 1e-9 < _pk['first_ac']['in_seconds']:
-                                    _pk['first_ac']['accounts'].extend(p['first_ac']['accounts'])
-
-                            if 'full_score' in p:
-                                fs = str(_pk.get('full_score', ''))
-                                if fs:
-                                    fs += ' '
-                                fs += str(p['full_score'])
-                                _pk['full_score'] = fs
-                problems = list(_problems.values())
-            else:
-                problems = problems['division'][division]
-        if division != 'any' and not inplace_division:
-            statistics = statistics.filter(addition__division=division)
-
-    for p in problems:
-        if 'full_score' in p and isinstance(p['full_score'], (int, float)) and abs(p['full_score'] - 1) > 1e-9:
-            mod_penalty = {}
-            break
+    problems = get_standings_problems(contest, division)
+    mod_penalty = get_standings_mod_penalty(contest, problems, statistics)
 
     last = None
     merge_problems = False
@@ -934,6 +1026,16 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         else:
             last = p
             last['colspan'] = 1
+
+    params = {}
+
+    # filter by division
+    if divisions_order:
+        params['division'] = division
+        if not inplace_division:
+            divisions_order.append('any')
+        if divisions_order and division != 'any' and not inplace_division:
+            statistics = statistics.filter(addition__division=division)
 
     # filter by search
     search = request.GET.get('search')
@@ -1253,8 +1355,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             ):
                 context['my_statistics_rev'] = True
 
-    inner_scroll = not request.user_agent.is_mobile and 'safari' not in request.user_agent.browser.family.lower()
-
     relative_problem_time = contest.resource.info.get('standings', {}).get('relative_problem_time')
     relative_problem_time = contest.info.get('standings', {}).get('relative_problem_time', relative_problem_time)
     context['relative_problem_time'] = relative_problem_time
@@ -1262,6 +1362,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     name_instead_key = contest.resource.info.get('standings', {}).get('name_instead_key')
     name_instead_key = contest.info.get('standings', {}).get('name_instead_key', name_instead_key)
     context['name_instead_key'] = name_instead_key
+
+    inner_scroll = not request.user_agent.is_mobile
 
     context.update({
         'has_versus': has_versus,
@@ -1300,6 +1402,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'with_neighbors': request.GET.get('neighbors') == 'on',
+        'without_neighbors_aligment': not inner_scroll or 'safari' in request.user_agent.browser.family.lower(),
         'with_table_inner_scroll': inner_scroll,
         'enable_timeline': enable_timeline,
         'contest_timeline': contest.get_timeline_info(),
@@ -1315,8 +1418,9 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             ('0.001', '0.1%'),
             ('0.005', '0.5%'),
             ('0.01', '1%'),
-            ('0.03', '3%'),
+            ('0.05', '5%'),
             ('0.1', '10%'),
+            ('0.2', '20%'),
         ],
         'timeline_delays': [
             ('500', '500 ms'),
@@ -1332,10 +1436,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     if extra_context is not None:
         context.update(extra_context)
 
-    if groupby == 'none' and request.GET.get('charts'):
+    if groupby == 'none' and 'charts' in request.GET:
         standings_charts(request, context)
         context['with_table_inner_scroll'] = False
         context['disable_switches'] = True
+        if 'field' in fields_to_select:
+            fields_to_select['field']['disabled'] = True
 
     return render(request, template, context)
 
@@ -1365,8 +1471,8 @@ def solutions(request, sid, problem_key):
             try:
                 source_code = resource.plugin.Statistic.get_source_code(statistic.contest, stat)
                 stat.update(source_code)
-            except (NotImplementedError, ExceptionParseStandings, FailOnGetResponse):
-                return HttpResponseNotFound()
+            except (NotImplementedError, ExceptionParseStandings, FailOnGetResponse) as e:
+                return HttpResponseNotFound(str(e))
         elif not stat.get('url'):
             return HttpResponseNotFound()
 
@@ -1396,7 +1502,7 @@ def action(request):
         if action == 'reset_contest_statistic_timing':
             contest_id = request.POST['cid']
             contest = Contest.objects.get(pk=contest_id)
-            if not user.has_perm('reset_contest_statistic_timing'):
+            if not user.has_perm('clist.reset_contest_statistic_timing'):
                 error = 'No permission.'
             else:
                 message = f'Updated timing.statistic = {contest.timing.statistic}.'

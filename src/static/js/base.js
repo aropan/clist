@@ -42,14 +42,22 @@ String.prototype.toTitleCase = function(){
 };
 
 function toggle_tooltip_object(object) {
-  object.removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'})
+  if (typeof object === 'string') {
+    $('body').tooltip({selector: object, container: 'body', trigger: 'hover'})
+  } else {
+    object.removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'})
+  }
 }
 
 function toggle_tooltip() {
-  toggle_tooltip_object($('[data-toggle="tooltip"]'))
+  toggle_tooltip_object('[data-toggle="tooltip"]')
 }
 
 $(toggle_tooltip)
+
+function clear_tooltip() {
+  $('.tooltip').tooltip('hide')
+}
 
 function slugify(text) {
   return text.toString().toLowerCase()
@@ -179,6 +187,7 @@ $.browser = {};
     $.browser.msie = true;
     $.browser.version = RegExp.$1;
   }
+  $.browser.firefox = navigator.userAgent.search("Firefox") > -1;
 })();
 
 
@@ -218,6 +227,17 @@ function log_ajax_error(response) {
     return classes;
   };
 })(jQuery);
+
+
+$.fn.findWithSelf = function(selector) {
+  var result = this.find(selector)
+  this.each(function() {
+    if ($(this).is(selector)) {
+      result = result.add($(this))
+    }
+  });
+  return result
+}
 
 
 function shuffle(array) {
@@ -332,5 +352,22 @@ $(function() {
   if (resizer) {
     resizer.addEventListener('mousedown', mouseDownHandler);
   }
-
 })
+
+
+$(function() {
+  $('body').keyup(function(event) {
+    if ($(event.target).is('input')) {
+      event.preventDefault()
+    }
+  })
+})
+
+function replace_tag(element, originalTag, replacementTag) {
+  var newElement = element.prop('outerHTML')
+  newElement = newElement.replace(new RegExp('<' + originalTag, 'ig'), '<' + replacementTag)
+  newElement = newElement.replace(new RegExp('</' + originalTag, 'ig'), '</' + replacementTag)
+  newElement = $(newElement)
+  element.replaceWith(newElement)
+  return newElement
+}

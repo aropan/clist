@@ -86,39 +86,36 @@
     {% endif %}
 
     {% if groupby == 'none' %}
-    {% if request.GET.charts %}
+    {% if charts %}
     <input type="hidden" name="charts" value="{{ request.GET.charts }}"/>
     {% endif %}
     <div class="input-group input-group-sm">
-      <button class="btn btn-default btn-sm{% if request.GET.charts %} active{% endif %}" name="charts"{% if not request.GET.charts %} value="on"{% endif %}>{% icon_to 'charts' %}</button>
+      <button class="btn btn-default btn-sm{% if charts %} active{% endif %}" name="charts"{% if charts %} value="off"{% endif %}>{% icon_to 'charts' %}</button>
     </div>
     {% endif %}
 
-    {% if request.GET.fullscreen %}
-    <input type="hidden" name="fullscreen" value="{{ request.GET.fullscreen }}"/>
-    {% endif %}
     <div class="input-group input-group-sm">
-      <button class="btn btn-default btn-sm{% if request.GET.fullscreen %} active{% endif %}" name="fullscreen"{% if not request.GET.fullscreen %} value="on"{% endif %}>{% icon_to 'fullscreen' %}</button>
+      <button class="btn btn-default btn-sm{% if fullscreen %} active{% endif %}" name="fullscreen"{% if not fullscreen %} value=""{% else %} value="off"{% endif %}>{% icon_to 'fullscreen' %}</button>
     </div>
 
     {% if enable_timeline and contest.resource.info.standings.timeline and groupby == 'none' %}
-      {% if timeline %}
-      <input type="hidden" name="timeline" value="{{ request.GET.timeline }}"/>
-      {% endif %}
 
       <div class="input-group input-group-sm">
-        <button id="show-timeline" onclick="this.remove(); show_timeline(); $('#step-backward-timeline').focus(); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}><i class="fas fa-history"></i></button>
+        {% if timeline %}
+        <input type="hidden" name="timeline" value="{{ request.GET.timeline }}"/>
+        {% endif %}
+        <button id="show-timeline" onclick="show_timeline(); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}><i class="fas fa-history"></i></button>
       </div>
 
       <div id="timeline-buttons" class="hidden">
 
         <div class="btn-group">
-          <button id="fast-backward-timeline" onclick="step_timeline(0, true); set_timeline(0.0); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-backward"></i></button>
-          <button id="step-backward-timeline" onclick="step_timeline(-1, true); return false" class="btn btn-default btn-sm"><i class="fas fa-step-backward"></i></button>
-          <button id="play-timeline" class="btn btn-default btn-sm"><i class="fas fa-play"></i></button>
-          <button id="step-forward-timeline" onclick="step_timeline(1, true); return false" class="btn btn-default btn-sm"><i class="fas fa-step-forward"></i></button>
-          <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1); return false" class="btn btn-default btn-sm"><i class="fas fa-fast-forward"></i></button>
-          <button id="erase-switchers-timeline" onclick="SWITCHER_CLICK_WITHOUT_UPDATE = true; $('.problem-cell[data-result-switcher]').click(); set_timeline(); SWITCHER_CLICK_WITHOUT_UPDATE = false; return false" class="btn btn-default btn-sm" disabled><i class="fas fa-eraser"></i></button>
+          <button id="fast-backward-timeline" onclick="step_timeline(0, true); set_timeline(0.0); return false" class="btn btn-default btn-sm" data-title="Fast backward (H)" data-toggle="tooltip"><i class="fas fa-fast-backward"></i></button>
+          <button id="step-backward-timeline" onclick="step_timeline(-1, true); return false" class="btn btn-default btn-sm" data-title="Step backward (K)" data-toggle="tooltip"><i class="fas fa-step-backward"></i></button>
+          <button id="play-timeline" class="btn btn-default btn-sm" data-title="Play (G)" data-toggle="tooltip"><i class="fas fa-play"></i></button>
+          <button id="step-forward-timeline" onclick="step_timeline(1, true); return false" class="btn btn-default btn-sm" data-title="Step forward (J)" data-toggle="tooltip"><i class="fas fa-step-forward"></i></button>
+          <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1); return false" class="btn btn-default btn-sm" data-title="Fast forward (L)" data-toggle="tooltip"><i class="fas fa-fast-forward"></i></button>
+          <button id="erase-switchers-timeline" onclick="SWITCHER_CLICK_WITHOUT_UPDATE = true; $('.problem-cell[data-result-switcher]').click(); set_timeline(); SWITCHER_CLICK_WITHOUT_UPDATE = false; return false" class="btn btn-default btn-sm" disabled data-title="Clear selected (D)" data-toggle="tooltip"><i class="fas fa-eraser"></i></button>
         </div>
 
         <div class="input-group input-group-sm">
@@ -127,7 +124,7 @@
           <select id="timeline-duration"{% if value %} name="t_duration"{% endif %}>
             {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
             {% for k, v in timeline_durations %}
-            <option value="{{ k }}"{% if not value and forloop.revcounter == 2 %} selected{% endif %}>{{ v }}</option>
+            <option value="{{ k }}"{% if not value and forloop.revcounter == 3 %} selected{% endif %}>{{ v }}</option>
             {% endfor %}
           </select>
           {% endwith %}
@@ -139,7 +136,7 @@
           <select id="timeline-step"{% if value %} name="t_step"{% endif %}>
             {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
             {% for k, v in timeline_steps %}
-            <option value="{{ k }}"{% if not value and forloop.revcounter == 2 %} selected{% endif %}>{{ v }}</option>
+            <option value="{{ k }}"{% if not value and forloop.revcounter == 3 %} selected{% endif %}>{{ v }}</option>
             {% endfor %}
           </select>
           {% endwith %}
@@ -151,7 +148,7 @@
           <select id="timeline-delay"{% if value %} name="t_delay"{% endif %}>
             {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
             {% for k, v in timeline_delays %}
-            <option value="{{ k }}"{% if not value and forloop.revcounter == 2 %} selected{% endif %}>{{ v }}</option>
+            <option value="{{ k }}"{% if not value and forloop.revcounter == 3 %} selected{% endif %}>{{ v }}</option>
             {% endfor %}
           </select>
           {% endwith %}
@@ -166,7 +163,7 @@
         $('#timeline-duration').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
         $('#timeline-step').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
         $('#timeline-delay').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
-        {% if timeline %}
+        {% if timeline and not disable_switches %}
         $(function() {
           shuffle_statistics_rows()
           $('#show-timeline').click()

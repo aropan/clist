@@ -12,19 +12,29 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li><a href="{{ news_url }}" target="_blank" rel="noopener noreferrer">News</a></li>
+                <li class="dropdown-menu-hover">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">News <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="https://t.me/s/clistbynews" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;Telegram</a></li>
+                        <li><a href="https://github.com/aropan/clist/discussions/categories/announcements" rel="noopener noreferrer"><i class="fab fa-github"></i>&nbsp;Github</a></li>
+                        <li><a href="https://codeforces.com/blog/entry/109095" rel="noopener noreferrer">
+                            <img src="{{ 'img/resources/codeforces_com.png'|static_resize:'32x32' }}" width="16" height="16" style="margin-top: -5px; margin-left: -3px"/>&nbsp;Codeforces
+                        </a></li>
+                        <li><a href="https://discord.gg/n8VxASFbfh" rel="noopener noreferrer"><i class="fab fa-discord"></i>&nbsp;Discord</a></li>
+                    </ul>
+                </li>
                 <li><a href="{% url 'clist:resources' %}">Resources</a></li>
                 <li><a href="{% url 'ranking:standings_list' %}">Standings</a></li>
                 <li><a href="{% url 'clist:problems' %}">Problems</a></li>
                 <li><a href="{% url 'coder:coders' %}">Coders</a></li>
                 <li><a href="{% url 'coder:accounts' %}">Accounts</a></li>
                 <li><a href="{% url 'ranking:make_versus' %}">Versus</a></li>
-                <li><a href="{{ issues_url }}" target="_blank" rel="noopener noreferrer">Issues</a></li>
+                <li><a href="https://github.com/aropan/clist/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
                 <li class="dropdown-menu-hover">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Donate <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                        <li><a href="https://www.patreon.com/clist">{% icon_to "patreon" %}&nbsp;Patreon</a></li>
-                        <li><a href="https://ko-fi.com/clist"><i class="fas fa-mug-hot ko-fi"></i>&nbsp;Ko-fi</a></li>
+                        <li><a href="https://www.patreon.com/clist" rel="noopener noreferrer">{% icon_to "patreon" %}&nbsp;Patreon</a></li>
+                        <li><a href="https://ko-fi.com/clist" rel="noopener noreferrer"><i class="fas fa-mug-hot ko-fi"></i>&nbsp;Ko-fi</a></li>
                     </ul>
                 </li>
                 {% block banner %}
@@ -76,7 +86,6 @@
                                 <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
                                 <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
                                 <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
-                                <li><a href="{{ discuss_url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-comments"></i>&nbsp;Discuss</a></li>
                                 <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
                                 <li role="separator" class="divider"></li>
                                 <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>

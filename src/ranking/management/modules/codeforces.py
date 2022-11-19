@@ -88,8 +88,8 @@ def _query(
     return ret
 
 
-def _get(url, *args, **kwargs):
-    page = REQ.get(url, *args, **kwargs)
+def _get(url, *args, return_url=False, **kwargs):
+    page, last_url = REQ.get(url, *args, return_url=True, **kwargs)
     if 'document.cookie="RCPC="+toHex(slowAES.decrypt(c,2,a,b))+";' in page:
         matches = re.findall(r'(?P<var>[a-z]+)=toNumbers\("(?P<value>[^"]*)"\)', page)
         variables = {}
@@ -101,11 +101,11 @@ def _get(url, *args, **kwargs):
         rcpc = ''.join(('0' if x < 16 else '') + hex(x)[2:] for x in map(ord, ret))
         REQ.add_cookie('RCPC', rcpc)
 
-        match = re.search('document.location.href="(?P<url>[^"]*)"', page)
-        url = match.group('url')
-        page = REQ.get(url, *args, **kwargs)
+        result = re.search('document.location.href="(?P<url>[^"]*)"', page)
+        url = result.group('url')
+        page, last_url = REQ.get(url, *args, return_url=True, **kwargs)
         REQ.save_cookie()
-    return page
+    return (page, last_url) if return_url else page
 
 
 class Statistic(BaseModule):
@@ -640,14 +640,15 @@ class Statistic(BaseModule):
     def get_source_code(contest, problem):
         if 'url' not in problem:
             raise ExceptionParseStandings('Not found url')
-
-        page = _get(problem['url'])
-        match = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # noqa
-        if not match:
+        page, last_url = _get(problem['url'], return_url=True)
+        if last_url != problem['url']:
+            raise ExceptionParseStandings('Not allowed to view source code')
+        result = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # noqa
+        if not result:
             raise ExceptionParseStandings('Not found source code')
-        solution = html.unescape(match.group('source'))
+        solution = html.unescape(result.group('source'))
         ret = {'solution': solution}
-        for c in match.group('class').split():
+        for c in result.group('class').split():
             if c.startswith('lang-'):
                 ret['lang_class'] = c
         return ret

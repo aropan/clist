@@ -13,7 +13,7 @@ from pprint import pprint  # noqa
 import coloredlogs
 import humanize
 from django.core.management.base import BaseCommand
-from django.utils.timezone import now
+from django.utils import timezone
 
 from .parse_statistic import Command as ParserCommand
 from clist.models import Contest
@@ -61,7 +61,8 @@ class Command(BaseCommand):
         iteration = 1 if args.dump else 0
         while True:
             subprocess.call('clear', shell=True)
-            print(now())
+            now = timezone.now()
+            print(now)
 
             contest = Contest.objects.filter(pk=args.cid)
             parser_command.parse_statistic(contest, without_contest_filter=True)
@@ -241,14 +242,14 @@ class Command(BaseCommand):
                     fo.write(standings_dump)
 
             if iteration:
-                is_over = contest.end_time < now()
+                is_over = contest.end_time < now
                 if is_over and not has_hidden:
                     break
                 tick = args.delay * 5 if is_over else args.delay
-                limit = now() + timedelta(seconds=tick)
+                limit = now + timedelta(seconds=tick)
                 size = 1
-                while now() < limit:
-                    value = humanize.naturaldelta(limit - now())
+                while timezone.now() < limit:
+                    value = humanize.naturaldelta(limit - timezone.now())
                     out = f'{value:{size}s}'
                     size = len(value)
                     print(out, end='\r')

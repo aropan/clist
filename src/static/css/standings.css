@@ -20,6 +20,10 @@
   margin-bottom: 5px;
 }
 
+table.standings {
+  border-collapse: separate;
+}
+
 table.standings td,
 table.standings th {
   text-align: center;
@@ -150,43 +154,68 @@ a.solution:hover span {
   font-weight: normal;
 }
 
-#viewSolutionModal .modal-body {
+#viewSolutionModal:not(.fullscreen) .modal-body {
   max-height: calc(100vh - 200px);
-  overflow-y: auto;
 }
 
-.my-stat .advance,
-.advance {
-  font-weight: bold;
+#viewSolutionModal.fullscreen .modal-body {
+  max-height: calc(100vh - 120px);
+}
+
+#viewSolutionModal.modal .modal-body {
+  overflow-y: auto;
 }
 
 .language {
   white-space: nowrap;
 }
 
-#table-inner-scroll table th {
+#table-inner-scroll table thead tr,
+#table-inner-scroll:not(.firefox) table tr.starred,
+#table-inner-scroll.firefox table tr.starred td  /* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */
+{
   position: sticky;
   position: -webkit-sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
+}
+
+#table-inner-scroll table tr.starred td {
+  border-top: 1px solid #c8e5f3;
 }
 
 .standings tr.find-me-row td {
   font-weight: bold;
 }
 
-#table-inner-scroll .my-stat th {
-  top: -2px;
-  bottom: 0;
+/*
+ * starred
+ */
+
+.starred .advance,
+.advance {
+  font-weight: bold;
 }
 
-.standings .my-stat th a
-{
-  color: inherit !important;
+.star {
+  cursor: pointer;
 }
 
-.my-stat th {
-  font-weight: normal;
+#unstar {
+  cursor: pointer;
+  color: inherit;
+}
+
+.stat-cell.starred .far.fa-star {
+  display: none;
+}
+
+.stat-cell .fas.fa-star {
+  display: none;
+}
+
+.stat-cell.starred .fas.fa-star {
+  display: inline;
 }
 
 #table-inner-scroll {
@@ -295,4 +324,9 @@ a.versus-games:hover {
 #parsed-time .pull-right {
   margin-top: -20px;
   height: 20px;
+}
+
+.stat-cell {
+  position: relative;
+  background-color: #fff;
 }

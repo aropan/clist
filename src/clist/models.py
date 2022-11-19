@@ -312,7 +312,7 @@ class Contest(BaseModel):
         return self.end_time <= timezone.now()
 
     def is_running(self):
-        return not self.is_over() and self.start_time < timezone.now()
+        return not self.is_over() and self.start_time <= timezone.now()
 
     def is_coming(self):
         return timezone.now() < self.start_time
@@ -456,6 +456,24 @@ class Contest(BaseModel):
 
     def is_major_kind(self):
         return self.resource.is_major_kind(self.kind)
+
+    @property
+    def time_percentage(self):
+        if self.is_coming():
+            return 0
+        if self.is_over() or not self.duration_in_secs or not self.parsed_time:
+            return 1
+        ret = (self.parsed_time - self.start_time).total_seconds() / self.duration_in_secs
+        return max(min(ret, 1), 0)
+
+    @property
+    def standings_per_page(self):
+        per_page = self.info.get('standings', {}).get('per_page', 50)
+        if per_page is None:
+            per_page = 100500
+        elif self.n_statistics and self.n_statistics <= 500:
+            per_page = self.n_statistics
+        return per_page
 
 
 class Problem(BaseModel):

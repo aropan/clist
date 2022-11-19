@@ -81,6 +81,8 @@ class Statistic(BaseModule):
         standings_urls = []
         if not self.standings_url:
             for url in (
+                'https://icpc.global/scoreboard/',
+                'https://pc2.ecs.baylor.edu/scoreboard/',
                 f'http://static.kattis.com/icpc/wf{year}/',
                 f'https://zibada.guru/finals/{year}/',
                 f'http://web.archive.org/web/{year}/https://icpc.baylor.edu/scoreboard/',
@@ -306,7 +308,11 @@ class Statistic(BaseModule):
                             if k not in problems_info:
                                 problems_info[k] = {'short': k}
                                 if 'title' in vs.header.attrs:
-                                    problems_info[k]['name'] = vs.header.attrs['title']
+                                    title = vs.header.attrs['title']
+                                    extra_prefix = 'problem '
+                                    if title.startswith(extra_prefix):
+                                        title = title[len(extra_prefix):].strip()
+                                    problems_info[k]['name'] = title
 
                             v = re.sub(r'([0-9]+)\s+([0-9]+)\s+tr.*', r'\2 \1', v)
                             v = re.sub('tr[a-z]*', '', v)
@@ -358,6 +364,11 @@ class Statistic(BaseModule):
                         region = ''.join([s.strip() for s in prv.xpath('text()')])
                         row['region'] = region
 
+                for row in result.values():
+                    info = row.get('info', {})
+                    if 'logo' in info:
+                        info['download_avatar_url_'] = info['logo']
+
             if not result:
                 continue
 
@@ -384,6 +395,7 @@ class Statistic(BaseModule):
                     def canonize_name(name):
                         name = name.lower()
                         name = name.replace('&', ' and ')
+                        name = name.replace(',', ' ')
                         name = re.sub(r'\s{2,}', ' ', name)
                         name = re.split(r'(?:\s-\s|\s-|-\s|,\s)', name)
                         name = tuple(sorted([n.strip() for n in name]))

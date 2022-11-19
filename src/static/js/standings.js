@@ -69,21 +69,30 @@ function duration_to_text(duration) {
 }
 
 var CURRENT_PERCENT = null
-var TOOLTIP_TIMER = null
 var TIMELINE_TIMER_ID = null
-const RESET_TOOLTIP_DURATION = 3000
 
 function step_timeline(multiplier = 1, stop = false) {
-  CURRENT_PERCENT += multiplier * parseFloat($('#timeline-step').val())
-  set_timeline(CURRENT_PERCENT)
-  if (stop && TIMELINE_TIMER_ID || !stop && CURRENT_PERCENT >= contest_max_percent) {
+  set_timeline(CURRENT_PERCENT + multiplier * parseFloat($('#timeline-step').val()))
+  if (stop && TIMELINE_TIMER_ID || !stop && CURRENT_PERCENT >= contest_time_percentage) {
     $('#play-timeline').click()
   }
 }
 
-function update_timeline_text(percent) {
-  $('#timeline .progress-bar-success')[0].style.width = percent * 100 + '%'
+function update_timeline_text(percent = null) {
+  percent = percent || CURRENT_PERCENT
+  $('#timeline-progress-select').css('width', percent * 100 + '%')
+  $('#timeline-progress-hidden').css('width', (contest_time_percentage - percent) * 100 + '%')
+  var unparsed_percent = Math.min(1, ($.now() / 1000 - contest_start_timestamp) / contest_duration)
+  $('#timeline-progress-unparsed').css('width', (unparsed_percent - contest_time_percentage) * 100 + '%')
   $('#timeline-text').text(duration_to_text(contest_duration * percent) + ' of ' + duration_to_text(contest_duration))
+}
+
+function set_contest_time_percentage(time_percentage) {
+  if (CURRENT_PERCENT == contest_time_percentage) {
+    CURRENT_PERCENT = time_percentage
+  }
+  contest_time_percentage = time_percentage
+  update_timeline_text(CURRENT_PERCENT)
 }
 
 function shuffle_statistics_rows() {
@@ -104,19 +113,15 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     percent = CURRENT_PERCENT
   } else {
     percent = Math.max(percent, 0)
-    percent = Math.min(percent, contest_max_percent)
-    update_timeline_text(percent)
-
-    if (CURRENT_PERCENT == percent && (CURRENT_PERCENT <= 0 || CURRENT_PERCENT >= contest_max_percent)) {
+    percent = Math.min(percent, contest_time_percentage)
+    if (CURRENT_PERCENT == percent) {
       return
     }
     CURRENT_PERCENT = percent
   }
-  var current_time = contest_duration * percent
+  update_timeline_text(percent)
 
-  if (TOOLTIP_TIMER) {
-    clearTimeout(TOOLTIP_TIMER)
-  }
+  var current_time = contest_duration * percent
 
   $('.stat-cell').each((_, e) => {
     score = 0
@@ -131,10 +136,24 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     $(e).attr('data-last', 0)
   })
 
-
   problem_progress_stats = {}
 
   $('.stat-cell').css('transition', 'transform ' + duration + 'ms')
+
+  if (!with_detail) {
+    $('.problem-cell').each(function() {
+      var text_muted = $(this).find('.text-muted')
+      if (!text_muted.length) {
+        return
+      }
+      var text = text_muted.text()
+      text_muted.remove()
+      var result = $(this).children(':not(.hidden)')
+      result.attr('title', text)
+      result.attr('data-toggle', 'tooltip')
+    })
+    toggle_tooltip()
+  }
 
   $('.problem-cell.problem-cell-stat').each((_, e) => {
     var $e = $(e)
@@ -159,7 +178,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       }
       visible = time <= current_time
     } else {
-      visible = CURRENT_PERCENT >= contest_max_percent
+      visible = CURRENT_PERCENT >= contest_time_percentage
     }
     var pvisible = $e.attr('data-visible')
     $e.attr('data-visible', visible)
@@ -230,7 +249,12 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   })
 
   $('.stat-cell').each((_, e) => {
-    $(e).find('.score-cell').text(e.getAttribute('data-score'))
+    var $e = $(e)
+    var current_score = $e.find('.score-cell').text().trim()
+    var new_score = e.getAttribute('data-score')
+    $e.find('.score-cell').text(new_score)
+    $e.css('z-index', current_score != new_score? '5' : '1')
+
     var format = contest_timeline['penalty_format'] || 1
     var penalty = parseFloat(e.getAttribute('data-penalty'))
 
@@ -238,11 +262,11 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     var more_penalty_factor = contest_timeline['penalty_more'] || 0
     var selector = contest_timeline['penalty_more_selector']
     if (selector) {
-      $(e).find(selector).text(more_penalty)
+      $e.find(selector).text(more_penalty)
     }
     if (more_penalty) {
       penalty += more_penalty * more_penalty_factor
-      $(e).attr('data-penalty', penalty)
+      $e.attr('data-penalty', penalty)
     }
 
     var rounding = contest_timeline['penalty_rounding'] || 'floor-minute'
@@ -273,7 +297,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     }
 
     var selector = contest_timeline['penalty_selector'] || '.addition-penalty-cell'
-    $(e).find(selector).text(penalty)
+    $e.find(selector).text(penalty)
   })
 
   var rows = $('.stat-cell')
@@ -310,29 +334,62 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     })
   }
 
-  rows.sort(cmp_row)
   var first = null
   var last = null
-  var current_top = $('table.standings thead')[0].offsetHeight
 
+  var table_inner_scroll = $('#table-inner-scroll')
+  var scroll_object = table_inner_scroll.length? table_inner_scroll : $('html, body')
+  var table_top = $('table.standings').parent().offset().top
+  var table_height = scroll_object.height()
+  var thead_height = $('table.standings thead').height()
+  var rows_top = table_top + thead_height
+
+  var offset = rows_top
+  rows.each((i, r) => {
+    var $r = $(r)
+    $r.attr('data-offset', offset)
+    offset += r.offsetHeight
+  })
+
+  rows.sort(cmp_row)
+
+  var current_top = rows_top
   rows.each((i, r) => {
     if (i == 0 || cmp_row(last, r) < 0) {
       if (first === null) {
         first = r
       }
-      place = i
+      place = i + 1
     }
     last = r
 
     var $r = $(r)
-    $r.find('>.place-cell').attr('data-text', place + 1)
+    $r.find('>.place-cell').attr('data-text', place)
 
     var gap = (get_row_penalty(r) - get_row_penalty(first)) + (get_row_score(first) - get_row_score(r)) * current_time
     $r.find('>.gap-cell').attr('data-text', Math.round(gap / 60))
 
-    $r.attr('data-translate-y', 'translateY(' + (r.offsetTop - current_top) + 'px)')
+    var translation = $r.attr('data-offset') - current_top
+    $r.removeAttr('data-offset')
+
+    if ($r.hasClass('starred')) {
+      var up = $r.offset().top - rows_top - parseFloat($r.css('top')) + thead_height
+      var down = table_height - up - parseFloat($r.css('top')) - parseFloat($r.css('bottom')) - r.offsetHeight
+      if (translation < -down) {
+        translation = -down
+      }
+      if (translation > up) {
+        translation = up
+      }
+    }
+
+    $r.attr('data-translate-y', 'translateY(' + translation + 'px)')
     $r.attr('data-scroll-top', current_top)
     current_top += r.offsetHeight
+
+    if (translation > 0 && !$r.css('z-index')) {
+      $r.css('z-index', '3')
+    }
   })
 
   rows.find('>.place-cell').each((i, e) => { $(e).text($(e).attr('data-text')) })
@@ -342,12 +399,14 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   $('table.standings tbody').html(rows)
   color_by_group_score('data-score')
   $('.accepted-switcher').click(switcher_click)
+  bind_starring()
+  recalc_pinned()
+
+  clear_tooltip()
+  toggle_tooltip_object('table.standings [data-original-title]')
 
   scroll_to_find_me(duration, 0, scroll_to_element)
-
   setTimeout(() => { rows.css('transform', '') }, 1)
-
-  TOOLTIP_TIMER = setTimeout(() => { toggle_tooltip_object($('table.standings [data-original-title]')) }, RESET_TOOLTIP_DURATION + duration)
 }
 
 function highlight_element(el, after = 1000, duration = 500, before_toggle_class = false, callback = undefined) {
@@ -396,6 +455,7 @@ function parse_factors_time(timeline_factors, penalty) {
 }
 
 function switcher_click(el) {
+  const hidden_regex = /^[-+0-9]+$/
   var stat = $(this)
   if (stat.attr('data-score-switcher') === undefined) {
     stat.attr('data-result-switcher', stat.attr('data-result') || '')
@@ -411,10 +471,7 @@ function switcher_click(el) {
       result = '+' + result.substring(1)
     } else if (result.startsWith('?')) {
       result = result.substring(1)
-      if (result) {
-        result = (parseFloat(result) - 1)
-      }
-      result = '+' + (result || '')
+      result = '+' + (hidden_regex.exec(result)? eval(result) - 1 || '' : '')
       penalty = parse_factors_time(contest_timeline['time_factor'], stat.attr('data-penalty')) || penalty
     }
 
@@ -481,16 +538,13 @@ function switcher_click(el) {
   }
   $('#erase-switchers-timeline').prop('disabled', $('.problem-cell[data-result-switcher]').length == 0)
   if (!SWITCHER_CLICK_WITHOUT_UPDATE) {
-    set_timeline(null, null, stat.closest('tr'))
+    var tr = stat.closest('tr')
+    set_timeline(null, null, tr)
   }
-  $('.tooltip').tooltip('hide')
+  clear_tooltip()
 }
 
-function show_timeline() {
-  $('#timeline-buttons').toggleClass('hidden')
-  $('#timeline').show()
-  $('.standings .endless_container').remove()
-
+function clear_extra_info_timeline() {
   $('table.standings tr > *').classes(function(c, e) {
     if (c.endsWith('-medal')) {
       $(e).removeClass(c)
@@ -505,25 +559,59 @@ function show_timeline() {
 
   $('.first-u-cell').remove()
 
-  $('td.problem-cell').addClass('accepted-switcher')
-  $('.accepted-switcher').click(switcher_click)
+  $('.stat-cell .problem-cell:not(.accepted-switcher)').addClass('accepted-switcher').click(switcher_click)
+}
+
+function show_timeline() {
+  $('#timeline-buttons').toggleClass('hidden')
+  $('#timeline').show()
+  $('.standings .endless_container').remove()
+
+  clear_extra_info_timeline()
 
   update_timeline_text(CURRENT_PERCENT)
   $(window).trigger('resize')
+  shown_timeline = true
+
+  var input_timeline = $('[name="timeline"]')
+  if (!input_timeline.length) {
+    $('<input type="hidden" name="timeline" value=""/>').insertBefore('#show-timeline')
+  }
+  $('#show-timeline').attr('name', 'timeline').attr('value', 'off').attr('onclick', '').addClass('active')
+  $('#step-backward-timeline').focus()
+
+  if (CURRENT_PERCENT < 1) {
+    var update_timeline_text_interval = Math.max(10, contest_duration / 1000)
+    setInterval(update_timeline_text, update_timeline_text_interval * 1000)
+  }
+
+  recalc_pinned()
 }
 
 function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500, el = null) {
   var el = el || $('.find-me-row')
-  var find_me_pos = el.position()
+  var find_me_pos = el.offset()
   if (find_me_pos) {
     var table_inner_scroll = $('#table-inner-scroll')
-    var table = table_inner_scroll.length? table_inner_scroll : $('html, body')
-    var table_pos = table.position()
-    var element_top = parseInt(el.attr('data-scroll-top')) + table_pos.top - table.scrollTop() || find_me_pos.top
-    el.attr('data-scroll-top', '')
-    var target = element_top - (table_pos.top + table.height() / 2)
-    table.stop()
-    table.animate({scrollTop: target + table.scrollTop()}, scroll_animate_time)
+    var scroll_object = table_inner_scroll.length? table_inner_scroll : $('html, body')
+    var table_top = $('table.standings').parent().offset().top
+    var table_offset = $('table.standings').offset().top
+    var screen_height = table_inner_scroll.length? table_inner_scroll.height() + 2 * table_offset : $(window).height()
+
+    var element_top = parseInt(el.attr('data-scroll-top'))
+    if (element_top) {
+      el.attr('data-scroll-top', '')
+      if (table_inner_scroll.length) {
+        element_top -= table_top
+        element_top += table_offset
+      }
+    } else {
+      element_top = find_me_pos.top
+    }
+
+    var target = element_top - screen_height / 2
+    scroll_object.stop()
+    scroll_object.animate({scrollTop: target}, scroll_animate_time)
 
     if (color_animate_time) {
       $('.find-me-row td').each(function() {
@@ -534,11 +622,13 @@ function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500,
 }
 
 function update_trophy_font_size() {
-  $('.handle-cell .trophy-detail').each((_, e) => { $(e).css("font-size", Math.max(14, $(e).closest('.handle-cell').height() / 2)) })
+  height = Math.min(...$('.handle-cell .trophy-detail').closest('.handle-cell').map((_, e) => $(e).height())) / 2
+  height = Math.max(14, height)
+  $('.handle-cell .trophy-detail').each((_, e) => { $(e).css("font-size", height) })
 }
 
 $(function() {
-  CURRENT_PERCENT = contest_max_percent
+  CURRENT_PERCENT = contest_time_percentage
 
   $('#timeline').click(function(e) {
     var percent = (e.pageX - $(this).offset().left) / $(this).width()
@@ -554,7 +644,7 @@ $(function() {
     var percent = (e.pageX - $(this).offset().left) / $(this).width()
     percent = Math.max(percent, 0)
     percent = Math.min(percent, 1)
-    $tooltip.css({'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() - 5})
+    $tooltip.css({'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() + 30})
     $tooltip.show()
     $tooltip.text(duration_to_text(contest_duration * percent))
   })
@@ -575,7 +665,7 @@ $(function() {
     if (TIMELINE_TIMER_ID) {
       clearInterval(TIMELINE_TIMER_ID)
       TIMELINE_TIMER_ID = null
-    } else if (CURRENT_PERCENT >= contest_max_percent) {
+    } else if (CURRENT_PERCENT >= contest_time_percentage) {
       setTimeout(toggle_play_timeline, 100)
     } else {
       TIMELINE_TIMER_ID = setInterval(step_timeline, $('#timeline-delay').val())
@@ -628,22 +718,130 @@ $(function() {
     }
   })
 
-  $('#timeline-buttons button').keyup(function(event) {
-    if (event.key == 'h') {
-      $('#fast-backward-timeline').focus().click();
-    } else if (event.key == 'j') {
-      $('#step-forward-timeline').focus().click();
-    } else if (event.key == 'k') {
-      $('#step-backward-timeline').focus().click();
-    } else if (event.key == 'l') {
-      $('#fast-forward-timeline').focus().click();
-    } else if (event.key == 'g') {
-      $('#play-timeline').focus().click();
+  $('body').keyup(function(event) {
+    if (event.isDefaultPrevented()) {
+      return
     }
+
+    if (event.key == 'Escape') {
+      $('.active[name="fullscreen"]').click()
+    }
+
+    if (shown_timeline) {
+      if (event.key == 'h') {
+        $('#fast-backward-timeline').focus().click()
+      } else if (event.key == 'j') {
+        $('#step-forward-timeline').focus().click()
+      } else if (event.key == 'k') {
+        $('#step-backward-timeline').focus().click()
+      } else if (event.key == 'l') {
+        $('#fast-forward-timeline').focus().click()
+      } else if (event.key == 'g') {
+        $('#play-timeline').focus().click()
+      } else if (event.key == 'd') {
+        $('#erase-switchers-timeline').focus().click()
+      }
+    }
+
+    event.preventDefault()
     return false
   });
 })
 
+/*
+ * Starred
+ */
+
+function recalc_pinned() {
+  var total_height = 0
+  var selector = '.starred'
+  var thead_height = $('#table-inner-scroll thead').height() || 0
+  var offset_height = 0
+  $(selector).each(function() {
+    total_height += $(this).height()
+  }).each(function() {
+    var el = $(this)
+    var selection = $.browser.firefox? el.find('td') : el
+    selection.css({
+      'top': offset_height + thead_height,
+      'bottom': total_height - offset_height - el.height(),
+    })
+    offset_height += el.height()
+  }).css('z-index', '')
+}
+
+function change_starring() {
+  var element = $(this)
+  if (!element.length) {
+    return;
+  }
+  var stat = element.closest('.stat-cell')
+  stat.toggleClass('info')
+  stat.toggleClass('starred')
+  stat.css('top', '').css('bottom', '')
+}
+
+function update_cookie_starring() {
+  var stat = $(this).closest('.stat-cell')
+  var statistic_id = stat.attr('data-statistic-id')
+  var starred = Cookies.get('starred', {path: starred_cookie_path})
+  starred = !starred? Array() : starred.split(',')
+  var index = starred.indexOf(statistic_id)
+  if (index == -1) {
+    starred.push(statistic_id)
+  } else {
+    starred.splice(index, 1)
+  }
+  starred = starred.join(',')
+  Cookies.set('starred', starred, {expires: starred_cookie_expires, path: starred_cookie_path})
+  update_unstar_hidden()
+}
+
+function update_unstar_hidden() {
+  var starred = Cookies.get('starred', {path: starred_cookie_path})
+  if (starred) {
+    $('#unstar').removeClass('hidden')
+  } else {
+    $('#unstar').addClass('hidden')
+  }
+}
+
+function starring() {
+  change_starring.call(this)
+  update_cookie_starring.call(this)
+  recalc_pinned()
+}
+
+function bind_starring() {
+  $('.stat-cell .star').unbind('click').click(starring)
+}
+
+function apply_starring() {
+  bind_starring()
+
+  var starred = Cookies.get('starred', {path: starred_cookie_path})
+  starred = !starred? Array() : starred.split(',')
+  starred.forEach(element => {
+    change_starring.call($('.stat-cell.' + element + ':not(".starred") .star'))
+  })
+
+  recalc_pinned()
+
+  update_unstar_hidden()
+}
+
+$(function() {
+  $('#unstar').click(function() {
+    $('.stat-cell.starred .star').click()
+    Cookies.remove('starred', {path: starred_cookie_path})
+    update_unstar_hidden()
+  })
+
+  var starred = Cookies.get('starred', {path: starred_cookie_path})
+  if (starred) {
+    Cookies.set('starred', starred, {expires: starred_cookie_expires, path: starred_cookie_path})
+  }
+})
 
 /*
  * Standings live
@@ -651,13 +849,54 @@ $(function() {
 
 $(function() {
   const standings_socket = new WebSocket('wss://' + window.location.host + '/ws/contest/?pk=' + contest_pk)
+  var n_messages = 0
+
+  function clear_on_update_standings() {
+    $('#parsed-time').remove()
+  }
+
+  function update_standings(data) {
+    if (shown_timeline) {
+      clear_on_update_standings()
+      set_contest_time_percentage(data.time_percentage)
+    }
+    var tr = $(data.rows).filter('tr')
+    if (!tr.length) {
+      return
+    }
+    var n_rows_msg = data.n_total && tr.length != data.n_total? tr.length + ' of ' + data.n_total : tr.length
+    if (shown_timeline) {
+      var standings = $('table.standings')
+      tr.each(function() {
+        var sid = $(this).attr('data-statistic-id')
+        var orig = $('.' + sid)
+        var replaced = orig.replaceWith(this).length
+        if (!replaced && !standings_filtered) {
+          standings.append(this)
+        }
+      })
+      apply_starring()
+      clear_extra_info_timeline()
+      set_timeline()
+      $.notify('updated ' + n_rows_msg + ' row(s)', 'success')
+    } else {
+      $.notify('updated ' + n_rows_msg + ' row(s), reload page to see', 'warn')
+    }
+  }
 
   standings_socket.onmessage = function(e) {
     const data = JSON.parse(e.data)
-    console.log('wss message', data)
+    if (data.type == 'standings') {
+      update_standings(data)
+    }
+    n_messages += 1
   }
 
-  standings_socket.onopen = function(e) {
-    console.log('wss connected')
+  standings_socket.onclose = function(e) {
+    if (n_messages) {
+      $.notify('Socket closed unexpectedly', 'warn')
+      $.notify('The page will be reloaded in 10 seconds', 'warn')
+      setTimeout(() => { location.reload() }, 10000)
+    }
   }
 })

@@ -39,7 +39,7 @@ def main(host=None):
                     fields_types[k].add(type(v).__name__)
                 pbar.update()
             fields_types = {k: list(v) for k, v in fields_types.items()}
-            resource.accounts_fields.setdefault('types', fields_types)
+            resource.accounts_fields['types'] = fields_types
             resource.save()
 
 

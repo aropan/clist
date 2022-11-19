@@ -42,6 +42,8 @@ class Command(BaseCommand):
         parser.add_argument('--update-new-year', action='store_true', help='force update new year accounts')
         parser.add_argument('--min-rating', default=None, type=int, help='minimum rating')
         parser.add_argument('--min-n-contests', default=None, type=int, help='minimum number of contests')
+        parser.add_argument('--without-new', action='store_true', help='only parsed account')
+        parser.add_argument('--with-field', default=None, type=str, help='only parsed account which have field')
 
     @staticmethod
     def _get_plugin(module):
@@ -103,6 +105,10 @@ class Command(BaseCommand):
                     accounts = accounts.filter(rating__gte=args.min_rating)
                 if args.min_n_contests:
                     accounts = accounts.filter(n_contests__gte=args.min_n_contests)
+                if args.without_new:
+                    accounts = accounts.exclude(info__exact={})
+                if args.with_field:
+                    accounts = accounts.filter(**{f'info__{args.with_field}__isnull': False})
 
                 total = accounts.count()
 

@@ -145,6 +145,7 @@ class Statistic(BaseModule):
 
                     for field, out in (
                         ('score', 'solving'),
+                        ('criteriaScore', 'solving'),
                         ('programmingLanguage', 'language'),
                         ('clashes_count', 'clashes_count'),
                         ('pseudo', 'name'),

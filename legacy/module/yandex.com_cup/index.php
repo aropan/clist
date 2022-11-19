@@ -24,6 +24,7 @@
             $start_time = $stage['date'];
             $start_time = preg_replace("#[^0-9a-z$sep]+#i", " ", $start_time);
             $start_time = preg_replace("#\s*$sep\s*#i", $sep, $start_time);
+            $end_time = null;
             if (strpos($start_time, $sep) !== false) {
                 list($start_time, $end_time) = explode($sep, $start_time);
                 $start_time = trim($start_time);
@@ -31,17 +32,18 @@
                 if (preg_match('#^[0-9]+$#', $end_time)) {
                     $end_time = preg_replace('#[0-9]+#', $end_time, $start_time);
                 }
-            } else {
-                $end_time = $start_time;
             }
             if (strpos($start_time, $year) === false) {
                 $start_time .= " $year";
             }
-            if (strpos($end_time, $year) === false) {
-                $end_time .= " $year";
-            }
             $start_time = '12:00 ' . $start_time;
-            $end_time = strtotime($end_time) + 24 * 60 * 60;
+
+            if ($end_time) {
+                if (strpos($end_time, $year) === false) {
+                    $end_time .= " $year";
+                }
+                $end_time = strtotime($end_time) + 24 * 60 * 60;
+            }
 
             $month = date('n', strtotime($start_time));
             if ($month >= 9) {
@@ -57,7 +59,7 @@
                 } else if (preg_match('#sprint#i', $stage['title'])) {
                     $duration = 120;  // 120 minutes
                 } else if (preg_match('#final#i', $stage['title'])) {
-                    $duration = 180;
+                    $duration = 120;
                 }
             } else if (preg_match('#back-?end#i', $category['name'])) {
                 $duration = 300;

@@ -92,6 +92,13 @@
   {% endif %}
 {% endif %}
 
+{% if not statistic.my_stat %}
+  <a class="star external-link invisible">
+    {% icon_to 'pin' false %}
+    {% icon_to 'unpin' false %}
+  </a>
+{% endif %}
+
 {% if perms.ranking.statistics_change and statistic %}
   <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
 {% endif %}

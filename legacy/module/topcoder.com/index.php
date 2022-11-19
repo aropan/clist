@@ -37,12 +37,12 @@
         $title = preg_replace('#^mm\b#i', 'Marathon Match', $title);
         $title = preg_replace('#([0-9])-([0-9])#', '\1\2', $title);
         $title = preg_replace('#\s*-\s*#', ' ', $title);
-        $title = preg_replace('#.?(TCO[0-9]+)\s*Finals[^\s]?#', '\1', $title);
+        $title = preg_replace('#.?(TCO[0-9]+)\s*Final[^\s]*#', '\1', $title);
         $title = trim($title);
         if (preg_match('#\b(test|testing|practice)\b$#i', $title)) {
             return false;
         }
-        if (!preg_match('#(?P<key>(?:(?:rookie\s*|beginner\s*)?srm|^marathon\s*match)\s*[-/.0-9]*[0-9]|^(?:[0-9]+\s?TCO|TCO\s?[0-9]+).*(?:(?:(?:algorithm|marathon)(?:.*\bfinals?\b)?)|\b(?:match|round)\b)\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
+        if (!preg_match('#(?P<key>(?:(?:rookie\s*|beginner\s*)?srm|^marathon\s*match)\s*[-/.0-9]*[0-9]|^(?:[0-9]+\s?TCO|TCO\s?[0-9]+).*(?:(?:(?:algorithm|marathon)(?:.*\bfinals?\b)?)|\b(?:match|round|semi)\b)\s*([.0-9a-z]*[0-9a-z])?)#i', $title, $match)) {
             return false;
         }
         return $match['key'];
@@ -50,11 +50,14 @@
 
     function normalize_title($title, $date) {
         $ret = strtolower($title);
-        $ret = preg_replace('/\b(algo|algorithm|round|marathon|match)\b/', ' ', $ret);
+        $ret = preg_replace('/:\s*hosted.*/', '', $ret);
+        $ret = preg_replace('/\b(algo|algorithm|round|marathon|match|live|competition)\b/', ' ', $ret);
+        $ret = preg_replace('/semi\s*final\s*/', 'semi ', $ret);
         $ret = preg_replace('/[0-9]*([0-9]{2})\s*tco(\s+)/', 'tco\1\2', $ret);
         $ret = preg_replace('/tco\s*[0-9]*([0-9]{2})(\s+)/', 'tco\1\2', $ret);
         $ret = preg_replace('/^[0-9]{2}([0-9]{2})(\s+)/', 'tco\1\2', $ret);
         $ret = preg_replace('/ +/', ' ', $ret);
+        $ret = trim($ret);
         return $ret;
     }
 
@@ -64,8 +67,80 @@
 
     $url_scheme_host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
 
+    $external_parsed = false;
+
+    for ($shift = 0; $shift < 2; ++$shift) {
+        $year = date('Y') + $shift;
+        $url = 'https://tco' . ($year % 100) . '.topcoder.com/schedule';
+        $page = curlexec($url);
+        preg_match_all('#<tr[^>]*>.*?</tr>#ms', $page, $rows);
+        $day = false;
+        foreach ($rows[0] as $row) {
+            preg_match_all('#<td[^>]*>.*?</td>#ms', $row, $columns);
+            $texts = array();
+            foreach ($columns[0] as $column) {
+                $text = strip_tags($column);
+                $texts[] = $text;
+            }
+            if (empty($texts)) {
+                continue;
+            }
+            $datetime= strtotime($texts[0]);
+            if ($datetime !== false) {
+                $day = $texts[0];
+                continue;
+            }
+            if ($day === false || count($texts) < 2) {
+                continue;
+            }
+            $splits = preg_split("#\s+-\s+#", $texts[0]);
+            if (count($splits) != 2) {
+                continue;
+            }
+            $start_time = $day . ' ' . $splits[0];
+            $end_time = $day . ' ' . $splits[1];
+
+            if (strtotime($start_time) === false) {
+                continue;
+            }
+            if (strtotime($end_time) === false) {
+                $end_time = null;
+            }
+
+            $title = trim($texts[1]);
+            if (!preg_match('#(algorithm|marathon)#i', $title)) {
+                continue;
+            }
+
+            $prefix = 'TCO' . ($year % 100);
+            if (!starts_with($title, $prefix) && !preg_match('#competition#i', $title)) {
+                continue;
+            }
+
+            if (!starts_with($title, $prefix)) {
+                $title = $prefix . ' ' . $title;
+            }
+
+            $key = get_algorithm_key($title);
+            if (!$key) {
+                continue;
+            }
+
+            $contest = array(
+                "start_time" => $start_time,
+                "end_time" => $end_time,
+                "title" => $title,
+                "url" => $url,
+                "key" => $key,
+                "timezone" => $TIMEZONE,
+                "_external" => true,
+            );
+            $_contests[] = $contest;
+            $external_parsed = true;
+        }
+    }
+
     $authorization = get_calendar_authorization();
-    $calendar_parsed = false;
     if ($authorization) {
         $url = 'https://www.topcoder.com/community/events';
         $page = curlexec($url);
@@ -86,7 +161,6 @@
         } else if (!isset($data["items"])) {
             echo $data['error']['message'] . "\n";
         } else {
-            $calendar_parsed = true;
             if ($debug_) {
                 echo "Total items: " . count($data["items"]) . "\n";
             }
@@ -129,9 +203,10 @@
                     "title" => $title,
                     "url" => $url,
                     "key" => $key,
-                    "_calendar" => true
+                    "_external" => true,
                 );
                 $_contests[] = $contest;
+                $external_parsed = true;
             }
         }
     }
@@ -237,7 +312,7 @@
     $_contests = $_;
     unset($_);
 
-    if ($calendar_parsed) {
+    if ($external_parsed) {
         $add_from_stats = isset($_GET['parse_full_list']);
         $iou_treshhold = 0.61803398875;
 
@@ -286,10 +361,10 @@
                         continue;
                     }
                 } else {
-                    if (!isset($c['_calendar'])) {
+                    if (!isset($c['_external'])) {
                         continue;
                     }
-                    $opt = $iou_treshhold;
+                    $opt = 0;
                     $t = null;
                     foreach (array(0, -1, 1) as $shift_day) {
                         $date = date('m.d.Y', strtotime($c['start_time']) + $shift_day * 24 * 60 * 60);
@@ -320,7 +395,7 @@
                             }
                         }
                     }
-                    if ($t === null) {
+                    if ($t === null || $opt < $iou_treshhold) {
                         continue;
                     }
                     if ($debug_) {
@@ -372,10 +447,12 @@
     }
 
     foreach ($_contests as $c) {
-        unset($c['_calendar']);
+        unset($c['_external']);
         $c["host"] = $HOST;
         $c["rid"] = $RID;
-        $c["timezone"] = "UTC";
+        if (!isset($c["timezone"])) {
+            $c["timezone"] = "UTC";
+        }
         $contests[] = $c;
     }
 

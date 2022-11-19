@@ -1,4 +1,4 @@
-<div class="neighbors-standings-url{% if with_related %} small{% endif %}">
+<div class="{% if not without_neighbors_aligment %} neighbors-standings-url{% endif %}{% if with_related %} small{% endif %}">
   {% if with_related or with_icon %}
   <span class="neighbors-standings-url-before">
     {% if with_related %}related&nbsp;{% endif %}

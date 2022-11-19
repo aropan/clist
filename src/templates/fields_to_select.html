@@ -1,5 +1,5 @@
 {% if fields_to_select %}
   {% for field, data in fields_to_select.items %}
-    {% include "field_to_select.html" with field=field data=data %}
+    {% include "field_to_select.html" with field=field data=data disabled=disabled %}
   {% endfor %}
 {% endif %}

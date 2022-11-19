@@ -11,6 +11,7 @@ import arrow
 
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -20,6 +21,9 @@ class Statistic(BaseModule):
         return func(*args, **kwargs)
 
     def _get_private_standings(self, users=None, statistics=None):
+        if self.invisible:
+            raise ExceptionParseStandings('Invisible contest')
+
         REQ.add_cookie('session', conf.ADVENTOFCODE_SESSION, '.adventofcode.com')
         page = REQ.get(self.url.rstrip('/') + '.json')
         data = json.loads(page)

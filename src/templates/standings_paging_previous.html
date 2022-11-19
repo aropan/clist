@@ -1,3 +1,4 @@
+{% if not without_paginate %}
 {% if pages.previous %}
 {% if force_both_scroll or request.GET.scroll_up %}
 <tr class="endless_container">
@@ -6,5 +7,6 @@
         <span class="endless_loading" style="display: none;">loading</span>
     </td>
 </tr>
+{% endif %}
 {% endif %}
 {% endif %}

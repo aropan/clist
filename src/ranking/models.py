@@ -109,14 +109,6 @@ class Account(BaseModel):
         unique_together = ('resource', 'key')
 
 
-def delete_avatar_url(account):
-    if AVATAR_RELPATH_FIELD in account.info:
-        old_filepath = os.path.join(settings.MEDIA_ROOT, account.info.pop(AVATAR_RELPATH_FIELD))
-        if os.path.exists(old_filepath):
-            os.remove(old_filepath)
-        account.save()
-
-
 def download_avatar_url(account):
     download_avatar_url = account.info.pop('download_avatar_url_', None)
     if not download_avatar_url:
@@ -141,8 +133,6 @@ def download_avatar_url(account):
     relpath = os.path.join('avatars', folder, f'{hashname}.{ext}')
     filepath = os.path.join(settings.MEDIA_ROOT, relpath)
 
-    delete_avatar_url(account)
-
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'wb') as fo:
         fo.write(response.content)
@@ -166,7 +156,6 @@ def count_resource_accounts(signal, instance, **kwargs):
     if signal is post_delete:
         instance.resource.n_accounts -= 1
         instance.resource.save()
-        delete_avatar_url(instance)
     elif signal is post_save and kwargs['created']:
         instance.resource.n_accounts += 1
         instance.resource.save()

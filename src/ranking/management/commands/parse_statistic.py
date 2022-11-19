@@ -29,6 +29,7 @@ from ranking.management.commands.countrier import Countrier
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.models import Account, Module, Stage, Statistics
+from ranking.views import update_standings_socket
 from utils.attrdict import AttrDict
 
 
@@ -60,6 +61,7 @@ class Command(BaseCommand):
         parser.add_argument('--division', action='store_true', default=False, help='Contests with divisions')
         parser.add_argument('--force-problems', action='store_true', default=False, help='Force update problems')
         parser.add_argument('--updated-before', help='Updated before date')
+        parser.add_argument('--force-socket', action='store_true', default=False, help='Force update socket')
         parser.add_argument('-cid', '--contest-id', help='Contest id')
 
     def parse_statistic(
@@ -78,6 +80,7 @@ class Command(BaseCommand):
         update_without_new_rating=None,
         without_contest_filter=False,
         force_problems=False,
+        force_socket=False,
         contest_id=None,
         query=None,
     ):
@@ -183,6 +186,8 @@ class Command(BaseCommand):
             parsed = False
             user_info_has_rating = {}
             is_major_kind = resource.is_major_kind(contest.kind)
+            to_update_socket = contest.is_running() or contest.has_hidden_results or force_socket
+
             try:
                 r = {}
 
@@ -279,6 +284,7 @@ class Command(BaseCommand):
                         problems_values = defaultdict(set)
                         hidden_fields = set()
                         medals_skip = set()
+                        updated_statistics_ids = list()
 
                         additions = copy.deepcopy(contest.info.get('additions', {}))
                         if additions:
@@ -618,7 +624,7 @@ class Command(BaseCommand):
                                         r[k] = getattr(operator, cond['operator'])(value, cond['threshold'])
 
                                 medals = contest.info.get('standings', {}).get('medals')
-                                if medals and contest.end_time < now:
+                                if medals and contest.end_time < now and not contest.has_hidden_results:
                                     k = 'medal'
                                     r.pop(k, None)
                                     if 'place' in r:
@@ -768,6 +774,17 @@ class Command(BaseCommand):
                                         nonlocal has_hidden
                                         has_hidden = True
 
+                                previous_problems = stats.get('problems', {})
+                                for k, problem in problems.items():
+                                    previous_problem = previous_problems.get(k, {})
+                                    if (
+                                        problem.get('result') != previous_problem.get('result') or
+                                        problem.get('time') != previous_problem.get('time') or
+                                        force_socket
+                                    ):
+                                        updated_statistics_ids.append(statistic.pk)
+                                        break
+
                                 if try_calculate_time:
                                     statistic.addition = addition
                                     statistic.save()
@@ -889,6 +906,10 @@ class Command(BaseCommand):
 
                                 update_problems(contest, problems=standings_problems, force=force_problems)
                             contest.save()
+
+                            if to_update_socket:
+                                update_standings_socket(contest, updated_statistics_ids)
+
                             if (
                                 resource.has_problem_rating and
                                 contest.end_time < now and
@@ -896,7 +917,8 @@ class Command(BaseCommand):
                                 not standings.get('timing_statistic_delta')
                             ):
                                 call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
-                            progress_bar.set_postfix(n_fields=len(fields))
+
+                            progress_bar.set_postfix(n_fields=len(fields), n_updated=len(updated_statistics_ids))
                     else:
                         if standings_problems is not None and standings_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
@@ -1041,6 +1063,7 @@ class Command(BaseCommand):
             with_stats=not args.no_stats,
             update_without_new_rating=args.update_without_new_rating,
             force_problems=args.force_problems,
+            force_socket=args.force_socket,
             contest_id=args.contest_id,
             query=args.query,
         )

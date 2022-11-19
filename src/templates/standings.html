@@ -19,9 +19,15 @@
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script>
   contest_duration = {{ contest.duration_in_secs }}
-  contest_max_percent = {% if contest.is_over or not contest.duration_in_secs %}1{% else %}{{ contest.duration_in_secs|substract:contest.next_time|divide:contest.duration_in_secs }}{% endif %}
+  contest_start_timestamp = {{ contest.start_time.timestamp }}
+  contest_time_percentage = {{ contest.time_percentage }}
   contest_timeline = {{ contest_timeline|default:"{}"|to_json }}
   contest_pk = {{ contest.pk }}
+  shown_timeline = false
+  standings_filtered = {{ with_row_num|lower }}
+  with_detail = {{ with_detail|lower }}
+  starred_cookie_path = window.location.pathname
+  starred_cookie_expires = 365
 </script>
 
 {% endblock %}
@@ -174,14 +180,18 @@
     </style>
     {% endif %}
 
-    <div id="timeline" class="progress">
-      <div class="progress-bar progress-bar-success" style="width: 100%">
-        <span id="timeline-text"></span>
+    <div id="timeline" class="progress fullscreen-border">
+      <span id="timeline-text"></span>
+      <div id="timeline-progress-select" class="progress-bar progress-bar-success" style="width: 0%">
+      </div>
+      <div id="timeline-progress-hidden" class="progress-bar progress-bar-success-lighter" style="width: 0%">
+      </div>
+      <div id="timeline-progress-unparsed" class="progress-bar progress-bar-default-lighter" style="width: 0%">
       </div>
     </div>
     <div id="timeline-tooltip" class="badge"></div>
 
-    <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default{% if not with_table_inner_scroll %} table-responsive{% endif %}">
+    <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default fullscreen-border{% if not with_table_inner_scroll %} table-responsive{% endif %} {{ request.user_agent.browser.family|lower }}">
       <table class="standings table table-hover table-condensed table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}{% if timeline %} invisible{% endif %}">
           <thead>
             <tr class="header-row">
@@ -199,6 +209,7 @@
                 {% if standings_options.help_message %}
                 <span class="bg-success nobold help-message">{{ standings_options.help_message }}</span>
                 {% endif %}
+                <a id="unstar" class="external-link invisible hidden">{% icon_to 'unpin' false %}</a>
               </th>
               {% if versus_data %}
               <th{% if merge_problems %} rowspan="2"{% endif %}>Games</th>
@@ -340,6 +351,7 @@
 <script>
 function viewSolution(a) {
   var href = $(a).attr('href')
+  var solution_modal = $('#viewSolutionModal')
   $('#viewSolutionModal .modal-content').html('<div class="modal-body"><p><i class="fa fa-spin fa-circle-notch"></i> Loading...</p></div>')
   $('#viewSolutionModal').modal('show')
 
@@ -348,11 +360,18 @@ function viewSolution(a) {
     type: 'get',
     success: function(response) {
       $('#viewSolutionModal .modal-content').html(response)
-      $('#viewSolutionModal .modal-content .modal-footer').prepend('<a href="' + href + '" target="_blank" rel="noopener" class="btn btn-default btn-sm"><i class="fas fa-external-link-alt"></i></a>')
+      if (solution_modal.hasClass('fullscreen')) {
+          $('#toggle-fullscreen-modal').click()
+          solution_modal.addClass('fullscreen')
+      }
       document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
     },
     error: function(response) {
-      bootbox.alert({title: response.statusText, message: 'You can check <a href="' + $(a).attr('data-url') + '">here</a>.', size: 'small'})
+      bootbox.alert({
+          title: response.responseText || response.statusText.toTitleCase(),
+          message: 'You can check <a href="' + $(a).attr('data-url') + '">here</a>.',
+          size: 'small'
+      })
       $('#viewSolutionModal').modal('hide')
     },
   })

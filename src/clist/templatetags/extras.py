@@ -928,13 +928,14 @@ def rating_from_probability(b, p, min_rating=0, max_rating=5000):
 @register.simple_tag
 def icon_to(value, default=None, icons=None, html_class=None):
     icons = icons or settings.FONTAWESOME_ICONS_
-    default = default or value.title().replace('_', ' ')
+    if default is None:
+        default = value.title().replace('_', ' ')
     if value in icons:
         value = icons[value]
         if isinstance(value, dict):
             value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
         inner = ''
-        if default is not None:
+        if default:
             inner += f' title="{default}" data-toggle="tooltip"'
         if html_class:
             inner += f' class="{html_class}"'

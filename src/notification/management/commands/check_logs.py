@@ -46,8 +46,6 @@ class Command(BaseCommand):
                 if cache.get(key) != h:
                     cache[key] = h
                     self._bot.admin_message(msg)
-            else:
-                cache.pop(key, None)
 
     def __init__(self):
         self._bot = Bot()
