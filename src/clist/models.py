@@ -475,6 +475,21 @@ class Contest(BaseModel):
             per_page = self.n_statistics
         return per_page
 
+    @property
+    def problems_list(self):
+        problems = self.info.get('problems')
+        if not problems:
+            return
+        if isinstance(problems, dict):
+            for division_problems in problems.get('divisions', {}).values():
+                for problem in division_problems:
+                    yield problem
+        elif isinstance(problems, list):
+            for problem in problems:
+                yield problem
+        else:
+            raise ValueError(f'Unknown problems types = {type(problems)}')
+
 
 class Problem(BaseModel):
     contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE, related_name='+')

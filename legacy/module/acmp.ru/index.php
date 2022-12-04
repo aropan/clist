@@ -3,13 +3,12 @@
 
     $host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
     $change_url = $host . '/asp/champ/index.asp?main=update&mode=ch_period';
-    $referer = $host . '/asp/champ/index.asp?main=stage&id_stage=0';
+    $referer = $host . '/asp/champ/index.asp?main=stage';
 
     $year = date('Y');
     $skip = 0;
 
-    while (isset($_GET['parse_full_list'])) {
-        $year -= 1;
+    do {
         $skip += 1;
 
         $url = $change_url;
@@ -59,5 +58,7 @@
         if ($skip >= 3) {
             break;
         }
-    }
+
+        $year -= 1;
+    } while (isset($_GET['parse_full_list']));
 ?>

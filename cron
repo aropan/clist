@@ -6,10 +6,10 @@ DJANGO_ENV_FILE=.env.prod
 20,35,55 * * * * /usr/src/clist/run-manage.bash update_google_calendars
 */1 * * * * /usr/src/clist/run-manage.bash notification_to_task
 */1 * * * * /usr/src/clist/run-manage.bash sendout_tasks
-*/5 * * * * /usr/src/clist/run-manage.bash parse_statistic
-*/2 * * * * /usr/src/clist/run-manage.bash parse_accounts_infos
+*/1 * * * * /usr/src/clist/run-manage.bash parse_statistic
+*/5 * * * * /usr/src/clist/run-manage.bash parse_accounts_infos
  15 * * * * /usr/src/clist/run-manage.bash update_auto_rating
-*/5 * * * * /usr/src/clist/run-manage.bash check_logs
+*/1 * * * * /usr/src/clist/run-manage.bash check_logs
 
 # # 58 3 14-20 * * [ "$(date '+\%u')" -eq 4 ] && cd $PROJECT_DIR && run-one ./manage.py runscript calculate_account_contests >logs/command/calculate_account_contests.log 2>&1
 # 58 4 * * 4 cd $PROJECT_DIR && run-one ./manage.py runscript calculate_coder_n_accounts_and_coder_n_contests >logs/command/calculate_coder_n_accounts_and_coder_n_contests.log 2>&1

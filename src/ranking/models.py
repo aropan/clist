@@ -40,6 +40,7 @@ class Account(BaseModel):
     n_contests = models.IntegerField(default=0, db_index=True)
     n_writers = models.IntegerField(default=0, db_index=True)
     last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
+    last_submission = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
     info = models.JSONField(default=dict, blank=True)
@@ -364,6 +365,7 @@ class Stage(BaseModel):
         for field in ('info__fields_types__new_rating__isnull',):
             if field in filter_params:
                 spec_filter_params[field] = filter_params.pop(field)
+        is_over = self.contest.end_time < timezone.now()
 
         contests = Contest.objects.filter(
             resource=self.contest.resource,
@@ -387,6 +389,8 @@ class Stage(BaseModel):
         results = collections.defaultdict(collections.OrderedDict)
 
         mapping_account_by_coder = {}
+        fixed_fields = []
+        hidden_fields = []
 
         problems_infos = collections.OrderedDict()
         divisions_order = []
@@ -549,7 +553,10 @@ class Stage(BaseModel):
                     problems = row.setdefault('problems', {})
                     if detail_problems:
                         for key, problem in s.addition.get('problems', {}).items():
-                            problems[f'{idx}.' + key] = problem
+                            p = problems.setdefault(f'{idx}.' + key, {})
+                            if contest_unrated:
+                                p = p.setdefault('upsolving', {})
+                            p.update(problem)
                     else:
                         problem = problems.setdefault(problem_short, {})
                         if contest_unrated:
@@ -725,10 +732,24 @@ class Stage(BaseModel):
                     if code not in mapping_regions:
                         continue
                     row[out] = mapping_regions[code]['regional_event']['name']
+            elif t == 'n_medal_problems':
+                for row in results.values():
+                    for problem in row['problems'].values():
+                        medal = problem.get('medal')
+                        if medal:
+                            k = f'n_{medal}_problems'
+                            row.setdefault(k, 0)
+                            row[k] += 1
+                            if k not in hidden_fields:
+                                hidden_fields.append(k)
+                for field in settings.STANDINGS_FIELDS_:
+                    if field in hidden_fields:
+                        fixed_fields.append(field)
+                        hidden_fields.remove(field)
             else:
                 raise ValueError(f'Unknown field type = {t}')
 
-        hidden_fields = [field.get('out', field.get('inp')) for field in fields if field.get('hidden')]
+        hidden_fields += [field.get('out', field.get('inp')) for field in fields if field.get('hidden')]
         stage.info['hidden_fields'] = hidden_fields
 
         results = list(results.values())
@@ -813,9 +834,11 @@ class Stage(BaseModel):
                             break
 
                         if 'places' in advance and place_advance in advance['places']:
-                            row['_advance'] = advance
-                            for field in advance.get('inplace_fields', []):
-                                row[field] = advance[field]
+                            if not advances.get('inplace_fields_only'):
+                                row['_advance'] = advance
+                            if is_over:
+                                for field in advance.get('inplace_fields', []):
+                                    row[field] = advance[field]
                             tmp = None
                             break
 
@@ -846,7 +869,7 @@ class Stage(BaseModel):
             stage.info['fields'] = list(fields)
 
         standings_info = self.score_params.get('info', {})
-        standings_info['fixed_fields'] = [(f.lstrip('-'), f.lstrip('-')) for f in order_by]
+        standings_info['fixed_fields'] = fixed_fields + [(f.lstrip('-'), f.lstrip('-')) for f in order_by]
         stage.info['standings'] = standings_info
 
         if divisions_order and self.score_params.get('divisions_ordering'):

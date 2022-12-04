@@ -1,6 +1,6 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
-    require_once dirname(__FILE__) . "/secrets.php";
+    require_once dirname(__FILE__) . "/secret.php";
 
     $host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
 

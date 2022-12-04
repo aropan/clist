@@ -31,6 +31,9 @@
 
     {% if resource.module %}
     <span class="badge progress-bar-{% if resource.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }} accounts(s)</span>
+    {% if perms.ranking.change_module %}
+      <a href="{% url 'admin:ranking_module_change' resource.module.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+    {% endif %}
     {% endif %}
 </div>
 

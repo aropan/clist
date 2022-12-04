@@ -47,8 +47,8 @@ class Statistic(BaseModule):
                         r['member'] = re.search('profile/(?P<key>[^/]+)', a.attrib['href']).group('key')
                         r['name'] = a.text
                         small = v.column.node.xpath('.//small')
-                        if small:
-                            r['affiliation'] = html.unescape(small[0].text)
+                        if small and (text := small[0].text):
+                            r['affiliation'] = html.unescape(text)
                     elif not f:
                         i = v.header.node.xpath('.//i')
                         if i:
@@ -70,9 +70,10 @@ class Statistic(BaseModule):
                         short, full_score = f.split()
                         short = short.title()
                         if short not in problems_infos:
+                            name = html.unescape(v.header.node.attrib['title'])
                             problems_infos[short] = {
                                 'short': short,
-                                'name': html.unescape(v.header.node.attrib['title']),
+                                'name': name or short,
                                 'url': urljoin(standings_url, v.header.node.xpath('.//a/@href')[0]),
                                 'full_score': int(full_score),
                             }

@@ -42,7 +42,7 @@
         }
     }
 
-    $url = 'http://codeforces.com/api/contest.list?lang=en';
+    $url = 'https://codeforces.com/api/contest.list?lang=en';
     $json = curlexec($url, NULL, array('json_output' => true));
     if (!is_array($json)) {
         return;
@@ -58,7 +58,7 @@
             'start_time' => $c['startTimeSeconds'],
             'duration' => $c['durationSeconds'] / 60,
             'title' => $title,
-            'url' => 'http://codeforces.com/contests/' . $c['id'],
+            'url' => 'https://codeforces.com/contests/' . $c['id'],
             'host' => $HOST,
             'key' => $c['id'],
             'rid' => $RID,

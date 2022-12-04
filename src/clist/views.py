@@ -490,7 +490,7 @@ def resource(request, host, template='resource.html', extra_context=None):
 
     params = {}
 
-    contests = resource.contest_set.all()
+    contests = resource.contest_set.all().select_related('timing')
 
     accounts = Account.objects.filter(resource=resource)
 
@@ -715,6 +715,8 @@ def update_problems(contest, problems=None, force=False):
                 key = get_problem_key(problem_info)
                 short = get_problem_short(problem_info)
                 name = get_problem_name(problem_info)
+                if problem_info.get('ignore'):
+                    continue
                 if last_group is not None and last_group == problem_info.get('group'):
                     continue
                 last_group = problem_info.get('group')
@@ -819,6 +821,7 @@ def problems(request, template='problems.html'):
             .filter(rating__isnull=False, resource__has_problem_rating=True)
             .select_related('resource')
         )
+        # problems = problems.filter(contests__statistics__account__coders=coder)
     else:
         coder = None
         has_update_coder = False

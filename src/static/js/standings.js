@@ -1,5 +1,5 @@
 function update_sticky_header_problems_top() {
-  $('tr.header-problems th').css('top', $('tr.header-row:first').height())
+  $('tr.header-problems').css('top', $('tr.header-row:first').height())
 }
 
 function color_by_group_score(attr = 'data-result') {
@@ -298,6 +298,22 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
     var selector = contest_timeline['penalty_selector'] || '.addition-penalty-cell'
     $e.find(selector).text(penalty)
+
+    var medals = ['gold', 'silver', 'bronze']
+    medals.forEach(medal => {
+      var selector = '.addition-n_' + medal + '_problems-cell'
+      var element = $e.find(selector)
+      if (element.length) {
+        var n_medal = 0
+        var selector = '.problem-cell-stat.' + medal + '-medal'
+        var value = $e.find(selector).length
+        n_medal += value
+        var selector = '.problem-cell-stat[data-class="' + medal + '-medal"]:not(.result-hidden):not(' + selector + ')'
+        var value = $e.find(selector).length
+        n_medal += value
+        element.html(n_medal || '&#183;')
+      }
+    })
   })
 
   var rows = $('.stat-cell')
@@ -546,11 +562,14 @@ function switcher_click(el) {
 
 function clear_extra_info_timeline() {
   $('table.standings tr > *').classes(function(c, e) {
+    if ($(e).hasClass('problem-cell-stat')) {
+      return
+    }
     if (c.endsWith('-medal')) {
       $(e).removeClass(c)
     }
   })
-  $('table.standings .trophy').remove()
+  $('table.standings td .trophy').remove()
 
   $('.other-problem-progress').remove()
 

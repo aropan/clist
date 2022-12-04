@@ -242,7 +242,7 @@ a.solution:hover span {
 
 .problem-progress {
   height: 7px;
-  margin: 5px;
+  margin: 5px 0px;
 }
 
 #timeline {
@@ -329,4 +329,21 @@ a.versus-games:hover {
 .stat-cell {
   position: relative;
   background-color: #fff;
+}
+
+table.standings.table-condensed-detail tr>td {
+  height: 40px;
+}
+
+table.standings.table-condensed-detail tr>* {
+  padding: 1px 5px;
+}
+
+table.standings.table-condensed-non-detail tr>* {
+  padding: 5px;
+}
+
+table.standings.table-merge-problems th {
+  height: 20px;
+  line-height: normal;
 }

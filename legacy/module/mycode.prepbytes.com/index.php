@@ -15,6 +15,10 @@
             $key = $c['contestId'];
             $url = url_merge($URL, '/contest/' . $key);
 
+            if (isset($c['isPrivate']) && $c['isPrivate']) {
+                continue;
+            }
+
             if (isset($c['rated']) && $c['rated']) {
                 $title .= '. Rated';
             }

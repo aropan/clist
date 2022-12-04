@@ -1,1 +1,2 @@
-secret.php
+*.*
+!index.php

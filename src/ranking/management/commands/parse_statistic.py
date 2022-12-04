@@ -26,6 +26,7 @@ from clist.templatetags.extras import (as_number, canonize, get_number_from_str,
 from clist.views import update_problems, update_writers
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
+from ranking.management.commands.parse_accounts_infos import rename_account
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.models import Account, Module, Stage, Statistics
@@ -142,15 +143,16 @@ class Command(BaseCommand):
         if limit:
             contests = contests.order_by('-end_time')[:limit]
 
-        for c in contests:
-            module = c.resource.module
-            delay_on_success = module.delay_on_success or module.max_delay_after_end
-            if now < c.end_time:
-                if module.long_contest_divider:
-                    delay_on_success = c.full_duration / module.long_contest_divider
-                if c.end_time < now + delay_on_success and module.min_delay_after_end:
-                    delay_on_success = c.end_time + module.min_delay_after_end - now
-            TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
+        if not users:
+            for c in contests:
+                module = c.resource.module
+                delay_on_success = module.delay_on_success or module.max_delay_after_end
+                if now < c.end_time:
+                    if module.long_contest_divider:
+                        delay_on_success = c.full_duration / module.long_contest_divider
+                    if c.end_time < now + delay_on_success and module.min_delay_after_end:
+                        delay_on_success = c.end_time + module.min_delay_after_end - now
+                TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
 
         if random_order:
             contests = list(contests)
@@ -199,22 +201,24 @@ class Command(BaseCommand):
                 now = timezone.now()
                 plugin = resource.plugin.Statistic(contest=contest)
 
-                with REQ:
-                    statistics_by_key = {} if with_stats else None
-                    statistics_ids = set()
-                    has_statistics = False
-                    if not no_update_results and (users or users is None):
-                        statistics = Statistics.objects.filter(contest=contest).select_related('account')
-                        if users:
-                            statistics = statistics.filter(account__key__in=users)
-                        for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
-                            if with_stats:
-                                statistics_by_key[s.account.key] = s.addition
-                                has_statistics = True
-                            statistics_ids.add(s.pk)
-                    standings = plugin.get_standings(users=users, statistics=statistics_by_key)
-
                 with transaction.atomic():
+                    _ = Contest.objects.select_for_update().get(pk=contest.pk)
+
+                    with REQ:
+                        statistics_by_key = {}
+                        statistics_ids = set()
+                        has_statistics = False
+                        if not no_update_results:
+                            statistics = Statistics.objects.filter(contest=contest).select_related('account')
+                            if users:
+                                statistics = statistics.filter(account__key__in=users)
+                            for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
+                                if with_stats:
+                                    statistics_by_key[s.account.key] = s.addition
+                                    has_statistics = True
+                                statistics_ids.add(s.pk)
+                        standings = plugin.get_standings(users=copy.deepcopy(users), statistics=statistics_by_key)
+
                     for field, attr in (
                         ('url', 'standings_url'),
                         ('contest_url', 'url'),
@@ -271,7 +275,7 @@ class Command(BaseCommand):
                     has_hidden = standings.pop('has_hidden', False)
 
                     results = []
-                    if result or users is not None:
+                    if result or users:
                         fields_set = set()
                         fields_types = defaultdict(set)
                         fields_preceding = defaultdict(set)
@@ -436,7 +440,17 @@ class Command(BaseCommand):
                             else:
                                 account = accounts[member]
 
-                            stats = (statistics_by_key or {}).get(member, {})
+                            stats = statistics_by_key.get(member, {})
+
+                            previous_member = r.pop('previous_member', None)
+                            if previous_member:
+                                if previous_member in statistics_by_key:
+                                    stats = statistics_by_key[previous_member]
+                                previous_account = resource.account_set.filter(key=previous_member).first()
+                                if previous_account:
+                                    account = rename_account(previous_account, account)
+                                    statistics_ids = None
+                                    continue
 
                             def update_addition_fields():
                                 addition_fields = parse_info.get('addition_fields', [])
@@ -476,7 +490,8 @@ class Command(BaseCommand):
                                 if (
                                     contest.info.get('_no_update_account_time') or
                                     skip_result or
-                                    contest.end_time > now
+                                    contest.end_time > now or
+                                    users
                                 ):
                                     return
 
@@ -793,7 +808,7 @@ class Command(BaseCommand):
                             update_account_time()
                             update_account_info()
                             update_stat_info()
-                            if users is None:
+                            if not users:
                                 update_problems_first_ac()
                             defaults, addition, try_calculate_time = get_addition()
 
@@ -807,7 +822,7 @@ class Command(BaseCommand):
 
                             update_after_update_or_create(statistic, statistics_created, try_calculate_time)
 
-                        if users is None:
+                        if not users:
                             if has_hidden != contest.has_hidden_results:
                                 contest.has_hidden_results = has_hidden
                                 contest.save()
@@ -917,6 +932,7 @@ class Command(BaseCommand):
                                 not standings.get('timing_statistic_delta')
                             ):
                                 call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
+                                contest.refresh_from_db()
 
                             progress_bar.set_postfix(n_fields=len(fields), n_updated=len(updated_statistics_ids))
                     else:

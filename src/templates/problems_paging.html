@@ -3,63 +3,86 @@
 {% lazy_paginate 50,200 problems %}
 
 {% for problem in problems %}
-<tr>
-    <td class="problem-date-column">
-        <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div>
-    </td>
-    <td class="problem-rating-column">
-        {% if problem.rating is not None %}
-        {% coder_color_circle problem.resource problem.rating %}
-        <span class="{% coder_color_class problem.resource problem.rating %}">
-            {{ problem.rating }}
-        </span>
-        {% endif %}
-    </td>
-    <td class="problem-progress-column">
-        {% include 'standings_problem_progress.html' with problem=problem contest="" %}
-    </td>
-    <td>
-        <div class="nowrap">
-            <a href="{% url_transform request resource=problem.resource.id %}">
-                <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
-            </a>
-            {% if problem.url %}<a href="{{ problem.url }}" target="_blank" rel="noopener">{% endif %}
-            {% trim_to problem.name 50 %}
-            {% if problem.url %}</a>{% endif %}
+{% if coder %}
+{% get_problem_solution problem as solution %}
 
-            {% if perms.clist.change_problem %}
-            <a href="{% url 'admin:clist_problem_change' problem.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-            {% endif %}
-        </div>
-    </td>
-    <td>
-        {% for contest in problem.contests.all %}
-        <div class="small nowrap text-muted">
-            <a href="{{ contest.actual_url }}">{% trim_to contest.title 25 %}</a>
-        </div>
-        {% endfor %}
-    </td>
-    {% if coder %}
-    <td class="problem-luck-column">
-        {% if problem.rating is not None and problem.account_rating is not None %}
-        {% win_probability problem.rating problem.account_rating as prob %}
-        {{ prob|multiply:100|floatformat:2 }}%
-        {% endif %}
-    </td>
-    {% get_problem_solution problem as solution %}
-    <td class="problem-result-column {% if solution.result|is_solved %}success{% elif solution.result.partial %}info{% elif solution.result.result|slice:":1" == "?" %}warning{% elif solution.result %}danger{% endif %}">
-        {% if not solution %}
-        {% else %}
-            {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result with_detail=False key=solution.key %}
-        {% endif %}
-    </td>
+{% if solution.result|is_solved %}
+{% define 'success' as solution_class %}
+{% elif solution.result.partial or solution.result.upsolving|is_solved %}
+{% define 'info' as solution_class %}
+{% elif solution.result.result|slice:":1" == "?" %}
+{% define 'warning' as solution_class %}
+{% elif solution.result %}
+{% define 'danger' as solution_class %}
+{% else %}
+{% define '' as solution_class %}
+{% endif %}
+
+{% endif %}
+<tr>
+  <td class="problem-date-column">
+    <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div> </td>
+  <td class="problem-rating-column">
+    {% if problem.rating is not None %}
+    {% coder_color_circle problem.resource problem.rating %}
+    <span class="{% coder_color_class problem.resource problem.rating %}">
+      {{ problem.rating }}
+    </span>
     {% endif %}
-    <td>
-        {% for tag in problem.tags.all %}
-        {% ifchanged %}<span class="hidden-tag unevent-hidden-tag badge progress-bar-info{% if show_tags %} hidden{% endif %}">&nbsp;</span>{% endifchanged %}
-        <a href="{% url_transform request tag=tag.id %}" class="tag badge progress-bar-info{% if not show_tags %} hidden{% endif %}">{{ tag.name }}</a>
+  </td>
+  <td class="problem-progress-column">
+    {% include 'standings_problem_progress.html' with problem=problem contest="" %}
+  </td>
+  {% if coder %}
+  <td class="problem-luck-column">
+    {% if problem.rating is not None and problem.account_rating is not None %}
+    {% win_probability problem.rating problem.account_rating as prob %}
+    {{ prob|multiply:100|floatformat:2 }}%
+    {% endif %}
+  </td>
+  <td class="problem-result-column {{ solution_class }}">
+    {% if solution %}
+      {% if not solution.result|is_solved and solution.result.upsolving %}
+        {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result.upsolving with_detail=False key=solution.key with_admin_url=True is_upsolving=True %}
+      {% else %}
+        {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result with_detail=False key=solution.key with_admin_url=True %}
+      {% endif %}
+    {% endif %}
+  </td>
+  {% endif %}
+  <td class="{{ solution_class }}">
+    <span class="nowrap">
+      <a href="{% url_transform request resource=problem.resource.id %}">
+        <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+      </a>
+      {% if problem.url %}<a href="{{ problem.url }}" target="_blank" rel="noopener">{% endif %}
+        {% trim_to problem.name 50 %}
+        {% if problem.url %}</a>{% endif %}
+    </span>
+    {% if perms.clist.change_problem %}
+    <a href="{% url 'admin:clist_problem_change' problem.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+    {% endif %}
+    <span class="pull-right">
+      {% for contest in problem.contests.all %}
+      {% if forloop.counter0 %} |
+      {% if forloop.counter0 == 1 %}
+      <a onclick="return show_hidden_contests(this)" class="hidden-contests contests" title="{% for contest in problem.contests.all|slice:"1:" %}{{ contest.title }}<br/>{% endfor %}" data-toggle="tooltip" data-html="true">...</a>
+      <span class="hidden">
+        {% endif %}
+        {% endif %}
+        <a href="{{ contest.actual_url }}" class="contests">{% trim_to contest.title 25 %}</a>
         {% endfor %}
-    </td>
+        {% if problem.contests.all|length > 1 %}
+      </span>
+      {% endif %}
+    </span>
+  </td>
+  <td>
+    {% for tag in problem.tags.all %}
+    {% ifchanged %}<span class="hidden-tag unevent-hidden-tag badge progress-bar-info{% if show_tags %} hidden{% endif %}">&nbsp;</span>{% endifchanged %}
+    <a href="{% url_transform request tag=tag.id %}" class="tag badge progress-bar-info{% if not show_tags %} hidden{% endif %}">{{ tag.name }}</a>
+    {% endfor %}
+  </td>
 </tr>
 {% endfor %}
 

@@ -24,6 +24,18 @@ from true_coders.models import Coder
 from utils.attrdict import AttrDict
 
 
+def rename_account(account, other):
+    n_contests = other.n_contests + account.n_contests
+    n_writers = other.n_writers + account.n_writers
+    new = MergedModelInstance.create(other, [account])
+    account.delete()
+    account = new
+    account.n_contests = n_contests
+    account.n_writers = n_writers
+    account.save()
+    return account
+
+
 class Command(BaseCommand):
     help = 'Parsing accounts infos'
 
@@ -184,18 +196,10 @@ class Command(BaseCommand):
                                 )
 
                             if 'rename' in data:
-                                other, created = Account.objects.get_or_create(resource=account.resource,
-                                                                               key=data['rename'])
+                                other, _ = Account.objects.get_or_create(resource=account.resource, key=data['rename'])
                                 n_rename += 1
                                 pbar.set_postfix(rename=f'{n_rename}: Rename {account} to {other}')
-                                n_contests = other.n_contests + account.n_contests
-                                n_writers = other.n_writers + account.n_writers
-                                new = MergedModelInstance.create(other, [account])
-                                account.delete()
-                                account = new
-                                account.n_contests = n_contests
-                                account.n_writers = n_writers
-                                account.save()
+                                account = rename_account(account, other)
 
                             coders = data.pop('coders', [])
                             if coders:

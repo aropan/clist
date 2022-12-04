@@ -519,15 +519,6 @@ class requester():
                     post_urlencoded if post else None,
                     timeout=time_out,
                 )
-
-                last_url = response.geturl() if response else url
-                if return_last_url:
-                    return last_url
-                if response.info().get("Content-Encoding", None) == "gzip":
-                    buf = BytesIO(response.read())
-                    page = GzipFile(fileobj=buf).read()
-                else:
-                    page = response.read()
             except Exception as err:
                 if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
                     force_json = False
@@ -542,6 +533,24 @@ class requester():
                     else:
                         traceback.print_exc()
                     return
+
+            try:
+                last_url = response.geturl() if response else url
+                if return_last_url:
+                    return last_url
+                if response.info().get("Content-Encoding", None) == "gzip":
+                    buf = BytesIO(response.read())
+                    page = GzipFile(fileobj=buf).read()
+                else:
+                    page = response.read()
+            except Exception as err:
+                if self.assert_on_fail:
+                    if self.proxer:
+                        self.proxer.fail(err)
+                    raise FailOnGetResponse(err)
+                else:
+                    traceback.print_exc()
+                return
 
             self.time_response = datetime.utcnow() - time_start
             if self.verify_word and self.verify_word not in page:

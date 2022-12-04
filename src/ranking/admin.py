@@ -57,7 +57,10 @@ class AccountAdmin(BaseModelAdmin):
     _has_coder.boolean = True
 
     def get_readonly_fields(self, request, obj=None):
-        return ['updated', 'n_contests', 'n_writers', 'last_activity'] + super().get_readonly_fields(request, obj)
+        return (
+            ['updated', 'n_contests', 'n_writers', 'last_activity', 'last_submission'] +
+            super().get_readonly_fields(request, obj)
+        )
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(has_coder=Exists('coders'))

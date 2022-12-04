@@ -20,8 +20,13 @@
 
         preg_match_all('#<[^>]*home-stages__date[^>]*>(?<date>[^<]*)<[^>]*>\s*<[^>]*home-stages__title[^>]*>(?<title>[^<]*)<[^>]*>#', $page, $matches, PREG_SET_ORDER);
         foreach ($matches as $stage) {
+            $title = $category['name'] . '. ' . $stage['title'];
+
             $sep = '–';
-            $start_time = $stage['date'];
+            $start_time = trim($stage['date']);
+            if (empty($start_time)) {
+                continue;
+            }
             $start_time = preg_replace("#[^0-9a-z$sep]+#i", " ", $start_time);
             $start_time = preg_replace("#\s*$sep\s*#i", $sep, $start_time);
             $end_time = null;
@@ -52,7 +57,7 @@
                 $season = ($year - 1) . "-" . ($year + 0);
             }
 
-            $duration = null;
+            $duration = 0;
             if (preg_match('#algorithm#i', $category['name'])) {
                 if (preg_match('#marathon#i', $stage['title'])) {
                     $duration = 7 * 24 * 60;  // 7 days
@@ -73,7 +78,6 @@
                 }
             }
 
-            $title = $category['name'] . '. ' . $stage['title'];
             $key = $category['type'] . ' ' . strtolower($stage['title']) . ' ' . $season;
 
             $contests[] = array(

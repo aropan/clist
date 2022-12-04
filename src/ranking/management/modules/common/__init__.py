@@ -117,6 +117,10 @@ class BaseModule(object, metaclass=ABCMeta):
         urlinfo = urllib.parse.urlparse(self.url)
         return f'{urlinfo.scheme}://{urlinfo.netloc}/'
 
+    @staticmethod
+    def update_submissions(account, resource):
+        raise NotImplementedError()
+
 
 def main():
     with REQ:

@@ -22,7 +22,7 @@
   <div>Status: {{ stat.status }}</div>
 {% endif %}
 "
-  class="badge progress-bar-{% if stat and stat.result is not None %}{% if stat.result|is_solved %}{% if stat.partial %}info{% else %}success{% endif %}{% elif stat.result.0 == '?' %}warning{% elif stat.upsolving|is_solved %}info{% else %}danger{% endif %}{% else %}{% if stat.upsolving|is_solved %}info{% else %}default{% endif %}{% endif %}"
+  class="badge progress-bar-{% if stat and stat.result is not None %}{% if stat.result|is_solved %}{% if stat.partial %}info{% else %}success{% endif %}{% elif stat.result.0 == '?' %}warning{% elif stat.upsolving|is_solved %}info{% else %}danger{% endif %}{% else %}{% if stat.upsolving|is_solved %}info{% elif stat.upsolving %}danger{% else %}default{% endif %}{% endif %}"
 >
 {{ short|truncatechars:10 }}
 </span>{% if stat.url or problem_url %}</a>{% endif %}

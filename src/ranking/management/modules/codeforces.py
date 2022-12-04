@@ -21,11 +21,14 @@ from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from utils.aes import AESModeOfOperation
 
+# from django.core.management import call_command
+
+
 API_KEYS = conf.CODEFORCES_API_KEYS
 DEFAULT_API_KEY = API_KEYS[API_KEYS['__default__']]
 
 
-def _query(
+def api_query(
     method,
     params,
     api_key=DEFAULT_API_KEY,
@@ -205,7 +208,64 @@ class Statistic(BaseModule):
         }
         return standings
 
+    @staticmethod
+    def process_submission(submission, result, upsolve, contest, binary):
+        contest_url = contest.url.replace('contests', 'contest')
+
+        info = {
+            'submission_id': submission['id'],
+            'url': Statistic.SUBMISSION_URL_FORMAT_.format(url=contest_url, sid=submission['id']),
+            'external_solution': True,
+        }
+
+        if 'verdict' in submission:
+            v = submission['verdict'].upper()
+            info['verdict'] = ''.join(s[0].upper() for s in v.split('_')) if len(v) > 3 else v.upper()
+
+        if 'programmingLanguage' in submission:
+            info['language'] = submission['programmingLanguage']
+
+        is_accepted = info.get('verdict') == 'OK'
+        if not is_accepted and 'passedTestCount' in submission:
+            info['test'] = submission['passedTestCount'] + 1
+
+        party = submission['author']
+        for member in party['members']:
+            handle = member['handle']
+            if handle not in result:
+                continue
+            r = result[handle]
+            problems = r.setdefault('problems', {})
+            k = submission['problem']['index']
+            p = problems.setdefault(k, {})
+
+            if upsolve:
+                p = p.setdefault('upsolving', {})
+
+            update_result = 'result' not in p or is_solved(p['result']) < is_accepted
+            if (
+                update_result or
+                'submission_id' not in p or
+                p['submission_id'] > info['submission_id'] and is_accepted
+            ):
+                p.update(info)
+                if binary:
+                    p['binary'] = binary
+                if update_result:
+                    p['result'] = '+' if is_accepted else '-1'
+                info['updated'] = True
+            r = as_number(p.get('result'), force=True)
+            p['partial'] = not is_accepted and p.get('partial', True) and r and r > 0
+
+        info['is_accepted'] = is_accepted
+        return info
+
     def get_standings(self, users=None, statistics=None):
+
+        def parse_points_info(points_info):
+            if not points_info:
+                return None
+            return float(points_info.split('/')[0])
 
         if self.is_spectator_ranklist:
             return self.get_standings_from_html()
@@ -235,7 +295,7 @@ class Statistic(BaseModule):
             if users:
                 params['handles'] = ';'.join(users)
 
-            data = _query(method='contest.standings', params=params, api_key=self.api_key)
+            data = api_query(method='contest.standings', params=params, api_key=self.api_key)
 
             if data['status'] != 'OK':
                 if data['code'] == 400:
@@ -256,7 +316,7 @@ class Statistic(BaseModule):
                     d['tags'] = tags
                 d['url'] = urljoin(standings_url.rstrip('/'), f"problem/{d['short']}")
 
-                if not is_gym:
+                if not is_gym and not users:
                     status_url = self.PROBLEM_STATUS_URL_FORMAT_.format(cid=self.cid, short=d['short'])
                     status_url = urljoin(self.url, status_url)
                     page = _get(status_url)
@@ -267,9 +327,6 @@ class Statistic(BaseModule):
                             d['_no_problem_url'] = True
 
                 problems_info[d['short']] = d
-
-            if users is not None and not users:
-                continue
 
             grouped = any(
                 'teamId' in row['party'] and row['party']['participantType'] in participant_types
@@ -332,7 +389,9 @@ class Statistic(BaseModule):
                         k = result_problems[i]['index']
                         points = float(s['points'])
                         if contest_type == 'IOI' and 'pointsInfo' in s:
-                            points = float(s['pointsInfo'] or '0')
+                            new_points = parse_points_info(s['pointsInfo'])
+                            if new_points is not None:
+                                points = new_points
 
                         n = s.get('rejectedAttemptCount')
                         if n is not None and contest_type == 'ICPC' and points + n > 0:
@@ -372,7 +431,9 @@ class Statistic(BaseModule):
                     if row['rank'] and not upsolve:
                         score = row['points']
                         if contest_type == 'IOI' and 'pointsInfo' in row:
-                            score = float(row['pointsInfo'] or '0')
+                            new_points = parse_points_info(row['pointsInfo'])
+                            if new_points is not None:
+                                score = new_points
 
                         if is_gym:
                             r['place'] = row['rank']
@@ -394,7 +455,8 @@ class Statistic(BaseModule):
                                     place = idx
                                 if first_score is None:
                                     first_score = score
-                                last_score = score
+                                if score:
+                                    last_score = score
                                 r['place'] = place
 
                         r['solving'] = score
@@ -410,21 +472,29 @@ class Statistic(BaseModule):
 
         params.pop('showUnofficial')
 
-        data = _query(method='contest.ratingChanges', params=params, api_key=self.api_key)
-        if data.get('status') not in ['OK', 'FAILED']:
-            raise ExceptionParseStandings(data)
-        if data and data['status'] == 'OK':
-            for row in data['result']:
-                if str(row.pop('contestId')) != self.key:
-                    continue
-                handle = row.pop('handle')
+        if not users:
+            data = api_query(method='contest.ratingChanges', params=params, api_key=self.api_key)
+            if data.get('status') not in ['OK', 'FAILED']:
+                raise ExceptionParseStandings(data)
+            if data and data['status'] == 'OK':
+                for row in data['result']:
+                    if str(row.pop('contestId')) != self.key:
+                        continue
+                    handle = row.pop('handle')
+                    if handle not in result:
+                        continue
+                    r = result[handle]
+                    old_rating = row.pop('oldRating')
+                    new_rating = row.pop('newRating')
+                    r['old_rating'] = old_rating
+                    r['new_rating'] = new_rating
+        elif statistics:
+            for handle, row in statistics.items():
                 if handle not in result:
                     continue
-                r = result[handle]
-                old_rating = row.pop('oldRating')
-                new_rating = row.pop('newRating')
-                r['old_rating'] = old_rating
-                r['new_rating'] = new_rating
+                for field in ('old_rating', 'new_rating'):
+                    if field in row:
+                        r[field] = row[field]
 
         params = {'contestId': self.cid}
         if users:
@@ -437,7 +507,7 @@ class Statistic(BaseModule):
 
         submissions = []
         for params in array_params:
-            data = _query('contest.status', params=params, api_key=self.api_key)
+            data = api_query('contest.status', params=params, api_key=self.api_key)
             if data.get('status') not in ['OK', 'FAILED']:
                 raise ExceptionParseStandings(data)
             if data['status'] == 'OK':
@@ -446,31 +516,7 @@ class Statistic(BaseModule):
         has_accepted = False
         for submission in submissions:
             party = submission['author']
-
-            info = {
-                'submission_id': submission['id'],
-                'url': Statistic.SUBMISSION_URL_FORMAT_.format(url=contest_url, sid=submission['id']),
-                'external_solution': True,
-            }
-
-            if 'verdict' in submission:
-                v = submission['verdict'].upper()
-                info['verdict'] = ''.join(s[0].upper() for s in v.split('_')) if len(v) > 3 else v.upper()
-
-            if 'programmingLanguage' in submission:
-                info['language'] = submission['programmingLanguage']
-
-            is_accepted = info.get('verdict') == 'OK'
-            has_accepted |= is_accepted
-            if not is_accepted and 'passedTestCount' in submission:
-                info['test'] = submission['passedTestCount'] + 1
-
-            if contest_type == 'IOI' and is_accepted:
-                k = submission['problem']['index']
-                problems_info[k].setdefault('full_score', submission['points'])
-
             upsolve = party['participantType'] not in participant_types
-
             if (
                 'relativeTimeSeconds' in submission
                 and duration_seconds
@@ -478,29 +524,12 @@ class Statistic(BaseModule):
             ):
                 upsolve = True
 
-            for member in party['members']:
-                handle = member['handle']
-                if handle not in result:
-                    continue
-                r = result[handle]
-                problems = r.setdefault('problems', {})
-                k = submission['problem']['index']
-                p = problems.setdefault(k, {})
+            info = Statistic.process_submission(submission, result, upsolve, contest=self, binary=False)
 
-                if upsolve:
-                    p = p.setdefault('upsolving', {})
-                if 'submission_id' not in p and ('result' not in p or is_solved(p['result']) <= is_accepted):
-                    p.update(info)
-                    if 'result' not in p or is_solved(p['result']) != is_accepted:
-                        p['result'] = '+' if is_accepted else '-1'
-                elif upsolve:
-                    v = str(p.get('result'))
-                    if v and v[0] in ['-', '+']:
-                        v = 0 if v == '+' else int(v)
-                        v = v + 1 if v >= 0 else v - 1
-                        p['result'] = f'{"+" if v > 0 else ""}{v}'
-                r = as_number(p.get('result'), force=True)
-                p['partial'] = not is_accepted and p.get('partial', True) and r and r > 0
+            has_accepted |= info['is_accepted']
+            if contest_type == 'IOI' and info['is_accepted']:
+                k = submission['problem']['index']
+                problems_info[k].setdefault('full_score', submission['points'])
 
         result = {
             k: v for k, v in result.items()
@@ -549,7 +578,6 @@ class Statistic(BaseModule):
             and phase == 'FINISHED'
             and not has_accepted
             and all('full_score' not in problem for problem in problems_info.values())
-            and len({problem['name'] for problem in problems_info.values()}) == 1
         ):
             standings['default_problem_full_score'] = 'max' if first_score > last_score else 'min'
 
@@ -591,7 +619,7 @@ class Statistic(BaseModule):
         orig_users = list(users)
         for _ in range(len(users) * 2):
             handles = ';'.join(users)
-            data = _query(method='user.info', params={'handles': handles})
+            data = api_query(method='user.info', params={'handles': handles})
             if data['status'] == 'OK':
                 break
             if data['status'] == 'FAILED' and data['comment'].startswith('handles: User with handle'):
@@ -651,6 +679,95 @@ class Statistic(BaseModule):
         for c in result.group('class').split():
             if c.startswith('lang-'):
                 ret['lang_class'] = c
+        return ret
+
+    @staticmethod
+    def update_submissions(account, resource):
+        info = deepcopy(account.info.setdefault('submissions_', {}))
+        info.setdefault('count', 0)
+        last_id = info.setdefault('last_id', -1)
+
+        start = 1
+        count = 10000 if last_id == -1 else 1000
+        stop = False
+        first_submission = True
+        stats_caches = {}
+        ret = {}
+        while not stop:
+            data = api_query(method='user.status', params={'handle': account.key, 'from': start, 'count': count})
+            submissions = data['result']
+            if not submissions:
+                break
+
+            for submission in submissions:
+                if last_id >= submission['id']:
+                    stop = True
+                    break
+                info['count'] += 1
+
+                is_testing = submission.get('verdict').upper() == 'TESTING'
+                if is_testing:
+                    info = deepcopy(account.info.setdefault('submissions_', {}))
+                    first_submission = True
+                    continue
+
+                if first_submission:
+                    info['last_id'] = submission['id']
+                    first_submission = False
+
+                party = submission['author']
+                participant_type = party['participantType']
+                upsolve = participant_type not in Statistic.PARTICIPANT_TYPES
+                if not upsolve:
+                    continue
+
+                contest_id = submission.get('contestId')
+                if contest_id is None:
+                    continue
+
+                if contest_id in stats_caches:
+                    contest, stat = stats_caches[contest_id]
+                    created = False
+                else:
+                    contest = resource.contest_set.filter(key=contest_id).first()
+                    if contest is None:
+                        continue
+                    stat, created = contest.statistics_set.get_or_create(contest=contest, account=account)
+                    stats_caches[contest_id] = contest, stat
+
+                if 'creationTimeSeconds' in submission:
+                    submission_time = datetime.fromtimestamp(submission['creationTimeSeconds'])
+                    submission_time = submission_time.replace(tzinfo=pytz.utc)
+                    if not account.last_submission or account.last_submission < submission_time:
+                        account.last_submission = submission_time
+
+                addition = stat.addition
+                if created:
+                    addition.setdefault('_no_update_n_contests', True)
+                    participant_types = addition.setdefault('participant_type', [])
+                    if participant_type not in participant_types:
+                        participant_types.append(participant_type)
+
+                result = {account.key: deepcopy(addition)}
+                submission_info = Statistic.process_submission(submission, result,
+                                                               upsolve=True, contest=contest, binary=True)
+                if not submission_info.get('updated'):
+                    continue
+
+                ret.setdefault('n_updated', 0)
+                ret['n_updated'] += 1
+
+                stat.addition = result[account.key]
+                stat.save()
+
+            if len(submissions) < count:
+                break
+            start += count
+
+        account.info['submissions_'] = info
+        account.save()
+
+        ret['n_contests'] = len(stats_caches)
         return ret
 
 

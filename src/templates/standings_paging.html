@@ -212,7 +212,7 @@ data-statistic-id="{{ statistic.id }}"
       data-penalty-in-seconds="{{ stat.time_in_seconds }}"
       data-more-penalty="{{ stat.penalty }}"
       data-problem-key="{{ key }}"
-      data-class="{% if stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}"
+      data-class="{% if '_class' in stat %}{{ stat|get_item:"_class" }}{% elif stat.first_ac_of_all %}first-ac-of-all{% elif stat.first_ac %}first-ac{% elif stat.max_score %}max-score{% endif %}"
       {% endif %}
       data-problem-full-score="{{ problem.full_score }}"
     >

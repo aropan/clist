@@ -7,7 +7,6 @@ from logging import getLogger
 from pprint import pprint  # noqa
 
 import tqdm
-from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils.timezone import now
@@ -15,6 +14,7 @@ from django.utils.timezone import now
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number, get_problem_key, get_problem_short, is_solved
 from clist.views import update_problems
+from utils.attrdict import AttrDict
 from utils.json_field import JSONF
 
 

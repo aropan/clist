@@ -23,3 +23,9 @@
 #problems a.solution {
   color: inherit !important;
 }
+
+#problems a.contests {
+  font-size: 90%;
+  color: #777;
+  cursor: pointer;
+}

@@ -84,6 +84,37 @@
         @unlink($cookiefile);
     }
 
+    function filter_cookies($cookiefile) {
+        $cookies = file_get_contents($cookiefile);
+        $cookies = explode("\n", $cookies);
+        $cookies = array_reverse($cookies);
+        $filtered = array();
+        $counters = array();
+        foreach ($cookies as $cookie) {
+            if (empty($cookie)) {
+                continue;
+            }
+            if (substr_count($cookie, "\t") == 6) {
+                $tokens = explode("\t", $cookie);
+                $domain = $tokens[0];
+                if (!isset($counters[$domain])) {
+                    $counters[$domain] = 0;
+                }
+                if (++$counters[$domain] > 50) {
+                    continue;
+                }
+            }
+            $filtered[] = $cookie;
+        }
+        $filtered = array_reverse($filtered);
+        $cookies = implode("\n", $filtered) . "\n";
+        file_put_contents($cookiefile, $cookies);
+    }
+
+    if (ISCLI) {
+        filter_cookies($cookiefile);
+    }
+
     $CID = curl_init();
     $USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0";
     curl_setopt($CID, CURLOPT_RETURNTRANSFER, true);

@@ -617,6 +617,13 @@ FONTAWESOME_ICONS_ = {
 }
 
 
+STANDINGS_FIELDS_ = {
+    'n_gold_problems': '<span class="trophy trophy-detail gold-trophy"><i class="fas fa-trophy"></i></span>',
+    'n_silver_problems': '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-trophy"></i></span>',
+    'n_bronze_problems': '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
+}
+
+
 class NOTIFICATION_CONF:
     EMAIL = 'email'
     TELEGRAM = 'telegram'

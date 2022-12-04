@@ -1,5 +1,6 @@
 <?php
     require_once "config.php";
+
 /*
     foreach (glob("./cache/*") as $file)
     {

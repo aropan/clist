@@ -5,12 +5,10 @@ import json
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from datetime import datetime, timedelta
 from pprint import pprint  # noqa
 
 import coloredlogs
 import dateutil.parser
-import pytz
 from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, BaseModule
@@ -24,21 +22,28 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
         api_server_url = self.info['parse'].get('contestServerUrl')
-        now = datetime.utcnow().replace(tzinfo=pytz.utc)
-        if not api_server_url or self.end_time + timedelta(days=1) < now:
+        if not api_server_url:
             api_server_url = 'https://server.prepbytes.com'
         api_server_url = api_server_url.rstrip('/')
+
+        url = 'https://server.prepbytes.com/api/contest/getContestById'
+        page = REQ.get(url, post={'contestId': self.key})
+        data = json.loads(page)
+        code = data.get('code')
+        data = data.get('data', {})
+        if code == 404 or not data or data.get('isPrivate'):
+            return {'action': 'delete', 'force': True}
+        if data.get('isMigrated'):
+            api_server_url = 'https://server.prepbytes.com'
 
         url = f'{api_server_url}/api/contest/getTotalParticipants'
         page = REQ.get(url, post={'contestId': self.key})
         data = json.loads(page)
-        if data.get('code') != 200 or data.get('data') is None:
-            raise ExceptionParseStandings(f'resposnse = {data}')
-        total = data['data']
+        total = data.get('data', 0)
 
         per_page = 1000
 
-        def fetch_leaderboard_page(page):
+        def fetch_leaderboard_page(page, per_page=per_page):
             url = f'{api_server_url}/api/contest/getLeaderboardByPage'
             data = {
                 'contestId': self.key,
@@ -93,8 +98,10 @@ class Statistic(BaseModule):
                         contest = contest_wise[0]
                         problem['url'] = f'https://mycode.prepbytes.com/contest/{contest}/problems/{p["problem_id"]}'
                 elif topic_wise_data:
-                    topic = topic_wise_data[0]['topic']
-                    problem['url'] = f'https://mycode.prepbytes.com/problems/{topic}/{p["problem_id"]}'
+                    topics = [t for t in topic_wise_data if 'topic' in t]
+                    if topics:
+                        topic = topics[0]['topic']
+                        problem['url'] = f'https://mycode.prepbytes.com/problems/{topic}/{p["problem_id"]}'
             problems.append(problem)
 
         ret = {

@@ -18,6 +18,13 @@ function add_hidden_tag_event() {
   })
 }
 
+function show_hidden_contests(e) {
+  $(e).next().removeClass('hidden')
+  $(e).remove()
+  clear_tooltip()
+  return false
+}
+
 $(function() {
   $('#show-tags').change(function() {
     if (coder_pk === undefined) {

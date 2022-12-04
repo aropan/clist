@@ -283,10 +283,13 @@ def get_division_problems(problem, info):
 
 def get_problem_field(problem, field):
     if isinstance(problem, dict):
-        return field in problem, problem.get(field)
+        has, ret = field in problem, problem.get(field)
     else:
         value = getattr(problem, field, None)
-        return value is not None, value
+        has, ret = value is not None, value
+    if has and ret:
+        ret = str(ret)
+    return has, ret
 
 
 @register.filter

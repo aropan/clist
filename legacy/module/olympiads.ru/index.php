@@ -41,6 +41,8 @@
             echo "\n\n" . $url. "\n";
         }
         $page = curlexec($url);
+        $page = preg_replace("#<!--.*?-->#ms", "", $page);
+        $page = preg_replace("#<!--.*#ms", "", $page);
         $page = $replace_months($page);
 
         if (!preg_match('#<h4\s*align="center"\s*>(?P<title>[^<]*,[^<]*)<#', $page, $match)) {

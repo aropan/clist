@@ -642,18 +642,22 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     inplace_division = '_division_addition' in contest_fields
 
     fixed_fields = (
-        ('penalty', 'Penalty'),
+        'penalty',
         ('total_time', 'Time'),
         ('advanced', 'Advance'),
     )
     fixed_fields += tuple(options.get('fixed_fields', []))
     if not with_detail:
-        fixed_fields += (('rating_change', 'Rating change'), )
+        fixed_fields += ('rating_change',)
     if division == 'any':
-        fixed_fields += (('division', 'Division'),)
+        fixed_fields += ('division',)
 
     fields = OrderedDict()
-    for k, v in fixed_fields:
+    for k in fixed_fields:
+        if isinstance(k, str):
+            v = k
+        else:
+            k, v = k
         if k in contest_fields:
             fields[k] = v
 
@@ -1380,6 +1384,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'my_statistics': my_statistics,
         'problems': problems,
         'params': params,
+        'settings_standings_fields': settings.STANDINGS_FIELDS_,
         'fields': fields,
         'fields_types': fields_types,
         'divisions_order': divisions_order,

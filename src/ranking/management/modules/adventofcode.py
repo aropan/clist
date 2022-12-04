@@ -11,19 +11,32 @@ import arrow
 
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
 
     def get_standings(self, *args, **kwargs):
-        func = self._get_private_standings if '/private/' in self.url else self._get_global_standings
-        return func(*args, **kwargs)
+        is_private = '/private/' in self.url
+        func = self._get_private_standings if is_private else self._get_global_standings
+        standings = func(*args, **kwargs)
+
+        for row in standings['result'].values():
+            for problem in row.get('problems', {}).values():
+                rank = problem['rank']
+                if rank == 1:
+                    problem['first_ac'] = True
+                if rank <= 3:
+                    medal = ['gold', 'silver', 'bronze'][rank - 1]
+                    problem['medal'] = medal
+                    problem['_class'] = f'{medal}-medal'
+
+                    if is_private:
+                        key = f'n_{medal}_problems'
+                        row.setdefault(key, 0)
+                        row[key] += 1
+        return standings
 
     def _get_private_standings(self, users=None, statistics=None):
-        if self.invisible:
-            raise ExceptionParseStandings('Invisible contest')
-
         REQ.add_cookie('session', conf.ADVENTOFCODE_SESSION, '.adventofcode.com')
         page = REQ.get(self.url.rstrip('/') + '.json')
         data = json.loads(page)
@@ -40,12 +53,12 @@ class Statistic(BaseModule):
         total_members = len(data['members'])
         tz = timezone(timedelta(hours=-5))
         for r in data['members'].values():
-            handle = r.pop('id')
+            handle = str(r.pop('id'))
             row = result.setdefault(handle, OrderedDict())
+            row['_skip_for_problem_stat'] = True
             row['member'] = handle
             row['solving'] = r.pop('local_score')
             row['name'] = r.pop('name')
-            row['global_score'] = r.pop('global_score')
             row['stars'] = r.pop('stars')
             ts = int(r.pop('last_star_ts'))
             if ts:
@@ -67,16 +80,18 @@ class Statistic(BaseModule):
                                              'subname_class': 'first-star' if star == '1' else 'both-stars',
                                              'url': urljoin(self.url, f'/{year}/day/{day}'),
                                              '_order': (int(day), int(star)),
-                                             'visible': False}
-                    times[k].append(res['get_star_ts'])
+                                             'ignore': True}
 
                     day_start_time = datetime(year=year, month=12, day=int(day), tzinfo=tz)
                     time = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc)
 
+                    ts = (time - day_start_time.replace(day=1)).total_seconds()
+                    times[k].append(ts)
+
                     problems[k] = {
-                        'ts': res['get_star_ts'],
+                        'ts': ts,
                         'time': self.to_time(time - day_start_time),
-                        'absolute_time': self.to_time(time - day_start_time.replace(day=1)),
+                        'absolute_time': self.to_time(ts),
                     }
             if not problems:
                 result.pop(handle)
@@ -90,6 +105,7 @@ class Statistic(BaseModule):
                 ts = p.pop('ts')
                 rank = times[k].index(ts) + 1
                 score = total_members - rank + 1
+                p['rank'] = rank
                 p['time_in_seconds'] = ts
                 p['result'] = score
 
@@ -106,6 +122,9 @@ class Statistic(BaseModule):
 
         ret = {
             'hidden_fields': {'last_star', 'stars', 'ranks'},
+            'options': {
+                'fixed_fields': [f'n_{medal}_problems' for medal in ['gold', 'silver', 'bronze']],
+            },
             'result': result,
             'fields_types': {'last_star': ['timestamp']},
             'problems': problems,
@@ -119,9 +138,9 @@ class Statistic(BaseModule):
                 delta += timedelta(days=1, seconds=42)
 
             if delta > timedelta(hours=23):
-                delta = timedelta(minutes=5)
+                delta = timedelta(minutes=1)
             else:
-                delta = min(delta, timedelta(hours=4))
+                delta = min(delta, timedelta(minutes=30))
 
             ret['timing_statistic_delta'] = delta
 
@@ -130,7 +149,6 @@ class Statistic(BaseModule):
     def _get_global_standings(self, users=None, statistics=None):
         year = self.start_time.year
         year = year if self.start_time.month >= 9 else year - 1
-        season = '%d-%d' % (year, year + 1)
         ret = {}
 
         if '/day/' not in self.url:
@@ -140,7 +158,8 @@ class Statistic(BaseModule):
             contest_url = self.url
 
         page = REQ.get(contest_url)
-        match = re.search(r'<h2>[^<]*Day\s*[0-9]+:\s*(?P<problem_name>[^<]*)</h2>', page)
+        match = re.search(r'<h2>[^<]*Day\s*(?P<day>[0-9]+):\s*(?P<problem_name>[^<]*)</h2>', page)
+        day = match.group('day')
         problem_name = match.group('problem_name').strip('-').strip()
 
         if self.name.count('.') == 1 and problem_name:
@@ -151,7 +170,7 @@ class Statistic(BaseModule):
 
         matches = re.finditer(
             r'''
-            <div[^>]*class="leaderboard-entry"[^>]*>\s*
+            <div[^>]*class="leaderboard-entry"[^>]*data-user-id="(?P<user_id>[^"]*)"[^>]*>\s*
                 <span[^>]*class="leaderboard-position"[^>]*>\s*(?P<rank>[0-9]+)[^<]*</span>\s*
                 <span[^>]*class="leaderboard-time"[^>]*>(?P<time>[^<]*)</span>\s*
                 (?:<a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*)?
@@ -170,15 +189,8 @@ class Statistic(BaseModule):
         n_results = 0
         for match in matches:
             n_results += 1
-            href = match.group('href')
             name = html.unescape(match.group('name')).strip()
-            if href:
-                handle = href.split('//')[-1].strip('/')
-            elif re.match(r'^\(anonymous user #[0-9]+\)$', name):
-                handle = name
-            else:
-                handle = f'{name}, {season}'
-            handle = handle.replace('/', '-')
+            handle = match.group('user_id')
 
             rank = int(match.group('rank'))
             if last is None or last >= rank:
@@ -197,18 +209,21 @@ class Statistic(BaseModule):
 
             k = str(n_problems)
             if k not in problems_info:
-                problems_info[k] = {'name': problem_name, 'code': k, 'url': contest_url, 'group': 0}
+                problems_info[k] = {
+                    'name': problem_name,
+                    'short': k,
+                    'code': f'Y{year}D{day}',
+                    'url': contest_url,
+                    'group': 0,
+                }
 
             problem = row.setdefault('problems', {}).setdefault(k, {})
             problem['result'] = score
             time = f'''{self.start_time.year} {match.group('time')} -05:00'''
             time = arrow.get(time, 'YYYY MMM D  HH:mm:ss ZZ') - self.start_time
             problem['time'] = self.to_time(time)
+            problem['rank'] = rank
             problem['absolute_time'] = self.to_time(time + self.start_time - self.start_time.replace(day=1))
-            if rank == 1:
-                problem['first_ac'] = True
-            if rank <= 3:
-                problem['_class'] = ['gold-medal', 'silver-medal', 'bronze-medal'][rank - 1]
 
         problems = list(reversed(problems_info.values()))
         problems[0].update({'subname': '*', 'subname_class': 'first-star'})
@@ -231,5 +246,5 @@ class Statistic(BaseModule):
             'problems': problems,
         })
         if n_results < 200:
-            ret['timing_statistic_delta'] = timedelta(minutes=5)
+            ret['timing_statistic_delta'] = timedelta(minutes=1)
         return ret
