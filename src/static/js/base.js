@@ -371,3 +371,8 @@ function replace_tag(element, originalTag, replacementTag) {
   element.replaceWith(newElement)
   return newElement
 }
+
+function toggle_hidden(element) {
+  var cls = $(element).attr('data-class')
+  $('.' + cls).toggleClass('hidden')
+}

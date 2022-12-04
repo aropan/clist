@@ -51,6 +51,8 @@
         <span{% if stat.verdict and 'time' in stat %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.result|scoreformat }}</span>
       {% endif %}
 
+      {% if with_detail %}{% if stat.result_rank %}<span class="text-muted small text-weight-normal"> ({{ stat.result_rank }})</span>{% endif %}{% endif %}
+
       {% if stat.url or stat.solution or stat.external_solution %}</a>{% endif %}
     </div>
   {% endif %}

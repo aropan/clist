@@ -7,10 +7,15 @@
   {% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} class="{% if subscore.result %}acc{% else %}rej{% endif %}"{% endif %}>{{ subscore.status }}</span>{% endfor %}
 </div>
 {% endif %}
-{% if not small and stat.verdict %}
+
+{% if stat.verdict and not small %}
   {% if stat.result|slice:":1" == "-" or stat.binary is not None and not stat.binary %}
     <div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</div>
   {% endif %}
+{% endif %}
+
+{% if not small and stat.result_rank %}
+  <div>Rank: {{ stat.result_rank }}</div>
 {% endif %}
 
 <div>
@@ -19,6 +24,11 @@
   <div>{{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}{% if stat.attempt %} ({{ stat.attempt }}){% endif %}</div>
 {% elif 'status' in stat and 'time' not in stat or 'status' in stat and stat.result|asfloat:0 <= 0 %}
   {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
+{% elif small and stat.delta_time and stat.time %}
+  <a href="" onclick="toggle_hidden(this); return false" data-class="detail-alternative-time">
+    <span class="detail-alternative-time hidden">{{ stat.delta_time }}</span>
+    <span class="detail-alternative-time">{{ stat.time }}</span>
+  </a>
 {% elif 'time' in stat %}
   {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}{% if stat.attempt %} ({{ stat.attempt }}){% endif %}
 {% elif 'upsolving' in stat %}
@@ -58,7 +68,11 @@
 {% endif %}
 </div>
 
-{% if stat.language and not small %}
+{% if not small and stat.delta_time %}
+  <div>{{ stat.delta_time }}</div>
+{% endif %}
+
+{% if not small and stat.language %}
   <div class="language">{{ stat.language }}</div>
 {% endif %}
 

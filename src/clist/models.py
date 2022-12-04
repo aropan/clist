@@ -450,7 +450,9 @@ class Contest(BaseModel):
             return settings.HTTPS_HOST_ + reverse('ranking:standings', args=(slug(self.title), self.pk))
         if self.registration_url and self.is_coming():
             return self.registration_url
-        if self.standings_url:
+        if self.url and self.is_coming():
+            return self.url
+        if self.standings_url and not self.is_coming():
             return self.standings_url
         return self.url
 

@@ -23,7 +23,7 @@ RUN apt install -y lsof htop vim
 # Setup python requirements
 RUN pip install "pip==22.1.2"
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 
 RUN apt update --fix-missing
 
@@ -44,7 +44,6 @@ RUN rm ipython_config.py
 
 FROM base as prod
 ENV DJANGO_ENV_FILE .env.prod
-RUN pip install "uwsgi==2.0.20" "supervisor==4.2.4" "daphne==3.0.2"
 RUN apt install -y cron redis-server
 
 COPY ./src/ $APPDIR/

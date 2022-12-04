@@ -69,6 +69,7 @@ class Statistic(BaseModule):
                 if not solution:
                     continue
                 day = str(day)
+                prev_time_in_seconds = None
                 for star, res in items_sort(solution):
                     star = str(star)
                     k = f'{day}.{star}'
@@ -85,14 +86,17 @@ class Statistic(BaseModule):
                     day_start_time = datetime(year=year, month=12, day=int(day), tzinfo=tz)
                     time = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc)
 
-                    ts = (time - day_start_time.replace(day=1)).total_seconds()
-                    times[k].append(ts)
+                    time_in_seconds = (time - day_start_time.replace(day=1)).total_seconds()
+                    times[k].append(time_in_seconds)
 
                     problems[k] = {
-                        'ts': ts,
+                        'time_in_seconds': time_in_seconds,
                         'time': self.to_time(time - day_start_time),
-                        'absolute_time': self.to_time(ts),
+                        'absolute_time': self.to_time(time_in_seconds),
                     }
+                    if prev_time_in_seconds:
+                        problems[k]['delta_time'] = '+' + self.to_time(time_in_seconds - prev_time_in_seconds)
+                    prev_time_in_seconds = time_in_seconds
             if not problems:
                 result.pop(handle)
 
@@ -102,12 +106,12 @@ class Statistic(BaseModule):
         for row in result.values():
             problems = row.setdefault('problems', {})
             for k, p in row['problems'].items():
-                ts = p.pop('ts')
-                rank = times[k].index(ts) + 1
+                time_in_seconds = p['time_in_seconds']
+                rank = times[k].index(time_in_seconds) + 1
                 score = total_members - rank + 1
                 p['rank'] = rank
-                p['time_in_seconds'] = ts
                 p['result'] = score
+                p['result_rank'] = rank
 
         last = None
         for idx, r in enumerate(sorted(result.values(), key=lambda r: -r['solving']), start=1):
@@ -217,13 +221,21 @@ class Statistic(BaseModule):
                     'group': 0,
                 }
 
-            problem = row.setdefault('problems', {}).setdefault(k, {})
+            problems = row.setdefault('problems', {})
+            problem = problems.setdefault(k, {})
             problem['result'] = score
             time = f'''{self.start_time.year} {match.group('time')} -05:00'''
             time = arrow.get(time, 'YYYY MMM D  HH:mm:ss ZZ') - self.start_time
             problem['time'] = self.to_time(time)
             problem['rank'] = rank
-            problem['absolute_time'] = self.to_time(time + self.start_time - self.start_time.replace(day=1))
+            problem['time_in_seconds'] = (time + self.start_time - self.start_time.replace(day=1)).total_seconds()
+            problem['absolute_time'] = self.to_time(problem['time_in_seconds'])
+
+            prev_k = str(n_problems - 1)
+            if prev_k in problems:
+                prev_problem = problems[prev_k]
+                delta_time = prev_problem['time_in_seconds'] - problem['time_in_seconds']
+                prev_problem['delta_time'] = '+' + self.to_time(delta_time)
 
         problems = list(reversed(problems_info.values()))
         problems[0].update({'subname': '*', 'subname_class': 'first-star'})
