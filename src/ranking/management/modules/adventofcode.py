@@ -56,6 +56,7 @@ class Statistic(BaseModule):
             handle = str(r.pop('id'))
             row = result.setdefault(handle, OrderedDict())
             row['_skip_for_problem_stat'] = True
+            row['global_score'] = r.pop('global_score')
             row['member'] = handle
             row['solving'] = r.pop('local_score')
             row['name'] = r.pop('name')
@@ -127,7 +128,7 @@ class Statistic(BaseModule):
         ret = {
             'hidden_fields': {'last_star', 'stars', 'ranks'},
             'options': {
-                'fixed_fields': [f'n_{medal}_problems' for medal in ['gold', 'silver', 'bronze']],
+                'fixed_fields': ['global_score'] + [f'n_{medal}_problems' for medal in ['gold', 'silver', 'bronze']],
             },
             'result': result,
             'fields_types': {'last_star': ['timestamp']},

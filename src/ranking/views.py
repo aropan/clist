@@ -25,7 +25,8 @@ from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, format_time, get_country_name, get_problem_short, get_problem_title,
-                                       is_solved, query_transform, slug, time_in_seconds, timestamp_to_datetime)
+                                       is_reject, is_solved, query_transform, slug, time_in_seconds,
+                                       timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint
 from clist.views import get_group_list, get_timeformat, get_timezone
@@ -376,7 +377,7 @@ def standings_charts(request, context):
         charts.append(scores_chart)
 
     if context.get('relative_problem_time'):
-        total_problem_time = max([max(v) for v in problems_values.values()], default=0)
+        total_problem_time = max([max(v) for v in problems_values.values()], default=0) + 1
     else:
         total_problem_time = contest.duration_in_secs
 
@@ -522,6 +523,9 @@ def render_standings_paging(contest, statistics, with_detail=True):
             statistics = statistics[:per_page]
         statistics = Statistics.objects.filter(pk__in=statistics)
 
+    order = get_statistics_order(contest) + ['pk']
+    statistics = statistics.order_by(*order)
+
     divisions_order = get_standings_divisions_order(contest)
     division = divisions_order[0] if divisions_order else None
     if division:
@@ -551,6 +555,13 @@ def render_standings_paging(contest, statistics, with_detail=True):
         'mod_penalty': mod_penalty,
         'colored_by_group_score': mod_penalty or colored_by_group_score,
     }
+
+    options = contest.info.get('standings', {})
+    data_1st_u = options.get('1st_u')
+    if data_1st_u:
+        n_highlight_context = _standings_highlight(contest.statistics_set.order_by(*order), options)
+        context.update(n_highlight_context)
+
     return {
         'page': get_template('standings_paging.html').render(context),
         'total': n_total or statistics.count(),
@@ -693,6 +704,21 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     return fields
 
 
+def get_statistics_order(contest):
+    options = contest.info.get('standings', {})
+    contest_fields = contest.info.get('fields', []).copy()
+    resource_standings = contest.resource.info.get('standings', {})
+    order = copy.copy(options.get('order', resource_standings.get('order')))
+    if order:
+        for f in order:
+            if f.startswith('addition__') and f.split('__', 1)[1] not in contest_fields:
+                order = None
+                break
+    if order is None:
+        order = ['place_as_int', '-solving']
+    return order
+
+
 @page_templates((
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
@@ -769,6 +795,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             to_redirect = True
         else:
             return redirect(reverse('ranking:standings_list') + f'?search=slug:{title_slug}')
+
+    contests_resources = set()
+    other_contests = list()
+    contests_timelines = dict()
     if contests_ids is not None:
         cids, contests_ids = list(map(toint, contests_ids.split(','))), []
         for cid in cids:
@@ -776,16 +806,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 contests_ids.append(cid)
         contest = contests.filter(pk=contests_ids[0]).first()
         other_contests = list(contests.filter(pk__in=contests_ids[1:]))
-        contests_ids = {}
-        contests_timelines = {}
+        contests_ids = dict()
         for i, c in enumerate([contest] + other_contests, start=1):
+            contests_resources.add(c.resource_id)
             contests_ids[c.pk] = i
             timeline = c.resource.info.get('standings', {}).get('timeline')
             if timeline:
                 contests_timelines[c.pk] = timeline
-    else:
-        other_contests = []
-        contests_timelines = {}
     if contest is None:
         return HttpResponseNotFound()
     if to_redirect:
@@ -824,18 +851,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     per_page = 50 if contests_ids else contest.standings_per_page
     per_page_more = per_page if find_me else 200
 
-    order = None
-    resource_standings = contest.resource.info.get('standings', {})
-    order = copy.copy(options.get('order', resource_standings.get('order')))
-    if order:
-        for f in order:
-            if f.startswith('addition__') and f.split('__', 1)[1] not in contest_fields:
-                order = None
-                break
-    if order is None:
-        order = ['place_as_int', '-solving']
-
-    # fixed fields
+    order = get_statistics_order(contest)
 
     statistics = statistics \
         .select_related('account') \
@@ -874,9 +890,11 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
     # FIXME extra per_page
     if (
-        contest.n_statistics and
-        (contest.n_statistics <= 1000 and 'team_id' in contest_fields or contest.info.get('grouped_team')) and
-        not groupby
+        contest.n_statistics
+        and (
+            contest.n_statistics <= settings.STANDINGS_SMALL_N_STATISTICS and 'team_id' in contest_fields
+            or contest.info.get('grouped_team')
+        ) and not groupby
     ):
         if 'team_id' in contest_fields:
             order.append('addition__team_id')
@@ -1002,7 +1020,10 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 penalty = first.addition.get('penalty')
                 if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
                     mod_penalty.update({'solving': first.solving, 'penalty': penalty})
-            enable_timeline = any('time' in p for p in first.addition.get('problems', {}).values())
+            first_problems = list(first.addition.get('problems', {}).values())
+            enable_timeline = all(not is_reject(p) for p in first_problems) or any('time' in p for p in first_problems)
+        if len(contests_resources) > 1:
+            enable_timeline = False
     if enable_timeline and 'timeline' in request.GET:
         timeline = request.GET.get('timeline') or '1'
         if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):

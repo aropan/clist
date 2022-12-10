@@ -273,6 +273,7 @@ a.solution:hover span {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
+.first-u-cell.result-hidden::before,
 .problem-cell.result-hidden::before {
   content: "?";
   color: #da2;

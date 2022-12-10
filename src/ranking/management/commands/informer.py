@@ -14,6 +14,7 @@ import coloredlogs
 import humanize
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from tabulate import tabulate
 
 from .parse_statistic import Command as ParserCommand
 from clist.models import Contest
@@ -45,6 +46,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
+        logging.disable(logging.DEBUG)
 
         bot = Bot()
 
@@ -80,9 +82,15 @@ class Command(BaseCommand):
             updated = False
             has_hidden = contest.has_hidden_results
             numbered = 0
+            table_rows = []
 
-            statistics = [s for s in statistics if s.place_as_int is not None]
-            for stat in sorted(statistics, key=lambda s: s.place_as_int):
+            def statistics_sort_key(stat):
+                return (
+                    stat.place_as_int if stat.place_as_int is not None else float('inf'),
+                    -stat.solving,
+                )
+
+            for stat in sorted(statistics, key=statistics_sort_key):
                 name_instead_key = resource.info.get('standings', {}).get('name_instead_key')
                 name_instead_key = stat.account.info.get('_name_instead_key', name_instead_key)
 
@@ -96,7 +104,7 @@ class Command(BaseCommand):
                 filtered = False
                 if args.query is not None and re.search(args.query, name, re.I):
                     filtered = True
-                if args.top and stat.place_as_int <= args.top:
+                if args.top and stat.place_as_int and stat.place_as_int <= args.top:
                     filtered = True
 
                 contest_problems = contest.info.get('problems')
@@ -180,7 +188,7 @@ class Command(BaseCommand):
                                         p_info['show_hidden'] = key
                                         m += ' TRY FIRST AC'
                                         has_try_first_ac = True
-                            if args.top and stat.place_as_int <= args.top:
+                            if args.top and stat.place_as_int and stat.place_as_int <= args.top:
                                 has_top = True
                         p.append(m)
                     if is_accepted:
@@ -195,7 +203,10 @@ class Command(BaseCommand):
                     numbered += 1
                     place = '%s (%s)' % (place, numbered)
 
-                msg = '%s. _%s_' % (place, md_italic_escape(name))
+                msg = ''
+                if place is not None:
+                    msg += '%s. ' % place
+                msg += '_%s_' % md_italic_escape(name)
                 if p:
                     msg = '%s, %s' % (', '.join(p), msg)
                 if has_top:
@@ -210,8 +221,7 @@ class Command(BaseCommand):
                     updated = True
 
                 if filtered:
-                    print(stat.place, stat.solving, end=' | ')
-                    print(msg)
+                    table_rows.append([stat.place, stat.solving, msg, stat.pk])
                 if not args.dryrun and (filtered and has_update or has_first_ac or has_try_first_ac):
                     delete_message()
                     for iteration in range(1, 5):
@@ -236,6 +246,8 @@ class Command(BaseCommand):
                     data['messageId'] = message_id
                 standings[key] = data
 
+            print(tabulate(table_rows, showindex=range(1, len(table_rows) + 1), tablefmt='rounded_outline'))
+
             if args.dump is not None and (updated or not os.path.exists(args.dump)):
                 standings_dump = json.dumps(standings, indent=2)
                 with open(args.dump, 'w') as fo:
@@ -245,14 +257,22 @@ class Command(BaseCommand):
                 is_over = contest.end_time < now
                 if is_over and not has_hidden:
                     break
-                tick = args.delay * 5 if is_over else args.delay
-                limit = now + timedelta(seconds=tick)
+                is_coming = now < contest.start_time
+                if is_coming:
+                    limit = contest.start_time
+                else:
+                    tick = args.delay * 10 if is_over else args.delay
+                    limit = now + timedelta(seconds=tick)
                 size = 1
+                prev_out = None
+                print()
                 while timezone.now() < limit:
                     value = humanize.naturaldelta(limit - timezone.now())
-                    out = f'{value:{size}s}'
-                    size = len(value)
-                    print(out, end='\r')
+                    out = f'\r{value:{size}s} '
+                    if out != prev_out:
+                        size = len(value)
+                        print(out, end='')
+                        prev_out = out
                     time.sleep(1)
                 print()
 

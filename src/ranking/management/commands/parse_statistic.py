@@ -199,6 +199,7 @@ class Command(BaseCommand):
                     continue
 
                 now = timezone.now()
+                is_coming = now < contest.start_time
                 plugin = resource.plugin.Statistic(contest=contest)
 
                 with transaction.atomic():
@@ -206,6 +207,7 @@ class Command(BaseCommand):
 
                     with REQ:
                         statistics_by_key = {}
+                        places_by_key = {}
                         statistics_ids = set()
                         has_statistics = False
                         if not no_update_results:
@@ -215,6 +217,7 @@ class Command(BaseCommand):
                             for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
                                 if with_stats:
                                     statistics_by_key[s.account.key] = s.addition
+                                    places_by_key[s.account.key] = s.place
                                     has_statistics = True
                                 statistics_ids.add(s.pk)
                         standings = plugin.get_standings(users=copy.deepcopy(users), statistics=statistics_by_key)
@@ -261,6 +264,15 @@ class Command(BaseCommand):
                     standings_hidden_fields_set = set(standings_hidden_fields)
 
                     standings_problems = standings.pop('problems', None)
+                    result = standings.get('result', {})
+
+                    if is_coming:
+                        for r in result.values():
+                            for field in ('place', 'solving', 'problems', 'penalty'):
+                                if field in r:
+                                    r.pop(field)
+                        standings_problems = {}
+
                     if no_update_results:
                         if standings_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
@@ -268,7 +280,6 @@ class Command(BaseCommand):
                         count += 1
                         continue
 
-                    result = standings.get('result', {})
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics', {})
                     wait_rating = resource_statistics.get('wait_rating', {})
@@ -440,12 +451,14 @@ class Command(BaseCommand):
                             else:
                                 account = accounts[member]
 
-                            stats = statistics_by_key.get(member, {})
+                            stat = statistics_by_key.get(member, {})
+                            stat_place = places_by_key.get(member, {})
 
                             previous_member = r.pop('previous_member', None)
                             if previous_member:
                                 if previous_member in statistics_by_key:
-                                    stats = statistics_by_key[previous_member]
+                                    stat = statistics_by_key[previous_member]
+                                    stat_place = places_by_key[previous_member]
                                 previous_account = resource.account_set.filter(key=previous_member).first()
                                 if previous_account:
                                     account = rename_account(previous_account, account)
@@ -454,12 +467,12 @@ class Command(BaseCommand):
 
                             def update_addition_fields():
                                 addition_fields = parse_info.get('addition_fields', [])
-                                if not stats or not addition_fields:
+                                if not stat or not addition_fields:
                                     return
                                 for d in addition_fields:
                                     k = d['out']
                                     value = r.get(d['field'])
-                                    pvalue = stats.get(d.get('vs_field', k))
+                                    pvalue = stat.get(d.get('vs_field', k))
 
                                     on_update_value = d.get('on_update_value')
                                     if on_update_value == 'now':
@@ -468,7 +481,7 @@ class Command(BaseCommand):
                                         raise ValueError(f'Unkonwn value = {on_update_value} in addition field = {d}')
 
                                     if d.get('skip_after_end') and contest.end_time < now:
-                                        value = stats.get(k)
+                                        value = stat.get(k)
                                         if value is not None:
                                             r[k] = value
                                         continue
@@ -482,7 +495,7 @@ class Command(BaseCommand):
                                             if on_update_value == 'now':
                                                 value = int(now.timestamp())
                                     if d.get('on_update') and not upd:
-                                        value = stats.get(k)
+                                        value = stat.get(k)
                                     if value is not None:
                                         r[k] = value
 
@@ -497,7 +510,7 @@ class Command(BaseCommand):
 
                                 nonlocal n_upd_account_time
                                 no_rating = with_stats and (
-                                    ('new_rating' in stats) + ('rating_change' in stats) + ('old_rating' in stats) < 2
+                                    ('new_rating' in stat) + ('rating_change' in stat) + ('old_rating' in stat) < 2
                                 )
 
                                 updated_delta = resource_statistics.get('account_updated_delta', {'days': 1})
@@ -789,7 +802,7 @@ class Command(BaseCommand):
                                         nonlocal has_hidden
                                         has_hidden = True
 
-                                previous_problems = stats.get('problems', {})
+                                previous_problems = stat.get('problems', {})
                                 for k, problem in problems.items():
                                     previous_problem = previous_problems.get(k, {})
                                     if (
@@ -799,6 +812,9 @@ class Command(BaseCommand):
                                     ):
                                         updated_statistics_ids.append(statistic.pk)
                                         break
+
+                                if str(statistic.place) != str(stat_place):
+                                    updated_statistics_ids.append(statistic.pk)
 
                                 if try_calculate_time:
                                     statistic.addition = addition
@@ -991,7 +1007,7 @@ class Command(BaseCommand):
                 delay = resource.module.delay_on_error
                 if now < contest.end_time and resource.module.long_contest_divider:
                     delay = min(delay, contest.full_duration / resource.module.long_contest_divider)
-                if now < contest.end_time < now + delay:
+                if now < contest.end_time < now + delay and module.min_delay_after_end:
                     delay = min(delay, contest.end_time + resource.module.min_delay_after_end - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])

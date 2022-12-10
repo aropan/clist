@@ -8,18 +8,18 @@
       {% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %}
         text-muted
       {% elif stat.binary is None and with_detail and stat.subscores %}
-      {% elif stat.result|is_solved %}
+      {% elif stat|is_solved %}
         {% if is_upsolving %}
           upsolved
         {% else %}
           acc
         {% endif %}
+      {% elif stat|is_hidden %}
+        hid
+      {% elif stat|is_reject %}
+        rej
       {% elif stat.partial %}
         par
-      {% elif stat.result|slice:":1" == "?" %}
-        hid
-      {% elif stat.result|slice:":1" == "-" or stat.result|asfloat:0 < 0 %}
-        rej
       {% endif %}
       "
       {% if not with_detail %}

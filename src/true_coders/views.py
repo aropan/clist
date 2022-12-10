@@ -13,6 +13,7 @@ from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
+from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
                               Prefetch, Q, Value, When)
@@ -1138,7 +1139,9 @@ def change(request):
             account.save()
         else:
             return HttpResponseBadRequest('Already updated')
-
+    elif name == "update-statistics" and request.user.has_perm('ranking.update_statistics'):
+        pk = request.POST.get('id')
+        call_command('parse_statistic', contest_id=pk)
     elif name == "pre-delete-user":
         class RollbackException(Exception):
             pass

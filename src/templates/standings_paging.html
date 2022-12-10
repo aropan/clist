@@ -24,6 +24,7 @@ data-statistic-id="{{ statistic.id }}"
   {% if addition.hack.successful %}data-successful-challenge="{{ addition.hack.successful }}"{% endif %}
   {% if addition.hack.unsuccessful %}data-unsuccessful-challenge="{{ addition.hack.unsuccessful }}"{% endif %}
 {% endif %}
+data-place="{{ statistic.place }}"
 >
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }}

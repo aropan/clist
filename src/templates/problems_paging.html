@@ -8,12 +8,14 @@
 
 {% if solution.result|is_solved %}
 {% define 'success' as solution_class %}
-{% elif solution.result.partial or solution.result.upsolving|is_solved %}
+{% elif solution.result.upsolving|is_solved %}
 {% define 'info' as solution_class %}
-{% elif solution.result.result|slice:":1" == "?" %}
+{% elif solution.result|is_hidden %}
 {% define 'warning' as solution_class %}
-{% elif solution.result %}
+{% elif solution.result|is_reject %}
 {% define 'danger' as solution_class %}
+{% elif solution.result.partial %}
+{% define 'info' as solution_class %}
 {% else %}
 {% define '' as solution_class %}
 {% endif %}

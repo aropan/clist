@@ -25,7 +25,7 @@
 {% elif 'status' in stat and 'time' not in stat or 'status' in stat and stat.result|asfloat:0 <= 0 %}
   {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
 {% elif small and stat.delta_time and stat.time %}
-  <a href="" onclick="toggle_hidden(this); return false" data-class="detail-alternative-time">
+  <a href="" onclick="toggle_hidden(this, event)" data-class="detail-alternative-time">
     <span class="detail-alternative-time hidden">{{ stat.delta_time }}</span>
     <span class="detail-alternative-time">{{ stat.time }}</span>
   </a>

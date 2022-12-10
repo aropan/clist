@@ -79,7 +79,7 @@ class Statistic(BaseModule):
                 elif k.lower() in ['place', 'rank']:
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():
-                    if xml_result:
+                    if xml_result and v.value in xml_result:
                         problems.update(xml_result[v.value])
                     row['member'] = v.value + ' ' + season
                     row['name'] = v.value
@@ -108,18 +108,21 @@ class Statistic(BaseModule):
                     row['university'] = u
             result[row['member']] = row
 
-        if statistics and self.info.get('use_icpc.kimden.online') and self.end_time + timedelta(days=10) > now():
+        if self.info.get('use_icpc.kimden.online') and self.end_time + timedelta(days=10) > now():
             team_regions = {}
 
             def canonize_name(name):
+                name = re.sub(r'^\*\s*', '', name)
                 name = re.sub(':', '', name)
-                name = re.sub(r'\s+', ' ', name)
+                name = re.sub(r'\s+', '', name)
                 return name
 
             def get_region(team_name):
                 nonlocal team_regions
+                if team_regions is False:
+                    return ''
                 if not team_regions:
-                    page = REQ.get('https://icpc.kimden.online/')
+                    page = REQ.get(self.info['use_icpc.kimden.online'])
                     matches = re.finditer(
                         '<label[^>]*for="(?P<selector>[^"]*)"[^"]*onclick="setRegion[^"]*"[^>]*>(?P<name>[^>]*)</',
                         page,
@@ -147,14 +150,14 @@ class Statistic(BaseModule):
                             if c in regions:
                                 team_regions[name] = regions[c]
                                 break
+                    if not team_regions:
+                        team_regions = False
                 team_name = canonize_name(team_name)
-                return team_regions.get(team_name)
+                return team_regions.get(team_name, '')
 
             for row in result.values():
-                stat = statistics.get(row['member'])
-                if not stat:
-                    continue
-                if stat.get('region'):
+                stat = (statistics or {}).get(row['member'])
+                if stat and 'region' in stat:
                     row['region'] = stat['region']
                 else:
                     row['region'] = get_region(row['name'])

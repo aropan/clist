@@ -119,6 +119,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     }
     CURRENT_PERCENT = percent
   }
+  percentage_filled = percent >= contest_time_percentage
   update_timeline_text(percent)
 
   var current_time = contest_duration * percent
@@ -178,7 +179,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       }
       visible = time <= current_time
     } else {
-      visible = CURRENT_PERCENT >= contest_time_percentage
+      visible = percentage_filled
     }
     var pvisible = $e.attr('data-visible')
     $e.attr('data-visible', visible)
@@ -229,6 +230,8 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
         more_penalty = parseFloat(more_penalty) + parseFloat(stat.attr('data-more-penalty'))
         stat.attr('data-more-penalty', more_penalty)
       }
+    } else if (visible && (score.startsWith('?'))) {
+      problem_status = 'warning'
     }
 
     if (visible && pvisible === 'false') {
@@ -380,7 +383,8 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     last = r
 
     var $r = $(r)
-    $r.find('>.place-cell').attr('data-text', place)
+    var place_text = percentage_filled && standings_filtered? $r.attr('data-place') + ' (' + place + ')' : place;
+    $r.find('>.place-cell').attr('data-text', place_text)
 
     var gap = (get_row_penalty(r) - get_row_penalty(first)) + (get_row_score(first) - get_row_score(r)) * current_time
     $r.find('>.gap-cell').attr('data-text', Math.round(gap / 60))
@@ -407,6 +411,15 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       $r.css('z-index', '3')
     }
   })
+
+  var first_u_cells = rows.find('.first-u-cell')
+  if (first_u_cells.length) {
+    if (percentage_filled) {
+      first_u_cells.removeClass('result-hidden')
+    } else {
+      first_u_cells.addClass('result-hidden')
+    }
+  }
 
   rows.find('>.place-cell').each((i, e) => { $(e).text($(e).attr('data-text')) })
   rows.find('>.gap-cell').each((i, e) => { $(e).text($(e).attr('data-text')) })
@@ -470,7 +483,7 @@ function parse_factors_time(timeline_factors, penalty) {
   }
 }
 
-function switcher_click(el) {
+function switcher_click(event) {
   const hidden_regex = /^[-+0-9]+$/
   var stat = $(this)
   if (stat.attr('data-score-switcher') === undefined) {
@@ -558,6 +571,8 @@ function switcher_click(el) {
     set_timeline(null, null, tr)
   }
   clear_tooltip()
+  event.preventDefault()
+  event.stopImmediatePropagation()
 }
 
 function clear_extra_info_timeline() {
@@ -575,8 +590,6 @@ function clear_extra_info_timeline() {
 
   $('table.standings .handle-cell .help-message').remove()
   $('table.standings .handle-cell.bg-success').removeClass('bg-success')
-
-  $('.first-u-cell').remove()
 
   $('.stat-cell .problem-cell:not(.accepted-switcher)').addClass('accepted-switcher').click(switcher_click)
 }
@@ -742,22 +755,25 @@ $(function() {
       return
     }
 
-    if (event.key == 'Escape') {
-      $('.active[name="fullscreen"]').click()
-    }
-
-    if (shown_timeline) {
-      if (event.key == 'h') {
+    var key = event.key.toLowerCase()
+    if (key == 'escape') {
+      $('.active#toggle-fullscreen').click()
+    } else if (key == 'f') {
+      $('#toggle-fullscreen').click()
+    } else if (key == 't') {
+      $('#show-timeline').click()
+    } else if (shown_timeline) {
+      if (key == 'h') {
         $('#fast-backward-timeline').focus().click()
-      } else if (event.key == 'j') {
+      } else if (key == 'j') {
         $('#step-forward-timeline').focus().click()
-      } else if (event.key == 'k') {
+      } else if (key == 'k') {
         $('#step-backward-timeline').focus().click()
-      } else if (event.key == 'l') {
+      } else if (key == 'l') {
         $('#fast-forward-timeline').focus().click()
-      } else if (event.key == 'g') {
+      } else if (key == 'g') {
         $('#play-timeline').focus().click()
-      } else if (event.key == 'd') {
+      } else if (key == 'd') {
         $('#erase-switchers-timeline').focus().click()
       }
     }
@@ -919,3 +935,31 @@ $(function() {
     }
   }
 })
+
+
+/*
+ * Update statistics
+ */
+
+function update_statistics(e) {
+  var icon = $(e).find('i')
+  icon.toggleClass('fa-spin')
+  icon.closest('a').toggleClass('invisible')
+  $.ajax({
+    type: 'POST',
+    url: change_url,
+    data: {
+      pk: coder_pk,
+      name: 'update-statistics',
+      id: contest_pk,
+    },
+    error: function(response) {
+      log_ajax_error(response)
+    },
+    complete: function() {
+      icon.toggleClass('fa-spin')
+      icon.closest('a').toggleClass('invisible')
+    },
+  })
+  event.preventDefault()
+}

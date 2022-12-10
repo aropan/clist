@@ -372,7 +372,20 @@ function replace_tag(element, originalTag, replacementTag) {
   return newElement
 }
 
-function toggle_hidden(element) {
+function toggle_hidden(element, event) {
   var cls = $(element).attr('data-class')
   $('.' + cls).toggleClass('hidden')
+  if (event !== undefined) {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+  }
 }
+
+$(function() {
+  $('.database-link').each((_, e) => {
+    var between = 10
+    var offset = between
+    $(e).prevAll('.database-link').each((_, e) => { offset += $(e).width() + between })
+    $(e).css('margin-left', offset)
+  })
+})

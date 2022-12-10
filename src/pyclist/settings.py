@@ -604,6 +604,7 @@ FONTAWESOME_ICONS_ = {
     'copied': '<i class="fas fa-copy"></i>',
     'pin': '<i class="far fa-star"></i>',
     'unpin': '<i class="fas fa-star"></i>',
+    'timeline': '<i class="fas fa-history"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
@@ -622,6 +623,8 @@ STANDINGS_FIELDS_ = {
     'n_silver_problems': '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-trophy"></i></span>',
     'n_bronze_problems': '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
 }
+
+STANDINGS_SMALL_N_STATISTICS = 1000
 
 
 class NOTIFICATION_CONF:

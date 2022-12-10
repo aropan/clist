@@ -28,6 +28,8 @@
   with_detail = {{ with_detail|lower }}
   starred_cookie_path = window.location.pathname
   starred_cookie_expires = 365
+  coder_pk = {% if request.user.is_authenticated %}{{ request.user.coder.pk }}{% else %}undefined{% endif %}
+  change_url = '{% url "coder:change" %}'
 </script>
 
 {% endblock %}
@@ -96,6 +98,9 @@
     {% if perms.clist.change_contest %}
       <a href="{% url 'admin:clist_contest_change' contest.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
     {% endif %}
+    {% if perms.ranking.update_statistics %}
+      <a href="" onclick="update_statistics(this); return false" class="database-link invisible">{% icon_to 'update' default='Update statistics' %}</a>
+    {% endif %}
     </div>
 
     {% if contest.related is not None %}
@@ -136,9 +141,9 @@
     $(window).resize(update_neighbors_standings_url_offset)
   </script>
 
-  {% if contest.is_running and not contest.is_over %}
+  {% if contest.is_running or contest.is_coming %}
   <h4 class="text-center">
-    Time remaining: <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>
+    {% if contest.is_running %}Time remaining: {% elif contest.is_coming %}Time before the start: {% endif %}<span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>
   {% endif %}
   {% with opening=contest.info|get_item:"_opening" %}
   {% if opening %}

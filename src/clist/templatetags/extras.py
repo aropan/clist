@@ -705,6 +705,30 @@ def is_solved(value):
 
 
 @register.filter
+def is_hidden(value):
+    if isinstance(value, dict):
+        value = value.get('result')
+    if not value:
+        return False
+    return str(value).startswith('?')
+
+
+@register.filter
+def is_reject(value):
+    if isinstance(value, dict):
+        value = value.get('result')
+    if not value:
+        return False
+    if str(value).startswith('-'):
+        return True
+    try:
+        value = float(value)
+    except ValueError:
+        return False
+    return value < 0
+
+
+@register.filter
 def timestamp_to_datetime(value):
     try:
         return datetime.fromtimestamp(value)

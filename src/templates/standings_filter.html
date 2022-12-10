@@ -95,7 +95,7 @@
     {% endif %}
 
     <div class="input-group input-group-sm">
-      <button class="btn btn-default btn-sm{% if fullscreen %} active{% endif %}" name="fullscreen"{% if not fullscreen %} value=""{% else %} value="off"{% endif %}>{% icon_to 'fullscreen' %}</button>
+      <button id="toggle-fullscreen" class="btn btn-default btn-sm{% if fullscreen %} active{% endif %}" name="fullscreen"{% if not fullscreen %} value=""{% else %} value="off"{% endif %}>{% icon_to 'fullscreen' default='Fullscreen (F)' %}</button>
     </div>
 
     {% if enable_timeline and contest.resource.info.standings.timeline and groupby == 'none' %}
@@ -104,7 +104,7 @@
         {% if timeline %}
         <input type="hidden" name="timeline" value="{{ request.GET.timeline }}"/>
         {% endif %}
-        <button id="show-timeline" onclick="show_timeline(); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}><i class="fas fa-history"></i></button>
+        <button id="show-timeline" onclick="show_timeline(); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}>{% icon_to 'timeline' default='Timeline (T)' %}</button>
       </div>
 
       <div id="timeline-buttons" class="hidden">
