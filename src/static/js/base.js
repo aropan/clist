@@ -389,3 +389,16 @@ $(function() {
     $(e).css('margin-left', offset)
   })
 })
+
+function update_urls_params(params) {
+  var url = new URL(window.location.href)
+  for (var k in params) {
+    v = params[k]
+    if (v == undefined) {
+      url.searchParams.delete(k)
+    } else {
+      url.searchParams.set(k, v)
+    }
+  }
+  window.history.replaceState(null, null, url)
+}

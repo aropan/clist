@@ -164,7 +164,7 @@ class Statistic(BaseModule):
                                 p['binary'] = True
                                 solved += 1
                             elif verdict == 'hidden':
-                                p['result'] = '?'
+                                p['result'] = '+?'
                                 p['icon'] = '<i class="fas fa-question"></i>'
                                 has_hidden = True
                             elif verdict == 'download_valid':

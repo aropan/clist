@@ -297,7 +297,7 @@ def standings_charts(request, context):
         full_scores[short] = problem['full_score']
 
     for stat in statistics:
-        if not is_stage and stat.addition.get('_no_update_n_contests'):
+        if not is_stage and stat.skip_in_stats:
             continue
 
         addition = stat.addition

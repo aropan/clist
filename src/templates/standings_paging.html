@@ -28,7 +28,8 @@ data-place="{{ statistic.place }}"
 >
   {% with advance=addition|get_item:'_advance' %}
   <{{ tag }}
-    class="place-cell{% if advance and not addition.medal %} advance{% if advance.class %} {{ advance.class }}{% endif %}{% endif %}"
+    class="place-cell sticky-column{% if advance and not addition.medal %} advance{% if advance.class %} {{ advance.class }}{% endif %}{% endif %}"
+    data-sticky-column="place-cell"
     {% if advance %}
       data-placement="top"
       data-toggle="tooltip"
@@ -44,7 +45,7 @@ data-place="{{ statistic.place }}"
   {% endwith %}
   {% if data_1st_u %}
   {% with info=participants_info|get_item:statistic.id %}
-  <{{ tag }} class="first-u-cell">
+  <{{ tag }} class="first-u-cell sticky-column" data-sticky-column="first-u-cell">
     {% if info.search %}
       {% if data_1st_u.field %}
       <a href="{{ request.path }}?{% query_transform request data_1st_u.field statistic.addition|get_item:data_1st_u.field %}">
@@ -66,11 +67,11 @@ data-place="{{ statistic.place }}"
   </{{ tag }}>
   {% endwith %}
   {% endif %}
-  <{{ tag }} class="handle-cell
+  <{{ tag }} class="handle-cell sticky-column
     {% with info=participants_info|get_item:statistic.id %}
     {% if info and info.n and info.n <= standings_options.n_highlight or info and info.highlight %}bg-success{% endif %}
     {% endwith %}
-  ">
+  " data-sticky-column="handle-cell">
     <div class="handle-cell-flex">
       <span>
         {% include "standings_account.html" with account=statistic.account addition=addition resource=contest.resource %}
@@ -105,7 +106,7 @@ data-place="{{ statistic.place }}"
   {% with versus_data_row=versus_data.stats|get_item:statistic.account.key %}
   {% if versus_data_row %}
     {% with win=versus_data_row.win lose=versus_data_row.lose draw=versus_data_row.draw total=versus_data_row.total %}
-    <{{ tag }}>
+    <{{ tag }} class="versus-cell">
       {% if versus_data_row.games %}
         <a class="versus-games" onclick="$('#versus-games-{{ statistic.pk }}').modal('show');">
       {% endif %}
@@ -146,7 +147,7 @@ data-place="{{ statistic.place }}"
   {% endif %}
   {% endwith %}
   {% endif %}
-  <{{ tag }} class="score-cell">
+  <{{ tag }} class="score-cell sticky-column" data-sticky-column="score-cell">
     <div>{{ statistic.addition_replacement.solving|default:statistic.solving|scoreformat }}</div>
   </{{ tag }}>
   {% if mod_penalty %}
@@ -253,8 +254,8 @@ data-place="{{ statistic.place }}"
 {% include "standings_paging_next.html" %}
 {% endif %}
 
-{% if with_table_inner_scroll and merge_problems %}
-<script>$(update_sticky_header_problems_top)</script>
+{% if with_table_inner_scroll %}
+<script>$(update_sticky)</script>
 {% endif %}
 
 {% if colored_by_group_score %}

@@ -320,7 +320,7 @@ class Command(BaseCommand):
                                 Account.objects.filter(resource=resource, key=r['member']).delete()
                                 continue
 
-                            skip_result = r.get('_no_update_n_contests')
+                            skip_result = bool(r.get('_no_update_n_contests'))
 
                             def update_problems_info():
                                 problems = r.get('problems', {})
@@ -442,7 +442,7 @@ class Command(BaseCommand):
 
                         for r in tqdm(results, desc=f'update results {contest}'):
                             member = r.pop('member')
-                            skip_result = r.get('_no_update_n_contests')
+                            skip_result = bool(r.get('_no_update_n_contests'))
 
                             account_created = member not in accounts
                             if account_created:
@@ -699,6 +699,7 @@ class Command(BaseCommand):
                                     'place': r.pop('place', None),
                                     'solving': r.pop('solving', 0),
                                     'upsolving': r.pop('upsolving', 0),
+                                    'skip_in_stats': skip_result,
                                 }
                                 defaults = {k: v for k, v in defaults.items() if v != '__unchanged__'}
 

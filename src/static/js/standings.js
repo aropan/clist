@@ -1,5 +1,17 @@
-function update_sticky_header_problems_top() {
+function update_sticky() {
   $('tr.header-problems').css('top', $('tr.header-row:first').height())
+
+  var width = 0
+  var seen = []
+  $('tr .sticky-column').each(function() {
+    var column = $(this).attr('data-sticky-column')
+    if (seen[column]) {
+      return
+    }
+    seen[column] = true
+    $('tr .' + column).css('left', width)
+    width += $(this).outerWidth()
+  })
 }
 
 function color_by_group_score(attr = 'data-result') {
@@ -192,7 +204,9 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       problem_status = 'warning'
     }
 
-    if (visible && (score.startsWith('+') || parseFloat(score) > 0)) {
+    var is_hidden = score.startsWith('?')
+    var is_solved = score.startsWith('+') || parseFloat(score) > 0
+    if (visible && is_solved) {
       problem_status = $e.find('.par').length? 'info' : 'success'
 
       if (result && result.startsWith('+') && contest_timeline['penalty_more'] && !more_penalty) {
@@ -230,7 +244,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
         more_penalty = parseFloat(more_penalty) + parseFloat(stat.attr('data-more-penalty'))
         stat.attr('data-more-penalty', more_penalty)
       }
-    } else if (visible && (score.startsWith('?'))) {
+    } else if (visible && is_hidden) {
       problem_status = 'warning'
     }
 
@@ -592,9 +606,12 @@ function clear_extra_info_timeline() {
   $('table.standings .handle-cell.bg-success').removeClass('bg-success')
 
   $('.stat-cell .problem-cell:not(.accepted-switcher)').addClass('accepted-switcher').click(switcher_click)
+
+  update_sticky()
 }
 
 function show_timeline() {
+  update_urls_params({'timeline': ''})
   $('#timeline-buttons').toggleClass('hidden')
   $('#timeline').show()
   $('.standings .endless_container').remove()

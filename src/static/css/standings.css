@@ -177,11 +177,30 @@ a.solution:hover span {
   position: sticky;
   position: -webkit-sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
 }
 
 #table-inner-scroll table tr.starred td {
   border-top: 1px solid #c8e5f3;
+}
+
+#table-inner-scroll table .sticky-column {
+  position: sticky;
+  position: -webkit-sticky;
+  left: 0;
+  z-index: 10;
+}
+
+.table-striped>tbody>tr:nth-of-type(n).info>td {
+  background-color: #d9edf7;
+}
+
+.table-striped>tbody>tr:nth-of-type(even)>td {
+  background-color: #ffffff;
+}
+
+.table-striped>tbody>tr:nth-of-type(odd)>td {
+  background-color: #f9f9f9;
 }
 
 .standings tr.find-me-row td {

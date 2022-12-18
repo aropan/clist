@@ -18,20 +18,13 @@ def main(host=None, full=False):
     total = resources.count()
 
     with tqdm(total=total, desc='resources') as pbar_resource:
-        for resource in resources.iterator():
+        for resource in resources:
             start_time = timezone.now()
             accounts = Account.objects.filter(resource=resource)
             if not full:
-                accounts = Account.objects.filter(coders__isnull=False)
-            qs = accounts.annotate(
-                count=SubqueryCount(
-                    'statistics',
-                    filter=(
-                        Q(addition___no_update_n_contests__isnull=True) |
-                        Q(addition___no_update_n_contests=False)
-                    ),
-                ),
-            )
+                accounts = accounts.filter(coders__isnull=False)
+
+            qs = accounts.annotate(count=SubqueryCount('statistics', filter=Q(skip_in_stats=False)))
             total = 0
             n_contests_diff = 0
             with tqdm(desc='accounts') as pbar:
@@ -51,9 +44,10 @@ def main(host=None, full=False):
                 resource=resource.host,
                 time=timezone.now() - start_time,
                 total=accounts.count(),
-                n_contests_diff=n_contests_diff,
+                diff=n_contests_diff,
             )
             pbar_resource.update()
+
         pbar_resource.close()
 
 

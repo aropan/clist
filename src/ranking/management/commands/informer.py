@@ -171,7 +171,7 @@ class Command(BaseCommand):
                         m = '%s%s %s' % (short, ('. ' + v['name']) if 'name' in v else '', result)
 
                         if v.get('verdict'):
-                            m += ' ' + v['verdict']
+                            m += ' ' + md_italic_escape(v['verdict'])
 
                         if p_result != result:
                             has_update = True

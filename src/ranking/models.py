@@ -282,6 +282,7 @@ class Statistics(BaseModel):
     url = models.TextField(null=True, blank=True)
     new_global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     global_rating_change = models.IntegerField(null=True, blank=True, default=None)
+    skip_in_stats = models.BooleanField(default=False, db_index=True)
 
     @staticmethod
     def is_special_addition_field(field):
@@ -320,7 +321,7 @@ def statistics_pre_save(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=Statistics)
 @receiver(post_delete, sender=Statistics)
 def count_account_contests(signal, instance, **kwargs):
-    if instance.addition.get('_no_update_n_contests'):
+    if instance.skip_in_stats:
         return
 
     if signal is post_delete:
@@ -806,7 +807,6 @@ class Stage(BaseModel):
                 for field in [row.get('member'), row.get('name')]:
                     row.update(additions.pop(field, {}))
 
-                row['_no_update_n_contests'] = True
                 division = row.get('division', 'none')
                 placing_info = placing_infos.setdefault(division, {})
                 placing_info['index'] = placing_info.get('index', 0) + 1
@@ -854,6 +854,7 @@ class Stage(BaseModel):
                         'place_as_int': placing_info['place'],
                         'solving': solving,
                         'addition': row,
+                        'skip_in_stats': True,
                     },
                 )
                 pks.add(stat.pk)
