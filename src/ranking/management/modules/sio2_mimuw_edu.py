@@ -34,6 +34,7 @@ class Statistic(BaseModule):
             for r in table:
                 if isinstance(r, parsed_table.ParsedTableRow):
                     runda = re.sub(r'\s*\(.*\)\s*$', '', r.columns[0].value).strip()
+                    runda = runda.strip('.')
                     skip = runda.lower() not in self.name.lower()
                     continue
 
@@ -53,7 +54,7 @@ class Statistic(BaseModule):
                         if match:
                             problem_info['_letter'] = match.group('letter')
                         problem_info['name'] = v
-                        href = vs.column.node.xpath('//a/@href')
+                        href = vs.column.node.xpath('.//a/@href')
                         if href:
                             problem_info['url'] = urljoin(problem_url, href[0])
                 if problem_info:
@@ -63,6 +64,7 @@ class Statistic(BaseModule):
         problems_infos = parse_problems_infos()
 
         result = {}
+        full_scores = set()
 
         page = 1
         while page is not None:
@@ -92,7 +94,11 @@ class Statistic(BaseModule):
                         row['member'] = member
                     elif k in problems_infos and v.value:
                         problems[k] = {'result': v.value}
-                        row['solving'] += as_number(v.value)
+                        value = as_number(v.value)
+                        row['solving'] += value
+                        if 'submission--OK100' in v.attrs.get('class', ''):
+                            problems_infos[k].setdefault('full_score', value)
+                            full_scores.add(value)
                 if not problems:
                     continue
                 result[row['member']] = row
@@ -114,4 +120,8 @@ class Statistic(BaseModule):
             'result': result,
             'problems': problems_infos,
         }
+
+        if len(full_scores) == 1:
+            ret['default_problem_full_score'] = list(full_scores)[0]
+
         return ret

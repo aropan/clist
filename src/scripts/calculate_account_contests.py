@@ -2,7 +2,7 @@
 
 
 import fire
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 from sql_util.utils import SubqueryCount
 from tqdm import tqdm
@@ -25,11 +25,10 @@ def main(host=None, full=False):
                 accounts = accounts.filter(coders__isnull=False)
 
             qs = accounts.annotate(count=SubqueryCount('statistics', filter=Q(skip_in_stats=False)))
-            total = 0
+            qs = qs.exclude(count=F('n_contests'))
             n_contests_diff = 0
             with tqdm(desc='accounts') as pbar:
                 for a in qs.iterator():
-                    total += 1
                     to_save = False
                     if a.count != a.n_contests:
                         n_contests_diff += 1

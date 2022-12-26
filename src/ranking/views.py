@@ -76,7 +76,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                 'coder': {'fields': ['statistics__account__coders__username']},
                 'account': {'fields': ['statistics__account__key', 'statistics__account__name'], 'suff': '__iregex'},
                 'stage': {'fields': ['stage'], 'suff': '__isnull', 'func': lambda v: False},
-                'medal': {'fields': ['info__standings__medals'], 'suff': '__isnull', 'func': lambda v: False},
+                'medal': {'fields': ['with_medals'], 'func': lambda v: True},
                 'year': {'fields': ['start_time__year', 'end_time__year']},
             },
             logger=request.logger,
@@ -1693,7 +1693,7 @@ def versus(request, query):
         def set_medal(v):
             nonlocal with_medal
             with_medal = True
-            return False
+            return True
 
         contests_filter = get_iregex_filter(search,
                                             'title', 'host', 'resource__host',
@@ -1702,9 +1702,7 @@ def versus(request, query):
                                                 'resource': {'fields': ['host__iregex']},
                                                 'slug': {'fields': ['slug']},
                                                 'writer': {'fields': ['info__writers__contains']},
-                                                'medal': {'fields': ['info__standings__medals'],
-                                                          'suff': '__isnull',
-                                                          'func': set_medal},
+                                                'medal': {'fields': ['with_medals'], 'func': set_medal},
                                             },
                                             logger=request.logger)
         if with_medal:
@@ -1713,7 +1711,7 @@ def versus(request, query):
 
     medal = request.GET.get('medal')
     if medal:
-        contests_filter = Q(info__standings__medals__isnull=False)
+        contests_filter = Q(with_medals=True)
         contests_filter |= Q(pk__in=versus_data['medal_contests_ids'])
         if medal == 'no':
             contests_filter = ~contests_filter

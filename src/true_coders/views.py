@@ -16,7 +16,7 @@ from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
-                              Prefetch, Q, Value, When)
+                              Prefetch, Q, Subquery, Value, When)
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1197,6 +1197,14 @@ def search(request, **kwargs):
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
+    elif query == 'contests':
+        qs = Contest.objects.all()
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'title'))
+        qs = qs.order_by('-end_time', 'pk')
+
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'text': r.title} for r in qs]
     elif query == 'tags':
         qs = ProblemTag.objects.all()
         if 'regex' in request.GET:
@@ -1786,6 +1794,38 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.filter(resource__in=resources)
         params['resources'] = resources
 
+    # qualifiers
+    contests = request.GET.getlist('contest')
+    contests = [r for r in contests if r]
+    if contests:
+        contests = Contest.objects.filter(pk__in=contests)
+        params['contests'] = contests
+
+        advanced = request.GET.get('advanced')
+        params['advanced_filter'] = {
+            'values': [advanced] if advanced else [],
+            'options': ['true', 'false'], 'noajax': True, 'nomultiply': True, 'nogroupby': True,
+        }
+
+        filt = Q(contest__in=contests)
+        if advanced and advanced in django_settings.YES_:
+            filt &= Q(advanced=True)
+            params['advanced_filter']['value'] = True
+
+        stats = Statistics.objects.filter(filt).prefetch_related('contest')
+
+        accounts = (
+            accounts
+            .prefetch_related(Prefetch('statistics_set', stats, to_attr='selected_stats'))
+            .annotate(has_contests=Exists('statistics', filter=filt))
+            .filter(has_contests=True)
+        )
+
+        subquery = stats.filter(account_id=OuterRef('pk')).order_by('contest__end_time', 'place_as_int')
+        subquery = subquery[:1]
+        accounts = accounts.annotate(selected_contest=Subquery(subquery.values('contest__end_time')))
+        accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
+
     context = {'params': params}
     addition_table_fields = ('modified', 'updated')
     table_fields = ('rating', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
@@ -1794,7 +1834,7 @@ def accounts(request, template='accounts.html'):
     groupby = request.GET.get('groupby')
     fields = request.GET.getlist('field')
     orderby = request.GET.get('sort_column')
-    order = request.GET.get('sort_order')
+    order = request.GET.get('sort_order') if orderby else None
 
     # custom fields
     custom_fields = set()
@@ -1854,6 +1894,8 @@ def accounts(request, template='accounts.html'):
         pass
     elif orderby in custom_fields:
         orderby = f'info__{orderby}'
+    elif params.get('advanced_filter'):
+        orderby = ['selected_contest', 'selected_place']
     elif orderby:
         request.logger.error(f'Not found `{orderby}` column for sorting')
         orderby = []
@@ -1864,6 +1906,7 @@ def accounts(request, template='accounts.html'):
         request.logger.warning(f'Not found `{order}` order for sorting')
     orderby = orderby or ['-created']
     accounts = accounts.order_by(*orderby)
+
     context['accounts'] = accounts
     context['resources_custom_fields'] = custom_fields
 

@@ -18,7 +18,7 @@ from django.utils import timezone
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
 
-from clist.templatetags.extras import slug
+from clist.templatetags.extras import get_item, slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
@@ -256,6 +256,7 @@ class Contest(BaseModel):
     has_hidden_results = models.BooleanField(null=True, blank=True)
     related = models.ForeignKey('Contest', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_set')
     is_rated = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+    with_medals = models.BooleanField(null=True, blank=True, default=None, db_index=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -278,6 +279,7 @@ class Contest(BaseModel):
             models.Index(fields=['n_statistics', 'end_time']),
             models.Index(fields=['resource', 'end_time', 'id']),
             models.Index(fields=['resource', 'start_time', 'id']),
+            models.Index(fields=['resource', 'start_time', 'end_time']),
             models.Index(fields=['title']),
             GistIndexTrgrmOps(fields=['title']),
         ]
@@ -305,6 +307,8 @@ class Contest(BaseModel):
             stats = self.statistics_set
             stats = stats.filter(new_global_rating__isnull=False)
             stats.update(new_global_rating=None, global_rating_change=None)
+
+        self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in self.info.get('fields', [])
 
         return super(Contest, self).save(*args, **kwargs)
 

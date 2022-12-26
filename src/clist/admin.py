@@ -76,7 +76,7 @@ class ContestAdmin(BaseModelAdmin):
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['n_statistics', 'parsed_time', 'has_hidden_results', 'calculate_time',
-                                             'info', 'invisible', 'is_rated', 'related']}],
+                                             'info', 'invisible', 'is_rated', 'with_medals', 'related']}],
         ['Access time', {'fields': ['created', 'modified', 'updated']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',

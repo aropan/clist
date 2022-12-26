@@ -34,3 +34,28 @@
   margin: -1px;
   text-align: center;
 }
+
+#accounts .result-table {
+  width: 100%;
+  min-height: 40px;
+}
+
+#accounts .result-td {
+  padding: 0px;
+}
+
+#accounts .gold-medal {
+  background: #f9d923 !important;
+}
+
+#accounts .silver-medal {
+  background: silver !important;
+}
+
+#accounts .bronze-medal {
+  background: #c08e55 !important;
+}
+
+#accounts .honorable-medal {
+  background: #d0e3f7 !important;
+}

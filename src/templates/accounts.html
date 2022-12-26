@@ -53,6 +53,11 @@
     {% include 'country_filter.html' with has_country=True groupby=groupby|default:chart %}
     {% include 'resource_filter.html' with groupby=groupby|default:chart %}
 
+    {% if params.contests %}
+    {% include 'contest_filter.html' %}
+    {% include "field_to_select.html" with field="advanced" data=params.advanced_filter %}
+    {% endif %}
+
     {% if custom_fields %}
     {% include "field_to_select.html" with field="field" data=custom_fields %}
     {% endif %}
@@ -94,6 +99,11 @@
             <div>Accounts</div>
             <div class="sortable-column" data-column="account"></div>
           </th>
+          {% if params.advanced_filter %}
+          <th>
+            <div>Result</div>
+          </th>
+          {% endif %}
           <th>
             <div>Coder</div>
           </th>

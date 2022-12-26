@@ -283,6 +283,7 @@ class Statistics(BaseModel):
     new_global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     global_rating_change = models.IntegerField(null=True, blank=True, default=None)
     skip_in_stats = models.BooleanField(default=False, db_index=True)
+    advanced = models.BooleanField(default=False, db_index=True)
 
     @staticmethod
     def is_special_addition_field(field):
@@ -310,6 +311,7 @@ class Statistics(BaseModel):
             models.Index(fields=['place_as_int', '-created']),
             models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
             models.Index(fields=['contest', 'account']),
+            models.Index(fields=['contest', 'advanced']),
         ]
 
 
@@ -846,6 +848,12 @@ class Stage(BaseModel):
                         score_advance, place_advance, place_index = tmp
                 account = row.pop('member')
                 solving = row.pop('score')
+
+                advanced = False
+                if row.get('_advance'):
+                    adv = row['_advance']
+                    advanced = not adv.get('skip') and not adv.get('class', '').startswith('text-')
+
                 stat, created = Statistics.objects.update_or_create(
                     account=account,
                     contest=stage,
@@ -855,6 +863,7 @@ class Stage(BaseModel):
                         'solving': solving,
                         'addition': row,
                         'skip_in_stats': True,
+                        'advanced': advanced,
                     },
                 )
                 pks.add(stat.pk)

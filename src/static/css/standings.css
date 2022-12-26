@@ -94,6 +94,10 @@ table.standings th {
   color: #4ba823 !important;
 }
 
+.standings .bg-success {
+  background: #dff0d8 !important;
+}
+
 table.standings .handle-cell {
   text-align: left;
   white-space: nowrap;
@@ -195,11 +199,11 @@ a.solution:hover span {
   background-color: #d9edf7;
 }
 
-.table-striped>tbody>tr:nth-of-type(even)>td {
+.table-striped tr:nth-of-type(even)>td {
   background-color: #ffffff;
 }
 
-.table-striped>tbody>tr:nth-of-type(odd)>td {
+.table-striped tr:nth-of-type(odd)>td {
   background-color: #f9f9f9;
 }
 

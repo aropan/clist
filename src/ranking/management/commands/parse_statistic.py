@@ -12,11 +12,13 @@ from logging import getLogger
 from random import shuffle
 
 import arrow
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
+from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 from traceback_with_variables import format_exc
 
@@ -700,6 +702,7 @@ class Command(BaseCommand):
                                     'solving': r.pop('solving', 0),
                                     'upsolving': r.pop('upsolving', 0),
                                     'skip_in_stats': skip_result,
+                                    'advanced': bool(r.get('advanced')),
                                 }
                                 defaults = {k: v for k, v in defaults.items() if v != '__unchanged__'}
 
@@ -1040,8 +1043,9 @@ class Command(BaseCommand):
                 stage.update()
             return ret
 
-        for stage in tqdm(Stage.objects.filter(pk__in=stages_ids), total=len(stages_ids), desc='getting stages'):
-            update_stage(stage)
+        if stages_ids:
+            for stage in tqdm(Stage.objects.filter(pk__in=stages_ids), total=len(stages_ids), desc='getting stages'):
+                update_stage(stage)
 
         progress_bar.close()
         self.logger.info(f'Parsed statistic: {count} of {total}')
@@ -1049,6 +1053,7 @@ class Command(BaseCommand):
         self.logger.info(f'Number of created statistics: {n_statistics_created} of {n_statistics_total}')
         return count, total
 
+    @print_sql_decorator(count_only=settings.DEBUG)
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)

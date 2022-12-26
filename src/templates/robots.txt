@@ -29,6 +29,8 @@ Disallow: /*&country=*&country=
 Disallow: /*?country=*&country=
 Disallow: /*&resource=*&resource=
 Disallow: /*?resource=*&resource=
+Disallow: /*&contest=*&contest=
+Disallow: /*?contest=*&contest=
 Disallow: /*&tag=*&tag=
 Disallow: /*?tag=*&tag=
 Clean-param: page&querystring_key&next&timezone&durationlimit&viewmode&hide_contest&tabs&q&search&as_coder&period&sort_column&sort_order&chart_column

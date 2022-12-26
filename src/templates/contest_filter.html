@@ -1,0 +1,69 @@
+{% with contest_id=contest|default:"contest" %}
+<div class="input-group input-group-sm hidden" id="{{ contest_id }}-hidden">
+{% if groupby %}
+  <div class="input-group-btn">
+    <button class="btn btn-default{% if groupby == 'contest' %} active{% endif %}" name="groupby" value="{% if groupby != 'contest' %}contest{% endif %}">
+      {% icon_to 'contest' %}
+    </button>
+  </div>
+{% else %}
+  <span class="input-group-addon">
+    {% icon_to 'contest' %}
+  </span>
+{% endif %}
+
+<select{% if not noname %} name="{{ contest_id }}"{% endif %} id="{{ contest_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
+    <option></option>
+    {% for contest in params.contests %}
+      <option value="{{ contest.pk }}" selected>{{ contest.title }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<script>
+  $('#{{ contest_id }}').select2({
+    dropdownAutoWidth : true,
+    theme: 'bootstrap',
+    placeholder: '',
+    allowClear: true,
+    templateResult: function (data) {
+      var $result = $('<span></span>')
+      $result.text(data.text)
+      if (data.icon) {
+        $result.prepend('<img src="/imagefit/static_resize/32x32/' + data.icon + '" width="16" height="16">&nbsp;')
+      }
+      return $result
+    },
+    ajax: {
+      url: '/settings/search/',
+      dataType: 'json',
+      delay: 314,
+      data: function (params) {
+        return {
+          query: 'contests',
+          regex: params.term,
+          page: params.page || 1
+        };
+      },
+      processResults: function (data, params) {
+        return {
+          results: data.items,
+          pagination: {
+            more: data.more
+          }
+        };
+      },
+      cache: true,
+    },
+  }).on('select2:unselecting', function() {
+    $(this).data('unselecting', true);
+  }).on('select2:opening', function(e) {
+    if ($(this).data('unselecting')) {
+      $(this).removeData('unselecting');
+      e.preventDefault();
+    }
+  })
+  $('#{{ contest_id }}-hidden').removeClass('hidden');
+</script>
+{% endwith %}
+

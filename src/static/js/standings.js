@@ -505,10 +505,19 @@ function switcher_click(event) {
     stat.attr('data-score-switcher', stat.attr('data-score') || '')
     stat.attr('data-penalty-switcher', stat.attr('data-penalty') || '')
 
+
     var result = stat.attr('data-result')
     var penalty = Math.floor(contest_duration * CURRENT_PERCENT)
     var score = stat.attr('data-problem-full-score')
-    if (!result) {
+    if (contest_timeline['result_switcher_type'] == 'next_min') {
+      var index = stat.parent().find('td').index(stat)
+      var problem_cells = $('.stat-cell td:nth-of-type(' + (index + 1) + ')')
+      var problem_results = problem_cells.map((_, e) => { return $(e).attr('data-result') })
+      problem_results = problem_results.filter((_, r) => !!r)
+      result = problem_results.length? Math.min(...problem_results) : problem_cells.length
+      result = Math.max(0, result - 1)
+      result = result.toString()
+    } else if (!result) {
       result = '+'
     } else if (result.startsWith('-')) {
       result = '+' + result.substring(1)

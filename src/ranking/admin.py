@@ -106,7 +106,7 @@ class AutoRatingAdmin(BaseModelAdmin):
 
 @admin_register(Statistics)
 class StatisticsAdmin(BaseModelAdmin):
-    list_display = ['account', 'contest', 'place', 'solving', 'upsolving', '_skip']
+    list_display = ['account', 'contest', 'place', 'solving', 'upsolving', '_skip', '_adv']
     search_fields = ['=account__key']
     list_filter = ['contest__host', 'skip_in_stats']
 
@@ -114,6 +114,11 @@ class StatisticsAdmin(BaseModelAdmin):
         return obj.skip_in_stats
     _skip.boolean = True
     _skip.short_description = 'Skip'
+
+    def _adv(self, obj):
+        return obj.advanced
+    _adv.boolean = True
+    _adv.short_description = 'Adv'
 
 
 @admin_register(Stage)

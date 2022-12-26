@@ -605,6 +605,7 @@ FONTAWESOME_ICONS_ = {
     'pin': '<i class="far fa-star"></i>',
     'unpin': '<i class="fas fa-star"></i>',
     'timeline': '<i class="fas fa-history"></i>',
+    'contest': '<i class="fas fa-laptop-code"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
