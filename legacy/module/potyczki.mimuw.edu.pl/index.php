@@ -4,12 +4,40 @@
     $url = $HOST_URL;
     $page = curlexec($url);
 
+    $parsed_times = array();
+    $parsed_year = null;
     if (preg_match('#<div[^>]*news_text[^>]*>.*?(?P<year>20[0-9]{2})#s', $page, $match)) {
+        $parsed_year = $match['year'];
+
+        function rename_months_from_pl_to_en($page, $year) {
+            $month_dict = array(
+                "st" => "january",
+                "lu" => "february",
+                "mar" => "march",
+                "kw" => "april",
+                "maj" => "may",
+                "cz" => "june",
+                "lip" => "july",
+                "si" => "august",
+                "wr" => "september",
+                "pa" => "october",
+                "lis" => "november",
+                "gru" => "december",
+            );
+            foreach ($month_dict as $key => $value) {
+                $value .= ' ' . $year;
+                $page = preg_replace('#\b' . $key . '\w*#', $value, $page);
+            }
+            return $page;
+        }
+        $page = rename_months_from_pl_to_en($page, $parsed_year);
+        $page = preg_replace('#\s*godz.\s*#', ' ', $page);
+
         preg_match_all('#
             <tr[^>]*>\s*
                 <td[^>]*>\s*(?P<round>[0-9])\s*</td>\s*
-                <td[^>]*>(?P<start_date>[^<]*)</td>\s*
-                <td[^>]*>(?P<end_date>[^<]*)</td>\s*
+                <td[^>]*>(?P<start_time>[^<]*)</td>\s*
+                <td[^>]*>(?P<end_time>[^<]*)</td>\s*
                 (?:\s*<td[^>]*>[^<]*</td>){3}\s*
             </tr>
             #x',
@@ -17,12 +45,17 @@
             $matches,
             PREG_SET_ORDER,
         );
+
+        foreach ($matches as $m) {
+            $name = 'Runda ' . $m['round'];
+            $start_time = $m['start_time'] . ' ' . $TIMEZONE;
+            $end_time = $m['end_time'] . ' ' . $TIMEZONE;
+            $parsed_times[$name] = array('start_time' => $start_time, 'end_time' => $end_time);
+        }
     }
 
     $year = date('Y');
     $url = $URL;
-
-
 
     do {
         $page = curlexec($url);
@@ -62,6 +95,13 @@
 
             $start_time = $curr_time - $duration;
             $start_time = round($start_time / 3600) * 3600;
+
+            if ($year == $parsed_year && isset($parsed_times[$round])) {
+                $t = $parsed_times[$round];
+                $start_time = $t['start_time'];
+                $end_time = $t['end_time'];
+                unset($parsed_times[$round]);
+            }
 
             $contests[] = array(
                 'start_time' => $start_time,

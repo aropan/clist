@@ -13,7 +13,7 @@ from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 
-from clist.models import Contest, TimingContest
+from clist.models import Contest
 from notification.models import Notification, Task
 from utils.datetime import Epoch
 
@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
         updates = Contest.visible\
             .filter(start_time__gte=timezone.now()) \
-            .filter(Q(timing=None) | Q(modified__gt=F('timing__notification'))) \
+            .filter(Q(notification_timing=None) | Q(modified__gt=F('notification_timing'))) \
             .order_by('start_time')
 
         now = timezone.now()
@@ -150,8 +150,4 @@ class Command(BaseCommand):
         if not dryrun:
             with transaction.atomic():
                 now = timezone.now()
-                for contest in updates:
-                    TimingContest.objects.update_or_create(
-                        contest=contest,
-                        defaults={'notification': now}
-                    )
+                updates.update(notification_timing=now)

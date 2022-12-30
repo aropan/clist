@@ -1795,35 +1795,49 @@ def accounts(request, template='accounts.html'):
         params['resources'] = resources
 
     # qualifiers
-    contests = request.GET.getlist('contest')
-    contests = [r for r in contests if r]
-    if contests:
-        contests = Contest.objects.filter(pk__in=contests)
+    contests_ids = request.GET.getlist('contest')
+    contests_ids = [r for r in contests_ids if r]
+    if contests_ids:
+        contests = Contest.objects.filter(pk__in=contests_ids)
         params['contests'] = contests
 
-        advanced = request.GET.get('advanced')
+        contest_filter = Q(contest__in=contests_ids)
+        stats = Statistics.objects.filter(contest_filter)
+
+        adv_options = stats.distinct('addition___advance__next').values_list('addition___advance__next', flat=True)
+        advanced = request.GET.getlist('advanced')
         params['advanced_filter'] = {
-            'values': [advanced] if advanced else [],
-            'options': ['true', 'false'], 'noajax': True, 'nomultiply': True, 'nogroupby': True,
+            'values': advanced,
+            'options': ['true', 'false'] + [a for a in adv_options if a],
+            'noajax': True,
+            'nomultiply': True,
+            'nogroupby': True,
         }
 
-        filt = Q(contest__in=contests)
-        if advanced and advanced in django_settings.YES_:
-            filt &= Q(advanced=True)
-            params['advanced_filter']['value'] = True
+        adv_filter = Q()
+        for adv in advanced:
+            if adv not in params['advanced_filter']['options']:
+                continue
+            if adv in ['true', 'false']:
+                adv_filter |= Q(advanced=adv == 'true')
+            else:
+                adv_filter |= Q(addition___advance__next=adv, advanced=True)
+            params['advanced_filter']['value'] = bool(advanced)
+        stats = stats.filter(adv_filter)
 
-        stats = Statistics.objects.filter(filt).prefetch_related('contest')
+        prefetch_stats = stats.select_related('contest').order_by('contest_id')
 
         accounts = (
             accounts
-            .prefetch_related(Prefetch('statistics_set', stats, to_attr='selected_stats'))
-            .annotate(has_contests=Exists('statistics', filter=filt))
+            .prefetch_related(Prefetch('statistics_set', prefetch_stats, to_attr='selected_stats'))
+            .annotate(has_contests=Exists('statistics', filter=contest_filter & adv_filter))
             .filter(has_contests=True)
         )
 
-        subquery = stats.filter(account_id=OuterRef('pk')).order_by('contest__end_time', 'place_as_int')
+        subquery = stats.filter(account=OuterRef('pk')).order_by('contest__start_time', 'contest_id', 'place_as_int')
         subquery = subquery[:1]
-        accounts = accounts.annotate(selected_contest=Subquery(subquery.values('contest__end_time')))
+        accounts = accounts.annotate(selected_time=Subquery(subquery.values('contest__start_time')))
+        accounts = accounts.annotate(selected_contest=Subquery(subquery.values('contest_id')))
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
 
     context = {'params': params}
@@ -1895,7 +1909,7 @@ def accounts(request, template='accounts.html'):
     elif orderby in custom_fields:
         orderby = f'info__{orderby}'
     elif params.get('advanced_filter'):
-        orderby = ['selected_contest', 'selected_place']
+        orderby = ['selected_time', 'selected_contest', 'selected_place']
     elif orderby:
         request.logger.error(f'Not found `{orderby}` column for sorting')
         orderby = []

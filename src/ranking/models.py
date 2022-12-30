@@ -282,8 +282,8 @@ class Statistics(BaseModel):
     url = models.TextField(null=True, blank=True)
     new_global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     global_rating_change = models.IntegerField(null=True, blank=True, default=None)
-    skip_in_stats = models.BooleanField(default=False, db_index=True)
-    advanced = models.BooleanField(default=False, db_index=True)
+    skip_in_stats = models.BooleanField(default=False)
+    advanced = models.BooleanField(default=False)
 
     @staticmethod
     def is_special_addition_field(field):
@@ -311,7 +311,10 @@ class Statistics(BaseModel):
             models.Index(fields=['place_as_int', '-created']),
             models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
             models.Index(fields=['contest', 'account']),
-            models.Index(fields=['contest', 'advanced']),
+            models.Index(fields=['contest', 'advanced', 'place_as_int']),
+            models.Index(fields=['contest', 'account', 'advanced', 'place_as_int']),
+            models.Index(fields=['account', 'advanced']),
+            models.Index(fields=['account', 'skip_in_stats']),
         ]
 
 

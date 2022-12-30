@@ -1,6 +1,6 @@
 {% if perms.clist.reset_contest_statistic_timing %}
 <span class="inline-button">
-    <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}" title="timing.statistic = {{ contest.timing.statistic|naturaltime }}" data-toggle="tooltip">
+    <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}" title="statistic timing = {{ contest.statistic_timing|naturaltime }}" data-toggle="tooltip">
         <i class="fas fa-sync-alt"></i>
     </button>
 

@@ -102,8 +102,6 @@ def get_view_contests(request, coder):
             user_contest_filter = Coder.get_contest_filter(None, categories)
 
     base_contests = Contest.visible.filter(user_contest_filter)
-    if request.user.has_perm('reset_contest_statistic_timing'):
-        base_contests = base_contests.select_related('timing')
 
     resources = [r for r in request.GET.getlist('resource') if r]
     if resources:
@@ -490,7 +488,7 @@ def resource(request, host, template='resource.html', extra_context=None):
 
     params = {}
 
-    contests = resource.contest_set.all().select_related('timing')
+    contests = resource.contest_set.all()
 
     accounts = Account.objects.filter(resource=resource)
 

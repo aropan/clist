@@ -68,21 +68,31 @@ class Statistic(BaseModule):
 
         def get_advance():
             advancement = scoreboard_data['data']['contest'].get('advancement_requirement_text')
+            if advancement:
+                match = re.search('top (?P<place>[0-9]+) contestants', advancement)
+                if match:
+                    threshold = int(match.group('place'))
+                    return {'filter': [{'threshold': threshold, 'operator': 'le', 'field': 'place'}]}
 
-            if not advancement:
-                return {}
+                match = re.search('least (?P<score>[0-9]+) points', advancement)
+                if match:
+                    threshold = int(match.group('score'))
+                    return {'filter': [{'threshold': threshold, 'operator': 'ge', 'field': 'solving'}]}
 
-            match = re.search('top (?P<place>[0-9]+) contestants', advancement)
-            if match:
-                return {'filter': [{'threshold': int(match.group('place')), 'operator': 'le', 'field': 'place'}]}
+                match = re.search('least (?P<count>[0-9]+) problem', advancement)
+                if match:
+                    threshold = int(match.group('count'))
+                    return {'filter': [{'threshold': threshold, 'operator': 'ge', 'field': '_n_solved'}]}
 
-            match = re.search('least (?P<score>[0-9]+) points', advancement)
-            if match:
-                return {'filter': [{'threshold': int(match.group('score')), 'operator': 'ge', 'field': 'solving'}]}
-
-            match = re.search('least (?P<count>[0-9]+) problem', advancement)
-            if match:
-                return {'filter': [{'threshold': int(match.group('count')), 'operator': 'ge', 'field': '_n_solved'}]}
+            advancement = scoreboard_data['data']['contest'].get('advancement_mode')
+            if advancement:
+                threshold = scoreboard_data['data']['contest']['advancement_value']
+                if advancement == 'RANK':
+                    return {'filter': [{'threshold': threshold, 'operator': 'le', 'field': 'place'}]}
+                if advancement == 'SCORE':
+                    return {'filter': [{'threshold': threshold, 'operator': 'ge', 'field': 'solving'}]}
+                if advancement == 'NUM_PROBLEMS_SOLVED':
+                    return {'filter': [{'threshold': threshold, 'operator': 'ge', 'field': '_n_solved'}]}
 
             return {}
 

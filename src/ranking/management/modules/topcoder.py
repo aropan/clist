@@ -262,6 +262,7 @@ class Statistic(BaseModule):
                     ])
 
             problems_info = dict() if len(problems_sets) > 1 else list()
+            with_adv = False
             for problems_set, result_url in zip(problems_sets, result_urls):
                 url = urljoin(self.standings_url, result_url + '&em=1000000042')
                 url = url.replace('&amp;', '&')
@@ -366,6 +367,7 @@ class Statistic(BaseModule):
 
                     if 'adv.' in row:
                         row['advanced'] = row.pop('adv.').lower().startswith('y')
+                        with_adv |= row['advanced']
 
                     url_info = urljoin(url, r.columns[0].node.xpath('a/@href')[0])
                     url_infos.append(url_info)
@@ -503,6 +505,10 @@ class Statistic(BaseModule):
                                 })
                                 for c in challenges:
                                     h['successful' if c['status'].lower() == 'yes' else 'unsuccessful'] += 1
+
+            if not with_adv:
+                for row in result.values():
+                    row.pop('advanced', None)
 
             if dd_round_results:
                 fields = set()

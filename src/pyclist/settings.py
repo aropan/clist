@@ -600,6 +600,7 @@ FONTAWESOME_ICONS_ = {
     'charts': '<i class="fas fa-chart-bar"></i>',
     'update': '<i class="fas fa-sync"></i>',
     'open_in_tab': '<i class="fas fa-external-link-alt"></i>',
+    'extra_url': '<i class="fas fa-external-link-alt"></i>',
     'copy': '<i class="far fa-copy"></i>',
     'copied': '<i class="fas fa-copy"></i>',
     'pin': '<i class="far fa-star"></i>',

@@ -1,9 +1,8 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
-from django.db import transaction
 from django.utils import timezone
 
-from clist.models import Banner, Contest, Problem, ProblemTag, Resource, TimingContest
+from clist.models import Banner, Contest, Problem, ProblemTag, Resource
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import Rating
@@ -48,23 +47,6 @@ class ContestAdmin(BaseModelAdmin):
         model = Rating
         extra = 0
 
-    class Timing(admin.TabularInline):
-        model = TimingContest
-        fields = ['statistic']
-        readonly_fields = ['modified']
-        extra = 0
-
-    @transaction.atomic
-    def create_timing(self, request, queryset):
-        total, count = 0, 0
-        for c in queryset:
-            _, created = TimingContest.objects.get_or_create(contest=c)
-            if created:
-                count += 1
-            total += 1
-        self.message_user(request, "%d of %d created." % (count, total))
-    create_timing.short_description = 'Create timing'
-
     def parse_statistic(self, request, queryset):
         count, total = parse_stat().parse_statistic(queryset, with_check=False)
         self.message_user(request, "%d of %d parsed." % (count, total))
@@ -77,19 +59,19 @@ class ContestAdmin(BaseModelAdmin):
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['n_statistics', 'parsed_time', 'has_hidden_results', 'calculate_time',
                                              'info', 'invisible', 'is_rated', 'with_medals', 'related']}],
-        ['Access time', {'fields': ['created', 'modified', 'updated']}],
+        ['Timing', {'fields': ['notification_timing', 'statistic_timing', 'created', 'modified', 'updated']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
                     'created', 'modified', 'updated', 'parsed_time']
     search_fields = ['title', 'standings_url']
     list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'is_rated', 'resource__host']
 
-    actions = [create_timing, parse_statistic]
+    actions = [parse_statistic]
 
     def get_readonly_fields(self, request, obj=None):
-        return ['updated', ] + list(super().get_readonly_fields(request, obj))
+        return ['updated', 'notification_timing', 'statistic_timing'] + list(super().get_readonly_fields(request, obj))
 
-    inlines = [RatingSet, Timing]
+    inlines = [RatingSet]
 
 
 @admin_register(Resource)
@@ -175,17 +157,6 @@ class ProblemAdmin(BaseModelAdmin):
 class ProblemTagAdmin(BaseModelAdmin):
     list_display = ['name']
     search_fields = ['name']
-
-
-@admin_register(TimingContest)
-class TimingContestAdmin(BaseModelAdmin):
-    list_display = ['contest', 'notification', 'statistic', 'modified']
-    list_filter = ['contest__host']
-    search_fields = ['contest__title', 'contest__host']
-
-    def get_readonly_fields(self, request, obj=None):
-        return ['notification', 'statistic', ] + \
-            list(super().get_readonly_fields(request, obj))
 
 
 @admin_register(Banner)

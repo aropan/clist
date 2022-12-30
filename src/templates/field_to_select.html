@@ -25,6 +25,13 @@
     {% endfor %}
   {% endif %}
   </select>
+  {% if data.extra_url %}
+  <div class="input-group-btn">
+    <a href="{{ data.extra_url }}" target="_blank" class="btn btn-default">
+      {% icon_to "extra_url" field|title|add:" extra url" %}
+    </a>
+  </div>
+  {% endif %}
 </div>
 <script>
   $('#{{ field }}').select2({

@@ -12,7 +12,6 @@ from logging import getLogger
 from random import shuffle
 
 import arrow
-from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -22,7 +21,7 @@ from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 from traceback_with_variables import format_exc
 
-from clist.models import Contest, Resource, TimingContest
+from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
                                        time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
@@ -102,12 +101,12 @@ class Command(BaseCommand):
                 if previous_days is not None:
                     contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
                 else:
-                    contests = contests.filter(Q(timing__statistic__isnull=True) | Q(timing__statistic__lt=now))
+                    contests = contests.filter(Q(statistic_timing=None) | Q(statistic_timing__lt=now))
                     started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
 
                     before_end_limit_query = (
                         Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
-                        | Q(timing__statistic__isnull=True)
+                        | Q(statistic_timing=None)
                     )
 
                     after_start_limit_query = Q(
@@ -154,7 +153,8 @@ class Command(BaseCommand):
                         delay_on_success = c.full_duration / module.long_contest_divider
                     if c.end_time < now + delay_on_success and module.min_delay_after_end:
                         delay_on_success = c.end_time + module.min_delay_after_end - now
-                TimingContest.objects.update_or_create(contest=c, defaults={'statistic': now + delay_on_success})
+                c.statistic_timing = now + delay_on_success
+                c.save()
 
         if random_order:
             contests = list(contests)
@@ -971,9 +971,8 @@ class Command(BaseCommand):
                     if timing_delta is not None:
                         self.logger.info(f'Statistic timing delta = {timing_delta}')
                         next_timing_statistic = timezone.now() + timing_delta
-                        if next_timing_statistic < contest.timing.statistic:
-                            contest.timing.statistic = next_timing_statistic
-                            contest.timing.save()
+                        if next_timing_statistic < contest.statistic_timing:
+                            contest.statistic_timing = next_timing_statistic
                         contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
                     else:
                         contest.info.pop('_timing_statistic_delta_seconds', None)
@@ -1019,8 +1018,8 @@ class Command(BaseCommand):
                         timing_delta /= resource.module.long_contest_divider
                     delay = min(delay, timing_delta)
 
-                contest.timing.statistic = timezone.now() + delay
-                contest.timing.save()
+                contest.statistic_timing = timezone.now() + delay
+                contest.save()
             elif not no_update_results and not users:
                 stages = Stage.objects.filter(
                     ~Q(pk__in=stages_ids),
@@ -1036,9 +1035,10 @@ class Command(BaseCommand):
         def update_stage(stage):
             exclude_stages = stage.score_params.get('advances', {}).get('exclude_stages', [])
             ret = stage.pk in stages_ids
-            for s in Stage.objects.filter(pk__in=exclude_stages):
-                if update_stage(s):
-                    ret = True
+            if exclude_stages:
+                for s in Stage.objects.filter(pk__in=exclude_stages):
+                    if update_stage(s):
+                        ret = True
             if ret:
                 stage.update()
             return ret
@@ -1053,7 +1053,7 @@ class Command(BaseCommand):
         self.logger.info(f'Number of created statistics: {n_statistics_created} of {n_statistics_total}')
         return count, total
 
-    @print_sql_decorator(count_only=settings.DEBUG)
+    @print_sql_decorator(count_only=True)
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)

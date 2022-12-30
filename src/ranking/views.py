@@ -28,11 +28,11 @@ from clist.templatetags.extras import (as_number, format_time, get_country_name,
                                        is_reject, is_solved, query_transform, slug, time_in_seconds,
                                        timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
-from clist.templatetags.extras import toint
+from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
-from ranking.models import Account, Module, Statistics
+from ranking.models import Account, Module, Stage, Statistics
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, Party
 from true_coders.views import get_ratings_data
@@ -46,7 +46,6 @@ from utils.regex import get_iregex_filter
 @page_template('standings_list_paging.html')
 def standings_list(request, template='standings_list.html', extra_context=None):
     contests = Contest.objects \
-        .select_related('timing') \
         .select_related('resource') \
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
         .filter(Q(n_statistics__gt=0) | Q(end_time__lte=timezone.now())) \
@@ -77,6 +76,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                 'account': {'fields': ['statistics__account__key', 'statistics__account__name'], 'suff': '__iregex'},
                 'stage': {'fields': ['stage'], 'suff': '__isnull', 'func': lambda v: False},
                 'medal': {'fields': ['with_medals'], 'func': lambda v: True},
+                'advance': {'fields': ['with_advance'], 'func': lambda v: True},
                 'year': {'fields': ['start_time__year', 'end_time__year']},
             },
             logger=request.logger,
@@ -719,6 +719,25 @@ def get_statistics_order(contest):
     return order
 
 
+def get_advancing_contests(contest):
+    ret = set()
+
+    def rec(contest):
+        if contest in ret:
+            return
+        ret.add(contest)
+
+        stage = getattr(contest, 'stage', None)
+        if not stage:
+            return
+        exclude_stages = stage.score_params.get('advances', {}).get('exclude_stages', [])
+        for s in Stage.objects.filter(pk__in=exclude_stages):
+            rec(s.contest)
+
+    rec(contest)
+    return ret
+
+
 @page_templates((
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
@@ -821,6 +840,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if query:
             query = '?' + query
         return redirect(url + query)
+
+    if request.GET.get('advanced_accounts'):
+        url = reverse('coder:accounts')
+        advacing_contests = get_advancing_contests(contest)
+        query = '&'.join(f'contest={c.pk}' for c in advacing_contests)
+        url += f'?{query}&advanced=true'
+        return redirect(url)
 
     with_detail = request.GET.get('detail', 'true') in ['true', 'on']
     if request.user.is_authenticated:
@@ -942,13 +968,21 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     # field to select
     fields_to_select_defaults = {
         'rating': {'options': ['rated', 'unrated'], 'noajax': True, 'nomultiply': True, 'nourl': True},
-        'advanced': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
+        'advanced': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True,
+                     'extra_url': url_transform(request, advanced_accounts='true')},
         'ghost': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
         'highlight': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
     }
 
     fields_to_select = OrderedDict()
     map_fields_to_select = {'rating_change': 'rating'}
+
+    def add_field_to_select(f):
+        f = map_fields_to_select.get(f, f)
+        field_to_select = fields_to_select.setdefault(f, {})
+        field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
+        field_to_select.update(fields_to_select_defaults.get(f, {}))
+
     for f in sorted(contest_fields):
         f = f.strip('_')
         fk = f.lower()
@@ -958,16 +992,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
             'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
         ]:
-            f = map_fields_to_select.get(f, f)
-            field_to_select = fields_to_select.setdefault(f, {})
-            field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
-            field_to_select.update(fields_to_select_defaults.get(f, {}))
+            add_field_to_select(f)
+
+    if contest.with_advance and 'advanced' not in fields_to_select:
+        add_field_to_select('advanced')
 
     if n_highlight_context.get('statistics_ids'):
-        f = 'highlight'
-        field_to_select = fields_to_select.setdefault(f, {})
-        field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
-        field_to_select.update(fields_to_select_defaults.get(f, {}))
+        add_field_to_select('highlight')
 
     chats = coder.chats.all() if coder else None
     if chats:
@@ -1141,7 +1172,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             for q in values:
                 if q not in field_to_select['options']:
                     continue
-                filt |= Q(addition__advanced=q == 'true')
+                filt |= Q(advanced=q == 'true')
         elif field == 'highlight':
             for q in values:
                 if q not in field_to_select['options']:
@@ -1219,7 +1250,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if 'medal' in contest_fields:
             for medal in settings.ORDERED_MEDALS_:
                 fields[f'n_{medal}'] = medals.get(medal, {}).get('value', medal[0].upper())
-        if 'advanced' in contest_fields or advanced_by_participants_info:
+        if contest.with_advance or advanced_by_participants_info:
             fields['n_advanced'] = 'Adv'
 
         orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
@@ -1264,6 +1295,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             else:
                 field = 'account__country'
             statistics = statistics.annotate(groupby=F(field))
+        elif groupby == 'advanced':
+            statistics = statistics.annotate(groupby=Cast(F('advanced'), models.TextField()))
         else:
             field = f'addition__{groupby}'
             types = contest.info.get('fields_types', {}).get(groupby, [])
@@ -1287,13 +1320,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                     f'{n_medal}': Count(Case(When(addition__medal__iexact=medal, then=1)))
                 })
 
-        if 'advanced' in contest_fields:
-            statistics = statistics.annotate(n_advanced=Count(
-                Case(
-                    When(addition__advanced=True, then=1),
-                    When(~Q(addition__advanced=False) & ~Q(addition__advanced=''), then=1),
-                )
-            ))
+        if contest.with_advance:
+            statistics = statistics.annotate(n_advanced=Count(Case(When(advanced=True, then=1))))
         elif advanced_by_participants_info:
             pks = list()
             for pk, info in participants_info.items():
@@ -1531,9 +1559,9 @@ def action(request):
             if not user.has_perm('clist.reset_contest_statistic_timing'):
                 error = 'No permission.'
             else:
-                message = f'Updated timing.statistic = {contest.timing.statistic}.'
-                contest.timing.statistic = None
-                contest.timing.save()
+                message = f'Updated statistic timing = {contest.statistic_timing}.'
+                contest.statistic_timing = None
+                contest.save()
         else:
             error = 'Unknown action'
     except Exception as e:

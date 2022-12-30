@@ -290,8 +290,8 @@ class Command(BaseCommand):
                             if account is None:
                                 self.logger.info(f'missing account = {handle}')
                                 if not missing_account and args.update_contest_on_missing_account:
-                                    current_contest.timing.statistic = None
-                                    current_contest.timing.save()
+                                    current_contest.statistic_timing = None
+                                    current_contest.save()
                                 missing_account = True
 
                                 if not ignore_missing_account:

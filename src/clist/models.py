@@ -257,6 +257,10 @@ class Contest(BaseModel):
     related = models.ForeignKey('Contest', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_set')
     is_rated = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     with_medals = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+    with_advance = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+
+    notification_timing = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -279,7 +283,8 @@ class Contest(BaseModel):
             models.Index(fields=['n_statistics', 'end_time']),
             models.Index(fields=['resource', 'end_time', 'id']),
             models.Index(fields=['resource', 'start_time', 'id']),
-            models.Index(fields=['resource', 'start_time', 'end_time']),
+            models.Index(fields=['resource', 'notification_timing', 'start_time', 'end_time']),
+            models.Index(fields=['resource', 'statistic_timing', 'start_time', 'end_time']),
             models.Index(fields=['title']),
             GistIndexTrgrmOps(fields=['title']),
         ]
@@ -294,8 +299,9 @@ class Contest(BaseModel):
         self.slug = slug(self.title)
         self.title_path = self.slug.replace('-', '.')
 
+        fields = self.info.get('fields', [])
+
         if self.is_rated is None:
-            fields = self.info.get('fields', [])
             is_rated = self.related_id is None and (
                 'new_rating' in fields or
                 'rating_change' in fields or
@@ -308,7 +314,8 @@ class Contest(BaseModel):
             stats = stats.filter(new_global_rating__isnull=False)
             stats.update(new_global_rating=None, global_rating_change=None)
 
-        self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in self.info.get('fields', [])
+        self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
+        self.with_advance = 'advanced' in fields or '_advance' in fields
 
         return super(Contest, self).save(*args, **kwargs)
 
@@ -541,15 +548,6 @@ class Problem(BaseModel):
 class ProblemTag(BaseModel):
     name = models.TextField(unique=True, db_index=True, null=False)
     problems = models.ManyToManyField(Problem, blank=True, related_name='tags')
-
-
-class TimingContest(BaseModel):
-    contest = models.OneToOneField(Contest, related_name='timing', on_delete=models.CASCADE)
-    notification = models.DateTimeField(auto_now_add=True, blank=True)
-    statistic = models.DateTimeField(default=None, null=True, blank=True)
-
-    def __str__(self):
-        return '%s timing, modified = %s' % (str(self.contest), self.modified)
 
 
 class Banner(BaseModel):

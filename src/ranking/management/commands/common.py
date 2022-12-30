@@ -68,9 +68,8 @@ def account_update_contest_additions(
                 contest.info['fields'].append(k)
                 to_save = True
         if to_save:
-            contest.save()
             if contest.end_time + timedelta(days=31) > timezone.now():
                 next_timing_statistic = timezone.now() + timedelta(minutes=10)
-                if next_timing_statistic < contest.timing.statistic:
-                    contest.timing.statistic = next_timing_statistic
-                    contest.timing.save()
+                if next_timing_statistic < contest.statistic_timing:
+                    contest.statistic_timing = next_timing_statistic
+            contest.save()
