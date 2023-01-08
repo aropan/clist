@@ -113,11 +113,21 @@
         preg_match_all('#
             (?P<title>длинн|коротк|заключител|\s+очный)[^<\n]*?(?:пройд|прох)[^<\n]*?
             (?P<start_time>(?:(?:[0-9]+\.){1,2}[0-9]+(?:\s+г[^\s]*)?\s*|с\s+[0-9:]+\s*)+)
+            (
+            (?:-|по|до)\s*
+            (?P<end_time>(?:(?:[0-9]+\.){1,2}[0-9]+(?:\s+г[^\s]*)?\s*|[0-9:]+\s*)+)
+            (?:[^<\n]*(?P<duration>[0-9]+)[^\s]часо[^\s]*\s*виртуальн)?
+            )?
             #xi', $page, $matches, PREG_SET_ORDER,
         );
 
         foreach ($matches as $m) {
-            $m['end_time'] = $m['start_time'];
+            if (empty($m['end_time'])) {
+                $m['end_time'] = $m['start_time'];
+            }
+            if (isset($m['duration'])) {
+                $m['duration'] .= ':00';
+            }
             $cs[] = $m;
         }
 
@@ -126,7 +136,8 @@
 
         preg_match_all("#
             (?P<title>длинн|коротк|заключител|\s+очный)[^<]*?
-            (?P<start_time>(?:(?:[0-9]+\.){1,2}[0-9]+(?:\s+г[^\s]*)?\s*|с\s+[0-9:]+\s*)+)(?:-|по|до)\s*
+            (?P<start_time>(?:(?:[0-9]+\.){1,2}[0-9]+(?:\s+г[^\s]*)?\s*|с\s+[0-9:]+\s*)+)
+            (?:-|по|до)\s*
             (?P<end_time>(?:(?:[0-9]+\.){1,2}[0-9]+(?:\s+г[^\s]*)?\s*|[0-9:]+\s*)+)
             #x", $page, $matches, PREG_SET_ORDER,
         );
@@ -181,6 +192,12 @@
             if ($duration < -6 * $MONTH) {
                 $duration += $YEAR;
             }
+            if (isset($match['duration'])) {
+                $duration = $match['duration'];
+            } else {
+                $end_time = null;
+                $duration /= 60;
+            }
 
             $standings_url = null;
 
@@ -210,7 +227,8 @@
 
             $contests[] = array(
                 "start_time" => $start_time,
-                "duration" => $duration / 60,
+                "end_time" => $end_time,
+                "duration" => $duration,
                 "title" => $title . ". " . $main_title,
                 "url" => $url,
                 "standings_url" => $standings_url,
