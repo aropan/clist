@@ -59,6 +59,7 @@ class Resource(BaseModel):
     icon = models.CharField(max_length=255, null=True, blank=True)
     accounts_fields = models.JSONField(default=dict, blank=True)
     avg_rating = models.FloatField(default=None, null=True, blank=True)
+    has_upsolving = models.BooleanField(default=False)
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
@@ -533,6 +534,7 @@ class Problem(BaseModel):
             models.Index(fields=['resource_id', 'url', '-time', 'contest_id', 'index']),
             models.Index(fields=['-time', 'contest_id', 'index']),
             models.Index(fields=['resource_id', 'rating']),
+            models.Index(fields=['resource_id', 'key']),
             GistIndexTrgrmOps(fields=['name']),
         ]
 

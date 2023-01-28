@@ -19,7 +19,6 @@ from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tqdm import tqdm
-from traceback_with_variables import format_exc
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
@@ -33,6 +32,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings, InitModu
 from ranking.models import Account, Module, Stage, Statistics
 from ranking.views import update_standings_socket
 from utils.attrdict import AttrDict
+from utils.traceback_with_vars import colored_format_exc
 
 
 class Command(BaseCommand):
@@ -64,6 +64,7 @@ class Command(BaseCommand):
         parser.add_argument('--force-problems', action='store_true', default=False, help='Force update problems')
         parser.add_argument('--updated-before', help='Updated before date')
         parser.add_argument('--force-socket', action='store_true', default=False, help='Force update socket')
+        parser.add_argument('--without-n_statistics', action='store_true', default=False, help='Force update')
         parser.add_argument('-cid', '--contest-id', help='Contest id')
 
     def parse_statistic(
@@ -83,6 +84,7 @@ class Command(BaseCommand):
         without_contest_filter=False,
         force_problems=False,
         force_socket=False,
+        without_n_statistics=False,
         contest_id=None,
         query=None,
     ):
@@ -132,11 +134,12 @@ class Command(BaseCommand):
 
                     contests = started.union(ended)
                     contests = contests.distinct('id')
-            elif title_regex:
-                contests = contests.filter(title__iregex=title_regex)
             else:
-                condition = Q(end_time__lt=now - F('resource__module__min_delay_after_end')) | Q(n_statistics__gt=0)
-                contests = contests.filter(condition)
+                contests = contests.filter(start_time__lt=now)
+            if title_regex:
+                contests = contests.filter(title__iregex=title_regex)
+            if without_n_statistics:
+                contests = contests.filter(Q(n_statistics__isnull=True) | Q(n_statistics__lte=0))
 
         if freshness_days is not None:
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
@@ -560,7 +563,7 @@ class Command(BaseCommand):
                                                     user_info_has_rating[division] = True
                                                     break
                                         except Exception:
-                                            self.logger.error(format_exc())
+                                            self.logger.error(colored_format_exc())
                                             user_info_has_rating[division] = False
 
                                     if user_info_has_rating[division]:
@@ -1003,7 +1006,7 @@ class Command(BaseCommand):
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 self.logger.error(f'contest = {contest.pk}, error = {e}, row = {r}')
-                self.logger.error(format_exc())
+                self.logger.error(colored_format_exc())
                 if stop_on_error:
                     break
             if not parsed:
@@ -1102,6 +1105,7 @@ class Command(BaseCommand):
             update_without_new_rating=args.update_without_new_rating,
             force_problems=args.force_problems,
             force_socket=args.force_socket,
+            without_n_statistics=args.without_n_statistics,
             contest_id=args.contest_id,
             query=args.query,
         )

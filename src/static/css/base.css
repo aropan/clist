@@ -543,3 +543,21 @@ canvas.rating_history {
   position: absolute;
   margin: 6px -12px;
 }
+
+
+/*
+ * Buttons for login and donate pages
+ */
+
+.custom-btn-group-justified.btn-group>.btn {
+  display: table-cell;
+  float: none;
+}
+
+.custom-btn-group-justified.btn-group {
+  margin-bottom: 5px;
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+}

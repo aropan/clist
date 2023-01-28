@@ -111,12 +111,14 @@ class Statistic(BaseModule):
             'problems': problems_info,
         }
 
-        if len(result) < 100:
+        if len(result) < 100 and 'No data available' not in page:
             delta = timezone.now() - self.start_time
             if delta < timedelta(days=1):
                 standings['timing_statistic_delta'] = timedelta(minutes=60)
             elif delta < timedelta(days=30):
                 standings['timing_statistic_delta'] = timedelta(days=1)
+            else:
+                standings['timing_statistic_delta'] = timedelta(days=7)
 
         return standings
 

@@ -7,6 +7,7 @@ import json
 import re
 import time
 import urllib.parse
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -17,26 +18,33 @@ from first import first
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
+from clist.templatetags.extras import as_number, is_solved
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+
+eps = 1e-9
 
 
 class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
     RESULTS_URL_ = '{0.url}/results'
     SUBMISSIONS_URL_ = '{0.url}/submissions'
+    TASKS_URL_ = '{0.url}/tasks'
     PROBLEM_URL_ = '{0.url}/tasks/{1}'
+    SOLUTION_URL_ = '{0.url}/submissions/{1}'
     HISTORY_URL_ = '{0.scheme}://{0.netloc}/users/{1}/history'
     DEFAULT_LAST_SUBMISSION_TIME = -1
     DEFAULT_LAST_PAGE = 1
+    KENKOOOO_SUBMISSIONS_URL_ = 'https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user={}&from_second={}'
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.cid = self.key
         self._username = conf.ATCODER_HANDLE
         self._password = conf.ATCODER_PASSWORD
         self._stop = None
+        self._fetch_submissions_limit = 2000
 
     def _get(self, *args, **kwargs):
         page = REQ.get(*args, **kwargs)
@@ -49,7 +57,13 @@ class Statistic(BaseModule):
             page = REQ.get(form['url'], post=form['post'])
         return page
 
+    @RateLimiter(max_calls=200, period=60)
     def fetch_submissions(self, fuser=None, c_page=1):
+        if self._fetch_submissions_limit is not None:
+            if not self._fetch_submissions_limit:
+                return
+            self._fetch_submissions_limit -= 1
+
         url = self.SUBMISSIONS_URL_.format(self) + f'?page={c_page}'
         if fuser:
             url += f'&f.User={fuser}'
@@ -132,19 +146,30 @@ class Statistic(BaseModule):
                         problems = res.setdefault('problems', {})
                         problem = problems.setdefault(task, {})
                         problem_score = problem.get('result', 0)
-                        eps = 1e-9
+
                         if upsolve:
                             problem = problem.setdefault('upsolving', {})
-                            st = submissions_times.setdefault((user, task), problem.get('submission_time'))
                             problem_score = problem.get('result', 0)
                             if 'submission_time' not in problem:
                                 problem_score = 0
+                        else:
+                            seconds = int((submission_time - self.start_time).total_seconds())
+                            row['time_in_seconds'] = seconds
+                            row['time'] = f'{seconds // 60}:{seconds % 60:02d}'
+                        st = submissions_times.setdefault((user, task, upsolve), problem.get('submission_time'))
 
-                            if score > eps:
-                                row['result'] = score
-                            elif problem_score < eps and (not st or st < row['submission_time']):
-                                problem['result'] = problem_score - 1
-                                row.pop('result', None)
+                        if score > eps:
+                            if (problem_score > score or (
+                                problem_score == score
+                                and 'submission_time' in problem
+                                and row['submission_time'] >= problem['submission_time']
+                            )):
+                                continue
+                            row['result'] = score
+                            problem.pop('submission_time', None)
+                        elif problem_score < eps and (not st or st < row['submission_time']):
+                            problem['result'] = problem_score - 1
+                            row.pop('result', None)
 
                         if 'submission_time' in problem and row['submission_time'] <= problem['submission_time']:
                             continue
@@ -253,9 +278,38 @@ class Statistic(BaseModule):
                     raise e
 
             if not data:
-                standings_url = f'{self.STANDING_URL_.format(self)}/team'
-                page = self._get(f'{standings_url}/json')
-                data = json.loads(page)
+                try:
+                    standings_url = f'{self.STANDING_URL_.format(self)}/team'
+                    page = self._get(f'{standings_url}/json')
+                    data = json.loads(page)
+                except FailOnGetResponse as e:
+                    if e.code == 404:
+                        data = {}
+                    else:
+                        raise e
+
+            if not data:
+                standings_url = self.url
+                self._fetch_submissions_limit = None
+                data = defaultdict(list)
+                tasks = data.setdefault('TaskInfo', [])
+                tasks_url = self.TASKS_URL_.format(self)
+                page = REQ.get(tasks_url)
+                table = parsed_table.ParsedTable(page)
+                for r in table:
+                    short = r['']
+                    short = short[0].value if isinstance(short, list) else short.value
+                    name = r.get('問題名', r.get('Task Name'))
+                    url = first(name.column.node.xpath('.//a/@href'))
+                    url = urllib.parse.urljoin(tasks_url, url)
+                    url = url.rstrip('/')
+                    code = url.split('/')[-1]
+                    task = {
+                        'TaskScreenName': code,
+                        'Assignment': short,
+                        'TaskName': name.value,
+                    }
+                    tasks.append(task)
 
             new_data = []
             teams = []
@@ -321,8 +375,6 @@ class Statistic(BaseModule):
                 r['country'] = row.pop('Country')
                 if 'UserName' in row:
                     r['name'] = row.pop('UserName')
-
-                r['url'] = self.SUBMISSIONS_URL_.format(self) + f'?f.User={handle}'
 
                 stats = (statistics or {}).get(handle, {})
                 problems = r.setdefault('problems', stats.get('problems', {}))
@@ -405,7 +457,6 @@ class Statistic(BaseModule):
                 r['country'] = row.pop('Country')
                 if 'UserName' in row:
                     r['name'] = row.pop('UserName')
-                r['url'] = self.SUBMISSIONS_URL_.format(self) + f'?f.User={handle}'
 
                 stats = (statistics or {}).get(handle, {})
                 problems = r.setdefault('problems', stats.get('problems', {}))
@@ -471,7 +522,7 @@ class Statistic(BaseModule):
             self._stop = False
             page_submissions = self.fetch_submissions()
             if page_submissions is not None:
-                standings['_submissions_info'] = {} if statistics is None else self.info.pop('_submissions_info', {})
+                standings['_submissions_info'] = self.info.pop('_submissions_info', {}) if statistics else {}
                 standings['info_fields'] = ['_submissions_info']
 
                 *_, n_page = page_submissions
@@ -493,10 +544,20 @@ class Statistic(BaseModule):
                 standings['timing_statistic_delta'] = delta
 
         for row in result.values():
+            handle = row['member']
+            row['url'] = self.SUBMISSIONS_URL_.format(self) + f'?f.User={handle}'
+
             has_result = any('result' in p for p in row.get('problems', {}).values())
             if has_result or row.get('IsRated'):
                 row.pop('_no_update_n_contests', None)
             else:
+                if 'solving' not in row:
+                    row.setdefault('solving', 0)
+                    for p in row.get('problems', {}).values():
+                        upsolving = p.get('upsolving')
+                        if not is_solved(upsolving):
+                            continue
+                        row['solving'] += as_number(upsolving['result'], force=True)
                 row['_no_update_n_contests'] = True
 
         standings['hidden_fields'] = [
@@ -569,3 +630,122 @@ class Statistic(BaseModule):
             raise ExceptionParseStandings('Not found source code')
         solution = html.unescape(match.group('source'))
         return {'solution': solution}
+
+    @staticmethod
+    def update_submissions(account, resource):
+        info = deepcopy(account.info.setdefault('submissions_', {}))
+        info.setdefault('count', 0)
+        last_from_seconds = info.setdefault('last_from_seconds', -1)
+
+        @RateLimiter(max_calls=1, period=1)
+        def fetch_submissions(url):
+            submissions = json.loads(REQ.get(url))
+            return submissions
+
+        stop = False
+        stats_caches = {}
+        ret = {}
+        while not stop:
+            url = Statistic.KENKOOOO_SUBMISSIONS_URL_.format(account.key, last_from_seconds + 1)
+            submissions = fetch_submissions(url)
+            new_submissions = False
+
+            for submission in submissions:
+                info['count'] += 1
+
+                if submission['epoch_second'] > last_from_seconds:
+                    last_from_seconds = submission['epoch_second']
+                    new_submissions = True
+
+                contest_id = submission.pop('contest_id')
+                if contest_id is None:
+                    continue
+
+                if contest_id in stats_caches:
+                    contest, stat = stats_caches[contest_id]
+                    created = False
+                else:
+                    contest = resource.contest_set.filter(key=contest_id).first()
+                    if contest is None:
+                        continue
+                    stat, created = contest.statistics_set.get_or_create(contest=contest, account=account)
+                    if created:
+                        stat.addition.setdefault('_no_update_n_contests', True)
+                    stats_caches[contest_id] = contest, stat
+
+                problem_id = submission.pop('problem_id')
+
+                for problem in contest.info.get('problems', []):
+                    if problem['code'].lower() == problem_id.lower():
+                        break
+                else:
+                    problem = None
+
+                if problem is None:
+                    LOG.warning(f'Missing problem: contest = {contest}, account = {account}, problem = {problem_id}')
+                    exit(0)
+                    continue
+                short = problem['short']
+
+                problems = stat.addition.setdefault('problems', {})
+                problem = problems.setdefault(short, {})
+                if is_solved(problem):
+                    continue
+
+                submission_time = arrow.get(submission['epoch_second'])
+                upsolve = submission_time >= contest.end_time
+                if not upsolve:
+                    continue
+
+                upsolving = problem.get('upsolving', {})
+
+                if is_solved(upsolving):
+                    continue
+
+                problem_info = {
+                    'url': Statistic.SOLUTION_URL_.format(contest, submission['id']),
+                    'result': as_number(submission.pop('point')),
+                }
+                for key, field in (
+                    ('result', 'verdict'),
+                    ('length', 'code_size'),
+                    ('execution_time', 'exec_time'),
+                    ('epoch_second', 'submission_time'),
+                    ('language', 'language'),
+                ):
+                    problem_info[field] = submission.pop(key)
+
+                problem_score = problem.get('result', 0)
+                if (
+                    (problem_score, problem.get('submission_time', 0)) >=
+                    (problem_info['result'], problem_info['submission_time'])
+                ):
+                    continue
+
+                if problem_score < eps and problem_info['result'] < eps:
+                    problem_info['result'] = problem_score - 1
+                elif (
+                    problem_score == problem_info['result'] and
+                    'submission_time' in problem and problem['submission_time'] < problem_info['submission_time']
+                ):
+                    continue
+
+                problem['upsolving'] = problem_info
+
+                if not account.last_submission or account.last_submission < submission_time:
+                    account.last_submission = submission_time.datetime
+
+                ret.setdefault('n_updated', 0)
+                ret['n_updated'] += 1
+
+                stat.save()
+
+            if not new_submissions:
+                break
+
+        info['last_from_seconds'] = last_from_seconds
+        account.info['submissions_'] = info
+        account.save()
+
+        ret['n_contests'] = len(stats_caches)
+        return ret

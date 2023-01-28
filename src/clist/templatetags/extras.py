@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 from functools import reduce
 from os import path
+from sys import float_info
 from urllib.parse import quote_plus
 
 import arrow
@@ -728,6 +729,38 @@ def is_reject(value):
     return value < 0
 
 
+def normalized_result(value):
+    if not value:
+        return value
+    if str(value).startswith('+'):
+        return '+'
+    if str(value).startswith('-'):
+        return '-'
+    return as_number(value)
+
+
+def is_improved_solution(curr, prev):
+    curr_solved = is_solved(curr)
+    prev_solved = is_solved(prev)
+    if curr_solved != prev_solved:
+        return curr_solved
+    curr_result = normalized_result(curr.get('result'))
+    prev_result = normalized_result(prev.get('result'))
+    if type(curr_result) != type(prev_result):
+        return prev_result is None
+
+    if curr_result is not None:
+        if prev_result is None or prev_result < curr_result:
+            return True
+        if prev_result > curr_result or curr_solved:
+            return False
+        for f in ('id', 'submission_time'):
+            if f in curr and f in prev and curr[f] > prev[f]:
+                return True
+
+    return False
+
+
 @register.filter
 def timestamp_to_datetime(value):
     try:
@@ -786,7 +819,7 @@ def as_number(value, force=False):
     valf = str(value).replace(',', '.')
     retf = asfloat(valf)
     if retf is not None:
-        reti = toint(valf)
+        reti = toint(retf if retf % 1 < float_info.epsilon else valf)
         if reti is not None:
             return reti
         return retf

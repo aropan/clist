@@ -9,16 +9,23 @@ import time
 import traceback
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
+from datetime import timedelta
 from urllib.parse import quote, urljoin
 
 import arrow
 import requests
 import tqdm
+from django.db import transaction
+from django.db.models import Q
+from first import first
 from ratelimiter import RateLimiter
 
+from clist.templatetags.extras import is_improved_solution
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+from utils.datetime import parse_datetime
 
 
 class Statistic(BaseModule):
@@ -30,6 +37,7 @@ class Statistic(BaseModule):
     PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/problems/{code}'
     CONTEST_PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/{key}/problems/{code}'
     TEAM_URL_FORMAT_ = 'https://www.codechef.com/teams/view/{user}'
+    SUBMISSIONS_URL_ = 'https://www.codechef.com/recent/user?page={page}&user_handle={user}'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -202,23 +210,28 @@ class Statistic(BaseModule):
                                 row['time'] = d.pop(k)
                                 break
 
-                        problems = row.setdefault('problems', {})
+                        stats = (statistics or {}).get(handle, {})
+                        problems = row.setdefault('problems', stats.get('problems', {}))
                         solved, upsolved = 0, 0
                         if problems_status:
                             for k, v in problems_status.items():
-                                t = 'upsolving' if k in unscored_problems else 'result'
-                                v[t] = v.pop('score')
-                                solved += 1 if v.get('result', 0) > 0 else 0
-                                upsolved += 1 if v.get('upsolving', 0) > 0 else 0
+                                score = v.pop('score')
 
-                                if ranking_type == '1' and 'penalty' in v and v[t] == 1:
+                                if ranking_type == '1' and 'penalty' in v and score == 1:
                                     penalty = v.pop('penalty')
-                                    if v[t] > 0:
-                                        v[t] = f'+{"" if penalty == 0 else penalty}'
+                                    if score > 0:
+                                        v['result'] = f'+{"" if penalty == 0 else penalty}'
                                     else:
-                                        v[t] = f'-{penalty}'
+                                        v['result'] = f'-{penalty}'
                                 else:
+                                    v['result'] = score
                                     penalty = 0
+
+                                if score > 0:
+                                    if k in unscored_problems:
+                                        upsolved += 1
+                                    else:
+                                        solved += 1
 
                                 if v.get('time'):
                                     time_in_seconds = 0
@@ -229,7 +242,13 @@ class Statistic(BaseModule):
                                     v['time'] = self.to_time(time_in_seconds, num=3)
                                     v['time_in_seconds'] = time_in_seconds
 
-                                problems[k] = v
+                                problem = problems.setdefault(k, {})
+                                if k in unscored_problems:
+                                    problem = problem.setdefault('upsolving', {})
+                                    if not is_improved_solution(v, problem):
+                                        continue
+                                problem.update(v)
+
                             row['solved'] = {'solving': solved, 'upsolving': upsolved}
                         country = d.pop('country_code')
                         if country:
@@ -276,35 +295,36 @@ class Statistic(BaseModule):
 
         return standings
 
+    @RateLimiter(max_calls=5, period=1)
+    @staticmethod
+    def fetch_profle_page(user):
+        for format_url in (
+            Statistic.PROFILE_URL_FORMAT_,
+            Statistic.TEAM_URL_FORMAT_,
+        ):
+            page = None
+            page_url = None
+            url = format_url.format(user=quote(user))
+            try:
+                ret = REQ.get(url, return_url=True)
+                if not ret:
+                    continue
+                page, page_url = ret
+                if '/users/' not in page_url and '/teams/' not in page_url:
+                    page = None
+                break
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    page = None
+                else:
+                    raise e
+        return page, page_url
+
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
-        @RateLimiter(max_calls=5, period=1)
-        def fetch_profle_page(user):
-            for format_url in (
-                Statistic.PROFILE_URL_FORMAT_,
-                Statistic.TEAM_URL_FORMAT_,
-            ):
-                page = None
-                page_url = None
-                url = format_url.format(user=quote(user))
-                try:
-                    ret = REQ.get(url, return_url=True)
-                    if not ret:
-                        continue
-                    page, page_url = ret
-                    if '/users/' not in page_url and '/teams/' not in page_url:
-                        page = None
-                    break
-                except FailOnGetResponse as e:
-                    if e.code == 404:
-                        page = None
-                    else:
-                        raise e
-            return page, page_url
-
         with PoolExecutor(max_workers=4) as executor:
-            for user, (page, url) in zip(users, executor.map(fetch_profle_page, users)):
+            for user, (page, url) in zip(users, executor.map(Statistic.fetch_profle_page, users)):
                 if pbar:
                     pbar.update()
 
@@ -411,3 +431,175 @@ class Statistic(BaseModule):
                     }
 
                 yield ret
+
+    @transaction.atomic()
+    @staticmethod
+    def update_submissions(account, resource):
+        submissions_info = deepcopy(account.info.setdefault('submissions_', {}))
+        submissions_info.setdefault('count', 0)
+        if 'last_submission_time' not in submissions_info:
+            submissions_info['count'] = 0
+            submissions_info['last_id'] = -1
+        last_id = submissions_info.setdefault('last_id', -1)
+        last_submission_time = submissions_info.setdefault('last_submission_time', -1)
+        new_last_id = last_id
+        new_last_submission_time = last_submission_time
+
+        ret = defaultdict(int)
+        seen = set()
+        contests_cache = dict()
+        stats_cache = dict()
+
+        @RateLimiter(max_calls=5, period=1)
+        def fetch_submissions(page=0):
+            url = Statistic.SUBMISSIONS_URL_.format(user=account.key, page=page)
+            response = REQ.get(url)
+            data = json.loads(response)
+            data['url'] = url
+            data['page'] = page
+            return data
+
+        def get_contest(key, short):
+            cache_key = key or short
+            if cache_key in contests_cache:
+                return contests_cache[cache_key]
+            if key is None:
+                problem = resource.problem_set.filter(key=short).first()
+                if problem and problem.contest_id:
+                    contest = problem.contest
+                elif problem:
+                    contest = None
+                    for c in problem.contests.all():
+                        exists = c.statistics_set.filter(account=account).exists()
+                        if contest is None or exists:
+                            contest = c
+                            if exists:
+                                break
+                else:
+                    contest = None
+            else:
+                f = Q(key=key)
+                if re.search('[A-Z]$', key):
+                    f |= Q(key=key[:-1])
+                    entry = re.search('([0-9]+)$', key[:-1])
+                    if entry and len(entry.group(1)) == 2:
+                        f |= Q(key=key[:-3] + '20' + key[-3:-1])
+                contest = resource.contest_set.get(f)
+            contests_cache[cache_key] = contest
+            return contest
+
+        def process_submission(data, current_url):
+            nonlocal new_last_id, new_last_submission_time
+            problem_info = {}
+            submission_time = parse_datetime(data.pop('Time').value, timezone='+05:30')
+            problem_info['submission_time'] = submission_time.timestamp()
+            solution = data.pop('Solution')
+            href = first(solution.column.node.xpath('.//a/@href'))
+            if href is not None:
+                url = urljoin(current_url, href)
+                problem_info['url'] = url
+                problem_info['id'] = int(url.rstrip('/').split('/')[-1])
+            result = data.pop('Result')
+            status = first(result.column.node.xpath('.//*/@title'))
+            status = status.upper().split()
+            status = status[0][:2] if len(status) == 1 else ''.join(s[0] for s in status)
+            problem_info['verdict'] = status
+            problem_info['language'] = data.pop('Lang').value
+            score = result.value
+            if score and (entry := re.match(r'^\((?P<score>[0-9]+)\)$', score)):
+                problem_info['result'] = int(entry.group('score'))
+                # FIXME: get full_score from contest problem info
+                problem_info['partial'] = problem_info['result'] < 100
+            else:
+                problem_info['binary'] = True
+                problem_info['result'] = int(problem_info['verdict'] == 'AC')
+
+            if 'id' in problem_info:
+                if last_id >= problem_info['id'] or problem_info['id'] in seen:
+                    return False
+                seen.add(problem_info['id'])
+                new_last_id = max(new_last_id, problem_info['id'])
+
+            if last_submission_time > (submission_time + timedelta(days=1)).timestamp():
+                return False
+            new_last_submission_time = max(new_last_submission_time, problem_info['submission_time'])
+
+            name = data.pop('Problem')
+            short = name.value
+            href = first(name.column.node.xpath('.//a/@href'))
+            contest_key = href.strip('/').split('/')[0]
+            contest_key = None if contest_key == 'problems' else contest_key
+
+            contest = get_contest(contest_key, short)
+            if contest is None:
+                LOG.warning(f'Missing contest for key = {contest_key} and short = {short}')
+                ret.setdefault('missing_contests', set()).add((contest_key, short))
+                return
+
+            if contest in stats_cache:
+                stat = stats_cache[contest]
+            else:
+                stat, created = contest.statistics_set.get_or_create(account=account)
+                stats_cache[contest] = stat
+
+            problems = stat.addition.setdefault('problems', {})
+            problem = problems.setdefault(short, {})
+            if not is_improved_solution(problem_info, problem):
+                return
+            upsolving = problem.setdefault('upsolving', {})
+
+            # previous version fix
+            if not isinstance(upsolving, dict) or 'submission_time' not in upsolving:
+                upsolving = {}
+
+            if not is_improved_solution(problem_info, upsolving):
+                return
+
+            if not account.last_submission or account.last_submission < submission_time:
+                account.last_submission = submission_time
+
+            problem['upsolving'] = problem_info
+            submissions_info['count'] += 1
+            ret['n_updated'] += 1
+
+            stat.save()
+
+        def process_submissions(data):
+            nonlocal max_page
+            max_page = data['max_page']
+            table = parsed_table.ParsedTable(data['content'])
+            ret = False
+            for r in table:
+                result = process_submission(r, data['url'])
+                if result is not False:
+                    ret = True
+            return ret
+
+        def process_pagination():
+            nonlocal max_page
+            last_page = -1
+            with PoolExecutor(max_workers=4) as executor:
+                while max_page is None or last_page + 1 < max_page:
+                    last_page += 1
+                    data = fetch_submissions(last_page)
+                    if not process_submissions(data):
+                        break
+
+                    with tqdm.tqdm(total=max_page - last_page - 1) as pbar:
+                        for data in executor.map(fetch_submissions, range(last_page + 1, max_page)):
+                            result = process_submissions(data)
+                            last_page = data['page']
+                            pbar.update()
+                            if not result:
+                                return
+
+        max_page = None
+        process_pagination()
+
+        submissions_info.update({
+            'last_id': new_last_id,
+            'last_submission_time': new_last_submission_time,
+        })
+        account.info['submissions_'] = submissions_info
+        account.save()
+        return ret

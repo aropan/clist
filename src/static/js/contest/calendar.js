@@ -21,6 +21,7 @@ $(function() {
         },
         titleFormat: '{MMMM {D}}, YYYY',
         firstDay: 1,
+        allDaySlot: false,
         timezone: timezone,
         events: function (fetchInfo, successCallback, failureCallback) {
             var url = new URL(window.location.href)

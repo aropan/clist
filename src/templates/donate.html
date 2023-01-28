@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Donate{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="col-md-offset-4 col-md-4 col-xs-offset-3 col-xs-6">
+    <div class="panel panel-primary">
+        <div class="panel-heading">Donate</div>
+        <div class="panel-body">
+            <div class="custom-btn-group-justified btn-group">
+                <a class="btn btn-default active icon service-icon-btn">{% icon_to "patreon" %}</a>
+                <a href="https://www.patreon.com/clist" class="btn btn-default" rel="noopener noreferrer"><div class="text-left">Patreon</div></a>
+            </div>
+            <div class="custom-btn-group-justified btn-group">
+                <a class="btn btn-default active icon service-icon-btn">{% icon_to "kofi" %}</a>
+                <a href="https://ko-fi.com/clist" class="btn btn-default" rel="noopener noreferrer"><div class="text-left">Ko-fi</div></a>
+            </div>
+            <div class="custom-btn-group-justified btn-group">
+                <a class="btn btn-default active icon service-icon-btn">{% icon_to "crypto" %}</a>
+                <a href="https://nowpayments.io/donation/clist" class="btn btn-default" rel="noopener noreferrer"><div class="text-left">Crypto</div></a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -23,8 +23,20 @@
         <i class="far fa-calendar-alt"></i> Google calendar
     </a>
 
-    <div class="badge progress-bar-{% if resource.enable %}success{% else %}danger{% endif %}">
-        updating {% if resource.enable %}auto{% else %}manually{% endif %}
+    <div class="badge progress-bar-{% if resource.enable %}success{% else %}info{% endif %}">
+        {% if resource.enable %}auto{% else %}manually{% endif %} updating
+    </div>
+
+    <div class="badge progress-bar-{% if resource.has_rating_history %}success{% else %}info{% endif %}">
+        {% if resource.has_rating_history %}has{% else %}no{% endif %} account rating
+    </div>
+
+    <div class="badge progress-bar-{% if resource.has_problem_rating %}success{% else %}info{% endif %}">
+        {% if resource.has_problem_rating %}has{% else %}no{% endif %} problem rating
+    </div>
+
+    <div class="badge progress-bar-{% if resource.has_upsolving %}success{% else %}info{% endif %}">
+        {% if resource.has_upsolving %}has{% else %}no{% endif %} upsolving
     </div>
 
     <span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }} contest(s)</span>

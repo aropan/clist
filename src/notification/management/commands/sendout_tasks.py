@@ -21,6 +21,7 @@ from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django_print_sql import print_sql_decorator
 from filelock import FileLock
+from requests.exceptions import ConnectionError
 from telegram.error import ChatMigrated, Unauthorized
 from webpush import send_user_notification
 from webpush.utils import WebPushException
@@ -86,17 +87,24 @@ class Command(BaseCommand):
         if not message:
             return
         response = None
+
+        def delete_notification(msg):
+            if 'notification' in kwargs:
+                if 'task' in kwargs and kwargs['task'].created + timedelta(minutes=30) > now():
+                    return False
+                delete_info = kwargs['notification'].delete()
+                logger.error(f'{msg}, delete info = {delete_info}')
+                return True
+            return False
+
         if method == settings.NOTIFICATION_CONF.TELEGRAM:
             if args:
                 try:
                     response = self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
                     response = response.to_dict()
                 except Unauthorized as e:
-                    if 'bot was kicked from' in str(e):
-                        if 'notification' in kwargs:
-                            delete_info = kwargs['notification'].delete()
-                            logger.error(f'{str(e)}, delete info = {delete_info}')
-                            return 'removed'
+                    if 'bot was kicked from' in str(e) and delete_notification(e):
+                        return 'removed'
                 except ChatMigrated as e:
                     new_char_id = str(e).strip().split()[-1]
                     notification = kwargs['notification']
@@ -113,9 +121,7 @@ class Command(BaseCommand):
                     else:
                         coder.settings.setdefault('telegram', {})['unauthorized'] = True
                         coder.save()
-            elif 'notification' in kwargs:
-                delete_info = kwargs['notification'].delete()
-                logger.error(f'Strange notification, delete info = {delete_info}')
+            elif delete_notification('Strange notification'):
                 return 'removed'
         elif method == settings.NOTIFICATION_CONF.EMAIL:
             if self.n_messages_sent % 20 == 0:
@@ -152,11 +158,11 @@ class Command(BaseCommand):
                     ttl=300,
                 )
             except WebPushException as e:
-                if '403 Forbidden' in str(e):
-                    if 'notification' in kwargs:
-                        delete_info = kwargs['notification'].delete()
-                        logger.error(f'{str(e)}, delete info = {delete_info}')
-                        return 'removed'
+                if '403 Forbidden' in str(e) and delete_notification(e):
+                    return 'removed'
+            except ConnectionError as e:
+                if 'Max retries exceeded with url' in str(e) and delete_notification(e):
+                    return 'removed'
 
         task = kwargs.get('task')
         if task is not None and response:

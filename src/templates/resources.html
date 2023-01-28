@@ -22,6 +22,7 @@
       <th>Auto<br/>update</th>
       <th>Rating</th>
       <th>Problem<br/>rating</th>
+      <th>Upsolve</th>
       <th>Contests<br/>number</th>
       <th>Accounts<br/>number</th>
     </tr>
@@ -72,6 +73,16 @@
       <td>
         <span class="badge progress-bar-{% if resource.has_problem_rating %}success{% else %}info{% endif %}" data-column="problem-rating">
           {% if resource.has_problem_rating %}
+            <i class="fas fa-check"></i>
+          {% else %}
+            <i class="fas fa-times"></i>
+          {% endif %}
+        </span>
+      </td>
+
+      <td>
+        <span class="badge progress-bar-{% if resource.has_upsolving %}success{% else %}info{% endif %}" data-column="upsolve">
+          {% if resource.has_upsolving %}
             <i class="fas fa-check"></i>
           {% else %}
             <i class="fas fa-times"></i>

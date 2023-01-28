@@ -51,16 +51,43 @@ from utils.regex import get_iregex_filter, verify_regex
 logger = logging.getLogger(__name__)
 
 
-def get_profile_context(request, statistics, writers, resources):
-    stats = statistics \
+def get_medals_for_profile_context(statistics):
+    qs = statistics \
         .select_related('contest') \
         .filter(addition__medal__isnull=False) \
         .order_by('-contest__end_time')
     resource_medals = {}
     account_medals = {}
-    for stat in stats:
-        resource_medals.setdefault(stat.contest.resource_id, []).append(stat)
+    for stat in qs:
+        if not stat.contest.related_id:
+            resource_medals.setdefault(stat.contest.resource_id, []).append(stat)
         account_medals.setdefault(stat.account_id, []).append(stat)
+
+    def group_medals(medals_dict, n_fixed=3):
+        ret = {}
+        for k, medals in medals_dict.items():
+            grouped_medals = medals[:n_fixed]
+            medals = [(stat.addition['medal'].lower(), stat) for stat in medals[n_fixed:]]
+            while medals:
+                next_medal, _ = medals[0]
+                filtered = [stat for (medal, stat) in medals if next_medal == medal]
+                if len(filtered) == 1:
+                    grouped_medals.append(filtered[0])
+                else:
+                    grouped_medals.append({'medal': next_medal, 'medals': filtered})
+                medals = [(medal, stat) for (medal, stat) in medals if next_medal != medal]
+            ret[k] = grouped_medals
+        return ret
+
+    return {
+        'resource_medals': group_medals(resource_medals),
+        'account_medals': group_medals(account_medals),
+    }
+
+
+def get_profile_context(request, statistics, writers, resources):
+    context = {}
+    context.update(get_medals_for_profile_context(statistics))
 
     statistics = statistics \
         .select_related('contest', 'contest__resource', 'account') \
@@ -146,20 +173,18 @@ def get_profile_context(request, statistics, writers, resources):
                 'nohidden': True,
             }
 
-    context = {
+    context.update({
         'statistics': statistics,
         'writers': writers,
         'resources': list(resources),
         'two_columns': len(history_resources) > 1,
         'history_resources': history_resources,
         'show_history_ratings': not filters,
-        'resource_medals': resource_medals,
-        'account_medals': account_medals,
         'search_resource': search_resource,
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'custom_fields': custom_fields,
-    }
+    })
 
     return context
 

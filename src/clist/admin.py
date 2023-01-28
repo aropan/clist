@@ -97,15 +97,17 @@ class ResourceAdmin(BaseModelAdmin):
                            'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
-        [None, {'fields': ['info', 'ratings',
-                           'has_rating_history', 'has_problem_rating', 'has_multi_account', 'has_accounts_infos_update',
-                           'avg_rating', 'accounts_fields']}],
+        [None, {'fields': ['info', 'ratings', 'avg_rating',
+                           'has_rating_history', 'has_problem_rating',
+                           'has_multi_account', 'has_accounts_infos_update', 'has_upsolving',
+                           'accounts_fields']}],
     ]
-    list_display = ['host', 'short_host', 'enable', '_has_rating', '_has_profile_url', '_has_problem_rating',
-                    '_has_accounts_infos_update', '_has_multi_account', 'n_contests', 'n_accounts', 'modified']
+    list_display = ['host', 'short_host', 'enable', 'n_contests', 'n_accounts', 'modified',
+                    '_has_rating', '_has_profile_url', '_has_problem_rating', '_has_accounts_infos_update',
+                    '_has_multi_account', '_has_upsolving']
     search_fields = ['host', 'url']
     list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone', 'has_problem_rating',
-                   'has_accounts_infos_update', 'has_multi_account']
+                   'has_accounts_infos_update', 'has_multi_account', 'has_upsolving']
 
     def _has_profile_url(self, obj):
         return bool(obj.profile_url)
@@ -131,6 +133,11 @@ class ResourceAdmin(BaseModelAdmin):
         return obj.has_multi_account
     _has_multi_account.boolean = True
     _has_multi_account.short_description = 'AMulti'
+
+    def _has_upsolving(self, obj):
+        return obj.has_upsolving
+    _has_upsolving.boolean = True
+    _has_upsolving.short_description = 'Upsolv'
 
     def get_list_display(self, request):
         ret = super().get_list_display(request)

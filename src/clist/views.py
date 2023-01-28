@@ -835,10 +835,11 @@ def problems(request, template='problems.html'):
     if search:
         cond, problems = get_iregex_filter(
             search,
-            'name',
+            'name', 'key',
             logger=request.logger,
             mapping={
                 'name': {'fields': ['name__iregex']},
+                'key': {'fields': ['key__iexact']},
                 'contest': {'fields': ['contest__title__iregex'], 'exists': 'contests'},
                 'resource': {'fields': ['resource__host__iregex']},
                 'tag': {'fields': ['problemtag__name__iregex'], 'exists': 'tags'},

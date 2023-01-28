@@ -1,0 +1,13 @@
+{% for s in stats %}
+  {% if s|get_type == 'dict' %}
+    {% with d=s %}
+    <span title='{% for s in d.medals %}{% include "trophy.html" with statistic=s with_color=True with_contest=True %}<br/>{% endfor %}' data-placement="bottom" data-toggle="tooltip" data-html="true" class="trophy {{ d.medal|lower }}-trophy no-user-select">
+      {{ d.medals|length }}
+    </span>
+    {% endwith %}
+  {% else %}
+    <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
+      {% include "trophy.html" with statistic=s %}
+    </span>
+  {% endif %}
+{% endfor %}

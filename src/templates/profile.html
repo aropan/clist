@@ -203,13 +203,7 @@ Number of competitions: {{ account.n_contests }}
           </span>
         </td>
         <td class="text-left">
-          {% for s in resource_medals|get_item:resource.pk %}
-            {% if not s.contest.related_id %}
-            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
-              {% include "trophy.html" with statistic=s %}
-            </span>
-            {% endif %}
-          {% endfor %}
+          {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
         </td>
       </tr>
     {% endif %}
@@ -234,13 +228,7 @@ Number of competitions: {{ account.n_contests }}
 
             {% endif %}
 
-            {% for s in resource_medals|get_item:resource.pk %}
-              {% if not s.contest.related_id %}
-              <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
-                {% include "trophy.html" with statistic=s %}
-              </span>
-              {% endif %}
-            {% endfor %}
+            {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
           </a>
           {% include "profile_account_actions.html" with account=account resource=account.resource %}
         </span>
@@ -256,11 +244,7 @@ Number of competitions: {{ account.n_contests }}
         <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
           {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
 
-          {% for s in account_medals|get_item:account.pk %}
-            <span title="{{ s.contest.title }}<br>{{ s.contest.end_time|naturalday }}" data-toggle="tooltip" data-html="true" class="trophy {{ s.addition.medal|lower }}-trophy no-user-select">
-              {% include "trophy.html" with statistic=s %}
-            </span>
-          {% endfor %}
+          {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}
         </a>
         {% include "profile_account_actions.html" with account=account resource=account.resource %}
       </span>

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
 from datetime import timedelta
 from logging import getLogger
 
@@ -14,7 +12,6 @@ from django.utils import timezone
 from django_super_deduper.merge import MergedModelInstance
 from tailslide import Percentile
 from tqdm import tqdm
-from traceback_with_variables import format_exc
 
 from clist.models import Resource
 from ranking.management.commands.common import account_update_contest_additions
@@ -22,6 +19,7 @@ from ranking.management.commands.countrier import Countrier
 from ranking.models import Account
 from true_coders.models import Coder
 from utils.attrdict import AttrDict
+from utils.traceback_with_vars import colored_format_exc
 
 
 def rename_account(account, other):
@@ -34,6 +32,18 @@ def rename_account(account, other):
     account.n_writers = n_writers
     account.save()
     return account
+
+
+def add_dict_to_dict(src, dst):
+    for k, v in src.items():
+        if k not in dst:
+            dst[k] = v
+        elif isinstance(v, set):
+            dst[k] |= v
+        elif isinstance(v, dict):
+            dst[k].update(v)
+        else:
+            dst[k] += v
 
 
 class Command(BaseCommand):
@@ -56,11 +66,6 @@ class Command(BaseCommand):
         parser.add_argument('--min-n-contests', default=None, type=int, help='minimum number of contests')
         parser.add_argument('--without-new', action='store_true', help='only parsed account')
         parser.add_argument('--with-field', default=None, type=str, help='only parsed account which have field')
-
-    @staticmethod
-    def _get_plugin(module):
-        sys.path.append(os.path.dirname(module.path))
-        return __import__(module.path.replace('/', '.'), fromlist=['Statistic'])
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -124,12 +129,12 @@ class Command(BaseCommand):
 
                 total = accounts.count()
 
-                accounts = accounts.annotate(priority=Case(
+                accounts = accounts.annotate(has_coders=Case(
                     When(coders__isnull=False, then=Value(1)),
                     default=Value(0),
                     output_field=IntegerField(),
                 ))
-                order = ['-priority', 'updated']
+                order = ['-has_coders', 'updated']
                 if args.top:
                     order = [F('rating').desc(nulls_last=True)] + order
                 accounts = accounts.order_by(*order)
@@ -146,6 +151,7 @@ class Command(BaseCommand):
             n_rename = 0
             n_remove = 0
             n_deferred = 0
+            total_update_submissions_info = {}
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -165,6 +171,12 @@ class Command(BaseCommand):
                         if args.all:
                             member = data.pop('member')
                             account, created = Account.objects.get_or_create(key=member, resource=resource)
+                        is_team = account.info.get('is_team', False)
+                        do_upsolve = resource.has_upsolving and account.has_coders and not is_team
+                        if do_upsolve:
+                            updated_info = resource.plugin.Statistic.update_submissions(account=account,
+                                                                                        resource=resource)
+                            add_dict_to_dict(updated_info, total_update_submissions_info)
                         with transaction.atomic():
                             if 'delta' in data or 'delta' in (data.get('info') or {}):
                                 n_deferred += 1
@@ -238,6 +250,10 @@ class Command(BaseCommand):
 
                             account.info = info
 
+                            if do_upsolve and account.last_submission is not None:
+                                sumission_delta = max(now - account.last_submission, timedelta(days=1))
+                                delta = min(delta, sumission_delta)
+
                             account.updated = arrow.get(now + delta).ceil('day').datetime
                             account.save()
             except Exception:
@@ -247,6 +263,8 @@ class Command(BaseCommand):
                         account.updated = updated
                         account.save()
                 self.logger.error(f'resource = {resource}')
-                self.logger.error(format_exc())
+                self.logger.error(colored_format_exc())
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}'
                              f', removed: {n_remove}, renamed: {n_rename}, deferred: {n_deferred}')
+            if total_update_submissions_info:
+                self.logger.info(f'Update submissions info: {total_update_submissions_info}')

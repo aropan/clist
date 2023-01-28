@@ -187,6 +187,9 @@
                 $end_time = "01.$end_time";
                 $duration = $MONTH;
             }
+            if (strpos($end_time, ':') === false) {
+                $end_time = date('d.m.Y', strtotime('+1 day', strtotime($end_time)));
+            }
             $duration += strtotime($end_time) - strtotime($start_time);
 
             if ($duration < -6 * $MONTH) {

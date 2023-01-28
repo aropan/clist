@@ -3,6 +3,7 @@
 import hashlib
 import operator
 from collections import OrderedDict, defaultdict
+from datetime import timedelta
 from logging import getLogger
 from pprint import pprint  # noqa
 
@@ -168,6 +169,7 @@ class Command(BaseCommand):
         parser.add_argument('-f', '--force', action='store_true', help='force update')
         parser.add_argument('-n', '--dryrun', action='store_true', help='do not update')
         parser.add_argument('-o', '--onlynew', action='store_true', help='update new only')
+        parser.add_argument('--staleness', metavar='DAYS', type=int, help='lower end_time days limit')
         parser.add_argument('--update-contest-on-missing-account', action='store_true')
         parser.add_argument('--ignore-missing-account', action='store_true')
 
@@ -190,6 +192,8 @@ class Command(BaseCommand):
             contests = contests.filter(title__regex=args.search)
         if args.contest:
             contests = contests.filter(pk=args.contest)
+        if args.staleness:
+            contests = contests.filter(updated__lt=now() - timedelta(days=args.staleness))
         contests = contests.order_by('-end_time')
         contests = contests.filter(end_time__lt=now())
         contests = contests.exclude(problem_set=None)

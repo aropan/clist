@@ -10,24 +10,9 @@
     <div class="panel panel-primary">
         <div class="panel-heading">{% block ogtitle %}{% block title %}Log in / Sign up{% endblock %}{% endblock %}</div>
         <div class="panel-body">
-        <style>
-.mbtn-group-justified>.btn {
-    display: table-cell;
-    float: none;
-}
-
-.mbtn-group-justified {
-    margin-bottom: 5px;
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: separate;
-}
-        </style>
-
 {% if services %}
     {% for service in services %}
-            <div class="mbtn-group-justified btn-group">
+            <div class="custom-btn-group-justified btn-group">
                 <a class="btn btn-default active icon service-icon-btn">{% icon_to service.name %}</a>
                 <a href="{% url 'auth:query' service.name %}" class="btn btn-default">
                     <div class="text-left">{{ service.title }}</div>

@@ -46,14 +46,14 @@
   {% elif stat.upsolving.result|slice:":1" == "+" %}
     {{ stat.upsolving.result }}
   {% elif stat.upsolving.result|slice:":1" == "-" and stat.upsolving.verdict %}
-    {% if not small or small and stat.verdict %}
+    {% if not small or small and stat.upsolving.verdict %}
       {{ stat.upsolving.result|scoreformat }} {{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}
     {% else %}
       <span title="{{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}" data-toggle="tooltip">
         {{ stat.upsolving.result|scoreformat }}
       </span>
     {% endif %}
-  {% elif stat.upsolving.result %}
+  {% elif stat.upsolving.result is not None %}
     {{ stat.upsolving.result|scoreformat }}
   {% endif %}
 
@@ -63,7 +63,7 @@
   </div>
   {% endif %}
 
-{% elif small and stat.verdict and not stat.binary and not stat.icon %}
+{% elif not stat|is_solved and small and stat.verdict and not stat.binary and not stat.icon %}
   <div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</div>
 {% endif %}
 </div>
