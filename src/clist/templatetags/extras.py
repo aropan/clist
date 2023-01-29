@@ -52,6 +52,12 @@ def get_item(data, key):
     return getattr(data, key, None)
 
 
+@register.simple_tag
+def set_item(data, key, value):
+    data[key] = value
+    return ''
+
+
 @register.filter
 def get_list(query_dict, key):
     return query_dict.getlist(key)

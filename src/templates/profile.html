@@ -314,6 +314,23 @@ Number of competitions: {{ account.n_contests }}
 <div class="col-xs-12">
 <h3>Contests</h3>
 
+{% with chart=contests_chart %}
+{% if chart %}
+{% set_item chart "border_width" 5 %}
+{% set_item chart "title" "Number of contests per day" %}
+{% set_item chart "type" "line" %}
+{% set_item chart "tension" 0.5 %}
+{% set_item chart "point_radius" 0 %}
+{% set_item chart "point_hover_radius" 0 %}
+{% set_item chart "border_color" "#5cb85c" %}
+{% set_item chart "border_width" 3 %}
+{% set_item chart "height" "40vh" %}
+{% set_item chart "duplicate_y_axis" True %}
+{% set_item chart "disable_legend_tooltip" True %}
+{% include "chart.html" with chart=chart without_buttons=True %}
+{% endif %}
+{% endwith %}
+
 <form class="form-inline" method="get" action="">
 <div class="input-group">
   <div class="input-group-addon">Results</div>

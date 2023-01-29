@@ -73,7 +73,8 @@ def make_beetween(column, value, start, end=None):
         return When(Q(**{column + '__gte': start, column + '__lt': end}), then=Value(value))
 
 
-def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=None, aggregations=None, bins=None):
+def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=None, aggregations=None, bins=None,
+               norm_value=None):
     context = {'title': title_field(field) + (f' (slice by {groupby})' if groupby else '')}
 
     if cast == 'int':
@@ -154,6 +155,10 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
         else:
             interval = ']' if idx + 1 == len(context['data']) else ')'
             row['title'] = f"[{context['bins'][idx]}..{context['bins'][idx + 1]}{interval}"
+        if norm_value:
+            interval = context['bins'][idx + 1] - context['bins'][idx]
+            if interval:
+                row['value'] *= norm_value / interval
 
     if aggregations:
         whens = [

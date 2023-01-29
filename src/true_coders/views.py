@@ -186,6 +186,11 @@ def get_profile_context(request, statistics, writers, resources):
         'custom_fields': custom_fields,
     })
 
+    qs = statistics.annotate(date=F('contest__start_time'))
+    qs = qs.filter(place__isnull=False).order_by()
+    contests_chart = make_chart(qs, field='date', n_bins=21, norm_value=timedelta(days=1))
+    context['contests_chart'] = contests_chart
+
     return context
 
 

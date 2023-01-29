@@ -1,5 +1,6 @@
 {% if chart %}
 <div id="chart_{{ chart.field }}">
+  {% if not without_buttons %}
   <div class="chart-buttons">
     <span class="toggle-log-scale">
       <input
@@ -36,8 +37,9 @@
     </span>
     {% endif %}
   </div>
+  {% endif %}
 
-  <canvas class="chart"></canvas>
+  <canvas class="chart"{% if chart.height %} height="{{ chart.height }}"{% endif %}></canvas>
 </div>
 
 <script>
@@ -58,8 +60,10 @@
         {
             data: [{% for d in chart.my_dataset.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ d.x }}', 'y': '{{ d.y }}'}{% endfor %}],
             label: "{{ chart.my_dataset.label|escapejs }}",
-            {% if chart.tension %}
+            {% if chart.cubic_interpolation %}
             cubicInterpolationMode: 'monotone',
+            {% endif %}
+            {% if chart.tension %}
             tension: {{ chart.tension }},
             {% endif %}
             pointBackgroundColor: [{% for d in chart.my_dataset.data %}{% if forloop.counter0 %},{% endif %}border_colors[{{ chart.fields|index:d.field }}]{% endfor %}],
@@ -86,8 +90,10 @@
           borderColor: border_colors[{{ forloop.counter0 }}],
           borderWidth: {{ chart.border_width|default:1 }},
           hoverBorderWidth: {{ chart.border_width|default:1|multiply:2 }},
-          {% if chart.tension %}
+          {% if chart.cubic_interpolation %}
           cubicInterpolationMode: 'monotone',
+          {% endif %}
+          {% if chart.tension %}
           tension: {{ chart.tension }},
           {% endif %}
           {% if chart.point_radius is not None %}
@@ -113,14 +119,18 @@
           {% endif %}
           {% if chart.border_color is not None %}
           borderColor: '{{ chart.border_color  }}',
+          backgroundColor: '{{ chart.background_color|default:chart.border_color }}',
           {% endif %}
           borderWidth: {{ chart.border_width|default:1 }},
-          {% if chart.tension %}
+          {% if chart.cubic_interpolation %}
           cubicInterpolationMode: 'monotone',
+          {% endif %}
+          {% if chart.tension %}
           tension: {{ chart.tension }},
           {% endif %}
           {% if chart.point_radius is not None %}
           pointRadius: {{ chart.point_radius }},
+          pointHoverRadius: {{ chart.point_hover_radius|default:chart.point_radius }},
           {% endif %}
           barPercentage: {{ chart.bar_percentage|default:1.0 }},
           categoryPercentage: {{ chart.category_percentage|default:0.8 }},
@@ -161,6 +171,9 @@
           },
           tooltip: {
             usePointStyle: true,
+            {% if chart.disable_legend_tooltip %}
+            displayColors: false,
+            {% endif %}
             callbacks: {
               {% if chart.x_ticks_time_rounding %}
               title: function(context) {
@@ -236,6 +249,17 @@
               },
             },
           },
+          {% if chart.duplicate_y_axis %}
+          y_right: {
+            position: 'right',
+            afterBuildTicks: (axis) => {
+              axis.ticks = [...axis.chart.scales.y.ticks]
+              axis.type = axis.chart.scales.y.type
+              axis.min = axis.chart.scales.y.min
+              axis.max = axis.chart.scales.y.max
+            },
+          },
+          {% endif %}
         },
       },
       plugins: [
