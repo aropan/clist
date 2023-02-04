@@ -185,7 +185,9 @@ class Command(BaseCommand):
         for contest in progress_bar:
             resource = contest.resource
             if not hasattr(resource, 'module'):
-                self.logger.error('Not found module contest = %s' % c)
+                self.logger.warning(f'contest = {contest}')
+                self.logger.warning(f'resource = {resource}')
+                self.logger.error('Not found module')
                 continue
             progress_bar.set_description(f'contest = {contest.title}')
             progress_bar.refresh()
@@ -563,7 +565,7 @@ class Command(BaseCommand):
                                                     user_info_has_rating[division] = True
                                                     break
                                         except Exception:
-                                            self.logger.error(colored_format_exc())
+                                            self.logger.info(colored_format_exc())
                                             user_info_has_rating[division] = False
 
                                     if user_info_has_rating[division]:
@@ -1005,20 +1007,24 @@ class Command(BaseCommand):
             except (ExceptionParseStandings, InitModuleException) as e:
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
-                self.logger.error(f'contest = {contest.pk}, error = {e}, row = {r}')
-                self.logger.error(colored_format_exc())
+                self.logger.warning(f'contest = {contest}')
+                if r:
+                    self.logger.warning(f'row = {r}')
+                self.logger.error(f'Parse statistic: {e}')
+                print(colored_format_exc())
                 if stop_on_error:
                     break
             if not parsed:
-                delay = resource.module.delay_on_error
-                if now < contest.end_time and resource.module.long_contest_divider:
-                    delay = min(delay, contest.full_duration / resource.module.long_contest_divider)
+                module = resource.module
+                delay = module.delay_on_error
+                if now < contest.end_time and module.long_contest_divider:
+                    delay = min(delay, contest.full_duration / module.long_contest_divider)
                 if now < contest.end_time < now + delay and module.min_delay_after_end:
-                    delay = min(delay, contest.end_time + resource.module.min_delay_after_end - now)
+                    delay = min(delay, contest.end_time + module.min_delay_after_end - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
-                    if now < contest.end_time and resource.module.long_contest_divider:
-                        timing_delta /= resource.module.long_contest_divider
+                    if now < contest.end_time and module.long_contest_divider:
+                        timing_delta /= module.long_contest_divider
                     delay = min(delay, timing_delta)
 
                 contest.statistic_timing = timezone.now() + delay

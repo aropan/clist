@@ -266,7 +266,7 @@ class Statistic(BaseModule):
             nonlocal global_ranking_users
             nonlocal rate_limiter
 
-            key = (account.info['profile_url']['_data_region'], account.key)
+            key = (account.info.get('profile_url', {}).get('_data_region'), account.key)
             if key in global_ranking_users:
                 return account, global_ranking_users[key]
 

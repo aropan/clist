@@ -548,8 +548,9 @@ class Bot(telegram.Bot):
                 chat = self.group or self.chat
                 if chat:
                     History.objects.create(chat=chat, message=data).save()
-        except Exception:
-            self.logger.error('Exception incoming message:\n%s\n%s' % (format_exc(), raw_data))
+        except Exception as e:
+            self.logger.info('Exception incoming message:\n%s\n%s' % (format_exc(), raw_data))
+            self.logger.error(f'Exception incoming message: {e}')
             try:
                 self.sendMessage(
                     self.ADMIN_CHAT_ID,

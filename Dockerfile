@@ -25,6 +25,9 @@ RUN pip install "pip==22.1.2"
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 
+# Sentry CLI
+RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.12.0" sh
+
 RUN apt update --fix-missing
 
 ENV APPDIR=/usr/src/clist

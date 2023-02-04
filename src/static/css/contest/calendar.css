@@ -36,3 +36,7 @@
     border-radius: 0px;
     margin-left: 0 !important;
 }
+
+#calendar .fc-dayGrid-view .fc-body .fc-row {
+    min-height: 0em;
+}

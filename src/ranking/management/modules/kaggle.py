@@ -5,6 +5,7 @@ import json
 import os
 import re
 from copy import deepcopy
+from functools import partial
 
 import dateutil.parser
 from flatten_dict import flatten
@@ -120,13 +121,21 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
 
-        def fetch_profile(req, handle):
+        def fetch_profile(req, handle, raise_on_error=False):
+            connect_func = partial(fetch_profile, handle=handle, raise_on_error=True)
+            req.proxer.set_connect_func(connect_func)
+
             url = resource.profile_url.format(account=handle)
             try:
                 page = req.get(url)
             except FailOnGetResponse as e:
                 if e.code == 404:
                     return None
+                if raise_on_error:
+                    raise e
+                ret = req.proxer.get_connect_ret()
+                if ret:
+                    return ret
                 return False
             result = re.search(r'Kaggle.State.push\((?P<data>{"userId":.*?})\)', page)
             data = json.loads(result.group('data'))
@@ -144,7 +153,7 @@ class Statistic(BaseModule):
         with REQ(
             with_proxy=True,
             args_proxy={
-                'time_limit': 1,
+                'time_limit': 2,
                 'n_limit': 50,
                 'filepath_proxies': os.path.join(os.path.dirname(__file__), '.kaggle.proxies'),
             },

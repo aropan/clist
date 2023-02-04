@@ -148,10 +148,12 @@ class Command(BaseCommand):
                     continue
 
             count = 0
+            n_skip = 0
             n_rename = 0
             n_remove = 0
             n_deferred = 0
             total_update_submissions_info = {}
+            account = None
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -182,13 +184,17 @@ class Command(BaseCommand):
                                 n_deferred += 1
                             if data.get('skip'):
                                 delta = data.get('delta') or timedelta(days=100)
-                                count += 1
+                                n_skip += 1
                                 account.updated = now + delta
                                 account.save()
                                 continue
                             count += 1
                             info = data['info']
                             if info is None:
+                                if 'coder' in data:
+                                    coder = account.coders.filter(username=data['coder']).first()
+                                    if coder is not None:
+                                        coder.delete()
                                 _, info = account.delete()
                                 info = {k: v for k, v in info.items() if v}
                                 n_remove += 1
@@ -256,15 +262,17 @@ class Command(BaseCommand):
 
                             account.updated = arrow.get(now + delta).ceil('day').datetime
                             account.save()
-            except Exception:
+            except Exception as e:
                 if not has_param and not args.all:
                     updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
-                    for account in tqdm(accounts, desc='changing update time'):
-                        account.updated = updated
-                        account.save()
-                self.logger.error(f'resource = {resource}')
-                self.logger.error(colored_format_exc())
+                    for a in tqdm(accounts, desc='changing update time'):
+                        a.updated = updated
+                        a.save()
+                self.logger.warning(f'resource = {resource}')
+                self.logger.warning(f'account = {account}')
+                self.logger.error(f'Parse accounts infos: {e}')
+                print(colored_format_exc())
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}'
-                             f', removed: {n_remove}, renamed: {n_rename}, deferred: {n_deferred}')
+                             f', skip: {n_skip}, removed: {n_remove}, renamed: {n_rename}, deferred: {n_deferred}')
             if total_update_submissions_info:
                 self.logger.info(f'Update submissions info: {total_update_submissions_info}')

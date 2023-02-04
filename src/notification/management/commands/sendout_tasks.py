@@ -8,7 +8,6 @@ from datetime import timedelta
 from logging import getLogger
 from smtplib import SMTPDataError, SMTPResponseException
 from time import sleep
-from traceback import format_exc
 
 import tqdm
 import yaml
@@ -30,6 +29,7 @@ from clist.models import Contest
 from notification.models import Task
 from tg.bot import Bot
 from tg.models import Chat
+from utils.traceback_with_vars import colored_format_exc
 
 logger = getLogger('notification.sendout.tasks')
 
@@ -254,7 +254,9 @@ class Command(BaseCommand):
                     task.is_sent = True
                     task.save()
                 except Exception as e:
-                    logger.error('Exception sendout task:\n%s' % format_exc())
+                    logger.warning(f'task = {task}')
+                    logger.error(f'Exception sendout task: {e}')
+                    print(colored_format_exc())
                     task.is_sent = False
                     task.save()
                     if isinstance(e, (SMTPResponseException, SMTPDataError)):

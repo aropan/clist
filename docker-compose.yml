@@ -15,6 +15,7 @@ services:
       - memcached
     secrets:
       - db_conf
+      - sentry_conf
   dev:
     build:
       context: .
@@ -30,6 +31,7 @@ services:
       - db
     secrets:
       - db_conf
+      - sentry_conf
     ports:
       - ${CLIST_DEV_PORT:-10042}:10042
   memcached:
@@ -42,6 +44,7 @@ services:
       - db
     secrets:
       - db_conf
+      - sentry_conf
   pgadmin:
     image: dpage/pgadmin4
     volumes:
@@ -96,6 +99,8 @@ services:
 secrets:
   db_conf:
     file: ./.env.db
+  sentry_conf:
+    file: ./.env.sentry
 
 volumes:
   postgres_data:

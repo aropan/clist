@@ -64,8 +64,9 @@ def account_update_contest_additions(
 
         to_save = False
         for k in ordered_dict.keys():
-            if k not in contest.info['fields']:
-                contest.info['fields'].append(k)
+            contest_fields = contest.info.setdefault('fields', [])
+            if k not in contest_fields:
+                contest_fields.append(k)
                 to_save = True
         if to_save:
             if contest.end_time + timedelta(days=31) > timezone.now():

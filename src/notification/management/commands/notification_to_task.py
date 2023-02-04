@@ -3,7 +3,6 @@
 
 import logging
 from datetime import timedelta
-from traceback import format_exc
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -16,6 +15,7 @@ from tqdm import tqdm
 from clist.models import Contest
 from notification.models import Notification, Task
 from utils.datetime import Epoch
+from utils.traceback_with_vars import colored_format_exc
 
 logger = logging.getLogger(__name__)
 
@@ -144,8 +144,10 @@ class Command(BaseCommand):
                     self.process(notify, qs)
                     notify.last_time = new_time
                     notify.save()
-            except Exception:
-                logger.error('Exception send notice:\n%s' % format_exc())
+            except Exception as e:
+                logger.warning(f'notification = {notify}')
+                logger.error(f'Exception send notice: {e}')
+                print(colored_format_exc())
 
         if not dryrun:
             with transaction.atomic():

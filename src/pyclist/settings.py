@@ -14,9 +14,11 @@ import warnings
 from os import path
 
 import pycountry
+import sentry_sdk
 from django.core.paginator import UnorderedObjectListWarning
 from django.utils.translation import gettext_lazy as _
 from environ import Env
+from sentry_sdk.integrations.django import DjangoIntegration
 from stringcolor import cs
 
 from pyclist import conf
@@ -30,6 +32,7 @@ BASE_DIR = path.dirname(path.dirname(path.abspath(__file__)))
 env = Env()
 env.read_env(env('DJANGO_ENV_FILE'))
 env.read_env(env('DJANGO_DB_CONF', default='/run/secrets/db_conf'))
+env.read_env(env('DJANGO_SENTRY_CONF', default='/run/secrets/sentry_conf'))
 
 ADMINS = conf.ADMINS
 
@@ -298,7 +301,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'production': {
-            'level': 'ERROR',
+            'level': 'WARNING',
             'filters': ['require_debug_false'],
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
@@ -640,6 +643,27 @@ class NOTIFICATION_CONF:
         (EMAIL, 'Email'),
         (TELEGRAM, 'Telegram'),
         (WEBBROWSER, 'WebBrowser'),
+    )
+
+
+# Sentry
+if not DEBUG:
+    sentry_sdk.init(
+        dsn=env('SENTRY_DSN'),
+        integrations=[
+            DjangoIntegration(),
+        ],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=0.1,
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True,
+        environment='development' if DEBUG else 'production',
+        _experiments={
+            'profiles_sample_rate': 0.1,
+        },
     )
 
 

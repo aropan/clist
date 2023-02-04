@@ -364,7 +364,7 @@ class Statistic(BaseModule):
                         r['room'] = as_number(party['room'])
 
                     r.setdefault('participant_type', []).append(party['participantType'])
-                    r['_no_update_n_contests'] = not bool(participant_types | set(r['participant_type']))
+                    r['_no_update_n_contests'] = not bool(participant_types & set(r['participant_type']))
 
                     if is_ghost and member['name']:
                         r['name'] = member['name']
@@ -705,7 +705,7 @@ class Statistic(BaseModule):
                     break
                 info['count'] += 1
 
-                is_testing = submission.get('verdict').upper() == 'TESTING'
+                is_testing = submission.get('verdict', '').upper() == 'TESTING'
                 if is_testing:
                     info = deepcopy(account.info.setdefault('submissions_', {}))
                     first_submission = True

@@ -17,7 +17,7 @@ from tqdm import tqdm
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number
 from notification.models import NotificationMessage
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseAccounts
 from true_coders.models import Coder
 
@@ -355,8 +355,15 @@ class Statistic(BaseModule):
                         coders_set_.add(c)
                 coders_set = coders_set_
 
-            if len(coders_set) > 1:
-                raise ExceptionParseAccounts(f'Too many coders for {user}: {coders_set}')
+            if len(coders_set) == n_virtual and n_virtual > 1:
+                main_account = resource.account_set.filter(key=info['member']).first()
+                main_coder = main_account.coders.first() if main_account else None
+                if main_coder is None:
+                    raise ExceptionParseAccounts(f'Too many coders for {user}: {coders_set}')
+                for c in coders_set:
+                    if c != main_coder:
+                        c.delete()
+                coders_set = {main_coder}
 
             if len(coders_set) == 0:
                 username = f'{settings.VIRTUAL_CODER_PREFIX_}{cphof_account.pk}'
@@ -400,9 +407,20 @@ class Statistic(BaseModule):
                 continue
 
             profile_url = cphof_resource.profile_url.format(account=quote(cphof_account.key))
-            info = Statistic._parse_profile_page(profile_url)
+            try:
+                info = Statistic._parse_profile_page(profile_url)
+            except FailOnGetResponse as e:
+                if 'page not found' in e.response.lower():
+                    username = f'{settings.VIRTUAL_CODER_PREFIX_}{cphof_account.pk}'
+                    yield {'info': None, 'coder': username}
+                    continue
+                raise e
 
             with transaction.atomic():
                 link_accounts(info, user, cphof_resource, cphof_account)
 
-            yield {'info': info, 'replace_info': True}
+            ret = {'info': info, 'replace_info': True}
+            if cphof_account.key != info['member']:
+                ret['rename'] = info['member']
+
+            yield ret

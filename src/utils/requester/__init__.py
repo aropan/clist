@@ -35,6 +35,7 @@ from filelock import FileLock
 from fp.fp import FreeProxy
 
 logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
+logger = logging.getLogger('utils.requester')
 
 
 class FileWithProxiesNotFound(Exception):
@@ -56,6 +57,10 @@ class FailOnGetResponse(Exception):
         return getattr(self.args[0], 'code', None)
 
     @property
+    def url(self):
+        return getattr(self.args[0], 'url', None)
+
+    @property
     def response(self):
         if not hasattr(self, 'response_'):
             err = self.args[0]
@@ -65,14 +70,24 @@ class FailOnGetResponse(Exception):
                     self.response_ = GzipFile(fileobj=buf).read()
                 else:
                     self.response_ = err.read()
+                self.response_ = self.response_.decode()
             else:
                 self.response_ = None
         return self.response_
 
     def __str__(self):
         if not hasattr(self, 'error_'):
-            self.error_ = super().__str__() + ', response = ' + str(self.response)
+            self.error_ = f'{super().__str__()}'
         return self.error_
+
+
+def raise_fail(err):
+    exc = FailOnGetResponse(err)
+    if exc.url:
+        logger.warning(f'url = {exc.url}')
+    if exc.response:
+        logger.warning(f'response = {exc.response[:100]}')
+    raise exc
 
 
 class NoVerifyWord(Exception):
@@ -529,7 +544,7 @@ class requester():
                     if self.assert_on_fail:
                         if self.proxer:
                             self.proxer.fail(err)
-                        raise FailOnGetResponse(err)
+                        raise_fail(err)
                     else:
                         traceback.print_exc()
                     return
@@ -547,7 +562,7 @@ class requester():
                 if self.assert_on_fail:
                     if self.proxer:
                         self.proxer.fail(err)
-                    raise FailOnGetResponse(err)
+                    raise_fail(err)
                 else:
                     traceback.print_exc()
                 return
@@ -615,8 +630,11 @@ class requester():
         self.response = response
         self.last_url = last_url
 
-        if return_json and response_content_type.startswith('application/json') or force_json:
-            page = json.loads(page)
+        if return_json:
+            if response_content_type.startswith('application/json') or force_json:
+                page = json.loads(page)
+            else:
+                page = {'page': page}
 
         return (page, last_url) if return_url else page
 

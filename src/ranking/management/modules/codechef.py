@@ -143,7 +143,9 @@ class Statistic(BaseModule):
                         raise ExceptionParseStandings(f'Failed getting {n_page} by url {url}')
 
                     if 'status' in data and data['status'] != 'success':
-                        raise ExceptionParseStandings(json.dumps(data))
+                        LOG.warning(f'Skip url = {url}, data = {data}')
+                        n_total_page = -1
+                        continue
 
                     unscored_problems = data['contest_info']['unscored_problems']
 
@@ -170,12 +172,15 @@ class Statistic(BaseModule):
                                 problem_data = REQ.get(problem_url,
                                                        headers=headers,
                                                        return_json=True,
-                                                       ignore_codes={404})
+                                                       ignore_codes={404, 403})
 
                                 if problem_data.get('status') == 'error':
                                     problem_info['url'] = self.CONTEST_PROBLEM_URL_FORMAT_.format(key=key, code=code)
                                     problem_url = self.API_PROBLEM_URL_FORMAT_.format(key=key, code=code)
-                                    problem_data = REQ.get(problem_url, headers=headers, return_json=True)
+                                    problem_data = REQ.get(problem_url,
+                                                           headers=headers,
+                                                           return_json=True,
+                                                           ignore_codes={404, 403})
 
                                 writer = problem_data.get('problem_author')
                                 if writer:
@@ -484,7 +489,7 @@ class Statistic(BaseModule):
                     entry = re.search('([0-9]+)$', key[:-1])
                     if entry and len(entry.group(1)) == 2:
                         f |= Q(key=key[:-3] + '20' + key[-3:-1])
-                contest = resource.contest_set.get(f)
+                contest = resource.contest_set.filter(f).first()
             contests_cache[cache_key] = contest
             return contest
 
