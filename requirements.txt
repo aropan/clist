@@ -69,7 +69,7 @@ scikit-image==0.19.2
 string-color==1.2.1
 channels==3.0.3
 flake8==3.8.4
-isort==5.7.0
+isort==5.12.0
 emoji-country-flag==1.2.4
 gitpython==3.1.30
 free-proxy==1.0.6
