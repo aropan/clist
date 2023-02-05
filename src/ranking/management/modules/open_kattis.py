@@ -138,7 +138,7 @@ class Statistic(BaseModule):
                 assert members
 
                 row['_members'] = [{'account': m.get('username'), 'name': m['name']} for m in members]
-                entry = re.search(r'"team_id":\s*(?P<team_id>[0-9]+),$', page, re.MULTILINE)
+                entry = re.search(r'"team_id":\s*"?(?P<team_id>[0-9]+)"?,$', page, re.MULTILINE)
                 row['team_id'] = entry.group('team_id')
                 return members, row
 

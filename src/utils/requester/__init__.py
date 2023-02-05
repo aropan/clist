@@ -86,7 +86,8 @@ def raise_fail(err):
     if exc.url:
         logger.warning(f'url = {exc.url}')
     if exc.response:
-        logger.warning(f'response = {exc.response[:100]}')
+        cropped_response = exc.response.strip().split('\n')[0][:100]
+        logger.warning(f'response = {cropped_response}')
     raise exc
 
 
