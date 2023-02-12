@@ -25,27 +25,29 @@
     }
 
     $url = 'https://hackerrank.com/api/hrw/resources/competitions?filter%5Bstatus%5D=published';
-    while ($url) {
+    $seen = array();
+    while ($url && !isset($seen[$url])) {
+        $seen[$url] = true;
         $json = curlexec($url, NULL, array('json_output' => true));
         if (!is_array($json['data'])) {
             print_r($json);
             trigger_error("Expected array ['data']", E_USER_WARNING);
-            continue;
+        } else {
+            foreach ($json['data'] as $c) {
+                $attrs = $c['attributes'];
+                $contests[] = array(
+                    'start_time' => $attrs['starts_at'],
+                    'end_time' => $attrs['ends_at'],
+                    'title' => $attrs['name'],
+                    'url' => 'https://hackerrank.com/competitions/' . $attrs['slug'],
+                    'host' => $HOST,
+                    'rid' => $RID,
+                    'timezone' => 'UTC',
+                    'key' => 'competitions/' . $c['id'],
+                );
+            }
         }
-        foreach ($json['data'] as $c) {
-            $attrs = $c['attributes'];
-            $contests[] = array(
-                'start_time' => $attrs['starts_at'],
-                'end_time' => $attrs['ends_at'],
-                'title' => $attrs['name'],
-                'url' => 'https://hackerrank.com/competitions/' . $attrs['slug'],
-                'host' => $HOST,
-                'rid' => $RID,
-                'timezone' => 'UTC',
-                'key' => 'competitions/' . $c['id'],
-            );
-        }
-        if (!isset($json['links']['next'])) {
+        if (!isset($json['links']) || !isset($json['links']['next'])) {
             break;
         }
         $url = $json['links']['next'];

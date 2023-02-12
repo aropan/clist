@@ -71,8 +71,10 @@
 
         if ($NLOGMSG == 0) {
             register_shutdown_function('crop_logmsg');
+        } else if ($NLOGMSG >= COUNTLINEINLOGFILE) {
+            crop_logmsg();
+            $NLOGMSG = 0;
         }
-
 
         $PREV_TIME = $curr_time;
         $NLOGMSG += 1;
@@ -534,20 +536,22 @@
     }
 
     // https://gist.github.com/erickpatrick/3039081#file-seconds-human-redable-text-php-L9
-    function secs_to_h($secs)
+    function human_readable_seconds($secs)
     {
         $units = array(
-            "week"   => 7*24*3600,
-            "day"    =>   24*3600,
-            "hour"   =>      3600,
-            "minute" =>        60,
-            "second" =>         1,
+            "week"   => 7 * 24 * 3600,
+            "day"    =>     24 * 3600,
+            "hour"   =>          3600,
+            "minute" =>            60,
+            "second" =>             1,
         );
         // specifically handle zero
-        if ( $secs == 0 ) return "0 seconds";
+        if ($secs < 1) {
+            return number_format($secs, 3) . " seconds";
+        }
         $s = "";
         foreach ( $units as $name => $divisor ) {
-            if ( $quot = intval($secs / $divisor) ) {
+            if ($quot = intval($secs / $divisor)) {
                 $s .= "$quot $name";
                 $s .= (abs($quot) > 1 ? "s" : "") . ", ";
                 $secs -= $quot * $divisor;

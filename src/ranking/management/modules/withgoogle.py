@@ -15,6 +15,7 @@ from random import choice
 
 import flag
 import tqdm
+from django.utils.timezone import now
 
 from clist.templatetags.extras import as_number, get_country_name, get_problem_key
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
@@ -24,6 +25,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings, InitModu
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://codejam.googleapis.com/scoreboard/{id}/poll?p='
     API_ATTEMPTS_URL_FORMAT_ = 'https://codejam.googleapis.com/attempts/{id}/poll?p='
+    API_NEVERLAND_URL_FORMAT_ = 'https://codejam.googleapis.com/profile/get?p='
     ARCHIVE_URL_FORMAT_ = 'https://codingcompetitions.withgoogle.com/hashcode/archive/{year}'
     ARCHIVE_DATA_URL_FORMAT_ = 'https://codingcompetitions.withgoogle.com/data/scoreboards/{year}.json'
 
@@ -78,7 +80,8 @@ class Statistic(BaseModule):
             query = f'{{"min_rank":{offset},"num_consecutive_users":{num}}}'
             url = api_ranking_url_format + encode(query)
             content = REQ.get(url)
-            return decode(content)
+            ret = decode(content)
+            return ret
 
         data = get(1, 1)
         challenge = data['challenge']
@@ -93,7 +96,7 @@ class Statistic(BaseModule):
                 'name': task['title'],
             }
             problems_order.append(problem_info['code'])
-            if 'name' in task['tests'][0]:
+            if task['tests'] and 'name' in task['tests'][0]:
                 problem_info.pop('code')
                 problem_info['group'] = problem_info['name']
                 for subtask in task['tests']:
@@ -131,19 +134,26 @@ class Statistic(BaseModule):
                 data = None
             return handle, data
 
+        def fetch_neverland(nid):
+            query = f'{{"neverland_id":"{nid}"}}'
+            url = Statistic.API_NEVERLAND_URL_FORMAT_ + encode(query)
+            content = REQ.get(url, ignore_codes={404})
+            data = decode(content)
+            return nid, data
+
         result = {}
         neverland_ids = []
         stop = False
         if users:
             users = set(users)
-        with PoolExecutor(max_workers=1 if users else 8) as executor:
+        with PoolExecutor(max_workers=1 if users else 20) as executor:
             handles_for_getting_attempts = []
             for data in tqdm.tqdm(executor.map(fetch_page, range(n_page)), total=n_page, desc='paging'):
                 if stop:
                     break
                 for row in data['user_scores']:
-                    if not row['task_info'] or stop:
-                        continue
+                    if stop:
+                        break
                     handle = row.pop('displayname')
                     if users and handle not in users:
                         continue
@@ -229,28 +239,32 @@ class Statistic(BaseModule):
                     else:
                         handles_for_getting_attempts.append(handle)
 
-            if are_results_final:
-                neverland_ids_set = set()
-                for row in result.values():
-                    if '_members' not in row or '_neverland_ids' not in row:
+            neverland_ids_set = set()
+            for row in result.values():
+                if '_members' not in row or '_neverland_ids' not in row:
+                    continue
+                for key, nid in zip(row['_members'], row['_neverland_ids']):
+                    if key is None:
                         continue
-                    for key, nid in zip(row['_members'], row['_neverland_ids']):
-                        if key is None:
-                            continue
-                        neverland_ids_set.add(nid)
-                neverland_ids = [nid for nid in neverland_ids if nid not in neverland_ids_set]
+                    neverland_ids_set.add(nid)
+            neverland_ids = [nid for nid in neverland_ids if nid not in neverland_ids_set]
+            neverland_ids = neverland_ids[:min(3000, len(neverland_ids))]
+            accounts = {}
+            for nid, data in tqdm.tqdm(
+                executor.map(fetch_neverland, neverland_ids),
+                total=len(neverland_ids),
+                desc='getting profiles',
+            ):
+                if not data:
+                    continue
+                accounts[nid] = data['profile']['nickname']
+            for row in result.values():
+                members = row.setdefault('_members', [None] * len(row['_neverland_ids']))
+                for idx, nid in enumerate(row['_neverland_ids']):
+                    if nid in accounts:
+                        members[idx] = {'account': accounts[nid]}
 
-                if neverland_ids:
-                    neverland_ids = neverland_ids[:min(300, len(neverland_ids))]
-                    accounts = self.resource.account_set.filter(info__neverland_id__in=set(neverland_ids))
-                    accounts = accounts.values_list('key', 'info__neverland_id')
-                    accounts = {nid: key for key, nid in accounts}
-                    for row in result.values():
-                        members = row.setdefault('_members', [None] * len(row['_neverland_ids']))
-                        for idx, nid in enumerate(row['_neverland_ids']):
-                            if nid in accounts:
-                                members[idx] = {'account': accounts[nid]}
-
+            if are_results_final:
                 for handle, data in tqdm.tqdm(
                     executor.map(fetch_attempts, handles_for_getting_attempts),
                     total=len(handles_for_getting_attempts),
@@ -310,6 +324,7 @@ class Statistic(BaseModule):
             'problems': problems_info,
             'advance': get_advance(challenge),
             'has_hidden': not are_results_final,
+            'link_accounts': self.end_time < now() and are_results_final,
         }
 
         if self.start_time.year >= 2020 and not standings['advance']:
@@ -426,7 +441,7 @@ class Statistic(BaseModule):
 
     def _hashcode(self, users=None, statistics=None):
         standings_url = None
-        is_final_round = self.name.endswith('Final Round')
+        is_final_round = re.search(r'\bfinals?\b', self.name, flags=re.I)
 
         data = None
         try:
@@ -539,7 +554,7 @@ class Statistic(BaseModule):
         return standings
 
     def get_standings(self, users=None, statistics=None):
-        if 'hashcode_scoreboard' in self.info or re.search(r'\bhash.*code\b.*\(round|final\)$', self.name, re.I):
+        if 'hashcode_scoreboard' in self.info:
             ret = self._hashcode(users, statistics)
         elif '/codingcompetitions.withgoogle.com/' in self.url:
             ret = self._api_get_standings(users, statistics)

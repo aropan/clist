@@ -40,11 +40,14 @@
        >
       <script>$('#toggle-view').bootstrapToggle()</script>
     </div>
-    <div id="filter" class="input-group input-group-xs">
-      <input class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
-      <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
-        <i class="fa fa-search"></i>
-      </span>
+    <div id="filter" class="form-inline">
+      {% if favorite_contests %}{% include "favorite_filter.html" with input_group_size="xs" %}{% endif %}
+      <div class="input-group input-group-xs">
+        <input id="search" class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
+        <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
+          <i class="fa fa-search"></i>
+        </span>
+      </div>
     </div>
   </div>
 </div>
@@ -107,6 +110,7 @@
             <a href="{% url 'clist:resource' contest.resource.host %}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
             <a class="title_search" href="{{ contest.actual_url }}"{% if open_new_tab %} target="_blank" rel="noopener"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
           </span>
+          {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
           {% if contest.state != "past" and add_to_calendar != "disable" %}
           <a class="data-ace" data-ace='{
             "title":"{{ contest.title }}",

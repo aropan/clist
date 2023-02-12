@@ -5,6 +5,7 @@
   timezone = '{{ timezone }}'
   timezone_hm = '{{ timezone|get_timezone_offset_hm }}'
   hide_contest = {{ hide_contest|default:0 }}
+  favorite_contests = {{ favorite_contests|default:1 }}
   contest_toggle = {{ party.toggle_contest|default:0 }}
   party_contests_set = new Set([{% for i in party.contest_ids %}{% if forloop.counter0 %},{% endif %}{{ i }}{% endfor %}])
   has_permission_toggle_party_contests = {{ party.has_permission_toggle|default:0 }}

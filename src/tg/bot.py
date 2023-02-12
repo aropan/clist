@@ -488,7 +488,8 @@ class Bot(telegram.Bot):
         except telegram.error.Unauthorized as e:
             raise e
         except Exception as e:
-            self.logger.error('Exception send message %s: %s' % (e, msg))
+            self.logger.warning(f'message = {msg}')
+            self.logger.error(f'Exception send message {e}')
             ret = self.sendMessage(**msg)
         return ret
 

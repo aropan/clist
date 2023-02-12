@@ -32,7 +32,7 @@ $(function() {
     } else {
       $.ajax({
         type: 'POST',
-        url: '/settings/change/',
+        url: change_url,
         data: {
           pk: coder_pk,
           name: 'show-tags',

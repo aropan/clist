@@ -5,7 +5,7 @@ $(function() {
         placement: 'top',
     })
     var timeoutId = null
-    var filterInput = $('#filter input')
+    var filterInput = $('#filter #search')
     filterInput.keyup(function(e) {
         if (e.which == 27) {
             $(this).val('')
@@ -20,19 +20,34 @@ $(function() {
         }
         timeoutId = setTimeout(function() {
             $('#filter .input-group-addon.icon').html('<i class="fa fa-search"></i>')
-            filterCallbackList(value)
-            filterCallbackCalendar(value)
+            filterCallbackList()
+            filterCallbackCalendar()
         }, filterTimeoutUpdate);
     })
 
-    if (filterInput.val()) {
+    var favorite_button_active = $('#filter button[name="favorite"].active')
+    if (filterInput.val() || favorite_button_active.length) {
         filterInput.keyup()
     }
 
     $('#toggle-view').change(function() {
-        var target = $(this).prop('checked')? '#list-view' : '#calendar-view'
+        var target_view = $(this).prop('checked')? 'list' : 'calendar'
         $('.list-calendar-views .active').toggleClass('active')
-        $(target).toggleClass('active')
+        $('#' + target_view + '-view').toggleClass('active')
         $(window).resize()  // to collapse list day events in calendar
+        update_urls_params({'view': target_view})
+    })
+
+    var fav_buttons = $('#filter button[name="favorite"]')
+    fav_buttons.click(function() {
+        var btn = $(this)
+        var active = btn.hasClass('active')
+        fav_buttons.removeClass('active')
+        if (!active) {
+            btn.addClass('active')
+        }
+        filterCallbackList()
+        filterCallbackCalendar()
+        return false
     })
 })

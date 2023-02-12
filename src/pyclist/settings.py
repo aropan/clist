@@ -100,6 +100,7 @@ INSTALLED_APPS = (
     'tastypie_oauth',
     'channels',
     'chats',
+    'favorites',
 )
 
 MIDDLEWARE = (
@@ -146,12 +147,14 @@ TEMPLATES = [
                 'pyclist.context_processors.bootstrap_admin',
                 'pyclist.context_processors.coder_time_info',
                 'pyclist.context_processors.fullscreen',
+                'pyclist.context_processors.favorite_settings',
             ],
             'builtins': [
                 'pyclist.templatetags.staticfiles',
                 'clist.templatetags.extras',
                 'imagefit.templatetags.imagefit',
                 'django.contrib.humanize.templatetags.humanize',
+                'favorites.templatetags.extras',
             ],
         },
     },
@@ -513,6 +516,10 @@ ADD_TO_CALENDAR_ = 'enable'
 COUNT_PAST_ = 3
 GROUP_LIST_ = True
 HIDE_CONTEST_ = False
+FAVORITE_SETTINGS_ = {
+    'contests': True,
+    'problems': True,
+}
 DEFAULT_TIME_ZONE_ = 'UTC'
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
 HTTPS_HOST_ = 'https://' + HOST_
@@ -612,6 +619,8 @@ FONTAWESOME_ICONS_ = {
     'contest': '<i class="fas fa-laptop-code"></i>',
     'kofi': '<i class="fas fa-mug-hot ko-fi"></i>',
     'crypto': '<i class="fab fa-bitcoin"></i>',
+    'fav': {'icon': '<i class="fas fa-star activity fav selected-activity"></i>', 'title': 'Favorite'},
+    'unfav': {'icon': '<i class="far fa-star activity fav"></i>', 'title': None},
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

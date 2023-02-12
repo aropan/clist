@@ -9,6 +9,7 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import F, Q
@@ -222,7 +223,11 @@ class Resource(BaseModel):
         return step
 
 
-class VisibleContestManager(BaseManager):
+class BaseContestManager(BaseManager):
+    pass
+
+
+class VisibleContestManager(BaseContestManager):
     def get_queryset(self):
         return super().get_queryset().filter(invisible=0).filter(stage__isnull=True)
 
@@ -268,7 +273,7 @@ class Contest(BaseModel):
     updated = models.DateTimeField(auto_now=True, db_index=True)
     was_auto_added = models.BooleanField(default=False)
 
-    objects = BaseManager()
+    objects = BaseContestManager()
     visible = VisibleContestManager()
     significant = SignificantContestManager()
 
@@ -523,6 +528,10 @@ class Problem(BaseModel):
     n_total = models.IntegerField(default=None, null=True, blank=True)
     visible = models.BooleanField(default=True, null=False)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
+
+    activities = GenericRelation('favorites.Activity')
+
+    objects = BaseManager()
 
     def __str__(self):
         return "%s [%d]" % (self.name, self.id)

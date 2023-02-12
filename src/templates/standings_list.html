@@ -52,6 +52,7 @@
 
       {% include 'resource_filter.html' %}
 
+      {% if favorite_contests %}{% include 'favorite_filter.html' %}{% endif %}
     </form>
 
     <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>

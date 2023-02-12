@@ -7,9 +7,9 @@ function init_account_buttons() {
     $loading.toggleClass('hidden')
     $.ajax({
       type: 'POST',
-      url: '/settings/change/',
+      url: change_url,
       data: {
-        pk: CODER_PK,
+        pk: coder_pk,
         name: $btn.attr('data-action'),
         id: $btn.attr('data-id'),
       },

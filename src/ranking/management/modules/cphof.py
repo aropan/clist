@@ -393,7 +393,7 @@ class Statistic(BaseModule):
                 account.coders.add(coder)
                 added_accounts.append(account)
 
-            if not coder.is_virtual and added_accounts:
+            if added_accounts:
                 profile_url = cphof_resource.profile_url.format(**cphof_account.dict_with_info())
                 msg = f'Account data taken from <a href="{profile_url}" class="alert-link">cphof.org</a>.'
                 NotificationMessage.link_accounts(to=coder, accounts=added_accounts, message=msg)

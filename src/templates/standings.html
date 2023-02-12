@@ -28,8 +28,6 @@
   with_detail = {{ with_detail|lower }}
   starred_cookie_path = window.location.pathname
   starred_cookie_expires = 365
-  coder_pk = {% if request.user.is_authenticated %}{{ request.user.coder.pk }}{% else %}undefined{% endif %}
-  change_url = '{% url "coder:change" %}'
 </script>
 
 {% endblock %}

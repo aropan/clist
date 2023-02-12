@@ -45,7 +45,7 @@ from utils.regex import get_iregex_filter
 
 @page_template('standings_list_paging.html')
 def standings_list(request, template='standings_list.html', extra_context=None):
-    contests = Contest.objects \
+    contests = Contest.objects.annotate_favorite(request.user) \
         .select_related('resource') \
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
         .filter(Q(n_statistics__gt=0) | Q(end_time__lte=timezone.now())) \
@@ -53,14 +53,21 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     all_standings = False
     if request.user.is_authenticated:
-        all_standings = request.user.coder.settings.get('all_standings')
+        coder = request.user.coder
+        all_standings = coder.settings.get('all_standings')
 
     switch = request.GET.get('switch')
     if bool(all_standings) == bool(switch) and switch != 'all' or switch == 'parsed':
         contests = contests.filter(Q(invisible=False) | Q(stage__isnull=False))
         contests = contests.filter(n_statistics__gt=0, has_module=True)
         if request.user.is_authenticated:
-            contests = contests.filter(request.user.coder.get_contest_filter(['list']))
+            contests = contests.filter(coder.get_contest_filter(['list']))
+
+    favorite_value = request.GET.get('favorite')
+    if favorite_value == 'on':
+        contests = contests.filter(is_favorite=True)
+    elif favorite_value == 'off':
+        contests = contests.filter(is_favorite=False)
 
     search = request.GET.get('search')
     if search is not None:

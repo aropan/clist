@@ -9,11 +9,6 @@
 {% endblock %}
 
 {% block content %}
-
-<script>
-  CODER_PK = {{ request.user.coder.pk|default:-1 }}
-</script>
-
 <div class="col-xl-10 col-xl-offset-1">
   <form class="form-inline" method="get" action="">
   <div id="accounts-filters" class="form-group">

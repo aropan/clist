@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 RUN apt update -y
+RUN apt install --reinstall build-essential -y
 
 # Decode raw protobuf message while parse some resources
 RUN apt install -y protobuf-compiler
@@ -21,7 +22,7 @@ RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/
 RUN apt install -y lsof htop vim
 
 # Setup python requirements
-RUN pip install "pip==22.1.2"
+RUN pip install "pip==23.0"
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 

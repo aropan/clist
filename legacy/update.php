@@ -46,13 +46,17 @@
 
     echo "<i>" . date("r") . "</i><br><br>\n\n";
 
+    $resources_hosts = array();
     foreach ($resources as $resource)
     {
+        $start_parsing_time = microtime(true);
         $parse_url = empty($resource['parse_url'])? $resource['url'] : $resource['parse_url'];
         $variables = array(
             '${YEAR}' => date('Y')
         );
         $parse_url = strtr($parse_url, $variables);
+        $resources_hosts[$resource['id']] = $resource['host'];
+
 
         echo "<b>{$resource['host']}</b>";
         $preCountContests = count($contests);
@@ -169,10 +173,13 @@
                 $contests[] = $contest;
             }
         }
-        echo " (" . (count($contests) - $preCountContests) . " of " . count($contests) . ")<br>\n";
+
+        $elapsed_time = microtime(true) - $start_parsing_time;
+        $elapsed_time_human_readable = sprintf("%0.3f", $elapsed_time);
+        echo " (" . (count($contests) - $preCountContests) . ") [<i title=\"" . human_readable_seconds($elapsed_time) . "\">" . number_format($elapsed_time, 3) . "</i>]<br>\n";
     }
 
-    $lastresources = "";
+    $last_resource = "";
     $updated_resources = array();
     foreach ($contests as $i => $contest)
     {
@@ -300,12 +307,15 @@
             }
         }
 
+        $to_delete = ($contest['delete_after_end'] ?? false) && $contest['end_time'] < time();
+
         $contest['start_time'] = date('Y-m-d H:i:s', $contest['start_time']);
         $contest['end_time'] = date('Y-m-d H:i:s', $contest['end_time']);
 
         $fields = "resource_id";
         $values = $contest['rid'];
         $update = "resource_id = " . $contest['rid'];
+        $contest_rid = $contest['rid'];
 
         $duplicate = isset($contest['duplicate']) && $contest['duplicate'];
 
@@ -314,6 +324,7 @@
         unset($contest['rid']);
         unset($contest['duplicate']);
         unset($contest['skip_check_time']);
+        unset($contest['delete_after_end']);
 
         $info = false;
         if (isset($contest['info'])) {
@@ -363,18 +374,24 @@
 
         $to_update = !DEBUG && (!isset($_GET['title']) || preg_match($_GET['title'], $contest['title']));
         if ($to_update) {
-            $db->query("INSERT INTO clist_contest ($fields) values ($values) ON CONFLICT (resource_id, key) DO UPDATE SET $update");
+            if ($to_delete) {
+                $db->query("DELETE FROM clist_contest WHERE resource_id = ${contest_rid} and key = '${contest['key']}'", true);
+            } else {
+                $db->query("INSERT INTO clist_contest ($fields) values ($values) ON CONFLICT (resource_id, key) DO UPDATE SET $update");
+            }
         }
 
-        if ($lastresources != $contest['host']) {
-            echo "<br><b>{$contest['host']}</b>:<br>\n";
-            $lastresources = $contest['host'];
+        $resource_host = $resources_hosts[$contest_rid];
+        if ($last_resource != $resource_host) {
+            echo "<br><b>$resource_host</b>:<br>\n";
+            $last_resource = $resource_host;
         }
 
-        $duration_human = secs_to_h($contest['duration_in_secs']);
+        $duration_human = human_readable_seconds($contest['duration_in_secs']);
         echo "\t<span style='padding-left: 50px'>" .
             ($duplicate? "<i>duplicate</i> " : "") .
             ($to_update? "" : "<i>skip</i> ") .
+            ($to_delete? "<i>delete</i> " : "") .
             "{$contest['title']} ({$contest['start_time']} | $duration_human) [{$contest['key']}]</span><br>\n";
     }
     if (count($updated_resources)) {

@@ -59,7 +59,8 @@
       </a>
       {% if problem.url %}<a href="{{ problem.url }}" target="_blank" rel="noopener">{% endif %}
         {% trim_to problem.name 50 %}
-        {% if problem.url %}</a>{% endif %}
+      {% if problem.url %}</a>{% endif %}
+      {% if favorite_problems %}{% activity_action "fav" problem %}{% endif %}
     </span>
     {% if perms.clist.change_problem %}
     <a href="{% url 'admin:clist_problem_change' problem.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>

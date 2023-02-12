@@ -7,10 +7,6 @@
 <link href="{% static_ts 'css/problems.css' %}" rel="stylesheet">
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/problems.js' %}"></script>
-
-<script>
-  coder_pk = {% if coder %}{{ coder.pk }}{% else %}undefined{% endif %}
-</script>
 {% endblock %}
 
 {% block content %}
@@ -32,6 +28,8 @@
     </div>
 
     {% include 'resource_filter.html' %}
+
+    {% if favorite_problems %}{% include 'favorite_filter.html' %}{% endif %}
 
     {% include 'tag_filter.html' %}
 

@@ -38,8 +38,6 @@ Number of competitions: {{ account.n_contests }}
 {% block content %}
 
 <script>
-  coder_pk = {% if request.user.is_authenticated %}{{ request.user.coder.pk }}{% else %}undefined{% endif %}
-  change_url = '{% url "coder:change" %}'
   ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource }}{% endif %}'
 </script>
 

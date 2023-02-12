@@ -1,7 +1,12 @@
+from django.apps import apps
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import OuterRef, Value
 from django.db.models.fields import Field
 from django.db.models.lookups import LessThan
 from django.utils.timezone import now
+from sql_util.utils import Exists
 
 from utils.datetime import parse_duration
 
@@ -29,6 +34,25 @@ class BaseModel(models.Model):
 
 
 class BaseManager(models.Manager):
+
+    def annotate_favorite(self, instance):
+        if isinstance(instance, User):
+            coder = instance.coder if instance.is_authenticated else None
+        else:
+            coder = instance
+
+        if not coder:
+            return self.annotate(is_favorite=Value(False))
+
+        Activity = apps.get_model('favorites.Activity')
+        content_type = ContentType.objects.get_for_model(self.model)
+        qs = Activity.objects.filter(
+            coder=coder,
+            activity_type=Activity.Type.FAVORITE,
+            content_type=content_type,
+            object_id=OuterRef('pk'),
+        )
+        return self.annotate(is_favorite=Exists(qs))
 
     class Meta:
         abstract = True

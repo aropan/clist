@@ -175,7 +175,7 @@
             $normalized_title = $normalize_title($item['summary']);
             $title = trim(preg_replace('/\s*[0-9]{4}\s*/', ' ', $item['summary']));
 
-            $skip_match_by_end = preg_match('/(registration|announce)/i', $title, $match);
+            $skip_match_by_end = preg_match('/(registration|announce|practice.*session|\bhub\b.*open)/i', $title, $match);
 
             $timestamp = date("U", strtotime($item['end'][$date_key]));
 
@@ -208,6 +208,7 @@
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
                 'key' => $item['id'],
+                'delete_after_end' => boolval($skip_match_by_end),
             );
         }
     }

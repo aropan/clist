@@ -216,7 +216,7 @@ class Statistic(BaseModule):
                 table = get_table(page)
                 for r in table:
                     uid = None
-                    for k, v in list(r.items()):
+                    for k, v in r:
                         if k == 'Имя':
                             uid = get_uid(v)
                             if uid is None:

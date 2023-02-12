@@ -24,6 +24,7 @@ from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
                                        time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
+from notification.models import NotificationMessage
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
 from ranking.management.commands.parse_accounts_infos import rename_account
@@ -291,6 +292,7 @@ class Command(BaseCommand):
                     resource_statistics = resource.info.get('statistics', {})
                     wait_rating = resource_statistics.get('wait_rating', {})
                     has_hidden = standings.pop('has_hidden', False)
+                    link_accounts = standings.pop('link_accounts', False)
 
                     results = []
                     if result or users:
@@ -829,6 +831,26 @@ class Command(BaseCommand):
                                     statistic.addition = addition
                                     statistic.save()
 
+                            def link_account(statistic):
+                                account_keys = set()
+                                for member in statistic.addition.get('_members', []):
+                                    if not member:
+                                        continue
+                                    account_key = member.get('account')
+                                    if not account_key:
+                                        continue
+                                    account_keys.add(account_key)
+                                accounts = resource.account_set.filter(key__in=account_keys).prefetch_related('coders')
+                                for account in accounts:
+                                    coders = account.coders.all()
+                                    if len(coders) != 1:
+                                        continue
+                                    coder = coders[0]
+                                    if coder.account_set.filter(pk=statistic.account.pk).exists():
+                                        continue
+                                    statistic.account.coders.add(coder)
+                                    NotificationMessage.link_accounts(to=coder, accounts=[statistic.account])
+
                             update_addition_fields()
                             update_account_time()
                             update_account_info()
@@ -846,6 +868,9 @@ class Command(BaseCommand):
                             n_statistics_created += statistics_created
 
                             update_after_update_or_create(statistic, statistics_created, try_calculate_time)
+
+                            if link_accounts:
+                                link_account(statistic)
 
                         if not users:
                             if has_hidden != contest.has_hidden_results:

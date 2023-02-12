@@ -1,0 +1,15 @@
+{% if request.GET.favorite %}
+<input type="hidden" name="favorite" value="{{ request.GET.favorite }}"/>
+{% endif %}
+<div class="input-group input-group-{{ input_group_size|default:'sm' }}">
+  <div class="input-group-btn">
+    <button class="btn btn-default{% if request.GET.favorite == 'on' %} active{% endif %}" name="favorite" value="{% if request.GET.favorite != 'on' %}on{% endif %}" data-value="on">
+      {% icon_to 'fav' %}
+    </button>
+  </div>
+  <div class="input-group-btn">
+    <button class="btn btn-default{% if request.GET.favorite == 'off' %} active{% endif %}" name="favorite" value="{% if request.GET.favorite != 'off' %}off{% endif %}" data-value="off">
+      {% icon_to 'unfav' %}
+    </button>
+  </div>
+</div>

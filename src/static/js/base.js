@@ -402,3 +402,55 @@ function update_urls_params(params) {
   }
   window.history.replaceState(null, null, url)
 }
+
+function click_activity(event, el) {
+  event.preventDefault()
+  var loading_spinner = null
+  var loading_timeout_id = setTimeout(function() {
+    loading_spinner = $('<i class="fas fa-circle-notch fa-spin"></i>')
+    $(el).after(loading_spinner)
+    $(el).hide()
+  }, 500)
+  $.ajax({
+    type: 'POST',
+    url: change_url,
+    data: {
+        pk: coder_pk,
+        name: 'activity',
+        content_type: $(el).attr('data-content-type'),
+        object_id: $(el).attr('data-object-id'),
+        activity_type: $(el).attr('data-activity-type'),
+        value: !$(el).hasClass('selected-activity'),
+    },
+    success: function(data) {
+      if (data['status'] == 'ok') {
+        var selector = ''
+        selector += '[data-content-type="' + $(el).attr('data-content-type') + '"]'
+        selector += '[data-object-id="' + $(el).attr('data-object-id') + '"]'
+        selector += '[data-activity-type="' + $(el).attr('data-activity-type') + '"]'
+        $(selector).each(function() {
+          if (data['state']) {
+            $(this).removeClass('far')
+            $(this).addClass('fas')
+            $(this).addClass('selected-activity')
+          } else {
+            $(this).addClass('far')
+            $(this).removeClass('fas')
+            $(this).removeClass('selected-activity')
+          }
+        })
+      } else {
+        $.notify(JSON.stringify(data), 'error')
+      }
+    },
+    error: log_ajax_error,
+    complete: function(data) {
+      clearTimeout(loading_timeout_id)
+      if (loading_spinner) {
+        loading_spinner.remove()
+        $(el).show()
+      }
+    },
+  })
+  return false
+}

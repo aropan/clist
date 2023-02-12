@@ -1,6 +1,6 @@
 
-#filter {
-    max-width: 200px;
+#filter > * {
+    max-width: 100px;
 }
 
 #filter .tooltip.top .tooltip-inner {

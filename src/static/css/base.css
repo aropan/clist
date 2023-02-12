@@ -561,3 +561,24 @@ canvas.rating_history {
   table-layout: fixed;
   border-collapse: separate;
 }
+
+
+/*
+ * Favorites
+ */
+
+.activity {
+  cursor: pointer;
+}
+
+.activity.fav {
+  color: #bbb;
+}
+
+.activity.fav.selected-activity {
+  color: yellow;
+}
+
+.activity.selected-activity {
+  text-shadow: 0 0 1px #000;
+}

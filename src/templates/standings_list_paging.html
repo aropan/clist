@@ -16,6 +16,8 @@
         <span class="toggle" data-group=".group-resource-{{ contest.resource.pk }}"><i class="fa fa-caret-up"></i></span>
     {% endif %}
     {% trim_to contest.title 60 %}
+    {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
+
     {% if contest.n_statistics and not contest.stats %}<small>({{ contest.n_statistics }})</small>{% endif %}
     {% if contests_groups %}
         {% with group_size=contests_groups|get_item:contest.resource|length %}

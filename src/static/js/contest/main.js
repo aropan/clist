@@ -1,4 +1,6 @@
-function filterCallbackList(regex) {
+function filterCallbackList() {
+    var regex = $('#filter #search').val()
+    update_urls_params({'q': regex? regex : undefined})
     if (regex) {
         try {
             regex = new RegExp(regex, 'i')
@@ -7,7 +9,18 @@ function filterCallbackList(regex) {
         }
     }
 
-    if (regex) {
+    var favorite_value = $('#filter button[name="favorite"].active').data('value')
+    if (favorite_value == 'on') {
+        favorite_value = 'true'
+        update_urls_params({'favorite': 'on'})
+    } else if (favorite_value == 'off') {
+        favorite_value = 'false'
+        update_urls_params({'favorite': 'off'})
+    } else {
+        update_urls_params({'favorite': undefined})
+    }
+
+    if (regex || favorite_value) {
         $('.contest .toggle, #toggle-all').each(function() {
             $(this).addClass('hidden')
         })
@@ -15,7 +28,10 @@ function filterCallbackList(regex) {
         $('.contest').each(function() {
             var title = $(this).find('.event .title_search').attr('title')
             var host = $(this).find('.event .resource_search').text()
-            if (regex.test(title) || regex.test(host)) {
+            var fav = Boolean($(this).find('.fav.selected-activity').length)
+            var regexed = regex? regex.test(title) || regex.test(host) : true
+            var favorited = favorite_value? String(fav) == favorite_value : true
+            if (regexed && favorited) {
                 $(this).addClass('onfilter').removeClass('nofilter')
                 count += 1
             } else {

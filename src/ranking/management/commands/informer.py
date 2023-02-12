@@ -21,6 +21,7 @@ from clist.models import Contest
 from clist.templatetags.extras import get_problem_name, get_problem_short, has_season, md_escape, md_italic_escape
 from ranking.models import Statistics
 from tg.bot import Bot, telegram
+from tg.models import Chat
 from utils.attrdict import AttrDict
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--cid', type=int, help='Contest id', required=True)
-        parser.add_argument('--tid', type=int, help='Telegram id for info', required=True)
+        parser.add_argument('--tid', type=str, help='Telegram id for info', required=True)
         parser.add_argument('--delay', type=int, help='Delay between query in seconds', default=30)
         parser.add_argument('--query', help='Regex search query', default=None)
         parser.add_argument('--numbered', help='Regex numbering query', default=None)
@@ -47,6 +48,11 @@ class Command(BaseCommand):
         self.stdout.write(str(options))
         args = AttrDict(options)
         logging.disable(logging.DEBUG)
+
+        if not re.match(r'^-?\d+$', args.tid):
+            tg_chat_id = Chat.objects.get(title=args.tid).chat_id
+        else:
+            tg_chat_id = args.tid
 
         bot = Bot()
 
@@ -123,7 +129,7 @@ class Command(BaseCommand):
                     if message_id:
                         for iteration in range(1, 5):
                             try:
-                                bot.delete_message(chat_id=args.tid, message_id=message_id)
+                                bot.delete_message(chat_id=tg_chat_id, message_id=message_id)
                                 message_id = None
                                 break
                             except telegram.error.BadRequest as e:
@@ -144,6 +150,8 @@ class Command(BaseCommand):
                 has_top = False
 
                 for k, v in stat.addition.get('problems', {}).items():
+                    if 'result' not in v:
+                        continue
                     p_info = problems_info.setdefault(k, {})
                     p_result = problems.get(k, {}).get('result')
                     result = v['result']
@@ -226,7 +234,7 @@ class Command(BaseCommand):
                     delete_message()
                     for iteration in range(1, 5):
                         try:
-                            message = bot.send_message(msg=msg, chat_id=args.tid)
+                            message = bot.send_message(msg=msg, chat_id=tg_chat_id)
                             message_id = message.message_id
                             break
                         except telegram.error.TimedOut as e:

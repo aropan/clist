@@ -101,7 +101,8 @@ def get_view_contests(request, coder):
         if categories:
             user_contest_filter = Coder.get_contest_filter(None, categories)
 
-    base_contests = Contest.visible.filter(user_contest_filter)
+    base_contests = Contest.visible.annotate_favorite(coder)
+    base_contests = base_contests.filter(user_contest_filter)
 
     resources = [r for r in request.GET.getlist('resource') if r]
     if resources:
@@ -190,12 +191,19 @@ def get_events(request):
         search_query_re = verify_regex(search_query)
         query &= Q(host__iregex=search_query_re) | Q(title__iregex=search_query_re)
 
+    favorite_value = request.POST.get('favorite')
+    if favorite_value == 'on':
+        query &= Q(is_favorite=True)
+    elif favorite_value == 'off':
+        query &= Q(is_favorite=False)
+
     party_slug = request.POST.get('party')
     if party_slug:
         party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
         query = Q(rating__party=party) & query
 
     contests = Contest.objects if party_slug else Contest.visible
+    contests = contests.annotate_favorite(coder)
     contests = contests.select_related('resource')
     contests = contests.order_by('start_time', 'title')
 
@@ -231,6 +239,8 @@ def get_events(request):
                 'color': color,
                 'icon': contest.resource.icon,
             }
+            if coder:
+                c['favorite'] = contest.is_favorite
             result.append(c)
     except Exception as e:
         return JsonResponse({'message': f'query = `{search_query}`, error = {e}'}, safe=False, status=400)
@@ -271,7 +281,6 @@ def main(request, party=None):
         coder = None
     viewmode = request.GET.get("view", viewmode)
     hide_contest = request.GET.get("hide_contest", hide_contest)
-
     hide_contest = int(str(hide_contest).lower() in settings.YES_)
 
     time_format = get_timeformat(request)
@@ -797,7 +806,7 @@ def update_problems(contest, problems=None, force=False):
 @page_template('problems_paging.html')
 @context_pagination()
 def problems(request, template='problems.html'):
-    problems = Problem.objects.all()
+    problems = Problem.objects.annotate_favorite(request.user)
     problems = problems.select_related('resource')
     problems = problems.prefetch_related('contests')
     problems = problems.prefetch_related('tags')
@@ -819,7 +828,13 @@ def problems(request, template='problems.html'):
             .filter(rating__isnull=False, resource__has_problem_rating=True)
             .select_related('resource')
         )
+
         # problems = problems.filter(contests__statistics__account__coders=coder)
+        favorite = request.GET.get('favorite')
+        if favorite == 'on':
+            problems = problems.filter(is_favorite=True)
+        elif favorite == 'off':
+            problems = problems.filter(is_favorite=False)
     else:
         coder = None
         has_update_coder = False

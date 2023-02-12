@@ -12,6 +12,7 @@ import pytz
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
@@ -29,6 +30,8 @@ from el_pagination.decorators import page_template, page_templates
 from ratelimit.core import get_usage
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
+
+from favorites.models import Activity
 
 from clist.models import Contest, ProblemTag, Resource
 from clist.templatetags.extras import asfloat, format_time, get_timezones, query_transform
@@ -814,12 +817,12 @@ def change(request):
         coder.timezone = value
         coder.save()
     elif name == "check-timezone":
-        if value not in ["0", "1", ]:
+        if value not in ["0", "1"]:
             return HttpResponseBadRequest("invalid check timezone value")
         coder.settings["check_timezone"] = int(value)
         coder.save()
     elif name == "show-tags":
-        if value not in ["0", "1", ]:
+        if value not in ["0", "1"]:
             return HttpResponseBadRequest("invalid show tags value")
         coder.settings["show_tags"] = int(value)
         coder.save()
@@ -863,7 +866,8 @@ def change(request):
             return HttpResponseBadRequest("invalid view mode")
         coder.settings["view_mode"] = value
         coder.save()
-    elif name in ["hide-contest", "all-standings", "open-new-tab", "group-in-list", "calendar-filter-long"]:
+    elif name in ["hide-contest", "all-standings", "open-new-tab", "group-in-list", "calendar-filter-long",
+                  "favorite-contests", "favorite-problems"]:
         if value not in ["0", "1", ]:
             return HttpResponseBadRequest(f"invalid {name} value")
         key = name.replace('-', '_')
@@ -1195,6 +1199,30 @@ def change(request):
             return HttpResponseBadRequest(f"invalid username: found '{username}', expected '{user.username}'")
         with transaction.atomic():
             user.delete()
+    elif name == 'activity':
+        if value not in ['1', '0']:
+            return HttpResponseBadRequest('invalid value')
+        value = int(value)
+        content_type = request.POST.get('content_type')
+        if content_type == 'problem':
+            content_type = ContentType.objects.get(app_label='clist', model='problem')
+        elif content_type == 'contest':
+            content_type = ContentType.objects.get(app_label='clist', model='contest')
+        else:
+            return HttpResponseBadRequest('invalid content type')
+        object_id = request.POST.get('object_id')
+        activity_type = request.POST.get('activity_type')
+        kwargs = dict(
+            coder=coder,
+            content_type=content_type,
+            object_id=object_id,
+            activity_type=activity_type,
+        )
+        if value:
+            Activity.objects.get_or_create(**kwargs)
+        else:
+            Activity.objects.filter(**kwargs).delete()
+        return JsonResponse({'status': 'ok', 'state': value})
     else:
         return HttpResponseBadRequest(f"unknown query = {name}")
 

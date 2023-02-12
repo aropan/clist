@@ -88,6 +88,11 @@
         {% block end-head %}{% endblock %}
     </head>
     <body{% if fullscreen %} class="fullscreen"{% endif %}>
+        <script>
+            coder_pk = {% if request.user.is_authenticated %}{{ request.user.coder.pk }}{% else %}undefined{% endif %}
+            change_url = '{% url "coder:change" %}'
+        </script>
+
         {% block navbar %}{% include 'navbar.html' %}{% endblock %}
         <div class="rating-clips">{% include "rating-clip.html" %}</div>
 

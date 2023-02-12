@@ -17,7 +17,7 @@ import pytz
 
 from clist.templatetags.extras import as_number, is_solved
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from utils.aes import AESModeOfOperation
 
@@ -475,8 +475,8 @@ class Statistic(BaseModule):
         if not users:
             data = api_query(method='contest.ratingChanges', params=params, api_key=self.api_key)
             if data.get('status') not in ['OK', 'FAILED']:
-                raise ExceptionParseStandings(data)
-            if data and data['status'] == 'OK':
+                LOG.warning(f'Missing rating changes = {data}')
+            if data and data.get('status') == 'OK':
                 for row in data['result']:
                     if str(row.pop('contestId')) != self.key:
                         continue

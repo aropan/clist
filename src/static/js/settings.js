@@ -1,6 +1,6 @@
 $(function() {
     $.fn.editable.defaults.mode = 'inline'
-    $.fn.editable.defaults.url = '/settings/change/'
+    $.fn.editable.defaults.url = change_url
 
     $('#theme').editable({
         type: 'select',

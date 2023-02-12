@@ -196,6 +196,9 @@ class NotificationMessage(BaseModel):
 
     @staticmethod
     def link_accounts(to, accounts, message=None, sender=None):
+        if to.is_virtual:
+            return
+
         text = 'New accounts have been linked to you. Check your <a href="/coder/" class="alert-link">profile page</a>.'
         if message:
             text += ' ' + message

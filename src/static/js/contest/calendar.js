@@ -1,4 +1,4 @@
-function filterCallbackCalendar(value) {
+function filterCallbackCalendar() {
     calendar.refetchEvents()
 }
 
@@ -37,6 +37,7 @@ $(function() {
                     search_query: $('#filter [type="text"]').val(),
                     resource: url.searchParams.getAll('resource'),
                     status: url.searchParams.get('status'),
+                    favorite: $('#filter button[name="favorite"].active').data('value'),
                     ignore_filters:
                         $('.ignore-filter')
                         .filter(function () { return $(this).attr('data-value') == '1' })
@@ -99,6 +100,12 @@ $(function() {
                     toggle_part_contest_link.click(toggle_party_contest)
                 }
                 toggle_part_contest_link.prependTo(element.querySelector('.fc-content'))
+            }
+            if (favorite_contests) {
+                var icon_class = event.extendedProps.favorite? 'selected-activity fas' : 'far'
+                var favorite_data = 'data-activity-type="fav" data-content-type="contest" data-object-id="' + event.id + '"'
+                var favorite_icon = $('<i onclick="click_activity(event, this)" class="activity fa-star fav ' + icon_class + '" ' + favorite_data + '></i>')
+                favorite_icon.prependTo(element.querySelector('.fc-content'))
             }
             if (hide_contest) {
                 var hide_contest_link=$('<i class="hide-contest fa fa-eye" data-contest-id="' + event.id + '">&nbsp;</i>')

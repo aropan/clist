@@ -338,7 +338,7 @@ class Statistic(BaseModule):
                 task_info[k] = {
                     'code': k,
                     'short': t['Assignment'],
-                    'name': t['TaskName'],
+                    'name': t['TaskName'] or k,
                     'url': url,
                 }
 
