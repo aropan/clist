@@ -193,7 +193,11 @@ $.browser = {};
 
 function log_ajax_error(response) {
   if (typeof response.responseJSON !== 'undefined') {
-    $.notify(response.responseJSON.message, 'error')
+    if (response.responseJSON.redirect) {
+      window.location.replace(response.responseJSON.redirect)
+    } else {
+      $.notify(response.responseJSON.message, 'error')
+    }
   } else {
     if (response.responseText.length < 50) {
       $.notify("{status} {statusText}: {responseText}".format(response), "error")
@@ -422,7 +426,7 @@ function click_activity(event, el) {
         activity_type: $(el).attr('data-activity-type'),
         value: !$(el).hasClass('selected-activity'),
     },
-    success: function(data) {
+    success: function(data, _, xhr) {
       if (data['status'] == 'ok') {
         var selector = ''
         selector += '[data-content-type="' + $(el).attr('data-content-type') + '"]'
@@ -440,7 +444,7 @@ function click_activity(event, el) {
           }
         })
       } else {
-        $.notify(JSON.stringify(data), 'error')
+        log_ajax_error(xhr)
       }
     },
     error: log_ajax_error,

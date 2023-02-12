@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from functools import reduce
 from os import path
 from sys import float_info
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 
 import arrow
 import pytz
@@ -1027,3 +1027,17 @@ def list_data_field_to_select(context):
         'nourl': True,
     }
     return ret
+
+
+def relative_url(url):
+    urlinfo = urlparse(url)
+    return urlinfo._replace(scheme='', netloc='').geturl()
+
+
+def quote_url(url):
+    return quote_plus(url)
+
+
+@register.filter
+def negative(value):
+    return not bool(value)

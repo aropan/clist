@@ -1,0 +1,6 @@
+<div class="input-group-btn">
+  <{{ tag }} class="btn btn-default{% if request.GET.favorite == value %} active{% endif %}" name="favorite" value="{% if request.GET.favorite != value %}{{ value }}{% endif %}" data-value="{{ value }}"{% if href %} href="{% url href %}"{% endif %}>
+    {% icon_to icon %}
+  </{{ tag }}>
+</div>
+

@@ -1,5 +1,5 @@
 from django.apps import apps
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import OuterRef, Value
@@ -36,13 +36,13 @@ class BaseModel(models.Model):
 class BaseManager(models.Manager):
 
     def annotate_favorite(self, instance):
-        if isinstance(instance, User):
+        if isinstance(instance, (User, AnonymousUser)):
             coder = instance.coder if instance.is_authenticated else None
         else:
             coder = instance
 
         if not coder:
-            return self.annotate(is_favorite=Value(False))
+            return self.annotate(is_favorite=Value(False, output_field=models.BooleanField()))
 
         Activity = apps.get_model('favorites.Activity')
         content_type = ContentType.objects.get_for_model(self.model)

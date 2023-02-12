@@ -4,6 +4,7 @@ from django.middleware import csrf
 from django.urls import reverse
 from django.utils.timezone import now
 
+from clist.templatetags.extras import quote_url
 from true_coders.models import Coder
 from utils.request_logger import RequestLogger
 
@@ -15,7 +16,7 @@ def DebugPermissionOnlyMiddleware(get_response):
         if first_path not in settings.DEBUG_PERMISSION_EXCLUDE_PATHS:
             if not request.user.is_authenticated:
                 if first_path not in ('login', 'signup', 'oauth', 'calendar'):
-                    return HttpResponseRedirect(reverse('auth:login') + f'?next={request.path}')
+                    return HttpResponseRedirect(reverse('auth:login') + f'?next={quote_url(request.get_full_path())}')
             elif not request.user.has_perm('auth.view_debug'):
                 return HttpResponseForbidden()
 

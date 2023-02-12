@@ -19,7 +19,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
                               Prefetch, Q, Subquery, Value, When)
 from django.db.models.functions import Cast
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -34,7 +34,7 @@ from tastypie.models import ApiKey
 from favorites.models import Activity
 
 from clist.models import Contest, ProblemTag, Resource
-from clist.templatetags.extras import asfloat, format_time, get_timezones, query_transform
+from clist.templatetags.extras import asfloat, format_time, get_timezones, query_transform, quote_url, relative_url
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
@@ -789,7 +789,6 @@ def settings(request, tab=None):
     )
 
 
-@login_required
 @require_http_methods(['POST'])
 def change(request):
     name = request.POST.get("name", None)
@@ -799,6 +798,15 @@ def change(request):
         value = "1" if value == "true" else "0"
 
     user = request.user
+
+    if not user.is_authenticated:
+        referer_url = relative_url(request.META.get('HTTP_REFERER') or '/')
+        auth_url = reverse('auth:login')
+        url = f'{auth_url}?next={quote_url(referer_url)}'
+        if request.is_ajax():
+            return JsonResponse({'redirect': url, 'message': 'redirect'}, status=HttpResponseForbidden.status_code)
+        return redirect(url)
+
     coder = user.coder
 
     if coder.id != int(request.POST.get("pk", -1)):

@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.utils import timezone
 from flatten_dict import flatten
 
+from clist.templatetags.extras import relative_url
 from my_oauth.models import Service, Token
 from true_coders.models import Coder
 
@@ -144,7 +145,7 @@ def response(request, name):
 def login(request):
     redirect_url = request.GET.get('next')
     if not redirect_url or not redirect_url.startswith('/'):
-        redirect_url = 'clist:main'
+        redirect_url = relative_url(request.META.get('HTTP_REFERER')) or 'clist:main'
     if request.user.is_authenticated:
         return redirect(redirect_url)
 
