@@ -7,16 +7,20 @@ import arrow
 import pytz
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.contenttypes.models import ContentType
 from django.core.management.commands import dumpdata
 from django.db.models import Avg, Count, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from el_pagination.decorators import QS_KEY, page_template, page_templates
 from sql_util.utils import Exists, SubqueryMin
+
+from favorites.models import Activity
+from favorites.templatetags.extras import activity_icon
 
 from clist.models import Banner, Contest, Problem, ProblemTag, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
@@ -835,6 +839,12 @@ def problems(request, template='problems.html'):
             problems = problems.filter(is_favorite=True)
         elif favorite == 'off':
             problems = problems.filter(is_favorite=False)
+
+        content_type = ContentType.objects.get_for_model(Problem)
+        qs = Activity.objects.filter(coder=coder, content_type=content_type, object_id=OuterRef('pk'))
+        problems = problems.annotate(is_todo=Exists(qs.filter(activity_type=Activity.Type.TODO)))
+        problems = problems.annotate(is_solved=Exists(qs.filter(activity_type=Activity.Type.SOLVED)))
+        problems = problems.annotate(is_reject=Exists(qs.filter(activity_type=Activity.Type.REJECT)))
     else:
         coder = None
         has_update_coder = False
@@ -964,6 +974,36 @@ def problems(request, template='problems.html'):
     else:
         chart = None
 
+    status_select = {
+        'values': [],
+        'data': [
+            {
+                'id': (status_id := name if enable else f'no{name}'),
+                'text': activity_icon(getattr(Activity.Type, name.upper()), enable=enable),
+                'selected': int(status_id in request.GET.getlist('status')),
+            }
+            for name in ['todo', 'solved', 'reject'] for enable in [True, False]
+        ],
+        'html': True,
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nofilter': True,
+        'nomultiply': True,
+    }
+    statuses = request.GET.getlist('status')
+    if statuses:
+        if not coder:
+            return redirect('auth:login')
+        for status in statuses:
+            if status.startswith('no'):
+                status = status[2:]
+                value = False
+            else:
+                value = True
+            if status in ['todo', 'solved', 'reject']:
+                problems = problems.filter(**{f'is_{status}': value})
+
     context = {
         'problems': problems,
         'coder': coder,
@@ -973,6 +1013,7 @@ def problems(request, template='problems.html'):
             'tags': tags,
         },
         'chart_select': chart_select,
+        'status_select': status_select,
         'chart': chart,
     }
 

@@ -1212,14 +1212,17 @@ def change(request):
             return HttpResponseBadRequest('invalid value')
         value = int(value)
         content_type = request.POST.get('content_type')
+        object_id = request.POST.get('object_id')
+        activity_type = request.POST.get('activity_type')
         if content_type == 'problem':
             content_type = ContentType.objects.get(app_label='clist', model='problem')
+        elif activity_type in [Activity.Type.TODO, Activity.Type.SOLVED, Activity.Type.REJECT]:
+            return HttpResponseBadRequest('invalid activity type')
         elif content_type == 'contest':
             content_type = ContentType.objects.get(app_label='clist', model='contest')
         else:
             return HttpResponseBadRequest('invalid content type')
-        object_id = request.POST.get('object_id')
-        activity_type = request.POST.get('activity_type')
+
         kwargs = dict(
             coder=coder,
             content_type=content_type,
@@ -1228,6 +1231,17 @@ def change(request):
         )
         if value:
             Activity.objects.get_or_create(**kwargs)
+
+            excluding_content_types_groups = [
+                {Activity.Type.SOLVED, Activity.Type.REJECT, Activity.Type.TODO},
+            ]
+            for group in excluding_content_types_groups:
+                if activity_type in group:
+                    for other_activity_type in group:
+                        if activity_type == other_activity_type:
+                            continue
+                        kwargs['activity_type'] = other_activity_type
+                        Activity.objects.filter(**kwargs).delete()
         else:
             Activity.objects.filter(**kwargs).delete()
         return JsonResponse({'status': 'ok', 'state': value})

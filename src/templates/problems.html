@@ -29,8 +29,6 @@
 
     {% include 'resource_filter.html' %}
 
-    {% if favorite_problems %}{% include 'favorite_filter.html' %}{% endif %}
-
     {% include 'tag_filter.html' %}
 
     <div class="input-group input-group-sm">
@@ -49,18 +47,21 @@
     </div>
     <script>$('#show-tags').bootstrapToggle()</script>
 
-
-    {% include "field_to_select.html" with field='chart' data=chart_select %}
-
     {% with values=coder.settings.range_filter %}
 
-    {% include 'range_filter.html' with name='luck' value_key='problems' from=0 to=100 default_from=42 default_to=60 disabled=coder|iffalse %}
+    {% include "range_filter.html" with name="luck" value_key="problems" from=0 to=100 default_from=42 default_to=60 disabled=coder|iffalse %}
 
-    {% include 'range_filter.html' with name='rating' value_key='problems' from=0 to=5000 %}
+    {% include "range_filter.html" with name="rating" value_key="problems" from=0 to=5000 %}
 
-    {% include 'range_filter_apply.html' %}
+    {% include "range_filter_apply.html" %}
 
     {% endwith %}
+
+    {% if favorite_problems %}{% include "favorite_filter.html" %}{% endif %}
+
+    {% include "field_to_select.html" with field="status" data=status_select %}
+
+    {% include "field_to_select.html" with field="chart" data=chart_select %}
   </form>
 
   {% include "chart.html" with chart=chart get_query_chart='chart' %}

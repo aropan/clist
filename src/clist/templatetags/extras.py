@@ -994,7 +994,7 @@ def rating_from_probability(b, p, min_rating=0, max_rating=5000):
 @register.simple_tag
 def icon_to(value, default=None, icons=None, html_class=None):
     icons = icons or settings.FONTAWESOME_ICONS_
-    if default is None:
+    if not default:
         default = value.title().replace('_', ' ')
     if value in icons:
         value = icons[value]

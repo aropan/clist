@@ -683,7 +683,6 @@ class Statistic(BaseModule):
 
                 if problem is None:
                     LOG.warning(f'Missing problem: contest = {contest}, account = {account}, problem = {problem_id}')
-                    exit(0)
                     continue
                 short = problem['short']
 

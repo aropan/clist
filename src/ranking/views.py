@@ -795,7 +795,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         else:
             find_me = int(find_me)
 
-    contests = Contest.objects
+    contests = Contest.objects.annotate_favorite(request.user)
     to_redirect = False
     contest = None
     if contest_id is not None:

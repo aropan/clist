@@ -6,10 +6,14 @@
 {% if coder %}
 {% get_problem_solution problem as solution %}
 
-{% if solution.result|is_solved %}
+{% if problem.is_solved %}
+{% define 'success' as solution_class %}
+{% elif problem.is_reject %}
+{% define 'danger' as solution_class %}
+{% elif solution.result|is_solved %}
 {% define 'success' as solution_class %}
 {% elif solution.result.upsolving|is_solved %}
-{% define 'info' as solution_class %}
+{% define 'success' as solution_class %}
 {% elif solution.result|is_hidden %}
 {% define 'warning' as solution_class %}
 {% elif solution.result|is_reject %}
@@ -21,7 +25,7 @@
 {% endif %}
 
 {% endif %}
-<tr>
+<tr class="show-hidden-activity-on-hover">
   <td class="problem-date-column">
     <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div> </td>
   <td class="problem-rating-column">
@@ -42,7 +46,7 @@
     {{ prob|multiply:100|floatformat:2 }}%
     {% endif %}
   </td>
-  <td class="problem-result-column {{ solution_class }}">
+  <td class="problem-result-column {{ solution_class }}" data-solution-class="{{ solution_class }}">
     {% if solution %}
       {% if not solution.result|is_solved and solution.result.upsolving %}
         {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result.upsolving with_detail=False key=solution.key with_admin_url=True is_upsolving=True %}
@@ -52,7 +56,7 @@
     {% endif %}
   </td>
   {% endif %}
-  <td class="{{ solution_class }}">
+  <td class="problem-name-column {{ solution_class }}" data-solution-class="{{ solution_class }}">
     <span class="nowrap">
       <a href="{% url_transform request resource=problem.resource.id %}">
         <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
@@ -61,6 +65,11 @@
         {% trim_to problem.name 50 %}
       {% if problem.url %}</a>{% endif %}
       {% if favorite_problems %}{% activity_action "fav" problem %}{% endif %}
+      <span class="hidden-activity">
+      {% activity_action "tdo" problem callback="click_activity_problem_result" %}
+      {% activity_action "sol" problem callback="click_activity_problem_result" %}
+      {% activity_action "rej" problem callback="click_activity_problem_result" %}
+      </span>
     </span>
     {% if perms.clist.change_problem %}
     <a href="{% url 'admin:clist_problem_change' problem.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>

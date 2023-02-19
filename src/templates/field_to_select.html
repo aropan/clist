@@ -19,10 +19,12 @@
     {% if data.options|get_type == 'dict' %}{{ data.options|get_item:v|default:v }}{% else %}{{ v }}{% endif %}
     </option>
     {% endfor %}
-  {% else %}
+  {% elif data.values %}
     {% for v in data.values %}
       <option value="{{ v }}" selected>{{ v }}</option>
     {% endfor %}
+  {% else %}
+    <option></option>
   {% endif %}
   </select>
   {% if data.extra_url %}
@@ -35,11 +37,17 @@
 </div>
 <script>
   $('#{{ field }}').select2({
+    {% if data.data %}
+    data: {{ data.data|safe }},
+    {% endif %}
     minimumResultsForSearch: -1,
     dropdownAutoWidth : true,
     theme: 'bootstrap',
     placeholder: '',
     allowClear: true,
+    {% if data.html %}
+    escapeMarkup: function (m) { return m },
+    {% endif %}
     {% if not data.noajax %}
     ajax: {
         url: '/settings/search/',

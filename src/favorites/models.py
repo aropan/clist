@@ -13,6 +13,7 @@ class Activity(BaseModel):
         LIKE = 'lik', 'Like'
         SOLVED = 'sol', 'Solved'
         REJECT = 'rej', 'Reject'
+        TODO = 'tdo', 'Todo'
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     activity_type = models.CharField(max_length=3, choices=Type.choices)

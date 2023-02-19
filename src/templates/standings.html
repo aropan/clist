@@ -84,6 +84,7 @@
     <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
     <span id="standings-url"></span>
     <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
+    {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
 
     {% if not other_contests %}
     <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></a>

@@ -1,5 +1,5 @@
 from django.apps import apps
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import OuterRef, Value

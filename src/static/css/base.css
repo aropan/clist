@@ -571,6 +571,10 @@ canvas.rating_history {
   cursor: pointer;
 }
 
+.activity.tdo {
+  color: #ddd;
+}
+
 .activity.fav {
   color: #bbb;
 }
@@ -579,6 +583,37 @@ canvas.rating_history {
   color: yellow;
 }
 
+.activity.tdo.selected-activity {
+  color: #8be;
+  text-shadow: none;
+}
+
+.activity.rej, .activity.sol {
+  text-shadow: 0 0 1px #bbb;
+  color: #ddd;
+  font-size: 110%;
+}
+
+.activity.sol.selected-activity {
+  color: green;
+}
+
+.activity.rej.selected-activity {
+  color: red;
+}
+
 .activity.selected-activity {
   text-shadow: 0 0 1px #000;
+}
+
+.hidden-activity {
+  visibility: hidden;
+}
+
+.hidden-activity:has(.selected-activity) {
+  visibility: visible;
+}
+
+.show-hidden-activity-on-hover:hover .hidden-activity {
+  visibility: visible;
 }

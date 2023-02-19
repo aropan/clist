@@ -45,3 +45,29 @@ $(function() {
     return false
   })
 })
+
+function click_activity_problem_result(el) {
+  $(el).siblings().removeClass('selected-activity')
+
+  $(el).closest('tr').find('[data-solution-class]').each(function() {
+    var solution_class = $(this).data('solution-class')
+    if (solution_class) {
+      $(this).removeClass(solution_class)
+    }
+    if ($(el).hasClass('selected-activity')) {
+      if ($(el).hasClass('sol')) {
+        solution_class = 'success'
+      } else if ($(el).hasClass('rej')) {
+        solution_class = 'danger'
+      } else {
+        solution_class = ''
+      }
+      $(this).data('solution-class', solution_class)
+      if (solution_class) {
+        $(this).addClass(solution_class)
+      }
+    } else {
+      $(this).data('solution-class', '')
+    }
+  })
+}

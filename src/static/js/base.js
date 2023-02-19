@@ -407,7 +407,7 @@ function update_urls_params(params) {
   window.history.replaceState(null, null, url)
 }
 
-function click_activity(event, el) {
+function click_activity(event, el, callback) {
   event.preventDefault()
   var loading_spinner = null
   var loading_timeout_id = setTimeout(function() {
@@ -434,15 +434,18 @@ function click_activity(event, el) {
         selector += '[data-activity-type="' + $(el).attr('data-activity-type') + '"]'
         $(selector).each(function() {
           if (data['state']) {
-            $(this).removeClass('far')
-            $(this).addClass('fas')
+            $(this).removeClass($(this).data('unselected-class'))
+            $(this).addClass($(this).data('selected-class'))
             $(this).addClass('selected-activity')
           } else {
-            $(this).addClass('far')
-            $(this).removeClass('fas')
+            $(this).removeClass($(this).data('selected-class'))
+            $(this).addClass($(this).data('unselected-class'))
             $(this).removeClass('selected-activity')
           }
         })
+        if (callback) {
+          callback(el)
+        }
       } else {
         log_ajax_error(xhr)
       }
