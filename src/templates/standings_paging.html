@@ -213,9 +213,9 @@ data-place="{{ statistic.place }}"
       {% endif %}
       data-penalty-in-seconds="{{ stat.time_in_seconds }}"
       data-more-penalty="{{ stat.penalty }}"
-      data-problem-key="{{ key }}"
       data-class="{% if '_class' in stat %}{{ stat|get_item:"_class" }}{% elif stat.first_ac_of_all %}first-ac-of-all{% elif stat.first_ac %}first-ac{% elif stat.max_score %}max-score{% endif %}"
       {% endif %}
+      data-problem-key="{{ key }}"
       data-problem-full-score="{{ problem.full_score }}"
     >
       {% include "standings_problem_stat.html" with stat=stat %}
@@ -229,20 +229,18 @@ data-place="{{ statistic.place }}"
 {% endwith %}
 
 {% if statistic.my_stat %}
-  <script>
-    $(function() {
-      var selector = $('tr.my-stat.floating')
-      if (!$('tr.my-stat:not(.floating)').length) {
+<script>
+  var selector = $('tr.my-stat.floating')
+  if (!$('tr.my-stat:not(.floating)').length) {
 {% if rev %}
-        selector = selector.not(':first')
+    selector = selector.not(':first')
 {% else %}
-        selector = selector.not(':last')
+    selector = selector.not(':last')
 {% endif %}
-      }
-      selector.remove()
-      $('tr.my-stat.floating').removeClass('hidden')
-    })
-  </script>
+  }
+  selector.remove()
+  $('tr.my-stat.floating').removeClass('hidden')
+</script>
 {% endif %}
 
 {% endfor %}

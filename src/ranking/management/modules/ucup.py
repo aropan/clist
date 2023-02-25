@@ -65,12 +65,12 @@ class Statistic(BaseModule):
                 solving=int(solving) // 100,
                 place=rank,
                 penalty=penalty // 60,
-                rating=rating,
                 name=name,
             )
 
             problems = row.setdefault('problems', {})
-            for k, scoring_value in scoring.items():
+            scoring = scoring.items() if isinstance(scoring, dict) else enumerate(scoring)
+            for k, scoring_value in scoring:
                 score, time, submission_id, n_attemps, full_score, *is_hidden = map(int, scoring_value)
                 short = chr(ord('A') + int(k))
                 problem = problems.setdefault(short, {})

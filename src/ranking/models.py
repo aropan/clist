@@ -7,6 +7,7 @@ from copy import deepcopy
 from pydoc import locate
 from urllib.parse import urljoin
 
+import magic
 import requests
 import tqdm
 from django.conf import settings
@@ -127,7 +128,10 @@ def download_avatar_url(account):
     if response.status_code != 200:
         return
 
-    ext = re.search('[^/]*$', response.headers['Content-Type']).group()
+    content_type = response.headers.get('Content-Type')
+    if not content_type:
+        content_type = magic.from_buffer(response.content, mime=True)
+    ext = content_type.split('/')[-1]
     folder = re.sub('[./]', '_', account.resource.host)
     hashname = hashlib.md5(download_avatar_url.encode()).hexdigest()
     hashname = hashname[:2] + '/' + hashname[2:4] + '/' + hashname[4:]

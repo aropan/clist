@@ -69,6 +69,7 @@ function cmp_row(a, b) {
 }
 
 function duration_to_text(duration) {
+  duration = Math.round(duration)
   var h = Math.floor(duration / 60 / 60)
   var m = Math.floor(duration / 60 % 60)
   var s = Math.floor(duration % 60)
@@ -82,9 +83,40 @@ function duration_to_text(duration) {
 
 var CURRENT_PERCENT = null
 var TIMELINE_TIMER_ID = null
+var UNFREEZE_OPENING = new Map()
+var UNFREEZE_ORDER = null
+var UNFREEZE_SIZE = 0
+var CLEAR_STARRED_UNFREEZED_TIMER_ID = null
+var PROBLEM_PROGRESS_STATS = {}
+
+function freeze_percent() {
+  return freeze_duration? freeze_duration / contest_duration : 0
+}
+
+function unfreeze_percent() {
+  return Math.min(contest_time_percentage, 1 - freeze_percent())
+}
 
 function step_timeline(multiplier = 1, stop = false) {
-  set_timeline(CURRENT_PERCENT + multiplier * parseFloat($('#timeline-step').val()))
+  var next_percent = CURRENT_PERCENT + multiplier * parseFloat($('#timeline-step').val())
+
+  if (unfreeze_percent() < next_percent && next_percent < 1 || CURRENT_PERCENT > unfreeze_percent()) {
+    var unfreeze_index = Math.max(0, CURRENT_PERCENT - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
+    if (multiplier > 0) {
+      unfreeze_index = Math.ceil(unfreeze_index) + 0.5
+    } else if (multiplier < 0) {
+      unfreeze_index = Math.floor(unfreeze_index) - 0.5
+    }
+    next_percent = unfreeze_index / UNFREEZE_SIZE * freeze_percent() + unfreeze_percent()
+    next_percent = Math.max(next_percent, 0)
+    next_percent = Math.min(next_percent, 1)
+  }
+
+  if (Math.min(next_percent, CURRENT_PERCENT) < unfreeze_percent() && unfreeze_percent() < Math.max(next_percent, CURRENT_PERCENT)) {
+    next_percent = unfreeze_percent()
+  }
+
+  set_timeline(next_percent)
   if (stop && TIMELINE_TIMER_ID || !stop && CURRENT_PERCENT >= contest_time_percentage) {
     $('#play-timeline').click()
   }
@@ -92,11 +124,19 @@ function step_timeline(multiplier = 1, stop = false) {
 
 function update_timeline_text(percent = null) {
   percent = percent || CURRENT_PERCENT
-  $('#timeline-progress-select').css('width', percent * 100 + '%')
-  $('#timeline-progress-hidden').css('width', (contest_time_percentage - percent) * 100 + '%')
+  $('#timeline-progress-select').css('width', Math.min(percent, unfreeze_percent()) * 100 + '%')
+  $('#timeline-progress-hidden').css('width', Math.max(unfreeze_percent() - percent, 0) * 100 + '%')
+  $('#timeline-progress-freeze').css('width', Math.max(percent - unfreeze_percent(), 0) * 100 + '%')
+  $('#timeline-progress-freeze-hidden').css('width', Math.min(Math.max(contest_time_percentage - percent, 0), freeze_percent()) * 100 + '%')
   var unparsed_percent = Math.min(1, ($.now() / 1000 - contest_start_timestamp) / contest_duration)
   $('#timeline-progress-unparsed').css('width', (unparsed_percent - contest_time_percentage) * 100 + '%')
-  $('#timeline-text').text(duration_to_text(contest_duration * percent) + ' of ' + duration_to_text(contest_duration))
+
+  if (unfreeze_percent() < percent && percent < 1) {
+    var value = (percent - unfreeze_percent()) / freeze_percent() * 100
+    $('#timeline-text').text(value.toFixed(2) + '%')
+  } else {
+    $('#timeline-text').text(duration_to_text(contest_duration * percent) + ' of ' + duration_to_text(contest_duration))
+  }
 }
 
 function set_contest_time_percentage(time_percentage) {
@@ -113,7 +153,222 @@ function shuffle_statistics_rows() {
   $('table.standings tbody').html(rows)
 }
 
+function clear_data_stat_cell(e) {
+  score = 0
+  if (contest_timeline['challenge_score']) {
+    score += parseFloat($(e).attr('data-successful-challenge') || 0) * contest_timeline['challenge_score']['successful']
+    score += parseFloat($(e).attr('data-unsuccessful-challenge') || 0) * contest_timeline['challenge_score']['unsuccessful']
+  }
+  $(e).attr('data-score', score)
+
+  $(e).attr('data-penalty', 0)
+  $(e).attr('data-more-penalty', 0)
+  $(e).attr('data-last', 0)
+}
+
+function process_problem_cell(e, current_time, unfreeze_index, percentage_filled, callback) {
+  var $e = $(e)
+  var score = e.getAttribute('data-score')
+  var penalty = e.getAttribute('data-penalty')
+  var penalty_in_seconds = e.getAttribute('data-penalty-in-seconds')
+  var result = e.getAttribute('data-result')
+  var more_penalty = e.getAttribute('data-more-penalty')
+  var problem_key = e.getAttribute('data-problem-key')
+  var problem_status = null
+  var stat = $e.parent('.stat-cell')
+  var statistic_id = stat.attr('data-statistic-id')
+
+  var visible = true
+  if (penalty) {
+    var times = penalty.split(/[:\s]+/)
+    if (times.length in contest_timeline['time_factor']) {
+      var time = parse_factors_time(contest_timeline['time_factor'], penalty)
+    } else if (penalty_in_seconds) {
+      var time = parseFloat(penalty_in_seconds)
+    } else {
+      var time = 0
+      console.log('Unknown problem time')
+    }
+    visible = time <= current_time
+  } else {
+    visible = percentage_filled
+  }
+  var unfreeze_opening = UNFREEZE_OPENING.get(statistic_id + '_' + problem_key)
+  if (unfreeze_opening !== undefined && unfreeze_opening < unfreeze_index) {
+    visible = true
+  }
+  var pvisible = $e.attr('data-visible')
+  $e.attr('data-visible', visible)
+
+  if (visible) {
+    $e.removeClass('result-hidden')
+    problem_status = 'danger'
+  } else {
+    $e.addClass('result-hidden')
+    problem_status = 'warning'
+  }
+
+  var is_hidden = score.startsWith('?')
+  var is_solved = score.startsWith('+') || parseFloat(score) > 0
+  if (visible && is_solved) {
+    problem_status = $e.find('.par').length? 'info' : 'success'
+
+    if (result && result.startsWith('+') && contest_timeline['penalty_more'] && !more_penalty) {
+      more_penalty = result == '+'? 0 : parseInt(result)
+    }
+
+    if (score.startsWith('+')) {
+      if (penalty) {
+        last = parseFloat(stat.attr('data-last'))
+        stat.attr('data-last', Math.max(last, time))
+        var attempt_penalty = contest_timeline['attempt_penalty']
+        attempt_penalty = attempt_penalty === undefined? 1200 : attempt_penalty
+        time += score == '+'? 0 : parseInt(score) * attempt_penalty
+      }
+      score = 1
+    } else {
+      score = parseFloat(score)
+    }
+    score += parseFloat(stat.attr('data-score'))
+    stat.attr('data-score', score)
+    if (penalty) {
+      var agg = contest_timeline['penalty_aggregate'] || 'sum'
+      if (agg == 'max') {
+        time = Math.max(time, parseFloat(stat.attr('data-penalty')))
+      } else if (agg == 'sum') {
+        time += parseFloat(stat.attr('data-penalty'))
+      } else {
+        console.log('Unknown aggregate:', agg)
+      }
+      stat.attr('data-penalty', time)
+    }
+
+    if (more_penalty) {
+      more_penalty = parseFloat(more_penalty) + parseFloat(stat.attr('data-more-penalty'))
+      stat.attr('data-more-penalty', more_penalty)
+    }
+  } else if (visible && is_hidden) {
+    problem_status = 'warning'
+  }
+  if (callback !== null) {
+    callback(e, visible, pvisible, problem_status)
+  }
+}
+
+function process_stat_cell(e) {
+  var $e = $(e)
+  var penalty = parseFloat(e.getAttribute('data-penalty'))
+  var more_penalty = parseFloat(e.getAttribute('data-more-penalty'))
+  var more_penalty_factor = contest_timeline['penalty_more'] || 0
+  var selector = contest_timeline['penalty_more_selector']
+  if (selector) {
+    $e.find(selector).text(more_penalty)
+  }
+  if (more_penalty) {
+    penalty += more_penalty * more_penalty_factor
+    $e.attr('data-penalty', penalty)
+  }
+}
+
+function prepare_unfreeze() {
+  UNFREEZE_OPENING.clear()
+  UNFREEZE_ORDER = []
+  UNFREEZE_SIZE = 0
+
+  var stat_cells = $('.stat-cell').clone()
+
+  stat_cells.each((_, e) => { clear_data_stat_cell(e) })
+
+  var current_time = Math.round(contest_duration * unfreeze_percent())
+  var problems_popularity = []
+  var has_empty_penalty = false
+  stat_cells.find('.problem-cell.problem-cell-stat').each((_, e) => {
+    var problem_key = $(e).attr('data-problem-key')
+    problems_popularity[problem_key] = (problems_popularity[problem_key] || 0) + 1
+    process_problem_cell(e, current_time, 0, false, null)
+    if ($(e).hasClass('result-hidden')) {
+      has_empty_penalty |= !$(e).attr('data-penalty')
+    }
+  })
+
+  stat_cells.each((_, e) => { process_stat_cell(e) })
+
+  stat_cells.sort(cmp_row)
+
+  var last_problem_cell = null
+  for (var index = stat_cells.length - 1; index >= 0; index--) {
+    var candidates, stat_cell
+    while ((candidates = $(stat_cell = stat_cells[index]).find('.problem-cell.problem-cell-stat.result-hidden')).length) {
+      var min_penalty, max_popularity, problem_cell
+      min_penalty = max_popularity = problem_cell = null
+      candidates.each((_, e) => {
+        var penalty = $(e).attr('data-penalty')
+        var problem_key = $(e).attr('data-problem-key')
+        var popularity = problems_popularity[problem_key]
+
+        penalty = has_empty_penalty? Infinity : penalty.split(/[:\s]+/).reduce((r, t) => { return r * 60 + parseFloat(t) })
+
+        if (!problem_cell || penalty < min_penalty || penalty == min_penalty && popularity > max_popularity) {
+          problem_cell = e
+          min_penalty = penalty
+          max_popularity = popularity
+        }
+      })
+
+      if (last_problem_cell == problem_cell) {
+        bootbox.alert({
+          message: 'Something went wrong while building the unfreezing.',
+          className: 'text-danger text-weight-bold',
+          backdrop: true,
+        });
+        return
+      }
+      last_problem_cell = problem_cell
+
+      var opening = $(problem_cell)
+      var stat = opening.parent('.stat-cell')
+      var statistic_id = stat.attr('data-statistic-id')
+      var problem_key = opening.attr('data-problem-key')
+      UNFREEZE_OPENING.set(statistic_id + '_' + problem_key, UNFREEZE_SIZE)
+      UNFREEZE_ORDER.push({statistic_id, problem_key})
+      UNFREEZE_SIZE += 1
+
+      clear_data_stat_cell(stat_cell)
+      $(stat_cell).find('.problem-cell.problem-cell-stat').each((_, e) => { process_problem_cell(e, current_time, UNFREEZE_SIZE, false, null) })
+      process_stat_cell(stat_cell)
+
+      for (var i = index; i > 0 && cmp_row(stat_cell, stat_cells[i - 1]) < 0; i--) {
+        stat_cells[i] = stat_cells[i - 1]
+        stat_cells[i - 1] = stat_cell
+      }
+    }
+  }
+}
+
+function change_freeze_duration(select) {
+  var value = select.value
+  if (value.indexOf(':') !== -1) {
+    var values = value.split(/[:\s]+/)
+    freeze_duration = values.reduce((r, t) => { return r * 60 + parseFloat(t) })
+  } else {
+    freeze_duration = parseFloat(value) * contest_duration
+  }
+  UNFREEZE_ORDER = null
+  set_timeline()
+}
+
+function clear_starred_unfreezed() {
+  if (CLEAR_STARRED_UNFREEZED_TIMER_ID) {
+    clearInterval(CLEAR_STARRED_UNFREEZED_TIMER_ID)
+    CLEAR_STARRED_UNFREEZED_TIMER_ID = null
+  }
+  $('.starred.unfreezed').each((_, e) => { change_starring.call(e) })
+}
+
 function set_timeline(percent = null, duration = null, scroll_to_element = null) {
+  if (UNFREEZE_ORDER === null) {
+    prepare_unfreeze()
+  }
   if (duration == null) {
     duration = parseInt($('#timeline-duration').val())
   }
@@ -121,35 +376,52 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     duration = 0
   }
 
+  var percent_sign = 0
   if (percent == null) {
     percent = CURRENT_PERCENT
   } else {
     percent = Math.max(percent, 0)
     percent = Math.min(percent, contest_time_percentage)
-    if (CURRENT_PERCENT == percent) {
-      return
-    }
+    percent_sign = Math.sign(percent - CURRENT_PERCENT)
     CURRENT_PERCENT = percent
   }
   percentage_filled = percent >= contest_time_percentage
   update_timeline_text(percent)
 
-  var current_time = contest_duration * percent
+  var current_time, unfreeze_index, highlight_problem_duration
+  if (unfreeze_percent() < percent && percent < 1) {
+    current_time = Math.round(contest_duration * unfreeze_percent())
+    unfreeze_index = (percent - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
+    highlight_problem_duration = 0
+  } else {
+    current_time = Math.round(contest_duration * percent)
+    unfreeze_index = -1
+    highlight_problem_duration = duration
+  }
 
-  $('.stat-cell').each((_, e) => {
-    score = 0
-    if (contest_timeline['challenge_score']) {
-      score += parseFloat($(e).attr('data-successful-challenge') || 0) * contest_timeline['challenge_score']['successful']
-      score += parseFloat($(e).attr('data-unsuccessful-challenge') || 0) * contest_timeline['challenge_score']['unsuccessful']
+  clear_starred_unfreezed()
+  if (unfreeze_index != -1 && scroll_to_element === null) {
+    var target_index = Math.floor(unfreeze_index) + (percent_sign < 0? 1 : 0)
+    if (0 <= target_index && target_index < UNFREEZE_SIZE) {
+      var statistic_id = UNFREEZE_ORDER[target_index].statistic_id
+      var statistic_element = $('.stat-cell[data-statistic-id="' + statistic_id + '"]')
+
+      if (percent_sign < 0) {
+        scroll_to_element = statistic_element
+      } else {
+        scroll_to_find_me(duration, 0, statistic_element)
+      }
+      if (!statistic_element.hasClass('starred')) {
+        change_starring.call(statistic_element)
+        statistic_element.addClass('unfreezed')
+        CLEAR_STARRED_UNFREEZED_TIMER_ID = setInterval(clear_starred_unfreezed, 10000)
+      }
     }
-    $(e).attr('data-score', score)
+  }
 
-    $(e).attr('data-penalty', 0)
-    $(e).attr('data-more-penalty', 0)
-    $(e).attr('data-last', 0)
-  })
+  $('.stat-cell').each((_, e) => { clear_data_stat_cell(e) })
 
-  problem_progress_stats = {}
+  var problem_progress_stats = {}
 
   $('.stat-cell').css('transition', 'transform ' + duration + 'ms')
 
@@ -168,89 +440,12 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     toggle_tooltip()
   }
 
-  $('.problem-cell.problem-cell-stat').each((_, e) => {
+  function process_problem_cell_callback(e, visible, pvisible, problem_status) {
     var $e = $(e)
-    var score = e.getAttribute('data-score')
-    var penalty = e.getAttribute('data-penalty')
-    var penalty_in_seconds = e.getAttribute('data-penalty-in-seconds')
-    var result = e.getAttribute('data-result')
-    var more_penalty = e.getAttribute('data-more-penalty')
     var toggle_class = e.getAttribute('data-class')
-    var problem_status = null
-
-    var visible = true
-    if (penalty) {
-      var times = penalty.split(/[:\s]+/)
-      if (times.length in contest_timeline['time_factor']) {
-        var time = parse_factors_time(contest_timeline['time_factor'], penalty)
-      } else if (penalty_in_seconds) {
-        var time = parseFloat(penalty_in_seconds)
-      } else {
-        var time = 0
-        console.log('Unknown problem time')
-      }
-      visible = time <= current_time
-    } else {
-      visible = percentage_filled
-    }
-    var pvisible = $e.attr('data-visible')
-    $e.attr('data-visible', visible)
-
-    if (visible) {
-      $e.removeClass('result-hidden')
-      problem_status = 'danger'
-    } else {
-      $e.addClass('result-hidden')
-      problem_status = 'warning'
-    }
-
-    var is_hidden = score.startsWith('?')
-    var is_solved = score.startsWith('+') || parseFloat(score) > 0
-    if (visible && is_solved) {
-      problem_status = $e.find('.par').length? 'info' : 'success'
-
-      if (result && result.startsWith('+') && contest_timeline['penalty_more'] && !more_penalty) {
-        more_penalty = result == '+'? 0 : parseInt(result)
-      }
-
-      var stat = $e.parent('.stat-cell')
-      if (score.startsWith('+')) {
-        if (penalty) {
-          last = parseFloat(stat.attr('data-last'))
-          stat.attr('data-last', Math.max(last, time))
-          var attempt_penalty = contest_timeline['attempt_penalty']
-          attempt_penalty = attempt_penalty === undefined? 1200 : attempt_penalty
-          time += score == '+'? 0 : parseInt(score) * attempt_penalty
-        }
-        score = 1
-      } else {
-        score = parseFloat(score)
-      }
-      score += parseFloat(stat.attr('data-score'))
-      stat.attr('data-score', score)
-      if (penalty) {
-        var agg = contest_timeline['penalty_aggregate'] || 'sum'
-        if (agg == 'max') {
-          time = Math.max(time, parseFloat(stat.attr('data-penalty')))
-        } else if (agg == 'sum') {
-          time += parseFloat(stat.attr('data-penalty'))
-        } else {
-          console.log('Unknown aggregate:', agg)
-        }
-        stat.attr('data-penalty', time)
-      }
-
-      if (more_penalty) {
-        more_penalty = parseFloat(more_penalty) + parseFloat(stat.attr('data-more-penalty'))
-        stat.attr('data-more-penalty', more_penalty)
-      }
-    } else if (visible && is_hidden) {
-      problem_status = 'warning'
-    }
-
     if (visible && pvisible === 'false') {
       $e.addClass(toggle_class)
-      highlight_element($e, duration, duration / 2, toggle_class, function() {
+      highlight_element($e, highlight_problem_duration, duration / 2, toggle_class, function() {
         return $e.attr('data-visible') !== 'false'
       })
     }
@@ -263,7 +458,11 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       var problem_progress_stat = problem_progress_stats[problem_key] || (problem_progress_stats[problem_key] = {})
       problem_progress_stat[problem_status] = (parseInt(problem_progress_stat[problem_status]) || 0) + 1
     }
-  })
+  }
+
+  $('.problem-cell.problem-cell-stat').each((_, e) => { process_problem_cell(e, current_time, unfreeze_index, percentage_filled, process_problem_cell_callback) })
+
+  $('.stat-cell').each((_, e) => { process_stat_cell(e) })
 
   $('.stat-cell').each((_, e) => {
     var $e = $(e)
@@ -272,19 +471,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     $e.find('.score-cell').text(new_score)
     $e.css('z-index', current_score != new_score? '5' : '1')
 
-    var format = contest_timeline['penalty_format'] || 1
     var penalty = parseFloat(e.getAttribute('data-penalty'))
-
-    var more_penalty = parseFloat(e.getAttribute('data-more-penalty'))
-    var more_penalty_factor = contest_timeline['penalty_more'] || 0
-    var selector = contest_timeline['penalty_more_selector']
-    if (selector) {
-      $e.find(selector).text(more_penalty)
-    }
-    if (more_penalty) {
-      penalty += more_penalty * more_penalty_factor
-      $e.attr('data-penalty', penalty)
-    }
 
     var rounding = contest_timeline['penalty_rounding'] || 'floor-minute'
     if (rounding == 'none') {
@@ -296,6 +483,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       console.log('Unknown rounding:', rounding)
     }
 
+    var format = contest_timeline['penalty_format'] || 1
     if (format == 1) {
     } else if (format == 2) {
       var ret = Math.floor(penalty / 60)
@@ -345,9 +533,17 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       var statuses = ['success', 'info', 'warning', 'danger']
       var problem_key = e.getAttribute('data-problem-key')
       var problem_progress_stat = problem_progress_stats[problem_key] || {}
+      var previous_problem_progress_stat = PROBLEM_PROGRESS_STATS[problem_key] || {}
+      var changed_statuses = []
+
       statuses.forEach((problem_status, i) => {
         var attr = 'data-' + problem_status
         var value = problem_progress_stat[problem_status] || 0
+        var previous_value = previous_problem_progress_stat[problem_status] || 0
+        if (value != previous_value && problem_status != 'warning') {
+          changed_statuses.push(problem_status)
+        }
+
         var percent = value * 100 / total
         if (value) {
           tooltip += 'Number of ' + numbers[i] + ': ' + value + ' (' + percent.toFixed(2) + '%)<br/>'
@@ -364,7 +560,16 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
         }
         $(e).attr('data-original-title', tooltip)
       }
+      if (duration && changed_statuses.length) {
+        var problem_status = changed_statuses.length == 1? changed_statuses[0] : 'info'
+        var problem_status_class = 'progress-bar-' + problem_status
+        var el = $(e).closest('th').children().first()
+        el.addClass(problem_status_class, duration / 2, function() {
+          el.removeClass(problem_status_class, duration / 2)
+        })
+      }
     })
+    PROBLEM_PROGRESS_STATS = problem_progress_stats
   }
 
   var first = null
@@ -472,6 +677,7 @@ function highlight_element(el, after = 1000, duration = 500, before_toggle_class
   }, after)
 }
 
+
 SWITCHER_CLICK_WITHOUT_UPDATE = false
 
 
@@ -507,7 +713,7 @@ function switcher_click(event) {
 
 
     var result = stat.attr('data-result')
-    var penalty = Math.floor(contest_duration * CURRENT_PERCENT)
+    var penalty = Math.floor(contest_duration * (unfreeze_percent() < CURRENT_PERCENT? 1.0 : CURRENT_PERCENT))
     var score = stat.attr('data-problem-full-score')
     if (contest_timeline['result_switcher_type'] == 'next_min') {
       var index = stat.parent().find('td').index(stat)
@@ -589,6 +795,7 @@ function switcher_click(event) {
     }
   }
   $('#erase-switchers-timeline').prop('disabled', $('.problem-cell[data-result-switcher]').length == 0)
+  UNFREEZE_ORDER = null
   if (!SWITCHER_CLICK_WITHOUT_UPDATE) {
     var tr = stat.closest('tr')
     set_timeline(null, null, tr)
@@ -620,7 +827,6 @@ function clear_extra_info_timeline() {
 }
 
 function show_timeline() {
-  update_urls_params({'timeline': ''})
   $('#timeline-buttons').toggleClass('hidden')
   $('#timeline').show()
   $('.standings .endless_container').remove()
@@ -702,9 +908,16 @@ $(function() {
     var percent = (e.pageX - $(this).offset().left) / $(this).width()
     percent = Math.max(percent, 0)
     percent = Math.min(percent, 1)
+
     $tooltip.css({'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() + 30})
     $tooltip.show()
-    $tooltip.text(duration_to_text(contest_duration * percent))
+
+    if (unfreeze_percent() < percent && percent < 1) {
+      var value = (percent - unfreeze_percent()) / freeze_percent() * 100
+      $tooltip.text(value.toFixed(2) + '%')
+    } else {
+      $tooltip.text(duration_to_text(contest_duration * percent))
+    }
   })
 
   $('#timeline').mouseout(function(e) {
@@ -739,7 +952,7 @@ $(function() {
     url = url.replace(/\bt_[a-z]+=[^&]+&?/gi, '')
     url = url.replace(/[\?&]$/, '')
     url += (url.indexOf('?') == -1? '?' : '&') + 'timeline=' + duration_to_text(contest_duration * CURRENT_PERCENT)
-    const keys = ['duration', 'step', 'delay']
+    const keys = ['duration', 'step', 'delay', 'freeze']
     keys.forEach(function(k) { el = $('#timeline-' + k); url += '&t_' + k + '=' + el.val() })
 
     var dialog = bootbox.dialog({

@@ -64,7 +64,7 @@ Disallow: /*&sort_order=
 Disallow: /*?sort_order=
 Disallow: /*&chart_column=
 Disallow: /*?chart_column=
-Clean-param: timeline&t_duration&t_step&t_delay&versus&detail&find_me&chat&list&neighbors&advanced /standings/
+Clean-param: timeline&t_duration&t_step&t_delay&t_freeze&versus&detail&find_me&chat&list&neighbors&advanced /standings/
 Disallow: /standings/*&timeline=
 Disallow: /standings/*?timeline=
 Disallow: /standings/*&t_duration=
@@ -73,6 +73,8 @@ Disallow: /standings/*&t_step=
 Disallow: /standings/*?t_step=
 Disallow: /standings/*&t_delay=
 Disallow: /standings/*?t_delay=
+Disallow: /standings/*&t_freeze=
+Disallow: /standings/*?t_freeze=
 Disallow: /standings/*&versus=
 Disallow: /standings/*?versus=
 Disallow: /standings/*&detail=

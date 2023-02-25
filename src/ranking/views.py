@@ -3,6 +3,7 @@ import colorsys
 import copy
 import re
 from collections import OrderedDict, defaultdict
+from functools import reduce
 
 import arrow
 from asgiref.sync import async_to_sync
@@ -1048,16 +1049,11 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     paginate_on_scroll = True
     force_both_scroll = False
 
-    mod_penalty = {}
     enable_timeline = False
     timeline = None
     if contest.duration_in_secs:
         first = statistics.first()
         if first:
-            if all('time' not in k for k in contest_fields):
-                penalty = first.addition.get('penalty')
-                if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
-                    mod_penalty.update({'solving': first.solving, 'penalty': penalty})
             first_problems = list(first.addition.get('problems', {}).values())
             enable_timeline = all(not is_reject(p) for p in first_problems) or any('time' in p for p in first_problems)
         if len(contests_resources) > 1:
@@ -1066,15 +1062,26 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         timeline = request.GET.get('timeline') or '1'
         if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):
             if ':' in timeline:
-                val = 0
-                for x in map(int, timeline.split(':')):
-                    val = val * 60 + x
+                val = reduce(lambda x, y: x * 60 + int(y), timeline.split(':'), 0)
                 timeline = f'{val / contest.duration_in_secs + 1e-6:.6f}'
         else:
             timeline = None
 
     problems = get_standings_problems(contest, division)
     mod_penalty = get_standings_mod_penalty(contest, problems, statistics)
+    freeze_duration_factor = options.get('freeze_duration_factor', settings.STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT)
+    freeze_duration_factor = request.GET.get('t_freeze', freeze_duration_factor)
+    freeze_duration = (mod_penalty or 't_freeze' in request.GET) and freeze_duration_factor
+    if freeze_duration:
+        t_freeze = str(freeze_duration_factor)
+        if ':' in str(freeze_duration_factor):
+            val = reduce(lambda x, y: x * 60 + int(y), str(freeze_duration_factor).split(':'), 0)
+            freeze_duration_factor = val / contest.duration_in_secs
+        else:
+            freeze_duration_factor = as_number(freeze_duration_factor)
+        freeze_duration = contest.duration_in_secs * freeze_duration_factor
+    else:
+        t_freeze = None
 
     last = None
     merge_problems = False
@@ -1431,6 +1438,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'versus_statistic_id': versus_statistic_id,
         'standings_options': options,
         'mod_penalty': mod_penalty,
+        'freeze_duration': freeze_duration,
+        't_freeze': t_freeze,
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
         'contest': contest,
         'contests_ids': contests_ids,
@@ -1489,6 +1498,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             ('2000', '2 sec'),
             ('4000', '4 sec'),
             ('10000', '10 sec'),
+        ],
+        'timeline_freeze': [
+            ('0', '0%'),
+            ('0.2', '20%'),
+            ('01:00:00', '1h'),
+            ('0.5', '50%'),
+            ('1.0', '100%'),
         ],
     })
 

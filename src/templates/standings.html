@@ -22,6 +22,7 @@
   contest_start_timestamp = {{ contest.start_time.timestamp }}
   contest_time_percentage = {{ contest.time_percentage }}
   contest_timeline = {{ contest_timeline|default:"{}"|to_json }}
+  freeze_duration = {{ freeze_duration|to_json }}
   contest_pk = {{ contest.pk }}
   shown_timeline = false
   standings_filtered = {{ with_row_num|lower }}
@@ -186,12 +187,11 @@
 
     <div id="timeline" class="progress fullscreen-border">
       <span id="timeline-text"></span>
-      <div id="timeline-progress-select" class="progress-bar progress-bar-success" style="width: 0%">
-      </div>
-      <div id="timeline-progress-hidden" class="progress-bar progress-bar-success-lighter" style="width: 0%">
-      </div>
-      <div id="timeline-progress-unparsed" class="progress-bar progress-bar-default-lighter" style="width: 0%">
-      </div>
+      <div id="timeline-progress-select" class="progress-bar progress-bar-success" style="width: 0%"></div>
+      <div id="timeline-progress-hidden" class="progress-bar progress-bar-success-lighter" style="width: 0%"></div>
+      <div id="timeline-progress-freeze" class="progress-bar progress-bar-freeze" style="width: 0%"></div>
+      <div id="timeline-progress-freeze-hidden" class="progress-bar progress-bar-freeze-lighter" style="width: 0%"></div>
+      <div id="timeline-progress-unparsed" class="progress-bar progress-bar-default-lighter" style="width: 0%"></div>
     </div>
     <div id="timeline-tooltip" class="badge"></div>
 

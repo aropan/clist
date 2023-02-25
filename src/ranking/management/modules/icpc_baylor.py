@@ -72,8 +72,14 @@ class Statistic(BaseModule):
         return ret
 
     def get_standings(self, users=None, statistics=None):
-        year = int(re.search(r'\b[0-9]{4}\b', self.key).group(0))
-        season = '%d-%d' % (year - 1, year)
+        is_regional = getattr(self, 'is_regional', False)
+        entry = re.search(r'\b[0-9]{4}\b-\b[0-9]{4}\b', self.key)
+        if entry:
+            season = entry.group(0)
+            year = int(season.split('-')[-1])
+        else:
+            year = int(re.search(r'\b[0-9]{4}\b', self.key).group(0))
+            season = '%d-%d' % (year - 1, year)
 
         icpc_standings_url = f'https://icpc.global/community/results-{year}'
         icpc_api_standings_url = f'https://icpc.global/api/help/cms/virtpublic/community/results-{year}'
@@ -112,7 +118,10 @@ class Statistic(BaseModule):
             raise ExceptionParseStandings(f'Not found standings url year = {year}')
 
         for standings_url in standings_urls:
-            if str(year) not in standings_url and now() - self.start_time > timedelta(days=30) and statistics:
+            if (
+                not re.search(r'\b[0-9]{4}\b', standings_url)
+                and now() - self.start_time > timedelta(days=30) and statistics
+            ):
                 continue
 
             is_icpc_api_standings_url = standings_url == icpc_api_standings_url
@@ -255,6 +264,7 @@ class Statistic(BaseModule):
                     table = []
                 time_divider = 1
                 last_place = None
+                is_ineligible = False
                 for r in table:
                     row = {}
                     problems = row.setdefault('problems', {})
@@ -270,23 +280,36 @@ class Statistic(BaseModule):
                                 medal = vs.column.node.xpath('.//img/@alt')
                                 if medal and medal[0].endswith('medal'):
                                     row['medal'] = medal[0].split()[0]
+                                for medal, ending in (('gold', '🥇'), ('silver', '🥈'), ('bronze', '🥉')):
+                                    if v.endswith(ending):
+                                        row['medal'] = medal
+                                        v = v[:-len(ending)].strip()
                             row['place'] = v
                         elif k in ('team', 'name', 'university'):
                             if isinstance(vs, list):
                                 for el in vs:
-                                    logo = el.column.node.xpath('.//img/@src')
-                                    if logo:
-                                        logo = urljoin(standings_url, logo[0])
-                                        row.setdefault('info', {})['logo'] = logo
-                                        break
+                                    images = el.column.node.xpath('.//img[@src]')
+                                    if images:
+                                        for img in images:
+                                            src = img.attrib['src']
+                                            if 'flags/' in src:
+                                                row['country'] = img.attrib['title']
+                                            else:
+                                                logo = urljoin(standings_url, src)
+                                                row.setdefault('info', {}).setdefault('logo', logo)
                                 for el in vs:
                                     region = el.column.node.xpath('.//*[@class="badge badge-warning"]')
                                     if region:
                                         region = ''.join([s.strip() for s in region[0].xpath('text()')])
-                                        if region:
+                                    if region:
+                                        if is_regional:
+                                            if region.lower() == 'ineligible':
+                                                is_ineligible = True
+                                        else:
                                             row['region'] = region
                                             if v.lower().startswith(region.lower()):
                                                 v = v[len(region):].strip()
+                            v = v.replace('\n', ' ')
                             if 'cphof' in standings_url:
                                 member = vs.column.node.xpath('.//a/text()')[0].strip()
                                 row['member'] = f'{member} {season}'
@@ -341,6 +364,8 @@ class Statistic(BaseModule):
                         last_place = row['place']
                     elif last_place:
                         row['place'] = last_place
+                    if is_ineligible:
+                        row.pop('place')
                     if 'member' not in row or row['member'].startswith(' '):
                         continue
                     result[row['member']] = row
@@ -364,10 +389,13 @@ class Statistic(BaseModule):
                         region = ''.join([s.strip() for s in prv.xpath('text()')])
                         row['region'] = region
 
-                for row in result.values():
-                    info = row.get('info', {})
-                    if 'logo' in info:
-                        info['download_avatar_url_'] = info['logo']
+                for team, row in result.items():
+                    if statistics and team in statistics:
+                        row.pop('info', None)
+                    else:
+                        info = row.get('info', {})
+                        if 'logo' in info:
+                            info['download_avatar_url_'] = info['logo']
 
             if not result:
                 continue
@@ -382,7 +410,7 @@ class Statistic(BaseModule):
                             hidden_fields.add(k)
                             row[k] = v
 
-            if any(['region' not in r for r in result.values()]):
+            if not is_regional and any(['region' not in r for r in result.values()]):
                 try:
                     url = f'https://icpc.global/api/team/wf/{year}/published'
                     page = REQ.get(url, time_out=60)
@@ -461,7 +489,7 @@ class Statistic(BaseModule):
             )
 
             options = {'per_page': None}
-            if not without_medals:
+            if not without_medals and not is_regional:
                 medals = self._get_medals(year)
                 if medals:
                     medals = [{'name': k, 'count': v} for k, v in medals.items()]

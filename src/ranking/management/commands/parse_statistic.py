@@ -786,12 +786,12 @@ class Command(BaseCommand):
                                     if statistics_ids:
                                         statistics_ids.remove(statistic.pk)
 
-                                    if try_calculate_time:
+                                    timeline = resource.info.get('standings', {}).get('timeline', {})
+                                    if timeline and try_calculate_time:
                                         p_problems = statistic.addition.get('problems', {})
 
                                         ts = int((now - contest.start_time).total_seconds())
                                         ts = min(ts, contest.duration_in_secs)
-                                        timeline = resource.info.get('standings', {}).get('timeline', {})
                                         time = time_in_seconds_format(timeline, ts, num=2)
 
                                         for k, v in problems.items():

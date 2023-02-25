@@ -6,6 +6,10 @@ a {
   font-weight: normal;
 }
 
+.text-weight-bold {
+  font-weight: bold;
+}
+
 img#logo {
   margin: -2px;
 }
@@ -442,6 +446,14 @@ canvas.rating_history {
 
 .progress-bar-vertical {
   transform: rotate(-90deg);
+}
+
+.progress-bar.progress-bar-freeze {
+  background-color: #5bc0de;
+}
+
+.progress-bar.progress-bar-freeze-lighter {
+  background-color: #addfee;
 }
 
 .progress-bar.progress-bar-success-lighter {

@@ -104,7 +104,7 @@
         {% if timeline %}
         <input type="hidden" name="timeline" value="{{ request.GET.timeline }}"/>
         {% endif %}
-        <button id="show-timeline" onclick="show_timeline(); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}>{% icon_to 'timeline' default='Timeline (T)' %}</button>
+        <button id="show-timeline" onclick="show_timeline(); update_urls_params({'timeline': ''}); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}>{% icon_to 'timeline' default='Timeline (T)' %}</button>
       </div>
 
       <div id="timeline-buttons" class="hidden">
@@ -114,7 +114,7 @@
           <button id="step-backward-timeline" onclick="step_timeline(-1, true); return false" class="btn btn-default btn-sm" data-title="Step backward (K)" data-toggle="tooltip"><i class="fas fa-step-backward"></i></button>
           <button id="play-timeline" class="btn btn-default btn-sm" data-title="Play (G)" data-toggle="tooltip"><i class="fas fa-play"></i></button>
           <button id="step-forward-timeline" onclick="step_timeline(1, true); return false" class="btn btn-default btn-sm" data-title="Step forward (J)" data-toggle="tooltip"><i class="fas fa-step-forward"></i></button>
-          <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1); return false" class="btn btn-default btn-sm" data-title="Fast forward (L)" data-toggle="tooltip"><i class="fas fa-fast-forward"></i></button>
+          <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1.0); return false" class="btn btn-default btn-sm" data-title="Fast forward (L)" data-toggle="tooltip"><i class="fas fa-fast-forward"></i></button>
           <button id="erase-switchers-timeline" onclick="SWITCHER_CLICK_WITHOUT_UPDATE = true; $('.problem-cell[data-result-switcher]').click(); set_timeline(); SWITCHER_CLICK_WITHOUT_UPDATE = false; return false" class="btn btn-default btn-sm" disabled data-title="Clear selected (D)" data-toggle="tooltip"><i class="fas fa-eraser"></i></button>
         </div>
 
@@ -155,18 +155,33 @@
         </div>
 
         <div class="input-group input-group-sm">
+          <div class="input-group-addon">Freeze</div>
+          {% with value=t_freeze %}
+          <select id="timeline-freeze"{% if value %} name="t_freeze"{% endif %} onchange="change_freeze_duration(this)">
+            {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
+            {% for k, v in timeline_freeze %}
+            <option value="{{ k }}"{% if not value and forloop.revcounter == 0 %} selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+          {% endwith %}
+        </div>
+
+        <div class="input-group input-group-sm">
           <button id="share-timeline" class="btn btn-default btn-sm"><i class="fas fa-share-square"></i></button>
         </div>
       </div>
 
       <script>
-        $('#timeline-duration').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
-        $('#timeline-step').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
-        $('#timeline-delay').select2({theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true})
+        var timeline_select_config = {theme: 'bootstrap', width: 'auto', dropdownAutoWidth : true, minimumResultsForSearch: -1}
+        $('#timeline-duration').select2(timeline_select_config)
+        $('#timeline-step').select2(timeline_select_config)
+        $('#timeline-delay').select2(timeline_select_config)
+        $('#timeline-freeze').select2(timeline_select_config)
+
         {% if timeline and not disable_switches %}
         $(function() {
           shuffle_statistics_rows()
-          $('#show-timeline').click()
+          show_timeline();
           {% if timeline == 'play' %}
           $('#fast-backward-timeline').click()
           $('#play-timeline').click()
