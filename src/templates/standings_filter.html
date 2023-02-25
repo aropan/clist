@@ -157,7 +157,7 @@
         <div class="input-group input-group-sm">
           <div class="input-group-addon">Freeze</div>
           {% with value=t_freeze %}
-          <select id="timeline-freeze"{% if value %} name="t_freeze"{% endif %} onchange="change_freeze_duration(this)">
+          <select id="timeline-freeze"{% if request.GET.t_delay %} name="t_freeze"{% endif %} onchange="change_freeze_duration(this)">
             {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
             {% for k, v in timeline_freeze %}
             <option value="{{ k }}"{% if not value and forloop.revcounter == 0 %} selected{% endif %}>{{ v }}</option>
