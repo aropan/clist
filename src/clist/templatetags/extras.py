@@ -108,13 +108,14 @@ def format_time(time, fmt):
 
 
 @register.filter
-def hr_timedelta(delta):
+def hr_timedelta(delta, n_significant=2):
     if isinstance(delta, timedelta):
         delta = delta.total_seconds()
     if delta <= 0:
         return 'past'
 
     ret = []
+    n_used = 0
     for c, s in (
         (364 * 24 * 60 * 60, 'year'),
         (7 * 24 * 60 * 60, 'week'),
@@ -127,9 +128,10 @@ def hr_timedelta(delta):
             val = delta // c
             delta %= c
             ret.append('%d %s%s' % (val, s, 's' if val > 1 else ''))
+            n_used += 1
         elif ret:
-            ret.append('')
-        if len(ret) == 2:
+            n_used += 1
+        if n_significant and n_significant == n_used:
             break
     ret = ' '.join(ret)
     return ret.strip()
@@ -998,9 +1000,11 @@ def icon_to(value, default=None, icons=None, html_class=None):
         default = value.title().replace('_', ' ')
     if value in icons:
         value = icons[value]
-        if isinstance(value, dict):
-            value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
         inner = ''
+        if isinstance(value, dict):
+            if 'position' in value:
+                inner += f' data-placement="{value["position"]}"'
+            value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
         if default:
             inner += f' title="{default}" data-toggle="tooltip"'
         if html_class:
@@ -1041,3 +1045,8 @@ def quote_url(url):
 @register.filter
 def negative(value):
     return not bool(value)
+
+
+@register.filter
+def to_list(value):
+    return list(value)

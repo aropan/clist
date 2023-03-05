@@ -1,25 +1,3 @@
-.standings_list .contest {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.standings_list a.contest:hover .inline-button {
-  display: inline-block;
-}
-
-.standings_list a.contest .inline-button {
-  margin-left: -60px;
-}
-
-.standings_list .resource {
-  margin-top: -5px;
-}
-
-.standings_list {
-  margin-bottom: 5px;
-}
-
 table.standings {
   border-collapse: separate;
 }

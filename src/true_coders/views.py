@@ -1278,13 +1278,19 @@ def search(request, **kwargs):
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
     elif query == 'contests':
-        qs = Contest.objects.all()
+        qs = Contest.objects.select_related('resource')
         if 'regex' in request.GET:
             qs = qs.filter(get_iregex_filter(request.GET['regex'], 'title'))
+        if request.GET.get('has_problems') in django_settings.YES_:
+            qs = qs.filter(info__problems__isnull=False, stage__isnull=True).exclude(info__problems__exact=[])
+        if request.GET.get('has_statistics') in django_settings.YES_:
+            qs = qs.filter(n_statistics__gt=0)
+        resources = [r for r in request.GET.getlist('resources[]') if r]
+        if resources:
+            qs = qs.filter(resource__pk__in=resources)
         qs = qs.order_by('-end_time', 'pk')
-
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.title} for r in qs]
+        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon} for r in qs]
     elif query == 'tags':
         qs = ProblemTag.objects.all()
         if 'regex' in request.GET:

@@ -4,7 +4,7 @@
 {% block description %}Pretty standings for past competitions with additional information and filtering{% endblock %}
 
 {% block end-head %}
-<link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+<link href="{% static_ts 'css/standings_list.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/standings_list.js' %}"></script>
 <script src="{% static_ts 'js/ajax-csrf.js' %}"></script>
 {% endblock %}
@@ -12,7 +12,7 @@
 {% block content %}
 
 <div class="row">
-  <div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
+  <div class="col-md-12 col-lg-8 col-lg-offset-2">
     <form class="form-inline" id="standings-filters" method="get" action="">
       <div class="input-group input-group-sm">
         <div class="input-group-addon">Contest</div>
@@ -56,12 +56,25 @@
     </form>
 
     <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
-    <div class="list-group standings_list">
-    {% include "standings_list_paging.html" with contests=stages without_paginate=True %}
-    </div>
-    <div class="list-group standings_list">
-    {% include "standings_list_paging.html" with contests=running_contests contests_groups=grouped_running_contests without_paginate=True %}
-    {% include page_template %}
+    <div id="standings_list" class="panel panel-default table-responsive">
+      <table class="table table-hover table-striped table-float-head">
+        <thead>
+          <tr>
+            <th class="n_statistics text-muted">{% icon_to 'n_participants' %}</th>
+            <th class="n_problems text-muted">{% icon_to 'n_problems' %}</th>
+            <th class="event">Event</th>
+            <th class="date text-muted">End Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if stages %}
+          {% include "standings_list_paging.html" with contests=stages without_paginate=True is_stage=True %}
+          <tr><td colspan="100%"></td></tr>
+          {% endif %}
+          {% include "standings_list_paging.html" with contests=running_contests contests_groups=grouped_running_contests without_paginate=True %}
+          {% include page_template %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

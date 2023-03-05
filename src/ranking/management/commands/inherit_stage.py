@@ -6,6 +6,7 @@ from datetime import timedelta
 
 import coloredlogs
 import dateutil
+import yaml
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Max, Min
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         parser.add_argument('--url', type=str, help='Url of new stage')
         parser.add_argument('--start-time', type=str, help='Start time of new stage')
         parser.add_argument('--end-time', type=str, help='End time of new stage')
+        parser.add_argument('--delta-time', type=str, help='Delta time of new stage')
         parser.add_argument('--time-regex', type=str, help='Regex contest title to find range time')
 
     def handle(self, *args, **options):
@@ -42,11 +44,19 @@ class Command(BaseCommand):
 
             if args.start_time:
                 start_time = dateutil.parser.parse(args.start_time)
+            elif args.delta_time:
+                delta_time = yaml.safe_load(args.delta_time) if args.delta_time else None
+                delta_time = dateutil.relativedelta.relativedelta(**delta_time)
+                start_time = original_contest.start_time + delta_time
             else:
                 start_time = time_qs.aggregate(Min('start_time'))['start_time__min'] - timedelta(days=1)
 
             if args.end_time:
                 end_time = dateutil.parser.parse(args.end_time)
+            elif args.delta_time:
+                delta_time = yaml.safe_load(args.delta_time) if args.delta_time else None
+                delta_time = dateutil.relativedelta.relativedelta(**delta_time)
+                end_time = original_contest.end_time + delta_time
             else:
                 end_time = time_qs.aggregate(Max('end_time'))['end_time__max'] + timedelta(days=1)
 
@@ -63,7 +73,7 @@ class Command(BaseCommand):
             )
 
             if created:
-                logger.info(f'new contest = {contest}')
+                logger.info(f'new contest = {contest}, start_time = {start_time}, end_time = {end_time}')
 
             if getattr(contest, 'stage', None):
                 stage = contest.stage

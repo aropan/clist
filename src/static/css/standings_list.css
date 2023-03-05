@@ -1,0 +1,15 @@
+#standings_list .n_statistics {
+  text-align: center;
+}
+
+#standings_list .n_problems {
+  text-align: center;
+}
+
+#standings_list .date {
+  text-align: right;
+}
+
+#standings_list tr td[colspan="100%"] {
+  padding: 4px;
+}

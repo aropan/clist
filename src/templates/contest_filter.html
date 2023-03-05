@@ -41,6 +41,9 @@
       data: function (params) {
         return {
           query: 'contests',
+          {% if has_problems %}has_problems: true,{% endif %}
+          {% if has_statistics %}has_statistics: true,{% endif %}
+          resources: [{% for resource in params.resources %}{{ resource.pk }}{% if not forloop.last %},{% endif %}{% endfor %}],
           regex: params.term,
           page: params.page || 1
         };

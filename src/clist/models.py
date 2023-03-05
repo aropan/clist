@@ -19,7 +19,7 @@ from django.utils import timezone
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
 
-from clist.templatetags.extras import get_item, slug
+from clist.templatetags.extras import get_item, get_problem_key, slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
@@ -500,8 +500,13 @@ class Contest(BaseModel):
         if not problems:
             return
         if isinstance(problems, dict):
-            for division_problems in problems.get('divisions', {}).values():
+            seen = set()
+            for division_problems in problems.get('division', {}).values():
                 for problem in division_problems:
+                    key = get_problem_key(problem)
+                    if key in seen:
+                        continue
+                    seen.add(key)
                     yield problem
         elif isinstance(problems, list):
             for problem in problems:
@@ -529,7 +534,7 @@ class Problem(BaseModel):
     visible = models.BooleanField(default=True, null=False)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
 
-    activities = GenericRelation('favorites.Activity')
+    activities = GenericRelation('favorites.Activity', related_query_name='problem')
 
     objects = BaseManager()
 

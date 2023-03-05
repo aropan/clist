@@ -627,6 +627,8 @@ FONTAWESOME_ICONS_ = {
     'tdo': {'icon': '<i class="fas fa-calendar-day activity tdo"></i>', 'name': 'fa-calendar-day',
             'check_field': 'is_todo'},
     'status': '<i class="far fa-lightbulb"></i>',
+    'n_participants': {'icon': '<i class="fas fa-users"></i>', 'title': 'Number of participants', 'position': 'bottom'},
+    'n_problems': {'icon': '<i class="far fa-file-code"></i>', 'title': 'Number of problems', 'position': 'bottom'},
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

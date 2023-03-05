@@ -63,7 +63,13 @@ class Statistic(BaseModule):
         result = {}
 
         problem_name = self.name.split('.', 1)[1].strip()
-        problems_info = [{'name': problem_name, 'url': self.url}]
+        problem_key = self.key
+        problems_info = [{
+            'name': problem_name,
+            'code': problem_key,
+            'url': self.url,
+            'n_total': 100,
+        }]
 
         regex = '<table[^>]*>.*?</table>'
         html_table = re.search(regex, page, re.DOTALL)
@@ -73,13 +79,19 @@ class Statistic(BaseModule):
             for r in table:
                 row = OrderedDict()
                 row['solving'] = 1
+
+                problems = row.setdefault('problems', {})
+                problem = problems.setdefault(problem_key, {})
+                problem['result'] = '+'
+                problem['binary'] = True
+
                 for k, v in r.items():
                     if isinstance(v, list):
                         place, country = v
                         row['place'] = re.match('[0-9]+', place.value).group(0)
                         country = first(country.column.node.xpath('.//@title'))
                         if country:
-                            row['country'] = country
+                            row['country'] = str(country)
                     elif k == 'Time To Solve':
                         params = {}
                         for x in v.value.split(', '):
@@ -90,17 +102,12 @@ class Statistic(BaseModule):
                         rel_delta = relativedelta(**params)
                         now = timezone.now()
                         delta = now - (now - rel_delta)
-                        row['penalty'] = f'{delta.total_seconds() / 60:.2f}'
+                        row['penalty'] = problem['time_in_seconds'] = int(delta.total_seconds())
                     elif k == 'User':
                         member = first(v.column.node.xpath('.//@title')) or v.value
                         row['member'] = member
                     else:
                         row[k.lower()] = v.value
-                problems = row.setdefault('problems', {})
-                problem = problems.setdefault(problem_name, {})
-                problem['result'] = '+'
-                problem['binary'] = True
-                row['_skip_for_problem_stat'] = True
                 if 'member' not in row:
                     continue
                 result[row['member']] = row
@@ -109,6 +116,7 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.standings_url,
             'problems': problems_info,
+            'fields_types': {'penalty': ['timedelta']},
         }
 
         if len(result) < 100 and 'No data available' not in page:

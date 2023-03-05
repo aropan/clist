@@ -8,58 +8,78 @@
 {% include "standings_list_paging.html" with contests=contests_groups|get_item:contest.resource contests_groups=None group_contest=True without_paginate=True %}
 {% endif %}
 
-<a href="{% if contest.n_statistics is None and not contest.info.problems  %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="contest list-group-item list-group-item-action list-group-item-{% if not contest.has_module %}info{% elif contest.n_statistics is None and not contest.info.problems %}danger{% elif contest.is_running %}success{% endif %}{% if group_contest %} group-resource-{{ contest.resource.pk }}{% endif %}" {% if group_contest %}style="display: none"{% endif %}>
-    <div>
-    <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
-    {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
-    {% if group_contest %}
-        <span class="toggle" data-group=".group-resource-{{ contest.resource.pk }}"><i class="fa fa-caret-up"></i></span>
+{% if not contest.has_module %}
+{% define 'info' as status %}
+{% elif contest.n_statistics is None and not contest.info.problems %}
+{% define 'danger' as status %}
+{% elif contest.is_running %}
+{% define 'success' as status %}
+{% else %}
+{% define '' as status %}
+{% endif %}
+
+<tr class="contest{% if status %} {{ status }}{% endif %}{% if group_contest %} group-resource-{{ contest.resource.pk }}{% endif %}" {% if group_contest %}style="display: none"{% endif %}>
+<td class="n_statistics text-muted">
+  {% if contest.n_statistics %}
+  <a href="{% url 'coder:accounts' %}?contest={{ contest.pk }}" class="{% if status %} text-{{ status }}{% endif %}">{{ contest.n_statistics }}</a>
+  {% endif %}
+</td>
+<td class="n_problems text-muted">
+  {% if not is_stage and contest.info.problems %}
+  <a href="{% url 'clist:problems' %}?contest={{ contest.pk }}" class="{% if status %} text-{{ status }}{% endif %}">{{ contest.problems_list|to_list|length }}</a>
+  {% endif %}
+</td>
+<td>
+  <a href="{% if contest.n_statistics is None and not contest.info.problems  %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="{% if status %} text-{{ status }}{% endif %}">
+  <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+  {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
+  {% if group_contest %}
+    <span class="toggle" data-group=".group-resource-{{ contest.resource.pk }}"><i class="fa fa-caret-up"></i></span>
+  {% endif %}
+  {% trim_to contest.title 60 %}
+  {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
+
+  {% if contests_groups %}
+    {% with group_size=contests_groups|get_item:contest.resource|length %}
+    {% if group_size %}
+      <span class="toggle badge progress-bar-info" data-group=".group-resource-{{ contest.resource.pk }}">{{ group_size }}&nbsp;<i class="fa fa-caret-up"></i></span>
     {% endif %}
-    {% trim_to contest.title 60 %}
-    {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
+    {% endwith %}
+  {% endif %}
 
-    {% if contest.n_statistics and not contest.stats %}<small>({{ contest.n_statistics }})</small>{% endif %}
-    {% if contests_groups %}
-        {% with group_size=contests_groups|get_item:contest.resource|length %}
-        {% if group_size %}
-            <span class="toggle badge progress-bar-info" data-group=".group-resource-{{ contest.resource.pk }}">{{ group_size }}&nbsp;<i class="fa fa-caret-up"></i></span>
-        {% endif %}
-        {% endwith %}
-    {% endif %}
-
-    <small class="pull-right">
-        {% include "contest_inline_buttons.html" with contest=contest %}
-
-        <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
-            {{ contest.end_time|timezone:timezone|naturalday }}
-        </span>
-    </small>
-    </div>
-
-    {% for stat in contest.stats %}
-    <small>
-        {% if stat.place %}
-        {% with division=stat.addition|get_item:"division" %}
-        Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}{% endif %}
-        {% endwith %}
-        {% endif %}
-
-        {% with value=stat.addition.rating_change %}
-        {% with intvalue=value|toint %}
-            <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
-            {% if intvalue %}
-              <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
-            {% else %}
-              {{ value }}
-            {% endif %}
-            </span>
-        {% endwith %}
-        {% endwith %}
-    </small>
-    {% endfor %}
+  <small class="pull-right">
+    {% include "contest_inline_buttons.html" with contest=contest %}
+  </small>
 </a>
+
+{% for stat in contest.stats %}
+<span class="text-muted small">
+  {% if stat.place %}
+  {% with division=stat.addition|get_item:"division" %}
+  Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}{% endif %}
+  {% endwith %}
+  {% endif %}
+
+  {% with value=stat.addition.rating_change %}
+  {% with intvalue=value|toint %}
+    <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
+    {% if intvalue %}
+      <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+    {% else %}
+      {{ value }}
+    {% endif %}
+    </span>
+  {% endwith %}
+  {% endwith %}
+</span>
+{% endfor %}
+</td>
+<td class="date text-muted small">
+  <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>
+</td>
+</tr>
 {% endfor %}
 
 {% if not without_paginate %}
-{% show_more %}
+{% show_more_table %}
 {% endif %}
