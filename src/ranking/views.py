@@ -24,7 +24,7 @@ from el_pagination.decorators import page_template, page_templates
 from ratelimit.decorators import ratelimit
 from sql_util.utils import Exists as SubqueryExists
 
-from clist.models import Contest, Resource
+from clist.models import Contest, ContestSeries, Resource
 from clist.templatetags.extras import (as_number, format_time, get_country_name, get_problem_short, get_problem_title,
                                        is_reject, is_solved, query_transform, slug, time_in_seconds,
                                        timestamp_to_datetime)
@@ -95,6 +95,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         contests = contests.filter(resource_id__in=resources)
         resources = list(Resource.objects.filter(pk__in=resources))
 
+    more_fields = request.user.has_perm('clist.view_more_fields')
+    more_fields = more_fields and [f for f in request.GET.getlist('more') if f]
+
     if request.user.is_authenticated:
         contests = contests.prefetch_related(Prefetch(
             'statistics_set',
@@ -106,6 +109,17 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     stages = contests.filter(active_stage_query)
     contests = contests.exclude(active_stage_query)
 
+    series = [s for s in request.GET.getlist('series') if s]
+    if series:
+        series = list(ContestSeries.objects.filter(slug__in=series))
+        link_series = request.GET.get('link_series') in settings.YES_
+        link_series = link_series and request.user.has_perm('clist.change_contestseries')
+        link_series = link_series and len(series) == 1
+        if link_series:
+            contests.update(series=series[0])
+        stages = stages.filter(series_id__in={s.pk for s in series})
+        contests = contests.filter(series_id__in={s.pk for s in series})
+
     context = {
         'stages': stages,
         'contests': contests,
@@ -115,7 +129,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         'switch': switch,
         'params': {
             'resources': resources,
+            'series': series,
         },
+        'more_fields': more_fields,
     }
 
     if get_group_list(request):

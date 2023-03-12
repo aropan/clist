@@ -265,6 +265,7 @@ class Statistic(BaseModule):
                 time_divider = 1
                 last_place = None
                 is_ineligible = False
+                is_honorable_mention = False
                 for r in table:
                     row = {}
                     problems = row.setdefault('problems', {})
@@ -275,6 +276,15 @@ class Statistic(BaseModule):
                             v = vs.value
                         k = k.lower().strip('.')
                         v = v.strip()
+
+                        if is_honorable_mention:
+                            new_row = dict(member=f'{v} {season}', name=v)
+                            result[new_row['member']] = new_row
+                            continue
+
+                        if re.search('honorable mention|in alphabetical order', v, re.I):
+                            is_honorable_mention = True
+
                         if k in ('rank', 'rk', 'place'):
                             if not isinstance(vs, list):
                                 medal = vs.column.node.xpath('.//img/@alt')
@@ -309,6 +319,11 @@ class Statistic(BaseModule):
                                             row['region'] = region
                                             if v.lower().startswith(region.lower()):
                                                 v = v[len(region):].strip()
+
+                            tr = vs[0] if isinstance(vs, list) else vs
+                            if tr.row.node.attrib.get('id') in ['scoresummary']:
+                                break
+
                             v = v.replace('\n', ' ')
                             if 'cphof' in standings_url:
                                 member = vs.column.node.xpath('.//a/text()')[0].strip()
@@ -340,8 +355,9 @@ class Statistic(BaseModule):
                             v = re.sub(r'([0-9]+)\s+([0-9]+)\s+tr.*', r'\2 \1', v)
                             v = re.sub('tr[a-z]*', '', v)
                             v = re.sub('-*', '', v)
+                            v = re.sub(r'([0-9]+)/([0-9]+)', r'\1 \2', v)
                             v = v.strip()
-                            if not v:
+                            if not v or v == '0':
                                 continue
 
                             p = problems.setdefault(k, {})
@@ -501,7 +517,9 @@ class Statistic(BaseModule):
                 'problems': list(problems_info.values()),
                 'options': options,
                 'hidden_fields': list(hidden_fields),
+                'series': 'icpc',
             }
+
             return standings
 
         raise ExceptionParseStandings(f'Not found standings url from {standings_urls}')

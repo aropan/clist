@@ -46,7 +46,7 @@ def get_item(data, key):
     if isinstance(data, (dict, defaultdict, OrderedDict)):
         if key in data or '.' not in str(key):
             return data.get(key)
-        return reduce(lambda d, k: d.get(k) if d else None, str(key).split('.'), data)
+        return reduce(lambda d, k: get_item(d, k) if d else None, str(key).split('.'), data)
     if isinstance(data, (list, tuple)):
         return data[key] if -len(data) <= key < len(data) else None
     return getattr(data, key, None)

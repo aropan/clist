@@ -33,7 +33,7 @@ from tastypie.models import ApiKey
 
 from favorites.models import Activity
 
-from clist.models import Contest, ProblemTag, Resource
+from clist.models import Contest, ContestSeries, ProblemTag, Resource
 from clist.templatetags.extras import asfloat, format_time, get_timezones, query_transform, quote_url, relative_url
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
@@ -1291,6 +1291,14 @@ def search(request, **kwargs):
         qs = qs.order_by('-end_time', 'pk')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon} for r in qs]
+    elif query == 'series':
+        qs = ContestSeries.objects.all()
+        qs = qs.annotate(n_contests=SubqueryCount('contest'))
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'name', 'short'))
+        qs = qs.order_by('-n_contests', '-pk')
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'slug': r.slug, 'text': r.text, 'short': r.short, 'name': r.name} for r in qs]
     elif query == 'tags':
         qs = ProblemTag.objects.all()
         if 'regex' in request.GET:
@@ -1927,7 +1935,7 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
 
     context = {'params': params}
-    addition_table_fields = ('modified', 'updated')
+    addition_table_fields = ('modified', 'updated', 'created')
     table_fields = ('rating', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')

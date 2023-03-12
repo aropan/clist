@@ -77,6 +77,14 @@
 <td class="date text-muted small">
   <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>
 </td>
+{% for more_field in more_fields %}
+<td>
+  {% with value=contest|get_item:more_field %}
+  {% include "field_value.html" with value=value field=more_field %}
+  {% endwith %}
+</td>
+{% endfor %}
+
 </tr>
 {% endfor %}
 

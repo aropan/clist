@@ -243,6 +243,9 @@ class Command(BaseCommand):
                             setattr(contest, attr, standings[field])
                             contest.save()
 
+                    if 'series' in standings:
+                        contest.set_series(standings.pop('series'))
+
                     if 'options' in standings:
                         contest_options = contest.info.get('standings', {})
                         standings_options = dict(contest_options)

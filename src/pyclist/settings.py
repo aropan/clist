@@ -431,15 +431,15 @@ if DEBUG:
       'debug_toolbar.panels.timer.TimerPanel',
       'debug_toolbar.panels.settings.SettingsPanel',
       'debug_toolbar.panels.headers.HeadersPanel',
-      'debug_toolbar.panels.request.RequestPanel',
       'debug_toolbar.panels.sql.SQLPanel',
       'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-      'debug_toolbar.panels.templates.TemplatesPanel',
       'debug_toolbar.panels.cache.CachePanel',
       'debug_toolbar.panels.signals.SignalsPanel',
       'debug_toolbar.panels.logging.LoggingPanel',
-      'debug_toolbar.panels.redirects.RedirectsPanel',
       'debug_toolbar.panels.profiling.ProfilingPanel',
+      # 'debug_toolbar.panels.templates.TemplatesPanel',
+      # 'debug_toolbar.panels.redirects.RedirectsPanel',
+      # 'debug_toolbar.panels.request.RequestPanel',
     ]
 
     def show_toolbar_callback(request):
@@ -459,9 +459,6 @@ if DEBUG:
             'debug_toolbar.panels.request.RequestPanel',
         },
     }
-
-# DJANGO CPROFILE
-DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
 
 # DGANGO IMAGEFIT
 IMAGEFIT_CACHE_ENABLED = True
@@ -629,6 +626,7 @@ FONTAWESOME_ICONS_ = {
     'status': '<i class="far fa-lightbulb"></i>',
     'n_participants': {'icon': '<i class="fas fa-users"></i>', 'title': 'Number of participants', 'position': 'bottom'},
     'n_problems': {'icon': '<i class="far fa-file-code"></i>', 'title': 'Number of problems', 'position': 'bottom'},
+    'series': '<i class="fas fa-trophy text-muted"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

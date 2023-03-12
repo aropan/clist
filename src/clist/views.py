@@ -723,16 +723,22 @@ def update_problems(contest, problems=None, force=False):
             problem_sets = [(None, problems)]
 
         for division, problem_set in problem_sets:
-            last_group = None
+            prev = None
             for index, problem_info in enumerate(problem_set, start=1):
                 key = get_problem_key(problem_info)
                 short = get_problem_short(problem_info)
                 name = get_problem_name(problem_info)
+
                 if problem_info.get('ignore'):
                     continue
-                if last_group is not None and last_group == problem_info.get('group'):
-                    continue
-                last_group = problem_info.get('group')
+                if prev:
+                    if prev.get('group') and prev.get('group') == problem_info.get('group'):
+                        continue
+                    if prev.get('subname') and prev.get('name') == name:
+                        continue
+                prev = dict(problem_info)
+                print(index)
+
                 problem_contest = contest if 'code' not in problem_info else None
 
                 added_problem = added_problems.get(key)

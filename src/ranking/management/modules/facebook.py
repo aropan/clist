@@ -223,6 +223,7 @@ class Statistic(BaseModule):
         }
 
         if is_final:
+            standings['series'] = 'FHC'
             if has_hidden or datetime.utcnow().replace(tzinfo=pytz.utc) < self.end_time:
                 standings['options'] = {'medals': []}
             else:

@@ -8,8 +8,18 @@
 
 #standings_list .date {
   text-align: right;
+  white-space: nowrap;
 }
 
 #standings_list tr td[colspan="100%"] {
   padding: 4px;
+}
+
+
+#standings-filters .input-group-addon:has(>.series-checkbox) {
+  line-height: 1.0;
+}
+
+#standings-filters .series-checkbox {
+  transform: scale(1.3);
 }

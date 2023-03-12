@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
+from math import isclose
 from time import sleep
 from urllib.parse import parse_qs, quote, urljoin
 
@@ -15,7 +16,7 @@ import dateutil.parser
 import tqdm
 from lxml import etree
 
-from clist.templatetags.extras import asfloat, toint
+from clist.templatetags.extras import as_number, asfloat, toint
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -170,7 +171,26 @@ class Statistic(BaseModule):
         else:
             challenge_id = None
 
-        if challenge_id:  # marathon match
+        if 'community.topcoder.com/pl' in self.standings_url:
+            page = REQ.get(self.standings_url)
+            tables = re.findall(r'<table[^>]*>\s*<tr[^>]*>\s*<t[^>]*colspan="?[23]"?[^>]*>.*?</table>', page, re.DOTALL)
+            for table in tables:
+                rows = parsed_table.ParsedTable(table, default_header_rowspan=2)
+                for row in rows:
+                    row = {k.lower(): v.value for k, v in row.items()}
+                    row['member'] = row.pop('handle')
+                    row['solving'] = as_number(row.pop('score'), force=True)
+                    result[row['member']] = row
+
+            last_rank, last_score = None, None
+            for rank, row in enumerate(sorted(result.values(), key=lambda x: x['solving'], reverse=True), start=1):
+                if last_score is None or not isclose(last_score, row['solving']):
+                    last_score = row['solving']
+                    last_rank = rank
+                row['place'] = last_rank
+
+            problems_info = None
+        elif challenge_id:  # marathon match
             url = conf.TOPCODER_API_MM_URL_FORMAT.format(challenge_id)
             page = REQ.get(url)
             data = json.loads(page)

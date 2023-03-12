@@ -70,7 +70,7 @@
         return $ids;
     }
 
-    $url = "https://www.facebook.com/";
+    $url = "https://www.facebook.com/?_fb_noscript=1";
     $page = curlexec($url);
 
     if (preg_match('#<form[^>]*action="(?P<url>[^"]*/login/[^"]*)"#', $page, $match)) {

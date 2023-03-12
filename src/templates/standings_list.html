@@ -12,7 +12,7 @@
 {% block content %}
 
 <div class="row">
-  <div class="col-md-12 col-lg-8 col-lg-offset-2">
+  <div class="{% if more_fields %}col-lg-12{% else %}col-md-12 col-lg-8 col-lg-offset-2{% endif %}">
     <form class="form-inline" id="standings-filters" method="get" action="">
       <div class="input-group input-group-sm">
         <div class="input-group-addon">Contest</div>
@@ -53,6 +53,12 @@
       {% include 'resource_filter.html' %}
 
       {% if favorite_contests %}{% include 'favorite_filter.html' %}{% endif %}
+
+      {% include 'series_filter.html' %}
+
+      {% for more_field in more_fields %}
+      <input type="hidden" name="more" value="{{ more_field }}"/>
+      {% endfor %}
     </form>
 
     <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
@@ -64,6 +70,9 @@
             <th class="n_problems text-muted">{% icon_to 'n_problems' %}</th>
             <th class="event">Event</th>
             <th class="date text-muted">End Time</th>
+            {% for more_field in more_fields %}
+            <th class="text-muted">{{ more_field|title_field }}</th>
+            {% endfor %}
           </tr>
         </thead>
         <tbody>

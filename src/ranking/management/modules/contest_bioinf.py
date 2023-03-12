@@ -30,7 +30,12 @@ class Statistic(BaseModule):
         page = REQ.get(self.standings_url)
 
         html_table = re.search('<table[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL).group(0)
-        table = parsed_table.ParsedTable(html_table, as_list=True, ignore_wrong_header_number=False, ignore_display_none=True)
+        table = parsed_table.ParsedTable(
+            html_table,
+            as_list=True,
+            ignore_wrong_header_number=False,
+            ignore_display_none=True,
+        )
 
         problems_info = OrderedDict()
 
@@ -60,7 +65,7 @@ class Statistic(BaseModule):
                     problem_key = str(pid)
                     if problem_key not in problems_info:
                         name = v.header.attrs['_top_column'].value
-                        p_info = {'code': problem_key}
+                        p_info = {'short': problem_key}
                         p_info_regex = r'^(?P<name>.*)\s+\(?(?P<score>[0-9]{2,})\)?$'
                         match = re.search(p_info_regex, name)
                         if match:
