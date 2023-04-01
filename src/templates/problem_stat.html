@@ -5,12 +5,12 @@
   <div>Name: {{ name }}</div>
 {% endif %}
 {% if stat.result != None %}
-  <div>Result: {{ stat.result|scoreformat }}{% if full_score %} of {{ full_score|scoreformat }}{% endif %}</div>
+  <div>Result: {{ stat.result|scoreformat:False }}{% if full_score %} of {{ full_score|scoreformat:False }}{% endif %}</div>
 {% elif full_score %}
-  <div>Full score: {{ full_score|scoreformat }}</div>
+  <div>Full score: {{ full_score|scoreformat:False }}</div>
 {% endif %}
 {% if stat.upsolving.result %}
-  <div>Upsolving: {{ stat.upsolving.result|scoreformat }}</div>
+  <div>Upsolving: {{ stat.upsolving.result|scoreformat:False }}</div>
 {% endif %}
 {% if stat.time %}
   <div>Time: {{ stat.time }}</div>

@@ -77,15 +77,11 @@ def api_query(
             if e.code == 503 and attempt:
                 sleep(1)
                 continue
-            err = e.args[0]
-            if hasattr(err, 'fp'):
-                try:
-                    ret = json.load(err.fp)
-                except json.decoder.JSONDecodeError:
-                    ret = {'status': str(e)}
-            else:
+            try:
+                ret = json.loads(e.response)
+            except json.decoder.JSONDecodeError:
                 ret = {'status': str(e)}
-            ret['code'] = getattr(err, 'code', None)
+            ret['code'] = e.code
         break
 
     return ret

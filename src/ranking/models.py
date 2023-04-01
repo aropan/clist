@@ -106,6 +106,7 @@ class Account(BaseModel):
             models.Index(fields=['resource', 'n_contests', 'rating50']),
             models.Index(fields=['resource', 'n_contests', 'country']),
             models.Index(fields=['resource', 'n_writers']),
+            models.Index(fields=['resource', 'updated']),
         ]
 
         unique_together = ('resource', 'key')

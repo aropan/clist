@@ -30,13 +30,18 @@
   {% endif %}
 </td>
 <td>
-  <a href="{% if contest.n_statistics is None and not contest.info.problems  %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="{% if status %} text-{{ status }}{% endif %}">
-  <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+  <a href="{% url_transform request resource=contest.resource.id %}">
+    <img data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+  </a>
   {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
   {% if group_contest %}
     <span class="toggle" data-group=".group-resource-{{ contest.resource.pk }}"><i class="fa fa-caret-up"></i></span>
   {% endif %}
+
+  <a href="{% if contest.n_statistics is None and not contest.info.problems  %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="{% if status %} text-{{ status }}{% endif %}">
   {% trim_to contest.title 60 %}
+  </a>
+
   {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
 
   {% if contests_groups %}
@@ -47,32 +52,29 @@
     {% endwith %}
   {% endif %}
 
-  <small class="pull-right">
-    {% include "contest_inline_buttons.html" with contest=contest %}
-  </small>
-</a>
-
-{% for stat in contest.stats %}
-<span class="text-muted small">
-  {% if stat.place %}
-  {% with division=stat.addition|get_item:"division" %}
-  Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}{% endif %}
-  {% endwith %}
-  {% endif %}
-
-  {% with value=stat.addition.rating_change %}
-  {% with intvalue=value|toint %}
-    <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
-    {% if intvalue %}
-      <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
-    {% else %}
-      {{ value }}
+  {% for stat in contest.stats %}
+  <span class="text-muted small">
+    {% if stat.place %}
+    {% with division=stat.addition|get_item:"division" %}
+    Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}{% endif %}
+    {% endwith %}
     {% endif %}
-    </span>
-  {% endwith %}
-  {% endwith %}
-</span>
-{% endfor %}
+
+    {% with value=stat.addition.rating_change %}
+    {% with intvalue=value|toint %}
+      <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
+      {% if intvalue %}
+        <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+      {% else %}
+        {{ value }}
+      {% endif %}
+      </span>
+    {% endwith %}
+    {% endwith %}
+  </span>
+  {% endfor %}
+
+  {% include "contest_inline_buttons.html" with contest=contest %}
 </td>
 <td class="date text-muted small">
   <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>

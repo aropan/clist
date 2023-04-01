@@ -38,7 +38,7 @@ Number of competitions: {{ account.n_contests }}
 {% block content %}
 
 <script>
-  ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource }}{% endif %}'
+  ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource.host }}{% endif %}'
 </script>
 
 <form method="post" class="form-inline" action="">{% csrf_token %}
@@ -321,6 +321,7 @@ Number of competitions: {{ account.n_contests }}
 {% set_item chart "point_radius" 0 %}
 {% set_item chart "point_hover_radius" 0 %}
 {% set_item chart "border_color" "#5cb85c" %}
+{% set_item chart "background_color" "#5cb85c" %}
 {% set_item chart "border_width" 3 %}
 {% set_item chart "height" "40vh" %}
 {% set_item chart "duplicate_y_axis" True %}

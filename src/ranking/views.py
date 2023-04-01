@@ -96,7 +96,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         resources = list(Resource.objects.filter(pk__in=resources))
 
     more_fields = request.user.has_perm('clist.view_more_fields')
-    more_fields = more_fields and [f for f in request.GET.getlist('more') if f]
+    more_fields = more_fields and [f for f in request.GET.getlist('more') if f] or []
 
     if request.user.is_authenticated:
         contests = contests.prefetch_related(Prefetch(

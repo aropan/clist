@@ -235,9 +235,7 @@
 
         if (isset($params["json_output"])) {
             $json_decode_page = json_decode(substr($page, $sep + 4), true);
-            if ($json_decode_page === null) {
-                echo json_last_error() . "\n";
-            } else {
+            if ($json_decode_page !== null) {
                 $page = $json_decode_page;
             }
         }

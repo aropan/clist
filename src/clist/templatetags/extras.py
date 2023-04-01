@@ -849,10 +849,18 @@ def title_field(value):
 
 
 @register.filter
-def scoreformat(value):
+def scoreformat(value, with_shorten=True):
     str_value = str(value)
     if not str_value or str_value[0] in ['+', '?']:
         return value
+    if with_shorten and len(str_value) > 7:
+        try:
+            new_str_value = f'{value:.2e}'.replace('+0', '+')
+            if len(new_str_value) < len(str_value):
+                ret = f'<span title="{value}" data-toggle="tooltip" data-placement="right">{new_str_value}</span>'
+                return mark_safe(ret)
+        except Exception:
+            pass
     format_value = floatformat(value, -2)
     return value if not format_value else format_value
 

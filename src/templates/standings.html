@@ -210,8 +210,12 @@
               <th class="handle-cell sticky-column" data-sticky-column="handle-cell"{% if merge_problems %} rowspan="2"{% endif %}>
                 {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
                 Handle
-                {% if standings_options.help_message %}
-                <span class="bg-success nobold help-message">{{ standings_options.help_message }}</span>
+                {% if standings_options.help_message %}<span class="bg-success nobold help-message">{{ standings_options.help_message }}</span>{% endif %}
+                {% if standings_options.members_message %}
+                <div>
+                  {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
+                  <span class="small nobold members-message">{{ standings_options.members_message }}</span>
+                </div>
                 {% endif %}
                 <a id="unstar" class="external-link invisible hidden">{% icon_to 'unpin' false %}</a>
               </th>

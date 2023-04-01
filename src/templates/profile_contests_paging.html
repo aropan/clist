@@ -35,13 +35,7 @@
     </td>
 
     <td>
-        {% with score=stat.solving|floatformat %}
-        {% if score|length > 10 %}
-            {{ stat.solving|stringformat:".2e" }}
-        {% else %}
-            {{ score }}
-        {% endif %}
-        {% endwith %}
+        {{ stat.solving|scoreformat }}
     </td>
 
     <td>

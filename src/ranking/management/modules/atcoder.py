@@ -514,7 +514,7 @@ class Statistic(BaseModule):
             if (
                 has_rated
                 and not has_new_rating
-                and self.end_time + timedelta(hours=3) > datetime.utcnow().replace(tzinfo=pytz.utc)
+                and self.end_time < datetime.utcnow().replace(tzinfo=pytz.utc) < self.end_time + timedelta(hours=3)
             ):
                 standings['timing_statistic_delta'] = timedelta(minutes=30)
 
@@ -538,7 +538,7 @@ class Statistic(BaseModule):
 
                 self._update_submissions(fusers, standings)
 
-            if page_submissions is None or 'last_page' in standings['_submissions_info']:
+            if page_submissions is not None and 'last_page' in standings['_submissions_info']:
                 delta = timedelta(minutes=15)
                 LOG.info(f'Repeat statistics update after {delta}')
                 standings['timing_statistic_delta'] = delta

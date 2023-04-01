@@ -3,21 +3,32 @@
 
     $schedule_page = curlexec($URL);
 
-    preg_match_all('#
-        <tr>\s*
-        <td[^>]*>\s*(?P<date>[0-9.]*)\s*</td>\s*
-        <td[^>]*>\s*(?P<title>[^<]*)\s*</td>\s*
-        .*?
-        </tr>
-        #xs',
-        $schedule_page,
-        $matches,
-        PREG_SET_ORDER,
-    );
+    preg_match_all('#<tr>.*?</tr>#s', $schedule_page, $rows, PREG_SET_ORDER);
+    $headers = false;
+    foreach ($rows as $row) {
+        preg_match_all('#<t[hd][^>]*>(.*?)</t[hd]>#s', $row[0], $cols);
+        if ($headers === false) {
+            $headers = array_map('strtolower', $cols[1]);
+            continue;
+        }
 
-    foreach ($matches as $c) {
-        $title = trim($c['title']);
+        $values = $cols[1];
+        foreach ($values as &$value) {
+            if (preg_match('#<a[^>]*href="(?P<href>[^"]*)"[^>]*>#', $value, $match)) {
+                $value = $match['href'];
+            }
+            $value = preg_replace('#<[^?]*>.*$#', '', $value);
+            $value = trim($value);
+        }
+        $c = array_combine($headers, $values);
+
+        $title = "Stage {$c['stage']}: " . trim($c['contest']);
         $date = $c['date'];
+
+        if (strpos($date, 'TBD') !== false) {
+            continue;
+        }
+
         $parts = explode('.', $date);
         if (strlen($parts[0]) == 4) {
             $parts = array_reverse($parts);
@@ -34,17 +45,13 @@
             'end_time' => $end_time,
             'duration' => $duration,
             'title' => trim($title),
-            'url' => $URL,
+            'url' => $c['announcement'] ?: $URL,
+            'standings_url' => $c['scoreboard'],
             'key' => $key,
             'host' => $HOST,
             'timezone' => $TIMEZONE,
             'rid' => $RID,
         );
-
-        if (preg_match('#<td[^>]*>\s*<a[^>]*href="(?P<href>[^"]*/scoreboard/[^"]*)"[^>]*>[^<]*</a>\s*</td>#', $c[0], $m)) {
-            $standings_url = url_merge($URL, $m['href']);
-            $contest['standings_url'] = $standings_url;
-        }
 
         $contests[] = $contest;
     }

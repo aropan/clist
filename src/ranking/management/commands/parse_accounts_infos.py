@@ -128,6 +128,8 @@ class Command(BaseCommand):
                     accounts = accounts.filter(**{f'info__{args.with_field}__isnull': False})
 
                 total = accounts.count()
+                if not total:
+                    continue
 
                 accounts = accounts.annotate(has_coders=Case(
                     When(coders__isnull=False, then=Value(1)),

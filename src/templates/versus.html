@@ -121,7 +121,7 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
           class="solving-place"
           title='
             <div>Rank: {{ stat.place }}</div>
-            <div>Score: {{ stat.solving|scoreformat }}</div>
+            <div>Score: {{ stat.solving|scoreformat:False }}</div>
             {% if stat.addition.penalty is not None %}
             <div>Penalty: {{ stat.addition.penalty }}</div>
             {% endif %}
