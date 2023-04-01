@@ -9,7 +9,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
-import tempfile
 import warnings
 from os import path
 
@@ -93,7 +92,6 @@ INSTALLED_APPS = (
     'django_user_agents',
     'django_json_widget',
     'django_ltree',
-    'imagefit',
     'webpush',
     'django_postgres_reindex_command',
     'oauth2_provider',
@@ -123,7 +121,7 @@ MIDDLEWARE = (
 )
 
 if DEBUG:
-    DEBUG_PERMISSION_EXCLUDE_PATHS = {'static', 'imagefit'}
+    DEBUG_PERMISSION_EXCLUDE_PATHS = {'static'}
     MIDDLEWARE += (
         'pyclist.middleware.DebugPermissionOnlyMiddleware',
         'django_cprofile_middleware.middleware.ProfilerMiddleware',
@@ -152,7 +150,6 @@ TEMPLATES = [
             'builtins': [
                 'pyclist.templatetags.staticfiles',
                 'clist.templatetags.extras',
-                'imagefit.templatetags.imagefit',
                 'django.contrib.humanize.templatetags.humanize',
                 'favorites.templatetags.extras',
             ],
@@ -233,6 +230,8 @@ STATIC_ROOT = path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [path.join(BASE_DIR, 'static')]
 REPO_STATIC_ROOT = path.join(BASE_DIR, 'static/')
 STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
+RESOURCES_ICONS_PATHDIR = 'img/resources/'
+RESOURCES_ICONS_SIZES = [32, 64]
 
 STATICFILES_STORAGE = 'static_compress.CompressedStaticFilesStorage'
 STATIC_COMPRESS_METHODS = ['gz']
@@ -240,6 +239,7 @@ STATIC_COMPRESS_METHODS = ['gz']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = path.join(BASE_DIR, 'mediafiles')
+MEDIA_SIZES_PATHDIR = 'sizes/'
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
 
@@ -459,14 +459,6 @@ if DEBUG:
             'debug_toolbar.panels.request.RequestPanel',
         },
     }
-
-# DGANGO IMAGEFIT
-IMAGEFIT_CACHE_ENABLED = True
-IMAGEFIT_CACHE_BACKEND_NAME = 'django_imagefit'
-CACHES[IMAGEFIT_CACHE_BACKEND_NAME] = {
-    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-    'LOCATION': path.join(tempfile.gettempdir(), 'django_imagefit' + ('_debug' if DEBUG else ''))
-}
 
 # BOOSTRAP ADMIN
 BOOTSTRAP_ADMIN_SIDEBAR_MENU = True

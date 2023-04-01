@@ -149,7 +149,7 @@ class Command(BaseCommand):
             if len(contests) == 1:
                 contest = contests[0]
                 payload['url'] = contest.url
-                payload['icon'] = f'{settings.HTTPS_HOST_}/imagefit/static_resize/64x64/{contest.resource.icon}'
+                payload['icon'] = f'{settings.HTTPS_HOST_}/media/sizes/64x64/{contest.resource.icon}'
 
             try:
                 send_user_notification(

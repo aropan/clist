@@ -1248,7 +1248,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     has_versus = contest.info.get('_has_versus', {}).get('enable')
     versus = request.GET.get('versus')
     versus_data = None
-    versus_statistic_id = toint(request.GET.get('id'))
+    versus_statistic_id = toint(request.GET.get('versus_id'))
     if has_versus and versus == 'statistics' and versus_statistic_id is not None:
         plugin = contest.resource.plugin.Statistic(contest=contest)
         statistic = get_object_or_404(Statistics.objects.prefetch_related('account'),

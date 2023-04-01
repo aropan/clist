@@ -62,7 +62,7 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
 {% for resource, resource_info in ratings.resources.items %}
 <div>
   <div class="resource_fields">
-    <a href="{% url 'clist:resource' resource_info.host %}" title="{{ resource_info.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ resource_info.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+    <a href="{% url 'clist:resource' resource_info.host %}" title="{{ resource_info.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ resource_info.icon|media_size:'32x32' }}" width="16" height="16"/></a>
     <div class="input-group input-group-sm invisible">
       <select id="resource_{{ resource_info.pk }}_fields">
         <option></option>
@@ -186,7 +186,7 @@ Final results {% for info in versus_data.infos %}{% if forloop.counter0 %} : {% 
       </td>
       <td class="title-column">
         <span>
-          <a href="{{ contest.resource.href }}"><img class="resource-icon" src="{{ contest.resource.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+          <a href="{{ contest.resource.href }}"><img class="resource-icon" src="{{ contest.resource.icon|media_size:'32x32' }}" width="16" height="16"/></a>
           <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}">{{ contest.title }}</a>
         </span>
       </td>

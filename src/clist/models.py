@@ -140,6 +140,15 @@ class Resource(BaseModel):
         }
         self.info.setdefault('get_events', {})['colors'] = colors
 
+    def update_icon_sizes(self):
+        filepath = os.path.join(settings.STATIC_ROOT, self.icon)
+        for size in settings.RESOURCES_ICONS_SIZES:
+            out_filepath = os.path.join(settings.MEDIA_ROOT, settings.MEDIA_SIZES_PATHDIR, f'{size}x{size}', self.icon)
+            os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
+            image = Image.open(filepath)
+            resized = image.resize((size, size))
+            resized.save(out_filepath)
+
     def update_icon(self):
 
         urls = []
@@ -175,7 +184,7 @@ class Resource(BaseModel):
             response = requests.get(url)
             if response.status_code == 200:
                 filename = re.sub('[./]', '_', self.host) + ext
-                relpath = os.path.join('img', 'resources', filename)
+                relpath = os.path.join(settings.RESOURCES_ICONS_PATHDIR, filename)
                 filepath = os.path.join(settings.STATIC_ROOT, relpath)
                 os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -194,6 +203,7 @@ class Resource(BaseModel):
 
                 self.icon = relpath
                 self.save()
+                self.update_icon_sizes()
                 break
 
     @property

@@ -1,12 +1,12 @@
 import itertools
 import json
 import math
+import os
 import re
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from functools import reduce
-from os import path
 from sys import float_info
 from urllib.parse import quote_plus, urlparse
 
@@ -213,7 +213,7 @@ def get_timezone_offset_hm(value):
 
 
 def get_timezones():
-    with open(path.join(settings.STATIC_JSON_TIMEZONES), "r") as fo:
+    with open(os.path.join(settings.STATIC_JSON_TIMEZONES), "r") as fo:
         timezones = json.load(fo)
         for tz in timezones:
             offset = get_timezone_offset(tz['name'])
@@ -853,6 +853,8 @@ def scoreformat(value, with_shorten=True):
     str_value = str(value)
     if not str_value or str_value[0] in ['+', '?']:
         return value
+    format_value = floatformat(value, -2)
+    str_value = format_value or str_value
     if with_shorten and len(str_value) > 7:
         try:
             new_str_value = f'{value:.2e}'.replace('+0', '+')
@@ -861,8 +863,7 @@ def scoreformat(value, with_shorten=True):
                 return mark_safe(ret)
         except Exception:
             pass
-    format_value = floatformat(value, -2)
-    return value if not format_value else format_value
+    return format_value or value
 
 
 @register.filter
@@ -1058,3 +1059,11 @@ def negative(value):
 @register.filter
 def to_list(value):
     return list(value)
+
+
+@register.filter
+def media_size(path, size):
+    ret = os.path.join(settings.MEDIA_URL, 'sizes', size, path)
+    if settings.DEBUG:
+        ret = settings.MAIN_HOST_ + ret
+    return ret

@@ -23,7 +23,7 @@ class ResourceResource(BaseModelResource):
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
-        bundle.data['icon'] = '/imagefit/static_resize/64x64/' + bundle.data['icon']
+        bundle.data['icon'] = '/media/sizes/64x64/' + bundle.data['icon']
         return bundle
 
 

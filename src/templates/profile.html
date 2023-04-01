@@ -49,7 +49,7 @@ Number of competitions: {{ account.n_contests }}
     {% if search_resource %}
       {% with resource=resources.0 %}
         {% if resource %}
-          <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|static_resize:'64x64' }}" width="30" height="30"/></a>
+          <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
 
           {% for account in resource.coder_accounts %}
             {% if resource.avatar_url %}
@@ -90,7 +90,7 @@ Number of competitions: {{ account.n_contests }}
   {% endif %}
 {% elif account %}
   <h2>
-    <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|static_resize:'64x64' }}" width="30" height="30"/></a>
+    <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
 
     {% if account.resource.avatar_url %}
       {% call_method account 'avatar_url' account.resource as avatar_url %}
@@ -173,7 +173,7 @@ Number of competitions: {{ account.n_contests }}
       <tr>
         <td>
           <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
-            <img src="{{ resource.icon|static_resize:'32x32' }}" width="15" height="15"/>
+            <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
           </a>
         </td>
         <td>
@@ -214,7 +214,7 @@ Number of competitions: {{ account.n_contests }}
       {% if account and account.rating is None or account and not resource.has_rating_history %}
         <span class="account btn-group btn-group-sm">
           <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
-            <img src="{{ resource.icon|static_resize:'32x32' }}" width="15" height="15"/>
+            <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
           </a>
           <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
             {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True trim_length=20 %}
@@ -288,7 +288,7 @@ Number of competitions: {{ account.n_contests }}
 <div>
   {% if not hr.kind %}
   <div class="resource_fields">
-    <a href="{% url 'clist:resource' hr.host %}" title="{{ hr.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ hr.icon|static_resize:'32x32' }}" width="16" height="16"/></a>
+    <a href="{% url 'clist:resource' hr.host %}" title="{{ hr.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ hr.icon|media_size:'32x32' }}" width="16" height="16"/></a>
     <div class="input-group input-group-sm invisible">
       <select id="resource_{{ hr.pk }}_fields">
         <option></option>
