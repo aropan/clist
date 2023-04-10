@@ -20,7 +20,11 @@
             $value = preg_replace('#<[^?]*>.*$#', '', $value);
             $value = trim($value);
         }
-        $c = array_combine($headers, $values);
+        $min_count = min(count($headers), count($values));
+        $c = array_combine(
+            array_slice($headers, 0, $min_count),
+            array_slice($values, 0, $min_count),
+        );
 
         $title = "Stage {$c['stage']}: " . trim($c['contest']);
         $date = $c['date'];

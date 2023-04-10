@@ -82,6 +82,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d/
       - certbot_www:/var/www/certbot/
       - certbot_conf:/etc/letsencrypt/
+      - ./logs/nginx:/var/log/nginx/
     ports:
       - 80:80
       - 443:443
@@ -95,12 +96,22 @@ services:
     depends_on:
       - nginx
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 1d & wait $${!}; done;'"
+  loggly:
+    build:
+      context: .
+      target: loggly
+    volumes:
+      - ./logs/:/logs/
+    secrets:
+      - loggly_token
 
 secrets:
   db_conf:
     file: ./.env.db
   sentry_conf:
     file: ./.env.sentry
+  loggly_token:
+    file: ./loggly/.env.token
 
 volumes:
   postgres_data:

@@ -42,10 +42,11 @@ class Statistic(BaseModule):
                     if attempt == 1:
                         problem['result'] = '+'
                     else:
-                        problem['result'] = f'+{attempt}'
+                        problem['result'] = f'+{attempt - 1}'
                 else:
                     problem['result'] = f'-{attempt}'
                 if 'time' in cell:
+                    problem['time_in_seconds'] = cell['time']
                     problem['time'] = self.to_time(cell['time'] // 60, 2)
 
         standings = {

@@ -224,7 +224,7 @@ class Command(BaseCommand):
                             statistics = Statistics.objects.filter(contest=contest).select_related('account')
                             if users:
                                 statistics = statistics.filter(account__key__in=users)
-                            for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
+                            for s in statistics:
                                 if with_stats:
                                     statistics_by_key[s.account.key] = s.addition
                                     places_by_key[s.account.key] = s.place

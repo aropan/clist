@@ -177,10 +177,6 @@ class Command(BaseCommand):
                             account, created = Account.objects.get_or_create(key=member, resource=resource)
                         is_team = account.info.get('is_team', False)
                         do_upsolve = resource.has_upsolving and account.has_coders and not is_team
-                        if do_upsolve:
-                            updated_info = resource.plugin.Statistic.update_submissions(account=account,
-                                                                                        resource=resource)
-                            add_dict_to_dict(updated_info, total_update_submissions_info)
                         with transaction.atomic():
                             if 'delta' in data or 'delta' in (data.get('info') or {}):
                                 n_deferred += 1
@@ -220,6 +216,11 @@ class Command(BaseCommand):
                                 n_rename += 1
                                 pbar.set_postfix(rename=f'{n_rename}: Rename {account} to {other}')
                                 account = rename_account(account, other)
+
+                            if do_upsolve:
+                                updated_info = resource.plugin.Statistic.update_submissions(account=account,
+                                                                                            resource=resource)
+                                add_dict_to_dict(updated_info, total_update_submissions_info)
 
                             coders = data.pop('coders', [])
                             if coders:

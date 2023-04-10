@@ -375,7 +375,8 @@ def profile(request, username, template='profile.html', extra_context=None):
 ))
 def account(request, key, host, template='profile.html', extra_context=None):
     accounts = Account.objects.select_related('resource').prefetch_related('coders')
-    account = get_object_or_404(accounts, key=key, resource__host=host)
+    resource = get_object_or_404(Resource, host=host)
+    account = get_object_or_404(accounts, key=key, resource=resource)
 
     data = _get_data_mixed_profile(request, [account.resource.host + ':' + account.key])
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
@@ -450,7 +451,10 @@ def _get_data_mixed_profile(request, query):
     for v in query:
         if ':' in v:
             host, key = v.split(':', 1)
-            account_prefilter |= (Q(resource__host=host) | Q(resource__short_host=host)) & Q(key=key)
+            resource = Resource.objects.filter(Q(host=host) | Q(short_host=host)).first()
+            if not resource:
+                continue
+            account_prefilter |= Q(key=key, resource=resource)
         elif n_coder:
             request.logger.warning(f'Coder {v} was skipped: only the first one is used')
         else:
@@ -523,7 +527,8 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             statistics = Statistics.objects.filter(account__coders=coder)
             with_global = True
         else:
-            account = get_object_or_404(Account, key=key, resource__host=host)
+            resource = get_object_or_404(Resource, host=host)
+            account = get_object_or_404(Account, key=key, resource=resource)
             statistics = Statistics.objects.filter(account=account)
         resource = request.GET.get('resource')
         if resource:
@@ -1154,7 +1159,8 @@ def change(request):
                 if not value:
                     return HttpResponseBadRequest("empty account value")
                 host = request.POST.get("resource")
-                account = Account.objects.get(resource__host=host, key=value)
+                resource = Resource.objects.get(host=host)
+                account = Account.objects.get(resource=resource, key=value)
             account.coders.remove(coder)
             account.updated = timezone.now()
             account.save()
