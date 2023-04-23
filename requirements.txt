@@ -61,7 +61,6 @@ docutils==0.16
 image==1.5.32
 pillow==9.3.0
 olefile==0.46
-sqlparse==0.3.0
 pytesseract==0.3.7
 python-dateutil==2.8.2
 scikit-image==0.19.2
