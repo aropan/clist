@@ -9,7 +9,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
-import tempfile
 import warnings
 from os import path
 
@@ -93,7 +92,6 @@ INSTALLED_APPS = (
     'django_user_agents',
     'django_json_widget',
     'django_ltree',
-    'imagefit',
     'webpush',
     'django_postgres_reindex_command',
     'oauth2_provider',
@@ -123,7 +121,7 @@ MIDDLEWARE = (
 )
 
 if DEBUG:
-    DEBUG_PERMISSION_EXCLUDE_PATHS = {'static', 'imagefit'}
+    DEBUG_PERMISSION_EXCLUDE_PATHS = {'static'}
     MIDDLEWARE += (
         'pyclist.middleware.DebugPermissionOnlyMiddleware',
         'django_cprofile_middleware.middleware.ProfilerMiddleware',
@@ -152,7 +150,6 @@ TEMPLATES = [
             'builtins': [
                 'pyclist.templatetags.staticfiles',
                 'clist.templatetags.extras',
-                'imagefit.templatetags.imagefit',
                 'django.contrib.humanize.templatetags.humanize',
                 'favorites.templatetags.extras',
             ],
@@ -233,6 +230,8 @@ STATIC_ROOT = path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [path.join(BASE_DIR, 'static')]
 REPO_STATIC_ROOT = path.join(BASE_DIR, 'static/')
 STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
+RESOURCES_ICONS_PATHDIR = 'img/resources/'
+RESOURCES_ICONS_SIZES = [32, 64]
 
 STATICFILES_STORAGE = 'static_compress.CompressedStaticFilesStorage'
 STATIC_COMPRESS_METHODS = ['gz']
@@ -240,6 +239,7 @@ STATIC_COMPRESS_METHODS = ['gz']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = path.join(BASE_DIR, 'mediafiles')
+MEDIA_SIZES_PATHDIR = 'sizes/'
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
 
@@ -431,15 +431,15 @@ if DEBUG:
       'debug_toolbar.panels.timer.TimerPanel',
       'debug_toolbar.panels.settings.SettingsPanel',
       'debug_toolbar.panels.headers.HeadersPanel',
-      'debug_toolbar.panels.request.RequestPanel',
       'debug_toolbar.panels.sql.SQLPanel',
       'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-      'debug_toolbar.panels.templates.TemplatesPanel',
       'debug_toolbar.panels.cache.CachePanel',
       'debug_toolbar.panels.signals.SignalsPanel',
       'debug_toolbar.panels.logging.LoggingPanel',
-      'debug_toolbar.panels.redirects.RedirectsPanel',
       'debug_toolbar.panels.profiling.ProfilingPanel',
+      # 'debug_toolbar.panels.templates.TemplatesPanel',
+      # 'debug_toolbar.panels.redirects.RedirectsPanel',
+      # 'debug_toolbar.panels.request.RequestPanel',
     ]
 
     def show_toolbar_callback(request):
@@ -459,17 +459,6 @@ if DEBUG:
             'debug_toolbar.panels.request.RequestPanel',
         },
     }
-
-# DJANGO CPROFILE
-DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
-
-# DGANGO IMAGEFIT
-IMAGEFIT_CACHE_ENABLED = True
-IMAGEFIT_CACHE_BACKEND_NAME = 'django_imagefit'
-CACHES[IMAGEFIT_CACHE_BACKEND_NAME] = {
-    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-    'LOCATION': path.join(tempfile.gettempdir(), 'django_imagefit' + ('_debug' if DEBUG else ''))
-}
 
 # BOOSTRAP ADMIN
 BOOTSTRAP_ADMIN_SIDEBAR_MENU = True
@@ -627,6 +616,9 @@ FONTAWESOME_ICONS_ = {
     'tdo': {'icon': '<i class="fas fa-calendar-day activity tdo"></i>', 'name': 'fa-calendar-day',
             'check_field': 'is_todo'},
     'status': '<i class="far fa-lightbulb"></i>',
+    'n_participants': {'icon': '<i class="fas fa-users"></i>', 'title': 'Number of participants', 'position': 'bottom'},
+    'n_problems': {'icon': '<i class="far fa-file-code"></i>', 'title': 'Number of problems', 'position': 'bottom'},
+    'series': '<i class="fas fa-trophy text-muted"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

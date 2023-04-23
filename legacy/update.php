@@ -241,10 +241,11 @@
     $by_key = [];
     foreach ($contests as $i => $contest)
     {
-        switch ($contest['host'])
-        {
-            case 'dl.gsu.by': $contest['key'] = $contest['title'] . '. ' . date("d.m.Y", $contest['start_time']); break;
-            case 'neerc.ifmo.ru/trains': $contest['key'] = $contest['title'] . date(" d.m.Y", $contest['start_time']); break;
+        if (!isset($contest['skip_update_key']) || !$contest['skip_update_key']) {
+            switch ($contest['host']) {
+                case 'dl.gsu.by': $contest['key'] = $contest['title'] . '. ' . date("d.m.Y", $contest['start_time']); break;
+                case 'neerc.ifmo.ru/trains': $contest['key'] = $contest['title'] . date(" d.m.Y", $contest['start_time']); break;
+            }
         }
 
         foreach(
@@ -292,7 +293,9 @@
         if (time() + 365 * 24 * 60 * 60 < $contest['end_time']) {
             continue;
         }
-        if (!DEBUG && !isset($_GET['skip_check_time']) && !isset($contest['skip_check_time'])) {
+        $get_skip_check_time = isset($_GET['skip_check_time']);
+        $contest_skip_check_time = !empty($contest['skip_check_time']);
+        if (!DEBUG && !$get_skip_check_time && !$contest_skip_check_time) {
             if ($contest['end_time'] < $contest['start_time']) continue;
             if ($contest['end_time'] + 31 * 24 * 60 * 60 < time()) continue;
         }
@@ -324,6 +327,7 @@
         unset($contest['rid']);
         unset($contest['duplicate']);
         unset($contest['skip_check_time']);
+        unset($contest['skip_update_key']);
         unset($contest['delete_after_end']);
 
         $info = false;

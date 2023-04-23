@@ -284,7 +284,7 @@ class Statistic(BaseModule):
         seen = set()
         while not stop and (total is None or page * page_size < total):
             page += 1
-            url = f'/api_v2/battles/task/{task_id}?page={page}&page_size={page_size}&search={member}'
+            url = f'/api_v2/battles/task/{task_id}?page={page}&page_size={page_size}&search={member.encode("utf-8")}'
             data = REQ.get(url, return_json=True)
             total = data['totals']
             stop = True

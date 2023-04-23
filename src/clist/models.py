@@ -19,7 +19,7 @@ from django.utils import timezone
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
 
-from clist.templatetags.extras import get_item, slug
+from clist.templatetags.extras import get_item, get_problem_key, slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
@@ -74,7 +74,7 @@ class Resource(BaseModel):
         ]
 
     def __str__(self):
-        return "%s" % (self.host)
+        return f'{self.host} Resource#{self.id}'
 
     def href(self, host=None):
         return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=host or self.host)
@@ -140,6 +140,15 @@ class Resource(BaseModel):
         }
         self.info.setdefault('get_events', {})['colors'] = colors
 
+    def update_icon_sizes(self):
+        filepath = os.path.join(settings.STATIC_ROOT, self.icon)
+        for size in settings.RESOURCES_ICONS_SIZES:
+            out_filepath = os.path.join(settings.MEDIA_ROOT, settings.MEDIA_SIZES_PATHDIR, f'{size}x{size}', self.icon)
+            os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
+            image = Image.open(filepath)
+            resized = image.resize((size, size))
+            resized.save(out_filepath)
+
     def update_icon(self):
 
         urls = []
@@ -175,7 +184,7 @@ class Resource(BaseModel):
             response = requests.get(url)
             if response.status_code == 200:
                 filename = re.sub('[./]', '_', self.host) + ext
-                relpath = os.path.join('img', 'resources', filename)
+                relpath = os.path.join(settings.RESOURCES_ICONS_PATHDIR, filename)
                 filepath = os.path.join(settings.STATIC_ROOT, relpath)
                 os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -194,6 +203,7 @@ class Resource(BaseModel):
 
                 self.icon = relpath
                 self.save()
+                self.update_icon_sizes()
                 break
 
     @property
@@ -264,6 +274,7 @@ class Contest(BaseModel):
     is_rated = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     with_medals = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     with_advance = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+    series = models.ForeignKey('ContestSeries', null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     notification_timing = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
@@ -323,7 +334,7 @@ class Contest(BaseModel):
         self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
         self.with_advance = 'advanced' in fields or '_advance' in fields
 
-        return super(Contest, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def is_over(self):
         return self.end_time <= timezone.now()
@@ -352,7 +363,7 @@ class Contest(BaseModel):
         ))
 
     def __str__(self):
-        return "%s [%d]" % (self.title, self.id)
+        return f'{self.title} Contest#{self.id}'
 
     @property
     def duration(self):
@@ -500,14 +511,68 @@ class Contest(BaseModel):
         if not problems:
             return
         if isinstance(problems, dict):
-            for division_problems in problems.get('divisions', {}).values():
-                for problem in division_problems:
-                    yield problem
-        elif isinstance(problems, list):
+            division_problems = list(problems.get('division', {}).values())
+            problems = []
+            for a in division_problems:
+                problems.extend(a)
+        if isinstance(problems, list):
+            seen = set()
+            name_grouping = False
             for problem in problems:
-                yield problem
+                name_grouping = name_grouping or 'subname' in problem or 'full_score' in problem
+                ok = True
+                for field, value in (
+                    ('key', get_problem_key(problem)),
+                    ('group', problem.get('group')),
+                    ('name', problem.get('name') if name_grouping else None),
+                ):
+                    if not value:
+                        continue
+                    if (field, value) in seen:
+                        ok = False
+                    else:
+                        seen.add((field, value))
+                if ok:
+                    yield problem
         else:
             raise ValueError(f'Unknown problems types = {type(problems)}')
+
+    def set_series(self, series_name):
+        if series_name is None:
+            series = None
+        else:
+            series_slug = slug(series_name)
+            series = ContestSeries.objects.filter(Q(name=series_name) | Q(slug=series_slug)).first()
+            if series is None:
+                series_alias_filter = Q(aliases__contains=series_name) | Q(aliases__contains=series_slug)
+                series = ContestSeries.objects.filter(series_alias_filter).first()
+            if series is None:
+                series = ContestSeries.objects.create(name=series_name, short=series_name)
+        self.series = series
+        self.save(update_fields=['series'])
+
+
+class ContestSeries(BaseModel):
+    name = models.TextField(unique=True, db_index=True, null=False)
+    short = models.TextField(unique=True, db_index=True, null=False)
+    slug = models.TextField(unique=True, db_index=True, null=False, blank=True)
+    aliases = models.JSONField(default=list, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.slug = slug(self.short)
+        if self.slug not in self.aliases:
+            self.aliases.append(self.slug)
+        return super().save(*args, **kwargs)
+
+    @property
+    def text(self):
+        return self.name if self.name.startswith(self.short) else f'{self.short} ({self.name})'
+
+    def __str__(self):
+        return f'{self.name} Series#{self.id}'
+
+    class Meta:
+        verbose_name_plural = 'Contest series'
 
 
 class Problem(BaseModel):
@@ -529,12 +594,12 @@ class Problem(BaseModel):
     visible = models.BooleanField(default=True, null=False)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
 
-    activities = GenericRelation('favorites.Activity')
+    activities = GenericRelation('favorites.Activity', related_query_name='problem')
 
     objects = BaseManager()
 
     def __str__(self):
-        return "%s [%d]" % (self.name, self.id)
+        return f'{self.name} Problem#{self.id}'
 
     class Meta:
         unique_together = ('contest', 'key')
@@ -570,7 +635,7 @@ class Banner(BaseModel):
     enable = models.BooleanField(default=True)
 
     def __str__(self):
-        return 'Banner %s' % self.name
+        return f'{self.name} Banner#{self.id}'
 
     @property
     def next_time(self):

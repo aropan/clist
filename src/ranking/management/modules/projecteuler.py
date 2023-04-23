@@ -14,7 +14,7 @@ from first import first
 from PIL import Image
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -25,10 +25,16 @@ class Statistic(BaseModule):
             self.standings_url = f'https://projecteuler.net/fastest={self.key}'
 
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'  # noqa
-        page = REQ.get(self.standings_url, headers={'User-Agent': user_agent})
+        try:
+            page = REQ.get(self.standings_url, headers={'User-Agent': user_agent})
+            unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
+        except FailOnGetResponse as e:
+            if e.code == 401:
+                unauthorized = True
+            else:
+                raise e
 
-        sign_out = re.search('<form[^>]*action="sign_out"[^>]*>', page)
-        if not sign_out:
+        if unauthorized:
             for attempt in range(20):
                 while True:
                     value = f'{random.random():.16f}'
@@ -63,7 +69,13 @@ class Statistic(BaseModule):
         result = {}
 
         problem_name = self.name.split('.', 1)[1].strip()
-        problems_info = [{'name': problem_name, 'url': self.url}]
+        problem_key = self.key
+        problems_info = [{
+            'name': problem_name,
+            'code': problem_key,
+            'url': self.url,
+            'n_total': 100,
+        }]
 
         regex = '<table[^>]*>.*?</table>'
         html_table = re.search(regex, page, re.DOTALL)
@@ -73,13 +85,19 @@ class Statistic(BaseModule):
             for r in table:
                 row = OrderedDict()
                 row['solving'] = 1
+
+                problems = row.setdefault('problems', {})
+                problem = problems.setdefault(problem_key, {})
+                problem['result'] = '+'
+                problem['binary'] = True
+
                 for k, v in r.items():
                     if isinstance(v, list):
                         place, country = v
                         row['place'] = re.match('[0-9]+', place.value).group(0)
                         country = first(country.column.node.xpath('.//@title'))
                         if country:
-                            row['country'] = country
+                            row['country'] = str(country)
                     elif k == 'Time To Solve':
                         params = {}
                         for x in v.value.split(', '):
@@ -90,17 +108,12 @@ class Statistic(BaseModule):
                         rel_delta = relativedelta(**params)
                         now = timezone.now()
                         delta = now - (now - rel_delta)
-                        row['penalty'] = f'{delta.total_seconds() / 60:.2f}'
+                        row['penalty'] = problem['time_in_seconds'] = int(delta.total_seconds())
                     elif k == 'User':
                         member = first(v.column.node.xpath('.//@title')) or v.value
                         row['member'] = member
                     else:
                         row[k.lower()] = v.value
-                problems = row.setdefault('problems', {})
-                problem = problems.setdefault(problem_name, {})
-                problem['result'] = '+'
-                problem['binary'] = True
-                row['_skip_for_problem_stat'] = True
                 if 'member' not in row:
                     continue
                 result[row['member']] = row
@@ -109,6 +122,7 @@ class Statistic(BaseModule):
             'result': result,
             'url': self.standings_url,
             'problems': problems_info,
+            'fields_types': {'penalty': ['timedelta']},
         }
 
         if len(result) < 100 and 'No data available' not in page:

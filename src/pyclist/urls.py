@@ -31,7 +31,6 @@ urlpatterns = [
 
     re_path(r'^googleee727737cf7b6a5a.html$', TemplateView.as_view(template_name='googleee727737cf7b6a5a.html')),
 
-    re_path(r'^imagefit/', include('imagefit.urls')),
     re_path(r'^webpush/', include('webpush.urls')),
 
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),

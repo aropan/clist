@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.utils import timezone
+from sql_util.utils import SubqueryCount
 
-from clist.models import Banner, Contest, Problem, ProblemTag, Resource
+from clist.models import Banner, Contest, ContestSeries, Problem, ProblemTag, Resource
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import Rating
@@ -58,7 +59,7 @@ class ContestAdmin(BaseModelAdmin):
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['n_statistics', 'parsed_time', 'has_hidden_results', 'calculate_time',
-                                             'info', 'invisible', 'is_rated', 'with_medals', 'related']}],
+                                             'info', 'invisible', 'is_rated', 'with_medals', 'related', 'series']}],
         ['Timing', {'fields': ['notification_timing', 'statistic_timing', 'created', 'modified', 'updated']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
@@ -72,6 +73,30 @@ class ContestAdmin(BaseModelAdmin):
         return ['updated', 'notification_timing', 'statistic_timing'] + list(super().get_readonly_fields(request, obj))
 
     inlines = [RatingSet]
+
+
+@admin_register(ContestSeries)
+class ContestSeriesAdmin(BaseModelAdmin):
+    list_display = ['name', 'n_contests', 'short', 'slug', 'aliases']
+    search_fields = ['name', 'short', 'slug', 'aliases']
+
+    def n_contests(self, obj):
+        return obj.n_contests
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(n_contests=SubqueryCount('contest'))
+        return queryset
+
+    class ContestInline(admin.TabularInline):
+        model = Contest
+        fields = ['standings_url', 'end_time']
+        readonly_fields = ['standings_url', 'end_time']
+        ordering = ['-end_time']
+        can_delete = False
+        extra = 0
+
+    inlines = [ContestInline]
 
 
 @admin_register(Resource)

@@ -64,6 +64,14 @@
                     break;
                 }
             }
+            preg_match_all("#data-tt-widget-config='(?P<json>[^']*)'#", $page, $matches);
+            foreach ($matches['json'] as $json) {
+                $data = json_decode($json, true);
+                if (isset($data["categoryId"]) && isset($data["id"])) {
+                    $cid = $data["id"];
+                    break;
+                }
+            }
         }
         if (empty($cid)) {
             continue;

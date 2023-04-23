@@ -181,6 +181,7 @@ class Command(BaseCommand):
         n_upd_account_time = 0
         n_statistics_total = 0
         n_statistics_created = 0
+        n_calculated_problem_rating = 0
         progress_bar = tqdm(contests)
         stages_ids = []
         for contest in progress_bar:
@@ -197,6 +198,7 @@ class Command(BaseCommand):
             user_info_has_rating = {}
             is_major_kind = resource.is_major_kind(contest.kind)
             to_update_socket = contest.is_running() or contest.has_hidden_results or force_socket
+            to_calculate_problem_rating = False
 
             try:
                 r = {}
@@ -222,7 +224,7 @@ class Command(BaseCommand):
                             statistics = Statistics.objects.filter(contest=contest).select_related('account')
                             if users:
                                 statistics = statistics.filter(account__key__in=users)
-                            for s in tqdm(statistics.iterator(), 'getting parsed statistics'):
+                            for s in statistics:
                                 if with_stats:
                                     statistics_by_key[s.account.key] = s.addition
                                     places_by_key[s.account.key] = s.place
@@ -240,6 +242,9 @@ class Command(BaseCommand):
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
                             contest.save()
+
+                    if 'series' in standings:
+                        contest.set_series(standings.pop('series'))
 
                     if 'options' in standings:
                         contest_options = contest.info.get('standings', {})
@@ -951,7 +956,7 @@ class Command(BaseCommand):
                                             if not short:
                                                 continue
                                             p.update(d_problems.get(d, {}).get(short, {}))
-                                            p['n_total'] = n_statistics[d]
+                                            p.setdefault('n_total', n_statistics[d])
                                             if key in problems_ratings:
                                                 p['rating'] = problems_ratings[key]
                                     if isinstance(standings_problems['division'], OrderedDict):
@@ -965,7 +970,7 @@ class Command(BaseCommand):
                                         if not short:
                                             continue
                                         p.update(d_problems.get(short, {}))
-                                        p['n_total'] = contest.n_statistics
+                                        p.setdefault('n_total', contest.n_statistics)
                                         if key in problems_ratings:
                                             p['rating'] = problems_ratings[key]
 
@@ -975,14 +980,12 @@ class Command(BaseCommand):
                             if to_update_socket:
                                 update_standings_socket(contest, updated_statistics_ids)
 
-                            if (
+                            to_calculate_problem_rating = (
                                 resource.has_problem_rating and
                                 contest.end_time < now and
                                 not contest.has_hidden_results and
                                 not standings.get('timing_statistic_delta')
-                            ):
-                                call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
-                                contest.refresh_from_db()
+                            )
 
                             progress_bar.set_postfix(n_fields=len(fields), n_updated=len(updated_statistics_ids))
                     else:
@@ -1026,6 +1029,11 @@ class Command(BaseCommand):
                         elif action == 'url':
                             contest.url = args[0]
                             contest.save()
+                if to_calculate_problem_rating:
+                    call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
+                    contest.refresh_from_db()
+                    n_calculated_problem_rating += 1
+
                 if 'result' in standings:
                     count += 1
                 parsed = True
@@ -1083,6 +1091,8 @@ class Command(BaseCommand):
 
         progress_bar.close()
         self.logger.info(f'Parsed statistic: {count} of {total}')
+        if n_calculated_problem_rating:
+            self.logger.info(f'Number of calculate rating problem: {n_calculated_problem_rating} of {total}')
         self.logger.info(f'Number of updated account time: {n_upd_account_time}')
         self.logger.info(f'Number of created statistics: {n_statistics_created} of {n_statistics_total}')
         return count, total

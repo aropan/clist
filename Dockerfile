@@ -65,3 +65,10 @@ COPY ./redis.conf /etc/redis/redis.conf
 
 COPY supervisord.conf /etc/supervisord.conf
 CMD supervisord -c /etc/supervisord.conf
+
+
+FROM ubuntu:latest as loggly
+RUN apt-get update && apt-get install -y rsyslog
+COPY ./loggly/replace_loggly_token.sh /replace_loggly_token.sh
+COPY ./loggly/60-loggly.conf /etc/rsyslog.d/60-loggly.conf
+CMD ["/bin/bash", "-c", "/replace_loggly_token.sh && /usr/sbin/rsyslogd -n"]

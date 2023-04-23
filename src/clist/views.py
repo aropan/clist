@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django_super_deduper.merge import MergedModelInstance
 from el_pagination.decorators import QS_KEY, page_template, page_templates
 from sql_util.utils import Exists, SubqueryMin
 
@@ -708,6 +709,7 @@ def update_problems(contest, problems=None, force=False):
     contests_queue = SimpleQueue()
     contests_queue.put(contest)
 
+    new_problem_ids = set()
     old_problem_ids = set(contest.problem_set.values_list('id', flat=True))
     added_problems = dict()
 
@@ -721,16 +723,22 @@ def update_problems(contest, problems=None, force=False):
             problem_sets = [(None, problems)]
 
         for division, problem_set in problem_sets:
-            last_group = None
+            prev = None
             for index, problem_info in enumerate(problem_set, start=1):
                 key = get_problem_key(problem_info)
                 short = get_problem_short(problem_info)
                 name = get_problem_name(problem_info)
+
                 if problem_info.get('ignore'):
                     continue
-                if last_group is not None and last_group == problem_info.get('group'):
-                    continue
-                last_group = problem_info.get('group')
+                if prev:
+                    if prev.get('group') and prev.get('group') == problem_info.get('group'):
+                        continue
+                    if prev.get('subname') and prev.get('name') == name:
+                        continue
+                prev = dict(problem_info)
+                print(index)
+
                 problem_contest = contest if 'code' not in problem_info else None
 
                 added_problem = added_problems.get(key)
@@ -790,6 +798,7 @@ def update_problems(contest, problems=None, force=False):
 
                 if problem.id in old_problem_ids:
                     old_problem_ids.remove(problem.id)
+                new_problem_ids.add(problem.id)
 
                 for c in problem.contests.all():
                     if c.pk in contests_set:
@@ -797,6 +806,32 @@ def update_problems(contest, problems=None, force=False):
                     contests_set.add(c.pk)
                     contests_queue.put(c)
         current_contest.save()
+
+    while old_problem_ids:
+        new_problems = Problem.objects.filter(id__in=new_problem_ids)
+        old_problems = Problem.objects.filter(id__in=old_problem_ids)
+
+        max_similarity_score = 0
+        for old_problem in old_problems:
+            for new_problem in new_problems:
+                similarity_score = 0
+                for weight, field in (
+                    (1, 'index'),
+                    (2, 'short'),
+                    (5, 'name'),
+                    (10, 'url'),
+                ):
+                    similarity_score += weight * (getattr(old_problem, field) == getattr(new_problem, field))
+                if similarity_score > max_similarity_score:
+                    max_similarity_score = similarity_score
+                    opt_old_problem = old_problem
+                    opt_new_problem = new_problem
+        if max_similarity_score == 0:
+            break
+        old_problem_ids.remove(opt_old_problem.id)
+        opt_old_problem.contest = opt_new_problem.contest
+        MergedModelInstance.create(opt_new_problem, [opt_old_problem])
+        opt_old_problem.delete()
 
     if old_problem_ids:
         for problem in Problem.objects.filter(id__in=old_problem_ids):
@@ -834,11 +869,6 @@ def problems(request, template='problems.html'):
         )
 
         # problems = problems.filter(contests__statistics__account__coders=coder)
-        favorite = request.GET.get('favorite')
-        if favorite == 'on':
-            problems = problems.filter(is_favorite=True)
-        elif favorite == 'off':
-            problems = problems.filter(is_favorite=False)
 
         content_type = ContentType.objects.get_for_model(Problem)
         qs = Activity.objects.filter(coder=coder, content_type=content_type, object_id=OuterRef('pk'))
@@ -851,6 +881,15 @@ def problems(request, template='problems.html'):
         statistics = Statistics.objects.none()
         problem_rating_accounts = []
     problems = problems.prefetch_related(Prefetch('contests__statistics_set', queryset=statistics))
+
+    favorite = request.GET.get('favorite')
+    if favorite in ['on', 'off']:
+        if not coder:
+            return redirect('auth:login')
+        if favorite == 'on':
+            problems = problems.filter(is_favorite=True)
+        elif favorite == 'off':
+            problems = problems.filter(is_favorite=False)
 
     show_tags_value = str(request.GET.get('show_tags', '')).lower()
     if show_tags_value:
@@ -888,6 +927,11 @@ def problems(request, template='problems.html'):
         if coder:
             problem_rating_accounts = problem_rating_accounts.filter(resource__pk__in=resources)
         resources = list(Resource.objects.filter(pk__in=resources))
+
+    contests = [r for r in request.GET.getlist('contest') if r]
+    if contests:
+        contests = list(Contest.objects.filter(pk__in=contests))
+        problems = problems.filter(Q(contests__in=contests) | Q(contest__in=contests))
 
     luck_from = as_number(request.GET.get('luck_from'), force=True)
     luck_to = as_number(request.GET.get('luck_to'), force=True)
@@ -993,8 +1037,6 @@ def problems(request, template='problems.html'):
     }
     statuses = request.GET.getlist('status')
     if statuses:
-        if not coder:
-            return redirect('auth:login')
         for status in statuses:
             if status.startswith('no'):
                 status = status[2:]
@@ -1002,6 +1044,8 @@ def problems(request, template='problems.html'):
             else:
                 value = True
             if status in ['todo', 'solved', 'reject']:
+                if not coder:
+                    return redirect('auth:login')
                 problems = problems.filter(**{f'is_{status}': value})
 
     context = {
@@ -1010,6 +1054,7 @@ def problems(request, template='problems.html'):
         'show_tags': show_tags,
         'params': {
             'resources': resources,
+            'contests': contests,
             'tags': tags,
         },
         'chart_select': chart_select,

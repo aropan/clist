@@ -119,7 +119,9 @@
           {% endif %}
           {% if chart.border_color is not None %}
           borderColor: '{{ chart.border_color  }}',
-          backgroundColor: '{{ chart.background_color|default:chart.border_color }}',
+          {% endif %}
+          {% if chart.background_color is not None %}
+          backgroundColor: '{{ chart.background_color }}',
           {% endif %}
           borderWidth: {{ chart.border_width|default:1 }},
           {% if chart.cubic_interpolation %}

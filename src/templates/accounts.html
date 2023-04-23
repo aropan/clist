@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block ogtitle %}{% block title %}Accounts{% endblock %}{% endblock %}
-{% block description %}List of accounts with functional filter and search{% endblock %}
+{% block description %}List of parsed accounts{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/accounts.css' %}" rel="stylesheet">
@@ -48,8 +48,8 @@
     {% include 'country_filter.html' with has_country=True groupby=groupby|default:chart %}
     {% include 'resource_filter.html' with groupby=groupby|default:chart %}
 
+    {% include 'contest_filter.html' with has_statistics=True %}
     {% if params.contests %}
-    {% include 'contest_filter.html' %}
     {% include "field_to_select.html" with field="advanced" data=params.advanced_filter %}
     {% endif %}
 
@@ -141,7 +141,4 @@
 
   </form>
 </div>
-
 {% endblock %}
-
-

@@ -24,9 +24,13 @@
         <span title="{{ value|timestamp_to_datetime|timezone:timezone|naturaltime }}" data-toggle="tooltip">
           {{ value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}
         <span>
+      {% elif 'timedelta' in types and value %}
+        <span title="{{ value|hr_timedelta:False }}" data-toggle="tooltip">
+          {{ value|hr_timedelta }}
+        <span>
       {% elif field == 'analysis' and 'dict' in types and value and 'url' in value %}
         <span title="{{ value.url }}" data-toggle="tooltip">
-          <a href="{{ value.url }}">
+          <a href="{{ value.url }}" rel="noopener noreferrer">
           {% if not value.icon %}
             <i class="text-muted fas fa-external-link-alt"></i>
           {% elif value.icon|startswith:"http" %}
@@ -36,6 +40,10 @@
           {% endif %}
           </a>
         </span>
+      {% elif value.url %}
+        <a href="{{ value.url }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
+      {% elif value|startswith:"http" %}
+        <a href="{{ value }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
       {% else %}
         {{ template_value|safe }}
       {% endif %}

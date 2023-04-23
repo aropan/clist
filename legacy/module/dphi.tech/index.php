@@ -5,7 +5,7 @@
 
     foreach ($types as $type) {
         $limit = 100;
-        $url = 'https://aiplanet.com/api/datathons/?list=' . $type . '&page=1&page_size=' . $limit . '&query=%7Bid,challenge,end_date,datathon_type,start_date,title,slug,url%7D';
+        $url = 'https://aiplanet.com/api/datathons/?list=' . $type . '&page=1&page_size=' . $limit . '&query=%7Bid,challenge_id,end_date,datathon_type,start_date,title,slug,url%7D';
         while ($url) {
             $response = curlexec($url, null, array("http_header" => array('content-type: application/json'), "json_output" => 1));
 
@@ -15,10 +15,7 @@
             }
 
             foreach ($response['results'] as $c) {
-                if (!preg_match('#(?P<id>[0-9]+)/?$#', $c['challenge'], $match)) {
-                    continue;
-                }
-                $cid = $match['id'];
+                $cid = "${c['challenge_id']}";
 
                 $title = $c['title'];
                 if ($c['datathon_type']) {

@@ -149,7 +149,7 @@ class Command(BaseCommand):
             if len(contests) == 1:
                 contest = contests[0]
                 payload['url'] = contest.url
-                payload['icon'] = f'{settings.HTTPS_HOST_}/imagefit/static_resize/64x64/{contest.resource.icon}'
+                payload['icon'] = f'{settings.HTTPS_HOST_}/media/sizes/64x64/{contest.resource.icon}'
 
             try:
                 send_user_notification(
@@ -205,6 +205,8 @@ class Command(BaseCommand):
         logger.info(f'Tasks cleared: {delete_info}')
 
         qs = Task.objects.all() if coders and options.get('force') else Task.unsent.all()
+        if coders:
+            qs = qs.filter(periodical_notification__coder__username__in=coders)
         qs = qs.prefetch_related(
             Prefetch(
                 'notification__coder__chat_set',
@@ -212,16 +214,13 @@ class Command(BaseCommand):
                 to_attr='cchat',
             )
         )
-        if coders:
-            qs = qs.filter(periodical_notification__coder__username__in=coders)
-
         qs = qs.order_by('modified')
 
         done = 0
         failed = 0
         deleted = 0
         for is_email_iteration in range(2):
-            for task in tqdm.tqdm(qs.iterator(), 'sending'):
+            for task in tqdm.tqdm(qs, 'sending'):
                 is_email = task.notification.method == settings.NOTIFICATION_CONF.EMAIL
                 if is_email_iteration != is_email:
                     continue

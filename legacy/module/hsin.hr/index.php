@@ -39,7 +39,7 @@
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
                 'key' => $season . ' ' . $title,
-                'skip_check_time' => '',
+                'skip_check_time' => true,
             );
 
             if (preg_match('#<a[^>]*href="(?P<href>[^"]*)"[^>]*><strong>Results</strong></a>#i', $m[0], $match)) {

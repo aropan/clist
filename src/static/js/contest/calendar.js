@@ -91,7 +91,7 @@ $(function() {
                     $(val).html(getFormatTime(countdown - ($.now() - page_load) / 1000))
                 })
             })
-            var icon = $('<img src="/imagefit/static_resize/32x32/' + event.extendedProps.icon + '" height="14" width="14">&nbsp;</img>')
+            var icon = $('<img src="' + main_host_url + '/media/sizes/32x32/' + event.extendedProps.icon + '" height="14" width="14">&nbsp;</img>')
             icon.prependTo(element.querySelector('.fc-content'))
             if (contest_toggle) {
                 var toggle_part_contest_link = $('<i class="party-check fa-fw far" data-contest-id="' + event.id + '">&nbsp;</i>')

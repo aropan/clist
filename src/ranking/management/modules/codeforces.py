@@ -77,15 +77,16 @@ def api_query(
             if e.code == 503 and attempt:
                 sleep(1)
                 continue
-            err = e.args[0]
-            if hasattr(err, 'fp'):
-                try:
-                    ret = json.load(err.fp)
-                except json.decoder.JSONDecodeError:
-                    ret = {'status': str(e)}
-            else:
+            try:
+                ret = json.loads(e.response)
+            except json.decoder.JSONDecodeError:
                 ret = {'status': str(e)}
-            ret['code'] = getattr(err, 'code', None)
+            ret['code'] = e.code
+        except json.decoder.JSONDecodeError as e:
+            if attempt:
+                sleep(1)
+                continue
+            ret = {'status': str(e)}
         break
 
     return ret
@@ -298,7 +299,7 @@ class Statistic(BaseModule):
             data = api_query(method='contest.standings', params=params, api_key=self.api_key)
 
             if data['status'] != 'OK':
-                if data['code'] == 400:
+                if data.get('code') == 400:
                     return {'action': 'delete'}
                 raise ExceptionParseStandings(data['status'])
 

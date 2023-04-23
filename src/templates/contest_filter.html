@@ -30,7 +30,7 @@
       var $result = $('<span></span>')
       $result.text(data.text)
       if (data.icon) {
-        $result.prepend('<img src="/imagefit/static_resize/32x32/' + data.icon + '" width="16" height="16">&nbsp;')
+        $result.prepend('<img src="/media/sizes/32x32/' + data.icon + '" width="16" height="16">&nbsp;')
       }
       return $result
     },
@@ -41,6 +41,9 @@
       data: function (params) {
         return {
           query: 'contests',
+          {% if has_problems %}has_problems: true,{% endif %}
+          {% if has_statistics %}has_statistics: true,{% endif %}
+          resources: [{% for resource in params.resources %}{{ resource.pk }}{% if not forloop.last %},{% endif %}{% endfor %}],
           regex: params.term,
           page: params.page || 1
         };

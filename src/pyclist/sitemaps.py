@@ -1,7 +1,9 @@
 from django.contrib.sitemaps import Sitemap
+from django.db.models import Max
 from django.urls import reverse
+from sql_util.utils import SubqueryMax
 
-from clist.models import Contest
+from clist.models import Contest, Resource
 from clist.templatetags.extras import slug
 from ranking.models import Statistics
 
@@ -45,15 +47,19 @@ class UpdatedStandingsSitemap(StandingsSitemap):
 
     def items(self):
         qs = super().items()
-        pks = {c.pk for c in qs[:StandingsSitemap.limit]}
-        return Contest.objects.filter(n_statistics__gt=0).exclude(pk__in=pks).order_by('-updated')
+        limit = StandingsSitemap.limit
+        end_time = qs[limit - 1:limit][0].end_time
+        return Contest.objects.filter(n_statistics__gt=0, end_time__lt=end_time).order_by('-updated')
+
+    def lastmod(self, contest):
+        return contest.updated
 
 
 class AccountsSitemap(BaseSitemap):
-    limit = 1000
+    limit = 200
 
     def items(self):
-        return Statistics.objects.filter(place_as_int__lte=10).order_by('-created').select_related('account__resource')
+        return Statistics.objects.filter(place_as_int__lte=3).order_by('-created').select_related('account__resource')
 
     def priority(self, stat):
         return round(0.5 - 0.1 * (stat.place_as_int - 1) / 10 + (0.4 if 'medal' in stat.addition else 0.0), 2)
@@ -65,9 +71,30 @@ class AccountsSitemap(BaseSitemap):
         return reverse('coder:account', args=(stat.account.key, stat.account.resource.host))
 
 
+class ResourcesSitemap(BaseSitemap):
+    max_priority = None
+
+    def items(self):
+        self.max_priority = Resource.priority_objects.aggregate(Max('priority'))['priority__max']
+        return Resource.priority_objects.annotate(lastmod=SubqueryMax('contest__parsed_time'))
+
+    def priority(self, resource):
+        ret = resource.priority
+        if self.max_priority:
+            ret /= self.max_priority
+        return ret
+
+    def lastmod(self, resource):
+        return resource.lastmod or resource.modified
+
+    def location(self, resource):
+        return reverse('clist:resource', args=(resource.host, ))
+
+
 sitemaps = {
     'static': StaticViewSitemap,
     'standings': StandingsSitemap,
     'updated_standings': UpdatedStandingsSitemap,
     'accounts': AccountsSitemap,
+    'resources': ResourcesSitemap,
 }

@@ -233,12 +233,10 @@
         }
         $header = $header_;
 
-        if (isset($params["json_output"]) && isset($header["content-type"])) {
-            $a = $header["content-type"];
-            $a = is_array($a)? $a : array($a);
-            $content_type = implode(", ", $a);
-            if (strpos($content_type, "json") !== false || strpos($content_type, "text/javascript") !== false) {
-                $page = json_decode(substr($page, $sep + 4), true);
+        if (isset($params["json_output"])) {
+            $json_decode_page = json_decode(substr($page, $sep + 4), true);
+            if ($json_decode_page !== null) {
+                $page = $json_decode_page;
             }
         }
 

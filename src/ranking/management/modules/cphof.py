@@ -86,7 +86,7 @@ class Statistic(BaseModule):
         def find_related(statistics):
             infos = deepcopy(self.info.get('standings', {}).get('parse', {}))
 
-            if self.contest.related_id is not None:
+            if self.contest.related_id is not None or not statistics:
                 return
 
             related = None
@@ -231,6 +231,14 @@ class Statistic(BaseModule):
                     row['_members'] = members[row['team_id']]
 
         find_related(result)
+
+        options_parse = options.get('parse') or {}
+        series = options_parse.get('series')
+        if series:
+            if self.contest.related_id is not None:
+                self.contest.related.set_series(series)
+                series = None
+            self.contest.set_series(series)
 
         standings['result'] = result
         return standings

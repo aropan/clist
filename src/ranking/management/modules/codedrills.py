@@ -148,6 +148,7 @@ class Statistic(BaseModule):
         def process_page(message):
             for r in to_list(message['1']['2']):
                 team_info = get_by_key(r, '8')
+                user_info = get_by_key(r, '2')
                 if team_info:
                     party = []
                     members = team_info.setdefault('members', [])
@@ -165,11 +166,12 @@ class Statistic(BaseModule):
                         if name and isinstance(name, bytes):
                             member['name'] = name.decode('utf8')
                         members.append(member)
-                else:
-                    user_info = get_by_key(r, '2')
+                elif user_info:
                     r['2'] = get_by_key(user_info, '2')
                     r['handle'] = get_by_key(user_info, '4')
                     party = [r]
+                else:
+                    continue
 
                 for r in party:
                     if not r.get('1'):

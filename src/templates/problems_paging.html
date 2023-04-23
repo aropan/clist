@@ -59,7 +59,7 @@
   <td class="problem-name-column {{ solution_class }}" data-solution-class="{{ solution_class }}">
     <span class="nowrap">
       <a href="{% url_transform request resource=problem.resource.id %}">
-        <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|static_resize:'32x32' }}" width="16" height="16"/>
+        <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
       </a>
       {% if problem.url %}<a href="{{ problem.url }}" target="_blank" rel="noopener">{% endif %}
         {% trim_to problem.name 50 %}

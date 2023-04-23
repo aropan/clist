@@ -80,7 +80,7 @@
 
 {% if has_versus %}
   {% if versus_statistic_id == statistic.id %}
-    <a href="{% url_transform request versus='statistics' id=statistic.id with_remove=1 %}" class="external-link">
+    <a href="{% url_transform request versus='statistics' versus_id=statistic.id with_remove=1 %}" class="external-link">
       <i class="fas fa-times"{% if versus_data.cache_time %}
          title="Time in cache: {{ versus_data.cache_time|timestamp_to_datetime|timezone:timezone|timedelta_with_now|hr_timedelta }}"
          data-toggle="tooltip"
@@ -88,7 +88,7 @@
       {% endif %}></i>
     </a>
   {% else %}
-    <a href="{% url_transform request versus='statistics' id=statistic.id with_replace=1 %}" class="external-link invisible"><i class="fas fa-desktop"></i></a>
+    <a href="{% url_transform request versus='statistics' versus_id=statistic.id with_replace=1 %}" class="external-link invisible"><i class="fas fa-desktop"></i></a>
   {% endif %}
 {% endif %}
 

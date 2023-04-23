@@ -259,6 +259,8 @@ class Statistic(BaseModule):
                     continue
                 accounts[nid] = data['profile']['nickname']
             for row in result.values():
+                if '_neverland_ids' not in row:
+                    continue
                 members = row.setdefault('_members', [None] * len(row['_neverland_ids']))
                 for idx, nid in enumerate(row['_neverland_ids']):
                     if nid in accounts:

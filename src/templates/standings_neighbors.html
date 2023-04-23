@@ -2,7 +2,7 @@
   {% if with_related or with_icon %}
   <span class="neighbors-standings-url-before">
     {% if with_related %}related&nbsp;{% endif %}
-    <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}"{% if with_related %} width="16" height="16"{% else %} width="24" height="24"{% endif %}/></a>
+    <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|media_size:'32x32' }}"{% if with_related %} width="16" height="16"{% else %} width="24" height="24"{% endif %}/></a>
   </span>
   {% endif %}<a href="{% url 'ranking:standings_by_id' contest.pk %}{% if not without_neighbors %}?{% query_transform request 'neighbors' 'on' 'with_replace' True %}{% endif %}">{{ contest.title }}</a>
   <span class="neighbors-standings-url-date">

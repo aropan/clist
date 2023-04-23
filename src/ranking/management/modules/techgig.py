@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import re
+from datetime import timedelta
+
+from django.utils.timezone import now
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -9,19 +12,26 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
-        if not self.standings_url:
-            raise ExceptionParseStandings('not set standings url')
+        if not self.name.endswith('Finale'):
+            raise ExceptionParseStandings('not final')
+
+        contest_url = (
+            f'https://www.techgig.com/codegladiators{self.end_time.year}'
+            if self.end_time + timedelta(days=200) < now() else
+            'https://www.techgig.com/codegladiators'
+        )
+        standings_url = f'{contest_url}/finaleleaderboard'
 
         season = self.get_season()
 
         def standings_page(req):
-            return req.get(self.standings_url)
+            return req.get(standings_url)
 
         with REQ(
             with_proxy=True,
             args_proxy=dict(
                 time_limit=3,
-                n_limit=30,
+                n_limit=100,
                 connect=standings_page,
             ),
         ) as req:
@@ -47,4 +57,16 @@ class Statistic(BaseModule):
                 row['member'] = f'{row["name"]} {season}'
             result[row['member']] = row
 
-        return {'result': result}
+        ret = {
+            'result': result,
+            'url': standings_url,
+            'contest_url': contest_url,
+        }
+        options = ret.setdefault('options', {})
+        options['medals'] = [
+            {"name": "gold", "count": 1},
+            {"name": "silver", "count": 1},
+            {"name": "bronze", "count": 1},
+            {"name": "honorable", "count": 2},
+        ]
+        return ret

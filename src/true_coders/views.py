@@ -33,7 +33,7 @@ from tastypie.models import ApiKey
 
 from favorites.models import Activity
 
-from clist.models import Contest, ProblemTag, Resource
+from clist.models import Contest, ContestSeries, ProblemTag, Resource
 from clist.templatetags.extras import asfloat, format_time, get_timezones, query_transform, quote_url, relative_url
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
@@ -375,7 +375,8 @@ def profile(request, username, template='profile.html', extra_context=None):
 ))
 def account(request, key, host, template='profile.html', extra_context=None):
     accounts = Account.objects.select_related('resource').prefetch_related('coders')
-    account = get_object_or_404(accounts, key=key, resource__host=host)
+    resource = get_object_or_404(Resource, host=host)
+    account = get_object_or_404(accounts, key=key, resource=resource)
 
     data = _get_data_mixed_profile(request, [account.resource.host + ':' + account.key])
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
@@ -450,7 +451,10 @@ def _get_data_mixed_profile(request, query):
     for v in query:
         if ':' in v:
             host, key = v.split(':', 1)
-            account_prefilter |= (Q(resource__host=host) | Q(resource__short_host=host)) & Q(key=key)
+            resource = Resource.objects.filter(Q(host=host) | Q(short_host=host)).first()
+            if not resource:
+                continue
+            account_prefilter |= Q(key=key, resource=resource)
         elif n_coder:
             request.logger.warning(f'Coder {v} was skipped: only the first one is used')
         else:
@@ -523,7 +527,8 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             statistics = Statistics.objects.filter(account__coders=coder)
             with_global = True
         else:
-            account = get_object_or_404(Account, key=key, resource__host=host)
+            resource = get_object_or_404(Resource, host=host)
+            account = get_object_or_404(Account, key=key, resource=resource)
             statistics = Statistics.objects.filter(account=account)
         resource = request.GET.get('resource')
         if resource:
@@ -1154,7 +1159,8 @@ def change(request):
                 if not value:
                     return HttpResponseBadRequest("empty account value")
                 host = request.POST.get("resource")
-                account = Account.objects.get(resource__host=host, key=value)
+                resource = Resource.objects.get(host=host)
+                account = Account.objects.get(resource=resource, key=value)
             account.coders.remove(coder)
             account.updated = timezone.now()
             account.save()
@@ -1278,13 +1284,27 @@ def search(request, **kwargs):
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
     elif query == 'contests':
-        qs = Contest.objects.all()
+        qs = Contest.objects.select_related('resource')
         if 'regex' in request.GET:
             qs = qs.filter(get_iregex_filter(request.GET['regex'], 'title'))
+        if request.GET.get('has_problems') in django_settings.YES_:
+            qs = qs.filter(info__problems__isnull=False, stage__isnull=True).exclude(info__problems__exact=[])
+        if request.GET.get('has_statistics') in django_settings.YES_:
+            qs = qs.filter(n_statistics__gt=0)
+        resources = [r for r in request.GET.getlist('resources[]') if r]
+        if resources:
+            qs = qs.filter(resource__pk__in=resources)
         qs = qs.order_by('-end_time', 'pk')
-
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.title} for r in qs]
+        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon} for r in qs]
+    elif query == 'series':
+        qs = ContestSeries.objects.all()
+        qs = qs.annotate(n_contests=SubqueryCount('contest'))
+        if 'regex' in request.GET:
+            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'name', 'short'))
+        qs = qs.order_by('-n_contests', '-pk')
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'slug': r.slug, 'text': r.text, 'short': r.short, 'name': r.name} for r in qs]
     elif query == 'tags':
         qs = ProblemTag.objects.all()
         if 'regex' in request.GET:
@@ -1921,7 +1941,7 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
 
     context = {'params': params}
-    addition_table_fields = ('modified', 'updated')
+    addition_table_fields = ('modified', 'updated', 'created')
     table_fields = ('rating', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')

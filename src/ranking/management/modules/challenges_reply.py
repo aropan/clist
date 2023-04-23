@@ -19,8 +19,12 @@ class Statistic(BaseModule):
         season = self.get_season()
         domain = urlparse(self.url).netloc
 
-        def get(*args, **kwargs):
-            page = REQ.get(*args, **kwargs)
+        def get(url, *args, **kwargs):
+            cache = kwargs.pop('cache', False)
+            if cache and self.start_time + timedelta(days=30) < pytz.UTC.localize(datetime.utcnow()):
+                url += '&params.fromCache=true'
+
+            page = REQ.get(url, *args, **kwargs)
             for c in REQ.get_raw_cookies():
                 if c.domain == domain and c.name.startswith('__'):
                     c.value = re.sub(r'\s*', '', c.value)
@@ -30,7 +34,7 @@ class Statistic(BaseModule):
 
         page = get('/tamtamy/home.action')
         if not re.search('<a[^>]*href="[^"]*logout[^"]*"[^>]*>', page, re.I):
-            page = get('/tamtamy/user/signIn.action', post={
+            get('/tamtamy/user/signIn.action', post={
                 'username': conf.CHALLENGES_REPLY_EMAIL,
                 'password': conf.CHALLENGES_REPLY_PASSWORD,
                 'remember': True,
@@ -46,15 +50,13 @@ class Statistic(BaseModule):
         offset = 0
         max_solving = 0
         problems_max_score = {}
+        has_delta = False
+        has_members = False
         while offset is not None:
             url = ("/tamtamy/api/challenge-leaderboard-entry.json"
                    f"?params.challengeId={self.key}&params.firstResult={offset}&params.numberOfResult=100")
-
-            if self.start_time + timedelta(days=30) < pytz.UTC.localize(datetime.utcnow()):
-                url += '&params.fromCache=true'
-
             try:
-                data = get(url)
+                data = get(url, cache=True)
                 if isinstance(data, str):
                     data = json.loads(data)
             except FailOnGetResponse as e:
@@ -74,12 +76,15 @@ class Statistic(BaseModule):
                 row['solving'] = r['score']
                 row['country'] = r['competitorFlagKey']
                 row['place'] = r['position']
+                row['delta'] = int(r['delta'])
+                has_delta |= bool(row['delta'])
 
                 if r.get('penalty'):
                     row['penalty'] = self.to_time(r['penalty'], num=3)
                 elif r.get('bestScoreReached'):
                     row['total_time'] = to_time(r['bestScoreReached']['time'])
 
+                members = set()
                 problems = row.setdefault('problems', {})
                 if r.get('maxScoring'):
                     for scoring in r['maxScoring']:
@@ -95,6 +100,9 @@ class Statistic(BaseModule):
                             problems_max_score[k] = max(problems_max_score.get(k, 0), p['result'])
                         else:
                             p['binary'] = False
+                        handle = scoring['author']['nickname']
+                        if handle:
+                            members.add(handle)
                 if r.get('problemStatus'):
                     for status in r['problemStatus']:
                         k = status['name']
@@ -130,16 +138,30 @@ class Statistic(BaseModule):
                     offset = None
                     break
 
-                if r.get('maxScoring') or not problems_info:
+                if r.get('maxScoring') or not result:
                     max_solving = max(max_solving, row['solving'])
+
+                if members:
+                    row['_members'] = [{'name': member} for member in members]
+                    has_members = True
 
                 result[row['member']] = row
 
-        if max_solving:
+        if has_delta:
             for row in result.values():
-                row['percent'] = f"{row['solving'] * 100 / max_solving:.2f}%"
+                if row['place'] + row['delta'] > len(result):
+                    row.pop('delta')
+        elif statistics:
+            for member, row in result.items():
+                delta = statistics.get(member, {}).get('delta')
+                if delta is not None:
+                    row['delta'] = delta
 
         if problems_max_score:
+            max_solving = 0
+            for k, v in problems_max_score.items():
+                problems_info[k]['max_score'] = v
+                max_solving += v
             for row in result.values():
                 for k, p in row.get('problems', {}).items():
                     if 'result' in p:
@@ -147,8 +169,17 @@ class Statistic(BaseModule):
                         if problems_max_score[k] - p['result'] < 1e-9:
                             p['max_score'] = True
 
+        if max_solving:
+            for row in result.values():
+                row['percent'] = f"{row['solving'] * 100 / max_solving:.2f}%"
+
         standings = {
             'result': result,
             'problems': list(problems_info.values()),
+            'fields_types': {'delta': ['delta']},
         }
+        if has_members:
+            options = standings.setdefault('options', {})
+            options.update({'members_message': 'members who submitted'})
+
         return standings

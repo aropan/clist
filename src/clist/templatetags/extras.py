@@ -1,12 +1,12 @@
 import itertools
 import json
 import math
+import os
 import re
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from functools import reduce
-from os import path
 from sys import float_info
 from urllib.parse import quote_plus, urlparse
 
@@ -46,7 +46,7 @@ def get_item(data, key):
     if isinstance(data, (dict, defaultdict, OrderedDict)):
         if key in data or '.' not in str(key):
             return data.get(key)
-        return reduce(lambda d, k: d.get(k) if d else None, str(key).split('.'), data)
+        return reduce(lambda d, k: get_item(d, k) if d else None, str(key).split('.'), data)
     if isinstance(data, (list, tuple)):
         return data[key] if -len(data) <= key < len(data) else None
     return getattr(data, key, None)
@@ -108,13 +108,14 @@ def format_time(time, fmt):
 
 
 @register.filter
-def hr_timedelta(delta):
+def hr_timedelta(delta, n_significant=2):
     if isinstance(delta, timedelta):
         delta = delta.total_seconds()
     if delta <= 0:
         return 'past'
 
     ret = []
+    n_used = 0
     for c, s in (
         (364 * 24 * 60 * 60, 'year'),
         (7 * 24 * 60 * 60, 'week'),
@@ -127,9 +128,10 @@ def hr_timedelta(delta):
             val = delta // c
             delta %= c
             ret.append('%d %s%s' % (val, s, 's' if val > 1 else ''))
+            n_used += 1
         elif ret:
-            ret.append('')
-        if len(ret) == 2:
+            n_used += 1
+        if n_significant and n_significant == n_used:
             break
     ret = ' '.join(ret)
     return ret.strip()
@@ -211,7 +213,7 @@ def get_timezone_offset_hm(value):
 
 
 def get_timezones():
-    with open(path.join(settings.STATIC_JSON_TIMEZONES), "r") as fo:
+    with open(os.path.join(settings.STATIC_JSON_TIMEZONES), "r") as fo:
         timezones = json.load(fo)
         for tz in timezones:
             offset = get_timezone_offset(tz['name'])
@@ -847,12 +849,21 @@ def title_field(value):
 
 
 @register.filter
-def scoreformat(value):
+def scoreformat(value, with_shorten=True):
     str_value = str(value)
     if not str_value or str_value[0] in ['+', '?']:
         return value
     format_value = floatformat(value, -2)
-    return value if not format_value else format_value
+    str_value = format_value or str_value
+    if with_shorten and len(str_value.split('.')[0]) > 7:
+        try:
+            new_str_value = f'{value:.2e}'.replace('+0', '+')
+            if len(new_str_value) < len(str_value):
+                ret = f'<span title="{value}" data-toggle="tooltip" data-placement="right">{new_str_value}</span>'
+                return mark_safe(ret)
+        except Exception:
+            pass
+    return format_value or value
 
 
 @register.filter
@@ -998,9 +1009,11 @@ def icon_to(value, default=None, icons=None, html_class=None):
         default = value.title().replace('_', ' ')
     if value in icons:
         value = icons[value]
-        if isinstance(value, dict):
-            value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
         inner = ''
+        if isinstance(value, dict):
+            if 'position' in value:
+                inner += f' data-placement="{value["position"]}"'
+            value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
         if default:
             inner += f' title="{default}" data-toggle="tooltip"'
         if html_class:
@@ -1041,3 +1054,16 @@ def quote_url(url):
 @register.filter
 def negative(value):
     return not bool(value)
+
+
+@register.filter
+def to_list(value):
+    return list(value)
+
+
+@register.filter
+def media_size(path, size):
+    ret = os.path.join(settings.MEDIA_URL, 'sizes', size, path)
+    if settings.DEBUG:
+        ret = settings.MAIN_HOST_ + ret
+    return ret

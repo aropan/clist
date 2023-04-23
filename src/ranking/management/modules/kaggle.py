@@ -137,7 +137,7 @@ class Statistic(BaseModule):
                 if ret:
                     return ret
                 return False
-            result = re.search(r'Kaggle.State.push\((?P<data>{"userId":.*?})\)', page)
+            result = re.search(r'Kaggle.State.push\((?P<data>{"userId":.*})\);', page)
             data = json.loads(result.group('data'))
             data.get('followers', {}).pop('list', None)
             data.get('following', {}).pop('list', None)

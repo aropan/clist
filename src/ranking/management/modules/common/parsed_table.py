@@ -97,6 +97,7 @@ class ParsedTable(object):
         header_mapping=(),
         without_header=False,
         strip_empty_columns=False,
+        default_header_rowspan=1,
     ):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
@@ -109,10 +110,10 @@ class ParsedTable(object):
         self.ignore_display_none = ignore_display_none
         self.without_header = without_header
         self.strip_empty_columns = strip_empty_columns
-        self.init_iter()
+        self.init_iter(default_header_rowspan)
         self.last_row = None
 
-    def init_iter(self):
+    def init_iter(self, default_header_rowspan=1):
         self.n_rows = len(self.table) - 1
         self.iter_table = iter(self.table)
         if self.without_header:
@@ -120,7 +121,7 @@ class ParsedTable(object):
         else:
             self.header = ParsedTableRow(next(self.iter_table))
 
-        rowspan = 1
+        rowspan = default_header_rowspan
         for c in self.header.columns:
             rowspan = max(rowspan, int(c.attrs.get('rowspan', 0)))
 

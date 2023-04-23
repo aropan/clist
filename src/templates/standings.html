@@ -2,6 +2,7 @@
 {% load el_pagination_tags %}
 
 {% block ogtitle %}{% block title %}{{ contest.title }} - Standings{% endblock %}{% endblock %}
+{% block description %}Standings of {{ contest.title }} from {{ contest.resource.host }}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
@@ -82,7 +83,7 @@
 
     <div>
     Standings
-    <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|static_resize:'32x32' }}" width="24" height="24"/></a>
+    <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="24" height="24"/></a>
     <span id="standings-url"></span>
     <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
     {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
@@ -210,8 +211,12 @@
               <th class="handle-cell sticky-column" data-sticky-column="handle-cell"{% if merge_problems %} rowspan="2"{% endif %}>
                 {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
                 Handle
-                {% if standings_options.help_message %}
-                <span class="bg-success nobold help-message">{{ standings_options.help_message }}</span>
+                {% if standings_options.help_message %}<span class="bg-success nobold help-message">{{ standings_options.help_message }}</span>{% endif %}
+                {% if standings_options.members_message %}
+                <div>
+                  {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
+                  <span class="small nobold members-message">{{ standings_options.members_message }}</span>
+                </div>
                 {% endif %}
                 <a id="unstar" class="external-link invisible hidden">{% icon_to 'unpin' false %}</a>
               </th>

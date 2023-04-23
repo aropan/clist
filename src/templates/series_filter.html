@@ -1,0 +1,66 @@
+{% with series_id=series|default:"series" %}
+<div class="input-group input-group-sm hidden" id="{{ series_id }}-hidden">
+{% if groupby %}
+  <div class="input-group-btn">
+    <button class="btn btn-default{% if groupby == 'series' %} active{% endif %}" name="groupby" value="{% if groupby != 'series' %}series{% endif %}">
+      {% icon_to 'series' %}
+    </button>
+  </div>
+{% else %}
+  <span class="input-group-addon">
+    {% icon_to 'series' %}
+  </span>
+{% endif %}
+
+  <select{% if not noname %} name="{{ series_id }}"{% endif %} id="{{ series_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
+    <option></option>
+    {% for series in params.series %}
+      <option value="{{ series.slug }}" selected>{{ series.short }}</option>
+    {% endfor %}
+  </select>
+
+  {% if more_fields and 'series' in more_fields %}
+  <span class="input-group-addon">
+    <input type="checkbox" class="link_series" name="link_{{ series_id }}" title="Link series" data-toggle="tooltip">
+  </span>
+  {% endif %}
+</div>
+
+<script>
+  $('#{{ series_id }}').select2({
+    dropdownAutoWidth : true,
+    theme: 'bootstrap',
+    placeholder: '',
+    allowClear: true,
+    ajax: {
+      url: '/settings/search/',
+      dataType: 'json',
+      delay: 314,
+      data: function (params) {
+        return {
+          query: 'series',
+          regex: params.term,
+          page: params.page || 1
+        };
+      },
+      processResults: function (data, params) {
+        return {
+          results: data.items.map(function (item) { return {id: item.slug, text: item.text} }),
+          pagination: {
+            more: data.more
+          }
+        };
+      },
+      cache: true,
+    },
+  }).on('select2:unselecting', function() {
+    $(this).data('unselecting', true);
+  }).on('select2:opening', function(e) {
+    if ($(this).data('unselecting')) {
+      $(this).removeData('unselecting');
+      e.preventDefault();
+    }
+  })
+  $('#{{ series_id }}-hidden').removeClass('hidden');
+</script>
+{% endwith %}
