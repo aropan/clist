@@ -149,7 +149,10 @@
         preg_match_all('#<h2>(?P<title>[^>]*)</h2>[^<]*(?:<[^>/]*>[^<]*)*<a[^>]*href="(?P<url>[^"]*)"[^>]*>\s*Результаты#', $page, $matches, PREG_SET_ORDER);
         foreach ($matches as $match) {
             $u = url_merge($url, $match['url']);
-            preg_match('#/(?P<key>20[0-9]{6})/#', $u, $m);
+            if (!preg_match('#[-/](?P<key>20[0-9]{6})[-/]#', $u, $m)) {
+                trigger_error("Not found key in $u", E_USER_WARNING);
+                continue;
+            }
             $key = $m['key'];
 
             $title = $match['title'];
@@ -173,7 +176,8 @@
                 'standings_url' => $u,
                 'timezone' => $TIMEZONE,
                 'key' => $key,
-                'rid' => $RID
+                'rid' => $RID,
+                'skip_check_time' => true,
             );
 
         }

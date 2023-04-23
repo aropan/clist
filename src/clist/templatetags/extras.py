@@ -855,7 +855,7 @@ def scoreformat(value, with_shorten=True):
         return value
     format_value = floatformat(value, -2)
     str_value = format_value or str_value
-    if with_shorten and len(str_value) > 7:
+    if with_shorten and len(str_value.split('.')[0]) > 7:
         try:
             new_str_value = f'{value:.2e}'.replace('+0', '+')
             if len(new_str_value) < len(str_value):

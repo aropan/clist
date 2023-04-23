@@ -17,6 +17,7 @@ class Statistic(BaseModule):
             problems_infos[idx] = {'short': short}
 
         result = {}
+        has_hidden = False
         for row in data['rows']:
             handle = str(row['participant']['scope_user']['id'])
             if hasattr(self, 'prefix_handle'):
@@ -43,8 +44,11 @@ class Statistic(BaseModule):
                         problem['result'] = '+'
                     else:
                         problem['result'] = f'+{attempt - 1}'
-                else:
+                elif cell['verdict'] == 'rejected':
                     problem['result'] = f'-{attempt}'
+                elif not cell['verdict']:
+                    has_hidden = True
+                    problem['result'] = f'?{attempt}'
                 if 'time' in cell:
                     problem['time_in_seconds'] = cell['time']
                     problem['time'] = self.to_time(cell['time'] // 60, 2)
@@ -52,5 +56,6 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'problems': list(problems_infos.values()),
+            'has_hidden': has_hidden,
         }
         return standings

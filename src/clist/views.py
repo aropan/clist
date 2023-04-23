@@ -869,11 +869,6 @@ def problems(request, template='problems.html'):
         )
 
         # problems = problems.filter(contests__statistics__account__coders=coder)
-        favorite = request.GET.get('favorite')
-        if favorite == 'on':
-            problems = problems.filter(is_favorite=True)
-        elif favorite == 'off':
-            problems = problems.filter(is_favorite=False)
 
         content_type = ContentType.objects.get_for_model(Problem)
         qs = Activity.objects.filter(coder=coder, content_type=content_type, object_id=OuterRef('pk'))
@@ -886,6 +881,15 @@ def problems(request, template='problems.html'):
         statistics = Statistics.objects.none()
         problem_rating_accounts = []
     problems = problems.prefetch_related(Prefetch('contests__statistics_set', queryset=statistics))
+
+    favorite = request.GET.get('favorite')
+    if favorite in ['on', 'off']:
+        if not coder:
+            return redirect('auth:login')
+        if favorite == 'on':
+            problems = problems.filter(is_favorite=True)
+        elif favorite == 'off':
+            problems = problems.filter(is_favorite=False)
 
     show_tags_value = str(request.GET.get('show_tags', '')).lower()
     if show_tags_value:
@@ -1033,8 +1037,6 @@ def problems(request, template='problems.html'):
     }
     statuses = request.GET.getlist('status')
     if statuses:
-        if not coder:
-            return redirect('auth:login')
         for status in statuses:
             if status.startswith('no'):
                 status = status[2:]
@@ -1042,6 +1044,8 @@ def problems(request, template='problems.html'):
             else:
                 value = True
             if status in ['todo', 'solved', 'reject']:
+                if not coder:
+                    return redirect('auth:login')
                 problems = problems.filter(**{f'is_{status}': value})
 
     context = {

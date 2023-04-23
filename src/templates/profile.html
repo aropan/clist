@@ -16,7 +16,8 @@
 
 {% block description %}{% linebreakless %}
   {% if coder %}
-Number of accounts: {{ coder.n_accounts }}
+{{ coder.display_name }} coder
+, number of accounts: {{ coder.n_accounts }}
 
 {% if coder.first_name_native or coder.last_name_native %}
 , name: {% if coder.first_name_native %}{{ coder.first_name_native }}{% endif %}{% if coder.first_name_native and coder.last_name_native %} {% endif %}{% if coder.last_name_native %}{{ coder.last_name_native }}{% endif %}
@@ -26,12 +27,16 @@ Number of accounts: {{ coder.n_accounts }}
 
 {% if coder.country %}, country: {{ coder.country.name }}{% endif %}
 , last update: {{ coder.modified|format_time:"%-d %B %Y" }}
+
   {% elif account %}
-Number of competitions: {{ account.n_contests }}
+{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} account
+, number of competitions: {{ account.n_contests }}
 {% if account.country %}, country: {{ account.country.name }}{% endif %}
 {% if account.rating %}, rating: {{ account.rating }}{% endif %}
 {% if account.last_activity %}, last activity: {{ account.last_activity|format_time:"%-d %B %Y" }}{% endif %}
 , last update: {{ account.modified|format_time:"%-d %B %Y" }}
+  {% else %}
+{{ query }}
   {% endif %}
 {% endlinebreakless %}{% endblock %}
 

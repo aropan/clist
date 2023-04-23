@@ -6,8 +6,8 @@ services:
       context: .
       target: prod
     volumes:
-      - static_volume:/usr/src/clist/staticfiles/
-      - media_volume:/usr/src/clist/mediafiles/
+      - static_files:/usr/src/clist/staticfiles/
+      - media_files:/usr/src/clist/mediafiles/
       - ./logs/production:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
@@ -16,6 +16,10 @@ services:
     secrets:
       - db_conf
       - sentry_conf
+    env_file:
+      - ./.env.supervisor
+    ports:
+      - 10043:9043
   dev:
     build:
       context: .
@@ -24,7 +28,7 @@ services:
       - ./src/:/usr/src/clist/
       - ./legacy/api/:/usr/src/clist/legacy/api/
       - ./src/static:/usr/src/clist/staticfiles/
-      - media_volume:/usr/src/clist/mediafiles/
+      - media_files:/usr/src/clist/mediafiles/
       - ./logs/development:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
@@ -53,8 +57,6 @@ services:
       - ./.env.db
     depends_on:
       - db
-    ports:
-      - 5050:80
   db:
     image: postgres:14.3-alpine
     volumes:
@@ -76,8 +78,8 @@ services:
   nginx:
     image: nginx:alpine
     volumes:
-      - static_volume:/staticfiles/
-      - media_volume:/mediafiles/
+      - static_files:/staticfiles/
+      - media_files:/mediafiles/
       - ./legacy:/usr/src/legacy/
       - ./nginx/conf.d:/etc/nginx/conf.d/
       - certbot_www:/var/www/certbot/
@@ -115,8 +117,38 @@ secrets:
 
 volumes:
   postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/postgres_data
   pgadmin_data:
-  static_volume:
-  media_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/pgadmin
+  static_files:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/static_files
+  media_files:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/media_files
   certbot_www:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/certbot_www
   certbot_conf:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/certbot_conf

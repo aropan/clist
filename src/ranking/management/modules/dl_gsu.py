@@ -145,6 +145,7 @@ class Statistic(BaseModule):
             row = OrderedDict()
             problems = row.setdefault('problems', {})
             pid = 0
+            solving = 0
             for k, v in r:
                 if k == 'Имя':
                     uid = get_uid(v)
@@ -178,6 +179,7 @@ class Statistic(BaseModule):
 
                         if v.value and v.value[0] not in ['-', '+']:
                             scoring = True
+                            solving += float(v.value)
 
                         try:
                             max_score[k] = max(max_score[k], float(v.value))
@@ -189,6 +191,11 @@ class Statistic(BaseModule):
                     href = v.column.node.xpath('.//a/@href')
                     if href:
                         row['url'] = urljoin(self.standings_url, href[0])
+
+            if 'solving' not in row:
+                row['solving'] = solving
+                row.pop('place', None)
+
             diploma = row.pop('Диплом', None)
             if diploma:
                 match = re.search(r'(?P<diploma>[0-9]+)\s+ст', diploma)
@@ -208,6 +215,17 @@ class Statistic(BaseModule):
             if 'member' not in row:
                 continue
             result[row['member']] = row
+
+        last_solving = None
+        last_rank = None
+        ordered_results = sorted(result.values(), key=lambda r: (-r['solving'], r.get('penalty', 0)))
+        for rank, row in enumerate(ordered_results, start=1):
+            solving = row['solving']
+            if last_solving is None or abs(solving - last_solving) > 1e-6:
+                last_solving = solving
+                last_rank = rank
+            if 'place' not in row:
+                row['place'] = last_rank
 
         if scoring and not is_olymp:
             match = re.search(r'<b[^>]*>\s*<a[^>]*href="(?P<url>[^"]*)"[^>]*>ACM</a>\s*</b>', page)
@@ -251,6 +269,9 @@ class Statistic(BaseModule):
             'problems': list(problems_info.values()),
             'info_fields': ['_standings_data'],
         }
+
+        if self.info.get('series'):
+            standings['series'] = self.info['series']
 
         if result and standings_data:
             standings['_standings_data'] = standings_data

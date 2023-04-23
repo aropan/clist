@@ -1940,7 +1940,7 @@ def make_versus(request):
         whos.append(who)
 
     url = reverse('ranking:versus', args=['/vs/'.join(whos)]) if len(whos) > 1 else None
-    if request.GET.get('redirect') in settings.YES_:
+    if url and request.GET.get('redirect') in settings.YES_:
         return redirect(url)
 
     context = {

@@ -12,6 +12,7 @@ import tqdm
 
 from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.common.locator import Locator
+from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules.neerc_ifmo_helper import parse_xml
 
 logging.getLogger('geopy').setLevel(logging.INFO)
@@ -44,6 +45,8 @@ class Statistic(BaseModule):
         if not html_table:
             regex = '<table[^>]*(?:border[^>]*|cellspacing[^>]*|cellpadding[^>]*){3}>.*?</table>'
             html_table = re.search(regex, page, re.DOTALL)
+            if not html_table:
+                raise ExceptionParseStandings('Cannot find standings table')
         header_mapping = {
             'Team': 'name',
             'Rank': 'place',

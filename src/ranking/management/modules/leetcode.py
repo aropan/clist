@@ -10,11 +10,14 @@ from datetime import datetime, timedelta
 from functools import lru_cache, partial
 from pprint import pprint
 
+import pytz
 import tqdm
 import yaml
+from django.db import transaction
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
+from clist.templatetags.extras import is_solved
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 
 # from ranking.management.modules import conf
 
@@ -206,6 +209,10 @@ class Statistic(BaseModule):
 
                     if n_added == 0:
                         stop = True
+            if statistics:
+                for handle, row in statistics.items():
+                    row['member'] = handle
+                    result.setdefault(handle, row)
 
         standings = {
             'result': result,
@@ -241,16 +248,17 @@ class Statistic(BaseModule):
         return data
 
     @staticmethod
+    def is_china(account):
+        profile_url = account.info.setdefault('profile_url', {})
+        if profile_url.get('_data_region') is None:
+            profile_url['_data_region'] = ''
+            account.save()
+        return '-cn' in profile_url['_data_region']
+
+    @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
 
         rate_limiter = RateLimiter(max_calls=1, period=4)
-
-        def is_chine(account):
-            profile_url = account.info.setdefault('profile_url', {})
-            if profile_url.get('_data_region') is None:
-                profile_url['_data_region'] = ''
-                account.save()
-            return '-cn' in profile_url['_data_region']
 
         @lru_cache()
         def get_all_contests(data_region=''):
@@ -280,7 +288,7 @@ class Statistic(BaseModule):
             while True:
                 try:
                     with rate_limiter:
-                        if is_chine(account):
+                        if Statistic.is_china(account):
                             ret = {}
 
                             post = '''
@@ -340,7 +348,7 @@ class Statistic(BaseModule):
                         page = None
                         break
 
-                    if is_chine(account):
+                    if Statistic.is_china(account):
                         if raise_on_error:
                             raise e
 
@@ -512,7 +520,7 @@ class Statistic(BaseModule):
                 info = {}
                 contest_addition_update_by = None
                 ratings, rankings, titles = [], [], []
-                if is_chine(account) or isinstance(page, dict) and 'contests' in page:
+                if Statistic.is_china(account) or isinstance(page, dict) and 'contests' in page:
                     info = page.pop('profile')['userProfilePublicProfile']
                     if info is None:
                         yield {'info': None}
@@ -602,6 +610,104 @@ class Statistic(BaseModule):
                     f'Account key {account.key} should be equal username {info["slug"]}'
 
                 yield ret
+
+    @transaction.atomic()
+    @staticmethod
+    def update_submissions(account, resource):
+
+        def recent_accepted_submissions(req=REQ):
+
+            if Statistic.is_china(account):
+                post = '''
+                {"query":"query recentAcSubmissions($userSlug: String!) { recentACSubmissions(userSlug: $userSlug) { submissionId submitTime question { title translatedTitle titleSlug questionFrontendId } } } ","variables":{"userSlug":"''' + account.key + '''"},"operationName":"recentAcSubmissions"}
+                '''
+                page = Statistic._get(
+                    'https://leetcode.cn/graphql/noj-go/',
+                    content_type='application/json',
+                    post=post.encode(),
+                    req=req,
+                )
+                data = json.loads(page)['data']['recentACSubmissions']
+            else:
+                post = '''
+                {"query":"query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { id title titleSlug timestamp } } ","variables":{"username":"''' + account.key + '''","limit":20},"operationName":"recentAcSubmissions"}
+                '''
+                page = Statistic._get(
+                    'https://leetcode.com/graphql',
+                    content_type='application/json',
+                    post=post.encode(),
+                    req=req,
+                )
+                data = json.loads(page)['data']['recentAcSubmissionList']
+            return data
+
+        ret = defaultdict(int)
+        submissions = recent_accepted_submissions()
+        save_account = False
+        for submission in submissions:
+
+            def get_field(*fields):
+                for field in fields:
+                    if field in submission:
+                        return submission.pop(field)
+                raise KeyError(f'No field {fields} in {submission}')
+
+            submission_time = int(get_field('timestamp', 'submitTime'))
+            submission_id = get_field('id', 'submissionId')
+            if 'question' in submission:
+                submission.update(submission.pop('question'))
+            title_slug = get_field('titleSlug')
+
+            regex = '/' + re.escape(title_slug) + '/?$'
+            qs = resource.problem_set.filter(url__regex=regex)
+            problems = qs[:2]
+            if len(problems) != 1:
+                LOG.warning(f'Wrong problems = {problems} for title slug = {title_slug}')
+                ret['n_missing_problem'] += 1
+                continue
+            problem = problems[0]
+            contests = set(problem.contests.all()[:2])
+            if problem.contest:
+                contests.add(problem.contest)
+            if len(contests) != 1:
+                LOG.warning(f'Wrong contests = {contests} for problem = {problem}')
+                ret['n_missing_contest'] += 1
+                continue
+            contest = next(iter(contests))
+            short = problem.short
+
+            if problem.name != get_field('title'):
+                LOG.warning(f'Problem {problem} has wrong name {problem.name}')
+                ret['n_wrong_problem_name'] += 1
+                continue
+
+            stat, created = contest.statistics_set.get_or_create(account=account)
+            if created:
+                stat.addition.setdefault('_no_update_n_contests', True)
+            problems = stat.addition.setdefault('problems', {})
+            problem = problems.setdefault(short, {})
+            upsolving = problem.setdefault('upsolving', {})
+            if is_solved(problem) or is_solved(upsolving):
+                ret['n_already_solved'] += 1
+                continue
+            upsolving = dict(
+                binary=True,
+                result='+',
+                submission_id=submission_id,
+                submission_time=submission_time,
+            )
+            problem['upsolving'] = upsolving
+            ret['n_updated'] += 1
+            stat.save()
+
+            submission_time = datetime.fromtimestamp(submission_time).replace(tzinfo=pytz.utc)
+            if not account.last_submission or account.last_submission < submission_time:
+                account.last_submission = submission_time
+                save_account = True
+
+        if save_account:
+            account.save()
+        return ret
 
 
 if __name__ == "__main__":

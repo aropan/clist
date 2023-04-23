@@ -14,7 +14,7 @@ from first import first
 from PIL import Image
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -25,10 +25,16 @@ class Statistic(BaseModule):
             self.standings_url = f'https://projecteuler.net/fastest={self.key}'
 
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'  # noqa
-        page = REQ.get(self.standings_url, headers={'User-Agent': user_agent})
+        try:
+            page = REQ.get(self.standings_url, headers={'User-Agent': user_agent})
+            unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
+        except FailOnGetResponse as e:
+            if e.code == 401:
+                unauthorized = True
+            else:
+                raise e
 
-        sign_out = re.search('<form[^>]*action="sign_out"[^>]*>', page)
-        if not sign_out:
+        if unauthorized:
             for attempt in range(20):
                 while True:
                     value = f'{random.random():.16f}'

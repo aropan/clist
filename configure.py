@@ -81,16 +81,16 @@ def run_command(cmd):
 def main():
     fill_template('.env.db')
     fill_template('src/pyclist/conf.py')
-    run_command('docker-compose build dev')
-    run_command('docker-compose run dev ./manage.py migrate contenttypes')
-    run_command('docker-compose run dev ./manage.py migrate auth')
-    run_command('docker-compose run dev ./manage.py migrate')
+    run_command('docker compose build dev')
+    run_command('docker compose run dev ./manage.py migrate contenttypes')
+    run_command('docker compose run dev ./manage.py migrate auth')
+    run_command('docker compose run dev ./manage.py migrate')
 
     username = enter_value('username', os.getlogin())
     password = enter_value('password', generete_password(10))
     email = enter_value('email', 'admin@localhost')
     run_command(f'''
-        docker-compose run dev ./manage.py createadmin
+        docker compose run dev ./manage.py createadmin
         --username "{username}"
         --password "{password}"
         --email "{email}"

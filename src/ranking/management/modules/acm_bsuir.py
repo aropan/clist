@@ -25,8 +25,10 @@ class Statistic(BaseModule):
         standings = self._module.get_standings(users, statistics)
         is_final = re.search(r'\bfinal\b', self.name, re.IGNORECASE)
         if is_final:
-            options = standings.setdefault('options', {})
-            medals = [{'name': medal, 'count': 1} for medal in ('gold', 'silver', 'bronze')]
-            options['medals'] = medals
+            has_hidden = standings.get('has_hidden')
+            if not has_hidden:
+                options = standings.setdefault('options', {})
+                medals = [{'name': medal, 'count': 1} for medal in ('gold', 'silver', 'bronze')]
+                options['medals'] = medals
             standings['series'] = 'bsuir-open'
         return standings

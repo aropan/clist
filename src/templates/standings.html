@@ -2,6 +2,7 @@
 {% load el_pagination_tags %}
 
 {% block ogtitle %}{% block title %}{{ contest.title }} - Standings{% endblock %}{% endblock %}
+{% block description %}Standings of {{ contest.title }} from {{ contest.resource.host }}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
