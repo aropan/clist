@@ -1,4 +1,4 @@
-const chat_socket = new WebSocket('wss://' + window.location.host + '/ws/chats/')
+const chat_socket = new WebSocket('wss://' + window.location.host + '/ws/chat/')
 
 function AddMessage(data, method='append') {
   time_ago = $('<time class="timeago" data-placement="right"/>').text($.timeago(data.when))

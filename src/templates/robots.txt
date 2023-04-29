@@ -4,7 +4,7 @@ Sitemap: https://clist.by/sitemap.xml
 Disallow: /api/
 Allow: /api/v1/doc
 Allow: /api/v2/doc
-Disallow: /chats/
+Disallow: /chat/
 Disallow: /admin/
 Disallow: /solutions/
 Disallow: /settings/

@@ -89,6 +89,8 @@ class BaseModelAdmin(admin.ModelAdmin):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if isinstance(db_field, models.fields.CharField) and db_field.name in getattr(self, 'textarea_fields', []):
             formfield.widget = forms.Textarea(attrs=formfield.widget.attrs)
+        elif isinstance(db_field, models.fields.TextField) and db_field.name in getattr(self, 'one_line_fields', []):
+            formfield.widget = forms.TextInput()
         return formfield
 
     class Meta:

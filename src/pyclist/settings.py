@@ -619,6 +619,7 @@ FONTAWESOME_ICONS_ = {
     'n_participants': {'icon': '<i class="fas fa-users"></i>', 'title': 'Number of participants', 'position': 'bottom'},
     'n_problems': {'icon': '<i class="far fa-file-code"></i>', 'title': 'Number of problems', 'position': 'bottom'},
     'series': '<i class="fas fa-trophy text-muted"></i>',
+    'app': '<i class="fas fa-desktop"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

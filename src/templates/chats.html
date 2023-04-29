@@ -1,51 +1,35 @@
-<!DOCTYPE html>
 {% extends "base.html" %}
 
 {% block ogtitle %}{% block title %}Chats{% endblock %}{% endblock %}
 
 {% block end-head %}
-<link href="{% static_ts 'css/chats.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/chats.js' %}"></script>
-
-<script src="{% static_ts 'js/jquery.timeago.js' %}"></script>
 {% endblock %}
 
-{% block navbar %}{% endblock %}
+{% block content %}
 
-{% block container %}
-<div class="container-fluid">
-    <div class="row">
-        {% comment %} <div class="col-xs-3" id="left"> {% endcomment %}
-        {% comment %}     <div id="chats"> {% endcomment %}
-        {% comment %}     </div> {% endcomment %}
-        {% comment %} </div> {% endcomment %}
-        <div class="col-xs-12" id="right">
-            {% comment %} <div class="row"> {% endcomment %}
-            {% comment %}     <div class="col-md-12 right-header"> {% endcomment %}
-            {% comment %}         <div class="right-header-detail"> {% endcomment %}
-            {% comment %}             <p>Jack Clerk</p> {% endcomment %}
-            {% comment %}             <span>already 19 messages </span> {% endcomment %}
-            {% comment %}         </div> {% endcomment %}
-            {% comment %}     </div> {% endcomment %}
-            {% comment %} </div> {% endcomment %}
-            <div class="messages">
+<div class="col-xl-10 col-xl-offset-1">
 
-            </div>
-
-            <div id="typing">
-                <div id="typing-textbox">
-                    {% if request.user.is_authenticated %}
-                    <input id="chat-message-input" placeholder="Type a message..." type="text" autocomplete="off">
-                    {% else %}
-                    <button id="chat-message-input" onclick="location.href='{% url 'auth:login' %}?next={{ request.path }}'">Log in to send a message</button>
-                    {% endif %}
-                    <input id="chat-message-submit" class="hidden" type="button" value="Send">
-                    <input id="chat-name" class="hidden" type="text" value="room__general">
-                    <input id="chat-history-id" class="hidden" type="text">
-                </div>
-            </div>
-        </div>
+  <form class="form-inline" method="get" action="">
+    <div class="form-group">
+      {% include "field_to_select.html" with data=chat_type_select field="app" %}
+      {% include 'resource_filter.html' %}
+      {% include 'contest_filter.html' %}
     </div>
+  </form>
+
+  {% comment %} <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script> {% endcomment %}
+  {% comment %} <div id="chats" class="panel panel-default table-responsive"> {% endcomment %}
+  {% comment %}   <table class="table table-hover table-striped table-float-head"> {% endcomment %}
+  {% comment %}     <thead> {% endcomment %}
+  {% comment %}       <tr> {% endcomment %}
+  {% comment %}         <th>Name</th> {% endcomment %}
+  {% comment %}       </tr> {% endcomment %}
+  {% comment %}     </thead> {% endcomment %}
+  {% comment %}     <tbody> {% endcomment %}
+  {% comment %}       {% include page_template %} {% endcomment %}
+  {% comment %}     </tbody> {% endcomment %}
+  {% comment %}   </table> {% endcomment %}
+  {% comment %} </div> {% endcomment %}
 </div>
 
 {% endblock %}

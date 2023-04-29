@@ -1,3 +1,5 @@
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from clist.templatetags.extras import slug
@@ -40,3 +42,23 @@ class ChatLog(BaseModel):
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE, null=True, blank=True, default=None)
     action = models.CharField(max_length=20, null=False)
     context = models.JSONField(null=True, blank=True, default=dict)
+
+
+class ExternalChat(BaseModel):
+
+    class ExternalChatType(models.TextChoices):
+        BLANK = 'BLANK', 'Blank'
+        # DISCORD = 'DSCRD', 'Discord'
+        TELEGRAM = 'TLGRM', 'Telegram'
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    related = GenericForeignKey('content_type', 'object_id')
+
+    chat_type = models.CharField(
+        max_length=5,
+        choices=ExternalChatType.choices,
+        default=ExternalChatType.BLANK,
+        db_index=True,
+    )
+    chat_id = models.TextField(null=False, db_index=True)

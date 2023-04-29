@@ -1,0 +1,11 @@
+{% load el_pagination_tags %}
+
+{% lazy_paginate 50,200 chats %}
+
+{% for chat in chats %}
+<tr>
+  <td>{{ chat.related }}</td>
+</tr>
+{% endfor %}
+
+{% show_more_table %}

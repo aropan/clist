@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Chat{% endblock %}{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/chat.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/chat.js' %}"></script>
+
+<script src="{% static_ts 'js/jquery.timeago.js' %}"></script>
+{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block container %}
+<div class="container-fluid">
+    <div class="row">
+        {% comment %} <div class="col-xs-3" id="left"> {% endcomment %}
+        {% comment %}     <div id="chats"> {% endcomment %}
+        {% comment %}     </div> {% endcomment %}
+        {% comment %} </div> {% endcomment %}
+        <div class="col-xs-12" id="right">
+            {% comment %} <div class="row"> {% endcomment %}
+            {% comment %}     <div class="col-md-12 right-header"> {% endcomment %}
+            {% comment %}         <div class="right-header-detail"> {% endcomment %}
+            {% comment %}             <p>Jack Clerk</p> {% endcomment %}
+            {% comment %}             <span>already 19 messages </span> {% endcomment %}
+            {% comment %}         </div> {% endcomment %}
+            {% comment %}     </div> {% endcomment %}
+            {% comment %} </div> {% endcomment %}
+            <div class="messages">
+
+            </div>
+
+            <div id="typing">
+                <div id="typing-textbox">
+                    {% if request.user.is_authenticated %}
+                    <input id="chat-message-input" placeholder="Type a message..." type="text" autocomplete="off">
+                    {% else %}
+                    <button id="chat-message-input" onclick="location.href='{% url 'auth:login' %}?next={{ request.path }}'">Log in to send a message</button>
+                    {% endif %}
+                    <input id="chat-message-submit" class="hidden" type="button" value="Send">
+                    <input id="chat-name" class="hidden" type="text" value="room__general">
+                    <input id="chat-history-id" class="hidden" type="text">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
