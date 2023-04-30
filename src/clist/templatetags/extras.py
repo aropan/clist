@@ -1067,3 +1067,12 @@ def media_size(path, size):
     if settings.DEBUG:
         ret = settings.MAIN_HOST_ + ret
     return ret
+
+
+@register.filter
+def allow_first(division_and_problem, stat):
+    division, problem = division_and_problem
+    if division != 'any' or not stat:
+        return True
+    first_ac_time = problem.get('first_ac', {}).get('time')
+    return first_ac_time and first_ac_time == stat.get('time')

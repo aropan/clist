@@ -667,9 +667,10 @@ class Command(BaseCommand):
 
                                 medals = contest.info.get('standings', {}).get('medals')
                                 if medals and contest.end_time < now and not contest.has_hidden_results:
+                                    medals_divisions = contest.info.get('standings', {}).get('medals_divisions')
                                     k = 'medal'
                                     r.pop(k, None)
-                                    if 'place' in r:
+                                    if 'place' in r and (not medals_divisions or r.get('division') in medals_divisions):
                                         place = get_number_from_str(r['place'])
                                         if member in contest.info.get('standings', {}).get('medals_skip', []):
                                             medals_skip.add(member)

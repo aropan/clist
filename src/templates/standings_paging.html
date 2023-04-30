@@ -199,8 +199,9 @@ data-place="{{ statistic.place }}"
   {% for problem in problems %}
     {% with key=problem|get_problem_short  %}
     {% with stat=addition.problems|get_item:key %}
+    {% with with_first=params.division|pass_arg:problem|allow_first:stat %}
     <{{ tag }}
-      class="problem-cell{% if stat %} problem-cell-stat{% if '_class' in stat %} {{ stat|get_item:"_class" }}{% elif stat.first_ac_of_all %} first-ac-of-all{% elif stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}"
+      class="problem-cell{% if stat %} problem-cell-stat{% if '_class' in stat %} {{ stat|get_item:"_class" }}{% elif with_first and stat.first_ac_of_all %} first-ac-of-all{% elif with_first and stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}"
       {% if stat %}
       data-score="{% if not problem.full_score or not stat.binary and not stat.result|slice:":1" == "+" %}{{ stat.result }}{% else %}{{ problem.full_score }}{% endif %}"
       data-result="{{ stat.result }}"
@@ -213,13 +214,14 @@ data-place="{{ statistic.place }}"
       {% endif %}
       data-penalty-in-seconds="{{ stat.time_in_seconds }}"
       data-more-penalty="{{ stat.penalty }}"
-      data-class="{% if '_class' in stat %}{{ stat|get_item:"_class" }}{% elif stat.first_ac_of_all %}first-ac-of-all{% elif stat.first_ac %}first-ac{% elif stat.max_score %}max-score{% endif %}"
+      data-class="{% if '_class' in stat %}{{ stat|get_item:"_class" }}{% elif with_first and stat.first_ac_of_all %}first-ac-of-all{% elif with_first and stat.first_ac %}first-ac{% elif stat.max_score %}max-score{% endif %}"
       {% endif %}
       data-problem-key="{{ key }}"
       data-problem-full-score="{{ problem.full_score }}"
     >
       {% include "standings_problem_stat.html" with stat=stat %}
     </{{ tag }}>
+    {% endwith %}
     {% endwith %}
     {% endwith %}
   {% endfor %}

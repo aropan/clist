@@ -561,7 +561,7 @@ def render_standings_paging(contest, statistics, with_detail=True):
 
     statistics = statistics.prefetch_related('account')
 
-    mod_penalty = get_standings_mod_penalty(contest, problems, statistics)
+    mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)
     colored_by_group_score = contest.info.get('standings', {}).get('colored_by_group_score')
 
     context = {
@@ -615,21 +615,20 @@ def get_standings_divisions_order(contest):
     return divisions_order
 
 
-def get_standings_mod_penalty(contest, problems, statistics):
-    mod_penalty = None
+def get_standings_mod_penalty(contest, division, problems, statistics):
+    for p in problems:
+        if 'full_score' in p and isinstance(p['full_score'], (int, float)) and abs(p['full_score'] - 1) > 1e-9:
+            return None
     contest_fields = contest.info.get('fields', [])
     if contest.duration_in_secs and all('time' not in k for k in contest_fields):
+        if division and division != 'any':
+            statistics = statistics.filter(addition__division=division)
         first = statistics.first()
         if first:
             penalty = first.addition.get('penalty')
             if penalty and isinstance(penalty, int) and 'solved' not in first.addition:
-                mod_penalty = {'solving': first.solving, 'penalty': penalty}
-    if mod_penalty:
-        for p in problems:
-            if 'full_score' in p and isinstance(p['full_score'], (int, float)) and abs(p['full_score'] - 1) > 1e-9:
-                mod_penalty = None
-                break
-    return mod_penalty
+                return {'solving': first.solving, 'penalty': penalty}
+    return None
 
 
 def get_standings_problems(contest, division):
@@ -1084,7 +1083,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             timeline = None
 
     problems = get_standings_problems(contest, division)
-    mod_penalty = get_standings_mod_penalty(contest, problems, statistics)
+    mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)
     freeze_duration_factor = options.get('freeze_duration_factor', settings.STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT)
     freeze_duration_factor = request.GET.get('t_freeze', freeze_duration_factor)
     freeze_duration = (mod_penalty or 't_freeze' in request.GET) and freeze_duration_factor
