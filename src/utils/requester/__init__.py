@@ -3,7 +3,6 @@
 
 
 import atexit
-import copy
 import html
 import json
 import logging
@@ -824,11 +823,9 @@ class requester():
 
     def __call__(self, with_proxy=False, args_proxy=None):
         if with_proxy:
-            ret = copy.copy(self)
-            ret.init_opener()
+            self.save_cookie()
             args_proxy = args_proxy or {}
-            ret.set_proxy(proxy=True, **args_proxy)
-            return ret
+            self.set_proxy(proxy=True, **args_proxy)
         return self
 
     def __enter__(self):
@@ -836,6 +833,7 @@ class requester():
 
     def __exit__(self, *err):
         self.close()
+        self.init_opener()
 
     def cleanup(self):
         self.save_cookie()

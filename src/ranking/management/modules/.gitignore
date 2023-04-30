@@ -1,5 +1,4 @@
 conf.py
 .locations.yaml
 .leetcode.yaml
-.leetcode.proxies.json
-.kaggle.proxies.json
+.*.proxies.json

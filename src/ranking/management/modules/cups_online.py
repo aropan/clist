@@ -45,7 +45,7 @@ class Statistic(BaseModule):
         data = REQ.get('/api_v2/contests/battles/?page_size=100500', return_json=True)
         for dcontest in data['results']:
             for dround in dcontest['rounds']:
-                if str(dround['id']) == key:
+                if str(dround['id']) == key and dround['tasks']:
                     return dround['tasks'][0]['id']
 
     def get_standings(self, users=None, statistics=None):

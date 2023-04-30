@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import io
+import json
+import os
 import random
 import re
 from collections import OrderedDict
@@ -14,7 +16,7 @@ from first import first
 from PIL import Image
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -25,57 +27,66 @@ class Statistic(BaseModule):
             self.standings_url = f'https://projecteuler.net/fastest={self.key}'
 
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'  # noqa
-        try:
-            page = REQ.get(self.standings_url, headers={'User-Agent': user_agent})
+
+        with REQ(
+            with_proxy=True,
+            args_proxy={
+                'time_limit': 5,
+                'n_limit': 30,
+                'filepath_proxies': os.path.join(os.path.dirname(__file__), '.projecteuler.proxies'),
+                'connect': lambda req: req.get(self.standings_url, headers={'User-Agent': user_agent}),
+            },
+        ) as req:
+            page = req.proxer.get_connect_ret()
             unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
-        except FailOnGetResponse as e:
-            if e.code == 401:
-                unauthorized = True
-            else:
-                raise e
 
-        if unauthorized:
-            for attempt in range(20):
-                while True:
-                    value = f'{random.random():.16f}'
-                    image_bytes = REQ.get(f'https://projecteuler.net/captcha/show_captcha.php?{value}')
-                    image_stream = io.BytesIO(image_bytes)
-                    image_rgb = Image.open(image_stream)
-                    text = pytesseract.image_to_string(image_rgb, config='--oem 0 --psm 13 digits')
-                    text = text.strip()
-                    if re.match('^[0-9]{5}$', text):
+            if unauthorized:
+                for attempt in range(20):
+                    while True:
+                        value = f'{random.random():.16f}'
+                        image_bytes = req.get(f'https://projecteuler.net/captcha/show_captcha.php?{value}')
+                        image_stream = io.BytesIO(image_bytes)
+                        image_rgb = Image.open(image_stream)
+                        text = pytesseract.image_to_string(image_rgb, config='--oem 0 --psm 13 digits')
+                        text = text.strip()
+                        if re.match('^[0-9]{5}$', text):
+                            break
+
+                    req.get('https://projecteuler.net/sign_in')
+                    page = req.submit_form(
+                        name='sign_in_form',
+                        action=None,
+                        data={
+                            'username': conf.PROJECTEULER_USERNAME,
+                            'password': conf.PROJECTEULER_PASSWORD,
+                            'captcha': text,
+                            'remember_me': '1',
+                        },
+                    )
+                    match = re.search('<p[^>]*class="warning"[^>]*>(?P<message>[^<]*)</p>', page)
+                    if match:
+                        req.print(match.group('message'))
+                    else:
                         break
-
-                REQ.get('https://projecteuler.net/sign_in')
-                page = REQ.submit_form(
-                    name='sign_in_form',
-                    action=None,
-                    data={
-                        'username': conf.PROJECTEULER_USERNAME,
-                        'password': conf.PROJECTEULER_PASSWORD,
-                        'captcha': text,
-                        'remember_me': '1',
-                    },
-                )
-                match = re.search('<p[^>]*class="warning"[^>]*>(?P<message>[^<]*)</p>', page)
-                if match:
-                    REQ.print(match.group('message'))
                 else:
-                    break
-            else:
-                raise ExceptionParseStandings('Did not recognize captcha for sign in')
-            page = REQ.get(self.standings_url)
+                    raise ExceptionParseStandings('Did not recognize captcha for sign in')
+                page = req.get(self.standings_url)
+
+            if req.proxer.proxy:
+                with open('logs/legacy/projecteuler.proxy', 'w') as fo:
+                    json.dump(req.proxer.proxy, fo, indent=2)
 
         result = {}
 
-        problem_name = self.name.split('.', 1)[1].strip()
         problem_key = self.key
-        problems_info = [{
-            'name': problem_name,
+        problem_info = {
             'code': problem_key,
             'url': self.url,
             'n_total': 100,
-        }]
+        }
+        if '. ' in self.name:
+            problem_info['name'] = self.name.split('. ', 1)[1].strip()
+        problems_info = [problem_info]
 
         regex = '<table[^>]*>.*?</table>'
         html_table = re.search(regex, page, re.DOTALL)

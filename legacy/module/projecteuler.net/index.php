@@ -4,6 +4,11 @@
     $user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36';
     curl_setopt($CID, CURLOPT_USERAGENT, $user_agent);
 
+    $proxy_file = dirname(__FILE__) . "/../../logs/projecteuler.proxy";
+    $proxy = file_exists($proxy_file)? json_decode(file_get_contents($proxy_file)) : false;
+    if ($proxy) {
+        curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
+    }
 
     $urls = array('https://projecteuler.net/recent');
 
@@ -67,6 +72,8 @@
         print_r($contests);
     }
 
-
+    if ($proxy) {
+        curl_setopt($CID, CURLOPT_PROXY, null);
+    }
     curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
 ?>
