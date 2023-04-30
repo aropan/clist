@@ -96,7 +96,7 @@
         {% block navbar %}{% include 'navbar.html' %}{% endblock %}
         <div class="rating-clips">{% include "rating-clip.html" %}</div>
 
-        <div class="container__main">
+        <div class="container__main body-wrapper">
             {% block container %}
             <div{% if not fullscreen %} class="container container__left"{% endif %}>
             {% block banner %}
@@ -117,6 +117,8 @@
             <div class="container__right hidden"></div>
             {% endcomment %}
         </div>
+
+        {% block footer %}{% include 'footer.html' %}{% endblock %}
 
         {% include 'messages.html' %}
 

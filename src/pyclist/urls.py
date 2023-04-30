@@ -39,7 +39,7 @@ urlpatterns = [
          sitemap if settings.DEBUG else cache_page(86400)(sitemap),
          {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 
-    re_path(r'^privacy/$', TemplateView.as_view(template_name='privacy.html')),
+    re_path(r'^privacy/$', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
     re_path(r'^favicon/$', RedirectView.as_view(url=static('img/favicon/favicon-32x32.png')), name='favicon'),
 ]
 
