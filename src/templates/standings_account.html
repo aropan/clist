@@ -31,7 +31,7 @@
     {% with names=account.key|split_account_key:resource.info.standings.subname %}
     <span>{{ names.0 }}<div class="text-muted small">{{ names.1 }}</div></span>
     {% endwith %}
-  {% elif addition.name and account.key|has_season:addition.name or team_id or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
+  {% elif addition.name and account.key|has_season:addition.name or members or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
     <span{% if addition.name|length > 50 %} title="{{ addition.name }}" data-toggle="tooltip"{% endif %}>{{ addition.name|truncatechars:50 }}</span>
   {% else %}
     <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>

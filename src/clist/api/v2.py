@@ -168,7 +168,7 @@ class ContestResource(BaseModelResource):
         filters = filters or {}
         upcoming = filters.pop('upcoming', None)
         filtered = filters.pop('filtered', None)
-        category = filters.pop('category', 'api')
+        category = filters.pop('category', ['api'])
         resource = filters.pop('resource', None)
         with_problems = filters.pop('with_problems', None)
         format_time = filters.pop('format_time', None)
@@ -198,10 +198,11 @@ class ContestResource(BaseModelResource):
             if f.startswith('duration'):
                 applicable_filters[f] = parse_duration(applicable_filters[f]).total_seconds()
         filtered = applicable_filters.pop('filtered', None)
-        category = applicable_filters.pop('category', 'api')
+        category = applicable_filters.pop('category', None)
         upcoming = applicable_filters.pop('upcoming', 'true' if is_atom else None)
         with_problems = applicable_filters.pop('with_problems', None)
         format_time = applicable_filters.pop('format_time', 'true' if is_atom else None)
+
 
         if is_atom and 'start_time__during' not in applicable_filters:
             applicable_filters['start_time__during'] = '1 day'

@@ -737,7 +737,6 @@ def update_problems(contest, problems=None, force=False):
                     if prev.get('subname') and prev.get('name') == name:
                         continue
                 prev = dict(problem_info)
-                print(index)
 
                 problem_contest = contest if 'code' not in problem_info else None
 

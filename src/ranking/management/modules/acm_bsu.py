@@ -8,8 +8,8 @@ from pprint import pprint
 from django.utils.timezone import now
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import DOT, REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import InitModuleException
+from ranking.management.modules.common import DOT, REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
 class Statistic(BaseModule):
@@ -27,7 +27,12 @@ class Statistic(BaseModule):
         has_provisional = False
 
         result = {}
-        page = REQ.get(self.standings_url)
+        try:
+            page = REQ.get(self.standings_url)
+        except FailOnGetResponse as e:
+            if e.code == 403:
+                raise ExceptionParseStandings('Forbidden')
+            raise e
         table = parsed_table.ParsedTable(html=page, xpath="//table[@class='ir-contest-standings']//tr")
         problems_info = collections.OrderedDict()
         has_plus = False

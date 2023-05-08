@@ -9,6 +9,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
+import logging
 import warnings
 from os import path
 
@@ -18,6 +19,7 @@ from django.core.paginator import UnorderedObjectListWarning
 from django.utils.translation import gettext_lazy as _
 from environ import Env
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 from stringcolor import cs
 
 from pyclist import conf
@@ -661,18 +663,12 @@ if not DEBUG:
         dsn=env('SENTRY_DSN'),
         integrations=[
             DjangoIntegration(),
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
         ],
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        # We recommend adjusting this value in production.
-        traces_sample_rate=0.1,
-        # If you wish to associate users to errors (assuming you are using
-        # django.contrib.auth) you may enable sending PII data.
+        traces_sample_rate=0.01,
+        profiles_sample_rate=0.01,
         send_default_pii=True,
         environment='development' if DEBUG else 'production',
-        _experiments={
-            'profiles_sample_rate': 0.1,
-        },
     )
 
 

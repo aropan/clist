@@ -1064,8 +1064,6 @@ def to_list(value):
 @register.filter
 def media_size(path, size):
     ret = os.path.join(settings.MEDIA_URL, 'sizes', size, path)
-    if settings.DEBUG:
-        ret = settings.MAIN_HOST_ + ret
     return ret
 
 

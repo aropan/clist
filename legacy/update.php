@@ -296,9 +296,9 @@
         $get_skip_check_time = isset($_GET['skip_check_time']);
         $contest_skip_check_time = !empty($contest['skip_check_time']);
         if (!DEBUG && !$get_skip_check_time && !$contest_skip_check_time) {
-            if ($contest['end_time'] < $contest['start_time']) continue;
             if ($contest['end_time'] + 31 * 24 * 60 * 60 < time()) continue;
         }
+        if ($contest['end_time'] < $contest['start_time']) continue;
 
         if (!isset($contest['key']) || !$contest['key']) $contest['key'] = date("Y", $contest['start_time']) . " " . $contest['title'];
 

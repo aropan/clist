@@ -88,7 +88,7 @@ class Account(BaseModel):
             return True
         if field in {'profile_url', 'rating'}:
             return True
-        if 'email' in field.lower():
+        if field.lower() in {'email', 'telegram', 'dateofbirth'}:
             return True
 
     class Meta:

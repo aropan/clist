@@ -6,7 +6,7 @@ from tqdm import tqdm
 from clist.models import Resource
 
 
-def main(host=None):
+def main(host):
     resources = Resource.objects.all()
     if host:
         resources = resources.filter(host__regex=host)

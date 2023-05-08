@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import re
 from datetime import timedelta
 
@@ -24,16 +25,11 @@ class Statistic(BaseModule):
 
         season = self.get_season()
 
-        def standings_page(req):
-            return req.get(standings_url)
-
-        with REQ(
-            with_proxy=True,
-            args_proxy=dict(
-                time_limit=3,
-                n_limit=100,
-                connect=standings_page,
-            ),
+        with REQ.with_proxy(
+            time_limit=3,
+            n_limit=100,
+            filepath_proxies=os.path.join(os.path.dirname(__file__), '.techgig.proxies'),
+            connect=lambda req: req.get(standings_url),
         ) as req:
             page = req.proxer.get_connect_ret()
 

@@ -3,6 +3,7 @@
 
 
 import atexit
+import copy
 import html
 import json
 import logging
@@ -85,7 +86,7 @@ def raise_fail(err):
     if exc.url:
         logger.warning(f'url = {exc.url}')
     if exc.response:
-        cropped_response = exc.response.strip().split('\n')[0][:100]
+        cropped_response = exc.response.strip().replace('\n', '\\n')[:200]
         logger.warning(f'response = {cropped_response}')
     raise exc
 
@@ -821,12 +822,15 @@ class requester():
             self.proxer.save_data()
         self.save_cookie()
 
-    def __call__(self, with_proxy=False, args_proxy=None):
-        if with_proxy:
-            self.save_cookie()
-            args_proxy = args_proxy or {}
-            self.set_proxy(proxy=True, **args_proxy)
-        return self
+    def with_proxy(self, inplace=True, **kwargs):
+        self.save_cookie()
+        if inplace:
+            ret = self
+        else:
+            ret = copy.copy(self)
+            ret.init_opener()
+        ret.set_proxy(proxy=True, **kwargs)
+        return ret
 
     def __enter__(self):
         return self

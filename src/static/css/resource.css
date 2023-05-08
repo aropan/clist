@@ -6,7 +6,7 @@ table.table tr th {
 
 #toggleLogScale {
   position: absolute;
-  right: 0;
+  right: 15px;
 }
 
 @media (min-width:1200px) {

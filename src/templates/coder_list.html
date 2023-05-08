@@ -20,87 +20,85 @@
   {% endif %}
 </h2>
 
-<div class="row">
-  <div class="col-xl-10 col-xl-offset-1">
-    <form class="form-inline" method="post" action="">
-      {% if can_modify %}
-      {% csrf_token %}
+<div class="col-xl-10 col-xl-offset-1">
+  <form class="form-inline" method="post" action="">
+    {% if can_modify %}
+    {% csrf_token %}
 
-      <div id="add-list-value">
-        <span id="add-list-value-coder">
-        {% include "coder_filter.html" with nomultiply=True coder="coder" %}
-        <span class="or">or</span>
-        </span>
-        {% include "account_filter.html" with nomultiply=True account="account" %}
-        <span class="or">or</span>
-        <div class="form-group">
-          <textarea class="form-control" rows="1" name="raw" id="raw-value" placeholder="coder_1
+    <div id="add-list-value">
+      <span id="add-list-value-coder">
+      {% include "coder_filter.html" with nomultiply=True coder="coder" %}
+      <span class="or">or</span>
+      </span>
+      {% include "account_filter.html" with nomultiply=True account="account" %}
+      <span class="or">or</span>
+      <div class="form-group">
+        <textarea class="form-control" rows="1" name="raw" id="raw-value" placeholder="coder_1
 host_2:account_2,host_3:account_3
 ..."></textarea>
-          <button class="btn btn-primary btn-sm" type="submit" id="raw-submit" disabled>Add</button>
-        </div>
+        <button class="btn btn-primary btn-sm" type="submit" id="raw-submit" disabled>Add</button>
       </div>
-      {% endif %}
+    </div>
+    {% endif %}
 
-      <div id="coder-list" class="panel panel-default table-responsive">
-        <table class="table table-hover table-striped">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th><i class="fas fa-external-link-alt"></i></th>
-              <th>VS</th>
-              <th class="value">
-                Coder/Accounts
-                <span class="small text-muted">({{ coder_values|length }} of {{ coder_list_n_values_limit }})</span>
-              </th>
-              {% for resource in params.resources %}
-              <th>
-                <a href="{% url 'clist:resource' resource.host %}">
-                  <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="24" height="24"/>
-                </a>
-              </th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for group_id, data in coder_values.items %}
-            <tr>
-              <td>{{ forloop.counter }}</td>
-              <td><a href="{% url 'coder:mixed_profile' data.versus %}"><i class="fa fa-user"></i></a></td>
-              <td>
-                {% if request.user.is_authenticated %}
-                <a href="{% url 'ranking:versus' data.versus|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a>
-                {% else %}
-                <a href="{% url 'auth:login' %}?next={{ request.path }}"><i class="fa fa-sign-in-alt"></i></a>
-                {% endif %}
-              </td>
-              <td class="value">
-                {% for v in data.list_values %}
-                  {% if forloop.counter0 %}|{% endif %}
-                  {% if v.coder %}
-                  <a href="{% url 'coder:profile' v.coder.username %}">{{ v.coder.username }}</a>
-                  {% elif v.account %}
-                  {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True %}
-                  {% else %}
-                  &mdash;
-                  {% endif %}
-                {% endfor %}
-                {% if can_modify %}
-                {% with v=data.list_values.0 %}
-                <span class="inline-button">
-                  <button href="#" class="add-account btn btn-primary btn-xs" data-gid="{{ v.group_id }}"><i class="fas fa-plus"></i></button>
-                  <button class="btn btn-danger btn-xs" name="delete_gid" value="{{ v.group_id }}"><i class="far fa-trash-alt"></i></button>
-                </span>
-                {% endwith %}
-                {% endif %}
-              </td>
-            </tr>
+    <div id="coder-list" class="panel panel-default table-responsive">
+      <table class="table table-hover table-striped">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><i class="fas fa-external-link-alt"></i></th>
+            <th>VS</th>
+            <th class="value">
+              Coder/Accounts
+              <span class="small text-muted">({{ coder_values|length }} of {{ coder_list_n_values_limit }})</span>
+            </th>
+            {% for resource in params.resources %}
+            <th>
+              <a href="{% url 'clist:resource' resource.host %}">
+                <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="24" height="24"/>
+              </a>
+            </th>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </form>
-  </div>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group_id, data in coder_values.items %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><a href="{% url 'coder:mixed_profile' data.versus %}"><i class="fa fa-user"></i></a></td>
+            <td>
+              {% if request.user.is_authenticated %}
+              <a href="{% url 'ranking:versus' data.versus|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a>
+              {% else %}
+              <a href="{% url 'auth:login' %}?next={{ request.path }}"><i class="fa fa-sign-in-alt"></i></a>
+              {% endif %}
+            </td>
+            <td class="value">
+              {% for v in data.list_values %}
+                {% if forloop.counter0 %}|{% endif %}
+                {% if v.coder %}
+                <a href="{% url 'coder:profile' v.coder.username %}">{{ v.coder.username }}</a>
+                {% elif v.account %}
+                {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True %}
+                {% else %}
+                &mdash;
+                {% endif %}
+              {% endfor %}
+              {% if can_modify %}
+              {% with v=data.list_values.0 %}
+              <span class="inline-button">
+                <button href="#" class="add-account btn btn-primary btn-xs" data-gid="{{ v.group_id }}"><i class="fas fa-plus"></i></button>
+                <button class="btn btn-danger btn-xs" name="delete_gid" value="{{ v.group_id }}"><i class="far fa-trash-alt"></i></button>
+              </span>
+              {% endwith %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
 </div>
 
 {% endblock %}

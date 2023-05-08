@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from googleapiclient.http import BatchHttpRequest
-from pytz import UTC
-
 from legacy.api.google_calendar.common import service
+from pytz import UTC
+from traceback_with_variables import prints_exc
 
 from clist.models import Contest, Resource
 
@@ -87,6 +87,7 @@ def get_time_with_tz(time, tz=UTC):
 class Command(BaseCommand):
     help = 'Update google calendars'
 
+    @prints_exc
     def handle(self, *args, **options):
         now = timezone.now()
         print(now)

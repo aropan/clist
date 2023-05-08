@@ -150,13 +150,10 @@ class Statistic(BaseModule):
                 data['name'] = name
             return data
 
-        with REQ(
-            with_proxy=True,
-            args_proxy={
-                'time_limit': 2,
-                'n_limit': 50,
-                'filepath_proxies': os.path.join(os.path.dirname(__file__), '.kaggle.proxies'),
-            },
+        with REQ.with_proxy(
+            time_limit=2,
+            n_limit=50,
+            filepath_proxies=os.path.join(os.path.dirname(__file__), '.kaggle.proxies'),
         ) as req:
             for user in users:
                 data = fetch_profile(req, user)

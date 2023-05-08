@@ -98,7 +98,7 @@
 
         <div class="container__main body-wrapper">
             {% block container %}
-            <div{% if not fullscreen %} class="container container__left"{% endif %}>
+            <div{% if not fullscreen %} class="container-fluid container__left"{% endif %}>
             {% block banner %}
                 {% for b in banners %}
                     {% if b.template %}

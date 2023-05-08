@@ -641,17 +641,17 @@ canvas.rating_history {
  * Footer
  */
 
-.footer {
+#footer {
   text-align: center;
   white-space: nowrap;
 }
 
-.footer.navbar.navbar-default {
+#footer {
   margin-bottom: 0px;
   margin-top: 20px;
 }
 
-.footer .row ul {
+#footer ul {
   margin: 0px;
   padding-left: 0px;
   padding-right: 0px;
@@ -659,33 +659,33 @@ canvas.rating_history {
   padding-bottom: 15px;
 }
 
-.footer .row ul li {
+#footer ul li {
   display: inline-block;
 }
 
-.footer .row .footer-divider {
+#footer .footer-divider {
   padding-left: 10px;
   padding-right: 10px;
 }
 
-.footer .row a {
+#footer a {
   color: #777;
 }
 
-.footer .row a:hover {
+#footer a:hover {
   color: #000;
 }
 
-.footer .row .icons a {
+#footer .icons a {
   padding-left: 5px;
   padding-right: 5px;
 }
 
 @media (max-width: 768px) {
-  .footer .row ul li {
+  #footer ul li {
     display: block;
   }
-  .footer .row .footer-divider {
+  #footer .footer-divider {
     display: none;
   }
 }

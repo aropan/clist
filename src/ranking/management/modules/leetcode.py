@@ -25,8 +25,9 @@ from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetRes
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global'
     RANKING_URL_FORMAT_ = '{url}/ranking'
-    API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}.com/api/submissions/{}/'
+    API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}/api/submissions/{}/'
     STATE_FILE = os.path.join(os.path.dirname(__file__), '.leetcode.yaml')
+    DOMAINS = {'': '.com', 'us': '.com', 'cn': '.cn'}
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -43,8 +44,8 @@ class Statistic(BaseModule):
     @staticmethod
     def fetch_submission(submission, req=REQ, raise_on_error=False):
         data_region = submission['data_region']
-        data_region = '' if data_region == 'US' else f'-{data_region.lower()}'
-        url = Statistic.API_SUBMISSION_URL_FORMAT_.format(data_region, submission['submission_id'])
+        domain = Statistic.DOMAINS[data_region.lower()]
+        url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission['submission_id'])
         try:
             content = req.get(url)
             content = json.loads(content)
@@ -155,7 +156,10 @@ class Statistic(BaseModule):
                         r['place'] = rank + (1 if rank_index0 else 0)
 
                         data_region = row.pop('data_region').lower()
-                        r['info'] = {'profile_url': {'_data_region': '' if data_region == 'us' else f'-{data_region}'}}
+                        r['info'] = {'profile_url': {
+                            '_data_region': '' if data_region == 'us' else f'-{data_region}',
+                            '_domain': Statistic.DOMAINS[data_region],
+                        }}
 
                         country = None
                         for field in 'country_code', 'country_name':
@@ -229,14 +233,11 @@ class Statistic(BaseModule):
     def get_source_code(contest, problem):
         _, data = Statistic.fetch_submission(problem, raise_on_error=False)
         if not data:
-            with REQ(
-                with_proxy=True,
-                args_proxy={
-                    'time_limit': 3,
-                    'n_limit': 30,
-                    'filepath_proxies': os.path.join(os.path.dirname(__file__), '.leetcode.proxies'),
-                    'connect': partial(Statistic.fetch_submission, problem, raise_on_error=True),
-                },
+            with REQ.with_proxy(
+                time_limit=3,
+                n_limit=30,
+                filepath_proxies=os.path.join(os.path.dirname(__file__), '.leetcode.get_source_code.proxies'),
+                connect=partial(Statistic.fetch_submission, problem, raise_on_error=True),
             ) as req:
                 _, data = req.proxer.get_connect_ret()
 
@@ -252,8 +253,9 @@ class Statistic(BaseModule):
         profile_url = account.info.setdefault('profile_url', {})
         if profile_url.get('_data_region') is None:
             profile_url['_data_region'] = ''
+            profile_url['_domain'] = Statistic.DOMAINS[profile_url['_data_region']],
             account.save()
-        return '-cn' in profile_url['_data_region']
+        return 'cn' in profile_url['_data_region']
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
@@ -262,8 +264,9 @@ class Statistic(BaseModule):
 
         @lru_cache()
         def get_all_contests(data_region=''):
+            domain = Statistic.DOMAINS[data_region]
             page = Statistic._get(
-                f'https://leetcode{data_region}.com/graphql',
+                f'https://leetcode{domain}/graphql',
                 post=b'{"variables":{},"query":"{allContests{titleSlug}}"}',
                 content_type='application/json',
             )
@@ -318,7 +321,7 @@ class Statistic(BaseModule):
                             post = re.sub(r'\s+', ' ', post)
 
                             page = Statistic._get(
-                                'https://leetcode-cn.com/graphql',
+                                'https://leetcode.cn/graphql',
                                 post=post.encode(),
                                 content_type='application/json',
                                 req=req,
@@ -403,7 +406,7 @@ class Statistic(BaseModule):
                     post = re.sub(r'\s+', ' ', post)
 
                     page = Statistic._get(
-                        'https://leetcode-cn.com/graphql',
+                        'https://leetcode.cn/graphql',
                         post=post.encode(),
                         content_type='application/json',
                         req=req,
@@ -423,9 +426,11 @@ class Statistic(BaseModule):
 
             return page_index, data
 
-        with REQ(
-            with_proxy=True,
-            args_proxy={'time_limit': 10, 'n_limit': 30},
+        with REQ.with_proxy(
+            time_limit=10,
+            n_limit=30,
+            inplace=False,
+            filepath_proxies=os.path.join(os.path.dirname(__file__), '.leetcode.proxies'),
         ) as req:
             if os.path.exists(Statistic.STATE_FILE):
                 with open(Statistic.STATE_FILE, 'r') as fo:
