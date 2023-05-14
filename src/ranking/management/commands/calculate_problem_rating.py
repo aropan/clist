@@ -13,7 +13,7 @@ from django.db.models import Q
 from django.utils.timezone import now
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import as_number, get_problem_key, get_problem_short, is_solved
+from clist.templatetags.extras import as_number, get_item, get_problem_key, get_problem_short, is_solved
 from clist.views import update_problems
 from utils.attrdict import AttrDict
 from utils.json_field import JSONF
@@ -73,10 +73,13 @@ def get_info_key(statistic):
     return (statistic.contest_id, division)
 
 
-def is_skip(statistic):
+def is_skip(contest, statistic):
+    old_rating_only = get_item(contest.resource.info, 'problems.rating.old_rating_only')
+
     return bool(
         statistic.account.info.get('is_team') and not statistic.account.info.get('members')
         or statistic.addition.get('team_id') and not statistic.addition.get('_members')
+        or old_rating_only and statistic.get_old_rating() is None
     )
 
 
@@ -229,14 +232,14 @@ class Command(BaseCommand):
             problems_contests = OrderedDict()
             problems_contests[contest] = statistics
             for problem in contest.problem_set.all():
-                for problem_contest in problem.contests.all():
+                for problem_contest in problem.contests.select_related('resource').all():
                     if problem_contest not in problems_contests:
                         problems_contests[problem_contest] = get_statistics(problem_contest)
 
             rows_values = []
             for current_contest, current_statistics in problems_contests.items():
                 for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc='rows_values'):
-                    if is_skip(stat):
+                    if is_skip(current_contest, stat):
                         continue
 
                     problems = current_contest.info['problems']
@@ -279,7 +282,7 @@ class Command(BaseCommand):
             missing_account = False
             for current_contest, current_statistics in problems_contests.items():
                 for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc='old_ratings'):
-                    if is_skip(stat):
+                    if is_skip(current_contest, stat):
                         continue
 
                     team_id, handles = get_team(stat)
@@ -349,7 +352,7 @@ class Command(BaseCommand):
             skip_problems = set()
             for current_contest, current_statistics in problems_contests.items():
                 for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc='perfomances'):
-                    if is_skip(stat):
+                    if is_skip(current_contest, stat):
                         continue
 
                     team_id, _ = get_team(stat)

@@ -34,6 +34,10 @@
     <span class="{% coder_color_class problem.resource problem.rating %}">
       {{ problem.rating }}
     </span>
+    {% elif problem.resource.has_problem_rating and problem.n_total %}
+    <i class="text-muted fa-xs fas fa-sync fa-spin"></i>
+    {% else %}
+    <span class="text-muted">&mdash;</span>
     {% endif %}
   </td>
   <td class="problem-progress-column">
@@ -56,6 +60,13 @@
     {% endif %}
   </td>
   {% endif %}
+  {% for field in custom_fields_select.values %}
+  <td class="problem-field-column">
+    {% with v=problem|get_item:field %}
+    {% if v is None %}<span class="text-muted">&mdash;</span>{% else %}{{ v }}{% endif %}
+    {% endwith %}
+  </td>
+  {% endfor %}
   <td class="problem-name-column {{ solution_class }}" data-solution-class="{{ solution_class }}">
     <span class="nowrap">
       <a href="{% url_transform request resource=problem.resource.id %}">

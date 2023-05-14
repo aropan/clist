@@ -3,6 +3,7 @@
 
 import collections
 import re
+from datetime import timedelta
 from pprint import pprint
 
 from django.utils.timezone import now
@@ -23,7 +24,7 @@ class Statistic(BaseModule):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
         is_challenge = bool(re.search(r'\bchallenge\b', self.name, re.I))
-        is_running = now() < self.end_time
+        is_running = now() < self.end_time + timedelta(minutes=15)
         has_provisional = False
 
         result = {}
@@ -82,6 +83,7 @@ class Statistic(BaseModule):
                 for k in self.info.get('fields', []):
                     if k not in row and k in stats:
                         row[k] = stats[k]
+
                 if 'provisional_rank' not in row or is_running:
                     row['provisional_rank'] = as_number(row['place'])
                 row['delta_rank'] = row['provisional_rank'] - as_number(row['place'])
@@ -89,6 +91,11 @@ class Statistic(BaseModule):
                     row['provisional_score'] = row['solving']
                 row['delta_score'] = row['solving'] - row['provisional_score']
                 has_provisional |= bool(row['delta_rank']) or bool(row['delta_score'])
+
+                if 'best_score' not in row:
+                    row['best_score'] = row['solving']
+                elif is_running:
+                    row['best_score'] = max(row['best_score'], row['solving'])
 
             if not (problems or (is_challenge and stats)):
                 continue
@@ -118,6 +125,8 @@ class Statistic(BaseModule):
             fields_types.update({'delta_rank': ['delta'], 'delta_score': ['delta']})
             if not has_provisional:
                 hidden_fields.extend(['provisional_rank', 'delta_rank', 'provisional_score', 'delta_score'])
+            if not is_running:
+                hidden_fields.extend(['best_score'])
 
         standings = {
             'result': result,

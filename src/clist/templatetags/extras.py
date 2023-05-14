@@ -857,7 +857,7 @@ def scoreformat(value, with_shorten=True):
     str_value = format_value or str_value
     if with_shorten and len(str_value.split('.')[0]) > 7:
         try:
-            new_str_value = f'{value:.2e}'.replace('+0', '+')
+            new_str_value = f'{value:.3e}'.replace('+0', '+')
             if len(new_str_value) < len(str_value):
                 ret = f'<span title="{value}" data-toggle="tooltip" data-placement="right">{new_str_value}</span>'
                 return mark_safe(ret)

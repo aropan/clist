@@ -33,6 +33,8 @@
 
     {% include 'tag_filter.html' %}
 
+    {% include "field_to_select.html" with field="field" data=custom_fields_select %}
+
     <div class="input-group input-group-sm">
       <input
         id="show-tags"
@@ -80,6 +82,9 @@
           <th class="problem-luck-column" title="Probability to solve problem<br>If the problem rating equals your rating then probability is 50%." data-html="true" data-toggle="tooltip" >Luck</th>
           <th class="problem-result-column">Result</th>
           {% endif %}
+          {% for field in custom_fields_select.values %}
+          <th class="problem-field-column">{{ field|title_field }}</th>
+          {% endfor %}
           <th>Name</th>
           <th>Tags</th>
         </tr>

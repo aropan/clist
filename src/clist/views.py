@@ -971,6 +971,17 @@ def problems(request, template='problems.html'):
         problems = problems.filter(has_tag=True)
         tags = list(ProblemTag.objects.filter(pk__in=tags))
 
+    custom_fields = [f for f in request.GET.getlist('field') if f]
+    options = ['index', 'short', 'key', 'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
+    custom_fields_select = {
+        'values': [v for v in custom_fields if v and v in options],
+        'options': options,
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nohidden': True,
+    }
+
     chart_select = {
         'values': [v for v in request.GET.getlist('chart') if v],
         'options': ['date', 'rating'] + (['luck'] if coder else []),
@@ -1058,6 +1069,7 @@ def problems(request, template='problems.html'):
         },
         'chart_select': chart_select,
         'status_select': status_select,
+        'custom_fields_select': custom_fields_select,
         'chart': chart,
     }
 

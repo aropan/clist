@@ -8,6 +8,7 @@
 <a{% if not without_btn %} class="btn btn-default"{% endif %} target="_blank" rel="noopener" disabled>
 <span title="{% if 0 < delta.total_seconds %} within {{ account.updated|naturaltime }}{% else %}in progress{% endif %}" data-toggle="tooltip" data-placement="top">
   <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
+</span>
 </a>
 {% endif %}
 {% endwith %}
