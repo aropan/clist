@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.commands import dumpdata
-from django.db.models import Avg, Count, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
+from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -23,9 +23,9 @@ from sql_util.utils import Exists, SubqueryMin
 from favorites.models import Activity
 from favorites.templatetags.extras import activity_icon
 
-from clist.models import Banner, Contest, Problem, ProblemTag, Resource
+from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
-                                       get_timezone_offset, get_timezones, rating_from_probability)
+                                       get_timezone_offset, get_timezones, rating_from_probability, win_probability)
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
@@ -761,6 +761,8 @@ def update_problems(contest, problems=None, force=False):
                     'n_hidden': problem_info.get('n_hidden', 0) + getattr(added_problem, 'n_hidden', 0),
                     'n_total': problem_info.get('n_total', 0) + getattr(added_problem, 'n_total', 0),
                     'time': max(contest.start_time, getattr(added_problem, 'time', contest.start_time)),
+                    'start_time': min(contest.start_time, getattr(added_problem, 'start_time', contest.start_time)),
+                    'end_time': max(contest.end_time, getattr(added_problem, 'end_time', contest.end_time)),
                 }
                 if getattr(added_problem, 'rating', None) is not None:
                     problem_info['rating'] = added_problem.rating
@@ -849,6 +851,7 @@ def problems(request, template='problems.html'):
     problems = problems.prefetch_related('contests')
     problems = problems.prefetch_related('tags')
     problems = problems.annotate(min_contest_id=SubqueryMin('contests__id'))
+    problems = problems.annotate(date=F('time'))
     problems = problems.order_by('-time', '-min_contest_id', 'rating', 'index', 'short')
     problems = problems.filter(visible=True)
 
@@ -859,7 +862,7 @@ def problems(request, template='problems.html'):
         show_tags = coder.settings.get('show_tags', show_tags)
         statistics = Statistics.objects.filter(account__coders=coder)
         accounts = Account.objects.filter(coders=coder, rating__isnull=False, resource=OuterRef('resource'))
-        accounts = accounts.order_by('rating').values('rating')[:1]
+        accounts = accounts.order_by('-rating').values('rating')[:1]
         problems = problems.annotate(account_rating=Subquery(accounts))
         problem_rating_accounts = (
             coder.account_set
@@ -867,7 +870,10 @@ def problems(request, template='problems.html'):
             .select_related('resource')
         )
 
-        # problems = problems.filter(contests__statistics__account__coders=coder)
+        problems = problems.annotate(luck=Cast(
+            win_probability(F('rating'), F('account_rating')),
+            output_field=FloatField(),
+        ))
 
         content_type = ContentType.objects.get_for_model(Problem)
         qs = Activity.objects.filter(coder=coder, content_type=content_type, object_id=OuterRef('pk'))
@@ -949,6 +955,8 @@ def problems(request, template='problems.html'):
             luck_filter |= cond
         if luck_filter:
             problems = problems.filter(luck_filter)
+        else:
+            request.logger.warning('Luck filter is empty')
 
     rating_from = as_number(request.GET.get('rating_from'), force=True)
     rating_to = as_number(request.GET.get('rating_to'), force=True)
@@ -972,23 +980,15 @@ def problems(request, template='problems.html'):
         tags = list(ProblemTag.objects.filter(pk__in=tags))
 
     custom_fields = [f for f in request.GET.getlist('field') if f]
-    options = ['index', 'short', 'key', 'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
+    custom_options = ['index', 'short', 'key', 'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
     custom_fields_select = {
-        'values': [v for v in custom_fields if v and v in options],
-        'options': options,
-        'noajax': True,
-        'nogroupby': True,
-        'nourl': True,
-        'nohidden': True,
+        'values': [v for v in custom_fields if v and v in custom_options],
+        'options': custom_options,
     }
 
     chart_select = {
         'values': [v for v in request.GET.getlist('chart') if v],
         'options': ['date', 'rating'] + (['luck'] if coder else []),
-        'noajax': True,
-        'nogroupby': True,
-        'nourl': True,
-        'nofilter': True,
         'nomultiply': True,
     }
     chart_field = request.GET.get('chart')
@@ -1033,16 +1033,19 @@ def problems(request, template='problems.html'):
         'data': [
             {
                 'id': (status_id := name if enable else f'no{name}'),
+                'text': activity_icon(name, enable=enable),
+                'selected': int(status_id in request.GET.getlist('status')),
+            }
+            for name in ['allsolved', 'allreject'] for enable in [True, False]
+        ] + [
+            {
+                'id': (status_id := name if enable else f'no{name}'),
                 'text': activity_icon(getattr(Activity.Type, name.upper()), enable=enable),
                 'selected': int(status_id in request.GET.getlist('status')),
             }
             for name in ['todo', 'solved', 'reject'] for enable in [True, False]
         ],
         'html': True,
-        'noajax': True,
-        'nogroupby': True,
-        'nourl': True,
-        'nofilter': True,
         'nomultiply': True,
     }
     statuses = request.GET.getlist('status')
@@ -1050,13 +1053,35 @@ def problems(request, template='problems.html'):
         for status in statuses:
             if status.startswith('no'):
                 status = status[2:]
-                value = False
+                inverse = True
             else:
-                value = True
+                inverse = False
+            if status.startswith('all'):
+                status = status[3:]
+                with_verdicts = True
+            else:
+                with_verdicts = False
             if status in ['todo', 'solved', 'reject']:
                 if not coder:
                     return redirect('auth:login')
-                problems = problems.filter(**{f'is_{status}': value})
+                condition = Q(**{f'is_{status}': True})
+                if with_verdicts:
+                    if status == 'solved':
+                        condition |= Q(verdicts__coder=coder, verdicts__verdict=ProblemVerdict.SOLVED)
+                    elif status == 'reject':
+                        condition |= Q(verdicts__coder=coder, verdicts__verdict=ProblemVerdict.REJECT)
+                if inverse:
+                    condition = ~condition
+                problems = problems.filter(condition)
+
+    sort_options = ['date', 'rating'] + custom_fields_select['values']
+    sort_select = {'options': sort_options}
+    sort_field = request.GET.get('sort')
+    sort_order = request.GET.get('sort_order')
+    if sort_field and sort_field in sort_options and sort_order in ['asc', 'desc']:
+        sort_select['values'] = [sort_field]
+        orderby = getattr(F(sort_field), sort_order)(nulls_last=True)
+        problems = problems.order_by(orderby)
 
     context = {
         'problems': problems,
@@ -1069,6 +1094,7 @@ def problems(request, template='problems.html'):
         },
         'chart_select': chart_select,
         'status_select': status_select,
+        'sort_select': sort_select,
         'custom_fields_select': custom_fields_select,
         'chart': chart,
     }

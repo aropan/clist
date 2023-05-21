@@ -2,6 +2,7 @@
 
 import copy
 import json
+import os
 import re
 from collections import OrderedDict
 from time import sleep
@@ -83,6 +84,8 @@ class Statistic(BaseModule):
 
             for row in rows:
                 handle = row.pop('username')
+                if re.match('cholpan[0-9]*', handle):
+                    continue
                 r = result.setdefault(handle, {'member': handle})
 
                 if is_rated:
@@ -111,7 +114,7 @@ class Statistic(BaseModule):
                         problem['result'] = f'-{attempts}'
                     else:
                         problem['result'] = problem_info['points']
-                    if problem_info['theBest']:
+                    if problem_info['points'] > 0 and problem_info['theBest']:
                         problem['max_score'] = True
 
                     if problem_info['penalties']:
@@ -131,7 +134,7 @@ class Statistic(BaseModule):
                 row.pop('penalty')
 
         standings = {
-            'standings_url': urljoin(self.url, 'standings'),
+            'url': os.path.join(self.url, 'standings'),
             'result': result,
             'problems': list(problems_infos.values()),
             'hidden_fields': list(hidden_fields),

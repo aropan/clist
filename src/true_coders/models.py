@@ -14,7 +14,7 @@ from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 from sql_util.utils import SubquerySum
 
-from clist.models import Contest, Resource
+from clist.models import Contest, Problem, ProblemVerdict, Resource
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 
@@ -157,6 +157,20 @@ class Coder(BaseModel):
     @property
     def has_global_rating(self):
         return django_settings.ENABLE_GLOBAL_RATING_ and self.global_rating is not None
+
+
+class CoderProblem(BaseModel):
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='verdicts')
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE, related_name='verdicts')
+    verdict = models.CharField(max_length=2, choices=ProblemVerdict.choices, db_index=True)
+
+    class Meta:
+        unique_together = ('coder', 'problem')
+
+        indexes = [
+            models.Index(fields=['coder', 'verdict']),
+            models.Index(fields=['problem', 'verdict']),
+        ]
 
 
 @receiver(signals.pre_save, sender=Coder)

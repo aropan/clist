@@ -2,6 +2,15 @@
   height: 40px;
 }
 
+#profile-header .profile-country {
+  line-height: 70%;
+  margin: 0px;
+}
+
+#profile-header .account-avatar {
+  margin: 0px;
+}
+
 #writers .date,
 #contests td,
 #contests th {

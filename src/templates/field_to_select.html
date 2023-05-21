@@ -1,6 +1,23 @@
 {% if data %}
+{% if data.state %}
+  {% with value=request.GET|get_item:data.state.name|default:data.state.values.0 total=data.state.values|length %}
+  <input type="hidden" name="{{ data.state.name }}" value="{{ value }}">
+  {% endwith %}
+{% endif %}
 <div class="input-group{% if not nosm %} input-group-sm{% endif %} field-to-select hidden">
-  {% if data.nogroupby %}
+  {% if data.state %}
+  <div class="input-group-btn">
+    {% with value=request.GET|get_item:data.state.name|default:data.state.values.0 total=data.state.values|length %}
+    {% with index=data.state.values|index:value|default:0 %}
+    {% with next_index=index|add:1|mod:total %}
+    <button class="btn btn-default" name="{{ data.state.name }}" value="{{ data.state.values|get_item:next_index }}">
+      {% icon_to data.state.icons|get_item:index field|title %}
+    </button>
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+  </div>
+  {% elif data.nogroupby %}
     <span class="input-group-addon">
       {% icon_to field data.title|default:field|title %}
     </span>
@@ -56,7 +73,7 @@
         data: function (params) {
             return {
                 query: 'field-to-select',
-                cid: {{ contest.pk }},
+                cid: {{ contest.pk|default:-1 }},
                 division: '{{ request.GET.division }}',
                 field: $(this).attr('name'),
                 text: params.term,
@@ -81,6 +98,10 @@
       $(this).removeData('unselecting')
       e.preventDefault()
     }
+  }).on('select2:open', function(e) {
+    $('.select2-dropdown').addClass('select2-dropdown-{{ field }}');
+  }).on('select2:closing', function(e) {
+    $('.select2-dropdown').removeClass('select2-dropdown-{{ field }}');
   })
   $('#{{ field }}').closest('.field-to-select').removeClass('hidden')
 </script>

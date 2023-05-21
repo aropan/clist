@@ -4,6 +4,7 @@
 import re
 import urllib.parse
 from collections import OrderedDict
+from copy import deepcopy
 from datetime import datetime
 from pprint import pprint
 
@@ -12,6 +13,7 @@ from ranking.management.modules.excepts import InitModuleException
 
 
 class Statistic(BaseModule):
+
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
         if not self.standings_url:
@@ -151,11 +153,22 @@ class Statistic(BaseModule):
                             row['solving'] = int(value.value)
                         else:
                             row[key.lower()] = value.value.replace('&nbsp', ' ').strip()
-                    row['member'] = f'{row["name"]}, {row["country"]}'
+                    handle = f'{row["name"]}, {row["country"]}'
+                    row['member'] = handle
                     row['division'] = division
-                    row['list'] = title.strip().strip(':')
+                    row['list'] = [title.strip().strip(':')]
                     row['solved'] = {'solving': solved}
-                    result[row['member']] = row
+                    row.setdefault('_division_addition', {})[row['division']] = deepcopy(row)
+
+                    if handle in result:
+                        result_row = result[handle]
+                        for field in ['problems', '_division_addition']:
+                            result_row[field].update(row[field])
+                        for val in row['list']:
+                            if val not in result_row['list']:
+                                result_row['list'].append(val)
+                        row = result_row
+                    result[handle] = row
 
         standings = {
             'result': result,

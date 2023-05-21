@@ -12,13 +12,13 @@
 {% define 'danger' as solution_class %}
 {% elif solution.result|is_solved %}
 {% define 'success' as solution_class %}
-{% elif solution.result.upsolving|is_solved %}
+{% elif solution.result|is_upsolved %}
 {% define 'success' as solution_class %}
 {% elif solution.result|is_hidden %}
 {% define 'warning' as solution_class %}
 {% elif solution.result|is_reject %}
 {% define 'danger' as solution_class %}
-{% elif solution.result.partial %}
+{% elif solution.result|is_partial %}
 {% define 'info' as solution_class %}
 {% else %}
 {% define '' as solution_class %}
@@ -35,7 +35,11 @@
       {{ problem.rating }}
     </span>
     {% elif problem.resource.has_problem_rating and problem.n_total %}
-    <i class="text-muted fa-xs fas fa-sync fa-spin"></i>
+    {% with is_coming=problem.end_time|is_coming %}
+    <span title="{% if is_coming %}waiting for end of contest{% else %}in progress{% endif %}" data-toggle="tooltip">
+      <i class="text-muted fa-xs fas fa-sync{% if not is_coming %} fa-spin{% endif %}"></i>
+    </span>
+    {% endwith %}
     {% else %}
     <span class="text-muted">&mdash;</span>
     {% endif %}
@@ -45,10 +49,7 @@
   </td>
   {% if coder %}
   <td class="problem-luck-column">
-    {% if problem.rating is not None and problem.account_rating is not None %}
-    {% win_probability problem.rating problem.account_rating as prob %}
-    {{ prob|multiply:100|floatformat:2 }}%
-    {% endif %}
+    {% if problem.luck is not None %}{{ problem.luck|multiply:100|floatformat:2 }}%{% endif %}
   </td>
   <td class="problem-result-column {{ solution_class }}" data-solution-class="{{ solution_class }}">
     {% if solution %}

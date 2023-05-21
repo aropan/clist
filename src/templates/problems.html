@@ -33,7 +33,7 @@
 
     {% include 'tag_filter.html' %}
 
-    {% include "field_to_select.html" with field="field" data=custom_fields_select %}
+    {% include "field_to_select.html" with field="field" data=custom_fields_select|simple_select_data %}
 
     <div class="input-group input-group-sm">
       <input
@@ -63,9 +63,11 @@
 
     {% if favorite_problems %}{% include "favorite_filter.html" %}{% endif %}
 
-    {% include "field_to_select.html" with field="status" data=status_select %}
+    {% include "field_to_select.html" with field="status" data=status_select|simple_select_data %}
 
-    {% include "field_to_select.html" with field="chart" data=chart_select %}
+    {% include "field_to_select.html" with field="chart" data=chart_select|simple_select_data %}
+
+    {% include "sort_select.html" with field="sort" data=sort_select %}
   </form>
 
   {% include "chart.html" with chart=chart get_query_chart='chart' %}
@@ -85,7 +87,7 @@
           {% for field in custom_fields_select.values %}
           <th class="problem-field-column">{{ field|title_field }}</th>
           {% endfor %}
-          <th>Name</th>
+          <th>Name <span class="pull-right text-muted">Contest</span></th>
           <th>Tags</th>
         </tr>
       </thead>

@@ -67,6 +67,7 @@
 
     $url_scheme_host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
 
+    $_contests = array();
     $external_parsed = false;
 
     for ($shift = 0; $shift < 2; ++$shift) {
@@ -140,152 +141,95 @@
         }
     }
 
-    $authorization = get_calendar_authorization();
-    if ($authorization) {
-        $url = 'https://www.topcoder.com/community/events';
-        $page = curlexec($url);
+    $url = 'https://www.topcoder.com/community/events';
+    $page = curlexec($url);
 
-        if (preg_match('#src="[^"]*calendar.google.com[^"]*embed[^"]*src=(?P<calendar>[^"&]*)#', $page, $match)) {
-            $calendar = urldecode($match['calendar']);
-            $url = "https://www.googleapis.com/calendar/v3/calendars/" . urlencode($calendar) . "/events?timeMin=" . urlencode(date("c", time() - 7 * 24 * 60 * 60));
-            if ($debug_) {
-                echo "url = $url\n";
-            }
-            $data = curlexec($url, NULL, array("http_header" => array("Authorization: $authorization"), "json_output" => 1));
-        } else {
-            $calendar = false;
+    preg_match_all(
+        '#
+        <[ap][^>]*>(?<date>[^<]*)</[^>]*>\s*
+        <[ap][^>]*>(?<title>[^<]*)</[^>]*>\s*
+        <p[^>]*>(?<description>.*?)</p>\s*
+        <a[^>]*href="(?P<calendar>https://calendar.google.com/[^"]*)"[^>]*>
+        #x',
+        $page,
+        $matches,
+        PREG_SET_ORDER,
+    );
+
+    foreach ($matches as $match) {
+        $title = trim($match['title']);
+        $key = get_algorithm_key($title);
+        if (!$key) {
+            continue;
         }
+        if (!preg_match('#dates=(?<date>[^&]*)#', urldecode($match['calendar']), $m)) {
+            continue;
+        }
+        list($start_time, $end_time) = explode('/', ($m['date']));
 
-        if (!$calendar) {
-            trigger_error("Not found calendar in $url", E_USER_WARNING);
-        } else if (!isset($data["items"])) {
-            echo $data['error']['message'] . "\n";
-        } else {
-            if ($debug_) {
-                echo "Total items: " . count($data["items"]) . "\n";
-            }
-            foreach ($data["items"] as $item)
-            {
-                if ($item["status"] != "confirmed" || !isset($item["summary"])) {
+        $_contests[] = array(
+            "start_time" => $start_time,
+            "end_time" => $end_time,
+            "title" => $title,
+            "url" => $url,
+            "key" => $key,
+            "_external" => true,
+        );
+        $external_parsed = true;
+    }
+
+    $limit = 100;
+    $ids = array();
+    foreach (array(
+        array("status" => "Active", "sortBy" => "startDate", "sortOrder" => "desc"),
+        array("status" => "Completed", "sortBy" => "startDate", "sortOrder" => "desc"),
+    ) as $params) {
+        for ($page = 1; $page < 10; $page += 1) {
+            $params["page"] = $page;
+            $params["perPage"] = $limit;
+            $query = http_build_query($params);
+            $url = "https://api.topcoder.com/v5/challenges/?" . $query;
+            $data = curlexec($url, null, array("json_output" => 1));
+            $stop = false;
+            foreach ($data as $c) {
+                $ok = true;
+                foreach (array("name", "id", "registrationStartDate", "submissionEndDate") as $f) {
+                    if (!isset($c[$f])) {
+                        $ok = false;
+                        break;
+                    }
+                }
+                if (!$ok) {
                     continue;
                 }
 
-                $title = $item["summary"];
-                if (strpos($title, "Registration") !== false) {
+                if (isset($ids[$c['id']])) {
+                    continue;
+                }
+                $ids[$c['id']] = true;
+
+                $title = $c["name"];
+                if (!isset($c['tags']) || !array_intersect($c['tags'], array("Algorithm", "Marathon Match", "Puzzle"))) {
                     continue;
                 }
 
                 $key = get_algorithm_key($title);
-                if (!$key) {
-                    continue;
+                if (!$key || strpos($key, 'SRM') !== false) {
+                    $key = "challenge=" . $c['id'];
                 }
-
-                $url = $URL;
-                foreach (array("description", "location") as $field) {
-                    if (!isset($item[$field])) {
-                        continue;
-                    }
-                    if (preg_match('#(?P<href>https?://[^\s"]*(?:MatchDetails|ViewProblemStatement)[^\s"]*)#', $item[$field], $match)) {
-                        $url = $match["href"];
-                        break;
-                    }
-                }
-
-                $start = $item["start"][isset($item["start"]["dateTime"])? "dateTime" : "date"];
-                $end = $item["end"][isset($item["end"]["dateTime"])? "dateTime" : "date"];
-                $date = date($_DATE_FORMAT, strtotime($start));
-                if (!isset($item["id"])) {
-                    trigger_error("No set id for event $title", E_USER_WARNING);
-                }
-                $contest = array(
-                    "start_time" => $start,
-                    "end_time" => $end,
+                $_contests[] = array(
+                    "start_time" => $c["registrationStartDate"],
+                    "end_time" => $c["submissionEndDate"],
+                    "standings_url" => "https://www.topcoder.com/challenges/" . $c['id'] . "?tab=submissions",
                     "title" => $title,
-                    "url" => $url,
+                    "url" => $url_scheme_host . "/challenges/" . $c['id'],
                     "key" => $key,
-                    "_external" => true,
                 );
-                $_contests[] = $contest;
-                $external_parsed = true;
             }
-        }
-    }
-
-    $limit = 50;
-    $ids = array();
-    foreach (array(
-        array("filter" => "status=ACTIVE"),
-        array("filter" => "status=COMPLETED"),
-        array("filter" => "status=ACTIVE", "filter[tracks][data_science]" => "true"),
-        array("filter" => "status=COMPLETED", "filter[tracks][data_science]" => "true"),
-    ) as $params) {
-        for ($offset = 0; ; $offset += $limit) {
-            $params["offset"] = $offset;
-            $params["limit"] = $limit;
-            $query = http_build_query($params);
-            $url = "https://api.topcoder.com/v4/challenges/?" . $query;
-            for ($attempt = 0; $attempt < 5; ++$attempt) {
-                $json = curlexec($url, null, array("json_output" => 1));
-                if (isset($json["result"]) && isset($json["result"]['content'])) {
-                    break;
-                }
-                sleep(10);
+            if (!count($data) || $stop) {
+                break;
             }
-            if (isset($json["result"]) && isset($json["result"]['content'])) {
-                $stop = false;
-                foreach ($json["result"]['content'] as $c) {
-                    $ok = true;
-                    foreach (array("name", "id", "registrationStartDate", "submissionEndDate") as $f) {
-                        if (!isset($c[$f])) {
-                            $ok = false;
-                            break;
-                        }
-                    }
-
-                    if (!$ok) {
-                        continue;
-                    }
-
-                    if (isset($ids[$c['id']])) {
-                        continue;
-                    }
-                    $ids[$c['id']] = true;
-
-                    $title = $c["name"];
-                    $track = $c['track'];
-                    $sub_track = $c['subTrack'];
-                    if ($track == 'DEVELOP') {
-                        if ($sub_track != 'DEVELOP_MARATHON_MATCH') {
-                            continue;
-                        }
-                    } else if ($track == 'DATA_SCIENCE') {
-                        if ($sub_track != 'MARATHON_MATCH') {
-                            continue;
-                        }
-                    } else {
-                        continue;
-                    }
-                    $key = get_algorithm_key($title);
-                    if (!$key || strpos($key, 'SRM') !== false) {
-                        $key = "challenge=" . $c['id'];
-                    }
-                    $_contests[] = array(
-                        "start_time" => $c["registrationStartDate"],
-                        "end_time" => $c["submissionEndDate"],
-                        "standings_url" => "https://www.topcoder.com/challenges/" . $c['id'] . "?tab=submissions",
-                        "title" => $title,
-                        "url" => $url_scheme_host . "/challenges/" . $c['id'],
-                        "key" => $key,
-                    );
-                }
-                if (!count($json["result"]["content"]) || $stop) {
-                    break;
-                }
-                if (!isset($_GET['parse_full_list']) && $params['filter'] == 'status=COMPLETED') {
-                    break;
-                }
-            } else {
-                trigger_error("Incorrect json response", E_USER_WARNING);
+            if (!isset($_GET['parse_full_list']) && $params['status'] == 'Completed') {
                 break;
             }
         }

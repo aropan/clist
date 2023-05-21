@@ -1,0 +1,3 @@
+{% with sort_data=data|sort_select_data %}
+{% include "field_to_select.html" with field="sort" data=sort_data %}
+{% endwith %}

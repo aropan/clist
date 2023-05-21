@@ -63,7 +63,7 @@
                 <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
               {% endif %}
             {% endif %}
-
+            {% if forloop.first %}{% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}{% endif %}
             {% coder_color_circle resource account.info size=28 %}
           {% endfor %}
         {% endif %}
@@ -103,7 +103,7 @@
         <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
       {% endif %}
     {% endif %}
-
+    {% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}
     {% coder_color_circle account.resource account.info size=28 %}
 
     <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>

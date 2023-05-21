@@ -607,17 +607,17 @@ canvas.rating_history {
   text-shadow: none;
 }
 
-.activity.rej, .activity.sol {
+.activity.rej, .activity.sol, .activity.allreject, .activity.allsolved {
   text-shadow: 0 0 1px #bbb;
   color: #ddd;
   font-size: 110%;
 }
 
-.activity.sol.selected-activity {
+.activity.sol.selected-activity, .activity.allsolved.selected-activity {
   color: green;
 }
 
-.activity.rej.selected-activity {
+.activity.rej.selected-activity, .activity.allreject.selected-activity {
   color: red;
 }
 

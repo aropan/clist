@@ -48,7 +48,7 @@ class ExternalChat(BaseModel):
 
     class ExternalChatType(models.TextChoices):
         BLANK = 'BLANK', 'Blank'
-        # DISCORD = 'DSCRD', 'Discord'
+        DISCORD = 'DSCRD', 'Discord'
         TELEGRAM = 'TLGRM', 'Telegram'
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)

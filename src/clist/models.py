@@ -580,6 +580,8 @@ class Problem(BaseModel):
     contests = models.ManyToManyField(Contest, blank=True, related_name='problem_set')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     time = models.DateTimeField()
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
     index = models.SmallIntegerField(null=True)
     key = models.TextField()
     name = models.TextField()
@@ -624,6 +626,14 @@ class Problem(BaseModel):
 class ProblemTag(BaseModel):
     name = models.TextField(unique=True, db_index=True, null=False)
     problems = models.ManyToManyField(Problem, blank=True, related_name='tags')
+
+
+class ProblemVerdict(models.TextChoices):
+    SOLVED = 'AC'  # accepted
+    REJECT = 'WA'  # wrong answer
+    HIDDEN = 'HT'  # hidden test
+    PARTIAL = 'PS'  # partial solution
+    UNKNOWN = '??'  # unknown verdict
 
 
 class Banner(BaseModel):

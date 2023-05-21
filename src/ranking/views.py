@@ -696,7 +696,7 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
             fields[k] = v
 
     division_addition_fields = inplace_division and divisions_order and division != divisions_order[0]
-    addition_fields = division_addition['fields'] if division_addition_fields else contest_fields
+    addition_fields = division_addition.get('fields', contest_fields) if division_addition_fields else contest_fields
     special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
                       'medal', 'raw_rating']
     hidden_fields = hidden_fields or list(contest.info.get('hidden_fields', []))
@@ -935,7 +935,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if division not in divisions_order:
             division = divisions_order[0]
 
-    division_addition = contest.info.get('divisions_addition', {}).get(division, {}).copy()
+    division_addition = contest.info.get('divisions_addition', {}).get(division, {})
 
     # FIXME extra per_page
     if (
@@ -952,7 +952,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         statistics = statistics.distinct(*[f.lstrip('-') for f in order])
 
     if inplace_division and division != divisions_order[0]:
-        fields_types = division_addition['fields_types']
+        fields_types = division_addition.get('fields_types', fields_types)
         statistics = statistics.annotate(addition_replacement=JSONF(f'addition___division_addition__{division}'))
         statistics = statistics.filter(addition_replacement__isnull=False)
         for src, dst in (

@@ -1035,6 +1035,8 @@ class Command(BaseCommand):
                     contest.refresh_from_db()
                     n_calculated_problem_rating += 1
 
+                call_command('fill_coder_problems', contest=contest.pk)
+
                 if 'result' in standings:
                     count += 1
                 parsed = True

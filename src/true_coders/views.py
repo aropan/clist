@@ -173,7 +173,6 @@ def get_profile_context(request, statistics, writers, resources):
                 'noajax': True,
                 'nogroupby': True,
                 'nourl': True,
-                'nohidden': True,
             }
 
     context.update({
@@ -245,7 +244,6 @@ def coders(request, template='coders.html'):
         'noajax': True,
         'nogroupby': True,
         'nourl': True,
-        'nohidden': True,
     }
 
     chat_fields = None
@@ -261,7 +259,6 @@ def coders(request, template='coders.html'):
                 'noajax': True,
                 'nogroupby': True,
                 'nourl': True,
-                'nohidden': True,
             }
 
             filt = Q()
@@ -303,7 +300,6 @@ def coders(request, template='coders.html'):
             'noajax': True,
             'nogroupby': True,
             'nourl': True,
-            'nohidden': True,
         }
         coders = coders.prefetch_related(
             Prefetch(
@@ -1986,7 +1982,6 @@ def accounts(request, template='accounts.html'):
         'noajax': True,
         'nogroupby': True,
         'nourl': True,
-        'nohidden': True,
     }
     for field in context['custom_fields']['values']:
         if field not in custom_fields:

@@ -167,6 +167,11 @@ def timedelta_with_now(value):
 
 
 @register.filter
+def is_coming(value):
+    return value > now()
+
+
+@register.filter
 def hours(time_delta):
     return time_delta.seconds // 3600
 
@@ -283,11 +288,19 @@ def slug(value):
 
 
 @register.filter
-def get_division_problems(problem, info):
-    division = info.get('division')
-    if division and 'division' in problem:
-        return problem['division'][division]
-    return problem
+def get_division_problems(problems, info):
+    ret = []
+    if 'division' in problems:
+        division_addition = info.get('_division_addition')
+        divisions = list(division_addition.keys()) if division_addition else []
+        division = info.get('division')
+        if division and division not in divisions:
+            divisions = [division] + divisions
+        for division in divisions:
+            if division in problems['division']:
+                for problem in problems['division'][division]:
+                    ret.append(problem)
+    return ret or problems
 
 
 def get_problem_field(problem, field):
@@ -356,15 +369,9 @@ def get_problem_solution(problem):
     for contest in problem.contests.all():
         for statistic in contest.statistics_set.all():
             problems = contest.info.get('problems', [])
-            if 'division' in problems:
-                division = statistic.addition.get('division')
-                problems = problems['division']
-                if division not in problems:
-                    continue
-                problems = problems[division]
+            problems = get_division_problems(problems, statistic.addition)
 
             ret = {'statistic': statistic}
-
             for p in problems:
                 key = get_problem_key(p)
                 if key == problem.key:
@@ -620,6 +627,11 @@ def substract(value, arg):
     return value - arg
 
 
+@register.filter
+def mod(value, arg):
+    return value % arg
+
+
 def canonize(data):
     return json.dumps(data, sort_keys=True)
 
@@ -714,6 +726,13 @@ def is_solved(value):
 
 
 @register.filter
+def is_upsolved(value):
+    if not value:
+        return False
+    return is_solved(value.get('upsolving'))
+
+
+@register.filter
 def is_hidden(value):
     if isinstance(value, dict):
         value = value.get('result')
@@ -735,6 +754,11 @@ def is_reject(value):
     except ValueError:
         return False
     return value < 0
+
+
+@register.filter
+def is_partial(value):
+    return value and value.get('partial')
 
 
 def normalized_result(value):
@@ -989,7 +1013,7 @@ def trim_to(value, length):
 
 @register.simple_tag
 def win_probability(a, b):
-    return 1 / (1 + 10 ** ((a - b) / 400))
+    return 1 / (1 + 10 ** ((a - b) / 400.0))
 
 
 @register.simple_tag
@@ -1074,3 +1098,31 @@ def allow_first(division_and_problem, stat):
         return True
     first_ac_time = problem.get('first_ac', {}).get('time')
     return first_ac_time and first_ac_time == stat.get('time')
+
+
+@register.filter
+def sort_select_data(data):
+    ret = {
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nomultiply': True,
+        'state': {
+            'values': ['asc', 'desc'],
+            'icons': ['sort-asc', 'sort-desc'],
+            'name': 'sort_order',
+        },
+    }
+    ret.update(data)
+    return ret
+
+
+@register.filter
+def simple_select_data(data):
+    ret = {
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+    }
+    ret.update(data)
+    return ret

@@ -11,6 +11,7 @@ import magic
 import requests
 import tqdm
 from django.conf import settings
+from django.core.management import call_command
 from django.db import models, transaction
 from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce, Upper
@@ -20,7 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
-from sql_util.utils import SubqueryCount, SubquerySum
+from sql_util.utils import Exists, SubqueryCount, SubquerySum
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import add_prefix_to_problem_short, get_number_from_str, get_problem_short, slug
@@ -241,19 +242,29 @@ def update_account_writer(signal, instance, action, reverse, pk_set, **kwargs):
 
 @receiver(m2m_changed, sender=Account.coders.through)
 def update_coder_n_accounts_and_n_contests(signal, instance, action, reverse, pk_set, **kwargs):
-    when, action = action.split('_', 1)
-    if when != 'post' or action not in ['add', 'remove']:
+    if action not in ['post_add', 'post_remove']:
         return
 
     if reverse:
         instance.n_accounts = instance.account_set.count()
         instance.n_contests = instance.account_set.aggregate(total=Sum('n_contests'))['total'] or 0
         instance.save()
+
+        resources = Resource.objects.annotate(has_account=Exists('account', filter=Q(pk__in=pk_set)))
+        resources = resources.filter(has_account=True)
+        resources = list(resources.values_list('host', flat=True))
+        coders = [instance.username]
     else:
         Coder.objects.filter(pk__in=pk_set) \
             .annotate(n_a=SubqueryCount('account')) \
             .annotate(n_c=SubquerySum('account__n_contests')) \
             .update(n_accounts=F('n_a'), n_contests=Coalesce('n_c', 0))
+
+        coders = list(Coder.objects.filter(pk__in=pk_set).values_list('username', flat=True))
+        resources = [instance.resource.host]
+
+    if coders and resources:
+        call_command('fill_coder_problems', coders=coders, resources=resources)
 
 
 class Rating(BaseModel):

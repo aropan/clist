@@ -30,3 +30,8 @@
   color: #777;
   cursor: pointer;
 }
+
+.select2-container--bootstrap .select2-dropdown-status .select2-results>.select2-results__options {
+  max-height: max-content;
+  overflow-y: auto;
+}

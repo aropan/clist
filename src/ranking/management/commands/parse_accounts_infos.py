@@ -5,6 +5,7 @@ from datetime import timedelta
 from logging import getLogger
 
 import arrow
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Case, F, IntegerField, Q, Value, When
@@ -217,11 +218,6 @@ class Command(BaseCommand):
                                 pbar.set_postfix(rename=f'{n_rename}: Rename {account} to {other}')
                                 account = rename_account(account, other)
 
-                            if do_upsolve:
-                                updated_info = resource.plugin.Statistic.update_submissions(account=account,
-                                                                                            resource=resource)
-                                add_dict_to_dict(updated_info, total_update_submissions_info)
-
                             coders = data.pop('coders', [])
                             if coders:
                                 qs = Coder.objects \
@@ -229,6 +225,15 @@ class Command(BaseCommand):
                                     .exclude(account=account)
                                 for c in qs:
                                     account.coders.add(c)
+
+                            if do_upsolve:
+                                updated_info = resource.plugin.Statistic.update_submissions(account=account,
+                                                                                            resource=resource)
+                                add_dict_to_dict(updated_info, total_update_submissions_info)
+
+                                coders = list(account.coders.values_list('username', flat=True))
+                                if coders and updated_info.get('n_updated'):
+                                    call_command('fill_coder_problems', coders=coders, resources=[resource.host])
 
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])

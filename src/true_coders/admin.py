@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from events.models import Participant
 from pyclist.admin import BaseModelAdmin, admin_register
-from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
+from true_coders.models import Coder, CoderList, CoderProblem, Filter, ListValue, Organization, Party
 
 
 @admin_register(Coder)
@@ -27,6 +27,13 @@ class CoderAdmin(BaseModelAdmin):
         extra = 0
 
     inlines = [PartySet]
+
+
+@admin_register(CoderProblem)
+class CoderProblemAdmin(BaseModelAdmin):
+    search_fields = ['coder__username', 'problem__name']
+    list_display = ['coder', 'problem', 'verdict']
+    list_filter = ['verdict', 'problem__resource']
 
 
 @admin_register(Party)
