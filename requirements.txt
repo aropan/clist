@@ -30,7 +30,7 @@ phonenumbers==8.10.6
 psycopg2-binary==2.9.3
 arrow==0.15.1
 tqdm==4.31.1
-requests==2.28.2
+requests==2.31.0
 pytimeparse==1.1.8
 humanfriendly==9.1
 humanize==3.1.0
