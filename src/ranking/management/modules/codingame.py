@@ -173,13 +173,12 @@ class Statistic(BaseModule):
 
                     stat = (statistics or {}).get(handle)
                     if stat:
-                        for field in ['codinpoints']:
+                        for field in ['codinpoints', '_last_agent_id']:
                             if field in stat and field not in r:
                                 r[field] = stat[field]
 
                     if 'percentage' in row:
                         row['percentage'] = min(row['percentage'], 100)
-                        row['_skip_provisional_rank'] = row['percentage'] < 100
                         percentages.append(row['percentage'])
 
                     has_codinpoints |= bool(row.get('codinpoints'))
@@ -293,6 +292,13 @@ class Statistic(BaseModule):
                     for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries), desc='countries'):
                         process_data(data)
 
+        for row in result.values():
+            row['_skip_subscriptions'] = True
+            if 'agent_id' in row and row.get('percentage') == 100:
+                if row['agent_id'] != row.get('_last_agent_id'):
+                    row['_force_subscriptions'] = True
+                row['_last_agent_id'] = row['agent_id']
+
         if self.end_time > now():
             hidden_fields.discard('submit_time')
         if self.end_time > now() or not has_codinpoints:
@@ -313,8 +319,9 @@ class Statistic(BaseModule):
                 'fixed_fields': [
                     ('league', 'league'),
                     ('league_rank', 'league_rank'),
-                    ('language', 'Language'),
+                    ('language', 'language'),
                     ('clashes_count', 'clashes_count'),
+                    ('submit_time', 'submit_time'),
                 ],
             },
             'grouped_team': grouped_team,
@@ -430,7 +437,6 @@ class Statistic(BaseModule):
                 yield info
 
     def get_versus(self, statistic, use_cache=True):
-        url = self.host + 'services/gamesPlayersRanking/findLastBattlesByAgentId'
         agent_id = statistic.addition.get('agent_id')
         user_id = statistic.addition.get('user_id')
 
@@ -439,6 +445,7 @@ class Statistic(BaseModule):
             if cache_key in cache:
                 return True, cache.get(cache_key)
 
+        url = self.host + 'services/gamesPlayersRanking/findLastBattlesByAgentId'
         data = json.loads(REQ.get(url, post=f'[{agent_id}, null]', content_type='application/json'))
         if not data:
             url = self.host + 'services/Leaderboards/getCodinGamerChallengeRanking'

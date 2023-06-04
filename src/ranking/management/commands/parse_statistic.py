@@ -5,7 +5,7 @@ import copy
 import operator
 import re
 from collections import OrderedDict, defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import lru_cache
 from html import unescape
 from logging import getLogger
@@ -196,7 +196,6 @@ class Command(BaseCommand):
             total += 1
             parsed = False
             user_info_has_rating = {}
-            is_major_kind = resource.is_major_kind(contest.kind)
             to_update_socket = contest.is_running() or contest.has_hidden_results or force_socket
             to_calculate_problem_rating = False
 
@@ -238,6 +237,7 @@ class Command(BaseCommand):
                         ('title', 'title'),
                         ('invisible', 'invisible'),
                         ('duration_in_secs', 'duration_in_secs'),
+                        ('kind', 'kind'),
                     ):
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
@@ -298,6 +298,8 @@ class Command(BaseCommand):
                     wait_rating = resource_statistics.get('wait_rating', {})
                     has_hidden = standings.pop('has_hidden', False)
                     link_accounts = standings.pop('link_accounts', False)
+                    is_major_kind = resource.is_major_kind(contest.kind)
+                    custom_fields_types = standings.pop('fields_types', {})
 
                     results = []
                     if result or users:
@@ -335,8 +337,13 @@ class Command(BaseCommand):
                                 continue
 
                             skip_result = bool(r.get('_no_update_n_contests'))
+                            last_activity = contest.start_time
+                            if r.get('submit_time') and 'timestamp' in custom_fields_types.get('submit_time', []):
+                                last_activity = datetime.fromtimestamp(r['submit_time'], tz=timezone.utc)
 
                             def update_problems_info():
+                                nonlocal last_activity
+
                                 problems = r.get('problems', {})
 
                                 is_new = ('team_id' not in r or r['team_id'] not in teams_viewed) and not skip_result
@@ -427,6 +434,8 @@ class Command(BaseCommand):
                                                 first_ac['in_seconds'] = in_seconds
                                                 first_ac['time'] = v['time']
                                                 first_ac['accounts'] = [r['member']]
+                                            activity_time = contest.start_time + timedelta(seconds=in_seconds)
+                                            last_activity = max(last_activity, activity_time)
 
                                     if not is_new:
                                         continue
@@ -448,6 +457,7 @@ class Command(BaseCommand):
 
                             update_problems_info()
 
+                            r.setdefault('last_activity', last_activity)
                             results.append(r)
 
                         members = [r['member'] for r in results]
@@ -716,6 +726,7 @@ class Command(BaseCommand):
                                     'upsolving': r.pop('upsolving', 0),
                                     'skip_in_stats': skip_result,
                                     'advanced': bool(r.get('advanced')),
+                                    'last_activity': r.pop('last_activity', None),
                                 }
                                 defaults = {k: v for k, v in defaults.items() if v != '__unchanged__'}
 
@@ -930,7 +941,7 @@ class Command(BaseCommand):
                                 contest.info['hidden_fields'] = hidden_fields
 
                             fields_types = {k: list(v) for k, v in fields_types.items()}
-                            for k, v in standings.get('fields_types', {}).items():
+                            for k, v in custom_fields_types.items():
                                 fields_types.setdefault(k, []).extend(v)
                             contest.info['fields_types'] = fields_types
 
@@ -1114,6 +1125,7 @@ class Command(BaseCommand):
         else:
             has_module = Module.objects.filter(resource_id=OuterRef('resource__pk'))
             contests = Contest.objects.annotate(has_module=Exists(has_module)).filter(has_module=True)
+        contests = contests.order_by('start_time')
 
         if args.only_new:
             has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))

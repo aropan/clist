@@ -110,6 +110,9 @@ class StatisticsAdmin(BaseModelAdmin):
     search_fields = ['=account__key']
     list_filter = ['contest__host', 'skip_in_stats']
 
+    def get_readonly_fields(self, *args, **kwargs):
+        return ['last_activity'] + super().get_readonly_fields(*args, **kwargs)
+
     def _skip(self, obj):
         return obj.skip_in_stats
     _skip.boolean = True

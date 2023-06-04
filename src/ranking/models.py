@@ -300,6 +300,7 @@ class Statistics(BaseModel):
     global_rating_change = models.IntegerField(null=True, blank=True, default=None)
     skip_in_stats = models.BooleanField(default=False)
     advanced = models.BooleanField(default=False)
+    last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
 
     @staticmethod
     def is_special_addition_field(field):
@@ -347,14 +348,18 @@ def count_account_contests(signal, instance, **kwargs):
 
     if signal is post_delete:
         instance.account.n_contests -= 1
-        instance.account.save()
-    elif signal is post_save and kwargs['created']:
-        instance.account.n_contests += 1
+        instance.account.save(update_fields=['n_contests'])
+    elif signal is post_save:
+        if kwargs['created']:
+            instance.account.n_contests += 1
+            instance.account.save(update_fields=['n_contests'])
 
-        if not instance.account.last_activity or instance.account.last_activity < instance.contest.end_time:
-            instance.account.last_activity = instance.contest.end_time
-
-        instance.account.save()
+        if (
+            instance.last_activity and
+            (not instance.account.last_activity or instance.account.last_activity < instance.last_activity)
+        ):
+            instance.account.last_activity = instance.last_activity
+            instance.account.save(update_fields=['last_activity'])
 
 
 class Module(BaseModel):

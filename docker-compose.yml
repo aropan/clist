@@ -20,6 +20,7 @@ services:
       - ./.env.supervisor
     ports:
       - 10043:9043
+    restart: always
   dev:
     build:
       context: .
@@ -38,8 +39,10 @@ services:
       - sentry_conf
     ports:
       - ${CLIST_DEV_PORT:-10042}:10042
+    restart: always
   memcached:
     image: memcached
+    restart: always
   legacy:
     build: ./legacy
     volumes:
@@ -49,6 +52,7 @@ services:
     secrets:
       - db_conf
       - sentry_conf
+    restart: always
   pgadmin:
     image: dpage/pgadmin4
     volumes:
@@ -57,6 +61,7 @@ services:
       - ./.env.db
     depends_on:
       - db
+    restart: always
   db:
     image: postgres:14.3-alpine
     volumes:
@@ -75,6 +80,7 @@ services:
       -c min_wal_size=320MB
       -c bgwriter_delay=20
     shm_size: 2gb
+    restart: always
   nginx:
     image: nginx:alpine
     volumes:
@@ -89,6 +95,7 @@ services:
       - 80:80
       - 443:443
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    restart: always
   certbot:
     image: certbot/certbot:latest
     volumes:
@@ -98,6 +105,7 @@ services:
     depends_on:
       - nginx
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 1d & wait $${!}; done;'"
+    restart: always
   loggly:
     build:
       context: .
@@ -106,6 +114,7 @@ services:
       - ./logs/:/logs/
     secrets:
       - loggly_token
+    restart: always
 
 secrets:
   db_conf:

@@ -14,6 +14,7 @@ $(function() {
                 $(this).html(value.charAt(0).toUpperCase() + value.slice(1));
             }
         },
+        onblur: 'ignore',
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 250,
@@ -29,6 +30,7 @@ $(function() {
         type: 'select',
         source: '/settings/search/?query=timezones',
         showbuttons: false,
+        onblur: 'ignore',
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 250,
@@ -80,6 +82,7 @@ $(function() {
         type: 'select',
         showbuttons: false,
         source: ACE_CALENDARS,
+        onblur: 'ignore',
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 250,
@@ -94,6 +97,7 @@ $(function() {
         type: 'select',
         showbuttons: false,
         source: SHARE_TO_CATEGORY,
+        onblur: 'ignore',
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 250,
@@ -107,6 +111,7 @@ $(function() {
         type: 'select',
         showbuttons: false,
         source: PAST_CALENDAR_ACTIONS,
+        onblur: 'ignore',
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 250,
@@ -122,6 +127,7 @@ $(function() {
         type: 'select',
         showbuttons: false,
         source: event_limit_source,
+        onblur: 'ignore',
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 250,
@@ -147,6 +153,7 @@ $(function() {
         type: 'select',
         source: COUNTRIES,
         showbuttons: false,
+        onblur: 'ignore',
     }).on('shown', function(e, editable){
         editable.input.$input.select2({
             width: 300,
@@ -167,6 +174,7 @@ $(function() {
             $('.custom-countries').addClass('hidden')
             $('.custom-countries[data-country="' + country + '"]').removeClass('hidden')
         })
+
         setTimeout(function() { editable.input.$input.select2('open'); }, 1)
     })
 

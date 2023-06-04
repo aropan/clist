@@ -377,6 +377,7 @@ def account(request, key, host, template='profile.html', extra_context=None):
     data = _get_data_mixed_profile(request, [account.resource.host + ':' + account.key])
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['account'] = account
+    context['without_accounts'] = True
 
     add_account_button = False
     if request.user.is_authenticated:

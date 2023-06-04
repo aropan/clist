@@ -982,7 +982,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         hidden_fields_values.remove('global_rating')
     if request.user.has_perm('ranking.view_statistics_hidden_fields'):
         for v in hidden_fields_values:
-            if v not in hidden_fields:
+            if v not in hidden_fields and v not in fields:
                 fields[v] = v
                 hidden_fields.append(v)
 

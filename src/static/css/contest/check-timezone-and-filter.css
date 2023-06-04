@@ -1,6 +1,10 @@
+#filter {
+    margin-left: 10px;
+}
 
 #filter > * {
     max-width: 100px;
+    display: inline-table;
 }
 
 #filter .tooltip.top .tooltip-inner {

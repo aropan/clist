@@ -11,7 +11,9 @@
   {{ coder.display_name }} - Coder
 {% elif account %}
   {% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} on {{ account.resource.host }} - Account
-  {% elif profiles %}{{ query }} - Profile{% endif %}
+{% elif profiles %}
+  {{ query }} - Profile
+{% endif %}
 {% endlinebreakless %}{% endblock %}{% endblock %}
 
 {% block description %}{% linebreakless %}
@@ -35,7 +37,7 @@
 {% if account.rating %}, rating: {{ account.rating }}{% endif %}
 {% if account.last_activity %}, last activity: {{ account.last_activity|format_time:"%-d %B %Y" }}{% endif %}
 , last update: {{ account.modified|format_time:"%-d %B %Y" }}
-  {% else %}
+  {% elif profiles %}
 {{ query }}
   {% endif %}
 {% endlinebreakless %}{% endblock %}
@@ -139,6 +141,7 @@
   <div class="text-center alert alert-info">The account rating not updated because not added to profile</div>
   {% endif %}
   {% endif %}
+
   {% for coder in account.coders.all %}
   <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
     {% if coder.user.first_name or coder.user.last_name %}
@@ -146,6 +149,12 @@
     {% endif %}
     {{ coder.display_name }}
   </a>
+  {% endfor %}
+
+  {% for resource in resources %}
+    {% for account in resource.coder_accounts %}
+      {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}
+    {% endfor %}
   {% endfor %}
 {% elif profiles %}
   <h2>
@@ -165,7 +174,7 @@
 
 <div{% if two_columns %} class="col-lg-6"{% endif %}>
 
-{% if resources and show_history_ratings %}
+{% if resources and show_history_ratings and not without_accounts %}
 <div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% elif not two_columns %} class="col-xs-12"{% endif %}>
 <h3>Accounts</h3>
 <div id="list-accounts">
@@ -304,7 +313,7 @@
 
   <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
 
-  <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}" height="75vh">{{ hr }}</canvas>
+  <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}">{{ hr }}</canvas>
 </div>
 {% endfor %}
 {% if history_resources|length > 3 %}
@@ -328,7 +337,6 @@
 {% set_item chart "border_color" "#5cb85c" %}
 {% set_item chart "background_color" "#5cb85c" %}
 {% set_item chart "border_width" 3 %}
-{% set_item chart "height" "40vh" %}
 {% set_item chart "duplicate_y_axis" True %}
 {% set_item chart "disable_legend_tooltip" True %}
 {% include "chart.html" with chart=chart without_buttons=True %}

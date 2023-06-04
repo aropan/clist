@@ -314,7 +314,7 @@ a.database-link {
 }
 
 /*
- * chart column
+ * chart
  */
 
 .chart-column {
@@ -342,6 +342,10 @@ a.database-link {
   margin: 20px;
 }
 
+#chart_date canvas.chart {
+  max-height: 200px;
+}
+
 /*
  * contest inline button
  */
@@ -365,6 +369,7 @@ canvas.rating_history {
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+  max-height: 250px;
 }
 
 #chartjs-tooltip {
@@ -635,6 +640,10 @@ canvas.rating_history {
 
 .show-hidden-activity-on-hover:hover .hidden-activity {
   visibility: visible;
+}
+
+.favorite-group {
+  width: 0;
 }
 
 /*

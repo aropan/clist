@@ -26,6 +26,9 @@ class Command(BaseCommand):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='resources hosts')
         parser.add_argument('-c', '--coders', metavar='CODER', nargs='*', help='coder usernames')
         parser.add_argument('-cid', '--contest', metavar='CONTEST', help='contest id')
+        parser.add_argument('-nv', '--no-virtual', action='store_true', help='exclude virtual coders')
+        parser.add_argument('-nf', '--no-filled', action='store_true', help='exclude filled coders')
+        parser.add_argument('-n', '--limit', type=int, help='number of coders')
 
     def log_queryset(self, name, qs, limit=20):
         total = qs.count()
@@ -36,6 +39,9 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         coders = Coder.objects.all()
+        if args.no_filled:
+            coders = coders.filter(settings__fill_coder_problems__isnull=True)
+
         if args.coders:
             coders_filters = Q()
             for c in args.coders:
@@ -65,11 +71,17 @@ class Command(BaseCommand):
         else:
             problems = None
 
+        if args.no_virtual:
+            coders = coders.exclude(is_virtual=True)
+
+        if args.limit:
+            coders = coders[:args.limit]
+
         n_created = 0
         n_total = 0
         n_deleted = 0
-        with transaction.atomic():
-            for coder in tqdm(coders, total=coders.count(), desc='coders'):
+        for coder in tqdm(coders, total=coders.count(), desc='coders'):
+            with transaction.atomic():
                 def process_problem(problems, desc):
                     nonlocal n_created, n_total, n_deleted
 
@@ -83,7 +95,7 @@ class Command(BaseCommand):
                     problems = problems.prefetch_related(Prefetch('contests__statistics_set', queryset=statistics))
                     problems = problems.filter(contests__statistics__account__coders=coder)
 
-                    for problem in tqdm(problems, total=problems.count(), desc=desc):
+                    for problem in tqdm(problems, total=len(problems), desc=desc):
                         solution = get_problem_solution(problem)
                         if 'result' not in solution:
                             continue
@@ -112,8 +124,12 @@ class Command(BaseCommand):
                 if problems is not None:
                     process_problem(problems, desc='problems')
                 else:
-                    for resource in resources:
+                    coder_resources = resources.annotate(has_coder=Exists('account', filter=Q(coders=coder)))
+                    coder_resources = coder_resources.filter(has_coder=True)
+                    for resource in tqdm(coder_resources, total=len(coder_resources), desc='resources'):
                         resource_problems = resource.problem_set.all()
                         process_problem(resource_problems, desc=f'{resource}')
+            coder.settings['fill_coder_problems'] = True
+            coder.save()
 
         self.logger.info(f'n_created = {n_created}, n_deleted = {n_deleted}, n_total = {n_total}')

@@ -569,6 +569,7 @@ class Statistic(BaseModule):
             'options': {
                 'fixed_fields': [('hack', 'Challenges')],
             },
+            'kind': 'algorithm' if 'topcoder.com/stat?' in self.standings_url else 'other',
         }
 
         if writers:
