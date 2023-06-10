@@ -1113,6 +1113,10 @@ def sort_select_data(data):
             'name': 'sort_order',
         },
     }
+    if data.get('rev_order'):
+        ret['state']['values'].reverse()
+        ret['state']['icons'].reverse()
+
     ret.update(data)
     return ret
 

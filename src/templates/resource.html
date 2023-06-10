@@ -2,7 +2,7 @@
 {% load humanize %}
 
 {% block ogtitle %}{% block title %}{{ resource.host }} - Resource{% endblock %}{% endblock %}
-{% block description %}{{ resource.host }} resource, number of contests: {{ resource.n_contests }}, number of accounts: {{ resource.n_accounts }}{% endblock %}
+{% block description %}{{ resource.host }} resource, number of contests: {{ resource.n_contests }}, number of accounts: {{ resource.n_accounts }}.{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/resource.css' %}" rel="stylesheet">
@@ -38,6 +38,11 @@
 
     <div class="badge progress-bar-{% if resource.has_upsolving %}success{% else %}info{% endif %}">
         {% if resource.has_upsolving %}has{% else %}no{% endif %} upsolving
+        {% if resource.info.problems.upsolving.help_message %}
+        <span data-toggle="tooltip" data-placement="top" title="{{ resource.info.problems.upsolving.help_message }}">
+          <i class="fas fa-exclamation-circle"></i>
+        </span>
+        {% endif %}
     </div>
 
     <span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }} contest(s)</span>

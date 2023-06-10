@@ -125,3 +125,7 @@ table tr.contest.honorable-medal {
 .update-account {
   cursor: pointer;
 }
+
+.update-account[disabled] {
+  pointer-events: none;
+}

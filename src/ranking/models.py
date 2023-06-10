@@ -97,6 +97,7 @@ class Account(BaseModel):
             GistIndexTrgrmOps(fields=['key']),
             GistIndexTrgrmOps(fields=['name']),
             ExpressionIndex(expressions=[Upper('key')]),
+            models.Index(fields=['resource', 'key']),
             models.Index(fields=['resource', 'country']),
             models.Index(fields=['resource', 'last_activity', 'country']),
             models.Index(fields=['resource', 'n_contests', '-id']),

@@ -16,7 +16,7 @@ from django.utils.timezone import now
 from tqdm import tqdm
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -40,6 +40,71 @@ class Statistic(BaseModule):
                 },
             )
 
+    def old_aicups_get_standings(self, users=None, statistics=None):
+        page = REQ.get(self.standings_url, detect_charsets=True)
+        tabs = re.findall('<a[^>]*data-toggle="tab">(?:<[^>]*>)*(?P<name>[^<]+)', page)
+        tables = re.findall('<table[^<]*>.*?</table>', page, re.DOTALL)
+        rating_name = self.info.get('_rating_name', self.name)
+
+        for index, (tab, table) in enumerate(zip(tabs, tables), start=1):
+            if tab in rating_name:
+                standings_url = self.standings_url.split('#')[0] + f'#{index}'
+                break
+        else:
+            raise ExceptionParseStandings('Not found standings table')
+
+        table = parsed_table.ParsedTable(table)
+        result = {}
+        fixed_fields = []
+        for row in table:
+            r = OrderedDict()
+            for k, v in row.items():
+                if k == '#':
+                    r['place'] = v.value
+                elif k == 'Пользователь':
+                    # find tag a with href start with "/profile/"
+                    href = v.column.node.xpath('.//a[starts-with(@href, "/profile/")]/@href')
+                    if len(href) != 1:
+                        raise ExceptionParseStandings(f'Not found user url, url = {href}')
+                    uid = re.search('([0-9]+)/?', href[0]).group(1)
+                    handle = f'aicups:{uid}'
+                    r['member'] = handle
+                    r['name'] = re.sub(r'\s+', ' ', v.value)
+                    r['info'] = {
+                        'profile_url': {
+                            'resource': 'aicups.ru',
+                            'account': uid,
+                        },
+                        '_name_instead_key': True,
+                    }
+                    r['_name_instead_key'] = True
+                elif k == 'Результат':
+                    r['solving'] = v.value
+                elif v.value:
+                    if k == '':
+                        k = 'language'
+                    k = k.lower()
+                    r[k] = v.value
+                    if k not in fixed_fields:
+                        fixed_fields.append(k)
+            result[r['member']] = r
+
+        options = {'fixed_fields': list(fixed_fields)}
+
+        is_final = bool(re.search(r'\bФинал', self.name))
+        if is_final:
+            options['medals'] = [
+                {'name': 'gold', 'count': 1},
+                {'name': 'silver', 'count': 1},
+                {'name': 'bronze', 'count': 1},
+            ]
+
+        return {
+            'url': standings_url,
+            'result': result,
+            'options': options,
+        }
+
     @staticmethod
     def _get_task_id(key):
         data = REQ.get('/api_v2/contests/battles/?page_size=100500', return_json=True)
@@ -49,6 +114,9 @@ class Statistic(BaseModule):
                     return dround['tasks'][0]['id']
 
     def get_standings(self, users=None, statistics=None):
+        if self.standings_url and '/aicups.ru/' in self.standings_url:
+            return self.old_aicups_get_standings(users=users, statistics=statistics)
+
         slug = self.info.get('parse').get('slug')
         period = self.info.get('parse').get('round', {}).get('round_status', 'past')
         standings_url = urljoin(self.url, f'/results/{slug}?roundId={self.key}&period={period}')

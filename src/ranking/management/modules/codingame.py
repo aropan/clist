@@ -299,8 +299,16 @@ class Statistic(BaseModule):
                     row['_force_subscriptions'] = True
                 row['_last_agent_id'] = row['agent_id']
 
+        fixed_fields = [
+            ('league', 'league'),
+            ('league_rank', 'league_rank'),
+            ('language', 'language'),
+            ('clashes_count', 'clashes_count'),
+        ]
+
         if self.end_time > now():
             hidden_fields.discard('submit_time')
+            fixed_fields.append(('submit_time', 'submit_time'))
         if self.end_time > now() or not has_codinpoints:
             hidden_fields.add('codinpoints')
         hidden_fields = list(hidden_fields)
@@ -316,13 +324,7 @@ class Statistic(BaseModule):
             '_challenge': challenge,
             '_opening': list(sorted(opening.values(), key=lambda o: o['date'])),
             'options': {
-                'fixed_fields': [
-                    ('league', 'league'),
-                    ('league_rank', 'league_rank'),
-                    ('language', 'language'),
-                    ('clashes_count', 'clashes_count'),
-                    ('submit_time', 'submit_time'),
-                ],
+                'fixed_fields': fixed_fields,
             },
             'grouped_team': grouped_team,
         }

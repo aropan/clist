@@ -203,7 +203,6 @@ class ContestResource(BaseModelResource):
         with_problems = applicable_filters.pop('with_problems', None)
         format_time = applicable_filters.pop('format_time', 'true' if is_atom else None)
 
-
         if is_atom and 'start_time__during' not in applicable_filters:
             applicable_filters['start_time__during'] = '1 day'
 

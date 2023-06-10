@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block ogtitle %}{% block title %}{{ event.name }} event{% endblock %}{% endblock %}
+{% block description %}Find detailed information about the {{ event.name }} event including rules, participants, stages, and schedule. Equip yourself with all you need to know to successfully navigate this programming competition.{% endblock %}
 
 {% block content %}
     <script>search_url = "{% url 'events:event' slug %}search/"</script>

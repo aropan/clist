@@ -34,6 +34,8 @@
         }
         $year = trim($match['year']);
         $title = trim($match['title']);
+        $titles = explode('|', $title);
+        $title = trim($titles[0]);
 
         $prepositions = '(?:at|on|from|of|[a-z,\s]+\bis\b)';
         $regex = '#(?:\b(?:contest\s+ran|start[a-z]*|held|(?:took|take)\s+place)\s+' . $prepositions . '?)(\s*<br[^>]*>)?(?:\s*<a[^>]*>)?(?P<start_time>(?:[^<."]*[0-9]+){2,}[^<."]*)#';

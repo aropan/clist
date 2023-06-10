@@ -28,3 +28,9 @@
 #resources .resource .database-link {
   margin-top: 5px;
 }
+
+#resources .upsolving_help_message {
+  color: #bbb;
+  position: absolute;
+  margin-left: 2px;
+}

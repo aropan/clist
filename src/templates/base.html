@@ -4,7 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta charset="utf-8">
         <meta name="google-site-verification" content="_r9dKPi1upFgyN6EgdU2g6yNRC7aza6qHyhdIPGomkE" />
-        <meta name="description" property="og:description" content="{% block description %}Events of competitive programming. Also coders, standings and more{% endblock %}">
+        <meta name="description" property="og:description" content="{% block description %}Join us on a journey into the world of competitive programming. Our platform keeps you updated about past events and future contests. Get personalized alerts for contests you're interested in and track the progress of coders worldwide. Learn from others, improve your coding skills, and become part of an active community of programmers. Begin your programming adventure with us today.{% endblock %}{% include "filter_title.html" with pretext="For" %}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <link rel="apple-touch-icon" sizes="180x180" href="{% static_ts 'img/favicon/apple-touch-icon.png' %}">
@@ -21,8 +21,12 @@
         <meta name="vapid-key" content="{{ vapid_public_key }}">
         {% endif %}
 
-        <meta property="og:title" content="{%block full_ogtitle %}{% block ogtitle %}{% endblock %} - CLIST{% endblock %}">
-        <title>{% block full_title %}{% block title %}{% endblock %} - CLIST{% endblock %}</title>
+        <meta property="og:title" content="{% block full_ogtitle %}{% block ogtitle %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}">
+        <title>{% block full_title %}{% block title %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}</title>
+
+        {% if request.GET %}
+        <link rel="canonical" href="{% block canonical %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}">
+        {% endif %}
 
         {% if not DEBUG %}
         {% include 'counter/base.html' %}

@@ -8,8 +8,9 @@ $(function() {
   })
 
   $('.update-account').click(function() {
-    var icon = $(this).find('i')
-    icon.toggleClass('fa-spin')
+    var btn = $(this)
+    var icon = btn.find('i')
+    icon.addClass('fa-spin')
     $.ajax({
       type: 'POST',
       url: change_url,
@@ -19,11 +20,11 @@ $(function() {
         id: $(this).attr('data-account-id'),
       },
       success: function(data) {
-        icon.toggleClass('fa-spin')
+        btn.attr('disabled', 'disabled')
         location.reload()
       },
       error: function(response) {
-        icon.toggleClass('fa-spin')
+        icon.removeClass('fa-spin')
         log_ajax_error(response)
       },
     })

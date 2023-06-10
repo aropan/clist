@@ -1,0 +1,4 @@
+{% if params.countries or params.resources %} {% linebreakless %}
+{% if params.countries %}{{ pretext }} {% for country in params.countries %}{% if forloop.counter0 %}, {% endif %}{{ country|get_country_name }}{% endfor %}{% endif %}
+{% if params.resources %}{% if params.countries %} and {% else %}{{ pretext }} {% endif %}{% for resource in params.resources %}{% if forloop.counter0 %}, {% endif %}{{ resource.host }}{% endfor %}{% endif %}
+{% endlinebreakless %}{% endif %}

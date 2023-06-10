@@ -74,7 +74,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     if search is not None:
         contests = contests.filter(get_iregex_filter(
             search,
-            'title', 'host', 'resource__host',
+            'title', 'url', 'host', 'resource__host',
             mapping={
                 'name': {'fields': ['title__iregex']},
                 'slug': {'fields': ['slug']},

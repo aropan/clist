@@ -29,7 +29,7 @@ from clist.templatetags.extras import (as_number, canonize, get_problem_key, get
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
-from true_coders.models import Coder, CoderList, Filter, Party
+from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import make_bins, make_chart
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
@@ -1050,6 +1050,12 @@ def problems(request, template='problems.html'):
     }
     statuses = request.GET.getlist('status')
     if statuses:
+        if not coder:
+            return redirect('auth:login')
+
+        qs = CoderProblem.objects.filter(coder=coder, problem=OuterRef('pk'))
+        problems = problems.annotate(is_solved_verdict=Exists(qs.filter(verdict=ProblemVerdict.SOLVED)))
+        problems = problems.annotate(is_reject_verdict=Exists(qs.filter(verdict=ProblemVerdict.REJECT)))
         for status in statuses:
             if status.startswith('no'):
                 status = status[2:]
@@ -1062,20 +1068,18 @@ def problems(request, template='problems.html'):
             else:
                 with_verdicts = False
             if status in ['todo', 'solved', 'reject']:
-                if not coder:
-                    return redirect('auth:login')
                 condition = Q(**{f'is_{status}': True})
                 if with_verdicts:
                     if status == 'solved':
-                        condition |= Q(verdicts__coder=coder, verdicts__verdict=ProblemVerdict.SOLVED)
+                        condition |= Q(is_solved_verdict=True)
                     elif status == 'reject':
-                        condition |= Q(verdicts__coder=coder, verdicts__verdict=ProblemVerdict.REJECT)
+                        condition |= Q(is_reject_verdict=True)
                 if inverse:
                     condition = ~condition
                 problems = problems.filter(condition)
 
     sort_options = ['date', 'rating'] + custom_fields_select['values']
-    sort_select = {'options': sort_options}
+    sort_select = {'options': sort_options, 'rev_order': True}
     sort_field = request.GET.get('sort')
     sort_order = request.GET.get('sort_order')
     if sort_field and sort_field in sort_options and sort_order in ['asc', 'desc']:

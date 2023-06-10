@@ -2,7 +2,7 @@
 {% load humanize %}
 
 {% block ogtitle %}{% block title %}Resources{% endblock %}{% endblock %}
-{% block description %}List of all resources with calendar url to export, number of contests, number of accounts and technical information{% endblock %}
+{% block description %}Explore our list of resources that host competitive programming contests. Discover a wide range of platforms where you can hone your skills and challenge yourself.{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/resources.css' %}" rel="stylesheet">
@@ -88,6 +88,11 @@
             <i class="fas fa-times"></i>
           {% endif %}
         </span>
+        {% if resource.info.problems.upsolving.help_message %}
+        <span class="upsolving_help_message" data-toggle="tooltip" data-placement="top" title="{{ resource.info.problems.upsolving.help_message }}">
+          <i class="fas fa-exclamation-circle"></i>
+        </span>
+        {% endif %}
       </td>
 
       <td>

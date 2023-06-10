@@ -1173,17 +1173,18 @@ def change(request):
         except Exception as e:
             return HttpResponseBadRequest(e)
 
+        if not account.resource.has_accounts_infos_update:
+            return HttpResponseBadRequest(f'Update not supported for {account.resource.host} resource')
         now = timezone.now()
-        if not account.updated or now < account.updated:
-            usage = get_usage(request, group='update-account', key='user', rate='10/h', increment=True)
-            if usage['should_limit']:
-                delta = timedelta(seconds=usage['time_left'])
-                return HttpResponseBadRequest(f'Try again in {humanize.naturaldelta(delta)}', status=429)
+        if account.updated and account.updated <= now:
+            return HttpResponseBadRequest('Update in progress')
 
-            account.updated = now
-            account.save()
-        else:
-            return HttpResponseBadRequest('Already updated')
+        usage = get_usage(request, group='update-account', key='user', rate='10/h', increment=True)
+        if usage['should_limit']:
+            delta = timedelta(seconds=usage['time_left'])
+            return HttpResponseBadRequest(f'Try again in {humanize.naturaldelta(delta)}', status=429)
+        account.updated = now
+        account.save()
     elif name == "update-statistics" and request.user.has_perm('ranking.update_statistics'):
         pk = request.POST.get('id')
         call_command('parse_statistic', contest_id=pk)

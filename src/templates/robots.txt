@@ -21,10 +21,11 @@ Disallow: /auth/
 Disallow: /o/
 Disallow: */ratings/
 
-Disallow: *?
-Allow:    *?country=
-Allow:    *?resource=
-Disallow: /standings/*?resource=
+Disallow: *?*&
+Disallow: *?*__*
+Disallow: /standings/*/*?resource=
 Disallow: /coders/*?resource=
 Disallow: /resources/top/*?resource=
-Disallow: *?*&
+Allow:    *?country=
+Allow:    *?resource=
+Disallow: *?

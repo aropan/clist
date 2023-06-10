@@ -126,8 +126,16 @@
 
     {% include "profile_list_filter.html" %}
 
-    {% if account.resource.has_accounts_infos_update and this_is_me or perms.ranking.update_account %}
-    <a class="update-account" data-account-id="{{ account.pk }}">{% icon_to 'update' %}</a>
+    {% if account.resource.has_accounts_infos_update %}
+    {% if this_is_me or perms.ranking.update_account %}
+    {% with delta=account.updated|timedelta_with_now %}
+    <a class="update-account" data-account-id="{{ account.pk }}"{% if delta.total_seconds < 0 %} disabled{% endif %}>
+      <span title="{% if 0 < delta.total_seconds %}Update{% else %}Update in progress{% endif %}" data-toggle="tooltip" data-placement="top">
+        <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
+      </span>
+    </a>
+    {% endwith %}
+    {% endif %}
     {% endif %}
 
     {% if perms.ranking.change_account %}
