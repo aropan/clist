@@ -44,7 +44,8 @@ from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
 from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
-from ranking.models import Account, Module, Rating, Statistics, update_account_by_coders
+from ranking.models import (Account, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
+                            update_account_by_coders)
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
 from utils.chart import make_chart
@@ -179,7 +180,7 @@ def get_profile_context(request, statistics, writers, resources):
         'statistics': statistics,
         'writers': writers,
         'resources': list(resources),
-        'two_columns': len(history_resources) > 1,
+        'two_columns': len(resources) > 1,
         'history_resources': history_resources,
         'show_history_ratings': not filters,
         'search_resource': search_resource,
@@ -347,7 +348,7 @@ def coders(request, template='coders.html'):
     ('profile_contests_paging.html', 'contest_page'),
     ('profile_writers_paging.html', 'writers_page'),
 ))
-def profile(request, username, template='profile.html', extra_context=None):
+def profile(request, username, template='profile_coder.html', extra_context=None):
     coder = get_object_or_404(Coder, username=username)
     data = _get_data_mixed_profile(request, [username])
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
@@ -365,28 +366,29 @@ def profile(request, username, template='profile.html', extra_context=None):
     return render(request, template, context)
 
 
-@page_templates((
-    ('profile_contests_paging.html', 'contest_page'),
-    ('profile_writers_paging.html', 'writers_page'),
-))
-def account(request, key, host, template='profile.html', extra_context=None):
+def account_context(request, key, host):
     accounts = Account.objects.select_related('resource').prefetch_related('coders')
     resource = get_object_or_404(Resource, host=host)
     account = get_object_or_404(accounts, key=key, resource=resource)
 
-    data = _get_data_mixed_profile(request, [account.resource.host + ':' + account.key])
-    context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
-    context['account'] = account
-    context['without_accounts'] = True
+    context = {
+        'account': account,
+        'without_accounts': True,
+    }
 
     add_account_button = False
+    verified = False
     if request.user.is_authenticated:
-        coder_accounts = request.user.coder.account_set.filter(resource=account.resource)
+        coder = request.user.coder
+        verified = bool(VerifiedAccount.objects.filter(coder=coder, account=account).exists())
+        coder_accounts = coder.account_set.filter(resource=account.resource)
         if account.resource.with_multi_account() or not coder_accounts.first():
             add_account_button = True
     else:
+        coder = None
         add_account_button = True
     context['add_account_button'] = add_account_button
+    context['verified_account'] = verified
 
     wait_rating = account.resource.info.get('statistics', {}).get('wait_rating', {})
     context['show_add_account_message'] = (
@@ -404,12 +406,72 @@ def account(request, key, host, template='profile.html', extra_context=None):
         )
     )
 
-    if request.user.is_authenticated and request.user.coder in account.coders.all():
+    if request.user.is_authenticated and coder in account.coders.all():
         context['without_findme'] = True
         context['this_is_me'] = True
+    return context
+
+
+@page_templates((
+    ('profile_contests_paging.html', 'contest_page'),
+    ('profile_writers_paging.html', 'writers_page'),
+))
+def account(request, key, host, template='profile_account.html', extra_context=None):
+    context = account_context(request, key, host)
+    account = context['account']
+
+    data = _get_data_mixed_profile(request, [account.resource.host + ':' + account.key])
+    profile_context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
+    context.update(profile_context)
 
     if extra_context is not None:
         context.update(extra_context)
+
+    return render(request, template, context)
+
+
+@login_required
+def account_verification(request, key, host, template='account_verification.html'):
+    context = account_context(request, key, host)
+    account = context['account']
+    resource = account.resource
+    coder = request.user.coder
+    this_is_me = bool(context.get('this_is_me'))
+    is_single_account = resource.with_single_account() or account.rating is not None
+    if not resource.has_account_verification:
+        return HttpResponseBadRequest(f'Account verification is not supported for {resource.host} resource')
+    if context.get('verified_account'):
+        return HttpResponseBadRequest('Account already verified')
+    if not this_is_me and is_single_account and coder.account_set.filter(resource=resource).exists():
+        return HttpResponseBadRequest('Allow only one account for resource')
+    verification, created = AccountVerification.objects.get_or_create(coder=coder, account=account)
+    context['verification'] = verification
+
+    action = request.POST.get('action')
+    if action == 'verify':
+        usage = get_usage(request, group='verify-account', key='user', rate='1/m', increment=True)
+        if usage['should_limit']:
+            delta = timedelta(seconds=usage['time_left'])
+            return HttpResponseBadRequest(f'Try again in {humanize.naturaldelta(delta)}', status=429)
+        try:
+            info = resource.plugin.Statistic.get_account_fields(account)
+            verified = False
+            verification_text = verification.text()
+            for field, value in info.items():
+                if isinstance(value, str) and verification_text in value:
+                    verified = True
+                    break
+            if not verified:
+                return HttpResponseBadRequest('Verification text not found')
+            with transaction.atomic():
+                if not this_is_me:
+                    if is_single_account:
+                        account.coders.clear()
+                    coder.add_account(account)
+                VerifiedAccount.objects.get_or_create(coder=coder, account=account)
+            return HttpResponse('ok')
+        except Exception:
+            return HttpResponseBadRequest('Unknown error while verification')
 
     return render(request, template, context)
 
@@ -483,11 +545,14 @@ def _get_data_mixed_profile(request, query):
     else:
         statistics = Statistics.objects.filter(statistics_filter)
         writers = Contest.objects.filter(writers_filter).select_related('resource').order_by('-end_time')
+        accounts = Account.objects.filter(accounts_filter).order_by('-n_contests')
+        if n_coder:
+            accounts = accounts.annotate(verified=Exists('verified_accounts', filter=Q(coder=coder)))
 
         resources = Resource.objects \
             .prefetch_related(Prefetch(
                 'account_set',
-                queryset=Account.objects.filter(accounts_filter).order_by('-n_contests'),
+                queryset=accounts,
                 to_attr='coder_accounts',
             )) \
             .select_related('module') \
@@ -508,7 +573,7 @@ def _get_data_mixed_profile(request, query):
     ('profile_writers_paging.html', 'writers_page'),
 ))
 @context_pagination()
-def profiles(request, query, template='profile.html'):
+def profiles(request, query, template='profile_mixed.html'):
     data = _get_data_mixed_profile(request, query)
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['profiles'] = data['profiles']
@@ -1131,19 +1196,7 @@ def change(request):
                 if account.coders.filter(is_virtual=False).exists():
                     raise Exception('Account is already connect')
 
-            if resource.with_single_account():
-                virtual = account.coders.filter(is_virtual=True).first()
-                if virtual:
-                    accounts = list(virtual.account_set.all())
-                    for a in accounts:
-                        a.coders.add(coder)
-                    virtual.account_set.clear()
-                    NotificationMessage.link_accounts(to=coder, accounts=accounts)
-                    virtual.delete()
-
-            account.coders.add(coder)
-            account.updated = timezone.now()
-            account.save()
+            coder.add_account(account)
             return HttpResponse(json.dumps(account.dict()), content_type="application/json")
         except Exception as e:
             return HttpResponseBadRequest(e)

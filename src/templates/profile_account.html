@@ -1,0 +1,93 @@
+{% extends "profile.html" %}
+
+{% block ogtitle %}{% block title %}{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} on {{ account.resource.host }} - Account{% endblock %}{% endblock %}
+
+{% block description %}{% linebreakless %}
+{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} account
+, number of competitions: {{ account.n_contests }}
+{% if account.country %}, country: {{ account.country.name }}{% endif %}
+{% if account.rating %}, rating: {{ account.rating }}{% endif %}
+{% if account.last_activity %}, last activity: {{ account.last_activity|format_time:"%-d %B %Y" }}{% endif %}
+, last update: {{ account.modified|format_time:"%-d %B %Y" }}
+{% endlinebreakless %}{% endblock %}
+
+{% block profile_header %}
+<h2>
+  <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
+
+  {% if account.resource.avatar_url %}
+    {% call_method account 'avatar_url' account.resource as avatar_url %}
+    {% if avatar_url %}
+      <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
+    {% endif %}
+  {% endif %}
+  {% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}
+  {% coder_color_circle account.resource account.info size=28 %}
+
+  <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+
+  {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
+  <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
+  {% endif %}
+
+  {% if account.resource.has_account_verification %}
+  {% if add_account_button or this_is_me  %}
+  {% if verified_account %}
+    {% icon_to 'verified' %}
+  {% else %}
+    <a href="{% url 'coder:account_verification' account.key account.resource.host %}">{% icon_to 'verification' %}</a>
+  {% endif %}
+  {% endif %}
+  {% endif %}
+
+  {% if request.user.is_authenticated and not this_is_me %}
+  {% with hostname=account.resource.short_host|default:account.resource.host %}
+  <a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:hostname|add:":"|add:account.key %}">{% icon_to 'versus' %}</i></a>
+  {% endwith %}
+  {% endif %}
+
+  {% if add_account_button %}
+  <a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key}}"><i class="fas fa-user-plus"></i></a>
+  {% endif %}
+
+  {% if account.resource.has_accounts_infos_update %}
+  {% if this_is_me or perms.ranking.update_account %}
+  {% with delta=account.updated|timedelta_with_now %}
+  <a class="update-account" data-account-id="{{ account.pk }}"{% if delta.total_seconds < 0 %} disabled{% endif %}>
+    <span title="{% if 0 < delta.total_seconds %}Update{% else %}Update in progress{% endif %}" data-toggle="tooltip" data-placement="top">
+      <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
+    </span>
+  </a>
+  {% endwith %}
+  {% endif %}
+  {% endif %}
+
+  {% include "profile_list_filter.html" %}
+
+  {% if perms.ranking.change_account %}
+    <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+  {% endif %}
+</h2>
+{% if show_add_account_message %}
+{% if add_account_button %}
+<div class="text-center alert alert-warning"><b><a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key }}">Add the account</a></b> to your profile to update the rating</div>
+{% else %}
+<div class="text-center alert alert-info">The account rating not updated because not added to profile</div>
+{% endif %}
+{% endif %}
+
+{% for coder in account.coders.all %}
+<a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
+  {% if coder.user.first_name or coder.user.last_name %}
+    {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+  {% endif %}
+  {{ coder.display_name }}
+</a>
+{% endfor %}
+
+{% for resource in resources %}
+  {% for account in resource.coder_accounts %}
+    {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}
+  {% endfor %}
+{% endfor %}
+{% endblock %}

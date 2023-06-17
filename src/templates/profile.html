@@ -6,177 +6,18 @@
 <script src="{% static_ts 'js/profile.js' %}"></script>
 {% endblock %}
 
-{% block ogtitle %}{% block title %}{% linebreakless %}
-{% if coder %}
-  {{ coder.display_name }} - Coder
-{% elif account %}
-  {% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} on {{ account.resource.host }} - Account
-{% elif profiles %}
-  {{ query }} - Profile
-{% endif %}
-{% endlinebreakless %}{% endblock %}{% endblock %}
-
-{% block description %}{% linebreakless %}
-  {% if coder %}
-{{ coder.display_name }} coder
-, number of accounts: {{ coder.n_accounts }}
-
-{% if coder.first_name_native or coder.last_name_native %}
-, name: {% if coder.first_name_native %}{{ coder.first_name_native }}{% endif %}{% if coder.first_name_native and coder.last_name_native %} {% endif %}{% if coder.last_name_native %}{{ coder.last_name_native }}{% endif %}
-{% elif coder.user.first_name or coder.user.last_name %}
-, name: {% if coder.user.first_name %}{{ coder.user.first_name }}{% endif %}{% if coder.user.first_name and coder.user.last_name %} {% endif %}{% if coder.user.last_name %}{{ coder.user.last_name }}{% endif %}
-{% endif %}
-
-{% if coder.country %}, country: {{ coder.country.name }}{% endif %}
-, last update: {{ coder.modified|format_time:"%-d %B %Y" }}
-
-  {% elif account %}
-{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %} account
-, number of competitions: {{ account.n_contests }}
-{% if account.country %}, country: {{ account.country.name }}{% endif %}
-{% if account.rating %}, rating: {{ account.rating }}{% endif %}
-{% if account.last_activity %}, last activity: {{ account.last_activity|format_time:"%-d %B %Y" }}{% endif %}
-, last update: {{ account.modified|format_time:"%-d %B %Y" }}
-  {% elif profiles %}
-{{ query }}
-  {% endif %}
-{% endlinebreakless %}{% endblock %}
-
 {% block content %}
 
+<form method="post" class="form-inline" action="">{% csrf_token %}
+<div id="profile-header">{% block profile_header %}{% endblock %}</div>
+</form>
+
+{% block profile_body %}
+
 <script>
-  ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource.host }}{% endif %}'
+ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource.host }}{% endif %}'
 </script>
 
-<form method="post" class="form-inline" action="">{% csrf_token %}
-
-<div id="profile-header">
-{% if coder %}
-  <h2>
-    {% if search_resource %}
-      {% with resource=resources.0 %}
-        {% if resource %}
-          <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
-
-          {% for account in resource.coder_accounts %}
-            {% if resource.avatar_url %}
-              {% call_method account 'avatar_url' resource as avatar_url %}
-              {% if avatar_url %}
-                <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
-              {% endif %}
-            {% endif %}
-            {% if forloop.first %}{% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}{% endif %}
-            {% coder_color_circle resource account.info size=28 %}
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
-    {% endif %}
-
-    {% if coder.user.first_name or coder.user.last_name %}
-      {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
-    {% endif %}
-    {{ coder.display_name }}
-
-    {% if request.user.is_authenticated and request.user.coder != coder %}
-    <a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:coder.username %}">{% icon_to 'versus' %}</a>
-    {% endif %}
-
-    {% include "profile_list_filter.html" %}
-
-    {% if perms.true_coders.change_coder %}
-      <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-    {% endif %}
-  </h2>
-  {% if search_resource %}
-  <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
-    {% if coder.user.first_name or coder.user.last_name %}
-      {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
-    {% endif %}
-    {{ coder.display_name }}
-  </a>
-  {% endif %}
-{% elif account %}
-  <h2>
-    <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
-
-    {% if account.resource.avatar_url %}
-      {% call_method account 'avatar_url' account.resource as avatar_url %}
-      {% if avatar_url %}
-        <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
-      {% endif %}
-    {% endif %}
-    {% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}
-    {% coder_color_circle account.resource account.info size=28 %}
-
-    <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
-
-    {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-    <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
-    {% endif %}
-
-    {% if request.user.is_authenticated and not this_is_me %}
-    {% with hostname=account.resource.short_host|default:account.resource.host %}
-    <a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:hostname|add:":"|add:account.key %}">{% icon_to 'versus' %}</i></a>
-    {% endwith %}
-    {% endif %}
-
-    {% if add_account_button %}
-    <a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key}}"><i class="fas fa-user-plus"></i></a>
-    {% endif %}
-
-    {% include "profile_list_filter.html" %}
-
-    {% if account.resource.has_accounts_infos_update %}
-    {% if this_is_me or perms.ranking.update_account %}
-    {% with delta=account.updated|timedelta_with_now %}
-    <a class="update-account" data-account-id="{{ account.pk }}"{% if delta.total_seconds < 0 %} disabled{% endif %}>
-      <span title="{% if 0 < delta.total_seconds %}Update{% else %}Update in progress{% endif %}" data-toggle="tooltip" data-placement="top">
-        <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
-      </span>
-    </a>
-    {% endwith %}
-    {% endif %}
-    {% endif %}
-
-    {% if perms.ranking.change_account %}
-      <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-    {% endif %}
-  </h2>
-  {% if show_add_account_message %}
-  {% if add_account_button %}
-  <div class="text-center alert alert-warning"><b><a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key }}">Add the account</a></b> to your profile to update the rating</div>
-  {% else %}
-  <div class="text-center alert alert-info">The account rating not updated because not added to profile</div>
-  {% endif %}
-  {% endif %}
-
-  {% for coder in account.coders.all %}
-  <a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
-    {% if coder.user.first_name or coder.user.last_name %}
-      {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
-    {% endif %}
-    {{ coder.display_name }}
-  </a>
-  {% endfor %}
-
-  {% for resource in resources %}
-    {% for account in resource.coder_accounts %}
-      {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}
-    {% endfor %}
-  {% endfor %}
-{% elif profiles %}
-  <h2>
-    {{ query }}
-
-    {% if request.user.is_authenticated %}
-    <a href="{% url 'ranking:versus' query|add:"/vs/"|add:request.user.coder.username %}">{% icon_to 'versus' %}</i></a>
-    {% endif %}
-
-    {% include "profile_list_filter.html" %}
-  </h2>
-{% endif %}
-</div>
-</form>
 
 <div class="row">
 
@@ -191,7 +32,8 @@
   <table id="table-accounts" class="table center table-hover table-condensed">
   {% for resource in resources %}
     {% with account=resource.coder_accounts.0 %}
-    {% if account and account.rating is not None and resource.has_rating_history %}
+    {% if account %}
+    {% if account.rating is not None and resource.has_rating_history and resource.enable %}
       <tr>
         <td>
           <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
@@ -215,6 +57,19 @@
           </a>
         </td>
         <td>
+        {% if resource.has_account_verification %}
+        {% if account.verified %}
+          {% icon_to 'verified' %}
+        {% else %}
+          {% if this_is_me %}
+            <a href="{% url 'coder:account_verification' account.key account.resource.host %}">{% icon_to 'unverified' %}</a>
+          {% else %}
+            {% icon_to 'unverified' %}
+          {% endif %}
+        {% endif %}
+        {% endif %}
+        </td>
+        <td>
           {% include "profile_account_actions.html" with account=account resource=account.resource without_btn=True %}
         </td>
         <td>
@@ -227,32 +82,35 @@
         </td>
       </tr>
     {% endif %}
+    {% endif %}
     {% endwith %}
   {% endfor %}
   </table>
 
   {% for resource in resources %}
     {% with account=resource.coder_accounts.0 %}
-      {% if account and account.rating is None or account and not resource.has_rating_history %}
-        <span class="account btn-group btn-group-sm">
-          <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
-            <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
-          </a>
-          <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
-            {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True trim_length=20 %}
+    {% if account %}
+    {% if account.rating is None or not resource.has_rating_history or not resource.enable %}
+      <span class="account btn-group btn-group-sm">
+        <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
+          <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
+        </a>
+        <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
+          {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True trim_length=20 %}
 
-            {% if resource.coder_accounts|length > 1 %}
-            <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
-              +{{ resource.coder_accounts|length|add:-1 }}
-            </span>
+          {% if resource.coder_accounts|length > 1 %}
+          <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
+            +{{ resource.coder_accounts|length|add:-1 }}
+          </span>
 
-            {% endif %}
+          {% endif %}
 
-            {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
-          </a>
-          {% include "profile_account_actions.html" with account=account resource=account.resource %}
-        </span>
-      {% endif %}
+          {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
+        </a>
+        {% include "profile_account_actions.html" with account=account resource=account.resource %}
+      </span>
+    {% endif %}
+    {% endif %}
     {% endwith %}
   {% endfor %}
 
@@ -399,6 +257,8 @@
 <div class="alert alert-warning">Empty statistics</div>
 {% endif %}
 </div>
+
+{% endblock %}
 
 {% endblock %}
 

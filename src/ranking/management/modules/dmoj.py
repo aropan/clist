@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import html
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from contextlib import ExitStack
+from datetime import timedelta
 from pprint import pprint
 from urllib.parse import quote_plus, urlparse
 
@@ -24,6 +27,7 @@ class Statistic(BaseModule):
     }
     PROBLEM_URL_ = '{resource}/problem/{code}'
     FETCH_USER_INFO_URL_ = '{resource}/api/user/info/{user}'
+    API_USER_URL_ = '{resource}/api/v2/user/{user}'
 
     def get_standings(self, users=None, statistics=None):
         api_ranking_url_version = self.resource.info.get('statistics', {}).get('api_ranking_url_version', 'v2')
@@ -178,6 +182,45 @@ class Statistic(BaseModule):
             'hidden_fields': list(hidden_fields),
         }
         return standings
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        host = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(resource.url))
+
+        @RateLimiter(max_calls=1, period=2)
+        def fetch_profile(user, account):
+            url = Statistic.API_USER_URL_.format(resource=host, user=quote_plus(user))
+
+            try:
+                data = REQ.get(url)
+                data = json.loads(data)
+                data = data['data']['object']
+                data.pop('solved_problems', None)
+                data.pop('contests', None)
+
+                url = resource.profile_url.format(**account.dict_with_info())
+                page = REQ.get(url)
+                match = re.search(r'<div[^>]*class="content-description"[^>]*>\s*<h4>[^<]*</h4>\s*<p>(?P<value>[^<]*)</p>', page)  # noqa
+                if match:
+                    data['description'] = html.unescape(match.group('value'))
+            except FailOnGetResponse:
+                return False
+
+            return data
+
+        with PoolExecutor(max_workers=8) as executor:
+            for info in executor.map(fetch_profile, users, accounts):
+                if pbar:
+                    pbar.update()
+                if not info:
+                    if info is None:
+                        yield {'info': None}
+                    else:
+                        yield {'skip': True, 'delta': timedelta(days=365)}
+                    continue
+                info = {'info': info}
+                yield info
 
 
 if __name__ == "__main__":

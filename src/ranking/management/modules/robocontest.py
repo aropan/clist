@@ -136,6 +136,9 @@ class Statistic(BaseModule):
                     val = html.unescape(match.group('val').strip())
                     ret[key] = val
 
+            match = re.search(r'<h3[^>]*class="[^"]*card-title[^"]*"[^>]*>(?:\s*<[^>]*>)*(?P<name>[^<]*)', page)
+            ret['name'] = html.unescape(match.group('name'))
+
             # for field in 'region', 'district':
             #     if ret.get(field):
             #         country = locator.get_country(ret[field], lang='ru')

@@ -238,7 +238,7 @@ class Command(BaseCommand):
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])
                             if 'name' in info:
-                                name = info.pop('name')
+                                name = info['name']
                                 account.name = name if name and name != account.key else None
                             if 'rating' in info and account.info.get('rating') != info['rating']:
                                 info['_rating_time'] = int(now.timestamp())

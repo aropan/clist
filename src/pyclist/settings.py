@@ -628,6 +628,9 @@ FONTAWESOME_ICONS_ = {
     'app': '<i class="fas fa-desktop"></i>',
     'sort-asc': '<i class="fas fa-sort-amount-down-alt"></i>',
     'sort-desc': '<i class="fas fa-sort-amount-down"></i>',
+    'verification': '<i class="far fa-check-circle"></i>',
+    'verified': '<i class="verified fas fa-check-circle"></i>',
+    'unverified': '<i class="unverified fas fa-check-circle"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

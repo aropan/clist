@@ -22,6 +22,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 class Statistic(BaseModule):
     RANKING_URL_FORMAT_ = 'https://www.hackerearth.com/AJAX/feed/newsfeed/icpc-leaderboard/event/{event_id}/{page}/'
     RATING_URL_FORMAT_ = 'https://www.hackerearth.com/ratings/AJAX/rating-graph/{account}/'
+    PROFILE_API_URL_FORMAT_ = 'https://www.hackerearth.com/profiles/api/{account}/personal-details/'
     LOGIN_URL_ = 'https://www.hackerearth.com/en-us/login/'
     LOGGED_IN = False
 
@@ -53,9 +54,8 @@ class Statistic(BaseModule):
                     csrftoken = REQ.get_cookie('csrftoken')
                     if csrftoken:
                         headers['x-csrftoken'] = csrftoken
-                else:
-                    headers = {}
-                return REQ.get(url, headers=headers)
+                    page = REQ.get(url, headers=headers)
+                return page
             except FailOnGetResponse as e:
                 if attempt == 15 or getattr(e.args[0], 'code', None) != 500:
                     raise ExceptionParseStandings(e.args[0])
@@ -274,6 +274,10 @@ class Statistic(BaseModule):
                     info['country'] = match.group('country')
                 info['country_ts'] = datetime.now().timestamp()
 
+            url = Statistic.PROFILE_API_URL_FORMAT_.format(**account.dict_with_info())
+            data = Statistic._get(url)
+            info.update(json.loads(data))
+
             url = Statistic.RATING_URL_FORMAT_.format(account=account.key)
             page = Statistic._get(url)
             match = re.search(r'var[^=]*=\s*(?P<data>.*);$', page, re.M)
@@ -294,7 +298,6 @@ class Statistic(BaseModule):
                             addition_update[dst] = int(contest[src])
                     if 'rating' in contest:
                         info['rating'] = int(contest['rating'])
-
             return account, ret
 
         with PoolExecutor(max_workers=8) as executor:

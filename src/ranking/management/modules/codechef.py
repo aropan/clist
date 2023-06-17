@@ -381,6 +381,10 @@ class Statistic(BaseModule):
                         value = match.group('value').strip()
                         info[key] = value
 
+                    match = re.search('<h1[^>]*class="h2-style"[^>]*>(?P<name>[^<]*)</h1>', page)
+                    if match:
+                        info['name'] = html.unescape(match.group('name').strip())
+
                     match = re.search(r'''<header[^>]*>\s*<img[^>]*src=["'](?P<src>[^"']*)["'][^>]*>\s*<h1''', page)
                     if match:
                         src = urljoin(url, match.group('src'))

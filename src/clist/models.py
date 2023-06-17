@@ -61,6 +61,7 @@ class Resource(BaseModel):
     accounts_fields = models.JSONField(default=dict, blank=True)
     avg_rating = models.FloatField(default=None, null=True, blank=True)
     has_upsolving = models.BooleanField(default=False)
+    has_account_verification = models.BooleanField(default=False)
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
@@ -231,6 +232,13 @@ class Resource(BaseModel):
             step = math.gcd(step, rating['next'] - prev)
             prev = rating['next']
         return step
+
+    def account_verification_fields(self):
+        verification_fields = self.accounts_fields.get('verification_fields', [])
+        ret = [field for field, values in self.accounts_fields.get('types', {}).items() if 'str' in values]
+        if verification_fields:
+            ret = [field for field in ret if field in verification_fields]
+        return ret
 
 
 class BaseContestManager(BaseManager):

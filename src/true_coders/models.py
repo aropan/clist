@@ -10,6 +10,7 @@ from django.core.cache import cache
 from django.db import models
 from django.db.models import Count, F, Q, signals
 from django.dispatch import receiver
+from django.utils import timezone
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 from sql_util.utils import SubquerySum
@@ -157,6 +158,25 @@ class Coder(BaseModel):
     @property
     def has_global_rating(self):
         return django_settings.ENABLE_GLOBAL_RATING_ and self.global_rating is not None
+
+    def add_account(self, account):
+        coder = self
+        resource = account.resource
+
+        if resource.with_single_account():
+            virtual = account.coders.filter(is_virtual=True).first()
+            if virtual:
+                accounts = list(virtual.account_set.all())
+                for a in accounts:
+                    a.coders.add(coder)
+                virtual.account_set.clear()
+                NotificationMessage = apps.get_model('notification.NotificationMessage')
+                NotificationMessage.link_accounts(to=coder, accounts=accounts)
+                virtual.delete()
+
+        account.coders.add(coder)
+        account.updated = timezone.now()
+        account.save()
 
 
 class CoderProblem(BaseModel):

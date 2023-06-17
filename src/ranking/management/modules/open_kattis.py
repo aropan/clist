@@ -227,6 +227,7 @@ class Statistic(BaseModule):
 
                 info = {}
                 for field, regex in (
+                    ('name', r'<div[^>]*class="image_info-text-horizontal"[^>]*>\s*<a[^>]*>\s*<span[^>]*>\s*<em>(?P<val>[^<]*)'),  # noqa
                     ('country', r'<div[^>]*country-flag[^>]*>\s*<a[^>]*href="[^"]*/countries/(?P<val>[^"/]*)/?"'),
                     ('subdivision', r'<div[^>]*subdivision-flag[^>]*>\s*<[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),
                     ('university', r'<span[^>]*university-logo[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),

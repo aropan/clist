@@ -1,0 +1,17 @@
+{% extends "profile.html" %}
+
+{% block ogtitle %}{% block title %}{{ query }} - Profile{% endblock %}{% endblock %}
+
+{% block description %}{{ query }}{% endblock %}
+
+{% block profile_header %}
+<h2>
+  {{ query }}
+
+  {% if request.user.is_authenticated %}
+  <a href="{% url 'ranking:versus' query|add:"/vs/"|add:request.user.coder.username %}">{% icon_to 'versus' %}</i></a>
+  {% endif %}
+
+  {% include "profile_list_filter.html" %}
+</h2>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "profile.html" %}
+
+{% block ogtitle %}{% block title %}{{ coder.display_name }} - Coder{% endblock %}{% endblock %}
+
+{% block description %}{% linebreakless %}
+{{ coder.display_name }} coder, number of accounts: {{ coder.n_accounts }}
+{% if coder.first_name_native or coder.last_name_native %}
+, name: {% if coder.first_name_native %}{{ coder.first_name_native }}{% endif %}{% if coder.first_name_native and coder.last_name_native %} {% endif %}{% if coder.last_name_native %}{{ coder.last_name_native }}{% endif %}
+{% elif coder.user.first_name or coder.user.last_name %}
+, name: {% if coder.user.first_name %}{{ coder.user.first_name }}{% endif %}{% if coder.user.first_name and coder.user.last_name %} {% endif %}{% if coder.user.last_name %}{{ coder.user.last_name }}{% endif %}
+{% endif %}
+{% if coder.country %}, country: {{ coder.country.name }}{% endif %}
+, last update: {{ coder.modified|format_time:"%-d %B %Y" }}
+{% endlinebreakless %}{% endblock %}
+
+{% block profile_header %}
+<h2>
+  {% if search_resource %}
+    {% with resource=resources.0 %}
+      {% if resource %}
+        <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
+
+        {% for account in resource.coder_accounts %}
+          {% if resource.avatar_url %}
+            {% call_method account 'avatar_url' resource as avatar_url %}
+            {% if avatar_url %}
+              <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
+            {% endif %}
+          {% endif %}
+          {% if forloop.first %}{% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}{% endif %}
+          {% coder_color_circle resource account.info size=28 %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+
+  {% if coder.user.first_name or coder.user.last_name %}
+    {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+  {% endif %}
+  {{ coder.display_name }}
+
+  {% if request.user.is_authenticated and request.user.coder != coder %}
+  <a href="{% url 'ranking:versus' request.user.coder.username|add:"/vs/"|add:coder.username %}">{% icon_to 'versus' %}</a>
+  {% endif %}
+
+  {% include "profile_list_filter.html" %}
+
+  {% if perms.true_coders.change_coder %}
+    <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+  {% endif %}
+</h2>
+{% if search_resource %}
+<a class="badge progress-bar-info" href="{% url 'coder:profile' coder.username %}">
+  {% if coder.user.first_name or coder.user.last_name %}
+    {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+  {% endif %}
+  {{ coder.display_name }}
+</a>
+{% endif %}
+{% endblock %}

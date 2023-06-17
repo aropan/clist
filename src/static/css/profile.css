@@ -129,3 +129,13 @@ table tr.contest.honorable-medal {
 .update-account[disabled] {
   pointer-events: none;
 }
+
+#account-verification a[target="_blank"] {
+  font-weight: bold;
+}
+
+
+#account-verification ol li.list-group-item {
+  list-style: decimal inside;
+  display: list-item;
+}

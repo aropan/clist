@@ -698,3 +698,23 @@ canvas.rating_history {
     display: none;
   }
 }
+
+/*
+ * Account
+ */
+
+.verified {
+  color: #3c3;
+}
+
+.unverified {
+  color: #ddd;
+}
+
+/*
+ * Copy to clipboard
+ */
+
+.copy-to-clipboard {
+  cursor: pointer;
+}

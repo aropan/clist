@@ -111,7 +111,8 @@ class Statistic(BaseModule):
                         else:
                             to_get_handle = True
                             row['member'] = f'{row["name"]}, {row["place"]}, {self.start_time.year}'
-                            row['info'] = {'is_virtual': True}
+                            row['info'] = {'is_virtual': True, '_name_instead_key': True}
+                            row['_name_instead_key'] = True
 
                         for field in v:
                             flag = field.row.node.xpath(".//span[contains(@class,'flag')]/@class")
@@ -314,6 +315,15 @@ class Statistic(BaseModule):
                 key = match.group('key').lower()
                 value = match.group('value')
                 info[key] = value
+
+            matches = re.finditer(r'<div\s*class="?(?P<title>[a-z]+)"?\s*>(?P<value>[^<]*)</div>', page)
+            for match in matches:
+                key = match.group('title').strip()
+                value = match.group('value').strip()
+                if key in ('value', 'title', 'spacer') or not value:
+                    continue
+                info[key] = value
+
             return user, info, ratings
 
         with PoolExecutor(max_workers=8) as executor:

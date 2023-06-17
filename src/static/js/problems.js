@@ -59,6 +59,8 @@ function click_activity_problem_result(el) {
         solution_class = 'success'
       } else if ($(el).hasClass('rej')) {
         solution_class = 'danger'
+      } else if ($(el).hasClass('tdo')) {
+        solution_class = 'info'
       } else {
         solution_class = ''
       }

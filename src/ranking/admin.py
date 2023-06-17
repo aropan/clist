@@ -5,7 +5,7 @@ from sql_util.utils import Exists
 from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
-from ranking.models import Account, AutoRating, Module, Rating, Stage, Statistics
+from ranking.models import Account, AccountVerification, AutoRating, Module, Rating, Stage, Statistics, VerifiedAccount
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -79,6 +79,18 @@ class AccountAdmin(BaseModelAdmin):
             return qs.select_related('contest')
 
     inlines = [StatisticsSet]
+
+
+@admin_register(AccountVerification)
+class AccountVerificationAdmin(BaseModelAdmin):
+    list_display = ['coder', 'account']
+    search_fields = ['=coder', '=account__key']
+
+
+@admin_register(VerifiedAccount)
+class VerifiedAccountAdmin(BaseModelAdmin):
+    list_display = ['coder', 'account']
+    search_fields = ['=coder', '=account__key']
 
 
 @admin_register(Rating)

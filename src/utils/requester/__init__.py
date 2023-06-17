@@ -188,6 +188,7 @@ class proxer():
             self.proxy.setdefault("_total_time", 0.)
             self.proxy["_count"] += 1
             self.proxy["_total_time"] += time_response.total_seconds() + time_response.microseconds / 1000000.
+            self.proxy["_avg_time"] = self.time_response()
         self.print(f'ok, {time_response} with average {self.time_response()}')
         self.check_proxy()
 
@@ -594,7 +595,7 @@ class requester():
                 if not self.error:
                     self.proxer.ok(self.time_response)
                 else:
-                    self.proxer.fail()
+                    self.proxer.fail(self.error)
 
             if not response_content_type or not response_content_type.startswith('image/'):
                 matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)

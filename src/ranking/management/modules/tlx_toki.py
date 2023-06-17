@@ -178,8 +178,12 @@ class Statistic(BaseModule):
             url = Statistic.API_AVATAR_URL_FORMAT_.format(jid=jid)
             data['avatar_url'] = url
 
-            url = Statistic.API_HISTORY_URL_FORMAT_.format(handle=handle)
-            history = json.loads(REQ.get(url))
+            try:
+                url = Statistic.API_HISTORY_URL_FORMAT_.format(handle=handle)
+                history = json.loads(REQ.get(url))
+            except Exception:
+                history = None
+
             return data, history
 
         page = REQ.get(Statistic.API_USER_SEARCH_, post=json.dumps(users), content_type='application/json')
@@ -199,38 +203,41 @@ class Statistic(BaseModule):
                         yield {'skip': True}
                     continue
 
-                contests = history['data']
-                contests.sort(key=lambda c: history['contestsMap'][c['contestJid']]['beginTime'])
-                last_rating = None
-                contest_addition_update = {}
-                for contest in contests:
-                    slug = history['contestsMap'][contest['contestJid']]['slug']
-                    url = f'https://tlx.toki.id/contests/{slug}'
-                    update = contest_addition_update.setdefault(url, collections.OrderedDict())
-                    if contest['rating']:
-                        rating = contest['rating']['publicRating']
-                        if last_rating is not None:
-                            update['old_rating'] = last_rating
-                            update['rating_change'] = rating - last_rating
-                        update['new_rating'] = rating
-                        last_rating = rating
-                    elif last_rating is not None:
-                        update['old_rating'] = last_rating
-                    else:
-                        contest_addition_update.pop(url)
-
-                if last_rating is not None:
-                    data['rating'] = last_rating
-
                 ret = {
                     'info': data,
-                    'contest_addition_update_params': {
-                        'update': contest_addition_update,
-                        'by': 'url',
-                        'clear_rating_change': True,
-                    },
                     'replace_info': True,
                 }
+
+                if history:
+                    contests = history['data']
+                    contests.sort(key=lambda c: history['contestsMap'][c['contestJid']]['beginTime'])
+                    last_rating = None
+                    contest_addition_update = {}
+                    for contest in contests:
+                        slug = history['contestsMap'][contest['contestJid']]['slug']
+                        url = f'https://tlx.toki.id/contests/{slug}'
+                        update = contest_addition_update.setdefault(url, collections.OrderedDict())
+                        if contest['rating']:
+                            rating = contest['rating']['publicRating']
+                            if last_rating is not None:
+                                update['old_rating'] = last_rating
+                                update['rating_change'] = rating - last_rating
+                            update['new_rating'] = rating
+                            last_rating = rating
+                        elif last_rating is not None:
+                            update['old_rating'] = last_rating
+                        else:
+                            contest_addition_update.pop(url)
+
+                    if last_rating is not None:
+                        data['rating'] = last_rating
+
+                    if contest_addition_update:
+                        ret['contest_addition_update_params'] = {
+                            'update': contest_addition_update,
+                            'by': 'url',
+                            'clear_rating_change': True,
+                        }
 
                 yield ret
 

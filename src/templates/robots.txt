@@ -1,9 +1,7 @@
 User-agent: *
 Crawl-Delay: 120
 Sitemap: https://clist.by/sitemap.xml
-Disallow: /api/
-Allow: /api/v1/doc
-Allow: /api/v2/doc
+
 Disallow: /chat/
 Disallow: /admin/
 Disallow: /solutions/
@@ -19,7 +17,12 @@ Disallow: /singup/
 Disallow: /oauth/
 Disallow: /auth/
 Disallow: /o/
-Disallow: */ratings/
+Disallow: /coder/*/ratings/
+Disallow: /account/*/ratings/
+Disallow: /profile/*/ratings/
+
+Allow: /api/v*/doc
+Disallow: /api/
 
 Disallow: *?*&
 Disallow: *?*__*

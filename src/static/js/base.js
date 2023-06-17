@@ -191,20 +191,27 @@ $.browser = {};
 })();
 
 
-function log_ajax_error(response) {
+function log_ajax_error(response, element = null) {
+  var message;
   if (typeof response.responseJSON !== 'undefined') {
     if (response.responseJSON.redirect) {
       window.location.replace(response.responseJSON.redirect)
     } else {
-      $.notify(response.responseJSON.message, 'error')
+      message = response.responseJSON.message
     }
   } else {
-    if (response.responseText.length < 50) {
-      $.notify("{status} {statusText}: {responseText}".format(response), "error")
+    if (response.responseText.length < 100) {
+      message = "{status} {statusText}: {responseText}".format(response)
     } else {
-      $.notify("{status} {statusText}, more in console".format(response), "error")
+      message = "{status} {statusText}, more in console".format(response)
       console.log(response.responseText)
     }
+  }
+  if (element) {
+    element.text(message)
+    element.removeClass('hidden')
+  } else {
+    $.notify(message, 'error')
   }
 }
 
@@ -218,7 +225,7 @@ function log_ajax_error(response) {
       for (var j = 0; j < splitClassName.length; j++) {
         var className = splitClassName[j];
         cs.push(className);
-        if (-1 === classes.indexOf(className)) {
+        if (classes.indexOf(className) === -1) {
           classes.push(className);
         }
       }
@@ -263,6 +270,13 @@ function copyTextToClipboard(text) {
   document.execCommand('copy')
   $temp.remove()
 }
+
+$(function() {
+  $('.copy-to-clipboard').click(function() {
+    copyTextToClipboard($(this).text())
+    $.notify('Copied to clipboard', 'success')
+  })
+})
 
 function select2_ajax_conf(query, field, addition_params) {
   return {

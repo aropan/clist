@@ -10,6 +10,8 @@
 {% define 'success' as solution_class %}
 {% elif problem.is_reject %}
 {% define 'danger' as solution_class %}
+{% elif problem.is_todo %}
+{% define 'info' as solution_class %}
 {% elif solution.result|is_solved %}
 {% define 'success' as solution_class %}
 {% elif solution.result|is_upsolved %}

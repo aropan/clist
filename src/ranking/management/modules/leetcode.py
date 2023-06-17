@@ -303,6 +303,9 @@ class Statistic(BaseModule):
                                         userSlug
                                         realName
                                         contestCount
+                                        userAvatar
+                                        aboutMe
+                                        birthday
                                         ranking {
                                             currentLocalRanking
                                             currentGlobalRanking
@@ -339,10 +342,22 @@ class Statistic(BaseModule):
                             page = Statistic._get(
                                 'https://leetcode.com/graphql',
                                 post=b'''
-                                {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {    attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }    rating    ranking    __typename  }}"}''',  # noqa
+                                {"operationName":"userPublicProfile","variables":{"username":"''' + account.key.encode() + b'''"},"query":"    query userPublicProfile($username: String!) {  matchedUser(username: $username) {    username    profile {      ranking      userAvatar      realName      aboutMe      school      websites      countryName      company      jobTitle      skillTags      postViewCount      postViewCountDiff      reputation      reputationDiff      solutionCount      solutionCountDiff      categoryDiscussCount      categoryDiscussCountDiff    }  }}    "
+}''',  # noqa
                                 content_type='application/json',
                             )
-                            page = json.loads(page)['data']
+                            profile_data = json.loads(page)['data']['matchedUser']
+
+                            page = Statistic._get(
+                                'https://leetcode.com/graphql',
+                                post=b'''
+                                {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    __typename  }}"}''',  # noqa
+                                content_type='application/json',
+                            )
+                            contest_data = json.loads(page)['data']
+
+                            page = profile_data
+                            page.update(contest_data)
                             page['slug'] = account.key
                     break
                 except FailOnGetResponse as e:
@@ -558,6 +573,7 @@ class Statistic(BaseModule):
                     if page['userContestRankingHistory'] is None:
                         yield {'info': None}
                         continue
+                    info.update(page.pop('profile', {}) or {})
                     contest_addition_update_by = 'title'
                     for history in page['userContestRankingHistory']:
                         ratings.append(history['rating'])

@@ -5,9 +5,11 @@ import itertools
 import json
 import re
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from datetime import timedelta
 from pprint import pprint
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -15,6 +17,7 @@ class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://csacademy.com/contest/scoreboard_state/?contestId={key}'
     API_STANDINGS_URL_FORMAT_ = '{url}scoreboard/'
     PROBLEM_URL_FORMAT_ = 'https://csacademy.com/contest/archive/task/{name}/'
+    PROFILE_URL_FORMAT_ = 'https://csacademy.com/user/{account}/?'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -134,6 +137,41 @@ class Statistic(BaseModule):
             'problems': list(problems_info.values()),
         }
         return standings
+
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        def fetch_profile(user):
+            url = Statistic.PROFILE_URL_FORMAT_.format(account=user)
+
+            try:
+                headers = {'x-requested-with': 'XMLHttpRequest'}
+                data = REQ.get(url, headers=headers)
+                data = json.loads(data)
+            except FailOnGetResponse:
+                return False
+
+            for publicuser in data['state']['publicuser']:
+                if publicuser['username'] == user:
+                    break
+            else:
+                return False
+
+            info = {k: v for k, v in publicuser.items() if not k.endswith('Rating') and not k.endswith('History')}
+            return info
+
+        with PoolExecutor(max_workers=8) as executor:
+            for info in executor.map(fetch_profile, users):
+                if pbar:
+                    pbar.update()
+                if not info:
+                    if info is None:
+                        yield {'info': None}
+                    else:
+                        yield {'skip': True, 'delta': timedelta(days=365)}
+                    continue
+                info = {'info': info}
+                yield info
 
 
 if __name__ == "__main__":

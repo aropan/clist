@@ -3,6 +3,7 @@
 
 import html
 import json
+import os
 import re
 import xml.etree.ElementTree as ET
 from collections import OrderedDict, defaultdict
@@ -19,7 +20,7 @@ from lxml import etree
 from clist.templatetags.extras import as_number, asfloat, toint
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, InitModuleException
 from utils.requester import FailOnGetResponse
 
 
@@ -98,6 +99,13 @@ class Statistic(BaseModule):
 
         start_time = self.start_time.replace(tzinfo=None)
 
+        req = REQ.with_proxy(
+            time_limit=5,
+            n_limit=30,
+            filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
+            connect=lambda req: req.get('https://www.topcoder.com/'),
+        )
+
         if not self.standings_url and datetime.now() - start_time < timedelta(days=30):
             opt = 0.61803398875
 
@@ -136,7 +144,7 @@ class Statistic(BaseModule):
                     self.standings_url = url
 
             url = 'https://www.topcoder.com/tc?module=MatchList&nr=100500'
-            page = REQ.get(url)
+            page = req.get(url)
             re_round_overview = re.compile(
                 r'''
 (?:<td[^>]*>(?:
@@ -152,7 +160,7 @@ class Statistic(BaseModule):
                 process_match(date, match.group('title'), urljoin(url, match.group('url')))
 
             url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_round_list'
-            page = REQ.get(url)
+            page = req.get(url)
             root = ET.fromstring(page)
             for child in root:
                 data = {}
@@ -172,7 +180,7 @@ class Statistic(BaseModule):
             challenge_id = None
 
         if 'community.topcoder.com/pl' in self.standings_url:
-            page = REQ.get(self.standings_url)
+            page = req.get(self.standings_url)
             tables = re.findall(r'<table[^>]*>\s*<tr[^>]*>\s*<t[^>]*colspan="?[23]"?[^>]*>.*?</table>', page, re.DOTALL)
             for table in tables:
                 rows = parsed_table.ParsedTable(table, default_header_rowspan=2)
@@ -192,7 +200,7 @@ class Statistic(BaseModule):
             problems_info = None
         elif challenge_id:  # marathon match
             url = conf.TOPCODER_API_MM_URL_FORMAT.format(challenge_id)
-            page = REQ.get(url)
+            page = req.get(url)
             data = json.loads(page)
             problems_info = []
             hidden_fields.extend(['time', 'submits', 'style'])
@@ -243,7 +251,7 @@ class Statistic(BaseModule):
             if not self.standings_url:
                 raise InitModuleException('Not set standings url for %s' % self.name)
             url = self.standings_url + '&nr=100000042'
-            page = REQ.get(url, time_out=100)
+            page = req.get(url, time_out=100)
             result_urls = re.findall(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>Results</a>', str(page), re.I)
             if not result_urls:
                 raise ExceptionParseStandings('not found result urls')
@@ -254,7 +262,7 @@ class Statistic(BaseModule):
                 rd = match.group('rd')
                 url = f'https://www.topcoder.com/tc?module=BasicData&c=dd_round_results&rd={rd}'
                 try:
-                    dd_round_results_page = REQ.get(url)
+                    dd_round_results_page = req.get(url)
                     root = ET.fromstring(dd_round_results_page)
                     for child in root:
                         data = {}
@@ -294,9 +302,9 @@ class Statistic(BaseModule):
                         errors = set()
                         for attempt in range(3):
                             try:
-                                page = REQ.get(p['url'], time_out=30)
+                                page = req.get(p['url'], time_out=30)
                                 match = re.search('<a[^>]*href="(?P<href>[^"]*module=ProblemDetail[^"]*)"[^>]*>', page)
-                                page = REQ.get(urljoin(p['url'], match.group('href')), time_out=30)
+                                page = req.get(urljoin(p['url'], match.group('href')), time_out=30)
                                 matches = re.findall(r'<td[^>]*class="statTextBig"[^>]*>(?P<key>[^<]*)</td>\s*<td[^>]*>(?P<value>.*?)</td>', page, re.DOTALL)  # noqa
                                 for key, value in matches:
                                     key = key.strip().rstrip(':').lower()
@@ -350,7 +358,7 @@ class Statistic(BaseModule):
                 if not users and users is not None:
                     continue
 
-                page = REQ.get(url)
+                page = req.get(url)
                 rows = etree.HTML(page).xpath("//tr[@valign='middle']")
                 header = None
                 url_infos = []
@@ -395,7 +403,7 @@ class Statistic(BaseModule):
                 def fetch_solution(url):
                     for i in range(2):
                         try:
-                            page = REQ.get(url, time_out=60)
+                            page = req.get(url, time_out=60)
                             match = re.search('<td[^>]*class="problemText"[^>]*>(?P<solution>.*?)</td>',
                                               page,
                                               re.DOTALL | re.IGNORECASE)
@@ -419,7 +427,7 @@ class Statistic(BaseModule):
                     delay = 10
                     for _ in range(5):
                         try:
-                            page = REQ.get(url, time_out=delay)
+                            page = req.get(url, time_out=delay)
                             match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>',
                                               page,
                                               re.IGNORECASE)
@@ -560,6 +568,9 @@ class Statistic(BaseModule):
                                     d = d['division'][row['division']]
                                 if idx is not None and 0 <= idx < len(d) and d[idx]['short'] in row['problems']:
                                     row['problems'][d[idx]['short']]['language'] = v
+
+        req.__exit__()
+
         standings = {
             'result': result,
             'url': self.standings_url,
@@ -587,54 +598,80 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
-        dd_active_algorithm = {}
-        page = REQ.get('https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list')
-        root = ET.fromstring(page)
-        for child in root:
-            data = {}
-            for field in child:
-                data[field.tag] = field.text
-            dd_active_algorithm[data.pop('handle')] = data
+        active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
+        with REQ.with_proxy(
+            time_limit=5,
+            n_limit=30,
+            filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
+            connect=lambda req: req.get(active_algorithm_list_url),
+        ) as req:
+            page = req.proxer.get_connect_ret()
+            dd_active_algorithm = {}
+            root = ET.fromstring(page)
+            for child in root:
+                data = {}
+                for field in child:
+                    data[field.tag] = field.text
+                dd_active_algorithm[data.pop('handle')] = data
 
-        def fetch_profile(user):
-            url = f'http://api.topcoder.com/v2/users/{quote(user)}'
-            ret = {}
-            for _ in range(2):
-                try:
-                    page = REQ.get(url)
-                    ret = json.loads(page)
-                    if 'error' in ret:
-                        if isinstance(ret['error'], dict) and ret['error'].get('value') == 404:
-                            ret = {'handle': user, 'action': 'remove'}
-                        else:
-                            continue
-                    break
-                except Exception:
-                    pass
-                sleep(1)
-            if 'handle' not in ret:
-                if not ret or 'error' in ret:
-                    ret['delta'] = timedelta(days=7)
-                ret['handle'] = user
-            if not ret.get('photoLink'):
-                ret.pop('photoLink', None)
-            if user in dd_active_algorithm:
-                data = dd_active_algorithm[user]
-                if 'alg_vol' in data:
-                    ret['volatility'] = toint(data['alg_vol'])
-                if 'alg_rating' in data:
-                    ret['rating'] = toint(data['alg_rating'])
-            for rating in ret.get('ratingSummary', []):
-                if rating['name'].lower() == 'algorithm' and 'rating' not in ret:
-                    ret['rating'] = rating['rating']
+            def fetch_profile(user):
+                url = f'https://api.topcoder.com/v5/members/{quote(user)}'
+                req.proxer.set_connect_func(lambda req: req.get(url))
+
+                ret = {}
+                for _ in range(2):
+                    try:
+                        page = req.get(url)
+                        ret = json.loads(page)
+                        if 'error' in ret:
+                            if isinstance(ret['error'], dict) and ret['error'].get('value') == 404:
+                                ret = {'handle': user, 'action': 'remove'}
+                            else:
+                                continue
+                        break
+                    except Exception:
+                        sleep(1)
+                else:
+                    raise ExceptionParseAccounts(f'Failed to fetch profile for {user}')
+                if 'handle' not in ret:
+                    if not ret or 'error' in ret:
+                        ret['delta'] = timedelta(days=7)
+                    ret['handle'] = user
+
+                for src, dst in (
+                    ('homeCountryCode', 'country'),
+                    ('competitionCountryCode', 'country'),
+                    ('description', 'shortBio'),
+                    ('photoURL', 'photoLink'),
+                    ('handleLower', 'handle'),
+                ):
+                    val = ret.pop(src, None)
+                    if val and not ret.get(dst):
+                        ret[dst] = val
+                if not ret.get('photoLink'):
+                    ret.pop('photoLink', None)
+                if user in dd_active_algorithm:
+                    data = dd_active_algorithm[user]
+                    if 'alg_vol' in data:
+                        ret['volatility'] = toint(data['alg_vol'])
+                    if 'alg_rating' in data:
+                        ret['rating'] = toint(data['alg_rating'])
+                for rating in ret.get('ratingSummary', []):
+                    if rating['name'].lower() == 'algorithm' and 'rating' not in ret:
+                        ret['rating'] = rating['rating']
+                return ret
+
+            ret = []
+            with PoolExecutor(max_workers=4) as executor:
+                for user, data in zip(users, executor.map(fetch_profile, users)):
+                    data['handle'] = data['handle'].strip()
+                    assert user.lower() == data['handle'].lower()
+                    if pbar:
+                        pbar.update()
+                    ret.append({'info': data})
+
+            if req.proxer.proxy:
+                with open('logs/legacy/topcoder.proxy', 'w') as fo:
+                    json.dump(req.proxer.proxy, fo, indent=2)
+
             return ret
-
-        ret = []
-        with PoolExecutor(max_workers=4) as executor:
-            for user, data in zip(users, executor.map(fetch_profile, users)):
-                data['handle'] = data['handle'].strip()
-                assert user.lower() == data['handle'].lower()
-                if pbar:
-                    pbar.update()
-                ret.append({'info': data})
-        return ret

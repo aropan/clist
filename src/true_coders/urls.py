@@ -17,6 +17,11 @@ urlpatterns = [
     re_path(r'^coder/([^/]*)/$', views.profile, name='profile'),
     re_path(r'^coders/$', views.coders, name='coders'),
     re_path(r'^account/(?P<key>.*)/resource/(?P<host>.*)/ratings/$', views.ratings),
+    re_path(
+        r'^account/(?P<key>.*)/resource/(?P<host>.*)/verification/$',
+        views.account_verification,
+        name='account_verification',
+    ),
     re_path(r'^account/(?P<key>.*)/resource/(?P<host>.*)/$', views.account, name='account'),
     re_path(r'^accounts/$', views.accounts, name='accounts'),
     re_path(r'^profile/(?P<query>.*)/ratings/$', views.ratings),

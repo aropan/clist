@@ -19,6 +19,7 @@ from django.db.models.signals import m2m_changed, post_delete, post_save, pre_sa
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
 from sql_util.utils import Exists, SubqueryCount, SubquerySum
@@ -87,7 +88,7 @@ class Account(BaseModel):
             return False
         if field[0] == '_' or field[-1] == '_':
             return True
-        if field in {'profile_url', 'rating'}:
+        if field in {'profile_url', 'rating', 'is_virtual'}:
             return True
         if field.lower() in {'email', 'telegram', 'dateofbirth'}:
             return True
@@ -266,6 +267,32 @@ def update_coder_n_accounts_and_n_contests(signal, instance, action, reverse, pk
 
     if coders and resources:
         call_command('fill_coder_problems', coders=coders, resources=resources)
+
+
+class AccountVerification(BaseModel):
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    code = models.CharField(max_length=10)
+
+    class Meta:
+        unique_together = ('coder', 'account')
+
+    def text(self):
+        return f'ClistCheckCode{self.code}'
+
+
+class VerifiedAccount(BaseModel):
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='verified_accounts')
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='verified_accounts')
+
+    class Meta:
+        unique_together = ('coder', 'account')
+
+
+@receiver(pre_save, sender=AccountVerification)
+def account_verification_pre_save(sender, instance, *args, **kwargs):
+    if not instance.code:
+        instance.code = get_random_string(length=10)
 
 
 class Rating(BaseModel):
