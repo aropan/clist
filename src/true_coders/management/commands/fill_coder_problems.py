@@ -129,7 +129,8 @@ class Command(BaseCommand):
                     for resource in tqdm(coder_resources, total=len(coder_resources), desc='resources'):
                         resource_problems = resource.problem_set.all()
                         process_problem(resource_problems, desc=f'{resource}')
-            coder.settings['fill_coder_problems'] = True
-            coder.save()
+            if args.no_filled:
+                coder.settings['fill_coder_problems'] = True
+                coder.save()
 
         self.logger.info(f'n_created = {n_created}, n_deleted = {n_deleted}, n_total = {n_total}')

@@ -1,6 +1,6 @@
 {% load el_pagination_tags %}
 
-{% lazy_paginate 50,200 problems %}
+{% lazy_paginate per_page,per_page_more problems using 'problems_paging' %}
 
 {% for problem in problems %}
 {% if coder %}
@@ -36,14 +36,17 @@
     <span class="{% coder_color_class problem.resource problem.rating %}">
       {{ problem.rating }}
     </span>
-    {% elif problem.resource.has_problem_rating and problem.n_total %}
-    {% with is_coming=problem.end_time|is_coming %}
-    <span title="{% if is_coming %}waiting for end of contest{% else %}in progress{% endif %}" data-toggle="tooltip">
-      <i class="text-muted fa-xs fas fa-sync{% if not is_coming %} fa-spin{% endif %}"></i>
-    </span>
-    {% endwith %}
     {% else %}
-    <span class="text-muted">&mdash;</span>
+      {% call_method problem.resource 'is_major_kind' problem.contests.all as is_major_kind %}
+      {% if problem.resource.has_problem_rating and problem.n_total and is_major_kind %}
+      {% with is_coming=problem.end_time|is_coming %}
+      <span title="{% if is_coming %}waiting for end of contest{% else %}in progress{% endif %}" data-toggle="tooltip">
+        <i class="text-muted fa-xs fas fa-sync{% if not is_coming %} fa-spin{% endif %}"></i>
+      </span>
+      {% endwith %}
+      {% else %}
+      <span class="text-muted">&mdash;</span>
+      {% endif %}
     {% endif %}
   </td>
   <td class="problem-progress-column">
@@ -90,17 +93,15 @@
     {% endif %}
     <span class="pull-right">
       {% for contest in problem.contests.all %}
-      {% if forloop.counter0 %} |
-      {% if forloop.counter0 == 1 %}
-      <a onclick="return show_hidden_contests(this)" class="hidden-contests contests" title="{% for contest in problem.contests.all|slice:"1:" %}{{ contest.title }}<br/>{% endfor %}" data-toggle="tooltip" data-html="true">...</a>
-      <span class="hidden">
+        {% if forloop.counter0 %} |
+        {% if forloop.counter0 == 1 %}
+        <a onclick="return show_hidden_contests(this)" class="hidden-contests contests" title="{% for contest in problem.contests.all|slice:"1:" %}{{ contest.title }}<br/>{% endfor %}" data-toggle="tooltip" data-html="true">...</a>
+        <span class="hidden">
         {% endif %}
         {% endif %}
         <a href="{{ contest.actual_url }}" class="contests">{% trim_to contest.title 25 %}</a>
-        {% endfor %}
-        {% if problem.contests.all|length > 1 %}
-      </span>
-      {% endif %}
+      {% endfor %}
+      {% if problem.contests.all|length > 1 %}</span>{% endif %}
     </span>
   </td>
   <td>

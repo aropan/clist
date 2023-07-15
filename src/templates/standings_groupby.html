@@ -5,8 +5,12 @@
       <thead>
         <tr class="header-row">
           <th>N</th>
-          {% for key, field in fields.items %}
+          {% for key, field in groupby_fields.items %}
           <th>
+            {% if without_orderby %}
+            {{ field }}
+            {% else %}
+
             {% with rev_key="-"|add:key %}
             <span{% if key in labels_groupby %} title="{{ labels_groupby|get_item:key }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>
               {{ field }}
@@ -28,7 +32,7 @@
               {% endif %}
             ><i class="fas fa-chevron-up"></i></a>
             {% endwith %}
-            {% if forloop.last %}
+
             {% endif %}
           </th>
           {% endfor %}
@@ -46,7 +50,7 @@
 </div>
 {% if num_rows_groupby > 1 %}
 <div class="col-lg-5">
-  {% for field, header in fields.items %}
+  {% for field, header in groupby_fields.items %}
   {% if field != "groupby" %}
   <div>
     <canvas id="chart_{{ field }}"></canvas>
@@ -57,9 +61,9 @@
   <script>
     $(function() {
       var charts = []
-  {% for field, header in fields.items %}
+  {% for field, header in groupby_fields.items %}
   {% if field != "groupby" %}
-  {% with limited_statistics=statistics|order_by_desc:field|limit:pie_limit_rows_groupby %}
+  {% with limited_groupby_data=groupby_data|order_by_desc:field|limit:pie_limit_rows_groupby %}
       var ctx = document.getElementById('chart_{{ field }}').getContext('2d');
       var bg_colors = palette('tol-rainbow', {{ num_rows_groupby }}).map(function(hex) { return '#' + hex; })
 
@@ -68,7 +72,7 @@
         data: {
           datasets: [{
             data: [
-              {% for statistic in limited_statistics %}
+              {% for statistic in limited_groupby_data %}
                 {% with value=statistic|get_item:field %}
                   {% if value|get_type == 'float' %}
                     {{ value|floatformat:2 }},
@@ -79,13 +83,13 @@
               {% endfor %}
             ],
             {% if map_colors_groupby %}
-            backgroundColor: [{% for s in limited_statistics %}bg_colors[{{ map_colors_groupby|get_item:s.groupby }}],{% endfor %}],
+            backgroundColor: [{% for s in limited_groupby_data %}bg_colors[{{ map_colors_groupby|get_item:s.groupby }}],{% endfor %}],
             {% else %}
             backgroundColor: bg_colors,
             {% endif %}
           }],
           labels: [
-            {% for statistic in limited_statistics %}
+            {% for statistic in limited_groupby_data %}
               {% with value=statistic|get_item:'groupby' %}
               {% if groupby == 'country' %}
                 {% if value %}

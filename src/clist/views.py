@@ -1,4 +1,5 @@
 import re
+from collections import OrderedDict
 from datetime import timedelta
 from queue import SimpleQueue
 from urllib.parse import parse_qs, urlparse
@@ -17,8 +18,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django_super_deduper.merge import MergedModelInstance
-from el_pagination.decorators import QS_KEY, page_template, page_templates
-from sql_util.utils import Exists, SubqueryMin
+from el_pagination.decorators import QS_KEY, page_templates
+from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
 from favorites.models import Activity
 from favorites.templatetags.extras import activity_icon
@@ -843,7 +844,10 @@ def update_problems(contest, problems=None, force=False):
     return True
 
 
-@page_template('problems_paging.html')
+@page_templates((
+    ('problems_paging.html', 'problems_paging'),
+    ('standings_groupby_paging.html', 'groupby_paging'),
+))
 @context_pagination()
 def problems(request, template='problems.html'):
     problems = Problem.objects.annotate_favorite(request.user)
@@ -980,7 +984,7 @@ def problems(request, template='problems.html'):
         tags = list(ProblemTag.objects.filter(pk__in=tags))
 
     custom_fields = [f for f in request.GET.getlist('field') if f]
-    custom_options = ['index', 'short', 'key', 'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
+    custom_options = ['index', 'short', 'key', 'url', 'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
     custom_fields_select = {
         'values': [v for v in custom_fields if v and v in custom_options],
         'options': custom_options,
@@ -1078,6 +1082,27 @@ def problems(request, template='problems.html'):
                     condition = ~condition
                 problems = problems.filter(condition)
 
+    # group by
+    groupby = request.GET.get('groupby')
+    groupby_fields = OrderedDict()
+    if groupby == 'tag':
+        problems_subquery = problems.filter(tags=OuterRef('pk')).values('tags')
+        problems_subquery = problems_subquery.annotate(cnt=Count('id')).values('cnt')
+        groupby_data = ProblemTag.objects.annotate(n_problems=SubqueryCount(problems_subquery)).filter(n_problems__gt=0)
+        groupby_data = groupby_data.order_by('-n_problems', 'name')
+        groupby_fields['name'] = 'Tag'
+    elif groupby == 'resource':
+        problems_subquery = problems.filter(resource=OuterRef('pk')).values('resource')
+        problems_subquery = problems_subquery.annotate(cnt=Count('id')).values('cnt')
+        groupby_data = Resource.objects.annotate(n_problems=SubqueryCount(problems_subquery)).filter(n_problems__gt=0)
+        groupby_data = groupby_data.order_by('-n_problems', 'host')
+        groupby_fields['host'] = 'Resource'
+    else:
+        groupby = 'none'
+        groupby_data = None
+    groupby_fields['n_problems'] = 'Num'
+
+    # sort problems
     sort_options = ['date', 'rating'] + custom_fields_select['values']
     sort_select = {'options': sort_options, 'rev_order': True}
     sort_field = request.GET.get('sort')
@@ -1101,6 +1126,12 @@ def problems(request, template='problems.html'):
         'sort_select': sort_select,
         'custom_fields_select': custom_fields_select,
         'chart': chart,
+        'groupby': groupby,
+        'groupby_data': groupby_data,
+        'groupby_fields': groupby_fields,
+        'groupby_select_first_column': True,
+        'per_page': 50,
+        'per_page_more': 200,
     }
 
     return template, context

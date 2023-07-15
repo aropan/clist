@@ -73,3 +73,9 @@ def account_update_contest_additions(
                 if next_timing_statistic < contest.statistic_timing:
                     contest.statistic_timing = next_timing_statistic
             contest.save()
+
+
+def create_upsolving_statistic(contest, account):
+    defaults = {'skip_in_stats': True, 'addition': {'_no_update_n_contests': True}}
+    stat, created = contest.statistics_set.get_or_create(account=account, defaults=defaults)
+    return stat, created

@@ -19,15 +19,16 @@ from lxml import etree
 
 from clist.templatetags.extras import as_number, asfloat, toint
 from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table, save_proxy
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, InitModuleException
 from utils.requester import FailOnGetResponse
 
 
 class Statistic(BaseModule):
+    LEGACY_PROXY_PATH = 'logs/legacy/topcoder.proxy'
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._handle = conf.TOPCODER_HANDLE
         self._password = conf.TOPCODER_PASSWORD
 
@@ -100,7 +101,7 @@ class Statistic(BaseModule):
         start_time = self.start_time.replace(tzinfo=None)
 
         req = REQ.with_proxy(
-            time_limit=5,
+            time_limit=10,
             n_limit=30,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
             connect=lambda req: req.get('https://www.topcoder.com/'),
@@ -566,9 +567,14 @@ class Statistic(BaseModule):
                                 d = problems_info
                                 if len(problems_sets) > 1:
                                     d = d['division'][row['division']]
-                                if idx is not None and 0 <= idx < len(d) and d[idx]['short'] in row['problems']:
+                                if (
+                                    idx is not None
+                                    and 0 <= idx < len(d)
+                                    and 'problems' in row
+                                    and d[idx]['short'] in row['problems']
+                                ):
                                     row['problems'][d[idx]['short']]['language'] = v
-
+        save_proxy(req, Statistic.LEGACY_PROXY_PATH)
         req.__exit__()
 
         standings = {
@@ -600,7 +606,7 @@ class Statistic(BaseModule):
 
         active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
         with REQ.with_proxy(
-            time_limit=5,
+            time_limit=10,
             n_limit=30,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
             connect=lambda req: req.get(active_algorithm_list_url),
@@ -670,8 +676,6 @@ class Statistic(BaseModule):
                         pbar.update()
                     ret.append({'info': data})
 
-            if req.proxer.proxy:
-                with open('logs/legacy/topcoder.proxy', 'w') as fo:
-                    json.dump(req.proxer.proxy, fo, indent=2)
+            save_proxy(req, Statistic.LEGACY_PROXY_PATH)
 
             return ret

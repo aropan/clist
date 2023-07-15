@@ -4,7 +4,7 @@
     $url = 'https://www.icfpconference.org/contest.html';
     $page = curlexec($url);
 
-    $urls = array('http://icfpcontest.org/');
+    $urls = array('http://icfpcontest.org/', 'http://icfpcontest.com/');
 
     if (preg_match_all('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<year>[0-9]{4})\b#', $page, $matches, PREG_SET_ORDER)) {
         foreach ($matches as $m) {
@@ -27,11 +27,22 @@
         }
         $parsed_urls[] = $url;
 
-        if (!preg_match('#<title[^>]*>(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)#i', $page, $match)) {
-            if (!preg_match('#<h1[^>]*>\s*(?:<a[^>]*>)?(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)<#i', $page, $match)) {
-                continue;
+        $regexes = array(
+            '#<title[^>]*>(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)#i',
+            '#<h1[^>]*>\s*(?:<a[^>]*>)?(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)<#i',
+            '#<a[^>]*href="/"[^>]*>(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)<#i',
+        );
+        $found = false;
+        foreach ($regexes as $regex) {
+            if (preg_match($regex, $page, $match)) {
+                $found = true;
+                break;
             }
         }
+        if (!$found) {
+            continue;
+        }
+
         $year = trim($match['year']);
         $title = trim($match['title']);
         $titles = explode('|', $title);
@@ -68,8 +79,16 @@
         if (!preg_match('#\b[0-9]{4}\b#', $start_time)) {
             $start_time .= " $year";
         }
-        if (!empty($end_time) && !preg_match('#\b[0-9]{4}\b#', $end_time)) {
-            $end_time .= " $year";
+        if (!preg_match('#[0-9]+:[0-9]+#', $start_time)) {
+            $start_time .= " 12:00 UTC";
+        }
+        if (!empty($end_time)) {
+            if (!preg_match('#\b[0-9]{4}\b#', $end_time)) {
+                $end_time .= " $year";
+            }
+            if (!preg_match('#[0-9]+:[0-9]+#', $end_time)) {
+                $end_time .= " 12:00 UTC";
+            }
         }
         if (!strtotime($start_time)) {
             continue;

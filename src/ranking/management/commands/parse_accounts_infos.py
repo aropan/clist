@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from collections import defaultdict
 from datetime import timedelta
 from logging import getLogger
 
@@ -85,6 +86,8 @@ class Command(BaseCommand):
         countrier = Countrier()
 
         now = timezone.now()
+        n_total_counter = defaultdict(int)
+        n_resource = 0
         for resource in resources:
             resource_info = resource.info.get('accounts', {})
             if resource_info.get('skip'):
@@ -151,11 +154,8 @@ class Command(BaseCommand):
                     continue
 
             count = 0
-            n_skip = 0
-            n_rename = 0
-            n_remove = 0
-            n_deferred = 0
-            total_update_submissions_info = {}
+            n_counter = defaultdict(int)
+            update_submissions_info = {}
             account = None
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
@@ -180,10 +180,10 @@ class Command(BaseCommand):
                         do_upsolve = resource.has_upsolving and account.has_coders and not is_team
                         with transaction.atomic():
                             if 'delta' in data or 'delta' in (data.get('info') or {}):
-                                n_deferred += 1
+                                n_counter['deferred'] += 1
                             if data.get('skip'):
                                 delta = data.get('delta') or timedelta(days=100)
-                                n_skip += 1
+                                n_counter['skip'] += 1
                                 account.updated = now + delta
                                 account.save()
                                 continue
@@ -196,8 +196,8 @@ class Command(BaseCommand):
                                         coder.delete()
                                 _, info = account.delete()
                                 info = {k: v for k, v in info.items() if v}
-                                n_remove += 1
-                                pbar.set_postfix(warning=f'{n_remove}: Remove user {account} = {info}')
+                                n_counter['remove'] += 1
+                                pbar.set_postfix(warning=f'{n_counter["remove"]}: Remove user {account} = {info}')
                                 continue
 
                             params = data.pop('contest_addition_update_params', {})
@@ -214,8 +214,8 @@ class Command(BaseCommand):
 
                             if 'rename' in data:
                                 other, _ = Account.objects.get_or_create(resource=account.resource, key=data['rename'])
-                                n_rename += 1
-                                pbar.set_postfix(rename=f'{n_rename}: Rename {account} to {other}')
+                                n_counter['rename'] += 1
+                                pbar.set_postfix(rename=f'{n_counter["rename"]}: Rename {account} to {other}')
                                 account = rename_account(account, other)
 
                             coders = data.pop('coders', [])
@@ -229,7 +229,7 @@ class Command(BaseCommand):
                             if do_upsolve:
                                 updated_info = resource.plugin.Statistic.update_submissions(account=account,
                                                                                             resource=resource)
-                                add_dict_to_dict(updated_info, total_update_submissions_info)
+                                add_dict_to_dict(updated_info, update_submissions_info)
 
                                 coders = list(account.coders.values_list('username', flat=True))
                                 if coders and updated_info.get('n_updated'):
@@ -280,7 +280,15 @@ class Command(BaseCommand):
                 self.logger.warning(f'account = {account}')
                 self.logger.error(f'Parse accounts infos: {e}')
                 print(colored_format_exc())
-            self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}'
-                             f', skip: {n_skip}, removed: {n_remove}, renamed: {n_rename}, deferred: {n_deferred}')
-            if total_update_submissions_info:
-                self.logger.info(f'Update submissions info: {total_update_submissions_info}')
+            self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}, {dict(n_counter)}')
+            if update_submissions_info:
+                self.logger.info(f'Update submissions info: {update_submissions_info}')
+                n_counter['update_submissions_info'] = update_submissions_info
+            n_resource += 1
+            n_counter['resource'] += 1
+            add_dict_to_dict(n_counter, n_total_counter)
+
+        total_update_submissions_info = n_total_counter.pop('update_submissions_info', {})
+        self.logger.info(f'Total: {dict(n_total_counter)}')
+        if total_update_submissions_info:
+            self.logger.info(f'Total update submissions info: {total_update_submissions_info}')

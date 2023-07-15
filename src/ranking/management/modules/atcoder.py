@@ -19,6 +19,7 @@ from ratelimiter import RateLimiter
 from tqdm import tqdm
 
 from clist.templatetags.extras import as_number, is_solved
+from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -495,15 +496,6 @@ class Statistic(BaseModule):
                     if no_url:
                         fusers.append(r['member'])
 
-            if statistics:
-                for member, row in statistics.items():
-                    if member not in result:
-                        has_result = any('result' in p for p in row.get('problems', {}).values())
-                        if has_result:
-                            continue
-                        row['member'] = member
-                        result[member] = row
-
             standings = {
                 'result': result,
                 'url': standings_url,
@@ -546,19 +538,9 @@ class Statistic(BaseModule):
         for row in result.values():
             handle = row['member']
             row['url'] = self.SUBMISSIONS_URL_.format(self) + f'?f.User={handle}'
-
             has_result = any('result' in p for p in row.get('problems', {}).values())
             if has_result or row.get('IsRated'):
                 row.pop('_no_update_n_contests', None)
-            else:
-                if 'solving' not in row:
-                    row.setdefault('solving', 0)
-                    for p in row.get('problems', {}).values():
-                        upsolving = p.get('upsolving')
-                        if not is_solved(upsolving):
-                            continue
-                        row['solving'] += as_number(upsolving['result'], force=True)
-                row['_no_update_n_contests'] = True
 
         standings['hidden_fields'] = [
             'Affiliation',
@@ -663,14 +645,11 @@ class Statistic(BaseModule):
 
                 if contest_id in stats_caches:
                     contest, stat = stats_caches[contest_id]
-                    created = False
                 else:
                     contest = resource.contest_set.filter(key=contest_id).first()
                     if contest is None:
                         continue
-                    stat, created = contest.statistics_set.get_or_create(contest=contest, account=account)
-                    if created:
-                        stat.addition.setdefault('_no_update_n_contests', True)
+                    stat, _ = create_upsolving_statistic(contest=contest, account=account)
                     stats_caches[contest_id] = contest, stat
 
                 problem_id = submission.pop('problem_id')

@@ -22,6 +22,7 @@ from first import first
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import is_improved_solution
+from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -548,7 +549,7 @@ class Statistic(BaseModule):
             if contest in stats_cache:
                 stat = stats_cache[contest]
             else:
-                stat, created = contest.statistics_set.get_or_create(account=account)
+                stat, _ = create_upsolving_statistic(contest=contest, account=account)
                 stats_cache[contest] = stat
 
             problems = stat.addition.setdefault('problems', {})

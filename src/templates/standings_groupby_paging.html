@@ -1,27 +1,27 @@
 {% load el_pagination_tags %}
 
-{% paginate per_page statistics using 'groupby_paging' %}{% get_pages %}
+{% paginate per_page groupby_data using 'groupby_paging' %}{% get_pages %}
 
-{% for statistic in statistics %}
+{% for row_data in groupby_data %}
 <tr>
   <td>{{ forloop.counter0|add:pages.current_start_index }}</td>
-  {% for field, header in fields.items %}
+  {% for field, header in groupby_fields.items %}
     {% with header=header|lower %}
-    {% with value=statistic|get_item:field %}
+    {% with value=row_data|get_item:field %}
     <td>
+      {% if header == 'resource' and row_data|get_type == 'Resource' %}
+        <img src="{{ row_data.icon|media_size:'64x64' }}" width="16" height="16"/>
+      {% endif %}
       {% if header == 'country' %}
         {% with name=value|get_country_name %}
         {% with code=value|get_country_code %}
         <a href="{% url_transform request country=code groupby='' %}">
           {% if value is None %}
             Undefined
+          {% elif name %}
+            <div class="flag flag-{{ code|lower }} margin-right-sm"></div>{{ name }}
           {% else %}
-              {% if name %}
-                <div class="flag flag-{{ code|lower }}"></div>
-                {{ name }}
-              {% else %}
-                {{ value }}
-              {% endif %}
+            {{ value }}
           {% endif %}
         </a>
         {% endwith %}
@@ -31,6 +31,8 @@
       {% else %}
         {% if header in fields_to_select %}
           <a class="field-to-select" href="{% url_transform request header value groupby='' %}">{{ value|default:"Undefined" }}</a>
+        {% elif forloop.counter == 1 and groupby_select_first_column %}
+          <a class="field-to-select" href="{% url_transform request header row_data|get_item:'pk'|default:value groupby='' %}">{{ value|default:"Undefined" }}</a>
         {% else %}
           {{ value }}
         {% endif %}

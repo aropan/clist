@@ -4,6 +4,7 @@ import logging
 import math
 import os
 import re
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse
 
@@ -222,8 +223,16 @@ class Resource(BaseModel):
     def with_multi_account(self):
         return self.has_multi_account
 
-    def is_major_kind(self, kind):
-        return not kind or kind == self.info.get('major_kind')
+    def is_major_kind(self, instance):
+        if not instance:
+            return True
+        if isinstance(instance, str):
+            return instance == self.info.get('major_kind')
+        if isinstance(instance, Contest):
+            return self.is_major_kind(instance.kind)
+        if isinstance(instance, Iterable):
+            return any(self.is_major_kind(kind) for kind in instance)
+        raise ValueError(f'Invalid instance type = {type(instance)}')
 
     def rating_step(self):
         prev = 0
@@ -341,6 +350,12 @@ class Contest(BaseModel):
 
         self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
         self.with_advance = 'advanced' in fields or '_advance' in fields
+
+        if not self.kind:
+            if hasattr(self, 'stage'):
+                self.kind = 'stage'
+            elif self.invisible:
+                self.kind = 'hidden'
 
         return super().save(*args, **kwargs)
 

@@ -7,20 +7,68 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from pprint import pprint
 from time import sleep
+from urllib.parse import urlparse
 
 import tqdm
 from first import first
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules import conf
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import InitModuleException
+
+
+def get(*args, **kwargs):
+    n_attempts = 5
+    for attempt in range(n_attempts):
+        try:
+            page = REQ.get(*args, **kwargs)
+            return page
+        except FailOnGetResponse as e:
+            if e.code == 503 and attempt + 1 < n_attempts:
+                LOG.warning(str(e))
+                sleep(attempt)
+                continue
+            raise e
 
 
 class Statistic(BaseModule):
 
+    @staticmethod
+    def authorize():
+        page = get('https://www.eolymp.com/en/')
+        authorized = bool(re.search(r'>\s*logout\s*<', page, re.I))
+        if authorized:
+            return
+
+        post = {
+            'grant_type': 'password',
+            'username': conf.EOLYMP_USERNAME,
+            'password': conf.EOLYMP_PASSWORD,
+            'scope': 'cognito:user:read cognito:user:write cognito:role:read',
+        }
+        data = get('https://api.eolymp.com/oauth/token', post=post, return_json=True)
+
+        headers = {'Authorization': f'Bearer {data["access_token"]}'}
+        data = get('https://api.eolymp.com/oauth/userinfo', headers=headers, return_json=True)
+
+        signin_url = 'https://www.eolymp.com/en/login'
+        get(signin_url)
+        parse_result = urlparse(REQ.last_url)
+        post = dict(urllib.parse.parse_qsl(parse_result.query))
+
+        data = get('https://api.eolymp.com/oauth/authcode', post=post, headers=headers, return_json=True)
+        page = get(data['redirect_uri'])
+
+        authorized = bool(re.search(r'>\s*logout\s*<', page, re.I))
+        if not authorized:
+            raise InitModuleException('Not authorized')
+
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self.standings_url:
             self.standings_url = f'{self.url.rstrip("/")}/leaderboard'
+        self.authorize()
 
     def get_standings(self, users=None, statistics=None):
 
@@ -28,7 +76,7 @@ class Statistic(BaseModule):
         problems_info = OrderedDict()
 
         try:
-            page = REQ.get(self.standings_url)
+            page = get(self.standings_url)
         except FailOnGetResponse as e:
             if e.code == 404:
                 return {'action': 'delete'}
@@ -44,7 +92,7 @@ class Statistic(BaseModule):
             n_attempts = 3
             for attempt in range(n_attempts):
                 try:
-                    page = REQ.get(url)
+                    page = get(url)
                     break
                 except FailOnGetResponse as e:
                     if e.code == 503 and attempt + 1 < n_attempts:
@@ -88,7 +136,12 @@ class Statistic(BaseModule):
                                 if title:
                                     problems_info[k]['name'] = html.unescape(title)
                                 if url:
-                                    problems_info[k]['url'] = urllib.parse.urljoin(self.standings_url, url)
+                                    url = urllib.parse.urljoin(self.standings_url, url)
+                                    problems_info[k]['url'] = url
+                                    problem_page = get(url)
+                                    match = re.search(r'href="[^"]*/submit\?problem=(?P<code>[0-9]+)"', problem_page)
+                                    if match:
+                                        problems_info[k]['code'] = match.group('code')
 
                             if '-' in v.value or '+' in v.value:
                                 p = problems.setdefault(k, {})

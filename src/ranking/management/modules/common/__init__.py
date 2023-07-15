@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import os
 import urllib.parse
@@ -131,6 +132,12 @@ class BaseModule(object, metaclass=ABCMeta):
     @staticmethod
     def update_submissions(account, resource):
         raise NotImplementedError()
+
+
+def save_proxy(req, filepath):
+    if req.proxer.proxy:
+        with open(filepath, 'w') as fo:
+            json.dump(req.proxer.proxy, fo, indent=2)
 
 
 def main():

@@ -83,14 +83,22 @@ class AccountAdmin(BaseModelAdmin):
 
 @admin_register(AccountVerification)
 class AccountVerificationAdmin(BaseModelAdmin):
-    list_display = ['coder', 'account']
-    search_fields = ['=coder', '=account__key']
+    list_display = ['coder', 'account', 'resource']
+    search_fields = ['=coder__username', '=account__key']
+    list_filter = ['account__resource__host']
+
+    def resource(self, obj):
+        return obj.account.resource.host
 
 
 @admin_register(VerifiedAccount)
 class VerifiedAccountAdmin(BaseModelAdmin):
-    list_display = ['coder', 'account']
-    search_fields = ['=coder', '=account__key']
+    list_display = ['coder', 'account', 'resource']
+    search_fields = ['=coder__username', '=account__key']
+    list_filter = ['account__resource__host']
+
+    def resource(self, obj):
+        return obj.account.resource.host
 
 
 @admin_register(Rating)

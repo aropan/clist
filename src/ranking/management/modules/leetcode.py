@@ -17,6 +17,7 @@ from django.db import transaction
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import is_solved
+from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 
 # from ranking.management.modules import conf
@@ -213,10 +214,6 @@ class Statistic(BaseModule):
 
                     if n_added == 0:
                         stop = True
-            if statistics:
-                for handle, row in statistics.items():
-                    row['member'] = handle
-                    result.setdefault(handle, row)
 
         standings = {
             'result': result,
@@ -702,9 +699,7 @@ class Statistic(BaseModule):
                 ret['n_wrong_problem_name'] += 1
                 continue
 
-            stat, created = contest.statistics_set.get_or_create(account=account)
-            if created:
-                stat.addition.setdefault('_no_update_n_contests', True)
+            stat, _ = create_upsolving_statistic(contest=contest, account=account)
             problems = stat.addition.setdefault('problems', {})
             problem = problems.setdefault(short, {})
             upsolving = problem.setdefault('upsolving', {})

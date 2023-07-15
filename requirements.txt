@@ -30,7 +30,7 @@ phonenumbers==8.10.6
 psycopg2-binary==2.9.3
 arrow==0.15.1
 tqdm==4.31.1
-requests==2.28.2
+requests==2.31.0
 pytimeparse==1.1.8
 humanfriendly==9.1
 humanize==3.1.0
@@ -74,6 +74,7 @@ free-proxy==1.0.6
 coloredlogs==15.0
 channels_redis==3.2.0
 fire==0.4.0
+strictfire==0.4.0
 lazy-load==0.8.2
 blackboxprotobuf==1.0.1
 traceback-with-variables==2.0.1
@@ -91,3 +92,4 @@ tabulate==0.9.0
 sentry-sdk==1.21.1
 chardet==3.0.4
 python-magic==0.4.27
+prettytable==3.8.0

@@ -16,16 +16,15 @@ from urllib.parse import urlencode, urljoin, urlparse
 import pytz
 
 from clist.templatetags.extras import as_number, is_solved
+from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from utils.aes import AESModeOfOperation
 
-# from django.core.management import call_command
-
-
 API_KEYS = conf.CODEFORCES_API_KEYS
 DEFAULT_API_KEY = API_KEYS[API_KEYS['__default__']]
+SUBDOMAIN = 'mirror.'
 
 
 def api_query(
@@ -33,7 +32,7 @@ def api_query(
     params,
     api_key=DEFAULT_API_KEY,
     prev_time_queries={},
-    api_url_format='https://codeforces.com/api/%s'
+    api_url_format=f'https://{SUBDOMAIN}codeforces.com/api/%s'
 ):
     url = api_url_format % method
     key, secret = api_key
@@ -93,6 +92,8 @@ def api_query(
 
 
 def _get(url, *args, return_url=False, **kwargs):
+    if SUBDOMAIN and SUBDOMAIN not in url:
+        url = url.replace('://codeforces.', '://%scodeforces.' % SUBDOMAIN, 1)
     page, last_url = REQ.get(url, *args, return_url=True, **kwargs)
     if 'document.cookie="RCPC="+toHex(slowAES.decrypt(c,2,a,b))+";' in page:
         matches = re.findall(r'(?P<var>[a-z]+)=toNumbers\("(?P<value>[^"]*)"\)', page)
@@ -113,7 +114,8 @@ def _get(url, *args, return_url=False, **kwargs):
 
 
 class Statistic(BaseModule):
-    PARTICIPANT_TYPES = {'CONTESTANT', 'OUT_OF_COMPETITION'}
+    OFFICIAL_PARTICIPANT_TYPES = {'CONTESTANT'}
+    PARTICIPANT_TYPES = OFFICIAL_PARTICIPANT_TYPES | {'OUT_OF_COMPETITION'}
     SUBMISSION_URL_FORMAT_ = '{url}/submission/{sid}'
     PROBLEM_STATUS_URL_FORMAT_ = '/problemset/status/{cid}/problem/{short}'
 
@@ -288,6 +290,7 @@ class Statistic(BaseModule):
                 domain_users[user.pop('login')] = user
 
         problems_info = OrderedDict()
+        all_special = True
         for unofficial in [True]:
             params = {
                 'contestId': self.cid,
@@ -315,13 +318,14 @@ class Statistic(BaseModule):
                 tags = p.get('tags')
                 if tags:
                     d['tags'] = tags
+                all_special = all_special and any('special' in tag for tag in (tags or []))
                 d['url'] = urljoin(standings_url.rstrip('/'), f"problem/{d['short']}")
 
                 if not is_gym and not users:
                     status_url = self.PROBLEM_STATUS_URL_FORMAT_.format(cid=self.cid, short=d['short'])
                     status_url = urljoin(self.url, status_url)
                     page = _get(status_url)
-                    match = re.search(r'<div[^>]*>\s*Problem\s*(?P<code>[0-9A-Z]+)\s*-', page)
+                    match = re.search(r'<div[^>]*>\s*(?:Problem|Задача)\s*(?P<code>[0-9A-Z]+)\s*-', page)
                     if match:
                         d['code'] = match.group('code')
                         if self.cid not in d['code']:
@@ -366,6 +370,7 @@ class Statistic(BaseModule):
 
                     r.setdefault('participant_type', []).append(party['participantType'])
                     r['_no_update_n_contests'] = not bool(participant_types & set(r['participant_type']))
+                    r['_skip_medal'] = not bool(Statistic.OFFICIAL_PARTICIPANT_TYPES & set(r['participant_type']))
 
                     if is_ghost and member['name']:
                         r['name'] = member['name']
@@ -585,6 +590,9 @@ class Statistic(BaseModule):
         if re.search('^educational codeforces round', self.name, re.IGNORECASE):
             standings['options'].setdefault('timeline', {}).update({'attempt_penalty': 10 * 60,
                                                                     'challenge_score': False})
+        elif re.search(r'\<div\.\s*3\>', self.name, re.IGNORECASE):
+            standings['options'].setdefault('timeline', {}).update({'attempt_penalty': 10 * 60,
+                                                                    'challenge_score': False})
 
         now = datetime.utcnow().replace(tzinfo=pytz.utc)
         if (
@@ -595,6 +603,9 @@ class Statistic(BaseModule):
 
         if grouped:
             standings['grouped_team'] = grouped
+
+        if problems_info and all_special:
+            standings['kind'] = 'special'
 
         return standings
 
@@ -733,7 +744,7 @@ class Statistic(BaseModule):
                     contest = resource.contest_set.filter(key=contest_id).first()
                     if contest is None:
                         continue
-                    stat, created = contest.statistics_set.get_or_create(contest=contest, account=account)
+                    stat, created = create_upsolving_statistic(contest=contest, account=account)
                     stats_caches[contest_id] = contest, stat
 
                 if 'creationTimeSeconds' in submission:
@@ -744,7 +755,6 @@ class Statistic(BaseModule):
 
                 addition = stat.addition
                 if created:
-                    addition.setdefault('_no_update_n_contests', True)
                     participant_types = addition.setdefault('participant_type', [])
                     if participant_type not in participant_types:
                         participant_types.append(participant_type)

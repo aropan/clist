@@ -18,247 +18,236 @@
 ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource.host }}{% endif %}'
 </script>
 
-
 <div class="row">
+  <div{% if two_columns %} class="col-lg-6"{% endif %}>
+    {% if resources and show_history_ratings and not without_accounts %}
+    <div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% elif not two_columns %} class="col-xs-12"{% endif %}>
+      <h3>Accounts</h3>
+      <div id="list-accounts">
+      {% if not search_resource %}
 
-<div{% if two_columns %} class="col-lg-6"{% endif %}>
+        <table id="table-accounts" class="table center table-hover table-condensed">
+        {% for resource in resources %}
+          {% with account=resource.coder_accounts.0 %}
+          {% if account %}
+          {% if account.rating is not None and resource.has_rating_history and resource.enable %}
+            <tr>
+              <td>
+                <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
+                  <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
+                </a>
+              </td>
+              <td>
+                <span class="{% coder_color_class resource account.info %}">
+                  {{ account.rating }}
+                </span>
+              </td>
+              <td class="text-left nowrap">
+                <a href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
+                  {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True with_fixed_width=True %}
 
-{% if resources and show_history_ratings and not without_accounts %}
-<div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% elif not two_columns %} class="col-xs-12"{% endif %}>
-<h3>Accounts</h3>
-<div id="list-accounts">
-{% if not search_resource %}
+                  {% if resource.coder_accounts|length > 1 %}
+                  <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
+                    +{{ resource.coder_accounts|length|add:-1 }}
+                  </span>
+                  {% endif %}
+                </a>
+              </td>
+              <td>
+              {% if resource.has_account_verification %}
+              {% if account.verified %}
+                {% icon_to 'verified' %}
+              {% else %}
+                {% if this_is_me %}
+                  <a href="{% url 'coder:account_verification' account.key account.resource.host %}">{% icon_to 'unverified' %}</a>
+                {% else %}
+                  {% icon_to 'unverified' %}
+                {% endif %}
+              {% endif %}
+              {% endif %}
+              </td>
+              <td>
+                {% include "profile_account_actions.html" with account=account resource=account.resource without_btn=True %}
+              </td>
+              <td>
+                <span title="Number of contests" data-toggle="tooltip">
+                  {{ resource.num_contests }}
+                </span>
+              </td>
+              <td class="text-left">
+                {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
+              </td>
+            </tr>
+          {% endif %}
+          {% endif %}
+          {% endwith %}
+        {% endfor %}
+        </table>
 
-  <table id="table-accounts" class="table center table-hover table-condensed">
-  {% for resource in resources %}
-    {% with account=resource.coder_accounts.0 %}
-    {% if account %}
-    {% if account.rating is not None and resource.has_rating_history and resource.enable %}
-      <tr>
-        <td>
-          <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
-            <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
-          </a>
-        </td>
-        <td>
-          <span class="{% coder_color_class resource account.info %}">
-            {{ account.rating }}
-          </span>
-        </td>
-        <td class="text-left nowrap">
-          <a href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
-            {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True with_fixed_width=True %}
+        {% for resource in resources %}
+          {% with account=resource.coder_accounts.0 %}
+          {% if account %}
+          {% if account.rating is None or not resource.has_rating_history or not resource.enable %}
+            <span class="account btn-group btn-group-sm">
+              <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
+                <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
+              </a>
+              <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
+                {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True trim_length=20 with_verified=True %}
 
-            {% if resource.coder_accounts|length > 1 %}
-            <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
-              +{{ resource.coder_accounts|length|add:-1 }}
+                {% if resource.coder_accounts|length > 1 %}
+                <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
+                  +{{ resource.coder_accounts|length|add:-1 }}
+                </span>
+
+                {% endif %}
+
+                {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
+              </a>
+              {% include "profile_account_actions.html" with account=account resource=account.resource %}
             </span>
-            {% endif %}
-          </a>
-        </td>
-        <td>
-        {% if resource.has_account_verification %}
-        {% if account.verified %}
-          {% icon_to 'verified' %}
-        {% else %}
-          {% if this_is_me %}
-            <a href="{% url 'coder:account_verification' account.key account.resource.host %}">{% icon_to 'unverified' %}</a>
-          {% else %}
-            {% icon_to 'unverified' %}
           {% endif %}
-        {% endif %}
-        {% endif %}
-        </td>
-        <td>
-          {% include "profile_account_actions.html" with account=account resource=account.resource without_btn=True %}
-        </td>
-        <td>
-          <span title="Number of contests" data-toggle="tooltip">
-            {{ resource.num_contests }}
-          </span>
-        </td>
-        <td class="text-left">
-          {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
-        </td>
-      </tr>
-    {% endif %}
-    {% endif %}
-    {% endwith %}
-  {% endfor %}
-  </table>
-
-  {% for resource in resources %}
-    {% with account=resource.coder_accounts.0 %}
-    {% if account %}
-    {% if account.rating is None or not resource.has_rating_history or not resource.enable %}
-      <span class="account btn-group btn-group-sm">
-        <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
-          <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
-        </a>
-        <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
-          {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True trim_length=20 %}
-
-          {% if resource.coder_accounts|length > 1 %}
-          <span class="badge no-user-select" data-toggle="tooltip" data-html="true" data-placement="bottom" title="{% for a in resource.coder_accounts|slice:'1:' %}<div>{% if a.name and a.key|has_season:a.name or a.name and resource.info.standings.name_instead_key %}{{ a.name }}{% else %}{{ a.key }}{% endif %}</div>{% endfor %}">
-            +{{ resource.coder_accounts|length|add:-1 }}
-          </span>
-
           {% endif %}
+          {% endwith %}
+        {% endfor %}
 
-          {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
-        </a>
-        {% include "profile_account_actions.html" with account=account resource=account.resource %}
-      </span>
-    {% endif %}
-    {% endif %}
-    {% endwith %}
-  {% endfor %}
+      {% else %}
 
-{% else %}
+        {% for resource in resources %}
+          {% for account in resource.coder_accounts %}
+            <span class="account btn-group btn-group-sm">
+              <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
+                {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True with_verified=True %}
 
-  {% for resource in resources %}
-    {% for account in resource.coder_accounts %}
-      <span class="account btn-group btn-group-sm">
-        <a class="btn btn-default" href="{% url 'coder:account' account.key resource.host %}">
-          {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True %}
+                {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}
+              </a>
+              {% include "profile_account_actions.html" with account=account resource=account.resource %}
+            </span>
+          {% endfor %}
+        {% endfor %}
 
-          {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}
-        </a>
-        {% include "profile_account_actions.html" with account=account resource=account.resource %}
-      </span>
-    {% endfor %}
-  {% endfor %}
-
-{% endif %}
-</div>
-</div>
-{% endif %}
-
-{% if show_history_ratings and writers.exists %}
-<div{% if not two_columns %} class="col-md-6"{% endif %}>
-<h3>Writer</h3>
-<div class="panel panel-default table-responsive">
-  <table id="writers" class="table table-hover table-condensed table-striped">
-    <tr>
-      <th class="date">Date</th>
-      <th class="event">Event</th>
-    </tr>
-    {% include 'profile_writers_paging.html' %}
-  </table>
-</div>
-<script>$('#writers').endlessPaginate({onCompleted: toggle_tooltip});</script>
-</div>
-{% endif %}
-
-</div>
-
-{% if show_history_ratings and history_resources %}
-<div{% if two_columns %} class="col-lg-6"{% else %} class="col-xs-12"{% endif %}>
-<h3>Ratings
-{% if two_columns %}
-<a id="expand-ratings" href="#" onclick=""><i class="fas fa-expand-arrows-alt"></i></a>
-{% endif %}
-</h3>
-
-{% for hr in history_resources %}
-{% if forloop.counter0 == 3 %}
-  <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|add:"-3" }} more</span></a>
-  <div class="collapse" id="history-resources-collapsed">
-{% endif %}
-<div>
-  {% if not hr.kind %}
-  <div class="resource_fields">
-    <a href="{% url 'clist:resource' hr.host %}" title="{{ hr.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ hr.icon|media_size:'32x32' }}" width="16" height="16"/></a>
-    <div class="input-group input-group-sm invisible">
-      <select id="resource_{{ hr.pk }}_fields">
-        <option></option>
-      </select>
+      {% endif %}
+      </div>
     </div>
+    {% endif %}
+
+    {% if show_history_ratings and writers.exists %}
+    <div{% if not two_columns %} class="col-md-6"{% endif %}>
+      <h3>Writer</h3>
+      <div class="panel panel-default table-responsive">
+        <table id="writers" class="table table-hover table-condensed table-striped">
+          <tr>
+            <th class="date">Date</th>
+            <th class="event">Event</th>
+          </tr>
+          {% include 'profile_writers_paging.html' %}
+        </table>
+      </div>
+      <script>$('#writers').endlessPaginate({onCompleted: toggle_tooltip});</script>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if show_history_ratings and history_resources %}
+  <div{% if two_columns %} class="col-lg-6"{% else %} class="col-xs-12"{% endif %}>
+    <h3>Ratings{% if two_columns %}<a id="expand-ratings" href="#" onclick=""><i class="fas fa-expand-arrows-alt"></i></a>{% endif %}</h3>
+
+    {% for hr in history_resources %}
+    {% if forloop.counter0 == 3 %}
+      <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|add:"-3" }} more</span></a>
+      <div class="collapse" id="history-resources-collapsed">
+    {% endif %}
+    <div>
+      {% if not hr.kind %}
+      <div class="resource_fields">
+        <a href="{% url 'clist:resource' hr.host %}" title="{{ hr.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ hr.icon|media_size:'32x32' }}" width="16" height="16"/></a>
+        <div class="input-group input-group-sm invisible">
+          <select id="resource_{{ hr.pk }}_fields">
+            <option></option>
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
+
+      <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}">{{ hr }}</canvas>
+    </div>
+    {% endfor %}
+    {% if history_resources|length > 3 %}
+      </div>
+    {% endif %}
   </div>
   {% endif %}
 
-  <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
+  <div class="col-xs-12">
+    <h3>Contests</h3>
 
-  <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}">{{ hr }}</canvas>
-</div>
-{% endfor %}
-{% if history_resources|length > 3 %}
+    {% with chart=contests_chart %}
+    {% if chart %}
+    {% set_item chart "border_width" 5 %}
+    {% set_item chart "title" "Number of contests per day" %}
+    {% set_item chart "type" "line" %}
+    {% set_item chart "tension" 0.5 %}
+    {% set_item chart "point_radius" 0 %}
+    {% set_item chart "point_hover_radius" 0 %}
+    {% set_item chart "border_color" "#5cb85c" %}
+    {% set_item chart "background_color" "#5cb85c" %}
+    {% set_item chart "border_width" 3 %}
+    {% set_item chart "duplicate_y_axis" True %}
+    {% set_item chart "disable_legend_tooltip" True %}
+    {% include "chart.html" with chart=chart without_buttons=True %}
+    {% endif %}
+    {% endwith %}
+
+    <form class="form-inline" method="get" action="">
+    <div class="input-group">
+      <div class="input-group-addon">Results</div>
+      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+      <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL}, type:{TYPE} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
+        <i class="fas fa-info"></i>
+      </span>
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
+      </span>
+    </div>
+    {% if custom_fields %}
+    {% include "field_to_select.html" with field="field" data=custom_fields nosm=True %}
+    {% endif %}
+    </form>
+
+    {% if statistics.exists %}
+    <div class="panel panel-default table-responsive">
+      <table id="contests" class="table table-hover table-striped table-condensed">
+        <tr>
+          <th></th>
+          <th>Rank</th>
+          <th>Score</th>
+          <th>Rating</th>
+          <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
+          {% if coder.has_global_rating %}
+          <th>Global</th>
+          <th title="Global rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
+          {% endif %}
+          <th class="date">Date</th>
+
+          {% if custom_fields %}
+          {% for field in custom_fields.values %}
+          <th>{{ field|title_field|split:" "|join:"<br>" }}</th>
+          {% endfor %}
+          {% endif %}
+
+          <th></th>
+          <th class="title">Event</th>
+        </tr>
+        {% include 'profile_contests_paging.html' %}
+      </table>
+    </div>
+    <script>$('#contests').endlessPaginate({onCompleted: toggle_tooltip});</script>
+    {% else %}
+    <div class="alert alert-warning">Empty statistics</div>
+    {% endif %}
   </div>
-{% endif %}
-
 </div>
-{% endif %}
-
-<div class="col-xs-12">
-<h3>Contests</h3>
-
-{% with chart=contests_chart %}
-{% if chart %}
-{% set_item chart "border_width" 5 %}
-{% set_item chart "title" "Number of contests per day" %}
-{% set_item chart "type" "line" %}
-{% set_item chart "tension" 0.5 %}
-{% set_item chart "point_radius" 0 %}
-{% set_item chart "point_hover_radius" 0 %}
-{% set_item chart "border_color" "#5cb85c" %}
-{% set_item chart "background_color" "#5cb85c" %}
-{% set_item chart "border_width" 3 %}
-{% set_item chart "duplicate_y_axis" True %}
-{% set_item chart "disable_legend_tooltip" True %}
-{% include "chart.html" with chart=chart without_buttons=True %}
-{% endif %}
-{% endwith %}
-
-<form class="form-inline" method="get" action="">
-<div class="input-group">
-  <div class="input-group-addon">Results</div>
-  <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-  <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL}, type:{TYPE} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
-    <i class="fas fa-info"></i>
-  </span>
-  <span class="input-group-btn">
-    <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
-  </span>
-</div>
-{% if custom_fields %}
-{% include "field_to_select.html" with field="field" data=custom_fields nosm=True %}
-{% endif %}
-</form>
-
-{% if statistics.exists %}
-<div class="panel panel-default table-responsive">
-  <table id="contests" class="table table-hover table-striped table-condensed">
-    <tr>
-      <th></th>
-      <th>Rank</th>
-      <th>Score</th>
-      <th>Rating</th>
-      <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
-      {% if coder.has_global_rating %}
-      <th>Global</th>
-      <th title="Global rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
-      {% endif %}
-      <th class="date">Date</th>
-
-      {% if custom_fields %}
-      {% for field in custom_fields.values %}
-      <th>{{ field|title_field|split:" "|join:"<br>" }}</th>
-      {% endfor %}
-      {% endif %}
-
-      <th></th>
-      <th class="title">Event</th>
-    </tr>
-    {% include 'profile_contests_paging.html' %}
-  </table>
-</div>
-<script>$('#contests').endlessPaginate({onCompleted: toggle_tooltip});</script>
-{% else %}
-<div class="alert alert-warning">Empty statistics</div>
-{% endif %}
-</div>
-
 {% endblock %}
-
 {% endblock %}
-

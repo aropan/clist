@@ -7,6 +7,7 @@
     $proxy_file = dirname(__FILE__) . "/../../logs/projecteuler.proxy";
     $proxy = file_exists($proxy_file)? json_decode(file_get_contents($proxy_file)) : false;
     if ($proxy) {
+        echo " (proxy)";
         curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
     }
 

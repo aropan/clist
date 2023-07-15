@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse
 # from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.common.parsed_table import ParsedTable
 
@@ -19,7 +19,10 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None):
         standings_url = self.url.rstrip('/') + '/results'
 
-        REQ.get(urljoin(standings_url, '/locale/en'))
+        try:
+            REQ.get(urljoin(standings_url, '/locale/en'))
+        except Exception as e:
+            LOG.warning(f'Failed to set locale: {e}')
 
         problems_infos = OrderedDict()
         result = OrderedDict()

@@ -718,3 +718,9 @@ canvas.rating_history {
 .copy-to-clipboard {
   cursor: pointer;
 }
+
+a[disabled] {
+  pointer-events: none;
+  cursor: default;
+  color: #aaa;
+}

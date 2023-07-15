@@ -39,13 +39,17 @@
 <span class="{% coder_color_class resource account.info %}">
 {% endif %}
 
-  {% if account.name and account.key|has_season:account.name %}
-    <span>{% trim_to account.name trim_length %}</span>
-  {% elif account.name and resource.info.standings.name_instead_key %}
-    <span>{% trim_to account.name trim_length %}</span>
-  {% else %}
-    <span{% if account.name %} title="{{ account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{% trim_to account.key trim_length %}</span>
-  {% endif %}
+{% if account.name and account.key|has_season:account.name %}
+<span>{% trim_to account.name trim_length %}</span>
+{% elif account.name and resource.info.standings.name_instead_key %}
+<span>{% trim_to account.name trim_length %}</span>
+{% else %}
+<span{% if account.name %} title="{{ account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{% trim_to account.key trim_length %}</span>
+{% endif %}
+
+{% if resource.has_account_verification and with_verified %}
+{% if account.verified %}{% icon_to 'verified' %}{% else %}{% icon_to 'unverified' %}{% endif %}
+{% endif %}
 
 {% if not without_url %}
 </a>

@@ -27,9 +27,11 @@
       </div>
     </div>
 
+    {% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}
+
     {% include 'resource_filter.html' %}
 
-    {% include 'contest_filter.html' with has_problems=True %}
+    {% include 'contest_filter.html' with has_problems=True groupby=False %}
 
     {% include 'tag_filter.html' %}
 
@@ -70,9 +72,11 @@
     {% include "sort_select.html" with field="sort" data=sort_select %}
   </form>
 
-  {% include "chart.html" with chart=chart get_query_chart='chart' %}
-
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
+
+  {% if not groupby or groupby == 'none' %}
+
+  {% include "chart.html" with chart=chart get_query_chart='chart' %}
   <div id="problems" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
       <thead>
@@ -92,10 +96,16 @@
         </tr>
       </thead>
       <tbody>
-        {% include page_template %}
+        {% include "problems_paging.html" %}
       </tbody>
     </table>
   </div>
+
+  {% else %}
+
+  {% include "standings_groupby.html" with without_orderby=True %}
+
+  {% endif %}
 </div>
 
 {% endblock %}

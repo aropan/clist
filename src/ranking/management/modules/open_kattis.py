@@ -44,7 +44,10 @@ class Statistic(BaseModule):
                 problem_info['name'] = r['Name'].value
                 url = r['Name'].column.node.xpath('.//a/@href')
                 if url:
-                    problem_info['url'] = urljoin(problems_url, url[0])
+                    url = urljoin(problems_url, url[0])
+                    problem_info['url'] = url
+                    code = url.rstrip('/').rsplit('/', 1)[-1]
+                    problem_info['code'] = code
 
         page = REQ.get(standings_url)
 
@@ -73,9 +76,9 @@ class Statistic(BaseModule):
                         if not alt:
                             continue
                         src = img.attrib.get('src', '')
-                        if '/countries/' in src:
+                        if '/countries/' in src and 'country' not in row:
                             row['country'] = alt
-                        elif '/universities/' in src:
+                        elif '/universities/' in src and 'university' not in row:
                             row['university'] = alt
             if not team.value:
                 continue
@@ -135,7 +138,6 @@ class Statistic(BaseModule):
                 page = REQ.get(row['_account_url'])
                 entry = re.search('"team_members":(?P<members>.*),$', page, re.MULTILINE)
                 members = json.loads(entry.group('members'))
-                assert members
 
                 row['_members'] = [{'account': m.get('username'), 'name': m['name']} for m in members]
                 entry = re.search(r'"team_id":\s*"?(?P<team_id>[0-9]+)"?,$', page, re.MULTILINE)

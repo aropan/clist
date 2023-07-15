@@ -61,6 +61,13 @@
         return $ret;
     }
 
+    $proxy_file = dirname(__FILE__) . "/../../logs/topcoder.proxy";
+    $proxy = file_exists($proxy_file)? json_decode(file_get_contents($proxy_file)) : false;
+    if ($proxy) {
+        echo " (proxy)";
+        curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
+    }
+
     $debug_ = $RID == -1 || DEBUG;
 
     $_DATE_FORMAT = 'm.d.Y';
@@ -190,6 +197,9 @@
             $query = http_build_query($params);
             $url = "https://api.topcoder.com/v5/challenges/?" . $query;
             $data = curlexec($url, null, array("json_output" => 1));
+            if (empty($data)) {
+                continue;
+            }
             $stop = false;
             foreach ($data as $c) {
                 $ok = true;
@@ -402,5 +412,9 @@
 
     if ($RID === -1) {
         echo "Total contests: " . count($_contests) . "\n";
+    }
+
+    if ($proxy) {
+        curl_setopt($CID, CURLOPT_PROXY, null);
     }
 ?>

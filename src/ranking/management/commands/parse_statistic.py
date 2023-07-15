@@ -33,6 +33,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings, InitModu
 from ranking.models import Account, Module, Stage, Statistics
 from ranking.views import update_standings_socket
 from utils.attrdict import AttrDict
+from utils.datetime import parse_datetime
 from utils.traceback_with_vars import colored_format_exc
 
 
@@ -66,6 +67,9 @@ class Command(BaseCommand):
         parser.add_argument('--updated-before', help='Updated before date')
         parser.add_argument('--force-socket', action='store_true', default=False, help='Force update socket')
         parser.add_argument('--without-n_statistics', action='store_true', default=False, help='Force update')
+        parser.add_argument('--before-date', default=False, help='Update contests that have been updated to date')
+        parser.add_argument('--with-medals', action='store_true', default=False, help='Contest with medals')
+        parser.add_argument('--skip-fill-coder-problems', action='store_true', default=False, help='Skip fill problems')
         parser.add_argument('-cid', '--contest-id', help='Contest id')
 
     def parse_statistic(
@@ -73,6 +77,7 @@ class Command(BaseCommand):
         contests,
         previous_days=None,
         freshness_days=None,
+        before_date=None,
         limit=None,
         with_check=True,
         stop_on_error=False,
@@ -88,6 +93,7 @@ class Command(BaseCommand):
         without_n_statistics=False,
         contest_id=None,
         query=None,
+        skip_fill_coder_problems=False,
     ):
         now = timezone.now()
 
@@ -144,6 +150,9 @@ class Command(BaseCommand):
 
         if freshness_days is not None:
             contests = contests.filter(updated__lt=now - timedelta(days=freshness_days))
+        if before_date:
+            before_date = parse_datetime(before_date)
+            contests = contests.filter(Q(parsed_time__isnull=True) | Q(parsed_time__lt=before_date))
 
         if limit:
             contests = contests.order_by('-end_time')[:limit]
@@ -191,6 +200,11 @@ class Command(BaseCommand):
                 self.logger.warning(f'resource = {resource}')
                 self.logger.error('Not found module')
                 continue
+            if resource.has_upsolving and not with_stats:
+                self.logger.warning(f'Skip parse statistic contest = {contest} because'
+                                    f' run without stats and resource has upsolving')
+                continue
+
             progress_bar.set_description(f'contest = {contest.title}')
             progress_bar.refresh()
             total += 1
@@ -230,6 +244,17 @@ class Command(BaseCommand):
                                     has_statistics = True
                                 statistics_ids.add(s.pk)
                         standings = plugin.get_standings(users=copy.deepcopy(users), statistics=statistics_by_key)
+                        has_standings_result = bool(standings.get('result'))
+
+                        if resource.has_upsolving:
+                            result = standings.setdefault('result', {})
+                            for member, row in statistics_by_key.items():
+                                if member not in result:
+                                    has_problem_result = any('result' in p for p in row.get('problems', {}).values())
+                                    if has_problem_result:
+                                        continue
+                                    row['member'] = member
+                                    result[member] = row
 
                     for field, attr in (
                         ('url', 'standings_url'),
@@ -277,7 +302,7 @@ class Command(BaseCommand):
                     standings_hidden_fields_set = set(standings_hidden_fields)
 
                     standings_problems = standings.pop('problems', None)
-                    result = standings.get('result', {})
+                    result = standings.setdefault('result', {})
 
                     if is_coming:
                         for r in result.values():
@@ -315,6 +340,7 @@ class Command(BaseCommand):
                         problems_values = defaultdict(set)
                         hidden_fields = set()
                         medals_skip = set()
+                        medals_skip_places = defaultdict(int)
                         updated_statistics_ids = list()
 
                         additions = copy.deepcopy(contest.info.get('additions', {}))
@@ -682,10 +708,14 @@ class Command(BaseCommand):
                                     r.pop(k, None)
                                     if 'place' in r and (not medals_divisions or r.get('division') in medals_divisions):
                                         place = get_number_from_str(r['place'])
-                                        if member in contest.info.get('standings', {}).get('medals_skip', []):
+                                        if (
+                                            member in contest.info.get('standings', {}).get('medals_skip', [])
+                                            or r.get('_skip_medal')
+                                        ):
                                             medals_skip.add(member)
+                                            medals_skip_places[place] += 1
                                         elif place:
-                                            place -= len(medals_skip)
+                                            place -= len(medals_skip) - medals_skip_places.get(place, 0)
                                             for medal in medals:
                                                 if place <= medal['count']:
                                                     r[k] = medal['name']
@@ -1048,7 +1078,7 @@ class Command(BaseCommand):
 
                 call_command('fill_coder_problems', contest=contest.pk)
 
-                if 'result' in standings:
+                if has_standings_result:
                     count += 1
                 parsed = True
             except (ExceptionParseStandings, InitModuleException) as e:
@@ -1146,6 +1176,9 @@ class Command(BaseCommand):
         if args.updated_before:
             contests = contests.filter(updated__lt=arrow.get(args.updated_before).datetime)
 
+        if args.with_medals:
+            contests = contests.filter(with_medals=True)
+
         self.parse_statistic(
             contests=contests,
             previous_days=args.days,
@@ -1155,6 +1188,7 @@ class Command(BaseCommand):
             random_order=args.random_order,
             no_update_results=args.no_update_results,
             freshness_days=args.freshness_days,
+            before_date=args.before_date,
             title_regex=args.event,
             users=args.users,
             with_stats=not args.no_stats,
@@ -1164,4 +1198,5 @@ class Command(BaseCommand):
             without_n_statistics=args.without_n_statistics,
             contest_id=args.contest_id,
             query=args.query,
+            skip_fill_coder_problems=args.skip_fill_coder_problems,
         )

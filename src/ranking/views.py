@@ -1521,6 +1521,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             ('0.5', '50%'),
             ('1.0', '100%'),
         ],
+        'groupby_data': statistics,
+        'groupby_fields': fields,
     })
 
     context.update(n_highlight_context)

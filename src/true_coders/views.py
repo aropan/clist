@@ -131,7 +131,12 @@ def get_profile_context(request, statistics, writers, resources):
             resources = resources.filter(functools.reduce(operator.ior, conditions))
 
     kinds_resources = collections.defaultdict(dict)
-    for stat in statistics.order_by().distinct('contest__resource__host', 'contest__kind'):
+    rated_stats = statistics.filter(
+        Q(addition__new_rating__isnull=False) |
+        Q(addition__rating_change__isnull=False) |
+        Q(addition___rating_data__isnull=False)
+    )
+    for stat in rated_stats.order_by().distinct('contest__resource__host', 'contest__kind'):
         resource = stat.contest.resource
         kind = stat.contest.kind
         kind = None if resource.is_major_kind(kind) else kind
@@ -377,18 +382,22 @@ def account_context(request, key, host):
     }
 
     add_account_button = False
-    verified = False
+    verified = bool(VerifiedAccount.objects.filter(account=account).exists())
+    need_verify = True
     if request.user.is_authenticated:
         coder = request.user.coder
-        verified = bool(VerifiedAccount.objects.filter(coder=coder, account=account).exists())
-        coder_accounts = coder.account_set.filter(resource=account.resource)
-        if account.resource.with_multi_account() or not coder_accounts.first():
+        need_verify = not bool(VerifiedAccount.objects.filter(coder=coder, account=account).exists())
+        coder_account = coder.account_set.filter(resource=account.resource).first()
+        if need_verify and not account.resource.with_multi_account() and coder_account and account != coder_account:
+            need_verify = False
+        if account.resource.with_multi_account() or coder_account:
             add_account_button = True
     else:
         coder = None
         add_account_button = True
     context['add_account_button'] = add_account_button
     context['verified_account'] = verified
+    context['need_verify'] = need_verify
 
     wait_rating = account.resource.info.get('statistics', {}).get('wait_rating', {})
     context['show_add_account_message'] = (
@@ -409,6 +418,7 @@ def account_context(request, key, host):
     if request.user.is_authenticated and coder in account.coders.all():
         context['without_findme'] = True
         context['this_is_me'] = True
+        context['add_account_button'] = False
     return context
 
 
@@ -438,12 +448,13 @@ def account_verification(request, key, host, template='account_verification.html
     coder = request.user.coder
     this_is_me = bool(context.get('this_is_me'))
     is_single_account = resource.with_single_account() or account.rating is not None
-    if not resource.has_account_verification:
-        return HttpResponseBadRequest(f'Account verification is not supported for {resource.host} resource')
-    if context.get('verified_account'):
-        return HttpResponseBadRequest('Account already verified')
-    if not this_is_me and is_single_account and coder.account_set.filter(resource=resource).exists():
-        return HttpResponseBadRequest('Allow only one account for resource')
+    if not request.user.has_perm('true_coders.force_account_verification'):
+        if not resource.has_account_verification:
+            return HttpResponseBadRequest(f'Account verification is not supported for {resource.host} resource')
+        if not context.get('need_verify'):
+            return HttpResponseBadRequest('Account already verified')
+        if not this_is_me and is_single_account and coder.account_set.filter(resource=resource).exists():
+            return HttpResponseBadRequest('Allow only one account for resource')
     verification, created = AccountVerification.objects.get_or_create(coder=coder, account=account)
     context['verification'] = verification
 
@@ -470,7 +481,8 @@ def account_verification(request, key, host, template='account_verification.html
                     coder.add_account(account)
                 VerifiedAccount.objects.get_or_create(coder=coder, account=account)
             return HttpResponse('ok')
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error while verification: {e}')
             return HttpResponseBadRequest('Unknown error while verification')
 
     return render(request, template, context)

@@ -127,7 +127,9 @@ class Statistic(BaseModule):
 
                         row['solving'], penalty = score.column.node.xpath('.//text()')
                         if not penalty.isdigit():
-                            penalty = score.column.node.xpath('.//*[@title]/@title')[-1]
+                            penalty = str(score.column.node.xpath('.//*[@title]/@title')[-1]).lower()
+                            if penalty.startswith('penalty'):
+                                penalty = penalty[len('penalty') + 1:].strip()
                         if penalty.isdigit():
                             penalty = int(penalty)
                         row['penalty'] = penalty

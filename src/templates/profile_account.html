@@ -31,13 +31,9 @@
   {% endif %}
 
   {% if account.resource.has_account_verification %}
-  {% if add_account_button or this_is_me  %}
-  {% if verified_account %}
-    {% icon_to 'verified' %}
-  {% else %}
-    <a href="{% url 'coder:account_verification' account.key account.resource.host %}">{% icon_to 'verification' %}</a>
-  {% endif %}
-  {% endif %}
+  <a href="{% url 'coder:account_verification' account.key account.resource.host %}"{% if not need_verify %} disabled{% endif %}>
+    {% if verified_account %}{% icon_to 'verified' %}{% else %}{% icon_to 'verification' %}{% endif %}
+  </a>
   {% endif %}
 
   {% if request.user.is_authenticated and not this_is_me %}
@@ -46,7 +42,7 @@
   {% endwith %}
   {% endif %}
 
-  {% if add_account_button %}
+  {% if add_account_button and not this_is_me %}
   <a href="{% url 'coder:settings' 'accounts' %}?resource={{ account.resource.host }}&account={{ account.key}}"><i class="fas fa-user-plus"></i></a>
   {% endif %}
 

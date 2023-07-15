@@ -1,6 +1,14 @@
 {% with tag_id=tag|default:"tag" %}
 <div class="input-group input-group-sm hidden" id="{{ tag_id }}-hidden">
+  {% if groupby %}
+  <div class="input-group-btn">
+    <button class="btn btn-default{% if groupby == 'tag' %} active{% endif %}" name="groupby" value="{% if groupby != 'tag' %}tag{% endif %}">
+      {% icon_to 'tag' %}
+    </button>
+  </div>
+  {% else %}
   <span class="input-group-addon">{% icon_to 'tag' %}</span>
+  {% endif %}
 
   <select{% if not noname %} name="{{ tag_id }}"{% endif %} id="{{ tag_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}>
     <option></option>

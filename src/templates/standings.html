@@ -316,7 +316,7 @@
             {% endif %}
           </thead>
           <tbody>
-          {% include 'standings_paging.html' %}
+          {% include "standings_paging.html" %}
           </tbody>
         </table>
         {% if versus_data %}
@@ -341,7 +341,7 @@
       {% endif %}
     {% else %}
       <div id="standings-groupby">
-        {% include 'standings_groupby.html' %}
+        {% include "standings_groupby.html" with groupby_data=statistics %}
       </div>
     {% endif %}
     <script>$.endlessPaginate({paginateOnScroll: {% if paginate_on_scroll %}true{% else %}false{% endif %}, onCompleted: toggle_tooltip});</script>

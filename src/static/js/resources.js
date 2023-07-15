@@ -25,8 +25,8 @@ $(function() {
       .each((_, el) => $(el).attr('data-count', parseInt($(el).attr('data-count') || '0') + count_delta))
       .each((_, el) => $(el).attr('data-count') == '0'? $(el).show() : $(el).hide())
   })
-  var max_width = Math.max(...$(data_column_selector).parent().map(function() { return $(this).width() }), 0)
-  $(data_column_selector).parent().each(function () { $(this).width(max_width); })
+  var avg_width = $(data_column_selector).parent().toArray().reduce((partial_sum, el) => partial_sum + $(el).width(), 0) / $(data_column_selector).length
+  $(data_column_selector).parent().each(function () { $(this).width(avg_width); })
 
 
   var url = new URL(window.location.href)
