@@ -8,7 +8,7 @@ from true_coders.models import Coder
 
 class ActiveServiceManager(BaseManager):
     def get_queryset(self):
-        return super(ActiveServiceManager, self).get_queryset().filter(disable=False)
+        return super().get_queryset().filter(disable=False)
 
 
 class Service(BaseModel):

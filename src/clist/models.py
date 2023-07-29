@@ -75,6 +75,11 @@ class Resource(BaseModel):
             GistIndexTrgrmOps(fields=['short_host']),
         ]
 
+        permissions = (
+            ('update_statistics', 'Can update statistics'),
+            ('view_private_fields', 'Can view private fields'),
+        )
+
     def __str__(self):
         return f'{self.host} Resource#{self.id}'
 
@@ -573,6 +578,10 @@ class Contest(BaseModel):
                 series = ContestSeries.objects.create(name=series_name, short=series_name)
         self.series = series
         self.save(update_fields=['series'])
+
+    @property
+    def channel_update_statistics_group_name(self):
+        return f'{self.channel_group_name}__update_statistics'
 
 
 class ContestSeries(BaseModel):

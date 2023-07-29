@@ -82,26 +82,32 @@
     {% endif %}
 
     <div>
-    Standings
-    <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="24" height="24"/></a>
-    <span id="standings-url"></span>
-    <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
-    {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
+      Standings
+      <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="24" height="24"/></a>
+      <span id="standings-url"></span>
+      <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
+      {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
 
-    {% if not other_contests %}
-    <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></a>
-    {% endif %}
+      {% if not other_contests %}
+      <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></a>
+      {% endif %}
 
-    <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
-      <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
-    </span>
+      <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+        <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
+      </span>
 
-    {% if perms.clist.change_contest %}
+      {% if user|has_update_statistics_permission:contest %}
+      <a href="" id="update_statistics_btn" onclick="update_statistics(this); return false">
+        {% icon_to 'update' default='Update statistics' %}
+      </a>
+      <a href="" id="show_update_statistics_log_btn" onclick="show_update_statistics_log(this); return false" class="hidden">
+        {% icon_to 'log' default='Show log' %}
+      </a>
+      {% endif %}
+
+      {% if perms.clist.change_contest %}
       <a href="{% url 'admin:clist_contest_change' contest.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-    {% endif %}
-    {% if perms.ranking.update_statistics %}
-      <a href="" onclick="update_statistics(this); return false" class="database-link invisible">{% icon_to 'update' default='Update statistics' %}</a>
-    {% endif %}
+      {% endif %}
     </div>
 
     {% if contest.related is not None %}
@@ -350,49 +356,36 @@
   {% endif %}
 </div>
 
-<div class="modal" id="viewSolutionModal">
+<div class="modal" id="view-solution-modal">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
     </div>
   </div>
 </div>
 
+<div class="modal" id="update-statistics-log">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="lead">
+          <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
+        </span>
+        <button id="modal-update-statistics-btn" class="btn btn-primary btn-sm pull-right" onclick="update_statistics(this); return false">
+          {% icon_to 'update' default='Update statistics' %}
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="update-statistics-progress" class="progress hidden">
+          <span id="update-statistics-progress-text"></span>
+          <div id="update-statistics-progress-bar" class="progress-bar progress-bar-success" style="width:0%"></div>
+        </div>
+        <pre id="update-statistics-log-output"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-function viewSolution(a) {
-  var href = $(a).attr('href')
-  var solution_modal = $('#viewSolutionModal')
-  $('#viewSolutionModal .modal-content').html('<div class="modal-body"><p><i class="fa fa-spin fa-circle-notch"></i> Loading...</p></div>')
-  $('#viewSolutionModal').modal('show')
-
-  $.ajax({
-    url: href,
-    type: 'get',
-    success: function(response) {
-      $('#viewSolutionModal .modal-content').html(response)
-      if (solution_modal.hasClass('fullscreen')) {
-          $('#toggle-fullscreen-modal').click()
-          solution_modal.addClass('fullscreen')
-      }
-      document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
-    },
-    error: function(response) {
-      bootbox.alert({
-          title: response.responseText || response.statusText.toTitleCase(),
-          message: 'You can check <a href="' + $(a).attr('data-url') + '">here</a>.',
-          size: 'small'
-      })
-      $('#viewSolutionModal').modal('hide')
-    },
-  })
-  return false
-}
-
-$(document).keydown(function(event) {
-  if (event.keyCode == 27) {
-    $('#viewSolutionModal').modal('hide')
-  }
-});
-
 {% block html %}{% if with_table_inner_scroll %}{% if not groupby or groupby == 'none' %} style="overflow-y: hidden"{% endif %}{% endif %}{% endblock %}
 {% if with_table_inner_scroll %}
   $(window).resize(update_sticky)

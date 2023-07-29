@@ -44,6 +44,8 @@
         <a href="{{ value.url }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
       {% elif value|startswith:"http" %}
         <a href="{{ value }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
+      {% elif field == '_ips' %}
+        {% for ip in value %}{% if forloop.counter0 %}, {% endif %}<a class="field-to-select" href="{% url_transform request ips=ip with_replace=1 %}">{{ ip }}</a>{% endfor %}
       {% else %}
         {{ template_value|safe }}
       {% endif %}

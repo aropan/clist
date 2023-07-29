@@ -355,6 +355,7 @@ class requester():
     limit_file_cache = 200
     counter_file_cache = 0
     verify_word = None
+    n_attemps = 1
 
     def print(self, *objs, force=False):
         if self.debug_output or force:
@@ -520,54 +521,61 @@ class requester():
             elif content_type:
                 headers.update({"Content-type": content_type})
 
-            try:
-                if headers:
-                    request = urllib.request.Request(url, headers=headers)
-                else:
-                    request = url
+            for attempt in range(self.n_attemps):
+                last_attempt = attempt + 1 == self.n_attemps
+                try:
+                    if headers:
+                        request = urllib.request.Request(url, headers=headers)
+                    else:
+                        request = url
 
-                time_start = datetime.utcnow()
+                    time_start = datetime.utcnow()
 
-                time_out = time_out or self.time_out
-                if self.proxer:
-                    time_out = min(time_out, self.proxer.time_limit)
-                response = self.opener.open(
-                    request,
-                    post_urlencoded if post else None,
-                    timeout=time_out,
-                )
-            except Exception as err:
-                if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
-                    force_json = False
-                    response = err
-                else:
-                    self.print('[error]', str(err)[:80])
-                    self.error = err
-                    if self.assert_on_fail:
+                    time_out = time_out or self.time_out
+                    if self.proxer:
+                        time_out = min(time_out, self.proxer.time_limit)
+                    response = self.opener.open(
+                        request,
+                        post_urlencoded if post else None,
+                        timeout=time_out,
+                    )
+                except Exception as err:
+                    if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
+                        force_json = False
+                        response = err
+                    else:
                         if self.proxer:
                             self.proxer.fail(err)
+                        if not last_attempt:
+                            continue
+                        self.print('[error]', str(err)[:80])
+                        self.error = err
+                        if self.assert_on_fail:
+                            raise_fail(err)
+                        else:
+                            traceback.print_exc()
+                        return
+
+                try:
+                    last_url = response.geturl() if response else url
+                    if return_last_url:
+                        return last_url
+                    if response.info().get("Content-Encoding", None) == "gzip":
+                        buf = BytesIO(response.read())
+                        page = GzipFile(fileobj=buf).read()
+                    else:
+                        page = response.read()
+                except Exception as err:
+                    if self.proxer:
+                        self.proxer.fail(err)
+                    if not last_attempt:
+                        continue
+                    if self.assert_on_fail:
                         raise_fail(err)
                     else:
                         traceback.print_exc()
                     return
-
-            try:
-                last_url = response.geturl() if response else url
-                if return_last_url:
-                    return last_url
-                if response.info().get("Content-Encoding", None) == "gzip":
-                    buf = BytesIO(response.read())
-                    page = GzipFile(fileobj=buf).read()
-                else:
-                    page = response.read()
-            except Exception as err:
-                if self.assert_on_fail:
-                    if self.proxer:
-                        self.proxer.fail(err)
-                    raise_fail(err)
-                else:
-                    traceback.print_exc()
-                return
+                break
 
             self.time_response = datetime.utcnow() - time_start
             if self.verify_word and self.verify_word not in page:
@@ -823,7 +831,7 @@ class requester():
             self.proxer.save_data()
         self.save_cookie()
 
-    def with_proxy(self, inplace=True, **kwargs):
+    def with_proxy(self, inplace=True, attributes=None, **kwargs):
         self.save_cookie()
         if inplace:
             ret = self
@@ -831,12 +839,22 @@ class requester():
             ret = copy.copy(self)
             ret.init_opener()
         ret.set_proxy(proxy=True, **kwargs)
+        if attributes:
+            orig_attributes = {}
+            for field, value in attributes.items():
+                orig_attributes[field] = getattr(ret, field, None)
+                setattr(ret, field, value)
+            setattr(ret, 'orig_attributes', orig_attributes)
         return ret
 
     def __enter__(self):
         return self
 
     def __exit__(self, *err):
+        orig_attributes = getattr(self, 'orig_attributes', None)
+        if orig_attributes:
+            for field, value in orig_attributes.items():
+                setattr(self, field, value)
         self.close()
         self.init_opener()
 

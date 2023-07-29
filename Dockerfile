@@ -38,7 +38,8 @@ WORKDIR $APPDIR
 FROM base as dev
 ENV DJANGO_ENV_FILE .env.dev
 RUN apt install -y redis-server
-CMD redis-server --daemonize yes; python manage.py runserver 0.0.0.0:10042
+COPY ./scripts/watchdog.bash /
+CMD sh -c 'redis-server --daemonize yes; /watchdog.bash "python manage.py rqworker" "*.py"; python manage.py runserver 0.0.0.0:10042'
 
 COPY ipython_config.py .
 RUN ipython profile create

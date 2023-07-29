@@ -5,7 +5,6 @@ from logging import getLogger
 
 import humanize
 import tqdm
-from utils.attrdict import AttrDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import OuterRef, Q, Subquery
@@ -16,6 +15,7 @@ from sql_util.utils import SubqueryCount
 from clist.models import Contest, Resource
 from ranking.models import Account, Statistics
 from true_coders.models import Coder
+from utils.attrdict import AttrDict
 
 
 class Command(BaseCommand):
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host names for calculate')
 
     def handle(self, *args, **options):
-        self.logger.info(f'options = {options}')
+        self.stdout.write(str(options))
         args = AttrDict(options)
 
         resource_filter = Q()

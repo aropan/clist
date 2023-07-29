@@ -35,7 +35,7 @@ class Command(BaseCommand):
         self.logger.info(f'{name} ({total}) = {qs}')
 
     def handle(self, *args, **options):
-        self.logger.info(f'options = {options}')
+        self.stdout.write(str(options))
         args = AttrDict(options)
 
         coders = Coder.objects.all()

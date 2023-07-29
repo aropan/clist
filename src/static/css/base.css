@@ -88,9 +88,13 @@ img.resource-icon {
   text-align: center;
 }
 
-.service-icon-btn {
+.btn.active.service-icon-btn, .btn.active.service-icon-btn:hover {
   width: 40px;
   cursor: default !important;
+  color: #333;
+  background-color: #e6e6e6;
+  background-image: none;
+  border-color: #adadad;
 }
 
 .navbar-static-top .navbar-right .dropdown-menu i {

@@ -101,6 +101,8 @@ INSTALLED_APPS = (
     'channels',
     'chats',
     'favorites',
+    'guardian',
+    'django_rq',
 )
 
 MIDDLEWARE = (
@@ -120,6 +122,11 @@ MIDDLEWARE = (
     'pyclist.middleware.RedirectMiddleware',
     'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',
+)
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
 )
 
 if DEBUG:
@@ -163,11 +170,26 @@ WSGI_APPLICATION = 'pyclist.wsgi.application'
 
 ASGI_APPLICATION = 'pyclist.asgi.application'
 
+CHANNEL_LAYERS_CAPACITY = 10_000
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {'hosts': [('0.0.0.0', 'redis')]},
+        'CONFIG': {
+            'hosts': [('0.0.0.0', 'redis')],
+            'capacity': CHANNEL_LAYERS_CAPACITY,
+        },
     },
+}
+
+
+# django_rq
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DEFAULT_TIMEOUT': 3600,
+    }
 }
 
 
@@ -423,6 +445,11 @@ CUSTOM_COUNTRIES_ = {
     'BY': ['BY', 'BPR'],
 }
 
+
+# guardian
+ANONYMOUS_USER_NAME = 'AnonymousUser'
+
+
 # DJANGO DEBUG TOOLBAR
 if DEBUG:
     MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
@@ -608,8 +635,8 @@ FONTAWESOME_ICONS_ = {
     'unpin': '<i class="fas fa-star"></i>',
     'timeline': '<i class="fas fa-history"></i>',
     'contest': '<i class="fas fa-laptop-code"></i>',
-    'kofi': '<i class="fas fa-mug-hot ko-fi"></i>',
-    'crypto': '<i class="fab fa-bitcoin"></i>',
+    'kofi': {'icon': '<i class="fas fa-mug-hot ko-fi"></i>', 'title': None},
+    'crypto': {'icon': '<i class="fab fa-bitcoin"></i>', 'title': None},
     'fav': {'icon': '<i class="fas fa-star activity fav selected-activity"></i>', 'title': 'Favorite',
             'name': 'fa-star', 'unselected_class': 'far', 'check_field': 'is_favorite'},
     'unfav': {'icon': '<i class="far fa-star activity fav"></i>', 'title': None},
@@ -631,6 +658,8 @@ FONTAWESOME_ICONS_ = {
     'verification': '<i class="far fa-check-circle"></i>',
     'verified': '<i class="verified fas fa-check-circle"></i>',
     'unverified': '<i class="unverified fas fa-check-circle"></i>',
+    'ips': '<i class="fas fa-search-location"></i>',
+    'log': '<i class="fas fa-scroll"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
@@ -641,6 +670,7 @@ FONTAWESOME_ICONS_ = {
     'discord': {'icon': '<i class="fab fa-discord"></i>', 'title': None},
     'vk': {'icon': '<i class="fab fa-vk"></i>', 'title': None},
     'patreon': {'icon': '<i class="fab fa-patreon"></i>', 'title': None},
+    'competitive-hustle': {'icon': '<i class="fas fa-tools"></i>'},
 }
 
 

@@ -24,9 +24,7 @@
         <meta property="og:title" content="{% block full_ogtitle %}{% block ogtitle %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}">
         <title>{% block full_title %}{% block title %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}</title>
 
-        {% if request.GET %}
         <link rel="canonical" href="{% block canonical %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}">
-        {% endif %}
 
         {% if not DEBUG %}
         {% include 'counter/base.html' %}

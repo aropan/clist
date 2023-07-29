@@ -26,6 +26,7 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
+from django_rq import job
 from el_pagination.decorators import page_template, page_templates
 from ratelimit.core import get_usage
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
@@ -34,7 +35,8 @@ from tastypie.models import ApiKey
 from favorites.models import Activity
 
 from clist.models import Contest, ContestSeries, ProblemTag, Resource
-from clist.templatetags.extras import asfloat, format_time, get_timezones, query_transform, quote_url, relative_url
+from clist.templatetags.extras import (asfloat, format_time, get_timezones, has_update_statistics_permission,
+                                       query_transform, quote_url, relative_url)
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
@@ -825,7 +827,11 @@ def settings(request, tab=None):
     resources = coder.get_ordered_resources()
     coder.filter_set.filter(resources=[], contest__isnull=True, party__isnull=True).delete()
 
-    services = Service.objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
+    if request.user.has_perm('my_oauth.view_disabled_services'):
+        services = Service.objects
+    else:
+        services = Service.active_objects
+    services = services.annotate(n_tokens=Count('token')).order_by('-n_tokens')
 
     selected_resource = request.GET.get('resource')
     selected_account = None
@@ -866,6 +872,11 @@ def settings(request, tab=None):
             "tab": tab,
         },
     )
+
+
+@job
+def call_command_parse_statistics(**kwargs):
+    return call_command('parse_statistic', **kwargs)
 
 
 @require_http_methods(['POST'])
@@ -1250,9 +1261,12 @@ def change(request):
             return HttpResponseBadRequest(f'Try again in {humanize.naturaldelta(delta)}', status=429)
         account.updated = now
         account.save()
-    elif name == "update-statistics" and request.user.has_perm('ranking.update_statistics'):
+    elif name == "update-statistics":
         pk = request.POST.get('id')
-        call_command('parse_statistic', contest_id=pk)
+        contest = get_object_or_404(Contest, pk=pk)
+        if not has_update_statistics_permission(user, contest):
+            return HttpResponseBadRequest('You have no permission to update statistics for this contest')
+        call_command_parse_statistics.delay(contest_id=pk)
     elif name == "pre-delete-user":
         class RollbackException(Exception):
             pass
@@ -1479,6 +1493,10 @@ def search(request, **kwargs):
         field = request.GET.get('field')
         assert '__' not in field
 
+        view_private_fields = request.user.has_perm('view_private_fields', contest.resource)
+        if field.startswith('_') and not view_private_fields:
+            return HttpResponseBadRequest('You have no permission to view this field')
+
         if field == 'languages':
             qs = contest.info.get('languages', [])
             qs = ['any'] + [q for q in qs if not text or text.lower() in q.lower()]
@@ -1488,13 +1506,18 @@ def search(request, **kwargs):
         elif field == 'rating':
             qs = ['rated', 'unrated']
         elif f'_{field}' in contest.info:
-            qs = contest.info.get(f'_{field}')
-        else:
+            if not view_private_fields:
+                return HttpResponseBadRequest('You have no permission to view this field')
+            qs = ['any'] + contest.info.get(f'_{field}')
+            qs = [v for v in qs if not text or text.lower() in str(v).lower()]
+        elif field in contest.info.get('fields', []):
             field = f'addition__{field}'
             qs = contest.statistics_set
             if text:
                 qs = qs.filter(**{f'{field}__icontains': text})
             qs = qs.distinct(field).values_list(field, flat=True)
+        else:
+            return HttpResponseBadRequest('Invalid field')
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': f, 'text': f} for f in qs]

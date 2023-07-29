@@ -83,6 +83,7 @@ function duration_to_text(duration) {
 
 var CURRENT_PERCENT = null
 var TIMELINE_TIMER_ID = null
+var TRANSFORM_TIMER_ID = null
 var UNFREEZE_OPENING = new Map()
 var UNFREEZE_ORDER = null
 var UNFREEZE_SIZE = 0
@@ -363,10 +364,12 @@ function clear_starred_unfreezed() {
     CLEAR_STARRED_UNFREEZED_TIMER_ID = null
   }
   $('.starred.unfreezed').each((_, e) => { change_starring.call(e) })
+  recalc_pinned()
 }
 
 function set_timeline(percent = null, duration = null, scroll_to_element = null) {
-  if (UNFREEZE_ORDER === null) {
+  init_unfreeze = UNFREEZE_ORDER === null
+  if (init_unfreeze) {
     prepare_unfreeze()
   }
   if (duration == null) {
@@ -406,12 +409,15 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       var statistic_id = UNFREEZE_ORDER[target_index].statistic_id
       var statistic_element = $('.stat-cell[data-statistic-id="' + statistic_id + '"]')
 
-      if (percent_sign < 0) {
-        scroll_to_element = statistic_element
-      } else {
-        scroll_to_find_me(duration, 0, statistic_element)
+      if (!scroll_to_element && $('.find-me-row').length == 0) {
+        if (percent_sign < 0) {
+          scroll_to_element = statistic_element
+        } else {
+          scroll_to_find_me(duration, 0, statistic_element)
+        }
       }
-      if (!statistic_element.hasClass('starred')) {
+
+      if (!init_unfreeze && !statistic_element.hasClass('starred')) {
         change_starring.call(statistic_element)
         statistic_element.addClass('unfreezed')
         CLEAR_STARRED_UNFREEZED_TIMER_ID = setInterval(clear_starred_unfreezed, 10000)
@@ -422,8 +428,6 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   $('.stat-cell').each((_, e) => { clear_data_stat_cell(e) })
 
   var problem_progress_stats = {}
-
-  $('.stat-cell').css('transition', 'transform ' + duration + 'ms')
 
   if (!with_detail) {
     $('.problem-cell').each(function() {
@@ -445,9 +449,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     var toggle_class = e.getAttribute('data-class')
     if (visible && pvisible === 'false') {
       $e.addClass(toggle_class)
-      highlight_element($e, highlight_problem_duration, duration / 2, toggle_class, function() {
-        return $e.attr('data-visible') !== 'false'
-      })
+      highlight_element($e, 0, duration / 2, toggle_class, function() { return $e.attr('data-visible') !== 'false' }, 0.25)
     }
     if (!visible && pvisible !== 'false') {
       $e.removeClass(toggle_class)
@@ -642,22 +644,37 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
   rows.find('>.place-cell').each((i, e) => { $(e).text($(e).attr('data-text')) })
   rows.find('>.gap-cell').each((i, e) => { $(e).text($(e).attr('data-text')) })
-  rows.each((i, r) => { $r = $(r); $r.css('transform', $r.attr('data-translate-y')) })
 
-  $('table.standings tbody').html(rows)
-  color_by_group_score('data-score')
-  $('.accepted-switcher').click(switcher_click)
-  bind_starring()
+  var delay_duration = duration / 2
+  clearInterval(TRANSFORM_TIMER_ID)
+
   recalc_pinned()
 
-  clear_tooltip()
-  toggle_tooltip_object('table.standings [data-original-title]')
+  TRANSFORM_TIMER_ID = setTimeout(() => {
+      var transform_duration = duration - delay_duration
 
-  scroll_to_find_me(duration, 0, scroll_to_element)
-  setTimeout(() => { rows.css('transform', '') }, 1)
+      rows.css('transition', 'transform ' + transform_duration + 'ms')
+      rows.each((i, r) => { $r = $(r); $r.css('transform', $r.attr('data-translate-y')) })
+
+      $('table.standings tbody').html(rows)
+      color_by_group_score('data-score')
+      $('.accepted-switcher').click(switcher_click)
+
+      bind_starring()
+      recalc_pinned()
+
+      clear_tooltip()
+      toggle_tooltip_object('table.standings [data-original-title]')
+
+      console.log(scroll_to_element)
+      scroll_to_find_me(transform_duration, 0, scroll_to_element)
+      rows.css('transform', '')
+    },
+    delay_duration,
+  )
 }
 
-function highlight_element(el, after = 1000, duration = 500, before_toggle_class = false, callback = undefined) {
+function highlight_element(el, after = 1000, duration = 500, before_toggle_class = false, callback = undefined, duration_ratio = 1.0) {
   if (!el.length) {
     return
   }
@@ -666,8 +683,8 @@ function highlight_element(el, after = 1000, duration = 500, before_toggle_class
     el.removeClass(before_toggle_class)
   }
   setTimeout(function() {
-    el.animate({'background-color': '#d0e3f7'}, duration, function() {
-      el.animate({'background-color': color}, duration, function() {
+    el.animate({'background-color': '#d0e3f7'}, duration * duration_ratio, function() {
+      el.animate({'background-color': color}, duration * (2 - duration_ratio), function() {
         el.css('background', '')
         if (callback === undefined || callback(el) !== false) {
           el.addClass(before_toggle_class)
@@ -1162,6 +1179,8 @@ $(function() {
     const data = JSON.parse(e.data)
     if (data.type == 'standings') {
       update_standings(data)
+    } else if (data.type == 'update_statistics') {
+      update_statistics_log(data)
     }
     n_messages += 1
   }
@@ -1180,10 +1199,18 @@ $(function() {
  * Update statistics
  */
 
+function show_update_statistics_log() {
+  var log_modal = $('#update-statistics-log')
+  log_modal.modal('show')
+}
+
 function update_statistics(e) {
+  show_update_statistics_log()
+
   var icon = $(e).find('i')
   icon.toggleClass('fa-spin')
-  icon.closest('a').toggleClass('invisible')
+  var btn = icon.closest('a')
+  btn.attr('disabled', 'disabled')
   $.ajax({
     type: 'POST',
     url: change_url,
@@ -1197,8 +1224,85 @@ function update_statistics(e) {
     },
     complete: function() {
       icon.toggleClass('fa-spin')
-      icon.closest('a').toggleClass('invisible')
+      btn.attr('disabled', false)
+      $.notify('Queued update', 'success')
     },
   })
   event.preventDefault()
 }
+
+function update_statistics_log(data) {
+  $('#update_statistics_btn').addClass('hidden')
+  $('#show_update_statistics_log_btn').removeClass('hidden')
+  var modal_btn = $('#modal-update-statistics-btn')
+  var log_output = $('#update-statistics-log-output')
+  if (data.line) {
+    var line = $('<span>').text(data.line + "\n")
+    log_output.prepend(line)
+  }
+  if (data.progress !== undefined) {
+    var progress_bar = $('#update-statistics-progress-bar')
+    progress_bar.css('width', data.progress * 100 + '%')
+    var progress_text = $('#update-statistics-progress-text')
+    progress_text.text(data.desc)
+
+    $('#update-statistics-progress').removeClass('hidden')
+  }
+  if (data.done !== undefined) {
+    var line = $('<div class="horizontal-line"></div>')
+    log_output.prepend(line)
+
+    modal_btn.attr('disabled', false)
+    modal_btn.find('i').removeClass('fa-spin')
+
+    $('#update-statistics-progress').addClass('hidden')
+  } else {
+    modal_btn.attr('disabled', true)
+    modal_btn.find('i').addClass('fa-spin')
+  }
+}
+
+
+/*
+ * View solution
+ */
+
+function viewSolution(a) {
+  var href = $(a).attr('href')
+  var solution_modal = $('#view-solution-modal')
+  $('#view-solution-modal .modal-content').html('<div class="modal-body"><p><i class="fa fa-spin fa-circle-notch"></i> Loading...</p></div>')
+  $('#view-solution-modal').modal('show')
+
+  $.ajax({
+    url: href,
+    type: 'get',
+    success: function(response) {
+      $('#view-solution-modal .modal-content').html(response)
+      if (solution_modal.hasClass('fullscreen')) {
+          $('#toggle-fullscreen-modal').click()
+          solution_modal.addClass('fullscreen')
+      }
+      document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
+    },
+    error: function(response) {
+      bootbox.alert({
+          title: response.responseText || response.statusText.toTitleCase(),
+          message: 'You can check <a href="' + $(a).attr('data-url') + '">here</a>.',
+          size: 'small'
+      })
+      $('#view-solution-modal').modal('hide')
+    },
+  })
+  return false
+}
+
+/*
+ * Press escape
+ */
+
+$(document).keydown(function(event) {
+  if (event.keyCode == 27) {
+    $('#view-solution-modal').modal('hide')
+    $('#pudate-statistics-logs').modal('hide')
+  }
+});

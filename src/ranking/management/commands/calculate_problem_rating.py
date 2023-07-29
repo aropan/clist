@@ -177,7 +177,7 @@ class Command(BaseCommand):
         parser.add_argument('--ignore-missing-account', action='store_true')
 
     def handle(self, *args, **options):
-        self.logger.info(f'options = {options}')
+        self.stdout.write(str(options))
         args = AttrDict(options)
 
         resources = Resource.objects.all()

@@ -560,7 +560,7 @@ def abs_filter(val):
 
 @register.filter
 def get_account(coder, host):
-    return coder.get_account(host)
+    return coder.get_account(host) if coder is not None else None
 
 
 @register.filter
@@ -967,7 +967,7 @@ def use_lightrope():
 
 @register.simple_tag
 def get_notification_messages_badges(user, path):
-    if not user or user.is_anonymous or path == reverse('notification:messages'):
+    if is_anonymous_user(user) or path == reverse('notification:messages'):
         return ''
     coder = getattr(user, 'coder', None)
     if not coder:
@@ -1130,3 +1130,33 @@ def simple_select_data(data):
     }
     ret.update(data)
     return ret
+
+
+@register.simple_tag
+def submission_info_field(stat, field):
+    counter = defaultdict(int)
+    for submission_info in stat.get('_submission_infos', []):
+        value = submission_info.get(field)
+        if not value:
+            continue
+        counter[value] += 1
+    ips = ''
+    for v, k in sorted([(v, k) for k, v in counter.items()], reverse=True):
+        ips += f'<div>{k} ({v})</div>'
+    ret = f'<div title="{ips}" data-html="true" data-toggle="tooltip">'
+    if len(counter) == 1:
+        ret += 'IP'
+    else:
+        ret += f'IPs ({len(counter)})'
+    ret += '</div>'
+    return mark_safe(ret)
+
+
+@register.filter
+def has_update_statistics_permission(user, contest):
+    return user.has_perm('ranking.update_statistics') or user.has_perm('update_statistics', contest.resource)
+
+
+@register.filter
+def is_anonymous_user(user):
+    return not user or user.username == settings.ANONYMOUS_USER_NAME

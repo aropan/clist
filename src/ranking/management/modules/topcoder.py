@@ -105,6 +105,7 @@ class Statistic(BaseModule):
             n_limit=30,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
             connect=lambda req: req.get('https://www.topcoder.com/'),
+            attributes=dict(n_attemps=5),
         )
 
         if not self.standings_url and datetime.now() - start_time < timedelta(days=30):

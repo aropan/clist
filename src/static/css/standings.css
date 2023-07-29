@@ -136,16 +136,36 @@ a.solution:hover span {
   font-weight: normal;
 }
 
-#viewSolutionModal:not(.fullscreen) .modal-body {
+#view-solution-modal:not(.fullscreen) .modal-body {
   max-height: calc(100vh - 200px);
 }
 
-#viewSolutionModal.fullscreen .modal-body {
+#view-solution-modal.fullscreen .modal-body {
   max-height: calc(100vh - 120px);
 }
 
-#viewSolutionModal.modal .modal-body {
+#view-solution-modal.modal .modal-body {
   overflow-y: auto;
+}
+
+#update-statistics-log-output {
+  white-space: pre-wrap;
+}
+
+#update-statistics-log-output .horizontal-line {
+  height: 1px;
+  background-color: #ccc;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+#update-statistics-progress-text {
+  position: absolute;
+  color: black;
+  text-align: center;
+  left: 0;
+  right: 0;
+  user-select: none;
 }
 
 .language {

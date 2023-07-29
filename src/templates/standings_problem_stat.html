@@ -88,4 +88,7 @@
   {% if stat.language and request.GET.languages %}
     <small{% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %} class="text-muted"{% endif %}><div class="language">{{ stat.language }}</div></small>
   {% endif %}
+  {% if request.GET.ips and fields_to_select.ips %}
+    {% submission_info_field stat 'ip' %}
+  {% endif %}
 {% endif %}

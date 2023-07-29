@@ -102,7 +102,7 @@
             {% endfor %}
             {% endif %}
 
-            {% if user.is_anonymous %}
+            {% if user|is_anonymous_user %}
             <h3>Only authorized users</h3>
             <a href="{% url 'auth:login' %}?next={% url 'events:event' slug %}" class="btn btn-primary">Log in / Sign up</a>
             {% else %}

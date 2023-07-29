@@ -37,7 +37,7 @@ def query(request, name):
     if redirect_url:
         request.session['next'] = redirect_url
 
-    service = get_object_or_404(Service.active_objects, name=name)
+    service = get_object_or_404(Service.objects, name=name)
     args = model_to_dict(service)
     args['redirect_uri'] = settings.HTTPS_HOST_ + reverse('auth:response', args=(name, ))
     args['state'] = generate_state()
@@ -117,7 +117,7 @@ def process_access_token(request, service, response):
 
 
 def response(request, name):
-    service = get_object_or_404(Service.active_objects, name=name)
+    service = get_object_or_404(Service.objects, name=name)
     state = request.session.get(service.state_field, None)
     try:
         if state is None or state != request.GET.get('state'):

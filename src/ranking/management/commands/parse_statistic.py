@@ -2,23 +2,26 @@
 # -*- coding: utf-8 -*-
 
 import copy
+import logging
 import operator
 import re
 from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
 from functools import lru_cache
 from html import unescape
-from logging import getLogger
 from random import shuffle
 
 import arrow
+import tqdm as _tqdm
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
-from tqdm import tqdm
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
@@ -37,12 +40,102 @@ from utils.datetime import parse_datetime
 from utils.traceback_with_vars import colored_format_exc
 
 
+class ChannelLayerHandler(logging.Handler):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.channel_layer = get_channel_layer()
+        self.group_name = None
+        self.capacity = 0
+        self.states = None
+
+    def emit(self, record):
+        if not self.group_name or not self.capacity:
+            return
+        log_entry = self.format(record)
+        self.send_message(log_entry)
+
+    def send_done(self, done=False):
+        if not self.group_name:
+            return
+        self.send_message('DONE' if done else 'FAILED', done=done)
+        self.group_name = None
+
+    def send_message(self, message, **kwargs):
+        context = {'type': 'update_statistics', 'line': message}
+        context.update(kwargs)
+        async_to_sync(self.channel_layer.group_send)(self.group_name, context)
+        self.decrease_capacity()
+
+    def send_progress(self, progress_bar: _tqdm.tqdm):
+        if not self.group_name or not self.capacity:
+            return
+        if not progress_bar.n or not progress_bar.total:
+            return
+
+        n = min(progress_bar.n, progress_bar.total)
+        total = progress_bar.total
+        desc = progress_bar.desc
+        state = (n, total)
+        if desc not in self.states:
+            if n < total:
+                self.states[desc] = state
+            return
+        elif self.states[desc] == state:
+            return
+        if n == total:
+            self.states.pop(desc)
+        else:
+            self.states[desc] = state
+
+        percentage = n / total
+        context = {'type': 'update_statistics', 'progress': percentage, 'desc': f'{desc} ({percentage * 100:.2f}%)'}
+        async_to_sync(self.channel_layer.group_send)(self.group_name, context)
+        self.decrease_capacity()
+
+    def decrease_capacity(self):
+        self.capacity -= 1
+        if self.capacity == 0:
+            context = {'type': 'update_statistics', 'line': 'REACH_LOGGING_LIMIT'}
+            async_to_sync(self.channel_layer.group_send)(self.group_name, context)
+
+    def set_contest(self, contest):
+        self.group_name = contest.channel_update_statistics_group_name
+        self.capacity = settings.CHANNEL_LAYERS_CAPACITY - 10
+        self.states = {}
+
+    def __del__(self):
+        self.send_done()
+
+
+class tqdm(_tqdm.tqdm):
+    _channel_layer_handler = None
+
+    def __init__(self, *args, **kwargs):
+        kwargs['mininterval'] = 0.2
+        super().__init__(*args, **kwargs)
+
+    def __iter__(self):
+        for obj in super().__iter__():
+            yield obj
+            self._channel_layer_handler.send_progress(self)
+        self._channel_layer_handler.send_progress(self)
+
+    def update(self, *args, **kwargs):
+        super().update(*args, **kwargs)
+        self._channel_layer_handler.send_progress(self)
+
+    def close(self, *args, **kwargs):
+        super().update(*args, **kwargs)
+        self._channel_layer_handler.send_progress(self)
+
+
 class Command(BaseCommand):
     help = 'Parsing statistics'
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.logger = getLogger('ranking.parse.statistic')
+        self.logger = logging.getLogger('ranking.parse.statistic')
 
     def add_arguments(self, parser):
         parser.add_argument('-d', '--days', type=int, help='how previous days for update')
@@ -70,7 +163,7 @@ class Command(BaseCommand):
         parser.add_argument('--before-date', default=False, help='Update contests that have been updated to date')
         parser.add_argument('--with-medals', action='store_true', default=False, help='Contest with medals')
         parser.add_argument('--skip-fill-coder-problems', action='store_true', default=False, help='Skip fill problems')
-        parser.add_argument('-cid', '--contest-id', help='Contest id')
+        parser.add_argument('--contest-id', '-cid', help='Contest id')
 
     def parse_statistic(
         self,
@@ -95,6 +188,17 @@ class Command(BaseCommand):
         query=None,
         skip_fill_coder_problems=False,
     ):
+        channel_layer_handler = ChannelLayerHandler()
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
+        channel_layer_handler.setFormatter(formatter)
+        channel_layer_handler.setLevel(logging.INFO)
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.INFO)
+        root_logger.addHandler(channel_layer_handler)
+
+        tqdm._channel_layer_handler = channel_layer_handler
+        _tqdm.tqdm = tqdm
+
         now = timezone.now()
 
         contests = contests.select_related('resource__module')
@@ -194,6 +298,7 @@ class Command(BaseCommand):
         progress_bar = tqdm(contests)
         stages_ids = []
         for contest in progress_bar:
+            channel_layer_handler.set_contest(contest)
             resource = contest.resource
             if not hasattr(resource, 'module'):
                 self.logger.warning(f'contest = {contest}')
@@ -205,7 +310,8 @@ class Command(BaseCommand):
                                     f' run without stats and resource has upsolving')
                 continue
 
-            progress_bar.set_description(f'contest = {contest.title}')
+            self.logger.info(f'Contest = {contest}')
+            progress_bar.set_description(f'contest = {contest}')
             progress_bar.refresh()
             total += 1
             parsed = False
@@ -490,7 +596,7 @@ class Command(BaseCommand):
                         accounts = resource.account_set.filter(key__in=members)
                         accounts = {a.key: a for a in accounts}
 
-                        for r in tqdm(results, desc=f'update results {contest}'):
+                        for r in tqdm(results, desc='update results'):
                             member = r.pop('member')
                             skip_result = bool(r.get('_no_update_n_contests'))
 
@@ -1084,10 +1190,8 @@ class Command(BaseCommand):
             except (ExceptionParseStandings, InitModuleException) as e:
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
-                self.logger.warning(f'contest = {contest}')
-                if r:
-                    self.logger.warning(f'row = {r}')
-                self.logger.error(f'Parse statistic: {e}')
+                self.logger.warning(f'contest = {contest}, row = {r}')
+                self.logger.error(f'parse_statistic exception: {e}')
                 print(colored_format_exc())
                 if stop_on_error:
                     break
@@ -1116,6 +1220,7 @@ class Command(BaseCommand):
                 for stage in stages:
                     if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
                         stages_ids.append(stage.pk)
+            channel_layer_handler.send_done(done=parsed)
 
         @lru_cache(maxsize=None)
         def update_stage(stage):
@@ -1134,11 +1239,13 @@ class Command(BaseCommand):
                 update_stage(stage)
 
         progress_bar.close()
-        self.logger.info(f'Parsed statistic: {count} of {total}')
+        self.logger.info(f'Number of parsed contests: {count} of {total}')
         if n_calculated_problem_rating:
             self.logger.info(f'Number of calculate rating problem: {n_calculated_problem_rating} of {total}')
         self.logger.info(f'Number of updated account time: {n_upd_account_time}')
         self.logger.info(f'Number of created statistics: {n_statistics_created} of {n_statistics_total}')
+
+        root_logger.removeHandler(channel_layer_handler)
         return count, total
 
     @print_sql_decorator(count_only=True)

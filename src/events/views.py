@@ -45,7 +45,7 @@ def event(request, slug, tab=None, template='event.html', extra_context=None):
     if tab is not None and tab not in ['information', 'registration', 'teams', 'participants', 'admin']:
         return HttpResponseNotFound()
     user = request.user
-    coder = None if user.is_anonymous else user.coder
+    coder = getattr(user, 'coder', None)
     participant = event.participant_set.filter(coder=coder, coder__isnull=False).first()
     if participant:
         join_requests = participant.joinrequest_set.all()

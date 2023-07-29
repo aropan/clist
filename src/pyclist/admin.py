@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db import connection, models, transaction
 from django.db.models.fields.related import RelatedField
 from django_json_widget.widgets import JSONEditorWidget
+from guardian.admin import GuardedModelAdmin
 
 from pyclist.models import BaseModel
 
@@ -76,7 +77,7 @@ def admin_register(*args, **kwargs):
     return _model_admin_wrapper
 
 
-class BaseModelAdmin(admin.ModelAdmin):
+class BaseModelAdmin(GuardedModelAdmin):
     readonly_fields = ['created', 'modified']
     save_as = True
     paginator = CachingPaginator
@@ -100,4 +101,4 @@ class BaseModelAdmin(admin.ModelAdmin):
 @admin_register(Permission)
 class PermissionAdmin(admin.ModelAdmin):
     list_display = ['name', 'content_type', 'codename']
-    search_fields = ['name']
+    search_fields = ['name', 'codename']

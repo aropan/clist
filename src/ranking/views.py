@@ -26,8 +26,8 @@ from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
 from clist.templatetags.extras import (as_number, format_time, get_country_name, get_problem_short, get_problem_title,
-                                       is_reject, is_solved, query_transform, slug, time_in_seconds,
-                                       timestamp_to_datetime)
+                                       has_update_statistics_permission, is_reject, is_solved, query_transform, slug,
+                                       time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
@@ -667,7 +667,8 @@ def get_standings_problems(contest, division):
     return problems
 
 
-def get_standings_fields(contest, division, with_detail, hidden_fields=None, hidden_fields_values=None):
+def get_standings_fields(contest, division, with_detail, hidden_fields=None, hidden_fields_values=None,
+                         view_private_fields=None):
     contest_fields = contest.info.get('fields', [])
     fields_values = contest.info.get('fields_values', {})
     options = contest.info.get('standings', {})
@@ -702,16 +703,17 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     hidden_fields = hidden_fields or list(contest.info.get('hidden_fields', []))
     hidden_fields_values = hidden_fields_values or set()
     for k in addition_fields:
+        is_private_k = k.startswith('_')
         if (
             k in fields
             or k in special_fields
             or 'country' in k and k not in hidden_fields_values
             or k in ['name', 'place', 'solving'] and k not in hidden_fields_values
-            or k.startswith('_')
+            or is_private_k and not view_private_fields
             or k in hidden_fields and k not in hidden_fields_values and k not in fields_values
         ):
             continue
-        if with_detail or k in hidden_fields_values or k in fields_values:
+        if not is_private_k and with_detail or k in hidden_fields_values or k in fields_values:
             fields[k] = k
         else:
             hidden_fields.append(k)
@@ -968,19 +970,25 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     order.append('pk')
     statistics = statistics.order_by(*order)
 
+    view_private_fields = request.user.has_perm('view_private_fields', contest.resource)
+    if view_private_fields:
+        for f in contest_fields:
+            if f in ['_ips']:
+                hidden_fields.append(f)
     fields = get_standings_fields(
         contest,
         division=division,
         with_detail=with_detail,
         hidden_fields=hidden_fields,
         hidden_fields_values=hidden_fields_values,
+        view_private_fields=view_private_fields,
     )
     if 'global_rating' in hidden_fields_values:
         fields['new_global_rating'] = 'new_global_rating'
         fields['global_rating_change'] = 'global_rating_change'
         hidden_fields.append('global_rating')
         hidden_fields_values.remove('global_rating')
-    if request.user.has_perm('ranking.view_statistics_hidden_fields'):
+    if request.user.has_perm('view_hidden_fields', contest.resource):
         for v in hidden_fields_values:
             if v not in hidden_fields and v not in fields:
                 fields[v] = v
@@ -1010,11 +1018,15 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         f = f.strip('_')
         fk = f.lower()
         hidden_f = fk in ['languages', 'verdicts'] and (fk not in hidden_fields or fk in hidden_fields_values)
-        if hidden_f or fk in [
-            'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
-            'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
-            'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
-        ]:
+        if (
+            hidden_f
+            or fk in [
+                'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
+                'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
+                'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
+            ]
+            or view_private_fields and fk in ['ips']
+        ):
             add_field_to_select(f)
 
     if contest.with_advance and 'advanced' not in fields_to_select:
@@ -1078,7 +1090,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):
             if ':' in timeline:
                 val = reduce(lambda x, y: x * 60 + int(y), timeline.split(':'), 0)
-                timeline = f'{val / contest.duration_in_secs + 1e-6:.6f}'
+                timeline = f'{val / contest.duration_in_secs:.6f}'
         else:
             timeline = None
 
@@ -1188,6 +1200,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         elif field == 'verdicts':
             for verdict in values:
                 filt |= Q(**{'addition___verdicts__contains': [verdict]})
+        elif field == 'ips':
+            for ip in values:
+                if ip == 'any':
+                    filt |= Q(**{'addition___ips__isnull': False})
+                    break
+                filt |= Q(**{'addition___ips__contains': [ip]})
         elif field == 'rating':
             for q in values:
                 if q not in field_to_select['options']:
@@ -1318,12 +1336,17 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             )
         elif groupby == 'country':
             if '_countries' in contest_fields:
-                statistics = statistics.annotate(
-                    country=RawSQL('''json_array_elements((("addition" ->> '_countries'))::json)::jsonb''', []))
+                raw_sql = '''json_array_elements((("addition" ->> '_countries'))::json)::jsonb'''
+                statistics = statistics.annotate(country=RawSQL(raw_sql, []))
                 field = 'country'
             else:
                 field = 'account__country'
             statistics = statistics.annotate(groupby=F(field))
+        elif groupby == 'ips':
+            raw_sql = '''json_array_elements((("addition" ->> '_ips'))::json)'''
+            raw_sql += ''' #>>'{}' '''  # trim double quotes
+            field = 'ip'
+            statistics = statistics.annotate(ip=RawSQL(raw_sql, [])).annotate(groupby=F(field))
         elif groupby == 'advanced':
             statistics = statistics.annotate(groupby=Cast(F('advanced'), models.TextField()))
         else:
@@ -1596,12 +1619,12 @@ def action(request):
         if action == 'reset_contest_statistic_timing':
             contest_id = request.POST['cid']
             contest = Contest.objects.get(pk=contest_id)
-            if not user.has_perm('clist.reset_contest_statistic_timing'):
-                error = 'No permission.'
-            else:
+            if has_update_statistics_permission(user, contest):
                 message = f'Updated statistic timing = {contest.statistic_timing}.'
                 contest.statistic_timing = None
                 contest.save()
+            else:
+                error = 'Permission denied'
         else:
             error = 'Unknown action'
     except Exception as e:
