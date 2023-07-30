@@ -1,3 +1,5 @@
+from functools import partial
+
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.middleware import csrf
@@ -36,6 +38,19 @@ def RequestLoggerMiddleware(get_response):
 
     def middleware(request):
         setattr(request, 'logger', RequestLogger(request))
+        response = get_response(request)
+        return response
+
+    return middleware
+
+
+def RequestIsAjaxFunction(get_response):
+
+    def is_ajax(request):
+        return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+
+    def middleware(request):
+        setattr(request, 'is_ajax', partial(is_ajax, request))
         response = get_response(request)
         return response
 

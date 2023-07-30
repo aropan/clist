@@ -1,6 +1,6 @@
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.db.models.constants import LOOKUP_SEP
 from django.db.models import F
+from django.db.models.constants import LOOKUP_SEP
+from django.db.models.fields.json import KeyTextTransform
 
 
 class KeyTextTransformFactory:

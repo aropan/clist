@@ -66,7 +66,6 @@ DEBUG = env('DJANGO_ENV') == 'dev'
 # Application definition
 
 INSTALLED_APPS = (
-    'bootstrap_admin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -119,6 +118,7 @@ MIDDLEWARE = (
     'csp.middleware.CSPMiddleware',
     'pyclist.middleware.UpdateCoderLastActivity',
     'pyclist.middleware.RequestLoggerMiddleware',
+    'pyclist.middleware.RequestIsAjaxFunction',
     'pyclist.middleware.RedirectMiddleware',
     'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',
@@ -151,7 +151,6 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'pyclist.context_processors.global_settings',
-                'pyclist.context_processors.bootstrap_admin',
                 'pyclist.context_processors.coder_time_info',
                 'pyclist.context_processors.fullscreen',
                 'pyclist.context_processors.favorite_settings',
@@ -160,7 +159,7 @@ TEMPLATES = [
                 'pyclist.templatetags.staticfiles',
                 'clist.templatetags.extras',
                 'django.contrib.humanize.templatetags.humanize',
-                'favorites.templatetags.extras',
+                'favorites.templatetags.favorites_extras',
             ],
         },
     },
@@ -217,11 +216,8 @@ DATABASES.update(DATABASES_)
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
         'LOCATION': 'memcached:11211',
-        'OPTIONS': {
-            'server_max_value_length': 1024 * 1024 * 10,
-        },
     }
 }
 
@@ -384,6 +380,7 @@ LOGGING = {
 
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
 TELEGRAM_TOKEN = conf.TELEGRAM_TOKEN
@@ -489,9 +486,6 @@ if DEBUG:
             'debug_toolbar.panels.request.RequestPanel',
         },
     }
-
-# BOOSTRAP ADMIN
-BOOTSTRAP_ADMIN_SIDEBAR_MENU = True
 
 # WEBPUSH
 WEBPUSH_SETTINGS = conf.WEBPUSH_SETTINGS

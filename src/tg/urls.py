@@ -1,7 +1,7 @@
 import hashlib
 
 from django.conf import settings
-from django.conf.urls import re_path
+from django.urls import re_path
 from django.views.decorators.csrf import csrf_exempt
 
 from tg import views

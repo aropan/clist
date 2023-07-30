@@ -22,7 +22,7 @@ from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
 from favorites.models import Activity
-from favorites.templatetags.extras import activity_icon
+from favorites.templatetags.favorites_extras import activity_icon
 
 from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,

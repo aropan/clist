@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-from django.conf.urls import re_path
+from django.urls import re_path
 from django.urls import reverse
 from tastypie import fields
 from tastypie.utils import trailing_slash

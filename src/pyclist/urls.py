@@ -1,10 +1,10 @@
 from django.conf import settings
-from django.conf.urls import include, re_path
+from django.conf.urls import include
 from django.conf.urls.static import static as url_static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.templatetags.static import static
-from django.urls import path
+from django.urls import path, re_path
 from django.views.decorators.cache import cache_page
 from django.views.generic import RedirectView, TemplateView
 

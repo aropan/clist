@@ -13,11 +13,11 @@ from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
                               Prefetch, Q, Subquery, Value, When)
+from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render

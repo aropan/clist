@@ -1,10 +1,10 @@
 import json
 
 import arrow
-from django.conf.urls import re_path
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
+from django.urls import re_path
 from django.db.models import CharField, IntegerField, JSONField, Value
 from django.db.models.expressions import F
+from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from django.urls import reverse
 from django.utils.timezone import now

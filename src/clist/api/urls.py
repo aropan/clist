@@ -1,4 +1,5 @@
-from django.conf.urls import include, re_path
+from django.conf.urls import include
+from django.urls import re_path
 from tastypie.api import NamespacedApi as Api
 
 from clist.api import v1, v2, v3
