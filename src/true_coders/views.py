@@ -1262,10 +1262,16 @@ def change(request):
         account.updated = now
         account.save()
     elif name == "update-statistics":
+        usage = get_usage(request, group='update-statistics', key='user', rate='20/h', increment=True)
+        if usage['should_limit']:
+            delta = timedelta(seconds=usage['time_left'])
+            return HttpResponseBadRequest(f'Try again in {humanize.naturaldelta(delta)}', status=429)
+
         pk = request.POST.get('id')
         contest = get_object_or_404(Contest, pk=pk)
         if not has_update_statistics_permission(user, contest):
             return HttpResponseBadRequest('You have no permission to update statistics for this contest')
+
         call_command_parse_statistics.delay(contest_id=pk)
     elif name == "pre-delete-user":
         class RollbackException(Exception):

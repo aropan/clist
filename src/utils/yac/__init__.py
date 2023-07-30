@@ -4,7 +4,7 @@ import os
 
 import yaml
 
-from requester import requester
+from utils.requester import requester
 
 
 def get_auth():

@@ -20,7 +20,7 @@ from lxml import etree
 from clist.templatetags.extras import as_number, asfloat, toint
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table, save_proxy
-from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, InitModuleException
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from utils.requester import FailOnGetResponse
 
 
@@ -611,6 +611,7 @@ class Statistic(BaseModule):
             n_limit=30,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
             connect=lambda req: req.get(active_algorithm_list_url),
+            attributes=dict(n_attemps=5),
         ) as req:
             page = req.proxer.get_connect_ret()
             dd_active_algorithm = {}
@@ -626,20 +627,10 @@ class Statistic(BaseModule):
                 req.proxer.set_connect_func(lambda req: req.get(url))
 
                 ret = {}
-                for _ in range(2):
-                    try:
-                        page = req.get(url)
-                        ret = json.loads(page)
-                        if 'error' in ret:
-                            if isinstance(ret['error'], dict) and ret['error'].get('value') == 404:
-                                ret = {'handle': user, 'action': 'remove'}
-                            else:
-                                continue
-                        break
-                    except Exception:
-                        sleep(1)
-                else:
-                    raise ExceptionParseAccounts(f'Failed to fetch profile for {user}')
+                page = req.get(url)
+                ret = json.loads(page)
+                if 'error' in ret and isinstance(ret['error'], dict) and ret['error'].get('value') == 404:
+                    ret = {'handle': user, 'action': 'remove'}
                 if 'handle' not in ret:
                     if not ret or 'error' in ret:
                         ret['delta'] = timedelta(days=7)

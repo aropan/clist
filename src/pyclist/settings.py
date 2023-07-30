@@ -191,6 +191,7 @@ RQ_QUEUES = {
         'DEFAULT_TIMEOUT': 3600,
     }
 }
+RQ_SHOW_ADMIN_LINK = True
 
 
 # Database
