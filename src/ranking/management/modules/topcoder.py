@@ -10,7 +10,6 @@ from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
 from math import isclose
-from time import sleep
 from urllib.parse import parse_qs, quote, urljoin
 
 import dateutil.parser
@@ -102,9 +101,9 @@ class Statistic(BaseModule):
 
         req = REQ.with_proxy(
             time_limit=10,
-            n_limit=30,
+            n_limit=50,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
-            connect=lambda req: req.get('https://www.topcoder.com/'),
+            connect=lambda req: req.get('https://www.topcoder.com/', n_attemps=1),
             attributes=dict(n_attemps=5),
         )
 
@@ -300,54 +299,44 @@ class Statistic(BaseModule):
                 division_str = 'I' * division
 
                 with PoolExecutor(max_workers=3) as executor:
+
                     def fetch_problem(p):
-                        errors = set()
-                        for attempt in range(3):
-                            try:
-                                page = req.get(p['url'], time_out=30)
-                                match = re.search('<a[^>]*href="(?P<href>[^"]*module=ProblemDetail[^"]*)"[^>]*>', page)
-                                page = req.get(urljoin(p['url'], match.group('href')), time_out=30)
-                                matches = re.findall(r'<td[^>]*class="statTextBig"[^>]*>(?P<key>[^<]*)</td>\s*<td[^>]*>(?P<value>.*?)</td>', page, re.DOTALL)  # noqa
-                                for key, value in matches:
-                                    key = key.strip().rstrip(':').lower()
-                                    if key == 'categories':
-                                        tags = [t.strip().lower() for t in value.split(',')]
-                                        tags = [t for t in tags if t]
-                                        if tags:
-                                            p['tags'] = tags
-                                    elif key.startswith('writer') or key.startswith('tester'):
-                                        key = key.rstrip('s') + 's'
-                                        p[key] = re.findall('(?<=>)[^<>,]+(?=<)', value)
-                                for w in p.get('writers', []):
-                                    writers[w] += 1
+                        page = req.get(p['url'], time_out=30)
+                        match = re.search('<a[^>]*href="(?P<href>[^"]*module=ProblemDetail[^"]*)"[^>]*>', page)
+                        page = req.get(urljoin(p['url'], match.group('href')), time_out=30)
+                        matches = re.findall(r'<td[^>]*class="statTextBig"[^>]*>(?P<key>[^<]*)</td>\s*<td[^>]*>(?P<value>.*?)</td>', page, re.DOTALL)  # noqa
+                        for key, value in matches:
+                            key = key.strip().rstrip(':').lower()
+                            if key == 'categories':
+                                tags = [t.strip().lower() for t in value.split(',')]
+                                tags = [t for t in tags if t]
+                                if tags:
+                                    p['tags'] = tags
+                            elif key.startswith('writer') or key.startswith('tester'):
+                                key = key.rstrip('s') + 's'
+                                p[key] = re.findall('(?<=>)[^<>,]+(?=<)', value)
+                        for w in p.get('writers', []):
+                            writers[w] += 1
 
-                                info = p.setdefault('info', {})
-                                matches = re.finditer('<table[^>]*paddingTable2[^>]*>.*?</table>', page, re.DOTALL)
-                                for match in matches:
-                                    html_table = match.group(0)
-                                    rows = parsed_table.ParsedTable(html_table)
-                                    for row in rows:
-                                        key, value = None, None
-                                        for k, v in row.items():
-                                            if k == "":
-                                                key = v.value
-                                            elif k and division_str in k.split():
-                                                value = v.value
-                                        if key and value:
-                                            key = re.sub(' +', '_', key.lower())
-                                            info[key] = value
-                                            if key == 'point_value':
-                                                value = toint(value) or asfloat(value)
-                                                if value is not None:
-                                                    p['full_score'] = value
-                            except Exception as e:
-                                errors.add(f'error parse problem info {p}: {e}')
-                                sleep(5 + attempt)
-                        else:
-                            errors = None
-                        if errors:
-                            LOG.error(errors)
-
+                        info = p.setdefault('info', {})
+                        matches = re.finditer('<table[^>]*paddingTable2[^>]*>.*?</table>', page, re.DOTALL)
+                        for match in matches:
+                            html_table = match.group(0)
+                            rows = parsed_table.ParsedTable(html_table)
+                            for row in rows:
+                                key, value = None, None
+                                for k, v in row.items():
+                                    if k == "":
+                                        key = v.value
+                                    elif k and division_str in k.split():
+                                        value = v.value
+                                if key and value:
+                                    key = re.sub(' +', '_', key.lower())
+                                    info[key] = value
+                                    if key == 'point_value':
+                                        value = toint(value) or asfloat(value)
+                                        if value is not None:
+                                            p['full_score'] = value
                         return p
 
                     for p in tqdm.tqdm(executor.map(fetch_problem, problems_set), total=len(problems_set)):
@@ -403,22 +392,20 @@ class Statistic(BaseModule):
                     url_infos.append(url_info)
 
                 def fetch_solution(url):
-                    for i in range(2):
-                        try:
-                            page = req.get(url, time_out=60)
-                            match = re.search('<td[^>]*class="problemText"[^>]*>(?P<solution>.*?)</td>',
-                                              page,
-                                              re.DOTALL | re.IGNORECASE)
-                            if not match:
-                                break
+                    ret = None
+                    try:
+                        page = req.get(url, time_out=60)
+                        match = re.search('<td[^>]*class="problemText"[^>]*>(?P<solution>.*?)</td>',
+                                          page,
+                                          re.DOTALL | re.IGNORECASE)
+                        if match:
                             ret = html.unescape(match.group('solution'))
                             ret = ret.strip()
                             ret = ret.replace('<BR>', '\n')
                             ret = ret.replace('\xa0', ' ')
-                            return ret
-                        except FailOnGetResponse:
-                            sleep(i * 10 + 3)
-                    return None
+                    except FailOnGetResponse:
+                        pass
+                    return ret
 
                 n_failed_fetch_info = 0
 
@@ -426,18 +413,16 @@ class Statistic(BaseModule):
                     nonlocal n_failed_fetch_info
                     if n_failed_fetch_info > 10:
                         return
-                    delay = 10
-                    for _ in range(5):
-                        try:
-                            page = req.get(url, time_out=delay)
-                            match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>',
-                                              page,
-                                              re.IGNORECASE)
-                            if match:
-                                break
-                        except Exception:
-                            sleep(delay + _)
-                    else:
+                    match = None
+                    try:
+                        page = req.get(url, time_out=10)
+                        match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>',
+                                          page,
+                                          re.IGNORECASE)
+                    except FailOnGetResponse:
+                        pass
+
+                    if not match:
                         n_failed_fetch_info += 1
                         return
 
@@ -608,9 +593,9 @@ class Statistic(BaseModule):
         active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
         with REQ.with_proxy(
             time_limit=10,
-            n_limit=30,
+            n_limit=20,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
-            connect=lambda req: req.get(active_algorithm_list_url),
+            connect=lambda req: req.get(active_algorithm_list_url, n_attemps=1),
             attributes=dict(n_attemps=5),
         ) as req:
             page = req.proxer.get_connect_ret()

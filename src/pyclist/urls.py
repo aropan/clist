@@ -5,7 +5,6 @@ from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.templatetags.static import static
 from django.urls import path, re_path
-from django.views.decorators.cache import cache_page
 from django.views.generic import RedirectView, TemplateView
 
 from pyclist.sitemaps import sitemaps
@@ -35,9 +34,7 @@ urlpatterns = [
 
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
-    path('sitemap.xml',
-         sitemap if settings.DEBUG else cache_page(86400)(sitemap),
-         {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 
     re_path(r'^privacy/$', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
     re_path(r'^favicon/$', RedirectView.as_view(url=static('img/favicon/favicon-32x32.png')), name='favicon'),

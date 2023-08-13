@@ -18,6 +18,7 @@ services:
       - sentry_conf
     env_file:
       - ./.env.supervisor
+      - ./.env.proxylist
     ports:
       - 10043:9043
     restart: always
@@ -39,6 +40,8 @@ services:
       - sentry_conf
     ports:
       - ${CLIST_DEV_PORT:-10042}:10042
+    env_file:
+      - ./.env.proxylist
     restart: always
   memcached:
     image: memcached

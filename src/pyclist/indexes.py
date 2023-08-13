@@ -23,7 +23,7 @@ class GistIndexTrgrmOps(GistIndex):
 
 
 class ExpressionIndex(models.Index):
-    def __init__(self, *, expressions=(), name=None, db_tablespace=None, opclasses=(), condition=None):
+    def __init__(self, *_, expressions=(), name=None, db_tablespace=None, opclasses=(), condition=None):
         super().__init__(fields=[str(e) for e in expressions],
                          name=name,
                          db_tablespace=db_tablespace,

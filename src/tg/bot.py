@@ -76,7 +76,7 @@ class Bot(telegram.Bot):
 
     def __init__(self, *args, **kw):
         if settings.TELEGRAM_TOKEN is not None:
-            super(Bot, self).__init__(settings.TELEGRAM_TOKEN, *args, **kw)
+            super().__init__(settings.TELEGRAM_TOKEN, *args, **kw)
         self.logger = logging.getLogger('telegrambot')
         self.logger.setLevel(logging.DEBUG)
 

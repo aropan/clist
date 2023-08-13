@@ -200,7 +200,7 @@ class Statistic(BaseModule):
                     created_at = None
                     for battle in data['results']:
                         created_at = arrow.get(battle['created_at'])
-                        created_at_timestamp = created_at.timestamp
+                        created_at_timestamp = created_at.timestamp()
                         if last_found_created_at is None:
                             last_found_created_at = created_at
                         if not battle['is_ranked'] or battle['id'] in battles_cache or not battle['battle_results']:

@@ -11,6 +11,7 @@ from datetime import timedelta
 
 from lazy_load import lz
 
+from utils import parsed_table  # noqa
 from utils.requester import FailOnGetResponse, ProxyLimitReached, requester  # noqa
 
 

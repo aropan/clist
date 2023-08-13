@@ -43,9 +43,10 @@
       </td>
       <td>
         {% if resource.uid %}
-          <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}">
-            <i class="far fa-calendar-alt"></i>
+          <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i>
           </a>
+          <a class="btn btn-default btn-xs copy-to-clipboard"><i class="far fa-copy"></i></i><span class="hidden">https://calendar.google.com/calendar/ical/{{ resource.uid }}/public/basic.ics</span></a>
         {% else %}
           <i class="fas fa-times"></i>
         {% endif %}
@@ -90,7 +91,7 @@
           {% endif %}
         </span>
         {% if resource.info.problems.upsolving.help_message %}
-        <span class="upsolving_help_message" data-toggle="tooltip" data-placement="top" title="{{ resource.info.problems.upsolving.help_message }}">
+        <span class="help-message" data-toggle="tooltip" data-placement="top" title="{{ resource.info.problems.upsolving.help_message }}">
           <i class="fas fa-exclamation-circle"></i>
         </span>
         {% endif %}

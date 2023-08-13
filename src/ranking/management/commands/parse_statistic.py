@@ -149,6 +149,7 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--stop-on-error', action='store_true', default=False, help='stop on exception')
         parser.add_argument('-u', '--users', nargs='*', default=None, help='users for parse statistics')
         parser.add_argument('-q', '--query', help='Query to filter contets')
+        parser.add_argument('--reparse', action='store_true', default=False, help='Reparse statistics')
         parser.add_argument('--random-order', action='store_true', default=False, help='Random order contests')
         parser.add_argument('--with-problems', action='store_true', default=False, help='Contests with problems')
         parser.add_argument('--no-stats', action='store_true', default=False, help='Do not pass statistics to module')
@@ -193,7 +194,6 @@ class Command(BaseCommand):
         channel_layer_handler.setFormatter(formatter)
         channel_layer_handler.setLevel(logging.INFO)
         root_logger = logging.getLogger()
-        root_logger.setLevel(logging.INFO)
         root_logger.addHandler(channel_layer_handler)
 
         tqdm._channel_layer_handler = channel_layer_handler
@@ -243,8 +243,7 @@ class Command(BaseCommand):
                     query = before_end_limit_query & after_start_query
                     ended = contests.filter(query)
 
-                    contests = started.union(ended)
-                    contests = contests.distinct('id')
+                    contests = Contest.objects.filter(Q(pk__in=started) | Q(pk__in=ended))
             else:
                 contests = contests.filter(start_time__lt=now)
             if title_regex:
@@ -714,7 +713,7 @@ class Command(BaseCommand):
                                                     user_info_has_rating[division] = True
                                                     break
                                         except Exception:
-                                            self.logger.info(colored_format_exc())
+                                            self.logger.debug(colored_format_exc())
                                             user_info_has_rating[division] = False
 
                                     if user_info_has_rating[division]:
@@ -856,8 +855,10 @@ class Command(BaseCommand):
                                         v['first_ac'] = True
 
                             def get_addition():
+                                place = r.pop('place', None)
                                 defaults = {
-                                    'place': r.pop('place', None),
+                                    'place': place,
+                                    'place_as_int': get_number_from_str(place),
                                     'solving': r.pop('solving', 0),
                                     'upsolving': r.pop('upsolving', 0),
                                     'skip_in_stats': skip_result,
@@ -1157,6 +1158,7 @@ class Command(BaseCommand):
                         contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
                     else:
                         contest.info.pop('_timing_statistic_delta_seconds', None)
+                    contest.info.pop('_reparse_statistics', None)
                     contest.save()
 
                     action = standings.get('action')
@@ -1190,9 +1192,9 @@ class Command(BaseCommand):
             except (ExceptionParseStandings, InitModuleException) as e:
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
+                self.logger.debug(colored_format_exc())
                 self.logger.warning(f'contest = {contest}, row = {r}')
                 self.logger.error(f'parse_statistic exception: {e}')
-                print(colored_format_exc())
                 if stop_on_error:
                     break
             if not parsed:
@@ -1286,11 +1288,14 @@ class Command(BaseCommand):
         if args.with_medals:
             contests = contests.filter(with_medals=True)
 
+        if args.reparse:
+            contests = contests.filter(info___reparse_statistics=True)
+
         self.parse_statistic(
             contests=contests,
             previous_days=args.days,
             limit=args.limit,
-            with_check=not args.no_check_timing,
+            with_check=not args.no_check_timing and not args.reparse,
             stop_on_error=args.stop_on_error,
             random_order=args.random_order,
             no_update_results=args.no_update_results,

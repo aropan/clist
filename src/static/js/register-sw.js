@@ -68,6 +68,7 @@ const sendSubData = async (subscription) => {
         status_type: 'subscribe',
         subscription: subscription.toJSON(),
         browser: browser,
+        user_agent: navigator.userAgent,
     };
 
     const res = await fetch('/webpush/save_information', {

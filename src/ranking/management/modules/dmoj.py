@@ -127,7 +127,7 @@ class Statistic(BaseModule):
             for k, v in r.items():
                 hidden_fields.add(k)
                 if k.endswith('_time'):
-                    r[k] = arrow.get(v).timestamp
+                    r[k] = arrow.get(v).timestamp()
                     fields_types.setdefault(k, ['time'])
 
             row.update({k: v for k, v in r.items() if k not in row})

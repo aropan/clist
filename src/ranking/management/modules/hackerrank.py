@@ -10,7 +10,7 @@ from urllib.parse import urljoin
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -137,6 +137,10 @@ class Statistic(BaseModule):
         process_data(data)
 
         total = data['meta']['record_count'] if 'meta' in data else data['total']
+        limit = self.resource.info.get('statistics', {}).get('limit')
+        if limit and limit < total:
+            LOG.warning(f'Limiting number of rows to {limit}')
+            total = limit
         n_pages = (total - 1) // (per_page) + 1
 
         with ExitStack() as stack:
@@ -147,8 +151,6 @@ class Statistic(BaseModule):
                 process_data(data)
                 pbar.set_postfix(delay=f'{Statistic.DELAY:.5f}', refresh=False)
                 pbar.update()
-
-        hidden_fields.discard('school')
 
         standings = {
             'result': result,

@@ -131,7 +131,7 @@ class Statistic(BaseModule):
 
                         submission_time = arrow.get(row['submission_time'])
                         upsolve = submission_time >= self.end_time
-                        row['submission_time'] = submission_time.timestamp
+                        row['submission_time'] = submission_time.timestamp()
                         last_submission_time = max(last_submission_time, row['submission_time'])
 
                         row['verdict'] = row.pop('status')

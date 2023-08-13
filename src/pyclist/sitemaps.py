@@ -43,20 +43,13 @@ class StandingsSitemap(BaseSitemap):
 
 class UpdatedStandingsSitemap(StandingsSitemap):
     priority = 0.6
-    limit = StandingsSitemap.limit // 5
 
     def items(self):
-        qs = super().items()
-        limit = StandingsSitemap.limit
-        end_time = qs[limit - 1:limit][0].end_time
-        return Contest.objects.filter(n_statistics__gt=0, end_time__lt=end_time).order_by('-updated')
-
-    def lastmod(self, contest):
-        return contest.updated
+        return super().items().order_by('-updated')
 
 
 class AccountsSitemap(BaseSitemap):
-    limit = 200
+    limit = 1000
 
     def items(self):
         return Statistics.objects.filter(place_as_int__lte=3).order_by('-created').select_related('account__resource')

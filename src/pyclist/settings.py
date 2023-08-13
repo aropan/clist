@@ -66,6 +66,7 @@ DEBUG = env('DJANGO_ENV') == 'dev'
 # Application definition
 
 INSTALLED_APPS = (
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -85,6 +86,7 @@ INSTALLED_APPS = (
     'tg',
     'notification',
     'crispy_forms',
+    'crispy_bootstrap3',
     'events',
     'django_countries',
     'el_pagination',
@@ -175,7 +177,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('0.0.0.0', 'redis')],
+            'hosts': [('localhost', 6379)],
             'capacity': CHANNEL_LAYERS_CAPACITY,
         },
     },
@@ -299,13 +301,13 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler',
         },
-        'console-debug': {
+        'console_debug': {
             'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'console-info': {
+        'console_info': {
             'level': 'INFO',
             'filters': ['require_debug_false'],
             'class': 'logging.StreamHandler',
@@ -320,7 +322,10 @@ LOGGING = {
         'development': {
             'level': 'DEBUG',
             'filters': ['require_debug_true'],
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 7,
             'filename': path.join(BASE_DIR, 'logs', 'dev.log'),
             'formatter': 'verbose',
         },
@@ -332,6 +337,16 @@ LOGGING = {
             'interval': 1,
             'backupCount': 7,
             'filename': path.join(BASE_DIR, 'logs', 'prod.log'),
+            'formatter': 'verbose',
+        },
+        'debug': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_false'],
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 2,
+            'filename': path.join(BASE_DIR, 'logs', 'debug.log'),
             'formatter': 'verbose',
         },
         'telegrambot': {
@@ -350,11 +365,19 @@ LOGGING = {
             'handlers': ['null'],
             'propagate': False,
         },
+        'parso.python.diff': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
         'PIL': {
             'handlers': ['null'],
             'propagate': False,
         },
         'googleapiclient.discovery': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'daphne': {
             'handlers': ['null'],
             'propagate': False,
         },
@@ -372,8 +395,8 @@ LOGGING = {
             'propagate': False,
         },
         '': {
-            'handlers': ['console-debug', 'console-info', 'development', 'production'],
-            'level': 'INFO',
+            'handlers': ['console_debug', 'console_info', 'development', 'production', 'debug'],
+            'level': 'DEBUG',
         },
     },
 }
@@ -387,6 +410,7 @@ TELEGRAM_TOKEN = conf.TELEGRAM_TOKEN
 TELEGRAM_NAME = conf.TELEGRAM_NAME
 TELEGRAM_ADMIN_CHAT_ID = conf.TELEGRAM_ADMIN_CHAT_ID
 
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap3'
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 COUNTRIES_OVERRIDE = {
@@ -445,7 +469,8 @@ CUSTOM_COUNTRIES_ = {
 
 
 # guardian
-ANONYMOUS_USER_NAME = 'AnonymousUser'
+ANONYMOUS_USER_NAME = None
+GUARDIAN_AUTO_PREFETCH = True
 
 
 # DJANGO DEBUG TOOLBAR

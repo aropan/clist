@@ -89,7 +89,7 @@ class Statistic(BaseModule):
             params = {
                 'operationName': 'questionData',
                 'variables': {'titleSlug': slug},
-                'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { profileUrl } topicTags { name } hints } }', # noqa
+                'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { profileUrl } topicTags { name } hints } }',  # noqa: E501
             }
             page = REQ.get(
                 'https://leetcode.com/graphql',
@@ -317,7 +317,7 @@ class Statistic(BaseModule):
                                     ratingHistory
                                     contestHistory
                                 }
-                            }"}'''
+                            }"}'''  # noqa: E501
                             post = re.sub(r'\s+', ' ', post)
 
                             page = Statistic._get(
@@ -336,22 +336,25 @@ class Statistic(BaseModule):
                             }
                             page = ret
                         else:
-                            page = Statistic._get(
+                            profile_page = Statistic._get(
                                 'https://leetcode.com/graphql',
                                 post=b'''
                                 {"operationName":"userPublicProfile","variables":{"username":"''' + account.key.encode() + b'''"},"query":"    query userPublicProfile($username: String!) {  matchedUser(username: $username) {    username    profile {      ranking      userAvatar      realName      aboutMe      school      websites      countryName      company      jobTitle      skillTags      postViewCount      postViewCountDiff      reputation      reputationDiff      solutionCount      solutionCountDiff      categoryDiscussCount      categoryDiscussCountDiff    }  }}    "
-}''',  # noqa
+}''',  # noqa: E501
                                 content_type='application/json',
                             )
-                            profile_data = json.loads(page)['data']['matchedUser']
+                            profile_data = json.loads(profile_page)['data']['matchedUser']
+                            if profile_data is None:
+                                page = None
+                                break
 
-                            page = Statistic._get(
+                            contest_page = Statistic._get(
                                 'https://leetcode.com/graphql',
                                 post=b'''
-                                {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    __typename  }}"}''',  # noqa
+                                {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    __typename  }}"}''',  # noqa: E501
                                 content_type='application/json',
                             )
-                            contest_data = json.loads(page)['data']
+                            contest_data = json.loads(contest_page)['data']
 
                             page = profile_data
                             page.update(contest_data)
@@ -638,7 +641,7 @@ class Statistic(BaseModule):
             if Statistic.is_china(account):
                 post = '''
                 {"query":"query recentAcSubmissions($userSlug: String!) { recentACSubmissions(userSlug: $userSlug) { submissionId submitTime question { title translatedTitle titleSlug questionFrontendId } } } ","variables":{"userSlug":"''' + account.key + '''"},"operationName":"recentAcSubmissions"}
-                '''
+                '''  # noqa: E501
                 page = Statistic._get(
                     'https://leetcode.cn/graphql/noj-go/',
                     content_type='application/json',
@@ -649,7 +652,7 @@ class Statistic(BaseModule):
             else:
                 post = '''
                 {"query":"query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { id title titleSlug timestamp } } ","variables":{"username":"''' + account.key + '''","limit":20},"operationName":"recentAcSubmissions"}
-                '''
+                '''  # noqa: E501
                 page = Statistic._get(
                     'https://leetcode.com/graphql',
                     content_type='application/json',

@@ -22,7 +22,7 @@ RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/
 RUN apt install -y lsof htop vim
 
 # Setup python requirements
-RUN pip install "pip==23.0"
+RUN pip install "pip==23.2"
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 

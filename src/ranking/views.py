@@ -10,7 +10,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.db import connection, models
+from django.db import models
 from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Value, When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast, window
@@ -20,8 +20,8 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django_ratelimit.decorators import ratelimit
 from el_pagination.decorators import page_template, page_templates
-from ratelimit.decorators import ratelimit
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
@@ -40,7 +40,6 @@ from true_coders.views import get_ratings_data
 from utils.chart import make_bins, make_histogram
 from utils.colors import get_n_colors
 from utils.json_field import JSONF
-from utils.list_as_queryset import ListAsQueryset
 from utils.regex import get_iregex_filter
 
 
@@ -700,7 +699,8 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     addition_fields = division_addition.get('fields', contest_fields) if division_addition_fields else contest_fields
     special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
                       'medal', 'raw_rating']
-    hidden_fields = hidden_fields or list(contest.info.get('hidden_fields', []))
+    if hidden_fields is None:
+        hidden_fields = list(contest.info.get('hidden_fields', []))
     hidden_fields_values = hidden_fields_values or set()
     for k in addition_fields:
         is_private_k = k.startswith('_')
@@ -715,6 +715,8 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
             continue
         if not is_private_k and with_detail or k in hidden_fields_values or k in fields_values:
             fields[k] = k
+            if is_private_k:
+                hidden_fields.append(k)
         else:
             hidden_fields.append(k)
 
@@ -725,7 +727,6 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
         if field and not field[0].isupper():
             field = field.title()
         fields[k] = field
-
     return fields
 
 
@@ -1003,6 +1004,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                      'extra_url': url_transform(request, advanced_accounts='true')},
         'ghost': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
         'highlight': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
+        'languages': {'nogroupby': True},
+        'verdicts': {'nogroupby': True},
     }
 
     fields_to_select = OrderedDict()
@@ -1253,7 +1256,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 filt |= Q(account__coders__in=coders) | Q(account__in=accounts)
         else:
             query_field = f'addition__{field}'
-            statistics = statistics.annotate(**{f'{query_field}_str': Cast(JSONF(query_field), models.TextField())})
+            statistics = statistics.annotate(**{f'{query_field}_str': JSONF(query_field)})
             for q in values:
                 if q == 'None':
                     filt |= Q(**{f'{query_field}__isnull': True})
@@ -1286,8 +1289,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
         participants_info = n_highlight_context.get('participants_info')
         n_highlight = options.get('n_highlight')
-        problems_groupby = ['languages', 'verdicts']
-        advanced_by_participants_info = participants_info and n_highlight and groupby not in problems_groupby
+        advanced_by_participants_info = participants_info and n_highlight
 
         fields = OrderedDict()
         fields['groupby'] = groupby.title()
@@ -1302,31 +1304,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
 
         orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
 
-        if groupby in problems_groupby:
-            groupby_field = groupby[:-1]
-            _, before_params = statistics.query.sql_with_params()
-            querysets = []
-            for problem in problems:
-                key = get_problem_short(problem)
-                field = f'addition__problems__{key}__{groupby_field}'
-                score = f'addition__problems__{key}__result'
-                qs = statistics \
-                    .filter(**{f'{field}__isnull': False, f'{score}__isnull': False}) \
-                    .annotate(**{groupby_field: Cast(JSONF(field), models.TextField())}) \
-                    .annotate(score=Case(
-                        When(**{f'{score}__startswith': '+'}, then=1),
-                        When(**{f'{score}__startswith': '-'}, then=0),
-                        When(**{f'{score}__startswith': '?'}, then=0),
-                        default=Cast(JSONF(score), models.FloatField()),
-                        output_field=models.FloatField(),
-                    )) \
-                    .annotate(sid=F('pk'))
-                querysets.append(qs)
-            merge_statistics = querysets[0].union(*querysets[1:], all=True)
-            language_query, language_params = merge_statistics.query.sql_with_params()
-            field = 'solving'
-            statistics = statistics.annotate(groupby=F(field))
-        elif groupby == 'rating':
+        if groupby == 'rating':
             statistics = statistics.annotate(
                 groupby=Case(
                     When(addition__rating_change__isnull=False, then=Value('Rated')),
@@ -1352,13 +1330,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         else:
             field = f'addition__{groupby}'
             types = contest.info.get('fields_types', {}).get(groupby, [])
+            value = JSONF(field)
             if 'int' in types:
-                field_type = models.IntegerField()
+                value = Cast(value, models.IntegerField())
             elif 'float' in types:
-                field_type = models.FloatField()
-            else:
-                field_type = models.TextField()
-            statistics = statistics.annotate(groupby=Cast(JSONF(field), field_type))
+                value = Cast(value, models.FloatField())
+            statistics = statistics.annotate(groupby=value)
 
         statistics = statistics.order_by('groupby')
         statistics = statistics.values('groupby')
@@ -1383,21 +1360,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             statistics = statistics.annotate(n_advanced=Count(Case(When(pk__in=set(pks), then=1))))
 
         statistics = statistics.order_by(*orderby)
-
-        if groupby in problems_groupby:
-            query, sql_params = statistics.query.sql_with_params()
-            query = query.replace(f'"ranking_statistics"."{field}" AS "groupby"', f'"{groupby_field}" AS "groupby"')
-            query = query.replace(f'GROUP BY "ranking_statistics"."{field}"', f'GROUP BY "{groupby_field}"')
-            query = query.replace('"ranking_statistics".', '')
-            query = query.replace('AVG("solving") AS "avg_score"', 'AVG("score") AS "avg_score"')
-            query = query.replace('COUNT("id") AS "n_accounts"', 'COUNT("sid") AS "n_accounts"')
-            query = re.sub('FROM "ranking_statistics".*GROUP BY', f'FROM ({language_query}) t1 GROUP BY', query)
-            sql_params = sql_params[:-len(before_params)] + language_params
-            with connection.cursor() as cursor:
-                cursor.execute(query, sql_params)
-                columns = [col[0] for col in cursor.description]
-                statistics = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                statistics = ListAsQueryset(statistics)
 
         problems = []
         labels_groupby = {

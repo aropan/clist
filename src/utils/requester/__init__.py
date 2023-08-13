@@ -12,6 +12,7 @@ import random
 import re
 import ssl
 import string
+import threading
 import traceback
 import urllib.error
 import urllib.parse
@@ -32,7 +33,8 @@ from time import sleep
 
 import chardet
 from filelock import FileLock
-from fp.fp import FreeProxy
+
+from utils.proxy_list import ProxyList
 
 logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
 logger = logging.getLogger('utils.requester')
@@ -101,63 +103,82 @@ class proxer():
 
     def load_data(self):
         try:
-            with open(self.file_name, "r") as fo:
-                self.data = load(fo)
+            with open(self.file_name, 'r') as fo:
+                self._data = load(fo)
         except (IOError, ValueError):
-            self.data = {}
+            self._data = {}
+        self._data.setdefault('proxies', {})
+        self._data.setdefault('sources', {})
+
+    @property
+    def proxies(self):
+        return self._data['proxies']
+
+    @property
+    def sources(self):
+        return self._data['sources']
 
     def check_proxy(self):
-        if (self.proxy and self.proxy["_fail"] > 0 and self.proxy["_success"] == 0 or self.is_slow_proxy()):
-            self.print(f'remove {self.proxy_key}, info = {self.proxy}')
-            del self.data[self.proxy_key]
-            self.proxy = None
-            self.proxy_key = None
-            self.save_data()
-            if not self.without_new_proxy and self.callback_new_proxy:
-                proxy = self.get()
-                self.callback_new_proxy(proxy)
+        with self.lock:
+            if (self.proxy and self.proxy['_fail'] > 0 and self.proxy['_success'] == 0 or self.is_slow_proxy()):
+                self.print(f'remove {self.proxy_key}, info = {self.proxy}')
+                del self.proxies[self.proxy_key]
+                self.proxy = None
+                self.proxy_key = None
+                self.save_data()
+                if not self.without_new_proxy and self.callback_new_proxy:
+                    proxy = self.get()
+                    self.callback_new_proxy(proxy)
 
     def save_data(self):
-        self.check_proxy()
-        j = dumps(
-            self.data,
-            indent=4,
-            sort_keys=True,
-            ensure_ascii=False
-        )
-        with open(self.file_name, "w") as fo:
-            fo.write(j)
+        with self.lock:
+            self.check_proxy()
+            j = dumps(
+                self._data,
+                indent=4,
+                sort_keys=True,
+                ensure_ascii=False
+            )
+            with open(self.file_name, 'w') as fo:
+                fo.write(j)
 
     def is_slow_proxy(self):
-        if self.proxy and self.proxy.get("_count", 0) > 9:
+        if self.proxy and self.proxy.get('_total_count', 0) > 9:
             time = self.time_response()
             return time > self.time_limit
 
     @staticmethod
     def get_timestamp():
-        return int(datetime.utcnow().strftime("%s"))
+        return int(datetime.utcnow().strftime('%s'))
 
     @staticmethod
     def get_score(proxy):
-        return (proxy["_success"], -proxy["_timestamp"])
+        return (proxy['_success'], -proxy['_timestamp'])
 
     def add(self, proxy):
-        value = self.data.setdefault(str(proxy), {})
         if isinstance(proxy, str):
-            value["addr"], value["port"] = proxy.split(":")
-        else:
-            value["addr"] = proxy.host
-            value["port"] = proxy.port
-        value.setdefault("_success", 0)
-        value.setdefault("_fail", 0)
-        value.setdefault("_timestamp", self.get_timestamp())
+            addr, port = proxy.split(':')
+            proxy = {'addr': addr, 'port': port}
+        key = f'{proxy["addr"]}:{proxy["port"]}'
+        value = self.proxies.setdefault(key, {})
+        value.update(proxy)
+        value.setdefault('_success', 0)
+        value.setdefault('_fail', 0)
+        value.setdefault('_timestamp', self.get_timestamp())
 
     def add_free_proxies(self):
-        for proxy in FreeProxy().get_proxy_list():
+        for proxy in ProxyList().get():
             self.add(proxy)
 
     def is_alive(self):
         return self.n_limit is None or self.n_limit > 0
+
+    @property
+    def proxy_address(self):
+        try:
+            return '%(addr)s:%(port)s' % self.proxy
+        except Exception:
+            return None
 
     def get(self):
         if self.n_limit is not None:
@@ -165,44 +186,52 @@ class proxer():
                 raise ProxyLimitReached()
             self.n_limit -= 1
 
-        if not self.data:
+        if not self.proxies:
             self.add_free_proxies()
         self.proxy = None
-        for k, v in self.data.items():
+        for k, v in self.proxies.items():
             if self.proxy is None or self.get_score(v) > self.get_score(self.proxy):
                 self.proxy = v
                 self.proxy_key = k
         if not self.proxy:
             raise NotFoundProxy()
-        self.proxy["_timestamp"] = self.get_timestamp()
-        ret = "%(addr)s:%(port)s" % self.proxy
+        self.proxy['_timestamp'] = self.get_timestamp()
+        ret = self.proxy_address
         self.print(f'get = {ret} of {len(self)} (limit = {self.n_limit}), time = {self.time_response()}')
         return ret
 
-    def ok(self, time_response=None):
-        if not self.proxy:
-            return
-        self.proxy["_success"] += 1
-        if time_response:
-            self.proxy.setdefault("_count", 0)
-            self.proxy.setdefault("_total_time", 0.)
-            self.proxy["_count"] += 1
-            self.proxy["_total_time"] += time_response.total_seconds() + time_response.microseconds / 1000000.
-            self.proxy["_avg_time"] = self.time_response()
-        self.print(f'ok, {time_response} with average {self.time_response()}')
-        self.check_proxy()
+    def update_value(self, key, value):
+        self.proxy.setdefault(key, 0)
+        self.proxy[key] += value
+        if 'source' in self.proxy:
+            source = self.sources.setdefault(self.proxy['source'], {})
+            source.setdefault(key, 0)
+            source[key] += value
 
-    def fail(self, error):
-        if not self.proxy:
-            return
-        self.print('fail', str(error)[:80])
-        self.proxy["_success"] //= self.DIVIDER
-        self.proxy["_fail"] += 1
-        self.check_proxy()
+    def ok(self, proxy, time_response=None):
+        with self.lock:
+            if not self.proxy or proxy != self.proxy_address:
+                return
+            self.update_value('_success', 1)
+            if time_response:
+                delta_time = time_response.total_seconds() + time_response.microseconds / 1000000.
+                self.update_value('_total_count', 1)
+                self.update_value('_total_time', delta_time)
+                self.proxy['_avg_time'] = self.time_response()
+            self.print(f'ok, {time_response} with average {self.time_response()}')
+            self.check_proxy()
+
+    def fail(self, proxy):
+        with self.lock:
+            if not self.proxy or proxy != self.proxy_address:
+                return
+            self.proxy['_success'] //= self.DIVIDER
+            self.update_value('_fail', 1)
+            self.check_proxy()
 
     def time_response(self):
-        if self.proxy and self.proxy.get("_count", 0):
-            return round(self.proxy["_total_time"] / self.proxy["_count"], 3)
+        if self.proxy and self.proxy.get('_total_count', 0):
+            return round(self.proxy['_total_time'] / self.proxy['_total_count'], 3)
 
     def print(self, *args):
         if self.logger:
@@ -222,7 +251,8 @@ class proxer():
                 try:
                     self.connect_ret = self.connect_func(req)
                 except FailOnGetResponse:
-                    set_proxy(self.get())
+                    with self.lock:
+                        set_proxy(self.get())
                     continue
                 break
             self.without_new_proxy = False
@@ -238,7 +268,7 @@ class proxer():
         n_limit=None,
     ):
         self.logger = logger
-        self.file_name = file_name + ".json"
+        self.file_name = file_name + '.json'
         self.time_limit = time_limit
         self.callback_new_proxy = callback_new_proxy
         self.without_new_proxy = False
@@ -247,17 +277,18 @@ class proxer():
         self.load_data()
         self.n_limit = n_limit
         if path.exists(file_name):
-            with open(file_name, "r") as fo:
+            with open(file_name, 'r') as fo:
                 for line in fo:
                     line = line.strip()
                     if not line:
                         continue
                     self.add(line)
-            open(file_name, "w").close()
+            open(file_name, 'w').close()
         self.proxy = None
+        self.lock = threading.RLock()
 
     def __len__(self):
-        return len(self.data)
+        return len(self.proxies)
 
     def __exit__(self, *err):
         self.close()
@@ -356,6 +387,7 @@ class requester():
     counter_file_cache = 0
     verify_word = None
     n_attemps = 1
+    attempt_delay = 2
 
     def print(self, *objs, force=False):
         if self.debug_output or force:
@@ -406,6 +438,7 @@ class requester():
         https_handler = urllib.request.HTTPSHandler(context=context)
         self.opener = urllib.request.build_opener(http_cookie_processor, https_handler)
         self.proxer = None
+        self.proxy = None
 
     def set_proxy(self, proxy, filepath_proxies=default_filepath_proxies, **kwargs):
         if proxy is True:
@@ -418,6 +451,7 @@ class requester():
                     'http': proxy,
                     'https': proxy,
                 }))
+                self.proxy = proxy
 
             set_proxy(proxy)
 
@@ -441,6 +475,7 @@ class requester():
         return_json=False,
         force_json=False,
         ignore_codes=None,
+        n_attemps=None,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -487,9 +522,7 @@ class requester():
                 diff_time = datetime.now() - datetime.fromtimestamp(path.getctime(file_cache))
                 from_cache = diff_time.seconds < self.cache_timeout
         self.print(("[cache] " if from_cache else "") + url, force=from_cache)
-        self.error = None
-        response = None
-        last_url = None
+        page, self.error, response, last_url, proxy = None, None, None, None, None
         if from_cache:
             with open(file_cache, "r") as f:
                 page = f.read()
@@ -521,8 +554,11 @@ class requester():
             elif content_type:
                 headers.update({"Content-type": content_type})
 
-            for attempt in range(self.n_attemps):
-                last_attempt = attempt + 1 == self.n_attemps
+            n_attemps = n_attemps or self.n_attemps
+            for attempt in range(n_attemps):
+                page, self.error, response, last_url, proxy = None, None, None, None, None
+                last_attempt = attempt + 1 == n_attemps
+                attempt_delay = self.attempt_delay * attempt / n_attemps
                 try:
                     if headers:
                         request = urllib.request.Request(url, headers=headers)
@@ -534,29 +570,13 @@ class requester():
                     time_out = time_out or self.time_out
                     if self.proxer:
                         time_out = min(time_out, self.proxer.time_limit)
+                    proxy = self.proxy
                     response = self.opener.open(
                         request,
                         post_urlencoded if post else None,
                         timeout=time_out,
                     )
-                except Exception as err:
-                    if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
-                        force_json = False
-                        response = err
-                    else:
-                        if self.proxer:
-                            self.proxer.fail(err)
-                        if not last_attempt:
-                            continue
-                        self.print('[error]', str(err)[:80])
-                        self.error = err
-                        if self.assert_on_fail:
-                            raise_fail(err)
-                        else:
-                            traceback.print_exc()
-                        return
 
-                try:
                     last_url = response.geturl() if response else url
                     if return_last_url:
                         return last_url
@@ -566,19 +586,26 @@ class requester():
                     else:
                         page = response.read()
                 except Exception as err:
-                    if self.proxer:
-                        self.proxer.fail(err)
-                    if not last_attempt:
-                        continue
-                    if self.assert_on_fail:
-                        raise_fail(err)
+                    if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
+                        force_json = False
+                        response = err
                     else:
-                        traceback.print_exc()
-                    return
+                        self.print('[error]', str(err)[:200])
+                        self.error = err
+                        if self.proxer:
+                            self.proxer.fail(proxy=str(proxy))
+                        if not last_attempt:
+                            sleep(attempt_delay)
+                            continue
+                        if self.assert_on_fail:
+                            raise_fail(err)
+                        else:
+                            traceback.print_exc()
+                        return
                 break
 
             self.time_response = datetime.utcnow() - time_start
-            if self.verify_word and self.verify_word not in page:
+            if page and self.verify_word and self.verify_word not in page:
                 raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
 
             response_content_type = response.info().get('Content-Type')
@@ -599,13 +626,10 @@ class requester():
                 traceback.print_exc()
                 self.print("[cache] ERROR: write to", file_cache)
 
-            if self.proxer:
-                if not self.error:
-                    self.proxer.ok(self.time_response)
-                else:
-                    self.proxer.fail(self.error)
+            if self.proxer and not self.error:
+                self.proxer.ok(proxy=str(proxy), time_response=self.time_response)
 
-            if not response_content_type or not response_content_type.startswith('image/'):
+            if page and (not response_content_type or not response_content_type.startswith('image/')):
                 matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
                 if matches and detect_charsets is not None:
                     charsets = [c.lower() for c in matches]
@@ -640,7 +664,7 @@ class requester():
         self.response = response
         self.last_url = last_url
 
-        if return_json:
+        if page and return_json:
             if response_content_type.startswith('application/json') or force_json:
                 page = json.loads(page)
             else:

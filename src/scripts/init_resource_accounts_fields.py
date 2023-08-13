@@ -5,6 +5,7 @@ from collections import defaultdict
 import fire
 from flatten_dict import flatten
 from flatten_dict.reducers import make_reducer
+from stringcolor import cs
 from tqdm import tqdm
 
 from clist.models import Resource
@@ -32,6 +33,19 @@ def main(host=None):
                     fields_types[k].add(type(v).__name__)
                 pbar.update()
             fields_types = {k: list(v) for k, v in fields_types.items()}
+            resource_accounts_fields_types = resource.accounts_fields.get('types', {})
+
+            fields = list(sorted(set(resource_accounts_fields_types.keys()) | set(fields_types.keys())))
+            for field in fields:
+                new_types = list(sorted(fields_types.get(field, [])))
+                orig_types = list(sorted(resource_accounts_fields_types.get(field, [])))
+                if new_types == orig_types:
+                    continue
+                if orig_types:
+                    print(cs(f'- {field}: {orig_types}', 'red'))
+                if new_types:
+                    print(cs(f'+ {field}: {new_types}', 'green'))
+
             resource.accounts_fields['types'] = fields_types
             resource.save()
 

@@ -29,7 +29,7 @@ class Statistic(BaseModule):
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'  # noqa
 
         with REQ.with_proxy(
-            time_limit=5,
+            time_limit=10,
             n_limit=30,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.projecteuler.proxies'),
             connect=lambda req: req.get(self.standings_url, headers={'User-Agent': user_agent}),

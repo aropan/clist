@@ -1086,15 +1086,17 @@ def problems(request, template='problems.html'):
     groupby = request.GET.get('groupby')
     groupby_fields = OrderedDict()
     if groupby == 'tag':
-        problems_subquery = problems.filter(tags=OuterRef('pk')).values('tags')
+        problems_subquery = problems.filter(tags=OuterRef('pk')).order_by().values('tags')
         problems_subquery = problems_subquery.annotate(cnt=Count('id')).values('cnt')
-        groupby_data = ProblemTag.objects.annotate(n_problems=SubqueryCount(problems_subquery)).filter(n_problems__gt=0)
+        groupby_data = ProblemTag.objects.annotate(n_problems=SubqueryCount(problems_subquery))
+        groupby_data = groupby_data.filter(n_problems__gt=0)
         groupby_data = groupby_data.order_by('-n_problems', 'name')
         groupby_fields['name'] = 'Tag'
     elif groupby == 'resource':
-        problems_subquery = problems.filter(resource=OuterRef('pk')).values('resource')
+        problems_subquery = problems.filter(resource=OuterRef('pk')).order_by().values('resource')
         problems_subquery = problems_subquery.annotate(cnt=Count('id')).values('cnt')
-        groupby_data = Resource.objects.annotate(n_problems=SubqueryCount(problems_subquery)).filter(n_problems__gt=0)
+        groupby_data = Resource.objects.annotate(n_problems=SubqueryCount(problems_subquery))
+        groupby_data = groupby_data.filter(n_problems__gt=0)
         groupby_data = groupby_data.order_by('-n_problems', 'host')
         groupby_fields['host'] = 'Resource'
     else:

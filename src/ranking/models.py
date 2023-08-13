@@ -13,7 +13,7 @@ import tqdm
 from django.conf import settings
 from django.core.management import call_command
 from django.db import models, transaction
-from django.db.models import ExpressionWrapper, F, Q, Sum
+from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce, Upper
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -25,8 +25,8 @@ from django_print_sql import print_sql
 from sql_util.utils import Exists, SubqueryCount, SubquerySum
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import add_prefix_to_problem_short, get_number_from_str, get_problem_short, slug
-from pyclist.indexes import GistIndexTrgrmOps
+from clist.templatetags.extras import add_prefix_to_problem_short, get_problem_short, slug
+from pyclist.indexes import ExpressionIndex, GistIndexTrgrmOps
 from pyclist.models import BaseModel
 from true_coders.models import Coder, Party
 
@@ -97,7 +97,7 @@ class Account(BaseModel):
         indexes = [
             GistIndexTrgrmOps(fields=['key']),
             GistIndexTrgrmOps(fields=['name']),
-            # models.Index(ExpressionWrapper(Upper('key'), output_field=models.CharField(max_length=1024))),  FIXME
+            ExpressionIndex(expressions=[Upper('key')]),
             models.Index(fields=['resource', 'key']),
             models.Index(fields=['resource', 'country']),
             models.Index(fields=['resource', 'last_activity', 'country']),
@@ -352,6 +352,7 @@ class Statistics(BaseModel):
         unique_together = ('account', 'contest')
 
         indexes = [
+            models.Index(fields=['place_as_int', 'created']),
             models.Index(fields=['place_as_int', '-solving']),
             models.Index(fields=['place_as_int', '-created']),
             models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
@@ -361,11 +362,6 @@ class Statistics(BaseModel):
             models.Index(fields=['account', 'advanced']),
             models.Index(fields=['account', 'skip_in_stats']),
         ]
-
-
-@receiver(pre_save, sender=Statistics)
-def statistics_pre_save(sender, instance, *args, **kwargs):
-    instance.place_as_int = get_number_from_str(instance.place)
 
 
 @receiver(post_save, sender=Statistics)

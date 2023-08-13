@@ -289,7 +289,7 @@
                 <div class="btn-block btn-group">
                     <a class="btn btn-default active service-icon-btn">{% icon_to service.name default=service.title %}</a>
                     <a {% if not token %}href="{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}social/"{% endif %} class="btn btn-default{% if token %} disabled{% endif %}">
-                        <div class="text-left">{% if token %}{{ token.user_id }}{% else %}connect{% endif %}</div>
+                        <div class="text-left">{% if token %}{{ token.user_id }}{% if token.email %} ({{ token.email }}){% endif %}{% else %}connect{% endif %}</div>
                     </a>
                     {% if token and tokens|length > 1 %}
                     <a href="{% url 'auth:unlink' service.name %}" class="btn btn-default"><i class="far fa-trash-alt"></i></a>

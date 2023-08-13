@@ -253,9 +253,9 @@ class Command(BaseCommand):
                     task.is_sent = True
                     task.save()
                 except Exception as e:
+                    logger.debug(colored_format_exc())
                     logger.warning(f'task = {task}')
                     logger.error(f'Exception sendout task: {e}')
-                    print(colored_format_exc())
                     task.is_sent = False
                     task.save()
                     if isinstance(e, (SMTPResponseException, SMTPDataError)):

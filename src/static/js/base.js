@@ -279,6 +279,7 @@ $(function() {
     el.tooltip('show')
     $.notify('Copied to clipboard', 'success')
     setTimeout(function() { el.attr('title', ''); el.tooltip('destroy'); }, 1000)
+    return false
   })
 })
 

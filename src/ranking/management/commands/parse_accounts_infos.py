@@ -276,10 +276,9 @@ class Command(BaseCommand):
                     for a in tqdm(accounts, desc='changing update time'):
                         a.updated = updated
                         a.save()
+                self.logger.debug(colored_format_exc())
                 self.logger.warning(f'resource = {resource}')
-                self.logger.warning(f'account = {account}')
                 self.logger.error(f'Parse accounts infos: {e}')
-                print(colored_format_exc())
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}, {dict(n_counter)}')
             if update_submissions_info:
                 self.logger.info(f'Update submissions info: {update_submissions_info}')

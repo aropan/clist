@@ -97,6 +97,14 @@ img.resource-icon {
   border-color: #adadad;
 }
 
+.btn.service-token, .btn.service-token:hover {
+  cursor: default !important;
+  color: #333;
+  background-color: #fff;
+  background-image: none;
+  border-color: #ccc;
+}
+
 .navbar-static-top .navbar-right .dropdown-menu i {
   width: 20px;
   text-align: center;

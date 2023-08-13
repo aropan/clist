@@ -12,7 +12,8 @@ from pprint import pprint
 import tqdm
 import yaml
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from clist.templatetags.extras import as_number
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -99,7 +100,7 @@ class Statistic(BaseModule):
                         name, *infos, score = v
 
                         texts = name.column.node.xpath('.//a[contains(@class,"handle")]/text()')
-                        row['name'] = texts[0] if texts else name.value
+                        row['name'] = str(texts[0]) if texts else name.value
                         hrefs = name.column.node.xpath('.//a[contains(@href,"/u/")]/@href')
                         if hrefs:
                             row['member'] = [h.rstrip('/').split('/')[-1] for h in hrefs]
@@ -128,11 +129,19 @@ class Statistic(BaseModule):
                         row['solving'], penalty = score.column.node.xpath('.//text()')
                         if not penalty.isdigit():
                             penalty = str(score.column.node.xpath('.//*[@title]/@title')[-1]).lower()
-                            if penalty.startswith('penalty'):
-                                penalty = penalty[len('penalty') + 1:].strip()
-                        if penalty.isdigit():
-                            penalty = int(penalty)
-                        row['penalty'] = penalty
+
+                            try:
+                                data = yaml.safe_load(re.sub(r'\s*,\s*', '\n', penalty))
+                                if isinstance(data, dict):
+                                    for key, value in data.items():
+                                        row.setdefault(key, as_number(value))
+                                else:
+                                    match = re.search(r'\b[.0-9]+\b', penalty)
+                                    if match:
+                                        penalty = match.group(0)
+                            except Exception as e:
+                                LOG.warning(f'Failed to parse penalt = {penalty}: {e}')
+                        row.setdefault('penalty', as_number(penalty))
                         has_penalty |= bool(penalty)
 
                         for field in v:

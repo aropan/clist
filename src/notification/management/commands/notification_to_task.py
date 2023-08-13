@@ -145,9 +145,9 @@ class Command(BaseCommand):
                     notify.last_time = new_time
                     notify.save()
             except Exception as e:
+                logger.debug(colored_format_exc())
                 logger.warning(f'notification = {notify}')
                 logger.error(f'Exception send notice: {e}')
-                print(colored_format_exc())
 
         if not dryrun:
             with transaction.atomic():

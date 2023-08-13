@@ -778,7 +778,7 @@ def is_improved_solution(curr, prev):
         return curr_solved
     curr_result = normalized_result(curr.get('result'))
     prev_result = normalized_result(prev.get('result'))
-    if type(curr_result) != type(prev_result):
+    if type(curr_result) is not type(prev_result):
         return prev_result is None
 
     if curr_result is not None:

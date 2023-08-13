@@ -15,8 +15,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
-from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
-                              Prefetch, Q, Subquery, Value, When)
+from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, JSONField, Max,
+                              OuterRef, Prefetch, Q, Subquery, Value, When)
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
@@ -26,9 +26,9 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
+from django_ratelimit.core import get_usage
 from django_rq import job
 from el_pagination.decorators import page_template, page_templates
-from ratelimit.core import get_usage
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
@@ -622,7 +622,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         .annotate(score=F('solving'))
         .annotate(addition_solved=KeyTextTransform('solved', 'addition'))
         .annotate(solved=Cast(KeyTextTransform('solving', 'addition_solved'), IntegerField()))
-        .annotate(problems=KeyTextTransform('problems', 'contest__info'))
+        .annotate(problems=Cast(KeyTextTransform('problems', 'contest__info'), JSONField()))
         .annotate(division=KeyTextTransform('division', 'addition'))
         .annotate(cid=F('contest__pk'))
         .annotate(sid=F('pk'))
