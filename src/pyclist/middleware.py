@@ -4,7 +4,8 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.middleware import csrf
 from django.urls import reverse
-from django.utils.timezone import now
+from django.utils import timezone
+from pytz import timezone as pytz_timezone
 
 from clist.templatetags.extras import quote_url
 from true_coders.models import Coder
@@ -17,7 +18,7 @@ def DebugPermissionOnlyMiddleware(get_response):
         first_path = request.path.split('/')[1]
         if first_path not in settings.DEBUG_PERMISSION_EXCLUDE_PATHS:
             if not request.user.is_authenticated:
-                if first_path not in ('login', 'signup', 'oauth', 'calendar'):
+                if first_path not in ('login', 'signup', 'oauth', 'calendar', 'telegram'):
                     return HttpResponseRedirect(reverse('auth:login') + f'?next={quote_url(request.get_full_path())}')
             elif not request.user.has_perm('auth.view_debug'):
                 return HttpResponseForbidden()
@@ -108,7 +109,7 @@ def UpdateCoderLastActivity(get_response):
         if request.user.is_authenticated:
             coder = Coder.objects.filter(pk=request.user.coder.pk).first()
             if coder:
-                coder.last_activity = now()
+                coder.last_activity = timezone.now()
                 coder.save(update_fields=['last_activity'])
         return response
 
@@ -131,3 +132,17 @@ class RedirectMiddleware:
     def process_exception(self, request, exception):
         if isinstance(exception, RedirectException):
             return exception.redirect
+
+
+class TimezoneMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            tzname = request.user.coder.timezone
+            if tzname:
+                timezone.activate(timezone.now().astimezone(pytz_timezone(tzname)).tzinfo)
+            else:
+                timezone.deactivate()
+        return self.get_response(request)

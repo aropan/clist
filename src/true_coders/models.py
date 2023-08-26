@@ -54,26 +54,31 @@ class Coder(BaseModel):
             self.cchat = list(self.chat_set.filter(is_group=False))
         return self.cchat[0] if self.cchat else None
 
-    def get_contest_filter(self, categories, ignores=None):
-        if not isinstance(categories, (list, tuple, set)):
-            categories = (categories, )
-        filter_categories = Q()
-        filter_categories_with_coder = Q()
-        for c in categories:
-            if '@' in c:
-                c, coder = c.split('@', 1)
-                filter_categories_with_coder |= Q(coder__username=coder, categories__contains=[c])
-            else:
-                filter_categories |= Q(categories__contains=[c])
-        if ignores:
-            filter_categories &= ~Q(id__in=ignores)
+    def get_contest_filter(self, categories=None, ignores=None, filters=None):
+        if categories is not None:
+            if not isinstance(categories, (list, tuple, set)):
+                categories = (categories, )
+            filter_categories = Q()
+            filter_categories_with_coder = Q()
+            for c in categories:
+                if '@' in c:
+                    c, coder = c.split('@', 1)
+                    filter_categories_with_coder |= Q(coder__username=coder, categories__contains=[c])
+                else:
+                    filter_categories |= Q(categories__contains=[c])
+            if ignores:
+                filter_categories &= ~Q(id__in=ignores)
 
-        if filter_categories_with_coder:
-            filters = Filter.objects.filter(filter_categories_with_coder)
-        elif self is not None:
-            filters = self.filter_set.filter(filter_categories)
+            if filter_categories_with_coder:
+                filters = Filter.objects.filter(filter_categories_with_coder, enabled=True)
+            elif self is not None:
+                filters = self.filter_set.filter(filter_categories, enabled=True)
+            else:
+                filters = []
+        elif filters is not None:
+            pass
         else:
-            filters = []
+            raise ValueError('categories or filters must be not None')
 
         hide = Q()
         show = Q()
@@ -87,6 +92,16 @@ class Coder(BaseModel):
             if filter_.duration_to:
                 seconds = timedelta(minutes=filter_.duration_to).total_seconds()
                 query &= Q(duration_in_secs__lte=seconds)
+            if filter_.start_time_from:
+                minutes = filter_.start_time_from * 60
+                hours = minutes // 60
+                minutes = minutes % 60
+                query &= Q(start_time__hour__gt=hours) | Q(start_time__hour=hours, start_time__minute__gte=minutes)
+            if filter_.start_time_to:
+                minutes = filter_.start_time_to * 60
+                hours = minutes // 60
+                minutes = minutes % 60
+                query &= Q(start_time__hour__lt=hours) | Q(start_time__hour=hours, start_time__minute__lte=minutes)
             if filter_.regex:
                 field = 'title'
                 regex = filter_.regex
@@ -101,6 +116,10 @@ class Coder(BaseModel):
                 if filter_.inverse_regex:
                     query_regex = ~query_regex
                 query &= query_regex
+            if filter_.host:
+                query &= Q(host=filter_.host)
+            if filter_.week_days:
+                query &= Q(start_time__week_day__in=filter_.week_days)
             if filter_.contest_id:
                 query &= Q(pk=filter_.contest_id)
             if filter_.party_id:
@@ -125,8 +144,7 @@ class Coder(BaseModel):
     def get_notifications(self):
         ret = list(django_settings.NOTIFICATION_CONF.METHODS_CHOICES)
         for chat in self.chat_set.filter(is_group=True):
-            name = chat.get_group_name()
-            ret.append(('telegram:{}'.format(chat.chat_id), name))
+            ret.append((chat.get_notification_method(), chat.get_group_name()))
         return ret
 
     def account_set_order_by_pk(self):
@@ -247,20 +265,29 @@ def _get_default_categories():
     return Filter.CATEGORIES
 
 
+def _get_default_week_days():
+    return []
+
+
 class Filter(BaseModel):
     CATEGORIES = ['list', 'calendar', 'email', 'telegram', 'api', 'webbrowser']
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE, db_index=True)
+    enabled = models.BooleanField(default=True)
     name = models.CharField(max_length=60, null=True, blank=True)
     duration_from = models.IntegerField(null=True, blank=True)
     duration_to = models.IntegerField(null=True, blank=True)
+    start_time_from = models.FloatField(null=True, blank=True)
+    start_time_to = models.FloatField(null=True, blank=True)
     regex = models.CharField(max_length=1000, null=True, blank=True)
     inverse_regex = models.BooleanField(default=False)
     to_show = models.BooleanField(default=True)
     resources = models.JSONField(default=list, blank=True)
+    host = models.TextField(default=None, null=True, blank=True)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE, default=None, null=True, blank=True, db_index=True)
     party = models.ForeignKey(Party, on_delete=models.CASCADE, default=None, null=True, blank=True, db_index=True)
     categories = ArrayField(models.CharField(max_length=20), blank=True, default=_get_default_categories)
+    week_days = ArrayField(models.PositiveSmallIntegerField(), blank=True, default=_get_default_week_days)
 
     def __str__(self):
         result = '' if not self.name else '{0.name}: '.format(self)
@@ -271,11 +298,19 @@ class Filter(BaseModel):
                 result += ' from {0.duration_from}'.format(self)
             if self.duration_to is not None:
                 result += ' to {0.duration_to}'.format(self)
+        if self.start_time_from is not None or self.start_time_to is not None:
+            result += ', start time'
+            if self.start_time_from is not None:
+                result += ' from {0.start_time_from}'.format(self)
+            if self.start_time_to is not None:
+                result += ' to {0.start_time_to}'.format(self)
         if self.regex is not None:
             result += ', regex '
             if self.inverse_regex:
                 result += '!'
             result += '= ' + self.regex
+        if self.host is not None:
+            result += ', host = {}'.format(self.host)
         return result
 
     def dict(self):
@@ -286,13 +321,20 @@ class Filter(BaseModel):
                 "from": self.duration_from or "",
                 "to": self.duration_to or "",
             },
+            "start_time": {
+                "from": self.start_time_from or "",
+                "to": self.start_time_to or "",
+            },
             "regex": self.regex or "",
+            "host": self.host or "",
             "resources": self.resources,
             "contest": self.contest_id,
             "party": self.party_id,
             "categories": self.categories,
+            "week_days": self.week_days,
             "inverse_regex": self.inverse_regex,
             "to_show": self.to_show,
+            "enabled": self.enabled,
         }
         if self.contest_id:
             ret['contest__title'] = self.contest.title

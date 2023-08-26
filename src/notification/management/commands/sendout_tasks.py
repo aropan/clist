@@ -106,9 +106,9 @@ class Command(BaseCommand):
                     if 'bot was kicked from' in str(e) and delete_notification(e):
                         return 'removed'
                 except ChatMigrated as e:
-                    new_char_id = str(e).strip().split()[-1]
+                    new_chat_id = str(e).strip().split()[-1]
                     notification = kwargs['notification']
-                    notification.method = f'telegram:{new_char_id}'
+                    notification.method = f'telegram:{new_chat_id}'
                     notification.save()
             elif coder.chat and coder.chat.chat_id:
                 try:

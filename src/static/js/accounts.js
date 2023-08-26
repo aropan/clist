@@ -20,6 +20,10 @@ function init_account_buttons() {
         $.notify($btn.attr('data-message'), 'success')
       },
       error: function(response) {
+        if (response.responseJSON && response.responseJSON.message == 'redirect') {
+            window.location.replace(response.responseJSON.url)
+            return
+        }
         $loading.toggleClass('hidden')
         $btn.toggleClass('hidden')
         log_ajax_error(response)

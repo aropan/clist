@@ -842,7 +842,7 @@ def settings(request, tab=None):
             selected_account = Account.objects.filter(resource=selected_resource, key=selected_account).first()
 
     categories = coder.get_categories()
-    custom_categories = {f'telegram:{c.chat_id}': c.title for c in coder.chat_set.filter(is_group=True)}
+    custom_categories = {c.get_notification_method(): c.title for c in coder.chat_set.filter(is_group=True)}
 
     my_lists = coder.my_list_set.annotate(n_records=SubqueryCount('values'))
 
@@ -1010,6 +1010,16 @@ def change(request):
             if filter_.duration_from and filter_.duration_to and filter_.duration_from > filter_.duration_to:
                 raise Exception("{from} should be less or equal {to}")
 
+            field = "Start time"
+            start_time_from = request.POST.get("value[start_time][from]", None)
+            filter_.start_time_from = float(start_time_from) if start_time_from and start_time_from != "NaN" else None
+
+            start_time_to = request.POST.get("value[start_time][to]", None)
+            filter_.start_time_to = float(start_time_to) if start_time_to and start_time_to != "NaN" else None
+
+            if filter_.start_time_from and filter_.start_time_to and filter_.start_time_from > filter_.start_time_to:
+                raise Exception("{from} should be less or equal {to}")
+
             field = "Regex"
             regex = request.POST.get("value[regex]", None)
             if regex:
@@ -1030,6 +1040,10 @@ def change(request):
             filter_.resources = list(map(int, request.POST.getlist("value[resources][]", [])))
             if Resource.objects.filter(pk__in=filter_.resources).count() != len(filter_.resources):
                 raise Exception("invalid resources")
+
+            field = "Host"
+            host = request.POST.get("value[host]", None)
+            filter_.host = host if host else None
 
             field = "Contest"
             contest_id = request.POST.get("value[contest]", None)
@@ -1059,6 +1073,15 @@ def change(request):
             if filter_.categories != Filter.CATEGORIES:
                 filter_.categories.sort()
 
+            field = "Week days"
+            filter_.week_days = [int(d) for d in request.POST.getlist("value[week_days][]", [])]
+            if len(filter_.week_days) != len(set(filter_.week_days)):
+                raise Exception("Duplicate week days")
+            allow_days = set(range(1, 8))
+            if any([d not in allow_days for d in filter_.week_days]):
+                raise Exception(f"Week days should be in {allow_days}")
+            filter_.week_days.sort()
+
             filter_.save()
         except Exception as e:
             return HttpResponseBadRequest("%s: %s" % (field, e))
@@ -1072,6 +1095,18 @@ def change(request):
             id_ = int(request.POST.get("id", -1))
             filter_ = Filter.objects.get(pk=id_, coder=coder)
             filter_.delete()
+        except Exception as e:
+            return HttpResponseBadRequest(e)
+    elif name in ("enable-filter", "disable-filter"):
+        try:
+            with transaction.atomic():
+                enabled = name == "enable-filter"
+                id_ = int(request.POST.get("id", -1))
+                filter_ = Filter.objects.get(pk=id_, coder=coder, enabled=not enabled)
+                filter_.enabled = enabled
+                for category in filter_.categories:
+                    Notification.objects.filter(coder=coder, method__endswith=category).update(last_time=None)
+                filter_.save(update_fields=['enabled'])
         except Exception as e:
             return HttpResponseBadRequest(e)
     elif name == "add-list":
@@ -1218,6 +1253,15 @@ def change(request):
                     raise Exception('Allow only one account for resource')
                 if account.coders.filter(is_virtual=False).exists():
                     raise Exception('Account is already connect')
+
+            need_verification = account.need_verification
+            if not need_verification and resource.has_account_verification:
+                need_verification = account.coders.exists()
+            if need_verification:
+                need_verification = not VerifiedAccount.objects.filter(coder=coder, account=account).exists()
+            if need_verification:
+                url = reverse('coder:account_verification', kwargs=dict(key=account.key, host=resource.host))
+                return JsonResponse({'url': url, 'message': 'redirect'}, status=HttpResponseRedirect.status_code)
 
             coder.add_account(account)
             return HttpResponse(json.dumps(account.dict()), content_type="application/json")
@@ -1380,6 +1424,16 @@ def search(request, **kwargs):
         qs = qs.order_by('-end_time', 'pk')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon} for r in qs]
+    elif query == 'show-filter':
+        coder = request.user.coder
+        filter_ = Filter.objects.get(pk=request.GET.get('id'), coder=coder)
+        contest_filter = coder.get_contest_filter(filters=[filter_])
+        if not filter_.to_show:
+            contest_filter = ~contest_filter
+        qs = Contest.visible.select_related('resource').filter(contest_filter)
+        qs = qs.order_by('-end_time', 'pk')
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon, 'url': r.actual_url} for r in qs]
     elif query == 'series':
         qs = ContestSeries.objects.all()
         qs = qs.annotate(n_contests=SubqueryCount('contest'))
@@ -1577,7 +1631,7 @@ def search(request, **kwargs):
             } for r in qs
         ]
     else:
-        return HttpResponseBadRequest('invalid query')
+        return HttpResponseBadRequest(f'invalid query = {query}')
 
     result = {
         'items': ret,

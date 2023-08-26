@@ -12,7 +12,7 @@ STOP_EMAIL = True
 SECRET_KEY = '{str}'  # random-string
 TELEGRAM_TOKEN = None  # '{int}:{str}'
 TELEGRAM_NAME = 'ClistBot'
-TELEGRAM_ADMIN_CHAT_ID = {int}
+TELEGRAM_ADMIN_CHAT_ID = '{str}'
 
 WEBPUSH_SETTINGS = {
     'VAPID_PUBLIC_KEY': '{str}',

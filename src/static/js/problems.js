@@ -69,7 +69,11 @@ function click_activity_problem_result(el) {
         $(this).addClass(solution_class)
       }
     } else {
-      $(this).data('solution-class', '')
+      solution_class = $(this).data('system-solution-class')
+    }
+    $(this).data('solution-class', solution_class)
+    if (solution_class) {
+      $(this).addClass(solution_class)
     }
   })
 }

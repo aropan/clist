@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Links{% endblock %}{% endblock %}
+
+{% block content %}
+<style>
+#links .list-group-item > * {
+  vertical-align: middle;
+}
+</style>
+
+<div id="links" class="row">
+  <div class="col-lg-8 col-lg-offset-2">
+    <h1>Links</h1>
+    <hr/>
+    <ul class="list-group lead">
+      <li class="list-group-item">
+        <img src="{% static_ts 'img/links/coding-list.webp' %}" width="40px" height="40px">
+        <span>
+          <a href="https://play.google.com/store/apps/details?id=io.github.vikasgola.coding_list" rel="external nofollow noopener" target="_blank">Coding List: A Coders Calendar</a>
+          &mdash; Unofficial android app
+        </span>
+      </li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

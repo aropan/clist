@@ -1028,7 +1028,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
                 'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
             ]
-            or view_private_fields and fk in ['ips']
+            or view_private_fields and fk in ['ips', 'languages', 'verdicts']
         ):
             add_field_to_select(f)
 

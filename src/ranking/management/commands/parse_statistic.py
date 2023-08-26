@@ -126,7 +126,7 @@ class tqdm(_tqdm.tqdm):
         self._channel_layer_handler.send_progress(self)
 
     def close(self, *args, **kwargs):
-        super().update(*args, **kwargs)
+        super().close(*args, **kwargs)
         self._channel_layer_handler.send_progress(self)
 
 
@@ -359,6 +359,7 @@ class Command(BaseCommand):
                                     if has_problem_result:
                                         continue
                                     row['member'] = member
+                                    row['_no_update_n_contests'] = True
                                     result[member] = row
 
                     for field, attr in (

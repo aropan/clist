@@ -39,7 +39,7 @@ requests==2.31.0
 pytimeparse==1.1.8
 humanfriendly==10.0
 humanize==4.7.0
-python-telegram-bot==12.7
+python-telegram-bot==13.15
 lxml==4.9.3
 defusedxml==0.7.1
 PyYAML==6.0.1

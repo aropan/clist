@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db.models import Q
 from django.utils import timezone
 
+from ranking.management.modules.common import LOG
 from ranking.models import Statistics
 
 
@@ -45,6 +46,7 @@ def account_update_contest_additions(
     total = 0
     for stat in qs:
         contest = stat.contest
+        contest_keys.discard(contest.key)
         total += 1
         addition = dict(stat.addition)
         for field in fields:
@@ -73,6 +75,8 @@ def account_update_contest_additions(
                 if next_timing_statistic < contest.statistic_timing:
                     contest.statistic_timing = next_timing_statistic
             contest.save()
+    if contest_keys:
+        LOG.warning('Not found %d contests for %s = %s', len(contest_keys), account, contest_keys)
 
 
 def create_upsolving_statistic(contest, account):

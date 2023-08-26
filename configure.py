@@ -26,13 +26,15 @@ def enter_value(variable, old_value):
     if not old_value:
         logger.info(f'Generated new value for {variable} default')
         old_value = generete_password()
-    value = input(f'Enter {variable} [default {old_value}]: ')
+    if old_value == '{empty}':
+        old_value = ''
+    value = input(f'Enter {variable} [default "{old_value}"]: ')
     if not value:
         value = old_value
     return value
 
 
-def fill_template(target_file):
+def fill_template(target_file, accept_default=False):
     template_file = target_file + '.template'
     if os.path.exists(target_file):
         logger.info(f'File {target_file} already exists')
@@ -62,7 +64,11 @@ def fill_template(target_file):
                 n_sep_skip += 1
                 generated += f'{line}\n'
                 continue
-            value = enter_value(variable, old_value)
+            if accept_default and old_value:
+                value = old_value
+                logger.info(f'Accept default value "{old_value}" for "{variable}"')
+            else:
+                value = enter_value(variable, old_value)
             generated += f'{variable}{sep}{quote}{value}{quote}\n'
 
     with open(target_file, 'w') as fo:
@@ -80,6 +86,9 @@ def run_command(cmd):
 
 def main():
     fill_template('.env.db')
+    fill_template('.env.proxylist')
+    fill_template('src/.env.dev', accept_default=True)
+    fill_template('src/.env.prod', accept_default=True)
     fill_template('src/pyclist/conf.py')
     run_command('docker compose build dev')
     run_command('docker compose run dev ./manage.py migrate contenttypes')

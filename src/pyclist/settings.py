@@ -10,8 +10,8 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
 import logging
+import os
 import warnings
-from os import path
 
 import pycountry
 import sentry_sdk
@@ -28,7 +28,7 @@ from pyclist import conf
 warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
 
 # Build paths inside the project like this: path.join(BASE_DIR, ...)
-BASE_DIR = path.dirname(path.dirname(path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 env = Env()
 env.read_env(env('DJANGO_ENV_FILE'))
@@ -122,6 +122,7 @@ MIDDLEWARE = (
     'pyclist.middleware.RequestLoggerMiddleware',
     'pyclist.middleware.RequestIsAjaxFunction',
     'pyclist.middleware.RedirectMiddleware',
+    'pyclist.middleware.TimezoneMiddleware',
     'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',
 )
@@ -144,7 +145,7 @@ ROOT_URLCONF = 'pyclist.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -249,10 +250,10 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [path.join(BASE_DIR, 'static')]
-REPO_STATIC_ROOT = path.join(BASE_DIR, 'static/')
-STATIC_JSON_TIMEZONES = path.join(BASE_DIR, 'static', 'json', 'timezones.json')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+REPO_STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATIC_JSON_TIMEZONES = os.path.join(BASE_DIR, 'static', 'json', 'timezones.json')
 RESOURCES_ICONS_PATHDIR = 'img/resources/'
 RESOURCES_ICONS_SIZES = [32, 64]
 
@@ -261,7 +262,7 @@ STATIC_COMPRESS_METHODS = ['gz']
 
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = path.join(BASE_DIR, 'mediafiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 MEDIA_SIZES_PATHDIR = 'sizes/'
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
@@ -326,7 +327,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'filename': path.join(BASE_DIR, 'logs', 'dev.log'),
+            'filename': os.path.join(BASE_DIR, 'logs', 'dev.log'),
             'formatter': 'verbose',
         },
         'production': {
@@ -336,7 +337,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'filename': path.join(BASE_DIR, 'logs', 'prod.log'),
+            'filename': os.path.join(BASE_DIR, 'logs', 'prod.log'),
             'formatter': 'verbose',
         },
         'debug': {
@@ -346,17 +347,16 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'backupCount': 2,
-            'filename': path.join(BASE_DIR, 'logs', 'debug.log'),
+            'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
             'formatter': 'verbose',
         },
         'telegrambot': {
             'level': 'DEBUG',
-            'filters': ['require_debug_false'],
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'backupCount': 7,
-            'filename': path.join(BASE_DIR, 'logs', 'telegram.log'),
+            'filename': os.path.join(BASE_DIR, 'logs', 'telegram.log'),
             'formatter': 'verbose',
         },
     },
@@ -378,6 +378,10 @@ LOGGING = {
             'propagate': False,
         },
         'daphne': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'asyncio': {
             'handlers': ['null'],
             'propagate': False,
         },
@@ -406,8 +410,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
-TELEGRAM_TOKEN = conf.TELEGRAM_TOKEN
-TELEGRAM_NAME = conf.TELEGRAM_NAME
+TELEGRAM_TOKEN = env('TELEGRAM_TOKEN', default=conf.TELEGRAM_TOKEN)
+TELEGRAM_NAME = env('TELEGRAM_NAME', default=conf.TELEGRAM_NAME)
 TELEGRAM_ADMIN_CHAT_ID = conf.TELEGRAM_ADMIN_CHAT_ID
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap3'
@@ -636,6 +640,7 @@ FONTAWESOME_ICONS_ = {
     'tag': '<i class="fa-fw fas fa-tag"></i>',
     'hide': '<i class="fa-fw far fa-eye-slash"></i>',
     'show': '<i class="fa-fw far fa-eye"></i>',
+    'delete': '<i class="fa-fw far fa-trash-alt"></i>',
     'period': '<i class="fa-fw far fa-clock"></i>',
     'date': '<i class="fa-fw far fa-calendar-alt"></i>',
     'n_participations': {'icon': '<i class="fa-fw fas fa-running"></i>', 'title': 'Number of participations'},
@@ -680,6 +685,9 @@ FONTAWESOME_ICONS_ = {
     'unverified': '<i class="unverified fas fa-check-circle"></i>',
     'ips': '<i class="fas fa-search-location"></i>',
     'log': '<i class="fas fa-scroll"></i>',
+    'on': '<i class="fa-fw fas fa-toggle-on"></i>',
+    'off': '<i class="fa-fw fas fa-toggle-off"></i>',
+    'more': '<i class="fa-fw fas fa-ellipsis-h"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
@@ -729,9 +737,3 @@ if not DEBUG:
         send_default_pii=True,
         environment='development' if DEBUG else 'production',
     )
-
-
-try:
-    from .local_settings import *  # noqa
-except ImportError:
-    pass

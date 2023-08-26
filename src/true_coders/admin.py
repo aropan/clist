@@ -56,6 +56,7 @@ class FilterAdmin(BaseModelAdmin):
     search_fields = ['coder__user__username', 'name']
     list_display = [
         'coder',
+        'enabled',
         'name',
         'to_show',
         'regex',
@@ -66,6 +67,7 @@ class FilterAdmin(BaseModelAdmin):
         'created',
         'modified',
     ]
+    list_filter = ['enabled']
 
     def _n_resources(self, obj):
         return len(obj.resources)

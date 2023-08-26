@@ -42,7 +42,7 @@ class Statistic(BaseModule):
         with PoolExecutor(max_workers=10) as executor:
             for idx, problem_page in enumerate(executor.map(REQ.get, problems_urls)):
                 problem = problems_infos[idx]
-                name = re.search(rf'<h1[^>]*>#{problem["code"]}.([^<]+)</h1>', problem_page).group(1)
+                name = re.search(rf'<h1[^>]*>\s*#\s*{problem["code"]}.([^<]+)</h1>', problem_page).group(1)
                 name = html.unescape(name).strip()
                 problem['name'] = name
 

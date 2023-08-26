@@ -7,24 +7,30 @@
 {% get_problem_solution problem as solution %}
 
 {% if problem.is_solved %}
-{% define 'success' as solution_class %}
+{% define 'success' as manual_solution_class %}
 {% elif problem.is_reject %}
-{% define 'danger' as solution_class %}
+{% define 'danger' as manual_solution_class %}
 {% elif problem.is_todo %}
-{% define 'info' as solution_class %}
-{% elif solution.result|is_solved %}
-{% define 'success' as solution_class %}
-{% elif solution.result|is_upsolved %}
-{% define 'success' as solution_class %}
-{% elif solution.result|is_hidden %}
-{% define 'warning' as solution_class %}
-{% elif solution.result|is_reject %}
-{% define 'danger' as solution_class %}
-{% elif solution.result|is_partial %}
-{% define 'info' as solution_class %}
+{% define 'info' as manual_solution_class %}
 {% else %}
-{% define '' as solution_class %}
+{% define '' as manual_solution_class %}
 {% endif %}
+
+{% if solution.result|is_solved %}
+{% define 'success' as system_solution_class %}
+{% elif solution.result|is_upsolved %}
+{% define 'success' as system_solution_class %}
+{% elif solution.result|is_hidden %}
+{% define 'warning' as system_solution_class %}
+{% elif solution.result|is_reject %}
+{% define 'danger' as system_solution_class %}
+{% elif solution.result|is_partial %}
+{% define 'info' as system_solution_class %}
+{% else %}
+{% define '' as system_solution_class %}
+{% endif %}
+
+{% define manual_solution_class|default:system_solution_class as solution_class %}
 
 {% endif %}
 <tr class="show-hidden-activity-on-hover">
@@ -40,8 +46,8 @@
       {% call_method problem.resource 'is_major_kind' problem.contests.all as is_major_kind %}
       {% if problem.resource.has_problem_rating and problem.n_total and is_major_kind %}
       {% with is_coming=problem.end_time|is_coming %}
-      <span title="{% if is_coming %}waiting for end of contest{% else %}in progress{% endif %}" data-toggle="tooltip">
-        <i class="text-muted fa-xs fas fa-sync{% if not is_coming %} fa-spin{% endif %}"></i>
+      <span title="{% if is_coming %}waiting for end of contest{% elif problem.n_hidden %}waiting unfreeze{% else %}in progress{% endif %}" data-toggle="tooltip">
+        <i class="text-muted fa-xs fas fa-sync{% if not is_coming and not problem.n_hidden %} fa-spin{% endif %}"></i>
       </span>
       {% endwith %}
       {% else %}
@@ -56,7 +62,7 @@
   <td class="problem-luck-column">
     {% if problem.luck is not None %}{{ problem.luck|multiply:100|floatformat:2 }}%{% endif %}
   </td>
-  <td class="problem-result-column {{ solution_class }}" data-solution-class="{{ solution_class }}">
+  <td class="problem-result-column {{ solution_class }}" data-solution-class="{{ solution_class }}" data-system-solution-class="{{ system_solution_class }}">
     {% if solution %}
       {% if not solution.result|is_solved and solution.result.upsolving %}
         {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result.upsolving with_detail=False key=solution.key with_admin_url=True is_upsolving=True %}
@@ -73,7 +79,7 @@
     {% endwith %}
   </td>
   {% endfor %}
-  <td class="problem-name-column {{ solution_class }}" data-solution-class="{{ solution_class }}">
+  <td class="problem-name-column {{ solution_class }}" data-solution-class="{{ solution_class }}" data-system-solution-class="{{ system_solution_class }}">
     <span class="nowrap">
       <a href="{% url_transform request resource=problem.resource.id %}">
         <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|media_size:'32x32' }}" width="16" height="16"/>

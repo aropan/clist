@@ -43,6 +43,8 @@
     SELECTED_RESOURCE = {% if selected_resource %}[{'id': {{ selected_resource.pk }}, 'text': '{{ selected_resource.host }}'}]{% else %}[]{% endif %}
 
     ACCOUNTS_ADVANCED_SEARCH_URL = "{% url 'coder:accounts' %}?add_account=on"
+
+    WEEK_DAYS = [{'id': '2', 'text': 'Mon'}, {'id': '3', 'text': 'Tue'}, {'id': '4', 'text': 'Wed'}, {'id': '5', 'text': 'Thu'}, {'id': '6', 'text': 'Fri'}, {'id': '7', 'text': 'Sat'}, {'id': '1', 'text': 'Sun'}]
 </script>
 
 <script src="{% static_ts 'js/settings.js' %}"></script>
@@ -146,8 +148,8 @@
             <div class="key">
                 <a href="#" id="add-filter" class="btn btn-primary">Create</a>
                 <i rel="tooltip" title="Filters of events that you want to show or hide."></i>
-                <span class="small">
-                    Resulting filter looks like <span class="badge alert-success">not (hide<sub>1</sub> or hide<sub>2</sub> or ... hide<sub>n</sub>) and (show<sub>1</sub> or show<sub>2</sub> or ... or show<sub>m</sub>)</span>
+                <span>
+                    Resulting filter looks like <code class="alert-success">not (hide<sub>1</sub> or hide<sub>2</sub> or ... hide<sub>n</sub>) and (show<sub>1</sub> or show<sub>2</sub> or ... or show<sub>m</sub>)</code>
                 </span>
                 <div id="add-filter-error" class="label label-danger hidden"></div>
             </div>
@@ -169,8 +171,11 @@
                 </div>
                 {% endifchanged %}
                 <div>
-                    <a href="#" data-name="filter" data-value='{{ f.dict|jsonify|force_escape }}' class="filter"></a>
-                    <a href="#" data-id="{{ f.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" data-name="filter" data-value='{{ f.dict|jsonify|force_escape }}' class="filter{% if not f.enabled %} text-muted{% endif %}"></a>
+                    <a href="#" data-id="{{ f.id }}" data-action="disable-filter" data-confirm="false" data-success="$this.addClass('hidden-filter'); $div.find('[data-action=enable-filter]').removeClass('hidden-filter'); $div.find('[data-name=filter]').addClass('text-muted')" class="action-filter btn btn-default btn-xs{% if not f.enabled %} hidden-filter{% endif %}">{% icon_to 'on' 'Off' %}</a>
+                    <a href="#" data-id="{{ f.id }}" data-action="enable-filter" data-confirm="false" data-success="$this.addClass('hidden-filter'); $div.find('[data-action=disable-filter]').removeClass('hidden-filter'); $div.find('[data-name=filter]').removeClass('text-muted')" class="action-filter btn btn-default btn-xs{% if f.enabled %} hidden-filter{% endif %}">{% icon_to 'off' 'On' %}</a>
+                    <a href="#" data-id="{{ f.id }}" data-action="show-filter" data-url="{% url "coder:search" %}" data-name="query" data-type="GET" data-confirm="false" data-success="toggle_show_filter($this, data)" data-page="1" class="action-filter btn btn-default btn-xs">{% icon_to 'show' %}</a>
+                    <a href="#" data-id="{{ f.id }}" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs">{% icon_to 'delete' %}</a>
                 </div>
                 {% endfor %}
             </div>

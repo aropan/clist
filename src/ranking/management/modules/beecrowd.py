@@ -4,8 +4,7 @@ import re
 from collections import OrderedDict
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.common.parsed_table import ParsedTable
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):
@@ -16,7 +15,7 @@ class Statistic(BaseModule):
 
         page = REQ.get(standings_url)
         page = page.replace('&bullet;', '')
-        table = ParsedTable(page, xpath='//table[@id="contest-rank"]//tr')
+        table = parsed_table.ParsedTable(page, xpath='//table[@id="contest-rank"]//tr')
         problems_infos = OrderedDict()
         result = OrderedDict()
         for row in table:

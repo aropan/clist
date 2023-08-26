@@ -554,6 +554,13 @@ class requester():
             elif content_type:
                 headers.update({"Content-type": content_type})
 
+            def read_response(response):
+                if response.info().get("Content-Encoding", None) == "gzip":
+                    buf = BytesIO(response.read())
+                    return GzipFile(fileobj=buf).read()
+                else:
+                    return response.read()
+
             n_attemps = n_attemps or self.n_attemps
             for attempt in range(n_attemps):
                 page, self.error, response, last_url, proxy = None, None, None, None, None
@@ -580,15 +587,12 @@ class requester():
                     last_url = response.geturl() if response else url
                     if return_last_url:
                         return last_url
-                    if response.info().get("Content-Encoding", None) == "gzip":
-                        buf = BytesIO(response.read())
-                        page = GzipFile(fileobj=buf).read()
-                    else:
-                        page = response.read()
+                    page = read_response(response)
                 except Exception as err:
                     if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
                         force_json = False
                         response = err
+                        page = read_response(response)
                     else:
                         self.print('[error]', str(err)[:200])
                         self.error = err

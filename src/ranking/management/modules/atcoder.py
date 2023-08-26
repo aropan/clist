@@ -541,6 +541,8 @@ class Statistic(BaseModule):
             has_result = any('result' in p for p in row.get('problems', {}).values())
             if has_result or row.get('IsRated'):
                 row.pop('_no_update_n_contests', None)
+            else:
+                row['_no_update_n_contests'] = True
 
         standings['hidden_fields'] = [
             'Affiliation',

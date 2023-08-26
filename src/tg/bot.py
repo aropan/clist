@@ -19,7 +19,7 @@ from pytimeparse.timeparse import timeparse
 
 from clist.api.v1 import ContestResource
 from clist.models import Contest, Resource
-from clist.templatetags.extras import hr_timedelta, md_escape
+from clist.templatetags.extras import as_number, hr_timedelta, md_escape
 from tg.models import Chat, History
 
 logging.basicConfig(level=logging.DEBUG)
@@ -90,7 +90,7 @@ class Bot(telegram.Bot):
     def group(self):
         if not hasattr(self, 'group_'):
             if self.chat and self.chat.chat_id != self.chat_id:
-                self.group_ = Chat.objects.filter(chat_id=self.chat_id).first()
+                self.group_ = Chat.objects.filter(chat_id=self.chat_id, thread_id=self.thread_id).first()
             else:
                 self.group_ = False
         return self.group_
@@ -272,10 +272,14 @@ class Bot(telegram.Bot):
             msg = 'This command should be used in chat rooms.'
         else:
             if self.group is None:
+                title = self.message['chat']['title']
+                if self.thread_id:
+                    title += f' # {self.thread_name}'
                 chat, created = Chat.objects.get_or_create(
                     chat_id=self.chat_id,
+                    thread_id=self.thread_id,
                     coder=self.coder,
-                    title=self.message['chat']['title'],
+                    title=title,
                     is_group=True,
                 )
                 if created:
@@ -471,7 +475,13 @@ class Bot(telegram.Bot):
         if len(msg['text']) > self.MAX_LENGTH_MESSAGE:
             msg['text'] = msg['text'][:self.MAX_LENGTH_MESSAGE - 3] + '...'
 
-        msg['chat_id'] = chat_id or self.from_id
+        chat_id = chat_id or self.from_id
+        if ':' in chat_id:
+            chat_id, thread_id = chat_id.split(':', 1)
+            thread_id = as_number(thread_id)
+            if thread_id is not None:
+                msg['reply_to_message_id'] = thread_id
+        msg['chat_id'] = chat_id
 
         msg['disable_web_page_preview'] = True
         if reply_markup:
@@ -519,6 +529,14 @@ class Bot(telegram.Bot):
 
             self.chat_id = str(self.message['chat']['id'])
             self.chat_type = self.message['chat'].get('type')
+
+            if self.message.get('is_topic_message'):
+                thread = self.message.get('reply_to_message', {}).get('forum_topic_created')
+                if thread:
+                    self.thread_id = str(self.message['message_thread_id'])
+                    self.thread_name = thread['name']
+
+            self.thread_id = str(self.message.get('message_thread_id', '')) or None
 
             self.update_chat_info(self.chat, self.message)
 

@@ -223,6 +223,7 @@ $(function() {
             this.$contest = this.$tpl.find('#contest')
             this.$party = this.$tpl.find('#party')
             this.$categories = this.$tpl.find('#categories')
+            this.$week_days = this.$tpl.find('#week_days')
 
             this.$tpl.find("i[rel=tooltip]")
                 .addClass('far fa-question-circle')
@@ -236,13 +237,14 @@ $(function() {
                 multiple: true,
                 width: '100%',
                 placeholder: 'Select resources',
+                theme: 'bootstrap',
             })
 
             this.$contest.select2({
                 dropdownAutoWidth : true,
                 width: '100%',
-                theme: 'bootstrap',
                 placeholder: 'Select contest',
+                theme: 'bootstrap',
                 allowClear: true,
                 ajax: select2_ajax_conf('notpast', 'regex'),
                 minimumInputLength: 2,
@@ -251,8 +253,8 @@ $(function() {
             this.$party.select2({
                 dropdownAutoWidth : true,
                 width: '100%',
-                theme: 'bootstrap',
                 placeholder: 'Select party',
+                theme: 'bootstrap',
                 allowClear: true,
                 ajax: select2_ajax_conf('party', 'name'),
                 minimumInputLength: 2,
@@ -263,8 +265,19 @@ $(function() {
                 multiple: true,
                 width: '100%',
                 placeholder: 'Select categories',
+                theme: 'bootstrap',
+                allowClear: true,
             })
 
+            this.$week_days.select2({
+                data: WEEK_DAYS,
+                multiple: true,
+                width: '100%',
+                placeholder: 'Select days of week',
+                theme: 'bootstrap',
+                allowClear: true,
+                dropdownAutoWidth: true,
+            })
 
             this.$tpl.find('#select-all-resources').click(function() {
                 $('#resources').val($.map(RESOURCES, function(r) { return r.id })).trigger('change')
@@ -284,6 +297,20 @@ $(function() {
                         }),
                         function(id) {
                             return $.inArray(id, $('#resources').val()) === -1
+                        }
+                    )
+                ).trigger('change')
+                return false
+            })
+
+            this.$tpl.find('#inverse-week-days').click(function() {
+                $('#week_days').val(
+                    $.grep(
+                        $.map(WEEK_DAYS, function(week_day) {
+                            return week_day.id
+                        }),
+                        function(id) {
+                            return $.inArray(id, $('#week_days').val()) === -1
                         }
                     )
                 ).trigger('change')
@@ -330,8 +357,20 @@ $(function() {
                     + (value.duration.from? ' from ' + value.duration.from : '')
                     + (value.duration.to? ' to ' + value.duration.to : '')
             }
+            if (value.start_time && (value.start_time.from || value.start_time.to)) {
+                html +=
+                    ', start time'
+                    + (value.start_time.from? ' from ' + value.start_time.from : '')
+                    + (value.start_time.to? ' to ' + value.start_time.to : '')
+            }
             if (value.regex) {
                 html += ', with ' + (value.inverse_regex? 'inverse ' : '') + 'regex ' + value.regex
+            }
+            if (value.host) {
+                html += ', with host ' + value.host
+            }
+            if (value.week_days && value.week_days.length) {
+                html += ', ' + value.week_days.length + ' week day(s)'
             }
             $(element).html(html)
         },
@@ -356,13 +395,19 @@ $(function() {
                 this.$input.filter('[name="duration-from"]').val(value.duration.from)
                 this.$input.filter('[name="duration-to"]').val(value.duration.to)
             }
+            if (value.start_time) {
+                this.$input.filter('[name="start-time-from"]').val(value.start_time.from)
+                this.$input.filter('[name="start-time-to"]').val(value.start_time.to)
+            }
             this.$input.filter('[name="regex"]').val(value.regex)
             this.$input.filter('[name="inverse-regex"]').attr('checked', value.inverse_regex)
+            this.$input.filter('[name="host"]').val(value.host)
             this.$input.filter('[name="to-show"]').attr('checked', value.to_show)
             this.$contest.select2('trigger', 'select', {data: {id: value.contest, text: value.contest__title}})
             this.$party.select2('trigger', 'select', {data: {id: value.party, text: value.party__name}})
             this.$resources.val(value.resources).trigger('change')
             this.$categories.val(value.categories).trigger('change')
+            this.$week_days.val(value.week_days).trigger('change')
         },
 
         input2value: function() {
@@ -375,8 +420,13 @@ $(function() {
                     from: parseInt(this.$input.filter('[name="duration-from"]').val()),
                     to: parseInt(this.$input.filter('[name="duration-to"]').val()),
                 },
+                start_time: {
+                    from: parseFloat(this.$input.filter('[name="start-time-from"]').val()),
+                    to: parseFloat(this.$input.filter('[name="start-time-to"]').val()),
+                },
                 regex: this.$input.filter('[name="regex"]').val(),
                 inverse_regex: this.$input.filter('[name="inverse-regex"]').prop('checked'),
+                host: this.$input.filter('[name="host"]').val(),
                 to_show: this.$input.filter('[name="to-show"]').prop('checked'),
                 resources: $.map(this.$resources.val() || [], function (v) { return parseInt(v) }),
                 contest: contest_data.length? contest_data[0].id : null,
@@ -384,6 +434,7 @@ $(function() {
                 party: party_data.length? party_data[0].id : null,
                 party__name: party_data.length? party_data[0].text : null,
                 categories: this.$categories.val() || [],
+                week_days: this.$week_days.val() || [],
             }
             return result
         },
@@ -403,24 +454,27 @@ $(function() {
 <div> \
     <input type="hidden" name="id"> \
     <div class="filter-field"> \
-        <div class="input-group input-group-sm"> \
+        <div class="input-group input-group-md"> \
             <span class="input-group-addon">Name</span> \
             <input name="name" maxlength="60" type="text" class="form-control"> \
         </div> \
-        <div class="input-group input-group-sm"> \
-            <span class="input-group-addon">To show</span> \
+    </div> \
+    <div class="filter-field"> \
+        <div class="input-group input-group-md"> \
+            <span class="input-group-addon">Show / Hide</span> \
             <span class="input-group-addon"> \
-                <input name="to-show" type="checkbox" rel="tooltip" title="To show"> \
+                <input name="to-show" type="checkbox" rel="tooltip" title="select to show"> \
             </span> \
         </div> \
-        <div class="input-group input-group-sm select2-bootstrap-prepend select2-bootstrap-append"> \
+    </div> \
+    <div class="filter-field"> \
+        <div class="input-group input-group-md"> \
+            <span class="input-group-addon">Categories</span> \
             <select id="categories" class="form-control" name="categories[]"></select> \
         </div> \
     </div> \
     <div class="filter-field"> \
-    </div> \
-    <div class="filter-field"> \
-        <div class="input-group input-group-sm"> \
+        <div class="input-group input-group-md"> \
             <span class="input-group-addon">Duration</span> \
             <span class="input-group-addon">from</span> \
             <input min="0" max="2139062143" type="number" class="form-control" name="duration-from"> \
@@ -430,11 +484,32 @@ $(function() {
         </div> \
     </div> \
     <div class="filter-field"> \
-        <div class="input-group input-group-sm"> \
+        <div class="input-group input-group-md"> \
+            <span class="input-group-addon">Start time</span> \
+            <span class="input-group-addon">from</span> \
+            <input min="0" max="24" type="number" step="0.1" class="form-control" name="start-time-from"> \
+            <span class="input-group-addon">to</span> \
+            <input min="0" max="24" type="number" step="0.1" class="form-control" name="start-time-to"> \
+            <span class="input-group-addon">hour(s)</span> \
+        </div> \
+        <i rel="tooltip" title="24-hour clock format in your time zone"></i> \
+    </div> \
+    <div class="filter-field"> \
+        <div class="input-group input-group-md"> \
+            <span class="input-group-addon">Week days</span> \
+            <select id="week_days" class="form-control" name="week_days[]"></select> \
+            <span class="input-group-btn"> \
+                <button id="inverse-week-days" class="btn btn-default" title="inverse"><i class="fas fa-sync-alt"></i></button> \
+            </span> \
+        </div> \
+        <i rel="tooltip" title="Start day of the week in your time zone"></i> \
+    </div> \
+    <div class="filter-field"> \
+        <div class="input-group input-group-md"> \
             <span class="input-group-addon">Regex</span> \
             <input name="regex" maxlength="1000" type="text" class="form-control"> \
         </div> \
-        <div class="input-group input-group-sm"> \
+        <div class="input-group input-group-md"> \
             <span class="input-group-addon">Inverse regex</span> \
             <span class="input-group-addon"> \
                 <input name="inverse-regex" type="checkbox" rel="tooltip" title="Inverse regex"> \
@@ -443,23 +518,25 @@ $(function() {
         <i rel="tooltip" title="Use `url:#regex#` to filter by regex by url"></i> \
     </div> \
     <div class="filter-field"> \
+        <div class="input-group input-group-md"> \
+            <span class="input-group-addon">Host</span> \
+            <input name="host" maxlength="1000" type="text" class="form-control"> \
+        </div> \
     </div> \
     <div class="filter-field"> \
-        <div class="input-group input-group-sm"> \
+        <div class="input-group input-group-md"> \
             <span class="input-group-addon">Resources</span> \
+            <select id="resources" class="form-control" name="resources[]"></select> \
             <span class="input-group-btn"> \
                 <button id="select-all-resources" class="btn btn-default"><i class="fa fa-check"></i></button> \
                 <button id="deselect-all-resources" class="btn btn-default"><i class="fa fa-times"></i></button> \
                 <button id="inverse-resources" class="btn btn-default" title="inverse"><i class="fas fa-sync-alt"></i></button> \
             </span> \
         </div> \
-        <div class="filter-field-resources"> \
-            <select id="resources" class="form-control" name="resources[]"></select> \
-        </div> \
     </div> \
     <div class="h5">OR</div> \
     <div class="filter-field"> \
-        <div class="input-group input-group-sm"> \
+        <div class="input-group input-group-md"> \
             <span class="input-group-addon">Contest</span> \
             <select id="contest" class="form-control" name="contest"></select> \
         </div> \
@@ -467,7 +544,7 @@ $(function() {
     </div> \
     <div class="h5">OR</div> \
     <div class="filter-field"> \
-        <div class="input-group input-group-sm"> \
+        <div class="input-group input-group-md"> \
             <span class="input-group-addon">Party</span> \
             <select id="party" class="form-control" name="party"></select> \
         </div> \
@@ -494,6 +571,11 @@ $(function() {
     function filterEditableShown(e, editable) {
         var $button = $('[data-id="{0}"]'.format(editable.value.id))
         $button.addClass('hidden')
+
+        var shown_filter = $button.parent().find('.shown-filter')
+        if (shown_filter.length) {
+            toggle_show_filter($button)
+        }
 
         $close_button = $button.parent().find('.editable-cancel')
         $close_button.attr('disabled', 'disabled')
@@ -824,34 +906,90 @@ $(function() {
         ntf_form.show(300)
     })
 
+    function add_more_filter(div, btn, data) {
+        data.items.forEach((el, idx) => {
+            var a = $('<a class="badge progress-bar-info shown-filter-contest">').attr('href', el.url).text(el.text)
+            a.appendTo(div)
+            $('<img width="16" height="16">').attr('src', '/media/sizes/32x32/' + el.icon).prependTo(a)
+        })
+        if (data.more) {
+            var a = $('<a class="action-filter btn btn-default btn-xs">')
+            $.each(btn[0].attributes, function() {
+                if (this.name.startsWith('data-')) {
+                    a.attr(this.name, this.value);
+                }
+            });
+            a.attr('data-page', parseInt(a.attr('data-page')) + 1)
+            a.attr('data-success', 'more_show_filter($this, data)')
+            a.click(sentAction)
+            a.append($('<i class="fa-fw fas fa-ellipsis-h"></i>'))
+            a.appendTo(div)
+        }
+    }
+
+    function more_show_filter(btn, data) {
+        var contests_div = btn.closest('div')
+        add_more_filter(contests_div, btn, data)
+        $(btn).remove()
+    }
+
+    function toggle_show_filter(btn, data) {
+        var div = btn.closest('div')
+        var previous_shown_filter = div.find('.shown-filter')
+        if (previous_shown_filter.length) {
+            previous_shown_filter.remove()
+            btn.removeClass('active')
+        } else if (data) {
+            var contests_div = $('<div class="shown-filter">')
+            contests_div.appendTo(div)
+            add_more_filter(contests_div, btn, data)
+            btn.addClass('active')
+        }
+    }
+
     function sentAction() {
         var $this = $(this)
         var $div = $this.parent()
-        bootbox.confirm({
-            size: 'small',
-            message: $div.text() +
-                "<br/><br/>" +
-                "<b>" + $this.attr('data-action').replace('-', ' ').toTitleCase() + "?</b>",
-            callback: function(result) {
-                if (result) {
-                    $.ajax({
-                        type: 'POST',
-                        url: $.fn.editable.defaults.url,
-                        data: {
-                            pk: $.fn.editable.defaults.pk,
-                            name: $this.attr('data-action'),
-                            id: $this.data("id"),
-                        },
-                        success: function(data) {
-                            eval($this.attr('data-success'))
-                        },
-                        error: function(data) {
-                            $.notify("{status} {statusText}: {responseText}".format(data), "error");
-                        },
-                    })
-                }
-            }
-        })
+        var url = $this.attr('data-url') || $.fn.editable.defaults.url
+        var name = $this.attr('data-name') || 'name'
+        var type = $this.attr('data-type') || 'POST'
+
+        var data = {
+            pk: $.fn.editable.defaults.pk,
+            [name]: $this.attr('data-action'),
+            id: $this.data("id"),
+        }
+
+        var page = $this.attr('data-page')
+        if (page) {
+            data['page'] = page
+        }
+
+        function queryAction() {
+            $.ajax({
+                type: type,
+                url: url,
+                data: data,
+                success: function(data) {
+                    eval($this.attr('data-success'))
+                },
+                error: function(data) {
+                    $.notify("{status} {statusText}: {responseText}".format(data), "error");
+                },
+            })
+        }
+
+        if ($this.attr('data-confirm') === 'false') {
+            queryAction()
+        } else {
+            bootbox.confirm({
+                size: 'small',
+                message: $div.text() +
+                    "<br/><br/>" +
+                    "<b>" + $this.attr('data-action').replace('-', ' ').toTitleCase() + "?</b>",
+                callback: function(result) { if (result) { queryAction() } },
+            })
+        }
         return false
     }
     $('.action-notification').click(sentAction)
@@ -986,6 +1124,10 @@ $(function() {
 
             },
             error: function(data) {
+                if (data.responseJSON && data.responseJSON.message == 'redirect') {
+                    window.location.replace(data.responseJSON.url)
+                    return
+                }
                 $add_account_loading.addClass('hidden')
                 $errorAccountTab.show().html(data.responseText)
                 setTimeout(function() { $errorAccountTab.hide(500) }, 3000)

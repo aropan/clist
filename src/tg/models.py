@@ -5,7 +5,8 @@ from true_coders.models import Coder
 
 
 class Chat(BaseModel):
-    chat_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    chat_id = models.CharField(max_length=100, blank=True, null=True)
+    thread_id = models.TextField(blank=True, null=True, default=None)
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     title = models.CharField(max_length=100, blank=True, null=True)
     name = models.TextField(blank=True, null=True)
@@ -20,6 +21,15 @@ class Chat(BaseModel):
 
     def get_group_name(self):
         return "%s@%s" % (self.chat_id, self.title)
+
+    def get_notification_method(self):
+        ret = f'telegram:{self.chat_id}'
+        if self.thread_id:
+            ret += f':{self.thread_id}'
+        return ret
+
+    class Meta:
+        unique_together = ['chat_id', 'thread_id']
 
 
 class History(BaseModel):

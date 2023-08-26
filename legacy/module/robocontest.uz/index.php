@@ -21,10 +21,10 @@
 
             $url = url_merge($URL, $olympiads['href']);
             $page = curlexec($url);
-            preg_match_all('#<tr[^>]*>\s*<th[^>]*>(?P<key>[^<]*)</th>\s*<td[^>]*>(?P<value>[^<]*)</td>\s*</tr>#', $page, $matches, PREG_SET_ORDER);
+            preg_match_all('#<tr[^>]*>\s*<th[^>]*>(?P<key>[^<]*)</th>\s*<td[^>]*>(?:\s*<[^>]*>)*\s*(?P<value>[^\s][^<]*)#', $page, $values_matches, PREG_SET_ORDER);
 
             $values = array();
-            foreach ($matches as $match) {
+            foreach ($values_matches as $match) {
                 $k = trim($match['key']);
                 $k = rtrim($k, ':');
                 $k = strtolower($k);
@@ -36,7 +36,6 @@
 
             $start_time = preg_replace('#[^0-9.: ]#', '', $values['starts at']);
             $end_time = preg_replace('#[^0-9.: ]#', '', $values['finishes at']);
-
 
             $contests[] = array(
                 'start_time' => $start_time,

@@ -75,6 +75,7 @@ def get_info_key(statistic):
 
 def is_skip(contest, statistic):
     old_rating_only = get_item(contest.resource.info, 'problems.rating.old_rating_only')
+    old_rating_only = not args.ignore_old_rating_only and old_rating_only
 
     return bool(
         statistic.account.info.get('is_team') and not statistic.account.info.get('members')
@@ -167,6 +168,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host names to calculate')
         parser.add_argument('-c', '--contest', metavar='CONTEST', type=int, help='contest id')
+        parser.add_argument('-cs', '--contests', metavar='CONTESTS', nargs='*', type=int, help='contest ids')
         parser.add_argument('-s', '--search', metavar='TITLE', nargs='*', help='contest title regex')
         parser.add_argument('-l', '--limit', metavar='LIMIT', type=int, help='number of contests limit')
         parser.add_argument('-f', '--force', action='store_true', help='force update')
@@ -175,8 +177,10 @@ class Command(BaseCommand):
         parser.add_argument('--staleness', metavar='DAYS', type=int, help='lower end_time days limit')
         parser.add_argument('--update-contest-on-missing-account', action='store_true')
         parser.add_argument('--ignore-missing-account', action='store_true')
+        parser.add_argument('--ignore-old-rating-only', action='store_true')
 
-    def handle(self, *args, **options):
+    def handle(self, *_, **options):
+        global args
         self.stdout.write(str(options))
         args = AttrDict(options)
 
@@ -195,6 +199,8 @@ class Command(BaseCommand):
             contests = contests.filter(title__regex=args.search)
         if args.contest:
             contests = contests.filter(pk=args.contest)
+        if args.contests:
+            contests = contests.filter(pk__in=args.contests)
         if args.staleness:
             contests = contests.filter(updated__lt=now() - timedelta(days=args.staleness))
         contests = contests.order_by('-end_time')
@@ -207,6 +213,7 @@ class Command(BaseCommand):
             contests = contests[:args.limit]
 
         ratings = []
+        n_empty = 0
         n_done = 0
         n_total = 0
         n_skip_hash = 0
@@ -256,6 +263,7 @@ class Command(BaseCommand):
                     row_value = (get_info_key(stat), stat.account_id) + tuple(row)
                     rows_values.append(row_value)
             if not rows_values:
+                n_empty += 1
                 self.logger.warning(f'skip empty contest = {contest}')
                 continue
 
@@ -413,4 +421,4 @@ class Command(BaseCommand):
                 n_done += 1
                 self.logger.info(f'done contest = {contest}')
         self.logger.info(f'done = {n_done}, skip hash = {n_skip_hash}, skip missing = {n_skip_missing}'
-                         f' of total = {n_total}')
+                         f', skip empty = {n_empty} of total = {n_total}')

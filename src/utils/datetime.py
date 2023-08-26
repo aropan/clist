@@ -3,9 +3,13 @@
 from datetime import timedelta
 
 import dateutil.parser
+import pytz
+from django.conf import settings
 from django.db import models
 from django.utils.timezone import now
 from pytimeparse.timeparse import timeparse
+
+from clist.templatetags.extras import get_timezones
 
 
 def parse_duration(value):
@@ -24,3 +28,33 @@ def parse_datetime(value, timezone=None):
 class Epoch(models.expressions.Func):
     template = 'EXTRACT(epoch FROM %(expressions)s)::INTEGER'
     output_field = models.IntegerField()
+
+
+def get_timezone(request):
+    tz = request.GET.get("timezone", None)
+    if tz:
+        result = None
+        try:
+            pytz.timezone(tz)
+            result = tz
+        except Exception:
+            if tz.startswith(" "):
+                tz = tz.replace(" ", "+")
+            for tzdata in get_timezones():
+                if str(tzdata["offset"]) == tz or tzdata["repr"] == tz:
+                    result = tzdata["name"]
+                    break
+
+        if result:
+            if "update" in request.GET:
+                if request.user.is_authenticated:
+                    request.user.coder.timezone = result
+                    request.user.coder.save()
+                else:
+                    request.session["timezone"] = result
+                return
+            return result
+
+    if request.user.is_authenticated and hasattr(request.user, "coder"):
+        return request.user.coder.timezone
+    return request.session.get("timezone", settings.DEFAULT_TIME_ZONE_)

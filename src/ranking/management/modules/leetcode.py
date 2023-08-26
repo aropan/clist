@@ -16,7 +16,7 @@ import yaml
 from django.db import transaction
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import is_solved
+from clist.templatetags.extras import get_item, is_solved
 from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 
@@ -43,12 +43,16 @@ class Statistic(BaseModule):
         return req.get(*args, **kwargs)
 
     @staticmethod
-    def fetch_submission(submission, req=REQ, raise_on_error=False):
+    def _get_source_code_proxies_file():
+        return os.path.join(os.path.dirname(__file__), '.leetcode.get_source_code.proxies')
+
+    @staticmethod
+    def fetch_submission(submission, req=REQ, raise_on_error=False, n_attemps=1):
         data_region = submission['data_region']
         domain = Statistic.DOMAINS[data_region.lower()]
         url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission['submission_id'])
         try:
-            content = req.get(url)
+            content = req.get(url, n_attemps=n_attemps)
             content = json.loads(content)
         except FailOnGetResponse as e:
             if raise_on_error:
@@ -115,11 +119,15 @@ class Statistic(BaseModule):
                 for w in problem_info.get('writers', []):
                     writers[w] += 1
 
-        @RateLimiter(max_calls=3, period=1)
         def fetch_page(page):
-            url = api_ranking_url_format.format(page + 1)
-            content = REQ.get(url)
-            return json.loads(content)
+            if stop:
+                return
+            with RateLimiter(max_calls=3, period=1):
+                url = api_ranking_url_format.format(page + 1)
+                content = REQ.get(url)
+                return json.loads(content)
+
+        n_top_submissions = get_item(self.resource.info, 'statistics.n_top_download_submissions')
 
         hidden_fields = set()
         result = {}
@@ -169,6 +177,7 @@ class Statistic(BaseModule):
                             r['country'] = country
 
                         problems_stats = (statistics or {}).get(handle, {}).get('problems', {})
+                        has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
 
                         solved = 0
                         problems = r.setdefault('problems', {})
@@ -184,12 +193,14 @@ class Statistic(BaseModule):
                             else:
                                 p['result'] = f'-{s["fail_count"]}'
                             if 'submission_id' in s:
+                                if (has_download_submissions or statistics) and (
+                                    'submission_id' in p and p['submission_id'] != s['submission_id']
+                                    or 'language' not in p
+                                ):
+                                    solutions_for_get.append(p)
                                 p['submission_id'] = s['submission_id']
                                 p['external_solution'] = True
                                 p['data_region'] = s['data_region']
-                                if 'language' not in p:
-                                    s['handle'] = handle
-                                    solutions_for_get.append(s)
 
                         if users:
                             users.remove(handle)
@@ -212,8 +223,25 @@ class Statistic(BaseModule):
                                     r[k] = stat[k]
                         n_added += 1
 
-                    if n_added == 0:
+                    if n_added == 0 and not users:
                         stop = True
+
+                if solutions_for_get:
+                    try:
+                        if n_top_submissions:
+                            n_solutions_limit = n_top_submissions * len(problems_info)
+                            solutions_for_get = solutions_for_get[:n_solutions_limit]
+                        for submission, data in tqdm.tqdm(
+                            executor.map(Statistic.fetch_submission, solutions_for_get),
+                            total=len(solutions_for_get),
+                            desc='fetching submissions',
+                        ):
+                            if 'code' in data:
+                                submission['solution'] = data['code']
+                            if 'lang' in data:
+                                submission['language'] = data['lang']
+                    except Exception as e:
+                        LOG.warning(f'Failed to fetch submissions: {e}')
 
         standings = {
             'result': result,
@@ -231,9 +259,9 @@ class Statistic(BaseModule):
         _, data = Statistic.fetch_submission(problem, raise_on_error=False)
         if not data:
             with REQ.with_proxy(
-                time_limit=3,
+                time_limit=10,
                 n_limit=30,
-                filepath_proxies=os.path.join(os.path.dirname(__file__), '.leetcode.get_source_code.proxies'),
+                filepath_proxies=Statistic._get_source_code_proxies_file(),
                 connect=partial(Statistic.fetch_submission, problem, raise_on_error=True),
             ) as req:
                 _, data = req.proxer.get_connect_ret()

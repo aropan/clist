@@ -1,25 +1,21 @@
 .key {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .value {
-    min-height: 30px;
+  min-height: 30px;
 }
 
 .editable-error-block {
-    padding: 10px;
+  padding: 10px;
 }
 
 .checkbox label {
-    color: #333 !important;
+  color: #333 !important;
 }
 
 #filters .key {
-    margin-top: 5px;
-}
-
-.filter-field-resources {
-    margin-top: 3px;
+  margin-top: 10px;
 }
 
 #accounts-tab>div,
@@ -30,7 +26,33 @@
 #calendars .calendar,
 #subscriptions .subscription
 {
-    margin-top: 7px;
+  margin-top: 5px;
+}
+
+.filter-field .input-group-addon {
+  width: 0%;
+}
+
+.filter-field .input-group input[type=number] {
+  border-left: 0px;
+  border-right: 0px;
+}
+
+.filter-field .select2-search__field {
+  min-width: 200px !important;
+}
+
+.hidden-filter {
+  display: none !important;
+}
+
+.action-filter {
+  font-size: 14px;
+  margin: 3px 1px;
+}
+
+.shown-filter-contest {
+  margin: 3px;
 }
 
 .notification .label,
@@ -38,56 +60,56 @@
 #calendars .calendar .label,
 #subscriptions .subscription .label
 {
-    font-size: 100%;
+  font-size: 100%;
 }
 
 .tooltip.right .tooltip-inner {
-    background-color: #fff;
-    color: #000;
-    border: 1px solid #000;
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #000;
 }
 
 .tooltip.right > .tooltip-arrow {
-    border-right-color: #000;
+  border-right-color: #000;
 }
 
 form.editableform .has-error .editable-input .input-group-addon {
-    color: #555;
-    background-color: #EEE;
-    border: 1px solid #CCC;
+  color: #555;
+  background-color: #EEE;
+  border: 1px solid #CCC;
 }
 
 
 form.editableform .has-error .editable-input .select2-selection,
 form.editableform .has-error .editable-input .form-control {
-    border: 1px solid #CCC;
+  border: 1px solid #CCC;
 }
 
 form.editableform .has-error .editable-input .form-control:focus {
-    border-color: #66AFE9;
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 8px rgba(102, 175, 233, 0.6);
+  border-color: #66AFE9;
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 8px rgba(102, 175, 233, 0.6);
 }
 
 .tab-content {
-    padding: 10px;
+  padding: 10px;
 }
 
 #error-account-tab {
-    display: none;
+  display: none;
 }
 
 .tab-content {
-    border-left: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
-    border-radius: 0px 0px 5px 5px;
-    padding: 10px;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  border-radius: 0px 0px 5px 5px;
+  padding: 10px;
 }
 
 .nav-tabs {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 #calendars .calendar .collapse.in {
-    display: inline;
+  display: inline;
 }

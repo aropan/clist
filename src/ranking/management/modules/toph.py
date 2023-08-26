@@ -176,21 +176,28 @@ class Statistic(BaseModule):
                             or pind < len(contest_problems) and (contest_problems[pind].get('name') == letter or
                                                                  contest_problems[pind].get('short') == letter)
                         ):
-                            if v.value:
-                                title = v.column.node.xpath('.//div[@title]/@title')[0]
-                                if ',' in title:
-                                    variables = yaml.safe_load(re.sub(r',\s*', '\n', title.lower()))
-                                    time = int(variables['minutes'])
-                                    attempt = int(variables['rejections']) + 1
+                            is_hidden = bool(v.column.node.xpath('.//img[contains(@src,"/question.svg")]'))
+                            if v.value or is_hidden:
+                                title = v.column.node.xpath('.//div[@title]/@title')
+                                if title:
+                                    title = title[0]
+                                    if ',' in title:
+                                        variables = yaml.safe_load(re.sub(r',\s*', '\n', title.lower()))
+                                        time = int(variables['minutes'])
+                                        attempt = int(variables['rejections']) + 1
+                                    else:
+                                        _, time, attempt = title.split()
+                                        time = int(time)
+                                        attempt = sum(map(int, re.findall('[0-9]+', attempt)))
                                 else:
-                                    _, time, attempt = title.split()
-                                    time = int(time)
-                                    attempt = sum(map(int, re.findall('[0-9]+', attempt)))
+                                    time, attempt = None, None
 
                                 p = problems.setdefault(letter, {})
 
                                 divs = v.column.node.xpath('.//a[contains(@href,"submissions")]/div/text()')
-                                if len(divs) == 2 and divs[0]:
+                                if is_hidden:
+                                    result = '?'
+                                elif len(divs) == 2 and divs[0]:
                                     result = divs[0].strip()
                                     cs = v.column.node.xpath('.//a[contains(@href,"submissions")]/div/@class')
                                     if result != '0' and cs:
@@ -201,7 +208,7 @@ class Statistic(BaseModule):
                                     if isinstance(row.get('penalty'), int):
                                         penalty = row['penalty']
                                         row['penalty'] = f'{penalty // 60:02}:{penalty % 60:02}'
-                                elif not v.column.node.xpath('.//img[@src]'):
+                                elif not v.column.node.xpath('.//img[@src]') and v.value:
                                     score, *_ = v.value.split()
                                     result = int(score)
                                     p['partial'] = not bool(v.column.node.xpath('.//*[contains(@class,"font-green")]'))

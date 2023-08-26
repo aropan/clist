@@ -130,7 +130,7 @@ table tr.contest.honorable-medal {
   pointer-events: none;
 }
 
-#account-verification a[target="_blank"] {
+#account-verification a {
   font-weight: bold;
 }
 

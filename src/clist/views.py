@@ -5,7 +5,6 @@ from queue import SimpleQueue
 from urllib.parse import parse_qs, urlparse
 
 import arrow
-import pytz
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.contenttypes.models import ContentType
@@ -26,12 +25,13 @@ from favorites.templatetags.favorites_extras import activity_icon
 
 from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
-                                       get_timezone_offset, get_timezones, rating_from_probability, win_probability)
+                                       get_timezone_offset, rating_from_probability, win_probability)
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import make_bins, make_chart
+from utils.datetime import get_timezone
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
 
@@ -50,36 +50,6 @@ def get_add_to_calendar(request):
     if request.user.is_authenticated and hasattr(request.user, "coder"):
         ret = request.user.coder.settings.get("add_to_calendar", ret)
     return settings.ACE_CALENDARS_[ret]['id']
-
-
-def get_timezone(request):
-    tz = request.GET.get("timezone", None)
-    if tz:
-        result = None
-        try:
-            pytz.timezone(tz)
-            result = tz
-        except Exception:
-            if tz.startswith(" "):
-                tz = tz.replace(" ", "+")
-            for tzdata in get_timezones():
-                if str(tzdata["offset"]) == tz or tzdata["repr"] == tz:
-                    result = tzdata["name"]
-                    break
-
-        if result:
-            if "update" in request.GET:
-                if request.user.is_authenticated:
-                    request.user.coder.timezone = result
-                    request.user.coder.save()
-                else:
-                    request.session["timezone"] = result
-                return
-            return result
-
-    if request.user.is_authenticated and hasattr(request.user, "coder"):
-        return request.user.coder.timezone
-    return request.session.get("timezone", settings.DEFAULT_TIME_ZONE_)
 
 
 def get_group_list(request):
@@ -317,7 +287,7 @@ def main(request, party=None):
         return HttpResponse("accepted" if has_tz else "reload")
 
     if coder:
-        ignore_filters = coder.ordered_filter_set.filter(categories__contains=['calendar'])
+        ignore_filters = coder.ordered_filter_set.filter(categories__contains=['calendar'], enabled=True)
         ignore_filters = ignore_filters.filter(name__isnull=False).exclude(name='')
         ignore_filters = list(ignore_filters.values('id', 'name'))
     else:

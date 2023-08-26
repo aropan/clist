@@ -50,6 +50,7 @@ class Account(BaseModel):
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
+    need_verification = models.BooleanField(default=False)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource_id))
