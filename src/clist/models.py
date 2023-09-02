@@ -270,6 +270,11 @@ class SignificantContestManager(VisibleContestManager):
 
 
 class Contest(BaseModel):
+    STANDINGS_KINDS = {
+        'icpc': 'ICPC',
+        'scoring': 'SCORING',
+    }
+
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     kind = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     title = models.CharField(max_length=2048)
@@ -285,6 +290,8 @@ class Contest(BaseModel):
     edit = models.CharField(max_length=100, null=True, blank=True)
     invisible = models.BooleanField(default=False, db_index=True)
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
+    standings_kind = models.CharField(max_length=10, blank=True, null=True, db_index=True,
+                                      choices=STANDINGS_KINDS.items())
     registration_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
     info = models.JSONField(default=dict, blank=True)
@@ -516,12 +523,19 @@ class Contest(BaseModel):
         return self.resource.is_major_kind(self.kind)
 
     @property
+    def standings_start_time(self):
+        start_time = self.info.get('custom_start_time')
+        if start_time:
+            return datetime.fromtimestamp(start_time, tz=timezone.utc)
+        return self.start_time
+
+    @property
     def time_percentage(self):
         if self.is_coming():
             return 0
         if self.is_over() or not self.duration_in_secs or not self.parsed_time:
             return 1
-        ret = (self.parsed_time - self.start_time).total_seconds() / self.duration_in_secs
+        ret = (self.parsed_time - self.standings_start_time).total_seconds() / self.duration_in_secs
         return max(min(ret, 1), 0)
 
     @property
@@ -629,6 +643,7 @@ class Problem(BaseModel):
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
 
     activities = GenericRelation('favorites.Activity', related_query_name='problem')
+    notes = GenericRelation('notes.Note', related_query_name='problem')
 
     objects = BaseManager()
 

@@ -20,7 +20,7 @@
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script>
   contest_duration = {{ contest.duration_in_secs }}
-  contest_start_timestamp = {{ contest.start_time.timestamp }}
+  contest_start_timestamp = {{ contest.standings_start_time.timestamp }}
   contest_time_percentage = {{ contest.time_percentage }}
   contest_timeline = {{ contest_timeline|default:"{}"|to_json }}
   freeze_duration = {{ freeze_duration|to_json }}

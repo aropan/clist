@@ -672,7 +672,7 @@ class requester():
             if response_content_type.startswith('application/json') or force_json:
                 page = json.loads(page)
             else:
-                page = {'page': page}
+                page = {'page': page, '__no_json': True}
 
         return (page, last_url) if return_url else page
 
@@ -684,7 +684,10 @@ class requester():
         return self.opener.open(url).getheaders()
 
     def geturl(self, url):
-        return self.opener.open(url).geturl()
+        try:
+            return self.opener.open(url).geturl()
+        except urllib.error.URLError:
+            return None
 
     def get_link_by_text(self, text, page=None):
         if page is None:

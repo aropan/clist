@@ -95,7 +95,12 @@ class Command(BaseCommand):
                     problems = problems.prefetch_related(Prefetch('contests__statistics_set', queryset=statistics))
                     problems = problems.filter(contests__statistics__account__coders=coder)
 
-                    for problem in tqdm(problems, total=len(problems), desc=desc):
+                    if args.contest:
+                        problem_iter = problems
+                    else:
+                        problem_iter = tqdm(problems, total=len(problems), desc=desc)
+
+                    for problem in problem_iter:
                         solution = get_problem_solution(problem)
                         if 'result' not in solution:
                             continue

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import html
+import json
 import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -55,13 +56,19 @@ class Statistic(BaseModule):
         found = re.search(regex, page, re.DOTALL)
         if found:
             table = parsed_table.ParsedTable(found.group(0))
+            short_names = []
             for r in table:
-                pid = str(int(r['Task'].value))
-                d = problems_info.setdefault(pid, {'short': pid})
-
-                d['name'] = html.unescape(r['Name'].value)
                 href = first(r['Name'].column.node.xpath('.//a/@href'))
-                d['url'] = urljoin(self.standings_url, '/' + href.lstrip('/'))
+                url = urljoin(self.standings_url, '/' + href.lstrip('/'))
+                short = url.rstrip('/').rsplit('/', 1)[-1]
+
+                short_names.append(short)
+                d = problems_info.setdefault(short, {
+                    'short': short,
+                    'name': html.unescape(r['Name'].value),
+                    'url': url,
+                })
+
                 full_score = as_number(r['Max. Score'].value, force=True)
                 if full_score is not None:
                     d['full_score'] = full_score
@@ -73,22 +80,23 @@ class Statistic(BaseModule):
             table = parsed_table.ParsedTable(found.group(0), as_list=True)
         else:
             table = []
+        has_standings_table = bool(found)
+        custom_start_time = 0
 
         for r in table:
             row = OrderedDict()
             problems = row.setdefault('problems', {})
-            problem_idx = 0
             for k, v in r:
                 if 'taskscore' in v.header.attrs.get('class', '').split():
-                    problem_idx += 1
-                    d = problems_info[str(problem_idx)]
-                    try:
-                        score = float(v.value)
-                        p = problems.setdefault(str(problem_idx), {})
-                        p['result'] = v.value
+                    url = v.header.node.xpath('.//a/@href')[0]
+                    assert 'tasks/' in url
+                    short = url.rstrip('/').rsplit('/', 1)[-1]
+                    d = problems_info[short]
+                    score = as_number(v.value, force=True)
+                    if score:
+                        p = problems.setdefault(short, {})
+                        p['result'] = score
                         p['partial'] = score < d['full_score']
-                    except Exception:
-                        pass
                 elif k == 'Abs.':
                     row['solving'] = float(v.value)
                 elif k == 'Rank':
@@ -143,13 +151,28 @@ class Statistic(BaseModule):
                     elif k not in row and v.value:
                         row[k] = v.value
 
-        page = REQ.get(self.url)
-        sample = re.search(r'<a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*official\s*website<\s*/a>', page, re.I)
-        if sample:
-            url = sample.group('href').replace('//', '//ranking.')
-            users = REQ.get(urljoin(url, '/users/'), force_json=True, ignore_codes={404})
-            if REQ.response.code == 404:
-                users = None
+        def get_ranking_url(path):
+            nonlocal ranking_url
+            if not ranking_url:
+                return None
+            try:
+                response = REQ.get(urljoin(ranking_url, path), return_json=True, force_json=True, ignore_codes={404})
+            except json.decoder.JSONDecodeError:
+                return None
+            if isinstance(response, dict) and response.get('__no_json'):
+                return None
+            return response
+
+        ranking_url = self.info.get('_official_website_ranking')
+        if not ranking_url:
+            page = REQ.get(self.url)
+            sample = re.search(r'<a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*official\s*website<\s*/a>', page, re.I)
+            if sample:
+                ranking_url = sample.group('href').replace('//', '//ranking.')
+
+        if ranking_url:
+            ranking_url = REQ.geturl(ranking_url)
+            users = get_ranking_url('users/')
         else:
             users = None
 
@@ -217,42 +240,80 @@ class Statistic(BaseModule):
                 user, member, *_ = mapping[0]
                 add_mapping(user, member)
 
-            contests = REQ.get(urljoin(url, '/contests/'), force_json=True)
+            contests = get_ranking_url('contests/')
             duration_in_secs = 0
             for contest in contests.values():
                 contest['time_shift'] = duration_in_secs
                 duration_in_secs += contest['end'] - contest['begin']
 
-            tasks = REQ.get(urljoin(url, '/tasks/'), force_json=True)
-            tasks = list(tasks.values())
+            tasks = get_ranking_url('tasks/')
+            if isinstance(tasks, dict):
+                tasks = list(tasks.values())
             tasks.sort(key=lambda t: (t['contest'], t['order']))
-            for index, task in enumerate(tasks, start=1):
-                task['index'] = str(index)
             tasks = {t['short_name']: t for t in tasks}
-            history = REQ.get(urljoin(url, '/history'), force_json=True)
+            if not has_standings_table:
+                for task in tasks.values():
+                    problems_info[task['short_name']] = {
+                        'name': task['name'],
+                        'short': task['short_name'],
+                        'full_score': task['max_score'],
+                    }
+            for task in tasks.values():
+                if 'extra_headers' in task:
+                    problems_info[task['short_name']]['subtasks'] = task.pop('extra_headers')
+
+            history = get_ranking_url('history')
+            history.sort(key=lambda x: x[2])
             for user, short, timestamp, score in history:
                 member = user_mapping[user]
                 row = result[member]
                 task = tasks[short]
 
                 problems = row.setdefault('problems', {})
-                problem = problems.setdefault(task['index'], {})
-                problem['result'] = max(score, as_number(problem.get('result', -1)))
+                problem = problems.setdefault(short, {})
+
+                if score > as_number(problem.get('result', -1)):
+                    problem.pop('time', None)
+                    problem['result'] = score
+
+                problem['partial'] = problem['result'] < problems_info[short]['full_score']
+                contest = contests[task['contest']]
+                custom_start_time = max(custom_start_time, contest['end'] - duration_in_secs)
+                time_in_seconds = timestamp - contest['begin']
                 if problem['result'] == score and 'time' not in problem:
-                    contest = contests[task['contest']]
-                    time_in_seconds = timestamp - contest['begin']
                     problem['time_in_seconds'] = time_in_seconds
                     problem['time'] = self.to_time(time_in_seconds, num=3)
                     problem['absolute_time'] = self.to_time(contest['time_shift'] + time_in_seconds, num=3)
-                if 'time' not in problem:
+                if problem.get('_attempt_time', -1) < time_in_seconds:
                     problem.setdefault('attempt', 0)
                     problem['attempt'] += 1
+                    problem['_attempt_time'] = time_in_seconds
+
+            if not has_standings_table:
+                scores = get_ranking_url('scores')
+                for user, score in scores.items():
+                    member = user_mapping[user]
+                    solving = sum(score.values())
+                    result[member]['solving'] = solving
+                for row in result.values():
+                    row.setdefault('solving', 0)
+
+                place = None
+                last = None
+                sorted_result = sorted(result.values(), key=lambda row: row['solving'], reverse=True)
+                for idx, row in enumerate(sorted_result, start=1):
+                    if last != row['solving']:
+                        last = row['solving']
+                        place = idx
+                    row['place'] = place
 
         standings = {
             'result': result,
             'url': self.standings_url,
             'problems': list(problems_info.values()),
             'hidden_fields': [k for k, v in hidden_fields.items() if v],
+            'custom_start_time': custom_start_time if custom_start_time else None,
+            'series': 'ioi',
         }
 
         if duration_in_secs is not None:

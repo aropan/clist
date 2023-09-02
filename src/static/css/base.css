@@ -646,16 +646,44 @@ canvas.rating_history {
   visibility: hidden;
 }
 
-.hidden-activity:has(.selected-activity) {
-  visibility: visible;
-}
-
+.hidden-activity:has(.selected-activity),
 .show-hidden-activity-on-hover:hover .hidden-activity {
   visibility: visible;
 }
 
 .favorite-group {
   width: 0;
+}
+
+/*
+ * Note
+ */
+
+.note.note-edit {
+  color: #bbb;
+}
+
+.note.note-edit.selected-note {
+  color: #8be;
+}
+
+.note-counter {
+  position: absolute;
+  z-index: 10;
+}
+
+textarea.note {
+  width: 100%;
+}
+
+.show-hidden-note-on-hover .note-edit {
+  visibility: hidden;
+}
+
+.show-hidden-note-on-hover:has(.hidden-activity .selected-activity) .note-edit,
+.show-hidden-note-on-hover .note-edit.selected-note,
+.show-hidden-note-on-hover:hover .note-edit {
+  visibility: visible;
 }
 
 /*

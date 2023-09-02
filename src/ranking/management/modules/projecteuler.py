@@ -28,15 +28,10 @@ class Statistic(BaseModule):
 
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'  # noqa
 
-        with REQ.with_proxy(
-            time_limit=10,
-            n_limit=30,
-            filepath_proxies=os.path.join(os.path.dirname(__file__), '.projecteuler.proxies'),
-            connect=lambda req: req.get(self.standings_url, headers={'User-Agent': user_agent}),
-        ) as req:
-            page = req.proxer.get_connect_ret()
-            unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
+        def get_standings_page(req):
+            page = req.get(self.standings_url, headers={'User-Agent': user_agent})
 
+            unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
             if unauthorized:
                 for attempt in range(20):
                     while True:
@@ -69,6 +64,15 @@ class Statistic(BaseModule):
                     raise ExceptionParseStandings('Did not recognize captcha for sign in')
                 page = req.get(self.standings_url)
 
+            return page
+
+        with REQ.with_proxy(
+            time_limit=20,
+            n_limit=30,
+            filepath_proxies=os.path.join(os.path.dirname(__file__), '.projecteuler.proxies'),
+            connect=get_standings_page,
+        ) as req:
+            page = req.proxer.get_connect_ret()
             if req.proxer.proxy:
                 with open('logs/legacy/projecteuler.proxy', 'w') as fo:
                     json.dump(req.proxer.proxy, fo, indent=2)

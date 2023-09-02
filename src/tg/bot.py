@@ -16,6 +16,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.timezone import now
 from pytimeparse.timeparse import timeparse
+from telegram.constants import MAX_MESSAGE_LENGTH
 
 from clist.api.v1 import ContestResource
 from clist.models import Contest, Resource
@@ -67,11 +68,10 @@ def fix_url_text(msg):
         text = re.sub(r'\]', '))', text)
         return f'[{text}]({url})'
 
-    return re.sub(r'\[(.*?)\]\((.*?)\)', url_text_repl, msg)
+    return re.sub(r'\[([\]]*?)\]\(([\)]*?)\)', url_text_repl, msg)
 
 
 class Bot(telegram.Bot):
-    MAX_LENGTH_MESSAGE = 4096
     ADMIN_CHAT_ID = settings.TELEGRAM_ADMIN_CHAT_ID
 
     def __init__(self, *args, **kw):
@@ -472,8 +472,8 @@ class Bot(telegram.Bot):
         if not msg['text']:
             return
         msg['text'] = fix_url_text(msg['text'])
-        if len(msg['text']) > self.MAX_LENGTH_MESSAGE:
-            msg['text'] = msg['text'][:self.MAX_LENGTH_MESSAGE - 3] + '...'
+        if len(msg['text']) > MAX_MESSAGE_LENGTH:
+            msg['text'] = msg['text'][:MAX_MESSAGE_LENGTH - 3] + '...'
 
         chat_id = chat_id or self.from_id
         if ':' in chat_id:

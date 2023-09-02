@@ -12,7 +12,7 @@
 {% block content %}
 
 <div class="row">
-  <div class="{% if more_fields %}col-lg-12{% else %}col-md-12 col-xl-8 col-xl-offset-2 col-lg-10 col-lg-offset-1{% endif %}">
+  <div class="{% if params.more_fields %}col-lg-12{% else %}col-md-12 col-xl-8 col-xl-offset-2 col-lg-10 col-lg-offset-1{% endif %}">
     <form class="form-inline" id="standings-filters" method="get" action="">
       <div class="input-group input-group-sm">
         <div class="input-group-addon">Contest</div>
@@ -56,9 +56,7 @@
 
       {% include 'series_filter.html' %}
 
-      {% for more_field in more_fields %}
-      <input type="hidden" name="more" value="{{ more_field }}"/>
-      {% endfor %}
+      {% include 'more_fields_filter.html' %}
     </form>
 
     <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
@@ -70,7 +68,7 @@
             <th class="n_problems text-muted">{% icon_to 'n_problems' %}</th>
             <th class="event">Event</th>
             <th class="date text-muted">End Time</th>
-            {% for more_field in more_fields %}
+            {% for more_field in params.more_fields %}
             <th class="text-muted">{{ more_field|title_field }}</th>
             {% endfor %}
           </tr>

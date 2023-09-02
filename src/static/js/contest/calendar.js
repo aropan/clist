@@ -103,7 +103,7 @@ $(function() {
             }
             if (favorite_contests) {
                 var icon_class = event.extendedProps.favorite? 'selected-activity fas' : 'far'
-                var favorite_data = 'data-activity-type="fav" data-content-type="contest" data-object-id="' + event.id + '"'
+                var favorite_data = 'data-activity-type="fav" data-content-type="contest" data-object-id="' + event.id + '" data-selected-class="fas" data-unselected-class="far"'
                 var favorite_icon = $('<i onclick="click_activity(event, this)" class="activity fa-star fav ' + icon_class + '" ' + favorite_data + '></i>')
                 favorite_icon.prependTo(element.querySelector('.fc-content'))
             }

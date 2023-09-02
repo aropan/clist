@@ -163,7 +163,7 @@ class Command(BaseCommand):
         parser.add_argument('--without-n_statistics', action='store_true', default=False, help='Force update')
         parser.add_argument('--before-date', default=False, help='Update contests that have been updated to date')
         parser.add_argument('--with-medals', action='store_true', default=False, help='Contest with medals')
-        parser.add_argument('--skip-fill-coder-problems', action='store_true', default=False, help='Skip fill problems')
+        parser.add_argument('--without-fill-coder-problems', action='store_true', default=False)
         parser.add_argument('--contest-id', '-cid', help='Contest id')
 
     def parse_statistic(
@@ -181,13 +181,12 @@ class Command(BaseCommand):
         users=None,
         with_stats=True,
         update_without_new_rating=None,
-        without_contest_filter=False,
         force_problems=False,
         force_socket=False,
         without_n_statistics=False,
         contest_id=None,
         query=None,
-        skip_fill_coder_problems=False,
+        without_fill_coder_problems=False,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -209,7 +208,7 @@ class Command(BaseCommand):
 
         if contest_id:
             contests = contests.filter(pk=contest_id)
-        elif not without_contest_filter:
+        else:
             if with_check:
                 if previous_days is not None:
                     contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
@@ -369,10 +368,11 @@ class Command(BaseCommand):
                         ('invisible', 'invisible'),
                         ('duration_in_secs', 'duration_in_secs'),
                         ('kind', 'kind'),
+                        ('standings_kind', 'standings_kind'),
                     ):
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
-                            contest.save()
+                            contest.save(update_fields=[attr])
 
                     if 'series' in standings:
                         contest.set_series(standings.pop('series'))
@@ -395,7 +395,7 @@ class Command(BaseCommand):
 
                     info_fields = standings.pop('info_fields', [])
                     info_fields += ['divisions_order', 'divisions_addition', 'advance', 'grouped_team', 'fields_values',
-                                    'default_problem_full_score']
+                                    'default_problem_full_score', 'custom_start_time']
                     for field in info_fields:
                         if standings.get(field) is not None and contest.info.get(field) != standings[field]:
                             contest.info[field] = standings[field]
@@ -431,6 +431,7 @@ class Command(BaseCommand):
                     link_accounts = standings.pop('link_accounts', False)
                     is_major_kind = resource.is_major_kind(contest.kind)
                     custom_fields_types = standings.pop('fields_types', {})
+                    standings_kinds = set(Contest.STANDINGS_KINDS.keys())
 
                     results = []
                     if result or users:
@@ -502,6 +503,11 @@ class Command(BaseCommand):
                                     is_accepted = result_str.startswith('+')
                                     is_hidden = result_str.startswith('?')
                                     is_score = result_str and result_str[0].isdigit()
+
+                                    if result_str and result_str[0] not in '+-?':
+                                        standings_kinds.discard('icpc')
+                                    if result_str and as_number(v['result'], force=True) is None:
+                                        standings_kinds.discard('scoring')
 
                                     scored = is_accepted
                                     try:
@@ -591,6 +597,12 @@ class Command(BaseCommand):
 
                             r.setdefault('last_activity', last_activity)
                             results.append(r)
+
+                        if len(standings_kinds) == 1:
+                            standings_kind = standings_kinds.pop()
+                            if contest.standings_kind != standings_kind:
+                                contest.standings_kind = standings_kind
+                                contest.save(update_fields=['standings_kind'])
 
                         members = [r['member'] for r in results]
                         accounts = resource.account_set.filter(key__in=members)
@@ -720,7 +732,7 @@ class Command(BaseCommand):
                                     if user_info_has_rating[division]:
                                         n_upd_account_time += 1
                                         account.updated = updated
-                                        account.save()
+                                        account.save(update_fields=['updated'])
                                 elif (
                                     account_created
                                     or not has_statistics
@@ -729,7 +741,7 @@ class Command(BaseCommand):
                                 ):
                                     n_upd_account_time += 1
                                     account.updated = updated
-                                    account.save()
+                                    account.save(update_fields=['updated'])
 
                             def update_account_info():
                                 if contest.info.get('_push_name_instead_key'):
@@ -748,14 +760,14 @@ class Command(BaseCommand):
                                         account.key != r[field_update_name]
                                     ):
                                         account.name = r[field_update_name]
-                                        account.save()
+                                        account.save(update_fields=['name'])
 
                                 country = r.get('country', None)
                                 if country:
                                     country = countrier.get(country)
                                     if country and country != account.country:
                                         account.country = country
-                                        account.save()
+                                        account.save(update_fields=['country'])
 
                                 contest_addition_update = r.pop('contest_addition_update', {})
                                 if contest_addition_update:
@@ -1030,7 +1042,7 @@ class Command(BaseCommand):
                         if not users:
                             if has_hidden != contest.has_hidden_results:
                                 contest.has_hidden_results = has_hidden
-                                contest.save()
+                                contest.save(update_fields=['has_hidden_results'])
 
                             for field, values in problems_values.items():
                                 if values:
@@ -1185,7 +1197,8 @@ class Command(BaseCommand):
                     contest.refresh_from_db()
                     n_calculated_problem_rating += 1
 
-                call_command('fill_coder_problems', contest=contest.pk)
+                if not without_fill_coder_problems:
+                    call_command('fill_coder_problems', contest=contest.pk)
 
                 if has_standings_result:
                     count += 1
@@ -1311,5 +1324,5 @@ class Command(BaseCommand):
             without_n_statistics=args.without_n_statistics,
             contest_id=args.contest_id,
             query=args.query,
-            skip_fill_coder_problems=args.skip_fill_coder_problems,
+            without_fill_coder_problems=args.without_fill_coder_problems,
         )

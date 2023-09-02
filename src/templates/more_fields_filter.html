@@ -1,0 +1,41 @@
+{% if params.more_fields %}
+{% with more_fields_id=more_fields|default:"more" %}
+<div class="input-group input-group-sm hidden" id="{{ more_fields_id }}-hidden">
+{% if groupby %}
+  <div class="input-group-btn">
+    <button class="btn btn-default{% if groupby == 'more_fields' %} active{% endif %}" name="groupby" value="{% if groupby != 'more_fields' %}more_fields{% endif %}">
+      {% icon_to 'more' %}
+    </button>
+  </div>
+{% else %}
+  <span class="input-group-addon">
+    {% icon_to 'more' %}
+  </span>
+{% endif %}
+
+  <select{% if not noname %} name="{{ more_fields_id }}"{% endif %} id="{{ more_fields_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
+    <option></option>
+    {% for more_field in params.more_fields %}
+      <option value="{{ more_field }}" selected>{{ more_field }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<script>
+  $('#{{ more_fields_id }}').select2({
+    dropdownAutoWidth : true,
+    theme: 'bootstrap',
+    placeholder: '',
+    allowClear: true,
+  }).on('select2:unselecting', function() {
+    $(this).data('unselecting', true);
+  }).on('select2:opening', function(e) {
+    if ($(this).data('unselecting')) {
+      $(this).removeData('unselecting');
+      e.preventDefault();
+    }
+  })
+  $('#{{ more_fields_id }}-hidden').removeClass('hidden')
+</script>
+{% endwith %}
+{% endif %}

@@ -4,6 +4,7 @@ import copy
 import re
 from collections import OrderedDict, defaultdict
 from functools import reduce
+from itertools import accumulate
 
 import arrow
 from asgiref.sync import async_to_sync
@@ -129,8 +130,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         'params': {
             'resources': resources,
             'series': series,
+            'series_link': 'series' in more_fields,
+            'more_fields': more_fields,
         },
-        'more_fields': more_fields,
     }
 
     if get_group_list(request):
@@ -306,11 +308,14 @@ def standings_charts(request, context):
     fields_values = defaultdict(list)
     fields_types = defaultdict(set)
     problems_values = defaultdict(list)
+    problems_scores_values = defaultdict(list)
+    problems_scoring_values = defaultdict(list)
     top_values = []
     scores_values = []
     int_scores = True
     my_values = {}
     is_stage = hasattr(contest, 'stage') and contest.stage is not None
+    is_scoring = contest.standings_kind in {'scoring'}
 
     full_scores = dict()
     for problem in problems:
@@ -358,6 +363,12 @@ def standings_charts(request, context):
             if not is_solved(result):
                 continue
 
+            is_binary = info.get('binary') or str(result).startswith('+')
+            if is_binary:
+                result = full_scores.get(key, 1)
+            result = as_number(result)
+            problems_scores_values[key].append(result)
+
             if 'time_in_seconds' in info:
                 time = info['time_in_seconds']
             else:
@@ -366,15 +377,14 @@ def standings_charts(request, context):
                     continue
                 time = time_in_seconds(stat_timeline, time)
 
+            rel_time = time
+            if context.get('relative_problem_time') and 'absolute_time' in info:
+                rel_time = time_in_seconds(stat_timeline, info['absolute_time'])
+            problems_scoring_values[key].append((time, result))
+
             if is_top:
-                top_time = time
-                if context.get('relative_problem_time') and 'absolute_time' in info:
-                    top_time = time_in_seconds(stat_timeline, info['absolute_time'])
-                is_binary = info.get('binary') or str(result).startswith('+')
-                if is_binary:
-                    result = full_scores.get(key, 1)
-                scores_info['times'].append(top_time)
-                scores_info['scores'].append(as_number(result))
+                scores_info['times'].append(rel_time)
+                scores_info['scores'].append(result)
 
             if info.get('partial'):
                 continue
@@ -404,72 +414,6 @@ def standings_charts(request, context):
     else:
         total_problem_time = contest.duration_in_secs
 
-    if problems_values and total_problem_time:
-        def timeline_format(t):
-            rounding = timeline.get('penalty_rounding', 'floor-minute')
-            if rounding == 'floor-minute':
-                t = int(t / 60)
-                ret = f'{t // 60}:{t % 60:02d}'
-            else:
-                if rounding == 'floor-second':
-                    t = int(t)
-                ret = f'{t // 60 // 60}:{t // 60 % 60:02d}:{t % 60:02d}'
-            return ret
-
-        problems_bins = make_bins(0, total_problem_time, n_bins=default_n_bins)
-        problems_chart = dict(
-            field='solved_problems',
-            type='line',
-            fields=[],
-            labels={},
-            bins=problems_bins,
-            data=[{'bin': timeline_format(b)} for b in problems_bins[:-1]],
-            cubic_interpolation=True,
-            point_radius=0,
-            border_width=2,
-            legend={'position': 'right'},
-        )
-        total_values = []
-        my_data = []
-        for problem in problems:
-            short = get_problem_short(problem)
-            hist, _ = make_histogram(values=problems_values[short], bins=problems_bins)
-            val = 0
-            for h, d in zip(hist, problems_chart['data']):
-                val += h
-                d[short] = val
-            total_values.extend(problems_values[short])
-            problems_chart['fields'].append(short)
-            problems_chart['labels'][short] = get_problem_title(problem)
-
-            if short in my_values.get('problems', {}):
-                idx = bisect.bisect(problems_bins, my_values['problems'][short]) - 1
-                my_data.append({'x': problems_bins[idx], 'y': problems_chart['data'][idx][short], 'field': short})
-        if my_data:
-            my_data.sort(key=lambda d: (d['x'], -d['y']))
-            for d in my_data:
-                d['x'] = timeline_format(d['x'])
-            problems_chart['my_dataset'] = {
-                'data': my_data,
-                'point_radius': 4,
-                'point_hover_radius': 8,
-                'label': my_values['__label'],
-            }
-
-        total_solved_chart = copy.deepcopy(problems_chart)
-        total_solved_chart.update(dict(
-            field='total_solved',
-            fields=False,
-            labels=False,
-            my_dataset=None,
-        ))
-        hist, _ = make_histogram(values=total_values, bins=problems_bins)
-        val = 0
-        for h, d in zip(hist, total_solved_chart['data']):
-            val += h
-            d['value'] = val
-        charts.extend([problems_chart, total_solved_chart])
-
     if top_values:
         top_bins = make_bins(0, contest.duration_in_secs, n_bins=default_n_bins)
         top_chart = dict(
@@ -496,6 +440,129 @@ def standings_charts(request, context):
             top_chart['fields'].append(field)
             top_chart['labels'][field] = f"{scores_info['place'] or '-'}. {scores_info['name']}"
         charts.append(top_chart)
+
+    def timeline_format(t):
+        rounding = timeline.get('penalty_rounding', 'floor-minute')
+        if rounding == 'floor-minute':
+            t = int(t / 60)
+            ret = f'{t // 60}:{t % 60:02d}'
+        else:
+            if rounding == 'floor-second':
+                t = int(t)
+            ret = f'{t // 60 // 60}:{t // 60 % 60:02d}:{t % 60:02d}'
+        return ret
+
+    problems_bins = make_bins(0, total_problem_time, n_bins=default_n_bins)
+    problems_chart = dict(
+        field='solved_problems',
+        type='line',
+        fields=[],
+        labels={},
+        bins=problems_bins,
+        data=[{'bin': timeline_format(b)} for b in problems_bins[:-1]],
+        cubic_interpolation=True,
+        point_radius=0,
+        border_width=2,
+        legend={'position': 'right'},
+    )
+    total_values = []
+    my_data = []
+    for problem in problems:
+        short = get_problem_short(problem)
+        values = problems_values.get(short, [])
+        total_values.extend(values)
+        hist, _ = make_histogram(values=values, bins=problems_bins)
+        for val, d in zip(accumulate(hist), problems_chart['data']):
+            d[short] = val
+        problems_chart['fields'].append(short)
+        problems_chart['labels'][short] = get_problem_title(problem)
+
+        if short in my_values.get('problems', {}):
+            idx = bisect.bisect(problems_bins, my_values['problems'][short]) - 1
+            my_data.append({'x': problems_bins[idx], 'y': problems_chart['data'][idx][short], 'field': short})
+    if my_data:
+        my_data.sort(key=lambda d: (d['x'], -d['y']))
+        for d in my_data:
+            d['x'] = timeline_format(d['x'])
+        problems_chart['my_dataset'] = {
+            'data': my_data,
+            'point_radius': 4,
+            'point_hover_radius': 8,
+            'label': my_values['__label'],
+        }
+    if problems_values:
+        charts.append(problems_chart)
+
+    total_scoring_values = []
+    if is_scoring and problems_scoring_values:
+        problems_scoring_chart = copy.deepcopy(problems_chart)
+        problems_scoring_chart.update(dict(
+            field='scoring_problems',
+            my_dataset=None,
+        ))
+
+        for problem in problems:
+            short = get_problem_short(problem)
+            values = problems_scoring_values.get(short,  [])
+            total_scoring_values.extend(values)
+
+            deltas = [v[1] for v in values]
+            values = [v[0] for v in values]
+            hist, _ = make_histogram(values=values, deltas=deltas, bins=problems_bins)
+            for val, d in zip(accumulate(hist), problems_scoring_chart['data']):
+                d[short] = val
+
+        charts.append(problems_scoring_chart)
+
+    total_solved_chart = copy.deepcopy(problems_chart)
+    total_solved_chart.update(dict(
+        field='total_solved',
+        fields=False,
+        labels=False,
+        my_dataset=None,
+    ))
+    hist, _ = make_histogram(values=total_values, bins=problems_bins)
+    for val, d in zip(accumulate(hist), total_solved_chart['data']):
+        d['value'] = val
+    if total_values:
+        charts.append(total_solved_chart)
+
+    if is_scoring and total_scoring_values:
+        total_scoring_chart = copy.deepcopy(problems_chart)
+        total_scoring_chart.update(dict(
+            field='total_scoring',
+            fields=False,
+            labels=False,
+            my_dataset=None,
+        ))
+        values = [v[0] for v in total_scoring_values]
+        deltas = [v[1] for v in total_scoring_values]
+        hist, _ = make_histogram(values=values, deltas=deltas, bins=problems_bins)
+        for val, d in zip(accumulate(hist), total_scoring_chart['data']):
+            d['value'] = val
+        charts.append(total_scoring_chart)
+
+    if is_scoring and problems_scores_values:
+        total_scores_values = []
+        for values in problems_scores_values.values():
+            total_scores_values.extend(values)
+
+        _, problems_scores_bins = make_histogram(values=total_scores_values, n_bins=default_n_bins)
+        problems_scores_chart = copy.deepcopy(problems_chart)
+        problems_scores_chart.update(dict(
+            field='problems_scores',
+            type='line',
+            bins=problems_scores_bins,
+            data=[{'bin': b} for b in problems_scores_bins[:-1]],
+            my_dataset=None,
+        ))
+        for problem in problems:
+            short = get_problem_short(problem)
+            values = problems_scores_values.get(short, [])
+            hist, _ = make_histogram(values, bins=problems_scores_bins)
+            for val, d in zip(hist, problems_scores_chart['data']):
+                d[short] = val
+        charts.append(problems_scores_chart)
 
     for field in contest.info.get('fields', []):
         types = fields_types.get(field)
@@ -563,6 +630,13 @@ def render_standings_paging(contest, statistics, with_detail=True):
     mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)
     colored_by_group_score = contest.info.get('standings', {}).get('colored_by_group_score')
 
+    contest_fields = contest.info.get('fields', [])
+    has_country = (
+        'country' in contest_fields or
+        '_countries' in contest_fields or
+        statistics.filter(account__country__isnull=False).exists()
+    )
+
     context = {
         'request': HttpRequest(),
         'contest': contest,
@@ -572,6 +646,7 @@ def render_standings_paging(contest, statistics, with_detail=True):
         'without_paginate': True,
         'my_statistics': [],
         'contest_timeline': contest.get_timeline_info(),
+        'has_country': has_country,
         'with_detail': with_detail,
         'per_page': contest.standings_per_page,
         'per_page_more': 0,

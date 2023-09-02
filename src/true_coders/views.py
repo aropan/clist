@@ -32,8 +32,6 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
-from favorites.models import Activity
-
 from clist.models import Contest, ContestSeries, ProblemTag, Resource
 from clist.templatetags.extras import (asfloat, format_time, get_timezones, has_update_statistics_permission,
                                        query_transform, quote_url, relative_url)
@@ -41,7 +39,9 @@ from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
+from favorites.models import Activity
 from my_oauth.models import Service
+from notes.models import Note
 from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
 from pyclist.decorators import context_pagination
@@ -1340,7 +1340,7 @@ def change(request):
             return HttpResponseBadRequest(f"invalid username: found '{username}', expected '{user.username}'")
         with transaction.atomic():
             user.delete()
-    elif name == 'activity':
+    elif name == "activity":
         if value not in ['1', '0']:
             return HttpResponseBadRequest('invalid value')
         value = int(value)
@@ -1377,11 +1377,41 @@ def change(request):
                         Activity.objects.filter(**kwargs).delete()
         else:
             Activity.objects.filter(**kwargs).delete()
+
+        return JsonResponse({'status': 'ok', 'state': value})
+    elif name == "note":
+        content_type = request.POST.get('content_type')
+        object_id = request.POST.get('object_id')
+        if content_type == 'problem':
+            content_type = ContentType.objects.get(app_label='clist', model='problem')
+
+        kwargs = dict(
+            coder=coder,
+            content_type=content_type,
+            object_id=object_id,
+        )
+
+        action = request.POST.get('action')
+
+        if action == 'change':
+            if not value:
+                return HttpResponseBadRequest('empty value')
+            if len(value) > 1000:
+                return HttpResponseBadRequest('too long value')
+            note, created = Note.objects.get_or_create(**kwargs)
+            note.text = value
+            note.save(update_fields=['text'])
+        elif action == 'delete':
+            Note.objects.filter(**kwargs).delete()
+            value = ''
+        else:
+            return HttpResponseBadRequest(f'unknown action = {action}')
+
         return JsonResponse({'status': 'ok', 'state': value})
     else:
-        return HttpResponseBadRequest(f"unknown query = {name}")
+        return HttpResponseBadRequest(f'unknown query = {name}')
 
-    return HttpResponse("accepted")
+    return HttpResponse('accepted')
 
 
 def search(request, **kwargs):

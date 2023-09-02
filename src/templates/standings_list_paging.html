@@ -79,7 +79,7 @@
 <td class="date text-muted small">
   <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>
 </td>
-{% for more_field in more_fields %}
+{% for more_field in params.more_fields %}
 <td>
   {% with value=contest|get_item:more_field info_value=contest.info|get_item:more_field %}
   {% include "field_value.html" with value=value|default:info_value field=more_field %}

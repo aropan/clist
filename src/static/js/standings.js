@@ -52,13 +52,12 @@ function cmp_row(a, b) {
   if (a_score != b_score) {
     return a_score > b_score? -1 : 1
   }
-  var a_penalty = get_row_penalty(a)
-  var b_penalty = get_row_penalty(b)
-  if (a_penalty != b_penalty) {
-    return a_penalty < b_penalty? -1 : 1
-  }
-  if (!a_penalty && !b_penalty) {
-    return 0;
+  if (!contest_timeline['no_penalty_time']) {
+    var a_penalty = get_row_penalty(a)
+    var b_penalty = get_row_penalty(b)
+    if (a_penalty != b_penalty) {
+      return a_penalty < b_penalty? -1 : 1
+    }
   }
   var a_last = get_row_last(a)
   var b_last = get_row_last(b)
@@ -132,7 +131,7 @@ function update_timeline_text(percent = null) {
   var unparsed_percent = Math.min(1, ($.now() / 1000 - contest_start_timestamp) / contest_duration)
   $('#timeline-progress-unparsed').css('width', (unparsed_percent - contest_time_percentage) * 100 + '%')
 
-  if (unfreeze_percent() < percent && percent < 1) {
+  if (freeze_percent() && unfreeze_percent() < percent && percent < 1) {
     var value = (percent - unfreeze_percent()) / freeze_percent() * 100
     $('#timeline-text').text(value.toFixed(2) + '%')
   } else {
@@ -666,7 +665,6 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       clear_tooltip()
       toggle_tooltip_object('table.standings [data-original-title]')
 
-      console.log(scroll_to_element)
       scroll_to_find_me(transform_duration, 0, scroll_to_element)
       rows.css('transform', '')
     },
@@ -929,7 +927,7 @@ $(function() {
     $tooltip.css({'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() + 30})
     $tooltip.show()
 
-    if (unfreeze_percent() < percent && percent < 1) {
+    if (freeze_percent() && unfreeze_percent() < percent && percent < 1) {
       var value = (percent - unfreeze_percent()) / freeze_percent() * 100
       $tooltip.text(value.toFixed(2) + '%')
     } else {

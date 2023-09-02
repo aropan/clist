@@ -914,11 +914,7 @@ $(function() {
         })
         if (data.more) {
             var a = $('<a class="action-filter btn btn-default btn-xs">')
-            $.each(btn[0].attributes, function() {
-                if (this.name.startsWith('data-')) {
-                    a.attr(this.name, this.value);
-                }
-            });
+            copy_attributes(btn, a)
             a.attr('data-page', parseInt(a.attr('data-page')) + 1)
             a.attr('data-success', 'more_show_filter($this, data)')
             a.click(sentAction)

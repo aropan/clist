@@ -11,6 +11,7 @@ from functools import lru_cache, partial
 from pprint import pprint
 
 import pytz
+import requests
 import tqdm
 import yaml
 from django.db import transaction
@@ -309,14 +310,24 @@ class Statistic(BaseModule):
             if stop:
                 return account, False
 
+            if not raise_on_error:
+                profile_url = resource.profile_url.format(**account.dict_with_info())
+                try:
+                    response = requests.head(profile_url)
+                    if response.status_code == 404:
+                        return account, None
+                except Exception:
+                    pass
+
             connect_func = partial(fetch_profile_data, account=account, raise_on_error=True)
             req.proxer.set_connect_func(connect_func)
 
             page = False
+            account_is_china = Statistic.is_china(account)
             while True:
                 try:
                     with rate_limiter:
-                        if Statistic.is_china(account):
+                        if account_is_china:
                             ret = {}
 
                             post = '''
@@ -394,7 +405,7 @@ class Statistic(BaseModule):
                         page = None
                         break
 
-                    if Statistic.is_china(account):
+                    if account_is_china:
                         if raise_on_error:
                             raise e
 
@@ -642,6 +653,7 @@ class Statistic(BaseModule):
                 else:
                     global_ranking = None
                 if global_ranking:
+                    info['global_ranking'] = global_ranking
                     page = (int(global_ranking) + 24) // 25
                     info['global_ranking_page'] = page
 

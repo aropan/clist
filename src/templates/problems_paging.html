@@ -33,7 +33,7 @@
 {% define manual_solution_class|default:system_solution_class as solution_class %}
 
 {% endif %}
-<tr class="show-hidden-activity-on-hover">
+<tr class="show-hidden-activity-on-hover show-hidden-note-on-hover">
   <td class="problem-date-column">
     <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div> </td>
   <td class="problem-rating-column">
@@ -79,7 +79,7 @@
     {% endwith %}
   </td>
   {% endfor %}
-  <td class="problem-name-column {{ solution_class }}" data-solution-class="{{ solution_class }}" data-system-solution-class="{{ system_solution_class }}">
+  <td class="problem-name-column note-holder {{ solution_class }}" data-solution-class="{{ solution_class }}" data-system-solution-class="{{ system_solution_class }}">
     <span class="nowrap">
       <a href="{% url_transform request resource=problem.resource.id %}">
         <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
@@ -88,6 +88,9 @@
         {% trim_to problem.name 50 %}
       {% if problem.url %}</a>{% endif %}
       {% if favorite_problems %}{% activity_action "fav" problem %}{% endif %}
+
+      {% note_action "note" problem %}
+
       <span class="hidden-activity">
       {% activity_action "tdo" problem callback="click_activity_problem_result" %}
       {% activity_action "sol" problem callback="click_activity_problem_result" %}
@@ -109,6 +112,7 @@
       {% endfor %}
       {% if problem.contests.all|length > 1 %}</span>{% endif %}
     </span>
+    <div class="note-text text-muted small">{% if problem.is_note %}{{ problem.note_text }}{% endif %}</div>
   </td>
   <td>
     {% for tag in problem.tags.all %}

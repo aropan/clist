@@ -18,7 +18,7 @@
 
       <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
 
-      <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Problem regex. You can use name:{NAME}, contest:{NAME}, resource:{HOST} or tag:{TAG}.<br>Use && and || and ! for difficult conditions.">
+      <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Problem regex. You can use name:{NAME}, contest:{NAME}, resource:{HOST}, tag:{TAG}, note:{NOTE}.<br>Use && and || and ! for difficult conditions.">
         <i class="fas fa-info"></i>
       </div>
 

@@ -426,6 +426,114 @@ function update_urls_params(params) {
   window.history.replaceState(null, null, url)
 }
 
+function click_note(event, el, callback) {
+  event.preventDefault()
+  var $el = $(el)
+  var $note_holder = $el.closest('.note-holder')
+  if ($note_holder.find('.note-div').length) {
+    return
+  }
+  var $note_text = $note_holder.find('.note-text')
+
+  var $note_div = $('<div class="note-div input-group">')
+  $note_div.appendTo($note_holder)
+  $('.note').focus()
+
+  var $note_textarea = $('<textarea class="note-textarea form-control" rows="1" maxlength="1000">')
+  $note_textarea.appendTo($note_div)
+  $('<span class="note-counter text-muted small"></span>').appendTo($note_div)
+  $note_textarea.on('input', note_textarea_input)
+  $note_textarea.val($note_text.text())
+  $note_text.hide()
+
+  var $button_group = $('<span class="input-group-btn">')
+  $button_group.appendTo($note_div)
+
+  var $accept_note = $('<button class="btn btn-success" type="button"><i class="fas fa-check"></i></button>')
+  $accept_note.appendTo($button_group)
+  copy_attributes($el, $accept_note)
+  $accept_note.attr('data-action', 'change')
+  $accept_note.click(note_action)
+
+  var $delete_note = $('<button class="btn btn-danger" type="button"><i class="far fa-trash-alt"></i></button>')
+  $delete_note.appendTo($button_group)
+  copy_attributes($el, $delete_note)
+  $delete_note.attr('data-action', 'delete')
+  $delete_note.click(note_action)
+
+  $note_textarea.trigger('input')
+}
+
+function note_textarea_input() {
+  var current = $(this).val().length;
+  var max_length = $(this).attr("maxlength");
+  var $counter = $(this).parent().find('.note-counter')
+  $counter.text(`${current}/${max_length}`);
+  var shift = $(this).parent().find('.input-group-btn').width()
+  var margin = 5
+  $counter.css('bottom', margin + 'px')
+  $counter.css('right', shift + 1.5 * margin + 'px')
+}
+
+function note_action() {
+  $el = $(this)
+
+  var $i = $el.find('i')
+  var loading_spinner = null
+  var loading_timeout_id = setTimeout(function() {
+    loading_spinner = $('<i class="fas fa-circle-notch fa-spin"></i>')
+    $i.after(loading_spinner)
+    $i.hide()
+    $el.attr('disabled', 'disabled')
+  }, 100)
+
+  var $holder = $el.closest('.note-holder')
+  var $edit = $holder.find('.note-edit')
+  var $textarea = $holder.find('.note-textarea')
+  var $text = $holder.find('.note-text')
+  var action = $el.attr('data-action')
+
+  $.ajax({
+    type: 'POST',
+    url: change_url,
+    data: {
+      pk: coder_pk,
+      name: 'note',
+      content_type: $el.attr('data-content-type'),
+      object_id: $el.attr('data-object-id'),
+      value: $textarea.val(),
+      action: $el.attr('data-action'),
+    },
+    success: function(data, _, xhr) {
+      if (data['status'] == 'ok') {
+        var value = data['state']
+        if (value) {
+          $edit.addClass('selected-note')
+        } else {
+          $edit.removeClass('selected-note')
+        }
+        $text.text(value)
+        $text.show()
+        $el.closest('.note-div').remove()
+      } else {
+        log_ajax_error(xhr)
+      }
+    },
+    error: function(response) {
+      log_ajax_error(response)
+    },
+    complete: function(data) {
+      clearTimeout(loading_timeout_id)
+      if (loading_spinner) {
+        loading_spinner.remove()
+      }
+      $i.show()
+      $el.removeAttr('disabled')
+    },
+  })
+  return false
+}
+
 function click_activity(event, el, callback) {
   event.preventDefault()
   var loading_spinner = null
@@ -469,7 +577,9 @@ function click_activity(event, el, callback) {
         log_ajax_error(xhr)
       }
     },
-    error: log_ajax_error,
+    error: function(response) {
+      log_ajax_error(response)
+    },
     complete: function(data) {
       clearTimeout(loading_timeout_id)
       if (loading_spinner) {
@@ -479,4 +589,12 @@ function click_activity(event, el, callback) {
     },
   })
   return false
+}
+
+function copy_attributes(src, dst, startswith = 'data-') {
+  $.each(src[0].attributes, function() {
+    if (this.name.startsWith('data-')) {
+      dst.attr(this.name, this.value)
+    }
+  })
 }

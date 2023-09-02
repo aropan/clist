@@ -1,3 +1,7 @@
+.fc-event .activity.fav:not(.selected-activity) {
+    color: #fff;
+}
+
 .fc-day-number {
     font-size: 10px;
 }

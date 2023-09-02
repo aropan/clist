@@ -8,21 +8,29 @@ import re
 import subprocess
 import time
 from datetime import timedelta
+from numbers import Number
 from pprint import pprint  # noqa
 
 import coloredlogs
+import flag
 import humanize
+from django.conf import settings
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
+from django.urls import reverse
 from django.utils import timezone
-from tabulate import tabulate
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.table import Table
 
-from .parse_statistic import Command as ParserCommand
 from clist.models import Contest
-from clist.templatetags.extras import get_problem_name, get_problem_short, has_season, md_escape, md_italic_escape
+from clist.templatetags.extras import (as_number, get_problem_name, get_problem_short, has_season, md_escape,
+                                       md_italic_escape, scoreformat)
 from ranking.models import Statistics
-from tg.bot import Bot, telegram
+from tg.bot import MAX_MESSAGE_LENGTH, Bot, telegram
 from tg.models import Chat
 from utils.attrdict import AttrDict
+from utils.strings import trim_on_newline
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
@@ -43,6 +51,9 @@ class Command(BaseCommand):
         parser.add_argument('--top', type=int, help='Number top ignore query', default=None)
         parser.add_argument('--dryrun', action='store_true', help='Do not send to bot message', default=False)
         parser.add_argument('--dump', help='Dump and restore log file', default=None)
+        parser.add_argument('--force-iterations', type=int, help='Minimum number of iterations before stop', default=0)
+        parser.add_argument('--no-parse-statistic', action='store_true',
+                            help='Do not call command to parse statistics', default=False)
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -64,17 +75,19 @@ class Command(BaseCommand):
 
         problems_info = standings.setdefault('__problems_info', {})
 
-        parser_command = ParserCommand()
-
         iteration = 1 if args.dump else 0
+        forced_iterations = args.force_iterations
+
+        console = Console()
+
         while True:
             subprocess.call('clear', shell=True)
             now = timezone.now()
             print(now)
 
-            contest = Contest.objects.filter(pk=args.cid)
-            parser_command.parse_statistic(contest, without_contest_filter=True)
-            contest = contest.first()
+            if not args.no_parse_statistic:
+                call_command('parse_statistic', contest_id=args.cid, without_fill_coder_problems=True)
+            contest = Contest.objects.get(pk=args.cid)
             resource = contest.resource
             qs = Statistics.objects.filter(contest=contest)
             qs = qs.prefetch_related('account')
@@ -88,7 +101,11 @@ class Command(BaseCommand):
             updated = False
             has_hidden = contest.has_hidden_results
             numbered = 0
-            table_rows = []
+            table = Table()
+            table.add_column('Rank')
+            table.add_column('Score')
+            table.add_column('Text')
+            table.add_column('Pk')
 
             def statistics_sort_key(stat):
                 return (
@@ -122,12 +139,13 @@ class Command(BaseCommand):
                 key = str(stat.account.id)
                 standings_key = standings.get(key, {})
                 problems = standings_key.get('problems', {})
-                message_id = standings_key.get('messageId')
+                message_id = standings_key.get('message_id')
+                message_text = standings_key.get('message_text', '')
 
                 def delete_message():
                     nonlocal message_id
                     if message_id:
-                        for iteration in range(1, 5):
+                        for it in range(3):
                             try:
                                 bot.delete_message(chat_id=tg_chat_id, message_id=message_id)
                                 message_id = None
@@ -139,19 +157,42 @@ class Command(BaseCommand):
                                 raise e
                             except telegram.error.TimedOut as e:
                                 logger.warning(str(e))
-                                time.sleep(iteration)
+                                time.sleep(it)
                                 continue
 
                 p = []
                 has_update = False
                 has_first_ac = False
+                has_max_score = False
                 has_try_first_ac = False
-                has_new_accepted = False
                 has_top = False
+                has_solving_diff = 'solving' not in standings_key or abs(standings_key['solving'] - stat.solving) > 1e-9
+
+                in_time = None
+
+                def time_compare(lhs, rhs):
+
+                    def get_value(val):
+                        if isinstance(val, Number):
+                            val = [val]
+                        else:
+                            val = list(val.split(':'))
+                        return len(val), val
+
+                    for k in ('time_in_seconds', 'time'):
+                        if k not in lhs or k not in rhs:
+                            continue
+                        l_val = get_value(lhs[k])
+                        r_val = get_value(rhs[k])
+                        if l_val != r_val:
+                            return -1 if l_val < r_val else 1
+
+                    return 0
 
                 for k, v in stat.addition.get('problems', {}).items():
                     if 'result' not in v:
                         continue
+
                     p_info = problems_info.setdefault(k, {})
                     p_result = problems.get(k, {}).get('result')
                     result = v['result']
@@ -162,12 +203,16 @@ class Command(BaseCommand):
                         is_accepted = is_accepted or float(result) > 0 and not v.get('partial')
                     except Exception:
                         pass
+                    is_max_score = False
+                    try:
+                        is_max_score = float(result) > p_info.get('max_score', 0)
+                    except Exception:
+                        pass
 
                     if is_hidden:
                         p_info['n_hidden'] = p_info.get('n_hidden', 0) + 1
 
                     if p_result != result or is_hidden:
-                        has_new_accepted |= is_accepted
                         short = k
                         contest_problem = contest_problems.get(k, {})
                         if contest_problem and ('short' not in contest_problem or short != get_problem_short(contest_problem)):  # noqa
@@ -176,12 +221,20 @@ class Command(BaseCommand):
                         if 'url' in contest_problem:
                             short = '[%s](%s)' % (short, contest_problem['url'])
 
-                        m = '%s%s %s' % (short, ('. ' + v['name']) if 'name' in v else '', result)
+                        m = '%s%s `%s`' % (short, ('. ' + v['name']) if 'name' in v else '', scoreformat(result))
 
                         if v.get('verdict'):
                             m += ' ' + md_italic_escape(v['verdict'])
 
                         if p_result != result:
+
+                            if p_result is not None and v.get('partial'):
+                                delta = as_number(result) - (as_number(p_result) or 0)
+                                m += " `%s%s`" % ('+' if delta >= 0 else '', delta)
+
+                            if in_time is None or time_compare(in_time, v) < 0:
+                                in_time = v
+
                             has_update = True
                             if iteration:
                                 if p_info.get('show_hidden') == key:
@@ -192,6 +245,9 @@ class Command(BaseCommand):
                                     if is_accepted:
                                         m += ' FIRST ACCEPTED'
                                         has_first_ac = True
+                                    elif is_max_score:
+                                        m += ' MAX SCORE'
+                                        has_max_score = True
                                     elif is_hidden and not p_info.get('show_hidden'):
                                         p_info['show_hidden'] = key
                                         m += ' TRY FIRST AC'
@@ -201,11 +257,13 @@ class Command(BaseCommand):
                         p.append(m)
                     if is_accepted:
                         p_info['accepted'] = True
+                    if is_max_score:
+                        p_info['max_score'] = float(result)
                     has_hidden = has_hidden or is_hidden
 
                 prev_place = standings_key.get('place')
                 place = stat.place
-                if has_new_accepted and prev_place:
+                if has_solving_diff and prev_place:
                     place = '%s->%s' % (prev_place, place)
                 if args.numbered is not None and re.search(args.numbered, stat.account.key, re.I):
                     numbered += 1
@@ -213,33 +271,44 @@ class Command(BaseCommand):
 
                 msg = ''
                 if place is not None:
-                    msg += '%s. ' % place
-                msg += '_%s_' % md_italic_escape(name)
+                    msg += '`%s`. ' % place
+                account_url = reverse('coder:account', kwargs={'key': stat.account.key, 'host': resource.host})
+                account_url = settings.MAIN_HOST_ + account_url
+                if stat.account.country:
+                    msg += flag.flag(stat.account.country.code)
+                msg += '[%s](%s)' % (name, account_url)
+
+                if has_solving_diff:
+                    msg += ' = `%d`' % stat.solving
+                    if 'penalty' in stat.addition:
+                        msg += rf' `[{stat.addition["penalty"]}]`'
                 if p:
-                    msg = '%s, %s' % (', '.join(p), msg)
+                    msg = '%s (%s)' % (msg, ', '.join(p))
                 if has_top:
                     msg += f' TOP{args.top}'
+                if in_time and 'time' in in_time:
+                    msg = '`[%s]` %s' % (in_time['time'], msg)
 
-                if 'solving' not in standings_key or abs(standings_key['solving'] - stat.solving) > 1e-9:
-                    msg += ' = %d' % stat.solving
-                    if 'penalty' in stat.addition:
-                        msg += f' ({stat.addition["penalty"]})'
-
-                if has_update or has_first_ac or has_try_first_ac:
+                if has_update or has_first_ac or has_try_first_ac or has_max_score:
                     updated = True
 
                 if filtered:
-                    table_rows.append([stat.place, stat.solving, msg, stat.pk])
-                if not args.dryrun and (filtered and has_update or has_first_ac or has_try_first_ac):
+                    table.add_row(str(stat.place), str(stat.solving), Markdown(msg), str(stat.pk))
+                if not args.dryrun and (filtered and has_update or has_first_ac or has_try_first_ac or has_max_score):
                     delete_message()
-                    for iteration in range(1, 5):
+                    if message_text:
+                        message_text += '\n'
+                    message_text += msg
+                    message_text = trim_on_newline(text=message_text, max_length=MAX_MESSAGE_LENGTH)
+
+                    for it in range(3):
                         try:
-                            message = bot.send_message(msg=msg, chat_id=tg_chat_id)
+                            message = bot.send_message(msg=message_text, chat_id=tg_chat_id)
                             message_id = message.message_id
                             break
                         except telegram.error.TimedOut as e:
                             logger.warning(str(e))
-                            time.sleep(iteration * 3)
+                            time.sleep(it * 3)
                             continue
                         except telegram.error.BadRequest as e:
                             logger.error(str(e))
@@ -249,12 +318,12 @@ class Command(BaseCommand):
                     'solving': stat.solving,
                     'place': stat.place,
                     'problems': stat.addition.get('problems', {}),
+                    'message_id': message_id,
+                    'message_text': message_text,
                 }
-                if message_id is not None:
-                    data['messageId'] = message_id
                 standings[key] = data
 
-            print(tabulate(table_rows, showindex=range(1, len(table_rows) + 1), tablefmt='rounded_outline'))
+            console.print(table)
 
             if args.dump is not None and (updated or not os.path.exists(args.dump)):
                 standings_dump = json.dumps(standings, indent=2)
@@ -262,12 +331,12 @@ class Command(BaseCommand):
                     fo.write(standings_dump)
 
             if iteration:
-                is_over = contest.end_time < now
-                if is_over and not has_hidden:
+                is_over = contest.end_time < now or contest.time_percentage >= 1
+                if args.no_parse_statistic or forced_iterations <= 0 and is_over and not has_hidden:
                     break
-                is_coming = now < contest.start_time
+                is_coming = now < contest.standings_start_time
                 if is_coming:
-                    limit = contest.start_time
+                    limit = contest.standings_start_time
                 else:
                     tick = args.delay * 10 if is_over else args.delay
                     limit = now + timedelta(seconds=tick)
@@ -285,3 +354,4 @@ class Command(BaseCommand):
                 print()
 
             iteration += 1
+            forced_iterations -= 1

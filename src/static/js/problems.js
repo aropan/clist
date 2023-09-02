@@ -39,7 +39,9 @@ $(function() {
           value: $(this).prop('checked'),
         },
         success: toggle_show_tags,
-        error: log_ajax_error
+        error: function(response) {
+          log_ajax_error(response)
+        },
       })
     }
     return false

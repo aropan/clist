@@ -19,7 +19,7 @@
     {% endfor %}
   </select>
 
-  {% if more_fields and 'series' in more_fields %}
+  {% if params.series_link %}
   <span class="input-group-addon">
     <input type="checkbox" class="link_series" name="link_{{ series_id }}" title="Link series" data-toggle="tooltip">
   </span>

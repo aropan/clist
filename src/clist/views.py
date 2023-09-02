@@ -20,12 +20,11 @@ from django_super_deduper.merge import MergedModelInstance
 from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
-from favorites.models import Activity
-from favorites.templatetags.favorites_extras import activity_icon
-
 from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
                                        get_timezone_offset, rating_from_probability, win_probability)
+from favorites.models import Activity
+from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
@@ -820,7 +819,7 @@ def update_problems(contest, problems=None, force=False):
 ))
 @context_pagination()
 def problems(request, template='problems.html'):
-    problems = Problem.objects.annotate_favorite(request.user)
+    problems = Problem.objects.annotate_favorite(request.user).annotate_note(request.user)
     problems = problems.select_related('resource')
     problems = problems.prefetch_related('contests')
     problems = problems.prefetch_related('tags')
@@ -893,6 +892,7 @@ def problems(request, template='problems.html'):
                 'n_partial':  {'fields': ['n_partial']},
                 'n_hidden':  {'fields': ['n_hidden']},
                 'n_total':  {'fields': ['n_total']},
+                'note': {'fields': ['note_text__iregex']},
             },
             queryset=problems,
         )
@@ -1018,6 +1018,13 @@ def problems(request, template='problems.html'):
                 'selected': int(status_id in request.GET.getlist('status')),
             }
             for name in ['todo', 'solved', 'reject'] for enable in [True, False]
+        ] + [
+            {
+                'id': (status_id := name if enable else f'no{name}'),
+                'text': activity_icon(name, enable=enable, name='note'),
+                'selected': int(status_id in request.GET.getlist('status')),
+            }
+            for name in ['note'] for enable in [True, False]
         ],
         'html': True,
         'nomultiply': True,
@@ -1031,7 +1038,7 @@ def problems(request, template='problems.html'):
         problems = problems.annotate(is_solved_verdict=Exists(qs.filter(verdict=ProblemVerdict.SOLVED)))
         problems = problems.annotate(is_reject_verdict=Exists(qs.filter(verdict=ProblemVerdict.REJECT)))
         for status in statuses:
-            if status.startswith('no'):
+            if status.startswith('no') and status != 'note':
                 status = status[2:]
                 inverse = True
             else:
@@ -1041,7 +1048,7 @@ def problems(request, template='problems.html'):
                 with_verdicts = True
             else:
                 with_verdicts = False
-            if status in ['todo', 'solved', 'reject']:
+            if status in ['todo', 'solved', 'reject', 'note']:
                 condition = Q(**{f'is_{status}': True})
                 if with_verdicts:
                     if status == 'solved':

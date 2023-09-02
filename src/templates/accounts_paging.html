@@ -4,7 +4,7 @@
 
 {% for account in accounts %}
 <tr{% if account.my_account %} class="info"{% endif %}>
-  <td class="text-muted">{{ forloop.counter0|add:pages.current_start_index }}</td>
+  <td>{{ forloop.counter0|add:pages.current_start_index }}</td>
   <td class="account">
     {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True %}
 
