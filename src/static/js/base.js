@@ -598,3 +598,8 @@ function copy_attributes(src, dst, startswith = 'data-') {
     }
   })
 }
+
+$(function() {
+  $('#filter-collapse').on('shown.bs.collapse', () => { $(window).trigger('resize') })
+  $('#filter-collapse').on('hidden.bs.collapse', () => { $(window).trigger('resize') })
+})

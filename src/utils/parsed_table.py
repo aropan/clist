@@ -72,7 +72,7 @@ class ParsedTableRow(object):
     def __init__(self, row=None):
         if row is not None:
             self.attrs = dict(list(row.items()))
-            self.columns = list(map(ParsedTableCol, iter(row)))
+            self.columns = [ParsedTableCol(col) for col in row if col.tag not in {'style'}]
         else:
             self.attrs = {}
             self.columns = []

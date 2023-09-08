@@ -1,0 +1,23 @@
+<form class="form-inline" method="get" action="">
+    <div id="resource-filters" class="form-group">
+        {% include 'country_filter.html' %}
+
+        <div class="input-group input-group-sm">
+            <span class="input-group-addon">{% icon_to 'period' %}</span>
+            <select name="period" onchange="this.form.submit()">
+                {% for p in periods %}
+                    <option value="{{ p }}"{% if p == params.period %} selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <script>$('select[name="period"]').select2({theme: 'bootstrap', placeholder: 'select period'})</script>
+
+        {% if rating.chart.data or request.GET.rating_from or request.GET.rating_to %}
+        {% include 'range_filter.html' with name='rating' value_key=resource.host from=rating.min to=rating.max %}
+        {% endif %}
+
+        {% include 'range_filter.html' with name='n_participations' value_key=resource.host from=0 to=resource.n_contests %}
+
+        {% include 'range_filter_apply.html' %}
+    </div>
+</form>

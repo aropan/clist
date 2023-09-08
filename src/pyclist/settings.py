@@ -435,6 +435,7 @@ COUNTRIES_OVERRIDE = {
     'PL': {'names': ['Poland', 'Republic of Poland', 'Польша']},
     'RU': {'names': ['Russia', 'Россия', 'Russian Federation', 'Российская Федерация']},
     'SU': {'names': ['Soviet Union', 'Советский Союз']},
+    'TR': {'names': ['Turkey', 'Türkiye', 'Турция']},
 }
 DISABLED_COUNTRIES = {'UM'}
 

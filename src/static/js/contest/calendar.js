@@ -147,8 +147,8 @@ $(function() {
 
         $btnGroup = $(customButtonSelector).first().parent()
         $btnGroup.html(
-            '<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">Custom filters <span class="caret"></span></button><div class="dropdown-menu">'
-            + $btnGroup.html() + '</div>'
+            '<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">Custom filters <span class="caret"></span></button>'
+            + '<div class="dropdown-menu">' + $btnGroup.html() + '</div>'
         )
 
         $(customButtonSelector).click(function (e) {
@@ -165,11 +165,12 @@ $(function() {
 
     $('.fc-cb0-button').attr('id', 'spam-filter');
     $spam_filter = $('#spam-filter')
+    $spam_filter.wrap('<div class="btn-group"></div>')
     $spam_filter.toggleClass('ignore-filter')
     $spam_filter.prop('checked', true)
     $spam_filter.bootstrapToggle({
         on: 'Filtered long',
-        off: 'Disabled fitler',
+        off: 'Disabled filter',
         onstyle: 'default active',
         offstyle: 'default active',
         size: 'small',

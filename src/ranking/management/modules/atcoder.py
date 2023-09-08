@@ -352,6 +352,22 @@ class Statistic(BaseModule):
             with PoolExecutor(max_workers=8) as executor:
                 executor.map(get_problem_full_score, task_info.values())
 
+            if any('full_score' not in t for t in task_info.values()):
+                page = REQ.get(self.url)
+                for match in re.finditer('<table[^>]*>.*</table>', page, re.MULTILINE | re.DOTALL):
+                    table = parsed_table.ParsedTable(match.group(0))
+                    header = [c.value for c in table.header.columns]
+                    if header != ['Task', 'Score']:
+                        continue
+                    for row in table:
+                        short = row['Task'].value
+                        score = as_number(row['Score'].value, force=True)
+                        tasks = [t for t in task_info.values() if t['short'] == short]
+                        if len(tasks) == 1:
+                            for t in tasks:
+                                if 'full_score' not in t:
+                                    t['full_score'] = score
+
             has_rated = False
             has_new_rating = False
 

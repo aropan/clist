@@ -143,8 +143,10 @@ class Statistic(BaseModule):
                 standings['timing_statistic_delta'] = timedelta(minutes=60)
             elif delta < timedelta(days=30):
                 standings['timing_statistic_delta'] = timedelta(days=1)
-            else:
+            elif delta < timedelta(days=365):
                 standings['timing_statistic_delta'] = timedelta(days=7)
+            else:
+                standings['timing_statistic_delta'] = timedelta(days=30)
 
         return standings
 

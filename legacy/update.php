@@ -186,8 +186,8 @@
         $updated_resources[$contest['rid']] = true;
         foreach (array('start_time', 'end_time') as $k) {
             if (isset($contest[$k]) && !is_numeric($contest[$k]) && $contest[$k]) {
-                if (!preg_match('/(?:[\-\+][0-9]+:[0-9]+|\s[A-Z]{3,})$/', $contest[$k]) and strpos($contest[$k], $contest['timezone']) === false) {
-                    $contest[$k] .= " ". $contest['timezone'];
+                if (!preg_match('/(?:[\-\+][0-9]+:[0-9]+|\s[A-Z]{3,}|Z)$/', $contest[$k]) and !empty($contest['timezone']) and strpos($contest[$k], $contest['timezone']) === false) {
+                    $contest[$k] .= " " . $contest['timezone'];
                 }
                 $contest[$k] = preg_replace_callback(
                     '/\s([A-Z]{3,})$/',

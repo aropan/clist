@@ -159,6 +159,7 @@ function clear_data_stat_cell(e) {
     score += parseFloat($(e).attr('data-successful-challenge') || 0) * contest_timeline['challenge_score']['successful']
     score += parseFloat($(e).attr('data-unsuccessful-challenge') || 0) * contest_timeline['challenge_score']['unsuccessful']
   }
+  score += parseFloat($(e).attr('data-more-score') || 0)
   $(e).attr('data-score', score)
 
   $(e).attr('data-penalty', 0)

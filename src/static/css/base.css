@@ -651,7 +651,8 @@ canvas.rating_history {
   visibility: visible;
 }
 
-.favorite-group {
+.favorite-group,
+.favorite-group .input-group-btn {
   width: 0;
 }
 
@@ -763,4 +764,25 @@ a[disabled] {
   pointer-events: none;
   cursor: default;
   color: #aaa;
+}
+
+
+/*
+ * filter collapse
+ */
+
+#filter-collapse {
+  padding: 0px;
+}
+
+#filter-toggle {
+  margin-bottom: 5px;
+  font-size: 10px;
+  line-height: 1.0;
+}
+
+@media (min-width: 768px) {
+  #filter-toggle {
+    display:none
+  }
 }

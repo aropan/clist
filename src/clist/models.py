@@ -53,6 +53,7 @@ class Resource(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     ratings = models.JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
+    last_rating_update_time = models.DateTimeField(null=True, blank=True)
     has_problem_rating = models.BooleanField(default=False)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)

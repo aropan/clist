@@ -1,0 +1,59 @@
+<form class="form-inline" id="problems-filter" method="get" action="">
+  <div class="input-group input-group-sm">
+    <div class="input-group-addon">Problem</div>
+
+    <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
+
+    <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Problem regex. You can use name:{NAME}, contest:{NAME}, resource:{HOST}, tag:{TAG}, note:{NOTE}.<br>Use && and || and ! for difficult conditions.">
+      <i class="fas fa-info"></i>
+    </div>
+
+    <div class="input-group-btn">
+      <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
+    </div>
+  </div>
+
+  {% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}
+
+  {% include 'resource_filter.html' %}
+
+  {% include 'contest_filter.html' with has_problems=True groupby=False %}
+
+  {% include 'tag_filter.html' %}
+
+  {% include "field_to_select.html" with field="field" data=custom_fields_select|simple_select_data %}
+
+  <div class="input-group input-group-sm">
+    <input
+      id="show-tags"
+      type="checkbox"
+      data-style="show-tags"
+      data-toggle="toggle"
+      data-size="small"
+      data-on='{% icon_to 'show' 'Show tags' %}'
+      data-off='{% icon_to 'hide' 'Hide tags' %}'
+      data-onstyle="default"
+      data-offstyle="default"
+      {% if show_tags %} checked{% endif %}
+    >
+  </div>
+  <script>$('#show-tags').bootstrapToggle()</script>
+
+  {% with values=coder.settings.range_filter %}
+
+  {% include "range_filter.html" with name="luck" value_key="problems" from=0 to=100 default_from=42 default_to=60 disabled=coder|iffalse %}
+
+  {% include "range_filter.html" with name="rating" value_key="problems" from=0 to=5000 %}
+
+  {% include "range_filter_apply.html" %}
+
+  {% endwith %}
+
+  {% if favorite_problems %}{% include "favorite_filter.html" %}{% endif %}
+
+  {% include "field_to_select.html" with field="status" data=status_select|simple_select_data %}
+
+  {% include "field_to_select.html" with field="chart" data=chart_select|simple_select_data %}
+
+  {% include "sort_select.html" with field="sort" data=sort_select %}
+</form>

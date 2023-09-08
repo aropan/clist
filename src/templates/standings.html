@@ -170,7 +170,7 @@
 
 
 <div>
-  {% include "standings_filter.html" %}
+  {% include "filter_collapse.html" with include_filter="standings_filters.html" %}
 
   {% if charts %}
     {% include "standings_charts.html" with charts=charts %}

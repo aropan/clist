@@ -46,6 +46,7 @@ class Account(BaseModel):
     last_submission = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
+    rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
@@ -101,16 +102,20 @@ class Account(BaseModel):
             ExpressionIndex(expressions=[Upper('key')]),
             models.Index(fields=['resource', 'key']),
             models.Index(fields=['resource', 'country']),
-            models.Index(fields=['resource', 'last_activity', 'country']),
-            models.Index(fields=['resource', 'n_contests', '-id']),
-            models.Index(fields=['resource', 'last_activity', '-id']),
-            models.Index(fields=['resource', 'rating', '-id']),
+            models.Index(fields=['resource', 'rating']),
+            models.Index(fields=['resource', '-rating']),
             models.Index(fields=['resource', 'rating50']),
-            models.Index(fields=['resource', 'n_contests', 'rating']),
-            models.Index(fields=['resource', 'n_contests', 'rating50']),
-            models.Index(fields=['resource', 'n_contests', 'country']),
+            models.Index(fields=['resource', '-rating50']),
+            models.Index(fields=['resource', 'last_activity']),
+            models.Index(fields=['resource', '-last_activity']),
+            models.Index(fields=['resource', 'n_contests']),
+            models.Index(fields=['resource', '-n_contests']),
             models.Index(fields=['resource', 'n_writers']),
+            models.Index(fields=['resource', '-n_writers']),
             models.Index(fields=['resource', 'updated']),
+            models.Index(fields=['resource', '-updated']),
+            models.Index(fields=['resource', 'rank']),
+            models.Index(fields=['resource', '-rank']),
         ]
 
         unique_together = ('resource', 'key')
@@ -155,6 +160,9 @@ def download_avatar_url(account):
 @receiver(pre_save, sender=Account)
 def set_account_rating(sender, instance, *args, **kwargs):
     if 'rating' in instance.info:
+        if instance.rating != instance.info['rating']:
+            instance.resource.last_rating_update_time = timezone.now()
+            instance.resource.save(update_fields=['last_rating_update_time'])
         instance.rating = instance.info['rating']
         instance.rating50 = instance.rating / 50 if instance.rating is not None else None
     download_avatar_url(instance)

@@ -11,73 +11,8 @@
 {% block content %}
 <div class="col-xl-10 col-xl-offset-1">
   <form class="form-inline" method="get" action="">
-  <div id="accounts-filters" class="form-group">
-    <div class="input-group input-group-sm">
-      <div class="input-group-addon">Account</div>
 
-      <input
-        type="search"
-        name="search"
-        value="{{ request.GET.search }}"
-        class="form-control"
-        {% if request.GET.search %}
-        autofocus
-        onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"
-        {% endif %}
-        autocomplete="off"
-      />
-
-      <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Account regex.<br>You can search accounts after participating in a contest and after parsing statistics.<br>Use && and || and ! for difficult conditions.">
-        <i class="fas fa-info"></i>
-      </div>
-
-      <span class="input-group-btn">
-        <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
-      </span>
-    </div>
-
-    {% if request.GET.sort_order %}
-    <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
-    <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>
-    {% endif %}
-
-    {% if request.GET.chart_column %}
-    <input type="hidden" name="chart_column" value="{{ request.GET.chart_column }}"/>
-    {% endif %}
-
-    {% include 'country_filter.html' with has_country=True groupby=groupby|default:chart %}
-    {% include 'resource_filter.html' with groupby=groupby|default:chart %}
-
-    {% include 'contest_filter.html' with has_statistics=True %}
-    {% if params.contests %}
-    {% include "field_to_select.html" with field="advanced" data=params.advanced_filter %}
-    {% endif %}
-
-    {% if custom_fields %}
-    {% include "field_to_select.html" with field="field" data=custom_fields %}
-    {% endif %}
-
-    {% if request.user.is_authenticated %}
-    {% if request.GET.add_account %}
-    <input type="hidden" name="add_account" value="{{ request.GET.add_account }}"/>
-    {% endif %}
-    <div class="input-group input-group-sm">
-      <button
-        class="btn btn-default btn-sm{% if request.GET.add_account %} active{% endif %}"
-        name="add_account"{% if not request.GET.add_account %}
-        value="on"{% endif %}
-        title="Buttons to add/delete account"
-        data-toggle="tooltip"
-      >
-        <i class="text-muted fas fa-user-plus"></i>
-      </button>
-    </div>
-    {% endif %}
-
-    {% if perms.ranking.link_account %}
-    {% include "coder_filter.html" with nomultiply=True submit="link" coders=params.link_coders %}
-    {% endif %}
-  </div>
+  {% include "filter_collapse.html" with include_filter="accounts_filters.html" %}
 
   {% include "chart.html" with chart=chart %}
 
@@ -106,6 +41,11 @@
             <div class="chart-column" data-field="rating"></div>
             <div>Rating</div>
             <div class="sortable-column" data-column="rating"></div>
+          </th>
+          <th>
+            <div class="chart-column" data-field="rank"></div>
+            <div>Rank</div>
+            <div class="sortable-column" data-column="rank"></div>
           </th>
           <th>
             <div class="chart-column" data-field="n_contests"></div>

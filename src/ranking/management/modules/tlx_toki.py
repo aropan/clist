@@ -46,24 +46,27 @@ class Statistic(BaseModule):
                 raise ExceptionParseStandings(e)
             raise e
 
-        problems_info = []
+        problems_info = collections.OrderedDict()
         state = data['data']['scoreboard']['state']
-        for idx, (code, short, problem_data) in enumerate(
-            zip(state['problemJids'], state['problemAliases'], problems_data['data'])
-        ):
-            problem_data.update(problems_data['problemsMap'][problem_data['problemJid']])
+        problem_shorts = state['problemAliases']
+        problem_scores = state['problemPoints']
+        for problem_data in problems_data['data']:
+            problem_jid = problem_data['problemJid']
+            problem_data.update(problems_data['problemsMap'][problem_jid])
+            idx = state['problemJids'].index(problem_jid)
+            short = problem_shorts[idx]
             title = problem_data['titlesByLanguage'][problem_data['defaultLanguage']]
             info = {
                 'name': title,
                 'code': problem_data['slug'],
                 'short': short,
             }
-            if state['problemPoints']:
-                info['full_score'] = state['problemPoints'][idx]
+            if problem_scores:
+                info['full_score'] = problem_scores[idx]
             elif problem_data['points']:
                 info['full_score'] = problem_data['points']
             info['url'] = self.PROBLEM_URL_FORMAT_.format(url=self.url, short=info['short'])
-            problems_info.append(info)
+            problems_info[short] = info
 
         result = {}
         if users is None or users:
@@ -81,6 +84,7 @@ class Statistic(BaseModule):
                 rows = data['data']['scoreboard']['content']['entries']
                 users_profiles_map = data['profilesMap']
                 for row in rows:
+
                     cjid = row['contestantJid']
                     total -= 1
                     if cjid not in users_profiles_map:
@@ -112,20 +116,21 @@ class Statistic(BaseModule):
                         for idx, score in enumerate(row['scores']):
                             if score is None:
                                 continue
-                            k = problems_info[idx]['short']
-                            p = problems.setdefault(k, {})
+                            short = problem_shorts[idx]
+                            p = problems.setdefault(short, {})
                             p['result'] = score
-                            p['partial'] = problems_info[idx].get('full_score', 100) > score
-                            if not p['partial']:
-                                solving += 1
+                            if short in problems_info:
+                                p['partial'] = problems_info[short].get('full_score', 100) > score
+                                if not p['partial']:
+                                    solving += 1
                     else:
                         for idx, (attempt, penalty, pstate) in enumerate(
                             zip(row['attemptsList'], row['penaltyList'], row['problemStateList'])
                         ):
                             if not attempt:
                                 continue
-                            k = problems_info[idx]['short']
-                            p = problems.setdefault(k, {})
+                            short = problem_shorts[idx]
+                            p = problems.setdefault(short, {})
 
                             if pstate:
                                 solving += 1
@@ -160,7 +165,7 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'url': self.STANDING_URL_FORMAT_.format(self),
-            'problems': problems_info,
+            'problems': list(problems_info.values()),
         }
         return standings
 

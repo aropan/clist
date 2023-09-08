@@ -8,4 +8,7 @@
   <span class="neighbors-standings-url-date">
     <small title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</small>
   </span>
+  {% if perms.clist.change_contest %}
+  <a href="{% url 'admin:clist_contest_change' contest.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+  {% endif %}
 </div>

@@ -293,7 +293,7 @@ def main(request, party=None):
         ignore_filters = []
 
     if not coder or coder.settings.get('calendar_filter_long', True):
-        ignore_filters = ignore_filters + [{'id': 0, 'name': 'Disabled fitler'}]
+        ignore_filters = ignore_filters + [{'id': 0, 'name': 'Disabled filter'}]
 
     context = {
         "ignore_filters": ignore_filters,
@@ -540,8 +540,8 @@ def resource(request, host, template='resource.html', extra_context=None):
 
         coloring_field = resource.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
         if coloring_field:
-            ratings = ratings.annotate(rank=Cast(JSONF(f'info__{coloring_field}'), IntegerField()))
-            aggregations = {'coloring_field': Avg('rank')}
+            ratings = ratings.annotate(_rank=Cast(JSONF(f'info__{coloring_field}'), IntegerField()))
+            aggregations = {'coloring_field': Avg('_rank')}
         else:
             aggregations = None
 

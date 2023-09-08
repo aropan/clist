@@ -2078,6 +2078,7 @@ def accounts(request, template='accounts.html'):
         params['contests'] = contests
 
         contest_filter = Q(contest__in=contests_ids)
+        contest_filter &= Q(addition___no_update_n_contests__isnull=True) | Q(addition___no_update_n_contests=False)
         stats = Statistics.objects.filter(contest_filter)
 
         adv_options = stats.distinct('addition___advance__next').values_list('addition___advance__next', flat=True)
@@ -2118,7 +2119,7 @@ def accounts(request, template='accounts.html'):
 
     context = {'params': params}
     addition_table_fields = ('modified', 'updated', 'created')
-    table_fields = ('rating', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
+    table_fields = ('rating', 'rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
     groupby = request.GET.get('groupby')

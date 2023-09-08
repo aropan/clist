@@ -122,7 +122,7 @@ class ResourceAdmin(BaseModelAdmin):
                            'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
-        ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'ratings']}],
+        ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'last_rating_update_time', 'ratings']}],
         ['Account information', {'fields': ['has_accounts_infos_update', 'has_multi_account',
                                             'has_account_verification', 'accounts_fields']}],
         ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving']}],

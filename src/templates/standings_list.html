@@ -12,52 +12,9 @@
 {% block content %}
 
 <div class="row">
+
   <div class="{% if params.more_fields %}col-lg-12{% else %}col-md-12 col-xl-8 col-xl-offset-2 col-lg-10 col-lg-offset-1{% endif %}">
-    <form class="form-inline" id="standings-filters" method="get" action="">
-      <div class="input-group input-group-sm">
-        <div class="input-group-addon">Contest</div>
-
-        <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-
-        <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Contest regex. You can use name:{NAME}, resource:{HOST}, writer:{HANDLE}, coder:{HANDLE}, account:{HANDLE}, year:{YEAR}, stage:, medal: or advance:<br>Use && and || and ! for difficult conditions.">
-          <i class="fas fa-info"></i>
-        </div>
-
-        <div class="input-group-btn">
-          <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
-        </div>
-      </div>
-
-      <div class="input-group input-group-sm">
-        <input
-          {% if all_standings %}
-          data-on="Parsed"
-          data-off="All"
-          {% else %}
-          data-on="All"
-          data-off="Parsed"
-          {% endif %}
-
-          type="checkbox"
-          name="switch"
-          data-toggle="toggle"
-          data-onstyle="default"
-          data-offstyle="default"
-          data-size="small"
-          onchange="this.form.submit()"
-          {% if switch %}checked{% endif %}
-        />
-      </div>
-      <script>$('input[name="switch"]').bootstrapToggle()</script>
-
-      {% include 'resource_filter.html' %}
-
-      {% if favorite_contests %}{% include 'favorite_filter.html' %}{% endif %}
-
-      {% include 'series_filter.html' %}
-
-      {% include 'more_fields_filter.html' %}
-    </form>
+    {% include "filter_collapse.html" with include_filter="standings_list_filters.html" %}
 
     <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }});</script>
     <div id="standings_list" class="panel panel-default table-responsive">

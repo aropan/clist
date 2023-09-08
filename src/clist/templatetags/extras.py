@@ -942,7 +942,8 @@ def time_in_seconds_format(timeline, seconds, num=2):
 
 
 def get_country_from(context, country, custom_countries):
-    if custom_countries and context['request'].user.is_authenticated and country.code in custom_countries:
+    user = getattr(context['request'], 'user', None)
+    if custom_countries and user and user.is_authenticated and country.code in custom_countries:
         setattr(country, 'flag_code', custom_countries[country.code])
     else:
         setattr(country, 'flag_code', country.code)

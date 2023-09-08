@@ -44,3 +44,7 @@
 #calendar .fc-dayGrid-view .fc-body .fc-row {
     min-height: 0em;
 }
+
+#calendar .fc-toolbar .fc-right .btn-group {
+    margin: 4px;
+}

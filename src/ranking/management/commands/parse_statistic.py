@@ -259,18 +259,6 @@ class Command(BaseCommand):
         if limit:
             contests = contests.order_by('-end_time')[:limit]
 
-        if not users:
-            for c in contests:
-                module = c.resource.module
-                delay_on_success = module.delay_on_success or module.max_delay_after_end
-                if now < c.end_time:
-                    if module.long_contest_divider:
-                        delay_on_success = c.full_duration / module.long_contest_divider
-                    if c.end_time < now + delay_on_success and module.min_delay_after_end:
-                        delay_on_success = c.end_time + module.min_delay_after_end - now
-                c.statistic_timing = now + delay_on_success
-                c.save()
-
         if random_order:
             contests = list(contests)
             shuffle(contests)
@@ -287,6 +275,7 @@ class Command(BaseCommand):
                 name = name[:1020] + '...'
             return name
 
+        has_error = False
         count = 0
         total = 0
         n_upd_account_time = 0
@@ -296,6 +285,8 @@ class Command(BaseCommand):
         progress_bar = tqdm(contests)
         stages_ids = []
         for contest in progress_bar:
+            if stop_on_error and has_error:
+                break
             channel_layer_handler.set_contest(contest)
             resource = contest.resource
             if not hasattr(resource, 'module'):
@@ -614,7 +605,7 @@ class Command(BaseCommand):
 
                             account_created = member not in accounts
                             if account_created:
-                                account = Account.objects.create(resource=resource, key=member)
+                                account = resource.account_set.create(key=member)
                                 accounts[member] = account
                             else:
                                 account = accounts[member]
@@ -1165,9 +1156,6 @@ class Command(BaseCommand):
                     timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
                     if timing_delta is not None:
                         self.logger.info(f'Statistic timing delta = {timing_delta}')
-                        next_timing_statistic = timezone.now() + timing_delta
-                        if next_timing_statistic < contest.statistic_timing:
-                            contest.statistic_timing = next_timing_statistic
                         contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
                     else:
                         contest.info.pop('_timing_statistic_delta_seconds', None)
@@ -1209,11 +1197,11 @@ class Command(BaseCommand):
                 self.logger.debug(colored_format_exc())
                 self.logger.warning(f'contest = {contest}, row = {r}')
                 self.logger.error(f'parse_statistic exception: {e}')
-                if stop_on_error:
-                    break
-            if not parsed:
+                has_error = True
+
+            if not users:
                 module = resource.module
-                delay = module.delay_on_error
+                delay = module.delay_on_success if parsed else module.delay_on_error
                 if now < contest.end_time and module.long_contest_divider:
                     delay = min(delay, contest.full_duration / module.long_contest_divider)
                 if now < contest.end_time < now + delay and module.min_delay_after_end:
@@ -1223,19 +1211,19 @@ class Command(BaseCommand):
                     if now < contest.end_time and module.long_contest_divider:
                         timing_delta /= module.long_contest_divider
                     delay = min(delay, timing_delta)
-
-                contest.statistic_timing = timezone.now() + delay
+                contest.statistic_timing = now + delay
                 contest.save()
-            elif not no_update_results and not users:
-                stages = Stage.objects.filter(
-                    ~Q(pk__in=stages_ids),
-                    contest__start_time__lte=contest.start_time,
-                    contest__end_time__gte=contest.end_time,
-                    contest__resource=resource,
-                )
-                for stage in stages:
-                    if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
-                        stages_ids.append(stage.pk)
+
+                if parsed and not no_update_results:
+                    stages = Stage.objects.filter(
+                        ~Q(pk__in=stages_ids),
+                        contest__start_time__lte=contest.start_time,
+                        contest__end_time__gte=contest.end_time,
+                        contest__resource=resource,
+                    )
+                    for stage in stages:
+                        if Contest.objects.filter(pk=contest.pk, **stage.filter_params).exists():
+                            stages_ids.append(stage.pk)
             channel_layer_handler.send_done(done=parsed)
 
         @lru_cache(maxsize=None)

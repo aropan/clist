@@ -57,6 +57,7 @@ class Statistic(BaseModule):
                     'Total Score': 'solving',
                     'Team': 'name',
                     'name': 'name',
+                    'Username': 'name',
                     'Team Name': 'name',
                     'score + unspent LAM': 'unspent_lam',
                 }
@@ -76,7 +77,9 @@ class Statistic(BaseModule):
                         row['name'] = v
                         row['member'] = f'{v} {season}'
                     else:
-                        row[k] = as_number(v) if k in {'place', 'solving'} else v
+                        if k in {'place', 'solving'}:
+                            v = as_number(v.replace(',', ''))
+                        row[k] = v
                 ret[row['member']] = row
             if not was_place:
                 place = None
@@ -110,8 +113,8 @@ class Statistic(BaseModule):
                 if place_as_int is not None and place_as_int <= len(medals):
                     medal = medals[place_as_int - 1]
                     result['medal'] = medal
-                    result['_medal_title_field'] = '_'
-                    result['_'] = f'{division.title()} {medal.title()}'
+                    result['_medal_title_field'] = '_medal_title'
+                    result['_medal_title'] = f'{division.title()} {medal.title()}'
 
                 scores = result.pop('_scores', {})
 

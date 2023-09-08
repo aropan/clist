@@ -9,6 +9,8 @@
     if ($proxy) {
         echo " (proxy)";
         curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
+    } else {
+        return;
     }
 
     $urls = array('https://projecteuler.net/recent');
@@ -64,7 +66,34 @@
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
-            'key' => $match['key'],
+            'key' => trim($match['key']),
+        );
+    }
+
+    $url = 'https://projecteuler.net/minimal=new';
+    $page = curlexec($url);
+    $lines = explode("\r\n\r\n", $page);
+    $lines = end($lines);
+    $lines = explode("\n", $lines);
+    foreach ($lines as $line) {
+        $data = explode("#", trim($line));
+        if (count($data) < 3) {
+            continue;
+        }
+        $key = trim($data[0]);
+        $start_time = trim($data[2]);
+        if (!is_numeric($key) || !is_numeric($start_time)) {
+            continue;
+        }
+        $contests[] = array(
+            'start_time' => $start_time,
+            'duration' => '00:00',
+            'title' => 'Problem ' . $key,
+            'url' => $URL,
+            'host' => $HOST,
+            'rid' => $RID,
+            'timezone' => $TIMEZONE,
+            'key' => $key,
         );
     }
 

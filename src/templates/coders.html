@@ -10,46 +10,7 @@
 {% block content %}
 
 <div class="col-xl-10 col-xl-offset-1">
-  <form class="form-inline" method="get" action="">
-  <div id="coders-filters" class="form-group">
-    <div class="input-group input-group-sm">
-      <div class="input-group-addon">Coder</div>
-
-      <input
-        type="search"
-        name="search"
-        value="{{ request.GET.search }}"
-        class="form-control"
-        {% if request.GET.search %}
-        autofocus
-        onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"
-        {% endif %}
-        autocomplete="off"
-      />
-
-      <div class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="User regex.<br>Use && and || and ! for difficult conditions.">
-        <i class="fas fa-info"></i>
-      </div>
-
-      <span class="input-group-btn">
-        <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
-      </span>
-    </div>
-
-    {% include 'country_filter.html' with has_country=True %}
-    {% include 'resource_filter.html' %}
-
-    {% include "field_to_select.html" with field='virtual' data=virtual_field %}
-    {% include "field_to_select.html" with field='chat' data=chat_fields %}
-    {% include "field_to_select.html" with field='field' data=custom_fields %}
-
-    {% if request.GET.sort_order %}
-    <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
-    <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>
-    {% endif %}
-  </div>
-
-  </form>
+  {% include "filter_collapse.html" with include_filter="coders_filters.html" %}
 
   <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
   <div id="coders" class="panel panel-default table-responsive">
