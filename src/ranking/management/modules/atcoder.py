@@ -159,17 +159,24 @@ class Statistic(BaseModule):
                             row['time'] = f'{seconds // 60}:{seconds % 60:02d}'
                         st = submissions_times.setdefault((user, task, upsolve), problem.get('submission_time'))
 
+                        has_same_desc = row.get('verdict') == problem.get('verdict')
+                        has_same_desc = has_same_desc and row.get('time') == problem.get('time')
+
                         if score > eps:
                             if (problem_score > score or (
                                 problem_score == score
                                 and 'submission_time' in problem
                                 and row['submission_time'] >= problem['submission_time']
+                                and has_same_desc
                             )):
                                 continue
                             row['result'] = score
                             problem.pop('submission_time', None)
                         elif problem_score < eps and (not st or st < row['submission_time']):
                             problem['result'] = problem_score - 1
+                            row.pop('result', None)
+                        elif problem_score < eps and not has_same_desc:
+                            problem.pop('submission_time', None)
                             row.pop('result', None)
 
                         if 'submission_time' in problem and row['submission_time'] <= problem['submission_time']:
@@ -415,7 +422,10 @@ class Statistic(BaseModule):
                         if v['Penalty'] > 0:
                             p['penalty'] = v['Penalty']
                     else:
-                        p['result'] = -v['Failure']
+                        p_result = -v['Failure']
+                        if p.get('result') != p_result:
+                            p.pop('time', None)
+                        p['result'] = p_result
                 r['solved'] = {'solving': solving}
                 r['IsTeam'] = row.pop('IsTeam')
 
@@ -497,6 +507,7 @@ class Statistic(BaseModule):
                             p['penalty'] = v['Penalty']
                     elif score <= 0 and p_result <= 0 and -v['Failure'] < p_result:
                         p['result'] = -v['Failure']
+                        p.pop('time', None)
 
             if self.info.get('_submissions_info', {}).get('last_submission_time', -1) > 0:
                 for r in result.values():

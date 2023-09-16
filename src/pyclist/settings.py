@@ -624,6 +624,7 @@ FONTAWESOME_ICONS_ = {
     'company': '<i class="fa-fw fas fa-building"></i>',
     'language': '<i class="fa-fw fas fa-code"></i>',
     'languages': '<i class="fa-fw fas fa-code"></i>',
+    'verdicts': '<i class="fas fa-scroll"></i>',
     'league': '<i class="fa-fw fas fa-chess"></i>',
     'degree': '<i class="fa-fw fas fa-user-graduate"></i>',
     'university': '<i class="fa-fw fas fa-university"></i>',

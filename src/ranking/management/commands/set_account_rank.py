@@ -7,12 +7,14 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F, Q, Window
 from django.db.models.functions import Rank
+from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 
 from clist.models import Resource
 from ranking.models import Account
 from utils.attrdict import AttrDict
+from utils.datetime import parse_duration
 from utils.logger import suppress_db_logging_context
 
 
@@ -27,6 +29,7 @@ class Command(BaseCommand):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='resources hosts')
         parser.add_argument('-bs', '--batch-size', type=int, help='batch size', default=1000)
         parser.add_argument('-n', '--limit', type=int, help='number of accounts')
+        parser.add_argument('-td', '--time-delay', help='time delay after rating last update time', default='1 day')
         parser.add_argument('--verbose', action='store_true', help='verbose output')
 
     def log_queryset(self, name, qs):
@@ -39,12 +42,20 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         resources = Resource.objects.filter(has_rating_history=True)
+
+        if args.time_delay:
+            time_delay = parse_duration(args.time_delay)
+            threshold_time = timezone.now() - time_delay
+            resources = resources.filter(rating_update_time__isnull=False,
+                                         rating_update_time__lt=threshold_time)
+
         if args.resources:
             resource_filter = Q()
             for r in args.resources:
                 resource_filter |= Q(host=r) | Q(short_host=r)
             resources = resources.filter(resource_filter)
-            self.log_queryset('resources', resources)
+
+        self.log_queryset('resources', resources)
 
         resource_rank = Window(expression=Rank(), order_by=F('rating').desc())
 
@@ -73,5 +84,7 @@ class Command(BaseCommand):
                         for offset in tqdm(offsets, desc=f'batching to set {field}'):
                             update_values_batch = update_values[offset:offset + args.batch_size]
                             n_updated += Account.objects.bulk_update(update_values_batch, [field])
+            resource.rating_update_time = None
+            resource.save(update_fields=['rating_update_time'])
 
         self.logger.info('n_updated = %d', n_updated)

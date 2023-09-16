@@ -404,6 +404,14 @@ class ListValue(BaseModel):
         ]
 
 
+class ListProblem(BaseModel):
+    problem = models.ForeignKey(Problem, related_name='lists', on_delete=models.CASCADE)
+    coder_list = models.ForeignKey(CoderList, related_name='problems', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('coder_list', 'problem')
+
+
 class Organization(BaseModel):
     name = models.CharField(max_length=255, unique=True)
     abbreviation = models.CharField(max_length=32, blank=True, null=True)

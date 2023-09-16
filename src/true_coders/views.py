@@ -2119,7 +2119,7 @@ def accounts(request, template='accounts.html'):
 
     context = {'params': params}
     addition_table_fields = ('modified', 'updated', 'created')
-    table_fields = ('rating', 'rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
+    table_fields = ('rating', 'overall_rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
     groupby = request.GET.get('groupby')

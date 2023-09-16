@@ -347,7 +347,17 @@ def update_coder_range_filter(coder, values, name):
 def resources(request):
     resources = Resource.priority_objects.all()
     resources = resources.select_related('module')
-    return render(request, 'resources.html', {'resources': resources})
+
+    more_fields = request.user.has_perm('clist.view_more_fields')
+    more_fields = more_fields and [f for f in request.GET.getlist('more') if f] or []
+
+    context = {
+        'resources': resources,
+        'params': {
+            'more_fields': more_fields,
+        }
+    }
+    return render(request, 'resources.html', context)
 
 
 @page_templates((('resources_top_paging.html', None),))

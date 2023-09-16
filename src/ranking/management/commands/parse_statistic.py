@@ -423,6 +423,7 @@ class Command(BaseCommand):
                     is_major_kind = resource.is_major_kind(contest.kind)
                     custom_fields_types = standings.pop('fields_types', {})
                     standings_kinds = set(Contest.STANDINGS_KINDS.keys())
+                    has_more_solving = bool(contest.info.get('_more_solving'))
 
                     results = []
                     if result or users:
@@ -464,9 +465,10 @@ class Command(BaseCommand):
                             last_activity = contest.start_time
                             if r.get('submit_time') and 'timestamp' in custom_fields_types.get('submit_time', []):
                                 last_activity = datetime.fromtimestamp(r['submit_time'], tz=timezone.utc)
+                            total_problems_solving = 0
 
                             def update_problems_info():
-                                nonlocal last_activity
+                                nonlocal last_activity, total_problems_solving
 
                                 problems = r.get('problems', {})
 
@@ -494,10 +496,11 @@ class Command(BaseCommand):
                                     is_accepted = result_str.startswith('+')
                                     is_hidden = result_str.startswith('?')
                                     is_score = result_str and result_str[0].isdigit()
+                                    result_num = as_number(v['result'], force=True)
 
                                     if result_str and result_str[0] not in '+-?':
                                         standings_kinds.discard('icpc')
-                                    if result_str and as_number(v['result'], force=True) is None:
+                                    if result_str and result_num is None:
                                         standings_kinds.discard('scoring')
 
                                     scored = is_accepted
@@ -506,16 +509,18 @@ class Command(BaseCommand):
                                     except Exception:
                                         pass
 
+                                    if scored:
+                                        total_problems_solving += 1 if is_accepted else result_num
+
                                     default_full_score = (
                                         contest.info.get('default_problem_full_score')
                                         or resource.info.get('statistics', {}).get('default_problem_full_score')
                                     )
                                     if default_full_score and is_score:
-                                        v_result = as_number(v['result'])
                                         if default_full_score == 'max':
-                                            p['max_score'] = max(p.get('max_score', float('-inf')), v_result)
+                                            p['max_score'] = max(p.get('max_score', float('-inf')), result_num)
                                         elif default_full_score == 'min':
-                                            p['min_score'] = min(p.get('min_score', float('inf')), v_result)
+                                            p['min_score'] = min(p.get('min_score', float('inf')), result_num)
                                         else:
                                             if 'full_score' not in p:
                                                 for i in standings_p:
@@ -524,7 +529,7 @@ class Command(BaseCommand):
                                                         break
                                                 else:
                                                     p['full_score'] = default_full_score
-                                            if 'partial' not in v and p['full_score'] - v_result > 1e-9:
+                                            if 'partial' not in v and p['full_score'] - result_num > 1e-9:
                                                 v['partial'] = True
                                             if not v.get('partial'):
                                                 solved['solving'] += 1
@@ -585,6 +590,11 @@ class Command(BaseCommand):
                                 r['division'] = default_division
 
                             update_problems_info()
+
+                            if has_more_solving and 'solving' in r:
+                                more_solving = r['solving'] - total_problems_solving
+                                if more_solving:
+                                    r['_more_solving'] = more_solving
 
                             r.setdefault('last_activity', last_activity)
                             results.append(r)
@@ -1041,9 +1051,6 @@ class Command(BaseCommand):
                                     values = list(sorted(values))
                                     if canonize(values) != canonize(contest.info.get(field)):
                                         contest.info[field] = values
-                                    if field not in hidden_fields:
-                                        standings_hidden_fields.append(field)
-                                        hidden_fields.add(field)
 
                             if fields_set and not addition_was_ordereddict:
                                 fields.sort()

@@ -159,7 +159,7 @@ function clear_data_stat_cell(e) {
     score += parseFloat($(e).attr('data-successful-challenge') || 0) * contest_timeline['challenge_score']['successful']
     score += parseFloat($(e).attr('data-unsuccessful-challenge') || 0) * contest_timeline['challenge_score']['unsuccessful']
   }
-  score += parseFloat($(e).attr('data-more-score') || 0)
+  score += parseFloat($(e).attr('data-additional-score') || 0)
   $(e).attr('data-score', score)
 
   $(e).attr('data-penalty', 0)
@@ -261,12 +261,17 @@ function process_stat_cell(e) {
   var penalty = parseFloat(e.getAttribute('data-penalty'))
   var more_penalty = parseFloat(e.getAttribute('data-more-penalty'))
   var more_penalty_factor = contest_timeline['penalty_more'] || 0
-  var selector = contest_timeline['penalty_more_selector']
-  if (selector) {
-    $e.find(selector).text(more_penalty)
+  var penalty_more_selector = contest_timeline['penalty_more_selector']
+  if (penalty_more_selector) {
+    $e.find(penalty_more_selector).text(more_penalty)
   }
   if (more_penalty) {
     penalty += more_penalty * more_penalty_factor
+    $e.attr('data-penalty', penalty)
+  }
+  var additional_penalty = parseFloat(e.getAttribute('data-additional-penalty'))
+  if (additional_penalty) {
+    penalty += additional_penalty
     $e.attr('data-penalty', penalty)
   }
 }

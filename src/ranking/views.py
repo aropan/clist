@@ -1047,10 +1047,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     statistics = statistics.order_by(*order)
 
     view_private_fields = request.user.has_perm('view_private_fields', contest.resource)
-    if view_private_fields:
-        for f in contest_fields:
-            if f in ['_ips']:
-                hidden_fields.append(f)
     fields = get_standings_fields(
         contest,
         division=division,
@@ -1079,8 +1075,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                      'extra_url': url_transform(request, advanced_accounts='true')},
         'ghost': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
         'highlight': {'options': ['true', 'false'], 'noajax': True, 'nomultiply': True},
-        'languages': {'nogroupby': True},
-        'verdicts': {'nogroupby': True},
     }
 
     fields_to_select = OrderedDict()
@@ -1093,17 +1087,17 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         field_to_select.update(fields_to_select_defaults.get(f, {}))
 
     for f in sorted(contest_fields):
+        is_private_field = f.startswith('_')
         f = f.strip('_')
         fk = f.lower()
-        hidden_f = fk in ['languages', 'verdicts'] and (fk not in hidden_fields or fk in hidden_fields_values)
         if (
-            hidden_f
+            is_private_field and fk in ['languages', 'verdicts']
             or fk in [
                 'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
                 'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
                 'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
             ]
-            or view_private_fields and fk in ['ips', 'languages', 'verdicts']
+            or view_private_fields and fk in ['ips']
         ):
             add_field_to_select(f)
 
@@ -1400,6 +1394,16 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             raw_sql += ''' #>>'{}' '''  # trim double quotes
             field = 'ip'
             statistics = statistics.annotate(ip=RawSQL(raw_sql, [])).annotate(groupby=F(field))
+        elif groupby == 'languages':
+            raw_sql = '''json_array_elements((("addition" ->> '_languages'))::json)'''
+            raw_sql += ''' #>>'{}' '''  # trim double quotes
+            field = 'language'
+            statistics = statistics.annotate(language=RawSQL(raw_sql, [])).annotate(groupby=F(field))
+        elif groupby == 'verdicts':
+            raw_sql = '''json_array_elements((("addition" ->> '_verdicts'))::json)'''
+            raw_sql += ''' #>>'{}' '''  # trim double quotes
+            field = 'verdict'
+            statistics = statistics.annotate(verdict=RawSQL(raw_sql, [])).annotate(groupby=F(field))
         elif groupby == 'advanced':
             statistics = statistics.annotate(groupby=Cast(F('advanced'), models.TextField()))
         else:

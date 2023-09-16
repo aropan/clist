@@ -26,6 +26,9 @@
       <th>Account<br/>verification</th>
       <th>Contests<br/>number</th>
       <th>Accounts<br/>number</th>
+      {% for field in params.more_fields %}
+      <th>{% with title_field=field|title_field %}{% for f in title_field.split %}{% if forloop.counter0 %}<br/>{% endif %}{{ f }}{% endfor %}{% endwith %}</th>
+      {% endfor %}
     </tr>
     {% for resource in resources %}
     <tr>
@@ -122,6 +125,14 @@
         &#183;
         {% endif %}
       </td>
+
+      {% for field in params.more_fields %}
+      <td>
+        {% with value=resource|get_item:field %}
+        {% if value is None %}&#183;{% else %}{{ value }}{% endif %}
+        {% endwith %}
+      </td>
+      {% endfor %}
     </tr>
     {% endfor %}
 

@@ -46,7 +46,7 @@ class Account(BaseModel):
     last_submission = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
-    rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
+    overall_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
@@ -114,8 +114,8 @@ class Account(BaseModel):
             models.Index(fields=['resource', '-n_writers']),
             models.Index(fields=['resource', 'updated']),
             models.Index(fields=['resource', '-updated']),
-            models.Index(fields=['resource', 'rank']),
-            models.Index(fields=['resource', '-rank']),
+            models.Index(fields=['resource', 'overall_rank']),
+            models.Index(fields=['resource', '-overall_rank']),
         ]
 
         unique_together = ('resource', 'key')
@@ -161,8 +161,8 @@ def download_avatar_url(account):
 def set_account_rating(sender, instance, *args, **kwargs):
     if 'rating' in instance.info:
         if instance.rating != instance.info['rating']:
-            instance.resource.last_rating_update_time = timezone.now()
-            instance.resource.save(update_fields=['last_rating_update_time'])
+            instance.resource.rating_update_time = timezone.now()
+            instance.resource.save(update_fields=['rating_update_time'])
         instance.rating = instance.info['rating']
         instance.rating50 = instance.rating / 50 if instance.rating is not None else None
     download_avatar_url(instance)

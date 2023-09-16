@@ -122,7 +122,7 @@ class ResourceAdmin(BaseModelAdmin):
                            'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
-        ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'last_rating_update_time', 'ratings']}],
+        ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'rating_update_time', 'ratings']}],
         ['Account information', {'fields': ['has_accounts_infos_update', 'has_multi_account',
                                             'has_account_verification', 'accounts_fields']}],
         ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving']}],
@@ -181,7 +181,7 @@ class ResourceAdmin(BaseModelAdmin):
 
 @admin_register(Problem)
 class ProblemAdmin(BaseModelAdmin):
-    list_display = ['contest', 'index', 'key', 'short', 'name', 'n_tries', 'n_accepted', 'divisions', 'url', 'visible']
+    list_display = ['name', 'index', 'key', 'short', 'n_tries', 'n_accepted', 'divisions', 'url', 'visible']
     list_filter = ['visible', 'resource']
     search_fields = ['contest', 'name']
 

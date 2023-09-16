@@ -19,7 +19,7 @@ RUN chmod 0644 /etc/cron.d/clist
 RUN crontab /etc/cron.d/clist
 
 # Sentry CLI
-RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.12.0" sh
+RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.20.7" sh
 
 ENV APPDIR=/usr/src/legacy
 WORKDIR $APPDIR

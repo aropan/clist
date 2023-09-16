@@ -418,6 +418,18 @@ def url_transform(request, *args, **kwargs):
 
 
 @register.simple_tag
+def query_fields(request, *args, before='&'):
+    updated = request.GET.copy()
+    for k in list(updated.keys()):
+        if k not in args:
+            updated.pop(k)
+    ret = updated.urlencode()
+    if ret:
+        ret = before + ret
+    return ret
+
+
+@register.simple_tag
 def get_countries():
     ret = []
     for c in countries:
