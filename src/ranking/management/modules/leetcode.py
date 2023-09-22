@@ -84,6 +84,7 @@ class Statistic(BaseModule):
                     'name': p['title'],
                     'url': os.path.join(self.url, 'problems', p['title_slug']),
                     'full_score': p['credit'],
+                    'slug': p['title_slug'],
                 }
             )
             for i, p in enumerate(data['questions'], start=1)

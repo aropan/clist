@@ -691,6 +691,7 @@ def update_problems(contest, problems=None, force=False):
 
     new_problem_ids = set()
     old_problem_ids = set(contest.problem_set.values_list('id', flat=True))
+    old_problem_ids |= set(contest.individual_problem_set.values_list('id', flat=True))
     added_problems = dict()
 
     while not contests_queue.empty():
@@ -717,6 +718,7 @@ def update_problems(contest, problems=None, force=False):
                     if prev.get('subname') and prev.get('name') == name:
                         continue
                 prev = dict(problem_info)
+                info = dict(problem_info)
 
                 problem_contest = contest if 'code' not in problem_info else None
 
@@ -724,32 +726,47 @@ def update_problems(contest, problems=None, force=False):
                 if current_contest != contest and not added_problem:
                     continue
 
-                if problem_info.get('_no_problem_url'):
-                    url = getattr(added_problem, 'url', None) or problem_info.get('url')
+                url = info.pop('url', None)
+                if info.pop('_no_problem_url', False):
+                    url = getattr(added_problem, 'url', None) or url
                 else:
-                    url = problem_info.get('url') or getattr(added_problem, 'url', None)
+                    url = url or getattr(added_problem, 'url', None)
 
                 defaults = {
                     'index': index if getattr(added_problem, 'index', index) == index else None,
                     'short': short if getattr(added_problem, 'short', short) == short else None,
                     'name': name,
+                    'slug': info.pop('slug', getattr(added_problem, 'slug', None)),
                     'divisions': getattr(added_problem, 'divisions', []) + ([division] if division else []),
                     'url': url,
-                    'n_tries': problem_info.get('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
-                    'n_accepted': problem_info.get('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
-                    'n_partial': problem_info.get('n_partial', 0) + getattr(added_problem, 'n_partial', 0),
-                    'n_hidden': problem_info.get('n_hidden', 0) + getattr(added_problem, 'n_hidden', 0),
-                    'n_total': problem_info.get('n_total', 0) + getattr(added_problem, 'n_total', 0),
+                    'n_tries': info.pop('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
+                    'n_accepted': info.pop('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
+                    'n_partial': info.pop('n_partial', 0) + getattr(added_problem, 'n_partial', 0),
+                    'n_hidden': info.pop('n_hidden', 0) + getattr(added_problem, 'n_hidden', 0),
+                    'n_total': info.pop('n_total', 0) + getattr(added_problem, 'n_total', 0),
                     'time': max(contest.start_time, getattr(added_problem, 'time', contest.start_time)),
                     'start_time': min(contest.start_time, getattr(added_problem, 'start_time', contest.start_time)),
                     'end_time': max(contest.end_time, getattr(added_problem, 'end_time', contest.end_time)),
                 }
                 if getattr(added_problem, 'rating', None) is not None:
                     problem_info['rating'] = added_problem.rating
-                elif 'rating' in problem_info:
-                    defaults['rating'] = problem_info['rating']
-                if 'visible' in problem_info:
-                    defaults['visible'] = problem_info['visible']
+                    info.pop('rating', None)
+                elif 'rating' in info:
+                    defaults['rating'] = info.pop('rating')
+                if 'visible' in info:
+                    defaults['visible'] = info.pop('visible')
+
+                if 'archive_url' in info:
+                    archive_url = info.pop('archive_url')
+                elif contest.resource.problem_url:
+                    archive_url = contest.resource.problem_url.format(key=key, **defaults)
+                else:
+                    archive_url = getattr(added_problem, 'archive_url', None)
+                defaults['archive_url'] = archive_url
+
+                for field in 'short', 'code', 'name', 'tags':
+                    info.pop(field, None)
+                defaults['info'] = info
 
                 problem, created = Problem.objects.update_or_create(
                     contest=problem_contest,
@@ -799,8 +816,10 @@ def update_problems(contest, problems=None, force=False):
                 for weight, field in (
                     (1, 'index'),
                     (2, 'short'),
+                    (3, 'slug'),
                     (5, 'name'),
                     (10, 'url'),
+                    (15, 'archive_url'),
                 ):
                     similarity_score += weight * (getattr(old_problem, field) == getattr(new_problem, field))
                 if similarity_score > max_similarity_score:
@@ -964,7 +983,8 @@ def problems(request, template='problems.html'):
         tags = list(ProblemTag.objects.filter(pk__in=tags))
 
     custom_fields = [f for f in request.GET.getlist('field') if f]
-    custom_options = ['index', 'short', 'key', 'url', 'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
+    custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url',
+                      'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
     custom_fields_select = {
         'values': [v for v in custom_fields if v and v in custom_options],
         'options': custom_options,

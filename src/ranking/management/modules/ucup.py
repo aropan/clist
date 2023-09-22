@@ -27,12 +27,13 @@ class Statistic(BaseModule):
 
         standings = variables.pop('standings')
         scorings = variables.pop('score')
+        base_url = 'https://qoj.ac/'
 
         problems_infos = []
         problems_urls = []
         for idx, problem_id in enumerate(variables['problems']):
             problem_id = str(problem_id)
-            url = urllib.parse.urljoin(self.standings_url, f'/problem/{problem_id}')
+            url = urllib.parse.urljoin(base_url, f'/problem/{problem_id}')
             problems_urls.append(url)
             problems_infos.append({
                 'short': chr(ord('A') + idx),

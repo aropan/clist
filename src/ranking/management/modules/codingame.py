@@ -366,7 +366,10 @@ class Statistic(BaseModule):
                     return user, None, None
                 return user, False, None
 
-            hist = points_stats['codingamePointsRankingDto'].pop('rankHistorics', None)
+            for history_field in 'rankHistorics', 'rankHistory':
+                hist = points_stats['codingamePointsRankingDto'].pop(history_field, None)
+                if hist:
+                    break
             info = points_stats.pop('codingamer')
             info.setdefault('points', {}).update(points_stats.pop('codingamePointsRankingDto'))
             info.update({k: v for k, v in points_stats.items() if not isinstance(v, list)})
@@ -374,15 +377,15 @@ class Statistic(BaseModule):
             if 'pseudo' in info:
                 info['name'] = info['pseudo']
 
-            if hist is not None:
-                dates = hist.pop('dates')
+            if hist:
+                dates = [h['date'] for h in hist]
                 rating_data = []
                 prev_rating = None
                 n_x_axis = resource.info['ratings']['chartjs']['n_x_axis']
                 size = max(len(dates) // n_x_axis, 1)
                 for offset in range(0, len(dates), size):
                     chunk = list(range(offset, min(len(dates), offset + size)))
-                    ratings = [hist['points'][idx] for idx in chunk]
+                    ratings = [hist[idx].get('points', 0) for idx in chunk]
                     # new_rating = round(sum(ratings) / len(ratings), 2)
                     new_rating = ratings[-1]
                     st = chunk[0]
@@ -391,9 +394,9 @@ class Statistic(BaseModule):
                         'timestamp': dates[fn],
                         'new_rating': new_rating,
                         'name': (f'{st + 1}' if st == fn else f'{st + 1}-{fn + 1}') + f' of {len(dates)}',
-                        'rank_rating': hist['ranks'][fn],
-                        'place': f"{hist['ranks'][fn]:,}",
-                        'total': f"{hist['totals'][fn]:,}",
+                        'rank_rating': hist[fn]['rank'],
+                        'place': f"{hist[fn]['rank']:,}",
+                        'total': f"{hist[fn]['total']:,}",
                     }
                     if prev_rating is not None:
                         r['rating_change'] = round(new_rating - prev_rating, 2)

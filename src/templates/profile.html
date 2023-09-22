@@ -74,6 +74,17 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
                   {{ resource.num_contests }}
                 </span>
               </td>
+              <td>
+                {% if account.overall_rank %}
+                  {% with percent=account.overall_rank|multiply:100|divide:account.resource.n_rating_accounts %}
+                  <span title="Rank: {{ account.overall_rank }} of {{ account.resource.n_rating_accounts }}<br/>Top: {{ percent|format_to_significant_digits:2 }}%" data-html="true" data-toggle="tooltip">
+                    #{{ account.overall_rank }}
+                  </span>
+                  {% endwith %}
+                {% else %}
+                  &mdash;
+                {% endif %}
+              </td>
               <td class="text-left">
                 {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
               </td>

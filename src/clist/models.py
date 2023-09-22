@@ -49,6 +49,7 @@ class Resource(BaseModel):
     color = models.CharField(max_length=20, null=True, blank=True)
     profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     avatar_url = models.CharField(max_length=255, null=True, blank=True, default=None)
+    problem_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     uid = models.CharField(max_length=100, null=True, blank=True)
     info = models.JSONField(default=dict, blank=True)
     ratings = models.JSONField(default=list, blank=True)
@@ -60,6 +61,7 @@ class Resource(BaseModel):
     has_accounts_infos_update = models.BooleanField(default=False)
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
+    n_rating_accounts = models.IntegerField(default=None, null=True, blank=True)
     icon = models.CharField(max_length=255, null=True, blank=True)
     accounts_fields = models.JSONField(default=dict, blank=True)
     avg_rating = models.FloatField(default=None, null=True, blank=True)
@@ -624,7 +626,8 @@ class ContestSeries(BaseModel):
 
 
 class Problem(BaseModel):
-    contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE, related_name='+')
+    contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE,
+                                related_name='individual_problem_set')
     contests = models.ManyToManyField(Contest, blank=True, related_name='problem_set')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     time = models.DateTimeField()
@@ -633,8 +636,10 @@ class Problem(BaseModel):
     index = models.SmallIntegerField(null=True)
     key = models.TextField()
     name = models.TextField()
+    slug = models.TextField(default=None, null=True, blank=True)
     short = models.TextField(default=None, null=True, blank=True)
     url = models.TextField(default=None, null=True, blank=True)
+    archive_url = models.TextField(default=None, null=True, blank=True)
     divisions = ArrayField(models.TextField(), default=None, null=True, blank=True)
     n_tries = models.IntegerField(default=None, null=True, blank=True)
     n_accepted = models.IntegerField(default=None, null=True, blank=True)
@@ -671,6 +676,10 @@ class Problem(BaseModel):
     @property
     def code(self):
         return self.key
+
+    @property
+    def actual_url(self):
+        return self.archive_url or self.url
 
 
 class ProblemTag(BaseModel):

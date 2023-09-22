@@ -227,13 +227,11 @@ class Command(BaseCommand):
                     )
                     start_limit = now - (F('end_time') - F('start_time')) / F('resource__module__long_contest_divider')
                     after_start_divider_query = Q(
-                        stage__isnull=True,
                         resource__module__min_delay_after_end__isnull=True,
                         resource__module__long_contest_divider__isnull=False,
                         start_time__lt=start_limit,
                     )
                     long_contest_query = Q(
-                        stage__isnull=True,
                         resource__module__long_contest_idle__isnull=False,
                         start_time__lt=now - F('resource__module__long_contest_idle'),
                     )
@@ -243,6 +241,7 @@ class Command(BaseCommand):
                     ended = contests.filter(query)
 
                     contests = Contest.objects.filter(Q(pk__in=started) | Q(pk__in=ended))
+                    contests = contests.filter(stage__isnull=True)
             else:
                 contests = contests.filter(start_time__lt=now)
             if title_regex:
@@ -936,7 +935,6 @@ class Command(BaseCommand):
                                 try_calculate_time = contest.calculate_time or (
                                     contest.start_time <= now < contest.end_time and
                                     not resource.info.get('parse', {}).get('no_calculate_time', False) and
-                                    resource.module.long_contest_idle and
                                     contest.full_duration < resource.module.long_contest_idle and
                                     'penalty' in fields_set
                                 )
@@ -1153,9 +1151,11 @@ class Command(BaseCommand):
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
                             update_problems(contest, problems=standings_problems, force=force_problems or not users)
 
-                    timing_delta = standings.get('timing_statistic_delta')
-                    if now < contest.end_time:
-                        timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
+                    timing_delta = None
+                    if contest.full_duration < resource.module.long_contest_idle:
+                        timing_delta = standings.get('timing_statistic_delta', timing_delta)
+                        if now < contest.end_time:
+                            timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
                     if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
                         timing_delta = timing_delta or timedelta(minutes=30)
                     if wait_rating and not has_statistics and results and 'days' in wait_rating:
@@ -1215,8 +1215,6 @@ class Command(BaseCommand):
                     delay = min(delay, contest.end_time + module.min_delay_after_end - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
-                    if now < contest.end_time and module.long_contest_divider:
-                        timing_delta /= module.long_contest_divider
                     delay = min(delay, timing_delta)
                 contest.statistic_timing = now + delay
                 contest.save()

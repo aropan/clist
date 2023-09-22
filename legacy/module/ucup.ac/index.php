@@ -4,8 +4,8 @@
 
     $near_season = date('Y') - 2022;
     for ($season = $near_season; $season <= $near_season + 1; $season += 1) {
-        $URL = "https://ucup.ac/?season=$season";
-        $schedule_page = curlexec($URL);
+        $url = "https://ucup.ac/?season=$season";
+        $schedule_page = curlexec($url);
 
         preg_match_all('#<tr>.*?</tr>#s', $schedule_page, $rows, PREG_SET_ORDER);
         $headers = false;
@@ -19,7 +19,7 @@
             $values = $cols[1];
             foreach ($values as &$value) {
                 if (preg_match('#<a[^>]*href="(?P<href>[^"]*)"[^>]*>#', $value, $match)) {
-                    $value = $match['href'];
+                    $value = url_merge($url, $match['href']);
                 }
                 $value = preg_replace('#<[^?]*>.*$#', '', $value);
                 $value = trim($value);
@@ -54,7 +54,7 @@
                 'end_time' => $end_time,
                 'duration' => $duration,
                 'title' => trim($title),
-                'url' => isset($c['announcement'])? $c['announcement'] : $URL,
+                'url' => isset($c['announcement'])? $c['announcement'] : $url,
                 'standings_url' => $c['scoreboard'],
                 'key' => $key,
                 'host' => $HOST,

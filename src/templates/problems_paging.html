@@ -74,8 +74,8 @@
   {% endif %}
   {% for field in custom_fields_select.values %}
   <td class="problem-field-column">
-    {% with v=problem|get_item:field %}
-    {% if v is None %}<span class="text-muted">&mdash;</span>{% else %}{{ v }}{% endif %}
+    {% with value=problem|get_item:field %}
+    {% if value is None %}<span class="text-muted">&mdash;</span>{% else %}{% include "field_value.html" with field=field value=value %}{% endif %}
     {% endwith %}
   </td>
   {% endfor %}
@@ -84,9 +84,9 @@
       <a href="{% url_transform request resource=problem.resource.id %}">
         <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
       </a>
-      {% if problem.url %}<a href="{{ problem.url }}" target="_blank" rel="noopener">{% endif %}
+      {% if problem.actual_url %}<a href="{{ problem.actual_url }}" target="_blank" rel="noopener">{% endif %}
         {% trim_to problem.name 50 %}
-      {% if problem.url %}</a>{% endif %}
+      {% if problem.actual_url %}</a>{% endif %}
       {% if favorite_problems %}{% activity_action "fav" problem %}{% endif %}
 
       {% note_action "note" problem %}

@@ -29,7 +29,7 @@ class Command(BaseCommand):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='resources hosts')
         parser.add_argument('-bs', '--batch-size', type=int, help='batch size', default=1000)
         parser.add_argument('-n', '--limit', type=int, help='number of accounts')
-        parser.add_argument('-td', '--time-delay', help='time delay after rating last update time', default='1 day')
+        parser.add_argument('-td', '--time-delay', help='time delay after rating last update time', default='3 hours')
         parser.add_argument('--verbose', action='store_true', help='verbose output')
 
     def log_queryset(self, name, qs):
@@ -42,12 +42,18 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         resources = Resource.objects.filter(has_rating_history=True)
+        now = timezone.now()
 
         if args.time_delay:
             time_delay = parse_duration(args.time_delay)
-            threshold_time = timezone.now() - time_delay
-            resources = resources.filter(rating_update_time__isnull=False,
-                                         rating_update_time__lt=threshold_time)
+            threshold_time = now - time_delay
+
+            long_wait = Q(rank_update_time__isnull=True) | Q(rank_update_time__lt=threshold_time)
+            need_update = (
+                Q(rank_update_time__isnull=True) |
+                (Q(rating_update_time__isnull=False) & Q(rank_update_time__lt=F('rating_update_time')))
+            )
+            resources = resources.filter(need_update & long_wait)
 
         if args.resources:
             resource_filter = Q()
@@ -61,30 +67,30 @@ class Command(BaseCommand):
 
         n_updated = 0
         for resource in tqdm(resources, total=len(resources), desc='resources'):
-            for field, rank in (
-                ('rank', resource_rank),
-            ):
-                with transaction.atomic():
-                    qs = Account.objects.filter(resource=resource, rating__isnull=False)
-                    qs = qs.annotate(_rank=rank)
-                    qs = qs.exclude(**{field: F('_rank')})
-                    qs = qs.values('pk', '_rank', field)
-                    self.logger.info('resource = %s, field = %s, number of accounts = %d', resource, field, qs.count())
+            field = 'overall_rank'
+            with transaction.atomic():
+                qs = Account.objects.filter(resource=resource, rating__isnull=False)
+                n_rating_accounts = qs.count()
+                qs = qs.annotate(_rank=resource_rank)
+                qs = qs.exclude(**{field: F('_rank')})
+                qs = qs.values('pk', '_rank', field)
+                self.logger.info('resource = %s, field = %s, number of accounts = %d', resource, field, qs.count())
 
-                    if args.limit:
-                        qs = qs[:args.limit]
+                if args.limit:
+                    qs = qs[:args.limit]
 
-                    if args.verbose:
-                        pprint(qs)
+                if args.verbose:
+                    pprint(qs)
 
-                    update_values = [Account(id=a['pk'], **{field: a['_rank']}) for a in qs]
+                update_values = [Account(id=a['pk'], **{field: a['_rank']}) for a in qs]
 
-                    with suppress_db_logging_context():
-                        offsets = list(range(0, len(update_values), args.batch_size))
-                        for offset in tqdm(offsets, desc=f'batching to set {field}'):
-                            update_values_batch = update_values[offset:offset + args.batch_size]
-                            n_updated += Account.objects.bulk_update(update_values_batch, [field])
-            resource.rating_update_time = None
-            resource.save(update_fields=['rating_update_time'])
+                with suppress_db_logging_context():
+                    offsets = list(range(0, len(update_values), args.batch_size))
+                    for offset in tqdm(offsets, desc=f'batching to set {field}'):
+                        update_values_batch = update_values[offset:offset + args.batch_size]
+                        n_updated += Account.objects.bulk_update(update_values_batch, [field])
+            resource.rank_update_time = now
+            resource.n_rating_accounts = n_rating_accounts
+            resource.save(update_fields=['rank_update_time', 'n_rating_accounts'])
 
         self.logger.info('n_updated = %d', n_updated)

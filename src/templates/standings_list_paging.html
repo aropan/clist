@@ -38,7 +38,7 @@
     <span class="toggle" data-group=".group-resource-{{ contest.resource.pk }}"><i class="fa fa-caret-down"></i></span>
   {% endif %}
 
-  <a href="{% if contest.n_statistics is None and not contest.info.problems  %}{{ contest.standings_url|default:contest.url }}{% else %}{% url 'ranking:standings' contest.title|slug contest.pk %}{% endif %}" class="{% if status %} text-{{ status }}{% endif %}">
+  <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}" class="{% if status %} text-{{ status }}{% endif %}">
   {% trim_to contest.title 60 %}
   </a>
 

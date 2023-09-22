@@ -63,6 +63,7 @@ class Command(BaseCommand):
                             help='limit users for one resource (default is 1000)')
         parser.add_argument('-a', '--all', action='store_true', help='get all accounts and create if needed')
         parser.add_argument('-t', '--top', action='store_true', help='top accounts priority')
+        parser.add_argument('-cid', '--contest-id', default=None, type=int, help='accounts from contest')
         parser.add_argument('--update-new-year', action='store_true', help='force update new year accounts')
         parser.add_argument('--min-rating', default=None, type=int, help='minimum rating')
         parser.add_argument('--min-n-contests', default=None, type=int, help='minimum number of contests')
@@ -130,6 +131,8 @@ class Command(BaseCommand):
                     accounts = accounts.exclude(info__exact={})
                 if args.with_field:
                     accounts = accounts.filter(**{f'info__{args.with_field}__isnull': False})
+                if args.contest_id:
+                    accounts = accounts.filter(statistics__contest_id=args.contest_id)
 
                 total = accounts.count()
                 if not total:
@@ -143,6 +146,8 @@ class Command(BaseCommand):
                 order = ['-has_coders', 'updated']
                 if args.top:
                     order = [F('rating').desc(nulls_last=True)] + order
+                if args.contest_id:
+                    order = ['statistics__place_as_int'] + order
                 accounts = accounts.order_by(*order)
 
                 if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):

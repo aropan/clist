@@ -10,7 +10,8 @@ from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number
 # from ranking.management.modules.common.locator import Locator
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -18,10 +19,20 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None):
         standings_url = self.url.rstrip('/') + '/results'
 
-        try:
-            REQ.get(urljoin(standings_url, '/locale/en'))
-        except Exception as e:
-            LOG.warning(f'Failed to set locale: {e}')
+        def is_english_locale(page):
+            match = re.search('<a[^>]*class="[^"]*font-weight-bold[^"]*"[^>]*>(?P<locale>[^<]+)</a>', page)
+            return match.group('locale').lower().strip() == 'english'
+
+        def set_locale():
+            return REQ.get(urljoin(standings_url, '/locale/en'))
+
+        def get_page(*args, **kwargs):
+            page = REQ.get(*args, **kwargs)
+            if not is_english_locale(page):
+                page = set_locale()
+                if not is_english_locale(page):
+                    raise ExceptionParseStandings('Failed to set locale')
+            return page
 
         problems_infos = OrderedDict()
         result = OrderedDict()
@@ -31,7 +42,7 @@ class Statistic(BaseModule):
         while not nothing:
             n_page += 1
 
-            page = REQ.get(standings_url + f'?page={n_page}')
+            page = get_page(standings_url + f'?page={n_page}')
             table = parsed_table.ParsedTable(page, as_list=True)
             nothing = True
 
@@ -101,10 +112,22 @@ class Statistic(BaseModule):
                 result[r['member']] = r
                 nothing = False
 
+        problems = list(problems_infos.values())
+        for problem in problems:
+            problem_page = get_page(problem['url'])
+            match = re.search(r'<h[^>]*>\s*Task\s*#(?P<key>[^<]*)</h', problem_page)
+            problem['code'] = match.group('key').strip()
+            archive_url = self.resource.problem_url.format(key=problem['code'])
+            try:
+                REQ.head(archive_url)
+                problem['archive_url'] = archive_url
+            except Exception:
+                problem['archive_url'] = None
+
         ret = {
             'hidden_fields': ['affiliation'],
             'url': standings_url,
-            'problems': list(problems_infos.values()),
+            'problems': problems,
             'result': result,
         }
 

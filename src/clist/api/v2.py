@@ -344,6 +344,7 @@ class AccountResource(BaseModelResource):
     handle = fields.CharField('key')
     name = fields.CharField('name', null=True)
     rating = fields.IntegerField('rating', null=True)
+    overall_rank = fields.IntegerField('overall_rank', null=True)
     n_contests = fields.IntegerField('n_contests')
     total_count = fields.BooleanField()
 
@@ -359,8 +360,9 @@ class AccountResource(BaseModelResource):
             'resource': ['exact'],
             'handle': ['exact', 'iregex', 'regex'],
             'rating': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
+            'overall_rank': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
         }
-        ordering = ['id', 'handle', 'rating', 'n_contests']
+        ordering = ['id', 'handle', 'rating', 'overall_rank', 'n_contests']
 
     def build_filters(self, filters=None, *args, **kwargs):
         filters = filters or {}

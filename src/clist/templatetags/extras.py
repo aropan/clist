@@ -1173,3 +1173,11 @@ def has_update_statistics_permission(user, contest):
 @register.filter
 def is_anonymous_user(user):
     return not user or user.username == settings.ANONYMOUS_USER_NAME
+
+
+@register.filter
+def format_to_significant_digits(number, digits):
+    formatted = "{:.{precision}g}".format(number, precision=digits)
+    if 'e' in formatted:
+        formatted = str(float(formatted))
+    return formatted

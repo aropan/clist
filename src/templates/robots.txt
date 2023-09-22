@@ -31,4 +31,6 @@ Disallow: /coders/*?resource=
 Disallow: /resources/top/*?resource=
 Allow:    *?country=
 Allow:    *?resource=
+Disallow: *?country=*&
+Disallow: *?resource=*&
 Disallow: *?
