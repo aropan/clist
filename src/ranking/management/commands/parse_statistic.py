@@ -23,6 +23,8 @@ from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 
+from logify.models import EventLog, EventStatus
+
 from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
                                        time_in_seconds, time_in_seconds_format)
@@ -130,6 +132,17 @@ class tqdm(_tqdm.tqdm):
         self._channel_layer_handler.send_progress(self)
 
 
+def canonize_name(name):
+    while True:
+        v = unescape(name)
+        if v == name:
+            break
+        name = v
+    if len(name) > 1024:
+        name = name[:1020] + '...'
+    return name
+
+
 class Command(BaseCommand):
     help = 'Parsing statistics'
 
@@ -165,6 +178,7 @@ class Command(BaseCommand):
         parser.add_argument('--with-medals', action='store_true', default=False, help='Contest with medals')
         parser.add_argument('--without-fill-coder-problems', action='store_true', default=False)
         parser.add_argument('--contest-id', '-cid', help='Contest id')
+        parser.add_argument('--no-update-problems', action='store_true', default=False, help='No update problems')
 
     def parse_statistic(
         self,
@@ -187,6 +201,7 @@ class Command(BaseCommand):
         contest_id=None,
         query=None,
         without_fill_coder_problems=False,
+        no_update_problems=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -264,16 +279,6 @@ class Command(BaseCommand):
 
         countrier = Countrier()
 
-        def canonize_name(name):
-            while True:
-                v = unescape(name)
-                if v == name:
-                    break
-                name = v
-            if len(name) > 1024:
-                name = name[:1020] + '...'
-            return name
-
         has_error = False
         count = 0
         total = 0
@@ -302,18 +307,23 @@ class Command(BaseCommand):
             progress_bar.set_description(f'contest = {contest}')
             progress_bar.refresh()
             total += 1
+
+            if hasattr(contest, 'stage'):
+                stages_ids.append(contest.stage.pk)
+                count += 1
+                continue
+
             parsed = False
+            exception_error = None
             user_info_has_rating = {}
             to_update_socket = contest.is_running() or contest.has_hidden_results or force_socket
             to_calculate_problem_rating = False
+            event_log = EventLog.objects.create(name='parse_statistic',
+                                                related=contest,
+                                                status=EventStatus.IN_PROGRESS)
 
             try:
                 r = {}
-
-                if hasattr(contest, 'stage'):
-                    stages_ids.append(contest.stage.pk)
-                    count += 1
-                    continue
 
                 now = timezone.now()
                 is_coming = now < contest.start_time
@@ -408,7 +418,7 @@ class Command(BaseCommand):
                         standings_problems = {}
 
                     if no_update_results:
-                        if standings_problems:
+                        if standings_problems and not no_update_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
                             update_problems(contest, standings_problems, force=force_problems)
                         count += 1
@@ -1132,7 +1142,8 @@ class Command(BaseCommand):
                                         if key in problems_ratings:
                                             p['rating'] = problems_ratings[key]
 
-                                update_problems(contest, problems=standings_problems, force=force_problems)
+                                if not no_update_problems:
+                                    update_problems(contest, problems=standings_problems, force=force_problems)
                             contest.save()
 
                             if to_update_socket:
@@ -1147,7 +1158,7 @@ class Command(BaseCommand):
 
                             progress_bar.set_postfix(n_fields=len(fields), n_updated=len(updated_statistics_ids))
                     else:
-                        if standings_problems is not None and standings_problems:
+                        if standings_problems is not None and standings_problems and not no_update_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
                             update_problems(contest, problems=standings_problems, force=force_problems or not users)
 
@@ -1199,12 +1210,17 @@ class Command(BaseCommand):
                     count += 1
                 parsed = True
             except (ExceptionParseStandings, InitModuleException) as e:
+                exception_error = str(e)
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
+                exception_error = str(e)
                 self.logger.debug(colored_format_exc())
                 self.logger.warning(f'contest = {contest}, row = {r}')
                 self.logger.error(f'parse_statistic exception: {e}')
                 has_error = True
+
+            event_log.update_status(status=EventStatus.COMPLETED if parsed else EventStatus.FAILED,
+                                    message=exception_error)
 
             if not users:
                 module = resource.module
@@ -1240,7 +1256,15 @@ class Command(BaseCommand):
                     if update_stage(s):
                         ret = True
             if ret:
-                stage.update()
+                try:
+                    event_log = EventLog.objects.create(name='parse_statistic',
+                                                        related=stage,
+                                                        status=EventStatus.IN_PROGRESS)
+                    stage.update()
+                    event_log.update_status(EventStatus.COMPLETED)
+                except Exception as e:
+                    event_log.update_status(EventStatus.FAILED, message=str(e))
+                    raise e
             return ret
 
         if stages_ids:
@@ -1318,4 +1342,5 @@ class Command(BaseCommand):
             contest_id=args.contest_id,
             query=args.query,
             without_fill_coder_problems=args.without_fill_coder_problems,
+            no_update_problems=args.no_update_problems,
         )

@@ -1095,7 +1095,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             or fk in [
                 'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
                 'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
-                'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost',
+                'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost', 'badge',
             ]
             or view_private_fields and fk in ['ips']
         ):
@@ -1271,7 +1271,21 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 filt |= Q(**{'addition___languages__contains': [lang]})
         elif field == 'verdicts':
             for verdict in values:
+                if verdict == 'any':
+                    filt = Q(**{'addition___verdicts__isnull': False})
+                    break
                 filt |= Q(**{'addition___verdicts__contains': [verdict]})
+        elif field == 'badge':
+            if 'badge' not in fields:
+                fields['badge'] = 'Badge'
+            for badge in values:
+                if badge == 'any':
+                    filt = Q(**{'addition__badge__isnull': False})
+                    break
+                if badge == 'None':
+                    filt |= Q(**{'addition__badge__isnull': True})
+                else:
+                    filt |= Q(**{'addition__badge__title': badge})
         elif field == 'ips':
             for ip in values:
                 if ip == 'any':
@@ -1404,6 +1418,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             raw_sql += ''' #>>'{}' '''  # trim double quotes
             field = 'verdict'
             statistics = statistics.annotate(verdict=RawSQL(raw_sql, [])).annotate(groupby=F(field))
+        elif groupby == 'badge':
+            statistics = statistics.annotate(groupby=JSONF('addition__badge__title'))
         elif groupby == 'advanced':
             statistics = statistics.annotate(groupby=Cast(F('advanced'), models.TextField()))
         else:

@@ -40,6 +40,10 @@
           {% endif %}
           </a>
         </span>
+      {% elif 'badge' in field and value|get_item:'icon' %}
+        <span{% if value.title %} title="{{ value.title }}" data-toggle="tooltip"{% endif %}>
+          <img src="{{ value.icon }}" height="16px"/>
+        </span>
       {% elif value.url %}
         <a href="{{ value.url }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
       {% elif value|startswith:"http" %}

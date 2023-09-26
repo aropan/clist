@@ -11,6 +11,8 @@ from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 
+from logify.models import EventLog, EventStatus
+
 from clist.models import Resource
 from ranking.models import Account
 from utils.attrdict import AttrDict
@@ -67,6 +69,9 @@ class Command(BaseCommand):
 
         n_updated = 0
         for resource in tqdm(resources, total=len(resources), desc='resources'):
+            event_log = EventLog.objects.create(name='set_account_rank',
+                                                related=resource,
+                                                status=EventStatus.IN_PROGRESS)
             field = 'overall_rank'
             with transaction.atomic():
                 qs = Account.objects.filter(resource=resource, rating__isnull=False)
@@ -74,7 +79,8 @@ class Command(BaseCommand):
                 qs = qs.annotate(_rank=resource_rank)
                 qs = qs.exclude(**{field: F('_rank')})
                 qs = qs.values('pk', '_rank', field)
-                self.logger.info('resource = %s, field = %s, number of accounts = %d', resource, field, qs.count())
+                message = f'field = {field}, number of accounts = {qs.count()}'
+                self.logger.info(f'resource = {resource}, {message}')
 
                 if args.limit:
                     qs = qs[:args.limit]
@@ -89,6 +95,7 @@ class Command(BaseCommand):
                     for offset in tqdm(offsets, desc=f'batching to set {field}'):
                         update_values_batch = update_values[offset:offset + args.batch_size]
                         n_updated += Account.objects.bulk_update(update_values_batch, [field])
+            event_log.update_status(EventStatus.COMPLETED, message=message)
             resource.rank_update_time = now
             resource.n_rating_accounts = n_rating_accounts
             resource.save(update_fields=['rank_update_time', 'n_rating_accounts'])

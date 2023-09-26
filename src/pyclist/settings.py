@@ -105,6 +105,7 @@ INSTALLED_APPS = (
     'guardian',
     'django_rq',
     'notes',
+    'logify',
 )
 
 MIDDLEWARE = (
@@ -693,6 +694,8 @@ FONTAWESOME_ICONS_ = {
     'more': '<i class="fa-fw fas fa-ellipsis-h"></i>',
     'note': {'icon': '<i class="far fa-edit"></i>', 'name': 'fa-edit', 'check_field': 'is_note',
              'selected_class': 'far note-edit', 'unselected_class': 'far note-edit'},
+    'badge': {'icon': '<i class="fas fa-tag"></i>'},
+    'virtual': '<i class="fas fa-globe"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

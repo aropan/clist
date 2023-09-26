@@ -7,13 +7,14 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime
 from pprint import pprint
+from time import sleep
 
 import pytz
 import requests
 import tqdm
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -25,11 +26,12 @@ class Statistic(BaseModule):
         REQ.get('https://facebook.com/')
         form = REQ.form(action='/login/')
         if form:
+            form['post'].pop('sign_up', None)
             data = {
                 'email': conf.FACEBOOK_USERNAME,
                 'pass': conf.FACEBOOK_PASSWORD,
             }
-            REQ.submit_form(data=data, form=form)
+            signin_page = REQ.submit_form(data=data, form=form)
             form = REQ.form(action='/login/')
             if form and 'validate-password' in form['url']:
                 REQ.submit_form(data=data, form=form)
@@ -53,15 +55,29 @@ class Statistic(BaseModule):
                 'doc_id': self.info['_scoreboard_ids'][name],
             }
 
-            ret = REQ.get(
-                self.API_GRAPH_URL_,
-                post=params,
-                headers={'accept-language': 'en-US,en;q=1.0'}
-            )
-            try:
-                return json.loads(ret)
-            except Exception as e:
-                raise ExceptionParseStandings(f'Error on query {name} = {e}')
+            n_attempts = 3
+            seen = set()
+            for idx in range(n_attempts):
+                ret = REQ.get(
+                    self.API_GRAPH_URL_,
+                    post=params,
+                    headers={'accept-language': 'en-US,en;q=1.0'}
+                )
+                try:
+                    ret = json.loads(ret)
+                    if 'errors' not in ret:
+                        return ret
+                    msg = f'Error on query {name}'
+                except Exception as e:
+                    msg = f'Exception on query {name} = {e}'
+
+                is_last = idx + 1 == n_attempts
+                if is_last:
+                    raise ExceptionParseStandings(msg)
+                if msg not in seen:
+                    LOG.warning(msg)
+                    seen.add(msg)
+                sleep(idx)
 
         variables = {'id': self.key, 'force_limited_data': False, 'show_all_submissions': False}
         scoreboard_data = query('CodingCompetitionsContestScoreboardQuery', variables)

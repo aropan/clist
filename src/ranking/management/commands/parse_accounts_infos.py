@@ -15,6 +15,8 @@ from django_super_deduper.merge import MergedModelInstance
 from tailslide import Percentile
 from tqdm import tqdm
 
+from logify.models import EventLog, EventStatus
+
 from clist.models import Resource
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
@@ -158,10 +160,15 @@ class Command(BaseCommand):
                 if not accounts:
                     continue
 
+            event_log = EventLog.objects.create(name='parse_accounts_infos',
+                                                related=resource,
+                                                status=EventStatus.IN_PROGRESS,
+                                                message=f'{len(accounts)} of {total} accounts')
             count = 0
             n_counter = defaultdict(int)
             update_submissions_info = {}
             account = None
+            exception_error = None
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -276,6 +283,7 @@ class Command(BaseCommand):
                             account.updated = arrow.get(now + delta).ceil('day').datetime
                             account.save()
             except Exception as e:
+                exception_error = str(e)
                 if not has_param and not args.all:
                     updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
                     for a in tqdm(accounts, desc='changing update time'):
@@ -284,7 +292,14 @@ class Command(BaseCommand):
                 self.logger.debug(colored_format_exc())
                 self.logger.warning(f'resource = {resource}')
                 self.logger.error(f'Parse accounts infos: {e}')
-            self.logger.info(f'Parsed accounts infos (resource = {resource}): {count} of {total}, {dict(n_counter)}')
+
+            message = f'{count} of {total} accounts, {dict(n_counter)}'
+            if exception_error:
+                event_log.update_status(EventStatus.FAILED, message=exception_error)
+            else:
+                event_log.update_status(EventStatus.COMPLETED, message=message)
+
+            self.logger.info(f'Parsed accounts infos (resource = {resource}): {message}')
             if update_submissions_info:
                 self.logger.info(f'Update submissions info: {update_submissions_info}')
                 n_counter['update_submissions_info'] = update_submissions_info

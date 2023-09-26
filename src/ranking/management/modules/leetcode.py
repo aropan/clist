@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
 from functools import lru_cache, partial
 from pprint import pprint
+from urllib.parse import urljoin
 
 import pytz
 import requests
@@ -73,7 +74,6 @@ class Statistic(BaseModule):
         data = json.loads(content)
         if not data:
             return {'result': {}, 'url': standings_url}
-        n_page = (data['user_num'] - 1) // len(data['total_rank']) + 1
 
         problems_info = OrderedDict((
             (
@@ -132,101 +132,152 @@ class Statistic(BaseModule):
         n_top_submissions = get_item(self.resource.info, 'statistics.n_top_download_submissions')
 
         hidden_fields = set()
+        parsed_domains = set()
+        badges = set()
         result = {}
         stop = False
-        rank_index0 = False
         if users is None or users:
             if users:
                 users = list(users)
             start_time = self.start_time.replace(tzinfo=None)
             with PoolExecutor(max_workers=8) as executor:
                 solutions_for_get = []
+                solutions_ids = set()
+                times = {}
 
-                for data in tqdm.tqdm(
-                    executor.map(fetch_page, range(n_page)),
-                    total=n_page,
-                    desc='parsing statistics paging',
-                ):
-                    if stop:
-                        break
-                    n_added = 0
-                    for row, submissions in zip(data['total_rank'], data['submissions']):
-                        handle = row.pop('user_slug').lower()
-                        if users is not None and handle not in users or handle in result:
-                            continue
-                        row.pop('contest_id')
-                        row.pop('global_ranking')
+                def fetch_ranking(domain):
+                    nonlocal api_ranking_url_format, stop, hidden_fields, parsed_domains
+                    api_ranking_url_format = re.sub('[.][^./]+(?=/)', domain, api_ranking_url_format)
+                    stop = False
 
-                        r = result.setdefault(handle, OrderedDict())
-                        r['member'] = handle
-                        r['solving'] = row.pop('score')
-                        r['name'] = row.pop('username')
+                    data = fetch_page(1)
+                    if not data:
+                        return
+                    for p in data['questions']:
+                        if str(p['question_id']) not in problems_info:
+                            return
 
-                        rank = int(row.pop('rank'))
-                        rank_index0 |= rank == 0
-                        r['place'] = rank + (1 if rank_index0 else 0)
+                    n_page = (data['user_num'] - 1) // len(data['total_rank']) + 1
+                    rank_index0 = False
+                    for data in tqdm.tqdm(
+                        executor.map(fetch_page, range(n_page)),
+                        total=n_page,
+                        desc=f'parsing statistics paging from {domain}',
+                    ):
+                        if stop:
+                            break
+                        n_added = 0
+                        for row, submissions in zip(data['total_rank'], data['submissions']):
+                            handle = row.pop('user_slug').lower()
+                            if users is not None and handle not in users or handle in result:
+                                continue
+                            row.pop('contest_id')
+                            row.pop('global_ranking')
 
-                        data_region = row.pop('data_region').lower()
-                        r['info'] = {'profile_url': {
-                            '_data_region': '' if data_region == 'us' else f'-{data_region}',
-                            '_domain': Statistic.DOMAINS[data_region],
-                        }}
+                            r = result.setdefault(handle, OrderedDict())
+                            r['_ranking_domain'] = domain
+                            r['member'] = handle
+                            r['solving'] = row.pop('score')
+                            r['name'] = row.pop('username')
 
-                        country = None
-                        for field in 'country_code', 'country_name':
-                            country = country or row.pop(field, None)
-                        if country:
-                            r['country'] = country
+                            rank = int(row.pop('rank'))
+                            rank_index0 |= rank == 0
+                            r['place'] = rank + (1 if rank_index0 else 0)
 
-                        problems_stats = (statistics or {}).get(handle, {}).get('problems', {})
-                        has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
+                            data_region = row.pop('data_region').lower()
+                            r['info'] = {'profile_url': {
+                                '_data_region': '' if data_region == 'us' else f'-{data_region}',
+                                '_domain': Statistic.DOMAINS[data_region],
+                            }}
 
-                        solved = 0
-                        problems = r.setdefault('problems', {})
-                        for i, (k, s) in enumerate(submissions.items(), start=1):
-                            short = problems_info[k]['short']
-                            p = problems.setdefault(short, problems_stats.get(short, {}))
-                            time = datetime.fromtimestamp(s['date']) - start_time
-                            p['time_in_seconds'] = time.total_seconds()
-                            p['time'] = self.to_time(time)
-                            if s['status'] == 10:
-                                solved += 1
-                                p['result'] = '+' + str(s['fail_count'] or '')
-                            else:
-                                p['result'] = f'-{s["fail_count"]}'
-                            if 'submission_id' in s:
-                                if (has_download_submissions or statistics) and (
-                                    'submission_id' in p and p['submission_id'] != s['submission_id']
-                                    or 'language' not in p
-                                ):
-                                    solutions_for_get.append(p)
-                                p['submission_id'] = s['submission_id']
-                                p['external_solution'] = True
-                                p['data_region'] = s['data_region']
+                            country = None
+                            for field in 'country_code', 'country_name':
+                                country = country or row.pop(field, None)
+                            if country:
+                                r['country'] = country
 
-                        if users:
-                            users.remove(handle)
-                            if not users:
-                                stop = True
+                            problems_stats = (statistics or {}).get(handle, {}).get('problems', {})
+                            has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
 
-                        if not problems:
-                            result.pop(handle)
-                            continue
+                            skip = False
+                            solved = 0
+                            problems = r.setdefault('problems', {})
+                            for i, (k, s) in enumerate(submissions.items(), start=1):
+                                short = problems_info[k]['short']
+                                p = problems.setdefault(short, problems_stats.get(short, {}))
+                                time = datetime.fromtimestamp(s['date']) - start_time
+                                p['time_in_seconds'] = time.total_seconds()
+                                p['time'] = self.to_time(time)
+                                if s['status'] == 10:
+                                    solved += 1
+                                    p['result'] = '+' + str(s['fail_count'] or '')
+                                else:
+                                    p['result'] = f'-{s["fail_count"]}'
+                                if s.get('lang'):
+                                    p['language'] = s['lang'].lower()
+                                if 'submission_id' in s:
+                                    if (has_download_submissions or statistics) and (
+                                        'submission_id' in p and p['submission_id'] != s['submission_id']
+                                        or 'language' not in p
+                                    ):
+                                        solutions_for_get.append(p)
+                                    p['submission_id'] = s['submission_id']
+                                    p['external_solution'] = True
+                                    p['data_region'] = s['data_region']
 
-                        r['solved'] = {'solving': solved}
-                        finish_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
-                        r['penalty'] = self.to_time(finish_time)
-                        r.update(row)
-                        hidden_fields |= set(row.keys())
-                        if statistics and handle in statistics:
-                            stat = statistics[handle]
-                            for k in ('rating_change', 'new_rating', 'raw_rating'):
-                                if k in stat:
-                                    r[k] = stat[k]
-                        n_added += 1
+                                    skip = skip or s['submission_id'] in solutions_ids
+                                    solutions_ids.add(s['submission_id'])
 
-                    if n_added == 0 and not users:
-                        stop = True
+                            if users:
+                                users.remove(handle)
+                                if not users:
+                                    stop = True
+
+                            if not problems or skip:
+                                result.pop(handle)
+                                continue
+
+                            r['solved'] = {'solving': solved}
+                            penalty_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
+                            r['penalty'] = self.to_time(penalty_time)
+                            times[handle] = penalty_time
+
+                            if get_item(row, 'user_badge.icon'):
+                                row['badge'] = {
+                                    'icon': urljoin(standings_url, row['user_badge']['icon']),
+                                    'title': row['user_badge']['display_name'],
+                                }
+                                badges.add(row['badge']['title'])
+                            if row.get('badge') or not row.get('user_badge'):
+                                row.pop('user_badge', None)
+
+                            r.update(row)
+
+                            hidden_fields |= set(row.keys())
+                            if statistics and handle in statistics:
+                                stat = statistics[handle]
+                                for k in ('rating_change', 'new_rating', 'raw_rating'):
+                                    if k in stat:
+                                        r[k] = stat[k]
+                            n_added += 1
+                            parsed_domains.add(domain)
+
+                        if n_added == 0 and not users:
+                            stop = True
+
+                for domain in '.com', '.cn':
+                    fetch_ranking(domain=domain)
+
+                if len(parsed_domains) > 1:
+                    def get_key(row):
+                        return (-row['solving'], times[row['member']])
+                    last = None
+                    for rank, row in enumerate(sorted(result.values(), key=get_key), start=1):
+                        value = get_key(row)
+                        if value != last:
+                            place = rank
+                            last = value
+                        row['place'] = place
 
                 if solutions_for_get:
                     try:
@@ -250,6 +301,8 @@ class Statistic(BaseModule):
             'url': standings_url,
             'hidden_fields': hidden_fields,
             'problems': list(problems_info.values()),
+            'badges': list(sorted(badges)),
+            'info_fields': ['badges'],
         }
         if writers:
             writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
@@ -364,7 +417,7 @@ class Statistic(BaseModule):
                                 'https://leetcode.cn/graphql',
                                 post=post.encode(),
                                 content_type='application/json',
-                                req=req,
+                                # req=req,  FIXME: enable proxy if needed
                                 **kwargs,
                             )
                             ret['profile'] = json.loads(page)['data']

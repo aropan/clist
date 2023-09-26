@@ -46,7 +46,8 @@ def account_update_contest_additions(
     total = 0
     for stat in qs:
         contest = stat.contest
-        contest_keys.discard(contest.key)
+        for field in fields:
+            contest_keys.discard(getattr(contest, field, None))
         total += 1
         addition = dict(stat.addition)
         for field in fields:

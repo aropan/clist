@@ -70,6 +70,8 @@ class Resource(BaseModel):
 
     RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
 
+    event_logs = GenericRelation('logify.EventLog', related_query_name='resource')
+
     objects = BaseManager()
     priority_objects = PriorityResourceManager()
 
@@ -316,6 +318,8 @@ class Contest(BaseModel):
     modified = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, db_index=True)
     was_auto_added = models.BooleanField(default=False)
+
+    event_logs = GenericRelation('logify.EventLog', related_query_name='contest')
 
     objects = BaseContestManager()
     visible = VisibleContestManager()

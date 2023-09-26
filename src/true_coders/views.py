@@ -1587,12 +1587,12 @@ def search(request, **kwargs):
         if field.startswith('_') and not view_private_fields:
             return HttpResponseBadRequest('You have no permission to view this field')
 
-        if field == 'languages':
-            qs = contest.info.get('languages', [])
+        mapping_fields = {'badge': 'badges'}
+        field = mapping_fields.get(field, field)
+
+        if field in ['languages', 'verdicts', 'badges']:
+            qs = contest.info.get(field, [])
             qs = ['any'] + [q for q in qs if not text or text.lower() in q.lower()]
-        elif field == 'verdicts':
-            qs = contest.info.get('verdicts', [])
-            qs = [q for q in qs if not text or text.lower() in q.lower()]
         elif field == 'rating':
             qs = ['rated', 'unrated']
         elif f'_{field}' in contest.info:
