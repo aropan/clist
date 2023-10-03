@@ -60,7 +60,7 @@ unicodecsv==0.14.1
 ratelimiter==1.2.0
 docutils==0.20.1
 image==1.5.33
-Pillow==10.0.0
+Pillow==10.0.1
 olefile==0.46
 pytesseract==0.3.10
 python-dateutil==2.8.2
