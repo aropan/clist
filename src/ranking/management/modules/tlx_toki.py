@@ -91,6 +91,7 @@ class Statistic(BaseModule):
                         continue
                     user = users_profiles_map[cjid]
                     handle = user['username']
+                    handle = handle.replace(' ', '_')
 
                     r = result.setdefault(handle, collections.OrderedDict())
                     r['member'] = handle

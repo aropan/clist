@@ -19,12 +19,12 @@
   </div>
   {% elif data.nogroupby %}
     <span class="input-group-addon">
-      {% icon_to field data.title|default:field|title %}
+      {% icon_to data.icon|default:field data.title|default:field|title_field %}
     </span>
   {% else %}
   <div class="input-group-btn">
     <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">
-      {% icon_to field data.title|default:field|title %}
+      {% icon_to data.icon|default:field data.title|default:field|title_field %}
     </button>
   </div>
   {% endif %}

@@ -3,10 +3,11 @@
 import html
 import os
 import re
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from urllib.parse import urljoin
 
 import tqdm
+from ipwhois import IPWhois
 
 from clist.templatetags.extras import get_item
 from my_oauth.models import Service
@@ -111,7 +112,6 @@ class Statistic(BaseModule):
 
         url = self.standings_url
         n_page = 1
-        contest_ips = set()
         submission_infos = None
         while True:
             page = REQ.get(url)
@@ -210,6 +210,9 @@ class Statistic(BaseModule):
 
         names = {row['name'] for row in result.values()}
         submission_infos = self.get_submission_infos(statistics, names) or {}
+        whois = self.info.setdefault('_whois', {})
+        contest_ips = set()
+        contest_whois = defaultdict(set)
 
         for row in result.values():
             name = row['name']
@@ -223,6 +226,29 @@ class Statistic(BaseModule):
             contest_ips |= ips
             row['_ips'] = list(sorted(ips))
 
+            for ip in row['_ips']:
+                if ip not in whois:
+                    lookup = IPWhois(ip).lookup_whois()
+                    nets = lookup.get('nets')
+                    if not nets:
+                        continue
+                    net = nets[0]
+                    description = net.get('description')
+                    if description:
+                        description = re.sub(r'\n\s*', '; ', description)
+                    whois[ip] = {
+                        'name': net.get('name'),
+                        'range': net.get('range'),
+                        'description': description,
+                        'country': net.get('country'),
+                    }
+                for field, value in whois[ip].items():
+                    if value:
+                        key = f'_whois_{field}'
+                        row_values = row.setdefault(key, [])
+                        row_values.append(value)
+                        contest_whois[key].add(value)
+
         standings = {
             'result': result,
             'url': self.standings_url,
@@ -230,6 +256,11 @@ class Statistic(BaseModule):
         }
 
         if contest_ips:
-            standings.setdefault('info_fields', []).append('_ips')
+            info_fields = standings.setdefault('info_fields', [])
+            info_fields.extend(['_ips', '_whois'])
             standings['_ips'] = list(sorted(contest_ips))
+            standings['_whois'] = whois
+            for field, values in contest_whois.items():
+                info_fields.append(field)
+                standings[field] = list(sorted(values))
         return standings

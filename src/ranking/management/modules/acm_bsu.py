@@ -24,7 +24,7 @@ class Statistic(BaseModule):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
         is_challenge = bool(re.search(r'\bchallenge\b', self.name, re.I))
-        is_running = now() < self.end_time + timedelta(minutes=15)
+        is_running = now() < self.end_time + timedelta(minutes=30)
         has_provisional = False
 
         result = {}

@@ -236,7 +236,6 @@ class Statistic(BaseModule):
                             max_iou = iou
                         if iou == max_iou:
                             mapping.append((user, member, name, info_name))
-                assert len(mapping) == 1
                 user, member, *_ = mapping[0]
                 add_mapping(user, member)
 

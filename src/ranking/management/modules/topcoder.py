@@ -19,7 +19,7 @@ from lxml import etree
 from clist.templatetags.extras import as_number, asfloat, toint
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table, save_proxy
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, InitModuleException
 from utils.requester import FailOnGetResponse
 
 
@@ -590,6 +590,14 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
+        def parse_xml(page):
+            root = ET.fromstring(page)
+            for child in root:
+                data = {}
+                for field in child:
+                    data[field.tag] = field.text
+                yield data
+
         active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
         with REQ.with_proxy(
             time_limit=10,
@@ -600,11 +608,7 @@ class Statistic(BaseModule):
         ) as req:
             page = req.proxer.get_connect_ret()
             dd_active_algorithm = {}
-            root = ET.fromstring(page)
-            for child in root:
-                data = {}
-                for field in child:
-                    data[field.tag] = field.text
+            for data in parse_xml(page):
                 dd_active_algorithm[data.pop('handle')] = data
 
             def fetch_profile(user):
@@ -612,7 +616,12 @@ class Statistic(BaseModule):
                 req.proxer.set_connect_func(lambda req: req.get(url))
 
                 ret = {}
-                page = req.get(url)
+                try:
+                    page = req.get(url)
+                except FailOnGetResponse as e:
+                    if e.code == 404:
+                        return None
+                    return False
                 ret = json.loads(page)
                 if 'error' in ret and isinstance(ret['error'], dict) and ret['error'].get('value') == 404:
                     ret = {'handle': user, 'action': 'remove'}
@@ -639,20 +648,40 @@ class Statistic(BaseModule):
                         ret['volatility'] = toint(data['alg_vol'])
                     if 'alg_rating' in data:
                         ret['rating'] = toint(data['alg_rating'])
+                elif 'userId' in ret:
+                    url = f'https://www.topcoder.com/tc?module=BasicData&c=dd_rating_history&cr={ret["userId"]}'
+                    page = req.get(url)
+                    max_rating_order = -1
+                    ret['rating'], ret['volatility'], n_rating = None, None, 0
+                    for data in parse_xml(page):
+                        n_rating += 1
+                        rating_order = as_number(data['rating_order'])
+                        if rating_order > max_rating_order:
+                            max_rating_order = rating_order
+                            ret['rating'] = as_number(data['new_rating'])
+                            ret['volatility'] = as_number(data['volatility'])
+                    if ret['rating'] == 0 and n_rating <= 3:
+                        ret['rating'], ret['volatility'] = None, None
                 for rating in ret.get('ratingSummary', []):
                     if rating['name'].lower() == 'algorithm' and 'rating' not in ret:
                         ret['rating'] = rating['rating']
+                        ret['volatility'] = None
                 return ret
 
-            ret = []
             with PoolExecutor(max_workers=4) as executor:
                 for user, data in zip(users, executor.map(fetch_profile, users)):
+                    if not data:
+                        if data is None:
+                            yield {'info': None}
+                        elif data is False:
+                            yield {'skip': True}
+                        else:
+                            raise ExceptionParseAccounts('Unknown error')
+                        continue
                     data['handle'] = data['handle'].strip()
                     assert user.lower() == data['handle'].lower()
                     if pbar:
                         pbar.update()
-                    ret.append({'info': data})
+                    yield {'info': data}
 
             save_proxy(req, Statistic.LEGACY_PROXY_PATH)
-
-            return ret

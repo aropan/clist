@@ -24,6 +24,7 @@ from clist.templatetags.extras import get_item, get_problem_key, slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
+from utils.datetime import parse_duration
 
 
 class PriorityResourceManager(BaseManager):
@@ -54,6 +55,7 @@ class Resource(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     ratings = models.JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
+    rating_prediction = models.JSONField(default=None, null=True, blank=True)
     rating_update_time = models.DateTimeField(null=True, blank=True)
     rank_update_time = models.DateTimeField(null=True, blank=True)
     has_problem_rating = models.BooleanField(default=False)
@@ -313,6 +315,10 @@ class Contest(BaseModel):
 
     notification_timing = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
+    rating_prediction_timing = models.DateTimeField(default=None, null=True, blank=True)
+
+    has_fixed_rating_prediction_field = models.BooleanField(default=False, null=True, blank=True)
+    rating_prediction_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -600,6 +606,15 @@ class Contest(BaseModel):
                 series = ContestSeries.objects.create(name=series_name, short=series_name)
         self.series = series
         self.save(update_fields=['series'])
+
+    @property
+    def is_rating_prediction_timespan(self):
+        timespan = self.resource.rating_prediction.get('timespan')
+        return not timespan or timezone.now() < self.end_time + parse_duration(timespan)
+
+    @property
+    def has_rating_prediction(self):
+        return self.has_fixed_rating_prediction_field and self.is_rating_prediction_timespan
 
     @property
     def channel_update_statistics_group_name(self):

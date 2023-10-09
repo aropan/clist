@@ -25,10 +25,6 @@
   cursor: pointer;
 }
 
-#resources .resource .database-link {
-  margin-top: 5px;
-}
-
 #resources .help-message {
   color: #bbb;
   position: absolute;

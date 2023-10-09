@@ -2132,9 +2132,18 @@ def accounts(request, template='accounts.html'):
     fields_types = {}
     for resource in resources:
         for k, v in resource.accounts_fields.get('types', {}).items():
-            if v == ['int'] or v == ['float'] and k not in table_fields:
-                fields_types[k] = v
-                custom_fields.add(k)
+            if k in table_fields:
+                continue
+            v = set(v)
+            field_type = None
+            if v == {'float'} or v == {'float', 'int'}:
+                field_type = 'float'
+            elif v == {'int'}:
+                field_type = 'int'
+            else:
+                continue
+            fields_types[k] = field_type
+            custom_fields.add(k)
     custom_fields = list(sorted(custom_fields))
     if chart_field and chart_field not in table_fields:
         if chart_field not in custom_fields:
@@ -2149,7 +2158,7 @@ def accounts(request, template='accounts.html'):
             cast = None
         else:
             field = f'info__{chart_field}'
-            cast = fields_types[chart_field][0]
+            cast = fields_types[chart_field]
         context['chart'] = make_chart(accounts, field=field, groupby=groupby, cast=cast, logger=request.logger)
         context['groupby'] = groupby
     else:
@@ -2170,9 +2179,9 @@ def accounts(request, template='accounts.html'):
         k = f'info__{field}'
         if field == orderby or field == chart_field:
             types = fields_types[field]
-            if types == ['int']:
+            if types == 'int':
                 accounts = accounts.annotate(**{k: Cast(JSONF(k), BigIntegerField())})
-            elif types == ['float']:
+            elif types == 'float':
                 accounts = accounts.annotate(**{k: Cast(JSONF(k), FloatField())})
         else:
             accounts = accounts.annotate(**{k: JSONF(k)})

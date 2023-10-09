@@ -56,7 +56,7 @@ class Statistic(BaseModule):
                 r = collections.OrderedDict()
                 if 'rank' in row:
                     r['place'] = row.pop('rank')
-                r['solving'] = row.pop('displayScore')
+                r['solving'] = row.pop('displayScore').replace(',', '')
                 if 'medal' in row:
                     r['medal'] = row.pop('medal').lower()
 

@@ -77,13 +77,22 @@ def admin_register(*args, **kwargs):
     return _model_admin_wrapper
 
 
+class CustomJSONEditorWidget(JSONEditorWidget):
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if value in {'{}', '[]', '', 'null'}:
+            context['widget']['height'] = '100px'
+        return context
+
+
 class BaseModelAdmin(GuardedModelAdmin):
     readonly_fields = ['created', 'modified']
     save_as = True
     paginator = CachingPaginator
 
     formfield_overrides = {
-        models.JSONField: {'widget': JSONEditorWidget(mode='code')},
+        models.JSONField: {'widget': CustomJSONEditorWidget(mode='code', height='300px')},
     }
 
     def formfield_for_dbfield(self, db_field, **kwargs):

@@ -60,7 +60,9 @@ class ContestAdmin(BaseModelAdmin):
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['n_statistics', 'parsed_time', 'has_hidden_results', 'calculate_time',
                                              'info', 'invisible', 'is_rated', 'with_medals', 'related', 'series']}],
-        ['Timing', {'fields': ['notification_timing', 'statistic_timing', 'created', 'modified', 'updated']}],
+        ['Timing', {'fields': ['notification_timing', 'statistic_timing', 'rating_prediction_timing',
+                               'created', 'modified', 'updated']}],
+        ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
                     'created', 'modified', 'updated', 'parsed_time']
@@ -122,7 +124,8 @@ class ResourceAdmin(BaseModelAdmin):
                            'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
-        ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'rating_update_time', 'ratings']}],
+        ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'rating_update_time', 'ratings',
+                                           'rating_prediction']}],
         ['Account information', {'fields': ['has_accounts_infos_update', 'has_multi_account',
                                             'has_account_verification', 'accounts_fields']}],
         ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving']}],

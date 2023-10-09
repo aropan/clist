@@ -12,6 +12,7 @@ from html import unescape
 from random import shuffle
 
 import arrow
+import humanize
 import tqdm as _tqdm
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -23,12 +24,11 @@ from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 
-from logify.models import EventLog, EventStatus
-
 from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
                                        time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
+from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
@@ -40,6 +40,8 @@ from ranking.views import update_standings_socket
 from utils.attrdict import AttrDict
 from utils.datetime import parse_datetime
 from utils.traceback_with_vars import colored_format_exc
+
+# from sql_util.utils import SubqueryCount
 
 
 class ChannelLayerHandler(logging.Handler):
@@ -90,8 +92,15 @@ class ChannelLayerHandler(logging.Handler):
         else:
             self.states[desc] = state
 
+        rate = progress_bar.format_dict['rate']
+        estimate_time = (total - n) / rate if rate else None
+        estimate_time_str = f'{humanize.naturaldelta(timedelta(seconds=estimate_time))}' if estimate_time else '…'
         percentage = n / total
-        context = {'type': 'update_statistics', 'progress': percentage, 'desc': f'{desc} ({percentage * 100:.2f}%)'}
+        context = {
+            'type': 'update_statistics',
+            'progress': percentage,
+            'desc': f'{desc} ({percentage * 100:.2f}%, {estimate_time_str})',
+        }
         async_to_sync(self.channel_layer.group_send)(self.group_name, context)
         self.decrease_capacity()
 
@@ -640,8 +649,6 @@ class Command(BaseCommand):
                                 previous_account = resource.account_set.filter(key=previous_member).first()
                                 if previous_account:
                                     account = rename_account(previous_account, account)
-                                    statistics_ids = None
-                                    continue
 
                             def update_addition_fields():
                                 addition_fields = parse_info.get('addition_fields', [])
@@ -1227,8 +1234,8 @@ class Command(BaseCommand):
                 delay = module.delay_on_success if parsed else module.delay_on_error
                 if now < contest.end_time and module.long_contest_divider:
                     delay = min(delay, contest.full_duration / module.long_contest_divider)
-                if now < contest.end_time < now + delay and module.min_delay_after_end:
-                    delay = min(delay, contest.end_time + module.min_delay_after_end - now)
+                if now < contest.end_time < now + delay:
+                    delay = min(delay, contest.end_time - now + (module.min_delay_after_end or timedelta(minutes=5)))
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
                     delay = min(delay, timing_delta)

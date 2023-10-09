@@ -363,29 +363,20 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django.security.DisallowedHost': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
-        'parso.python.diff': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
-        'PIL': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
-        'googleapiclient.discovery': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
-        'daphne': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
-        'asyncio': {
-            'handlers': ['null'],
-            'propagate': False,
+        **{
+            k: {
+                'handlers': ['null'],
+                'propagate': False,
+            }
+            for k in (
+                'django.security.DisallowedHost',
+                'parso.python.diff',
+                'PIL',
+                'googleapiclient.discovery',
+                'daphne',
+                'asyncio',
+                'numba.core',
+            )
         },
         'django': {
             'handlers': ['mail_admins'],
@@ -687,7 +678,8 @@ FONTAWESOME_ICONS_ = {
     'verification': '<i class="far fa-check-circle"></i>',
     'verified': '<i class="verified fas fa-check-circle"></i>',
     'unverified': '<i class="unverified fas fa-check-circle"></i>',
-    'ips': '<i class="fas fa-search-location"></i>',
+    'ips': '<i class="fas fa-user-secret"></i>',
+    'secret': '<i class="fas fa-user-secret"></i>',
     'log': '<i class="fas fa-scroll"></i>',
     'on': '<i class="fa-fw fas fa-toggle-on"></i>',
     'off': '<i class="fa-fw fas fa-toggle-off"></i>',

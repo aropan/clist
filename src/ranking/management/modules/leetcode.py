@@ -145,9 +145,11 @@ class Statistic(BaseModule):
                 solutions_ids = set()
                 times = {}
 
-                def fetch_ranking(domain):
+                def fetch_ranking(domain, region):
                     nonlocal api_ranking_url_format, stop, hidden_fields, parsed_domains
                     api_ranking_url_format = re.sub('[.][^./]+(?=/)', domain, api_ranking_url_format)
+                    api_ranking_url_format = re.sub('&region=[^&]+', f'&region={region}', api_ranking_url_format)
+
                     stop = False
 
                     data = fetch_page(1)
@@ -265,8 +267,8 @@ class Statistic(BaseModule):
                         if n_added == 0 and not users:
                             stop = True
 
-                for domain in '.com', '.cn':
-                    fetch_ranking(domain=domain)
+                fetch_ranking(domain='.com', region='global')
+                fetch_ranking(domain='.cn', region='local')
 
                 if len(parsed_domains) > 1:
                     def get_key(row):

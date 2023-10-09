@@ -27,7 +27,7 @@ from sql_util.utils import Exists, SubqueryCount, SubquerySum
 from clist.models import Contest, Resource
 from clist.templatetags.extras import add_prefix_to_problem_short, get_problem_short, slug
 from pyclist.indexes import ExpressionIndex, GistIndexTrgrmOps
-from pyclist.models import BaseModel
+from pyclist.models import BaseManager, BaseModel
 from true_coders.models import Coder, Party
 
 AVATAR_RELPATH_FIELD = 'avatar_relpath_'
@@ -338,6 +338,7 @@ class Statistics(BaseModel):
     skip_in_stats = models.BooleanField(default=False)
     advanced = models.BooleanField(default=False)
     last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
+    rating_prediction = models.JSONField(default=None, null=True, blank=True)
 
     @staticmethod
     def is_special_addition_field(field):
@@ -403,10 +404,16 @@ class Module(BaseModel):
     delay_on_error = models.DurationField()
     delay_on_success = models.DurationField(null=True, blank=True)
     long_contest_idle = models.DurationField(default='06:00:00', blank=True)
-    long_contest_divider = models.IntegerField(default=12)
+    long_contest_divider = models.IntegerField(default=15)
+
+    class BaseModuleManager(BaseManager):
+        def get_queryset(self):
+            return super().get_queryset().select_related('resource')
+
+    objects = BaseModuleManager()
 
     def __str__(self):
-        return '%s: %s' % (self.resource.host, self.path)
+        return f'{self.resource.host} Module#{self.id}'
 
 
 class Stage(BaseModel):

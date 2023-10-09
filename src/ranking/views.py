@@ -27,8 +27,8 @@ from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
 from clist.templatetags.extras import (as_number, format_time, get_country_name, get_problem_short, get_problem_title,
-                                       has_update_statistics_permission, is_reject, is_solved, query_transform, slug,
-                                       time_in_seconds, timestamp_to_datetime)
+                                       has_update_statistics_permission, is_ip_field, is_private_field, is_reject,
+                                       is_solved, query_transform, slug, time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
@@ -777,12 +777,18 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     if hidden_fields is None:
         hidden_fields = list(contest.info.get('hidden_fields', []))
     hidden_fields_values = hidden_fields_values or set()
+
+    predicted_fields = ['predicted_rating_change', 'predicted_new_rating']
+    if contest.rating_prediction_hash:
+        addition_fields = addition_fields + predicted_fields
+        hidden_fields.extend(predicted_fields)
+
     for k in addition_fields:
         is_private_k = k.startswith('_')
         if (
             k in fields
             or k in special_fields
-            or 'country' in k and k not in hidden_fields_values
+            or not is_private_k and 'country' in k and k not in hidden_fields_values
             or k in ['name', 'place', 'solving'] and k not in hidden_fields_values
             or is_private_k and not view_private_fields
             or k in hidden_fields and k not in hidden_fields_values and k not in fields_values
@@ -790,10 +796,13 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
             continue
         if not is_private_k and with_detail or k in hidden_fields_values or k in fields_values:
             fields[k] = k
-            if is_private_k:
-                hidden_fields.append(k)
-        else:
+        if k not in hidden_fields:
             hidden_fields.append(k)
+
+    if contest.has_rating_prediction and with_detail:
+        for field in predicted_fields:
+            if field not in fields:
+                fields[field] = field
 
     for k, field in fields.items():
         if k != field:
@@ -1084,20 +1093,22 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         f = map_fields_to_select.get(f, f)
         field_to_select = fields_to_select.setdefault(f, {})
         field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
+        if is_ip_field(f):
+            field_to_select['icon'] = 'secret'
         field_to_select.update(fields_to_select_defaults.get(f, {}))
 
     for f in sorted(contest_fields):
-        is_private_field = f.startswith('_')
+        is_hidden_field = f.startswith('_')
         f = f.strip('_')
         fk = f.lower()
         if (
-            is_private_field and fk in ['languages', 'verdicts']
+            is_hidden_field and fk in ['languages', 'verdicts']
             or fk in [
                 'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
                 'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
                 'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost', 'badge',
             ]
-            or view_private_fields and fk in ['ips']
+            or view_private_fields and is_private_field(fk) and is_hidden_field and f'_{fk}' in fields
         ):
             add_field_to_select(f)
 
@@ -1286,12 +1297,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                     filt |= Q(**{'addition__badge__isnull': True})
                 else:
                     filt |= Q(**{'addition__badge__title': badge})
-        elif field == 'ips':
-            for ip in values:
-                if ip == 'any':
-                    filt |= Q(**{'addition___ips__isnull': False})
+        elif is_ip_field(field):
+            for value in values:
+                if value == 'any':
+                    filt |= Q(**{f'addition___{field}__isnull': False})
                     break
-                filt |= Q(**{'addition___ips__contains': [ip]})
+                filt |= Q(**{f'addition___{field}__contains': [value]})
         elif field == 'rating':
             for q in values:
                 if q not in field_to_select['options']:
@@ -1403,11 +1414,11 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             else:
                 field = 'account__country'
             statistics = statistics.annotate(groupby=F(field))
-        elif groupby == 'ips':
-            raw_sql = '''json_array_elements((("addition" ->> '_ips'))::json)'''
+        elif is_ip_field(groupby):
+            raw_sql = f'''json_array_elements((("addition" ->> '_{groupby}'))::json)'''
             raw_sql += ''' #>>'{}' '''  # trim double quotes
-            field = 'ip'
-            statistics = statistics.annotate(ip=RawSQL(raw_sql, [])).annotate(groupby=F(field))
+            field = groupby
+            statistics = statistics.annotate(**{field: RawSQL(raw_sql, [])}).annotate(groupby=F(field))
         elif groupby == 'languages':
             raw_sql = '''json_array_elements((("addition" ->> '_languages'))::json)'''
             raw_sql += ''' #>>'{}' '''  # trim double quotes

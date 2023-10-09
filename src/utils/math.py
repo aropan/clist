@@ -18,3 +18,10 @@ def get_divisors(n, reverse=False):
     for i in reversed(range(1, m + 1)):
         if n % i == 0:
             yield n // i
+
+
+def max_with_none(*args):
+    valid_args = [x for x in args if x is not None]
+    if not valid_args:
+        return None
+    return max(valid_args)

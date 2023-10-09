@@ -15,6 +15,7 @@ from django.utils.timezone import now
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number, get_item, get_problem_key, get_problem_short, is_solved
 from clist.views import update_problems
+from logify.models import EventLog, EventStatus
 from utils.attrdict import AttrDict
 from utils.json_field import JSONF
 
@@ -169,7 +170,7 @@ class Command(BaseCommand):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host names to calculate')
         parser.add_argument('-c', '--contest', metavar='CONTEST', type=int, help='contest id')
         parser.add_argument('-cs', '--contests', metavar='CONTESTS', nargs='*', type=int, help='contest ids')
-        parser.add_argument('-s', '--search', metavar='TITLE', nargs='*', help='contest title regex')
+        parser.add_argument('-s', '--search', metavar='TITLE', help='contest title regex')
         parser.add_argument('-l', '--limit', metavar='LIMIT', type=int, help='number of contests limit')
         parser.add_argument('-f', '--force', action='store_true', help='force update')
         parser.add_argument('-n', '--dryrun', action='store_true', help='do not update')
@@ -232,6 +233,10 @@ class Command(BaseCommand):
                 continue
             n_total += 1
 
+            event_log = EventLog.objects.create(name='calculate_problem_rating',
+                                                related=contest,
+                                                status=EventStatus.IN_PROGRESS)
+
             statistics = get_statistics(contest)
 
             self.logger.info(f'number of statistics = {statistics.count()}, contest = {contest}')
@@ -265,6 +270,7 @@ class Command(BaseCommand):
             if not rows_values:
                 n_empty += 1
                 self.logger.warning(f'skip empty contest = {contest}')
+                event_log.update_status(EventStatus.SKIPPED, message='empty contest')
                 continue
 
             rows_values = tuple(sorted(rows_values))
@@ -282,6 +288,7 @@ class Command(BaseCommand):
             ):
                 n_skip_hash += 1
                 self.logger.warning(f'skip unchanged hash contest = {contest}')
+                event_log.update_status(EventStatus.SKIPPED, message='unchanged hash')
                 continue
 
             contests_divisions_data = dict()
@@ -347,6 +354,7 @@ class Command(BaseCommand):
             if missing_account and not ignore_missing_account:
                 n_skip_missing += 1
                 self.logger.warning(f'skip by missing account = {contest}')
+                event_log.update_status(EventStatus.SKIPPED, message='missing account')
                 continue
 
             for info in contests_divisions_data.values():
@@ -420,5 +428,6 @@ class Command(BaseCommand):
                 contest.save()
                 n_done += 1
                 self.logger.info(f'done contest = {contest}')
+                event_log.update_status(EventStatus.COMPLETED)
         self.logger.info(f'done = {n_done}, skip hash = {n_skip_hash}, skip missing = {n_skip_missing}'
                          f', skip empty = {n_empty} of total = {n_total}')

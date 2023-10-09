@@ -1181,3 +1181,29 @@ def format_to_significant_digits(number, digits):
     if 'e' in formatted:
         formatted = str(float(formatted))
     return formatted
+
+
+@register.filter
+def is_ip_field(field):
+    field = field.strip('_')
+    return field == 'ips' or field.startswith('whois_')
+
+
+@register.filter
+def is_private_field(field):
+    return is_ip_field(field)
+
+
+@register.filter
+def get_rating_predicition_field(field):
+    prefix = 'predicted'
+    if not field.startswith(prefix):
+        return False
+    field = field[len(prefix):]
+    field = field.strip('_')
+    return field if field in {'new_rating', 'old_rating', 'rating_change'} else False
+
+
+@register.filter
+def is_rating_change_field(field):
+    return field in {'rating_change', 'ratingChange', 'predicted_rating_change'}

@@ -163,7 +163,12 @@ data-place="{{ statistic.place }}"
 
   {% with advance_url=addition|get_item:"_advance_url" advance_medal=addition|get_item:"_advance_medal" advance_icon=addition|get_item:"_advance_icon" %}
   {% for field in fields.keys %}
-  {% with value=addition|get_item:field %}
+  {% if field|get_rating_predicition_field %}
+  {% define field|get_rating_predicition_field as field %}
+  {% define statistic.rating_prediction|get_item:field as value %}
+  {% else %}
+  {% define addition|get_item:field as value %}
+  {% endif %}
   <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
     {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     <span
@@ -177,24 +182,12 @@ data-place="{{ statistic.place }}"
         <span class="rating-change{% if statistic.global_rating_change %} rating-change-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}{% endif %}">
           <i class="fas fa-angle-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}"></i>{{ statistic.global_rating_change|abs }}
         </span>
-      {% elif field == 'advance' and advance_icon %}
-        <i class="{{ advance_icon }}"></i>
-      {% elif field in addition and not value.empty %}
-        {% if field == 'hack' %}
-          <small>
-          {% if addition.hack.successful %}<div class="inline acc">+{{ addition.hack.successful }}</div>{% endif %}
-          {% if addition.hack.unsuccessful %}<div class="inline rej">-{{ addition.hack.unsuccessful }}</div>{% endif %}
-          </small>
-        {% else %}
-          {% include "field_value.html" %}
-        {% endif %}
       {% else %}
-        <small class='text-muted'>&#183;</small>
+        {% include "field_value.html" %}
       {% endif %}
       {% if field == 'advance' and advance_url %}</a>{% endif %}
     </span>
   </{{ tag }}>
-  {% endwith %}
   {% endfor %}
   {% endwith %}
 
