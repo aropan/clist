@@ -5,7 +5,8 @@ from sql_util.utils import Exists
 from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
-from ranking.models import Account, AccountVerification, AutoRating, Module, Rating, Stage, Statistics, VerifiedAccount
+from ranking.models import (Account, AccountRenaming, AccountVerification, AutoRating, Module, Rating, Stage,
+                            Statistics, VerifiedAccount)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -79,6 +80,13 @@ class AccountAdmin(BaseModelAdmin):
             return qs.select_related('contest')
 
     inlines = [StatisticsSet]
+
+
+@admin_register(AccountRenaming)
+class AccountRenamingAdmin(BaseModelAdmin):
+    list_display = ['pk', 'resource', 'old_key', 'new_key']
+    search_fields = ['old_key', 'new_key']
+    list_filter = ['resource']
 
 
 @admin_register(AccountVerification)
@@ -161,6 +169,7 @@ class StageAdmin(BaseModelAdmin):
 @admin_register(Module)
 class ModuleAdmin(BaseModelAdmin):
     list_display = ['resource',
+                    'enable',
                     'min_delay_after_end',
                     'max_delay_after_end',
                     'delay_on_error',
@@ -169,3 +178,4 @@ class ModuleAdmin(BaseModelAdmin):
                     'long_contest_divider',
                     'path']
     search_fields = ['resource__host']
+    list_filter = ['enable']

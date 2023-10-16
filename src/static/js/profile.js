@@ -49,7 +49,7 @@ $(function() {
           if (!canvas.length) {
             continue;
           }
-          canvas.siblings('.loading_rating').remove()
+          canvas.siblings('.loading-rating').remove()
 
           var resource_dates = response['data']['dates']
           config = create_chart_config(resource_info, resource_dates)
@@ -62,11 +62,11 @@ $(function() {
             add_selection_chart_fields(resource_info, resource_rating_id, resource_fields_id, resource_dates)
           }
         }
-        $('.loading_rating').parent().remove()
+        $('.loading-rating').parent().remove()
       },
       error: function(data) {
         $.notify('{status} {statusText}'.format(data), 'error');
-        $('.loading_rating').parent().remove()
+        $('.loading-rating').parent().remove()
       },
     });
   }

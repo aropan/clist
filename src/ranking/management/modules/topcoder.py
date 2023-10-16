@@ -103,8 +103,8 @@ class Statistic(BaseModule):
             time_limit=10,
             n_limit=50,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
-            connect=lambda req: req.get('https://www.topcoder.com/', n_attemps=1),
-            attributes=dict(n_attemps=5),
+            connect=lambda req: req.get('https://www.topcoder.com/', n_attempts=1),
+            attributes=dict(n_attempts=5),
         )
 
         if not self.standings_url and datetime.now() - start_time < timedelta(days=30):
@@ -603,8 +603,8 @@ class Statistic(BaseModule):
             time_limit=10,
             n_limit=20,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
-            connect=lambda req: req.get(active_algorithm_list_url, n_attemps=1),
-            attributes=dict(n_attemps=5),
+            connect=lambda req: req.get(active_algorithm_list_url, n_attempts=1),
+            attributes=dict(n_attempts=5),
         ) as req:
             page = req.proxer.get_connect_ret()
             dd_active_algorithm = {}

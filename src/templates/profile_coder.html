@@ -28,7 +28,7 @@
             {% endif %}
           {% endif %}
           {% if forloop.first %}{% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}{% endif %}
-          {% coder_color_circle resource account.info size=28 %}
+          {% coder_color_circle resource account size=28 %}
         {% endfor %}
       {% endif %}
     {% endwith %}

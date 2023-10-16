@@ -138,8 +138,9 @@ class Statistic(BaseModule):
 
         @RateLimiter(max_calls=5, period=1)
         def fetch_user(user):
+            n_attempts = 4
             url = resource.profile_url.format(account=user)
-            page = REQ.get(url)
+            page = REQ.get(url, n_attempts=n_attempts)
 
             info = {}
 
@@ -147,7 +148,7 @@ class Statistic(BaseModule):
             for k, v in matches:
                 info[k.lower()] = int(v)
 
-            match = re.search('<img[^>]*src="[^"]*country[^"]*([0-9]+)[^"]*"[^>]*alt="country"[^>]*>', page)
+            match = re.search('<img[^>]*src="[^"]*country[^"]*/([0-9]+)[^"/]*"[^>]*alt="country"[^>]*>', page)
             if match:
                 info['country'] = countries.get(match.group(1))
 
@@ -155,7 +156,7 @@ class Statistic(BaseModule):
             if match:
                 info['avatar_url'] = urljoin(url, match.group(1))
 
-            page = REQ.get(Statistic.USER_RATING_API_URL_.format(user))
+            page = REQ.get(Statistic.USER_RATING_API_URL_.format(user), n_attempts=n_attempts)
             data = json.loads(page)
             ratings = {}
             old_rating = None

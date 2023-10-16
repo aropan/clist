@@ -84,8 +84,8 @@
     <div class="col-md-6 col-lg-8">
         <h4>
             Rating distribution
-            {% if rating.account %}
-            <span class="pull-right">{% include 'account_table_cell.html' with account=rating.account resource=resource %}</span>
+            {% if primary_account %}
+            <span class="pull-right">{% include 'account_table_cell.html' with account=primary_account resource=resource %}</span>
             {% endif %}
         </h4>
         <span id="toggleLogScale">
@@ -164,9 +164,9 @@
                         c.style.cursor = el[0] ? 'pointer' : 'default'
                     },
                 },
-{% if rating.account %}
+{% if primary_account and primary_account.rating is not None %}
 {% with coloring_field=resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'coloring_field' %}
-{% with coloring_value=rating.account.info|get_item:coloring_field|pass_arg:coloring_field|ifelse:rating.account.rating %}
+{% with coloring_value=primary_account.info|get_item:coloring_field|pass_arg:coloring_field|ifelse:primary_account.rating %}
                 plugins: [{
                     beforeDatasetsDraw: function (chart) {
                         var ctx = chart.ctx
@@ -179,7 +179,7 @@
                             'left': x_axis.left,
                             'right': x_axis.right,
                         }
-                        var x = get_x_chart({{ rating.account.rating }}, x_axis)
+                        var x = get_x_chart({{ primary_account.rating }}, x_axis)
                         ctx.beginPath();
                         ctx.moveTo(x, y_axis.top);
                         ctx.lineTo(x, y_axis.bottom);

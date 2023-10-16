@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.db import models
-from django.db.models import Count, F, Q, signals
+from django.db.models import Case, Count, F, Q, When, signals
 from django.dispatch import receiver
 from django.utils import timezone
 from django_countries.fields import CountryField
@@ -195,6 +195,17 @@ class Coder(BaseModel):
         account.coders.add(coder)
         account.updated = timezone.now()
         account.save()
+
+    def primary_account(self, resource):
+        qs = self.account_set.filter(resource=resource)
+        qs = qs.annotate(has_rating=Case(When(rating__isnull=False, then=True), default=False))
+        return qs.order_by('-has_rating', '-n_contests').first()
+
+    def primary_accounts(self):
+        qs = self.account_set.annotate(has_rating=Case(When(rating__isnull=False, then=True), default=False))
+        qs = qs.order_by('resource', '-has_rating', '-n_contests')
+        qs = qs.distinct('resource')
+        return qs
 
 
 class CoderProblem(BaseModel):

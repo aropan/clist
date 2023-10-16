@@ -5,12 +5,7 @@
     $url = $URL;
 
     $page = curlexec($url);
-    preg_match('#<meta[^>]*name="next-head-count"[^>]*content="(?P<year>[0-9]+)"[^>]*>#', $page, $match);
-    $year = $match['year'];
-    if (strlen($year) < 4) {
-        $y = date('Y');
-        $year = substr($y, 0, 4 - strlen($year)) . $year;
-    }
+    $year = date('Y');
 
     preg_match_all('#<a[^>]*home-hero__link[^>]*home-hero__link_(?P<type>[a-z]+)[^>]*href="(?P<href>[^"]*)"[^>]*>.*?<[^>]*home-hero__title[^>]*>(?P<name>[^<]*)(</[^>]*>)*</a>#', $page, $matches, PREG_SET_ORDER);
 

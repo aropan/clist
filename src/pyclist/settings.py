@@ -414,7 +414,7 @@ COUNTRIES_OVERRIDE = {
     'CZ': {'names': ['Czech Republic', 'Czechia', 'Чехия']},
     'MK': {'names': ['Macedonia', 'North Macedonia', 'Македония']},
     'PS': {'names': ['Palestine', 'Palestine, State of', 'Палестина']},
-    'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея', 'Korea, Republic of']},
+    'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея', 'Korea, Republic of', 'Korea']},
     'MO': {'names': ['Macao', 'Macau', 'Макао']},
     'US': {'names': ['United States of America', 'United States', 'America', 'Virgin Islands', 'UM', 'United States Minor Outlying Islands', 'Соединенные Штаты Америки', 'США']},  # noqa
     'VN': {'names': ['Vietnam', 'Viet Nam', 'Вьетнам']},

@@ -10,7 +10,7 @@ from pyclist.admin import BaseModelAdmin, admin_register
 class EventLogAdmin(BaseModelAdmin):
     list_display = ['id', 'related_object_link', 'name', 'status', 'message', 'created', '_elapsed_time']
     list_filter = ['name', 'status', 'resource']
-    search_fields = ['contest__title', 'name', 'message']
+    search_fields = ['contest__title', 'contest__host', 'resource__host', 'name', 'message']
 
     def _elapsed_time(self, obj):
         return humanize.naturaldelta(obj.modified - obj.created)

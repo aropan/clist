@@ -603,3 +603,24 @@ $(function() {
   $('#filter-collapse').on('shown.bs.collapse', () => { $(window).trigger('resize') })
   $('#filter-collapse').on('hidden.bs.collapse', () => { $(window).trigger('resize') })
 })
+
+function delete_on_duplicate() {
+  var elements = $('[data-delete-on-duplicate]')
+  var lasts = {}
+  var stops = {}
+  elements.each(function(index) {
+    var $el = $(this)
+    var id = $el.attr('data-delete-on-duplicate')
+    if (id in stops) {
+      $el.remove()
+    } else {
+      if (id in lasts) {
+        lasts[id].remove()
+      }
+      if ($el.attr('data-delete-on-duplicate-stop')) {
+        stops[id] = true
+      }
+      lasts[id] = $el
+    }
+  })
+}

@@ -786,3 +786,7 @@ a[disabled] {
     display:none
   }
 }
+
+tr:has(+ tr[data-delete-on-duplicate]:not(tr[data-delete-on-duplicate-stop])) {
+  display: none;
+}

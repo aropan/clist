@@ -8,12 +8,14 @@ from django.utils import timezone
 
 from ranking.management.modules.common import LOG
 from ranking.models import Statistics
+from utils.logger import suppress_db_logging_context
 
 
 def to_canonize_str(data):
     return json.dumps(data, sort_keys=True)
 
 
+@suppress_db_logging_context()
 def account_update_contest_additions(
     account,
     contest_addition_update,

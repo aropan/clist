@@ -386,7 +386,7 @@ class requester():
     limit_file_cache = 200
     counter_file_cache = 0
     verify_word = None
-    n_attemps = 1
+    n_attempts = 1
     attempt_delay = 2
 
     def print(self, *objs, force=False):
@@ -475,7 +475,7 @@ class requester():
         return_json=False,
         force_json=False,
         ignore_codes=None,
-        n_attemps=None,
+        n_attempts=None,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -561,11 +561,11 @@ class requester():
                 else:
                     return response.read()
 
-            n_attemps = n_attemps or self.n_attemps
-            for attempt in range(n_attemps):
+            n_attempts = n_attempts or self.n_attempts
+            for attempt in range(n_attempts):
                 page, self.error, response, last_url, proxy = None, None, None, None, None
-                last_attempt = attempt + 1 == n_attemps
-                attempt_delay = self.attempt_delay * attempt / n_attemps
+                last_attempt = attempt + 1 == n_attempts
+                attempt_delay = self.attempt_delay * attempt / n_attempts
                 try:
                     if headers:
                         request = urllib.request.Request(url, headers=headers)

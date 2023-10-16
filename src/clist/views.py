@@ -408,8 +408,10 @@ def resources_top(request, template='resources_top.html'):
     if request.user.is_authenticated:
         coder = request.as_coder or request.user.coder
         coder_accounts_ids = set(coder.account_set.values_list('id', flat=True))
+        primary_accounts = {a.resource_id: a for a in coder.primary_accounts().filter(rating__isnull=False)}
     else:
         coder_accounts_ids = set()
+        primary_accounts = dict()
 
     earliest_last_activity = Account.objects.filter(rating__isnull=False).earliest('last_activity').last_activity
 
@@ -417,6 +419,7 @@ def resources_top(request, template='resources_top.html'):
         'resources': resources,
         'params': params,
         'coder_accounts_ids': coder_accounts_ids,
+        'primary_accounts': primary_accounts,
         'last_activity': {
             'from': 0,
             'to': (timezone.now() - earliest_last_activity).days + 1,
@@ -471,14 +474,12 @@ def resource(request, host, template='resource.html', extra_context=None):
 
     if request.user.is_authenticated:
         coder = request.user.coder
-        coder_account = coder.account_set.filter(resource=resource, rating__isnull=False).first()
+        primary_account = coder.primary_account(resource)
         coder_accounts_ids = set(coder.account_set.filter(resource=resource).values_list('id', flat=True))
-        show_coder_account_rating = True
     else:
         coder = None
-        coder_account = None
+        primary_account = None
         coder_accounts_ids = set()
-        show_coder_account_rating = False
 
     params = {}
 
@@ -583,12 +584,12 @@ def resource(request, host, template='resource.html', extra_context=None):
     context = {
         'resource': resource,
         'coder': coder,
+        'primary_account': primary_account,
         'coder_accounts_ids': coder_accounts_ids,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
         'countries': countries,
         'rating': {
             'chart': rating_chart,
-            'account': coder_account if show_coder_account_rating else None,
             'min': min_rating,
             'max': max_rating,
         },

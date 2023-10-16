@@ -15,7 +15,9 @@ import pytz
 import six
 import yaml
 from django import template
+from django.apps import apps
 from django.conf import settings
+from django.db.models import Value
 from django.template.base import Node
 from django.template.defaultfilters import floatformat, slugify, stringfilter
 from django.urls import reverse
@@ -499,7 +501,9 @@ def coder_color_class(resource, *values):
 
 @register.simple_tag
 def coder_color_circle(resource, *values, size=16, **kwargs):
-    rating, value = resource.get_rating_color(values)
+    Account = apps.get_model('ranking', 'Account')
+    cleaned_values = [a.info if isinstance(a, Account) else a for a in values]
+    rating, value = resource.get_rating_color(cleaned_values)
     if not rating:
         return ''
     color = rating['hex_rgb']
@@ -528,6 +532,13 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
             title += f' ({percent * 100:.1f}%)'
     if 'name' in rating:
         title += f'<br/>{rating["name"]}'
+    if len(values) == 1 and isinstance(values[0], Account):
+        overall_rank = values[0].overall_rank
+        if overall_rank:
+            total_rank = resource.n_rating_accounts
+            percent = overall_rank * 100 / total_rank
+            percent = format_to_significant_digits(percent, 2)
+            title += f'<br/>#{overall_rank} of {total_rank} ({percent}%)'
 
     div_size = radius * 2 + width
     return mark_safe(
@@ -1207,3 +1218,20 @@ def get_rating_predicition_field(field):
 @register.filter
 def is_rating_change_field(field):
     return field in {'rating_change', 'ratingChange', 'predicted_rating_change'}
+
+
+@register.simple_tag
+def queryset_filter(qs, **kwargs):
+    return qs.filter(**kwargs)
+
+
+@register.simple_tag
+def coder_account_filter(qs, account, row_number_field=None, operator=None):
+    if account is None:
+        return []
+    ret = qs.filter(pk=account.pk).annotate(delete_on_duplicate=Value(True))
+    if row_number_field:
+        value = getattr(account, row_number_field)
+        row_number = qs.filter(**{row_number_field + operator: value}).count() + 1
+        ret = ret.annotate(row_number=Value(row_number))
+    return ret

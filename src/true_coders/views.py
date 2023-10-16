@@ -46,7 +46,7 @@ from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
 from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
-from ranking.models import (Account, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
+from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
                             update_account_by_coders)
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
@@ -376,7 +376,12 @@ def profile(request, username, template='profile_coder.html', extra_context=None
 def account_context(request, key, host):
     accounts = Account.objects.select_related('resource').prefetch_related('coders')
     resource = get_object_or_404(Resource, host=host)
-    account = get_object_or_404(accounts, key=key, resource=resource)
+    account = accounts.filter(resource=resource, key=key).first()
+    if account is None:
+        renaming = get_object_or_404(AccountRenaming, resource=resource, old_key=key)
+        url = reverse('coder:account', kwargs=dict(host=resource.host, key=renaming.new_key))
+        request.logger.info(f'Redirect to {renaming.new_key} account')
+        raise RedirectException(redirect(url))
 
     context = {
         'account': account,
@@ -386,13 +391,16 @@ def account_context(request, key, host):
     add_account_button = False
     verified = bool(VerifiedAccount.objects.filter(account=account).exists())
     need_verify = True
+    set_variables = None
     if request.user.is_authenticated:
         coder = request.user.coder
         need_verify = not bool(VerifiedAccount.objects.filter(coder=coder, account=account).exists())
+        if not need_verify:
+            set_variables = resource.accounts_fields.get('variables')
         coder_account = coder.account_set.filter(resource=account.resource).first()
         if need_verify and not account.resource.with_multi_account() and coder_account and account != coder_account:
             need_verify = False
-        if account.resource.with_multi_account() or coder_account:
+        if account.resource.with_multi_account() or not coder_account:
             add_account_button = True
     else:
         coder = None
@@ -400,6 +408,7 @@ def account_context(request, key, host):
     context['add_account_button'] = add_account_button
     context['verified_account'] = verified
     context['need_verify'] = need_verify
+    context['set_variables'] = set_variables
 
     wait_rating = account.resource.info.get('statistics', {}).get('wait_rating', {})
     context['show_add_account_message'] = (
@@ -1250,7 +1259,7 @@ def change(request):
 
             if resource.with_single_account():
                 if coder.account_set.filter(resource=resource).exists():
-                    raise Exception('Allow only one account for resource')
+                    raise Exception(f'Allow only one account for {resource.host}')
                 if account.coders.filter(is_virtual=False).exists():
                     raise Exception('Account is already connect')
 

@@ -11,9 +11,9 @@ from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 
-from logify.models import EventLog, EventStatus
-
 from clist.models import Resource
+from logify.models import EventLog, EventStatus
+from logify.utils import failed_on_exception
 from ranking.models import Account
 from utils.attrdict import AttrDict
 from utils.datetime import parse_duration
@@ -73,28 +73,30 @@ class Command(BaseCommand):
                                                 related=resource,
                                                 status=EventStatus.IN_PROGRESS)
             field = 'overall_rank'
-            with transaction.atomic():
+            with failed_on_exception(event_log):
                 qs = Account.objects.filter(resource=resource, rating__isnull=False)
                 n_rating_accounts = qs.count()
                 qs = qs.annotate(_rank=resource_rank)
                 qs = qs.exclude(**{field: F('_rank')})
                 qs = qs.values('pk', '_rank', field)
-                message = f'field = {field}, number of accounts = {qs.count()}'
+                message = f'field = {field}, to update {qs.count()} of {n_rating_accounts} accounts'
                 self.logger.info(f'resource = {resource}, {message}')
+                event_log.update_message(message)
 
-                if args.limit:
-                    qs = qs[:args.limit]
+                with transaction.atomic():
+                    if args.limit:
+                        qs = qs[:args.limit]
 
-                if args.verbose:
-                    pprint(qs)
+                    if args.verbose:
+                        pprint(qs)
 
-                update_values = [Account(id=a['pk'], **{field: a['_rank']}) for a in qs]
+                    update_values = [Account(id=a['pk'], **{field: a['_rank']}) for a in qs]
 
-                with suppress_db_logging_context():
-                    offsets = list(range(0, len(update_values), args.batch_size))
-                    for offset in tqdm(offsets, desc=f'batching to set {field}'):
-                        update_values_batch = update_values[offset:offset + args.batch_size]
-                        n_updated += Account.objects.bulk_update(update_values_batch, [field])
+                    with suppress_db_logging_context():
+                        offsets = list(range(0, len(update_values), args.batch_size))
+                        for offset in tqdm(offsets, desc=f'{resource.host} batching {field}'):
+                            update_values_batch = update_values[offset:offset + args.batch_size]
+                            n_updated += Account.objects.bulk_update(update_values_batch, [field])
             event_log.update_status(EventStatus.COMPLETED, message=message)
             resource.rank_update_time = now
             resource.n_rating_accounts = n_rating_accounts

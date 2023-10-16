@@ -12,7 +12,6 @@ from pprint import pprint
 from urllib.parse import urljoin
 
 import pytz
-import requests
 import tqdm
 import yaml
 from django.db import transaction
@@ -49,12 +48,12 @@ class Statistic(BaseModule):
         return os.path.join(os.path.dirname(__file__), '.leetcode.get_source_code.proxies')
 
     @staticmethod
-    def fetch_submission(submission, req=REQ, raise_on_error=False, n_attemps=1):
+    def fetch_submission(submission, req=REQ, raise_on_error=False, n_attempts=1):
         data_region = submission['data_region']
         domain = Statistic.DOMAINS[data_region.lower()]
         url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission['submission_id'])
         try:
-            content = req.get(url, n_attemps=n_attemps)
+            content = req.get(url, n_attempts=n_attempts)
             content = json.loads(content)
         except FailOnGetResponse as e:
             if raise_on_error:
@@ -105,21 +104,21 @@ class Statistic(BaseModule):
             question = json.loads(page)['data']['question']
             if question:
                 info['tags'] = [t['name'].lower() for t in question['topicTags']]
-                info['writers'] = [
-                    re.search('/(?P<username>[^/]*)/?$', c['profileUrl']).group('username').lower()
-                    for c in question['contributors']
-                ]
-                if not info['writers']:
-                    info['writers'] = ['leetcode']
+                # info['writers'] = [
+                #     re.search('/(?P<username>[^/]*)/?$', c['profileUrl']).group('username').lower()
+                #     for c in question['contributors']
+                # ]
+                # if not info['writers']:
+                #     info['writers'] = ['leetcode']
                 info['difficulty'] = question['difficulty'].lower()
                 info['hints'] = question['hints']
             return info
 
-        writers = defaultdict(int)
-        with PoolExecutor(max_workers=8) as executor:
-            for problem_info in executor.map(update_problem_info, problems_info.values()):
-                for w in problem_info.get('writers', []):
-                    writers[w] += 1
+        # writers = defaultdict(int)
+        # with PoolExecutor(max_workers=8) as executor:
+        #     for problem_info in executor.map(update_problem_info, problems_info.values()):
+        #         for w in problem_info.get('writers', []):
+        #             writers[w] += 1
 
         def fetch_page(page):
             if stop:
@@ -152,7 +151,12 @@ class Statistic(BaseModule):
 
                     stop = False
 
-                    data = fetch_page(1)
+                    try:
+                        data = fetch_page(1)
+                    except FailOnGetResponse as e:
+                        if e.code == 404:
+                            return
+                        raise e
                     if not data:
                         return
                     for p in data['questions']:
@@ -171,14 +175,18 @@ class Statistic(BaseModule):
                         n_added = 0
                         for row, submissions in zip(data['total_rank'], data['submissions']):
                             handle = row.pop('user_slug').lower()
-                            if users is not None and handle not in users or handle in result:
+                            data_region = row.pop('data_region').lower()
+                            data_domain = Statistic.DOMAINS[data_region]
+                            member = f'{handle}@{data_domain}'
+
+                            if users is not None and member not in users or member in result:
                                 continue
                             row.pop('contest_id')
                             row.pop('global_ranking')
 
-                            r = result.setdefault(handle, OrderedDict())
+                            r = result.setdefault(member, OrderedDict())
                             r['_ranking_domain'] = domain
-                            r['member'] = handle
+                            r['member'] = member
                             r['solving'] = row.pop('score')
                             r['name'] = row.pop('username')
 
@@ -186,11 +194,7 @@ class Statistic(BaseModule):
                             rank_index0 |= rank == 0
                             r['place'] = rank + (1 if rank_index0 else 0)
 
-                            data_region = row.pop('data_region').lower()
-                            r['info'] = {'profile_url': {
-                                '_data_region': '' if data_region == 'us' else f'-{data_region}',
-                                '_domain': Statistic.DOMAINS[data_region],
-                            }}
+                            r['info'] = {'profile_url': {'_domain': data_domain, '_handle': handle}}
 
                             country = None
                             for field in 'country_code', 'country_name':
@@ -198,7 +202,7 @@ class Statistic(BaseModule):
                             if country:
                                 r['country'] = country
 
-                            problems_stats = (statistics or {}).get(handle, {}).get('problems', {})
+                            problems_stats = (statistics or {}).get(member, {}).get('problems', {})
                             has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
 
                             skip = False
@@ -231,18 +235,18 @@ class Statistic(BaseModule):
                                     solutions_ids.add(s['submission_id'])
 
                             if users:
-                                users.remove(handle)
+                                users.remove(member)
                                 if not users:
                                     stop = True
 
                             if not problems or skip:
-                                result.pop(handle)
+                                result.pop(member)
                                 continue
 
                             r['solved'] = {'solving': solved}
                             penalty_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
                             r['penalty'] = self.to_time(penalty_time)
-                            times[handle] = penalty_time
+                            times[member] = penalty_time
 
                             if get_item(row, 'user_badge.icon'):
                                 row['badge'] = {
@@ -256,8 +260,8 @@ class Statistic(BaseModule):
                             r.update(row)
 
                             hidden_fields |= set(row.keys())
-                            if statistics and handle in statistics:
-                                stat = statistics[handle]
+                            if statistics and member in statistics:
+                                stat = statistics[member]
                                 for k in ('rating_change', 'new_rating', 'raw_rating'):
                                     if k in stat:
                                         r[k] = stat[k]
@@ -306,9 +310,9 @@ class Statistic(BaseModule):
             'badges': list(sorted(badges)),
             'info_fields': ['badges'],
         }
-        if writers:
-            writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
-            standings['writers'] = writers
+        # if writers:
+        #     writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
+        #     standings['writers'] = writers
         return standings
 
     @staticmethod
@@ -332,17 +336,12 @@ class Statistic(BaseModule):
 
     @staticmethod
     def is_china(account):
-        profile_url = account.info.setdefault('profile_url', {})
-        if profile_url.get('_data_region') is None:
-            profile_url['_data_region'] = ''
-            profile_url['_domain'] = Statistic.DOMAINS[profile_url['_data_region']],
-            account.save()
-        return 'cn' in profile_url['_data_region']
+        return account.key.endswith('.cn')
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
 
-        rate_limiter = RateLimiter(max_calls=1, period=4)
+        rate_limiter = RateLimiter(max_calls=1, period=2)
 
         @lru_cache()
         def get_all_contests(data_region=''):
@@ -359,24 +358,17 @@ class Statistic(BaseModule):
             nonlocal global_ranking_users
             nonlocal rate_limiter
 
-            key = (account.info.get('profile_url', {}).get('_data_region'), account.key)
+            profile_url = account.info.setdefault('profile_url', {})
+            key = (profile_url['_domain'], profile_url['_handle'])
             if key in global_ranking_users:
                 return account, global_ranking_users[key]
+            handle = profile_url['_handle']
 
             if stop:
                 return account, False
 
-            if not raise_on_error:
-                profile_url = resource.profile_url.format(**account.dict_with_info())
-                try:
-                    response = requests.head(profile_url)
-                    if response.status_code == 404:
-                        return account, None
-                except Exception:
-                    pass
-
-            connect_func = partial(fetch_profile_data, account=account, raise_on_error=True)
-            req.proxer.set_connect_func(connect_func)
+            # connect_func = partial(fetch_profile_data, account=account, raise_on_error=True)
+            # req.proxer.set_connect_func(connect_func)
 
             page = False
             account_is_china = Statistic.is_china(account)
@@ -387,7 +379,7 @@ class Statistic(BaseModule):
                             ret = {}
 
                             post = '''
-                            {"operationName":"userPublicProfile","variables":{"userSlug":"''' + account.key + '''"},"query":"
+                            {"operationName":"userPublicProfile","variables":{"userSlug":"''' + handle + '''"},"query":"
                             query userPublicProfile($userSlug: String!) {
                                 userProfilePublicProfile(userSlug: $userSlug) {
                                     username
@@ -422,7 +414,12 @@ class Statistic(BaseModule):
                                 # req=req,  FIXME: enable proxy if needed
                                 **kwargs,
                             )
-                            ret['profile'] = json.loads(page)['data']
+                            profile_data = json.loads(page)
+                            if profile_data['data']['userProfilePublicProfile'] is None:
+                                page = None
+                                break
+
+                            ret['profile'] = profile_data['data']
                             ranking = ret['profile'].pop('userContestRanking', None) or {}
 
                             ret['history'] = {
@@ -434,26 +431,31 @@ class Statistic(BaseModule):
                             profile_page = Statistic._get(
                                 'https://leetcode.com/graphql',
                                 post=b'''
-                                {"operationName":"userPublicProfile","variables":{"username":"''' + account.key.encode() + b'''"},"query":"    query userPublicProfile($username: String!) {  matchedUser(username: $username) {    username    profile {      ranking      userAvatar      realName      aboutMe      school      websites      countryName      company      jobTitle      skillTags      postViewCount      postViewCountDiff      reputation      reputationDiff      solutionCount      solutionCountDiff      categoryDiscussCount      categoryDiscussCountDiff    }  }}    "
+                                {"operationName":"userPublicProfile","variables":{"username":"''' + handle.encode() + b'''"},"query":"    query userPublicProfile($username: String!) {  matchedUser(username: $username) {    username    profile {      ranking      userAvatar      realName      aboutMe      school      websites      countryName      company      jobTitle      skillTags      postViewCount      postViewCountDiff      reputation      reputationDiff      solutionCount      solutionCountDiff      categoryDiscussCount      categoryDiscussCountDiff    }  }}    "
 }''',  # noqa: E501
                                 content_type='application/json',
                             )
-                            profile_data = json.loads(profile_page)['data']['matchedUser']
-                            if profile_data is None:
+                            profile_data = json.loads(profile_page)
+                            user_does_not_exist = any([
+                                'user does not exist' in e['message']
+                                for e in profile_data.get('errors', [])
+                            ])
+                            if user_does_not_exist:
                                 page = None
                                 break
+                            profile_data = profile_data['data']['matchedUser']
 
                             contest_page = Statistic._get(
                                 'https://leetcode.com/graphql',
                                 post=b'''
-                                {"operationName":"getContentRankingData","variables":{"username":"''' + account.key.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    __typename  }}"}''',  # noqa: E501
+                                {"operationName":"getContentRankingData","variables":{"username":"''' + handle.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    __typename  }}"}''',  # noqa: E501
                                 content_type='application/json',
                             )
                             contest_data = json.loads(contest_page)['data']
 
                             page = profile_data
                             page.update(contest_data)
-                            page['slug'] = account.key
+                            page['slug'] = handle
                     break
                 except FailOnGetResponse as e:
                     code = e.code
@@ -461,18 +463,22 @@ class Statistic(BaseModule):
                         page = None
                         break
 
-                    if account_is_china:
-                        if raise_on_error:
-                            raise e
+                    page = False
+                    if code in [403, 429]:
+                        stop = True
+                    break
+                    # if account_is_china:
+                    #     if raise_on_error:
+                    #         raise e
 
-                        ret = req.proxer.get_connect_ret()
-                        if ret:
-                            return ret
-                    else:
-                        page = False
-                        if code in [403, 429]:
-                            stop = True
-                        break
+                    #     ret = req.proxer.get_connect_ret()
+                    #     if ret:
+                    #         return ret
+                    # else:
+                    #     page = False
+                    #     if code in [403, 429]:
+                    #         stop = True
+                    #     break
                 except ProxyLimitReached:
                     return account, {}
 
@@ -541,7 +547,7 @@ class Statistic(BaseModule):
             n_limit=30,
             inplace=False,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.leetcode.proxies'),
-        ) as req:
+        ) as req, PoolExecutor(max_workers=8) as executor:
             if os.path.exists(Statistic.STATE_FILE):
                 with open(Statistic.STATE_FILE, 'r') as fo:
                     state = yaml.safe_load(fo)
@@ -600,9 +606,9 @@ class Statistic(BaseModule):
                             state['last_page'] = last_page
                         for node in data:
                             data_region = node['dataRegion'].lower()
-                            data_region = '' if data_region == 'us' else f'-{data_region}'
+                            data_domain = Statistic.DOMAINS[data_region]
                             username = node['user']['profile']['userSlug'].lower()
-                            global_ranking_users[(data_region, username)] = {
+                            global_ranking_users[(data_domain, username)] = {
                                 'profile': {'userProfilePublicProfile': node['user']},
                             }
                     else:
@@ -620,7 +626,7 @@ class Statistic(BaseModule):
                     yaml.dump(state, fo, indent=2)
 
             fetch_profile_data_func = partial(fetch_profile_data, req)
-            for account, page in map(fetch_profile_data_func, accounts):
+            for account, page in executor.map(fetch_profile_data_func, accounts):
                 if pbar:
                     pbar.set_postfix(stop=stop)
                     pbar.update()
@@ -701,6 +707,8 @@ class Statistic(BaseModule):
                         prev_rating = rating
                 if last_rating and 'rating' not in info:
                     info['rating'] = last_rating
+                if account.key.startswith('@_deleted_user_'):
+                    info['rating'] = None
 
                 if 'global_ranking' in info:
                     global_ranking = int(re.split('[^0-9]', str(info['global_ranking']))[0])
@@ -723,8 +731,10 @@ class Statistic(BaseModule):
                     'replace_info': True,
                 }
 
-                assert info and info['slug'].lower() == account.key, \
-                    f'Account key {account.key} should be equal username {info["slug"]}'
+                profile_url = account.info.setdefault('profile_url', {})
+                handle = profile_url['_handle']
+                assert info and info['slug'].lower() == handle, \
+                    f'Account handle {handle} should be equal username {info["slug"]}'
 
                 yield ret
 
@@ -732,11 +742,14 @@ class Statistic(BaseModule):
     @staticmethod
     def update_submissions(account, resource):
 
+        profile_url = account.info.setdefault('profile_url', {})
+        handle = profile_url['_handle']
+
         def recent_accepted_submissions(req=REQ):
 
             if Statistic.is_china(account):
                 post = '''
-                {"query":"query recentAcSubmissions($userSlug: String!) { recentACSubmissions(userSlug: $userSlug) { submissionId submitTime question { title translatedTitle titleSlug questionFrontendId } } } ","variables":{"userSlug":"''' + account.key + '''"},"operationName":"recentAcSubmissions"}
+                {"query":"query recentAcSubmissions($userSlug: String!) { recentACSubmissions(userSlug: $userSlug) { submissionId submitTime question { title translatedTitle titleSlug questionFrontendId } } } ","variables":{"userSlug":"''' + handle + '''"},"operationName":"recentAcSubmissions"}
                 '''  # noqa: E501
                 page = Statistic._get(
                     'https://leetcode.cn/graphql/noj-go/',
@@ -747,7 +760,7 @@ class Statistic(BaseModule):
                 data = json.loads(page)['data']['recentACSubmissions']
             else:
                 post = '''
-                {"query":"query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { id title titleSlug timestamp } } ","variables":{"username":"''' + account.key + '''","limit":20},"operationName":"recentAcSubmissions"}
+                {"query":"query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { id title titleSlug timestamp } } ","variables":{"username":"''' + handle + '''","limit":20},"operationName":"recentAcSubmissions"}
                 '''  # noqa: E501
                 page = Statistic._get(
                     'https://leetcode.com/graphql',

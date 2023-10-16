@@ -8,9 +8,14 @@
   <td class="account">
     {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True %}
 
-    {% if perms.ranking.change_account %}
-    <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+    <span class="inline-button">
+    {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
+    <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" class="small" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
     {% endif %}
+    {% if perms.ranking.change_account %}
+    <a href="{% url 'admin:ranking_account_change' account.id %}" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+    {% endif %}
+    </span>
 
     {% if request.user.is_authenticated and request.GET.add_account %}
     <div class="buttons pull-right">

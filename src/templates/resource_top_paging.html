@@ -1,11 +1,22 @@
 {% load el_pagination_tags %}
 
+{% coder_account_filter top primary_account row_number_field="rating" operator="__gt" as coder_top %}
 {% lazy_paginate first_per_page,per_page top using "top_page" %}
 {% get_pages %}
-{% for account in top %}
-  <tr{% if account.id in coder_accounts_ids %} class="info"{% endif %}>
+{% for account in top|chain:coder_top %}
+  <tr
+    {% if account.id in coder_accounts_ids %}class="info"{% endif %}
+    {% if account.delete_on_duplicate or account == primary_account %}
+    {% if not account.delete_on_duplicate %}data-delete-on-duplicate-stop="true"{% endif %}
+    data-delete-on-duplicate="top-{{ account.pk}}"
+    {% endif %}
+  >
     <td>
+      {% if account.delete_on_duplicate %}
+      {{ account.row_number }}
+      {% else %}
       {{ forloop.counter0|add:pages.current_start_index }}
+      {% endif %}
     </td>
     <td>
       {% include 'account_table_cell.html' with account=account resource=resource %}
@@ -16,3 +27,4 @@
   </tr>
 {% endfor %}
 {% show_more_table %}
+<script>delete_on_duplicate()</script>

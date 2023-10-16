@@ -21,8 +21,10 @@
       <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
     {% endif %}
   {% endif %}
-  {% get_country_from_account account as country %}{% if country %}<span class="profile-country flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></span>{% endif %}
-  {% coder_color_circle account.resource account.info size=28 %}
+  {% get_country_from_account account as country %}{% if country %}
+  <a href="{% url 'clist:resource' account.resource.host %}?country={{ country.code }}" title="{{ country.name }}" data-toggle="tooltip"><span class="profile-country flag flag-{{ country.flag_code|lower }}"></span></a>
+  {% endif %}
+  {% coder_color_circle account.resource account size=28 %}
 
   <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 

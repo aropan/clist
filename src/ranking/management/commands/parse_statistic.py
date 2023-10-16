@@ -186,6 +186,7 @@ class Command(BaseCommand):
         parser.add_argument('--before-date', default=False, help='Update contests that have been updated to date')
         parser.add_argument('--with-medals', action='store_true', default=False, help='Contest with medals')
         parser.add_argument('--without-fill-coder-problems', action='store_true', default=False)
+        parser.add_argument('--without-calculate-problem-rating', action='store_true', default=False)
         parser.add_argument('--contest-id', '-cid', help='Contest id')
         parser.add_argument('--no-update-problems', action='store_true', default=False, help='No update problems')
 
@@ -210,6 +211,7 @@ class Command(BaseCommand):
         contest_id=None,
         query=None,
         without_fill_coder_problems=False,
+        without_calculate_problem_rating=False,
         no_update_problems=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
@@ -266,6 +268,7 @@ class Command(BaseCommand):
 
                     contests = Contest.objects.filter(Q(pk__in=started) | Q(pk__in=ended))
                     contests = contests.filter(stage__isnull=True)
+                contests = contests.filter(resource__module__enable=True)
             else:
                 contests = contests.filter(start_time__lt=now)
             if title_regex:
@@ -282,8 +285,9 @@ class Command(BaseCommand):
         if limit:
             contests = contests.order_by('-end_time')[:limit]
 
+        contests = list(contests)
+
         if random_order:
-            contests = list(contests)
             shuffle(contests)
 
         countrier = Countrier()
@@ -291,15 +295,30 @@ class Command(BaseCommand):
         has_error = False
         count = 0
         total = 0
+        n_contest_progress = 0
         n_upd_account_time = 0
         n_statistics_total = 0
         n_statistics_created = 0
         n_calculated_problem_rating = 0
         progress_bar = tqdm(contests)
         stages_ids = []
+
+        resources = {contest.resource for contest in contests}
+        if len(resources) == 1 and len(contests) > 3:
+            resource_event_log = EventLog.objects.create(name='parse_statistic',
+                                                         related=contests[0].resource,
+                                                         status=EventStatus.IN_PROGRESS)
+        else:
+            resource_event_log = None
+
         for contest in progress_bar:
             if stop_on_error and has_error:
                 break
+            if resource_event_log:
+                message = f'progress {n_contest_progress} of {len(contests)} ({count} parsed), contest = {contest}'
+                resource_event_log.update_message(message)
+            n_contest_progress += 1
+
             channel_layer_handler.set_contest(contest)
             resource = contest.resource
             if not hasattr(resource, 'module'):
@@ -1205,7 +1224,7 @@ class Command(BaseCommand):
                         elif action == 'url':
                             contest.url = args[0]
                             contest.save()
-                if to_calculate_problem_rating:
+                if to_calculate_problem_rating and not without_calculate_problem_rating:
                     call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
                     contest.refresh_from_db()
                     n_calculated_problem_rating += 1
@@ -1278,7 +1297,10 @@ class Command(BaseCommand):
             for stage in tqdm(Stage.objects.filter(pk__in=stages_ids), total=len(stages_ids), desc='getting stages'):
                 update_stage(stage)
 
+        if resource_event_log:
+            resource_event_log.delete()
         progress_bar.close()
+
         self.logger.info(f'Number of parsed contests: {count} of {total}')
         if n_calculated_problem_rating:
             self.logger.info(f'Number of calculate rating problem: {n_calculated_problem_rating} of {total}')
@@ -1294,11 +1316,8 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         if args.resources:
-            if len(args.resources) == 1:
-                contests = Contest.objects.filter(resource__module__resource__host__iregex=args.resources[0])
-            else:
-                resources = [Resource.objects.get(host__iregex=r) for r in args.resources]
-                contests = Contest.objects.filter(resource__module__resource__host__in=resources)
+            resources = [Resource.objects.get(host__iregex=r) for r in args.resources]
+            contests = Contest.objects.filter(resource__module__resource__in=resources)
         else:
             has_module = Module.objects.filter(resource_id=OuterRef('resource__pk'))
             contests = Contest.objects.annotate(has_module=Exists(has_module)).filter(has_module=True)
@@ -1349,5 +1368,6 @@ class Command(BaseCommand):
             contest_id=args.contest_id,
             query=args.query,
             without_fill_coder_problems=args.without_fill_coder_problems,
+            without_calculate_problem_rating=args.without_calculate_problem_rating,
             no_update_problems=args.no_update_problems,
         )

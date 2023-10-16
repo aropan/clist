@@ -21,6 +21,7 @@ class EventStatus(models.TextChoices):
     DELETED = 'deleted', 'Deleted'
     SKIPPED = 'skipped', 'Skipped'
     REVERTED = 'reverted', 'Reverted'
+    EXCEPTION = 'exception', 'Exception'
 
 
 class EventLogManager(BaseManager):
@@ -42,3 +43,7 @@ class EventLog(BaseModel):
         self.status = status
         self.message = message
         self.save(update_fields=['status', 'message', 'modified'])
+
+    def update_message(self, message):
+        self.message = message
+        self.save(update_fields=['message', 'modified'])

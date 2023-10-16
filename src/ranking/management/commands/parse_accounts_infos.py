@@ -19,14 +19,25 @@ from clist.models import Resource
 from logify.models import EventLog, EventStatus
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
-from ranking.models import Account
+from ranking.models import Account, AccountRenaming
 from true_coders.models import Coder
 from utils.attrdict import AttrDict
 from utils.math import max_with_none
 from utils.traceback_with_vars import colored_format_exc
 
 
+@transaction.atomic
 def rename_account(account, other):
+    AccountRenaming.objects.update_or_create(
+        resource=account.resource,
+        old_key=account.key,
+        defaults={'new_key': other.key},
+    )
+    AccountRenaming.objects.filter(
+        resource=account.resource,
+        old_key=other.key,
+    ).delete()
+
     n_contests = other.n_contests + account.n_contests
     n_writers = other.n_writers + account.n_writers
     last_activity = max_with_none(account.last_activity, other.last_activity)
@@ -63,7 +74,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
-        parser.add_argument('-q', '--query', default=None, help='regex account key')
+        parser.add_argument('-q', '--query', default=None, nargs='+', help='account key or name')
         parser.add_argument('-f', '--force', action='store_true', help='get accounts with min updated time')
         parser.add_argument('-l', '--limit', default=None, type=int,
                             help='limit users for one resource (default is 1000)')
@@ -107,7 +118,10 @@ class Command(BaseCommand):
                 accounts = resource.account_set
 
                 if args.query:
-                    accounts = accounts.filter(Q(key=args.query) | Q(name=args.query))
+                    condition = Q()
+                    for query in args.query:
+                        condition |= Q(key=query) | Q(name=query)
+                    accounts = accounts.filter(condition)
                 elif not args.force:
                     condition = Q(updated__isnull=True) | Q(updated__lte=now)
                     if resource_info.get('force_on_new_year') or args.update_new_year:
@@ -173,6 +187,7 @@ class Command(BaseCommand):
             update_submissions_info = {}
             account = None
             exception_error = None
+            seen = set()
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -201,7 +216,8 @@ class Command(BaseCommand):
                                 delta = data.get('delta') or timedelta(days=100)
                                 n_counter['skip'] += 1
                                 account.updated = now + delta
-                                account.save()
+                                account.save(update_fields=['updated'])
+                                seen.add(account.key)
                                 continue
                             count += 1
                             info = data['info']
@@ -214,6 +230,7 @@ class Command(BaseCommand):
                                 info = {k: v for k, v in info.items() if v}
                                 n_counter['remove'] += 1
                                 pbar.set_postfix(warning=f'{n_counter["remove"]}: Remove user {account} = {info}')
+                                seen.add(account.key)
                                 continue
 
                             params = data.pop('contest_addition_update_params', {})
@@ -281,18 +298,14 @@ class Command(BaseCommand):
                             account.info = info
 
                             if do_upsolve and account.last_submission is not None:
-                                sumission_delta = max(now - account.last_submission, timedelta(days=1))
+                                sumission_delta = max(now - account.last_submission, timedelta(hours=20))
                                 delta = min(delta, sumission_delta)
 
                             account.updated = arrow.get(now + delta).ceil('day').datetime
                             account.save()
+                            seen.add(account.key)
             except Exception as e:
                 exception_error = str(e)
-                if not has_param and not args.all:
-                    updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
-                    for a in tqdm(accounts, desc='changing update time'):
-                        a.updated = updated
-                        a.save()
                 self.logger.debug(colored_format_exc())
                 self.logger.warning(f'resource = {resource}')
                 self.logger.error(f'Parse accounts infos: {e}')
@@ -302,6 +315,17 @@ class Command(BaseCommand):
                 event_log.update_status(EventStatus.FAILED, message=exception_error)
             else:
                 event_log.update_status(EventStatus.COMPLETED, message=message)
+
+            if exception_error and not has_param and not args.all:
+                try:
+                    updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
+                    for a in tqdm(accounts, desc='changing update time'):
+                        if a.key not in seen:
+                            a.updated = updated
+                            a.save(update_fields=['updated'])
+                except Exception as e:
+                    self.logger.debug(colored_format_exc())
+                    self.logger.error(f'Parse accounts infos changing update time: {e}')
 
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {message}')
             if update_submissions_info:

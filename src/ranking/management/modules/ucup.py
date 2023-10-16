@@ -72,16 +72,16 @@ class Statistic(BaseModule):
             problems = row.setdefault('problems', {})
             scoring = scoring.items() if isinstance(scoring, dict) else enumerate(scoring)
             for k, scoring_value in scoring:
-                score, time, submission_id, n_attemps, full_score, *is_hidden = map(int, scoring_value)
+                score, time, submission_id, n_attempts, full_score, *is_hidden = map(int, scoring_value)
                 short = chr(ord('A') + int(k))
                 problem = problems.setdefault(short, {})
                 is_accepted = score == full_score
                 if is_hidden and is_hidden[0]:
-                    problem['result'] = f'?{n_attemps + 1}'
+                    problem['result'] = f'?{n_attempts + 1}'
                 elif is_accepted:
-                    problem['result'] = f'+{n_attemps}' if n_attemps else '+'
+                    problem['result'] = f'+{n_attempts}' if n_attempts else '+'
                 else:
-                    problem['result'] = f'-{n_attemps + 1}'
+                    problem['result'] = f'-{n_attempts + 1}'
                 if time >= 0:
                     problem['time'] = self.to_time(time // 60, num=2)
                     problem['time_in_seconds'] = time

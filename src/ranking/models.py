@@ -102,6 +102,7 @@ class Account(BaseModel):
             ExpressionIndex(expressions=[Upper('key')]),
             models.Index(fields=['resource', 'key']),
             models.Index(fields=['resource', 'country']),
+
             models.Index(fields=['resource', 'rating']),
             models.Index(fields=['resource', '-rating']),
             models.Index(fields=['resource', 'rating50']),
@@ -116,9 +117,46 @@ class Account(BaseModel):
             models.Index(fields=['resource', '-updated']),
             models.Index(fields=['resource', 'overall_rank']),
             models.Index(fields=['resource', '-overall_rank']),
+
+            models.Index(fields=['resource', 'country', '-rating']),
+            models.Index(fields=['resource', 'country', '-rating50']),
+            models.Index(fields=['resource', 'country', '-last_activity']),
+            models.Index(fields=['resource', 'country', '-n_contests']),
+            models.Index(fields=['resource', 'country', '-n_writers']),
+            models.Index(fields=['resource', 'country', '-updated']),
+            models.Index(fields=['resource', 'country', 'overall_rank']),
+            models.Index(fields=['resource', 'country', '-overall_rank']),
+
+            models.Index(fields=['country', '-rating']),
+            models.Index(fields=['country', '-rating50']),
+            models.Index(fields=['country', '-last_activity']),
+            models.Index(fields=['country', '-n_contests']),
+            models.Index(fields=['country', '-n_writers']),
+            models.Index(fields=['country', '-updated']),
+            models.Index(fields=['country', 'overall_rank']),
+            models.Index(fields=['country', '-overall_rank']),
         ]
 
         unique_together = ('resource', 'key')
+
+
+class AccountRenaming(BaseModel):
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    old_key = models.CharField(max_length=1024, null=False, blank=False)
+    new_key = models.CharField(max_length=1024, null=False, blank=False)
+
+    def __str__(self):
+        return f'{self.old_key} -> {self.new_key}'
+
+    class Meta:
+        indexes = [
+            GistIndexTrgrmOps(fields=['old_key']),
+            GistIndexTrgrmOps(fields=['new_key']),
+            models.Index(fields=['resource', 'old_key']),
+            models.Index(fields=['resource', 'new_key']),
+        ]
+
+        unique_together = ('resource', 'old_key')
 
 
 def download_avatar_url(account):
@@ -165,6 +203,8 @@ def set_account_rating(sender, instance, *args, **kwargs):
             instance.resource.save(update_fields=['rating_update_time'])
         instance.rating = instance.info['rating']
         instance.rating50 = instance.rating / 50 if instance.rating is not None else None
+        if instance.rating is None:
+            instance.overall_rank = None
     download_avatar_url(instance)
 
 
@@ -399,6 +439,7 @@ def count_account_contests(signal, instance, **kwargs):
 class Module(BaseModel):
     resource = models.OneToOneField(Resource, on_delete=models.CASCADE)
     path = models.CharField(max_length=255)
+    enable = models.BooleanField(default=True, blank=True, db_index=True)
     min_delay_after_end = models.DurationField(null=True, blank=True)
     max_delay_after_end = models.DurationField()
     delay_on_error = models.DurationField()

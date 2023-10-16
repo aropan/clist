@@ -180,7 +180,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
       </div>
       {% endif %}
 
-      <div class="text-center loading_rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
+      <div class="text-center loading-rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
 
       <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}">{{ hr }}</canvas>
     </div>

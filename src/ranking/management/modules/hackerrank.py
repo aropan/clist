@@ -21,7 +21,7 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get(url):
-        n_attemps = 0
+        n_attempts = 0
         while True:
             try:
                 Statistic.DELAY *= 0.9
@@ -30,8 +30,8 @@ class Statistic(BaseModule):
                 page = REQ.get(url)
                 break
             except FailOnGetResponse as e:
-                n_attemps += 1
-                if e.code == 429 and n_attemps < 10:
+                n_attempts += 1
+                if e.code == 429 and n_attempts < 10:
                     Statistic.DELAY *= 1.5
                     continue
                 raise e
