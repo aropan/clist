@@ -93,7 +93,7 @@ class OrganizationAdmin(BaseModelAdmin):
 
 @admin_register(CoderList)
 class CoderListAdmin(BaseModelAdmin):
-    list_display = ['name', 'owner', 'uuid']
+    list_display = ['name', 'owner', 'access_level', 'uuid']
     search_fields = ['name', 'owner__username', 'uuid']
 
 

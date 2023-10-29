@@ -23,7 +23,7 @@ class Statistic(BaseModule):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        REQ.get('https://facebook.com/')
+        facebook_page = REQ.get('https://facebook.com/')  # noqa: F841
         form = REQ.form(action='/login/')
         if form:
             form['post'].pop('sign_up', None)
@@ -31,7 +31,7 @@ class Statistic(BaseModule):
                 'email': conf.FACEBOOK_USERNAME,
                 'pass': conf.FACEBOOK_PASSWORD,
             }
-            signin_page = REQ.submit_form(data=data, form=form)
+            signin_page = REQ.submit_form(data=data, form=form)  # noqa: F841
             form = REQ.form(action='/login/')
             if form and 'validate-password' in form['url']:
                 REQ.submit_form(data=data, form=form)
@@ -68,6 +68,12 @@ class Statistic(BaseModule):
                     if 'errors' not in ret:
                         return ret
                     msg = f'Error on query {name}'
+                    messages = []
+                    for error in ret['errors']:
+                        if isinstance(error, dict) and 'message' in error:
+                            messages.append(error['message'])
+                    if messages:
+                        msg += f' = {messages}'
                 except Exception as e:
                     msg = f'Exception on query {name} = {e}'
 

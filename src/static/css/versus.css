@@ -58,8 +58,6 @@ td.title-column span {
 }
 
 .versus-action {
-  position: absolute;
-  margin-top: -25px;
   visibility: hidden;
 }
 

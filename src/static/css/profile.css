@@ -60,10 +60,6 @@
   background-color: #cccccc;
 }
 
-#list-accounts .account a {
-  text-decoration: none;
-}
-
 #list-accounts .account .btn:hover {
   background-color: #f7f7f7;
 }

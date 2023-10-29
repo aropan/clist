@@ -9,7 +9,7 @@ import cssutils
 from clist.models import Resource
 
 
-def run(*args):
+def run(host=None, *args):
     sheet = cssutils.parseFile('static/css/base.css')
 
     selector_coloring = {}
@@ -25,7 +25,11 @@ def run(*args):
                 assert selector not in selector_coloring or selector_coloring.get(selector) == color
                 selector_coloring[selector] = color
 
-    for resource in Resource.objects.all():
+    resources = Resource.objects.all()
+    if host:
+        resources = resources.filter(host__regex=host)
+
+    for resource in resources:
         if not resource.ratings:
             continue
         to_save = False
@@ -55,13 +59,20 @@ def run(*args):
             prev_rgb = hex_rgb
 
         limit = None
+        next_rating = resource.ratings[-1]
         for rating in reversed(resource.ratings[:-1]):
+            next_rating_value = next_rating['low'] - 1
+            if rating.get('high') != next_rating_value:
+                rating['high'] = next_rating_value
+                to_save = True
             if limit is None or rating['color'] != limit['color']:
                 limit = rating
-            value = limit['high'] + 1
-            if rating.get('next') != value:
-                rating['next'] = value
-                to_save = True
+            if 'high' in limit:
+                value = limit['high'] + 1
+                if rating.get('next') != value:
+                    rating['next'] = value
+                    to_save = True
+            next_rating = rating
 
         limit = None
         for rating in resource.ratings[1:]:

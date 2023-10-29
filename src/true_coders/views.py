@@ -49,7 +49,7 @@ from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
                             update_account_by_coders)
 from tg.models import Chat
-from true_coders.models import Coder, CoderList, Filter, ListValue, Organization, Party
+from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListValue, Organization, Party
 from utils.chart import make_chart
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
@@ -255,6 +255,7 @@ def coders(request, template='coders.html'):
     }
 
     chat_fields = None
+    list_fields = None
     view_coder_chat = None
     if request.user.is_authenticated:
         coder = request.user.coder
@@ -263,10 +264,7 @@ def coders(request, template='coders.html'):
             options_values = {c.chat_id: c.title for c in chats}
             chat_fields = {
                 'values': [v for v in request.GET.getlist('chat') if v and v in options_values],
-                'options': options_values,
-                'noajax': True,
-                'nogroupby': True,
-                'nourl': True,
+                'options': options_values, 'noajax': True, 'nogroupby': True, 'nourl': True,
             }
 
             filt = Q()
@@ -284,6 +282,15 @@ def coders(request, template='coders.html'):
                         to_attr='non_group_chats',
                     )
                 )
+        lists = coder.my_list_set.all()
+        if lists:
+            options_values = {str(v.uuid): v.name for v in lists}
+            list_fields = {
+                'values': [v for v in request.GET.getlist('list') if v in options_values],
+                'options': options_values, 'noajax': True, 'nogroupby': True, 'nourl': True,
+            }
+            coder_filter = CoderList.coders_filter(list_fields['values'], logger=logger)
+            coders = coders.filter(coder_filter)
 
     resources = request.GET.getlist('resource')
     if resources:
@@ -345,6 +352,7 @@ def coders(request, template='coders.html'):
         'params': params,
         'virtual_field': virtual_field,
         'chat_fields': chat_fields,
+        'list_fields': list_fields,
         'custom_fields': custom_fields,
         'view_coder_chat': view_coder_chat,
     }
@@ -389,7 +397,7 @@ def account_context(request, key, host):
     }
 
     add_account_button = False
-    verified = bool(VerifiedAccount.objects.filter(account=account).exists())
+    verified = VerifiedAccount.objects.filter(account=account).first()
     need_verify = True
     set_variables = None
     if request.user.is_authenticated:
@@ -854,6 +862,7 @@ def settings(request, tab=None):
     custom_categories = {c.get_notification_method(): c.title for c in coder.chat_set.filter(is_group=True)}
 
     my_lists = coder.my_list_set.annotate(n_records=SubqueryCount('values'))
+    my_lists = my_lists.prefetch_related('shared_with_coders')
 
     return render(
         request,
@@ -878,6 +887,7 @@ def settings(request, tab=None):
             "ace_calendars": django_settings.ACE_CALENDARS_,
             "custom_countries": django_settings.CUSTOM_COUNTRIES_,
             "past_calendar_actions": django_settings.PAST_CALENDAR_ACTIONS_,
+            "access_levels": AccessLevel,
             "tab": tab,
         },
     )
@@ -1118,24 +1128,30 @@ def change(request):
                 filter_.save(update_fields=['enabled'])
         except Exception as e:
             return HttpResponseBadRequest(e)
-    elif name == "add-list":
-        if not value:
-            return HttpResponseBadRequest("empty list name")
-        if coder.my_list_set.count() >= 50:
-            return HttpResponseBadRequest("reached the limit number of lists")
-        if coder.my_list_set.filter(name=value):
-            return HttpResponseBadRequest("duplicate list name")
-        coder_list = CoderList.objects.create(owner=coder, name=value)
-        return HttpResponse(json.dumps({'id': coder_list.pk, 'name': coder_list.name}), content_type="application/json")
-    elif name == "edit-list":
-        if not value:
-            return HttpResponseBadRequest("empty list name")
-        if coder.my_list_set.filter(name=value):
-            return HttpResponseBadRequest("duplicate list name")
+    elif name == "add-list" or name == "edit-list":
         try:
-            pk = int(request.POST.get("id", -1))
-            coder_list = CoderList.objects.get(pk=pk, owner=coder)
+            if not value:
+                return HttpResponseBadRequest("empty list name")
+
+            if name == "add-list":
+                if coder.my_list_set.count() >= 50:
+                    return HttpResponseBadRequest("reached the limit number of lists")
+                if coder.my_list_set.filter(name=value):
+                    return HttpResponseBadRequest("duplicate list name")
+                coder_list = CoderList.objects.create(owner=coder, name=value)
+            elif name == "edit-list":
+                pk = int(request.POST.get("id"))
+                if coder.my_list_set.filter(name=value).exclude(pk=pk).exists():
+                    return HttpResponseBadRequest("duplicate list name")
+                coder_list = CoderList.objects.get(pk=pk, owner=coder)
             coder_list.name = value
+            access_level = request.POST.get("access_level")
+            coder_list.access_level = access_level
+            if access_level == AccessLevel.RESTRICTED:
+                shared_with = [int(x) for x in request.POST.getlist("shared_with[]", []) if x]
+                if len(shared_with) > 50:
+                    return HttpResponseBadRequest("reached the limit number of shared with")
+                coder_list.shared_with_coders.set(shared_with)
             coder_list.save()
         except Exception as e:
             return HttpResponseBadRequest(e)
@@ -2078,6 +2094,15 @@ def accounts(request, template='accounts.html'):
         resources = Resource.objects.filter(pk__in=resources)
         accounts = accounts.filter(resource__in=resources)
         params['resources'] = resources
+
+    lists = coder.my_list_set.all() if request.user.is_authenticated else None
+    if lists:
+        options_values = {str(v.uuid): v.name for v in lists}
+        values = [v for v in request.GET.getlist('list') if v in options_values]
+        params['list_filter'] = {'values': values, 'options': options_values,
+                                 'noajax': True, 'nogroupby': True, 'nourl': True}
+        accounts_filter = CoderList.accounts_filter(values, logger=logger)
+        accounts = accounts.filter(accounts_filter)
 
     # qualifiers
     contests_ids = request.GET.getlist('contest')

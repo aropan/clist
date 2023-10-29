@@ -361,36 +361,63 @@ class Filter(BaseModel):
         ]
 
 
+class AccessLevel(models.TextChoices):
+    PRIVATE = 'private', 'Private'
+    RESTRICTED = 'restricted', 'Restricted'
+    PUBLIC = 'public', 'Public'
+
+
 class CoderList(BaseModel):
     name = models.CharField(max_length=60)
     owner = models.ForeignKey(Coder, related_name='my_list_set', on_delete=models.CASCADE, db_index=True)
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
+    access_level = models.CharField(max_length=10, choices=AccessLevel.choices, default=AccessLevel.PRIVATE)
+    shared_with_coders = models.ManyToManyField(Coder, related_name='shared_list_set', blank=True)
 
     def __str__(self):
         return f'CoderList#{self.uuid}'
 
+    def shared_with(self):
+        return [{'id': c.pk, 'username': c.username} for c in self.shared_with_coders.all()]
+
     @staticmethod
-    def accounts_filter(request):
-        values = [v for v in request.GET.getlist('list')]
+    def coders_and_accounts_ids(uuids, logger=None):
         coders = set()
         accounts = set()
-        for uuid in values:
+        for uuid in uuids:
             try:
                 coder_list = CoderList.objects.prefetch_related('values').get(uuid=uuid)
             except Exception:
-                request.logger.warning(f'Ignore list with uuid = "{uuid}"')
+                if logger:
+                    logger.warning(f'Ignore list with uuid = "{uuid}"')
                 continue
             for v in coder_list.values.select_related('coder').select_related('account'):
                 if v.coder:
                     coders.add(v.coder.pk)
                 if v.account:
                     accounts.add(v.account.pk)
+        return coders, accounts
+
+    @staticmethod
+    def accounts_filter(uuids, logger=None):
+        coders, accounts = CoderList.coders_and_accounts_ids(uuids, logger=logger)
         ret = Q()
         if coders:
             Account = apps.get_model('ranking', 'Account')
             accounts |= set(Account.objects.filter(coders__pk__in=coders).values_list('pk', flat=True))
         if accounts:
             ret |= Q(pk__in=accounts)
+        return ret
+
+    @staticmethod
+    def coders_filter(uuids, logger=None):
+        coders, accounts = CoderList.coders_and_accounts_ids(uuids, logger=logger)
+        ret = Q()
+        if accounts:
+            Coder = apps.get_model('true_coders', 'Coder')
+            coders |= set(Coder.objects.filter(account__pk__in=accounts).values_list('pk', flat=True))
+        if coders:
+            ret |= Q(pk__in=coders)
         return ret
 
 

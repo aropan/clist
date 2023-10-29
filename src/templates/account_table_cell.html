@@ -1,7 +1,7 @@
 {% if with_resource %}
   {% if with_fixed_width %}<div class="resource-width-fixed">{% endif %}
     {% if not without_url_transform and request %}<a href="{% url_transform request resource=resource.pk %}">{% endif %}
-      <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+      <img data-toggle="tooltip" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/>
     {% if not without_url_transform and request %}</a>{% endif %}
   {% if with_fixed_width %}</div>{% endif %}
 {% endif %}
@@ -27,7 +27,7 @@
   {% if with_fixed_width %}</div>{% endif %}
 {% endif %}
 
-<span>
+<span class="{% coder_color_class resource account.info %}">
 
 {% if not without_circle %}
 {% coder_color_circle resource account %}

@@ -64,7 +64,7 @@
     <div class="col-md-6 col-lg-4">
         <h4>
             Top rating
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' %}"><i class="fas fa-list"></i></a>
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
             <a href="{% url 'clist:resources_top' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' %}</a>
         </h4>
         <div class="panel panel-default table-responsive">
@@ -226,7 +226,7 @@
     <div class="col-md-6 col-lg-4">
         <h4>
             Last activity
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=last_activity&sort_order=desc{% query_fields request 'country' %}"><i class="fas fa-list"></i></a>
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=last_activity&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -245,7 +245,7 @@
     <div class="col-md-6 col-lg-4">
         <h4>
             Most participated
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_contests&sort_order=desc{% query_fields request 'country' %}"><i class="fas fa-list"></i></a>
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_contests&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -264,7 +264,7 @@
     <div class="col-md-6 col-lg-4">
         <h4>
             Most writer
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_writers&sort_order=desc{% query_fields request 'country' %}"><i class="fas fa-list"></i></a>
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_writers&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -283,7 +283,7 @@
     <div class="col-md-6 col-lg-4">
         <h4>
             Problems
-            <a href="{% url 'clist:problems' %}?resource={{ resource.pk }}"><i class="fas fa-list"></i></a>
+            <a href="{% url 'clist:problems' %}?resource={{ resource.pk }}">{% icon_to 'problems' %}</a>
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="problems table table-hover table-condensed table-striped">

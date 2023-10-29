@@ -1,6 +1,6 @@
-function toggle_hide_contest(e) {
-    e.preventDefault();
-    var icon = $(this);
+function toggle_hide_contest(ev, el) {
+    ev.preventDefault();
+    var icon = $(el);
     $.ajax({
         type: 'GET',
         url: document.URL,
@@ -77,5 +77,4 @@ $(function() {
     })
 
     $(".party-check.has-permission-toggle-party-contest[data-contest-id]").click(toggle_party_contest)
-    $(".hide-contest[data-contest-id]").click(toggle_hide_contest)
 });

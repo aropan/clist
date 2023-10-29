@@ -414,7 +414,7 @@ class requester():
                 ('Connection', 'keep-alive'),
                 (
                     'User-Agent',
-                    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:10.0.2) Gecko/20100101 Firefox/10.0.2'
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'  # noqa
                     if user_agent is None else user_agent
                 )
             ]
@@ -634,7 +634,7 @@ class requester():
                 self.proxer.ok(proxy=str(proxy), time_response=self.time_response)
 
             if page and (not response_content_type or not response_content_type.startswith('image/')):
-                matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;]{3,}\b)', str(page), re.IGNORECASE)
+                matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;,]{3,}\b)', str(page), re.IGNORECASE)
                 if matches and detect_charsets is not None:
                     charsets = [c.lower() for c in matches]
                     if len(charsets) > 1 and len(set(charsets)) > 1:

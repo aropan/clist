@@ -179,6 +179,7 @@ class Command(BaseCommand):
         parser.add_argument('--update-contest-on-missing-account', action='store_true')
         parser.add_argument('--ignore-missing-account', action='store_true')
         parser.add_argument('--ignore-old-rating-only', action='store_true')
+        parser.add_argument('--reparse', action='store_true', default=False, help='Reparse problem rating')
 
     def handle(self, *_, **options):
         global args
@@ -204,6 +205,9 @@ class Command(BaseCommand):
             contests = contests.filter(pk__in=args.contests)
         if args.staleness:
             contests = contests.filter(updated__lt=now() - timedelta(days=args.staleness))
+        if args.reparse:
+            contests = contests.filter(info___reparse_problem_rating=True)
+
         contests = contests.order_by('-end_time')
         contests = contests.filter(end_time__lt=now())
         contests = contests.exclude(problem_set=None)
@@ -271,6 +275,8 @@ class Command(BaseCommand):
                 n_empty += 1
                 self.logger.warning(f'skip empty contest = {contest}')
                 event_log.update_status(EventStatus.SKIPPED, message='empty contest')
+                contest.info.pop('_reparse_problem_rating', None)
+                contest.save(update_fields=['info'])
                 continue
 
             rows_values = tuple(sorted(rows_values))
@@ -289,6 +295,8 @@ class Command(BaseCommand):
                 n_skip_hash += 1
                 self.logger.warning(f'skip unchanged hash contest = {contest}')
                 event_log.update_status(EventStatus.SKIPPED, message='unchanged hash')
+                contest.info.pop('_reparse_problem_rating', None)
+                contest.save(update_fields=['info'])
                 continue
 
             contests_divisions_data = dict()
@@ -355,6 +363,8 @@ class Command(BaseCommand):
                 n_skip_missing += 1
                 self.logger.warning(f'skip by missing account = {contest}')
                 event_log.update_status(EventStatus.SKIPPED, message='missing account')
+                contest.info.pop('_reparse_problem_rating', None)
+                contest.save(update_fields=['info'])
                 continue
 
             for info in contests_divisions_data.values():
@@ -429,5 +439,7 @@ class Command(BaseCommand):
                 n_done += 1
                 self.logger.info(f'done contest = {contest}')
                 event_log.update_status(EventStatus.COMPLETED)
+                contest.info.pop('_reparse_problem_rating', None)
+                contest.save(update_fields=['info'])
         self.logger.info(f'done = {n_done}, skip hash = {n_skip_hash}, skip missing = {n_skip_missing}'
                          f', skip empty = {n_empty} of total = {n_total}')

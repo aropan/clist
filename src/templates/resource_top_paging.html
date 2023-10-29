@@ -6,17 +6,10 @@
 {% for account in top|chain:coder_top %}
   <tr
     {% if account.id in coder_accounts_ids %}class="info"{% endif %}
-    {% if account.delete_on_duplicate or account == primary_account %}
-    {% if not account.delete_on_duplicate %}data-delete-on-duplicate-stop="true"{% endif %}
-    data-delete-on-duplicate="top-{{ account.pk}}"
-    {% endif %}
+    {% include "delete_on_duplicate_attrs.html" with name="top" entry=account primary=primary_account %}
   >
     <td>
-      {% if account.delete_on_duplicate %}
-      {{ account.row_number }}
-      {% else %}
-      {{ forloop.counter0|add:pages.current_start_index }}
-      {% endif %}
+      {% if account.delete_on_duplicate %}{{ account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}
     </td>
     <td>
       {% include 'account_table_cell.html' with account=account resource=resource %}

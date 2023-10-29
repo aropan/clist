@@ -665,6 +665,11 @@ def to_json(data):
 
 
 @register.filter
+def to_escaped_json(data):
+    return json.dumps(data)
+
+
+@register.filter
 def chain(value, arg):
     return itertools.chain(value, arg)
 
@@ -1232,6 +1237,7 @@ def coder_account_filter(qs, account, row_number_field=None, operator=None):
     ret = qs.filter(pk=account.pk).annotate(delete_on_duplicate=Value(True))
     if row_number_field:
         value = getattr(account, row_number_field)
-        row_number = qs.filter(**{row_number_field + operator: value}).count() + 1
-        ret = ret.annotate(row_number=Value(row_number))
+        if value is not None:
+            row_number = qs.filter(**{row_number_field + operator: value}).count() + 1
+            ret = ret.annotate(row_number=Value(row_number))
     return ret

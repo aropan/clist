@@ -624,3 +624,66 @@ function delete_on_duplicate() {
     }
   })
 }
+
+/*
+ * Select coders
+ */
+
+function coders_select(id, submit) {
+  $(id).select2({
+    dropdownAutoWidth : true,
+    theme: 'bootstrap',
+    placeholder: '',
+    allowClear: true,
+    templateResult: function (data) {
+      var $result = $('<span></span>')
+      $result.text(data.text)
+      return $result
+    },
+    ajax: {
+      url: '/settings/search/',
+      dataType: 'json',
+      delay: 314,
+      data: function (params) {
+        return {
+          query: 'coders',
+          regex: params.term,
+          page: params.page || 1
+        }
+      },
+      processResults: function (data, params) {
+        return {
+          results: data.items,
+          pagination: {
+            more: data.more
+          }
+        }
+      },
+      cache: true,
+    },
+  }).on('select2:unselecting', function() {
+    if (submit) {
+      $('button[name="action"][value="' + submit + '"]').prop('disabled', true)
+    }
+    $(this).data('unselecting', true)
+  }).on('select2:opening', function(e) {
+    if ($(this).data('unselecting')) {
+      $(this).removeData('unselecting')
+      e.preventDefault()
+    }
+  }).on('select2:selecting', function(e) {
+    if (submit) {
+      $('button[name="action"][value="' + submit + '"]').prop('disabled', false)
+    }
+  })
+  $(id + '-hidden').removeClass('hidden')
+}
+
+
+function escape_html(str) {
+    return str.replace(/&/g, '&amp;')  // First, escape ampersands
+              .replace(/"/g, '&quot;') // then double-quotes
+              .replace(/'/g, '&#39;')  // and single quotes
+              .replace(/</g, '&lt;')   // and less-than signs
+              .replace(/>/g, '&gt;');  // and greater-than signs
+}

@@ -88,7 +88,7 @@
                                 <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
                                 <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
                                 <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
-                                <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i></i>&nbsp;Atom&RSS</a></li>
+                                <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i>&nbsp;Atom&RSS</a></li>
                                 <li><a href="{% url 'clist:links' %}"><i class="fas fa-link"></i>&nbsp;Links</a></li>
                                 <li role="separator" class="divider"></li>
                                 <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>

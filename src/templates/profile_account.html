@@ -63,7 +63,10 @@
   {% include "profile_list_filter.html" %}
 
   {% if perms.ranking.change_account %}
-    <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+  <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank" rel="noopener">{% icon_to 'database' 'Change account' %}</a>
+  {% endif %}
+  {% if perms.ranking.change_verifiedaccount and verified_account %}
+  <a href="{% url 'admin:ranking_verifiedaccount_change' verified_account.id %}" class="database-link invisible" target="_blank" rel="noopener">{% icon_to 'verification' 'Change verification' %}</a>
   {% endif %}
 </h2>
 {% if show_add_account_message %}

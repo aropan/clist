@@ -1,11 +1,15 @@
 {% load el_pagination_tags %}
 
+{% coder_account_filter most_participated primary_account row_number_field="n_contests" operator="__gt" as coder_most_participated %}
 {% lazy_paginate first_per_page,per_page most_participated using "most_participated_page" %}
 {% get_pages %}
-{% for account in most_participated %}
-  <tr{% if account.id in coder_accounts_ids %} class="info"{% endif %}>
+{% for account in most_participated|chain:coder_most_participated %}
+  <tr
+    {% if account.id in coder_accounts_ids %} class="info"{% endif %}
+    {% include "delete_on_duplicate_attrs.html" with name="most_participated" entry=account primary=primary_account %}
+  >
     <td>
-      {{ forloop.counter0|add:pages.current_start_index }}
+      {% if account.delete_on_duplicate %}{{ account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}
     </td>
     <td>
       {% include 'account_table_cell.html' with account=account resource=resource %}
@@ -16,3 +20,4 @@
   </tr>
 {% endfor %}
 {% show_more_table %}
+<script>delete_on_duplicate()</script>

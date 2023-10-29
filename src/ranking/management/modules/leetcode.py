@@ -100,6 +100,7 @@ class Statistic(BaseModule):
                 'https://leetcode.com/graphql',
                 content_type='application/json',
                 post=json.dumps(params).encode('utf-8'),
+                n_attempts=3,
             )
             question = json.loads(page)['data']['question']
             if question:
@@ -120,13 +121,16 @@ class Statistic(BaseModule):
         #         for w in problem_info.get('writers', []):
         #             writers[w] += 1
 
+        fetch_page_rate_limiter = RateLimiter(max_calls=4, period=1)
+
         def fetch_page(page):
             if stop:
                 return
-            with RateLimiter(max_calls=3, period=1):
+            with fetch_page_rate_limiter:
                 url = api_ranking_url_format.format(page + 1)
-                content = REQ.get(url)
-                return json.loads(content)
+                content = REQ.get(url, n_attempts=3)
+                data = json.loads(content)
+                return data
 
         n_top_submissions = get_item(self.resource.info, 'statistics.n_top_download_submissions')
 
@@ -139,7 +143,7 @@ class Statistic(BaseModule):
             if users:
                 users = list(users)
             start_time = self.start_time.replace(tzinfo=None)
-            with PoolExecutor(max_workers=8) as executor:
+            with PoolExecutor(max_workers=4) as executor:
                 solutions_for_get = []
                 solutions_ids = set()
                 times = {}

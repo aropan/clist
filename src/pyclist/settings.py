@@ -8,7 +8,6 @@ https://docs.djangoproject.com/en/1.8/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
-
 import logging
 import os
 import warnings
@@ -106,6 +105,7 @@ INSTALLED_APPS = (
     'django_rq',
     'notes',
     'logify',
+    'fontawesomefree',
 )
 
 MIDDLEWARE = (
@@ -626,6 +626,7 @@ FONTAWESOME_ICONS_ = {
     'college': '<i class="fa-fw fas fa-university"></i>',
     'resource': '<i class="fa-fw fas fa-at"></i>',
     'field': '<i class="fa-fw fas fa-database"></i>',
+    'database': '<i class="fas fa-database"></i>',
     'find_me': '<i class="fa-fw fas fa-crosshairs"></i>',
     'search': '<i class="fa-fw fas fa-search"></i>',
     'detail_info': '<i class="fa-fw fas fa-info"></i>',
@@ -642,6 +643,8 @@ FONTAWESOME_ICONS_ = {
     'chart': '<i class="fa-fw fas fa-chart-bar"></i>',
     'ghost': '<i class="fs-fw fas fa-ghost"></i>',
     'top': {'icon': '<i class="fas fa-list-ol"></i>', 'title': 'Top for resource'},
+    'accounts': '<i class="fa-regular fa-rectangle-list"></i>',
+    'problems': '<i class="fa-solid fa-list-check"></i>',
     'versus': '<i class="fas fa-people-arrows"></i>',
     'last_activity': '<i class="fa-fw far fa-clock"></i>',
     'fullscreen': '<i class="fas fa-expand-arrows-alt"></i>',
@@ -670,7 +673,8 @@ FONTAWESOME_ICONS_ = {
                   'selected_class': 'far', 'unselected_class': 'far'},
     'status': '<i class="far fa-lightbulb"></i>',
     'n_participants': {'icon': '<i class="fas fa-users"></i>', 'title': 'Number of participants', 'position': 'bottom'},
-    'n_problems': {'icon': '<i class="far fa-file-code"></i>', 'title': 'Number of problems', 'position': 'bottom'},
+    'n_problems': {'icon': '<i class="fa-solid fa-list-check"></i>', 'title': 'Number of problems',
+                   'position': 'bottom'},
     'series': '<i class="fas fa-trophy text-muted"></i>',
     'app': '<i class="fas fa-desktop"></i>',
     'sort-asc': '<i class="fas fa-sort-amount-down-alt"></i>',
@@ -688,6 +692,9 @@ FONTAWESOME_ICONS_ = {
              'selected_class': 'far note-edit', 'unselected_class': 'far note-edit'},
     'badge': {'icon': '<i class="fas fa-tag"></i>'},
     'virtual': '<i class="fas fa-globe"></i>',
+    'private': '<span class="label label-success"><i class="fa-solid fa-lock"></i></span>',
+    'restricted': '<span class="label label-warning"><i class="fa-solid fa-unlock"></i></span>',
+    'public': '<span class="label label-danger"><i class="fa-solid fa-lock-open"></i></span>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

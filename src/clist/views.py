@@ -383,7 +383,8 @@ def resources_top(request, template='resources_top.html'):
         _, host = qs_key.split('__')
         resources = resources.filter(host=host)
 
-    list_filter = CoderList.accounts_filter(request)
+    list_values = [v for v in request.GET.getlist('list')]
+    list_filter = CoderList.accounts_filter(list_values, logger=request.logger)
     if list_filter:
         qs = Account.objects.filter(list_filter).filter(rating__isnull=False).values_list('pk', flat=True)
         accounts_filter &= Q(pk__in=set(qs))
@@ -473,7 +474,7 @@ def resource(request, host, template='resource.html', extra_context=None):
     resource = get_object_or_404(Resource, host=host)
 
     if request.user.is_authenticated:
-        coder = request.user.coder
+        coder = request.as_coder or request.user.coder
         primary_account = coder.primary_account(resource)
         coder_accounts_ids = set(coder.account_set.filter(resource=resource).values_list('id', flat=True))
     else:
@@ -524,7 +525,9 @@ def resource(request, host, template='resource.html', extra_context=None):
         if value is not None:
             params[field] = value
             accounts = accounts.filter(**{operator: value})
-    update_coder_range_filter(coder, range_filter_values, resource.host)
+
+    if not request.as_coder:
+        update_coder_range_filter(coder, range_filter_values, resource.host)
 
     countries = (accounts
                  .filter(country__isnull=False)

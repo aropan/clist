@@ -44,6 +44,8 @@
 
     ACCOUNTS_ADVANCED_SEARCH_URL = "{% url 'coder:accounts' %}?add_account=on"
 
+    ACCESS_LEVELS = [ {% for access_level in access_levels %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ access_level.value }}', 'text': '{{ access_level.label }}'}{% endfor %} ]
+
     WEEK_DAYS = [{'id': '2', 'text': 'Mon'}, {'id': '3', 'text': 'Tue'}, {'id': '4', 'text': 'Wed'}, {'id': '5', 'text': 'Thu'}, {'id': '6', 'text': 'Fri'}, {'id': '7', 'text': 'Sat'}, {'id': '1', 'text': 'Sun'}]
 </script>
 
@@ -190,9 +192,12 @@
             <div id="lists" class="value">
                 {% for my_list in my_lists %}
                 <div class="list">
-                    <span class="label label-info">{{ my_list.name }}</span> with <span class="label label-info">{{ my_list.n_records }}</span> record(s)
+                    <span class="label label-info">{{ my_list.name }}</span>
+                    {% icon_to my_list.access_level %}</span>
+                    with <span class="label label-info">{{ my_list.n_records }}</span> record(s)
+                    {% if my_list.access_level == 'restricted' %} and <span class="label label-info">{{ my_list.shared_with|length }}</span> shared with coder(s){% endif %}
                     <a href="{% url 'coder:list' my_list.uuid %}" class="btn btn-primary btn-sm" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
-                    <button href="#" data-name="edit-list" data-id="{{ my_list.id }}" data-value="{{ my_list.name }}" class="edit-list btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>
+                    <button href="#" data-name="edit-list" data-id="{{ my_list.id }}" data-value="{{ my_list.name|escape }}" data-access-level="{{ my_list.access_level }}" data-shared-with="{{ my_list.shared_with|to_escaped_json }}" class="edit-list btn btn-primary btn-sm"><i class="fas fa-pen"></i></button>
                     <button href="#" data-id="{{ my_list.id }}" data-action="delete-list" data-success="$div.remove();" class="action-list btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
                 </div>
                 {% endfor %}

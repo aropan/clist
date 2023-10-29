@@ -25,6 +25,7 @@ from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetRes
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 eps = 1e-9
+rate_limiter = RateLimiter(max_calls=4, period=1)
 
 
 class Statistic(BaseModule):
@@ -45,6 +46,7 @@ class Statistic(BaseModule):
         self._username = conf.ATCODER_HANDLE
         self._password = conf.ATCODER_PASSWORD
         self._stop = None
+        self._forbidden = None
         self._fetch_submissions_limit = 2000
 
     def _get(self, *args, **kwargs):
@@ -58,7 +60,6 @@ class Statistic(BaseModule):
             page = REQ.get(form['url'], post=form['post'])
         return page
 
-    @RateLimiter(max_calls=200, period=60)
     def fetch_submissions(self, fuser=None, c_page=1):
         if self._fetch_submissions_limit is not None:
             if not self._fetch_submissions_limit:
@@ -69,18 +70,23 @@ class Statistic(BaseModule):
         if fuser:
             url += f'&f.User={fuser}'
 
+        codes = set()
         for attempt in range(4):
-            if self._stop:
+            if self._stop or self._forbidden:
                 return
 
-            try:
-                page = self._get(url)
-                break
-            except FailOnGetResponse as e:
-                if e.code == 404:
-                    return
-                time.sleep(attempt)
+            with rate_limiter:
+                try:
+                    page = self._get(url)
+                    break
+                except FailOnGetResponse as e:
+                    if e.code == 404:
+                        return
+                    codes.add(e.code)
+                    time.sleep(attempt)
         else:
+            if 403 in codes:
+                self._forbidden = True
             return
 
         regex = '<table[^>]*>.*?</table>'
@@ -88,18 +94,16 @@ class Statistic(BaseModule):
         if entry:
             html_table = entry.group(0)
             table = parsed_table.ParsedTable(html_table, with_duplicate_colspan=True)
-            pages = re.findall(r'''<a[^>]*href=["'][^"']*/submissions\?[^"']*page=([0-9]+)[^"']*["'][^>]*>[0-9]+</a>''', page)  # noqa
-            n_page = max(map(int, pages))
         else:
             table = []
-            n_page = c_page - 1
 
-        return url, page, table, c_page, n_page
+        return url, page, table, c_page
 
     def _update_submissions(self, fusers, standings):
         result = standings['result']
 
-        with PoolExecutor(max_workers=8) as executor:
+        n_workers = 8
+        with PoolExecutor(max_workers=n_workers) as executor:
             submissions = list(tqdm(executor.map(self.fetch_submissions, fusers),
                                     total=len(fusers),
                                     desc='gettings first page'))
@@ -107,7 +111,7 @@ class Statistic(BaseModule):
             for fuser, page_submissions in zip(fusers, submissions):
                 if page_submissions is None:
                     break
-                url, page, table, _, n_page = page_submissions
+                url, page, table, _ = page_submissions
 
                 submissions_times = {}
 
@@ -196,28 +200,43 @@ class Statistic(BaseModule):
                 last_page = submissions_info.pop('last_page', self.DEFAULT_LAST_PAGE)
                 last_page_st = submissions_info.pop('last_page_st', self.DEFAULT_LAST_SUBMISSION_TIME)
                 c_page = last_page
+                d_page = n_workers
 
                 self._stop = False
-                fetch_submissions_user = functools.partial(self.fetch_submissions, fuser)
-                for page_submissions in tqdm(
-                    executor.map(fetch_submissions_user, range(last_page + 1, n_page + 1)),
-                    total=n_page - last_page,
-                    desc=f'getting submissions for ({last_page};{n_page}]'
-                ):
-                    if page_submissions is None:
-                        submissions_info['last_page'] = c_page
-                        submissions_info['last_page_st'] = last_page_st
-                        LOG.info(f'stopped after ({last_page};{c_page}] of {n_page}')
-                        self._stop = True
-                        break
+                while not self._stop and not self._forbidden:
+                    n_page = c_page + d_page
+                    n_empty_tables = 0
+                    fetch_submissions_user = functools.partial(self.fetch_submissions, fuser)
+                    for page_submissions in tqdm(
+                        executor.map(fetch_submissions_user, range(last_page + 1, n_page + 1)),
+                        total=n_page - last_page,
+                        desc=f'getting submissions for ({last_page};{n_page}]'
+                    ):
+                        if page_submissions is None:
+                            submissions_info['last_page'] = c_page
+                            submissions_info['last_page_st'] = last_page_st
+                            LOG.info(f'stopped after ({last_page};{c_page}] of {n_page}')
+                            self._stop = True
+                            break
 
-                    url, page, table, c_page, _ = page_submissions
-                    submission_time = process_page(url, page, table)
-                    last_page_st = max(last_page_st, submission_time)
+                        url, page, table, c_page_ = page_submissions
+                        submission_time = process_page(url, page, table)
+                        last_page_st = max(last_page_st, submission_time)
 
-                    if submission_time < limit_st:
-                        self._stop = True
-                        break
+                        if not table:
+                            n_empty_tables += 1
+                            if n_empty_tables >= n_workers:
+                                self._stop = True
+                                break
+                        else:
+                            c_page = c_page_
+                            n_empty_tables = 0
+
+                        if submission_time < limit_st:
+                            self._stop = True
+                            break
+                    last_page = n_page
+                    d_page *= 2
                 if 'last_page' not in submissions_info:
                     submissions_info['last_submission_time'] = \
                         last_submission_time if last_page == self.DEFAULT_LAST_PAGE else last_page_st
@@ -544,14 +563,12 @@ class Statistic(BaseModule):
                 standings['_submissions_info'] = self.info.pop('_submissions_info', {}) if statistics else {}
                 standings['info_fields'] = ['_submissions_info']
 
-                *_, n_page = page_submissions
-
                 if not users:
                     if fusers:
                         LOG.info(f'Numbers of users without urls for some problems: {len(fusers)}')
                     if not fusers or 'last_page' in standings['_submissions_info']:
                         fusers = [None]
-                    elif len(fusers) > n_page:
+                    elif len(fusers) > len(result) * 0.2:
                         standings['_submissions_info'].pop('_last_submission_time', None)
                         fusers = [None]
 
@@ -592,7 +609,7 @@ class Statistic(BaseModule):
         )
         avatar_re = re.compile('''<img[^>]*class=["']avatar["'][^>]*src=["'](?P<url>[^"']*/icons/[^"']*)["'][^>]*>''')
 
-        @RateLimiter(max_calls=100, period=10)
+        @rate_limiter
         def fetch_profile(user):
             url = resource.profile_url.format(account=user)
             try:

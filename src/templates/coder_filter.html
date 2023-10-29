@@ -16,55 +16,6 @@
 </div>
 
 <script>
-  $('#{{ coder_id }}').select2({
-    dropdownAutoWidth : true,
-    theme: 'bootstrap',
-    placeholder: '',
-    allowClear: true,
-    templateResult: function (data) {
-      var $result = $('<span></span>')
-      $result.text(data.text)
-      if (data.icon) {
-        $result.prepend('<img src="/media/sizes/32x32/' + data.icon + '" width="16" height="16">&nbsp;')
-      }
-      return $result
-    },
-    ajax: {
-      url: '/settings/search/',
-      dataType: 'json',
-      delay: 314,
-      data: function (params) {
-        return {
-          query: 'coders',
-          regex: params.term,
-          page: params.page || 1
-        };
-      },
-      processResults: function (data, params) {
-        return {
-          results: data.items,
-          pagination: {
-            more: data.more
-          }
-        };
-      },
-      cache: true,
-    },
-  }).on('select2:unselecting', function() {
-    {% if submit %}
-    $('button[name="action"][value="{{ submit }}"]').prop('disabled', true)
-    {% endif %}
-    $(this).data('unselecting', true);
-  }).on('select2:opening', function(e) {
-    if ($(this).data('unselecting')) {
-      $(this).removeData('unselecting');
-      e.preventDefault();
-    }
-  }).on('select2:selecting', function(e) {
-    {% if submit %}
-    $('button[name="action"][value="{{ submit }}"]').prop('disabled', false)
-    {% endif %}
-  })
-  $('#{{ coder_id }}-hidden').removeClass('hidden');
+  coders_select('#{{ coder_id }}', '{{ submit }}');
 </script>
 {% endwith %}

@@ -108,8 +108,7 @@ $(function() {
                 favorite_icon.prependTo(element.querySelector('.fc-content'))
             }
             if (hide_contest) {
-                var hide_contest_link=$('<i class="hide-contest fa fa-eye" data-contest-id="' + event.id + '">&nbsp;</i>')
-                hide_contest_link.click(toggle_hide_contest)
+                var hide_contest_link=$('<i onclick="toggle_hide_contest(event, this)" class="hide-contest fa fa-eye" data-contest-id="' + event.id + '">&nbsp;</i>')
                 hide_contest_link.prependTo(element.querySelector('.fc-content'))
             }
             if (add_to_calendar && add_to_calendar.length == 1) {

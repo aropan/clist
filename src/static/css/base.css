@@ -1,4 +1,8 @@
 a {
+  text-decoration: none;
+}
+
+a:hover, a:focus {
   text-decoration: none !important;
 }
 
@@ -194,6 +198,10 @@ html {
 
 .coder-blue {
   color: #0000FF !important;
+}
+
+.coder-sky-blue {
+  color: #30A1E5 !important;
 }
 
 .coder-cyan {
@@ -461,7 +469,8 @@ canvas.rating_history {
 }
 
 .trophy {
-  text-shadow: 0 0 1px #000;
+  text-shadow: 0 0 1px #888;
+  filter: drop-shadow(0px 0px 1px #888);
 }
 
 /*
@@ -608,7 +617,7 @@ canvas.rating_history {
 }
 
 .activity.tdo {
-  color: #ddd;
+  color: #ccc;
 }
 
 .activity.fav {
@@ -621,12 +630,10 @@ canvas.rating_history {
 
 .activity.tdo.selected-activity {
   color: #8be;
-  text-shadow: none;
 }
 
 .activity.rej, .activity.sol, .activity.allreject, .activity.allsolved {
-  text-shadow: 0 0 1px #bbb;
-  color: #ddd;
+  color: #bbb;
   font-size: 110%;
 }
 
@@ -638,8 +645,9 @@ canvas.rating_history {
   color: red;
 }
 
-.activity.selected-activity {
-  text-shadow: 0 0 1px #000;
+.activity.fav.selected-activity {
+  text-shadow: 0 0 1px #bbb;
+  filter: drop-shadow(0px 0px 1px #bbb);
 }
 
 .hidden-activity {
@@ -789,4 +797,23 @@ a[disabled] {
 
 tr:has(+ tr[data-delete-on-duplicate]:not(tr[data-delete-on-duplicate-stop])) {
   display: none;
+}
+
+
+/*
+ * table
+ */
+
+.no-stretch {
+    white-space: nowrap;
+    width: 1%;
+    max-width: none;
+}
+
+
+/*
+ * copy-url-help
+ */
+.btn.btn-success.copy-url-help {
+  color: #fff;
 }

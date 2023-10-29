@@ -26,15 +26,17 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
-from clist.templatetags.extras import (as_number, format_time, get_country_name, get_problem_short, get_problem_title,
-                                       has_update_statistics_permission, is_ip_field, is_private_field, is_reject,
-                                       is_solved, query_transform, slug, time_in_seconds, timestamp_to_datetime)
+from clist.templatetags.extras import (as_number, format_time, get_country_name, get_item, get_problem_short,
+                                       get_problem_title, has_update_statistics_permission, is_ip_field,
+                                       is_private_field, is_reject, is_solved, query_transform, slug, time_in_seconds,
+                                       timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
+from pyclist.middleware import RedirectException
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
-from ranking.models import Account, Module, Stage, Statistics
+from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, Party
 from true_coders.views import get_ratings_data
@@ -1734,6 +1736,8 @@ def get_versus_data(request, query, fields_to_select):
     filters = []
     urls = []
     display_names = []
+    new_query = []
+    redirect_new_query = False
     for idx, whos in enumerate(opponents):
         filt = Q()
         us = []
@@ -1743,22 +1747,38 @@ def get_versus_data(request, query, fields_to_select):
         for who in whos:
             n_accounts += ':' in who
 
+        new_whos = []
         for who in whos:
             url = None
             display_name = who
             if ':' in who:
                 host, key = who.split(':', 1)
-                account = Account.objects.filter(Q(resource__host=host) | Q(resource__short_host=host), key=key).first()
+                resource_q = Q(resource__host=host) | Q(resource__short_host=host)
+                account = Account.objects.filter(resource_q, key=key).first()
+                if not account:
+                    renaming = AccountRenaming.objects.filter(resource_q, old_key=key).first()
+                    if renaming:
+                        account = Account.objects.filter(resource_q, key=renaming.new_key).first()
+                    if account:
+                        request.logger.warning(f'Replace {who} account to {account.key}')
+                        redirect_new_query = True
                 if not account:
                     request.logger.warning(f'Not found account {who}')
                 else:
                     filt |= Q(account=account)
                     url = reverse('coder:account', kwargs={'key': account.key, 'host': account.resource.host})
+                    new_whos.append(f'{host}:{account.key}')
+                    display_name = f'{host}:'
+                    if get_item(account.resource.info, 'standings.name_instead_key'):
+                        display_name += account.name or account.key
+                    else:
+                        display_name += account.key
             else:
                 coder = Coder.objects.filter(username=who).first()
                 if not coder:
                     request.logger.warning(f'Not found coder {who}')
                 else:
+                    new_whos.append(who)
                     if n_accounts == 0:
                         filt |= Q(account__coders=coder)
                     else:
@@ -1773,6 +1793,14 @@ def get_versus_data(request, query, fields_to_select):
         display_names.append(ds)
         urls.append(us)
         filters.append(base_filter & filt)
+        if new_whos:
+            new_query.append(','.join(new_whos))
+
+    if redirect_new_query and len(new_query) > 1:
+        new_query = '/vs/'.join(new_query)
+        url = reverse('ranking:versus', args=(new_query,))
+        request.logger.info('Redirect to fixed versus url')
+        raise RedirectException(redirect(url))
 
     infos = []
     medal_contests_ids = set()
@@ -1960,7 +1988,7 @@ def versus(request, query):
                 'tooltip_mode': 'nearest',
                 'datasets': {
                     'colors': datasets_colors,
-                    'labels': versus_data['opponents'],
+                    'labels': [[','.join(whos)] for whos in versus_data['opponents']],
                 },
                 'x_axes_unit': rinfo.pop('x_axes_unit', None),
             })

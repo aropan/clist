@@ -39,7 +39,9 @@
 
   {% if account.url and not team_id or '_account_url' in addition %}</a>{% endif %}
 
-  {% for country_name in addition|get_item:"_countries" %}
+  {% with addition_countries=addition|get_item:"_countries" %}
+  {% if addition_countries %}
+  {% for country_name in addition_countries %}
     {% with country_code=country_name|get_country_code %}
       {% if country_code %}
         <div class="flag-width-fixed">
@@ -50,6 +52,25 @@
       {% endif %}
     {% endwith %}
   {% endfor %}
+  {% elif members %}
+    {% for member in members %}
+      {% if member and member.account %}
+        {% with account=preload_statistics_data.accounts|get_item:member.account %}
+        {% if account %}
+        {% get_country_from_account account as country %}
+        {% if country %}
+        <div class="flag-width-fixed">
+          <a href="{% url_transform request country=country.code %}">
+            <div class="flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></div>
+          </a>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% endwith %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
 
   {% if members %}
     {% if with_detail %}<div class="small">{% else %}<div class="small inline">:{% endif %}
@@ -57,11 +78,7 @@
       {% if forloop.counter0 %}|{% endif %}
       {% if member and member.account %}
         {% with account=preload_statistics_data.accounts|get_item:member.account %}
-        <span class="{% coder_color_class resource account.info %}">
-        {% if account.url or resource.profile_url %}<a href="{{ account.url|default:resource.profile_url|format_dict:member }}" class="coder">{% endif %}
-          <span>{{ member.name|truncatechars:30|default:member.account }}</span>
-        {% if account.url or resource.profile_url %}</a>{% endif %}
-        </span>
+        {% if not account %}{{ member.account }}{% else %}{% include "account_table_cell.html" with account=account addition=None resource=resource without_circle=True without_country=True %}{% endif %}
         {% endwith %}
       {% elif member and member.name %}
         {{ member.name }}

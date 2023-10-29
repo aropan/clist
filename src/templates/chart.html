@@ -305,7 +305,8 @@
             draw_x(x, '#c9e1f1')
 
             var y = y_axis.top
-            var width = {{ chart.my_value|scoreformat|length }} * 8 + 10
+            var text = "{{ chart.my_value|scoreformat:False }}"
+            var width = text.length * 8 + 10
             var height = 20
             var rx = Math.min(Math.max(x_axis.left, x - width / 2), x_axis.right - width)
             var ry = y - height / 3
@@ -321,7 +322,7 @@
             ctx.font = '12px Comic Sans MS'
             ctx.textAlign = 'center'
             ctx.fillStyle = 'black'
-            ctx.fillText("{{ chart.my_value|scoreformat }}", cx, cy + 4)
+            ctx.fillText(text, cx, cy + 4)
           },
         },
         {% endif %}

@@ -113,3 +113,7 @@ form.editableform .has-error .editable-input .form-control:focus {
 #calendars .calendar .collapse.in {
   display: inline;
 }
+
+.change-list-ok {
+  width: 50px;
+}

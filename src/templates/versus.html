@@ -23,11 +23,16 @@
 
 {% block content %}
 
-<h3 id="versus-title" class="text-center">
+<h3 id="versus-title" class="text-center table-responsive">
   <table>
   <tr>
   {% for whos, display_names in versus_data.opponents|zip:versus_data.display_names %}
-    {% if forloop.counter0 %}<td>vs</td>{% endif %}
+    {% if forloop.counter0 %}
+    <td>
+      {% if versus_data.opponents|length > 2 %}<div>&nbsp;</div>{% endif %}
+      <div>vs</div>
+    </td>
+    {% endif %}
     <td>
       {% if versus_data.opponents|length > 2 %}
       <a href="{{ request.path }}?remove={{ forloop.counter0 }}" class="versus-action"><i class="fas fa-times fa-xs"></i></a>
@@ -87,21 +92,24 @@
 {% endfor %}
 {% endwith %}
 
-<div class="col-lg-8 col-lg-offset-2">
+<hr/>
+
+<div>
   {% include "versus_filter.html" %}
 
+  {% if contests %}
   <div id="versus-table" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
     <thead>
     <tr>
-      {% for whos, urls in versus_data.opponents|zip:versus_data.urls %}
+      {% for display_names, urls in versus_data.display_names|zip:versus_data.urls %}
       <th class="score-column">
-        {% for val, href in whos|zip:urls %}
+        {% for display_name, href in display_names|zip:urls %}
         <div>
           {% if href %}
-            <a href="{{ href }}">{{ val }}</a>
+            <a href="{{ href }}">{{ display_name }}</a>
           {% else %}
-            {{ val }}
+            {{ display_name }}
           {% endif %}
         </div>
         {% endfor %}
@@ -198,6 +206,8 @@
     </tbody>
     </table>
   </div>
+  {% else %}
+  <div class="alert alert-info">Empty contests data</div>
+  {% endif %}
 </div>
-
 {% endblock %}

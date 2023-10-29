@@ -13,8 +13,9 @@
   <i class="fas fa-list"></i>
   {% if is_owner %}{{ coder_list.name }}{% else %}{{ coder_list.uuid }}{% endif %}
   {% if versus %}
-  <small><a href="{% url 'ranking:versus' versus %}"><i class="fas fa-people-arrows"></i></a></small>
+  <a href="{% url 'ranking:versus' versus %}">{% icon_to 'versus' %}</a>
   {% endif %}
+  <a href="{% url 'coder:accounts' %}?list={{ coder_list.uuid }}">{% icon_to 'accounts' %}</a>
   {% if perms.true_coders.change_coderlist %}
     <a href="{% url 'admin:true_coders_coderlist_change' coder_list.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
   {% endif %}
@@ -45,9 +46,9 @@ host_2:account_2,host_3:account_3
       <table class="table table-hover table-striped">
         <thead>
           <tr>
-            <th>#</th>
-            <th><i class="fas fa-external-link-alt"></i></th>
-            <th>VS</th>
+            <th class="no-stretch">#</th>
+            <th class="no-stretch"><i class="fas fa-external-link-alt"></i></th>
+            <th class="no-stretch">VS</th>
             <th class="value">
               Coder/Accounts
               <span class="small text-muted">({{ coder_values|length }} of {{ coder_list_n_values_limit }})</span>
@@ -64,9 +65,9 @@ host_2:account_2,host_3:account_3
         <tbody>
           {% for group_id, data in coder_values.items %}
           <tr>
-            <td>{{ forloop.counter }}</td>
-            <td><a href="{% url 'coder:mixed_profile' data.versus %}"><i class="fa fa-user"></i></a></td>
-            <td>
+            <td class="no-stretch">{{ forloop.counter }}</td>
+            <td class="no-stretch"><a href="{% url 'coder:mixed_profile' data.versus %}"><i class="fa fa-user"></i></a></td>
+            <td class="no-stretch">
               {% if request.user.is_authenticated %}
               <a href="{% url 'ranking:versus' data.versus|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a>
               {% else %}

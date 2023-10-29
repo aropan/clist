@@ -637,28 +637,90 @@ $(function() {
 
     function process_list() {
         name = $(this).attr('data-name')
+        value = $(this).attr('data-value') || ''
+        access_level = $(this).attr('data-access-level') || ACCESS_LEVELS[0]['id']
+        shared_with = JSON.parse($(this).attr('data-shared-with') || "[]")
         id = $(this).attr('data-id') || ''
-        bootbox.prompt({title: 'List name', value: $(this).attr('data-value'), callback: function(result) {
-            if (!result) {
-                return;
+
+        const access_level_select_options = ACCESS_LEVELS.map(level => `
+            <option value="${level.id}" ${level.id === access_level ? 'selected' : ''}>${level.text}</option>
+        `).join('')
+
+        const shared_with_select_options = shared_with.map(user => `
+            <option value="${user.id}" selected>${user.username}</option>
+        `).join('')
+
+        var dialog = bootbox.dialog({
+            title: id? 'Editing list' : 'Creating list',
+            message: `
+                <form id="list-form">
+                    <div class="form-group">
+                        <label class="control-label" for="textInput">Name:</label>
+                        <div><input id="list-name" type="text" class="form-control" value="` + escape_html(value) + `" required></div>
+                        <small class="form-text text-muted">Required field</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label" for="selectInput">Access level:</label>
+                        <div><select id="list-access-level" class="form-control">` + access_level_select_options + `</select></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label" for="selectInput">Shared with:</label>
+                        <div><select id="list-shared-with" class="form-control" multiple>` + shared_with_select_options + `</select></div>
+                        <small class="form-text text-muted">Used only with restricted access level</small>
+                    </div>
+                </form>
+                <script>
+                    coders_select('#list-shared-with')
+                    $('#list-access-level').on('change', function() {
+                        $('#list-shared-with').closest('.form-group').toggle($(this).val() == 'restricted')
+                    }).change()
+                </script>
+            `,
+            buttons: {
+                cancel: {
+                    label: "Cancel",
+                    className: "btn-default",
+                },
+                success: {
+                    label: "OK",
+                    className: "btn-primary change-list-ok",
+                    callback: function () {
+                        var form = document.getElementById('list-form')
+                        if (!form.checkValidity()) {
+                            form.reportValidity()
+                            return false
+                        }
+
+                        var btn = dialog.find('.change-list-ok')
+                        var original_html = btn.html()
+                        btn.html('<i class="fas fa-circle-notch fa-spin"></i>')
+
+                        $.ajax({
+                            type: 'POST',
+                            url: $.fn.editable.defaults.url,
+                            data: {
+                                pk: $.fn.editable.defaults.pk,
+                                name: name,
+                                value: $('#list-name').val(),
+                                access_level: $('#list-access-level').val(),
+                                shared_with: $('#list-shared-with').val(),
+                                id: id,
+                            },
+                            success: function(data) {
+                                window.location.replace(LISTS_URL)
+                            },
+                            error: function(response) {
+                                btn.html(original_html)
+                                log_ajax_error(response)
+                            },
+                        })
+                        return false
+                    }
+                }
             }
-            $.ajax({
-                type: 'POST',
-                url: $.fn.editable.defaults.url,
-                data: {
-                    pk: $.fn.editable.defaults.pk,
-                    name: name,
-                    value: result,
-                    id: id,
-                },
-                success: function(data) {
-                    window.location.replace(LISTS_URL);
-                },
-                error: function(response) {
-                    log_ajax_error(response)
-                },
-            })
-        }});
+        })
     }
 
     $('#add-list').click(process_list)
