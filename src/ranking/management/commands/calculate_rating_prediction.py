@@ -205,7 +205,8 @@ class Command(BaseCommand):
 
             if not contest.is_rating_prediction_timespan:
                 self.logger.warning(f'skip contest with timespan, contest = {contest}')
-                continue
+                if not args.force:
+                    continue
 
             event_log = EventLog.objects.create(name='calculate_rating_prediction',
                                                 related=contest,
@@ -223,10 +224,11 @@ class Command(BaseCommand):
             values = (self.VERSION, values)
             rating_prediction_hash = hashlib.sha256(str(values).encode('utf8')).hexdigest()
 
-            if not args.force and contest.rating_prediction_hash == rating_prediction_hash:
+            if contest.rating_prediction_hash == rating_prediction_hash:
                 self.logger.warning(f'skip unchanged rating prediction hash, contest = {contest}')
-                event_log.update_status(EventStatus.SKIPPED, message='unchanged rating prediction hash')
-                continue
+                if not args.force:
+                    event_log.update_status(EventStatus.SKIPPED, message='unchanged rating prediction hash')
+                    continue
 
             with measure_time('calculate_rating_prediction', logger=self.logger):
                 calculate_rating_prediction(rankings)

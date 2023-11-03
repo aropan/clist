@@ -26,6 +26,7 @@ from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.utils import clear_problems_fields
 from utils.datetime import parse_datetime
 
 
@@ -218,6 +219,7 @@ class Statistic(BaseModule):
 
                         stats = (statistics or {}).get(handle, {})
                         problems = row.setdefault('problems', stats.get('problems', {}))
+                        clear_problems_fields(problems)
                         solved, upsolved = 0, 0
                         if problems_status:
                             for k, v in problems_status.items():

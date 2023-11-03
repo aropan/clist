@@ -11,6 +11,7 @@ import tqdm
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils.timezone import now
+from sql_util.utils import SubqueryCount
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number, get_item, get_problem_key, get_problem_short, is_solved
@@ -139,6 +140,16 @@ def account_get_n_contests(account, before):
         .count()
     )
     return ret
+
+
+def statistics_get_n_contests(statistics, before):
+    contest_filter = Q(
+        contest__end_time__lt=before.end_time,
+        contest__stage__isnull=True,
+        contest__kind=before.kind,
+    )
+    qs = statistics.annotate(n_contests=SubqueryCount('account__statistics', filter=contest_filter))
+    return {s['pk']: s['n_contests'] for s in qs.values('pk', 'n_contests')}
 
 
 def adjust_rating(adjustment, account, rating, n_contests):
@@ -304,6 +315,18 @@ class Command(BaseCommand):
             team_ids = set()
             missing_account = False
             for current_contest, current_statistics in problems_contests.items():
+
+                accounts_to_get_n_contests = set()
+                for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(),
+                                      desc='accounts_to_get_n_contests'):
+                    if is_skip(current_contest, stat):
+                        continue
+                    team_id, _ = get_team(stat)
+                    if team_id is None:
+                        accounts_to_get_n_contests.add(stat.account_id)
+                filtered_statistics = current_statistics.filter(account_id__in=accounts_to_get_n_contests)
+                n_contests_for_accounts = statistics_get_n_contests(filtered_statistics, current_contest)
+
                 for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc='old_ratings'):
                     if is_skip(current_contest, stat):
                         continue
@@ -344,7 +367,10 @@ class Command(BaseCommand):
                         old_rating = stat.get_old_rating()
                         if old_rating is None:
                             old_rating = account_get_old_rating(stat.account, current_contest)
-                        n_contests = account_get_n_contests(stat.account, current_contest)
+                        if stat.pk in n_contests_for_accounts:
+                            n_contests = n_contests_for_accounts[stat.pk]
+                        else:
+                            n_contests = account_get_n_contests(stat.account, current_contest)
                         old_rating = adjust_rating(rating_adjustment, stat.account, old_rating, n_contests)
 
                     weight = 1 - 0.9 ** (n_contests + 1)

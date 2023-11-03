@@ -255,7 +255,6 @@ def coders(request, template='coders.html'):
     }
 
     chat_fields = None
-    list_fields = None
     view_coder_chat = None
     if request.user.is_authenticated:
         coder = request.user.coder
@@ -282,15 +281,13 @@ def coders(request, template='coders.html'):
                         to_attr='non_group_chats',
                     )
                 )
-        lists = coder.my_list_set.all()
-        if lists:
-            options_values = {str(v.uuid): v.name for v in lists}
-            list_fields = {
-                'values': [v for v in request.GET.getlist('list') if v in options_values],
-                'options': options_values, 'noajax': True, 'nogroupby': True, 'nourl': True,
-            }
-            coder_filter = CoderList.coders_filter(list_fields['values'], logger=logger)
-            coders = coders.filter(coder_filter)
+    else:
+        coder = None
+
+    list_uuids = [v for v in request.GET.getlist('list') if v]
+    if list_uuids:
+        coder_filter = CoderList.coders_filter(list_uuids, coder=coder, logger=request.logger)
+        coders = coders.filter(coder_filter)
 
     resources = request.GET.getlist('resource')
     if resources:
@@ -352,7 +349,6 @@ def coders(request, template='coders.html'):
         'params': params,
         'virtual_field': virtual_field,
         'chat_fields': chat_fields,
-        'list_fields': list_fields,
         'custom_fields': custom_fields,
         'view_coder_chat': view_coder_chat,
     }
@@ -1901,11 +1897,11 @@ def party_contests(request, slug):
 
 
 def view_list(request, uuid):
-    qs = CoderList.objects
+    coder = request.user.coder if request.user.is_authenticated else None
+    qs = CoderList.filter_for_coder(coder=coder)
     qs = qs.prefetch_related('values__account__resource')
     qs = qs.prefetch_related('values__coder')
     coder_list = get_object_or_404(qs, uuid=uuid)
-    coder = request.user.coder if request.user.is_authenticated else None
 
     is_owner = coder_list.owner == coder
     can_modify = is_owner
@@ -2042,6 +2038,8 @@ def accounts(request, template='accounts.html'):
     if request.user.is_authenticated:
         coder = request.user.coder
         accounts = accounts.annotate(my_account=Exists('coders', filter=Q(coder=coder)))
+    else:
+        coder = None
     params = {}
 
     action = request.GET.get('action')
@@ -2095,13 +2093,9 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.filter(resource__in=resources)
         params['resources'] = resources
 
-    lists = coder.my_list_set.all() if request.user.is_authenticated else None
-    if lists:
-        options_values = {str(v.uuid): v.name for v in lists}
-        values = [v for v in request.GET.getlist('list') if v in options_values]
-        params['list_filter'] = {'values': values, 'options': options_values,
-                                 'noajax': True, 'nogroupby': True, 'nourl': True}
-        accounts_filter = CoderList.accounts_filter(values, logger=logger)
+    list_uuids = [v for v in request.GET.getlist('list') if v]
+    if list_uuids:
+        accounts_filter = CoderList.accounts_filter(list_uuids, coder=coder, logger=request.logger)
         accounts = accounts.filter(accounts_filter)
 
     # qualifiers

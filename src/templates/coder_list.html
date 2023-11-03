@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block ogtitle %}{% block title %}{% if is_owner %}{{ coder_list.name }} - {% endif %}List{% endblock %}{% endblock %}
+{% block ogtitle %}{% block title %}{{ coder_list.name }} - List{% endblock %}{% endblock %}
 
 {% block end-head %}
 <link href="{% static_ts 'css/coder_list.css' %}" rel="stylesheet">
@@ -11,7 +11,7 @@
 
 <h2>
   <i class="fas fa-list"></i>
-  {% if is_owner %}{{ coder_list.name }}{% else %}{{ coder_list.uuid }}{% endif %}
+  {{ coder_list.name }}
   {% if versus %}
   <a href="{% url 'ranking:versus' versus %}">{% icon_to 'versus' %}</a>
   {% endif %}

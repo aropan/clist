@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse
 
+import numpy as np
 import requests
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -69,8 +70,10 @@ class Resource(BaseModel):
     avg_rating = models.FloatField(default=None, null=True, blank=True)
     has_upsolving = models.BooleanField(default=False)
     has_account_verification = models.BooleanField(default=False)
+    has_standings_renamed_account = models.BooleanField(default=False)
+    problems_fields = models.JSONField(default=dict, blank=True)
 
-    RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating')
+    RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating', 'rating_perf')
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='resource')
 
@@ -164,6 +167,24 @@ class Resource(BaseModel):
             resized = image.resize((size, size))
             resized.save(out_filepath)
 
+    def change_icon_background_color(self):
+        icon_background_color = self.info.get('icon_background_color')
+        if not icon_background_color:
+            return
+        filepath = os.path.join(settings.STATIC_ROOT, self.icon)
+        try:
+            img = Image.open(filepath).convert('RGBA')
+        except UnidentifiedImageError:
+            return
+        img = np.array(img)
+        if img.shape[2] != 4:
+            return
+        alpha = img[..., 3:] / 255
+        bg_color = color_to_rgb(icon_background_color, normalization=255)
+        img = (1 - alpha) * bg_color + alpha * img[..., :3]
+        img = Image.fromarray(np.round(img).astype(np.uint8))
+        img.save(filepath)
+
     def update_icon(self):
 
         urls = []
@@ -218,8 +239,13 @@ class Resource(BaseModel):
 
                 self.icon = relpath
                 self.save()
-                self.update_icon_sizes()
                 break
+        else:
+            return
+
+        if self.icon:
+            self.change_icon_background_color()
+            self.update_icon_sizes()
 
     @property
     def plugin(self):
@@ -382,6 +408,25 @@ class Contest(BaseModel):
                 self.kind = 'stage'
             elif self.invisible:
                 self.kind = 'hidden'
+
+        last_index = None
+        min_index = None
+        wrong_rating_order = False
+        rating_order_fields = ('old_rating', 'rating_change', 'new_rating')
+        for field in rating_order_fields:
+            if field in fields:
+                index = fields.index(field)
+                if min_index is None or min_index > index:
+                    min_index = index
+                if last_index is not None and last_index > index:
+                    wrong_rating_order = True
+                last_index = index
+        if wrong_rating_order:
+            for field in rating_order_fields[::-1]:
+                if field in fields:
+                    fields.remove(field)
+                    fields.insert(min_index, field)
+            self.info['fields'] = fields
 
         return super().save(*args, **kwargs)
 
@@ -699,6 +744,15 @@ class Problem(BaseModel):
     @property
     def actual_url(self):
         return self.archive_url or self.url
+
+    @staticmethod
+    def is_special_info_field(field):
+        if not field:
+            return False
+        if field[0] == '_' or field[-1] == '_' or '___' in field:
+            return True
+        if field in {'first_ac'}:
+            return True
 
 
 class ProblemTag(BaseModel):

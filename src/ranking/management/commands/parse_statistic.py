@@ -35,7 +35,7 @@ from ranking.management.commands.countrier import Countrier
 from ranking.management.commands.parse_accounts_infos import rename_account
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
-from ranking.models import Account, Module, Stage, Statistics
+from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from ranking.views import update_standings_socket
 from utils.attrdict import AttrDict
 from utils.datetime import parse_datetime
@@ -187,6 +187,7 @@ class Command(BaseCommand):
         parser.add_argument('--with-medals', action='store_true', default=False, help='Contest with medals')
         parser.add_argument('--without-fill-coder-problems', action='store_true', default=False)
         parser.add_argument('--without-calculate-problem-rating', action='store_true', default=False)
+        parser.add_argument('--without-calculate-rating-prediction', action='store_true', default=False)
         parser.add_argument('--contest-id', '-cid', help='Contest id')
         parser.add_argument('--no-update-problems', action='store_true', default=False, help='No update problems')
 
@@ -212,6 +213,7 @@ class Command(BaseCommand):
         query=None,
         without_fill_coder_problems=False,
         without_calculate_problem_rating=False,
+        without_calculate_rating_prediction=False,
         no_update_problems=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
@@ -289,6 +291,8 @@ class Command(BaseCommand):
 
         if random_order:
             shuffle(contests)
+        else:
+            contests.sort(key=lambda contest: contest.start_time)
 
         countrier = Countrier()
 
@@ -452,6 +456,14 @@ class Command(BaseCommand):
                         count += 1
                         continue
 
+                    if resource.has_standings_renamed_account:
+                        renaming_qs = AccountRenaming.objects.filter(resource=resource, old_key__in=result.keys())
+                        renaming_qs = renaming_qs.values_list('old_key', 'new_key')
+                        for old_key, new_key in renaming_qs:
+                            if old_key in result:
+                                result[new_key] = result.pop(old_key)
+                                result[new_key]['member'] = new_key
+
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics', {})
                     wait_rating = resource_statistics.get('wait_rating', {})
@@ -590,23 +602,21 @@ class Command(BaseCommand):
                                             if timeline:
                                                 v['time_in_seconds'] = time_in_seconds(timeline, v['time'])
 
+                                        in_seconds = v.get('time_in_seconds')
+                                        if in_seconds is not None:
+                                            activity_time = contest.start_time + timedelta(seconds=in_seconds)
+                                            last_activity = max(last_activity, activity_time)
                                         if v.get('first_ac') or v.get('first_ac_of_all'):
+                                            in_seconds = -1
+                                        if in_seconds is not None:
                                             first_ac = p.setdefault('first_ac', {})
-                                            first_ac['in_seconds'] = -1
-                                            first_ac['time'] = v['time']
-                                            first_ac['accounts'] = [r['member']]
-                                        elif 'time_in_seconds' in v:
-                                            in_seconds = v['time_in_seconds']
-                                            first_ac = p.setdefault('first_ac', {})
-                                            delta = in_seconds - first_ac.get('in_seconds', -1)
+                                            delta = in_seconds - first_ac.get('in_seconds', float('inf'))
                                             if 'in_seconds' in first_ac and abs(delta) < 1e-9:
                                                 first_ac['accounts'].append(r['member'])
                                             if 'in_seconds' not in first_ac or delta < 0:
                                                 first_ac['in_seconds'] = in_seconds
                                                 first_ac['time'] = v['time']
                                                 first_ac['accounts'] = [r['member']]
-                                            activity_time = contest.start_time + timedelta(seconds=in_seconds)
-                                            last_activity = max(last_activity, activity_time)
 
                                     if not is_new:
                                         continue
@@ -933,8 +943,9 @@ class Command(BaseCommand):
                                     if k not in fields_set:
                                         fields_set.add(k)
                                         fields.append(k)
-                                    fields_preceding[k] |= previous_fields
-                                    previous_fields.add(k)
+                                    if not skip_result:
+                                        fields_preceding[k] |= previous_fields
+                                        previous_fields.add(k)
 
                                     if (k in Resource.RATING_FIELDS or k == 'rating_change') and v is None:
                                         continue
@@ -955,7 +966,8 @@ class Command(BaseCommand):
                                     if f not in fields_set:
                                         fields_set.add(f)
                                         fields.append(f)
-                                    fields_preceding[f] |= previous_fields
+                                    if not skip_result:
+                                        fields_preceding[f] |= previous_fields
 
                                 rating_time = int(min(contest.end_time, now).timestamp())
                                 if (
@@ -1224,6 +1236,10 @@ class Command(BaseCommand):
                         elif action == 'url':
                             contest.url = args[0]
                             contest.save()
+
+                if resource.rating_prediction and not without_calculate_rating_prediction:
+                    call_command('calculate_rating_prediction', contest=contest.pk)
+
                 if to_calculate_problem_rating and not without_calculate_problem_rating:
                     call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
                     contest.refresh_from_db()
@@ -1369,5 +1385,6 @@ class Command(BaseCommand):
             query=args.query,
             without_fill_coder_problems=args.without_fill_coder_problems,
             without_calculate_problem_rating=args.without_calculate_problem_rating,
+            without_calculate_rating_prediction=args.without_calculate_rating_prediction,
             no_update_problems=args.no_update_problems,
         )

@@ -6,8 +6,8 @@ import numpy as np
 from skimage import color
 
 
-def color_to_rgb(color):
-    return [int(color[i:i + 2], 16) / 255. for i in range(1, 6, 2)]
+def color_to_rgb(color, normalization=1):
+    return [int(color[i:i + 2], 16) * normalization / 255 for i in range(1, 6, 2)]
 
 
 def rgb_to_color(*args):

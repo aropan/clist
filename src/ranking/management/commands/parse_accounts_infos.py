@@ -11,7 +11,6 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Case, F, IntegerField, Q, Value, When
 from django.utils import timezone
-from django_super_deduper.merge import MergedModelInstance
 from tailslide import Percentile
 from tqdm import tqdm
 
@@ -19,38 +18,11 @@ from clist.models import Resource
 from logify.models import EventLog, EventStatus
 from ranking.management.commands.common import account_update_contest_additions
 from ranking.management.commands.countrier import Countrier
-from ranking.models import Account, AccountRenaming
+from ranking.models import Account
+from ranking.utils import rename_account
 from true_coders.models import Coder
 from utils.attrdict import AttrDict
-from utils.math import max_with_none
 from utils.traceback_with_vars import colored_format_exc
-
-
-@transaction.atomic
-def rename_account(account, other):
-    AccountRenaming.objects.update_or_create(
-        resource=account.resource,
-        old_key=account.key,
-        defaults={'new_key': other.key},
-    )
-    AccountRenaming.objects.filter(
-        resource=account.resource,
-        old_key=other.key,
-    ).delete()
-
-    n_contests = other.n_contests + account.n_contests
-    n_writers = other.n_writers + account.n_writers
-    last_activity = max_with_none(account.last_activity, other.last_activity)
-    last_submission = max_with_none(account.last_submission, other.last_submission)
-    new = MergedModelInstance.create(other, [account])
-    account.delete()
-    account = new
-    account.n_contests = n_contests
-    account.n_writers = n_writers
-    account.last_activity = last_activity
-    account.last_submission = last_submission
-    account.save()
-    return account
 
 
 def add_dict_to_dict(src, dst):

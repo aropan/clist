@@ -780,7 +780,7 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
         hidden_fields = list(contest.info.get('hidden_fields', []))
     hidden_fields_values = hidden_fields_values or set()
 
-    predicted_fields = ['predicted_rating_change', 'predicted_new_rating']
+    predicted_fields = ['predicted_rating_change', 'predicted_new_rating', 'predicted_rating_perf']
     if contest.rating_prediction_hash:
         addition_fields = addition_fields + predicted_fields
         hidden_fields.extend(predicted_fields)
@@ -1135,15 +1135,14 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if c and c not in chat_options:
             request.logger.warning(f'You are not a member of chat = {c}')
 
-    lists = coder.my_list_set.all() if coder else None
-    if lists:
-        options_values = {str(v.uuid): v.name for v in lists}
+    list_uuids = [v for v in request.GET.getlist('list') if v]
+    coder_lists, list_uuids = CoderList.filter_for_coder_and_uuids(coder=coder, uuids=list_uuids, logger=request.logger)
+    if coder_lists:
+        options_values = {str(v.uuid): v.name for v in coder_lists}
+        list_uuids = [uuid for uuid in list_uuids if uuid in options_values]
         fields_to_select['list'] = {
-            'values': [v for v in request.GET.getlist('list')],
-            'options': options_values,
-            'noajax': True,
-            'nogroupby': True,
-            'nourl': True,
+            'values': list_uuids, 'options': options_values,
+            'noajax': True, 'nogroupby': True, 'nourl': True,
         }
 
     if contest.is_rated and 'global_rating' not in hidden_fields and settings.ENABLE_GLOBAL_RATING_:
@@ -1336,20 +1335,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             # subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
             # statistics = statistics.annotate(chat_name=Subquery(subquery))
         elif field == 'list':
-            for uuid in values:
-                try:
-                    coder_list = CoderList.objects.prefetch_related('values').get(uuid=uuid)
-                except Exception:
-                    request.logger.warning(f'Ignore list with uuid = "{uuid}"')
-                    continue
-                coders = set()
-                accounts = set()
-                for v in coder_list.values.all():
-                    if v.coder:
-                        coders.add(v.coder)
-                    if v.account and v.account.resource_id == contest.resource_id:
-                        accounts.add(v.account)
-                filt |= Q(account__coders__in=coders) | Q(account__in=accounts)
+            coders, accounts = CoderList.coders_and_accounts_ids(uuids=values, coder=coder)
+            filt |= Q(account__coders__in=coders) | Q(account__in=accounts)
         else:
             query_field = f'addition__{field}'
             statistics = statistics.annotate(**{f'{query_field}_str': JSONF(query_field)})

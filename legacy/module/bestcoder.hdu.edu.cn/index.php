@@ -24,7 +24,6 @@
             $page = curlexec($url);
 
             if (!preg_match('#<[^>]*class="fa fa-clock-o"[^>]*>(?:\s*</[^>]*>)*(?:\s*<[^/][^>]>)?\s*(?P<time>(?:[0-9]+[- :]+){11}[0-9]+)\s*<#', $page, $match)) {
-                echo $url . "\n";
                 continue;
             }
             preg_match_all('#(?:[0-9]+[- :]+){5}[0-9]+#', $match['time'], $time);

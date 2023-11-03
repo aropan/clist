@@ -135,8 +135,8 @@ class Statistic(BaseModule):
                 course = stat['course']
                 key = f'{course["hash"]}/{course["assignment_hash"]}'
                 rating = ratings.setdefault(key, collections.OrderedDict())
-                rating['new_rating'] = stat['rating']
                 rating['rating_change'] = stat['rating_delta']
+                rating['new_rating'] = stat['rating']
 
             return user, info, ratings
 

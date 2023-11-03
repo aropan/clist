@@ -74,9 +74,16 @@
   {% endif %}
   {% for field in custom_fields_select.values %}
   <td class="problem-field-column">
-    {% with value=problem|get_item:field %}
-    {% if value is None %}<span class="text-muted">&mdash;</span>{% else %}{% include "field_value.html" with field=field value=value %}{% endif %}
-    {% endwith %}
+    {% if field in custom_info_fields %}
+    {% define problem.info|get_item:field as value %}
+    {% else %}
+    {% define problem|get_item:field as value %}
+    {% endif %}
+    {% if value is None %}
+    <span class="text-muted">&mdash;</span>
+    {% else %}
+    {% include "field_value.html" with field=field value=value fields_types=fields_types resource=problem.resource %}
+    {% endif %}
   </td>
   {% endfor %}
   <td class="problem-name-column note-holder {{ solution_class }}" data-solution-class="{{ solution_class }}" data-system-solution-class="{{ system_solution_class }}">

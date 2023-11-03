@@ -88,11 +88,14 @@ class Account(BaseModel):
     def is_special_info_field(field):
         if not field:
             return False
-        if field[0] == '_' or field[-1] == '_':
+        if field[0] == '_' or field[-1] == '_' or '___' in field:
             return True
         if field in {'profile_url', 'rating', 'is_virtual'}:
             return True
-        if field.lower() in {'email', 'telegram', 'dateofbirth'}:
+        field = field.lower()
+        if field in {'telegram', 'dateofbirth'}:
+            return True
+        if 'email' in field:
             return True
 
     class Meta:
@@ -392,10 +395,13 @@ class Statistics(BaseModel):
         return f'{self.account_id} on {self.contest_id} = {self.solving} + {self.upsolving}'
 
     def get_old_rating(self):
-        if 'old_rating' in self.addition:
-            return self.addition['old_rating']
-        if 'new_rating' in self.addition and 'rating_change' in self.addition:
-            return self.addition['new_rating'] - self.addition['rating_change']
+        for rating_data in (self.addition, self.rating_prediction):
+            if not rating_data:
+                continue
+            if 'old_rating' in rating_data:
+                return rating_data['old_rating']
+            if 'new_rating' in rating_data and 'rating_change' in rating_data:
+                return rating_data['new_rating'] - rating_data['rating_change']
 
     class Meta:
         verbose_name_plural = 'Statistics'

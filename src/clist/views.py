@@ -366,6 +366,15 @@ def resources_top(request, template='resources_top.html'):
     params = {}
     accounts_filter = Q()
 
+    if request.user.is_authenticated:
+        coder = request.as_coder or request.user.coder
+        coder_accounts_ids = set(coder.account_set.values_list('id', flat=True))
+        primary_accounts = {a.resource_id: a for a in coder.primary_accounts().filter(rating__isnull=False)}
+    else:
+        coder = None
+        coder_accounts_ids = set()
+        primary_accounts = dict()
+
     resources = Resource.priority_objects.filter(has_rating_history=True)
     resources_ids = [r for r in request.GET.getlist('resource') if r]
     if resources_ids:
@@ -383,8 +392,8 @@ def resources_top(request, template='resources_top.html'):
         _, host = qs_key.split('__')
         resources = resources.filter(host=host)
 
-    list_values = [v for v in request.GET.getlist('list')]
-    list_filter = CoderList.accounts_filter(list_values, logger=request.logger)
+    list_values = [v for v in request.GET.getlist('list') if v]
+    list_filter = CoderList.accounts_filter(list_values, coder=coder, logger=request.logger)
     if list_filter:
         qs = Account.objects.filter(list_filter).filter(rating__isnull=False).values_list('pk', flat=True)
         accounts_filter &= Q(pk__in=set(qs))
@@ -405,14 +414,6 @@ def resources_top(request, template='resources_top.html'):
         accounts = accounts.filter(accounts_filter)
         accounts = accounts.prefetch_related('coders')
         setattr(resource, 'accounts', accounts)
-
-    if request.user.is_authenticated:
-        coder = request.as_coder or request.user.coder
-        coder_accounts_ids = set(coder.account_set.values_list('id', flat=True))
-        primary_accounts = {a.resource_id: a for a in coder.primary_accounts().filter(rating__isnull=False)}
-    else:
-        coder_accounts_ids = set()
-        primary_accounts = dict()
 
     earliest_last_activity = Account.objects.filter(rating__isnull=False).earliest('last_activity').last_activity
 
@@ -945,6 +946,13 @@ def problems(request, template='problems.html'):
         contests = list(Contest.objects.filter(pk__in=contests))
         problems = problems.filter(Q(contests__in=contests) | Q(contest__in=contests))
 
+    if len(resources) == 1:
+        selected_resource = resources[0]
+    elif len(contests) == 1:
+        selected_resource = contests[0].resource
+    else:
+        selected_resource = None
+
     luck_from = as_number(request.GET.get('luck_from'), force=True)
     luck_to = as_number(request.GET.get('luck_to'), force=True)
     if luck_from is not None or luck_to is not None:
@@ -989,6 +997,15 @@ def problems(request, template='problems.html'):
     custom_fields = [f for f in request.GET.getlist('field') if f]
     custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url',
                       'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
+    custom_info_fields = set()
+    if selected_resource:
+        fields_types = selected_resource.problems_fields.get('types', {})
+        for field in fields_types:
+            if field not in custom_options:
+                custom_options.append(field)
+                custom_info_fields.add(field)
+    else:
+        fields_types = None
     custom_fields_select = {
         'values': [v for v in custom_fields if v and v in custom_options],
         'options': custom_options,
@@ -1001,15 +1018,14 @@ def problems(request, template='problems.html'):
     }
     chart_field = request.GET.get('chart')
     if chart_field == 'rating':
-        resource = resources[0] if resources and len(resources) == 1 and resources[0].has_rating_history else None
-        step = resource.rating_step() if resource else None
+        step = selected_resource.rating_step() if selected_resource and selected_resource.has_rating_history else None
         chart = make_chart(problems, field='rating', step=step, logger=request.logger)
-        if resource and chart:
+        if selected_resource and chart:
             for data in chart['data']:
                 val = as_number(data['bin'], force=True)
                 if val is None:
                     continue
-                for rating in resource.ratings:
+                for rating in selected_resource.ratings:
                     if rating['low'] <= val <= rating['high']:
                         data['bgcolor'] = rating['hex_rgb']
                         break
@@ -1116,7 +1132,7 @@ def problems(request, template='problems.html'):
     groupby_fields['n_problems'] = 'Num'
 
     # sort problems
-    sort_options = ['date', 'rating'] + custom_fields_select['values']
+    sort_options = ['date', 'rating'] + [f for f in custom_fields_select['values'] if f not in custom_info_fields]
     sort_select = {'options': sort_options, 'rev_order': True}
     sort_field = request.GET.get('sort')
     sort_order = request.GET.get('sort_order')
@@ -1138,6 +1154,8 @@ def problems(request, template='problems.html'):
         'status_select': status_select,
         'sort_select': sort_select,
         'custom_fields_select': custom_fields_select,
+        'custom_info_fields': custom_info_fields,
+        'fields_types': fields_types,
         'chart': chart,
         'groupby': groupby,
         'groupby_data': groupby_data,

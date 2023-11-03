@@ -20,6 +20,7 @@ from ratelimiter import RateLimiter
 from clist.templatetags.extras import get_item, is_solved
 from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
+from ranking.utils import clear_problems_fields
 
 # from ranking.management.modules import conf
 
@@ -105,21 +106,12 @@ class Statistic(BaseModule):
             question = json.loads(page)['data']['question']
             if question:
                 info['tags'] = [t['name'].lower() for t in question['topicTags']]
-                # info['writers'] = [
-                #     re.search('/(?P<username>[^/]*)/?$', c['profileUrl']).group('username').lower()
-                #     for c in question['contributors']
-                # ]
-                # if not info['writers']:
-                #     info['writers'] = ['leetcode']
                 info['difficulty'] = question['difficulty'].lower()
                 info['hints'] = question['hints']
             return info
 
-        # writers = defaultdict(int)
-        # with PoolExecutor(max_workers=8) as executor:
-        #     for problem_info in executor.map(update_problem_info, problems_info.values()):
-        #         for w in problem_info.get('writers', []):
-        #             writers[w] += 1
+        with PoolExecutor(max_workers=8) as executor:
+            executor.map(update_problem_info, problems_info.values())
 
         fetch_page_rate_limiter = RateLimiter(max_calls=4, period=1)
 
@@ -206,15 +198,16 @@ class Statistic(BaseModule):
                             if country:
                                 r['country'] = country
 
-                            problems_stats = (statistics or {}).get(member, {}).get('problems', {})
                             has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
 
                             skip = False
                             solved = 0
-                            problems = r.setdefault('problems', {})
+                            stats = (statistics or {}).get(handle, {})
+                            problems = r.setdefault('problems', stats.get('problems', {}))
+                            clear_problems_fields(problems)
                             for i, (k, s) in enumerate(submissions.items(), start=1):
                                 short = problems_info[k]['short']
-                                p = problems.setdefault(short, problems_stats.get(short, {}))
+                                p = problems.setdefault(short, {})
                                 time = datetime.fromtimestamp(s['date']) - start_time
                                 p['time_in_seconds'] = time.total_seconds()
                                 p['time'] = self.to_time(time)
@@ -266,7 +259,7 @@ class Statistic(BaseModule):
                             hidden_fields |= set(row.keys())
                             if statistics and member in statistics:
                                 stat = statistics[member]
-                                for k in ('rating_change', 'new_rating', 'raw_rating'):
+                                for k in ('rating_change', 'new_rating', 'raw_rating', '_rank'):
                                     if k in stat:
                                         r[k] = stat[k]
                             n_added += 1
@@ -314,9 +307,6 @@ class Statistic(BaseModule):
             'badges': list(sorted(badges)),
             'info_fields': ['badges'],
         }
-        # if writers:
-        #     writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
-        #     standings['writers'] = writers
         return standings
 
     @staticmethod
@@ -636,8 +626,10 @@ class Statistic(BaseModule):
                     pbar.update()
 
                 if not page:
+                    # don't remove account becase if page is not found it may be a temporary error or renamed account
                     if page is None:
-                        yield {'info': None}
+                        # yield {'info': None}  # remove account
+                        yield {'skip': True}
                     else:
                         yield {'skip': True}
                     continue
@@ -707,6 +699,7 @@ class Statistic(BaseModule):
                             update['rating_change'] = int_rating - last_rating if last_rating is not None else None
                             update['new_rating'] = int_rating
                             update['raw_rating'] = rating
+                            update['_rank'] = ranking
                             last_rating = int_rating
                         prev_rating = rating
                 if last_rating and 'rating' not in info:
@@ -731,6 +724,7 @@ class Statistic(BaseModule):
                         'update': contest_addition_update,
                         'by': contest_addition_update_by,
                         'clear_rating_change': True,
+                        'try_renaming_check': True,
                     },
                     'replace_info': True,
                 }

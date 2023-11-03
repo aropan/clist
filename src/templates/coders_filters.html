@@ -29,7 +29,7 @@
 
     {% include "field_to_select.html" with field='virtual' data=virtual_field %}
     {% include "field_to_select.html" with field='chat' data=chat_fields %}
-    {% include "field_to_select.html" with field='list' data=list_fields %}
+    {% include "list_filter.html" %}
     {% include "field_to_select.html" with field='field' data=custom_fields %}
 
     {% if request.GET.sort_order %}

@@ -71,8 +71,8 @@ class Statistic(BaseModule):
                                     r['rating_change'] = 0
                                 elif v.value != '-':
                                     new_rating, rating_change = v.value.split()
-                                    r['new_rating'] = int(new_rating)
                                     r['rating_change'] = int(rating_change)
+                                    r['new_rating'] = int(new_rating)
                             elif 'tasks' in c:
                                 r['solving'] = v.value
                     elif f == 'ball':

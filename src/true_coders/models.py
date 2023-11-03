@@ -13,7 +13,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
-from sql_util.utils import SubquerySum
+from sql_util.utils import Exists, SubquerySum
 
 from clist.models import Contest, Problem, ProblemVerdict, Resource
 from pyclist.indexes import GistIndexTrgrmOps
@@ -381,12 +381,35 @@ class CoderList(BaseModel):
         return [{'id': c.pk, 'username': c.username} for c in self.shared_with_coders.all()]
 
     @staticmethod
-    def coders_and_accounts_ids(uuids, logger=None):
+    def filter_for_coder(coder):
+        qs = CoderList.objects
+        condition = Q(access_level=AccessLevel.PUBLIC)
+        if coder is not None:
+            condition |= Q(owner=coder)
+            qs = qs.annotate(has_shared_with=Exists('shared_with_coders', filter=Q(coder=coder)))
+            condition |= Q(access_level=AccessLevel.RESTRICTED, has_shared_with=True)
+        return qs.filter(condition)
+
+    @staticmethod
+    def filter_for_coder_and_uuids(coder, uuids, logger=None):
+        qs = CoderList.filter_for_coder(coder=coder)
+        qs = qs.filter(Q(owner=coder) | Q(uuid__in=uuids))
+        used_uuids = set(map(str, qs.values_list('uuid', flat=True)))
+        filtered_uuids = []
+        for uuid in uuids:
+            if uuid in used_uuids:
+                filtered_uuids.append(uuid)
+            elif logger:
+                logger.warning(f'Ignore list with uuid = "{uuid}"')
+        return qs, filtered_uuids
+
+    @staticmethod
+    def coders_and_accounts_ids(uuids, coder=None, logger=None):
         coders = set()
         accounts = set()
         for uuid in uuids:
             try:
-                coder_list = CoderList.objects.prefetch_related('values').get(uuid=uuid)
+                coder_list = CoderList.filter_for_coder(coder).prefetch_related('values').get(uuid=uuid)
             except Exception:
                 if logger:
                     logger.warning(f'Ignore list with uuid = "{uuid}"')
@@ -399,8 +422,8 @@ class CoderList(BaseModel):
         return coders, accounts
 
     @staticmethod
-    def accounts_filter(uuids, logger=None):
-        coders, accounts = CoderList.coders_and_accounts_ids(uuids, logger=logger)
+    def accounts_filter(uuids, coder=None, logger=None):
+        coders, accounts = CoderList.coders_and_accounts_ids(uuids, coder=coder, logger=logger)
         ret = Q()
         if coders:
             Account = apps.get_model('ranking', 'Account')
@@ -410,8 +433,8 @@ class CoderList(BaseModel):
         return ret
 
     @staticmethod
-    def coders_filter(uuids, logger=None):
-        coders, accounts = CoderList.coders_and_accounts_ids(uuids, logger=logger)
+    def coders_filter(uuids, coder=None, logger=None):
+        coders, accounts = CoderList.coders_and_accounts_ids(uuids, coder=coder, logger=logger)
         ret = Q()
         if accounts:
             Coder = apps.get_model('true_coders', 'Coder')

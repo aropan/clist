@@ -57,6 +57,8 @@
         <a href="{{ value }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
       {% elif field|is_ip_field %}
         {% for v in value %}{% if forloop.counter0 %}<br/>{% endif %}<a class="nowrap field-to-select" href="{% url_transform request field|strip:"_" v with_replace=1 %}">{{ v }}</a>{% endfor %}
+      {% elif field == 'first_ac__accounts' and types|to_json == '["list"]' %}
+        {% for handle in value %}{% if forloop.counter0 %}<br/>{% endif %}{% if resource %}<a href="{% url 'coder:account' handle resource.host %}">{{ handle }}</a>{% else %}{{ handle }}{% endif %}{% endfor %}
       {% else %}
         {{ template_value|safe }}
       {% endif %}

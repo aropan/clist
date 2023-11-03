@@ -23,6 +23,7 @@ from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.utils import clear_problems_fields
 
 eps = 1e-9
 rate_limiter = RateLimiter(max_calls=4, period=1)
@@ -421,6 +422,7 @@ class Statistic(BaseModule):
 
                 stats = (statistics or {}).get(handle, {})
                 problems = r.setdefault('problems', stats.get('problems', {}))
+                clear_problems_fields(problems)
                 solving = 0
                 task_results = row.pop('TaskResults', {})
                 for k, v in task_results.items():
@@ -506,6 +508,7 @@ class Statistic(BaseModule):
 
                 stats = (statistics or {}).get(handle, {})
                 problems = r.setdefault('problems', stats.get('problems', {}))
+                clear_problems_fields(problems)
                 task_results = row.pop('TaskResults', {})
                 for k, v in task_results.items():
                     if 'Score' not in v:

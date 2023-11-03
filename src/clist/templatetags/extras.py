@@ -46,9 +46,12 @@ def get_item(data, key):
     if not data:
         return None
     if isinstance(data, (dict, defaultdict, OrderedDict)):
-        if key in data or '.' not in str(key):
+        if key in data:
             return data.get(key)
-        return reduce(lambda d, k: get_item(d, k) if d else None, str(key).split('.'), data)
+        for sep in ('.', '__'):
+            if sep in str(key):
+                return reduce(lambda d, k: get_item(d, k) if d else None, str(key).split(sep), data)
+        return None
     if isinstance(data, (list, tuple)):
         return data[key] if -len(data) <= key < len(data) else None
     return getattr(data, key, None)
@@ -1079,19 +1082,14 @@ def icon_to(value, default=None, icons=None, html_class=None):
 
 @register.simple_tag(takes_context=True)
 def list_data_field_to_select(context):
+    CoderList = apps.get_model('true_coders', 'CoderList')
     request = context['request']
     coder = getattr(request.user, 'coder', None)
-    lists = coder.my_list_set.all() if coder else None
-    if not coder or not lists:
-        return
-    options_values = {str(v.uuid): v.name for v in lists}
-    ret = {
-        'values': [v for v in request.GET.getlist('list')],
-        'options': options_values,
-        'noajax': True,
-        'nogroupby': True,
-        'nourl': True,
-    }
+    list_uuids = [v for v in request.GET.getlist('list') if v]
+    coder_lists, list_uuids = CoderList.filter_for_coder_and_uuids(coder=coder, uuids=list_uuids)
+    options_values = {str(v.uuid): v.name for v in coder_lists}
+    ret = {'values': list_uuids, 'options': options_values,
+           'noajax': True, 'nogroupby': True, 'nourl': True}
     return ret
 
 
@@ -1217,7 +1215,7 @@ def get_rating_predicition_field(field):
         return False
     field = field[len(prefix):]
     field = field.strip('_')
-    return field if field in {'new_rating', 'old_rating', 'rating_change'} else False
+    return field if field in {'new_rating', 'old_rating', 'rating_change', 'rating_perf'} else False
 
 
 @register.filter

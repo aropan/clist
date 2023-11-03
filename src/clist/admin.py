@@ -127,13 +127,14 @@ class ResourceAdmin(BaseModelAdmin):
         ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'rating_update_time', 'ratings',
                                            'rating_prediction']}],
         ['Account information', {'fields': ['has_accounts_infos_update', 'has_multi_account',
-                                            'has_account_verification', 'accounts_fields']}],
-        ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving']}],
+                                            'has_account_verification', 'has_standings_renamed_account',
+                                            'accounts_fields']}],
+        ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving', 'problems_fields']}],
         ['Other information', {'fields': ['info']}],
     ]
     list_display = ['host', 'short_host', 'enable', 'n_contests', 'n_accounts', 'modified',
                     '_has_rating', '_has_profile_url', '_has_problem_rating', '_has_accounts_infos_update',
-                    '_has_multi_account', '_has_upsolving']
+                    '_has_multi_account', '_has_standings_renamed_account', '_has_upsolving']
     search_fields = ['host', 'url']
     list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone', 'has_problem_rating',
                    'has_accounts_infos_update', 'has_multi_account', 'has_upsolving']
@@ -162,6 +163,11 @@ class ResourceAdmin(BaseModelAdmin):
         return obj.has_multi_account
     _has_multi_account.boolean = True
     _has_multi_account.short_description = 'AMulti'
+
+    def _has_standings_renamed_account(self, obj):
+        return obj.has_standings_renamed_account
+    _has_standings_renamed_account.boolean = True
+    _has_standings_renamed_account.short_description = 'ARenamed'
 
     def _has_upsolving(self, obj):
         return obj.has_upsolving
