@@ -67,7 +67,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
               {% endif %}
               </td>
               <td>
-                {% include "profile_account_actions.html" with account=account resource=account.resource without_btn=True %}
+                {% include "profile_account_actions.html" with account=account resource=account.resource with_update=this_is_me %}
               </td>
               <td>
                 <span title="Number of contests" data-toggle="tooltip">
@@ -75,10 +75,10 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
                 </span>
               </td>
               <td>
-                {% if account.overall_rank %}
-                  {% with percent=account.overall_rank|multiply:100|divide:account.resource.n_rating_accounts %}
-                  <span title="Rank: {{ account.overall_rank }} of {{ account.resource.n_rating_accounts }}<br/>Top: {{ percent|format_to_significant_digits:2 }}%" data-html="true" data-toggle="tooltip">
-                    #{{ account.overall_rank }}
+                {% if account.resource_rank %}
+                  {% with percent=account.resource_rank|multiply:100|divide:account.resource.n_rating_accounts %}
+                  <span title="Rank: {{ account.resource_rank }} of {{ account.resource.n_rating_accounts }}<br/>Top: {{ percent|format_to_significant_digits:2 }}%" data-html="true" data-toggle="tooltip">
+                    #{{ account.resource_rank }}
                   </span>
                   {% endwith %}
                 {% else %}
@@ -115,7 +115,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
 
                 {% include "profile_medals.html" with stats=resource_medals|get_item:resource.pk %}
               </a>
-              {% include "profile_account_actions.html" with account=account resource=account.resource %}
+              {% include "profile_account_actions.html" with account=account resource=account.resource with_update=this_is_me %}
             </span>
           {% endif %}
           {% endif %}
@@ -132,7 +132,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
 
                 {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}
               </a>
-              {% include "profile_account_actions.html" with account=account resource=account.resource %}
+              {% include "profile_account_actions.html" with account=account resource=account.resource with_update=this_is_me %}
             </span>
           {% endfor %}
         {% endfor %}
@@ -222,8 +222,8 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
         <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
       </span>
     </div>
-    {% if custom_fields %}
-    {% include "field_to_select.html" with field="field" data=custom_fields nosm=True %}
+    {% if statistics_fields %}
+    {% include "field_to_select.html" with field="field" data=statistics_fields nosm=True %}
     {% endif %}
     </form>
 
@@ -242,8 +242,8 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
           {% endif %}
           <th class="date">Date</th>
 
-          {% if custom_fields %}
-          {% for field in custom_fields.values %}
+          {% if statistics_fields %}
+          {% for field in statistics_fields.values %}
           <th>{{ field|title_field|split:" "|join:"<br>" }}</th>
           {% endfor %}
           {% endif %}

@@ -2,7 +2,7 @@
 {% if resource.avatar_url %}
   <div class="avatar-width-fixed">
   {% if not team_id %}
-  {% with avatar_url=account.avatar_url %}{% if avatar_url %}<img class="account-avatar" src="{{ avatar_url }}"/>{% endif %}{% endwith %}
+  {% with avatar_url=account.avatar_url %}{% if avatar_url|not_empty %}<img class="account-avatar" src="{{ avatar_url }}"/>{% endif %}{% endwith %}
   {% endif %}
   </div>
 {% endif %}

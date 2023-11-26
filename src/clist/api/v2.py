@@ -1,4 +1,5 @@
 import json
+import re
 
 import arrow
 from django.db.models import CharField, IntegerField, JSONField, Value
@@ -93,6 +94,8 @@ class ContestResource(BaseModelResource):
     event = fields.CharField('title')
     start = fields.DateTimeField('start_time')
     end = fields.DateTimeField('end_time')
+    n_statistics = fields.IntegerField('n_statistics', null=True)
+    n_problems = fields.IntegerField('n_problems', null=True)
     parsed_at = fields.DateTimeField('parsed_time', null=True)
     upcoming = fields.BooleanField(help_text='Boolean data (default true if format is atom). Filter upcoming contests')  # noqa
     format_time = fields.BooleanField(help_text='Boolean data (default true if format is atom). Convert time to user timezone and timeformat')  # noqa
@@ -131,6 +134,8 @@ class ContestResource(BaseModelResource):
             'end': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
             'parsed_at': ['exact', 'gt', 'lt', 'gte', 'lte'],
             'duration': ['exact', 'gt', 'lt', 'gte', 'lte'],
+            'n_statistics': ['exact', 'gt', 'lt', 'gte', 'lte'],
+            'n_problems': ['exact', 'gt', 'lt', 'gte', 'lte'],
             'filtered': ['exact'],
             'category': ['exact'],
         }
@@ -344,7 +349,7 @@ class AccountResource(BaseModelResource):
     handle = fields.CharField('key')
     name = fields.CharField('name', null=True)
     rating = fields.IntegerField('rating', null=True)
-    overall_rank = fields.IntegerField('overall_rank', null=True)
+    overall_rank = fields.IntegerField('resource_rank', null=True)
     n_contests = fields.IntegerField('n_contests')
     total_count = fields.BooleanField()
 
@@ -378,15 +383,27 @@ class AccountResource(BaseModelResource):
         return qs
 
 
+def get_api_version(bundle):
+    parts = bundle.request.path.split('/')
+    for part in parts:
+        if re.match('^v[0-9]+$', part):
+            return part
+    return None
+
+
 def use_in_me_only(bundle, *args, **kwargs):
-    url = reverse('clist:api:v2:api_dispatch_me', kwargs={'api_name': 'v2', 'resource_name': 'coder'})
+    api_version = get_api_version(bundle)
+    url = reverse(f'clist:api:{api_version}:api_dispatch_me',
+                  kwargs={'api_name': api_version, 'resource_name': 'coder'})
     return url == bundle.request.path
 
 
 def use_in_detail_only(bundle, *args, **kwargs):
     with_accounts = is_true_value(bundle.request.GET.get('with_accounts'))
     query_by_id = bool(bundle.request.GET.get('id') or bundle.request.GET.get('username'))
-    url = reverse('clist:api:v2:api_dispatch_list', kwargs={'api_name': 'v2', 'resource_name': 'coder'})
+    api_version = get_api_version(bundle)
+    url = reverse(f'clist:api:{api_version}:api_dispatch_list',
+                  kwargs={'api_name': api_version, 'resource_name': 'coder'})
     return with_accounts or query_by_id or not (url == bundle.request.path or use_in_me_only(bundle, *args, **kwargs))
 
 

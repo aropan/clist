@@ -22,11 +22,10 @@ from first import first
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import is_improved_solution
-from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
-from ranking.utils import clear_problems_fields
+from ranking.utils import clear_problems_fields, create_upsolving_statistic
 from utils.datetime import parse_datetime
 
 

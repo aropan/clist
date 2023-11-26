@@ -2,26 +2,12 @@
 
 
 from django.urls import re_path
-from django.urls import reverse
 from tastypie import fields
 from tastypie.utils import trailing_slash
 
-from clist.api.common import is_true_value
 from clist.api.v2 import (AccountResource, BaseModelResource, ContestResource, ResourceResource,  # noqa: F401
-                          StatisticsResource)
+                          StatisticsResource, use_in_detail_only, use_in_me_only)
 from true_coders.models import Coder
-
-
-def use_in_me_only(bundle, *args, **kwargs):
-    url = reverse('clist:api:v3:api_dispatch_me', kwargs={'api_name': 'v3', 'resource_name': 'coder'})
-    return url == bundle.request.path
-
-
-def use_in_detail_only(bundle, *args, **kwargs):
-    with_accounts = is_true_value(bundle.request.GET.get('with_accounts'))
-    query_by_id = bool(bundle.request.GET.get('id') or bundle.request.GET.get('handle'))
-    url = reverse('clist:api:v3:api_dispatch_list', kwargs={'api_name': 'v3', 'resource_name': 'coder'})
-    return with_accounts or query_by_id or not (url == bundle.request.path or use_in_me_only(bundle, *args, **kwargs))
 
 
 def use_for_is_real(bundle, *args, **kwargs):

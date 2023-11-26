@@ -399,7 +399,7 @@
             $page
         );
         $page = preg_replace(
-            array('#\sянв#','#\sфев#','#\sмар#','#\sапр#','#\sмай#','#\sмая#','#\sиюн#','#\sиюл#','#\sавг#','#\sсен#','#\sокт#','#\sноя#','#\sдек#'),
+            array('#\sянв\b#','#\sфев\b#','#\sмар\b#','#\sапр\b#','#\sмай\b#','#\sмая\b#','#\sиюн\b#','#\sиюл\b#','#\sавг\b#','#\sсен\b#','#\sокт\b#','#\sноя\b#','#\sдек\b#'),
             array('.01','.02','.03','.04','.05','.05','.06','.07','.08','.09','.10','.11','.12'),
             $page
         );
@@ -442,7 +442,7 @@
         return "$scheme$user$pass$host$port$path$query$fragment";
     }
 
-    function url_merge($original, $new, $clear_query = false)
+    function url_merge($original, $new, $merge_query = false)
     {
         if (is_string($original)) {
             $original = parse_url($original);
@@ -450,32 +450,32 @@
         if (is_string($new)) {
             $new = parse_url($new);
         }
-        $qs = null;
         if (!empty($original['query']) && is_string($original['query'])) {
             parse_str($original['query'], $original['query']);
         }
         if (!empty($new['query']) && is_string($new['query'])) {
             parse_str($new['query'], $new['query']);
         }
-        if (isset($original['query']) || isset($new['query'])) {
-            if (!isset($original['query'])) {
-                $qs = $new['query'];
-            } elseif (!isset($new['query'])) {
-                $qs = $original['query'];
-            } else {
-                $qs = array_merge($original['query'], $new['query']);
+        $qs = null;
+        if ($merge_query) {
+            if (isset($original['query']) || isset($new['query'])) {
+                if (!isset($original['query'])) {
+                    $qs = $new['query'];
+                } elseif (!isset($new['query'])) {
+                    $qs = $original['query'];
+                } else {
+                    $qs = array_merge($original['query'], $new['query']);
+                }
             }
+        } else if (isset($new['query'])) {
+            $qs = $new['query'];
         }
         if (isset($original['path']) && isset($new['path']) && $new['path'][0] != '/') {
             $path = preg_replace('#[^/]+$#', '', $original['path']);
             $new['path'] = $path . $new['path'];
         }
         $result = array_merge($original, $new);
-        if ($clear_query) {
-            unset($result['query']);
-        } else {
-            $result['query'] = $qs;
-        }
+        $result['query'] = $qs;
         foreach ($result as $k => $v) {
             if ($v === null) {
                 unset($result[$k]);

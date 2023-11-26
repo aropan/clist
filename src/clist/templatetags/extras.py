@@ -177,6 +177,11 @@ def is_coming(value):
 
 
 @register.filter
+def is_past(value):
+    return value < now()
+
+
+@register.filter
 def hours(time_delta):
     return time_delta.seconds // 3600
 
@@ -244,6 +249,11 @@ def md_escape(value, clear=False):
     ret = re.sub(r'([^\\])([*_`\[])', repl, ret)
     ret = ret[1:]
     return ret
+
+
+@register.filter
+def md_url(value, clear=False):
+    return value.replace('(', '%28').replace(')', '%29')
 
 
 @register.filter
@@ -376,14 +386,17 @@ def get_problem_solution(problem):
             problems = contest.info.get('problems', [])
             problems = get_division_problems(problems, statistic.addition)
 
-            ret = {'statistic': statistic}
             for p in problems:
                 key = get_problem_key(p)
                 if key == problem.key:
                     short = get_problem_short(p)
-                    ret['result'] = statistic.addition.get('problems', {}).get(short)
-                    ret['key'] = short
-                    return ret
+                    result = statistic.addition.get('problems', {}).get(short)
+                    res = {'statistic': statistic, 'result': result, 'key': short}
+                    if (
+                        not ret or ret['result'] is None or
+                        result is not None and is_improved_solution(result, ret['result'])
+                    ):
+                        ret = res
     return ret
 
 
@@ -536,12 +549,12 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
     if 'name' in rating:
         title += f'<br/>{rating["name"]}'
     if len(values) == 1 and isinstance(values[0], Account):
-        overall_rank = values[0].overall_rank
-        if overall_rank:
+        resource_rank = values[0].resource_rank
+        if resource_rank:
             total_rank = resource.n_rating_accounts
-            percent = overall_rank * 100 / total_rank
+            percent = resource_rank * 100 / total_rank
             percent = format_to_significant_digits(percent, 2)
-            title += f'<br/>#{overall_rank} of {total_rank} ({percent}%)'
+            title += f'<br/>#{resource_rank} of {total_rank} ({percent}%)'
 
     div_size = radius * 2 + width
     return mark_safe(
@@ -807,6 +820,13 @@ def is_improved_solution(curr, prev):
     prev_solved = is_solved(prev)
     if curr_solved != prev_solved:
         return curr_solved
+
+    if not curr_solved:
+        curr_upsolved = is_upsolved(curr)
+        prev_upsolved = is_upsolved(prev)
+        if curr_upsolved != prev_upsolved:
+            return curr_upsolved
+
     curr_result = normalized_result(curr.get('result'))
     prev_result = normalized_result(prev.get('result'))
     if type(curr_result) is not type(prev_result):
@@ -1210,17 +1230,28 @@ def is_private_field(field):
 
 @register.filter
 def get_rating_predicition_field(field):
-    prefix = 'predicted'
-    if not field.startswith(prefix):
-        return False
-    field = field[len(prefix):]
-    field = field.strip('_')
-    return field if field in {'new_rating', 'old_rating', 'rating_change', 'rating_perf'} else False
+    for prefix in ('predicted', 'rating_prediction'):
+        if field.startswith(prefix):
+            field = field[len(prefix):]
+            field = field.strip('_')
+            if field:
+                return field
+    return False
 
 
 @register.filter
 def is_rating_change_field(field):
-    return field in {'rating_change', 'ratingChange', 'predicted_rating_change'}
+    return field in {'rating_change', 'ratingChange', 'predicted_rating_change', 'rating_prediction_rating_change'}
+
+
+@register.filter
+def is_new_rating_field(field):
+    return field in {'new_rating', 'predicted_new_rating', 'rating_prediction_new_rating'}
+
+
+@register.filter
+def to_rating_change_field(field):
+    return field.replace('new_rating', 'rating_change')
 
 
 @register.simple_tag
@@ -1239,3 +1270,8 @@ def coder_account_filter(qs, account, row_number_field=None, operator=None):
             row_number = qs.filter(**{row_number_field + operator: value}).count() + 1
             ret = ret.annotate(row_number=Value(row_number))
     return ret
+
+
+@register.filter
+def not_empty(value):
+    return value and value is not None and value != 'None'

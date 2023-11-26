@@ -17,7 +17,7 @@
 {% with addition=statistic.addition_replacement|default:statistic.addition %}
 {% if statistic.my_stat and statistic.floating and not rev %}{% include "standings_paging_next.html" %}{% endif %}
 <tr
-class="stat-cell {{ statistic.id }}{% if statistic.my_stat %} my-stat info starred{% endif %}{% if statistic.floating %} floating hidden{% endif %}{% if statistic.id == request.GET.find_me|toint %} find-me-row{% endif %}{% if versus_statistic_id == statistic.id %} success{% endif %}"
+class="stat-cell {{ statistic.id }}{% if statistic.my_stat %} my-stat info starred{% endif %}{% if statistic.floating %} floating hidden{% endif %}{% if statistic.id == request.GET.find_me|toint %} find-me-row info starred{% endif %}{% if versus_statistic_id == statistic.id %} success{% endif %}"
 data-statistic-id="{{ statistic.id }}"
 {% if colored_by_group_score %}data-result="{{ statistic.solving|scoreformat }}"{% endif %}
 {% if addition.hack %}
@@ -136,7 +136,7 @@ data-place="{{ statistic.place }}"
     {% endwith %}
     {% for field in versus_data.fields %}
     {% with value=versus_data_row|get_item:field %}
-    <{{ tag }}>{% include "field_value.html" %}</{{ tag }}>
+    <{{ tag }}>{% include "field_value.html" with resource=contest.resource %}</{{ tag }}>
     {% endwith %}
     {% endfor %}
   {% else %}
@@ -164,15 +164,13 @@ data-place="{{ statistic.place }}"
   {% with advance_url=addition|get_item:"_advance_url" advance_medal=addition|get_item:"_advance_medal" advance_icon=addition|get_item:"_advance_icon" %}
   {% for field in fields.keys %}
   {% if field|get_rating_predicition_field %}
-  {% define field|get_rating_predicition_field as field %}
-  {% define statistic.rating_prediction|get_item:field as value %}
+  {% define field|get_rating_predicition_field as predicition_field %}
+  {% define statistic.rating_prediction|get_item:predicition_field as value %}
   {% else %}
   {% define addition|get_item:field as value %}
   {% endif %}
   <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
-    {% if field in contest.resource.RATING_FIELDS %}{% coder_color_circle contest.resource value %}{% endif %}
     <span
-      {% if field in contest.resource.RATING_FIELDS or field == 'performance' %} class="{% coder_color_class contest.resource value %}"{% endif %}
       {% if field == 'advance' and advance_medal %} class="trophy {{ advance_medal|lower }}-trophy"{% endif %}
     >
       {% if field == 'advance' and advance_url %}<a href="{{ advance_url }}">{% endif %}
@@ -183,7 +181,7 @@ data-place="{{ statistic.place }}"
           <i class="fas fa-angle-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}"></i>{{ statistic.global_rating_change|abs }}
         </span>
       {% else %}
-        {% include "field_value.html" %}
+        {% include "field_value.html" with resource=contest.resource %}
       {% endif %}
       {% if field == 'advance' and advance_url %}</a>{% endif %}
     </span>

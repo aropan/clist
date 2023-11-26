@@ -72,7 +72,7 @@ class Command(BaseCommand):
             event_log = EventLog.objects.create(name='set_account_rank',
                                                 related=resource,
                                                 status=EventStatus.IN_PROGRESS)
-            field = 'overall_rank'
+            field = 'resource_rank'
             with failed_on_exception(event_log):
                 qs = Account.objects.filter(resource=resource, rating__isnull=False)
                 n_rating_accounts = qs.count()

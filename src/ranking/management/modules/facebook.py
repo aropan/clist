@@ -13,7 +13,7 @@ import pytz
 import requests
 import tqdm
 
-from ranking.management.modules import conf
+# from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 
@@ -23,18 +23,18 @@ class Statistic(BaseModule):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        facebook_page = REQ.get('https://facebook.com/')  # noqa: F841
-        form = REQ.form(action='/login/')
-        if form:
-            form['post'].pop('sign_up', None)
-            data = {
-                'email': conf.FACEBOOK_USERNAME,
-                'pass': conf.FACEBOOK_PASSWORD,
-            }
-            signin_page = REQ.submit_form(data=data, form=form)  # noqa: F841
-            form = REQ.form(action='/login/')
-            if form and 'validate-password' in form['url']:
-                REQ.submit_form(data=data, form=form)
+        # facebook_page = REQ.get('https://facebook.com/')  # noqa: F841
+        # form = REQ.form(action='/login/')
+        # if form:
+        #     form['post'].pop('sign_up', None)
+        #     data = {
+        #         'email': conf.FACEBOOK_USERNAME,
+        #         'pass': conf.FACEBOOK_PASSWORD,
+        #     }
+        #     signin_page = REQ.submit_form(data=data, form=form)  # noqa: F841
+        #     form = REQ.form(action='/login/')
+        #     if form and 'validate-password' in form['url']:
+        #         REQ.submit_form(data=data, form=form)
 
     def get_standings(self, users=None, statistics=None):
         is_final = bool(re.search(r'\bfinals?\b', self.name, re.IGNORECASE))
@@ -58,11 +58,12 @@ class Statistic(BaseModule):
             n_attempts = 3
             seen = set()
             for idx in range(n_attempts):
-                ret = REQ.get(
-                    self.API_GRAPH_URL_,
-                    post=params,
-                    headers={'accept-language': 'en-US,en;q=1.0'}
-                )
+                # ret = REQ.get(
+                #     self.API_GRAPH_URL_,
+                #     post=params,
+                #     headers={'accept-language': 'en-US,en;q=1.0'}
+                # )
+                ret = requests.post(self.API_GRAPH_URL_, data=params).content
                 try:
                     ret = json.loads(ret)
                     if 'errors' not in ret:

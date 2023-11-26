@@ -11,8 +11,8 @@ from flatten_dict.reducers import make_reducer
 from stringcolor import cs
 from tqdm import tqdm
 
-from clist.models import Problem, Resource
-from ranking.models import Account
+from clist.models import Contest, Problem, Resource
+from ranking.models import Account, Statistics
 from utils.attrdict import AttrDict
 
 
@@ -90,6 +90,69 @@ def set_problems_fields(resources, logger):
             resource.save()
 
 
+def set_statistics_fields(resources, logger):
+    qs = Contest.objects.filter(stage__isnull=True)
+    total = qs.filter(resource__in=resources).count()
+    with tqdm(total=total, desc='contests') as pbar:
+        for resource in resources.iterator():
+            fields_types = defaultdict(set)
+            pbar.set_postfix(resource=resource)
+
+            resource_qs = qs.filter(resource=resource).values('info__fields_types', 'rating_prediction_fields__types')
+            for info in resource_qs.iterator():
+                for prefix, fields_key in (
+                    ('', 'info__fields_types'),
+                    ('rating_prediction_', 'rating_prediction_fields__types'),
+                ):
+                    fields = info[fields_key] or {}
+                    for k, v in fields.items():
+                        if prefix:
+                            k = f'{prefix}{k}'
+                        if Statistics.is_special_addition_field(k):
+                            continue
+                        fields_types[k] |= set(v)
+                pbar.update()
+
+            fields_types = {k: list(v) for k, v in fields_types.items()}
+            resource_statistics_fields_types = resource.statistics_fields.get('types', {})
+
+            fields = list(sorted(set(resource_statistics_fields_types.keys()) | set(fields_types.keys())))
+            first_log = True
+            for field in fields:
+                new_types = list(sorted(fields_types.get(field, [])))
+                orig_types = list(sorted(resource_statistics_fields_types.get(field, [])))
+                if new_types == orig_types:
+                    continue
+                if (orig_types or new_types) and first_log:
+                    logger.info(f'{resource} statistics fields:')
+                    first_log = False
+                if orig_types:
+                    logger.info(cs(f'- {field}: {orig_types}', 'red'))
+                if new_types:
+                    logger.info(cs(f'+ {field}: {new_types}', 'green'))
+
+            resource.statistics_fields['types'] = fields_types
+            resource.save()
+
+
+def set_n_fields(resources, logger):
+    for resource in resources:
+        n_accounts = resource.account_set.count()
+        n_contests = resource.contest_set.count()
+        update_fields = []
+        for field, new_value in (
+            ('n_accounts', n_accounts),
+            ('n_contests', n_contests),
+        ):
+            value = getattr(resource, field)
+            if value != new_value:
+                logger.info(f'{resource} {field}: {value} -> {new_value}')
+                setattr(resource, field, new_value)
+                update_fields.append(field)
+        if update_fields:
+            resource.save(update_fields=update_fields)
+
+
 class Command(BaseCommand):
     help = 'Set resources fields'
 
@@ -114,3 +177,5 @@ class Command(BaseCommand):
         self.logger.info(f'resources [{len(resources)}] = {[r.host for r in resources]}')
         set_accounts_fields(resources, logger=self.logger)
         set_problems_fields(resources, logger=self.logger)
+        set_statistics_fields(resources, logger=self.logger)
+        set_n_fields(resources, logger=self.logger)

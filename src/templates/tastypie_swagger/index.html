@@ -47,77 +47,103 @@
 <div class="info">
     {% with api_url="clist:api:latest:index"|url %}
     {% if request.path != api_url %}
-    <div class="alert alert-warning text-center lead">Use the <a href="{{ api_url }}">latest</a> API version</div>
+    <div class="alert alert-warning text-center lead">
+        For the latest features, please use the <a href="{{ api_url }}">most recent version</a> of our API.
+    </div>
     {% endif %}
     {% endwith %}
-    <div class="title">authentication</div>
-    <div class="text">API key is needed to access API (<a href="{% url 'auth:login' %}" id="show-api-key">show my api-key</a>). There is also access without api-key through session on this website. You can get access API from other user throught <a href="{% url 'oauth2_provider:list' %}">OAuth</a>.
-    {% if user.is_authenticated %}
-    <script>
-        $(function() {
-            $('#show-api-key').click(function() {
-                var $this = $(this)
-                $this.html('<i class="fas fa-sync-alt fa-lg fa-pulse"></i>')
-                $.ajax({
-                    type: 'POST',
-                    url: '{% url "coder:api-key" %}',
-                    success: function (api_key) {
-                        $this.html(api_key)
-                        $this.removeAttr('href').unbind('click')
-                        $this.popover({
-                            placement: 'bottom',
-                            container: 'body',
-                            html: true,
-                            delay: {
-                                'show': 300,
-                                'hide': 100,
-                            },
-content: '<div class="info"><div class="title">Request header</div><div class="text">Authorization: ApiKey {{user.username}}:' + api_key + '</div></div><div class="or text-center">or</div><div class="info"><div class="title">Param query</div><div class="text">/?username={{user.username}}&api_key=' + api_key + '</div></div>',
-                            title: 'How to use?',
-                        }).popover('show')
-                        $this.append('&nbsp;<a id="remove-api-key" class="btn btn-xs btn-danger"><i class="far fa-trash-alt"></i></a>')
-                        $('#remove-api-key').click(function() {
-                            bootbox.confirm({
-                                size: 'small',
-                                message: 'Remove api key?<br/><small class="text-muted">You can create a new api key later.</small>',
-                                callback: function (result) {
-                                    if (result) {
-                                        $.ajax({
-                                            type: 'DELETE',
-                                            url: '{% url "coder:remove-api-key" %}',
-                                            success: function(response) { location.reload() },
-                                            error: function (data) { bootbox.alert({message: data.statusText, size: 'small'}) },
-                                        })
-                                    }
-                                }
-                            })
-                        })
-                    },
-                    error: function (data) { bootbox.alert({message: data.statusText, size: 'small'}) },
-                })
-                return false;
-            })
-        })
-    </script>
-    {% else %}
-    <a href="{% url 'auth:login' %}" class="pull-right" id="show-api-key">Log in to view api-key</a>
-    {% endif %}
+    <div class="title">Authentication</div>
+    <div class="text">
+        {% if not user.is_authenticated %}<a href="{% url 'auth:login' %}" class="pull-right" id="show-api-key">Log in for API key access</a>{% endif %}
+        <ul>
+            <li>Accessing the API requires an API key, available to authenticated users <a href="{% url 'auth:login' %}" id="show-api-key">here</a>.</li>
+            <li>Non-key access is also available through website sessions.</li>
+            <li><a href="{% url 'oauth2_provider:list' %}">OAuth</a> allows for the use of user-specific filters and manages API request limits among multiple users.</li>
+        </ul>
     </div>
 </div>
 <div class="info">
     {% get_api_formats as formats %}
-    <div class="title">format</div>
-    <div class="text">Supported {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}. Set format in url <samp>/api/v2/json/...</samp> or use param in GET query <samp>?format=json</samp>.</div>
+    <div class="title">Format</div>
+    <div class="text">
+        <ul>
+            <li>The API supports multiple formats, including: {% for format in formats %}{% if forloop.counter0 %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<samp>{{ format }}</samp>{% endfor %}.</li>
+            <li>Select your preferred format in the URL, like <samp>/api/{{ version }}/json/...</samp>, or via a GET query parameter, such as <samp>?format=json</samp>.</li>
+        </ul>
+    </div>
 </div>
 <div class="info" id="atom-and-rss">
-    <div class="title">atom and rss</div>
-    <div class="text">Query <samp>/api/v2/contest/</samp> only. Using <samp>?format=atom</samp> or <samp>?format=rss</samp>. Preset params for atom and rss format: <samp>?upcoming=true&format_time=true&start_time__during=1 day</samp>. Set <samp>timezone</samp> and <samp>timeformat</samp> using GET query also or <a href="{% url "coder:settings" "preferences" %}">preferences</a>.</div>
+    <div class="title">Atom and RSS</div>
+    <div class="text">
+        <ul>
+            <li>Atom and RSS formats are specifically supported at the <samp>/api/{{ version }}/contest/</samp> endpoint.</li>
+            <li>Specify your format as Atom (<samp>?format=atom</samp>) or RSS (<samp>?format=rss</samp>).</li>
+            <li>Default settings include <samp>?upcoming=true&format_time=true&start_time__during=1 day</samp>.</li>
+            <li>Customize your <samp>timezone</samp> and <samp>timeformat</samp> via GET query or in your <a href="{% url "coder:settings" "preferences" %}">user preferences</a>.</li>
+        </ul>
+    </div>
 </div>
 <div class="info">
-    <div class="title">throttle</div>
-    <div class="text">{% if user.is_authenticated and user.coder.settings.api_throttle_at %}<strike>{{ default_api_throttle_at }}</strike> {{ user.coder.settings.api_throttle_at }}{% else %}{{ default_api_throttle_at }}{% endif %} requests per minute.</div>
+    <div class="title">Throttle</div>
+    <div class="text">
+        <ul>
+            <li>Standard request limit is {% if user.is_authenticated and user.coder.settings.api_throttle_at %}<strike>{{ default_api_throttle_at }}</strike> {{ user.coder.settings.api_throttle_at }}{% else %}{{ default_api_throttle_at }}{% endif %} per minute.</li>
+            <li>Should you require a higher limit, please let us know to accommodate your needs.</li>
+        </ul>
+    </div>
 </div>
+
+{% if user.is_authenticated %}
+<script>
+    $(function() {
+        $('#show-api-key').click(function() {
+            var $this = $(this)
+            $this.html('<i class="fas fa-sync-alt fa-lg fa-pulse"></i>')
+            $.ajax({
+                type: 'POST',
+                url: '{% url "coder:api-key" %}',
+                success: function (api_key) {
+                    $this.html(api_key)
+                    $this.removeAttr('href').unbind('click')
+                    $this.popover({
+                        placement: 'bottom',
+                        container: 'body',
+                        html: true,
+                        delay: {
+                            'show': 300,
+                            'hide': 100,
+                        },
+content: '<div class="info"><div class="title">Request header</div><div class="text">Authorization: ApiKey {{user.username}}:' + api_key + '</div></div><div class="or text-center">or</div><div class="info"><div class="title">Param query</div><div class="text">/?username={{user.username}}&api_key=' + api_key + '</div></div>',
+                        title: 'How to use?',
+                    }).popover('show')
+                    $this.append('&nbsp;<a id="remove-api-key" class="btn btn-xs btn-danger"><i class="far fa-trash-alt"></i></a>')
+                    $('#remove-api-key').click(function() {
+                        bootbox.confirm({
+                            size: 'small',
+                            message: 'Remove api key?<br/><small class="text-muted">You can create a new api key later.</small>',
+                            callback: function (result) {
+                                if (result) {
+                                    $.ajax({
+                                        type: 'DELETE',
+                                        url: '{% url "coder:remove-api-key" %}',
+                                        success: function(response) { location.reload() },
+                                        error: function (data) { bootbox.alert({message: data.statusText, size: 'small'}) },
+                                    })
+                                }
+                            }
+                        })
+                    })
+                },
+                error: function (data) { bootbox.alert({message: data.statusText, size: 'small'}) },
+            })
+            return false;
+        })
+    })
+</script>
+{% endif%}
+
 <div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
 
 <div id="swagger-ui-container" class="swagger-ui-wrap"></div>
+
 {% endblock %}

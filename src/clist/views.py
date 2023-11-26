@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.commands import dumpdata
+from django.db import transaction
 from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
@@ -680,15 +681,19 @@ def update_writers(contest, writers=None):
         account.writer_set.add(contest)
 
 
+@transaction.atomic
 def update_problems(contest, problems=None, force=False):
     if problems is not None and not force:
         if canonize(problems) == canonize(contest.info.get('problems')):
             return
     contest.info['problems'] = problems
-    contest.save()
+    contest.save(update_fields=['info'])
 
     if hasattr(contest, 'stage'):
         return
+
+    contest.n_problems = len(list(contest.problems_list))
+    contest.save(update_fields=['n_problems'])
 
     contests_set = {contest.pk}
     contests_queue = SimpleQueue()
@@ -744,7 +749,7 @@ def update_problems(contest, problems=None, force=False):
                     'slug': info.pop('slug', getattr(added_problem, 'slug', None)),
                     'divisions': getattr(added_problem, 'divisions', []) + ([division] if division else []),
                     'url': url,
-                    'n_tries': info.pop('n_teams', 0) + getattr(added_problem, 'n_tries', 0),
+                    'n_attempts': info.pop('n_teams', 0) + getattr(added_problem, 'n_attempts', 0),
                     'n_accepted': info.pop('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
                     'n_partial': info.pop('n_partial', 0) + getattr(added_problem, 'n_partial', 0),
                     'n_hidden': info.pop('n_hidden', 0) + getattr(added_problem, 'n_hidden', 0),
@@ -785,8 +790,6 @@ def update_problems(contest, problems=None, force=False):
                 if 'tags' in problem_info:
                     if '' in problem_info['tags']:
                         problem_info['tags'].remove('')
-                        contest.save()
-
                     for name in problem_info['tags']:
                         tag, _ = ProblemTag.objects.get_or_create(name=name)
                         if tag in old_tags:
@@ -808,7 +811,7 @@ def update_problems(contest, problems=None, force=False):
                         continue
                     contests_set.add(c.pk)
                     contests_queue.put(c)
-        current_contest.save()
+        current_contest.save(update_fields=['info'])
 
     while old_problem_ids:
         new_problems = Problem.objects.filter(id__in=new_problem_ids)
@@ -853,14 +856,13 @@ def update_problems(contest, problems=None, force=False):
 ))
 @context_pagination()
 def problems(request, template='problems.html'):
-    problems = Problem.objects.annotate_favorite(request.user).annotate_note(request.user)
+    problems = Problem.visible_objects.annotate_favorite(request.user).annotate_note(request.user)
     problems = problems.select_related('resource')
     problems = problems.prefetch_related('contests')
     problems = problems.prefetch_related('tags')
     problems = problems.annotate(min_contest_id=SubqueryMin('contests__id'))
     problems = problems.annotate(date=F('time'))
     problems = problems.order_by('-time', '-min_contest_id', 'rating', 'index', 'short')
-    problems = problems.filter(visible=True)
 
     show_tags = True
     if request.user.is_authenticated:
@@ -943,8 +945,9 @@ def problems(request, template='problems.html'):
 
     contests = [r for r in request.GET.getlist('contest') if r]
     if contests:
+        problems = problems.annotate(has_contests=Exists('contests', filter=Q(contest__in=contests)))
+        problems = problems.filter(Q(has_contests=True) | Q(contest__in=contests))
         contests = list(Contest.objects.filter(pk__in=contests))
-        problems = problems.filter(Q(contests__in=contests) | Q(contest__in=contests))
 
     if len(resources) == 1:
         selected_resource = resources[0]
@@ -996,7 +999,7 @@ def problems(request, template='problems.html'):
 
     custom_fields = [f for f in request.GET.getlist('field') if f]
     custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url',
-                      'n_accepted', 'n_tries', 'n_partial', 'n_hidden', 'n_total']
+                      'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_total']
     custom_info_fields = set()
     if selected_resource:
         fields_types = selected_resource.problems_fields.get('types', {})

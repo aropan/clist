@@ -108,10 +108,20 @@
      * Интернет-олимпиады
      */
     $page = curlexec($URL);
+    preg_match_all('#<a[^>]*href="(?P<url>[^"]*/archive/(?P<key>20[0-9]{6})/[^"]*)"[^>]*>\s*Результаты\s*олимпиады\s*</a>#', $page, $matches, PREG_SET_ORDER);
+    $standings_urls = array();
+    foreach ($matches as $match) {
+        $key = $match['key'];
+        $url = $match['url'];
+        $standings_urls[$key] = url_merge($URL, $url);
+    }
     preg_match_all('#<td class="date">(?<date>\d+\s[^\s]+(?:\s\d+)?)[^<]*</td><td class="time">(?<date_start_time>[^\s<]*)[^<]*</td><td[^>]*>(?<durations>[^<]*)</td><td[^>]*>(?<title>[^<]*)</td>\s*</tr>#', $page, $matches, PREG_SET_ORDER);
     foreach ($matches as $match)
     {
         $title = 'Интернет-олимпиада';
+        if (empty($match['title'])) {
+            $title .= ' (' . $match['title'] . ')';
+        }
         $match['date'] = replace_months($match['date'], true);
         $match['date_start_time'] = str_replace('-', ':', $match['date_start_time']);
 
@@ -126,10 +136,10 @@
 
         $key = date("Ymd", strtotime($match['date']));
 
-        $_contests[$key] = array(
+        $contest = array(
             'start_time' => trim($match['date']) . ' ' . trim($match['date_start_time']),
             'duration' => '05:00',
-            'title' => $title . (!empty($match['title'])? ' (' . $match['title'] . ')' : ''),
+            'title' => $title,
             'host' => $HOST,
             'url' => $URL,
             'timezone' => $TIMEZONE,
@@ -140,6 +150,20 @@
             'start_time' => trim($match['date']) . ' ' . trim($match['date_start_time']),
             'duration' => '05:00',
         );
+
+        if (isset($standings_urls[$key])) {
+            $standings_url = $standings_urls[$key];
+            $page = curlexec($standings_url);
+            if (preg_match('#<h[0-9][^>]*>(?P<title>[^<]*)<#', $page, $match)) {
+                $title = $match['title'];
+                $title = html_entity_decode($title);
+                $title = htmlspecialchars_decode($title);
+                $title = preg_replace('#\s+#', ' ', trim($title));
+                $contest['title'] = $title;
+            }
+            $contest['standings_url'] = $standings_url;
+        }
+        $_contests[$key] = $contest;
     }
 
     preg_match_all('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>[0-9]{4}-[0-9]{4}</a>#', $page, $matches);

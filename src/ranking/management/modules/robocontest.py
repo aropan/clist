@@ -58,10 +58,10 @@ class Statistic(BaseModule):
                     elif f.startswith('fullname'):
                         a = v.column.node.xpath('.//a')[0]
                         r['member'] = re.search('profile/(?P<key>[^/]+)', a.attrib['href']).group('key')
-                        r['name'] = a.text
+                        r['name'] = html.unescape(a.text).strip()
                         small = v.column.node.xpath('.//small')
                         if small and (text := small[0].text):
-                            r['affiliation'] = html.unescape(text)
+                            r['affiliation'] = html.unescape(text).strip()
                     elif not f:
                         i = v.header.node.xpath('.//i')
                         if i:

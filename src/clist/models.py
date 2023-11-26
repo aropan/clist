@@ -72,8 +72,12 @@ class Resource(BaseModel):
     has_account_verification = models.BooleanField(default=False)
     has_standings_renamed_account = models.BooleanField(default=False)
     problems_fields = models.JSONField(default=dict, blank=True)
+    statistics_fields = models.JSONField(default=dict, blank=True)
 
-    RATING_FIELDS = ('old_rating', 'OldRating', 'new_rating', 'NewRating', 'rating', 'Rating', 'rating_perf')
+    RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'perfomance',
+                     'OldRating', 'Rating', 'NewRating', 'Perfomance',
+                     'predicted_new_rating', 'predicted_rating_perf',
+                     'rating_prediction_old_rating', 'rating_prediction_new_rating', 'rating_prediction_rating_perf')
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='resource')
 
@@ -331,6 +335,7 @@ class Contest(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
+    n_problems = models.IntegerField(null=True, blank=True, db_index=True)
     parsed_time = models.DateTimeField(null=True, blank=True)
     has_hidden_results = models.BooleanField(null=True, blank=True)
     related = models.ForeignKey('Contest', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_set')
@@ -343,6 +348,7 @@ class Contest(BaseModel):
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
     rating_prediction_timing = models.DateTimeField(default=None, null=True, blank=True)
 
+    rating_prediction_fields = models.JSONField(default=dict, blank=True, null=True)
     has_fixed_rating_prediction_field = models.BooleanField(default=False, null=True, blank=True)
     rating_prediction_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
 
@@ -371,6 +377,8 @@ class Contest(BaseModel):
             models.Index(fields=['resource', 'start_time', 'id']),
             models.Index(fields=['resource', 'notification_timing', 'start_time', 'end_time']),
             models.Index(fields=['resource', 'statistic_timing', 'start_time', 'end_time']),
+            models.Index(fields=['resource', '-n_statistics']),
+            models.Index(fields=['resource', '-n_problems']),
             models.Index(fields=['title']),
             GistIndexTrgrmOps(fields=['title']),
         ]
@@ -427,6 +435,13 @@ class Contest(BaseModel):
                     fields.remove(field)
                     fields.insert(min_index, field)
             self.info['fields'] = fields
+
+        hidden_fields = self.info.get('hidden_fields', [])
+        if 'old_rating' in fields and 'old_rating' not in hidden_fields:
+            hidden_fields.append('old_rating')
+        if 'rating_change' in fields and 'rating_change' not in hidden_fields and 'new_rating' in fields:
+            hidden_fields.append('rating_change')
+        self.info['hidden_fields'] = hidden_fields
 
         return super().save(*args, **kwargs)
 
@@ -689,6 +704,11 @@ class ContestSeries(BaseModel):
         verbose_name_plural = 'Contest series'
 
 
+class VisibleProblemManager(BaseContestManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(visible=True)
+
+
 class Problem(BaseModel):
     contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE,
                                 related_name='individual_problem_set')
@@ -705,7 +725,7 @@ class Problem(BaseModel):
     url = models.TextField(default=None, null=True, blank=True)
     archive_url = models.TextField(default=None, null=True, blank=True)
     divisions = ArrayField(models.TextField(), default=None, null=True, blank=True)
-    n_tries = models.IntegerField(default=None, null=True, blank=True)
+    n_attempts = models.IntegerField(default=None, null=True, blank=True)
     n_accepted = models.IntegerField(default=None, null=True, blank=True)
     n_partial = models.IntegerField(default=None, null=True, blank=True)
     n_hidden = models.IntegerField(default=None, null=True, blank=True)
@@ -718,6 +738,7 @@ class Problem(BaseModel):
     notes = GenericRelation('notes.Note', related_query_name='problem')
 
     objects = BaseManager()
+    visible_objects = VisibleProblemManager()
 
     def __str__(self):
         return f'{self.name} Problem#{self.id}'

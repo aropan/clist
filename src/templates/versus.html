@@ -159,18 +159,7 @@
         </div>
         {% if rated %}
         <div>
-          {% with rating=stat.addition.new_rating %}
-          {% if rating %}
-          <span class="{% coder_color_class contest.resource rating %}">
-          {% coder_color_circle contest.resource rating %}
-          {{ rating }}
-          </span>
-          {% endif %}
-          {% endwith %}
-
-          {% if stat.addition.rating_change %}
-          {% include "field_value.html" with field='rating_change' value=stat.addition.rating_change %}
-          {% endif %}
+          {% include "field_value.html" with field='new_rating' value=stat.addition.new_rating resource=contest.resource addition=stat.addition with_rating_change=True %}
         </div>
         {% endif %}
       </td>

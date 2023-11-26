@@ -1,12 +1,16 @@
 {% with coder_id=coder|default:"coder" %}
 <div class="input-group input-group-sm hidden" id="{{ coder_id }}-hidden">
-  <span class="input-group-addon">Coder</span>
+  <span class="input-group-addon">{% if coder_id == "as_coder" %}{% icon_to "as_coder" %}{% else %}Coder{% endif %}</span>
 
   <select name="{{ coder_id }}" id="{{ coder_id }}"{% if not submit %} onchange="this.form.submit(){% endif %}"{% if not nomultiply %} multiple{% endif %}>
+    {% if coder_id == "as_coder" %}
+      <option value="{{ request.as_coder.pk }}" selected>{{ request.as_coder.username }}</option>
+    {% else %}
     <option></option>
     {% for coder in coders %}
       <option value="{{ coder.pk }}" selected>{{ coder.username }}</option>
     {% endfor %}
+    {% endif %}
   </select>
   {% if submit %}
   <span class="input-group-btn">

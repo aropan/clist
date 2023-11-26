@@ -84,7 +84,7 @@ class AccountAdmin(BaseModelAdmin):
 
 @admin_register(AccountRenaming)
 class AccountRenamingAdmin(BaseModelAdmin):
-    list_display = ['pk', 'resource', 'old_key', 'new_key']
+    list_display = ['pk', 'resource', 'old_key', 'new_key', 'created']
     search_fields = ['old_key', 'new_key']
     list_filter = ['resource']
 

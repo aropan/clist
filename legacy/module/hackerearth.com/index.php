@@ -11,8 +11,9 @@
         $title = $item['title'];
 
         $url = $item['url'];
-        $en_url = preg_replace('#hackerearth.com/(ru/|en-us/)?#', 'hackerearth.com/en-us/', $url);
-        $url = str_replace('/ru/', '/', $url);
+        $language_re = '#(hackerearth.com)/(../|en-us/)?#';
+        $en_url = preg_replace($language_re, '\1/en-us/', $url);
+        $url = preg_replace($language_re, '/', $url);
 
         if (strpos($url, '/hiring/') !== false) {
             continue;
@@ -32,9 +33,8 @@
         $contest_page = curlexec($en_url);
 
         $info = array();
-        if (preg_match('#<h1[^>]*class="event-[^"]*"[^>]*>(?:[^<]*<[^/][^>]*>[^<]*)<i[^>]*class="[^"]*fa-star[^"]*"[^>]*>[^<]*</i>(?P<label>[^<]*)#', $contest_page, $match)) {
+        if (preg_match('#<i[^>]*class="[^"]*fa-star[^"]*"[^>]*>[^<]*</i>(?P<label>[^<]*)#', $contest_page, $match)) {
             $label = trim($match['label']);
-            $label = ucfirst(strtolower($label));
             $title .= ". " . $label;
             $info['_no_update_account_time'] = stripos($label, 'rated') === false;
         } else {
@@ -43,7 +43,7 @@
 
         preg_match('#\bis\b.*\brated\b.*\bcontest\b#', $contest_page, $is_rated);
         if ($info['_no_update_account_time'] && $is_rated) {
-            $title .= ". Rated contest";
+            $title .= ". Rated";
             $info['_no_update_account_time'] = false;
         }
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import hashlib
+from collections import defaultdict
 from logging import getLogger
 
 import numpy as np
@@ -11,6 +12,7 @@ from django.db.models import Case, F, FloatField, Q, When
 from django.utils.timezone import now
 from numba import njit
 from prettytable import PrettyTable
+from sql_util.utils import SubqueryCount
 
 from clist.models import Contest, Resource
 from logify.models import EventLog, EventStatus
@@ -53,9 +55,9 @@ def enough_rating_for_rank_mean(ratings, rating, rank_mean):
 
 
 @njit
-def calculate_expected_ratings(ranks, ratings):
+def calculate_expected_ratings(ranks, ratings, rating_limit=10000):
     n = len(ranks)
-    expected_ratings = np.zeros(n, dtype=np.float64)
+    expected_ratings = np.zeros((n, 2), dtype=np.float64)
     ranks_ratings = zip(ranks, ratings)
 
     rank_means = []
@@ -65,28 +67,29 @@ def calculate_expected_ratings(ranks, ratings):
             e_rank += E(r - rating)
         e_rank += 0.5
         rank_mean = (rank * e_rank) ** 0.5
-        rank_means.append((rank_mean, index))
+        rank_means.append((rank_mean, 0, index))
+        rank_means.append((rank + 0.5, 1, index))
 
     rank_means.sort()
-    window_rating = float(10000)
-    expected_rating = float(10000)
-    for rank_mean, index in rank_means:
-        right = expected_rating
+    window_rating = float(rating_limit)
+    rank_rating = float(rating_limit)
+    for rank_mean, field, index in rank_means:
+        right = rank_rating
 
-        while enough_rating_for_rank_mean(ratings, right - window_rating, rank_mean):
+        while right - window_rating > 0 and enough_rating_for_rank_mean(ratings, right - window_rating, rank_mean):
             window_rating *= 2
         if not enough_rating_for_rank_mean(ratings, right - window_rating / 2, rank_mean):
             window_rating /= 2
 
-        left = right - window_rating
+        left = max(right - window_rating, 0)
         while right - left > 1e-3:
             middle = (left + right) / 2
             if enough_rating_for_rank_mean(ratings, middle, rank_mean):
                 right = middle
             else:
                 left = middle
-        expected_rating = right
-        expected_ratings[index] = expected_rating
+        rank_rating = right
+        expected_ratings[index][field] = rank_rating
 
     return expected_ratings
 
@@ -99,8 +102,9 @@ def calculate_rating_prediction(rankings):
     ratings = np.array([r['old_rating'] for r in rankings])
     expected_ratings = calculate_expected_ratings(ranks, ratings)
     for ranking, expected_rating in zip(rankings, expected_ratings):
-        rating_change = f(ranking['n_contests']) * (expected_rating - ranking['old_rating'])
-        ranking['rating_perf'] = expected_rating
+        expected_rating = dict(zip(['rating', 'perf'], expected_rating))
+        rating_change = f(ranking['n_contests']) * (expected_rating['rating'] - ranking['old_rating'])
+        ranking['rating_perf'] = expected_rating['perf']
         ranking['rating_change'] = rating_change
     return True
 
@@ -128,6 +132,7 @@ def get_old_ratings(contest):
         'account', '-contest__end_time'
     ).distinct('account').values('member', 'latest_rating')
 
+    n_contests_filter = Q(contest__start_time__lt=contest.start_time, skip_in_stats=False)
     rankings = Statistics.objects.filter(
         contest=contest,
         account__in=accounts,
@@ -136,7 +141,7 @@ def get_old_ratings(contest):
     ).annotate(
         rank=F('place_as_int'),
         member=F('account__key'),
-        n_contests=F('account__n_contests'),
+        n_contests=SubqueryCount('account__statistics', filter=n_contests_filter),
     ).values('rank', 'member', 'n_contests')
 
     rankings = {r['member']: r for r in rankings}
@@ -146,6 +151,7 @@ def get_old_ratings(contest):
     for ranking in rankings:
         if ranking.get('old_rating') is None:
             ranking['old_rating'] = resource.rating_prediction['initial_rating']
+        ranking['n_contests'] += 1
     rankings.sort(key=lambda r: r['rank'])
     return rankings
 
@@ -243,9 +249,15 @@ class Command(BaseCommand):
                 ranking['new_rating'] = round(ranking['old_rating']) + ranking['rating_change']
 
             rankings.sort(key=lambda r: r['rank'])
-            fields = list(rankings[0].keys())
+            fields = list(rankings[0].keys()) + ['change_diff']
             table = PrettyTable(field_names=fields)
             for ranking in rankings[:10]:
+                stat = Statistics.objects.get(contest=contest, account__key=ranking['member'])
+                prev_prediction = stat.rating_prediction
+                if prev_prediction and 'rating_change' in prev_prediction and 'rating_change' in ranking:
+                    ranking['change_diff'] = ranking.get('rating_change') - prev_prediction['rating_change']
+                else:
+                    ranking['change_diff'] = ''
                 table.add_row([ranking[field] for field in fields])
             print(table)
 
@@ -254,18 +266,24 @@ class Command(BaseCommand):
                 statistics = Statistics.objects.filter(contest=contest, account__key__in=list(rankings_dict.keys()))
                 statistics = statistics.select_related('account')
                 has_fixed_field = False
+                fields_types = defaultdict(set)
                 for stat in tqdm.tqdm(statistics.iterator(),
                                       total=len(rankings_dict),
                                       desc='update statistics rating predictions'):
                     if 'rating_change' not in stat.addition:
                         has_fixed_field = True
                     stat.rating_prediction = rankings_dict[stat.account.key]
+                    for k, v in stat.rating_prediction.items():
+                        fields_types[k].add(type(v).__name__)
                     stat.save(update_fields=['rating_prediction'])
+                fields_types = {k: list(v) for k, v in fields_types.items()}
 
+                contest.rating_prediction_fields['types'] = fields_types
                 contest.rating_prediction_hash = rating_prediction_hash
                 contest.has_fixed_rating_prediction_field = has_fixed_field
                 contest.rating_prediction_timing = now()
                 contest.save(update_fields=['rating_prediction_hash',
                                             'rating_prediction_timing',
-                                            'has_fixed_rating_prediction_field'])
+                                            'has_fixed_rating_prediction_field',
+                                            'rating_prediction_fields'])
             event_log.update_status(EventStatus.COMPLETED)

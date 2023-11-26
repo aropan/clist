@@ -1,7 +1,10 @@
 {% with template_value=value|to_template_value %}
-<span{% if value|get_type == 'bool' %} class="text-muted"{% endif %}>
+{% if field in resource.RATING_FIELDS %}{% coder_color_circle resource value %}{% endif %}
+<span class="{% if value|get_type == 'bool' %} text-muted{% endif %}{% if field in resource.RATING_FIELDS %} {% coder_color_class resource value %}{% endif %}">
 {% if fields_to_select and field in fields_to_select and value not in fields_to_select|get_item:field and not fields_to_select|get_item:field|get_item:'nourl' %}
-  <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value|to_template_filter_value %}">{{ template_value|safe }}</a>
+  <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value|to_template_filter_value %}">
+    {% if value is None %}&mdash;{% else %}{{ template_value|safe }}{% endif %}
+  </a>
 {% else %}
   {% with intvalue=value|toint %}
   {% with types=fields_types|get_item:field %}
@@ -19,6 +22,22 @@
         {% if value.successful %}<div class="inline acc">+{{ value.successful }}</div>{% endif %}
         {% if value.unsuccessful %}<div class="inline rej">-{{ value.unsuccessful }}</div>{% endif %}
         </small>
+      {% elif field|is_new_rating_field %}
+        {{ value }}
+        {% define field|to_rating_change_field as rating_change_field %}
+        {% if rating_change_field not in fields and rating_change_field in hidden_fields or with_rating_change %}
+
+          {% if rating_change_field|get_rating_predicition_field %}
+          {% define rating_change_field|get_rating_predicition_field as predicition_rating_change_field %}
+          {% define statistic.rating_prediction|get_item:predicition_rating_change_field as rating_change_value %}
+          {% else %}
+          {% define addition|get_item:rating_change_field as rating_change_value %}
+          {% endif %}
+
+          {% if rating_change_value is not None %}
+          {% include "field_value.html" with field=rating_change_field value=rating_change_value %}
+          {% endif %}
+        {% endif %}
       {% elif field|is_rating_change_field and intvalue %}
         <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
       {% elif 'delta' in types and value %}

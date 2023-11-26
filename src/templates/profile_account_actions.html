@@ -1,15 +1,16 @@
 {% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-<a{% if not without_btn %} class="btn btn-default"{% endif %} href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
+<a class="btn btn-default btn-xs" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
 {% endif %}
 
 {% if resource.has_accounts_infos_update %}
 {% with delta=account.updated|timedelta_with_now %}
-{% if delta.days < 1 %}
-<a{% if not without_btn %} class="btn btn-default"{% endif %} target="_blank" rel="noopener" disabled>
-<span title="{% if 0 < delta.total_seconds %} within {{ account.updated|naturaltime }}{% else %}in progress{% endif %}" data-toggle="tooltip" data-placement="top">
-  <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
-</span>
+{% with with_tooltip=delta|less_24_hours in_progress=account.updated|is_past %}
+{% if with_update or with_tooltip %}
+<a class="update-account btn btn-default btn-xs" data-account-id="{{ account.id }}" target="_blank" rel="noopener"{% if with_tooltip %} title="{% if in_progress %}in progress{% else %}within {{ account.updated|naturaltime }}{% endif %}" data-toggle="tooltip" data-placement="top"{% endif %}{% if in_progress or not with_update %} disabled{% endif %}>
+<span><i class="fas fa-sync{% if in_progress %} fa-spin{% endif %}"></i></span>
 </a>
 {% endif %}
 {% endwith %}
+{% endwith %}
+
 {% endif %}

@@ -23,7 +23,7 @@
         {% for account in resource.coder_accounts %}
           {% if resource.avatar_url %}
             {% call_method account 'avatar_url' resource as avatar_url %}
-            {% if avatar_url %}
+            {% if avatar_url|not_empty %}
               <img class="account-avatar" src="{{ avatar_url }}" style="width: 32px; height: 32px"/>
             {% endif %}
           {% endif %}

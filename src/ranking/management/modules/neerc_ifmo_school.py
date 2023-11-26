@@ -108,7 +108,7 @@ class Statistic(BaseModule):
                             n_problem = False
                         c = mapping_key.get(c, c).lower()
                         row[c] = v.value.strip()
-                        if xml_result and c == 'name':
+                        if xml_result and c == 'name' and v.value in xml_result:
                             problems.update(xml_result[v.value])
 
                         if c in ('diploma', 'medal', 'd'):

@@ -46,7 +46,7 @@ class Account(BaseModel):
     last_submission = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
-    overall_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
+    resource_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
@@ -102,6 +102,7 @@ class Account(BaseModel):
         indexes = [
             GistIndexTrgrmOps(fields=['key']),
             GistIndexTrgrmOps(fields=['name']),
+            GistIndexTrgrmOps(fields=['key', 'name']),
             ExpressionIndex(expressions=[Upper('key')]),
             models.Index(fields=['resource', 'key']),
             models.Index(fields=['resource', 'country']),
@@ -118,8 +119,8 @@ class Account(BaseModel):
             models.Index(fields=['resource', '-n_writers']),
             models.Index(fields=['resource', 'updated']),
             models.Index(fields=['resource', '-updated']),
-            models.Index(fields=['resource', 'overall_rank']),
-            models.Index(fields=['resource', '-overall_rank']),
+            models.Index(fields=['resource', 'resource_rank']),
+            models.Index(fields=['resource', '-resource_rank']),
 
             models.Index(fields=['resource', 'country', '-rating']),
             models.Index(fields=['resource', 'country', '-rating50']),
@@ -127,8 +128,8 @@ class Account(BaseModel):
             models.Index(fields=['resource', 'country', '-n_contests']),
             models.Index(fields=['resource', 'country', '-n_writers']),
             models.Index(fields=['resource', 'country', '-updated']),
-            models.Index(fields=['resource', 'country', 'overall_rank']),
-            models.Index(fields=['resource', 'country', '-overall_rank']),
+            models.Index(fields=['resource', 'country', 'resource_rank']),
+            models.Index(fields=['resource', 'country', '-resource_rank']),
 
             models.Index(fields=['country', '-rating']),
             models.Index(fields=['country', '-rating50']),
@@ -136,11 +137,19 @@ class Account(BaseModel):
             models.Index(fields=['country', '-n_contests']),
             models.Index(fields=['country', '-n_writers']),
             models.Index(fields=['country', '-updated']),
-            models.Index(fields=['country', 'overall_rank']),
-            models.Index(fields=['country', '-overall_rank']),
+            models.Index(fields=['country', 'resource_rank']),
+            models.Index(fields=['country', '-resource_rank']),
         ]
 
         unique_together = ('resource', 'key')
+
+    def get_last_season(self):
+        if not self.last_activity:
+            return
+        date = self.last_activity
+        year = date.year - (0 if date.month > 8 else 1)
+        season = f'{year}-{year + 1}'
+        return season
 
 
 class AccountRenaming(BaseModel):
@@ -207,7 +216,7 @@ def set_account_rating(sender, instance, *args, **kwargs):
         instance.rating = instance.info['rating']
         instance.rating50 = instance.rating / 50 if instance.rating is not None else None
         if instance.rating is None:
-            instance.overall_rank = None
+            instance.resource_rank = None
     download_avatar_url(instance)
 
 
@@ -472,6 +481,7 @@ class Stage(BaseModel):
         return 'Stage#%d %s' % (self.pk, self.contest)
 
     def update(self):
+        eps = 1e-9
         stage = self.contest
 
         filter_params = dict(self.filter_params)
@@ -497,6 +507,7 @@ class Stage(BaseModel):
         placing = self.score_params.get('place')
         n_best = self.score_params.get('n_best')
         fields = self.score_params.get('fields', [])
+        scoring = self.score_params.get('scoring', {})
         detail_problems = self.score_params.get('detail_problems')
         order_by = self.score_params['order_by']
         advances = self.score_params.get('advances', {})
@@ -620,12 +631,19 @@ class Stage(BaseModel):
                                 placing_['scores'][key] /= len(scores) + 1
                             scores = []
 
+                max_solving = 0
+                n_effective = 0
+                for stat in stats:
+                    max_solving = max(max_solving, stat.solving)
+                    n_effective += stat.solving > eps
+
                 for s in stats:
                     if not detail_problems and not skip_problem_stat:
                         problems_infos[problem_info_key].setdefault('n_total', 0)
                         problems_infos[problem_info_key]['n_total'] += 1
 
-                    if s.solving < 1e-9:
+                    score = None
+                    if s.solving < eps:
                         score = 0
                         if placing:
                             placing_ = get_placing(placing_scores, s)
@@ -636,8 +654,15 @@ class Stage(BaseModel):
                             score = placing_['scores'].get(str(s.place_as_int), placing_.get('default'))
                             if score is None:
                                 continue
+                    if scoring:
+                        if scoring['name'] == 'general':
+                            solving_factor = s.solving / max_solving
+                            rank_factor = (n_effective - s.place_as_int + 1) / n_effective
+                            score += scoring['factor'] * solving_factor * rank_factor
                         else:
-                            score = s.solving
+                            raise NotImplementedError(f'scoring {scoring["name"]} is not implemented')
+                    if score is None:
+                        score = s.solving
 
                     if not detail_problems and not skip_problem_stat:
                         problems_infos[problem_info_key].setdefault('n_teams', 0)
@@ -677,8 +702,10 @@ class Stage(BaseModel):
                             problem = problem.setdefault('upsolving', {})
                         problem['result'] = score
                         url = s.addition.get('url')
-                        if url:
-                            problem['url'] = url
+                        if not url:
+                            url = reverse('ranking:standings_by_id', kwargs={'contest_id': str(contest.pk)})
+                            url += f'?find_me={s.pk}'
+                        problem['url'] = url
                     if contest_unrated:
                         score = 0
 
@@ -779,6 +806,13 @@ class Stage(BaseModel):
                 if n_contests == row['writer'] or 'score' not in row:
                     continue
                 row['score'] = row['score'] / (n_contests - row['writer']) * n_contests
+        if self.score_params.get('exponential_score_decay'):
+            for r in results.values():
+                scores = [problem.get('result', 0) for problem in r.get('problems', {}).values()]
+                scores.sort(reverse=True)
+                k = self.score_params['exponential_score_decay']
+                score = k * sum((1 - k) ** i * score for i, score in enumerate(scores))
+                r['score'] = score
 
         for field in fields:
             t = field.get('type')
@@ -878,7 +912,7 @@ class Stage(BaseModel):
 
         filtered_results = []
         for r in results:
-            if r['score'] > 1e-9 or r.get('writer'):
+            if r['score'] > eps or r.get('writer'):
                 filtered_results.append(r)
                 continue
             if detail_problems:

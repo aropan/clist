@@ -803,7 +803,7 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
 
     if contest.has_rating_prediction and with_detail:
         for field in predicted_fields:
-            if field not in fields:
+            if field not in fields and 'rating_change' not in field:
                 fields[field] = field
 
     for k, field in fields.items():
@@ -1183,7 +1183,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     freeze_duration_factor = options.get('freeze_duration_factor', settings.STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT)
     freeze_duration_factor = request.GET.get('t_freeze', freeze_duration_factor)
     freeze_duration = (mod_penalty or 't_freeze' in request.GET) and freeze_duration_factor
-    if freeze_duration:
+    if freeze_duration and contest.is_over():
         t_freeze = str(freeze_duration_factor)
         if ':' in str(freeze_duration_factor):
             val = reduce(lambda x, y: x * 60 + int(y), str(freeze_duration_factor).split(':'), 0)
@@ -1193,6 +1193,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         freeze_duration = contest.duration_in_secs * freeze_duration_factor
     else:
         t_freeze = None
+        freeze_duration = None
 
     last = None
     merge_problems = False
@@ -1547,6 +1548,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'settings_standings_fields': settings.STANDINGS_FIELDS_,
         'fields': fields,
         'fields_types': fields_types,
+        'hidden_fields': hidden_fields,
         'divisions_order': divisions_order,
         'has_country': has_country,
         'per_page': per_page,

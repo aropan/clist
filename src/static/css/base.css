@@ -274,13 +274,14 @@ html {
 
 .rating-change {
   font-weight: bold !important;
+  color: grey;
 }
 
-.rating-change-up {
+.rating-change.rating-change-up {
   color: #090;
 }
 
-.rating-change-down {
+.rating-change.rating-change-down {
   color: #f00;
 }
 
@@ -805,9 +806,9 @@ tr:has(+ tr[data-delete-on-duplicate]:not(tr[data-delete-on-duplicate-stop])) {
  */
 
 .no-stretch {
-    white-space: nowrap;
-    width: 1%;
-    max-width: none;
+  white-space: nowrap;
+  width: 1%;
+  max-width: none;
 }
 
 
@@ -816,4 +817,13 @@ tr:has(+ tr[data-delete-on-duplicate]:not(tr[data-delete-on-duplicate-stop])) {
  */
 .btn.btn-success.copy-url-help {
   color: #fff;
+}
+
+/*
+ * disabled button tooltip
+ */
+
+a[data-toggle="tooltip"][disabled],
+.btn[data-toggle="tooltip"][disabled] {
+  pointer-events: auto;
 }

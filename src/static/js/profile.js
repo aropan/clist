@@ -9,6 +9,9 @@ $(function() {
 
   $('.update-account').click(function() {
     var btn = $(this)
+    if (btn.attr('disabled')) {
+      return
+    }
     var icon = btn.find('i')
     icon.addClass('fa-spin')
     $.ajax({
@@ -21,7 +24,6 @@ $(function() {
       },
       success: function(data) {
         btn.attr('disabled', 'disabled')
-        location.reload()
       },
       error: function(response) {
         icon.removeClass('fa-spin')

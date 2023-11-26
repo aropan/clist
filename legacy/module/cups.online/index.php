@@ -15,13 +15,13 @@
       $key = $round['id'];
 
       if ($contest['is_internal']) {
-        $u = url_merge($url, "/rounds/$key", true);
+        $u = url_merge($url, "/rounds/$key");
       } else if (!empty($round['url'])) {
         $u = $round['url'];
       } else if (!empty($contest['url'])) {
         $u = $contest['url'];
       } else {
-        $u = url_merge($url, '/contests', true);
+        $u = url_merge($url, '/contests');
       }
 
       if (strpos($u, 'russianaicup') !== false) {

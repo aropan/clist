@@ -2,6 +2,8 @@ from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.db.backends.utils import names_digest, split_identifier
 
+GIST_INDEX_TRGRM_OPS_SEP = ' || '
+
 
 class GistIndexTrgrmOps(GistIndex):
     def create_sql(self, *args, **kwargs):
@@ -17,6 +19,11 @@ class GistIndexTrgrmOps(GistIndex):
         #   class
         # - so we replace the template with:
         #   "CREATE INDEX %(name)s ON %(table)s%(using)s (%(columns)s gist_trgrm_ops)%(extra)s"
+        columns = statement.parts['columns'].columns
+        if len(columns) > 1:
+            sep = f" || '{GIST_INDEX_TRGRM_OPS_SEP}' || "
+            columns = sep.join(statement.parts['columns'].columns)
+            statement.parts['columns'] = f'({columns})'
         statement.template = "CREATE INDEX %(name)s ON %(table)s%(using)s (%(columns)s gist_trgm_ops)%(extra)s"
 
         return statement

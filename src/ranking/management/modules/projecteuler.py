@@ -67,8 +67,8 @@ class Statistic(BaseModule):
             return page
 
         with REQ.with_proxy(
-            time_limit=5,
-            n_limit=100,
+            time_limit=20,
+            n_limit=25,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.projecteuler.proxies'),
             connect=get_standings_page,
         ) as req:

@@ -10,7 +10,7 @@
 {% if with_fixed_width %}<div class="avatar-width-fixed">{% endif %}
 {% if resource.avatar_url %}
   {% call_method account 'avatar_url' resource as avatar_url %}
-  {% if avatar_url %}
+  {% if avatar_url|not_empty %}
     <img class="account-avatar" src="{{ avatar_url }}"/>
   {% endif %}
 {% endif %}

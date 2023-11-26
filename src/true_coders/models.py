@@ -1,5 +1,6 @@
 import re
 import uuid
+from collections import Counter
 from datetime import timedelta
 
 from django.apps import apps
@@ -31,6 +32,7 @@ class Coder(BaseModel):
     timezone = models.CharField(max_length=32, default="UTC")
     settings = models.JSONField(default=dict, blank=True)
     country = CountryField(null=True, blank=True)
+    auto_detect_country = models.BooleanField(default=False, blank=True)
     phone_number = PhoneNumberField(blank=True)
     addition_fields = models.JSONField(default=dict, blank=True)
     n_accounts = models.IntegerField(default=0, db_index=True)
@@ -177,6 +179,18 @@ class Coder(BaseModel):
     def has_global_rating(self):
         return django_settings.ENABLE_GLOBAL_RATING_ and self.global_rating is not None
 
+    def detect_country(self):
+        if self.country and not self.auto_detect_country:
+            return
+        countries = self.account_set.filter(country__isnull=False).values_list('country', flat=True)
+        if countries:
+            counter = Counter(countries)
+            max_counter, max_country = max([(v, k) for k, v in counter.items()])
+            if self.country != max_country and 2 * max_counter > len(countries):
+                self.country = max_country
+                self.auto_detect_country = True
+                self.save()
+
     def add_account(self, account):
         coder = self
         resource = account.resource
@@ -195,6 +209,7 @@ class Coder(BaseModel):
         account.coders.add(coder)
         account.updated = timezone.now()
         account.save()
+        coder.detect_country()
 
     def primary_account(self, resource):
         qs = self.account_set.filter(resource=resource)

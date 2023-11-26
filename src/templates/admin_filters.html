@@ -1,0 +1,3 @@
+{% if perms.true_coders.as_coder %}
+{% include "coder_filter.html" with coder="as_coder" nomultiply=True %}
+{% endif %}

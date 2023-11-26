@@ -58,11 +58,12 @@ class ContestAdmin(BaseModelAdmin):
                            'standings_kind', 'registration_url']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
-        ['Addition information', {'fields': ['n_statistics', 'parsed_time', 'has_hidden_results', 'calculate_time',
+        ['Addition information', {'fields': ['was_auto_added', 'n_statistics', 'has_hidden_results', 'calculate_time',
                                              'info', 'invisible', 'is_rated', 'with_medals', 'related', 'series']}],
-        ['Timing', {'fields': ['notification_timing', 'statistic_timing', 'rating_prediction_timing',
+        ['Timing', {'fields': ['parsed_time', 'notification_timing', 'statistic_timing', 'rating_prediction_timing',
                                'created', 'modified', 'updated']}],
-        ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field']}],
+        ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
+                               'rating_prediction_fields']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
                     'created', 'modified', 'updated', 'parsed_time']
@@ -130,6 +131,7 @@ class ResourceAdmin(BaseModelAdmin):
                                             'has_account_verification', 'has_standings_renamed_account',
                                             'accounts_fields']}],
         ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving', 'problems_fields']}],
+        ['Statistics information', {'fields': ['statistics_fields']}],
         ['Other information', {'fields': ['info']}],
     ]
     list_display = ['host', 'short_host', 'enable', 'n_contests', 'n_accounts', 'modified',
@@ -190,7 +192,7 @@ class ResourceAdmin(BaseModelAdmin):
 
 @admin_register(Problem)
 class ProblemAdmin(BaseModelAdmin):
-    list_display = ['name', 'index', 'key', 'short', 'n_tries', 'n_accepted', 'divisions', 'url', 'visible']
+    list_display = ['name', 'index', 'key', 'short', 'n_attempts', 'n_accepted', 'divisions', 'url', 'visible']
     list_filter = ['visible', 'resource']
     search_fields = ['contest', 'name']
 

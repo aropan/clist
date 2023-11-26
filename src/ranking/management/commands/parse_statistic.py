@@ -30,18 +30,16 @@ from clist.templatetags.extras import (as_number, canonize, get_number_from_str,
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage
-from ranking.management.commands.common import account_update_contest_additions
-from ranking.management.commands.countrier import Countrier
 from ranking.management.commands.parse_accounts_infos import rename_account
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
+from ranking.utils import account_update_contest_additions
 from ranking.views import update_standings_socket
 from utils.attrdict import AttrDict
+from utils.countrier import Countrier
 from utils.datetime import parse_datetime
 from utils.traceback_with_vars import colored_format_exc
-
-# from sql_util.utils import SubqueryCount
 
 
 class ChannelLayerHandler(logging.Handler):
@@ -190,6 +188,7 @@ class Command(BaseCommand):
         parser.add_argument('--without-calculate-rating-prediction', action='store_true', default=False)
         parser.add_argument('--contest-id', '-cid', help='Contest id')
         parser.add_argument('--no-update-problems', action='store_true', default=False, help='No update problems')
+        parser.add_argument('--is-rated', action='store_true', default=False, help='Contest is rated')
 
     def parse_statistic(
         self,
@@ -215,6 +214,7 @@ class Command(BaseCommand):
         without_calculate_problem_rating=False,
         without_calculate_rating_prediction=False,
         no_update_problems=None,
+        is_rated=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -283,6 +283,8 @@ class Command(BaseCommand):
         if before_date:
             before_date = parse_datetime(before_date)
             contests = contests.filter(Q(parsed_time__isnull=True) | Q(parsed_time__lt=before_date))
+        if is_rated:
+            contests = contests.filter(is_rated=True)
 
         if limit:
             contests = contests.order_by('-end_time')[:limit]
@@ -671,10 +673,9 @@ class Command(BaseCommand):
                             stat_place = places_by_key.get(member, {})
 
                             previous_member = r.pop('previous_member', None)
-                            if previous_member:
-                                if previous_member in statistics_by_key:
-                                    stat = statistics_by_key[previous_member]
-                                    stat_place = places_by_key[previous_member]
+                            if previous_member and previous_member in statistics_by_key:
+                                stat = statistics_by_key[previous_member]
+                                stat_place = places_by_key[previous_member]
                                 previous_account = resource.account_set.filter(key=previous_member).first()
                                 if previous_account:
                                     account = rename_account(previous_account, account)
@@ -730,10 +731,6 @@ class Command(BaseCommand):
                                 updated_delta = resource_statistics.get('account_updated_delta', {'days': 1})
                                 updated = now + timedelta(**updated_delta)
 
-                                title_re = wait_rating.get('title_re')
-                                if title_re and not re.search(title_re, contest.title):
-                                    return
-
                                 has_coder = wait_rating.get('has_coder')
                                 top_rank_percent = wait_rating.get('top_rank_percent')
                                 assert bool(has_coder is None) == bool(top_rank_percent is None)
@@ -754,8 +751,22 @@ class Command(BaseCommand):
                                     and now < contest.end_time + timedelta(days=1)
                                 )
 
+                                to_update_account = (
+                                    account_created
+                                    or not has_statistics
+                                    or update_on_parsed_time
+                                    or (update_without_new_rating and no_rating)
+                                )
+
+                                title_re = wait_rating.get('title_re')
                                 wait_days = wait_rating.get('days')
-                                if no_rating and wait_rating and contest.end_time + timedelta(days=wait_days) > now:
+                                if (
+                                    not to_update_account
+                                    and no_rating
+                                    and wait_rating
+                                    and contest.end_time + timedelta(days=wait_days) > now
+                                    and (not title_re or re.search(title_re, contest.title))
+                                ):
                                     division = r.get('division')
                                     if division not in user_info_has_rating:
                                         generator = plugin.get_users_infos([member], resource, [account])
@@ -774,17 +785,10 @@ class Command(BaseCommand):
                                         except Exception:
                                             self.logger.debug(colored_format_exc())
                                             user_info_has_rating[division] = False
-
                                     if user_info_has_rating[division]:
-                                        n_upd_account_time += 1
-                                        account.updated = updated
-                                        account.save(update_fields=['updated'])
-                                elif (
-                                    account_created
-                                    or not has_statistics
-                                    or update_on_parsed_time
-                                    or (update_without_new_rating and no_rating)
-                                ):
+                                        to_update_account = True
+
+                                if to_update_account:
                                     n_upd_account_time += 1
                                     account.updated = updated
                                     account.save(update_fields=['updated'])
@@ -1137,6 +1141,9 @@ class Command(BaseCommand):
                             fields_types = {k: list(v) for k, v in fields_types.items()}
                             for k, v in custom_fields_types.items():
                                 fields_types.setdefault(k, []).extend(v)
+                            for k, v in fields_types.items():
+                                if set(v) == {'float', 'int'}:
+                                    v[:] = ['float']
                             contest.info['fields_types'] = fields_types
 
                             if calculate_time and not contest.calculate_time:
@@ -1387,4 +1394,5 @@ class Command(BaseCommand):
             without_calculate_problem_rating=args.without_calculate_problem_rating,
             without_calculate_rating_prediction=args.without_calculate_rating_prediction,
             no_update_problems=args.no_update_problems,
+            is_rated=args.is_rated,
         )

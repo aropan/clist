@@ -63,7 +63,7 @@ class Statistic(BaseModule):
                     p['result'] = values[0]
                     if p['result'].startswith('+'):
                         has_plus = True
-                    elif v.column.node.xpath('.//*[@class="ir-rejected"]'):
+                    elif not p['result'].startswith('-') and v.column.node.xpath('.//*[@class="ir-rejected"]'):
                         p['partial'] = True
                     if len(values) > 1:
                         p['time'] = values[1]

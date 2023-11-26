@@ -1079,12 +1079,13 @@ function change_starring() {
 function update_cookie_starring() {
   var stat = $(this).closest('.stat-cell')
   var statistic_id = stat.attr('data-statistic-id')
+  var has_starred = stat.hasClass('starred')
   var starred = Cookies.get('starred', {path: starred_cookie_path})
   starred = !starred? Array() : starred.split(',')
   var index = starred.indexOf(statistic_id)
-  if (index == -1) {
+  if (has_starred && index == -1) {
     starred.push(statistic_id)
-  } else {
+  } else if (!has_starred && index != -1) {
     starred.splice(index, 1)
   }
   starred = starred.join(',')

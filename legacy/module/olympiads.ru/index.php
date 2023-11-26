@@ -2,13 +2,14 @@
     require_once dirname(__FILE__) . "/../../config.php";
 
     $urls = array();
-    $urls[] = $URL;
+    $archive_url = 'https://olympiads.ru/zaoch/';
+    $urls[] = $archive_url;
 
     if (isset($_GET['parse_full_list'])) {
-        $page = curlexec($URL);
+        $page = curlexec($archive_url);
         preg_match_all('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>[0-9]+/[0-9]+<#', $page, $matches);
         foreach ($matches['url'] as $url) {
-            $urls[] = url_merge($URL, $url);
+            $urls[] = url_merge($archive_url, $url);
         }
     }
 
@@ -241,6 +242,54 @@
                 "timezone" => $TIMEZONE,
             );
             $seen[$title] = true;
+        }
+    }
+
+    $url = 'https://inf-open.ru/';
+    $main_page = curlexec($url);
+    if (preg_match('#<h1[^>]*>(?P<title>[^<]*)</h1>#s', $main_page, $match)) {
+        $main_title = html_entity_decode($match['title']);
+
+        $url = 'https://inf-open.ru/schedule/';
+        $schedule_page = curlexec($url);
+        $schedule_page = $replace_months($schedule_page);
+
+        preg_match_all('#<h4[^>]*id="[^"]*"[^>]*>(?P<title>[^<]*)</h4>.*?<strong>(?P<date>[^<]*[0-9]{4})\sгода</strong>#s', $schedule_page, $matches, PREG_SET_ORDER);
+        foreach ($matches as $match) {
+            $title = html_entity_decode($match['title']);
+            if (!preg_match_all('#[.0-9]+#', $match['date'], $dates)) {
+                continue;
+            }
+            if (count($dates[0]) != 2) {
+                continue;
+            }
+            list($start_time, $end_time) = $dates[0];
+            $start_parts = explode('.', $start_time);
+            $end_parts = explode('.', $end_time);
+            if (count($start_parts) < count($end_parts)) {
+                for ($i = count($start_parts); $i < count($end_parts); ++$i) {
+                    $start_parts[] = $end_parts[$i];
+                }
+                $start_time = implode('.', $start_parts);
+            }
+
+            $year = date('Y', strtotime($end_time));
+            $month = date('m', strtotime($end_time));
+            if ($month < 9) {
+                $year--;
+            }
+            $season = $year . '-' . ($year + 1);
+
+            $contests[] = array(
+                "start_time" => $start_time,
+                "end_time" => $end_time,
+                "title" => $title . '. ' . $main_title,
+                "url" => $url,
+                "host" => $HOST,
+                "key" => $season . '. ' . $title,
+                "rid" => $RID,
+                "timezone" => $TIMEZONE,
+            );
         }
     }
 

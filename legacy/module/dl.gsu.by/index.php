@@ -1,7 +1,7 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
-    $results_url = url_merge($URL, '/olymp/info/allgomel.asp', true);
+    $results_url = url_merge($URL, '/olymp/info/allgomel.asp');
     $schedule_page = curlexec($results_url);
 
     preg_match_all('#<div[^>]*YearLine[^>]*>[^<0-9]*(?P<year>[0-9]+)[^>]*<small>\s*<a[^>]*href=[\'"](?P<href>[^\'"]*)[\'"][^>]*>[^<]*</a>[^0-9]*(?P<date>[-0-9. ]*),[^<]*</small>#', $schedule_page, $matches, PREG_SET_ORDER);

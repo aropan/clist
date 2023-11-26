@@ -19,11 +19,10 @@ from ratelimiter import RateLimiter
 from tqdm import tqdm
 
 from clist.templatetags.extras import as_number, is_solved
-from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
-from ranking.utils import clear_problems_fields
+from ranking.utils import clear_problems_fields, create_upsolving_statistic
 
 eps = 1e-9
 rate_limiter = RateLimiter(max_calls=4, period=1)
@@ -103,11 +102,11 @@ class Statistic(BaseModule):
     def _update_submissions(self, fusers, standings):
         result = standings['result']
 
-        n_workers = 8
+        n_workers = 2
         with PoolExecutor(max_workers=n_workers) as executor:
-            submissions = list(tqdm(executor.map(self.fetch_submissions, fusers),
-                                    total=len(fusers),
-                                    desc='gettings first page'))
+            submissions = tqdm(executor.map(self.fetch_submissions, fusers),
+                               total=len(fusers),
+                               desc='gettings first page')
 
             for fuser, page_submissions in zip(fusers, submissions):
                 if page_submissions is None:
@@ -208,11 +207,13 @@ class Statistic(BaseModule):
                     n_page = c_page + d_page
                     n_empty_tables = 0
                     fetch_submissions_user = functools.partial(self.fetch_submissions, fuser)
-                    for page_submissions in tqdm(
-                        executor.map(fetch_submissions_user, range(last_page + 1, n_page + 1)),
-                        total=n_page - last_page,
-                        desc=f'getting submissions for ({last_page};{n_page}]'
-                    ):
+
+                    submissions_iter = executor.map(fetch_submissions_user, range(last_page + 1, n_page + 1))
+                    if fuser is None:
+                        submissions_iter = tqdm(submissions_iter, total=n_page - last_page,
+                                                desc=f'getting submissions for ({last_page};{n_page}]')
+
+                    for page_submissions in submissions_iter:
                         if page_submissions is None:
                             submissions_info['last_page'] = c_page
                             submissions_info['last_page_st'] = last_page_st
@@ -372,7 +373,7 @@ class Statistic(BaseModule):
 
             def get_problem_full_score(info):
                 page = REQ.get(info['url'])
-                match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
+                match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
                 if match:
                     info['full_score'] = int(match.group('score'))
 

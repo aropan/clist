@@ -25,7 +25,7 @@ from rich.table import Table
 
 from clist.models import Contest
 from clist.templatetags.extras import (as_number, get_problem_name, get_problem_short, has_season, md_escape,
-                                       md_italic_escape, scoreformat)
+                                       md_italic_escape, md_url, scoreformat)
 from ranking.models import Statistics
 from tg.bot import MAX_MESSAGE_LENGTH, Bot, telegram
 from tg.models import Chat
@@ -34,6 +34,12 @@ from utils.strings import trim_on_newline
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
+
+
+def combine_messages(msg, previous):
+    ret = msg + '\n' + previous if previous else msg
+    ret = trim_on_newline(text=ret, max_length=MAX_MESSAGE_LENGTH)
+    return ret
 
 
 class Command(BaseCommand):
@@ -269,41 +275,42 @@ class Command(BaseCommand):
                     numbered += 1
                     place = '%s (%s)' % (place, numbered)
 
-                msg = ''
+                prefix_msg = ''
                 if place is not None:
-                    msg += '`%s`. ' % place
-                account_url = reverse('coder:account', kwargs={'key': stat.account.key, 'host': resource.host})
-                account_url = settings.MAIN_HOST_ + account_url
-                if stat.account.country:
-                    msg += flag.flag(stat.account.country.code)
-                msg += '[%s](%s)' % (name, account_url)
-
-                if has_solving_diff:
-                    msg += ' = `%d`' % stat.solving
-                    if 'penalty' in stat.addition:
-                        msg += rf' `[{stat.addition["penalty"]}]`'
-                if p:
-                    msg = '%s (%s)' % (msg, ', '.join(p))
-                if has_top:
-                    msg += f' TOP{args.top}'
+                    prefix_msg += '`%s`. ' % place
                 if in_time and 'time' in in_time:
-                    msg = '`[%s]` %s' % (in_time['time'], msg)
+                    prefix_msg = '`[%s]` %s' % (in_time['time'], prefix_msg)
+
+                account_url = reverse('coder:account', kwargs={'key': stat.account.key, 'host': resource.host})
+                account_url = settings.MAIN_HOST_ + md_url(account_url)
+                account_msg = '[%s](%s)' % (name, account_url)
+                if stat.account.country:
+                    account_msg = flag.flag(stat.account.country.code) + account_msg
+
+                suffix_msg = ''
+                if has_solving_diff:
+                    suffix_msg += ' = `%d`' % stat.solving
+                    if 'penalty' in stat.addition:
+                        suffix_msg += rf' `[{stat.addition["penalty"]}]`'
+                if p:
+                    suffix_msg += ' (%s)' % ', '.join(p)
+                if has_top:
+                    suffix_msg += f' TOP{args.top}'
 
                 if has_update or has_first_ac or has_try_first_ac or has_max_score:
                     updated = True
+
+                msg = prefix_msg + account_msg + suffix_msg
+                history_msg = prefix_msg.rstrip() + suffix_msg
 
                 if filtered:
                     table.add_row(str(stat.place), str(stat.solving), Markdown(msg), str(stat.pk))
                 if not args.dryrun and (filtered and has_update or has_first_ac or has_try_first_ac or has_max_score):
                     delete_message()
-                    if message_text:
-                        message_text += '\n'
-                    message_text += msg
-                    message_text = trim_on_newline(text=message_text, max_length=MAX_MESSAGE_LENGTH)
-
+                    msg = combine_messages(msg, message_text)
                     for it in range(3):
                         try:
-                            message = bot.send_message(msg=message_text, chat_id=tg_chat_id)
+                            message = bot.send_message(msg=msg, chat_id=tg_chat_id)
                             message_id = message.message_id
                             break
                         except telegram.error.TimedOut as e:
@@ -313,6 +320,7 @@ class Command(BaseCommand):
                         except telegram.error.BadRequest as e:
                             logger.error(str(e))
                             break
+                    message_text = combine_messages(history_msg, message_text)
 
                 data = {
                     'solving': stat.solving,

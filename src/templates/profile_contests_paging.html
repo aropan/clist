@@ -2,15 +2,16 @@
 
 {% lazy_paginate 10,100 statistics using "contest_page" %}
 
-{% for stat in statistics %}
-<tr class="contest{% if stat.addition.medal %} {{ stat.addition.medal|lower }}-medal{% endif %}{% if stat.contest.is_running %} success{% endif %}" id="cid-{{ stat.contest.id }}">
+{% for statistic in statistics %}
+{% with contest=statistic.contest resource=statistic.contest.resource %}
+<tr class="contest{% if statistic.addition.medal %} {{ statistic.addition.medal|lower }}-medal{% endif %}{% if contest.is_running %} success{% endif %}" id="cid-{{ contest.id }}">
     <td>
-    {% with division=stat.addition.division %}
-    {% with n_total=stat.contest.info.problems.n_statistics|get_item:division|default:stat.contest.n_statistics %}
-        {% if n_total and stat.place_as_int %}
-        {% with percent=stat.place_as_int|multiply:100|divide:n_total %}
+    {% with division=statistic.addition.division %}
+    {% with n_total=contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics %}
+        {% if n_total and statistic.place_as_int %}
+        {% with percent=statistic.place_as_int|multiply:100|divide:n_total %}
         <div class="pull-left">
-            <div class="rank-progress progress progress-bar-vertical" title="Top: {{ percent|floatformat:"1" }}%<br>Rank: {{ stat.place }}<br>Total: {{ n_total }}" data-toggle="tooltip" data-placement="top" data-html="true">
+            <div class="rank-progress progress progress-bar-vertical" title="Top: {{ percent|floatformat:"1" }}%<br>Rank: {{ statistic.place }}<br>Total: {{ n_total }}" data-toggle="tooltip" data-placement="top" data-html="true">
               <div class="progress-bar progress-bar-success" style="width: {{ 100|substract:percent|floatformat:"3" }}%"></div>
             </div>
         </div>
@@ -20,29 +21,30 @@
     {% endwith %}
     </td>
     <td class="rank">
-        {% if stat.addition.url %}<a href="{{ stat.addition.url }}">{% endif %}
+        {% if statistic.addition.url %}<a href="{{ statistic.addition.url }}">{% endif %}
         <div data-toggle="tooltip" data-placement="top" data-html="true" title="
-            handle: {{ stat.account.key }}<br/>
-            {% for k, v in stat.addition.items|sort %}
-                {% if k.0 != "_" and k not in "problems,hack,solved,challenges,url" %}
+            handle: {{ statistic.account.key }}<br/>
+            {% for k, v in statistic.addition.items|sort %}
+                {% call_method statistic 'is_special_addition_field' k as is_special %}
+                {% if not is_special and v|get_type != 'dict' %}
                     {{ k|lower }}: {{ v }}<br/>
                 {% endif %}
             {% endfor %}
         ">
-            {{ stat.place|default:"-" }}
+            {{ statistic.place|default:"-" }}
         </div>
-        {% if stat.addition.url %}</a>{% endif %}
+        {% if statistic.addition.url %}</a>{% endif %}
     </td>
 
     <td>
-        {{ stat.solving|scoreformat }}
+        {{ statistic.solving|scoreformat }}
     </td>
 
     <td>
-        {% with value=stat.contest.resource|get_new_rating_value:stat.addition %}
+        {% with value=resource|get_new_rating_value:statistic.addition %}
         {% if value is not None %}
-        <div class="{% coder_color_class stat.contest.resource value %}">
-            {% coder_color_circle stat.contest.resource value %}
+        <div class="{% coder_color_class resource value %}">
+            {% coder_color_circle resource value %}
             {{ value }}
         </div>
         {% else %}
@@ -51,9 +53,9 @@
         {% endwith %}
     </td>
     <td>
-        {% with value=stat.addition.rating_change %}
+        {% with value=statistic.addition.rating_change %}
         {% with intvalue=value|toint %}
-        {% if intvalue or 'rating_change' in stat.addition %}
+        {% if intvalue or 'rating_change' in statistic.addition %}
             <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
             {% if intvalue %}
                 <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
@@ -69,15 +71,15 @@
     </td>
     {% if coder.has_global_rating %}
     <td>
-        {% if stat.new_global_rating is not None %}
-            {{ stat.new_global_rating }}
+        {% if statistic.new_global_rating is not None %}
+            {{ statistic.new_global_rating }}
         {% else %}
             <small class='text-muted'>&#183;</small>
         {% endif %}
     </td>
     <td>
-        {% if stat.global_rating_change is not None %}
-            {% with value=stat.global_rating_change %}
+        {% if statistic.global_rating_change is not None %}
+            {% with value=statistic.global_rating_change %}
             {% with intvalue=value|toint %}
             <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
             {% if intvalue %}
@@ -93,52 +95,55 @@
         {% endif %}
     </td>
     {% endif %}
-    <td class="date"><div title="{{ stat.contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ stat.contest.end_time|timezone:timezone|naturalday }}</div></td>
-    {% if custom_fields %}
-    {% for field in custom_fields.values %}
+    <td class="date"><div title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</div></td>
+    {% if statistics_fields %}
+    {% with fields_types=statistics_fields.types %}
+    {% for field in statistics_fields.values %}
     <td>
-        {% with v=stat.addition|get_item:field %}
-        {% if v is None %}
-            &mdash;
+        {% if field|get_rating_predicition_field %}
+        {% define field|get_rating_predicition_field as predicition_field %}
+        {% define statistic.rating_prediction|get_item:predicition_field as value %}
         {% else %}
-            {{ v }}
+        {% define statistic.addition|get_item:field as value %}
         {% endif %}
-        {% endwith %}
+        {% include "field_value.html" with statistic=statistic addition=statistic.addition %}
     </td>
     {% endfor %}
+    {% endwith %}
     {% endif %}
-    <td><a href="?search=resource:{{ stat.contest.resource.host }}" title="{{ stat.contest.resource.host }}" data-toggle="tooltip"><img src="{{ stat.contest.resource.icon|media_size:'32x32' }}" width="16" height="16"/></a></td>
+    <td><a href="?search=resource:{{ resource.host }}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/></a></td>
     <td class="title col-md-9 col-sm-8">
-        {% if stat.contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
-        <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}{% if not without_findme %}?find_me={{ stat.pk }}{% endif %}">{{ stat.contest.title }}</a>
-        {% if stat.addition.hack %}
-        {% with hack=stat.addition.hack %}
+        {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
+        <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}{% if not without_findme %}?find_me={{ statistic.pk }}{% endif %}">{{ contest.title }}</a>
+        {% if statistic.addition.hack %}
+        {% with hack=statistic.addition.hack %}
         <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>
             {{ hack.successful|default:"0" }} : {% if hack.unsuccessful %}-{{ hack.unsuccessful }}{% else %}0{% endif %}
         </span>
         {% endwith %}
         {% endif %}
         <span class="problems">
-            {% if 'problems' in stat.addition %}
-                {% if stat.contest.info.problems %}
-                  {% for problem in stat.contest.info.problems|get_division_problems:stat.addition %}
+            {% if 'problems' in statistic.addition %}
+                {% if contest.info.problems %}
+                  {% for problem in contest.info.problems|get_division_problems:statistic.addition %}
                     {% with key=problem|get_problem_short  %}
-                    {% with stat=stat.addition.problems|get_item:key %}
+                    {% with stat=statistic.addition.problems|get_item:key %}
                       {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url full_score=problem.full_score %}
                     {% endwith %}
                     {% endwith %}
                   {% endfor %}
                 {% else %}
-                  {% for k, v in stat.addition.problems.items|sort %}
+                  {% for k, v in statistic.addition.problems.items|sort %}
                   {% include 'problem_stat.html' with short=k name=k stat=v problem_url=None full_score=None %}
                   {% endfor %}
                 {% endif %}
             {% endif %}
         </span>
         {% if perms.ranking.change_statistics %}
-        <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+        <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
         {% endif %}
     </td>
 </tr>
+{% endwith %}
 {% endfor %}
 {% show_more_table %}

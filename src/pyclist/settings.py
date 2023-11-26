@@ -95,7 +95,6 @@ INSTALLED_APPS = (
     'django_json_widget',
     'django_ltree',
     'webpush',
-    'django_postgres_reindex_command',
     'oauth2_provider',
     'tastypie_oauth',
     'channels',
@@ -589,7 +588,7 @@ THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journa
 DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
 
-ADDITION_HIDE_FIELDS_ = {'problems', 'solved'}
+ADDITION_HIDE_FIELDS_ = {'problems', 'solved', 'hack', 'challenges', 'url'}
 
 VIRTUAL_CODER_PREFIX_ = '∨'
 
@@ -695,6 +694,7 @@ FONTAWESOME_ICONS_ = {
     'private': '<span class="label label-success"><i class="fa-solid fa-lock"></i></span>',
     'restricted': '<span class="label label-warning"><i class="fa-solid fa-unlock"></i></span>',
     'public': '<span class="label label-danger"><i class="fa-solid fa-lock-open"></i></span>',
+    'as_coder': '<i class="fa-solid fa-user-group"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

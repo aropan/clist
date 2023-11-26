@@ -1,22 +1,22 @@
-{% with n_tries_=problem.n_tries|default:0 n_statistics_=contest.n_statistics|default:0 %}
-{% with n_accepted=problem.n_accepted|default:0 n_partial=problem.n_partial|default:0 n_hidden=problem.n_hidden|default:0 n_tries=problem.n_teams|default:n_tries_ n_statistics=problem.n_total|default:n_statistics_ %}
+{% with n_attempts_=problem.n_attempts|default:0 n_statistics_=contest.n_statistics|default:0 %}
+{% with n_accepted=problem.n_accepted|default:0 n_partial=problem.n_partial|default:0 n_hidden=problem.n_hidden|default:0 n_attempts=problem.n_teams|default:n_attempts_ n_statistics=problem.n_total|default:n_statistics_ %}
 {% if n_statistics %}
 <div class="problem-progress progress" title="
   Number of accepted: {{ n_accepted }} ({{ n_accepted|multiply:100|divide:n_statistics|floatformat:"2" }}%)
   {% if n_partial %}<br/>Number of partial: {{ n_partial }} ({{ n_partial|multiply:100|divide:n_statistics|floatformat:"2" }})%){% endif %}
   {% if n_hidden %}<br/>Number of hidden: {{ n_hidden }} ({{ n_hidden|multiply:100|divide:n_statistics|floatformat:"2" }})%){% endif %}
-  {% if n_accepted != n_tries %}<br/>Number of tries: {{ n_tries }} ({{ n_tries|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
+  {% if n_accepted != n_attempts %}<br/>Number of attempts: {{ n_attempts }} ({{ n_attempts|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
   <br/>Total: {{ n_statistics }}
   {% if problem.first_ac %}<br/>First accepted: {{ problem.first_ac.time }}{% endif %}
 " data-toggle="tooltip" data-html="true" data-placement="bottom"{% if problem %} data-problem-key="{{ problem|get_problem_short }}"{% endif %}>
   <div class="progress-bar progress-bar-success" style="width: {{ n_accepted|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
   <div class="progress-bar progress-bar-info" style="width: {{ n_partial|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
   <div class="progress-bar progress-bar-warning" style="width: {{ n_hidden|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
-  <div class="progress-bar progress-bar-danger" style="width: {{ n_tries|substract:n_accepted|substract:n_partial|substract:n_hidden|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
+  <div class="progress-bar progress-bar-danger" style="width: {{ n_attempts|substract:n_accepted|substract:n_partial|substract:n_hidden|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
 </div>
 {% else %}
 <div class="small text-muted nobold">
-  <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ n_accepted }}</span>{% if not contest.resource.info.standings.only_one_when_stat_equal or n_accepted != n_tries %}/<span title="Number of tries" data-placement="bottom" data-toggle="tooltip">{{ n_tries }}</span>{% endif %}
+  <span title="Number of accepted" data-placement="bottom" data-toggle="tooltip">{{ n_accepted }}</span>{% if not contest.resource.info.standings.only_one_when_stat_equal or n_accepted != n_attempts %}/<span title="Number of attempts" data-placement="bottom" data-toggle="tooltip">{{ n_attempts }}</span>{% endif %}
 </div>
 {% endif %}
 {% endwith %}

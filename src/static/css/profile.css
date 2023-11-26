@@ -75,6 +75,7 @@
 
 #table-accounts td {
   border-bottom: 1px solid #ddd;
+  vertical-align: middle;
 }
 
 input[type="search"]::-webkit-search-cancel-button {

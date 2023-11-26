@@ -21,10 +21,6 @@
   margin: 0px;
 }
 
-#problems a.solution {
-  color: inherit !important;
-}
-
 #problems a.contests {
   font-size: 90%;
   color: #777;
@@ -34,4 +30,8 @@
 .select2-container--bootstrap .select2-dropdown-status .select2-results>.select2-results__options {
   max-height: max-content;
   overflow-y: auto;
+}
+
+#problems .problem-result-column a {
+  color: inherit !important;
 }

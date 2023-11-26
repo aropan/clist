@@ -74,3 +74,9 @@ RUN sed -i '/imklog/s/^/# /g' /etc/rsyslog.conf
 COPY ./loggly/entrypoint.sh /entrypoint.sh
 COPY ./loggly/60-loggly.conf /etc/rsyslog.d/60-loggly.conf
 ENTRYPOINT /entrypoint.sh
+
+
+FROM nginx:alpine as nginx
+RUN apk add --no-cache logrotate
+COPY ./nginx/logrotate.d/nginx /etc/logrotate.d/nginx
+RUN chmod 0644 /etc/logrotate.d/nginx

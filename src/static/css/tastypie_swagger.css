@@ -63,6 +63,10 @@
     box-sizing: border-box;
 }
 
+.info .text ul {
+    margin: 0px;
+}
+
 #show-api-key {
     color: #0F6AB4;
     /* font-size: 0.75em; */

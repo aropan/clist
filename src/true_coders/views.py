@@ -164,24 +164,19 @@ def get_profile_context(request, statistics, writers, resources):
         statistics = statistics.filter(contest__invisible=False)
 
     # custom fields
-    custom_fields = None
+    statistics_fields = None
     if search_resource:
-        stat = statistics.filter(contest__stage__isnull=True).first()
-        if stat:
-            options = []
-            for k in stat.addition.keys():
-                if Statistics.is_special_addition_field(k):
-                    continue
-                options.append(k)
-            options.sort()
-            fields = request.GET.getlist('field')
-            custom_fields = {
-                'values': [v for v in fields if v and v in options],
-                'options': options,
-                'noajax': True,
-                'nogroupby': True,
-                'nourl': True,
-            }
+        fields_types = search_resource.statistics_fields.get('types', {})
+        options = list(sorted(fields_types.keys()))
+        fields = request.GET.getlist('field')
+        statistics_fields = {
+            'values': [v for v in fields if v and v in options],
+            'types': fields_types,
+            'options': options,
+            'noajax': True,
+            'nogroupby': True,
+            'nourl': True,
+        }
 
     context.update({
         'statistics': statistics,
@@ -193,7 +188,7 @@ def get_profile_context(request, statistics, writers, resources):
         'search_resource': search_resource,
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
-        'custom_fields': custom_fields,
+        'statistics_fields': statistics_fields,
     })
 
     qs = statistics.annotate(date=F('contest__start_time'))
@@ -466,10 +461,10 @@ def account_verification(request, key, host, template='account_verification.html
     if not request.user.has_perm('true_coders.force_account_verification'):
         if not resource.has_account_verification:
             return HttpResponseBadRequest(f'Account verification is not supported for {resource.host} resource')
+        if not this_is_me and is_single_account and coder.account_set.filter(resource=resource).exists():
+            return HttpResponseBadRequest(f'Allow only one account for {resource.host} resource')
         if not context.get('need_verify'):
             return HttpResponseBadRequest('Account already verified')
-        if not this_is_me and is_single_account and coder.account_set.filter(resource=resource).exists():
-            return HttpResponseBadRequest('Allow only one account for resource')
     verification, created = AccountVerification.objects.get_or_create(coder=coder, account=account)
     context['verification'] = verification
 
@@ -992,6 +987,7 @@ def change(request):
         user.email = value
         user.save()
     elif name == "country":
+        coder.auto_detect_country = False
         coder.country = value
         coder.save()
     elif name == "custom-countries":
@@ -2146,8 +2142,8 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
 
     context = {'params': params}
-    addition_table_fields = ('modified', 'updated', 'created')
-    table_fields = ('rating', 'overall_rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
+    addition_table_fields = ('modified', 'updated', 'created', 'key')
+    table_fields = ('rating', 'resource_rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
     groupby = request.GET.get('groupby')

@@ -18,9 +18,8 @@ from django.db import transaction
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import get_item, is_solved
-from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
-from ranking.utils import clear_problems_fields
+from ranking.utils import clear_problems_fields, create_upsolving_statistic
 
 # from ranking.management.modules import conf
 

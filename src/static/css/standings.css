@@ -89,10 +89,6 @@ table.standings .place-cell {
   white-space: nowrap;
 }
 
-table.standings .handle-cell .handle-div {
-  white-space: normal;
-}
-
 .handle-cell > .handle-cell-flex {
   display: flex;
   justify-content: space-between;
@@ -193,7 +189,7 @@ a.solution:hover span {
   z-index: 10;
 }
 
-.table-striped>tbody>tr:nth-of-type(n).info>td {
+.table tr:nth-of-type(n).info td {
   background-color: #d9edf7;
 }
 
@@ -203,10 +199,6 @@ a.solution:hover span {
 
 .table-striped tr:nth-of-type(odd)>td {
   background-color: #f9f9f9;
-}
-
-.standings tr.find-me-row td {
-  font-weight: bold;
 }
 
 /*

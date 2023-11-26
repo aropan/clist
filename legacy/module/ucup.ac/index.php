@@ -4,6 +4,18 @@
 
     $near_season = date('Y') - 2022;
     for ($season = $near_season; $season <= $near_season + 1; $season += 1) {
+        $url = "https://ucup.ac/rating?season=$season";
+        $rating_page = curlexec($url);
+        preg_match_all('#<th[^>]*>\s*<a[^>]*href="(?P<href>[^"]*)"[^>]*>(?P<title>[^<]*)</a>\s*</th>#s', $rating_page, $matches, PREG_SET_ORDER);
+        $standings = array();
+        foreach ($matches as $stage => $th) {
+            $standings_url = url_merge($url, $th['href']);
+            $parsed_url = parse_url($standings_url);
+            $parsed_url['path'] = rtrim($parsed_url['path'], '/') . '/standings/';
+            $standings_url = unparse_url($parsed_url);
+            $standings[$stage] = array("standings_url" => $standings_url, "title" => $th['title'], "stage" => $stage);
+        }
+
         $url = "https://ucup.ac/?season=$season";
         $schedule_page = curlexec($url);
 
@@ -48,6 +60,24 @@
             $end_time = $date . ' 23:00 UTC';
             $duration = '05:00';
             $key = 'ucup-' . $season . '-stage-' . $c['stage'];
+            $info = array('parse' => array('season' => "$season", 'stage' => $c['stage']));
+
+            $standings_url = $c['scoreboard'];
+            if (empty($standings_url)) {
+                $standings_stage = null;
+                foreach ($standings as $stage => $info) {
+                    if (stripos($info['title'], $c['contest']) === false) {
+                        continue;
+                    }
+                    if ($standings_stage === null || strlen($info['title']) < strlen($standings_stage['title'])) {
+                        $standings_stage = $info;
+                    }
+                }
+                if ($standings_stage) {
+                    $standings_url = $standings_stage['standings_url'];
+                    unset($standings[$standings_stage['stage']]);
+                }
+            }
 
             $contest = array(
                 'start_time' => $start_time,
@@ -55,8 +85,9 @@
                 'duration' => $duration,
                 'title' => trim($title),
                 'url' => isset($c['announcement'])? $c['announcement'] : $url,
-                'standings_url' => $c['scoreboard'],
+                'standings_url' => $standings_url,
                 'key' => $key,
+                'info' => $info,
                 'host' => $HOST,
                 'timezone' => $TIMEZONE,
                 'rid' => $RID,

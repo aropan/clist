@@ -1,6 +1,7 @@
 from functools import partial
 
 from django.conf import settings
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.middleware import csrf
 from django.urls import reverse
@@ -92,7 +93,11 @@ def SetAsCoder(get_response):
 
     def middleware(request):
         if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
-            as_coder = Coder.objects.get(user__username=request.GET['as_coder'])
+            as_coder_str = request.GET['as_coder']
+            coder_filter = Q(user__username=as_coder_str)
+            if as_coder_str.isdigit():
+                coder_filter |= Q(pk=as_coder_str)
+            as_coder = Coder.objects.get(coder_filter)
         else:
             as_coder = None
         setattr(request, 'as_coder', as_coder)

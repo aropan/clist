@@ -2,7 +2,7 @@ from django.conf.urls import include
 from django.urls import re_path
 from tastypie.api import NamespacedApi as Api
 
-from clist.api import v1, v2, v3
+from clist.api import v1, v2, v3, v4
 
 app_name = 'clist'
 
@@ -24,7 +24,15 @@ api_v3.register(v3.AccountResource())
 api_v3.register(v3.CoderResource())
 api_v3.register(v3.StatisticsResource())
 
-apis = [api_v3, api_v2, api_v1]
+api_v4 = Api(api_name='v4', urlconf_namespace=f'{app_name}:api:v4')
+api_v4.register(v4.ResourceResource())
+api_v4.register(v4.ContestResource())
+api_v4.register(v4.AccountResource())
+api_v4.register(v4.CoderResource())
+api_v4.register(v4.StatisticsResource())
+api_v4.register(v4.ProblemResource())
+
+apis = [api_v4, api_v3, api_v2, api_v1]
 
 urlpatterns = []
 

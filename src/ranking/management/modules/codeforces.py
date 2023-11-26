@@ -16,10 +16,10 @@ from urllib.parse import urlencode, urljoin, urlparse
 import pytz
 
 from clist.templatetags.extras import as_number, is_solved
-from ranking.management.commands.common import create_upsolving_statistic
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.utils import create_upsolving_statistic
 from utils.aes import AESModeOfOperation
 
 API_KEYS = conf.CODEFORCES_API_KEYS

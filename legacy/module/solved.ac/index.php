@@ -10,10 +10,14 @@
 
     foreach ($data as $_ => $contests_data) {
         foreach ($contests_data as $contest_data) {
+            $title = $contest_data['title'];
+            if (!empty($contest_data['divisionDisplayName'])) {
+                $title .= '. ' . $contest_data['divisionDisplayName'];
+            }
             $contests[] = array(
                 'start_time' => $contest_data['startTime'],
                 'end_time' => $contest_data['endTime'],
-                'title' => $contest_data['title'],
+                'title' => $title,
                 'url' => $contests_url,
                 'key' => $contest_data['arenaId'],
                 'host' => $HOST,

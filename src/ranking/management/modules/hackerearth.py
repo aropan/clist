@@ -7,7 +7,6 @@ import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
-from pprint import pprint
 from threading import Lock
 from time import sleep
 
@@ -16,6 +15,7 @@ from first import first
 
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -229,57 +229,59 @@ class Statistic(BaseModule):
             ret = {}
             info = ret.setdefault('info', {})
 
-            ts = (datetime.now() - timedelta(days=30)).timestamp()
-            if account.info.get('country_ts') is None or account.info['country_ts'] < ts:
-                try:
+            try:
+                ts = (datetime.now() - timedelta(days=30)).timestamp()
+                if account.info.get('country_ts') is None or account.info['country_ts'] < ts:
                     url = resource.profile_url.format(**account.dict_with_info())
                     page = Statistic._get(url)
-                except ExceptionParseStandings as e:
-                    arg = e.args[0]
-                    if arg.code == 404:
-                        for stat in account.statistics_set.order_by('-contest__end_time')[:3]:
-                            if stat.place is None:
-                                continue
-                            if stat.solving < 1e-9:
-                                continue
-                            try:
-                                module = Statistic(contest=stat.contest)
-                                standings = module.get_standings(fixed_rank=stat.place_as_int)
-                            except Exception:
-                                continue
-                            results = standings.get('result', {})
-                            if len(results) != 1:
-                                continue
-                            member, result = list(results.items())[0]
-                            if (
-                                not re.search('[1-9]', result.get('penalty', ''))
-                                or result['penalty'] != stat.addition.get('penalty')
-                            ):
-                                continue
-                            if abs(stat.solving - result.get('solving', 0)) > 1e-9:
-                                continue
 
-                            if member == account.key:
-                                break
+                    match = re.search(r'''
+                        <div[^>]*class="[^"]*track-current-location[^"]*"[^>]*>
+                        [^<]*<i[^>]*>[^<]*</[^>]*>
+                        [^<]*<span[^>]*>[^<]*,\s*(?P<country>[^,<]+)\s*</[^>]*>
+                    ''', page, re.VERBOSE)
+                    if match:
+                        info['country'] = match.group('country')
+                    info['country_ts'] = datetime.now().timestamp()
 
-                            return account, {'rename': member, 'info': {}}
-                        return account, {'info': None}
+                url = Statistic.PROFILE_API_URL_FORMAT_.format(**account.dict_with_info())
+                data = Statistic._get(url)
 
-                match = re.search(r'''
-                    <div[^>]*class="[^"]*track-current-location[^"]*"[^>]*>
-                    [^<]*<i[^>]*>[^<]*</[^>]*>
-                    [^<]*<span[^>]*>[^<]*,\s*(?P<country>[^,<]+)\s*</[^>]*>
-                ''', page, re.VERBOSE)
-                if match:
-                    info['country'] = match.group('country')
-                info['country_ts'] = datetime.now().timestamp()
+                url = Statistic.RATING_URL_FORMAT_.format(account=account.key)
+                page = Statistic._get(url)
+            except ExceptionParseStandings as e:
+                arg = e.args[0]
+                if arg.code in {404, 400}:
+                    for stat in account.statistics_set.order_by('-contest__end_time')[:3]:
+                        if stat.place is None:
+                            continue
+                        if stat.solving < 1e-9:
+                            continue
+                        try:
+                            module = Statistic(contest=stat.contest)
+                            standings = module.get_standings(fixed_rank=stat.place_as_int)
+                        except Exception:
+                            continue
+                        results = standings.get('result', {})
+                        if len(results) != 1:
+                            continue
+                        member, result = list(results.items())[0]
+                        if (
+                            not re.search('[1-9]', result.get('penalty', ''))
+                            or result['penalty'] != stat.addition.get('penalty')
+                        ):
+                            continue
+                        if abs(stat.solving - result.get('solving', 0)) > 1e-9:
+                            continue
 
-            url = Statistic.PROFILE_API_URL_FORMAT_.format(**account.dict_with_info())
-            data = Statistic._get(url)
+                        if member == account.key:
+                            break
+
+                        return account, {'rename': member, 'info': {}}
+                    return account, {'info': None}
+                return account, {'skip': True}
+
             info.update(json.loads(data))
-
-            url = Statistic.RATING_URL_FORMAT_.format(account=account.key)
-            page = Statistic._get(url)
             match = re.search(r'var[^=]*=\s*(?P<data>.*);$', page, re.M)
             if not match:
                 info['country_ts'] = None
@@ -300,43 +302,15 @@ class Statistic(BaseModule):
                         info['rating'] = int(contest['rating'])
             return account, ret
 
-        with PoolExecutor(max_workers=8) as executor:
+        with PoolExecutor(max_workers=8) as executor, Locator() as locator:
             for account, data in executor.map(fetch_account, accounts):
+                if data.get('info'):
+                    location = data['info'].get('location')
+                    country = account.country or data['info'].get('country')
+                    if location and not country:
+                        country = locator.get_country(location)
+                        if country:
+                            data['info']['country'] = country
                 if pbar:
                     pbar.update()
                 yield data
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'
-
-    from django import setup
-    setup()
-
-    from django.utils import timezone
-
-    from clist.models import Contest
-
-    contests = Contest.objects \
-        .filter(title="ACM ICPC Practice Contest") \
-        .filter(host='hackerearth.com', end_time__lt=timezone.now() - timezone.timedelta(days=2)) \
-        .order_by('-start_time') \
-
-    for contest in contests[:1]:
-        try:
-            statistic = Statistic(
-                name=contest.title,
-                url=contest.url,
-                key=contest.key,
-                standings_url=contest.standings_url,
-                start_time=contest.start_time,
-            )
-            s = statistic.get_standings()
-            pprint(s.pop('result'))
-            pprint(s)
-        except ExceptionParseStandings:
-            continue

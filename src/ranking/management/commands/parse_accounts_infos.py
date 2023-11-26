@@ -16,12 +16,11 @@ from tqdm import tqdm
 
 from clist.models import Resource
 from logify.models import EventLog, EventStatus
-from ranking.management.commands.common import account_update_contest_additions
-from ranking.management.commands.countrier import Countrier
 from ranking.models import Account
-from ranking.utils import rename_account
+from ranking.utils import account_update_contest_additions, rename_account
 from true_coders.models import Coder
 from utils.attrdict import AttrDict
+from utils.countrier import Countrier
 from utils.traceback_with_vars import colored_format_exc
 
 
