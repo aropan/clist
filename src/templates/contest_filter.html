@@ -1,5 +1,5 @@
 {% with contest_id=contest|default:"contest" %}
-<div class="input-group input-group-sm hidden" id="{{ contest_id }}-hidden">
+<div class="input-group{% if not nosmall %} input-group-sm{% endif %} hidden" id="{{ contest_id }}-hidden">
 {% if groupby %}
   <div class="input-group-btn">
     <button class="btn btn-default{% if groupby == 'contest' %} active{% endif %}" name="groupby" value="{% if groupby != 'contest' %}contest{% endif %}">
@@ -39,11 +39,19 @@
       dataType: 'json',
       delay: 314,
       data: function (params) {
+        {% if resource_from %}
+        var resources = $('#{{ resource_from }}').val()
+        resources = Array.isArray(resources) ? resources : [resources];
+        {% else %}
+        var resources = [{% for resource in params.resources %}{{ resource.pk }}{% if not forloop.last %},{% endif %}{% endfor %}]
+        {% endif %}
         return {
           query: 'contests',
           {% if has_problems %}has_problems: true,{% endif %}
           {% if has_statistics %}has_statistics: true,{% endif %}
-          resources: [{% for resource in params.resources %}{{ resource.pk }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          {% if has_started %}has_started: true,{% endif %}
+          {% if has_virtual_start %}has_virtual_start: true,{% endif %}
+          resources: resources,
           regex: params.term,
           page: params.page || 1
         };

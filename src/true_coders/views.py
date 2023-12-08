@@ -47,7 +47,7 @@ from notification.models import Calendar, NotificationMessage, Subscription
 from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
-                            update_account_by_coders)
+                            VirtualStart, update_account_by_coders)
 from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListValue, Organization, Party
 from utils.chart import make_chart
@@ -1465,12 +1465,21 @@ def search(request, **kwargs):
             qs = qs.filter(info__problems__isnull=False, stage__isnull=True).exclude(info__problems__exact=[])
         if request.GET.get('has_statistics') in django_settings.YES_:
             qs = qs.filter(n_statistics__gt=0)
+        if request.GET.get('has_started') in django_settings.YES_:
+            qs = qs.filter(start_time__lt=timezone.now())
+        if request.GET.get('has_virtual_start') in django_settings.YES_:
+            if request.user.is_authenticated:
+                coder = request.user.coder
+                vs = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef('id'))
+                qs = qs.annotate(disabled=Exists(vs))
+            qs = qs.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
         resources = [r for r in request.GET.getlist('resources[]') if r]
         if resources:
             qs = qs.filter(resource__pk__in=resources)
         qs = qs.order_by('-end_time', 'pk')
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon} for r in qs]
+        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon, 'disabled': getattr(r, 'disabled', False)}
+               for r in qs]
     elif query == 'show-filter':
         coder = request.user.coder
         filter_ = Filter.objects.get(pk=request.GET.get('id'), coder=coder)

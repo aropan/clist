@@ -1,5 +1,5 @@
 {% with resource_id=resource|default:"resource" %}
-<div class="input-group input-group-sm hidden" id="{{ resource_id }}-hidden">
+<div class="input-group{% if not nosmall %} input-group-sm{% endif %} hidden" id="{{ resource_id }}-hidden">
 {% if groupby %}
   <div class="input-group-btn">
     <button class="btn btn-default{% if groupby == 'resource' %} active{% endif %}" name="groupby" value="{% if groupby != 'resource' %}resource{% endif %}">

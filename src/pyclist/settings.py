@@ -11,12 +11,14 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import logging
 import os
 import warnings
+from datetime import datetime
 
 import pycountry
 import sentry_sdk
 from django.core.paginator import UnorderedObjectListWarning
 from django.utils.translation import gettext_lazy as _
 from environ import Env
+from pytz import utc
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from stringcolor import cs
@@ -584,6 +586,14 @@ PAST_CALENDAR_DEFAULT_ACTION_ = 'lighten'
 ORDERED_MEDALS_ = ['gold', 'silver', 'bronze']
 THEMES_ = ['default', 'cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable',
            'sandstone', 'simplex', 'slate', 'spacelab', 'superhero', 'united', 'yeti']
+SESSION_DURATIONS_ = {
+    '1 day': {'value': 60 * 60 * 24},
+    '1 week': {'value': 60 * 60 * 24 * 7},
+    '1 month': {'value': 60 * 60 * 24 * 30, 'default': True},
+    '1 year': {'value': 60 * 60 * 24 * 365},
+    '1 life': {'value': datetime.max.replace(tzinfo=utc)},
+
+}
 
 DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
@@ -695,6 +705,8 @@ FONTAWESOME_ICONS_ = {
     'restricted': '<span class="label label-warning"><i class="fa-solid fa-unlock"></i></span>',
     'public': '<span class="label label-danger"><i class="fa-solid fa-lock-open"></i></span>',
     'as_coder': '<i class="fa-solid fa-user-group"></i>',
+    'logify': '<i class="fa-regular fa-file-lines"></i>',
+    'is_virtual': {'icon': '<i class="fa-solid fa-clock-rotate-left"></i>', 'title': False},
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

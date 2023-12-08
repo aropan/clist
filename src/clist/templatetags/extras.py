@@ -233,7 +233,7 @@ def get_timezones():
         for tz in timezones:
             offset = get_timezone_offset(tz['name'])
             tz['offset'] = offset
-            tz['repr'] = f'{"+" if offset > 0 else "-"}{abs(offset) // 60:02}:{abs(offset) % 60:02}'
+            tz['repr'] = f'{"+" if offset >= 0 else "-"}{abs(offset) // 60:02}:{abs(offset) % 60:02}'
     return timezones
 
 
@@ -1201,7 +1201,10 @@ def submission_info_field(stat, field):
 
 @register.filter
 def has_update_statistics_permission(user, contest):
-    return user.has_perm('ranking.update_statistics') or user.has_perm('update_statistics', contest.resource)
+    ret = user.has_perm('ranking.update_statistics') or user.has_perm('update_statistics', contest.resource)
+    if not ret and user.is_authenticated and contest.allow_updating_statistics_for_participants:
+        ret = contest.statistics_set.filter(account__coders=user.coder).exists()
+    return ret
 
 
 @register.filter

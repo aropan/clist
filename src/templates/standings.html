@@ -107,6 +107,7 @@
 
       {% if perms.clist.change_contest %}
       <a href="{% url 'admin:clist_contest_change' contest.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+      <a href="{% url 'admin:logify_eventlog_changelist' %}?q={{ contest.title }}" class="database-link invisible" target="_blank" rel="noopener">{% icon_to 'logify' %}</a>
       {% endif %}
     </div>
 
@@ -352,7 +353,7 @@
     {% endif %}
     <script>$.endlessPaginate({paginateOnScroll: {% if paginate_on_scroll %}true{% else %}false{% endif %}, onCompleted: toggle_tooltip});</script>
   {% else %}
-  <div class="alert alert-info">Empty data</div>
+  <div class="alert alert-info">No standings</div>
   {% endif %}
 </div>
 

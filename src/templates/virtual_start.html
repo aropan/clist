@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block ogtitle %}{% block title %}Virtual start{% endblock %}{% endblock %}
+{% block description %}Enables participants to initiate a virtual competition and compare their results with others in a straightforward and user-friendly way.{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/virtual-start.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/virtual-start.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<h2 class="text-center">Virtual start</h2>
+
+<div id="virtual-start">
+  <form class="form-inline" method="get" action="">
+    {% with nomultiply=True nosmall=True %}
+      {% include 'resource_filter.html' %}
+      {% include 'contest_filter.html' with nosubmit=True has_virtual_start=True resource_from="resource" %}
+    {% endwith %}
+    <div class="input-group">
+      <button type="submit" name="action" value="start" class="btn btn-primary"{% if not params.contests %} disabled{% endif %}>Start</button>
+    </div>
+  </form>
+</div>
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2 col-xl-6 col-xl-offset-3">
+    {% if virtual_starts.exists %}
+    <div id="virtual-start-list" class="panel panel-default table-responsive">
+      <table class="table table-hover table-striped table-float-head">
+        <thead>
+          <tr>
+            <th class="start-time">Start time</th>
+            <th class="event">Event</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% include page_template %}
+        </tbody>
+      </table>
+      <script>configure_pagination()</script>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No virtual starts</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

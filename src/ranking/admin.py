@@ -6,7 +6,7 @@ from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import (Account, AccountRenaming, AccountVerification, AutoRating, Module, Rating, Stage,
-                            Statistics, VerifiedAccount)
+                            Statistics, VerifiedAccount, VirtualStart)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -179,3 +179,9 @@ class ModuleAdmin(BaseModelAdmin):
                     'path']
     search_fields = ['resource__host']
     list_filter = ['enable']
+
+
+@admin_register(VirtualStart)
+class VirtualStartAdmin(BaseModelAdmin):
+    list_display = ['id', 'coder', 'entity', 'start_time']
+    search_fields = ['coder__username']

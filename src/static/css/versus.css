@@ -41,6 +41,10 @@
   text-shadow: 0 0 0 #d0e3f7;
 }
 
+#versus-table .score-column .solving-place {
+  white-space: nowrap;
+}
+
 td.title-column {
   max-width: 300px;
 }
@@ -80,8 +84,4 @@ td.title-column span {
 {
   font-weight: bold;
   font-size: 130%;
-}
-
-#versus-table .score-column .solving-place {
-  white-space: nowrap;
 }

@@ -681,9 +681,13 @@ function coders_select(id, submit) {
 
 
 function escape_html(str) {
-    return str.replace(/&/g, '&amp;')  // First, escape ampersands
-              .replace(/"/g, '&quot;') // then double-quotes
-              .replace(/'/g, '&#39;')  // and single quotes
-              .replace(/</g, '&lt;')   // and less-than signs
-              .replace(/>/g, '&gt;');  // and greater-than signs
+  return str.replace(/&/g, '&amp;')  // First, escape ampersands
+            .replace(/"/g, '&quot;') // then double-quotes
+            .replace(/'/g, '&#39;')  // and single quotes
+            .replace(/</g, '&lt;')   // and less-than signs
+            .replace(/>/g, '&gt;');  // and greater-than signs
+}
+
+function configure_pagination() {
+  $.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }})
 }

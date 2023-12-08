@@ -15,7 +15,7 @@ from django.db import models
 from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Value, When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast, window
-from django.http import HttpRequest, HttpResponseNotFound, JsonResponse
+from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import get_template
 from django.urls import reverse
@@ -33,10 +33,11 @@ from clist.templatetags.extras import (as_number, format_time, get_country_name,
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
+from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
-from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
+from ranking.models import Account, AccountRenaming, Module, Stage, Statistics, VirtualStart
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, Party
 from true_coders.views import get_ratings_data
@@ -137,7 +138,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         },
     }
 
-    if get_group_list(request):
+    if get_group_list(request) and len(resources) != 1:
         running_contest_query = Q(end_time__gt=timezone.now())
         running_contests = contests.filter(running_contest_query)
         contests = contests.exclude(running_contest_query)
@@ -1533,6 +1534,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'versus_data': versus_data,
         'versus_statistic_id': versus_statistic_id,
         'standings_options': options,
+        'has_alternative_result': with_detail and options.get('alternative_result_field'),
         'mod_penalty': mod_penalty,
         'freeze_duration': freeze_duration,
         't_freeze': t_freeze,
@@ -2057,3 +2059,46 @@ def make_versus(request):
         'opponents': opponents,
     }
     return render(request, 'make_versus.html', context)
+
+
+@login_required
+@page_template('virtual_start_paging.html')
+@context_pagination()
+def virtual_start(request, template='virtual_start.html'):
+    coder = request.user.coder
+    context = {}
+    params = context.setdefault('params', {})
+    resource = request.GET.get('resource')
+    virtual_starts = VirtualStart.filter_by_content_type(Contest).filter(coder=coder).order_by('-start_time')
+    if resource:
+        resource = Resource.get_object(resource)
+        params['resources'] = [resource]
+        virtual_starts = virtual_starts.filter(contest__resource=resource)
+    contest = request.GET.get('contest')
+    if contest:
+        if contest == 'auto' and resource:
+            vs = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef('id'))
+            contest = resource.contest_set.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
+            contest = contest.annotate(disabled=SubqueryExists(vs))
+            contest = contest.order_by('-start_time').first()
+            if contest and contest.disabled:
+                contest = None
+        elif contest.isdigit():
+            contest = Contest.objects.get(pk=contest)
+        else:
+            return HttpResponseBadRequest('Invalid contest')
+        if contest:
+            params['contests'] = [contest]
+    action = request.GET.get('action')
+    if action == 'start':
+        if contest:
+            if VirtualStart.objects.filter(coder=coder, contest=contest).exists():
+                request.logger.error('Already started')
+            else:
+                VirtualStart.objects.create(coder=coder, entity=contest, start_time=timezone.now())
+                return redirect(contest.url)
+        else:
+            request.logger.error('No contest to start')
+        return redirect(url_transform(request, action=None, with_remove=True))
+    context['virtual_starts'] = virtual_starts
+    return template, context

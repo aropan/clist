@@ -13,7 +13,7 @@
         $url = $item['url'];
         $language_re = '#(hackerearth.com)/(../|en-us/)?#';
         $en_url = preg_replace($language_re, '\1/en-us/', $url);
-        $url = preg_replace($language_re, '/', $url);
+        $url = preg_replace($language_re, '\1/', $url);
 
         if (strpos($url, '/hiring/') !== false) {
             continue;

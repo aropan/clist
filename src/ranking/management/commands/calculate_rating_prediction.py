@@ -133,7 +133,7 @@ def get_old_ratings(contest):
     ).distinct('account').values('member', 'latest_rating')
 
     n_contests_filter = Q(contest__start_time__lt=contest.start_time, skip_in_stats=False)
-    rankings = Statistics.objects.filter(
+    statistics = Statistics.objects.filter(
         contest=contest,
         account__in=accounts,
     ).filter(
@@ -142,16 +142,27 @@ def get_old_ratings(contest):
         rank=F('place_as_int'),
         member=F('account__key'),
         n_contests=SubqueryCount('account__statistics', filter=n_contests_filter),
-    ).values('rank', 'member', 'n_contests')
+    )
 
-    rankings = {r['member']: r for r in rankings}
+    rankings = {}
+    for statistic in statistics:
+        ranking = {
+            'rank': statistic.rank,
+            'member': statistic.member,
+            'n_contests': statistic.n_contests,
+        }
+        old_rating = statistic.get_old_rating(use_rating_prediction=False)
+        if old_rating is not None:
+            ranking['old_rating'] = old_rating
+        rankings[ranking['member']] = ranking
     for account in latest_rating:
-        rankings[account['member']]['old_rating'] = account['latest_rating']
+        rankings[account['member']].setdefault('old_rating', account['latest_rating'])
     rankings = list(rankings.values())
     for ranking in rankings:
         if ranking.get('old_rating') is None:
             ranking['old_rating'] = resource.rating_prediction['initial_rating']
         ranking['n_contests'] += 1
+
     rankings.sort(key=lambda r: r['rank'])
     return rankings
 
@@ -205,12 +216,13 @@ class Command(BaseCommand):
         contests = list(sorted(contests, key=lambda c: c.start_time))
 
         self.logger.info(f'contests = {[c.title for c in contests]}')
+        skip_action = 'skip' if not args.force else 'ignore skipping'
 
         for contest in contests:
             resource = contest.resource
 
             if not contest.is_rating_prediction_timespan:
-                self.logger.warning(f'skip contest with timespan, contest = {contest}')
+                self.logger.warning(f'{skip_action} contest with timespan, contest = {contest}')
                 if not args.force:
                     continue
 
@@ -231,7 +243,7 @@ class Command(BaseCommand):
             rating_prediction_hash = hashlib.sha256(str(values).encode('utf8')).hexdigest()
 
             if contest.rating_prediction_hash == rating_prediction_hash:
-                self.logger.warning(f'skip unchanged rating prediction hash, contest = {contest}')
+                self.logger.warning(f'{skip_action} unchanged rating prediction hash, contest = {contest}')
                 if not args.force:
                     event_log.update_status(EventStatus.SKIPPED, message='unchanged rating prediction hash')
                     continue

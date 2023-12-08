@@ -305,6 +305,14 @@ a.solution:hover span {
   background-color: #fef;
 }
 
+.problem-cell .is-virtual {
+  position: absolute;
+  color: #777;
+  font-size: 90%;
+  margin-left: 5px;
+  margin-top: 2px;
+}
+
 /*
  * versus games modal
  */

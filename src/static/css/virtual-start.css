@@ -1,0 +1,11 @@
+#virtual-start {
+  text-align: center;
+}
+
+#virtual-start-list .event {
+  text-align: left;
+}
+
+#virtual-start-list .start-time {
+  text-align: right;
+}

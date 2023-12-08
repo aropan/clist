@@ -100,7 +100,7 @@ function unfreeze_percent() {
 function step_timeline(multiplier = 1, stop = false) {
   var next_percent = CURRENT_PERCENT + multiplier * parseFloat($('#timeline-step').val())
 
-  if (unfreeze_percent() < next_percent && next_percent < 1 || CURRENT_PERCENT > unfreeze_percent()) {
+  if (unfreeze_percent() < next_percent && next_percent < contest_time_percentage || CURRENT_PERCENT > unfreeze_percent()) {
     var unfreeze_index = Math.max(0, CURRENT_PERCENT - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
     if (multiplier > 0) {
       unfreeze_index = Math.ceil(unfreeze_index) + 0.5

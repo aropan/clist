@@ -30,6 +30,7 @@ from clist.templatetags.extras import (as_number, canonize, get_number_from_str,
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage
+from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.parse_accounts_infos import rename_account
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
@@ -463,8 +464,11 @@ class Command(BaseCommand):
                         renaming_qs = renaming_qs.values_list('old_key', 'new_key')
                         for old_key, new_key in renaming_qs:
                             if old_key in result:
-                                result[new_key] = result.pop(old_key)
-                                result[new_key]['member'] = new_key
+                                if new_key is None:
+                                    result.pop(old_key)
+                                else:
+                                    result[new_key] = result.pop(old_key)
+                                    result[new_key]['member'] = new_key
 
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics', {})
@@ -539,6 +543,8 @@ class Command(BaseCommand):
                                     p = d_problems
                                     standings_p = standings_problems
                                     if standings_p and 'division' in standings_p:
+                                        if not r.get('division'):
+                                            continue
                                         p = p.setdefault(r['division'], {})
                                         standings_p = standings_p.get(r['division'], [])
                                     p = p.setdefault(k, {})
@@ -909,6 +915,8 @@ class Command(BaseCommand):
                                 for k, v in problems.items():
                                     p = d_problems
                                     if standings_problems and 'division' in standings_problems:
+                                        if not r.get('division'):
+                                            continue
                                         p = p.setdefault(r['division'], {})
                                     p = p.setdefault(k, {})
                                     if 'first_ac' not in p:
@@ -1334,6 +1342,7 @@ class Command(BaseCommand):
         return count, total
 
     @print_sql_decorator(count_only=True)
+    @analyze_db_queries
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)

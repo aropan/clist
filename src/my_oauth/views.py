@@ -33,10 +33,6 @@ def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
 
 
 def query(request, name):
-    redirect_url = request.GET.get('next', None)
-    if redirect_url:
-        request.session['next'] = redirect_url
-
     service = get_object_or_404(Service.objects, name=name)
     args = model_to_dict(service)
     args['redirect_uri'] = settings.HTTPS_HOST_ + reverse('auth:response', args=(name, ))
@@ -149,6 +145,11 @@ def login(request):
     if request.user.is_authenticated:
         return redirect(redirect_url)
 
+    session_durations = settings.SESSION_DURATIONS_
+    session_duration = request.POST.get('session_duration')
+    if session_duration in session_durations:
+        request.session.set_expiry(session_durations[session_duration]['value'])
+
     services = Service.active_objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
     if not services:
         action = request.POST.get('action')
@@ -162,10 +163,17 @@ def login(request):
             return redirect(redirect_url)
 
     request.session['next'] = redirect_url
+    service = request.POST.get('service')
+    if service:
+        return query(request, service)
+
     return render(
         request,
         'login.html',
-        {'services': services},
+        {
+            'services': services,
+            'session_durations': session_durations,
+        },
     )
 
 

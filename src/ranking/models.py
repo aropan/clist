@@ -11,6 +11,8 @@ import magic
 import requests
 import tqdm
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.db import models, transaction
 from django.db.models import F, Q, Sum
@@ -155,7 +157,7 @@ class Account(BaseModel):
 class AccountRenaming(BaseModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     old_key = models.CharField(max_length=1024, null=False, blank=False)
-    new_key = models.CharField(max_length=1024, null=False, blank=False)
+    new_key = models.CharField(max_length=1024, null=True, blank=True)
 
     def __str__(self):
         return f'{self.old_key} -> {self.new_key}'
@@ -403,8 +405,11 @@ class Statistics(BaseModel):
     def __str__(self):
         return f'{self.account_id} on {self.contest_id} = {self.solving} + {self.upsolving}'
 
-    def get_old_rating(self):
-        for rating_data in (self.addition, self.rating_prediction):
+    def get_old_rating(self, use_rating_prediction=True):
+        rating_datas = [self.addition]
+        if use_rating_prediction:
+            rating_datas.append(self.rating_prediction)
+        for rating_data in rating_datas:
             if not rating_data:
                 continue
             if 'old_rating' in rating_data:
@@ -1034,3 +1039,22 @@ class Stage(BaseModel):
         if stage.is_rated is None:
             stage.is_rated = False
         stage.save()
+
+
+class VirtualStart(BaseModel):
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='virtual_starts')
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    entity = GenericForeignKey('content_type', 'object_id')
+
+    start_time = models.DateTimeField()
+
+    class Meta:
+        unique_together = ('coder', 'content_type', 'object_id')
+        indexes = [models.Index(fields=['coder', 'content_type', 'object_id'])]
+
+    @classmethod
+    def filter_by_content_type(cls, model_class):
+        content_type = ContentType.objects.get_for_model(model_class)
+        return cls.objects.filter(content_type=content_type)

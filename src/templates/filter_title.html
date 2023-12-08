@@ -1,4 +1,5 @@
-{% if params.countries or params.resources %} {% linebreakless %}
+{% if params.countries or params.resources or params.contests %} {% linebreakless %}
 {% if params.countries %}{{ pretext }} {% for country in params.countries %}{% if forloop.counter0 %}, {% endif %}{{ country|get_country_name }}{% endfor %}{% endif %}
 {% if params.resources %}{% if params.countries %} and {% else %}{{ pretext }} {% endif %}{% for resource in params.resources %}{% if forloop.counter0 %}, {% endif %}{{ resource.host }}{% endfor %}{% endif %}
+{% if params.contests %}{% if params.countries or params.resources %} and {% else %}{{ pretext }} {% endif %}{% for contest in params.contests %}{% if forloop.counter0 %}, {% endif %}{{ contest.title }}{% endfor %}{% endif %}
 {% endlinebreakless %}{% endif %}

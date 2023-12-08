@@ -1,0 +1,31 @@
+{% load el_pagination_tags %}
+
+{% lazy_paginate 50,200 virtual_starts %}
+
+{% for virtual_start in virtual_starts %}
+{% with contest=virtual_start.entity %}
+{% with resource=contest.resource %}
+<tr>
+  <td class="start-time">
+    <span title="{{ virtual_start.start_time|timezone:timezone|naturalday }}" data-toggle="tooltip">{{ virtual_start.start_time|timezone:timezone|format_time:timeformat }}</span>
+  </td>
+  <td class="event">
+    <a href="{% url_transform request resource=resource.id %}">
+      <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+    </a>
+    <a href="{{ contest.url }}">
+      {% trim_to contest.title 60 %}
+    </a>
+
+    {% if perms.ranking.change_virtualstart %}
+    <span class="inline-button">
+        <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_virtualstart_change' virtual_start.id %}"><i class="fas fa-database"></i></button>
+    </span>
+    {% endif %}
+  </td>
+</tr>
+{% endwith %}
+{% endwith %}
+{% endfor %}
+
+{% show_more_table %}

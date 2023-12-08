@@ -74,10 +74,11 @@ class Resource(BaseModel):
     problems_fields = models.JSONField(default=dict, blank=True)
     statistics_fields = models.JSONField(default=dict, blank=True)
 
-    RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'perfomance',
+    RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'perfomance', 'raw_rating',
                      'OldRating', 'Rating', 'NewRating', 'Perfomance',
-                     'predicted_new_rating', 'predicted_rating_perf',
-                     'rating_prediction_old_rating', 'rating_prediction_new_rating', 'rating_prediction_rating_perf')
+                     'predicted_old_rating', 'predicted_new_rating', 'predicted_rating_perf', 'predicted_raw_rating',
+                     'rating_prediction_old_rating', 'rating_prediction_new_rating', 'rating_prediction_rating_perf',
+                     'rating_prediction_raw_rating')
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='resource')
 
@@ -292,6 +293,13 @@ class Resource(BaseModel):
             ret = [field for field in ret if field in verification_fields]
         return ret
 
+    @classmethod
+    def get_object(cls, value):
+        condition = Q(host__contains=value)
+        if value.isdigit():
+            condition |= Q(pk=value)
+        return Resource.objects.get(condition)
+
 
 class BaseContestManager(BaseManager):
     pass
@@ -343,6 +351,7 @@ class Contest(BaseModel):
     with_medals = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     with_advance = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     series = models.ForeignKey('ContestSeries', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    allow_updating_statistics_for_participants = models.BooleanField(null=True, blank=True, default=None, db_index=True)
 
     notification_timing = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
@@ -358,6 +367,7 @@ class Contest(BaseModel):
     was_auto_added = models.BooleanField(default=False)
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='contest')
+    virtual_starts = GenericRelation('ranking.VirtualStart', related_query_name='contest')
 
     objects = BaseContestManager()
     visible = VisibleContestManager()

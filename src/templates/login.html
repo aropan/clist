@@ -1,35 +1,50 @@
 {% extends "base.html" %}
 
+{% block end-head %}
+<script src="{% static_ts 'js/login.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 {% if request.is_ajax %}
 <script>
     window.location.href = "{{ request.get_full_path }}";
 </script>
 {% else %}
+
 <div class="col-sm-offset-2 col-sm-8 col-lg-offset-4 col-lg-4">
     <div class="panel panel-primary">
         <div class="panel-heading">{% block ogtitle %}{% block title %}Log in / Sign up{% endblock %}{% endblock %}</div>
         <div class="panel-body">
+            <form method="post">
+                {% csrf_token %}
 {% if services %}
+                <input type="hidden" name="service">
     {% for service in services %}
-            <div class="custom-btn-group-justified btn-group">
-                <a class="btn btn-default active icon service-icon-btn">{% icon_to service.name %}</a>
-                <a href="{% url 'auth:query' service.name %}" class="btn btn-default">
-                    <div class="text-left">{{ service.title }}</div>
-                </a>
-            </div>
+                <div class="custom-btn-group-justified btn-group">
+                    <a class="btn btn-default active icon service-icon-btn">{% icon_to service.name %}</a>
+                    <a data-service="{{ service.name }}" class="btn btn-default"><div class="text-left">{{ service.title }}</div></a>
+                </div>
     {% endfor %}
 {% else %}
-            <form method="post">{% csrf_token %}
                 <div class="form-group">
                     <input type="text" name="username" class="form-control" placeholder="Username" value="">
                 </div>
                 <div class="form-group">
                     <input type="password" name="password" class="form-control" placeholder="Password">
                 </div>
-                <button type="submit" name="action" tabindex="3" class="btn btn-primary" value="login">Log In</button>
-            </form>
+                <button type="submit" name="action" class="btn btn-primary" value="login">Log In</button>
 {% endif %}
+                <hr/>
+
+                <div class="form-group">
+                    <label for="session_duration">Session duration:</label>
+                    <select class="form-control" name="session_duration" id="session_duration">
+                        {% for duration, value in session_durations.items %}
+                        <option value="{{ duration }}"{% if value.default %} selected{% endif %}>{{ duration }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
         </div>
     </div>
 </div>
