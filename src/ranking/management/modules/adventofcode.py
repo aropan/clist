@@ -24,11 +24,11 @@ class Statistic(BaseModule):
         func = self._get_private_standings if is_private else self._get_global_standings
         standings = func(*args, **kwargs)
 
-        self._set_medals(standings['result'], is_private=is_private)
+        self._set_medals(standings['result'], n_medals=is_private)
         return standings
 
     @staticmethod
-    def _set_medals(result, is_private):
+    def _set_medals(result, n_medals=False):
         for row in result.values():
             for problem in row.get('problems', {}).values():
                 rank = problem['rank']
@@ -39,7 +39,7 @@ class Statistic(BaseModule):
                     problem['medal'] = medal
                     problem['_class'] = f'{medal}-medal'
 
-                    if is_private:
+                    if n_medals:
                         key = f'n_{medal}_problems'
                         row.setdefault(key, 0)
                         row[key] += 1
@@ -56,7 +56,7 @@ class Statistic(BaseModule):
         def items_sort(d):
             return sorted(d.items(), key=lambda i: int(i[0]))
 
-        result = {}
+        result = defaultdict(dict)
         total_members = len(data['members'])
         local_best_score = total_members
         global_best_score = 100
@@ -73,17 +73,22 @@ class Statistic(BaseModule):
             account_coders[a['key']].append(a['coders'])
 
         has_virtual = False
-        for division in 'virtual', 'main':
+        divisions_order = []
+        for division in 'diff', 'virtual', 'main':
+            is_main = division == 'main'
             is_virtual = division == 'virtual'
+            is_diff = division == 'diff'
             times = defaultdict(list)
             rows = list(data['members'].values())
+            division_result = {}
             for r in tqdm.tqdm(rows, total=len(rows)):
                 r = deepcopy(r)
                 handle = str(r.pop('id'))
-                row = result.setdefault(handle, OrderedDict())
+                row = division_result.setdefault(handle, OrderedDict())
                 row['_skip_for_problem_stat'] = True
                 row['_global_score'] = r.pop('global_score')
-                row['global_score'] = 0
+                if not is_diff:
+                    row['global_score'] = 0
                 row['member'] = handle
                 row['_local_score'] = r.pop('local_score')
                 row['name'] = r.pop('name')
@@ -93,7 +98,7 @@ class Statistic(BaseModule):
                     row['last_star'] = ts
                 solutions = r.pop('completion_day_level')
                 if not solutions:
-                    result.pop(handle)
+                    division_result.pop(handle)
                     continue
 
                 if is_virtual and handle in account_coders:
@@ -117,14 +122,17 @@ class Statistic(BaseModule):
                         star = str(star)
                         k = f'{day}.{star}'
                         if k not in problems_infos:
-                            problems_infos[k] = {'name': day,
-                                                 'code': k,
+                            problems_infos[k] = {'name': contest.title.split('. ', 3)[-1],
+                                                 'short': k,
+                                                 'code': f'Y{year}D{day}',
                                                  'group': day,
                                                  'subname': '*',
                                                  'subname_class': 'first-star' if star == '1' else 'both-stars',
                                                  'url': urljoin(self.url, f'/{year}/day/{day}'),
                                                  '_order': (int(day), int(star)),
                                                  'ignore': True}
+                            if star == '1':
+                                problems_infos[k]['skip_for_divisions'] = ['diff']
 
                         time = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc)
 
@@ -137,12 +145,23 @@ class Statistic(BaseModule):
                             problem_is_virtual = False
 
                         time_in_seconds = (time - day_start_time.replace(day=1)).total_seconds()
+                        if is_diff:
+                            if star == '1':
+                                prev_time_in_seconds = time_in_seconds
+                                continue
+                            time_in_seconds = time_in_seconds - prev_time_in_seconds
+                            time = day_start_time + timedelta(seconds=time_in_seconds)
+                            time_in_seconds = (time - day_start_time.replace(day=1)).total_seconds()
+                            prev_time_in_seconds = None
 
                         problem = {
                             'time_index': res['star_index'],
                             'time_in_seconds': time_in_seconds,
                             'time': self.to_time(time - day_start_time),
                             'absolute_time': self.to_time(time_in_seconds),
+                            'result_name': '*',
+                            'result_name_class': 'first-star' if star == '1' else 'both-stars',
+                            '_solution_priority': 2 if star == '1' else 1,
                         }
                         if prev_time_in_seconds:
                             problem['delta_time'] = '+' + self.to_time(time_in_seconds - prev_time_in_seconds)
@@ -153,7 +172,7 @@ class Statistic(BaseModule):
                         times[k].append((problem['time_in_seconds'], problem['time_index']))
                         prev_time_in_seconds = time_in_seconds
                 if not problems:
-                    result.pop(handle)
+                    division_result.pop(handle)
 
             global_times = deepcopy(times)
             for contest in contests.values():
@@ -163,8 +182,8 @@ class Statistic(BaseModule):
                     for star, p in stat['addition__problems'].items():
                         star = 3 - int(star)
                         k = f'{day}.{star}'
-                        if account in result:
-                            result[account]['problems'][k].update({
+                        if account in division_result and k in division_result[account]['problems']:
+                            division_result[account]['problems'][k].update({
                                 'global_rank': p['rank'],
                                 'global_score': p['result'],
                             })
@@ -173,7 +192,7 @@ class Statistic(BaseModule):
             for t in (times, global_times):
                 for v in t.values():
                     v.sort()
-            for row in result.values():
+            for row in division_result.values():
                 problems = row.setdefault('problems', {})
                 for k, p in row['problems'].items():
                     time_value = (p['time_in_seconds'], p['time_index'])
@@ -183,28 +202,34 @@ class Statistic(BaseModule):
                     p['result'] = score
                     p['result_rank'] = rank
 
-                    global_rank = global_times[k].index(time_value) + 1
-                    global_score = max(global_best_score - global_rank + 1, 0)
-                    if global_score and 'global_rank' not in p:
-                        p['global_rank'] = global_rank
-                        p['global_score'] = global_score
-                    row['global_score'] += p.get('global_score', 0)
+                    if not is_diff:
+                        global_rank = global_times[k].index(time_value) + 1
+                        global_score = max(global_best_score - global_rank + 1, 0)
+                        if global_score and 'global_rank' not in p:
+                            p['global_rank'] = global_rank
+                            p['global_score'] = global_score
+                        row['global_score'] += p.get('global_score', 0)
 
-            for row in result.values():
+            for row in division_result.values():
                 row['solving'] = sum(p['result'] for p in row['problems'].values())
 
             last = None
-            for idx, r in enumerate(sorted(result.values(), key=lambda r: -r['solving']), start=1):
+            for idx, r in enumerate(sorted(division_result.values(), key=lambda r: -r['solving']), start=1):
                 if r['solving'] != last:
                     last = r['solving']
                     rank = idx
                 r['place'] = rank
 
-            if is_virtual:
-                if not has_virtual:
-                    break
-                self._set_medals(result, is_private=True)
-                result = {k: {'_division_addition': {division: v}} for k, v in result.items()}
+            if is_main:
+                for k, v in division_result.items():
+                    result[k].update(v)
+            else:
+                if is_virtual and not has_virtual:
+                    continue
+                self._set_medals(division_result, n_medals=True)
+                for k, v in division_result.items():
+                    result[k].setdefault('_division_addition', {}).update({division: v})
+            divisions_order.append(division)
 
         problems = list(sorted(problems_infos.values(), key=lambda p: p['_order']))
         for p in problems:
@@ -220,8 +245,8 @@ class Statistic(BaseModule):
             'fields_types': {'last_star': ['timestamp']},
             'problems': problems,
         }
-        if has_virtual:
-            ret['divisions_order'] = ['main', 'virtual']
+        if len(divisions_order) > 1:
+            ret['divisions_order'] = divisions_order[::-1]
 
         now = datetime.now(tz=tz)
         if now.year == year and now.month == 12:
@@ -319,6 +344,7 @@ class Statistic(BaseModule):
             problem['rank'] = rank
             problem['time_in_seconds'] = (time + self.start_time - self.start_time.replace(day=1)).total_seconds()
             problem['absolute_time'] = self.to_time(problem['time_in_seconds'])
+            problem['_solution_priority'] = 0
 
             prev_k = str(n_problems - 1)
             if prev_k in problems:

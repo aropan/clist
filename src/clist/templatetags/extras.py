@@ -5,6 +5,7 @@ import os
 import re
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
+from copy import deepcopy
 from datetime import datetime, timedelta
 from functools import reduce
 from sys import float_info
@@ -385,12 +386,21 @@ def get_problem_solution(problem):
         for statistic in contest.statistics_set.all():
             problems = contest.info.get('problems', [])
             problems = get_division_problems(problems, statistic.addition)
+            group_scores = defaultdict(int)
 
             for p in problems:
                 key = get_problem_key(p)
                 if key == problem.key:
                     short = get_problem_short(p)
-                    result = statistic.addition.get('problems', {}).get(short)
+                    result = deepcopy(statistic.addition.get('problems', {}).get(short))
+
+                    if 'group' in p:
+                        if is_solved(result):
+                            score = as_number(result.get('result'))
+                            if score is not None:
+                                group_scores[p['group']] += score
+                                result['result'] = group_scores[p['group']]
+
                     res = {'statistic': statistic, 'result': result, 'key': short}
                     if (
                         not ret or ret['result'] is None or
@@ -826,6 +836,11 @@ def is_improved_solution(curr, prev):
         prev_upsolved = is_upsolved(prev)
         if curr_upsolved != prev_upsolved:
             return curr_upsolved
+
+    curr_priority = curr.get('_solution_priority')
+    prev_priority = prev.get('_solution_priority')
+    if curr_priority is not None and prev_priority is not None and curr_priority != prev_priority:
+        return curr_priority < prev_priority
 
     curr_result = normalized_result(curr.get('result'))
     prev_result = normalized_result(prev.get('result'))

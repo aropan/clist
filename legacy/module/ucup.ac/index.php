@@ -63,20 +63,18 @@
             $info = array('parse' => array('season' => "$season", 'stage' => $c['stage']));
 
             $standings_url = $c['scoreboard'];
-            if (empty($standings_url)) {
-                $standings_stage = null;
-                foreach ($standings as $stage => $info) {
-                    if (stripos($info['title'], $c['contest']) === false) {
-                        continue;
-                    }
-                    if ($standings_stage === null || strlen($info['title']) < strlen($standings_stage['title'])) {
-                        $standings_stage = $info;
-                    }
+            $standings_stage = null;
+            foreach ($standings as $stage => $info) {
+                if (stripos($info['title'], $c['contest']) === false) {
+                    continue;
                 }
-                if ($standings_stage) {
-                    $standings_url = $standings_stage['standings_url'];
-                    unset($standings[$standings_stage['stage']]);
+                if ($standings_stage === null || strlen($info['title']) < strlen($standings_stage['title'])) {
+                    $standings_stage = $info;
                 }
+            }
+            if ($standings_stage) {
+                $standings_url = $standings_stage['standings_url'];
+                unset($standings[$standings_stage['stage']]);
             }
 
             $contest = array(

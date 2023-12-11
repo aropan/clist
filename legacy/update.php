@@ -47,6 +47,7 @@
     echo "<i>" . date("r") . "</i><br><br>\n\n";
 
     $resources_hosts = array();
+    $auto_remove_started = array();
     foreach ($resources as $resource)
     {
         $start_parsing_time = microtime(true);
@@ -172,6 +173,9 @@
 
                 $contests[] = $contest;
             }
+        }
+        if ($resource['auto_remove_started'] == 't') {
+            $auto_remove_started[$resource['id']] = true;
         }
 
         $elapsed_time = microtime(true) - $start_parsing_time;
@@ -351,6 +355,7 @@
         }
 
         $contest['was_auto_added'] = 1;
+        $contest['auto_updated'] = date("Y-m-d H:i:s");
 
         foreach ($contest as $field => $value)
         {
@@ -399,10 +404,20 @@
             "{$contest['title']} ({$contest['start_time']} | $duration_human) [{$contest['key']}]</span><br>\n";
     }
     if (count($updated_resources)) {
-        $query =
-            'was_auto_added = true'
-            . ' AND resource_id IN (' . implode(',', array_keys($updated_resources)) . ')'
-            . " AND start_time > now() AND now() - interval '2 hours' > updated";
+        $resources_filter = '';
+        foreach (array_keys($updated_resources) as $resource_id) {
+            if ($resources_filter) {
+                $resources_filter .= ' OR ';
+            }
+
+            if (isset($auto_remove_started[$resource_id])) {
+                $time_filter = "auto_updated < now() - interval '2 hours' AND now() < end_time";
+            } else {
+                $time_filter = "auto_updated < now() - interval '2 hours' AND now() < start_time";
+            }
+            $resources_filter .= "(resource_id = $resource_id AND $time_filter)";
+        }
+        $query = "was_auto_added = true AND ($resources_filter)";
         $to_be_removed = $db->select("clist_contest", "*", $query);
         if ($to_be_removed) {
             $filename_log =  LOGREMOVEDDIR . date("Y-m-d_H-i-s", time()) . '.txt';

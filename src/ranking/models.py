@@ -661,6 +661,8 @@ class Stage(BaseModel):
                                 continue
                     if scoring:
                         if scoring['name'] == 'general':
+                            if s.place_as_int is None:
+                                continue
                             solving_factor = s.solving / max_solving
                             rank_factor = (n_effective - s.place_as_int + 1) / n_effective
                             score += scoring['factor'] * solving_factor * rank_factor

@@ -4,7 +4,7 @@
   <div>
   {% if stat.result is not None %}
     <div
-      class="inline
+      class="inline text-nowrap
       {% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %}
         text-muted
       {% elif stat.binary is None and with_detail and stat.subscores %}
@@ -54,7 +54,12 @@
       {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}
         <span>{{ stat.result }}</span>
       {% else %}
-        <span{% if stat.verdict and 'time' in stat %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.result|scoreformat }}</span>
+        <span
+          {% if with_result_name and stat.result_name_class %} class="{{ stat.result_name_class }}"{% endif %}
+          {% if stat.verdict and 'time' in stat %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}
+        >
+          {% if with_result_name and stat.result_name %}{{ stat.result_name }}{% else %}{{ stat.result|scoreformat }}{% endif %}
+        </span>
       {% endif %}
       {% if with_detail %}{% if stat.result_rank %}<span class="text-muted small text-weight-normal"> ({{ stat.result_rank }})</span>{% endif %}{% endif %}
 

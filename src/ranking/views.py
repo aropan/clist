@@ -49,11 +49,13 @@ from utils.regex import get_iregex_filter
 
 @page_template('standings_list_paging.html')
 def standings_list(request, template='standings_list.html', extra_context=None):
-    contests = Contest.objects.annotate_favorite(request.user) \
-        .select_related('resource') \
-        .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id')))) \
-        .filter(Q(n_statistics__gt=0) | Q(end_time__lte=timezone.now())) \
+    contests = (
+        Contest.objects.annotate_favorite(request.user)
+        .select_related('resource', 'stage')
+        .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id'))))
+        .filter(Q(n_statistics__gt=0) | Q(end_time__lte=timezone.now()))
         .order_by('-end_time', 'pk')
+    )
 
     all_standings = False
     if request.user.is_authenticated:
@@ -741,6 +743,8 @@ def get_standings_problems(contest, division):
             problems = list(_problems.values())
         else:
             problems = problems['division'][division]
+    if division:
+        problems = [p for p in problems if division not in p.get('skip_for_divisions', [])]
     return problems
 
 

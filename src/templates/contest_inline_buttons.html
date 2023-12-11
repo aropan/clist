@@ -9,5 +9,11 @@
         <i class="fas fa-database"></i>
     </button>
     {% endif %}
+
+    {% if perms.ranking.change_stage and is_stage %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_stage_change' contest.stage.id %}">
+        <i class="fas fa-database"></i>
+    </button>
+    {% endif %}
 </span>
 {% endif %}

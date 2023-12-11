@@ -827,3 +827,23 @@ a[data-toggle="tooltip"][disabled],
 .btn[data-toggle="tooltip"][disabled] {
   pointer-events: auto;
 }
+
+
+/*
+ * Advent of Code stars
+ */
+
+
+.first-star {
+  color: #9999cc;
+  font-family: "Source Code Pro", monospace;
+  font-size: 18pt;
+  text-shadow: 0 0 1px #000;
+}
+
+.both-stars {
+  color: #ffff66;
+  font-family: "Source Code Pro", monospace;
+  font-size: 18pt;
+  text-shadow: 0 0 2px #000;
+}

@@ -48,9 +48,13 @@
       {% with advance=stat.addition|get_item:'_advance' %}
       <tr>
         <td class="{% if advance.class %} {{ advance.class }}{% endif %}">
+          {% if stat.place is None %}
+          &mdash;
+          {% else %}
           <div title="{{ stat.contest.title }}{% if advance.next %}<br/>Supposedly advance to {{ advance.next }}{% endif %}" data-html="true" data-toggle="tooltip">
             <a href="{% url 'ranking:standings' stat.contest.title|slug stat.contest.pk %}?find_me={{ stat.pk }}">{{ stat.place }}</a>
           </div>
+          {% endif %}
         </td>
       </tr>
       {% endwith %}

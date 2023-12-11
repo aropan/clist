@@ -48,6 +48,7 @@ class Resource(BaseModel):
     path = models.CharField(max_length=255, null=True, blank=True)
     parse_url = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=30, null=True, blank=True)
+    auto_remove_started = models.BooleanField(default=False, null=False, blank=False)
     color = models.CharField(max_length=20, null=True, blank=True)
     profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)
     avatar_url = models.CharField(max_length=255, null=True, blank=True, default=None)
@@ -365,6 +366,7 @@ class Contest(BaseModel):
     modified = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, db_index=True)
     was_auto_added = models.BooleanField(default=False)
+    auto_updated = models.DateTimeField(auto_now_add=True)
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='contest')
     virtual_starts = GenericRelation('ranking.VirtualStart', related_query_name='contest')

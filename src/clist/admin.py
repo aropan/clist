@@ -58,23 +58,25 @@ class ContestAdmin(BaseModelAdmin):
                            'standings_kind', 'registration_url']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
-        ['Addition information', {'fields': ['was_auto_added', 'n_statistics', 'has_hidden_results', 'calculate_time',
-                                             'info', 'invisible', 'is_rated', 'with_medals', 'related', 'series',
-                                             'allow_updating_statistics_for_participants']}],
+        ['Addition information', {'fields': ['was_auto_added', 'auto_updated', 'n_statistics', 'has_hidden_results',
+                                             'calculate_time', 'info', 'invisible', 'is_rated', 'with_medals',
+                                             'related', 'series', 'allow_updating_statistics_for_participants']}],
         ['Timing', {'fields': ['parsed_time', 'notification_timing', 'statistic_timing', 'rating_prediction_timing',
                                'created', 'modified', 'updated']}],
         ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
                                'rating_prediction_fields']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
-                    'created', 'modified', 'updated', 'parsed_time']
+                    'created', 'modified', 'updated', 'parsed_time', 'auto_updated']
     search_fields = ['title', 'standings_url']
     list_filter = [ComingContestListFilter, PastContestListFilter, 'invisible', 'is_rated', 'resource__host']
 
     actions = [parse_statistic]
 
     def get_readonly_fields(self, request, obj=None):
-        return ['updated', 'notification_timing', 'statistic_timing'] + list(super().get_readonly_fields(request, obj))
+        ret = ['auto_updated', 'updated', 'notification_timing', 'statistic_timing']
+        ret += list(super().get_readonly_fields(request, obj))
+        return ret
 
     inlines = [RatingSet]
 
@@ -124,7 +126,7 @@ class ResourceAdmin(BaseModelAdmin):
     fieldsets = [
         [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'avatar_url', 'problem_url', 'icon',
                            'n_accounts', 'n_contests']}],
-        ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone']}],
+        ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone', 'auto_remove_started']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
         ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'rating_update_time', 'ratings',
                                            'rating_prediction']}],

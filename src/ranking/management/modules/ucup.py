@@ -4,6 +4,7 @@ import html
 import re
 import urllib.parse
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 import yaml
 from django.db.models import Q
@@ -77,8 +78,8 @@ class Statistic(BaseModule):
         scorings = variables.pop('score')
         base_url = 'https://qoj.ac/'
 
-        problems_infos = []
-        for idx, problem_id in enumerate(variables['problems']):
+        def fetch_problem(problem: tuple[int, int]):
+            idx, problem_id = problem
             problem_id = str(problem_id)
             problem_info = {'short': chr(ord('A') + idx), 'code': problem_id}
             for url in (
@@ -95,9 +96,15 @@ class Statistic(BaseModule):
                     break
                 except FailOnGetResponse as e:
                     LOG.warn(f'Fail to get problem names: {e}')
-            problems_infos.append(problem_info)
+            return problem_info
+
+        problems_infos = []
+        with PoolExecutor(max_workers=8) as executor:
+            for problem_info in executor.map(fetch_problem, enumerate(variables['problems'])):
+                problems_infos.append(problem_info)
 
         result = {}
+        handle_mapping = {}
         for standings_row in standings:
             solving, penalty, name, rank, rating = standings_row
             orig_handle, _, _, name, *_ = name
@@ -119,6 +126,7 @@ class Statistic(BaseModule):
                 handle = orig_handle
             if handle in result:
                 raise ExceptionParseStandings(f'Duplicate handle "{handle}"')
+            handle_mapping[orig_handle] = handle
 
             name = name.encode('utf8', 'replace').decode('utf8')
             name = re.sub(r'<([a-z]+)[^>]*>.*</\1>$', '', name)
@@ -140,7 +148,8 @@ class Statistic(BaseModule):
                 **rating_data,
             )
 
-            problems = row.setdefault('problems', {})
+            statistics_problems = (statistics or {}).get(handle, {}).get('problems', {})
+            problems = row.setdefault('problems', statistics_problems)
             scoring = scoring.items() if isinstance(scoring, dict) else enumerate(scoring)
             for k, scoring_value in scoring:
                 score, time, submission_id, n_attempts, full_score, *is_hidden = map(int, scoring_value)
@@ -157,13 +166,89 @@ class Statistic(BaseModule):
                     problem['time'] = self.to_time(time // 60, num=2)
                     problem['time_in_seconds'] = time
                 if submission_id != -1:
+                    problem['submission_id'] = submission_id
                     problem['url'] = urllib.parse.urljoin(self.standings_url, f'/submission/{submission_id}')
             result[handle] = row
+        if statistics:
+            for handle, row in statistics.items():
+                if handle not in result:
+                    row['member'] = handle
+                    result[handle] = row
+
+        REQ.add_cookie('show_all_submissions', 'true')
+        submission_url = urllib.parse.urljoin(self.standings_url.rstrip('/'), 'submissions/')
+
+        seen_pages = {1}
+        next_pages = []
+        submissions_info = self.info.get('_submissions_info', {})
+        last_submission_id = submissions_info.get('last_submission_id') if statistics else None
+
+        def process_submission_page(page):
+            submission_page = REQ.get(submission_url + '?page=' + str(page))
+
+            table = parsed_table.ParsedTable(submission_page)
+            n_added = 0
+            for row in table:
+                row = {k.lower().replace(' ', '_'): v.value for k, v in row.items()}
+                submission_id = int(row.pop('id').lstrip('#'))
+                if last_submission_id and submission_id <= last_submission_id:
+                    continue
+                handle = row.pop('submitter').rstrip(' #')
+                short = row.pop('problem').split('.')[0]
+                verdict = row.pop('result').split()[0]
+                handle = handle_mapping.get(handle, handle)
+                if handle not in result:
+                    result[handle] = {'member': handle, 'problems': {}, '_no_update_n_contests': True}
+                problems = result[handle].setdefault('problems', {})
+                problem = problems.setdefault(short, {})
+                is_accepted = verdict == 'AC'
+                upsolving = submission_id > problem.get('submission_id', -1)
+                if upsolving:
+                    problem = problem.setdefault('upsolving', {})
+                elif submission_id != problem.get('submission_id', -1):
+                    continue
+
+                row['execution_time'] = row.pop('time')
+                problem.update(row)
+                problem['verdict'] = verdict
+                if upsolving:
+                    if 'submission_id' not in problem or submission_id > problem['submission_id'] or is_accepted:
+                        problem['submission_id'] = submission_id
+                        problem['url'] = urllib.parse.urljoin(self.standings_url, f'/submission/{submission_id}')
+                    if is_accepted:
+                        problem['result'] = f'+{problem.get("attempts") or ""}'
+                    else:
+                        problem['attempts'] = problem.get('attempts', 0) + 1
+                        prev_result = problem.get('result', '-')[0]
+                        problem['result'] = f'{prev_result}{problem["attempts"]}'
+
+                if submissions_info.get('last_submission_id', -1) < submission_id:
+                    submissions_info['last_submission_id'] = submission_id
+                n_added += 1
+            if not n_added:
+                return
+
+            matches = re.finditer('<a[^>]*class="page-link"[^>]*>(?P<page>[0-9]+)</a>', submission_page)
+            for match in matches:
+                page = int(match.group('page'))
+                if page not in seen_pages:
+                    seen_pages.add(page)
+                    next_pages.append(page)
+
+        process_submission_page(1)
+        with PoolExecutor(max_workers=8) as executor:
+            while next_pages:
+                curr_pages = next_pages
+                next_pages = []
+                for _ in executor.map(process_submission_page, curr_pages):
+                    pass
 
         standings = {
             'result': result,
             'problems': problems_infos,
             'hidden_fields': ['total_rating', 'original_handle'],
+            '_submissions_info': submissions_info,
+            'info_fields': ['_submissions_info'],
         }
         return standings
 

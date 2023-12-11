@@ -306,6 +306,7 @@ class Command(BaseCommand):
         n_upd_account_time = 0
         n_statistics_total = 0
         n_statistics_created = 0
+        n_calculated_rating_prediction = 0
         n_calculated_problem_rating = 0
         progress_bar = tqdm(contests)
         stages_ids = []
@@ -344,6 +345,7 @@ class Command(BaseCommand):
             total += 1
 
             if hasattr(contest, 'stage'):
+                self.logger.info(f'update stage = {contest.stage}')
                 stages_ids.append(contest.stage.pk)
                 count += 1
                 continue
@@ -1254,6 +1256,8 @@ class Command(BaseCommand):
 
                 if resource.rating_prediction and not without_calculate_rating_prediction:
                     call_command('calculate_rating_prediction', contest=contest.pk)
+                    contest.refresh_from_db()
+                    n_calculated_rating_prediction += 1
 
                 if to_calculate_problem_rating and not without_calculate_problem_rating:
                     call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
@@ -1290,7 +1294,7 @@ class Command(BaseCommand):
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
                     delay = min(delay, timing_delta)
                 contest.statistic_timing = now + delay
-                contest.save()
+                contest.save(update_fields=['statistic_timing'])
 
                 if parsed and not no_update_results:
                     stages = Stage.objects.filter(
@@ -1317,9 +1321,12 @@ class Command(BaseCommand):
                     event_log = EventLog.objects.create(name='parse_statistic',
                                                         related=stage,
                                                         status=EventStatus.IN_PROGRESS)
+                    channel_layer_handler.set_contest(stage.contest)
                     stage.update()
+                    channel_layer_handler.send_done(done=True)
                     event_log.update_status(EventStatus.COMPLETED)
                 except Exception as e:
+                    channel_layer_handler.send_done(done=False)
                     event_log.update_status(EventStatus.FAILED, message=str(e))
                     raise e
             return ret
@@ -1335,6 +1342,8 @@ class Command(BaseCommand):
         self.logger.info(f'Number of parsed contests: {count} of {total}')
         if n_calculated_problem_rating:
             self.logger.info(f'Number of calculate rating problem: {n_calculated_problem_rating} of {total}')
+        if n_calculated_rating_prediction:
+            self.logger.info(f'Number of calculate rating prediction: {n_calculated_rating_prediction} of {total}')
         self.logger.info(f'Number of updated account time: {n_upd_account_time}')
         self.logger.info(f'Number of created statistics: {n_statistics_created} of {n_statistics_total}')
 

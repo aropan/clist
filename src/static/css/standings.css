@@ -306,11 +306,9 @@ a.solution:hover span {
 }
 
 .problem-cell .is-virtual {
-  position: absolute;
   color: #777;
-  font-size: 90%;
-  margin-left: 5px;
-  margin-top: 2px;
+  font-size: 70%;
+  margin-left: -2px;
 }
 
 /*

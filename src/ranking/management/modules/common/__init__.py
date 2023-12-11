@@ -125,6 +125,15 @@ class BaseModule(object, metaclass=ABCMeta):
     def get_versus(self, *args, **kwargs):
         raise NotImplementedError()
 
+    @staticmethod
+    def get_upsolving_problems(statistics, handle):
+        problems = {}
+        if statistics and handle in statistics:
+            for short, problem in statistics[handle].get('problems', {}).items():
+                if 'upsolving' in problem:
+                    problems[short] = {'upsolving': problem['upsolving']}
+        return problems
+
     @property
     def host(self):
         urlinfo = urllib.parse.urlparse(self.url)

@@ -64,11 +64,13 @@
   </td>
   <td class="problem-result-column {{ solution_class }}" data-solution-class="{{ solution_class }}" data-system-solution-class="{{ system_solution_class }}">
     {% if solution %}
+      {% with with_result_name=True  %}
       {% if not solution.result|is_solved and solution.result.upsolving %}
         {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result.upsolving with_detail=False key=solution.key with_admin_url=True is_upsolving=True %}
       {% else %}
         {% include "standings_problem_stat.html" with statistic=solution.statistic stat=solution.result with_detail=False key=solution.key with_admin_url=True %}
       {% endif %}
+      {% endwith %}
     {% endif %}
   </td>
   {% endif %}

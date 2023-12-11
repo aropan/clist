@@ -834,7 +834,7 @@ class requester():
             domain=domain or urllib.parse.urlparse(self.last_url).netloc,
             domain_specified=False,
             domain_initial_dot=False,
-            path='/',
+            path=path,
             path_specified=True,
             secure=False,
             expires=expires,
