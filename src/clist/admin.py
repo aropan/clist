@@ -55,7 +55,7 @@ class ContestAdmin(BaseModelAdmin):
 
     fieldsets = [
         [None, {'fields': ['title', 'slug', 'title_path', 'kind', 'resource', 'host', 'url', 'standings_url',
-                           'standings_kind', 'registration_url']}],
+                           'standings_kind', 'registration_url', 'trial_standings_url']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['was_auto_added', 'auto_updated', 'n_statistics', 'has_hidden_results',

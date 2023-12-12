@@ -5,15 +5,13 @@ import logging
 import os
 import re
 from collections import OrderedDict, defaultdict
-from datetime import datetime
-from pprint import pprint
 
 import tqdm
 
 from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings
-from ranking.management.modules.neerc_ifmo_helper import parse_xml
+from ranking.management.modules.nerc_itmo_helper import parse_xml
 
 logging.getLogger('geopy').setLevel(logging.INFO)
 
@@ -193,6 +191,8 @@ class Statistic(BaseModule):
 
                             countries = defaultdict(int)
                             for loc in locs:
+                                if detect_location.get('first'):
+                                    loc = loc.split()[0]
                                 country = locator.get_country(loc, lang='ru')
                                 if country:
                                     countries[country] += 1
@@ -207,26 +207,3 @@ class Statistic(BaseModule):
             'problems': list(problems_info.values()),
         }
         return standings
-
-
-if __name__ == "__main__":
-    statictic = Statistic(
-        standings_url='http://neerc.ifmo.ru/school/io/archive/20120129/standings-20120129-individual.html',
-        start_time=datetime.strptime('20120129', '%Y%m%d'),
-    )
-    pprint(statictic.get_standings())
-    statictic = Statistic(
-        standings_url='http://neerc.ifmo.ru/school/io/archive/20190324/standings-20190324-individual.html',
-        start_time=datetime.strptime('20190324', '%Y%m%d'),
-    )
-    pprint(statictic.get_standings())
-    statictic = Statistic(
-        standings_url='http://neerc.ifmo.ru/school/io/archive/20080510/standings-20080510-advanced.html',
-        start_time=datetime.strptime('20080510', '%Y%m%d'),
-    )
-    pprint(statictic.get_standings())
-    statictic = Statistic(
-        standings_url='https://nerc.itmo.ru/school/archive/2019-2020/ru-olymp-team-russia-2019-standings.html',
-        start_time=datetime.strptime('20191201', '%Y%m%d'),
-    )
-    pprint(statictic.get_standings())

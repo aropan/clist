@@ -337,6 +337,7 @@ class Contest(BaseModel):
     edit = models.CharField(max_length=100, null=True, blank=True)
     invisible = models.BooleanField(default=False, db_index=True)
     standings_url = models.CharField(max_length=2048, null=True, blank=True)
+    trial_standings_url = models.CharField(max_length=2048, null=True, blank=True)
     standings_kind = models.CharField(max_length=10, blank=True, null=True, db_index=True,
                                       choices=STANDINGS_KINDS.items())
     registration_url = models.CharField(max_length=2048, null=True, blank=True)

@@ -130,7 +130,7 @@ class Statistic(BaseModule):
                                                  'subname_class': 'first-star' if star == '1' else 'both-stars',
                                                  'url': urljoin(self.url, f'/{year}/day/{day}'),
                                                  '_order': (int(day), int(star)),
-                                                 'ignore': True}
+                                                 'skip_in_stats': True}
                             if star == '1':
                                 problems_infos[k]['skip_for_divisions'] = ['diff']
 

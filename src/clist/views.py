@@ -736,6 +736,18 @@ def update_problems(contest, problems=None, force=False):
                 if current_contest != contest and not added_problem:
                     continue
 
+                if problem_info.get('skip_in_stats'):
+                    problem = Problem.objects.filter(
+                        contest=problem_contest,
+                        resource=contest.resource,
+                        key=key,
+                    ).first()
+                    if problem:
+                        problem.contests.add(contest)
+                        if problem.id in old_problem_ids:
+                            old_problem_ids.remove(problem.id)
+                    continue
+
                 url = info.pop('url', None)
                 if info.pop('_no_problem_url', False):
                     url = getattr(added_problem, 'url', None) or url
@@ -858,7 +870,8 @@ def update_problems(contest, problems=None, force=False):
 def problems(request, template='problems.html'):
     problems = Problem.visible_objects.annotate_favorite(request.user).annotate_note(request.user)
     problems = problems.select_related('resource')
-    problems = problems.prefetch_related('contests')
+    problems_contests = Contest.objects.order_by('invisible', '-end_time')
+    problems = problems.prefetch_related(Prefetch('contests', queryset=problems_contests))
     problems = problems.prefetch_related('tags')
     problems = problems.annotate(min_contest_id=SubqueryMin('contests__id'))
     problems = problems.annotate(date=F('time'))

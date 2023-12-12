@@ -195,7 +195,7 @@ class Statistic(BaseModule):
                     continue
                 handle = row.pop('submitter').rstrip(' #')
                 short = row.pop('problem').split('.')[0]
-                verdict = row.pop('result').split()[0]
+                verdict = ''.join(re.findall('[A-Z]', row.pop('result')))
                 handle = handle_mapping.get(handle, handle)
                 if handle not in result:
                     result[handle] = {'member': handle, 'problems': {}, '_no_update_n_contests': True}

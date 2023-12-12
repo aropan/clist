@@ -847,3 +847,8 @@ a[data-toggle="tooltip"][disabled],
   font-size: 18pt;
   text-shadow: 0 0 2px #000;
 }
+
+.table td:has(.both-stars),
+.table td:has(.first-star) {
+  padding: 0px;
+}

@@ -3,14 +3,14 @@
 import html
 import re
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pprint import pprint
 
 from django.utils.timezone import now
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import InitModuleException
-from ranking.management.modules.neerc_ifmo_helper import parse_xml
+from ranking.management.modules.nerc_itmo_helper import parse_xml
 
 
 class Statistic(BaseModule):
@@ -170,13 +170,3 @@ class Statistic(BaseModule):
             'hidden_fields': ['university', 'region', 'medal'],
         }
         return standings
-
-
-if __name__ == "__main__":
-    statictic = Statistic(
-        name='ICPC 2019-2020, NEERC - Northern Eurasia Finals',
-        standings_url='http://neerc.ifmo.ru/archive/2019/standings.html',
-        key='2019-2020 NEERC',
-        start_time=datetime.strptime('2019-09-02', '%Y-%m-%d'),
-    )
-    pprint(statictic.get_result('SPb SU: 25 (Belichenko, Bykov, Petrov) 2019-2020'))

@@ -248,7 +248,7 @@
         if (!isset($contest['skip_update_key']) || !$contest['skip_update_key']) {
             switch ($contest['host']) {
                 case 'dl.gsu.by': $contest['key'] = $contest['title'] . '. ' . date("d.m.Y", $contest['start_time']); break;
-                case 'neerc.ifmo.ru/trains': $contest['key'] = $contest['title'] . date(" d.m.Y", $contest['start_time']); break;
+                case 'nerc.itmo.ru/trains': $contest['key'] = $contest['title'] . date(" d.m.Y", $contest['start_time']); break;
             }
         }
 
