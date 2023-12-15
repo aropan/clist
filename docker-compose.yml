@@ -57,7 +57,7 @@ services:
       - sentry_conf
     restart: always
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:latest
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     env_file:
@@ -82,6 +82,7 @@ services:
       -c max_wal_size=4GB
       -c min_wal_size=320MB
       -c bgwriter_delay=20
+      -c track_activity_query_size=4096
     shm_size: 2gb
     restart: always
   nginx:

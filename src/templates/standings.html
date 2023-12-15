@@ -16,7 +16,6 @@
 <script src="{% static_ts 'js/addon-chart.js' %}"></script>
 {% endif %}
 
-<script>page_load = $.now();</script>
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script>
   contest_duration = {{ contest.duration_in_secs }}
@@ -351,7 +350,7 @@
         {% include "standings_groupby.html" with groupby_data=statistics %}
       </div>
     {% endif %}
-    <script>$.endlessPaginate({paginateOnScroll: {% if paginate_on_scroll %}true{% else %}false{% endif %}, onCompleted: toggle_tooltip});</script>
+    <script>configure_pagination({% if paginate_on_scroll %}true{% else %}false{% endif %});</script>
   {% else %}
   <div class="alert alert-info">No standings</div>
   {% endif %}

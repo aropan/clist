@@ -77,7 +77,7 @@
   </span>
   {% endfor %}
 
-  {% include "contest_inline_buttons.html" with contest=contest %}
+  {% include "contest_inline_buttons.html" with contest=contest with_stage=True %}
 </td>
 <td class="date text-muted small">
   <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>

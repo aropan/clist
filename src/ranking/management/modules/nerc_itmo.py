@@ -135,7 +135,7 @@ class Statistic(BaseModule):
 
                     matches = re.finditer(
                         r'''
-                        <tr[^>]*class="(?P<class>[^"]*)"[^>]*>\s*<td[^>]*>[^<]*</td>\s*<td[^>]*title="(?P<name>[^"]*)">[^<]*</td>
+                        <tr[^>]*class="(?P<class>[^"]*)"[^>]*>\s*<td[^>]*>[^<]*</td>\s*<td[^>]*title="(?P<name>[^"]*)">
                         ''',
                         page,
                         re.VERBOSE,

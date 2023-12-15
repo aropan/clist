@@ -66,4 +66,6 @@
   {% if perms.ranking.link_account %}
   {% include "coder_filter.html" with nomultiply=True submit="link" coders=params.link_coders %}
   {% endif %}
+
+  {% include "list_filter.html" with list_field="to_list" nomultiply=True submit="add" submit_value="add_to_list" submit_enabled=params.to_list %}
 </div>

@@ -608,7 +608,7 @@ class Command(BaseCommand):
 
                                     if ac and v.get('time'):
                                         if contest.info.get('with_time_from_timeline') and 'time_in_seconds' not in v:
-                                            timeline = resource.info.get('standings', {}).get('timeline', {})
+                                            timeline = contest.get_timeline_info()
                                             if timeline:
                                                 v['time_in_seconds'] = time_in_seconds(timeline, v['time'])
 
@@ -893,13 +893,24 @@ class Command(BaseCommand):
                                         elif place:
                                             place -= len(medals_skip) - medals_skip_places.get(place, 0)
                                             for medal in medals:
-                                                if place <= medal['count']:
+                                                if (
+                                                    'count' in medal and place <= medal['count']
+                                                    or 'score' in medal and r.get('solving', 0) >= medal['score']
+                                                ):
                                                     r[k] = medal['name']
                                                     if 'field' in medal:
-                                                        r[medal['field']] = medal['value']
-                                                        r[f'_{k}_title_field'] = medal['field']
+                                                        field = medal['field']
+                                                        if (
+                                                            not Statistics.is_special_addition_field(field)
+                                                            and field not in hidden_fields
+                                                        ):
+                                                            standings_hidden_fields.append(field)
+                                                            hidden_fields.add(field)
+                                                        r[field] = medal['value']
+                                                        r[f'_{k}_title_field'] = field
                                                     break
-                                                place -= medal['count']
+                                                if 'count' in medal:
+                                                    place -= medal['count']
                                     medal_fields = [m['field'] for m in medals if 'field' in m] or [k]
                                     for f in medal_fields:
                                         if f not in fields_set:
@@ -1014,7 +1025,7 @@ class Command(BaseCommand):
                                     if statistics_ids:
                                         statistics_ids.remove(statistic.pk)
 
-                                    timeline = resource.info.get('standings', {}).get('timeline', {})
+                                    timeline = contest.get_timeline_info()
                                     if timeline and try_calculate_time:
                                         p_problems = statistic.addition.get('problems', {})
 

@@ -947,9 +947,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         for i, c in enumerate([contest] + other_contests, start=1):
             contests_resources.add(c.resource_id)
             contests_ids[c.pk] = i
-            timeline = c.resource.info.get('standings', {}).get('timeline')
-            if timeline:
-                contests_timelines[c.pk] = timeline
+            contests_timelines[c.pk] = c.get_timeline_info()
     if contest is None:
         return HttpResponseNotFound()
     if to_redirect:
@@ -1173,8 +1171,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if first:
             first_problems = list(first.addition.get('problems', {}).values())
             enable_timeline = all(not is_reject(p) for p in first_problems) or any('time' in p for p in first_problems)
-        if len(contests_resources) > 1:
-            enable_timeline = False
     if enable_timeline and 'timeline' in request.GET:
         timeline = request.GET.get('timeline') or '1'
         if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):

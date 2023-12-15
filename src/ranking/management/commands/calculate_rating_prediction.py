@@ -275,13 +275,13 @@ class Command(BaseCommand):
 
             with transaction.atomic(), suppress_db_logging_context():
                 rankings_dict = {ranking.pop('member'): ranking for ranking in rankings}
-                statistics = Statistics.objects.filter(contest=contest, account__key__in=list(rankings_dict.keys()))
-                statistics = statistics.select_related('account')
+                statistics = Statistics.objects.filter(contest=contest).select_related('account')
                 has_fixed_field = False
                 fields_types = defaultdict(set)
-                for stat in tqdm.tqdm(statistics.iterator(),
-                                      total=len(rankings_dict),
+                for stat in tqdm.tqdm(statistics.iterator(), total=contest.n_statistics,
                                       desc='update statistics rating predictions'):
+                    if stat.account.key not in rankings_dict:
+                        continue
                     if 'rating_change' not in stat.addition:
                         has_fixed_field = True
                     stat.rating_prediction = rankings_dict[stat.account.key]
@@ -290,7 +290,10 @@ class Command(BaseCommand):
                     stat.save(update_fields=['rating_prediction'])
                 fields_types = {k: list(v) for k, v in fields_types.items()}
 
-                contest.rating_prediction_fields['types'] = fields_types
+                rating_prediction_fields = contest.rating_prediction_fields or {}
+                rating_prediction_fields['types'] = fields_types
+
+                contest.rating_prediction_fields = rating_prediction_fields
                 contest.rating_prediction_hash = rating_prediction_hash
                 contest.has_fixed_rating_prediction_field = has_fixed_field
                 contest.rating_prediction_timing = now()

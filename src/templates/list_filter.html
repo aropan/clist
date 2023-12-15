@@ -1,4 +1,6 @@
-{% list_data_field_to_select as list_data %}
+{% with field=list_field|default:'list' %}
+{% list_data_field_to_select field=field nomultiply=nomultiply as list_data %}
 {% if list_data %}
-  {% include "field_to_select.html" with field='list' data=list_data %}
+  {% include "field_to_select.html" with field=field data=list_data %}
 {% endif %}
+{% endwith %}

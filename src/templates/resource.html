@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<script>$.endlessPaginate({onCompleted: toggle_tooltip});</script>
+<script>configure_pagination(false)</script>
 
 <h2>
     <img src="{{ resource.icon|media_size:'64x64' }}" width="24" height="24"/>

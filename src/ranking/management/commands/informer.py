@@ -29,6 +29,7 @@ from clist.templatetags.extras import (as_number, get_problem_name, get_problem_
 from ranking.models import Statistics
 from tg.bot import MAX_MESSAGE_LENGTH, Bot, telegram
 from tg.models import Chat
+from true_coders.models import CoderList
 from utils.attrdict import AttrDict
 from utils.strings import trim_on_newline
 
@@ -42,6 +43,22 @@ def combine_messages(msg, previous):
     return ret
 
 
+def wait(message, until_time, size=1):
+    if isinstance(until_time, (int, float)):
+        until_time = timezone.now() + timedelta(seconds=until_time)
+    prev_out = None
+    print()
+    while timezone.now() < until_time:
+        value = humanize.naturaldelta(until_time - timezone.now())
+        out = f'\r{message}: {value:{size}s} '
+        if out != prev_out:
+            size = len(value)
+            print(out, end='')
+            prev_out = out
+        time.sleep(1)
+    print()
+
+
 class Command(BaseCommand):
     help = 'Informer'
 
@@ -53,6 +70,7 @@ class Command(BaseCommand):
         parser.add_argument('--tid', type=str, help='Telegram id for info', required=True)
         parser.add_argument('--delay', type=int, help='Delay between query in seconds', default=30)
         parser.add_argument('--query', help='Regex search query', default=None)
+        parser.add_argument('--coder-list', type=str, help='Coder list to query')
         parser.add_argument('--numbered', help='Regex numbering query', default=None)
         parser.add_argument('--top', type=int, help='Number top ignore query', default=None)
         parser.add_argument('--dryrun', action='store_true', help='Do not send to bot message', default=False)
@@ -119,6 +137,11 @@ class Command(BaseCommand):
                     -stat.solving,
                 )
 
+            if args.coder_list:
+                accounts_filter = CoderList.accounts_filter(uuids=[args.coder_list])
+                qs = resource.account_set.filter(accounts_filter)  # TODO filter by contest
+                coder_list_accounts = set(qs.values_list('pk', flat=True))
+
             for stat in sorted(statistics, key=statistics_sort_key):
                 name_instead_key = resource.info.get('standings', {}).get('name_instead_key')
                 name_instead_key = stat.account.info.get('_name_instead_key', name_instead_key)
@@ -130,10 +153,14 @@ class Command(BaseCommand):
                     if not name or not has_season(stat.account.key, name):
                         name = stat.account.key
 
+                stat_problems = stat.addition.get('problems', {})
+
                 filtered = False
                 if args.query is not None and re.search(args.query, name, re.I):
                     filtered = True
-                if args.top and stat.place_as_int and stat.place_as_int <= args.top:
+                if args.top and stat.place_as_int and stat.place_as_int <= args.top and stat_problems:
+                    filtered = True
+                if args.coder_list and stat.account.pk in coder_list_accounts:
                     filtered = True
 
                 contest_problems = contest.info.get('problems')
@@ -147,6 +174,7 @@ class Command(BaseCommand):
                 problems = standings_key.get('problems', {})
                 message_id = standings_key.get('message_id')
                 message_text = standings_key.get('message_text', '')
+                skip_in_message_text = True
 
                 def delete_message():
                     nonlocal message_id
@@ -195,13 +223,15 @@ class Command(BaseCommand):
 
                     return 0
 
-                for k, v in stat.addition.get('problems', {}).items():
+                for k, v in stat_problems.items():
                     if 'result' not in v:
                         continue
 
                     p_info = problems_info.setdefault(k, {})
                     p_result = problems.get(k, {}).get('result')
+                    p_verdict = problems.get(k, {}).get('verdict')
                     result = v['result']
+                    verdict = v.get('verdict')
 
                     is_hidden = str(result).startswith('?')
                     is_accepted = str(result).startswith('+') or v.get('binary', False)
@@ -218,7 +248,8 @@ class Command(BaseCommand):
                     if is_hidden:
                         p_info['n_hidden'] = p_info.get('n_hidden', 0) + 1
 
-                    if p_result != result or is_hidden:
+                    has_change = p_result != result or (p_verdict and verdict and p_verdict != verdict)
+                    if has_change or is_hidden:
                         short = k
                         contest_problem = contest_problems.get(k, {})
                         if contest_problem and ('short' not in contest_problem or short != get_problem_short(contest_problem)):  # noqa
@@ -229,17 +260,19 @@ class Command(BaseCommand):
 
                         m = '%s%s `%s`' % (short, ('. ' + v['name']) if 'name' in v else '', scoreformat(result))
 
-                        if v.get('verdict'):
-                            m += ' ' + md_italic_escape(v['verdict'])
+                        if verdict:
+                            m += ' ' + md_italic_escape(verdict)
 
-                        if p_result != result:
-
+                        if has_change:
                             if p_result is not None and v.get('partial'):
                                 delta = as_number(result) - (as_number(p_result) or 0)
                                 m += " `%s%s`" % ('+' if delta >= 0 else '', delta)
 
                             if in_time is None or time_compare(in_time, v) < 0:
                                 in_time = v
+
+                            if verdict not in ['U']:
+                                skip_in_message_text = False
 
                             has_update = True
                             if iteration:
@@ -267,6 +300,10 @@ class Command(BaseCommand):
                         p_info['max_score'] = float(result)
                     has_hidden = has_hidden or is_hidden
 
+                prev_place_as_int = standings_key.get('place_as_int')
+                place_as_int = stat.place_as_int
+                if prev_place_as_int and place_as_int and prev_place_as_int > place_as_int:
+                    has_update = True
                 prev_place = standings_key.get('place')
                 place = stat.place
                 if has_solving_diff and prev_place:
@@ -308,23 +345,26 @@ class Command(BaseCommand):
                 if not args.dryrun and (filtered and has_update or has_first_ac or has_try_first_ac or has_max_score):
                     delete_message()
                     msg = combine_messages(msg, message_text)
-                    for it in range(3):
+                    n_attempts = 5
+                    delay_on_timeout = 3
+                    for it in range(n_attempts):
                         try:
                             message = bot.send_message(msg=msg, chat_id=tg_chat_id)
                             message_id = message.message_id
                             break
                         except telegram.error.TimedOut as e:
                             logger.warning(str(e))
-                            time.sleep(it * 3)
-                            continue
                         except telegram.error.BadRequest as e:
                             logger.error(str(e))
-                            break
-                    message_text = combine_messages(history_msg, message_text)
+                        wait('send message', it * delay_on_timeout)
+                        continue
+                    if not skip_in_message_text:
+                        message_text = combine_messages(history_msg, message_text)
 
                 data = {
                     'solving': stat.solving,
                     'place': stat.place,
+                    'place_as_int': stat.place_as_int,
                     'problems': stat.addition.get('problems', {}),
                     'message_id': message_id,
                     'message_text': message_text,
@@ -348,18 +388,7 @@ class Command(BaseCommand):
                 else:
                     tick = args.delay * 10 if is_over else args.delay
                     limit = now + timedelta(seconds=tick)
-                size = 1
-                prev_out = None
-                print()
-                while timezone.now() < limit:
-                    value = humanize.naturaldelta(limit - timezone.now())
-                    out = f'\r{value:{size}s} '
-                    if out != prev_out:
-                        size = len(value)
-                        print(out, end='')
-                        prev_out = out
-                    time.sleep(1)
-                print()
+                wait('parsing iteration', limit)
 
             iteration += 1
             forced_iterations -= 1

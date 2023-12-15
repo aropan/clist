@@ -49,13 +49,16 @@ def get_item(data, key):
     if isinstance(data, (dict, defaultdict, OrderedDict)):
         if key in data:
             return data.get(key)
-        for sep in ('.', '__'):
-            if sep in str(key):
-                return reduce(lambda d, k: get_item(d, k) if d else None, str(key).split(sep), data)
-        return None
-    if isinstance(data, (list, tuple)):
-        return data[key] if -len(data) <= key < len(data) else None
-    return getattr(data, key, None)
+    elif isinstance(data, (list, tuple)):
+        key_as_number = as_number(key, force=True)
+        if key_as_number is not None and -len(data) <= key_as_number < len(data):
+            return data[key_as_number]
+    elif hasattr(data, key):
+        return getattr(data, key)
+    for sep in ('.', '__'):
+        if sep in str(key):
+            return reduce(lambda d, k: get_item(d, k) if d else None, str(key).split(sep), data)
+    return None
 
 
 @register.simple_tag
@@ -1116,15 +1119,21 @@ def icon_to(value, default=None, icons=None, html_class=None):
 
 
 @register.simple_tag(takes_context=True)
-def list_data_field_to_select(context):
+def list_data_field_to_select(context, field='list', nomultiply=False):
     CoderList = apps.get_model('true_coders', 'CoderList')
     request = context['request']
     coder = getattr(request.user, 'coder', None)
-    list_uuids = [v for v in request.GET.getlist('list') if v]
+    list_uuids = [v for v in request.GET.getlist(field) if v]
     coder_lists, list_uuids = CoderList.filter_for_coder_and_uuids(coder=coder, uuids=list_uuids)
     options_values = {str(v.uuid): v.name for v in coder_lists}
-    ret = {'values': list_uuids, 'options': options_values,
-           'noajax': True, 'nogroupby': True, 'nourl': True}
+    ret = {
+        'values': list_uuids,
+        'options': options_values,
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nomultiply': nomultiply,
+    }
     return ret
 
 
@@ -1293,3 +1302,8 @@ def coder_account_filter(qs, account, row_number_field=None, operator=None):
 @register.filter
 def not_empty(value):
     return value and value is not None and value != 'None'
+
+
+@register.filter
+def accounts_split(value):
+    return re.split(r',(?=[^\s])', value)

@@ -92,6 +92,7 @@
     </head>
     <body{% if fullscreen %} class="fullscreen"{% endif %}>
         <script>
+            page_load = $.now()
             coder_pk = {% if request.user.is_authenticated %}{{ request.user.coder.pk }}{% else %}undefined{% endif %}
             change_url = '{% url "coder:change" %}'
         </script>

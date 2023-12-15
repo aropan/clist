@@ -25,7 +25,7 @@
   cursor: pointer;
 }
 
-#accounts input[type=checkbox][name=accounts] {
+#accounts input.scale15 {
   transform: scale(1.5);
 }
 

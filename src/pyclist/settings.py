@@ -707,6 +707,7 @@ FONTAWESOME_ICONS_ = {
     'as_coder': '<i class="fa-solid fa-user-group"></i>',
     'logify': '<i class="fa-regular fa-file-lines"></i>',
     'is_virtual': {'icon': '<i class="fa-solid fa-clock-rotate-left"></i>', 'title': False},
+    'to_list': {'icon': '<i class="fa-solid fa-list-check"></i>', 'title': 'Add to list'},
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

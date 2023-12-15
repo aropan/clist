@@ -688,6 +688,6 @@ function escape_html(str) {
             .replace(/>/g, '&gt;');  // and greater-than signs
 }
 
-function configure_pagination() {
-  $.endlessPaginate({paginateOnScroll: true, onCompleted: function () { toggle_tooltip(); inline_button(); }})
+function configure_pagination(paginate_on_scroll = true) {
+  $.endlessPaginate({paginateOnScroll: paginate_on_scroll, onCompleted: function () { toggle_tooltip(); inline_button(); $(window).trigger('resize'); }})
 }

@@ -2,12 +2,14 @@ SECOND = 1000;
 MINUTE = 60 * SECOND;
 HOUR = 60 * MINUTE;
 DAY = 24 * HOUR;
+COUNTDOWN_RELOAD_DELAY = 10 * MINUTE;
 
 function getFormatTime(timer)
 {
     if (typeof(time_update) == "undefined") {
         time_update = DAY;
     }
+
     var h = parseInt(timer / 3600);
     var m = parseInt(timer % 3600 / 60);
     var s = parseInt(timer % 60);
@@ -29,7 +31,8 @@ function countdown()
 {
     var need_reload = false;
     var now = $.now();
-    time_update = DAY;
+    time_update = MINUTE;
+    var reload_time_cookie_name = '_countdown_reload_time';
 
     $(".countdown").each(function () {
         var el = $(this)
@@ -43,7 +46,10 @@ function countdown()
         timer = timer - (now - page_load) / 1000
         var value;
         if (timer < 0) {
-            need_reload = true;
+            var countdown_reload_time = Cookies.get(reload_time_cookie_name)
+            if (!countdown_reload_time || parseInt(countdown_reload_time) + COUNTDOWN_RELOAD_DELAY < now) {
+                need_reload = true;
+            }
             value = '--:--:--';
         } else {
             value = getFormatTime(timer);
@@ -52,6 +58,7 @@ function countdown()
     });
 
     if (need_reload) {
+        Cookies.set(reload_time_cookie_name, now)
         setTimeout("location.reload()", 1990);
     } else if (typeof(time_update) != "undefined") {
         setTimeout(countdown, time_update);

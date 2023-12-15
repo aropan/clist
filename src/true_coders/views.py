@@ -33,8 +33,8 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
 from clist.models import Contest, ContestSeries, ProblemTag, Resource
-from clist.templatetags.extras import (asfloat, format_time, get_timezones, has_update_statistics_permission,
-                                       query_transform, quote_url, relative_url)
+from clist.templatetags.extras import (accounts_split, asfloat, format_time, get_timezones,
+                                       has_update_statistics_permission, query_transform, quote_url, relative_url)
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
@@ -50,6 +50,7 @@ from ranking.models import (Account, AccountRenaming, AccountVerification, Modul
                             VirtualStart, update_account_by_coders)
 from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListValue, Organization, Party
+from true_coders.utils import add_query_to_list
 from utils.chart import make_chart
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
@@ -297,6 +298,14 @@ def coders(request, template='coders.html'):
             coders = coders.annotate(**{f'{r.pk}_n_contests': SubquerySum('account__n_contests', filter=Q(resource=r))})
         params['resources'] = resources
 
+    filtered_stats = filter_contests_with_advanced_to_stats(request, params)
+    if filtered_stats:
+        coders = (
+            coders
+            .annotate(has_contest_account=Exists(filtered_stats['accounts'].filter(coders=OuterRef('id'))))
+            .filter(has_contest_account=True)
+        )
+
     custom_fields = None
     if len(resources) == 1:
         resource = resources[0]
@@ -505,23 +514,13 @@ def _get_data_mixed_profile(request, query):
     profiles = []
 
     if not isinstance(query, (list, tuple)):
-        query = query.split(',')
+        query = accounts_split(query)
 
     if len(query) > 20:
         query = query[:20]
         request.logger.warning('The query is truncated to the first 20 records')
 
-    if request.user.is_authenticated:
-        coder_list = request.POST.get('list')
-        if coder_list:
-            coder = request.user.coder
-            coder_list = get_object_or_404(CoderList, owner=coder, uuid=coder_list)
-            url = reverse('coder:list', args=(str(coder_list.uuid),))
-            request.session['view_list_request_post'] = {
-                'raw': ','.join(query),
-                'uuid': str(coder_list.uuid),
-            }
-            raise RedirectException(redirect(url))
+    add_query_to_list(request, uuid=request.POST.get('list'), query=','.join(query))
 
     n_accounts = 0
     for v in query:
@@ -1956,7 +1955,7 @@ def view_list(request, uuid):
                 request.logger.warning('Nothing has been deleted')
         elif request_post.get('raw'):
             raw = request_post.get('raw')
-            lines = raw.strip().split()
+            lines = raw.strip().splitlines()
 
             if request_post.get('gid'):
                 if len(lines) > 1:
@@ -1964,7 +1963,7 @@ def view_list(request, uuid):
                 lines = lines[:1]
 
             for line in lines:
-                values = line.strip().split(',')
+                values = accounts_split(line.strip())
                 n_coders = 0
                 n_accounts = 0
                 for value in values:
@@ -2035,6 +2034,54 @@ def view_list(request, uuid):
     return render(request, 'coder_list.html', context)
 
 
+def filter_contests_with_advanced_to_stats(request, params):
+    contests_ids = request.GET.getlist('contest')
+    contests_ids = [r for r in contests_ids if r]
+    if not contests_ids:
+        return
+
+    contests = Contest.objects.filter(pk__in=contests_ids)
+    params['contests'] = contests
+
+    contest_filter = Q(contest__in=contests_ids)
+    contest_filter &= Q(addition___no_update_n_contests__isnull=True) | Q(addition___no_update_n_contests=False)
+    stats = Statistics.objects.filter(contest_filter)
+
+    adv_options = stats.distinct('addition___advance__next').values_list('addition___advance__next', flat=True)
+    advanced = request.GET.getlist('advanced')
+    params['advanced_filter'] = {
+        'values': advanced,
+        'options': ['true', 'false'] + [a for a in adv_options if a],
+        'noajax': True,
+        'nomultiply': True,
+        'nogroupby': True,
+    }
+
+    adv_filter = Q()
+    for adv in advanced:
+        if adv not in params['advanced_filter']['options']:
+            continue
+        if adv in ['true', 'false']:
+            adv_filter |= Q(advanced=adv == 'true')
+        else:
+            adv_filter |= Q(addition___advance__next=adv, advanced=True)
+        params['advanced_filter']['value'] = bool(advanced)
+    stats = stats.filter(adv_filter)
+
+    accounts = (
+        Account.objects
+        .annotate(has_contest_stat=Exists(stats.filter(account_id=OuterRef('id'))))
+        .filter(has_contest_stat=True)
+    )
+
+    return {
+        'contest_filter': contest_filter,
+        'adv_filter': adv_filter,
+        'statistics': stats,
+        'accounts': accounts,
+    }
+
+
 @page_template('accounts_paging.html')
 @context_pagination()
 def accounts(request, template='accounts.html'):
@@ -2072,6 +2119,11 @@ def accounts(request, template='accounts.html'):
                     request.logger.success(f'Linked {len(linked_accounts)} account(s) to {link_coder.username}')
             query = query_transform(request, with_remove=True, accounts=None, action=None)
             return HttpResponseRedirect(f'{request.path}?{query}')
+    if action == 'add_to_list':
+        to_list_accounts = set(request.GET.getlist('to_list_accounts'))
+        to_list_accounts = Account.objects.filter(pk__in=to_list_accounts)
+        query = '\n'.join(f'{a.resource.host}:{a.key}' for a in to_list_accounts)
+        add_query_to_list(request, uuid=request.GET.get('to_list'), query=query)
 
     search = request.GET.get('search')
     if search:
@@ -2104,51 +2156,31 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.filter(accounts_filter)
 
     # qualifiers
-    contests_ids = request.GET.getlist('contest')
-    contests_ids = [r for r in contests_ids if r]
-    if contests_ids:
-        contests = Contest.objects.filter(pk__in=contests_ids)
-        params['contests'] = contests
-
-        contest_filter = Q(contest__in=contests_ids)
-        contest_filter &= Q(addition___no_update_n_contests__isnull=True) | Q(addition___no_update_n_contests=False)
-        stats = Statistics.objects.filter(contest_filter)
-
-        adv_options = stats.distinct('addition___advance__next').values_list('addition___advance__next', flat=True)
-        advanced = request.GET.getlist('advanced')
-        params['advanced_filter'] = {
-            'values': advanced,
-            'options': ['true', 'false'] + [a for a in adv_options if a],
-            'noajax': True,
-            'nomultiply': True,
-            'nogroupby': True,
-        }
-
-        adv_filter = Q()
-        for adv in advanced:
-            if adv not in params['advanced_filter']['options']:
-                continue
-            if adv in ['true', 'false']:
-                adv_filter |= Q(advanced=adv == 'true')
-            else:
-                adv_filter |= Q(addition___advance__next=adv, advanced=True)
-            params['advanced_filter']['value'] = bool(advanced)
-        stats = stats.filter(adv_filter)
-
+    filtered_stats = filter_contests_with_advanced_to_stats(request, params)
+    if filtered_stats:
+        stats = filtered_stats['statistics']
         prefetch_stats = stats.select_related('contest').order_by('contest_id')
 
+        statistics_filter = filtered_stats['contest_filter'] & filtered_stats['adv_filter']
         accounts = (
             accounts
             .prefetch_related(Prefetch('statistics_set', prefetch_stats, to_attr='selected_stats'))
-            .annotate(has_contests=Exists('statistics', filter=contest_filter & adv_filter))
-            .filter(has_contests=True)
+            .annotate(has_statistic=Exists('statistics', filter=statistics_filter))
+            .filter(has_statistic=True)
         )
-
-        subquery = stats.filter(account=OuterRef('pk')).order_by('contest__start_time', 'contest_id', 'place_as_int')
+        subquery = stats.filter(account=OuterRef('pk'))
+        subquery = subquery.order_by('contest__start_time', 'contest_id', 'place_as_int')
         subquery = subquery[:1]
         accounts = accounts.annotate(selected_time=Subquery(subquery.values('contest__start_time')))
         accounts = accounts.annotate(selected_contest=Subquery(subquery.values('contest_id')))
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
+
+    to_list = request.GET.get('to_list')
+    if to_list:
+        to_list_accounts_filter = CoderList.accounts_filter([to_list], coder=coder, logger=request.logger)
+        to_list_accounts = Account.objects.filter(to_list_accounts_filter)
+        accounts = accounts.annotate(to_list=Exists(to_list_accounts.filter(pk=OuterRef('pk'))))
+        params['to_list'] = to_list
 
     context = {'params': params}
     addition_table_fields = ('modified', 'updated', 'created', 'key')

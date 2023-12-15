@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<script>$.endlessPaginate({onCompleted: toggle_tooltip});</script>
+<script>configure_pagination(false)</script>
 <script>versus_url = "{% url 'ranking:make_versus' %}"</script>
 
 {% include "filter_collapse.html" with include_filter="resources_top_filters.html" %}

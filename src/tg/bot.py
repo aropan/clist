@@ -495,12 +495,13 @@ class Bot(telegram.Bot):
 
         try:
             ret = self.sendMessage(parse_mode='Markdown', **msg)
-        except telegram.error.Unauthorized as e:
-            raise e
         except Exception as e:
             self.logger.warning(f'message = {msg}')
             self.logger.error(f'Exception send message {e}')
-            ret = self.sendMessage(**msg)
+            if "can't parse entities" in str(e).lower():
+                ret = self.sendMessage(**msg)
+            else:
+                raise e
         return ret
 
     def admin_message(self, msg):

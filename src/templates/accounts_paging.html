@@ -4,7 +4,7 @@
 
 {% for account in accounts %}
 <tr{% if account.my_account %} class="info"{% endif %}>
-  <td>{{ forloop.counter0|add:pages.current_start_index }}</td>
+  <td class="no-stretch">{{ forloop.counter0|add:pages.current_start_index }}</td>
   <td class="account">
     {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True %}
 
@@ -64,14 +64,23 @@
   {% endif %}
   <td>
     {% if not account.has_coders and perms.ranking.link_account %}
-    <input type="checkbox" name="accounts" value="{{ account.pk }}"{% if account.pk|slugify in params.link_accounts %} checked{% endif %}>
+    <input class="scale15" type="checkbox" name="accounts" value="{{ account.pk }}"{% if account.pk|slugify in params.link_accounts %} checked{% endif %}>
     {% elif perms.ranking.link_account %}
     <i class="has_coders fas fa-check clickable"></i>
-    <input class="hidden" type="checkbox" name="accounts" value="{{ account.pk }}">
+    <input class="hidden scale15" type="checkbox" name="accounts" value="{{ account.pk }}">
     {% else %}
     <i class="has_coders fas fa-{% if account.has_coders %}check{% else %}times{% endif %}"></i>
     {% endif %}
   </td>
+  {% if params.to_list %}
+  <td>
+    {% if account.to_list %}
+    <i class="fas fa-check"></i>
+    {% else %}
+    <input class="scale15" type="checkbox" name="to_list_accounts" value="{{ account.pk }}">
+    {% endif %}
+  </td>
+  {% endif %}
   <td>
     {% if account.rating is not None %}
     {% with coloring_field=account.resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'coloring_field' %}

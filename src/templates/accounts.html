@@ -16,12 +16,12 @@
 
   {% include "chart.html" with chart=chart %}
 
-  <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
+  <script>configure_pagination()</script>
   <div id="accounts" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
       <thead>
         <tr>
-          <th>#</th>
+          <th class="no-stretch">#</th>
           <th class="account">
             <div class="resource-width-fixed"></div>
             <div class="avatar-width-fixed"></div>
@@ -37,6 +37,11 @@
           <th>
             <div>Linked<br/>coder</div>
           </th>
+          {% if params.to_list %}
+          <th>
+            <div>Add<br/>to list</div>
+          </th>
+          {% endif %}
           <th>
             <div class="chart-column" data-field="rating"></div>
             <div>Rating</div>

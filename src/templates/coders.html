@@ -12,12 +12,12 @@
 <div class="col-xl-10 col-xl-offset-1">
   {% include "filter_collapse.html" with include_filter="coders_filters.html" %}
 
-  <script>$.endlessPaginate({paginateOnScroll: true, onCompleted: toggle_tooltip});</script>
+  <script>configure_pagination()</script>
   <div id="coders" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
       <thead>
         <tr>
-          <th>#</th>
+          <th class="no-stretch">#</th>
           <th class="username">
             <div class="flag-width-fixed"></div>
             <div>Coder</div>
@@ -44,10 +44,6 @@
           <th>
             <div>Accounts<br/>number</div>
             <div class="sortable-column" data-column="n_accounts"></div>
-          </th>
-          <th>
-            <div>Registration<br/>time</div>
-            <div class="sortable-column" data-column="created"></div>
           </th>
           {% for field in custom_fields.values %}
           <th>

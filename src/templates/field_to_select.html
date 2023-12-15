@@ -51,6 +51,11 @@
     </a>
   </div>
   {% endif %}
+  {% if submit %}
+  <span class="input-group-btn">
+    <button class="btn btn-default" type="submit" name="action" value="{{ submit_value|default:submit }}"{% if not submit_enabled %} disabled{% endif %}>{{ submit|title }}</button>
+  </span>
+  {% endif %}
 </div>
 <script>
   $('#{{ field }}').select2({

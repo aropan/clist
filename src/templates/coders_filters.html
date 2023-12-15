@@ -32,6 +32,11 @@
     {% include "list_filter.html" %}
     {% include "field_to_select.html" with field='field' data=custom_fields %}
 
+    {% include 'contest_filter.html' with has_statistics=True %}
+    {% if params.contests %}
+    {% include "field_to_select.html" with field="advanced" data=params.advanced_filter %}
+    {% endif %}
+
     {% if request.GET.sort_order %}
     <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
     <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>
