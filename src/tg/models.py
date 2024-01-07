@@ -17,7 +17,7 @@ class Chat(BaseModel):
     settings = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
-        return "%s#%s" % (self.coder_id, self.chat_id)
+        return "%s Chat#%s" % (self.title or self.name or self.chat_id, self.id)
 
     def get_group_name(self):
         return "%s@%s" % (self.chat_id, self.title)

@@ -38,6 +38,25 @@ table.center {
   margin-right: auto;
 }
 
+
+/*
+ * Row flex
+ */
+
+@media (min-width: 768px) {
+  .row-flex-sm {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 992px) {
+  .row-flex-md {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
 /*
  * Search
  */

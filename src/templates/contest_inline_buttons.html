@@ -1,19 +1,22 @@
 {% if user|has_update_statistics_permission:contest %}
 <span class="inline-button">
-    <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}" title="statistic timing = {{ contest.statistic_timing|naturaltime }}" data-toggle="tooltip">
-        <i class="fas fa-sync-alt"></i>
+    <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}">
+        <!-- <i class="fas fa-sync-alt"></i> -->
+        {% icon_to 'update' contest.statistic_timing|naturaltime|to_str %}
     </button>
 
     {% if perms.clist.change_contest %}
-    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:clist_contest_change' contest.id %}">
-        <i class="fas fa-database"></i>
-    </button>
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:clist_contest_change' contest.id %}">{% icon_to 'database' "Contest#"|concat:contest.id %}</button>
     {% endif %}
 
     {% if perms.ranking.change_stage and with_stage and contest.stage %}
-    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_stage_change' contest.stage.id %}">
-        <i class="fas fa-database"></i>
-    </button>
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_stage_change' contest.stage.id %}">{% icon_to 'database' "Stage#"|concat:contest.stage.id %}</button>
     {% endif %}
+
+    {% if perms.logify.view_eventlog %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:logify_eventlog_changelist' %}?q={{ contest.title }}" target="_blank">{% icon_to 'logify' "View logs" %}</button>
+    {% endif %}
+
+    <button class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.pk }}">{% icon_to 'copy' contest.pk %}</button>
 </span>
 {% endif %}

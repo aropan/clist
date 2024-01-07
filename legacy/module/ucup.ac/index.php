@@ -3,6 +3,7 @@
 
 
     $near_season = date('Y') - 2022;
+    $seen = array();
     for ($season = $near_season; $season <= $near_season + 1; $season += 1) {
         $url = "https://ucup.ac/rating?season=$season";
         $rating_page = curlexec($url);
@@ -76,6 +77,12 @@
                 $standings_url = $standings_stage['standings_url'];
                 unset($standings[$standings_stage['stage']]);
             }
+
+            $start_and_title = $start_time . " " . $c['stage'] . " " . trim($c['contest']);
+            if (isset($seen[$start_and_title])) {
+                continue;
+            }
+            $seen[$start_and_title] = true;
 
             $contest = array(
                 'start_time' => $start_time,

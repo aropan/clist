@@ -284,6 +284,11 @@ class Statistic(BaseModule):
                 process_data(data)
 
                 if len(data['users']) >= 1000:
+                    leagues_ = [league.lower().replace(' ', '') for league in leagues]
+                    fetch_data = partial(get_leaderboard, url, "LEAGUE")
+                    for data in tqdm.tqdm(executor.map(fetch_data, leagues_), total=len(languages), desc='leagues'):
+                        process_data(data)
+
                     fetch_data = partial(get_leaderboard, url, "LANGUAGE")
                     for data in tqdm.tqdm(executor.map(fetch_data, languages), total=len(languages), desc='languages'):
                         process_data(data)

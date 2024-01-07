@@ -1,5 +1,6 @@
 import re
 from collections import OrderedDict
+from copy import deepcopy
 from datetime import timedelta
 from queue import SimpleQueue
 from urllib.parse import parse_qs, urlparse
@@ -722,13 +723,13 @@ def update_problems(contest, problems=None, force=False):
 
                 if problem_info.get('ignore'):
                     continue
-                if prev:
+                if prev and not problem_info.get('_info_prefix'):
                     if prev.get('group') and prev.get('group') == problem_info.get('group'):
                         continue
                     if prev.get('subname') and prev.get('name') == name:
                         continue
-                prev = dict(problem_info)
-                info = dict(problem_info)
+                prev = deepcopy(problem_info)
+                info = deepcopy(problem_info)
 
                 problem_contest = contest if 'code' not in problem_info else None
 
@@ -786,8 +787,19 @@ def update_problems(contest, problems=None, force=False):
                     archive_url = getattr(added_problem, 'archive_url', None)
                 defaults['archive_url'] = archive_url
 
-                for field in 'short', 'code', 'name', 'tags':
+                info_prefix = info.pop('_info_prefix', None)
+                info_prefix_fields = info.pop('_info_prefix_fields', None)
+                if info_prefix:
+                    for field in info_prefix_fields:
+                        if field in info:
+                            info[f'{info_prefix}{field}'] = info.pop(field)
+
+                for field in 'short', 'code', 'name', 'tags', 'subname', 'subname_class':
                     info.pop(field, None)
+                if added_problem:
+                    added_info = deepcopy(added_problem.info or {})
+                    added_info.update(info)
+                    info = added_info
                 defaults['info'] = info
 
                 problem, created = Problem.objects.update_or_create(
@@ -942,6 +954,7 @@ def problems(request, template='problems.html'):
                 'n_hidden':  {'fields': ['n_hidden']},
                 'n_total':  {'fields': ['n_total']},
                 'note': {'fields': ['note_text__iregex']},
+                'year': {'fields': ['time__year']},
             },
             queryset=problems,
         )
@@ -1148,12 +1161,14 @@ def problems(request, template='problems.html'):
     groupby_fields['n_problems'] = 'Num'
 
     # sort problems
-    sort_options = ['date', 'rating'] + [f for f in custom_fields_select['values'] if f not in custom_info_fields]
+    sort_options = ['date', 'rating'] + [f for f in custom_fields_select['values']]
     sort_select = {'options': sort_options, 'rev_order': True}
     sort_field = request.GET.get('sort')
     sort_order = request.GET.get('sort_order')
     if sort_field and sort_field in sort_options and sort_order in ['asc', 'desc']:
         sort_select['values'] = [sort_field]
+        if sort_field in custom_info_fields:
+            sort_field = f'info__{sort_field}'
         orderby = getattr(F(sort_field), sort_order)(nulls_last=True)
         problems = problems.order_by(orderby)
 

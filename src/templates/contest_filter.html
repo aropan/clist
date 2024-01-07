@@ -12,7 +12,7 @@
   </span>
 {% endif %}
 
-<select{% if not noname %} name="{{ contest_id }}"{% endif %} id="{{ contest_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
+<select{% if not noname %} name="{{ contest_id }}"{% endif %} id="{{ contest_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% elif with_update_url %} onchange="update_urls_params({'{{ contest_id }}': $(this).val()})"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
     <option></option>
     {% for contest in params.contests %}
       <option value="{{ contest.pk }}" selected>{{ contest.title }}</option>

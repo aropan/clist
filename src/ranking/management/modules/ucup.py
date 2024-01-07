@@ -107,7 +107,10 @@ class Statistic(BaseModule):
         handle_mapping = {}
         for standings_row in standings:
             solving, penalty, name, rank, rating = standings_row
-            orig_handle, _, _, name, *_ = name
+            if isinstance(name, dict):
+                orig_handle, name = name['0'], name['3']
+            else:
+                orig_handle, _, _, name, *_ = name
             scoring = scorings[orig_handle]
             if not scoring:
                 continue

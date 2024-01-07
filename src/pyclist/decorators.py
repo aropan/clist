@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import contextlib
 import re
 from functools import wraps
 
@@ -7,6 +8,7 @@ import numpy as np
 from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import render
+from stringcolor import bold, cs
 
 
 def context_pagination():
@@ -26,18 +28,13 @@ def context_pagination():
     return decorator
 
 
-def analyze_db_queries(func):
-
-    @wraps(func)
-    def analyze_db_queries_wrapper(*args, **kwargs):
-        initial_queries = len(connection.queries)
-        result = func(*args, **kwargs)
-        final_queries = connection.queries[initial_queries:]
-        grouped_times = group_and_calculate_times(final_queries)
-        log_grouped_times(grouped_times)
-        return result
-
-    return analyze_db_queries_wrapper
+@contextlib.contextmanager
+def analyze_db_queries():
+    initial_queries = len(connection.queries)
+    yield
+    final_queries = connection.queries[initial_queries:]
+    grouped_times = group_and_calculate_times(final_queries)
+    log_grouped_times(grouped_times)
 
 
 def group_and_calculate_times(queries):
@@ -47,6 +44,8 @@ def group_and_calculate_times(queries):
         query_sql = re.sub(r'\b\d+\b', '%d', query_sql)  # replace number
         query_sql = re.sub(r'\'.+?\'', '%s', query_sql)  # replace string
         query_sql = re.sub(r'\bs\d+_x\d+\b', '%s', query_sql)  # replace savepoint
+        query_sql = re.sub(r'\b%d\b(, %d\b)+', '%ds', query_sql)  # replace many numbers
+        query_sql = re.sub(r'\b%s\b(, %s\b)+', '%ss', query_sql)  # replace many strings
         grouped.setdefault(query_sql, []).append(query)
     total_times = []
     for key, queries in grouped.items():
@@ -66,4 +65,8 @@ def log_grouped_times(grouped_times):
     for g in grouped_times:
         if g['sum'] < mean:
             break
-        print('{sum:.3f}ms ({avg:.3f}ms) {count} times: {query}'.format(**g))
+        msg = bold(f'{g["sum"]:.3f}') + ' ms'
+        msg += ' (avg ' + bold(f'{g["avg"]:.3f}') + ' ms)'
+        msg += ' ' + bold(f'{g["count"]}') + ' times'
+        msg += ': ' + cs(g['query'], 'grey')
+        print(msg)

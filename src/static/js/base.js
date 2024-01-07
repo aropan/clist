@@ -274,10 +274,11 @@ function copyTextToClipboard(text) {
 $(function() {
   $('.copy-to-clipboard').click(function() {
     var el= $(this)
-    copyTextToClipboard(el.text())
+    var text = el.data('text') || el.text()
+    copyTextToClipboard(text)
     el.attr('title', 'copied')
     el.tooltip('show')
-    $.notify('Copied to clipboard', 'success')
+    $.notify('Copied "' + text + '" to clipboard', 'success')
     setTimeout(function() { el.attr('title', ''); el.tooltip('destroy'); }, 1000)
     return false
   })

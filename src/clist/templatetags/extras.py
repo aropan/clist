@@ -726,6 +726,11 @@ def concat(a, b):
 
 
 @register.filter
+def to_str(value):
+    return str(value)
+
+
+@register.filter
 def to_template_value(value):
     if isinstance(value, bool):
         return f'<i class="fas fa-{"check" if value else "times"}"></i>'

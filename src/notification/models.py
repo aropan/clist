@@ -16,10 +16,11 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from clist.models import Contest
+from clist.models import Contest, Resource
 from pyclist.models import BaseModel
 from ranking.models import Account
-from true_coders.models import Coder
+from tg.models import Chat as CoderChat
+from true_coders.models import Coder, CoderList
 
 
 class TaskNotification(BaseModel):
@@ -98,8 +99,11 @@ class Notification(TaskNotification):
 
 
 class Subscription(TaskNotification):
-    contest = models.ForeignKey(Contest, db_index=True, on_delete=models.CASCADE)
-    account = models.ForeignKey(Account, db_index=True, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, null=True, blank=True, default=None, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, null=True, blank=True, default=None, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, null=True, blank=True, default=None, on_delete=models.CASCADE)
+    coder_list = models.ForeignKey(CoderList, null=True, blank=True, default=None, on_delete=models.CASCADE)
+    coder_chat = models.ForeignKey(CoderChat, null=True, blank=True, default=None, on_delete=models.CASCADE)
 
     tasks = GenericRelation(
         'Task',
@@ -110,7 +114,6 @@ class Subscription(TaskNotification):
 
     class Meta:
         indexes = [models.Index(fields=['contest', 'account'])]
-        unique_together = ('coder', 'method', 'contest', 'account')
 
 
 class Task(BaseModel):

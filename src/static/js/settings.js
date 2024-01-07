@@ -872,20 +872,20 @@ $(function() {
         name = $(this).attr('data-name')
 
         var form = $(`
-          <form>
+          <form id="process_subscription-form">
             <div class="form-group">
               <label class="control-label">Contest</label>
-              <select class="form-control" name="contest"></select>
+              <select class="form-control" name="contest" required></select>
               <small class="form-text text-muted">Required field</small>
             </div>
             <div class="form-group">
               <label class="control-label">Account</label>
-              <select class="form-control" name="account"></select>
+              <select class="form-control" name="account" required></select>
               <small class="form-text text-muted">Will be available after selecting a contest. Required field</small>
             </div>
             <div class="form-group">
               <label class="control-label">Method</label>
-              <select class="form-control" name="method"></select>
+              <select class="form-control" name="method" required></select>
               <small class="form-text text-muted">Required field</small>
             </div>
           </form>
@@ -926,7 +926,12 @@ $(function() {
 
         bootbox.confirm(form, function(result) {
             if (!result) {
-                return;
+                return
+            }
+            var form = document.getElementById('process_subscription-form')
+            if (!form.checkValidity()) {
+                form.reportValidity()
+                return false
             }
             $.ajax({
                 type: 'POST',

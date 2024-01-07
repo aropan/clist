@@ -17,7 +17,7 @@
   <form class="form-inline" method="get" action="">
     {% with nomultiply=True nosmall=True %}
       {% include 'resource_filter.html' %}
-      {% include 'contest_filter.html' with nosubmit=True has_virtual_start=True resource_from="resource" %}
+      {% include 'contest_filter.html' with nosubmit=True with_update_url=True has_virtual_start=True resource_from="resource" %}
     {% endwith %}
     <div class="input-group">
       <button type="submit" name="action" value="start" class="btn btn-primary"{% if not params.contests %} disabled{% endif %}>Start</button>

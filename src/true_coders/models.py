@@ -390,7 +390,7 @@ class CoderList(BaseModel):
     shared_with_coders = models.ManyToManyField(Coder, related_name='shared_list_set', blank=True)
 
     def __str__(self):
-        return f'CoderList#{self.uuid}'
+        return f'{self.name} CoderList#{self.id}'
 
     def shared_with(self):
         return [{'id': c.pk, 'username': c.username} for c in self.shared_with_coders.all()]

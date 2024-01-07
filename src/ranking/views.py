@@ -1388,6 +1388,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         if contest.with_advance or advanced_by_participants_info:
             fields['n_advanced'] = 'Adv'
 
+        default_orderby = not orderby
         orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
 
         if groupby == 'rating':
@@ -1457,6 +1458,16 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 pks.append(pk)
             statistics = statistics.annotate(n_advanced=Count(Case(When(pk__in=set(pks), then=1))))
 
+        if default_orderby and groupby == 'league' and '_league' in contest.info:
+            league_mapping = {league: idx for idx, league in enumerate(contest.info['_league'])}
+            statistics = statistics.annotate(
+                league_order=Case(
+                    *[When(groupby=k, then=Value(v)) for k, v in league_mapping.items()],
+                    default=Value(len(league_mapping)),
+                    output_field=models.IntegerField(),
+                )
+            )
+            orderby = ['league_order'] + orderby
         statistics = statistics.order_by(*orderby)
 
         problems = []
@@ -2076,20 +2087,20 @@ def virtual_start(request, template='virtual_start.html'):
         params['resources'] = [resource]
         virtual_starts = virtual_starts.filter(contest__resource=resource)
     contest = request.GET.get('contest')
+    if (contest == 'auto' or not contest) and resource:
+        contest = resource.contest_set.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
+        contest = contest.annotate(disabled=VirtualStart.contests_filter(coder))
+        contest = contest.order_by('-start_time').first()
+        if contest and contest.disabled:
+            contest = None
+    elif contest and contest.isdigit():
+        contest = Contest.objects.get(pk=contest)
+        if contest.resource_id != resource.id:
+            return redirect(url_transform(request, contest=None, with_remove=True))
+    elif contest:
+        return HttpResponseBadRequest('Invalid contest')
     if contest:
-        if contest == 'auto' and resource:
-            vs = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef('id'))
-            contest = resource.contest_set.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
-            contest = contest.annotate(disabled=SubqueryExists(vs))
-            contest = contest.order_by('-start_time').first()
-            if contest and contest.disabled:
-                contest = None
-        elif contest.isdigit():
-            contest = Contest.objects.get(pk=contest)
-        else:
-            return HttpResponseBadRequest('Invalid contest')
-        if contest:
-            params['contests'] = [contest]
+        params['contests'] = [contest]
     action = request.GET.get('action')
     if action == 'start':
         if contest:

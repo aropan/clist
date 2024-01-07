@@ -51,7 +51,7 @@ class HasInfo(admin.SimpleListFilter):
 class AccountAdmin(BaseModelAdmin):
     list_display = ['resource', 'key', 'name', 'country', '_has_coder', 'updated']
     search_fields = ['=key', '=name']
-    list_filter = [HasCoders, HasInfo, 'resource__host']
+    list_filter = [HasCoders, HasInfo, 'deleted', 'resource__host']
 
     def _has_coder(self, obj):
         return obj.has_coder

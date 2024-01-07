@@ -49,7 +49,7 @@
           <a class="btn btn-default btn-xs" href="https://calendar.google.com/calendar/embed?src={{ resource.uid }}" target="_blank" rel="noopener noreferrer">
             <i class="fas fa-external-link-alt"></i>
           </a>
-          <a class="btn btn-default btn-xs copy-to-clipboard"><i class="far fa-copy"></i></i><span class="hidden">https://calendar.google.com/calendar/ical/{{ resource.uid }}/public/basic.ics</span></a>
+          <a class="btn btn-default btn-xs copy-to-clipboard" data-text="https://calendar.google.com/calendar/ical/{{ resource.uid }}/public/basic.ics"><i class="far fa-copy"></i></a>
         {% else %}
           <i class="fas fa-times"></i>
         {% endif %}

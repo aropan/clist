@@ -276,7 +276,7 @@ class Statistic(BaseModule):
         if result and standings_data:
             standings['_standings_data'] = standings_data
             self.resource.info['parse']['last_standings_data'][cid] = standings_data
-            self.resource.save()
+            self.resource.save(update_fields=['info'])
 
         return standings
 

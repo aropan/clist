@@ -29,7 +29,7 @@ from clist.templatetags.extras import (as_number, canonize, get_number_from_str,
                                        time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
-from notification.models import NotificationMessage
+from notification.models import NotificationMessage, Subscription
 from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.parse_accounts_infos import rename_account
 from ranking.management.modules.common import REQ
@@ -37,10 +37,13 @@ from ranking.management.modules.excepts import ExceptionParseStandings, InitModu
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from ranking.utils import account_update_contest_additions
 from ranking.views import update_standings_socket
+from true_coders.models import Coder
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.datetime import parse_datetime
 from utils.traceback_with_vars import colored_format_exc
+
+EPS = 1e-9
 
 
 class ChannelLayerHandler(logging.Handler):
@@ -183,13 +186,16 @@ class Command(BaseCommand):
         parser.add_argument('--force-socket', action='store_true', default=False, help='Force update socket')
         parser.add_argument('--without-n_statistics', action='store_true', default=False, help='Force update')
         parser.add_argument('--before-date', default=False, help='Update contests that have been updated to date')
+        parser.add_argument('--after-date', default=False, help='Update contests that have been updated after date')
         parser.add_argument('--with-medals', action='store_true', default=False, help='Contest with medals')
         parser.add_argument('--without-fill-coder-problems', action='store_true', default=False)
         parser.add_argument('--without-calculate-problem-rating', action='store_true', default=False)
         parser.add_argument('--without-calculate-rating-prediction', action='store_true', default=False)
+        parser.add_argument('--without-stage', action='store_true', default=False, help='Without update stage contests')
         parser.add_argument('--contest-id', '-cid', help='Contest id')
         parser.add_argument('--no-update-problems', action='store_true', default=False, help='No update problems')
         parser.add_argument('--is-rated', action='store_true', default=False, help='Contest is rated')
+        parser.add_argument('--after', type=str, help='Events after date')
 
     def parse_statistic(
         self,
@@ -197,6 +203,7 @@ class Command(BaseCommand):
         previous_days=None,
         freshness_days=None,
         before_date=None,
+        after_date=None,
         limit=None,
         with_check=True,
         stop_on_error=False,
@@ -214,6 +221,7 @@ class Command(BaseCommand):
         without_fill_coder_problems=False,
         without_calculate_problem_rating=False,
         without_calculate_rating_prediction=False,
+        without_stage=False,
         no_update_problems=None,
         is_rated=None,
     ):
@@ -284,6 +292,9 @@ class Command(BaseCommand):
         if before_date:
             before_date = parse_datetime(before_date)
             contests = contests.filter(Q(parsed_time__isnull=True) | Q(parsed_time__lt=before_date))
+        if after_date:
+            after_date = parse_datetime(after_date)
+            contests = contests.filter(Q(parsed_time__isnull=True) | Q(parsed_time__gt=after_date))
         if is_rated:
             contests = contests.filter(is_rated=True)
 
@@ -371,7 +382,7 @@ class Command(BaseCommand):
 
                     with REQ:
                         statistics_by_key = {}
-                        places_by_key = {}
+                        more_statistics_by_key = {}
                         statistics_ids = set()
                         has_statistics = False
                         if not no_update_results:
@@ -380,8 +391,11 @@ class Command(BaseCommand):
                                 statistics = statistics.filter(account__key__in=users)
                             for s in statistics:
                                 if with_stats:
-                                    statistics_by_key[s.account.key] = s.addition
-                                    places_by_key[s.account.key] = s.place
+                                    statistics_by_key[s.account.key] = s.addition or {}
+                                    more_statistics_by_key[s.account.key] = {
+                                        'place': s.place,
+                                        'score': s.solving,
+                                    }
                                     has_statistics = True
                                 statistics_ids.add(s.pk)
                         standings = plugin.get_standings(users=copy.deepcopy(users), statistics=statistics_by_key)
@@ -397,6 +411,9 @@ class Command(BaseCommand):
                                     row['member'] = member
                                     row['_no_update_n_contests'] = True
                                     result[member] = row
+
+                        for key, more_stat in more_statistics_by_key.items():
+                            statistics_by_key[key].update(more_stat)
 
                     for field, attr in (
                         ('url', 'standings_url'),
@@ -473,7 +490,7 @@ class Command(BaseCommand):
                                     result[new_key]['member'] = new_key
 
                     parse_info = contest.info.get('parse', {})
-                    resource_statistics = resource.info.get('statistics', {})
+                    resource_statistics = resource.info.get('statistics') or {}
                     wait_rating = resource_statistics.get('wait_rating', {})
                     has_hidden = standings.pop('has_hidden', False)
                     link_accounts = standings.pop('link_accounts', False)
@@ -573,7 +590,7 @@ class Command(BaseCommand):
 
                                     default_full_score = (
                                         contest.info.get('default_problem_full_score')
-                                        or resource.info.get('statistics', {}).get('default_problem_full_score')
+                                        or resource_statistics.get('default_problem_full_score')
                                     )
                                     if default_full_score and is_score:
                                         if default_full_score == 'max':
@@ -588,7 +605,7 @@ class Command(BaseCommand):
                                                         break
                                                 else:
                                                     p['full_score'] = default_full_score
-                                            if 'partial' not in v and p['full_score'] - result_num > 1e-9:
+                                            if 'partial' not in v and p['full_score'] - result_num > EPS:
                                                 v['partial'] = True
                                             if not v.get('partial'):
                                                 solved['solving'] += 1
@@ -603,7 +620,7 @@ class Command(BaseCommand):
                                     if contest.info.get('without_problem_time'):
                                         v.pop('time', None)
 
-                                    if r.get('_skip_for_problem_stat') or skip_result:
+                                    if skip_result:
                                         continue
 
                                     if ac and v.get('time'):
@@ -616,19 +633,30 @@ class Command(BaseCommand):
                                         if in_seconds is not None:
                                             activity_time = contest.start_time + timedelta(seconds=in_seconds)
                                             last_activity = max(last_activity, activity_time)
+                                        cmp_seconds = in_seconds
                                         if v.get('first_ac') or v.get('first_ac_of_all'):
-                                            in_seconds = -1
+                                            cmp_seconds = -1
                                         if in_seconds is not None:
                                             first_ac = p.setdefault('first_ac', {})
-                                            delta = in_seconds - first_ac.get('in_seconds', float('inf'))
-                                            if 'in_seconds' in first_ac and abs(delta) < 1e-9:
+                                            delta = cmp_seconds - first_ac.get('_cmp_seconds', float('inf'))
+                                            if '_cmp_seconds' in first_ac and abs(delta) < EPS:
                                                 first_ac['accounts'].append(r['member'])
-                                            if 'in_seconds' not in first_ac or delta < 0:
+                                            if '_cmp_seconds' not in first_ac or delta < 0:
+                                                first_ac['_cmp_seconds'] = cmp_seconds
                                                 first_ac['in_seconds'] = in_seconds
                                                 first_ac['time'] = v['time']
                                                 first_ac['accounts'] = [r['member']]
+                                            if resource_statistics.get('with_last_ac'):
+                                                last_ac = p.setdefault('last_ac', {})
+                                                if '_cmp_seconds' in last_ac and abs(delta) > EPS:
+                                                    last_ac['accounts'].append(r['member'])
+                                                if '_cmp_seconds' not in last_ac or delta > 0:
+                                                    last_ac['_cmp_seconds'] = cmp_seconds
+                                                    last_ac['in_seconds'] = in_seconds
+                                                    last_ac['time'] = v['time']
+                                                    last_ac['accounts'] = [r['member']]
 
-                                    if not is_new:
+                                    if r.get('_skip_for_problem_stat') or not is_new:
                                         continue
 
                                     p['n_teams'] = p.get('n_teams', 0) + 1
@@ -678,12 +706,10 @@ class Command(BaseCommand):
                                 account = accounts[member]
 
                             stat = statistics_by_key.get(member, {})
-                            stat_place = places_by_key.get(member, {})
 
                             previous_member = r.pop('previous_member', None)
                             if previous_member and previous_member in statistics_by_key:
                                 stat = statistics_by_key[previous_member]
-                                stat_place = places_by_key[previous_member]
                                 previous_account = resource.account_set.filter(key=previous_member).first()
                                 if previous_account:
                                     account = rename_account(previous_account, account)
@@ -1017,7 +1043,7 @@ class Command(BaseCommand):
 
                                 return defaults, addition, try_calculate_time
 
-                            def update_after_update_or_create(statistic, created, try_calculate_time):
+                            def update_after_update_or_create(statistic, created, addition, try_calculate_time):
                                 problems = r.get('problems', {})
 
                                 if not created:
@@ -1063,7 +1089,7 @@ class Command(BaseCommand):
                                         updated_statistics_ids.append(statistic.pk)
                                         break
 
-                                if str(statistic.place) != str(stat_place):
+                                if str(statistic.place) != str(stat.get('place')):
                                     updated_statistics_ids.append(statistic.pk)
 
                                 if try_calculate_time:
@@ -1106,10 +1132,32 @@ class Command(BaseCommand):
                             n_statistics_total += 1
                             n_statistics_created += statistics_created
 
-                            update_after_update_or_create(statistic, statistics_created, try_calculate_time)
+                            update_after_update_or_create(statistic, statistics_created, addition, try_calculate_time)
 
                             if link_accounts:
                                 link_account(statistic)
+
+                            has_subscription_update = (
+                                account.is_subscribed
+                                and not skip_result
+                                and not addition.get('_skip_subscription')
+                                and (
+                                    statistics_created
+                                    or stat.get('score', 0) < statistic.solving + EPS
+                                )
+                            )
+                            if has_subscription_update:
+                                subscriptions_filter = Q(resource__isnull=True) | Q(resource=resource)
+                                subscriptions_filter &= Q(contest__isnull=True) | Q(contest=contest)
+                                subscriptions_filter &= (
+                                    Q(account=account)
+                                    | Q(coder_chat__coders__account=account)
+                                    | Q(coder_list__values__account=account)
+                                    | Q(coder_list__values__coder__account=account)
+                                )
+                                subscriptions = Subscription.objects.filter(subscriptions_filter)
+                                for subscription in subscriptions:
+                                    pass
 
                         if not users:
                             if has_hidden != contest.has_hidden_results:
@@ -1191,6 +1239,8 @@ class Command(BaseCommand):
                                                 continue
                                             p.update(d_problems.get(d, {}).get(short, {}))
                                             p.setdefault('n_total', n_statistics[d])
+                                            p.get('first_ac', {}).pop('_cmp_seconds', None)
+                                            p.get('last_ac', {}).pop('_cmp_seconds', None)
                                             if key in problems_ratings:
                                                 p['rating'] = problems_ratings[key]
                                     if isinstance(standings_problems['division'], OrderedDict):
@@ -1205,6 +1255,8 @@ class Command(BaseCommand):
                                             continue
                                         p.update(d_problems.get(short, {}))
                                         p.setdefault('n_total', contest.n_statistics)
+                                        p.get('first_ac', {}).pop('_cmp_seconds', None)
+                                        p.get('last_ac', {}).pop('_cmp_seconds', None)
                                         if key in problems_ratings:
                                             p['rating'] = problems_ratings[key]
 
@@ -1228,23 +1280,27 @@ class Command(BaseCommand):
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get('problems'))
                             update_problems(contest, problems=standings_problems, force=force_problems or not users)
 
-                    timing_delta = None
-                    if contest.full_duration < resource.module.long_contest_idle:
-                        timing_delta = standings.get('timing_statistic_delta', timing_delta)
-                        if now < contest.end_time:
-                            timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
-                    if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
-                        timing_delta = timing_delta or timedelta(minutes=30)
-                    if wait_rating and not has_statistics and results and 'days' in wait_rating:
-                        timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
-                    timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
-                    if timing_delta is not None:
-                        self.logger.info(f'Statistic timing delta = {timing_delta}')
-                        contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
+                    if not users:
+                        timing_delta = None
+                        if contest.full_duration < resource.module.long_contest_idle:
+                            timing_delta = standings.get('timing_statistic_delta', timing_delta)
+                            if now < contest.end_time:
+                                timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
+                        if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
+                            timing_delta = timing_delta or timedelta(minutes=30)
+                        if wait_rating and not has_statistics and results and 'days' in wait_rating:
+                            timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
+                        timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
+                        if timing_delta is not None:
+                            self.logger.info(f'Statistic timing delta = {timing_delta}')
+                            contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
+                        else:
+                            contest.info.pop('_timing_statistic_delta_seconds', None)
+                        contest.info.pop('_reparse_statistics', None)
+                        contest.save()
                     else:
-                        contest.info.pop('_timing_statistic_delta_seconds', None)
-                    contest.info.pop('_reparse_statistics', None)
-                    contest.save()
+                        without_calculate_rating_prediction = True
+                        to_calculate_problem_rating = False
 
                     action = standings.get('action')
                     if action is not None:
@@ -1261,22 +1317,30 @@ class Command(BaseCommand):
                             else:
                                 delete_info = contest.delete()
                                 self.logger.info(f'Delete info contest: {delete_info}')
+                                continue
                         elif action == 'url':
                             contest.url = args[0]
                             contest.save()
 
-                if resource.rating_prediction and not without_calculate_rating_prediction:
+                if resource.rating_prediction and not without_calculate_rating_prediction and contest.pk:
                     call_command('calculate_rating_prediction', contest=contest.pk)
                     contest.refresh_from_db()
                     n_calculated_rating_prediction += 1
 
-                if to_calculate_problem_rating and not without_calculate_problem_rating:
+                if to_calculate_problem_rating and not without_calculate_problem_rating and contest.pk:
                     call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
                     contest.refresh_from_db()
                     n_calculated_problem_rating += 1
 
-                if not without_fill_coder_problems:
-                    call_command('fill_coder_problems', contest=contest.pk)
+                if not without_fill_coder_problems and contest.pk:
+                    if users:
+                        users_qs = Account.objects.filter(resource=resource, key__in=users)
+                        users_coders = Coder.objects.filter(Exists(users_qs.filter(pk=OuterRef('account'))))
+                        users_coders = users_coders.values_list('username', flat=True)
+                        if users_coders:
+                            call_command('fill_coder_problems', contest=contest.pk, coders=users_coders)
+                    else:
+                        call_command('fill_coder_problems', contest=contest.pk)
 
                 if has_standings_result:
                     count += 1
@@ -1293,6 +1357,8 @@ class Command(BaseCommand):
 
             event_log.update_status(status=EventStatus.COMPLETED if parsed else EventStatus.FAILED,
                                     message=exception_error)
+            if users:
+                event_log.delete()
 
             if not users:
                 module = resource.module
@@ -1344,7 +1410,10 @@ class Command(BaseCommand):
 
         if stages_ids:
             for stage in tqdm(Stage.objects.filter(pk__in=stages_ids), total=len(stages_ids), desc='getting stages'):
-                update_stage(stage)
+                if without_stage:
+                    self.logger.info(f'Skip stage: {stage}')
+                else:
+                    update_stage(stage)
 
         if resource_event_log:
             resource_event_log.delete()
@@ -1362,7 +1431,7 @@ class Command(BaseCommand):
         return count, total
 
     @print_sql_decorator(count_only=True)
-    @analyze_db_queries
+    @analyze_db_queries()
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
@@ -1381,6 +1450,9 @@ class Command(BaseCommand):
 
         if args.year:
             contests = contests.filter(start_time__year=args.year)
+
+        if args.after:
+            contests = contests.filter(start_time__gte=args.after)
 
         if args.stage:
             contests = contests.filter(stage__isnull=False)
@@ -1410,6 +1482,7 @@ class Command(BaseCommand):
             no_update_results=args.no_update_results,
             freshness_days=args.freshness_days,
             before_date=args.before_date,
+            after_date=args.after_date,
             title_regex=args.event,
             users=args.users,
             with_stats=not args.no_stats,
@@ -1422,6 +1495,7 @@ class Command(BaseCommand):
             without_fill_coder_problems=args.without_fill_coder_problems,
             without_calculate_problem_rating=args.without_calculate_problem_rating,
             without_calculate_rating_prediction=args.without_calculate_rating_prediction,
+            without_stage=args.without_stage,
             no_update_problems=args.no_update_problems,
             is_rated=args.is_rated,
         )

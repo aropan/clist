@@ -247,57 +247,54 @@ class Statistic(BaseModule):
         result = {}
         standings_url = self.standings_url or self.STANDING_URL_.format(self)
 
-        if users and statistics:
-            fusers = users
-            for member in users:
-                if member not in statistics:
-                    continue
+        fusers = []
+        page = self._get(self.url)
+        match = re.search(r'(?<=<li>)Writer:.*', page)
+        writers = []
+        if match:
+            matches = re.findall('(?<=>)[^<]+(?=</)', match.group())
+            writers = list()
+            for m in matches:
+                writers.extend(map(str.strip, re.split(r'[,\s]+', m)))
+            writers = [w for w in writers if w and w != '?']
 
-                info = collections.OrderedDict(deepcopy(statistics.get(member)))
-                info['member'] = member
-                for f in ('place', 'solving', 'upsolving'):
-                    info[f] = '__unchanged__'
-                result[member] = info
+        url = f'{self.RESULTS_URL_.format(self)}/'
+        try:
+            page = self._get(url)
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                return {'action': 'delete'}
+            raise e
 
-            standings = {'result': result}
-        else:
-            fusers = []
-            page = self._get(self.url)
-            match = re.search(r'(?<=<li>)Writer:.*', page)
-            writers = []
-            if match:
-                matches = re.findall('(?<=>)[^<]+(?=</)', match.group())
-                writers = list()
-                for m in matches:
-                    writers.extend(map(str.strip, re.split(r'[,\s]+', m)))
-                writers = [w for w in writers if w and w != '?']
+        match = re.search(r'var\s*results\s*=\s*(\[[^\n]*\]);$', page, re.MULTILINE)
+        data = json.loads(match.group(1))
+        results = {}
+        for row in data:
+            if not row.get('IsRated'):
+                continue
+            handle = row.pop('UserScreenName')
+            if users and handle not in users:
+                continue
+            if 'NewRating' not in row:
+                continue
+            r = collections.OrderedDict()
+            for k in ['OldRating', 'NewRating', 'Performance']:
+                if k in row:
+                    r[k] = row[k]
+            results[handle] = r
 
-            url = f'{self.RESULTS_URL_.format(self)}/'
-            try:
-                page = self._get(url)
-            except FailOnGetResponse as e:
-                if e.code == 404:
-                    return {'action': 'delete'}
+        try:
+            page = self._get(f'{standings_url}/json')
+            data = json.loads(page)
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                data = {}
+            else:
                 raise e
 
-            match = re.search(r'var\s*results\s*=\s*(\[[^\n]*\]);$', page, re.MULTILINE)
-            data = json.loads(match.group(1))
-            results = {}
-            for row in data:
-                if not row.get('IsRated'):
-                    continue
-                handle = row.pop('UserScreenName')
-                if users and handle not in users:
-                    continue
-                if 'NewRating' not in row:
-                    continue
-                r = collections.OrderedDict()
-                for k in ['OldRating', 'NewRating', 'Performance']:
-                    if k in row:
-                        r[k] = row[k]
-                results[handle] = r
-
+        if not data:
             try:
+                standings_url = f'{self.STANDING_URL_.format(self)}/team'
                 page = self._get(f'{standings_url}/json')
                 data = json.loads(page)
             except FailOnGetResponse as e:
@@ -306,259 +303,248 @@ class Statistic(BaseModule):
                 else:
                     raise e
 
-            if not data:
-                try:
-                    standings_url = f'{self.STANDING_URL_.format(self)}/team'
-                    page = self._get(f'{standings_url}/json')
-                    data = json.loads(page)
-                except FailOnGetResponse as e:
-                    if e.code == 404:
-                        data = {}
-                    else:
-                        raise e
-
-            if not data:
-                standings_url = self.url
-                self._fetch_submissions_limit = None
-                data = defaultdict(list)
-                tasks = data.setdefault('TaskInfo', [])
-                tasks_url = self.TASKS_URL_.format(self)
-                page = REQ.get(tasks_url)
-                table = parsed_table.ParsedTable(page)
-                for r in table:
-                    short = r['']
-                    short = short[0].value if isinstance(short, list) else short.value
-                    name = r.get('問題名', r.get('Task Name'))
-                    url = first(name.column.node.xpath('.//a/@href'))
-                    url = urllib.parse.urljoin(tasks_url, url)
-                    url = url.rstrip('/')
-                    code = url.split('/')[-1]
-                    task = {
-                        'TaskScreenName': code,
-                        'Assignment': short,
-                        'TaskName': name.value,
-                    }
-                    tasks.append(task)
-
-            new_data = []
-            teams = []
-            handles = []
-            for row in data['StandingsData']:
-                if not row['IsTeam']:
-                    new_data.append(row)
-                    continue
-                teams.append(row)
-                handles.extend(row['Affiliation'].split(', '))
-            if self.resource.account_set.filter(key__in=handles).exists():
-                for row in teams:
-                    handles = row.pop('Affiliation').split(', ')
-                    row['team_id'] = row.pop('UserScreenName')
-                    row['_members'] = [{'account': m} for m in handles]
-                    for handle in handles:
-                        r = deepcopy(row)
-                        r['UserScreenName'] = handle
-                        new_data.append(r)
-            data['StandingsData'] = new_data
-
-            task_info = collections.OrderedDict()
-            for t in data['TaskInfo']:
-                k = t['TaskScreenName']
-                url = self.PROBLEM_URL_.format(self, k)
-                task_info[k] = {
-                    'code': k,
-                    'short': t['Assignment'],
-                    'name': t['TaskName'] or k,
-                    'url': url,
+        if not data:
+            standings_url = self.url
+            self._fetch_submissions_limit = None
+            data = defaultdict(list)
+            tasks = data.setdefault('TaskInfo', [])
+            tasks_url = self.TASKS_URL_.format(self)
+            page = REQ.get(tasks_url)
+            table = parsed_table.ParsedTable(page)
+            for r in table:
+                short = r['']
+                short = short[0].value if isinstance(short, list) else short.value
+                name = r.get('問題名', r.get('Task Name'))
+                url = first(name.column.node.xpath('.//a/@href'))
+                url = urllib.parse.urljoin(tasks_url, url)
+                url = url.rstrip('/')
+                code = url.split('/')[-1]
+                task = {
+                    'TaskScreenName': code,
+                    'Assignment': short,
+                    'TaskName': name.value,
                 }
+                tasks.append(task)
 
-            def get_problem_full_score(info):
-                page = REQ.get(info['url'])
-                match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
-                if match:
-                    info['full_score'] = int(match.group('score'))
+        new_data = []
+        teams = []
+        handles = []
+        for row in data['StandingsData']:
+            if not row['IsTeam']:
+                new_data.append(row)
+                continue
+            teams.append(row)
+            handles.extend(row['Affiliation'].split(', '))
+        if self.resource.account_set.filter(key__in=handles).exists():
+            for row in teams:
+                handles = row.pop('Affiliation').split(', ')
+                row['team_id'] = row.pop('UserScreenName')
+                row['_members'] = [{'account': m} for m in handles]
+                for handle in handles:
+                    r = deepcopy(row)
+                    r['UserScreenName'] = handle
+                    new_data.append(r)
+        data['StandingsData'] = new_data
 
-            with PoolExecutor(max_workers=8) as executor:
-                executor.map(get_problem_full_score, task_info.values())
-
-            if any('full_score' not in t for t in task_info.values()):
-                page = REQ.get(self.url)
-                for match in re.finditer('<table[^>]*>.*</table>', page, re.MULTILINE | re.DOTALL):
-                    table = parsed_table.ParsedTable(match.group(0))
-                    header = [c.value for c in table.header.columns]
-                    if header != ['Task', 'Score']:
-                        continue
-                    for row in table:
-                        short = row['Task'].value
-                        score = as_number(row['Score'].value, force=True)
-                        tasks = [t for t in task_info.values() if t['short'] == short]
-                        if len(tasks) == 1:
-                            for t in tasks:
-                                if 'full_score' not in t:
-                                    t['full_score'] = score
-
-            has_rated = False
-            has_new_rating = False
-
-            for row in data['StandingsData']:
-                if not row['TaskResults'] and not row.get('IsRated'):
-                    continue
-                handle = row.pop('UserScreenName')
-                if users is not None and handle not in users:
-                    continue
-                r = result.setdefault(handle, collections.OrderedDict())
-                r['member'] = handle
-                if row.pop('UserIsDeleted', None):
-                    r['action'] = 'delete'
-                    continue
-                r['place'] = row.pop('Rank')
-                total_result = row.pop('TotalResult')
-
-                penalty = total_result['Elapsed'] // 10**9
-                r['penalty'] = f'{penalty // 60}:{penalty % 60:02d}'
-
-                r['solving'] = total_result['Score'] / 100.
-                r['country'] = row.pop('Country')
-                if 'UserName' in row:
-                    r['name'] = row.pop('UserName')
-
-                stats = (statistics or {}).get(handle, {})
-                problems = r.setdefault('problems', stats.get('problems', {}))
-                clear_problems_fields(problems)
-                solving = 0
-                task_results = row.pop('TaskResults', {})
-                for k, v in task_results.items():
-                    if 'Score' not in v:
-                        continue
-                    letter = task_info[k]['short']
-                    p = problems.setdefault(letter, {})
-
-                    if v['Score'] > 0:
-                        solving += 1
-
-                        p['result'] = v['Score'] / 100.
-
-                        seconds = v['Elapsed'] // 10**9
-                        p['time_in_seconds'] = seconds
-                        p['time'] = f'{seconds // 60}:{seconds % 60:02d}'
-
-                        if v['Penalty'] > 0:
-                            p['penalty'] = v['Penalty']
-                    else:
-                        p_result = -v['Failure']
-                        if p.get('result') != p_result:
-                            p.pop('time', None)
-                        p['result'] = p_result
-                r['solved'] = {'solving': solving}
-                r['IsTeam'] = row.pop('IsTeam')
-
-                if 'team_id' in row:
-                    r['team_id'] = row.pop('team_id')
-                    r['_members'] = row.pop('_members')
-
-                if r['IsTeam']:
-                    continue
-
-                row.update(r)
-                row.pop('Additional', None)
-                if 'AtCoderRank' in row:
-                    row['AtcoderRank'] = row.pop('AtCoderRank')
-                rating = row.pop('Rating', None)
-                if rating is not None:
-                    r['info'] = {'rating': rating}
-                old_rating = row.pop('OldRating', None)
-
-                for k, v in sorted(row.items()):
-                    r[k] = v
-
-                if handle in results:
-                    r.update(results.pop(handle))
-
-                if old_rating is not None and (old_rating or 'NewRating' in r):
-                    r['OldRating'] = old_rating
-
-                if r.get('IsRated'):
-                    has_rated = True
-                    if r.get('NewRating') is not None:
-                        has_new_rating = True
-
-            try:
-                url = f'{self.STANDING_URL_.format(self)}/virtual/json'
-                page = self._get(url)
-                data = json.loads(page)
-            except FailOnGetResponse as e:
-                if e.code == 404:
-                    data = {}
-                else:
-                    raise e
-
-            for row in data.get('StandingsData', []):
-                if not row['TaskResults']:
-                    continue
-                handle = row.pop('UserScreenName')
-                if users is not None and handle not in users:
-                    continue
-                r = result.setdefault(handle, collections.OrderedDict())
-                r['member'] = handle
-                if row.pop('UserIsDeleted', None):
-                    r['action'] = 'delete'
-                    continue
-
-                r['country'] = row.pop('Country')
-                if 'UserName' in row:
-                    r['name'] = row.pop('UserName')
-
-                stats = (statistics or {}).get(handle, {})
-                problems = r.setdefault('problems', stats.get('problems', {}))
-                clear_problems_fields(problems)
-                task_results = row.pop('TaskResults', {})
-                for k, v in task_results.items():
-                    if 'Score' not in v:
-                        continue
-                    letter = task_info[k]['short']
-                    p = problems.setdefault(letter, {})
-                    p = p.setdefault('upsolving', {})
-                    p_result = p.get('result', 0)
-                    score = v['Score'] / 100.
-                    if score > 0 and score > p_result:
-                        p['result'] = score
-
-                        seconds = v['Elapsed'] // 10**9
-                        p['time_in_seconds'] = seconds
-                        p['time'] = f'{seconds // 60}:{seconds % 60:02d}'
-
-                        if v['Penalty'] > 0:
-                            p['penalty'] = v['Penalty']
-                    elif score <= 0 and p_result <= 0 and -v['Failure'] < p_result:
-                        p['result'] = -v['Failure']
-                        p.pop('time', None)
-
-            if self.info.get('_submissions_info', {}).get('last_submission_time', -1) > 0:
-                for r in result.values():
-                    problems = r.get('problems', {})
-                    if not problems:
-                        continue
-                    no_url = False
-                    for p in problems.values():
-                        u = p.get('upsolving', {})
-                        if 'result' in p and 'url' not in p or 'result' in u and 'url' not in u:
-                            no_url = True
-                            break
-                    if no_url:
-                        fusers.append(r['member'])
-
-            standings = {
-                'result': result,
-                'url': standings_url,
-                'problems': list(task_info.values()),
-                'writers': writers,
+        task_info = collections.OrderedDict()
+        for t in data['TaskInfo']:
+            k = t['TaskScreenName']
+            url = self.PROBLEM_URL_.format(self, k)
+            task_info[k] = {
+                'code': k,
+                'short': t['Assignment'],
+                'name': t['TaskName'] or k,
+                'url': url,
             }
 
-            if (
-                has_rated
-                and not has_new_rating
-                and self.end_time < datetime.utcnow().replace(tzinfo=pytz.utc) < self.end_time + timedelta(hours=3)
-            ):
-                standings['timing_statistic_delta'] = timedelta(minutes=30)
+        def get_problem_full_score(info):
+            page = REQ.get(info['url'])
+            match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
+            if match:
+                info['full_score'] = int(match.group('score'))
+
+        with PoolExecutor(max_workers=8) as executor:
+            executor.map(get_problem_full_score, task_info.values())
+
+        if any('full_score' not in t for t in task_info.values()):
+            page = REQ.get(self.url)
+            for match in re.finditer('<table[^>]*>.*</table>', page, re.MULTILINE | re.DOTALL):
+                table = parsed_table.ParsedTable(match.group(0))
+                header = [c.value for c in table.header.columns]
+                if header != ['Task', 'Score']:
+                    continue
+                for row in table:
+                    short = row['Task'].value
+                    score = as_number(row['Score'].value, force=True)
+                    tasks = [t for t in task_info.values() if t['short'] == short]
+                    if len(tasks) == 1:
+                        for t in tasks:
+                            if 'full_score' not in t:
+                                t['full_score'] = score
+
+        has_rated = False
+        has_new_rating = False
+
+        for row in data['StandingsData']:
+            if not row['TaskResults'] and not row.get('IsRated'):
+                continue
+            handle = row.pop('UserScreenName')
+            if users is not None and handle not in users:
+                continue
+            r = result.setdefault(handle, collections.OrderedDict())
+            r['member'] = handle
+            if row.pop('UserIsDeleted', None):
+                r['action'] = 'delete'
+                continue
+            r['place'] = row.pop('Rank')
+            total_result = row.pop('TotalResult')
+
+            penalty = total_result['Elapsed'] // 10**9
+            r['penalty'] = f'{penalty // 60}:{penalty % 60:02d}'
+
+            r['solving'] = total_result['Score'] / 100.
+            r['country'] = row.pop('Country')
+            if 'UserName' in row:
+                r['name'] = row.pop('UserName')
+
+            stats = (statistics or {}).get(handle, {})
+            problems = r.setdefault('problems', stats.get('problems', {}))
+            clear_problems_fields(problems)
+            solving = 0
+            task_results = row.pop('TaskResults', {})
+            for k, v in task_results.items():
+                if 'Score' not in v:
+                    continue
+                letter = task_info[k]['short']
+                p = problems.setdefault(letter, {})
+
+                if v['Score'] > 0:
+                    solving += 1
+
+                    p['result'] = v['Score'] / 100.
+
+                    seconds = v['Elapsed'] // 10**9
+                    p['time_in_seconds'] = seconds
+                    p['time'] = f'{seconds // 60}:{seconds % 60:02d}'
+
+                    if v['Penalty'] > 0:
+                        p['penalty'] = v['Penalty']
+                else:
+                    p_result = -v['Failure']
+                    if p.get('result') != p_result:
+                        p.pop('time', None)
+                    p['result'] = p_result
+            r['solved'] = {'solving': solving}
+            r['IsTeam'] = row.pop('IsTeam')
+
+            if 'team_id' in row:
+                r['team_id'] = row.pop('team_id')
+                r['_members'] = row.pop('_members')
+
+            if r['IsTeam']:
+                continue
+
+            row.update(r)
+            row.pop('Additional', None)
+            if 'AtCoderRank' in row:
+                row['AtcoderRank'] = row.pop('AtCoderRank')
+            rating = row.pop('Rating', None)
+            if rating is not None:
+                r['info'] = {'rating': rating}
+            old_rating = row.pop('OldRating', None)
+
+            for k, v in sorted(row.items()):
+                r[k] = v
+
+            if handle in results:
+                r.update(results.pop(handle))
+
+            if old_rating is not None and (old_rating or 'NewRating' in r):
+                r['OldRating'] = old_rating
+
+            if r.get('IsRated'):
+                has_rated = True
+                if r.get('NewRating') is not None:
+                    has_new_rating = True
+
+        try:
+            url = f'{self.STANDING_URL_.format(self)}/virtual/json'
+            page = self._get(url)
+            data = json.loads(page)
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                data = {}
+            else:
+                raise e
+
+        for row in data.get('StandingsData', []):
+            if not row['TaskResults']:
+                continue
+            handle = row.pop('UserScreenName')
+            if users is not None and handle not in users:
+                continue
+            r = result.setdefault(handle, collections.OrderedDict())
+            r['member'] = handle
+            if row.pop('UserIsDeleted', None):
+                r['action'] = 'delete'
+                continue
+
+            r['country'] = row.pop('Country')
+            if 'UserName' in row:
+                r['name'] = row.pop('UserName')
+
+            stats = (statistics or {}).get(handle, {})
+            problems = r.setdefault('problems', stats.get('problems', {}))
+            clear_problems_fields(problems)
+            task_results = row.pop('TaskResults', {})
+            for k, v in task_results.items():
+                if 'Score' not in v:
+                    continue
+                letter = task_info[k]['short']
+                p = problems.setdefault(letter, {})
+                p = p.setdefault('upsolving', {})
+                p_result = p.get('result', 0)
+                score = v['Score'] / 100.
+                if score > 0 and score > p_result:
+                    p['result'] = score
+
+                    seconds = v['Elapsed'] // 10**9
+                    p['time_in_seconds'] = seconds
+                    p['time'] = f'{seconds // 60}:{seconds % 60:02d}'
+
+                    if v['Penalty'] > 0:
+                        p['penalty'] = v['Penalty']
+                elif score <= 0 and p_result <= 0 and -v['Failure'] < p_result:
+                    p['result'] = -v['Failure']
+                    p.pop('time', None)
+
+        if self.info.get('_submissions_info', {}).get('last_submission_time', -1) > 0:
+            for r in result.values():
+                problems = r.get('problems', {})
+                if not problems:
+                    continue
+                no_url = False
+                for p in problems.values():
+                    u = p.get('upsolving', {})
+                    if 'result' in p and 'url' not in p or 'result' in u and 'url' not in u:
+                        no_url = True
+                        break
+                if no_url:
+                    fusers.append(r['member'])
+
+        standings = {
+            'result': result,
+            'url': standings_url,
+            'problems': list(task_info.values()),
+            'writers': writers,
+        }
+
+        if (
+            has_rated
+            and not has_new_rating
+            and self.end_time < datetime.utcnow().replace(tzinfo=pytz.utc) < self.end_time + timedelta(hours=3)
+        ):
+            standings['timing_statistic_delta'] = timedelta(minutes=30)
 
         if users or users is None:
             self._stop = False
@@ -623,7 +609,7 @@ class Statistic(BaseModule):
                     return None
                 code = e.code
                 if code == 404:
-                    return None
+                    return {'_deleted': True}
                 return {}
             ret = {}
             matches = key_value_re.finditer(page, re.VERBOSE)

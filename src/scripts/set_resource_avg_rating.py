@@ -24,7 +24,7 @@ def main(host):
             avg_rating = sum(ratings) / len(ratings)
             print(resource, avg_rating)
             resource.avg_rating = avg_rating
-            resource.save()
+            resource.save(update_fields=['avg_rating'])
 
 
 def run(*args):

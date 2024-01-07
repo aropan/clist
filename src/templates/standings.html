@@ -104,10 +104,7 @@
       </a>
       {% endif %}
 
-      {% if perms.clist.change_contest %}
-      <a href="{% url 'admin:clist_contest_change' contest.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-      <a href="{% url 'admin:logify_eventlog_changelist' %}?q={{ contest.title }}" class="database-link invisible" target="_blank" rel="noopener">{% icon_to 'logify' %}</a>
-      {% endif %}
+      {% include "contest_inline_buttons.html" with contest=contest with_stage=True %}
     </div>
 
     {% if contest.related is not None %}
@@ -150,22 +147,23 @@
 
   {% if contest.is_running or contest.is_coming %}
   <h4 class="text-center">
-    {% if contest.is_running %}Time remaining: {% elif contest.is_coming %}Time before the start: {% endif %}<span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span>
-  {% endif %}
-  {% with opening=contest.info|get_item:"_opening" %}
-  {% if opening %}
-    {% for o in opening %}
-    {% with otimedelta=o.date|timestamp_to_datetime|timezone:timezone|timedelta_with_now  %}
-    {% with oseconds=otimedelta.total_seconds %}
-    {% if oseconds > 0 %}
-    | {{ o.title }}: <span class="timeleft countdown" data-timestamp="{{ oseconds }}">{{ oseconds|countdown }}</span>
+    {% if contest.is_running %}Time remaining: {% elif contest.is_coming %}Time before the start: {% endif %}
+    <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}" title="{{ contest.next_time_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.next_time|countdown }}</span>
+    {% with opening=contest.info|get_item:"_opening" %}
+    {% if opening %}
+      {% for o in opening %}
+      {% with otimedelta=o.date|timestamp_to_datetime|timezone:timezone|timedelta_with_now  %}
+      {% with oseconds=otimedelta.total_seconds %}
+      {% if oseconds > 0 %}
+      | {{ o.title }}: <span class="timeleft countdown" data-timestamp="{{ oseconds }}" title="{{ o.date|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ oseconds|countdown }}</span>
+      {% endif %}
+      {% endwith %}
+      {% endwith %}
+      {% endfor %}
     {% endif %}
     {% endwith %}
-    {% endwith %}
-    {% endfor %}
-  {% endif %}
-  {% endwith %}
   </h4>
+  {% endif %}
 </div>
 
 

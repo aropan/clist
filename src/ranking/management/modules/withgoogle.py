@@ -235,7 +235,7 @@ class Statistic(BaseModule):
                     r['solved'] = {'solving': solved}
 
                     if statistics and handle in statistics and are_results_final:
-                        result[handle] = self.merge_dict(r, statistics.pop(handle))
+                        result[handle] = self.merge_dict(r, statistics[handle])
                     else:
                         handles_for_getting_attempts.append(handle)
 

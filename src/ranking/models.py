@@ -15,7 +15,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.db import models, transaction
-from django.db.models import F, Q, Sum
+from django.db.models import F, OuterRef, Q, Sum
 from django.db.models.functions import Coalesce, Upper
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -54,6 +54,8 @@ class Account(BaseModel):
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     need_verification = models.BooleanField(default=False)
+    is_subscribed = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+    deleted = models.BooleanField(null=True, blank=True, default=None, db_index=True)
 
     def __str__(self):
         return '%s on %s' % (str(self.key), str(self.resource_id))
@@ -107,6 +109,7 @@ class Account(BaseModel):
             GistIndexTrgrmOps(fields=['key', 'name']),
             ExpressionIndex(expressions=[Upper('key')]),
             models.Index(fields=['resource', 'key']),
+            models.Index(fields=['resource', 'name']),
             models.Index(fields=['resource', 'country']),
 
             models.Index(fields=['resource', 'rating']),
@@ -227,10 +230,10 @@ def set_account_rating(sender, instance, *args, **kwargs):
 def count_resource_accounts(signal, instance, **kwargs):
     if signal is post_delete:
         instance.resource.n_accounts -= 1
-        instance.resource.save()
+        instance.resource.save(update_fields=['n_accounts'])
     elif signal is post_save and kwargs['created']:
         instance.resource.n_accounts += 1
-        instance.resource.save()
+        instance.resource.save(update_fields=['n_accounts'])
 
 
 def update_account_by_coders(account, default_url=None):
@@ -1060,3 +1063,9 @@ class VirtualStart(BaseModel):
     def filter_by_content_type(cls, model_class):
         content_type = ContentType.objects.get_for_model(model_class)
         return cls.objects.filter(content_type=content_type)
+
+    @staticmethod
+    def contests_filter(coder):
+        has_virtual_start = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef('id'))
+        has_verdict = coder.verdicts.filter(problem__contests=OuterRef('pk'))
+        return Exists(has_virtual_start) | Exists(has_verdict)

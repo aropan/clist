@@ -50,7 +50,7 @@ def set_accounts_fields(resources, logger):
                     logger.info(cs(f'+ {field}: {new_types}', 'green'))
 
             resource.accounts_fields['types'] = fields_types
-            resource.save()
+            resource.save(update_fields=['accounts_fields'])
 
 
 def set_problems_fields(resources, logger):
@@ -87,7 +87,7 @@ def set_problems_fields(resources, logger):
                     logger.info(cs(f'+ {field}: {new_types}', 'green'))
 
             resource.problems_fields['types'] = fields_types
-            resource.save()
+            resource.save(update_fields=['problems_fields'])
 
 
 def set_statistics_fields(resources, logger):
@@ -132,7 +132,7 @@ def set_statistics_fields(resources, logger):
                     logger.info(cs(f'+ {field}: {new_types}', 'green'))
 
             resource.statistics_fields['types'] = fields_types
-            resource.save()
+            resource.save(update_fields=['statistics_fields'])
 
 
 def set_n_fields(resources, logger):

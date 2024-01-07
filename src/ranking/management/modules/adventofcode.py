@@ -129,7 +129,7 @@ class Statistic(BaseModule):
                                                  'subname': '*',
                                                  'subname_class': 'first-star' if star == '1' else 'both-stars',
                                                  'url': urljoin(self.url, f'/{year}/day/{day}'),
-                                                 '_order': (int(day), int(star)),
+                                                 '_order': (-int(day), int(star)),
                                                  'skip_in_stats': True}
                             if star == '1':
                                 problems_infos[k]['skip_for_divisions'] = ['diff']
@@ -333,6 +333,7 @@ class Statistic(BaseModule):
                     'code': f'Y{year}D{day}',
                     'url': contest_url,
                     'group': 0,
+                    '_info_prefix_fields': ['first_ac', 'last_ac'],
                 }
 
             problems = row.setdefault('problems', {})
@@ -353,9 +354,19 @@ class Statistic(BaseModule):
                 prev_problem['delta_time'] = '+' + self.to_time(delta_time)
 
         problems = list(reversed(problems_info.values()))
-        problems[0].update({'subname': '*', 'subname_class': 'first-star'})
+        problems[0].update({'subname': '*', 'subname_class': 'first-star', '_info_prefix': 'first_star_'})
         if len(problems) > 1:
-            problems[1].update({'subname': '*', 'subname_class': 'both-stars'})
+            problems[1].update({'subname': '*', 'subname_class': 'both-stars', '_info_prefix': 'both_stars_'})
+            first_ac = defaultdict(lambda: float('inf'))
+            last_ac = defaultdict(lambda: float('-inf'))
+            for r in result.values():
+                for k, v in r['problems'].items():
+                    first_ac[k] = min(first_ac[k], v['time_in_seconds'])
+                    last_ac[k] = max(last_ac[k], v['time_in_seconds'])
+            problems[1].update({
+                'diff_first_ac': self.to_time(first_ac['1'] - first_ac['2']),
+                'diff_last_ac': self.to_time(last_ac['1'] - last_ac['2']),
+            })
 
         place = None
         last = None

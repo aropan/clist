@@ -74,14 +74,7 @@ services:
     command: >
       postgres
       -c max_connections=50
-      -c shared_buffers=1GB
-      -c work_mem=20MB
-      -c maintenance_work_mem=200MB
-      -c effective_cache_size=2GB
       -c checkpoint_timeout=30min
-      -c max_wal_size=4GB
-      -c min_wal_size=320MB
-      -c bgwriter_delay=20
       -c track_activity_query_size=4096
     shm_size: 2gb
     restart: always

@@ -27,10 +27,3 @@ table.table.contests tr .title,
 table.table.problems tr .title {
   text-align: left;
 }
-
-@media (min-width: 992px) {
-  #resource-tables {
-    display: flex;
-    flex-wrap: wrap;
-  }
-}

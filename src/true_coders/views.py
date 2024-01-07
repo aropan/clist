@@ -1212,7 +1212,7 @@ def change(request):
         except Exception as e:
             return HttpResponseBadRequest(e)
     elif name == "add-subscription":
-        if coder.subscription_set.count() >= 50:
+        if coder.subscription_set.count() >= 3:
             return HttpResponseBadRequest("reached the limit number of subscriptions")
         contest = get_object_or_404(Contest, pk=request.POST.get("contest"))
         account = get_object_or_404(Account, pk=request.POST.get("account"))
@@ -1468,9 +1468,7 @@ def search(request, **kwargs):
             qs = qs.filter(start_time__lt=timezone.now())
         if request.GET.get('has_virtual_start') in django_settings.YES_:
             if request.user.is_authenticated:
-                coder = request.user.coder
-                vs = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef('id'))
-                qs = qs.annotate(disabled=Exists(vs))
+                qs = qs.annotate(disabled=VirtualStart.contests_filter(request.user.coder))
             qs = qs.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
         resources = [r for r in request.GET.getlist('resources[]') if r]
         if resources:
@@ -1623,7 +1621,7 @@ def search(request, **kwargs):
         elif f'_{field}' in contest.info:
             if not view_private_fields:
                 return HttpResponseBadRequest('You have no permission to view this field')
-            qs = ['any'] + contest.info.get(f'_{field}')
+            qs = contest.info.get(f'_{field}')
             qs = [v for v in qs if not text or text.lower() in str(v).lower()]
         elif field in contest.info.get('fields', []):
             field = f'addition__{field}'
@@ -2127,7 +2125,7 @@ def accounts(request, template='accounts.html'):
 
     search = request.GET.get('search')
     if search:
-        filt = get_iregex_filter(search, 'name', 'key', logger=request.logger)
+        filt = get_iregex_filter(search, 'name', 'key', suffix='', logger=request.logger)
         accounts = accounts.filter(filt)
         if request.user.has_perm('ranking.link_account'):
             coders_counter = Counter(accounts.filter(has_coders=True).values_list('coders__pk', flat=True))

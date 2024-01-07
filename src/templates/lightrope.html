@@ -1,6 +1,6 @@
 <link href="{% static_ts 'css/lightrope.css' %}" rel="stylesheet">
 {% with lightrope=request.session.lightrope %}
-<ul id="lightrope" class="lightrope{% if lightrope %} lightrope-{{ lightrope }} lightrope-ready{% else %} lightrope-on{% endif %}"></ul>
+<div><ul id="lightrope" class="lightrope{% if lightrope %} lightrope-{{ lightrope }} lightrope-ready{% else %} lightrope-on{% endif %}"></ul></div>
 <script>
   $(function() {
     var n_lightrope = $(window).width() / 52 - 1

@@ -57,8 +57,7 @@
 
 .notification .label,
 #lists .list .label,
-#calendars .calendar .label,
-#subscriptions .subscription .label
+#calendars .calendar .label
 {
   font-size: 100%;
 }
@@ -116,4 +115,8 @@ form.editableform .has-error .editable-input .form-control:focus {
 
 .change-list-ok {
   width: 50px;
+}
+
+#subscriptions .subscription .key-column {
+  text-align: right;
 }

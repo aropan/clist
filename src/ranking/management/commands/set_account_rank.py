@@ -80,6 +80,8 @@ class Command(BaseCommand):
                 qs = qs.exclude(**{field: F('_rank')})
                 qs = qs.values('pk', '_rank', field)
                 message = f'field = {field}, to update {qs.count()} of {n_rating_accounts} accounts'
+                message += f', rating_update_time = {resource.rating_update_time}'
+                message += f', rank_update_time = {resource.rank_update_time}'
                 self.logger.info(f'resource = {resource}, {message}')
                 event_log.update_message(message)
 

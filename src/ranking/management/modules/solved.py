@@ -74,7 +74,7 @@ class Statistic(BaseModule):
                         hidden_fields.add(k)
                         row[k] = v
                 if handle in statistics:
-                    stat = statistics.pop(handle)
+                    stat = statistics[handle]
                     for k in 'old_rating', 'rating_change', 'new_rating', 'performance':
                         if k in stat:
                             row[k] = stat[k]

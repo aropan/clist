@@ -85,4 +85,4 @@ def run(host=None, *args):
 
         if to_save:
             pprint(resource.ratings)
-            resource.save()
+            resource.save(update_fields=['ratings'])

@@ -296,9 +296,7 @@ class Resource(BaseModel):
 
     @classmethod
     def get_object(cls, value):
-        condition = Q(host__contains=value)
-        if value.isdigit():
-            condition |= Q(pk=value)
+        condition = Q(pk=value) if value.isdigit() else Q(host__contains=value)
         return Resource.objects.get(condition)
 
 
@@ -474,15 +472,12 @@ class Contest(BaseModel):
     def next_time_to(self, now):
         if self.is_over():
             return 0
-        return int(round(
-            (
-                (
-                    self.end_time
-                    if self.is_running()
-                    else self.start_time
-                ) - (now or timezone.now())
-            ).total_seconds()
-        ))
+        delta = self.next_time_datetime() - (now or timezone.now())
+        seconds = delta.total_seconds()
+        return int(round(seconds))
+
+    def next_time_datetime(self):
+        return self.end_time if self.is_running else self.start_time
 
     def __str__(self):
         return f'{self.title} Contest#{self.id}'

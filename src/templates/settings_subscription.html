@@ -1,0 +1,66 @@
+<div class="col-sm-6 col-md-4 col-lg-3">
+  <div class="subscription panel panel-default panel-inline table-responsive">
+    <table class="table">
+      <tr>
+        <td class="no-stretch key-column">Method</td>
+        <td>{{ subscription.method }}</td>
+      </tr>
+      {% if subscription.resource %}
+      <tr>
+        <td class="no-stretch key-column">Resource</td>
+        <td>
+          <a href="{% url 'clist:resource' subscription.resource.host %}">
+            <img src="{{ subscription.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+            {{ subscription.resource.host }}
+          </a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if subscription.contest %}
+      <tr>
+        <td class="no-stretch key-column">Contest</td>
+        <td>
+          <a href="{% url 'clist:resource' subscription.contest.resource.host %}" title="{{ subscription.contest.resource.host }}" data-toggle="tooltip">
+            <img src="{{ subscription.contest.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+          </a>
+          <a href="{{ subscription.contest.actual_url }}">
+            {{ subscription.contest.title }}
+          </a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if subscription.account %}
+      <tr>
+        <td class="no-stretch key-column">Account</td>
+        <td>
+          {% include "account_table_cell.html" with account=subscription.account resource=subscription.account.resource without_country=True without_avatar=True without_circle=True %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if subscription.coder_list %}
+      <tr>
+        <td class="no-stretch key-column">List</td>
+        <td>
+          <a href="{% url 'coder:list' subscription.coder_list.uuid %}">
+            {{ subscription.coder_list.name }}
+          </a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if subscription.coder_chat %}
+      <tr>
+        <td class="no-stretch key-column">Chat</td>
+        <td>{{ subscription.coder_chat.title }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td colspan="100%">
+          <span class="pull-right">
+            <button href="#" data-id="{{ subscription.id }}" data-action="delete-subscription" data-success="$div.remove();" class="action-subscription btn btn-danger btn-xs"><i class="far fa-trash-alt"></i></button>
+          </span>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+

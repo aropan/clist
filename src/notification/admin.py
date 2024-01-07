@@ -14,7 +14,7 @@ class NotificationAdmin(BaseModelAdmin):
 
 @admin_register(Subscription)
 class SubscriptionAdmin(BaseModelAdmin):
-    list_display = ['coder', 'method', 'account', 'enable']
+    list_display = ['coder', 'method', 'resource', 'contest', 'account', 'coder_list', 'coder_chat', 'enable']
     list_filter = ['enable', 'method']
     search_fields = ['coder__username', 'account__key']
 

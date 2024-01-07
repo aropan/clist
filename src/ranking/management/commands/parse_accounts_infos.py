@@ -246,6 +246,7 @@ class Command(BaseCommand):
                                 account.name = name if name and name != account.key else None
                             if 'rating' in info and account.info.get('rating') != info['rating']:
                                 info['_rating_time'] = int(now.timestamp())
+                            account.deleted = info.get('_deleted', False)
                             delta = timedelta(**resource_info.get('delta', {'days': 365}))
                             delta = info.pop('delta', delta)
 

@@ -53,7 +53,7 @@ def create_resource_calendar(resource, calendarId=None):
     else:
         entry = service.calendars().insert(body=body).execute()
         resource.uid = entry["id"]
-        resource.save()
+        resource.save(update_fields=["uid"])
 
 
 def create_contest_event(calendarId, contest, eventId=None):
