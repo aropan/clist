@@ -776,7 +776,7 @@ class Statistic(BaseModule):
             start += count
 
         account.info['submissions_'] = info
-        account.save()
+        account.save(update_fields=['info', 'last_submission'])
 
         ret['n_contests'] = len(stats_caches)
         return ret

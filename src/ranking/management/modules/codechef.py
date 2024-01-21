@@ -612,5 +612,5 @@ class Statistic(BaseModule):
             'last_submission_time': new_last_submission_time,
         })
         account.info['submissions_'] = submissions_info
-        account.save()
+        account.save(update_fields=['info', 'last_submission'])
         return ret

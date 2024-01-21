@@ -165,6 +165,11 @@ def account_update_contest_additions(
 
 
 def create_upsolving_statistic(contest, account):
-    defaults = {'skip_in_stats': True, 'addition': {'_no_update_n_contests': True}}
+    defaults = {
+        'skip_in_stats': True,
+        'addition': {'_no_update_n_contests': True},
+    }
+    if account.name:
+        defaults['addition']['name'] = account.name
     stat, created = contest.statistics_set.get_or_create(account=account, defaults=defaults)
     return stat, created

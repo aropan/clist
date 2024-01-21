@@ -609,7 +609,7 @@ class Statistic(BaseModule):
                     return None
                 code = e.code
                 if code == 404:
-                    return {'_deleted': True}
+                    return {'_delete': True}
                 return {}
             ret = {}
             matches = key_value_re.finditer(page, re.VERBOSE)
@@ -634,7 +634,10 @@ class Statistic(BaseModule):
                     else:
                         yield {'skip': True}
                 else:
-                    yield {'info': data}
+                    if data.get('_delete'):
+                        yield {'delete': True}
+                    else:
+                        yield {'info': data}
                 pbar.update()
 
     @staticmethod
@@ -759,7 +762,7 @@ class Statistic(BaseModule):
 
         info['last_from_seconds'] = last_from_seconds
         account.info['submissions_'] = info
-        account.save()
+        account.save(update_fields=['info', 'last_submission'])
 
         ret['n_contests'] = len(stats_caches)
         return ret

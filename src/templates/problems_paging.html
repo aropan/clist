@@ -16,15 +16,13 @@
 {% define '' as manual_solution_class %}
 {% endif %}
 
-{% if solution.result|is_solved %}
+{% if solution.result|is_solved:True %}
 {% define 'success' as system_solution_class %}
-{% elif solution.result|is_upsolved %}
-{% define 'success' as system_solution_class %}
-{% elif solution.result|is_hidden %}
+{% elif solution.result|is_hidden:True %}
 {% define 'warning' as system_solution_class %}
-{% elif solution.result|is_reject %}
+{% elif solution.result|is_reject:True %}
 {% define 'danger' as system_solution_class %}
-{% elif solution.result|is_partial %}
+{% elif solution.result|is_partial:True %}
 {% define 'info' as system_solution_class %}
 {% else %}
 {% define '' as system_solution_class %}

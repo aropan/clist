@@ -768,12 +768,16 @@ def next_time_to(obj, now):
 
 
 @register.filter
-def is_solved(value):
+def is_solved(value, with_upsolving=False):
     if not value:
         return False
     if isinstance(value, dict):
+        if with_upsolving and is_solved(value.get('upsolving')):
+            return True
         if value.get('partial'):
             return False
+        if value.get('binary') is True:
+            return True
         value = value.get('result', 0)
     if isinstance(value, str):
         if value.startswith('+'):
@@ -788,24 +792,14 @@ def is_solved(value):
 
 
 @register.filter
-def is_upsolved(value):
-    if not value:
+def is_reject(value, with_upsolving=False):
+    if with_upsolving and is_solved(value, with_upsolving=with_upsolving):
         return False
-    return is_solved(value.get('upsolving'))
-
-
-@register.filter
-def is_hidden(value):
     if isinstance(value, dict):
-        value = value.get('result')
-    if not value:
-        return False
-    return str(value).startswith('?')
-
-
-@register.filter
-def is_reject(value):
-    if isinstance(value, dict):
+        if with_upsolving and is_reject(value.get('upsolving')):
+            return True
+        if value.get('binary') is False:
+            return True
         value = value.get('result')
     if not value:
         return False
@@ -815,12 +809,36 @@ def is_reject(value):
         value = float(value)
     except ValueError:
         return False
-    return value < 0
+    return value <= 0
 
 
 @register.filter
-def is_partial(value):
-    return value and value.get('partial')
+def is_upsolved(value):
+    if not value:
+        return False
+    return is_solved(value.get('upsolving'))
+
+
+@register.filter
+def is_hidden(value, with_upsolving=False):
+    if with_upsolving and is_solved(value, with_upsolving=with_upsolving):
+        return False
+    if isinstance(value, dict):
+        if with_upsolving and is_hidden(value.get('upsolving')):
+            return True
+        value = value.get('result')
+    if not value:
+        return False
+    return str(value).startswith('?')
+
+
+@register.filter
+def is_partial(value, with_upsolving=False):
+    if with_upsolving and is_solved(value, with_upsolving=with_upsolving):
+        return False
+    if not value:
+        return False
+    return value.get('partial') or with_upsolving and is_partial(value.get('upsolving'))
 
 
 def normalized_result(value):
@@ -1312,3 +1330,8 @@ def not_empty(value):
 @register.filter
 def accounts_split(value):
     return re.split(r',(?=[^\s])', value)
+
+
+@register.filter
+def is_yes(value):
+    return value and str(value).lower() in settings.YES_

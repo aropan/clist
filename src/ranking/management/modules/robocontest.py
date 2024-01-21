@@ -43,6 +43,7 @@ class Statistic(BaseModule):
             n_page += 1
 
             page = get_page(standings_url + f'?page={n_page}')
+            page = re.sub(r'<!(?:--)?\[[^\]]*\](?:--)?>', '', page)
             table = parsed_table.ParsedTable(page, as_list=True)
             nothing = True
 
@@ -74,9 +75,9 @@ class Statistic(BaseModule):
                                     r['rating_change'] = int(rating_change)
                                     r['new_rating'] = int(new_rating)
                             elif 'tasks' in c:
-                                r['solving'] = v.value
+                                r['tasks'] = v.value
                     elif f == 'ball':
-                        r['score'] = v.value
+                        r['solving'] = v.value
                     elif f == 'penalty':
                         r['penalty'] = v.value
                     elif len(f.split()[0]) == 1:
@@ -98,6 +99,11 @@ class Statistic(BaseModule):
                             p['result'], p['time'] = val.split()
                         elif val == '-':
                             p['result'] = '-1'
+                        elif ' / ' in val:
+                            res, full = [as_number(v) for v in val.split(' / ')]
+                            if 0 < res < full:
+                                p['partial'] = True
+                            p['result'] = res
                         else:
                             p['result'] = val
                         if 'first-solved' in v.column.node.attrib['class']:
@@ -106,7 +112,7 @@ class Statistic(BaseModule):
                 if not r.get('member'):
                     continue
 
-                if not problems and not as_number(r['score']):
+                if not problems and not as_number(r['solving']):
                     continue
 
                 result[r['member']] = r

@@ -9,10 +9,11 @@ from sql_util.utils import Exists
 from tqdm import tqdm
 
 from clist.models import Contest, ProblemVerdict, Resource
-from clist.templatetags.extras import get_problem_solution, is_hidden, is_partial, is_reject, is_solved, is_upsolved
+from clist.templatetags.extras import get_problem_solution, is_hidden, is_partial, is_reject, is_solved
 from ranking.models import Statistics
 from true_coders.models import Coder, CoderProblem
 from utils.attrdict import AttrDict
+from utils.logger import suppress_db_logging_context
 
 
 class Command(BaseCommand):
@@ -39,8 +40,13 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         coders = Coder.objects.all()
+        update_fill_coder_problems = False
         if args.no_filled:
-            coders = coders.filter(settings__fill_coder_problems__isnull=True)
+            coders = coders.filter(
+                Q(settings__fill_coder_problems__isnull=True) |
+                Q(settings__fill_coder_problems=False)
+            )
+            update_fill_coder_problems = True
 
         if args.coders:
             coders_filters = Q()
@@ -48,6 +54,7 @@ class Command(BaseCommand):
                 coders_filters |= Q(username=c)
             coders = coders.filter(coders_filters)
             self.log_queryset('coders', coders)
+            update_fill_coder_problems = False
 
         resources = Resource.objects.all()
         if args.resources:
@@ -60,6 +67,7 @@ class Command(BaseCommand):
             if not args.coders:
                 coders = coders.annotate(has_resource=Exists('account', filter=Q(account__resource__in=resources)))
                 coders = coders.filter(has_resource=True)
+            update_fill_coder_problems = False
 
         if args.contest:
             contest = Contest.objects.get(pk=args.contest)
@@ -68,6 +76,7 @@ class Command(BaseCommand):
             coders = coders.filter(has_account=True)
             self.log_queryset('contest problems', problems)
             self.log_queryset('contest coders', coders)
+            update_fill_coder_problems = False
         else:
             problems = None
 
@@ -81,7 +90,7 @@ class Command(BaseCommand):
         n_total = 0
         n_deleted = 0
         for coder in tqdm(coders, total=coders.count(), desc='coders'):
-            with transaction.atomic():
+            with transaction.atomic(), suppress_db_logging_context():
                 def process_problem(problems, desc):
                     nonlocal n_created, n_total, n_deleted
 
@@ -105,13 +114,13 @@ class Command(BaseCommand):
                         if 'result' not in solution:
                             continue
                         result = solution['result']
-                        if is_solved(result) or is_upsolved(result):
+                        if is_solved(result, with_upsolving=True):
                             verdict = ProblemVerdict.SOLVED
-                        elif is_reject(result):
+                        elif is_reject(result, with_upsolving=True):
                             verdict = ProblemVerdict.REJECT
-                        elif is_hidden(result):
+                        elif is_hidden(result, with_upsolving=True):
                             verdict = ProblemVerdict.HIDDEN
-                        elif is_partial(result):
+                        elif is_partial(result, with_upsolving=True):
                             verdict = ProblemVerdict.PARTIAL
                         else:
                             continue
@@ -134,8 +143,8 @@ class Command(BaseCommand):
                     for resource in tqdm(coder_resources, total=len(coder_resources), desc='resources'):
                         resource_problems = resource.problem_set.all()
                         process_problem(resource_problems, desc=f'{resource}')
-            if args.no_filled:
+            if update_fill_coder_problems:
                 coder.settings['fill_coder_problems'] = True
-                coder.save()
+                coder.save(update_fields=['settings'])
 
         self.logger.info(f'n_created = {n_created}, n_deleted = {n_deleted}, n_total = {n_total}')

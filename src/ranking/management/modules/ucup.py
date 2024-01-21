@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import yaml
 from django.db.models import Q
 
-from clist.templatetags.extras import as_number
+from clist.templatetags.extras import as_number, is_yes
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
@@ -79,9 +79,9 @@ class Statistic(BaseModule):
         base_url = 'https://qoj.ac/'
 
         def fetch_problem(problem: tuple[int, int]):
-            idx, problem_id = problem
+            short, problem_id = problem
             problem_id = str(problem_id)
-            problem_info = {'short': chr(ord('A') + idx), 'code': problem_id}
+            problem_info = {'short': short, 'code': problem_id}
             for url in (
                 urllib.parse.urljoin(self.standings_url.rstrip('/'), f'problem/{problem_id}'),
                 urllib.parse.urljoin(base_url, f'/problem/{problem_id}'),
@@ -100,7 +100,13 @@ class Statistic(BaseModule):
 
         problems_infos = []
         with PoolExecutor(max_workers=8) as executor:
-            for problem_info in executor.map(fetch_problem, enumerate(variables['problems'])):
+            problems_short = variables['problems_id']
+            for idx in range(len(problems_short)):
+                if not problems_short[idx]:
+                    problems_short[idx] = chr(ord('A') + idx)
+            problems_id = variables['problems']
+            problems_data = zip(problems_short, problems_id)
+            for problem_info in executor.map(fetch_problem, problems_data):
                 problems_infos.append(problem_info)
 
         result = {}
@@ -155,11 +161,12 @@ class Statistic(BaseModule):
             problems = row.setdefault('problems', statistics_problems)
             scoring = scoring.items() if isinstance(scoring, dict) else enumerate(scoring)
             for k, scoring_value in scoring:
-                score, time, submission_id, n_attempts, full_score, *is_hidden = map(int, scoring_value)
-                short = chr(ord('A') + int(k))
+                scoring_value, is_hidden = scoring_value[:5], scoring_value[5:]
+                score, time, submission_id, n_attempts, full_score = map(int, scoring_value)
+                short = problems_infos[int(k)]['short']
                 problem = problems.setdefault(short, {})
                 is_accepted = score == full_score
-                if is_hidden and is_hidden[0]:
+                if is_hidden and is_yes(is_hidden[0]):
                     problem['result'] = f'?{n_attempts + 1}'
                 elif is_accepted:
                     problem['result'] = f'+{n_attempts}' if n_attempts else '+'

@@ -183,16 +183,25 @@ class Command(BaseCommand):
                         with transaction.atomic():
                             if 'delta' in data or 'delta' in (data.get('info') or {}):
                                 n_counter['deferred'] += 1
-                            if data.get('skip'):
+                            if data.get('skip'):  # skip to update after
                                 delta = data.get('delta') or timedelta(days=100)
                                 n_counter['skip'] += 1
                                 account.updated = now + delta
                                 account.save(update_fields=['updated'])
                                 seen.add(account.key)
                                 continue
+
+                            account.deleted = data.get('delete', False)
+                            if account.deleted:  # mark as deleted
+                                n_counter['deleted'] += 1
+                                account.updated = now + timedelta(days=365)
+                                account.save(update_fields=['deleted', 'updated'])
+                                seen.add(account.key)
+                                continue
+
                             count += 1
                             info = data['info']
-                            if info is None:
+                            if info is None:  # delete account
                                 if 'coder' in data:
                                     coder = account.coders.filter(username=data['coder']).first()
                                     if coder is not None:
@@ -246,7 +255,6 @@ class Command(BaseCommand):
                                 account.name = name if name and name != account.key else None
                             if 'rating' in info and account.info.get('rating') != info['rating']:
                                 info['_rating_time'] = int(now.timestamp())
-                            account.deleted = info.get('_deleted', False)
                             delta = timedelta(**resource_info.get('delta', {'days': 365}))
                             delta = info.pop('delta', delta)
 

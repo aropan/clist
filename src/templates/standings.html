@@ -204,15 +204,15 @@
       <table class="standings table table-hover table-condensed{% if with_detail %}-detail{% else %}-non-detail{% endif %} table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}{% if timeline %} invisible{% endif %}{% if merge_problems %} table-merge-problems{% endif %}">
           <thead>
             <tr class="header-row">
-              <th class="place-cell sticky-column" data-sticky-column="place-cell"{% if merge_problems %} rowspan="2"{% endif %}>
+              <th class="place-cell sticky-column" data-sticky-column="place-cell"{{ default_rowspan }}>
                 {% with division=params|get_item:"division" %}
                 <span{% if contest.n_statistics %} title="Total: {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}" data-toggle="tooltip" data-placement="top"{% endif %}>Rank</span>
                 {% endwith %}
               </th>
               {% if data_1st_u %}
-              <th class="first-u-cell sticky-column" data-sticky-column="first-u-cell"{% if merge_problems %} rowspan="2"{% endif %}><span{% if data_1st_u.title %} title="{{ data_1st_u.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ data_1st_u.header|default:"1st U" }}</span></th>
+              <th class="first-u-cell sticky-column" data-sticky-column="first-u-cell"{{ default_rowspan }}><span{% if data_1st_u.title %} title="{{ data_1st_u.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{{ data_1st_u.header|default:"1st U" }}</span></th>
               {% endif %}
-              <th class="handle-cell sticky-column" data-sticky-column="handle-cell"{% if merge_problems %} rowspan="2"{% endif %}>
+              <th class="handle-cell sticky-column" data-sticky-column="handle-cell"{{ default_rowspan }}>
                 {% if has_country %}<div class="flag-width-fixed"></div>{% endif %}
                 Handle
                 {% if standings_options.help_message %}<span class="bg-success nobold help-message">{{ standings_options.help_message }}</span>{% endif %}
@@ -225,21 +225,21 @@
                 <a id="unstar" class="external-link invisible hidden">{% icon_to 'unpin' false %}</a>
               </th>
               {% if versus_data %}
-              <th{% if merge_problems %} rowspan="2"{% endif %}>Games</th>
-              <th{% if merge_problems %} rowspan="2"{% endif %}>Win Rate</th>
-              <th{% if merge_problems %} rowspan="2"{% endif %}>Results</th>
+              <th{{ default_rowspan }}>Games</th>
+              <th{{ default_rowspan }}>Win Rate</th>
+              <th{{ default_rowspan }}>Results</th>
               {% for field in versus_data.fields %}
-              <th{% if merge_problems %} rowspan="2"{% endif %}>{% with title_field=field|title_field %}{% for f in title_field.split %}<div>{{ f }}</div>{% endfor %}{% endwith %}</th>
+              <th{{ default_rowspan }}>{% with title_field=field|title_field %}{% for f in title_field.split %}<div>{{ f }}</div>{% endfor %}{% endwith %}</th>
               {% endfor %}
               {% endif %}
-              <th class="score-cell sticky-column" data-sticky-column="score-cell"{% if merge_problems %} rowspan="2"{% endif %}>Score</th>
+              <th class="score-cell sticky-column" data-sticky-column="score-cell"{{ default_rowspan }}>Score</th>
               {% if mod_penalty %}
-              <th class="gap-cell" {% if merge_problems %} rowspan="2"{% endif %}>
+              <th class="gap-cell"{{ default_rowspan }}>
                 <span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true" data-placement="bottom" data-toggle="tooltip">Gap</span>
               </th>
               {% endif %}
               {% for key, field in fields.items %}
-              <th{% if merge_problems %} rowspan="2"{% endif %}><span{% if advance.title and key == 'advanced' %} title="{{ advance.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{% if key in settings_standings_fields %}{{ settings_standings_fields|get_item:key|safe }}{% else %}{% for f in field.split %}<div>{{ f }}</div>{% endfor %}{% endif %}{% with value=contest.info.fields_values|get_item:key %}{% if value is not None %}<div class="small">{{ value }}</div>{% endif %}{% endwith %}</span></th>
+              <th{{ default_rowspan }}><span{% if advance.title and key == 'advanced' %} title="{{ advance.title }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>{% if key in settings_standings_fields %}{{ settings_standings_fields|get_item:key|safe }}{% else %}{% for f in field.split %}<div>{{ f }}</div>{% endfor %}{% endif %}{% with value=contest.info.fields_values|get_item:key %}{% if value is not None %}<div class="small">{{ value }}</div>{% endif %}{% endwith %}</span></th>
               {% endfor %}
 
               {% for problem in problems %}
@@ -320,6 +320,18 @@
             {% endif %}
           </thead>
           <tbody>
+          {% if versus_data and contest.resource.info.standings.versus_data.addition_account %}
+            {% with versus_data_row=versus_data.stats|get_item:contest.resource.info.standings.versus_data.addition_account.key %}
+            {% if versus_data_row %}
+            <tr>
+              <td></td>
+              <td class="handle-cell">{{ contest.resource.info.standings.versus_data.addition_account.name }}</td>
+              {% include "standings_versus_columns.html" with tag="td" statistics=None %}
+              <td colspan="100%">
+            </tr>
+            {% endif %}
+            {% endwith %}
+          {% endif %}
           {% include "standings_paging.html" %}
           </tbody>
         </table>

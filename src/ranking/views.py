@@ -20,6 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django_ratelimit.decorators import ratelimit
 from el_pagination.decorators import page_template, page_templates
@@ -1571,6 +1572,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'force_both_scroll': force_both_scroll,
         'with_row_num': with_row_num,
         'merge_problems': merge_problems,
+        'default_rowspan': mark_safe(' rowspan="2"') if merge_problems else '',
         'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': with_detail,

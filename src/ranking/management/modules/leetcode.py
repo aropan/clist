@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
+import hashlib
 import json
 import os
 import re
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
 from datetime import datetime, timedelta
 from functools import lru_cache, partial
 from pprint import pprint
@@ -17,9 +20,10 @@ import yaml
 from django.db import transaction
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import get_item, is_solved
+from clist.templatetags.extras import get_item, is_improved_solution
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
+from utils.logger import suppress_db_logging_context
 
 # from ranking.management.modules import conf
 
@@ -30,6 +34,7 @@ class Statistic(BaseModule):
     API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}/api/submissions/{}/'
     STATE_FILE = os.path.join(os.path.dirname(__file__), '.leetcode.yaml')
     DOMAINS = {'': '.com', 'us': '.com', 'cn': '.cn'}
+    API_SUBMISSIONS_URL_FORMAT_ = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -625,10 +630,8 @@ class Statistic(BaseModule):
                     pbar.update()
 
                 if not page:
-                    # don't remove account becase if page is not found it may be a temporary error or renamed account
                     if page is None:
-                        # yield {'info': None}  # remove account
-                        yield {'skip': True}
+                        yield {'delete': True}
                     else:
                         yield {'skip': True}
                     continue
@@ -738,6 +741,14 @@ class Statistic(BaseModule):
     @transaction.atomic()
     @staticmethod
     def update_submissions(account, resource):
+        info = deepcopy(account.info.setdefault('submissions_', {}))
+        leetcode_session = account.info.get('variables_', {}).get('LEETCODE_SESSION', None)
+        if leetcode_session:
+            leetcode_session_hash = hashlib.md5(leetcode_session.encode()).hexdigest()
+            if info.get('leetcode_session_hash') != leetcode_session_hash:
+                info['leetcode_session_hash'] = leetcode_session_hash
+                info.pop('submission_id', None)
+        last_submission_id = info.setdefault('submission_id', -1)
 
         profile_url = account.info.setdefault('profile_url', {})
         handle = profile_url['_handle']
@@ -769,69 +780,130 @@ class Statistic(BaseModule):
             return data
 
         ret = defaultdict(int)
-        submissions = recent_accepted_submissions()
         save_account = False
-        for submission in submissions:
+        wrong_problems = set()
 
-            def get_field(*fields):
-                for field in fields:
-                    if field in submission:
-                        return submission.pop(field)
-                raise KeyError(f'No field {fields} in {submission}')
+        @suppress_db_logging_context()
+        @RateLimiter(max_calls=20, period=60)
+        def process_submission(submissions, with_last_submission=True, status_raise_not_found=True):
+            nonlocal ret
+            nonlocal save_account
+            for submission in submissions:
 
-            submission_time = int(get_field('timestamp', 'submitTime'))
-            submission_id = get_field('id', 'submissionId')
-            if 'question' in submission:
-                submission.update(submission.pop('question'))
-            title_slug = get_field('titleSlug')
+                def get_field(*fields, raise_not_found=True):
+                    for field in fields:
+                        if field in submission:
+                            return submission.pop(field)
+                    if raise_not_found:
+                        raise KeyError(f'No field {fields} in {submission}')
 
-            regex = '/' + re.escape(title_slug) + '/?$'
-            qs = resource.problem_set.filter(url__regex=regex)
-            problems = qs[:2]
-            if len(problems) != 1:
-                LOG.warning(f'Wrong problems = {problems} for title slug = {title_slug}')
-                ret['n_missing_problem'] += 1
-                continue
-            problem = problems[0]
-            contests = set(problem.contests.all()[:2])
-            if problem.contest:
-                contests.add(problem.contest)
-            if len(contests) != 1:
-                LOG.warning(f'Wrong contests = {contests} for problem = {problem}')
-                ret['n_missing_contest'] += 1
-                continue
-            contest = next(iter(contests))
-            short = problem.short
+                if 'question' in submission:
+                    submission.update(submission.pop('question'))
+                submission_time = int(get_field('timestamp', 'submitTime'))
+                submission_id = int(get_field('id', 'submissionId'))
+                status_display = get_field('status', raise_not_found=status_raise_not_found)
+                is_accepted = status_display in {None, 10}
 
-            if problem.name != get_field('title'):
-                LOG.warning(f'Problem {problem} has wrong name {problem.name}')
-                ret['n_wrong_problem_name'] += 1
-                continue
+                if with_last_submission and submission_id <= last_submission_id:
+                    return False
 
-            stat, _ = create_upsolving_statistic(contest=contest, account=account)
-            problems = stat.addition.setdefault('problems', {})
-            problem = problems.setdefault(short, {})
-            upsolving = problem.setdefault('upsolving', {})
-            if is_solved(problem) or is_solved(upsolving):
-                ret['n_already_solved'] += 1
-                continue
-            upsolving = dict(
-                binary=True,
-                result='+',
-                submission_id=submission_id,
-                submission_time=submission_time,
-            )
-            problem['upsolving'] = upsolving
-            ret['n_updated'] += 1
-            stat.save()
+                title_slug = get_field('titleSlug', 'title_slug')
+                if title_slug in wrong_problems:
+                    continue
 
-            submission_time = datetime.fromtimestamp(submission_time).replace(tzinfo=pytz.utc)
-            if not account.last_submission or account.last_submission < submission_time:
-                account.last_submission = submission_time
-                save_account = True
+                regex = '/' + re.escape(title_slug) + '/?$'
+                qs = resource.problem_set.filter(url__regex=regex)
+                problems = qs[:2]
+                if len(problems) != 1:
+                    LOG.warning(f'Wrong problems = {problems} for title slug = {title_slug}')
+                    if not problems:
+                        ret['n_missing_problem'] += 1
+                    else:
+                        ret['n_many_problems'] += 1
+                    wrong_problems.add(title_slug)
+                    continue
+                problem = problems[0]
+                contests = set(problem.contests.all()[:2])
+                if problem.contest:
+                    contests.add(problem.contest)
+                if len(contests) != 1:
+                    LOG.warning(f'Wrong contests = {contests} for problem = {problem}')
+                    ret['n_missing_contest'] += 1
+                    wrong_problems.add(title_slug)
+                    continue
+                contest = next(iter(contests))
+                short = problem.short
+
+                title = get_field('title')
+                if problem.name != title:
+                    LOG.warning(f'Problem {problem} has wrong name: {title} vs {problem.name}')
+                    ret['n_wrong_problem_name'] += 1
+                    wrong_problems.add(title_slug)
+                    continue
+
+                if with_last_submission and submission_id > info['submission_id']:
+                    info['submission_id'] = submission_id
+                    save_account = True
+
+                submission = dict(
+                    binary=is_accepted,
+                    result='+' if is_accepted else '-',
+                    submission_id=submission_id,
+                    submission_time=submission_time,
+                )
+
+                stat, _ = create_upsolving_statistic(contest=contest, account=account)
+                problems = stat.addition.setdefault('problems', {})
+                problem = problems.setdefault(short, {})
+                if not is_improved_solution(submission, problem):
+                    ret['n_already_solved'] += 1
+                    continue
+
+                upsolving = problem.setdefault('upsolving', {})
+                if not is_improved_solution(submission, upsolving):
+                    ret['n_already_upsolving'] += 1
+                    continue
+
+                problem['upsolving'] = submission
+                ret['n_updated'] += 1
+                stat.save()
+
+                submission_time = datetime.fromtimestamp(submission_time).replace(tzinfo=pytz.utc)
+                if not account.last_submission or account.last_submission < submission_time:
+                    account.last_submission = submission_time
+                    save_account = True
+            return True
+
+        submissions = recent_accepted_submissions()
+        process_submission(submissions, with_last_submission=False, status_raise_not_found=False)
+
+        if leetcode_session:
+            req = copy.copy(REQ)
+            req.cookie_filename = None
+            req.init_opener()
+            req.add_cookie('LEETCODE_SESSION', leetcode_session, domain='.leetcode.com')
+            offset = info.pop('offset', 0)
+            limit = 20
+            info.pop('error', None)
+            while True:
+                url = Statistic.API_SUBMISSIONS_URL_FORMAT_.format(offset, limit)
+                try:
+                    submissions_page = req.get(url, n_attempts=5)
+                except FailOnGetResponse as e:
+                    info['error'] = str(e)
+                    info['offset'] = offset
+                    info['submission_id'] = last_submission_id
+                    break
+                submissions_data = json.loads(submissions_page)
+                submissions = submissions_data['submissions_dump']
+                need_more = process_submission(submissions)
+                if not need_more or not submissions_data['has_next']:
+                    break
+                offset += limit
 
         if save_account:
-            account.save()
+            account.info['submissions_'] = info
+            account.save(update_fields=['info', 'last_submission'])
         return ret
 
 

@@ -1450,9 +1450,17 @@ def search(request, **kwargs):
         return JsonResponse(ret)
     elif query == 'resources':
         qs = Resource.objects.all()
+        order = ['-n_accounts', 'pk']
         if 'regex' in request.GET:
-            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'host'))
-        qs = qs.order_by('-n_accounts', 'pk')
+            query = request.GET['regex']
+            qs = qs.filter(get_iregex_filter(query, 'host__regex', 'short_host', suffix=''))
+            qs = qs.annotate(is_short=Case(
+                When(short_host=query, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))
+            order = ['-is_short'] + order
+        qs = qs.order_by(*order)
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]

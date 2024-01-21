@@ -477,7 +477,7 @@ class Contest(BaseModel):
         return int(round(seconds))
 
     def next_time_datetime(self):
-        return self.end_time if self.is_running else self.start_time
+        return self.end_time if self.is_running() else self.start_time
 
     def __str__(self):
         return f'{self.title} Contest#{self.id}'

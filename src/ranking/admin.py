@@ -66,21 +66,6 @@ class AccountAdmin(BaseModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(has_coder=Exists('coders'))
 
-    class StatisticsSet(admin.TabularInline):
-        model = Statistics
-        ordering = ('-contest__end_time', )
-        raw_id_fields = ('contest', )
-        fields = ('contest', )
-        readonly_fields = ('contest', )
-        can_delete = False
-        extra = 0
-
-        def get_queryset(self, *args, **kwargs):
-            qs = super().get_queryset(*args, **kwargs)
-            return qs.select_related('contest')
-
-    inlines = [StatisticsSet]
-
 
 @admin_register(AccountRenaming)
 class AccountRenamingAdmin(BaseModelAdmin):

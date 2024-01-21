@@ -105,49 +105,9 @@ data-place="{{ statistic.place }}"
     </div>
   </{{ tag }}>
   {% if versus_data %}
-  {% with versus_data_row=versus_data.stats|get_item:statistic.account.key %}
-  {% if versus_data_row %}
-    {% with win=versus_data_row.win lose=versus_data_row.lose draw=versus_data_row.draw total=versus_data_row.total %}
-    <{{ tag }} class="versus-cell">
-      {% if versus_data_row.games %}
-        <a class="versus-games" onclick="$('#versus-games-{{ statistic.pk }}').modal('show');">
-      {% endif %}
-      {{ total }}
-      {% if versus_data_row.games %}
-        </a>
-        {% if not statistic.my_stat %}
-          {% include "standings_versus_games.html" %}
-        {% endif %}
-      {% endif %}
-    </{{ tag }}>
-    <{{ tag }}>{% with p=win|multiply:2|add:draw q=total|multiply:2 %}{{ p|multiply:100|divide:q|floatformat:"1" }}%{% endwith %}</{{ tag }}>
-    <{{ tag }}>
-      <div class="problem-progress progress" title="
-        {% if win %}Number of wins: {{ win }} ({{ win|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
-        {% if draw %}Number of draws: {{ draw }} ({{ draw|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
-        {% if lose %}Number of loses: {{ lose }} ({{ lose|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
-        Total: {{ total }}
-      " data-toggle="tooltip" data-html="true" data-placement="bottom">
-        <div class="progress-bar progress-bar-success" style="width: {{ win|multiply:100|divide:total|floatformat:"3" }}%"></div>
-        <div class="progress-bar progress-bar-warning" style="width: {{ draw|multiply:100|divide:total|floatformat:"3" }}%"></div>
-        <div class="progress-bar progress-bar-danger" style="width: {{ lose|multiply:100|divide:total|floatformat:"3" }}%"></div>
-      </div>
-    </{{ tag }}>
+    {% with versus_data_row=versus_data.stats|get_item:statistic.account.key %}
+    {% include "standings_versus_columns.html" %}
     {% endwith %}
-    {% for field in versus_data.fields %}
-    {% with value=versus_data_row|get_item:field %}
-    <{{ tag }}>{% include "field_value.html" with resource=contest.resource %}</{{ tag }}>
-    {% endwith %}
-    {% endfor %}
-  {% else %}
-    <{{ tag }}></{{ tag }}>
-    <{{ tag }}></{{ tag }}>
-    <{{ tag }}></{{ tag }}>
-    {% for field in versus_data.fields %}
-    <{{ tag }}></{{ tag }}>
-    {% endfor %}
-  {% endif %}
-  {% endwith %}
   {% endif %}
   <{{ tag }} class="score-cell sticky-column" data-sticky-column="score-cell">
     <div>{{ statistic.addition_replacement.solving|default:statistic.solving|scoreformat }}</div>

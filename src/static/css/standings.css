@@ -178,6 +178,10 @@ a.solution:hover span {
   z-index: 20;
 }
 
+#table-inner-scroll table thead tr.header-problems {
+  z-index: 19;
+}
+
 #table-inner-scroll table tr.starred td {
   border-top: 1px solid #c8e5f3;
 }
