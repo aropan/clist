@@ -107,16 +107,26 @@ def account_update_contest_additions(
     if timedelta_limit is not None and not clear_rating_change:
         base_qs.filter(modified__lte=timezone.now() - timedelta_limit)
 
+    grouped_contest_keys = defaultdict(list)
+    for contest_key, update in contest_addition_update.items():
+        group = update.get('_group')
+        if group:
+            grouped_contest_keys[group].append(contest_key)
+
     iteration = 0
     while contest_keys:
         iteration += 1
         if clear_rating_change:
-            qs_clear = base_qs.filter(Q(addition__rating_change__isnull=False) | Q(addition__new_rating__isnull=False))
+            qs_clear = base_qs.filter(Q(addition__rating_change__isnull=False) |
+                                      Q(addition__new_rating__isnull=False) |
+                                      Q(addition__rating__isnull=False))
             for s in qs_clear:
+                s.addition.pop('rating', None)
                 s.addition.pop('rating_change', None)
                 s.addition.pop('new_rating', None)
                 s.addition.pop('old_rating', None)
                 s.save(update_fields=['addition'])
+            clear_rating_change = False
 
         conditions = (Q(**{f'contest__{field}__in': contest_keys}) for field in fields)
         condition = functools.reduce(operator.__or__, conditions)
@@ -134,6 +144,12 @@ def account_update_contest_additions(
                 if key in contest_addition_update:
                     ordered_dict = contest_addition_update[key]
                     break
+
+            group = ordered_dict.pop('_group', None)
+            if group:
+                for contest_key in grouped_contest_keys.pop(group, []):
+                    contest_keys.discard(contest_key)
+
             addition.update(dict(ordered_dict))
             for k, v in ordered_dict.items():
                 if v is None:
@@ -160,7 +176,8 @@ def account_update_contest_additions(
         if try_renaming_check and renaming_check(account, contest_keys, fields, contest_addition_update):
             continue
         if contest_keys:
-            LOG.warning('Not found %d contests for %s = %s', len(contest_keys), account, contest_keys)
+            out_contests = list(grouped_contest_keys.values()) or contest_keys
+            LOG.warning('Not found %d contests for %s = %s', len(out_contests), account, out_contests)
         break
 
 
@@ -172,4 +189,17 @@ def create_upsolving_statistic(contest, account):
     if account.name:
         defaults['addition']['name'] = account.name
     stat, created = contest.statistics_set.get_or_create(account=account, defaults=defaults)
+    if stat.skip_in_stats:
+        return stat, created
+
+    problems = stat.addition.get('problems', {})
+    all_upsolving = True
+    for solution in problems.values():
+        if len(solution) != 1 or 'upsolving' not in solution:
+            all_upsolving = False
+            break
+    if all_upsolving:
+        stat.skip_in_stats = True
+        stat.addition['_no_update_n_contests'] = True
+        stat.save(update_fields=['skip_in_stats', 'addition'])
     return stat, created

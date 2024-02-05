@@ -57,6 +57,8 @@ class Command(BaseCommand):
         parser.add_argument('--min-n-contests', default=None, type=int, help='minimum number of contests')
         parser.add_argument('--without-new', action='store_true', help='only parsed account')
         parser.add_argument('--with-field', default=None, type=str, help='only parsed account which have field')
+        parser.add_argument('--reset-upsolving', action='store_true', help='reset upsolving')
+        parser.add_argument('--with-coders', action='store_true', help='with coders')
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -124,6 +126,8 @@ class Command(BaseCommand):
                     accounts = accounts.filter(**{f'info__{args.with_field}__isnull': False})
                 if args.contest_id:
                     accounts = accounts.filter(statistics__contest_id=args.contest_id)
+                if args.with_coders:
+                    accounts = accounts.filter(coders__isnull=False)
 
                 total = accounts.count()
                 if not total:
@@ -240,6 +244,8 @@ class Command(BaseCommand):
                                     account.coders.add(c)
 
                             if do_upsolve:
+                                if args.reset_upsolving:
+                                    account.info.pop('submissions_', None)
                                 updated_info = resource.plugin.Statistic.update_submissions(account=account,
                                                                                             resource=resource)
                                 add_dict_to_dict(updated_info, update_submissions_info)

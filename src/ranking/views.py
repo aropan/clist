@@ -28,9 +28,9 @@ from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
 from clist.templatetags.extras import (as_number, format_time, get_country_name, get_item, get_problem_short,
-                                       get_problem_title, has_update_statistics_permission, is_ip_field,
-                                       is_private_field, is_reject, is_solved, query_transform, slug, time_in_seconds,
-                                       timestamp_to_datetime)
+                                       get_problem_title, get_standings_divisions_order,
+                                       has_update_statistics_permission, is_ip_field, is_private_field, is_reject,
+                                       is_solved, query_transform, slug, time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
@@ -573,22 +573,19 @@ def standings_charts(request, context):
 
     for field in contest.info.get('fields', []):
         types = fields_types.get(field)
-        if field.startswith('_') or not types:
+        if field.startswith('_') or not types or not fields_values[field]:
             continue
-        if len(types) != 1:
+        if not all(t in [int, float] for t in types):
             continue
-        field_type = next(iter(types))
-        if field_type not in [int, float]:
-            continue
-        if not fields_values[field]:
-            continue
+        field_type = float if float in types else int
+        field_values = [field_type(v) for v in fields_values[field]]
 
         if field in mapping_fields_values:
             values = fields_values[mapping_fields_values[field]]
             bins = make_bins(min(values), max(values), n_bins=default_n_bins)
-            hist, bins = make_histogram(fields_values[field], bins=bins)
+            hist, bins = make_histogram(field_values, bins=bins)
         else:
-            hist, bins = make_histogram(fields_values[field], n_bins=default_n_bins)
+            hist, bins = make_histogram(field_values, n_bins=default_n_bins)
 
         chart = dict(
             field=field,
@@ -683,17 +680,6 @@ def update_standings_socket(contest, statistics):
         'time_percentage': contest.time_percentage,
     }
     async_to_sync(channel_layer.group_send)(contest.channel_group_name, context)
-
-
-def get_standings_divisions_order(contest):
-    problems = contest.info.get('problems', {})
-    if 'division' in problems:
-        divisions_order = list(problems.get('divisions_order', sorted(contest.info['problems']['division'].keys())))
-    elif 'divisions_order' in contest.info:
-        divisions_order = contest.info['divisions_order']
-    else:
-        divisions_order = []
-    return divisions_order
 
 
 def get_standings_mod_penalty(contest, division, problems, statistics):
@@ -1025,9 +1011,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         else:
             values = None
         if values:
-            division = values[0]['addition__division']
+            values = [v['addition__division'] for v in values if v['addition__division'] in divisions_order]
+        if values:
+            division = values[0]
         if division not in divisions_order:
             division = divisions_order[0]
+        if not values and values is not None and not inplace_division:
+            division = 'any'
 
     division_addition = contest.info.get('divisions_addition', {}).get(division, {})
 
@@ -1219,8 +1209,12 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         params['division'] = division
         if not inplace_division:
             divisions_order.append('any')
-        if divisions_order and division != 'any' and not inplace_division:
-            statistics = statistics.filter(addition__division=division)
+        if divisions_order and division != 'any':
+            if inplace_division:
+                field = f'addition___division_addition__{division}'
+                statistics = statistics.filter(**{f'{field}__isnull': False})
+            else:
+                statistics = statistics.filter(addition__division=division)
 
     # filter by search
     search = request.GET.get('search')

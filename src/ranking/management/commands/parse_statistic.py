@@ -196,6 +196,7 @@ class Command(BaseCommand):
         parser.add_argument('--no-update-problems', action='store_true', default=False, help='No update problems')
         parser.add_argument('--is-rated', action='store_true', default=False, help='Contest is rated')
         parser.add_argument('--after', type=str, help='Events after date')
+        parser.add_argument('--for-account', type=str, help='Events for account')
 
     def parse_statistic(
         self,
@@ -224,6 +225,7 @@ class Command(BaseCommand):
         without_stage=False,
         no_update_problems=None,
         is_rated=None,
+        for_account=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -297,6 +299,8 @@ class Command(BaseCommand):
             contests = contests.filter(Q(parsed_time__isnull=True) | Q(parsed_time__gt=after_date))
         if is_rated:
             contests = contests.filter(is_rated=True)
+        if for_account:
+            contests = contests.filter(statistics__account__key=for_account)
 
         if limit:
             contests = contests.order_by('-end_time')[:limit]
@@ -408,6 +412,7 @@ class Command(BaseCommand):
                                     has_problem_result = any('result' in p for p in row.get('problems', {}).values())
                                     if has_problem_result:
                                         continue
+                                    row = copy.deepcopy(row)
                                     row['member'] = member
                                     row['_no_update_n_contests'] = True
                                     result[member] = row
@@ -498,6 +503,7 @@ class Command(BaseCommand):
                     custom_fields_types = standings.pop('fields_types', {})
                     standings_kinds = set(Contest.STANDINGS_KINDS.keys())
                     has_more_solving = bool(contest.info.get('_more_solving'))
+                    updated_statistics_ids = list()
 
                     results = []
                     if result or users:
@@ -514,7 +520,6 @@ class Command(BaseCommand):
                         hidden_fields = set()
                         medals_skip = set()
                         medals_skip_places = defaultdict(int)
-                        updated_statistics_ids = list()
 
                         additions = copy.deepcopy(contest.info.get('additions', {}))
                         if additions:
@@ -1286,6 +1291,8 @@ class Command(BaseCommand):
                             timing_delta = standings.get('timing_statistic_delta', timing_delta)
                             if now < contest.end_time:
                                 timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
+                        if updated_statistics_ids and contest.end_time < now < contest.end_time + timedelta(hours=1):
+                            timing_delta = timing_delta or timedelta(minutes=10)
                         if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
                             timing_delta = timing_delta or timedelta(minutes=30)
                         if wait_rating and not has_statistics and results and 'days' in wait_rating:
@@ -1498,4 +1505,5 @@ class Command(BaseCommand):
             without_stage=args.without_stage,
             no_update_problems=args.no_update_problems,
             is_rated=args.is_rated,
+            for_account=args.for_account,
         )

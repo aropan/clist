@@ -31,13 +31,21 @@
                 {% endif %}
             {% endfor %}
         ">
-            {{ statistic.place|default:"-" }}
+            {% if statistic.place %}
+                {{ statistic.place }}
+            {% else %}
+                <small class='text-muted'>&mdash;</small>
+            {% endif %}
         </div>
         {% if statistic.addition.url %}</a>{% endif %}
     </td>
 
     <td>
-        {{ statistic.solving|scoreformat }}
+        {% if statistic.skip_in_stats and not statistic.solving %}
+            <small class='text-muted'>&#183;</small>
+        {% else %}
+            {{ statistic.solving|scoreformat }}
+        {% endif %}
     </td>
 
     <td>
@@ -125,7 +133,7 @@
         <span class="problems">
             {% if 'problems' in statistic.addition %}
                 {% if contest.info.problems %}
-                  {% for problem in contest.info.problems|get_division_problems:statistic.addition %}
+                  {% for problem in contest|get_division_problems:statistic.addition %}
                     {% with key=problem|get_problem_short  %}
                     {% with stat=statistic.addition.problems|get_item:key %}
                       {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url full_score=problem.full_score %}

@@ -623,6 +623,30 @@ class Statistic(BaseModule):
                 ret['avatar'] = match.group('url')
             if 'Rating' in ret:
                 ret['rating'] = int(ret['Rating'])
+            match = re.search('>var rating_history=(?P<rating_history>[^<]*);</', page)
+            if match:
+                contest_addition_update = {}
+                rating_history = json.loads(match.group('rating_history'))
+                for hist in rating_history:
+                    url = hist['StandingsUrl']
+                    match = re.search(r'/contests/(?P<contest_key>[^/]*)/', url)
+                    if not match:
+                        continue
+                    contest_key = match.group('contest_key')
+                    rank = hist['Place']
+                    addition_update = {'_rank': rank}
+                    if hist.get('NewRating'):
+                        addition_update['new_rating'] = hist['NewRating']
+                    if hist.get('OldRating'):
+                        addition_update['old_rating'] = hist['OldRating']
+                    if 'new_rating' in addition_update and 'old_rating' in addition_update:
+                        addition_update['rating_change'] = addition_update['new_rating'] - addition_update['old_rating']
+                    contest_addition_update[contest_key] = addition_update
+                if contest_addition_update:
+                    ret['_contest_addition_update_params'] = {
+                        'update': contest_addition_update,
+                        'try_renaming_check': True,
+                    }
             return ret
 
         with PoolExecutor(max_workers=8) as executor:
@@ -637,7 +661,11 @@ class Statistic(BaseModule):
                     if data.get('_delete'):
                         yield {'delete': True}
                     else:
-                        yield {'info': data}
+                        ret = {'info': data}
+                        contest_addition_update_params = data.pop('_contest_addition_update_params', None)
+                        if contest_addition_update_params:
+                            ret['contest_addition_update_params'] = contest_addition_update_params
+                        yield ret
                 pbar.update()
 
     @staticmethod

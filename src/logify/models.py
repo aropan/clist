@@ -22,6 +22,7 @@ class EventStatus(models.TextChoices):
     SKIPPED = 'skipped', 'Skipped'
     REVERTED = 'reverted', 'Reverted'
     EXCEPTION = 'exception', 'Exception'
+    INTERRUPTED = 'interrupted', 'Interrupted'
 
 
 class EventLogManager(BaseManager):
@@ -47,3 +48,20 @@ class EventLog(BaseModel):
     def update_message(self, message):
         self.message = message
         self.save(update_fields=['message', 'modified'])
+
+
+class PgStatTuple(BaseModel):
+    table_name = models.CharField(max_length=255, db_index=True, unique=True)
+    app_name = models.CharField(max_length=255, blank=True, null=True)
+    table_len = models.BigIntegerField()
+    tuple_count = models.BigIntegerField()
+    tuple_len = models.BigIntegerField()
+    tuple_percent = models.FloatField()
+    dead_tuple_count = models.BigIntegerField()
+    dead_tuple_len = models.BigIntegerField()
+    dead_tuple_percent = models.FloatField()
+    free_space = models.BigIntegerField()
+    free_percent = models.FloatField()
+
+    def __str__(self):
+        return f'{self.table_name} PgStatTuple#{self.id}'

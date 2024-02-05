@@ -64,10 +64,10 @@
   {% endif %}
   <td>
     {% if not account.has_coders and perms.ranking.link_account %}
-    <input class="scale15" type="checkbox" name="accounts" value="{{ account.pk }}"{% if account.pk|slugify in params.link_accounts %} checked{% endif %}>
+    <input class="scale15 mouseover-toggle" type="checkbox" name="accounts" value="{{ account.pk }}"{% if account.pk|slugify in params.link_accounts %} checked{% endif %}>
     {% elif perms.ranking.link_account %}
     <i class="has_coders fas fa-check clickable"></i>
-    <input class="hidden scale15" type="checkbox" name="accounts" value="{{ account.pk }}">
+    <input class="hidden scale15 mouseover-toggle" type="checkbox" name="accounts" value="{{ account.pk }}">
     {% else %}
     <i class="has_coders fas fa-{% if account.has_coders %}check{% else %}times{% endif %}"></i>
     {% endif %}

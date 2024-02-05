@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 
 import contextlib
+import logging
 import re
 from functools import wraps
 
 import numpy as np
+from django.conf import settings
+from django.core.cache import cache
 from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import render
 from stringcolor import bold, cs
+
+logger = logging.getLogger(__name__)
 
 
 def context_pagination():
@@ -70,3 +75,23 @@ def log_grouped_times(grouped_times):
         msg += ' ' + bold(f'{g["count"]}') + ' times'
         msg += ': ' + cs(g['query'], 'grey')
         print(msg)
+
+
+def run_only_in_production(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not settings.DEBUG:
+            return func(*args, **kwargs)
+    return wrapper
+
+
+def run_once(key):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not cache.get(key):
+                result = func(*args, **kwargs)
+                cache.set(key, True)
+                return result
+        return wrapper
+    return decorator

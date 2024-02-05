@@ -35,7 +35,7 @@
           </th>
           {% endif %}
           <th>
-            <div>Linked<br/>coder</div>
+            <div>Linked<br/>coder{% if perms.ranking.link_account %} <a href="#" onclick="invert_linked_coder_accounts(event)" id="switch-accounts">{% icon_to 'invert' %}</a>{% endif %}</div>
           </th>
           {% if params.to_list %}
           <th>

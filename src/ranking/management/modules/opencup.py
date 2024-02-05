@@ -29,6 +29,7 @@ class Statistic(BaseModule):
         problems_info = OrderedDict()
 
         page = REQ.get(self.standings_url, detect_charsets=True)
+        page = page.replace('&nbsp;', ' ')
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
         html_table = re.search(regex, page, re.DOTALL).group(0)
         table = parsed_table.ParsedTable(html_table)
@@ -106,10 +107,12 @@ class Statistic(BaseModule):
                     row['member'] = v.value if ' ' not in v.value else v.value + ' ' + self.season
                     row['name'] = v.value
                 else:
-                    t = as_number(v.value)
-                    if t:
+                    key = re.sub('[-._ ]+', '_', key)
+                    val = v.value.strip()
+                    if val and val != '-':
+                        t = as_number(val)
                         fields_types[key].add(type(t))
-                    other[key] = v.value
+                        other[key] = val
             for k, v in other.items():
                 if k.lower() not in row:
                     row[k] = v
@@ -118,10 +121,7 @@ class Statistic(BaseModule):
             result[row['member']] = row
 
         for field, types in fields_types.items():
-            if len(types) != 1:
-                continue
-            field_type = next(iter(types))
-            if field_type not in [int, float]:
+            if not all(t in [int, float] for t in types):
                 continue
             for row in result.values():
                 if field in row:
@@ -133,6 +133,10 @@ class Statistic(BaseModule):
             'problems': list(problems_info.values()),
             'problems_time_format': '{H}:{m:02d}',
         }
+
+        if self.info.get('series'):
+            standings['series'] = self.info['series']
+
         return standings
 
 

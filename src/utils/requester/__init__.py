@@ -435,6 +435,9 @@ class requester():
         http_cookie_processor = urllib.request.HTTPCookieProcessor(self.cookiejar)
         context = ssl.create_default_context()
         context.set_ciphers('DEFAULT')
+        if strtobool(environ.get('REQUESTER_INSECURE', '0')):
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
         https_handler = urllib.request.HTTPSHandler(context=context)
         self.opener = urllib.request.build_opener(http_cookie_processor, https_handler)
         self.proxer = None

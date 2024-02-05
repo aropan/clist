@@ -8,7 +8,7 @@ import string
 import subprocess
 
 
-def generete_password(length=40):
+def random_string(length=40):
     return ''.join(random.choices(list(string.ascii_letters + string.digits), k=length))
 
 
@@ -25,7 +25,7 @@ def create_logger():
 def enter_value(variable, old_value):
     if not old_value:
         logger.info(f'Generated new value for {variable} default')
-        old_value = generete_password()
+        old_value = random_string()
     if old_value == '{empty}':
         old_value = ''
     value = input(f'Enter {variable} [default "{old_value}"]: ')
@@ -96,7 +96,7 @@ def main():
     run_command('docker compose run dev ./manage.py migrate')
 
     username = enter_value('username', os.getlogin())
-    password = enter_value('password', generete_password(10))
+    password = enter_value('password', random_string(10))
     email = enter_value('email', 'admin@localhost')
     run_command(f'''
         docker compose run dev ./manage.py createadmin

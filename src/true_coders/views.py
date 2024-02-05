@@ -2111,18 +2111,12 @@ def accounts(request, template='accounts.html'):
             params['link_accounts'] = set(link_accounts)
         if action == 'link':
             if link_accounts and link_coder:
-                link_accounts = Account.objects.filter(pk__in=link_accounts)
+                linked_accounts = list(Account.objects.filter(pk__in=link_accounts).exclude(coders__pk=link_coder.pk))
+                link_coder.account_set.add(*linked_accounts)
                 coder_url = reverse('coder:profile', args=[coder.username])
                 message = f'Added by <a href="{coder_url}">{coder.display_name}</a>.'
-                linked_accounts = []
-                for a in link_accounts:
-                    if a.coders.filter(pk=link_coder.pk).exists():
-                        continue
-                    a.coders.add(link_coder)
-                    linked_accounts.append(a)
-                if linked_accounts and not link_coder.is_virtual:
-                    NotificationMessage.link_accounts(link_coder, linked_accounts, message=message, sender=coder)
-                    request.logger.success(f'Linked {len(linked_accounts)} account(s) to {link_coder.username}')
+                NotificationMessage.link_accounts(link_coder, linked_accounts, message=message, sender=coder)
+                request.logger.success(f'Linked {len(linked_accounts)} account(s) to {link_coder.username}')
             query = query_transform(request, with_remove=True, accounts=None, action=None)
             return HttpResponseRedirect(f'{request.path}?{query}')
     if action == 'add_to_list':
@@ -2133,7 +2127,14 @@ def accounts(request, template='accounts.html'):
 
     search = request.GET.get('search')
     if search:
-        filt = get_iregex_filter(search, 'name', 'key', suffix='', logger=request.logger)
+        filt = get_iregex_filter(
+            search, 'name', 'key', suffix='__contains',
+            mapping={
+                'key': {'fields': ['key']},
+                'name': {'fields': ['name']},
+            },
+            logger=request.logger,
+        )
         accounts = accounts.filter(filt)
         if request.user.has_perm('ranking.link_account'):
             coders_counter = Counter(accounts.filter(has_coders=True).values_list('coders__pk', flat=True))

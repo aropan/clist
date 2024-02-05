@@ -306,18 +306,38 @@ def slug(value):
     return slugify(unidecode(value)).strip('-')
 
 
+def get_standings_divisions_order(contest):
+    problems = contest.info.get('problems', {})
+    if 'division' in problems:
+        divisions_order = list(problems.get('divisions_order', sorted(contest.info['problems']['division'].keys())))
+    elif 'divisions_order' in contest.info:
+        divisions_order = contest.info['divisions_order']
+    else:
+        divisions_order = []
+    return divisions_order
+
+
 @register.filter
-def get_division_problems(problems, info):
+def get_division_problems(contest, info):
+    problems = contest.info.get('problems', [])
     ret = []
+    seen_keys = set()
     if 'division' in problems:
         division_addition = info.get('_division_addition')
         divisions = list(division_addition.keys()) if division_addition else []
         division = info.get('division')
         if division and division not in divisions:
             divisions = [division] + divisions
+        for division in get_standings_divisions_order(contest):
+            if division not in divisions:
+                divisions.append(division)
         for division in divisions:
             if division in problems['division']:
                 for problem in problems['division'][division]:
+                    problem_key = get_problem_key(problem)
+                    if problem_key in seen_keys:
+                        continue
+                    seen_keys.add(problem_key)
                     ret.append(problem)
     return ret or problems
 
@@ -387,8 +407,7 @@ def get_problem_solution(problem):
     ret = {}
     for contest in problem.contests.all():
         for statistic in contest.statistics_set.all():
-            problems = contest.info.get('problems', [])
-            problems = get_division_problems(problems, statistic.addition)
+            problems = get_division_problems(contest, statistic.addition)
             group_scores = defaultdict(int)
 
             for p in problems:

@@ -690,5 +690,29 @@ function escape_html(str) {
 }
 
 function configure_pagination(paginate_on_scroll = true) {
-  $.endlessPaginate({paginateOnScroll: paginate_on_scroll, onCompleted: function () { toggle_tooltip(); inline_button(); $(window).trigger('resize'); }})
+  $.endlessPaginate({paginateOnScroll: paginate_on_scroll, onCompleted: function () { toggle_tooltip(); inline_button(); checkbox_mouseover_toggle(); $(window).trigger('resize'); }})
 }
+
+
+/*
+ * checkbox mouseover toggle
+ */
+
+var mouse_is_down = false
+
+function checkbox_mouseover_toggle() {
+  $('input.mouseover-toggle[type="checkbox"]').removeClass('mouseover-toggle').mouseover(function() {
+    if (mouse_is_down) {
+      $(this).prop('checked', !$(this).prop('checked'))
+    }
+  })
+}
+
+$(function() {
+  $(document).mousedown(function() {
+    mouse_is_down = true
+  }).mouseup(function() {
+    mouse_is_down = false
+  })
+  checkbox_mouseover_toggle()
+})

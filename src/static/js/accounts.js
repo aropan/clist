@@ -40,3 +40,8 @@ function init_clickable_has_coders() {
     $(this).remove()
   })
 }
+
+function invert_linked_coder_accounts(e) {
+  e.preventDefault()
+  $('#accounts input[name="accounts"]').click()
+}

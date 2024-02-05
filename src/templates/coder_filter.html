@@ -14,6 +14,9 @@
   </select>
   {% if submit %}
   <span class="input-group-btn">
+    {% for coder in coders %}
+    <a class="btn btn-default btn-xs" href="{% url 'coder:profile' coder.username %}" target="_blank">{% icon_to 'extra_url' coder.username %}</a>
+    {% endfor %}
     <button class="btn btn-default" type="submit" name="action" value="{{ submit }}"{% if not coders %} disabled{% endif %}>{{ submit|title }}</button>
   </span>
   {% endif %}

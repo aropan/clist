@@ -175,6 +175,8 @@ class Statistic(BaseModule):
 
         @RateLimiter(max_calls=5, period=1)
         def fetch_profile(jid, handle):
+            if jid is None:
+                return {'_delete': True}, None
             url = Statistic.API_PROFILE_URL_FORMAT_.format(jid=jid)
             page = REQ.get(url)
             data = json.loads(page)
@@ -194,20 +196,23 @@ class Statistic(BaseModule):
 
         page = REQ.get(Statistic.API_USER_SEARCH_, post=json.dumps(users), content_type='application/json')
         data = json.loads(page)
-        jids = [data[user] for user in users]
+        jids = [data.get(user) for user in users]
 
         with PoolExecutor(max_workers=8) as executor:
             profiles = executor.map(fetch_profile, jids, users)
             for user, (data, history) in zip(users, profiles):
                 if pbar:
                     pbar.update()
-                assert user == data['username']
                 if not data:
                     if data is None:
                         yield {'info': None}
                     else:
                         yield {'skip': True}
                     continue
+                if data.get('_delete'):
+                    yield {'delete': True}
+                    continue
+                assert user == data['username']
 
                 ret = {
                     'info': data,
@@ -234,6 +239,8 @@ class Statistic(BaseModule):
                             update['old_rating'] = last_rating
                         else:
                             contest_addition_update.pop(url)
+                        if contest.get('rank'):
+                            update['_rank'] = contest['rank']
 
                     if last_rating is not None:
                         data['rating'] = last_rating
@@ -243,6 +250,7 @@ class Statistic(BaseModule):
                             'update': contest_addition_update,
                             'by': 'url',
                             'clear_rating_change': True,
+                            'try_renaming_check': True,
                         }
 
                 yield ret

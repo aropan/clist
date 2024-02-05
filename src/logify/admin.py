@@ -2,7 +2,7 @@ import humanize
 from django.urls import reverse
 from django.utils.html import format_html
 
-from logify.models import EventLog
+from logify.models import EventLog, PgStatTuple
 from pyclist.admin import BaseModelAdmin, admin_register
 
 
@@ -21,3 +21,11 @@ class EventLogAdmin(BaseModelAdmin):
         return format_html('<a href="{}">{}</a>', url, obj.related)
 
     related_object_link.short_description = 'Related Object'
+
+
+@admin_register(PgStatTuple)
+class PgStatTupleAdmin(BaseModelAdmin):
+    list_display = ['id', 'table_name', 'app_name', 'table_len', 'tuple_percent', 'dead_tuple_percent', 'free_percent']
+    list_filter = ['app_name']
+    search_fields = ['table_name']
+    ordering = ['-table_len']

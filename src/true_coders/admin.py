@@ -31,9 +31,9 @@ class CoderAdmin(BaseModelAdmin):
 
 @admin_register(CoderProblem)
 class CoderProblemAdmin(BaseModelAdmin):
-    search_fields = ['coder__username', 'problem__name']
-    list_display = ['coder', 'problem', 'verdict']
+    list_display = ['coder', 'problem', 'verdict', 'created', 'modified']
     list_filter = ['verdict', 'problem__resource']
+    search_fields = ['coder__username', 'problem__name']
 
 
 @admin_register(Party)

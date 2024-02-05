@@ -945,7 +945,7 @@ def problems(request, template='problems.html'):
                 'key': {'fields': ['key__iexact']},
                 'contest': {'fields': ['contest__title__iregex'], 'exists': 'contests'},
                 'resource': {'fields': ['resource__host__iregex']},
-                'tag': {'fields': ['problemtag__name__iregex'], 'exists': 'tags'},
+                'tag': {'fields': ['problemtag__name'], 'exists': 'tags'},
                 'cid': {'fields': ['contest__pk'], 'exists': 'contests', 'func': lambda v: int(v)},
                 'rid': {'fields': ['resource_id'], 'func': lambda v: int(v)},
                 'pid': {'fields': ['id'], 'func': lambda v: int(v)},
@@ -1019,8 +1019,8 @@ def problems(request, template='problems.html'):
 
     tags = [r for r in request.GET.getlist('tag') if r]
     if tags:
-        problems = problems.annotate(has_tag=Exists('tags', filter=Q(problemtag__pk__in=tags)))
-        problems = problems.filter(has_tag=True)
+        for tag in tags:
+            problems = problems.filter(tags__pk=tag)
         tags = list(ProblemTag.objects.filter(pk__in=tags))
 
     custom_fields = [f for f in request.GET.getlist('field') if f]

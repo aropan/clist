@@ -21,7 +21,7 @@ from django.db.models import Q
 from first import first
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import is_improved_solution
+from clist.templatetags.extras import as_number, is_improved_solution
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -261,16 +261,15 @@ class Statistic(BaseModule):
                         if country:
                             d['country'] = country
 
-                        rating = d.pop('rating', None)
-                        if rating and rating != '0':
-                            hidden_fields.add('rating')
-                            row['rating'] = rating
+                        rating = as_number(d.pop('rating', None), force=True)
+                        if rating:
+                            row['old_rating'] = rating
 
                         row.update(d)
                         row.update(contest_info)
                         if statistics and handle in statistics:
                             stat = statistics[handle]
-                            for k in ('rating_change', 'new_rating'):
+                            for k in ('old_rating', 'rating_change', 'new_rating'):
                                 if k in stat:
                                     row[k] = stat[k]
                         hidden_fields |= set(list(d.keys()))
@@ -395,7 +394,7 @@ class Statistic(BaseModule):
                             if response.status_code < 400 and response.headers.get('Content-Length', '0') != '0':
                                 info['avatar_url'] = src
 
-                    contest_addition_update_params = {}
+                    contest_addition_update_params = {'clear_rating_change': True}
                     update = contest_addition_update_params.setdefault('update', {})
                     by = contest_addition_update_params.setdefault('by', ['key'])
                     prev_rating = None
@@ -410,13 +409,16 @@ class Statistic(BaseModule):
                         name = row.get('name')
                         end_time = row.get('end_date')
                         if code:
-                            if re.search(r'\bdiv(ision)?[-_\s]+[ABCD1234]\b', name, re.I) \
+                            if re.search(r'\bdiv[ision]*[-_\s]+[ABCD1234]\b', name, re.I) \
                                and re.search('[ABCD]$', code):
                                 code = code[:-1]
 
                             u = update.setdefault(code, OrderedDict())
-                            u['rating_change'] = rating - prev_rating if prev_rating is not None else None
                             u['new_rating'] = rating
+                            if prev_rating is not None:
+                                u['old_rating'] = prev_rating
+                                u['rating_change'] = rating - prev_rating
+                            u['_group'] = row['code']
 
                             new_name = name
                             new_name = re.sub(r'\s*\([^\)]*\brated\b[^\)]*\)$', '', new_name, flags=re.I)
