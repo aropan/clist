@@ -34,7 +34,7 @@ from clist.templatetags.extras import (as_number, format_time, get_country_name,
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
-from pyclist.decorators import context_pagination
+from pyclist.decorators import context_pagination, extra_context_without_pagination
 from pyclist.middleware import RedirectException
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -49,13 +49,14 @@ from utils.regex import get_iregex_filter
 
 
 @page_template('standings_list_paging.html')
+@extra_context_without_pagination('clist.view_full_table')
 def standings_list(request, template='standings_list.html', extra_context=None):
     contests = (
         Contest.objects.annotate_favorite(request.user)
         .select_related('resource', 'stage')
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id'))))
         .filter(Q(n_statistics__gt=0) | Q(end_time__lte=timezone.now()))
-        .order_by('-end_time', 'pk')
+        .order_by('-end_time', '-id')
     )
 
     all_standings = False
@@ -647,7 +648,7 @@ def render_standings_paging(contest, statistics, with_detail=True):
         'statistics': statistics,
         'problems': problems,
         'fields': fields,
-        'without_paginate': True,
+        'without_pagination': True,
         'my_statistics': [],
         'contest_timeline': contest.get_timeline_info(),
         'has_country': has_country,
@@ -1869,7 +1870,7 @@ def versus(request, query):
     versus_data = get_versus_data(request, query, fields_to_select)
 
     # filter contests
-    contests = Contest.significant.filter(pk__in=versus_data['contests_ids']).order_by('-end_time')
+    contests = Contest.significant.filter(pk__in=versus_data['contests_ids']).order_by('-end_time', '-id')
     contests = contests.select_related('resource')
 
     search = request.GET.get('search')
@@ -2091,7 +2092,7 @@ def virtual_start(request, template='virtual_start.html'):
             contest = None
     elif contest and contest.isdigit():
         contest = Contest.objects.get(pk=contest)
-        if contest.resource_id != resource.id:
+        if resource and contest.resource_id != resource.id:
             return redirect(url_transform(request, contest=None, with_remove=True))
     elif contest:
         return HttpResponseBadRequest('Invalid contest')

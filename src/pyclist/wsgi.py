@@ -18,6 +18,10 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pyclist.settings")
 
 if not settings.DEBUG:
     setup()
+
     call_command('collectstatic', verbosity=1, interactive=False)
+
+    from logify.models import EventLog, EventStatus
+    EventLog.objects.filter(status=EventStatus.IN_PROGRESS).update(status=EventStatus.INTERRUPTED)
 
 application = get_wsgi_application()

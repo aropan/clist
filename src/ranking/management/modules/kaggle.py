@@ -161,7 +161,7 @@ class Statistic(BaseModule):
                     pbar.update()
                 if not data:
                     if data is None:
-                        yield {'info': None}
+                        yield {'delete': True}
                     else:
                         yield {'skip': True}
                     continue

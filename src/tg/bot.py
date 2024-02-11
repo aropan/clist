@@ -205,8 +205,8 @@ class Bot(telegram.Bot):
             qs = qs.order_by(s)
             qs = qs[first:last]
         else:
-            fs = qs.filter(start_time__lte=time).order_by('end_time')
-            sc = qs.filter(start_time__gt=time).order_by('start_time')
+            fs = qs.filter(start_time__lte=time).order_by('end_time', 'id')
+            sc = qs.filter(start_time__gt=time).order_by('start_time', 'id')
             total = fs.count()
             fs = fs[first:last]
             first -= total

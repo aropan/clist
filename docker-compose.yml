@@ -76,11 +76,11 @@ services:
       -c max_connections=50
       -c checkpoint_timeout=60min
       -c track_activity_query_size=4096
-      -c shared_buffers=2GB
-      -c effective_cache_size=4GB
-      -c work_mem=80MB
-      -c maintenance_work_mem=1GB
-    shm_size: 7gb
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c work_mem=64MB
+      -c maintenance_work_mem=500MB
+    shm_size: 4GB
     restart: always
   nginx:
     build:

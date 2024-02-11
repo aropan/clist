@@ -11,15 +11,23 @@ from utils.json_field import JSONF
 from utils.math import get_divisors
 
 
-def make_bins(src, dst, n_bins, logger=None, field=None, step=None):
+def make_bins(src, dst, n_bins, logger=None, field=None, step=None, qs=None):
     n_bins += 1
+    force_ending = False
     if isinstance(src, str):
         if not dst:
             logger and logger.warning(f'One of border is empty, field = {field}')
             return
-        st = ord(src[0]) + 1 if src else 32
-        fn = ord(dst[0])
-        bins = [src] + [chr(int(round(st + (fn - st) * i / (n_bins - 1)))) for i in range(n_bins)] + [dst]
+        if (
+            field and qs is not None and
+            len(values := list(qs.distinct(field).values_list(field, flat=True)[:n_bins])) < n_bins
+        ):
+            bins = values
+            force_ending = True
+        else:
+            st = ord(src[0]) + 1 if src else 32
+            fn = ord(dst[0])
+            bins = [src] + [chr(int(round(st + (fn - st) * i / (n_bins - 1)))) for i in range(n_bins)] + [dst]
     else:
         if step is not None:
             for divisor in get_divisors(step, reverse=True):
@@ -38,7 +46,7 @@ def make_bins(src, dst, n_bins, logger=None, field=None, step=None):
     bins = list(sorted(set(bins)))
     if isinstance(src, int) and len(bins) < n_bins:
         bins.append(bins[-1] + 1)
-    elif len(bins) == 1:
+    elif len(bins) == 1 or force_ending:
         bins.append(bins[-1])
     return bins
 
@@ -110,31 +118,40 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
 
     qs = qs.filter(value__isnull=False)
 
-    slice_on = None
-    if groupby == 'resource':
-        slice_on = 'resource__host'
-    elif groupby == 'country':
-        slice_on = 'country'
-
-    if slice_on:
-        values = get_column_values(qs, slice_on, choices='minimum')
-        fields = [f for f, v in values]
-        n_bins = max(2 * n_bins // len(fields) + 1, 4)
-        context['fields'] = fields
-        context['slice'] = slice_on
-
     if not qs.exists():
         logger and logger.warning(f'Empty histogram, field = {field}')
         return
 
     src = qs.earliest('value').value
     dst = qs.latest('value').value
-
-    bins = bins or make_bins(src=src, dst=dst, n_bins=n_bins, logger=logger, field=field, step=step)
-    context['bins'] = bins.copy()
-
     if isinstance(src, datetime):
         context['x_type'] = 'time'
+        context['x_from'] = src.timestamp()
+        context['x_to'] = dst.timestamp()
+    elif type(src) in (int, float):
+        context['x_from'] = src
+        context['x_to'] = dst
+    if groupby and not isinstance(src, str):
+        context['type'] = 'line'
+
+    slice_on = None
+    if groupby == 'resource':
+        slice_on = 'resource__host'
+    elif groupby == 'country':
+        slice_on = 'country'
+    else:
+        slice_on = groupby
+
+    if slice_on:
+        values = get_column_values(qs, slice_on, choices='minimum')
+        fields = [str(f) for f, v in values]
+        if context['type'] != 'line':
+            n_bins = max(2 * n_bins // len(fields) + 1, 4)
+        context['fields'] = fields
+        context['slice'] = slice_on
+
+    bins = bins or make_bins(src=src, dst=dst, n_bins=n_bins, logger=logger, field=field, step=step, qs=qs)
+    context['bins'] = bins.copy()
 
     bins.pop(-1)
     context['data'] = histogram(qs, 'value', bins=bins, slice_on=slice_on, choices='minimum')

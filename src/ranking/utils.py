@@ -19,30 +19,32 @@ from utils.math import max_with_none
 
 
 @transaction.atomic
-def rename_account(account, other):
+def rename_account(old_account, new_account):
     AccountRenaming.objects.update_or_create(
-        resource=account.resource,
-        old_key=account.key,
-        defaults={'new_key': other.key},
+        resource=old_account.resource,
+        old_key=old_account.key,
+        defaults={'new_key': new_account.key},
     )
     AccountRenaming.objects.filter(
-        resource=account.resource,
-        old_key=other.key,
+        resource=old_account.resource,
+        old_key=new_account.key,
     ).delete()
 
-    n_contests = other.n_contests + account.n_contests
-    n_writers = other.n_writers + account.n_writers
-    last_activity = max_with_none(account.last_activity, other.last_activity)
-    last_submission = max_with_none(account.last_submission, other.last_submission)
-    new = MergedModelInstance.create(other, [account])
-    account.delete()
-    account = new
-    account.n_contests = n_contests
-    account.n_writers = n_writers
-    account.last_activity = last_activity
-    account.last_submission = last_submission
-    account.save()
-    return account
+    old_contests = old_account.statistics_set.values('contest')
+    new_account.statistics_set.filter(contest__in=old_contests).delete()
+
+    n_contests = new_account.n_contests + old_account.n_contests
+    n_writers = new_account.n_writers + old_account.n_writers
+    last_activity = max_with_none(old_account.last_activity, new_account.last_activity)
+    last_submission = max_with_none(old_account.last_submission, new_account.last_submission)
+    new_account = MergedModelInstance.create(new_account, [old_account])
+    old_account.delete()
+    new_account.n_contests = n_contests
+    new_account.n_writers = n_writers
+    new_account.last_activity = last_activity
+    new_account.last_submission = last_submission
+    new_account.save()
+    return new_account
 
 
 def clear_problems_fields(problems):
@@ -80,10 +82,13 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
                 max_counter_key = old_account_key
     if max_counter_key is None:
         return
-    if key_counter[max_counter_key] < max(total_counter * 0.5, 3):
+    max_counter_val = key_counter.pop(max_counter_key)
+    other_max_counter_val = max(key_counter.values(), default=0)
+    if max_counter_val < max(other_max_counter_val * 2, 3):
+        LOG.warning('Failed renaming %s, counter = %s', account, key_counter)
         return
     old_account = account.resource.account_set.get(key=max_counter_key)
-    LOG.warning('Renaming %s to %s', old_account, account)
+    LOG.info('Renaming %s to %s', old_account, account)
     rename_account(old_account, account)
     return True
 
@@ -114,6 +119,7 @@ def account_update_contest_additions(
             grouped_contest_keys[group].append(contest_key)
 
     iteration = 0
+    renaming_contest_keys = set(contest_keys)
     while contest_keys:
         iteration += 1
         if clear_rating_change:
@@ -136,7 +142,11 @@ def account_update_contest_additions(
         for stat in stat_qs:
             contest = stat.contest
             for field in fields:
-                contest_keys.discard(getattr(contest, field, None))
+                key = getattr(contest, field)
+                contest_keys.discard(key)
+                if not stat.skip_in_stats:
+                    renaming_contest_keys.discard(key)
+
             total += 1
             addition = dict(stat.addition)
             for field in fields:
@@ -149,6 +159,7 @@ def account_update_contest_additions(
             if group:
                 for contest_key in grouped_contest_keys.pop(group, []):
                     contest_keys.discard(contest_key)
+                    renaming_contest_keys.discard(contest_key)
 
             addition.update(dict(ordered_dict))
             for k, v in ordered_dict.items():
@@ -171,9 +182,9 @@ def account_update_contest_additions(
                     if next_timing_statistic < contest.statistic_timing:
                         contest.statistic_timing = next_timing_statistic
                 contest.save()
-        if iteration and not total:
+        if iteration > 1 and not total:
             break
-        if try_renaming_check and renaming_check(account, contest_keys, fields, contest_addition_update):
+        if try_renaming_check and renaming_check(account, renaming_contest_keys, fields, contest_addition_update):
             continue
         if contest_keys:
             out_contests = list(grouped_contest_keys.values()) or contest_keys

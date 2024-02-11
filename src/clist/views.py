@@ -601,7 +601,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         },
         'contests': {
             'past': {
-                'contests': contests.filter(end_time__lt=now).order_by('-end_time'),
+                'contests': contests.filter(end_time__lt=now).order_by('-end_time', '-id'),
                 'field': 'end_time',
                 'url': reverse('ranking:standings_list') + f'?resource={resource.pk}',
             },
@@ -611,7 +611,7 @@ def resource(request, host, template='resource.html', extra_context=None):
                 'url': reverse('clist:main') + f'?resource={resource.pk}&view=list&group=no&status=coming',
             },
             'running': {
-                'contests': contests.filter(start_time__lt=now, end_time__gt=now).order_by('end_time'),
+                'contests': contests.filter(start_time__lt=now, end_time__gt=now).order_by('end_time', 'id'),
                 'field': 'time_left',
                 'url': reverse('clist:main') + f'?resource={resource.pk}&view=list&group=no&status=running',
             },
@@ -882,7 +882,7 @@ def update_problems(contest, problems=None, force=False):
 def problems(request, template='problems.html'):
     problems = Problem.visible_objects.annotate_favorite(request.user).annotate_note(request.user)
     problems = problems.select_related('resource')
-    problems_contests = Contest.objects.order_by('invisible', '-end_time')
+    problems_contests = Contest.objects.order_by('invisible', '-end_time', '-id')
     problems = problems.prefetch_related(Prefetch('contests', queryset=problems_contests))
     problems = problems.prefetch_related('tags')
     problems = problems.annotate(min_contest_id=SubqueryMin('contests__id'))

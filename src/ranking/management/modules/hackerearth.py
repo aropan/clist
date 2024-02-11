@@ -252,33 +252,7 @@ class Statistic(BaseModule):
             except ExceptionParseStandings as e:
                 arg = e.args[0]
                 if arg.code in {404, 400}:
-                    for stat in account.statistics_set.order_by('-contest__end_time')[:3]:
-                        if stat.place is None:
-                            continue
-                        if stat.solving < 1e-9:
-                            continue
-                        try:
-                            module = Statistic(contest=stat.contest)
-                            standings = module.get_standings(fixed_rank=stat.place_as_int)
-                        except Exception:
-                            continue
-                        results = standings.get('result', {})
-                        if len(results) != 1:
-                            continue
-                        member, result = list(results.items())[0]
-                        if (
-                            not re.search('[1-9]', result.get('penalty', ''))
-                            or result['penalty'] != stat.addition.get('penalty')
-                        ):
-                            continue
-                        if abs(stat.solving - result.get('solving', 0)) > 1e-9:
-                            continue
-
-                        if member == account.key:
-                            break
-
-                        return account, {'rename': member, 'info': {}}
-                    return account, {'info': None}
+                    return account, {'delete': True}
                 return account, {'skip': True}
 
             info.update(json.loads(data))
@@ -288,6 +262,7 @@ class Statistic(BaseModule):
             else:
                 data = json.loads(match.group('data'))
                 contest_addition_update = ret.setdefault('contest_addition_update', {})
+                ret['contest_addition_update_params'] = {'try_renaming_check': True}
                 for contest in data:
                     key = re.search(r'/(?P<key>[^/]+)/$', contest['event_url']).group('key')
                     addition_update = contest_addition_update.setdefault(key, OrderedDict())
@@ -295,6 +270,7 @@ class Statistic(BaseModule):
                         ('old_rating', 'old_rating'),
                         ('rating_change', 'rating_change'),
                         ('rating', 'new_rating'),
+                        ('rank', '_rank'),
                     ):
                         if src in contest:
                             addition_update[dst] = int(contest[src])

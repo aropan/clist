@@ -197,6 +197,7 @@ class Command(BaseCommand):
         parser.add_argument('--is-rated', action='store_true', default=False, help='Contest is rated')
         parser.add_argument('--after', type=str, help='Events after date')
         parser.add_argument('--for-account', type=str, help='Events for account')
+        parser.add_argument('--ignore-stage', action='store_true', default=False, help='Ignore stage')
 
     def parse_statistic(
         self,
@@ -226,6 +227,7 @@ class Command(BaseCommand):
         no_update_problems=None,
         is_rated=None,
         for_account=None,
+        ignore_stage=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -303,7 +305,7 @@ class Command(BaseCommand):
             contests = contests.filter(statistics__account__key=for_account)
 
         if limit:
-            contests = contests.order_by('-end_time')[:limit]
+            contests = contests.order_by('-end_time', '-id')[:limit]
 
         contests = list(contests)
 
@@ -359,7 +361,15 @@ class Command(BaseCommand):
             progress_bar.refresh()
             total += 1
 
-            if hasattr(contest, 'stage'):
+            inherit_stage = contest.info.get('_inherit_stage')
+            has_stage = hasattr(contest, 'stage')
+            if not has_stage and inherit_stage:
+                call_command('inherit_stage', contest_id=contest.pk)
+                contest.refresh_from_db()
+                has_stage = hasattr(contest, 'stage')
+                if not has_stage:
+                    raise Exception(f'Not found stage for contest = {contest}')
+            if has_stage and not ignore_stage:
                 self.logger.info(f'update stage = {contest.stage}')
                 stages_ids.append(contest.stage.pk)
                 count += 1
@@ -992,6 +1002,7 @@ class Command(BaseCommand):
                                     if k[0].isalpha() and not re.match('^[A-Z]+([0-9]+)?$', k):
                                         k = k[0].upper() + k[1:]
                                         k = '_'.join(map(str.lower, re.findall('([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)', k)))
+                                        k = re.sub('_+', '_', k)
 
                                     if is_hidden_field:
                                         standings_hidden_fields_mapping[orig_k] = k
@@ -1506,4 +1517,5 @@ class Command(BaseCommand):
             no_update_problems=args.no_update_problems,
             is_rated=args.is_rated,
             for_account=args.for_account,
+            ignore_stage=args.ignore_stage,
         )

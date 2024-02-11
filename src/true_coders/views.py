@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 import humanize
 import pytz
+from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -62,7 +63,7 @@ def get_medals_for_profile_context(statistics):
     qs = statistics \
         .select_related('contest') \
         .filter(addition__medal__isnull=False) \
-        .order_by('-contest__end_time')
+        .order_by('-contest__end_time', '-contest_id')
     resource_medals = {}
     account_medals = {}
     for stat in qs:
@@ -98,7 +99,7 @@ def get_profile_context(request, statistics, writers, resources):
 
     statistics = statistics \
         .select_related('contest', 'contest__resource', 'account') \
-        .order_by('-contest__end_time')
+        .order_by('-contest__end_time', '-contest__id')
 
     search = request.GET.get('search')
     filters = {}
@@ -158,7 +159,7 @@ def get_profile_context(request, statistics, writers, resources):
 
     if search_resource:
         writers = writers.filter(resource__host=search_resource)
-    writers = writers.order_by('-end_time')
+    writers = writers.order_by('-end_time', '-id')
     writers = writers.annotate(has_statistics=Exists('statistics'))
 
     if not search_resource:
@@ -565,7 +566,7 @@ def _get_data_mixed_profile(request, query):
         resources = Resource.objects.none()
     else:
         statistics = Statistics.objects.filter(statistics_filter)
-        writers = Contest.objects.filter(writers_filter).select_related('resource').order_by('-end_time')
+        writers = Contest.objects.filter(writers_filter).select_related('resource').order_by('-end_time', '-id')
         accounts = Account.objects.filter(accounts_filter).order_by('-n_contests')
         if n_coder:
             accounts = accounts.annotate(verified=Exists('verified_accounts', filter=Q(coder=coder)))
@@ -1481,7 +1482,7 @@ def search(request, **kwargs):
         resources = [r for r in request.GET.getlist('resources[]') if r]
         if resources:
             qs = qs.filter(resource__pk__in=resources)
-        qs = qs.order_by('-end_time', 'pk')
+        qs = qs.order_by('-end_time', '-id')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon, 'disabled': getattr(r, 'disabled', False)}
                for r in qs]
@@ -1492,7 +1493,7 @@ def search(request, **kwargs):
         if not filter_.to_show:
             contest_filter = ~contest_filter
         qs = Contest.visible.select_related('resource').filter(contest_filter)
-        qs = qs.order_by('-end_time', 'pk')
+        qs = qs.order_by('-end_time', '-id')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon, 'url': r.actual_url} for r in qs]
     elif query == 'series':
@@ -1592,7 +1593,7 @@ def search(request, **kwargs):
         regex = request.GET.get('regex')
         if regex:
             qs = qs.filter(title__iregex=verify_regex(regex))
-        qs = qs.order_by('-end_time', 'pk')
+        qs = qs.order_by('-end_time', '-id')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c.id, 'text': c.title} for c in qs]
     elif query == 'notpast':
@@ -1600,7 +1601,7 @@ def search(request, **kwargs):
         regex = request.GET.get('regex')
         if regex:
             qs = qs.filter(title__iregex=verify_regex(regex))
-        qs = qs.order_by('-end_time', 'pk')
+        qs = qs.order_by('-end_time', '-id')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c.id, 'text': c.title} for c in qs]
     elif query == 'party':
@@ -1642,6 +1643,41 @@ def search(request, **kwargs):
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': f, 'text': f} for f in qs]
+    elif query == 'charts-field-select':
+        if not request.user.is_staff:
+            return HttpResponseBadRequest('You have no permission')
+        app_label, model_name = request.GET.get('source').split('.')
+        model = apps.get_model(app_label, model_name)
+        field_name = request.GET.get('field')
+        field = model._meta.get_field(field_name)
+
+        qs = model.objects.distinct(field_name)
+        text = request.GET.get('text')
+        if text:
+            if field.related_model:
+                preset_related_fields = {'auth.user': 'username'}
+                related_source = f'{field.related_model._meta.app_label}.{field.related_model._meta.model_name}'
+                if related_source in preset_related_fields:
+                    related_field = preset_related_fields[related_source]
+                else:
+                    related_field = 'pk'
+                    for f in field.related_model._meta.get_fields():
+                        t = type(f).__name__
+                        if t in {'TextField', 'CharField'}:
+                            related_field = f.name
+                            break
+                qs_field = f'{field_name}__{related_field}'
+            else:
+                qs_field = field_name
+            qs = qs.filter(**{f'{qs_field}__icontains': text})
+
+        qs = qs[(page - 1) * count:page * count]
+        attr = field.get_attname()
+        ret = []
+        for f in qs:
+            f_id = str(getattr(f, attr))
+            f_text = str(getattr(f, field_name))
+            ret.append({'id': f_id, 'text': f_text})
     elif query == 'coders':
         qs = Coder.objects.all()
 
@@ -1755,7 +1791,7 @@ def party(request, slug, tab='ranking'):
     party_contests = Contest.objects \
         .filter(rating__party=party) \
         .annotate(has_statistics=Exists('statistics')) \
-        .order_by('-end_time')
+        .order_by('-end_time', '-id')
 
     filt = Q(rating__party=party, statistics__account__coders=OuterRef('pk'))
     coders = party.coders \
@@ -1782,12 +1818,12 @@ def party(request, slug, tab='ranking'):
         contest__in=party_contests.filter(start_time__lt=timezone.now()),
         contest__end_time__lt=timezone.now(),
     ) \
-        .order_by('-contest__end_time') \
+        .order_by('-contest__end_time', '-contest__id') \
         .select_related('contest', 'account', 'contest__resource') \
         .prefetch_related('account__coders', 'account__coders__user')
 
     contests_standings = collections.OrderedDict(
-        (c, {}) for c in contests.filter(end_time__lt=timezone.now()).order_by('-end_time')
+        (c, {}) for c in contests.filter(end_time__lt=timezone.now()).order_by('-end_time', '-id')
     )
     for statistic in statistics:
         contest = statistic.contest
@@ -2194,7 +2230,7 @@ def accounts(request, template='accounts.html'):
     table_fields = ('rating', 'resource_rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
-    groupby = request.GET.get('groupby')
+    groupby = request.get_filtered_value('groupby', ['country', 'resource'])
     fields = request.GET.getlist('field')
     orderby = request.GET.get('sort_column')
     order = request.GET.get('sort_order') if orderby else None

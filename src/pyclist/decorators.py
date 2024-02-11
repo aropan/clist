@@ -7,7 +7,6 @@ from functools import wraps
 
 import numpy as np
 from django.conf import settings
-from django.core.cache import cache
 from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -85,13 +84,19 @@ def run_only_in_production(func):
     return wrapper
 
 
-def run_once(key):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            if not cache.get(key):
-                result = func(*args, **kwargs)
-                cache.set(key, True)
-                return result
-        return wrapper
+def extra_context_without_pagination(perm):
+    def decorator(view):
+        @wraps(view)
+        def decorated(request, *args, **kwargs):
+            if (
+                request.user.is_authenticated
+                and 'full_table' in request.GET
+                and request.user.has_perm(perm)
+            ):
+                extra_context = kwargs.setdefault('extra_context', {})
+                extra_context.update({'without_pagination': True})
+            return view(request, *args, **kwargs)
+
+        return decorated
+
     return decorator

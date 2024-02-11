@@ -420,7 +420,7 @@ class Statistic(BaseModule):
             except FailOnGetResponse as e:
                 if 'page not found' in e.response.lower():
                     username = f'{settings.VIRTUAL_CODER_PREFIX_}{cphof_account.pk}'
-                    yield {'info': None, 'coder': username}
+                    yield {'delete': True, 'coder': username}
                     continue
                 raise e
 

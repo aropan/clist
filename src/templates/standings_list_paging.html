@@ -1,4 +1,4 @@
-{% if not without_paginate %}
+{% if not without_pagination %}
 {% load el_pagination_tags %}
 {% lazy_paginate 50 contests %}
 {% endif %}
@@ -6,7 +6,7 @@
 {% for contest in contests %}
 {% with resource=contest.resource %}
 {% if contests_groups %}
-{% include "standings_list_paging.html" with contests=contests_groups|get_item:resource contests_groups=None group_contest=True without_paginate=True %}
+{% include "standings_list_paging.html" with contests=contests_groups|get_item:resource contests_groups=None group_contest=True without_pagination=True %}
 {% endif %}
 
 {% if not contest.has_module %}
@@ -94,6 +94,6 @@
 {% endwith %}
 {% endfor %}
 
-{% if not without_paginate %}
+{% if not without_pagination %}
 {% show_more_table %}
 {% endif %}

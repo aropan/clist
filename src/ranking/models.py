@@ -214,7 +214,11 @@ def download_avatar_url(account):
 
 @receiver(pre_save, sender=Account)
 def set_account_rating(sender, instance, *args, **kwargs):
-    if 'rating' in instance.info:
+    if instance.deleted:
+        instance.rating = None
+        instance.rating50 = None
+        instance.resource_rank = None
+    elif 'rating' in instance.info:
         if instance.rating != instance.info['rating']:
             instance.resource.rating_update_time = timezone.now()
             instance.resource.save(update_fields=['rating_update_time'])
@@ -484,6 +488,7 @@ class Stage(BaseModel):
     contest = models.OneToOneField(Contest, on_delete=models.CASCADE)
     filter_params = models.JSONField(default=dict, blank=True)
     score_params = models.JSONField(default=dict, blank=True)
+    contests = models.ManyToManyField(Contest, related_name='stages', blank=True)
 
     def __str__(self):
         return 'Stage#%d %s' % (self.pk, self.contest)
@@ -511,6 +516,15 @@ class Stage(BaseModel):
 
         contests = contests.order_by('start_time')
         contests = contests.prefetch_related('writers')
+        self.contests.set(contests)
+
+        parsed_statistic = self.score_params.get('parse_statistic')
+        if parsed_statistic:
+            call_command('parse_statistic',
+                         contest_id=stage.pk,
+                         without_fill_coder_problems=True,
+                         ignore_stage=True)
+            stage.refresh_from_db()
 
         placing = self.score_params.get('place')
         n_best = self.score_params.get('n_best')
@@ -567,6 +581,8 @@ class Stage(BaseModel):
                             full += problem.get('full_score', 1)
                         full_scores.append(full)
                     info['full_score'] = max(full_scores)
+                elif self.score_params.get('default_problem_full_score'):
+                    full_score = self.score_params['default_problem_full_score']
                 else:
                     full_score = 0
                     for problem in problems:
@@ -587,7 +603,7 @@ class Stage(BaseModel):
             qs = Statistics.objects \
                 .filter(contest__stage__in=advances['exclude_stages'], addition___advance__isnull=False) \
                 .values('account__key', 'addition___advance', 'contest__title') \
-                .order_by('contest__end_time')
+                .order_by('contest__end_time', 'contest__id')
             for r in qs:
                 d = r['addition___advance']
                 if 'contest' not in d:
@@ -663,12 +679,16 @@ class Stage(BaseModel):
                             if score is None:
                                 continue
                     if scoring:
+                        if score is None:
+                            score = 0
                         if scoring['name'] == 'general':
                             if s.place_as_int is None:
                                 continue
                             solving_factor = s.solving / max_solving
                             rank_factor = (n_effective - s.place_as_int + 1) / n_effective
                             score += scoring['factor'] * solving_factor * rank_factor
+                        elif scoring['name'] == 'field':
+                            score += s.addition.get(scoring['field'], 0)
                         else:
                             raise NotImplementedError(f'scoring {scoring["name"]} is not implemented')
                     if score is None:
@@ -744,9 +764,15 @@ class Stage(BaseModel):
                             continue
                         if field.get('accumulate'):
                             val = round(val + ast.literal_eval(str(row.get(out, 0))), 2)
+                        if field.get('aggregate') == 'avg':
+                            out_n = f'_{out}_n'
+                            out_s = f'_{out}_s'
+                            row[out_n] = row.get(out_n, 0) + 1
+                            row[out_s] = row.get(out_s, 0) + val
+                            val = round(row[out_s] / row[out_n], 2)
                         row[out] = val
 
-                    if 'solved' in s.addition:
+                    if 'solved' in s.addition and isinstance(s.addition['solved'], dict):
                         solved = row.setdefault('solved', {})
                         for k, v in s.addition['solved'].items():
                             solved[k] = solved.get(k, 0) + v
@@ -908,7 +934,6 @@ class Stage(BaseModel):
                 raise ValueError(f'Unknown field type = {t}')
 
         hidden_fields += [field.get('out', field.get('inp')) for field in fields if field.get('hidden')]
-        stage.info['hidden_fields'] = hidden_fields
 
         results = list(results.values())
         if n_best:
@@ -921,8 +946,9 @@ class Stage(BaseModel):
                         problem['status'] = problem.pop('result')
 
         filtered_results = []
+        filter_zero_points = self.score_params.get('filter_zero_points', True)
         for r in results:
-            if r['score'] > eps or r.get('writer'):
+            if r['score'] > eps or not filter_zero_points or r.get('writer'):
                 filtered_results.append(r)
                 continue
             if detail_problems:
@@ -950,7 +976,7 @@ class Stage(BaseModel):
         )
 
         additions = deepcopy(stage.info.get('additions', {}))
-
+        field_to_problem = self.score_params.get('field_to_problem')
         with transaction.atomic():
             fields_set = set()
             fields = list()
@@ -1009,41 +1035,87 @@ class Stage(BaseModel):
                     adv = row['_advance']
                     advanced = not adv.get('skip') and not adv.get('class', '').startswith('text-')
 
-                stat, created = Statistics.objects.update_or_create(
-                    account=account,
-                    contest=stage,
-                    defaults={
-                        'place': str(placing_info['place']),
-                        'place_as_int': placing_info['place'],
-                        'solving': solving,
-                        'addition': row,
-                        'skip_in_stats': True,
-                        'advanced': advanced,
-                    },
-                )
+                defaults = {
+                    'place': str(placing_info['place']),
+                    'place_as_int': placing_info['place'],
+                    'solving': solving,
+                    'addition': row,
+                    'skip_in_stats': True,
+                    'advanced': advanced,
+                }
+                if parsed_statistic:
+                    defaults['place'] = None
+                    defaults['place_as_int'] = None
+                    defaults['solving'] = 0
+                    stat = Statistics.objects.filter(account=account, contest=stage).first()
+                    if not stat:
+                        continue
+                    for k, v in defaults['addition'].items():
+                        if k not in stat.addition or (v and not stat.addition.get(k)):
+                            stat.addition[k] = v
+                    stat.skip_in_stats = defaults['skip_in_stats']
+                    stat.advanced = defaults['advanced']
+                    stat.save(update_fields=['addition', 'skip_in_stats', 'advanced'])
+                else:
+                    stat, created = Statistics.objects.update_or_create(
+                        account=account,
+                        contest=stage,
+                        defaults=defaults,
+                    )
                 pks.add(stat.pk)
 
-                for k in row.keys():
+                for k in stat.addition.keys():
+                    if field_to_problem and re.search(field_to_problem['regex'], k):
+                        continue
                     if k not in fields_set:
                         fields_set.add(k)
                         fields.append(k)
-            stage.statistics_set.exclude(pk__in=pks).delete()
-            stage.n_statistics = len(results)
-            stage.parsed_time = timezone.now()
+            stage.info['problems'] = list(problems_infos.values())
 
+            if field_to_problem:
+                for stat in stage.statistics_set.all():
+                    problems = stat.addition.setdefault('problems', {})
+                    was_updated = False
+                    for k, v in list(stat.addition.items()):
+                        match = re.search(field_to_problem['regex'], k)
+                        if match:
+                            problem_short = field_to_problem['format'].format(**match.groupdict())
+                            if problem_short not in problems:
+                                problems[problem_short] = {'result': v}
+                            stat.addition.pop(k)
+                            if 'fields_types' in stage.info:
+                                stage.info['fields_types'].pop(k, None)
+                            was_updated = True
+                    if was_updated:
+                        stat.save(update_fields=['addition'])
+
+            if parsed_statistic:
+                for field in stage.info.setdefault('hidden_fields', []):
+                    if field not in hidden_fields:
+                        hidden_fields.append(field)
+            regex_hidden_fields = self.score_params.get('regex_hidden_fields')
+            if regex_hidden_fields:
+                for field in fields:
+                    if field not in hidden_fields and re.search(regex_hidden_fields, field):
+                        hidden_fields.append(field)
             stage.info['fields'] = list(fields)
+            stage.info['hidden_fields'] = hidden_fields
 
-        standings_info = self.score_params.get('info', {})
-        standings_info['fixed_fields'] = fixed_fields + [(f.lstrip('-'), f.lstrip('-')) for f in order_by]
-        stage.info['standings'] = standings_info
+            if not parsed_statistic:
+                stage.statistics_set.exclude(pk__in=pks).delete()
+                stage.n_statistics = len(results)
+                stage.parsed_time = timezone.now()
 
-        if divisions_order and self.score_params.get('divisions_ordering'):
-            stage.info['divisions_order'] = divisions_order
+                standings_info = self.score_params.get('info', {})
+                standings_info['fixed_fields'] = fixed_fields + [(f.lstrip('-'), f.lstrip('-')) for f in order_by]
+                stage.info['standings'] = standings_info
 
-        stage.info['problems'] = list(problems_infos.values())
-        if stage.is_rated is None:
-            stage.is_rated = False
-        stage.save()
+                if divisions_order and self.score_params.get('divisions_ordering'):
+                    stage.info['divisions_order'] = divisions_order
+
+                if stage.is_rated is None:
+                    stage.is_rated = False
+            stage.save()
 
 
 class VirtualStart(BaseModel):

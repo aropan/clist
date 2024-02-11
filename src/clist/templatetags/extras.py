@@ -1,3 +1,4 @@
+import html
 import itertools
 import json
 import math
@@ -18,10 +19,11 @@ import yaml
 from django import template
 from django.apps import apps
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Value
 from django.template.base import Node
 from django.template.defaultfilters import floatformat, slugify, stringfilter
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils.functional import keep_lazy
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
@@ -752,13 +754,13 @@ def to_str(value):
 @register.filter
 def to_template_value(value):
     if isinstance(value, bool):
-        return f'<i class="fas fa-{"check" if value else "times"}"></i>'
+        return mark_safe(f'<i class="fas fa-{"check" if value else "times"}"></i>')
     if isinstance(value, float):
         value_str = str(value)
         if '.' in value_str:
             length = len(value_str.split('.')[-1])
             if length > 3:
-                return f'<span title="{value}" data-toggle="tooltip">{value:.3f}</span>'
+                return mark_safe(f'<span title="{value}" data-toggle="tooltip">{value:.3f}</span>')
     return value
 
 
@@ -907,6 +909,8 @@ def is_improved_solution(curr, prev):
 @register.filter
 def timestamp_to_datetime(value):
     try:
+        if isinstance(value, str):
+            value = float(value)
         return datetime.fromtimestamp(value)
     except Exception:
         return None
@@ -1119,7 +1123,7 @@ def trim_to(value, length):
         return value
     half = length // 2
     trimmed_value = value[:half].strip() + '...' + value[-half:].strip()
-    ret = f'<span title="{value}" data-toggle="tooltip">{trimmed_value}</span>'
+    ret = f'<span title="{html.escape(value)}" data-toggle="tooltip">{html.escape(trimmed_value)}</span>'
     return mark_safe(ret)
 
 
@@ -1141,7 +1145,7 @@ def rating_from_probability(b, p, min_rating=0, max_rating=5000):
 @register.simple_tag
 def icon_to(value, default=None, icons=None, html_class=None):
     icons = icons or settings.FONTAWESOME_ICONS_
-    if not default:
+    if default is None:
         default = value.title().replace('_', ' ')
     if value in icons:
         value = icons[value]
@@ -1236,6 +1240,8 @@ def sort_select_data(data):
 
 @register.filter
 def simple_select_data(data):
+    if data is None:
+        return
     ret = {
         'noajax': True,
         'nogroupby': True,
@@ -1354,3 +1360,14 @@ def accounts_split(value):
 @register.filter
 def is_yes(value):
     return value and str(value).lower() in settings.YES_
+
+
+@register.filter
+def get_admin_url(obj):
+    if obj is None:
+        return
+    content_type = ContentType.objects.get_for_model(obj.__class__)
+    try:
+        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(obj.pk,))
+    except NoReverseMatch:
+        return

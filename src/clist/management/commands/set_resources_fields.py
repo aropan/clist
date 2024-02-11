@@ -91,7 +91,7 @@ def set_problems_fields(resources, logger):
 
 
 def set_statistics_fields(resources, logger):
-    qs = Contest.objects.filter(stage__isnull=True)
+    qs = Contest.objects
     total = qs.filter(resource__in=resources).count()
     with tqdm(total=total, desc='contests') as pbar:
         for resource in resources.iterator():

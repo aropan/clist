@@ -196,7 +196,9 @@ class Command(BaseCommand):
                                 continue
 
                             account.deleted = data.get('delete', False)
-                            if account.deleted:  # mark as deleted
+                            if account.deleted:
+                                if 'coder' in data:
+                                    account.coders.filter(username=data['coder']).delete()
                                 n_counter['deleted'] += 1
                                 account.updated = now + timedelta(days=365)
                                 account.save(update_fields=['deleted', 'updated'])
@@ -205,17 +207,6 @@ class Command(BaseCommand):
 
                             count += 1
                             info = data['info']
-                            if info is None:  # delete account
-                                if 'coder' in data:
-                                    coder = account.coders.filter(username=data['coder']).first()
-                                    if coder is not None:
-                                        coder.delete()
-                                _, info = account.delete()
-                                info = {k: v for k, v in info.items() if v}
-                                n_counter['remove'] += 1
-                                pbar.set_postfix(warning=f'{n_counter["remove"]}: Remove user {account} = {info}')
-                                seen.add(account.key)
-                                continue
 
                             params = data.pop('contest_addition_update_params', {})
                             contest_addition_update = data.pop('contest_addition_update', params.pop('update', {}))

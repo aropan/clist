@@ -32,10 +32,10 @@
         </thead>
         <tbody>
           {% if stages %}
-          {% include "standings_list_paging.html" with contests=stages without_paginate=True is_stage=True %}
+          {% include "standings_list_paging.html" with contests=stages without_pagination=True is_stage=True %}
           <tr><td colspan="100%"></td></tr>
           {% endif %}
-          {% include "standings_list_paging.html" with contests=running_contests contests_groups=grouped_running_contests without_paginate=True %}
+          {% include "standings_list_paging.html" with contests=running_contests contests_groups=grouped_running_contests without_pagination=True %}
           {% include page_template %}
         </tbody>
       </table>

@@ -107,9 +107,11 @@ INSTALLED_APPS = (
     'notes',
     'logify',
     'fontawesomefree',
+    'corsheaders',
 )
 
 MIDDLEWARE = (
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -122,7 +124,7 @@ MIDDLEWARE = (
     'django_user_agents.middleware.UserAgentMiddleware',
     'csp.middleware.CSPMiddleware',
     'pyclist.middleware.UpdateCoderLastActivity',
-    'pyclist.middleware.RequestLoggerMiddleware',
+    'pyclist.middleware.CustomRequestMiddleware',
     'pyclist.middleware.RequestIsAjaxFunction',
     'pyclist.middleware.RedirectMiddleware',
     'pyclist.middleware.TimezoneMiddleware',
@@ -527,6 +529,10 @@ SECURE_HSTS_SECONDS = 15768000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
+# CORS
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_URLS_REGEX = '^/api/.*$'
+
 # Content Security Policy
 CSP_DEFAULT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "data:")
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")
@@ -657,7 +663,6 @@ FONTAWESOME_ICONS_ = {
     'versus': '<i class="fas fa-people-arrows"></i>',
     'last_activity': '<i class="fa-fw far fa-clock"></i>',
     'fullscreen': '<i class="fas fa-expand-arrows-alt"></i>',
-    'charts': '<i class="fas fa-chart-bar"></i>',
     'update': '<i class="fas fa-sync"></i>',
     'open_in_tab': '<i class="fas fa-external-link-alt"></i>',
     'extra_url': '<i class="fas fa-external-link-alt"></i>',
@@ -709,6 +714,10 @@ FONTAWESOME_ICONS_ = {
     'is_virtual': {'icon': '<i class="fa-solid fa-clock-rotate-left"></i>', 'title': False},
     'to_list': {'icon': '<i class="fa-solid fa-list-check"></i>', 'title': 'Add to list'},
     'invert': '<i class="fa-solid fa-rotate"></i>',
+    'stage': '<i class="fa-regular fa-object-group"></i>',
+    'full_table': {'icon': '<i class="fa-solid fa-up-down"></i>', 'title': 'Load full table'},
+    'charts': '<i class="fa-solid fa-chart-line"></i>',
+
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

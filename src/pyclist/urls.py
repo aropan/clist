@@ -8,7 +8,7 @@ from django.urls import path, re_path
 from django.views.generic import RedirectView, TemplateView
 
 from pyclist.sitemaps import sitemaps
-from pyclist.views import test
+from pyclist.views import charts
 
 admin.autodiscover()
 
@@ -20,6 +20,8 @@ urlpatterns = [
     re_path(r'', include('events.urls')),
     re_path(r'', include('chats.urls')),
     re_path(r'', include('notification.urls')),
+
+    re_path(r'charts/', charts, name='charts'),
 
     re_path(r'^telegram/', include('tg.urls')),
 
@@ -46,10 +48,7 @@ urlpatterns = [
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = (
-        [
-            re_path(r'^__debug__/', include(debug_toolbar.urls)),
-            re_path(r'^__test__/', test, name='__test__'),
-        ]
+        [re_path(r'^__debug__/', include(debug_toolbar.urls))]
         + url_static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
         + urlpatterns
     )

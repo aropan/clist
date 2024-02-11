@@ -3,7 +3,7 @@
 <span class="{% if value|get_type == 'bool' %} text-muted{% endif %}{% if field in resource.RATING_FIELDS %} {% coder_color_class resource value %}{% endif %}">
 {% if fields_to_select and field in fields_to_select and value not in fields_to_select|get_item:field and not fields_to_select|get_item:field|get_item:'nourl' %}
   <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value|to_template_filter_value %}">
-    {% if value is None %}&mdash;{% else %}{{ template_value|safe }}{% endif %}
+    {% if value is None %}&mdash;{% else %}{{ template_value }}{% endif %}
   </a>
 {% else %}
   {% with intvalue=value|toint %}
@@ -71,15 +71,15 @@
           <img src="{{ value.icon }}" height="16px"/>
         </span>
       {% elif value.url %}
-        <a href="{{ value.url }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
+        <a href="{{ value.url }}" rel="noopener noreferrer">{{ template_value }}</a>
       {% elif value|startswith:"http" %}
-        <a href="{{ value }}" rel="noopener noreferrer">{{ template_value|safe }}</a>
+        <a href="{{ value }}" rel="noopener noreferrer">{{ template_value }}</a>
       {% elif field|is_ip_field %}
         {% for v in value %}{% if forloop.counter0 %}<br/>{% endif %}<a class="nowrap field-to-select" href="{% url_transform request field|strip:"_" v with_replace=1 %}">{{ v }}</a>{% endfor %}
       {% elif field == 'first_ac__accounts' and types|to_json == '["list"]' %}
         {% for handle in value %}{% if forloop.counter0 %}<br/>{% endif %}{% if resource %}<a href="{% url 'coder:account' handle resource.host %}">{{ handle }}</a>{% else %}{{ handle }}{% endif %}{% endfor %}
       {% else %}
-        {{ template_value|safe }}
+        {{ template_value }}
       {% endif %}
     </span>
   {% endwith %}

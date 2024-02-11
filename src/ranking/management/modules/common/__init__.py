@@ -18,7 +18,7 @@ from utils.requester import FailOnGetResponse, ProxyLimitReached, requester  # n
 def create_requester():
     req = requester(cookie_filename=os.path.join(os.path.dirname(__file__), 'cookies.txt'))
     req.caching = 'REQUESTER_CACHING' in os.environ
-    req.time_out = 30
+    req.time_out = 45
     req.debug_output = 'REQUESTER_DEBUG' in os.environ
     return req
 

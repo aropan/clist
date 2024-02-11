@@ -24,7 +24,7 @@ from utils.aes import AESModeOfOperation
 
 API_KEYS = conf.CODEFORCES_API_KEYS
 DEFAULT_API_KEY = API_KEYS[API_KEYS['__default__']]
-SUBDOMAIN = 'mirror.'
+SUBDOMAIN = ''
 
 
 def api_query(

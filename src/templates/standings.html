@@ -87,13 +87,16 @@
       <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
       {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
 
-      {% if not other_contests %}
-      <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></a>
-      {% endif %}
-
       <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
         <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
       </span>
+
+      {% for stage in contest.stages.all %}
+        <a href="{% url 'ranking:standings' stage.contest.title|slug stage.contest.pk %}" class="badge progress-bar-info">{% icon_to "stage" stage.contest.title %}</a>
+      {% endfor %}
+      {% if not other_contests %}
+      <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><span title="Show nearby" data-toggle="tooltip"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></span></a>
+      {% endif %}
 
       {% if user|has_update_statistics_permission:contest %}
       <a href="" id="update_statistics_btn" onclick="update_statistics(this); return false">

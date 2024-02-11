@@ -642,7 +642,7 @@ class Statistic(BaseModule):
                 if Statistic.is_china(account) or isinstance(page, dict) and 'contests' in page:
                     info = page.pop('profile')['userProfilePublicProfile']
                     if info is None:
-                        yield {'info': None}
+                        yield {'delete': True}
                         continue
                     contest_addition_update_by = 'key'
                     info.update(info.pop('profile', {}) or {})
@@ -670,7 +670,7 @@ class Statistic(BaseModule):
                         info['rating'] = int(info['currentRating'])
                 else:
                     if page['userContestRankingHistory'] is None:
-                        yield {'info': None}
+                        yield {'delete': True}
                         continue
                     info.update(page.pop('profile', {}) or {})
                     contest_addition_update_by = 'title'

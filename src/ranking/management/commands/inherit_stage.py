@@ -23,8 +23,9 @@ class Command(BaseCommand):
     help = 'Inherit stage'
 
     def add_arguments(self, parser):
-        parser.add_argument('--regex', type=str, help='Original stage title regex', required=True)
-        parser.add_argument('--title', type=str, help='Title of new stage', required=True)
+        parser.add_argument('--contest-id', '-cid', type=int, help='Contest id')
+        parser.add_argument('--regex', type=str, help='Original stage title regex')
+        parser.add_argument('--title', type=str, help='Title of new stage')
         parser.add_argument('--url', type=str, help='Url of new stage')
         parser.add_argument('--start-time', type=str, help='Start time of new stage')
         parser.add_argument('--end-time', type=str, help='End time of new stage')
@@ -36,41 +37,52 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         with transaction.atomic():
-            original_contest = Contest.objects.get(stage__isnull=False, title__iregex=args.regex)
-            logger.info(f'original contest = {original_contest}')
-
-            time_qs = original_contest.resource.contest_set.filter(title__regex=args.time_regex or args.title)
-            time_qs = time_qs.filter(stage__isnull=True)
-
-            if args.start_time:
-                start_time = dateutil.parser.parse(args.start_time)
-            elif args.delta_time:
-                delta_time = yaml.safe_load(args.delta_time) if args.delta_time else None
-                delta_time = dateutil.relativedelta.relativedelta(**delta_time)
-                start_time = original_contest.start_time + delta_time
+            if args.contest_id:
+                contest = Contest.objects.get(pk=args.contest_id)
+                filtered_contests = contest.neighbors()
+                stage_contests = filtered_contests.filter(stage__isnull=False, start_time__lt=contest.start_time)
+                original_contest = stage_contests.order_by('-end_time').first()
+                if original_contest is None:
+                    filtered_contests = contest.resource.contest_set.all()
+                    stage_contests = filtered_contests.filter(stage__isnull=False, start_time__lt=contest.start_time)
+                    original_contest = stage_contests.order_by('-end_time').first()
+                created = False
             else:
-                start_time = time_qs.aggregate(Min('start_time'))['start_time__min'] - timedelta(days=1)
+                original_contest = Contest.objects.get(stage__isnull=False, title__iregex=args.regex)
+                logger.info(f'original contest = {original_contest}')
 
-            if args.end_time:
-                end_time = dateutil.parser.parse(args.end_time)
-            elif args.delta_time:
-                delta_time = yaml.safe_load(args.delta_time) if args.delta_time else None
-                delta_time = dateutil.relativedelta.relativedelta(**delta_time)
-                end_time = original_contest.end_time + delta_time
-            else:
-                end_time = time_qs.aggregate(Max('end_time'))['end_time__max'] + timedelta(days=1)
+                time_qs = original_contest.resource.contest_set.filter(title__regex=args.time_regex or args.title)
+                time_qs = time_qs.filter(stage__isnull=True)
 
-            contest, created = Contest.objects.update_or_create(
-                title=args.title,
-                host=original_contest.host,
-                resource=original_contest.resource,
-                key=slug(args.title),
-                defaults=dict(
-                    start_time=start_time,
-                    end_time=end_time,
-                    url=args.url if args.url else original_contest.url,
-                ),
-            )
+                if args.start_time:
+                    start_time = dateutil.parser.parse(args.start_time)
+                elif args.delta_time:
+                    delta_time = yaml.safe_load(args.delta_time) if args.delta_time else None
+                    delta_time = dateutil.relativedelta.relativedelta(**delta_time)
+                    start_time = original_contest.start_time + delta_time
+                else:
+                    start_time = time_qs.aggregate(Min('start_time'))['start_time__min'] - timedelta(days=1)
+
+                if args.end_time:
+                    end_time = dateutil.parser.parse(args.end_time)
+                elif args.delta_time:
+                    delta_time = yaml.safe_load(args.delta_time) if args.delta_time else None
+                    delta_time = dateutil.relativedelta.relativedelta(**delta_time)
+                    end_time = original_contest.end_time + delta_time
+                else:
+                    end_time = time_qs.aggregate(Max('end_time'))['end_time__max'] + timedelta(days=1)
+
+                contest, created = Contest.objects.update_or_create(
+                    title=args.title,
+                    host=original_contest.host,
+                    resource=original_contest.resource,
+                    key=slug(args.title),
+                    defaults=dict(
+                        start_time=start_time,
+                        end_time=end_time,
+                        url=args.url if args.url else original_contest.url,
+                    ),
+                )
 
             if created:
                 logger.info(f'new contest = {contest}, start_time = {start_time}, end_time = {end_time}')

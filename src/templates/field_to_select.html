@@ -19,23 +19,35 @@
   </div>
   {% elif data.nogroupby %}
     <span class="input-group-addon">
-      {% icon_to data.icon|default:field data.title|default:field|title_field %}
+      {% if data.icon is False %}
+        {{ data.title|default:field|title_field }}
+      {% else %}
+        {% icon_to data.icon|default:field data.title|default:field|title_field %}
+      {% endif %}
     </span>
   {% else %}
   <div class="input-group-btn">
     <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">
-      {% icon_to data.icon|default:field data.title|default:field|title_field %}
+      {% if data.icon is False %}
+        {{ data.title|default:field|title_field }}
+      {% else %}
+        {% icon_to data.icon|default:field data.title|default:field|title_field %}
+      {% endif %}
     </button>
   </div>
   {% endif %}
   <select name="{{ field }}" id="{{ field }}"{% if not data.nosubmit %} onchange="this.form.submit()"{% endif %}{% if not data.nomultiply %} multiple{% endif %}{% if disabled or data.disabled %} disabled{% endif %}>
   {% if data.options %}
+    {% with values=request.GET|get_list:field %}
+    {% with values=data|get_item:'values'|default:values %}
     <option></option>
     {% for v in data.options %}
-    <option value="{{ v }}"{% if v in data.values %} selected{% endif %}>
+    <option value="{{ v }}"{% if v in values %} selected{% endif %}>
     {% if data.options|get_type == 'dict' %}{{ data.options|get_item:v|default:v }}{% else %}{{ v }}{% endif %}
     </option>
     {% endfor %}
+    {% endwith %}
+    {% endwith %}
   {% elif data.values %}
     {% for v in data.values %}
       <option value="{{ v }}" selected>{{ v }}</option>
@@ -62,7 +74,7 @@
     {% if data.data %}
     data: {{ data.data|safe }},
     {% endif %}
-    minimumResultsForSearch: -1,
+    minimumResultsForSearch: 10,
     dropdownAutoWidth : true,
     theme: 'bootstrap',
     placeholder: '',
@@ -77,9 +89,14 @@
         delay: 314,
         data: function (params) {
             return {
-                query: 'field-to-select',
+                query: '{{ data.ajax_query|default:'field-to-select' }}',
+                {% if not data.ajax_query %}
                 cid: {{ contest.pk|default:-1 }},
                 division: '{{ request.GET.division }}',
+                {% endif %}
+                {% for field in data.ajax_params %}
+                {{ field }}: '{{ request.GET|get_item:field }}',
+                {% endfor %}
                 field: $(this).attr('name'),
                 text: params.term,
                 page: params.page || 1

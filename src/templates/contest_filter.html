@@ -1,18 +1,9 @@
 {% with contest_id=contest|default:"contest" %}
 <div class="input-group{% if not nosmall %} input-group-sm{% endif %} hidden" id="{{ contest_id }}-hidden">
-{% if groupby %}
-  <div class="input-group-btn">
-    <button class="btn btn-default{% if groupby == 'contest' %} active{% endif %}" name="groupby" value="{% if groupby != 'contest' %}contest{% endif %}">
-      {% icon_to 'contest' %}
-    </button>
-  </div>
-{% else %}
   <span class="input-group-addon">
     {% icon_to 'contest' %}
   </span>
-{% endif %}
-
-<select{% if not noname %} name="{{ contest_id }}"{% endif %} id="{{ contest_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% elif with_update_url %} onchange="update_urls_params({'{{ contest_id }}': $(this).val()})"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
+  <select{% if not noname %} name="{{ contest_id }}"{% endif %} id="{{ contest_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% elif with_update_url %} onchange="update_urls_params({'{{ contest_id }}': $(this).val()})"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
     <option></option>
     {% for contest in params.contests %}
       <option value="{{ contest.pk }}" selected>{{ contest.title }}</option>

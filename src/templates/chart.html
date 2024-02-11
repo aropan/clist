@@ -1,5 +1,5 @@
 {% if chart %}
-<div id="chart_{{ chart.field }}">
+<div id="chart_{{ chart.field }}" class="chart">
   {% if not without_buttons %}
   <div class="chart-buttons">
     <span class="toggle-log-scale">
@@ -39,7 +39,7 @@
   </div>
   {% endif %}
 
-  <canvas class="chart"{% if chart.height %} height="{{ chart.height }}"{% endif %}></canvas>
+  <canvas id="chart_{{ chart.field }}_canvas"{% if chart.height %} height="{{ chart.height }}"{% endif %}></canvas>
 </div>
 
 <script>
@@ -329,8 +329,17 @@
       ],
     }
 
-    var ctx = $('#chart_{{ chart.field }} canvas')[0].getContext('2d');
+    var ctx = $('#chart_{{ chart.field }}_canvas')[0].getContext('2d');
     var chart = new Chart(ctx, config);
+
+    {% if chart.range_selection %}
+    add_selection_chart_range(
+      'chart_{{ chart.field }}_canvas',
+      chart,
+      false,
+      {{ chart.range_selection|to_json }},
+    );
+    {% endif %}
 
     $('#chart_{{ chart.field }} .toggle-log-scale').change(function() {
       chart.options.scales.y.type = chart.options.scales.y.type == 'linear'? 'logarithmic' : 'linear'

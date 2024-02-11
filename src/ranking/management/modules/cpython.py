@@ -87,7 +87,6 @@ class Statistic(BaseModule):
                 if re.match('cholpan[0-9]*', handle):
                     continue
                 r = result.setdefault(handle, {'member': handle})
-
                 if is_rated:
                     r['old_rating'] = row.pop('rating')
                     r['rating_change'] = row.pop('delta')
@@ -103,10 +102,14 @@ class Statistic(BaseModule):
                 r['solving'] = row.pop('points')
                 r['penalty'] = row.pop('penalties')
 
+                upsolving = row.get('isVirtual')
+
                 problems = r.setdefault('problems', {})
-                for problem_info in row['problemsInfo']:
+                for problem_info in row.pop('problemsInfo'):
                     short = problem_info['problemSymbol']
                     problem = problems.setdefault(short, {})
+                    if upsolving:
+                        problem = problem.setdefault('upsolving', {})
                     attempts = problem_info['attemptsCount']
                     if problem_info['points'] and problems_full_scores[short] == 1:
                         problem['result'] = '+' if attempts == 0 else f'+{attempts}'
@@ -124,7 +127,12 @@ class Statistic(BaseModule):
                     if accepted_time:
                         accepted_time = parse_datetime(accepted_time)
                         problem['time'] = self.to_time((accepted_time - self.start_time).total_seconds() // 60, 2)
-                        problem['time_in_seconds'] = accepted_time.timestamp()
+                        problem['time_in_seconds'] = (accepted_time - self.start_time).total_seconds()
+
+                for k, v in row.items():
+                    if k not in hidden_fields:
+                        r[k] = v
+                        hidden_fields.add(k)
 
                 if not problems and not r['solving']:
                     result.pop(handle)
@@ -177,7 +185,7 @@ class Statistic(BaseModule):
                 pbar.update()
             if not data:
                 if data is None:
-                    yield {'info': None}
+                    yield {'delete': True}
                 else:
                     yield {'skip': True}
                 continue

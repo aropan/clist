@@ -385,6 +385,9 @@ class Contest(BaseModel):
             models.Index(fields=['n_statistics', 'updated']),
             models.Index(fields=['n_statistics', 'end_time']),
             models.Index(fields=['resource', 'end_time', 'id']),
+            models.Index(fields=['resource', '-end_time', '-id']),
+            models.Index(fields=['end_time', 'id']),
+            models.Index(fields=['-end_time', '-id']),
             models.Index(fields=['resource', 'start_time', 'id']),
             models.Index(fields=['resource', 'notification_timing', 'start_time', 'end_time']),
             models.Index(fields=['resource', 'statistic_timing', 'start_time', 'end_time']),
@@ -579,7 +582,7 @@ class Contest(BaseModel):
                 add(q[:1])
 
         if qs is not None:
-            qs = qs.order_by('end_time')
+            qs = qs.order_by('end_time', 'id')
         else:
             qs = []
         return qs

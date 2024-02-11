@@ -42,4 +42,10 @@
   {% include 'series_filter.html' %}
 
   {% include 'more_fields_filter.html' %}
+
+  {% if perms.clist.view_full_table %}
+  <div class="input-group input-group-sm">
+    <button class="btn btn-default btn-sm" type="submit" name="full_table"{% if not request.GET %} disabled{% endif %}>{% icon_to 'full_table' %}</button>
+  </div>
+  {% endif %}
 </form>

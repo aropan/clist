@@ -1,0 +1,47 @@
+{% load el_pagination_tags %}
+
+{% lazy_paginate per_page,per_page_more entities using 'entities_paging' %}
+
+{% for entity in entities %}
+<tr>
+  {% for field in fields %}
+  <td class="nowrap">
+    {% with value=entity|get_item:field type=model.fields|get_item:field|get_item:'type' %}
+
+    {% if field == 'id' %}
+    {% define entity|get_admin_url as field_url %}
+    {% elif type == 'ForeignKey' or type == 'OneToOneField' %}
+    {% define value|get_admin_url as field_url %}
+    {% elif field.lower|slice:"-3:" == 'url' %}
+    {% define value as field_url %}
+    {% else %}
+    {% define False as field_url %}
+    {% endif %}
+
+    {% if field_url %}<a href="{{ field_url }}">{% endif %}
+
+    {% if value is None %}
+      <span class="text-muted">&mdash;</span>
+    {% elif value == '' %}
+      <span class="text-muted">&middot;</span>
+    {% elif type == 'BooleanField' %}
+      {{ value|to_template_value }}
+    {% elif type == 'CountryField' %}
+      <span class="flag flag-{{ value|lower }}" title="{{ value|get_country_name }}" data-toggle="tooltip"></span>&nbsp;{{ value }}
+    {% elif type == 'DateTimeField' %}
+      <span title="{{ value|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+        {{ value|timezone:timezone|naturaltime }}
+      <span>
+    {% else %}
+      {% trim_to value|to_str 30 %}
+    {% endif %}
+
+    {% if field_url %}</a>{% endif %}
+
+    {% endwith %}
+  </td>
+  {% endfor %}
+</tr>
+{% endfor %}
+
+{% show_more_table %}

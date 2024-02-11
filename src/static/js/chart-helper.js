@@ -393,15 +393,15 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   }
 }
 
-function add_selection_chart_range(canvas_selector, chart, with_close_chart=false) {
+function add_selection_chart_range(canvas_selector, chart, with_close_chart=false, range_selection=undefined) {
   $('#' + canvas_selector).data('chart', chart)
 
   var overlay = document.createElement('canvas');
   overlay.setAttribute('id', canvas_selector + '_overlay');
-  overlay.setAttribute('class', 'resource_rating_overlay');
+  overlay.setAttribute('class', 'chart_range_selection_overlay');
 
   var show_hint = document.createElement('div');
-  show_hint.setAttribute('class', 'resource_rating_hint small text-muted invisible');
+  show_hint.setAttribute('class', 'chart_range_selection_hint small text-muted invisible');
   show_hint.textContent = '*double click to previous zoom';
 
   var canvas = document.getElementById(canvas_selector);
@@ -409,7 +409,7 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
   canvas.parentNode.insertBefore(show_hint, canvas);
   if (with_close_chart) {
     var close_chart = document.createElement('div');
-    close_chart.setAttribute('class', 'resource_rating_close');
+    close_chart.setAttribute('class', 'chart_range_selection_close');
     var i = document.createElement('i');
     i.setAttribute('class', 'fas fa-times'); close_chart.appendChild(i);
     canvas.parentNode.insertBefore(close_chart, canvas);
@@ -441,6 +441,8 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
   var lineY = false;
   var draged = false;
   const stack_axes = [];
+  const with_update_x_slider_values = range_selection.x_slider_id
+  const stack_x_slider_values = []
   const dragBorder = 30;
 
   canvas.addEventListener('pointerdown', evt => {
@@ -457,7 +459,7 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
   });
 
   function clear_overlay() {
-    $('.resource_rating_overlay').map((idx, overlay) => {
+    $('.chart_range_selection_overlay').map((idx, overlay) => {
       overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
     })
   }
@@ -483,7 +485,7 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
       const x_axis = chart.scales['x'];
       const value = (clip_x - x_axis.left) / x_axis.width * (x_axis.max - x_axis.min) + x_axis.min;
 
-      $('.resource_rating_overlay').map((idx, overlay) => {
+      $('.chart_range_selection_overlay').map((idx, overlay) => {
         const canvas = overlay.nextSibling;
         const chart = $(canvas).data('chart');
         const x_axis = chart.scales['x'];
@@ -519,6 +521,13 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
     }
   }
 
+
+  function update_x_slider_values(values) {
+    var $slider = $('#' + range_selection.x_slider_id)
+    $slider.slider('values', values)
+    $slider.slider('option', 'slide').call($slider, true, {handle: true, values: values})
+  }
+
   canvas.addEventListener('pointermove', update_chart_range);
 
   canvas.addEventListener('dblclick', evt => {
@@ -529,6 +538,9 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
       chart.options.scales.x.max = x_max;
       chart.options.scales.y.min = y_min;
       chart.options.scales.y.max = y_max;
+      if (with_update_x_slider_values) {
+        update_x_slider_values(stack_x_slider_values.pop())
+      }
       chart.update();
       if (!stack_axes.length) {
         show_hint.classList.add('invisible');
@@ -542,15 +554,26 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
     clear_overlay();
     if (draged) {
       stack_axes.push([chart.options.scales.x.min, chart.options.scales.x.max, chart.options.scales.y.min, chart.options.scales.y.max]);
+      if (with_update_x_slider_values) {
+        stack_x_slider_values.push($('#' + range_selection.x_slider_id).slider('values'))
+      }
       show_hint.classList.remove('invisible');
     }
     if (dragX && draged) {
       const x_axis = chart.scales['x'];
-      const start_value = (selectionRect.startX - x_axis.left) / x_axis.width * (x_axis.max - x_axis.min) + x_axis.min;
-      const end_value = (selectionRect.endX - x_axis.left) / x_axis.width * (x_axis.max - x_axis.min) + x_axis.min;
+      const start_alpha = (selectionRect.startX - x_axis.left) / x_axis.width;
+      const end_alpha = (selectionRect.endX - x_axis.left) / x_axis.width;
+      const start_value = start_alpha * (x_axis.max - x_axis.min) + x_axis.min;
+      const end_value = end_alpha * (x_axis.max - x_axis.min) + x_axis.min;
       chart.options.scales.x.min = Math.min(start_value, end_value);
       chart.options.scales.x.max = Math.max(start_value, end_value);
       chart.update();
+
+      if (with_update_x_slider_values) {
+        const x_slider_from = start_alpha * (range_selection.x_to - range_selection.x_from) + range_selection.x_from;
+        const x_slider_to = end_alpha * (range_selection.x_to - range_selection.x_from) + range_selection.x_from;
+        update_x_slider_values([Math.min(x_slider_from, x_slider_to), Math.max(x_slider_from, x_slider_to)]);
+      }
     } else if (dragY && draged) {
       const y_axis = chart.scales['y'];
       const start_value = (selectionRect.startY - y_axis.top) / y_axis.height * (y_axis.min - y_axis.max) + y_axis.max;

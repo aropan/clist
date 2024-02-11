@@ -220,7 +220,7 @@ class Statistic(BaseModule):
                     pbar.update()
 
                 if page is None:
-                    yield {'info': None}
+                    yield {'delete': True}
                     continue
 
                 if page is False:

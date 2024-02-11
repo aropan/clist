@@ -176,7 +176,7 @@ class Statistic(BaseModule):
         @RateLimiter(max_calls=5, period=1)
         def fetch_profile(jid, handle):
             if jid is None:
-                return {'_delete': True}, None
+                return None, None
             url = Statistic.API_PROFILE_URL_FORMAT_.format(jid=jid)
             page = REQ.get(url)
             data = json.loads(page)
@@ -205,12 +205,9 @@ class Statistic(BaseModule):
                     pbar.update()
                 if not data:
                     if data is None:
-                        yield {'info': None}
+                        yield {'delete': True}
                     else:
                         yield {'skip': True}
-                    continue
-                if data.get('_delete'):
-                    yield {'delete': True}
                     continue
                 assert user == data['username']
 

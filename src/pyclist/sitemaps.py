@@ -29,7 +29,7 @@ class StandingsSitemap(BaseSitemap):
     limit = 1000
 
     def items(self):
-        return Contest.objects.filter(n_statistics__gt=0).order_by('-end_time')
+        return Contest.objects.filter(n_statistics__gt=0).order_by('-end_time', '-id')
 
     def priority(self, contest):
         return round(0.7 + (0.2 if 'medal' in contest.info.get('fields', []) else 0.0), 2)

@@ -10,10 +10,10 @@ import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import arrow
-import pytz
+from django.utils.timezone import now
 from first import first
 from ratelimiter import RateLimiter
 from tqdm import tqdm
@@ -542,11 +542,11 @@ class Statistic(BaseModule):
         if (
             has_rated
             and not has_new_rating
-            and self.end_time < datetime.utcnow().replace(tzinfo=pytz.utc) < self.end_time + timedelta(hours=3)
+            and self.end_time < now() < self.end_time + timedelta(hours=3)
         ):
             standings['timing_statistic_delta'] = timedelta(minutes=30)
 
-        if users or users is None:
+        if users or (users is None and now() < self.end_time + timedelta(days=30)):
             self._stop = False
             page_submissions = self.fetch_submissions()
             if page_submissions is not None:
@@ -609,7 +609,7 @@ class Statistic(BaseModule):
                     return None
                 code = e.code
                 if code == 404:
-                    return {'_delete': True}
+                    return
                 return {}
             ret = {}
             matches = key_value_re.finditer(page, re.VERBOSE)
@@ -654,18 +654,15 @@ class Statistic(BaseModule):
             for data in profiles:
                 if not data:
                     if data is None:
-                        yield {'info': None}
+                        yield {'delete': True}
                     else:
                         yield {'skip': True}
                 else:
-                    if data.get('_delete'):
-                        yield {'delete': True}
-                    else:
-                        ret = {'info': data}
-                        contest_addition_update_params = data.pop('_contest_addition_update_params', None)
-                        if contest_addition_update_params:
-                            ret['contest_addition_update_params'] = contest_addition_update_params
-                        yield ret
+                    ret = {'info': data}
+                    contest_addition_update_params = data.pop('_contest_addition_update_params', None)
+                    if contest_addition_update_params:
+                        ret['contest_addition_update_params'] = contest_addition_update_params
+                    yield ret
                 pbar.update()
 
     @staticmethod
@@ -730,6 +727,7 @@ class Statistic(BaseModule):
                 if problem is None:
                     LOG.warning(f'Missing problem: contest = {contest}, account = {account}, problem = {problem_id}')
                     continue
+
                 short = problem['short']
 
                 problems = stat.addition.setdefault('problems', {})

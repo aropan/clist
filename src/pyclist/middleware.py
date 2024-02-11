@@ -10,7 +10,7 @@ from pytz import timezone as pytz_timezone
 
 from clist.templatetags.extras import quote_url
 from true_coders.models import Coder
-from utils.request_logger import RequestLogger
+from utils.custom_request import custom_request
 
 
 def DebugPermissionOnlyMiddleware(get_response):
@@ -36,10 +36,10 @@ def DebugPermissionOnlyMiddleware(get_response):
     return middleware
 
 
-def RequestLoggerMiddleware(get_response):
+def CustomRequestMiddleware(get_response):
 
     def middleware(request):
-        setattr(request, 'logger', RequestLogger(request))
+        request = custom_request(request)
         response = get_response(request)
         return response
 

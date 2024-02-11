@@ -19,7 +19,9 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None):
         if not hasattr(self, 'season'):
-            if not hasattr(self, 'start_time'):
+            if 'season' in self.info:
+                self.season = self.info['season']
+            elif not hasattr(self, 'start_time'):
                 self.season = self.key.split()[0]
             else:
                 year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
@@ -104,10 +106,15 @@ class Statistic(BaseModule):
                 elif k == 'Place':
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():
-                    row['member'] = v.value if ' ' not in v.value else v.value + ' ' + self.season
-                    row['name'] = v.value
+                    name = v.value
+                    with_space = ' ' in v.value
+                    name = re.sub(r'^\([^\)]+\)\s+', '', name)
+                    member = name + ' ' + self.season if with_space else name
+                    row['member'] = member
+                    row['name'] = name
                 else:
                     key = re.sub('[-._ ]+', '_', key)
+                    key = key.strip(':')
                     val = v.value.strip()
                     if val and val != '-':
                         t = as_number(val)

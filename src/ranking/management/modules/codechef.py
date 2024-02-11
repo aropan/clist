@@ -335,7 +335,7 @@ class Statistic(BaseModule):
                     pbar.update()
 
                 if page is None:
-                    yield {'info': None}
+                    yield {'delete': True}
                     continue
 
                 match = re.search(r'jQuery.extend\(Drupal.settings,(?P<data>[^;]*)\);$', str(page), re.MULTILINE)

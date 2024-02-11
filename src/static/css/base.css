@@ -379,7 +379,7 @@ a.database-link {
 }
 
 .chart {
-  margin: 20px;
+  padding: 20px;
 }
 
 #chart_date canvas.chart {
@@ -432,28 +432,33 @@ canvas.rating_history {
   border: 1px solid #888;
 }
 
+
 /*
- * rating graphs
+ * chart range selection
  */
 
-.resource_rating_close {
+.chart_range_selection_close {
   position: absolute;
   padding-top: 10px;
   z-index: 0;
   cursor: pointer;
 }
 
-.resource_rating_hint {
+.chart_range_selection_hint {
   position: absolute;
   padding-top: 20px;
   right: 20px;
   z-index: 0;
 }
 
-.resource_rating_overlay {
+.chart_range_selection_overlay {
   position: absolute;
   pointer-events: none;
 }
+
+/*
+ * rating graphs
+ */
 
 .resource_fields {
   position: absolute;

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Charts{% endblock %}{% endblock %}
+{% block description %}desc{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/charts.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/charts.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<form class="form-inline" id="problems-filter" method="get" action="">
+  {% include "field_to_select.html" with field="source" data=source_field_select %}
+  {% include "sort_select.html" with data=sort_field_select %}
+  {% include "field_to_select.html" with field="x_axis" data=x_field_select %}
+  {% if chart and chart.range_selection %}
+  {% include "range_filter.html" with name=chart.name value_key="charts" from=chart.x_from to=chart.x_to icon_title="X Range" %}
+  {% include "range_filter_apply.html" %}
+  {% endif %}
+  {% include "field_to_select.html" with field="selection" data=selection_field_select %}
+
+  {% for field_select in selection_field_selects %}
+    {% include "field_to_select.html" with field=field_select.name data=field_select %}
+  {% endfor %}
+</form>
+
+<script>configure_pagination()</script>
+
+<div>
+{% include 'chart.html' with chart=chart without_close_chart=True %}
+</div>
+
+{% if entities is not None %}
+<div id="entities" class="panel panel-default table-responsive">
+  <table class="table table-hover table-striped table-float-head">
+    <thead>
+      <tr>
+        {% for field in fields  %}
+        <th>{{ field }}</th>
+        {% endfor %}
+      </tr>
+      <tr>
+        {% for field in fields %}
+        <th class="text-muted small">{{ model.fields|get_item:field|get_item:'type' }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+
+    <tbody>
+      {% include "charts_paging.html" %}
+    </tbody>
+  </table>
+</div>
+{% elif model %}
+<div class="alert alert-warning">Not found entities</div>
+{% endif %}
+
+{% endblock %}

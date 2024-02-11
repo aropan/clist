@@ -78,6 +78,15 @@
         $days = array();
         $HOUR = 60 * 60;
         $DAY = 24 * $HOUR;
+
+        $camp_season = substr($camp, -1);
+        if ($camp_season == 'w') {
+            $base_date = strtotime("$year-02-27");
+        } else if ($camp_season == 's') {
+            $base_date = strtotime("$year-08-30");
+        } else {
+            $camp_season = false;
+        }
         foreach ($matches as $i => $values)
         {
             $url = $values['url'];
@@ -95,7 +104,8 @@
                 }
                 if (isset($match['date'])) {
                     $date = preg_replace('#^.*,\s*([^,]*,[^,]*)$#', '\1', $match['date']);
-                    if (strtotime($date) !== false) {
+                    $datetime = strtotime($date);
+                    if ($datetime !== false && (!$camp_season || abs($datetime - $base_date) < 120 * $DAY)) {
                         $data['date'] = $date;
                     }
                 }
@@ -112,13 +122,8 @@
                 }
             } else {
                 $data['start_time'] = '10:00';
-                if (empty($schedule) && !isset($data['date'])) {
-                    $season = substr($camp, -1);
-                    if ($season == 'w') {
-                        $data['date'] = strftime('%B %d, %Y', strtotime("$year-02-27") + ($i - count($matches) + 1) * $DAY);
-                    } else if ($season == 's') {
-                        $data['date'] = strftime('%B %d, %Y', strtotime("$year-08-30") + ($i - count($matches) + 1) * $DAY);
-                    }
+                if (empty($schedule) && !isset($data['date']) && $camp_season) {
+                    $data['date'] = strftime('%B %d, %Y', $base_date + ($i - count($matches) + 1) * $DAY);
                 }
             }
             $days[intval($values['day'])] = $data;
@@ -136,6 +141,7 @@
 
         $camp_start_time = null;
         $camp_end_time = null;
+        $season = ($year - 1) . "-" . $year;
         foreach ($days as $day => $data) {
             if (!isset($data['date'])) {
                 continue;
@@ -171,6 +177,7 @@
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
                 'key' => $key,
+                'info' => array('season' => $season),
             );
         }
 
@@ -184,7 +191,7 @@
             'rid' => $RID,
             'timezone' => $TIMEZONE,
             'key' => $camp,
-            'info' => array('series' => 'ptzcamp'),
+            'info' => array('series' => 'ptzcamp', '_inherit_stage' => true, 'season' => $season),
         );
     }
 ?>

@@ -64,7 +64,8 @@
                 <li>
                     {% if user.is_authenticated %}
                         {% if user.is_staff %}
-                        <li><a href="/admin/"><i class="fas fa-server"></i></a></li>
+                        <li><a href="{% url 'charts' %}">{% icon_to 'charts' False %}</a></li>
+                        <li><a href="{% url 'admin:index' %}"><i class="fas fa-server"></i></a></li>
                         {% endif %}
                         <li><a href="{% url 'coder:profile' user.username %}">{{ user.username }}</a></li>
                     {% else %}

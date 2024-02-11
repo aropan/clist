@@ -672,7 +672,7 @@ class Statistic(BaseModule):
                 for user, data in zip(users, executor.map(fetch_profile, users)):
                     if not data:
                         if data is None:
-                            yield {'info': None}
+                            yield {'delete': True}
                         elif data is False:
                             yield {'skip': True}
                         else:
