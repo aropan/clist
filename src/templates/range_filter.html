@@ -4,9 +4,14 @@
 {% with default_from_val=values|get_item:from_key|default_if_none:default_from default_to_val=values|get_item:to_key|default_if_none:default_to %}
 {% with show=from_val|default:to_val|get_type|is_equal:'str'|toint %}
 <div class="input-group input-group-sm">
-  <button class="range-filter-show btn btn-default btn-sm{% if show %} active{% endif %}" data-id="{{ range_id }}"{% if disabled %} disabled{% endif %}>
-    {% icon_to name default=icon_title %}
-  </button>
+  <div{% if range_select %} class="input-group-btn"{% endif %}>
+    <button class="range-filter-show btn btn-default btn-sm{% if show %} active{% endif %}" data-id="{{ range_id }}"{% if disabled %} disabled{% endif %}>
+      {% icon_to name default=icon_title %}
+    </button>
+  </div>
+  {% if range_select %}
+  {% include "field_to_select.html" with data=range_select noinputgroup=True %}
+  {% endif %}
 </div>
 <div class="range-filter input-group input-group-sm{% if not show %} hidden{% endif %}">
   <input type="hidden" id="{{ from_key }}">
@@ -28,9 +33,15 @@ $slider = $("#{{ range_id }}").slider({
     if (!ui.handle) {
       return;
     }
+    console.log(event, typeof(event))
     if (typeof(event) != 'number') {
       $('#range-filter-apply').parent().removeClass('hidden')
       $(window).trigger('resize')
+      {% if range_select %}
+      $('#{{ range_select.field }}').next().remove()
+      $('#{{ range_select.field }}').remove()
+      {% endif %}
+    } else {
     }
     if (event) {
       $('#{{ from_key }}').prop('name', '{{ from_key }}')

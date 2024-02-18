@@ -1,9 +1,13 @@
 {% if data %}
+{% if 'field' in data %}
+{% define data.field as field %}
+{% endif %}
 {% if data.state %}
   {% with value=request.GET|get_item:data.state.name|default:data.state.values.0 total=data.state.values|length %}
   <input type="hidden" name="{{ data.state.name }}" value="{{ value }}">
   {% endwith %}
 {% endif %}
+{% if not noinputgroup %}
 <div class="input-group{% if not nosm %} input-group-sm{% endif %} field-to-select hidden">
   {% if data.state %}
   <div class="input-group-btn">
@@ -36,11 +40,12 @@
     </button>
   </div>
   {% endif %}
+{% endif %}
   <select name="{{ field }}" id="{{ field }}"{% if not data.nosubmit %} onchange="this.form.submit()"{% endif %}{% if not data.nomultiply %} multiple{% endif %}{% if disabled or data.disabled %} disabled{% endif %}>
   {% if data.options %}
     {% with values=request.GET|get_list:field %}
     {% with values=data|get_item:'values'|default:values %}
-    <option></option>
+    {% if not data.noempty %}<option></option>{% endif %}
     {% for v in data.options %}
     <option value="{{ v }}"{% if v in values %} selected{% endif %}>
     {% if data.options|get_type == 'dict' %}{{ data.options|get_item:v|default:v }}{% else %}{{ v }}{% endif %}
@@ -68,7 +73,9 @@
     <button class="btn btn-default" type="submit" name="action" value="{{ submit_value|default:submit }}"{% if not submit_enabled %} disabled{% endif %}>{{ submit|title }}</button>
   </span>
   {% endif %}
+{% if not noinputgroup %}
 </div>
+{% endif %}
 <script>
   $('#{{ field }}').select2({
     {% if data.data %}

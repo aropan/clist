@@ -101,3 +101,4 @@ scipy==1.11.2
 numba==0.58.0
 ipwhois==1.2.0
 fontawesomefree==6.4.2
+brotli==1.0.9

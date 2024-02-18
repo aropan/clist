@@ -271,17 +271,21 @@ function copyTextToClipboard(text) {
   $temp.remove()
 }
 
+
+function copyElementToClipboard(event, element) {
+  var el = $(element)
+  var text = el.data('text') || el.text()
+  copyTextToClipboard(text)
+  el.attr('title', 'copied')
+  el.tooltip('show')
+  $.notify('Copied "' + text + '" to clipboard', 'success')
+  setTimeout(function() { el.attr('title', ''); el.tooltip('destroy'); }, 1000)
+  return false
+}
+
+
 $(function() {
-  $('.copy-to-clipboard').click(function() {
-    var el= $(this)
-    var text = el.data('text') || el.text()
-    copyTextToClipboard(text)
-    el.attr('title', 'copied')
-    el.tooltip('show')
-    $.notify('Copied "' + text + '" to clipboard', 'success')
-    setTimeout(function() { el.attr('title', ''); el.tooltip('destroy'); }, 1000)
-    return false
-  })
+  $('.copy-to-clipboard:not([onclick])').click(function(event) { copyElementToClipboard(event, this) })
 })
 
 function select2_ajax_conf(query, field, addition_params) {
@@ -690,7 +694,12 @@ function escape_html(str) {
 }
 
 function configure_pagination(paginate_on_scroll = true) {
-  $.endlessPaginate({paginateOnScroll: paginate_on_scroll, onCompleted: function () { toggle_tooltip(); inline_button(); checkbox_mouseover_toggle(); $(window).trigger('resize'); }})
+  $.endlessPaginate({paginateOnScroll: paginate_on_scroll, onCompleted: function () {
+    toggle_tooltip()
+    inline_button()
+    checkbox_mouseover_toggle()
+    $(window).trigger('resize')
+  }})
 }
 
 

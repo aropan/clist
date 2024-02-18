@@ -2,13 +2,22 @@
 # -*- coding: utf-8 -*-
 
 
-class InitModuleException(Exception):
+class BaseException(Exception):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def __str__(self):
+        return f'{self.__class__.__name__}: {super().__str__()}'
+
+
+class InitModuleException(BaseException):
     pass
 
 
-class ExceptionParseStandings(Exception):
+class ExceptionParseStandings(BaseException):
     pass
 
 
-class ExceptionParseAccounts(Exception):
+class ExceptionParseAccounts(BaseException):
     pass

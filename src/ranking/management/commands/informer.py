@@ -319,7 +319,7 @@ class Command(BaseCommand):
                     prefix_msg = '`[%s]` %s' % (in_time['time'], prefix_msg)
 
                 account_url = reverse('coder:account', kwargs={'key': stat.account.key, 'host': resource.host})
-                account_url = settings.MAIN_HOST_ + md_url(account_url)
+                account_url = settings.MAIN_HOST_URL_ + md_url(account_url)
                 account_msg = '[%s](%s)' % (name, account_url)
                 if stat.account.country:
                     account_msg = flag.flag(stat.account.country.code) + account_msg

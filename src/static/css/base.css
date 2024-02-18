@@ -382,7 +382,7 @@ a.database-link {
   padding: 20px;
 }
 
-#chart_date canvas.chart {
+#chart_date canvas {
   max-height: 200px;
 }
 

@@ -107,7 +107,9 @@
         {% endfor %}
       {% else %}
         {
-          data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist.value }}'}{% endfor %}],
+          {% with y_value=chart.y_value|default:'value' %}
+          data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:y_value }}'}{% endfor %}],
+          {% endwith %}
           {% if chart.data and chart.data.0.bgcolor %}
           backgroundColor: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}'{{ hist.bgcolor }}'{% endfor %}],
           {% endif %}

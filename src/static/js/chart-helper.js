@@ -441,7 +441,7 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
   var lineY = false;
   var draged = false;
   const stack_axes = [];
-  const with_update_x_slider_values = range_selection.x_slider_id
+  const with_update_x_slider_values = range_selection && range_selection.x_slider_id
   const stack_x_slider_values = []
   const dragBorder = 30;
 

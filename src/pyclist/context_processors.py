@@ -6,8 +6,8 @@ from clist.views import get_timeformat, get_timezone
 def global_settings(request):
     return {
         'vapid_public_key': settings.WEBPUSH_SETTINGS['VAPID_PUBLIC_KEY'],
-        'main_host_url': settings.MAIN_HOST_,
-        'host_url': settings.HTTPS_HOST_,
+        'main_host_url': settings.MAIN_HOST_URL_,
+        'host_url': settings.HTTPS_HOST_URL_,
         'default_api_throttle_at': settings.DEFAULT_API_THROTTLE_AT_,
         'enable_global_rating': settings.ENABLE_GLOBAL_RATING_,
         'DEBUG': settings.DEBUG,

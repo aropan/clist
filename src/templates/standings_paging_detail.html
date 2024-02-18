@@ -18,6 +18,7 @@
   <div>Rank: {{ stat.result_rank }}</div>
 {% endif %}
 
+{% stat_has_failed_verdict stat small as has_failed_verdict %}
 <div>
 {% if 'status' in stat and 'time' in stat and stat.result is None and stat.extra_score is None and with_detail or 'status' in stat and 'time' in stat and not small %}
   <div>{% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}</div>
@@ -32,8 +33,8 @@
 {% elif 'time' in stat %}
   {{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}{% if stat.attempt %} ({{ stat.attempt }}){% endif %}
 {% elif 'upsolving' in stat %}
-  {% if small and stat.verdict and not stat.binary and not stat.icon %}
-  <div
+  {% if has_failed_verdict %}
+  <div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}<span
      class="{% if stat.upsolving.result|is_solved %}upsolved{% else %}upsolving{% endif %}"
      data-toggle="tooltip"
      data-placement="top"
@@ -57,13 +58,9 @@
     {{ stat.upsolving.result|scoreformat }}
   {% endif %}
 
-  {% if small and stat.verdict and not stat.binary and not stat.icon %}
-  '>
-    {{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}
-  </div>
-  {% endif %}
+  {% if has_failed_verdict %}'>&#65290;</span></div>{% endif %}
 
-{% elif not stat|is_solved and small and stat.verdict and not stat.binary and not stat.icon %}
+{% elif has_failed_verdict %}
   <div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</div>
 {% endif %}
 </div>

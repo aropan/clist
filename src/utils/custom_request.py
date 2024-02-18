@@ -25,9 +25,15 @@ def get_filtered_list(request, field, options=None):
     ]
 
 
-def get_filtered_value(request, field, options=None):
+def get_filtered_value(request, field, options=None, default_first=None, allow_empty=False):
+    if allow_empty and '' not in options:
+        options = options + ['']
     ret = get_filtered_list(request, field, options)
-    return ret[-1] if ret else None
+    if ret:
+        return ret[-1]
+    if default_first and options:
+        return options[0]
+    return None
 
 
 def custom_request(request):

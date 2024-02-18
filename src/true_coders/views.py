@@ -826,7 +826,7 @@ def settings(request, tab=None):
                 if pk:
                     notification.last_time = timezone.now()
                 if notification.method == django_settings.NOTIFICATION_CONF.TELEGRAM and not coder.chat:
-                    return HttpResponseRedirect(django_settings.HTTPS_HOST_ + reverse('telegram:me'))
+                    return HttpResponseRedirect(django_settings.HTTPS_HOST_URL_ + reverse('telegram:me'))
                 notification.coder = coder
                 notification.save()
                 request.logger.success(f'{"Updated" if pk else "Created"} notification')
@@ -1962,25 +1962,36 @@ def view_list(request, uuid):
         if not group_id:
             group_id = (coder_list.values.aggregate(val=Max('group_id')).get('val') or 0) + 1
 
-        def add_coder(c):
+        def add_coder(c, log_value=None):
+            log_value = log_value or c.username
             if ListValue.objects.filter(coder_list=coder_list).count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
-                request.logger.warning(f'Limit reached. Coder {c.username} not added')
+                request.logger.warning(f'Limit reached. Coder {log_value} not added')
                 return
             try:
                 ListValue.objects.create(coder_list=coder_list, coder=c, group_id=group_id)
-                request.logger.success(f'Added {c.username} coder to list')
+                request.logger.success(f'Added {log_value} coder to list')
             except IntegrityError:
-                request.logger.warning(f'Coder {c.username} has already been added')
+                request.logger.warning(f'Coder {log_value} has already been added')
 
-        def add_account(a):
+        def add_account(a, log_value=None):
+            log_value = log_value or a.key
             if ListValue.objects.filter(coder_list=coder_list).count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
-                request.logger.warning(f'Limit reached. Account {a.key} not added')
+                request.logger.warning(f'Limit reached. Account {log_value} not added')
                 return
+
+            added = False
             try:
-                ListValue.objects.create(coder_list=coder_list, account=a, group_id=group_id)
-                request.logger.success(f'Added {a.key} account to list')
+                accounts_filter = CoderList.accounts_filter(uuids=[uuid], coder=coder, logger=request.logger)
+                if not Account.objects.filter(accounts_filter, pk=a.pk).exists():
+                    ListValue.objects.create(coder_list=coder_list, account=a, group_id=group_id)
+                    added = True
             except IntegrityError:
-                request.logger.warning(f'Account {a.key} has already been added')
+                pass
+
+            if added:
+                request.logger.success(f'Added {log_value} account to list')
+            else:
+                request.logger.warning(f'Account {log_value} has already been added')
 
         if request_post.get('coder'):
             c = get_object_or_404(Coder, pk=request_post.get('coder'))
@@ -2021,7 +2032,7 @@ def view_list(request, uuid):
                             if len(coders) > 1:
                                 request.logger.warning(f'Too many coders found = "{coders}", value = "{value}"')
                                 continue
-                            add_coder(coders[0])
+                            add_coder(coders[0], log_value=value)
                             n_coders += 1
                         else:
                             host, account = value.split(':', 1)
@@ -2040,15 +2051,16 @@ def view_list(request, uuid):
                             if len(accounts) > 1:
                                 request.logger.warning(f'Too many accounts found = "{accounts}", value = "{value}"')
                                 continue
-                            add_account(accounts[0])
+                            add_account(accounts[0], log_value=value)
                             n_accounts += 1
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error while adding raw to coder list: {e}')
                         request.logger.error(f'Some problem with value = "{value}"')
                 group_id += 1
         return HttpResponseRedirect(request.path)
 
     coder_values = {}
-    for v in coder_list.values.all():
+    for v in coder_list.values.order_by('group_id').all():
         data = coder_values.setdefault(v.group_id, {})
         data.setdefault('list_values', []).append(v)
 

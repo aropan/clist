@@ -46,7 +46,7 @@ class EventFeed(ICalFeed):
     def item_link(self, item):
         if Calendar.EventDescription.URL not in self.calendar.descriptions:
             return item.actual_url
-        return settings.HTTPS_HOST_
+        return settings.HTTPS_HOST_URL_
 
     def item_location(self, item):
         return item.host

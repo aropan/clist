@@ -445,6 +445,8 @@ class CoderList(BaseModel):
             accounts |= set(Account.objects.filter(coders__pk__in=coders).values_list('pk', flat=True))
         if accounts:
             ret |= Q(pk__in=accounts)
+        if not ret:
+            ret = Q(id=0)
         return ret
 
     @staticmethod
@@ -456,6 +458,8 @@ class CoderList(BaseModel):
             coders |= set(Coder.objects.filter(account__pk__in=accounts).values_list('pk', flat=True))
         if coders:
             ret |= Q(pk__in=coders)
+        if not ret:
+            ret = Q(id=0)
         return ret
 
 
@@ -477,6 +481,10 @@ class ListValue(BaseModel):
                 condition=Q(account__isnull=False),
                 name='unique_account',
             ),
+        ]
+
+        indexes = [
+            models.Index(fields=['coder_list', 'group_id']),
         ]
 
 

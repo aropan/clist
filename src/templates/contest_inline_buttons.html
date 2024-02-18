@@ -17,6 +17,6 @@
     <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:logify_eventlog_changelist' %}?q={{ contest.title }}" target="_blank">{% icon_to 'logify' "View logs" %}</button>
     {% endif %}
 
-    <button class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.pk }}">{% icon_to 'copy' contest.pk %}</button>
+    <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.pk }}">{% icon_to 'copy' contest.pk %}</button>
 </span>
 {% endif %}

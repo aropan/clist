@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block ogtitle %}{% block title %}Charts{% endblock %}{% endblock %}
+{% block ogtitle %}{% block title %}{% if source %}{{ source }} - {% endif %}Charts{% endblock %}{% endblock %}
 {% block description %}desc{% endblock %}
 
 {% block end-head %}
@@ -11,18 +11,37 @@
 {% block content %}
 
 <form class="form-inline" id="problems-filter" method="get" action="">
+  {% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}
+
   {% include "field_to_select.html" with field="source" data=source_field_select %}
   {% include "sort_select.html" with data=sort_field_select %}
   {% include "field_to_select.html" with field="x_axis" data=x_field_select %}
+
   {% if chart and chart.range_selection %}
-  {% include "range_filter.html" with name=chart.name value_key="charts" from=chart.x_from to=chart.x_to icon_title="X Range" %}
+  {% include "range_filter.html" with name=chart.name value_key="charts" from=chart.x_from to=chart.x_to icon_title="X Range" range_select=x_range_select %}
   {% include "range_filter_apply.html" %}
   {% endif %}
+
+  {% if x_axis %}
+    {% include "field_to_select.html" with field="y_axis" data=y_field_select %}
+
+    {% if y_axis %}
+      {% include "field_to_select.html" with field="y_agg" data=y_agg_select %}
+      {% if y_agg == "percentile" %}
+      <div class="input-group input-group-sm">
+        <input min="0" max="1" step="0.01" type="number" class="form-control" name="percentile" value="{{ percentile }}" required></input>
+      </div>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
   {% include "field_to_select.html" with field="selection" data=selection_field_select %}
 
   {% for field_select in selection_field_selects %}
     {% include "field_to_select.html" with field=field_select.name data=field_select %}
   {% endfor %}
+
+  {% include "field_to_select.html" with field="field" data=entity_fields_select %}
 </form>
 
 <script>configure_pagination()</script>

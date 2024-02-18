@@ -17,6 +17,8 @@ import traceback
 import urllib.error
 import urllib.parse
 import urllib.request
+import zlib
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from distutils.util import strtobool
 from gzip import GzipFile
@@ -31,6 +33,7 @@ from string import ascii_letters, digits
 from sys import stderr
 from time import sleep
 
+import brotli
 import chardet
 from filelock import FileLock
 
@@ -40,19 +43,28 @@ logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
 logger = logging.getLogger('utils.requester')
 
 
-class FileWithProxiesNotFound(Exception):
+class BaseException(Exception):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def __str__(self):
+        return f'{self.__class__.__name__}: {super().__str__()}'
+
+
+class FileWithProxiesNotFound(BaseException):
     pass
 
 
-class NotFoundProxy(Exception):
+class NotFoundProxy(BaseException):
     pass
 
 
-class ProxyLimitReached(Exception):
+class ProxyLimitReached(BaseException):
     pass
 
 
-class FailOnGetResponse(Exception):
+class FailOnGetResponse(BaseException):
 
     @property
     def code(self):
@@ -66,21 +78,8 @@ class FailOnGetResponse(Exception):
     def response(self):
         if not hasattr(self, 'response_'):
             err = self.args[0]
-            if hasattr(err, 'fp'):
-                if err.info().get('Content-Encoding', None) == 'gzip':
-                    buf = BytesIO(err.read())
-                    self.response_ = GzipFile(fileobj=buf).read()
-                else:
-                    self.response_ = err.read()
-                self.response_ = self.response_.decode()
-            else:
-                self.response_ = None
+            self.response_ = read_response(err).decode() if hasattr(err, 'fp') else None
         return self.response_
-
-    def __str__(self):
-        if not hasattr(self, 'error_'):
-            self.error_ = f'{super().__str__()}'
-        return self.error_
 
 
 def raise_fail(err):
@@ -370,6 +369,26 @@ def encode_multipart(fields=None, files=None, boundary=None):
     return body, headers
 
 
+@contextmanager
+def get_response_buffer(response):
+    content_encoding = response.info().get("Content-Encoding", None)
+    if content_encoding == 'gzip':
+        buf = BytesIO(response.read())
+        with GzipFile(fileobj=buf) as f:
+            yield f
+    elif content_encoding == 'deflate':
+        yield BytesIO(zlib.decompress(response.read(), -zlib.MAX_WBITS))
+    elif content_encoding == 'br':
+        yield BytesIO(brotli.decompress(response.read()))
+    else:
+        yield response
+
+
+def read_response(response):
+    with get_response_buffer(response) as buf:
+        return buf.read()
+
+
 class requester():
     cache_timeout = 10940
     caching = True
@@ -409,7 +428,7 @@ class requester():
         else:
             self.headers = [
                 ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
-                ('Accept-Encoding', 'gzip, deflate'),
+                ('Accept-Encoding', 'gzip, deflate, br'),
                 ('Accept-Language', 'ru-ru,ru;q=0.8,en-us;q=0.5,en;q=0.3'),
                 ('Connection', 'keep-alive'),
                 (
@@ -479,6 +498,7 @@ class requester():
         force_json=False,
         ignore_codes=None,
         n_attempts=None,
+        last_info=True,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -556,13 +576,6 @@ class requester():
                 headers.update(multipart_headers)
             elif content_type:
                 headers.update({"Content-type": content_type})
-
-            def read_response(response):
-                if response.info().get("Content-Encoding", None) == "gzip":
-                    buf = BytesIO(response.read())
-                    return GzipFile(fileobj=buf).read()
-                else:
-                    return response.read()
 
             n_attempts = n_attempts or self.n_attempts
             for attempt in range(n_attempts):
@@ -664,12 +677,14 @@ class requester():
                     except LookupError:
                         pass
 
-        self.last_page = page
-        if is_ref_url:
-            self.ref_url = self.last_url
         self.file_cache_clear()
-        self.response = response
-        self.last_url = last_url
+
+        if last_info:
+            self.last_page = page
+            if is_ref_url:
+                self.ref_url = self.last_url
+            self.response = response
+            self.last_url = last_url
 
         if page and return_json:
             if response_content_type.startswith('application/json') or force_json:

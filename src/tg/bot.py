@@ -509,7 +509,7 @@ class Bot(telegram.Bot):
 
     @property
     def follow_url(self):
-        return settings.HTTPS_HOST_ + reverse('telegram:me')
+        return settings.HTTPS_HOST_URL_ + reverse('telegram:me')
 
     def incoming(self, raw_data):
         try:
@@ -599,7 +599,7 @@ class Bot(telegram.Bot):
         )
 
     def webhook(self):
-        url = settings.HTTPS_HOST_ + reverse('telegram:incoming')
+        url = settings.HTTPS_HOST_URL_ + reverse('telegram:incoming')
         self.logger.info('webhook url = %s' % url)
         return self.setWebhook(url)
 

@@ -60,7 +60,7 @@ class Command(BaseCommand):
             context = deepcopy(data.get('context', {}))
             context.update({
                 'contests': contests,
-                'domain': settings.MAIN_HOST_,
+                'domain': settings.MAIN_HOST_URL_,
             })
             context.update(kwargs)
             subject = render_to_string('subject', context).strip()
@@ -149,7 +149,7 @@ class Command(BaseCommand):
             if len(contests) == 1:
                 contest = contests[0]
                 payload['url'] = contest.url
-                payload['icon'] = f'{settings.HTTPS_HOST_}/media/sizes/64x64/{contest.resource.icon}'
+                payload['icon'] = f'{settings.HTTPS_HOST_URL_}/media/sizes/64x64/{contest.resource.icon}'
 
             try:
                 send_user_notification(

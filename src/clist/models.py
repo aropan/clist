@@ -595,7 +595,7 @@ class Contest(BaseModel):
     @property
     def actual_url(self):
         if self.n_statistics or self.info.get('problems'):
-            return settings.HTTPS_HOST_ + reverse('ranking:standings', args=(slug(self.title), self.pk))
+            return settings.HTTPS_HOST_URL_ + reverse('ranking:standings', args=(slug(self.title), self.pk))
         if self.registration_url and self.is_coming():
             return self.registration_url
         if self.url and self.is_coming():
@@ -690,6 +690,10 @@ class Contest(BaseModel):
     @property
     def channel_update_statistics_group_name(self):
         return f'{self.channel_group_name}__update_statistics'
+
+    def reparse(self):
+        self.info['_reparse_statistics'] = True
+        self.save(update_fields=['info'])
 
 
 class ContestSeries(BaseModel):

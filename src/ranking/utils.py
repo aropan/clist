@@ -6,11 +6,11 @@ import operator
 from collections import defaultdict
 from datetime import timedelta
 
+import tqdm
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django_super_deduper.merge import MergedModelInstance
-from tqdm import tqdm
 
 from ranking.management.modules.common import LOG
 from ranking.models import AccountRenaming, Statistics
@@ -67,7 +67,8 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
     key_counter = defaultdict(int)
     total_counter = 0
     max_counter_key = None
-    for contest_key in tqdm(contest_keys, desc='renaming_check'):
+    queryset_filter = Q()
+    for contest_key in contest_keys:
         addition_update = contest_addition_update[contest_key]
         if '_rank' not in addition_update:
             continue
@@ -75,11 +76,17 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         conditions = (Q(**{f'contest__{field}': contest_key}) for field in fields)
         condition = functools.reduce(operator.__or__, conditions)
         condition &= Q(place=addition_update['_rank'], contest__resource=account.resource)
-        old_account_key = Statistics.objects.filter(condition).values_list('account__key', flat=True).first()
-        if old_account_key:
-            key_counter[old_account_key] += 1
-            if max_counter_key is None or key_counter[max_counter_key] < key_counter[old_account_key]:
-                max_counter_key = old_account_key
+        queryset_filter |= condition
+    if not queryset_filter:
+        return
+    for old_account_key in tqdm.tqdm(
+        Statistics.objects.filter(queryset_filter).values_list('account__key', flat=True).iterator(),
+        total=total_counter,
+        desc='renaming check',
+    ):
+        key_counter[old_account_key] += 1
+        if max_counter_key is None or key_counter[max_counter_key] < key_counter[old_account_key]:
+            max_counter_key = old_account_key
     if max_counter_key is None:
         return
     max_counter_val = key_counter.pop(max_counter_key)
@@ -187,8 +194,8 @@ def account_update_contest_additions(
         if try_renaming_check and renaming_check(account, renaming_contest_keys, fields, contest_addition_update):
             continue
         if contest_keys:
-            out_contests = list(grouped_contest_keys.values()) or contest_keys
-            LOG.warning('Not found %d contests for %s = %s', len(out_contests), account, out_contests)
+            out_contests = list(grouped_contest_keys.values()) or list(contest_keys)
+            LOG.warning('Not found %d contests for %s = %s', len(out_contests), account, out_contests[:5])
         break
 
 

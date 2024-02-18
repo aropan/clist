@@ -64,6 +64,7 @@
                 <li>
                     {% if user.is_authenticated %}
                         {% if user.is_staff %}
+                        <li><a href="{% url 'change_environment' %}" rel="noopener">{% icon_to 'dev' False %}</a></li>
                         <li><a href="{% url 'charts' %}">{% icon_to 'charts' False %}</a></li>
                         <li><a href="{% url 'admin:index' %}"><i class="fas fa-server"></i></a></li>
                         {% endif %}

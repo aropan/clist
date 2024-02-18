@@ -35,7 +35,7 @@ def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
 def query(request, name):
     service = get_object_or_404(Service.objects, name=name)
     args = model_to_dict(service)
-    args['redirect_uri'] = settings.HTTPS_HOST_ + reverse('auth:response', args=(name, ))
+    args['redirect_uri'] = settings.HTTPS_HOST_URL_ + reverse('auth:response', args=(name, ))
     args['state'] = generate_state()
     request.session['state'] = args['state']
     url = re.sub('[\n\r]', '', service.code_uri % args)
@@ -122,7 +122,7 @@ def response(request, name):
         args = model_to_dict(service)
         get_args = list(request.GET.items())
         args.update(dict(get_args))
-        args['redirect_uri'] = settings.HTTPS_HOST_ + reverse('auth:response', args=(name, ))
+        args['redirect_uri'] = settings.HTTPS_HOST_URL_ + reverse('auth:response', args=(name, ))
         if 'code' not in args:
             raise ValueError(f'Not found code. Received {get_args}')
 

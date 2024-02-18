@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import dateutil.parser
 import pytz
 from django.conf import settings
 from django.db import models
-from django.utils.timezone import now
+from django.utils.timezone import now, utc
 from pytimeparse.timeparse import timeparse
 
 from clist.templatetags.extras import get_timezones
@@ -23,6 +23,14 @@ def parse_datetime(value, timezone=None):
     if timezone:
         value += ' ' + timezone
     return dateutil.parser.parse(value)
+
+
+def datetime_from_timestamp(timestamp):
+    return datetime.fromtimestamp(timestamp, tz=utc)
+
+
+def datetime_to_str(dt):
+    return dt.strftime('%Y-%m-%d %H:%M:%S %z')
 
 
 class Epoch(models.expressions.Func):

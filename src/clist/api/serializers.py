@@ -16,7 +16,7 @@ def use_in_atom_format(bundle, *args, **kwargs):
 
 
 def reverse_url(name):
-    return settings.HTTPS_HOST_ + reverse(name)
+    return settings.HTTPS_HOST_URL_ + reverse(name)
 
 
 class ContestAtomSerializer(Serializer):
@@ -57,7 +57,7 @@ class ContestAtomSerializer(Serializer):
                 fe.content(template.render({
                     'contest': contest,
                     'resource': resource,
-                    'host': settings.HTTPS_HOST_
+                    'host': settings.HTTPS_HOST_URL_
                 }))
         else:
             fg.description(json.dumps(data))

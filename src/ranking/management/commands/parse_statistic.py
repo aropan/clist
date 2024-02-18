@@ -9,6 +9,7 @@ from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
 from functools import lru_cache
 from html import unescape
+from math import isclose
 from random import shuffle
 
 import arrow
@@ -32,7 +33,7 @@ from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
 from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.parse_accounts_infos import rename_account
-from ranking.management.modules.common import REQ
+from ranking.management.modules.common import REQ, ProxyLimitReached
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from ranking.utils import account_update_contest_additions
@@ -255,7 +256,7 @@ class Command(BaseCommand):
                     contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
                 else:
                     contests = contests.filter(Q(statistic_timing=None) | Q(statistic_timing__lt=now))
-                    started = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
+                    parsed_contests = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
 
                     before_end_limit_query = (
                         Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
@@ -279,9 +280,9 @@ class Command(BaseCommand):
                     after_start_query = after_start_limit_query | after_start_divider_query | long_contest_query
 
                     query = before_end_limit_query & after_start_query
-                    ended = contests.filter(query)
+                    in_range_contests = contests.filter(query)
 
-                    contests = Contest.objects.filter(Q(pk__in=started) | Q(pk__in=ended))
+                    contests = Contest.objects.filter(Q(pk__in=parsed_contests) | Q(pk__in=in_range_contests))
                     contests = contests.filter(stage__isnull=True)
                 contests = contests.filter(resource__module__enable=True)
             else:
@@ -336,6 +337,7 @@ class Command(BaseCommand):
         else:
             resource_event_log = None
 
+        processed_group = set()
         for contest in progress_bar:
             if stop_on_error and has_error:
                 break
@@ -355,6 +357,12 @@ class Command(BaseCommand):
                 self.logger.warning(f'Skip parse statistic contest = {contest} because'
                                     f' run without stats and resource has upsolving')
                 continue
+
+            group = contest.info.pop('__parse_statistics_group', None)
+            if group and group in processed_group:
+                self.logger.info(f'Skip contest = {contest} because already processed group = {group}')
+                continue
+            processed_group.add(group)
 
             self.logger.info(f'Contest = {contest}')
             progress_bar.set_description(f'contest = {contest}')
@@ -403,12 +411,14 @@ class Command(BaseCommand):
                             statistics = Statistics.objects.filter(contest=contest).select_related('account')
                             if users:
                                 statistics = statistics.filter(account__key__in=users)
-                            for s in statistics:
+                            for s in statistics.iterator():
                                 if with_stats:
                                     statistics_by_key[s.account.key] = s.addition or {}
                                     more_statistics_by_key[s.account.key] = {
+                                        'pk': s.pk,
                                         'place': s.place,
                                         'score': s.solving,
+                                        '_no_update_n_contests': s.skip_in_stats,
                                     }
                                     has_statistics = True
                                 statistics_ids.add(s.pk)
@@ -418,14 +428,28 @@ class Command(BaseCommand):
                         if resource.has_upsolving:
                             result = standings.setdefault('result', {})
                             for member, row in statistics_by_key.items():
-                                if member not in result:
+                                result_row = result.get(member)
+                                stat = more_statistics_by_key[member]
+                                if result_row is None:
                                     has_problem_result = any('result' in p for p in row.get('problems', {}).values())
                                     if has_problem_result:
+                                        continue
+                                    if row.get('_no_update_n_contests') and stat['_no_update_n_contests']:
+                                        statistics_ids.remove(stat['pk'])
                                         continue
                                     row = copy.deepcopy(row)
                                     row['member'] = member
                                     row['_no_update_n_contests'] = True
                                     result[member] = row
+                                elif (
+                                    result_row.get('_no_update_n_contests') and
+                                    canonize(result_row.get('problems')) == canonize(row.get('problems')) and
+                                    ('solving' not in result_row or isclose(result_row['solving'], stat['score'])) and
+                                    ('place' not in result_row or str(result_row['place']) == str(stat['place']))
+                                ):
+                                    if row.get('_no_update_n_contests') and stat['_no_update_n_contests']:
+                                        statistics_ids.remove(stat['pk'])
+                                        result.pop(member)
 
                         for key, more_stat in more_statistics_by_key.items():
                             statistics_by_key[key].update(more_stat)
@@ -1363,7 +1387,7 @@ class Command(BaseCommand):
                 if has_standings_result:
                     count += 1
                 parsed = True
-            except (ExceptionParseStandings, InitModuleException) as e:
+            except (ExceptionParseStandings, InitModuleException, ProxyLimitReached) as e:
                 exception_error = str(e)
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:

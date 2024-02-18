@@ -1371,3 +1371,8 @@ def get_admin_url(obj):
         return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(obj.pk,))
     except NoReverseMatch:
         return
+
+
+@register.simple_tag
+def stat_has_failed_verdict(stat, small):
+    return small and not is_solved(stat) and stat.get('verdict') and not stat.get('binary') and not stat.get('icon')

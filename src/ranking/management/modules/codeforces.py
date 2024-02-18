@@ -17,7 +17,7 @@ import pytz
 
 from clist.templatetags.extras import as_number, is_solved
 from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table, utc_now
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.utils import create_upsolving_statistic
 from utils.aes import AESModeOfOperation
@@ -69,9 +69,8 @@ def api_query(
 
     for attempt in reversed(range(5)):
         try:
-            page = REQ.get(url, md5_file_cache=md5_file_cache)
+            ret = REQ.get(url, md5_file_cache=md5_file_cache, return_json=True, last_info=True)
             times[-1] = time()
-            ret = json.loads(page)
         except FailOnGetResponse as e:
             if e.code == 503 and attempt:
                 sleep(1)
@@ -264,6 +263,7 @@ class Statistic(BaseModule):
         return info
 
     def get_standings(self, users=None, statistics=None):
+        now = utc_now()
 
         def parse_points_info(points_info):
             if not points_info:
@@ -280,6 +280,9 @@ class Statistic(BaseModule):
         is_gym = '/gym/' in self.url
         if is_gym:
             participant_types.add('VIRTUAL')
+
+        limited = self.end_time + timedelta(days=100) < now
+        limited_count = 100000
 
         result = {}
 
@@ -298,6 +301,8 @@ class Statistic(BaseModule):
             }
             if users:
                 params['handles'] = ';'.join(users)
+            if limited:
+                params['count'] = limited_count
 
             data = api_query(method='contest.standings', params=params, api_key=self.api_key)
 
@@ -390,7 +395,10 @@ class Statistic(BaseModule):
                     hack = row['successfulHackCount']
                     unhack = row['unsuccessfulHackCount']
 
-                    problems = r.setdefault('problems', {})
+                    problems = {}
+                    if limited and handle in statistics:
+                        problems = deepcopy(statistics[handle].get('problems', {}))
+                    problems = r.setdefault('problems', problems)
                     for i, s in enumerate(row['problemResults']):
                         k = result_problems[i]['index']
                         points = float(s['points'])
@@ -477,6 +485,7 @@ class Statistic(BaseModule):
                         }
 
         params.pop('showUnofficial')
+        params.pop('count', None)
 
         if not users:
             data = api_query(method='contest.ratingChanges', params=params, api_key=self.api_key)
@@ -508,6 +517,9 @@ class Statistic(BaseModule):
             for user in users:
                 params['handle'] = user
                 array_params.append(deepcopy(params))
+        elif limited:
+            params['count'] = limited_count
+            array_params = [params]
         else:
             array_params = [params]
 
@@ -517,7 +529,7 @@ class Statistic(BaseModule):
             if data.get('status') not in ['OK', 'FAILED']:
                 raise ExceptionParseStandings(data)
             if data['status'] == 'OK':
-                submissions.extend(data['result'])
+                submissions.extend(data.pop('result'))
 
         has_accepted = False
         for submission in submissions:
@@ -594,7 +606,6 @@ class Statistic(BaseModule):
             standings['options'].setdefault('timeline', {}).update({'attempt_penalty': 10 * 60,
                                                                     'challenge_score': False})
 
-        now = datetime.utcnow().replace(tzinfo=pytz.utc)
         if (
             phase != 'FINISHED' and self.end_time + timedelta(hours=3) > now or
             abs(self.end_time - now) < timedelta(minutes=15)
@@ -613,18 +624,14 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
         assert resource is None or 'gym' not in resource.host
 
-        handles = ';'.join(users)
-
         len_limit = 2000
-        if len(handles) > len_limit:
-            total_len = 0
-            for i in range(len(users)):
-                total_len += len(users[i])
-                if total_len > len_limit:
-                    return (
-                        Statistic.get_users_infos(users[:i], pbar=pbar) +
-                        Statistic.get_users_infos(users[i:], pbar=pbar)
-                    )
+        total_len = 0
+        for i in range(len(users)):
+            total_len += len(users[i])
+            if total_len > len_limit:
+                yield from Statistic.get_users_infos(users[:i], pbar=pbar)
+                yield from Statistic.get_users_infos(users[i:], pbar=pbar)
+                return
 
         removed = []
         last_index = 0
@@ -633,9 +640,14 @@ class Statistic(BaseModule):
             handles = ';'.join(users)
             data = api_query(method='user.info', params={'handles': handles})
             if data['status'] == 'OK':
+                for index in range(len(users)):
+                    users[index] = data['result'][index]['handle']
                 break
-            if data['status'] == 'FAILED' and data['comment'].startswith('handles: User with handle'):
-                handle = data['comment'].split()[-3]
+            if (
+                data['status'] == 'FAILED'
+                and (match := re.search('handles: User with handle (?P<handle>.*) not found', data['comment']))
+            ):
+                handle = match.group('handle')
                 location = REQ.geturl(f'https://codeforces.com/profile/{handle}')
                 index = users.index(handle)
                 if urlparse(location).path.rstrip('/'):
@@ -660,7 +672,6 @@ class Statistic(BaseModule):
             infos.insert(index, None)
             users.insert(index, user)
 
-        ret = []
         assert len(infos) == len(users)
         for data, user, orig in zip(infos, users, orig_users):
             if data:
@@ -671,10 +682,10 @@ class Statistic(BaseModule):
                 if data.get('titlePhoto', '').endswith('/no-title.jpg'):
                     data.pop('titlePhoto')
                 data['name'] = ' '.join([data[f] for f in ['firstName', 'lastName'] if data.get(f)])
-            ret.append({'info': data})
+            info = {'info': data}
             if data and data['handle'] != orig:
-                ret[-1]['rename'] = data['handle']
-        return ret
+                info['rename'] = data['handle']
+            yield info
 
     @staticmethod
     def get_source_code(contest, problem):

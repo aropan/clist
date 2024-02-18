@@ -564,9 +564,10 @@ FAVORITE_SETTINGS_ = {
     'problems': True,
 }
 DEFAULT_TIME_ZONE_ = 'UTC'
+CHANING_HOSTS_ = ['clist.by', 'dev.clist.by']
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
-HTTPS_HOST_ = 'https://' + HOST_
-MAIN_HOST_ = 'https://clist.by'
+HTTPS_HOST_URL_ = 'https://' + HOST_
+MAIN_HOST_URL_ = 'https://clist.by'
 CLIST_RESOURCE_DICT_ = {
     'host': HOST_,
     'pk': 0,
@@ -717,7 +718,7 @@ FONTAWESOME_ICONS_ = {
     'stage': '<i class="fa-regular fa-object-group"></i>',
     'full_table': {'icon': '<i class="fa-solid fa-up-down"></i>', 'title': 'Load full table'},
     'charts': '<i class="fa-solid fa-chart-line"></i>',
-
+    'dev': '<i class="fa-regular fa-clone"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

@@ -8,7 +8,7 @@ from django.urls import path, re_path
 from django.views.generic import RedirectView, TemplateView
 
 from pyclist.sitemaps import sitemaps
-from pyclist.views import charts
+from pyclist.views import change_environment, charts
 
 admin.autodiscover()
 
@@ -22,6 +22,7 @@ urlpatterns = [
     re_path(r'', include('notification.urls')),
 
     re_path(r'charts/', charts, name='charts'),
+    re_path(r'change-environment/', change_environment, name='change_environment'),
 
     re_path(r'^telegram/', include('tg.urls')),
 

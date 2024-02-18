@@ -77,6 +77,8 @@
     $_contests = array();
     $external_parsed = false;
 
+    $parse_full_list = false;  // isset($_GET['parse_full_list']);
+
     for ($shift = 0; $shift < 2; ++$shift) {
         $year = date('Y') + $shift;
         $url = 'https://tco' . ($year % 100) . '.topcoder.com/schedule';
@@ -223,6 +225,22 @@
                     continue;
                 }
 
+                if (preg_match('#NASA.TopCoder.*[0-9]{4}$#i', strtolower($title))) {
+                    // merge to one contest
+                    continue;
+                }
+
+                if (preg_match('#^USPTO [0-9]{4}$#i', strtolower($title))) {
+                    // merge to one contest
+                    continue;
+                }
+
+                if (preg_match('#^(NASA Robots Challenge|NASA Robots Test Contest)#i', strtolower($title))) {
+                    // merge to one contest
+                    continue;
+                }
+
+
                 $key = get_algorithm_key($title);
                 if (!$key || strpos($key, 'SRM') !== false) {
                     $key = "challenge=" . $c['id'];
@@ -239,7 +257,7 @@
             if (!count($data) || $stop) {
                 break;
             }
-            if (!isset($_GET['parse_full_list']) && $params['status'] == 'Completed') {
+            if (!$parse_full_list && $params['status'] == 'Completed') {
                 break;
             }
         }
@@ -267,7 +285,7 @@
     unset($_);
 
     if ($external_parsed) {
-        $add_from_stats = isset($_GET['parse_full_list']);
+        $add_from_stats = $parse_full_list;
         $iou_treshhold = 0.61803398875;
 
         $round_overview = array();

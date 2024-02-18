@@ -35,7 +35,14 @@ class Statistic(BaseModule):
         while True:
             attempt += 1
             try:
-                page = REQ.get(url)
+                if 'AJAX' in url:
+                    headers = {'x-requested-with': 'XMLHttpRequest'}
+                    csrftoken = REQ.get_cookie('csrftoken')
+                    if csrftoken:
+                        headers['x-csrftoken'] = csrftoken
+                else:
+                    headers = None
+                page = REQ.get(url, headers=headers)
                 if 'id="id_login"' in page and 'id="id_password"' in page:
                     with lock:
                         if not Statistic.LOGGED_IN:
@@ -49,12 +56,6 @@ class Statistic(BaseModule):
                                 limit=0,
                             )
                             Statistic.LOGGED_IN = True
-                if 'AJAX' in url:
-                    headers = {'x-requested-with': 'XMLHttpRequest'}
-                    csrftoken = REQ.get_cookie('csrftoken')
-                    if csrftoken:
-                        headers['x-csrftoken'] = csrftoken
-                    page = REQ.get(url, headers=headers)
                 return page
             except FailOnGetResponse as e:
                 if attempt == 15 or getattr(e.args[0], 'code', None) != 500:
@@ -182,6 +183,8 @@ class Statistic(BaseModule):
             with PoolExecutor(max_workers=8) as executor:
                 for r in executor.map(fetch_members, rows):
                     members = r.pop('members')
+                    if 'team_id' in r:
+                        r['_members'] = [{'account': m} for m in members]
                     for member in members:
                         if users and member not in users:
                             continue
@@ -193,7 +196,6 @@ class Statistic(BaseModule):
                                 if k in stat and k not in row:
                                     row[k] = stat[k]
                         results[member] = row
-
             return page, problems_info
 
         if fixed_rank is not None:

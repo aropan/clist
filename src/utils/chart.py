@@ -1,10 +1,12 @@
 import re
 from datetime import datetime
+from functools import partial
 
-from django.db.models import Case, F, FloatField, IntegerField, Q, Value, When
+from django.db.models import Avg, Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.fields.related import RelatedField
 from django.db.models.functions import Cast
 from django_pivot.histogram import get_column_values, histogram
+from tailslide import Percentile
 
 from clist.templatetags.extras import title_field
 from utils.json_field import JSONF
@@ -139,12 +141,12 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
         slice_on = 'resource__host'
     elif groupby == 'country':
         slice_on = 'country'
-    else:
+    elif groupby:
         slice_on = groupby
 
     if slice_on:
-        values = get_column_values(qs, slice_on, choices='minimum')
-        fields = [str(f) for f, v in values]
+        field_values = get_column_values(qs, slice_on, choices='minimum')
+        fields = [str(f) for f, v in field_values]
         if context['type'] != 'line':
             n_bins = max(2 * n_bins // len(fields) + 1, 4)
         context['fields'] = fields
@@ -184,9 +186,28 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
         ]
         qs = qs.annotate(k=Case(*whens, output_field=IntegerField()))
         qs = qs.order_by('k').values('k')
-        for field, aggregate in aggregations.items():
-            result = qs.annotate(**{field: aggregate})
+        for field, aggregation in aggregations.items():
+            if isinstance(aggregation, dict):
+                op = {
+                    'sum': Sum, 'avg': Avg, 'min': Min, 'max': Max, 'count': Count,
+                    'percentile': partial(Percentile, percentile=aggregation['percentile']),
+                }
+                aggregate_func = op[aggregation['op']]
+                aggregate_field = aggregate_func(field)
+            else:
+                aggregate_field = aggregation
+
+            if slice_on:
+                histogram_annotation = {
+                    display_value: aggregate_func(Case(When(Q(**{slice_on: field_value}), then=F(field))))
+                    for field_value, display_value in field_values
+                }
+            else:
+                histogram_annotation = {field: aggregate_field}
+            result = qs.annotate(**histogram_annotation)
+
             for record in result:
-                context['data'][record['k']][field] = record[field]
+                k = record.pop('k')
+                context['data'][k].update(record)
 
     return context

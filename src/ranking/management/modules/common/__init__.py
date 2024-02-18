@@ -7,8 +7,9 @@ import os
 import urllib.parse
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
-from datetime import timedelta
+from datetime import datetime, timedelta
 
+import pytz
 from lazy_load import lz
 
 from utils import parsed_table  # noqa
@@ -148,6 +149,10 @@ def save_proxy(req, filepath):
     if req.proxer.proxy:
         with open(filepath, 'w') as fo:
             json.dump(req.proxer.proxy, fo, indent=2)
+
+
+def utc_now():
+    return datetime.utcnow().replace(tzinfo=pytz.utc)
 
 
 def main():

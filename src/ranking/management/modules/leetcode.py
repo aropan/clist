@@ -11,7 +11,6 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import datetime, timedelta
 from functools import lru_cache, partial
-from pprint import pprint
 from urllib.parse import urljoin
 
 import pytz
@@ -23,6 +22,7 @@ from ratelimiter import RateLimiter
 from clist.templatetags.extras import get_item, is_improved_solution
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
+from utils.datetime import datetime_from_timestamp
 from utils.logger import suppress_db_logging_context
 
 # from ranking.management.modules import conf
@@ -377,32 +377,71 @@ class Statistic(BaseModule):
                             ret = {}
 
                             post = '''
-                            {"operationName":"userPublicProfile","variables":{"userSlug":"''' + handle + '''"},"query":"
-                            query userPublicProfile($userSlug: String!) {
-                                userProfilePublicProfile(userSlug: $userSlug) {
-                                    username
+                            {"operationName":"userProfilePublicProfile","variables":{"userSlug":"''' + handle + '''"},"query":"
+                                query userProfilePublicProfile($userSlug: String!) {
+                                  userProfilePublicProfile(userSlug: $userSlug) {
+                                    haveFollowed
+                                    siteRanking
                                     profile {
-                                        userSlug
-                                        realName
-                                        contestCount
-                                        userAvatar
-                                        aboutMe
-                                        birthday
-                                        ranking {
-                                            currentLocalRanking
-                                            currentGlobalRanking
-                                            currentRating
-                                            totalLocalUsers
-                                            totalGlobalUsers
+                                      userSlug
+                                      realName
+                                      aboutMe
+                                      asciiCode
+                                      userAvatar
+                                      gender
+                                      websites
+                                      skillTags
+                                      ipRegion
+                                      birthday
+                                      location
+                                      useDefaultAvatar
+                                      github
+                                      school: schoolV2 {
+                                        schoolId
+                                        logo
+                                        name
+                                      }
+                                      company: companyV2 {
+                                        id
+                                        logo
+                                        name
+                                      }
+                                      job
+                                      globalLocation {
+                                        country
+                                        province
+                                        city
+                                        overseasCity
+                                      }
+                                      socialAccounts {
+                                        provider
+                                        profileUrl
+                                      }
+                                      skillSet {
+                                        langLevels {
+                                          langName
+                                          langVerboseName
+                                          level
                                         }
+                                        topicAreaScores {
+                                          score
+                                          topicArea {
+                                            name
+                                            slug
+                                          }
+                                        }
+                                      }
                                     }
+                                    educationRecordList {
+                                      unverifiedOrganizationName
+                                    }
+                                    occupationRecordList {
+                                      unverifiedOrganizationName
+                                      jobTitle
+                                    }
+                                  }
                                 }
-
-                                userContestRanking(userSlug: $userSlug) {
-                                    ratingHistory
-                                    contestHistory
-                                }
-                            }"}'''  # noqa: E501
+                            "}'''  # noqa: E501
                             post = re.sub(r'\s+', ' ', post)
 
                             page = Statistic._get(
@@ -417,13 +456,43 @@ class Statistic(BaseModule):
                                 page = None
                                 break
 
-                            ret['profile'] = profile_data['data']
-                            ranking = ret['profile'].pop('userContestRanking', None) or {}
+                            ret = profile_data['data']['userProfilePublicProfile']
+                            ret['profile']['slug'] = ret['profile'].pop('userSlug')
 
-                            ret['history'] = {
-                                'titles': [h['title_slug'] for h in json.loads(ranking.get('contestHistory', '{}'))],
-                                'ratings': json.loads(ranking.get('ratingHistory', '{}')),
-                            }
+                            post = '''
+                            {"operationName":"userContestRankingInfo","variables":{"userSlug":"''' + handle + '''"},"query":"
+                                query userContestRankingInfo($userSlug: String!) {
+                                  userContestRanking(userSlug: $userSlug) {
+                                    attendedContestsCount
+                                    rating
+                                    globalRanking
+                                    localRanking
+                                    globalTotalParticipants
+                                    localTotalParticipants
+                                    topPercentage
+                                  }
+                                  userContestRankingHistory(userSlug: $userSlug) {
+                                    attended
+                                    rating
+                                    ranking
+                                    contest {
+                                      title
+                                      startTime
+                                    }
+                                  }
+                                }
+                            "}'''  # noqa: E501
+                            post = re.sub(r'\s+', ' ', post)
+                            page = Statistic._get(
+                                'https://leetcode.cn/graphql/noj-go/',
+                                post=post.encode(),
+                                content_type='application/json',
+                                # req=req,  FIXME: enable proxy if needed
+                                **kwargs,
+                            )
+                            ranking_data = json.loads(page)
+                            ret['ranking'] = ranking_data['data']['userContestRanking']
+                            ret['history'] = ranking_data['data']['userContestRankingHistory']
                             page = ret
                         else:
                             profile_page = Statistic._get(
@@ -441,19 +510,19 @@ class Statistic(BaseModule):
                             if user_does_not_exist:
                                 page = None
                                 break
-                            profile_data = profile_data['data']['matchedUser']
+                            ret = profile_data['data']['matchedUser']
+                            ret['profile']['slug'] = ret.pop('username')
 
                             contest_page = Statistic._get(
                                 'https://leetcode.com/graphql',
                                 post=b'''
-                                {"operationName":"getContentRankingData","variables":{"username":"''' + handle.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    __typename  }}"}''',  # noqa: E501
+                                {"operationName":"getContentRankingData","variables":{"username":"''' + handle.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    attended    __typename  }}"}''',  # noqa: E501
                                 content_type='application/json',
                             )
                             contest_data = json.loads(contest_page)['data']
-
-                            page = profile_data
-                            page.update(contest_data)
-                            page['slug'] = handle
+                            ret['ranking'] = contest_data['userContestRanking']
+                            ret['history'] = contest_data['userContestRankingHistory']
+                            page = ret
                     break
                 except FailOnGetResponse as e:
                     code = e.code
@@ -636,74 +705,40 @@ class Statistic(BaseModule):
                         yield {'skip': True}
                     continue
 
-                info = {}
                 contest_addition_update_by = None
-                ratings, rankings, titles = [], [], []
-                if Statistic.is_china(account) or isinstance(page, dict) and 'contests' in page:
-                    info = page.pop('profile')['userProfilePublicProfile']
-                    if info is None:
-                        yield {'delete': True}
+                ratings, rankings, contest_keys = [], [], []
+
+                info = page.pop('profile')
+                if info is None:
+                    yield {'delete': True}
+                    continue
+                history = page.pop('history') or []
+                info.update(page.pop('ranking') or {})
+
+                contest_addition_update_by = 'start_time'
+                for h in history:
+                    if not h['attended']:
                         continue
-                    contest_addition_update_by = 'key'
-                    info.update(info.pop('profile', {}) or {})
-                    info.update(info.pop('ranking', {}) or {})
-                    info.update(page.pop('history', {}) or {})
-                    info['slug'] = info.pop('userSlug')
-
-                    if 'titles' in info:
-                        titles = info.pop('titles')
-                    else:
-                        contests = [c['titleSlug'] for c in page['contests']['allContests']]
-                        titles = list(reversed(contests))
-
-                    if 'rankings' in info:
-                        rankings = info.pop('rankings')
-                    elif 'ranking' in info:
-                        rankings = yaml.safe_load(info.pop('ranking'))
-
-                    if 'ratings' in info:
-                        ratings = info.pop('ratings')
-                    else:
-                        ratings = info.pop('ratingProgress', []) or []
-
-                    if 'currentRating' in info:
-                        info['rating'] = int(info['currentRating'])
-                else:
-                    if page['userContestRankingHistory'] is None:
-                        yield {'delete': True}
-                        continue
-                    info.update(page.pop('profile', {}) or {})
-                    contest_addition_update_by = 'title'
-                    for history in page['userContestRankingHistory']:
-                        ratings.append(history['rating'])
-                        rankings.append(history['ranking'])
-                        titles.append(history['contest']['title'])
-                    global_ranking = (page.get('userContestRanking') or {}).get('globalRanking')
-                    if global_ranking is not None:
-                        info['global_ranking'] = global_ranking
-                    info['slug'] = page['slug']
+                    rankings.append(h['ranking'])
+                    ratings.append(h['rating'])
+                    start_time = h['contest']['startTime']
+                    start_time = datetime_from_timestamp(start_time)
+                    contest_keys.append(start_time)
 
                 for k in ('profile_url', ):
                     if k in account.info:
                         info[k] = account.info[k]
 
-                if not rankings:
-                    rankings = [-1] * len(ratings)
-
                 contest_addition_update = {}
-                prev_rating = None
                 last_rating = None
-                if ratings and titles:
-                    for rating, ranking, title in zip(ratings, rankings, titles):
-                        if ranking > 0 or prev_rating != rating and (prev_rating is not None or rating != 1500):
-                            int_rating = round(rating)
-                            update = contest_addition_update.setdefault(title, OrderedDict())
-                            update['rating_change'] = int_rating - last_rating if last_rating is not None else None
-                            update['new_rating'] = int_rating
-                            update['raw_rating'] = rating
-                            update['_rank'] = ranking
-                            last_rating = int_rating
-                        prev_rating = rating
+                for rating, ranking, contest_key in zip(ratings, rankings, contest_keys):
+                    int_rating = round(rating)
+                    update = contest_addition_update.setdefault(contest_key, OrderedDict())
+                    update['rating_change'] = int_rating - last_rating if last_rating is not None else None
+                    update['new_rating'] = int_rating
+                    update['raw_rating'] = rating
+                    update['_rank'] = ranking
+                    last_rating = int_rating
                 if last_rating and 'rating' not in info:
                     info['rating'] = last_rating
                 if account.key.startswith('@_deleted_user_'):
@@ -711,8 +746,8 @@ class Statistic(BaseModule):
 
                 if 'global_ranking' in info:
                     global_ranking = int(re.split('[^0-9]', str(info['global_ranking']))[0])
-                elif 'currentGlobalRanking' in info:
-                    global_ranking = info['currentGlobalRanking']
+                elif 'globalRanking' in info:
+                    global_ranking = info['globalRanking']
                 else:
                     global_ranking = None
                 if global_ranking:
@@ -744,7 +779,7 @@ class Statistic(BaseModule):
         info = deepcopy(account.info.setdefault('submissions_', {}))
         leetcode_session = account.info.get('variables_', {}).get('LEETCODE_SESSION', None)
         if leetcode_session:
-            leetcode_session_hash = hashlib.md5(leetcode_session.encode()).hexdigest()
+            leetcode_session_hash = hashlib.md5(leetcode_session['value'].encode()).hexdigest()
             if info.get('leetcode_session_hash') != leetcode_session_hash:
                 info['leetcode_session_hash'] = leetcode_session_hash
                 info.pop('submission_id', None)
@@ -800,7 +835,10 @@ class Statistic(BaseModule):
                 if 'question' in submission:
                     submission.update(submission.pop('question'))
                 submission_time = int(get_field('timestamp', 'submitTime'))
-                submission_id = int(get_field('id', 'submissionId'))
+                submission_id = get_field('id', 'submissionId')
+                if submission_id is None:
+                    continue
+                submission_id = int(submission_id)
                 status_display = get_field('status', raise_not_found=status_raise_not_found)
                 is_accepted = status_display in {None, 10}
 
@@ -877,11 +915,11 @@ class Statistic(BaseModule):
         submissions = recent_accepted_submissions()
         process_submission(submissions, with_last_submission=False, status_raise_not_found=False)
 
-        if leetcode_session:
+        if leetcode_session and not leetcode_session.get('disabled'):
             req = copy.copy(REQ)
             req.cookie_filename = None
             req.init_opener()
-            req.add_cookie('LEETCODE_SESSION', leetcode_session, domain='.leetcode.com')
+            req.add_cookie('LEETCODE_SESSION', leetcode_session['value'], domain='.leetcode.com')
             offset = info.pop('offset', 0)
             limit = 20
             info.pop('error', None)
@@ -890,6 +928,9 @@ class Statistic(BaseModule):
                 try:
                     submissions_page = req.get(url, n_attempts=5)
                 except FailOnGetResponse as e:
+                    if e.code == 401:
+                        leetcode_session['disabled'] = True
+                        save_account = True
                     info['error'] = str(e)
                     info['offset'] = offset
                     info['submission_id'] = last_submission_id
@@ -905,14 +946,3 @@ class Statistic(BaseModule):
             account.info['submissions_'] = info
             account.save(update_fields=['info', 'last_submission'])
         return ret
-
-
-if __name__ == "__main__":
-    statictic = Statistic(
-        name='Biweekly Contest 18',
-        url='https://leetcode.com/contest/biweekly-contest-18/',
-        key='biweekly-contest-18',
-        start_time=datetime.now(),
-        standings_url=None,
-    )
-    pprint(next(iter(statictic.get_standings()['result'].values())))

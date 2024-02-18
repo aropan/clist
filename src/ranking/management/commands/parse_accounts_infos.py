@@ -96,7 +96,7 @@ class Command(BaseCommand):
                         condition |= Q(key=query) | Q(name=query)
                     accounts = accounts.filter(condition)
                 elif not args.force:
-                    condition = Q(updated__isnull=True) | Q(updated__lte=now)
+                    condition = Q(updated__isnull=False, updated__lte=now)
                     if resource_info.get('force_on_new_year') or args.update_new_year:
                         days = abs(now - now.replace(month=1, day=1)).days
                         days = min(364 - days, days)
