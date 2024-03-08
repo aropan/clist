@@ -51,7 +51,8 @@ class Statistic(BaseModule):
                     user = r.pop('user')
                 elif 'course_user_mapping' in r:
                     user = r.pop('course_user_mapping').pop('user')
-                row['member'] = user.pop('username')
+                member = user.pop('username')
+                row['member'] = member
                 row['name'] = user.pop('first_name') + ' ' + user.pop('last_name')
                 row['penalty'] = r.pop('penalty')
                 row['solving'] = r.pop('all_test_cases_passed_question_count')
@@ -89,7 +90,14 @@ class Statistic(BaseModule):
                         problem['time'] = self.to_time(time, 2)
                 if not problems:
                     continue
-                results[row['member']] = row
+
+                if statistics and member in statistics:
+                    stat = statistics[member]
+                    for k in ('rating_change', 'new_rating', '_rank'):
+                        if k in stat:
+                            row[k] = stat[k]
+
+                results[member] = row
 
             return data
 
@@ -137,6 +145,7 @@ class Statistic(BaseModule):
                 rating = ratings.setdefault(key, collections.OrderedDict())
                 rating['rating_change'] = stat['rating_delta']
                 rating['new_rating'] = stat['rating']
+                rating['_rank'] = stat['rank']
 
             return user, info, ratings
 

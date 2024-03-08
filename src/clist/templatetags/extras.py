@@ -389,7 +389,7 @@ def add_prefix_to_problem_short(problem, prefix):
 
 @register.filter
 def get_problem_header(problem):
-    if '_header' in problem:
+    if isinstance(problem, dict) and '_header' in problem:
         return problem[problem['_header']]
     for k in ['short', 'name', 'code']:
         has, value = get_problem_field(problem, k)
@@ -1118,11 +1118,13 @@ def filter_by_resource(coders, resource):
 
 
 @register.simple_tag
-def trim_to(value, length):
-    if not length or len(value) - 3 < length:
+def trim_to(value, length, raw_text=False):
+    if not length or len(value) - 1 < length:
         return value
     half = length // 2
-    trimmed_value = value[:half].strip() + '...' + value[-half:].strip()
+    trimmed_value = value[:half].strip() + '…' + value[-half:].strip()
+    if raw_text:
+        return trimmed_value
     ret = f'<span title="{html.escape(value)}" data-toggle="tooltip">{html.escape(trimmed_value)}</span>'
     return mark_safe(ret)
 

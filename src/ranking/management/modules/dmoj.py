@@ -223,31 +223,3 @@ class Statistic(BaseModule):
                 yield info
 
 
-if __name__ == "__main__":
-    statictic = Statistic(
-        name='42',
-        url='https://dmoj.ca/contest/dmopc18c2/',
-        key='dmopc18c2',
-    )
-    pprint(statictic.get_result('ayyyyyyyyyyyyyLMAO'))
-
-    statictic = Statistic(
-        name="Mock CCO '19 Contest 2, Day 1",
-        url='http://www.dmoj.ca/contest/mcco19c2d1',
-        key='mcco19c2d1',
-    )
-    pprint(statictic.get_result('GSmerch', 'georgehtliu'))
-
-    statictic = Statistic(
-        name='Deadly Serious Contest Day 1',
-        url='http://www.dmoj.ca/contest/dsc19d1',
-        key='dsc19d1',
-    )
-    pprint(statictic.get_result('scanhex', 'wleung_bvg'))
-
-    statictic = Statistic(
-        name="Mock CCO '19 Contest 2, Day 1",
-        url='https://dmoj.ca/contest/tle16',
-        key='tle16',
-    )
-    pprint(statictic.get_standings())

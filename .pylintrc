@@ -1,0 +1,11 @@
+[FORMAT]
+max-line-length=120
+
+[MASTER]
+load-plugins=pylint_django
+django-settings-module=pyclist.settings
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    logging-fstring-interpolation

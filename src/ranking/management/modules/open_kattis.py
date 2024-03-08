@@ -12,6 +12,7 @@ from ratelimiter import RateLimiter
 from tqdm import tqdm
 
 from clist.templatetags.extras import as_number
+from clist.models import Contest
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
 
@@ -57,6 +58,7 @@ class Statistic(BaseModule):
         table = parsed_table.ParsedTable(html_table)
 
         rows = []
+        standings_kind = Contest.STANDINGS_KINDS['icpc']
         for r in table:
             row = {}
             problems = row.setdefault('problems', {})
@@ -86,38 +88,49 @@ class Statistic(BaseModule):
             row['name'] = team.value
 
             if 'Slv.' in r:
-                row['solving'] = int(r.pop('Slv.').value)
+                row['solving'] = as_number(r.pop('Slv.').value, force=True)
             elif 'Score' in r:
-                row['solving'] = int(r.pop('Score').value)
+                row['solving'] = as_number(r.pop('Score').value, force=True)
 
             if 'Time' in r:
                 row['penalty'] = int(r.pop('Time').value)
 
             for k, v in r.items():
+                k, *other = k.split()
                 if len(k) == 1:
+                    full_score = None
+                    if other and (match := re.match(r'\((\d+)\)', other[0])):
+                        full_score = int(match.group(1))
+                        problems_info[k].setdefault('full_score', full_score)
+                        standings_kind = Contest.STANDINGS_KINDS['scoring']
+
                     if not v.value:
                         continue
 
                     p = problems.setdefault(k, {})
 
-                    attempt, *values = v.value.split()
-                    if '+' in attempt:
-                        attempt = sum(map(int, attempt.split('+')))
+                    score, *values = v.value.split()
+                    if '+' in score:
+                        score = sum(map(int, score.split('+')))
                     else:
-                        attempt = int(attempt)
+                        score = as_number(score)
                     classes = v.column.node.xpath('@class')[0].split()
 
                     pending = 'pending' in classes
                     first = 'solvedfirst' in classes or bool(v.column.node.xpath('.//i[contains(@class,"cell-first")]'))
                     solved = first or 'solved' in classes
 
-                    if solved:
-                        p['result'] = '+' if attempt == 1 else f'+{attempt - 1}'
-                        p['time'] = self.to_time(int(values[0]), 2)
-                    elif pending:
-                        p['result'] = '?' if attempt == 1 else f'?{attempt - 1}'
+                    if not full_score:
+                        if solved:
+                            p['result'] = '+' if score == 1 else f'+{score - 1}'
+                            p['time'] = self.to_time(int(values[0]), 2)
+                        elif pending:
+                            p['result'] = '?' if score == 1 else f'?{score - 1}'
+                        else:
+                            p['result'] = f'-{score}'
                     else:
-                        p['result'] = f'-{attempt}'
+                        p['result'] = score
+                        p['partial'] = not solved and full_score > score
 
                     if first:
                         p['first_ac'] = True
@@ -136,7 +149,7 @@ class Statistic(BaseModule):
 
             def fetch_members(row):
                 page = REQ.get(row['_account_url'])
-                entry = re.search('"team_members":(?P<members>.*),$', page, re.MULTILINE)
+                entry = re.search(r'"team_members":\s*(?P<members>\[.*\]),?$', page, re.MULTILINE)
                 members = json.loads(entry.group('members'))
 
                 row['_members'] = [{'account': m.get('username'), 'name': m['name']} for m in members]
@@ -158,6 +171,7 @@ class Statistic(BaseModule):
             'url': standings_url,
             'problems': list(problems_info.values()),
             'hidden_fields': ['university'],
+            'standings_kind': standings_kind,
         }
         return standings
 
@@ -281,9 +295,9 @@ class Statistic(BaseModule):
                         info['avatar_url'] = urljoin(url, entry.group('url'))
                         break
 
-                if 'score' in info:
-                    info['rating'] = int(info['score'])
-                if 'rank' in info:
-                    info['rank'] = int(info['rank'])
+                if 'score' in info and (score := as_number(info.pop('score'), force=True)) is not None:
+                    info['rating'] = score
+                if 'rank' in info and (rank := as_number(info.pop('rank'), force=True)) is not None:
+                    info['rank'] = rank
 
                 yield {'info': info}

@@ -25,7 +25,7 @@ from clist.templatetags.extras import get_item, get_problem_key, slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
-from utils.datetime import parse_duration
+from utils.timetools import parse_duration
 
 
 class PriorityResourceManager(BaseManager):
@@ -664,6 +664,15 @@ class Contest(BaseModel):
         else:
             raise ValueError(f'Unknown problems types = {type(problems)}')
 
+    @property
+    def division_problems(self):
+        problems = self.info.get('problems')
+        if not problems:
+            return []
+        if isinstance(problems, dict) and 'division' in problems:
+            return problems['division'].items()
+        return [(None, problems)]
+
     def set_series(self, series_name):
         if series_name is None:
             series = None
@@ -747,6 +756,7 @@ class Problem(BaseModel):
     n_total = models.IntegerField(default=None, null=True, blank=True)
     visible = models.BooleanField(default=True, null=False)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
+    skip_rating = models.BooleanField(default=None, null=True, blank=True)
     info = models.JSONField(default=dict, blank=True)
 
     activities = GenericRelation('favorites.Activity', related_query_name='problem')
@@ -789,6 +799,27 @@ class Problem(BaseModel):
             return True
         if field in {'first_ac'}:
             return True
+
+    def rating_is_coming(self):
+        return self.end_time <= timezone.now() <= self.end_time + self.resource.module.max_delay_after_end
+
+    def rating_status(self):
+        now = timezone.now()
+        if now < self.end_time:
+            return "waiting for end of contest"
+        if self.n_hidden:
+            return "waiting unfreeze"
+        if self.end_time + self.resource.module.max_delay_after_end < now:
+            return "expired"
+        return "in progress"
+
+    def has_rating(self):
+        return (
+            self.n_total
+            and not self.skip_rating
+            and self.resource.has_problem_rating
+            and self.resource.is_major_kind(self.contests.all())
+        )
 
 
 class ProblemTag(BaseModel):

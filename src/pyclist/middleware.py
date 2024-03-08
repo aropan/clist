@@ -1,5 +1,6 @@
 from functools import partial
 
+from django.db import connection
 from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
@@ -151,3 +152,13 @@ class TimezoneMiddleware:
             else:
                 timezone.deactivate()
         return self.get_response(request)
+
+
+def StatementTimeoutMiddleware(get_response):
+
+    def middleware(request):
+        with connection.cursor() as cursor:
+            cursor.execute("SET statement_timeout TO '30s'")
+        return get_response(request)
+
+    return middleware

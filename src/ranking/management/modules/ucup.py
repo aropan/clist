@@ -71,7 +71,7 @@ class Statistic(BaseModule):
         entries = re.findall(r'^([a-z_]+)\s*=\s*(.*);\s*$', page, flags=re.MULTILINE)
         variables = {k: yaml.safe_load(v) for k, v in entries}
 
-        if variables['contest_type'] != 'ICPC':
+        if variables.get('contest_type') != 'ICPC':
             raise ExceptionParseStandings(f'Contest type should be "ICPC", found "{variables["contest_type"]}"')
 
         standings = variables.pop('standings')

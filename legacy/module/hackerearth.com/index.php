@@ -3,7 +3,7 @@
 
     $data = curlexec($URL, NULL, array('json_output' => 1));
     if (!isset($data['response'])) {
-        print_r($data);
+        echo "No response, data = " . debug_content($data);
         return;
     }
     $data = $data['response'];

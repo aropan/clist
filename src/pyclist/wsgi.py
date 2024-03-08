@@ -22,6 +22,7 @@ if not settings.DEBUG:
     call_command('collectstatic', verbosity=1, interactive=False)
 
     from logify.models import EventLog, EventStatus
-    EventLog.objects.filter(status=EventStatus.IN_PROGRESS).update(status=EventStatus.INTERRUPTED)
+    for event in EventLog.objects.filter(status=EventStatus.IN_PROGRESS):
+        event.update_status(EventStatus.INTERRUPTED)
 
 application = get_wsgi_application()

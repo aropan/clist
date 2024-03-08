@@ -9,7 +9,7 @@ from time import sleep
 from urllib.parse import urljoin
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from utils.datetime import parse_datetime
+from utils.timetools import parse_datetime
 
 
 def query(url, *args, **kwargs):

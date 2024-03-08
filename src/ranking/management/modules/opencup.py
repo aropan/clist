@@ -147,10 +147,3 @@ class Statistic(BaseModule):
         return standings
 
 
-if __name__ == "__main__":
-    statictic = Statistic(
-        url='http://moscow2019.workshops.it-edu.mipt.ru/',
-        standings_url='http://moscow2019.workshops.it-edu.mipt.ru/index.cgi?data=macros/amresults&menu=index&head=index&round=22&sbname=mipt2019n&class=mipt2019n&rid=1',  # noqa
-        key='2019-2020 bla bla',
-    )
-    pprint(statictic.get_standings()['result']['SCH_Kazan+ITMO: Koresha (Gainullin, Rakhmatullin) 2019-2020'])

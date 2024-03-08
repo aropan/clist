@@ -109,6 +109,3 @@ class Statistic(BaseModule):
         return standings
 
 
-if __name__ == "__main__":
-    module = Statistic(key="http://contest.bsuir.by/standings/2016-school-sbory-practice-01.html")
-    pprint(module.get_standings())

@@ -603,4 +603,9 @@
         else
             return $number . $ends[$number % 10];
     }
+
+    function debug_content($content) {
+        $escaped_content = htmlspecialchars($content);
+        return '<pre style="font-family: monospace;">' . $escaped_content . '</pre>';
+    }
 ?>

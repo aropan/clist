@@ -249,7 +249,7 @@ class Statistic(BaseModule):
 
         fusers = []
         page = self._get(self.url)
-        match = re.search(r'(?<=<li>)Writer:.*', page)
+        match = re.search(r'(?<=<li>)writer:.*?</?l[iu]>', page, re.I | re.DOTALL)
         writers = []
         if match:
             matches = re.findall('(?<=>)[^<]+(?=</)', match.group())

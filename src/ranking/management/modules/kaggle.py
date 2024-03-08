@@ -3,12 +3,11 @@
 import collections
 import json
 import os
-import re
 from copy import deepcopy
 from functools import partial
+from urllib.parse import urljoin
 
 import dateutil.parser
-from flatten_dict import flatten
 
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
@@ -18,6 +17,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 class Statistic(BaseModule):
     STANDING_URL_FORMAT_ = '{0.url}/leaderboard'
     API_STANDINGS_URL_ = 'https://www.kaggle.com/api/i/competitions.LeaderboardService/GetLeaderboard'
+    API_PROFILE_URL_ = 'https://www.kaggle.com/api/i/users.ProfileService/GetProfile'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -125,9 +125,16 @@ class Statistic(BaseModule):
             connect_func = partial(fetch_profile, handle=handle, raise_on_error=True)
             req.proxer.set_connect_func(connect_func)
 
-            url = resource.profile_url.format(account=handle)
             try:
-                page = req.get(url)
+                xsrf_token = req.get_cookie('XSRF-TOKEN', domain_regex='kaggle.com')
+                headers = {
+                    'x-xsrf-token': xsrf_token,
+                    'content-type': 'application/json',
+                    'accept': 'application/json',
+                }
+                url = Statistic.API_PROFILE_URL_
+                post = '{"userName":' + json.dumps(handle) + '}'
+                data = req.get(url, headers=headers, post=post, return_json=True)
             except FailOnGetResponse as e:
                 if e.code == 404:
                     return None
@@ -137,17 +144,16 @@ class Statistic(BaseModule):
                 if ret:
                     return ret
                 return False
-            result = re.search(r'Kaggle.State.push\((?P<data>{"userId":.*})\);', page)
-            data = json.loads(result.group('data'))
-            data.get('followers', {}).pop('list', None)
-            data.get('following', {}).pop('list', None)
-            for k, v in data.items():
-                if k.endswith('Summary') and isinstance(v, dict):
-                    v.pop('highlights', None)
-            data = flatten(data, 'dot')
+
+            data['followers'] = len(data.pop('usersFollowingMe', []))
+            data['following'] = len(data.pop('usersIFollow', []))
+
             name = data.pop('displayName')
             if name:
                 data['name'] = name
+            avatar_url = data.get('userAvatarUrl')
+            if avatar_url:
+                data['userAvatarUrl'] = urljoin(url, avatar_url)
             return data
 
         with REQ.with_proxy(

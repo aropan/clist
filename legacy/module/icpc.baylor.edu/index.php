@@ -2,20 +2,18 @@
     require_once dirname(__FILE__) . "/../../config.php";
 
     $page = curlexec($URL);
-    if (!preg_match('#src="(?P<js>/static/js/main.[^"]*.js)"#', $page, $match)) {
-        trigger_error('Not found main.js', E_USER_WARNING);
-        return;
-    }
+    unset($xwiki);
+    if (preg_match('#src="(?P<js>/static/js/main.[^"]*.js)"#', $page, $match)) {
+        $page = curlexec($match['js']);
+        if (!preg_match('#XWIKI:"(?P<xwiki>[^"]*)"#', $page, $match)) {
+            trigger_error('Not found xwiki', E_USER_WARNING);
+            return;
+        }
+        $xwiki = url_merge($URL, '/' . trim($match['xwiki'], '/'));
+        $url = "$xwiki/virtpublic/worldfinals/schedule";
 
-    $page = curlexec($match['js']);
-    if (!preg_match('#XWIKI:"(?P<xwiki>[^"]*)"#', $page, $match)) {
-        trigger_error('Not found xwiki', E_USER_WARNING);
-        return;
+        $page = curlexec($url);
     }
-    $xwiki = url_merge($URL, '/' . trim($match['xwiki'], '/'));
-    $url = "$xwiki/virtpublic/worldfinals/schedule";
-
-    $page = curlexec($url);
 
     if (!preg_match("#>The (?P<year>[0-9]{4}) (?P<title>(?:ACM-)?ICPC World Finals)#i", $page, $match)) {
         trigger_error('Not found year and title', E_USER_WARNING);
@@ -23,35 +21,67 @@
     }
 
     $year = $match['year'];
-    $title = $match['title'];
+    $title = trim($match['title']);
 
     if (!preg_match("#>hosted by(?:[^,<]*,)?\s*(?P<where>[^<]*?)\s*<#i", $page, $match)) {
         trigger_error('Not found where', E_USER_WARNING);
         return;
     }
-    $title .= ". " . $match["where"];
+    $where = $match['where'];
 
-    if (!preg_match("#held on (?P<date>[^,\.<]*)#", $page, $match)) {
+    $duration = '24 hours';
+    $duration_in_secs = 5 * 60 * 60;
+    if (preg_match('#.*(?P<day><th[^>]*colspan[^>]*>\s*[a-z]+\s*(?P<date>[^<]*)&[^<]*'. $title . '[^<]*</th>.*?)<th[^>]*colspan[^>]*>#is', $page, $match)) {
+        $start_date = trim($match['date']) . ' ' . $year;
+        preg_match_all('#(?P<times>(?:<td[^>]*>[^<]*</td>\s*)+)<td[^>]*required[^>]*>#s', $match['day'], $matches, PREG_SET_ORDER);
+        $opt = 1e9;
+        $opt_start_time = false;
+        foreach ($matches as $m) {
+            $times = $m['times'];
+            if (preg_match_all('#<td[^>]*>(?P<time>[^<]+)</td>#', $times, $matches) && count($matches['time']) == 2) {
+                list($start_time, $end_time) = $matches['time'];
+                $duration_time = strtotime($end_time) - strtotime($start_time);
+                $diff = abs($duration_time - $duration_in_secs);
+                if ($diff < $opt) {
+                    $opt = $diff;
+                    $duration = $duration_time;
+                    $opt_start_time = trim($start_time);
+                }
+            }
+        }
+        if ($opt_start_time) {
+            $start_date = $start_date . ' ' . $opt_start_time;
+        }
+    } else if (preg_match("#held on (?P<date>[^,\.<]*)#", $page, $match)) {
+        $start_date = $match['date'] . ' ' . $year;
+    } else {
         trigger_error('Not found date', E_USER_WARNING);
         return;
     }
 
-    $start_time = $match['date'] . ' ' . $year;
+    if ($where == 'AASTMT') {
+        $title .= ". $where, Egypt";
+        $timezone = 'Africa/Cairo';
+        $start_date = str_replace($year, $year + 1, $start_date);
+    } else {
+        $title .= ". $where";
+        $timezone = $TIMEZONE;
+    }
 
     $contests[] = array(
-        'start_time' => $start_time,
-        'duration' => '24 hours',
-        'duration_in_secs' => 5 * 60 * 60,
+        'start_time' => $start_date,
+        'duration' => $duration,
+        'duration_in_secs' => $duration_in_secs,
         'title' => $title,
         'url' => $URL,
         'host' => $HOST,
         'key' => $year,
         'rid' => $RID,
-        'timezone' => $TIMEZONE
+        'timezone' => $timezone
     );
 
     $parse_full_list = isset($_GET['parse_full_list']);
-    for (;$year > 1970;) {
+    for (;$parse_full_list && isset($xwiki) && $year > 1970;) {
         --$year;
         $path = "/community/history-icpc-$year";
 

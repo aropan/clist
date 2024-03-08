@@ -36,21 +36,16 @@
     <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div> </td>
   <td class="problem-rating-column">
     {% if problem.rating is not None %}
-    {% coder_color_circle problem.resource problem.rating %}
-    <span class="{% coder_color_class problem.resource problem.rating %}">
-      {{ problem.rating }}
-    </span>
-    {% else %}
-      {% call_method problem.resource 'is_major_kind' problem.contests.all as is_major_kind %}
-      {% if problem.resource.has_problem_rating and problem.n_total and is_major_kind %}
-      {% with is_coming=problem.end_time|is_coming %}
-      <span title="{% if is_coming %}waiting for end of contest{% elif problem.n_hidden %}waiting unfreeze{% else %}in progress{% endif %}" data-toggle="tooltip">
-        <i class="text-muted fa-xs fas fa-sync{% if not is_coming and not problem.n_hidden %} fa-spin{% endif %}"></i>
+      {% coder_color_circle problem.resource problem.rating %}
+      <span class="{% coder_color_class problem.resource problem.rating %}">
+        {{ problem.rating }}
       </span>
-      {% endwith %}
-      {% else %}
+    {% elif problem.has_rating %}
+      <span title="{{ problem.rating_status }}" data-toggle="tooltip">
+        <i class="text-muted fa-xs fas fa-sync{% if not problem.n_hidden and problem.rating_is_coming %} fa-spin{% endif %}"></i>
+      </span>
+    {% else %}
       <span class="text-muted">&mdash;</span>
-      {% endif %}
     {% endif %}
   </td>
   <td class="problem-progress-column">

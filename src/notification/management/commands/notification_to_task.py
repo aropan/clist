@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from clist.models import Contest
 from notification.models import Notification, Task
-from utils.datetime import Epoch
+from utils.timetools import Epoch
 from utils.traceback_with_vars import colored_format_exc
 
 logger = logging.getLogger(__name__)

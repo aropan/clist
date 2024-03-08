@@ -10,15 +10,16 @@ from tailslide import Percentile
 
 from clist.templatetags.extras import title_field
 from utils.json_field import JSONF
-from utils.math import get_divisors
+from utils.logger import NullLogger
+from utils.mathutils import get_divisors
 
 
-def make_bins(src, dst, n_bins, logger=None, field=None, step=None, qs=None):
+def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=None):
     n_bins += 1
     force_ending = False
     if isinstance(src, str):
         if not dst:
-            logger and logger.warning(f'One of border is empty, field = {field}')
+            logger.warning(f'One of border is empty, field = {field}')
             return
         if (
             field and qs is not None and
@@ -79,12 +80,11 @@ def make_histogram(values, n_bins=None, bins=None, src=None, dst=None, deltas=No
 def make_beetween(column, value, start, end=None):
     if end is None:
         return When(Q(**{column + '__gte': start}), then=Value(value))
-    else:
-        return When(Q(**{column + '__gte': start, column + '__lt': end}), then=Value(value))
+    return When(Q(**{column + '__gte': start, column + '__lt': end}), then=Value(value))
 
 
-def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=None, aggregations=None, bins=None,
-               norm_value=None):
+def make_chart(qs, field, groupby=None, logger=NullLogger(), n_bins=42, cast=None, step=None, aggregations=None,
+               bins=None, norm_value=None):
     context = {'title': title_field(field) + (f' (slice by {groupby})' if groupby else '')}
 
     if cast == 'int':
@@ -106,7 +106,7 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
 
         related_field = field.split('__')[0]
         if related_field in related_fields or '___' in field:
-            logger and logger.error(f'use of an invalid field = {field}')
+            logger.error(f'use of an invalid field = {field}')
             return
         cast = cast or IntegerField()
         qs = qs.annotate(value=Cast(JSONF(field), cast))
@@ -121,7 +121,7 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
     qs = qs.filter(value__isnull=False)
 
     if not qs.exists():
-        logger and logger.warning(f'Empty histogram, field = {field}')
+        logger.warning(f'Empty histogram, field = {field}')
         return
 
     src = qs.earliest('value').value
@@ -181,11 +181,11 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
 
     if aggregations:
         whens = [
-            make_beetween('value', k, bins[k], bins[k + 1] if k + 1 < len(bins) else None)
-            for k in range(len(bins))
+            make_beetween('value', idx, bins[idx], bins[idx + 1] if idx + 1 < len(bins) else None)
+            for idx in range(len(bins))
         ]
-        qs = qs.annotate(k=Case(*whens, output_field=IntegerField()))
-        qs = qs.order_by('k').values('k')
+        qs = qs.annotate(idx=Case(*whens, output_field=IntegerField()))
+        qs = qs.order_by('idx').values('idx')
         for field, aggregation in aggregations.items():
             if isinstance(aggregation, dict):
                 op = {
@@ -207,7 +207,8 @@ def make_chart(qs, field, groupby=None, logger=None, n_bins=42, cast=None, step=
             result = qs.annotate(**histogram_annotation)
 
             for record in result:
-                k = record.pop('k')
-                context['data'][k].update(record)
+                idx = record.pop('idx')
+                record = {k: v if v is not None else 0 for k, v in record.items()}
+                context['data'][idx].update(record)
 
     return context

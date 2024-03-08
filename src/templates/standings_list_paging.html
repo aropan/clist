@@ -22,13 +22,13 @@
 {% endif %}
 
 <tr class="contest{% if status %} {{ status }}{% endif %}{% if group_contest %} group-resource-{{ resource.pk }}{% endif %}" {% if group_contest %}style="display: none"{% endif %}>
-<td class="n_statistics text-muted">
+<td class="n_statistics no-stretch text-muted">
   {% if contest.n_statistics %}
   <a href="{% url 'coder:accounts' %}?contest={{ contest.pk }}" class="{% if status %} text-{{ status }}{% endif %}">{{ contest.n_statistics }}</a>
   {% endif %}
 </td>
-<td class="n_problems text-muted">
-  {% if contest.n_problems %}
+<td class="n_problems no-stretch text-muted">
+  {% if contest.n_problems is not None %}
   <a href="{% url 'clist:problems' %}?contest={{ contest.pk }}" class="{% if status %} text-{{ status }}{% endif %}">{{ contest.n_problems }}</a>
   {% endif %}
 </td>
@@ -78,6 +78,37 @@
   {% endfor %}
 
   {% include "contest_inline_buttons.html" with contest=contest with_stage=True %}
+
+  {% if 'with_problems' in request.GET %}
+    <table>
+    {% for division, problems in contest.division_problems %}
+    <tr class="problems">
+      {% if division %}
+      <td class="division">
+        <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}?division={{ division }}">{{ division }}</a>
+      </td>
+      {% endif %}
+      <td>
+      {% for problem in problems %}
+      <div class="problem">
+        <div>
+          {% if problem.rating is not None %}
+            {% coder_color_circle contest.resource problem.rating %}
+          {% endif %}
+          {% if problem.url %}<a href="{{ problem.url }}" rel="noopener noreferrer">{% endif %}
+          <span title="{{ problem|get_problem_title }}" data-toggle="tooltip">{% trim_to problem|get_problem_short 4 raw_text=True %}</span>
+          {% if problem.url %}</a>{% endif %}
+        </div>
+        <div>
+          {% include 'standings_problem_progress.html' with problem=problem contest=contest %}
+        </div>
+      </div>
+      {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+    </table>
+  {% endif %}
 </td>
 <td class="date text-muted small">
   <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>

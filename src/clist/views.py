@@ -32,18 +32,9 @@ from pyclist.decorators import context_pagination
 from ranking.models import Account, Rating, Statistics
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import make_bins, make_chart
-from utils.datetime import get_timezone
+from utils.timetools import get_timeformat, get_timezone
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
-
-
-def get_timeformat(request):
-    if "time_format" in request.GET:
-        return request.GET["time_format"]
-    ret = settings.TIME_FORMAT_
-    if request.user.is_authenticated and hasattr(request.user, "coder"):
-        ret = request.user.coder.settings.get("time_format", ret)
-    return ret
 
 
 def get_add_to_calendar(request):
@@ -132,11 +123,7 @@ def get_events(request):
     if referer:
         parsed = urlparse(referer)
         query_dict = parse_qs(parsed.query)
-
-        as_coder = query_dict.get('as_coder')
-        if as_coder and request.user.has_perm('as_coder'):
-            coder = Coder.objects.get(user__username=as_coder[0])
-
+        coder = request.as_coder or coder
         has_filter = 'filter' in query_dict
         categories = query_dict.get('filter', categories)
 
@@ -177,7 +164,7 @@ def get_events(request):
     party_slug = request.POST.get('party')
     if party_slug:
         party = get_object_or_404(Party.objects.for_user(request.user), slug=party_slug)
-        query = Q(rating__party=party) & query
+        query = Q(ratings__party=party) & query
 
     contests = Contest.objects if party_slug else Contest.visible
     contests = contests.annotate_favorite(coder)
@@ -707,13 +694,7 @@ def update_problems(contest, problems=None, force=False):
 
     while not contests_queue.empty():
         current_contest = contests_queue.get()
-
-        problems = current_contest.info.get('problems')
-        if 'division' in problems:
-            problem_sets = problems['division'].items()
-        else:
-            problem_sets = [(None, problems)]
-
+        problem_sets = current_contest.division_problems
         for division, problem_set in problem_sets:
             prev = None
             for index, problem_info in enumerate(problem_set, start=1):
@@ -755,6 +736,8 @@ def update_problems(contest, problems=None, force=False):
                 else:
                     url = url or getattr(added_problem, 'url', None)
 
+                skip_rating = bool(contest.info.get('skip_problem_rating'))
+
                 defaults = {
                     'index': index if getattr(added_problem, 'index', index) == index else None,
                     'short': short if getattr(added_problem, 'short', short) == short else None,
@@ -770,6 +753,7 @@ def update_problems(contest, problems=None, force=False):
                     'time': max(contest.start_time, getattr(added_problem, 'time', contest.start_time)),
                     'start_time': min(contest.start_time, getattr(added_problem, 'start_time', contest.start_time)),
                     'end_time': max(contest.end_time, getattr(added_problem, 'end_time', contest.end_time)),
+                    'skip_rating': skip_rating and getattr(added_problem, 'skip_rating', skip_rating),
                 }
                 if getattr(added_problem, 'rating', None) is not None:
                     problem_info['rating'] = added_problem.rating
@@ -787,6 +771,8 @@ def update_problems(contest, problems=None, force=False):
                     archive_url = getattr(added_problem, 'archive_url', None)
                 defaults['archive_url'] = archive_url
 
+                if '_more_fields' in info:
+                    info.update(info.pop('_more_fields'))
                 info_prefix = info.pop('_info_prefix', None)
                 info_prefix_fields = info.pop('_info_prefix_fields', None)
                 if info_prefix:
@@ -880,8 +866,11 @@ def update_problems(contest, problems=None, force=False):
 ))
 @context_pagination()
 def problems(request, template='problems.html'):
-    problems = Problem.visible_objects.annotate_favorite(request.user).annotate_note(request.user)
-    problems = problems.select_related('resource')
+    contests = [r for r in request.GET.getlist('contest') if r]
+    problems = Problem.objects if contests else Problem.visible_objects
+
+    problems = problems.annotate_favorite(request.user).annotate_note(request.user)
+    problems = problems.select_related('resource', 'resource__module')
     problems_contests = Contest.objects.order_by('invisible', '-end_time', '-id')
     problems = problems.prefetch_related(Prefetch('contests', queryset=problems_contests))
     problems = problems.prefetch_related('tags')
@@ -969,7 +958,6 @@ def problems(request, template='problems.html'):
             problem_rating_accounts = problem_rating_accounts.filter(resource__pk__in=resources)
         resources = list(Resource.objects.filter(pk__in=resources))
 
-    contests = [r for r in request.GET.getlist('contest') if r]
     if contests:
         problems = problems.annotate(has_contests=Exists('contests', filter=Q(contest__in=contests)))
         problems = problems.filter(Q(has_contests=True) | Q(contest__in=contests))
@@ -1024,7 +1012,7 @@ def problems(request, template='problems.html'):
         tags = list(ProblemTag.objects.filter(pk__in=tags))
 
     custom_fields = [f for f in request.GET.getlist('field') if f]
-    custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url',
+    custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url', 'divisions',
                       'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_total']
     custom_info_fields = set()
     if selected_resource:

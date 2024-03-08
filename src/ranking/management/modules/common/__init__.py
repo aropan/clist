@@ -29,6 +29,7 @@ REQ = lz(create_requester)
 SPACE = ' '
 DOT = '.'
 
+UNCHANGED = '__unchanged__'
 
 ch = logging.StreamHandler()
 ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)-10s - %(name)s - %(message)s',
@@ -161,5 +162,3 @@ def main():
         print(page)
 
 
-if __name__ == "__main__":
-    main()

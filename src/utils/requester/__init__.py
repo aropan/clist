@@ -498,7 +498,10 @@ class requester():
         force_json=False,
         ignore_codes=None,
         n_attempts=None,
+        additional_attempts=None,
+        additional_delay=0,
         last_info=True,
+        params=None,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -524,6 +527,9 @@ class requester():
             post_urlencoded = post.encode('utf8')
         else:
             post_urlencoded = post
+
+        if params:
+            url = f'{url}?{urllib.parse.urlencode(params)}'
 
         try:
             file_cache = ''.join((
@@ -578,9 +584,9 @@ class requester():
                 headers.update({"Content-type": content_type})
 
             n_attempts = n_attempts or self.n_attempts
-            for attempt in range(n_attempts):
+            attempt = 0
+            while attempt < n_attempts:
                 page, self.error, response, last_url, proxy = None, None, None, None, None
-                last_attempt = attempt + 1 == n_attempts
                 attempt_delay = self.attempt_delay * attempt / n_attempts
                 try:
                     if headers:
@@ -605,7 +611,8 @@ class requester():
                         return last_url
                     page = read_response(response)
                 except Exception as err:
-                    if ignore_codes and isinstance(err, urllib.error.HTTPError) and err.code in ignore_codes:
+                    error_code = err.code if isinstance(err, urllib.error.HTTPError) else None
+                    if ignore_codes and error_code in ignore_codes:
                         force_json = False
                         response = err
                         page = read_response(response)
@@ -614,7 +621,14 @@ class requester():
                         self.error = err
                         if self.proxer:
                             self.proxer.fail(proxy=str(proxy))
-                        if not last_attempt:
+
+                        if additional_attempts and additional_attempts.get(error_code, 0) > 0:
+                            additional_attempts[error_code] -= 1
+                            attempt -= 1
+                            sleep(additional_delay)
+
+                        attempt += 1
+                        if attempt < n_attempts:
                             sleep(attempt_delay)
                             continue
                         if self.assert_on_fail:

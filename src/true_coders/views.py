@@ -1789,11 +1789,11 @@ def party(request, slug, tab='ranking'):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
 
     party_contests = Contest.objects \
-        .filter(rating__party=party) \
+        .filter(ratings__party=party) \
         .annotate(has_statistics=Exists('statistics')) \
         .order_by('-end_time', '-id')
 
-    filt = Q(rating__party=party, statistics__account__coders=OuterRef('pk'))
+    filt = Q(ratings__party=party, statistics__account__coders=OuterRef('pk'))
     coders = party.coders \
         .annotate(n_participations=SubqueryCount('account__resource__contest', filter=filt)) \
         .order_by('-n_participations') \
@@ -1810,7 +1810,7 @@ def party(request, slug, tab='ranking'):
     results = []
     total = {}
 
-    contests = Contest.objects.filter(rating__party=party).select_related('resource')
+    contests = Contest.objects.filter(ratings__party=party).select_related('resource')
     future = contests.filter(end_time__gt=timezone.now()).order_by('start_time')
 
     statistics = Statistics.objects.filter(
@@ -1944,6 +1944,7 @@ def party_contests(request, slug):
 
 def view_list(request, uuid):
     coder = request.user.coder if request.user.is_authenticated else None
+    coder = request.as_coder or coder
     qs = CoderList.filter_for_coder(coder=coder)
     qs = qs.prefetch_related('values__account__resource')
     qs = qs.prefetch_related('values__coder')

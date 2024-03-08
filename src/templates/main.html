@@ -24,7 +24,7 @@
   {% endif %}
   {% endif %}
   <div id="time-view-search">
-    <div id="time" class="small text-muted">{{ now|timezone:timezone|format_time:"%A, %H:%M:%S%z" }}</div>
+    <div id="time" class="small text-muted" title="{{ timezone }}" data-toggle="tooltip">{{ now|timezone:timezone|format_time:"%A, %H:%M:%S%z" }}</div>
     <div>
       <input
          id="toggle-view"

@@ -25,31 +25,3 @@ class Statistic(BaseModule):
         return self.module.get_standings(users)
 
 
-if __name__ == "__main__":
-    from pprint import pprint
-    import sys
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'
-
-    from django import setup
-    setup()
-
-    from clist.models import Contest
-    from django.utils.timezone import now
-
-    contests = Contest.objects.filter(host='contests.snarknews.info', end_time__lte=now())
-    contests = contests.filter(title='1 раунд. SnarkNews Winter Series - 2020')
-
-    contest = contests.last()
-
-    statistic = Statistic(
-        name=contest.title,
-        url=contest.url,
-        key=contest.key,
-        standings_url=contest.standings_url,
-        start_time=contest.start_time,
-    )
-    s = statistic.get_standings()
-    # pprint(s['result'])
-    pprint(s['problems'])
-    pprint(s['result']['Ildar Gainullin 2019-2020'])

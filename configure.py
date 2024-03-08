@@ -86,7 +86,6 @@ def run_command(cmd):
 
 def main():
     fill_template('.env.db')
-    fill_template('.env.proxylist')
     fill_template('src/.env.dev', accept_default=True)
     fill_template('src/.env.prod', accept_default=True)
     fill_template('src/pyclist/conf.py')

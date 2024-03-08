@@ -525,12 +525,3 @@ class Statistic(BaseModule):
         raise ExceptionParseStandings(f'Not found standings url from {standings_urls}')
 
 
-if __name__ == "__main__":
-    from datetime import datetime
-    statictic = Statistic(
-        name='ACM-ICPC World Finals. China',
-        standings_url=None,
-        key='ACM-ICPC World Finals. China 2008',
-        start_time=datetime.strptime('2008-04-02', '%Y-%m-%d'),
-    )
-    pprint(statictic.get_standings())

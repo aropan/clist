@@ -12,7 +12,7 @@ from el_pagination.decorators import page_templates
 from clist.templatetags.extras import is_yes, timestamp_to_datetime
 from pyclist.decorators import context_pagination
 from utils.chart import make_chart
-from utils.datetime import parse_duration
+from utils.timetools import parse_duration
 
 
 def create_field_to_select(**kwargs):

@@ -181,8 +181,3 @@ class Statistic(BaseModule):
         return standings
 
 
-if __name__ == "__main__":
-    # statictic = Statistic(url='https://www.e-olymp.com/en/contests/13532', standings_url=None)
-    # pprint(statictic.get_standings()['problems'])
-    statictic = Statistic(url='https://www.e-olymp.com/en/contests/13745', standings_url=None)
-    pprint(statictic.get_standings()['problems'])

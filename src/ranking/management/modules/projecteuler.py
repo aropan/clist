@@ -151,6 +151,3 @@ class Statistic(BaseModule):
         return standings
 
 
-if __name__ == "__main__":
-    statictic = Statistic(url='https://projecteuler.net/problem=689', key='689', standings_url=None)
-    pprint(statictic.get_result('theshuffler', 'Tepsi', 'jpeg13'))

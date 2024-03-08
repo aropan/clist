@@ -42,7 +42,7 @@
   {% endif %}
 {% endif %}
   <select name="{{ field }}" id="{{ field }}"{% if not data.nosubmit %} onchange="this.form.submit()"{% endif %}{% if not data.nomultiply %} multiple{% endif %}{% if disabled or data.disabled %} disabled{% endif %}>
-  {% if data.options %}
+  {% if data.options is not None %}
     {% with values=request.GET|get_list:field %}
     {% with values=data|get_item:'values'|default:values %}
     {% if not data.noempty %}<option></option>{% endif %}

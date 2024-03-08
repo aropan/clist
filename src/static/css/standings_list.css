@@ -15,11 +15,22 @@
   padding: 4px;
 }
 
-
 #standings-filters .input-group-addon:has(>.series-checkbox) {
   line-height: 1.0;
 }
 
 #standings-filters .series-checkbox {
   transform: scale(1.3);
+}
+
+.problems .division {
+  vertical-align: middle;
+  text-align: center;
+  padding: 5px;
+}
+
+.problems .problem {
+  text-align: center;
+  min-width: 50px;
+  display: inline-block;
 }

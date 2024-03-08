@@ -2,6 +2,17 @@
 <div id="chart_{{ chart.field }}" class="chart">
   {% if not without_buttons %}
   <div class="chart-buttons">
+    <span class="toggle-accumulate">
+      <input
+          type="checkbox"
+          data-toggle="toggle"
+          data-on="accumulate"
+          data-off="normal"
+          data-onstyle="default active"
+          data-offstyle="default active"
+          data-size="mini"
+          />
+    </span>
     <span class="toggle-log-scale">
       <input
           type="checkbox"
@@ -343,12 +354,33 @@
     );
     {% endif %}
 
+    var original_data = null
+    $('#chart_{{ chart.field }} .toggle-accumulate').change(function() {
+      if (original_data === null) {
+        original_data = []
+        for (var idx = 0; idx < chart.data.datasets.length; idx += 1) {
+          original_data[idx] = JSON.parse(JSON.stringify(chart.data.datasets[idx].data))
+          chart.data.datasets[idx].data.reduce((acc, item) => {
+            acc = acc + + item['y']
+            item['y'] = acc
+            return acc
+          }, 0)
+        }
+      } else {
+        for (var idx = 0; idx < chart.data.datasets.length; idx += 1) {
+          chart.data.datasets[idx].data = original_data[idx]
+        }
+        original_data = null
+      }
+      chart.update()
+    })
+
     $('#chart_{{ chart.field }} .toggle-log-scale').change(function() {
       chart.options.scales.y.type = chart.options.scales.y.type == 'linear'? 'logarithmic' : 'linear'
       chart.update()
     })
 
-    $('#chart_{{ chart.field }} .toggle-type input').change(function() {
+    $('#chart_{{ chart.field }} .toggle-type').change(function() {
       chart.destroy();
       config['type'] = config['type'] == 'bar'? 'line' : 'bar';
       chart = new Chart(ctx, config);

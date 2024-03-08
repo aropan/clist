@@ -8,7 +8,7 @@ from django.db.models.lookups import LessThan
 from django.utils.timezone import now
 from sql_util.utils import Exists
 
-from utils.datetime import parse_duration
+from utils.timetools import parse_duration
 
 
 class DateDuringLookup(LessThan):

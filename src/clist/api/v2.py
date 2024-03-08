@@ -22,7 +22,7 @@ from clist.templatetags.extras import timezone as set_timezone
 from pyclist.context_processors import coder_time_info
 from ranking.models import Account, Statistics
 from true_coders.models import Coder, Filter
-from utils.datetime import parse_duration
+from utils.timetools import parse_duration
 
 
 class BaseModelResource(CommmonBaseModuelResource):

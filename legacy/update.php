@@ -38,7 +38,7 @@
         $ids = array_map('intval', $_GET['id']);
         $resources = $db->select("clist_resource", "*", "enable = $enable and id in (" . implode(",", $ids) . ")");
     } elseif (isset($_GET['host'])) {
-        $likes = array_map(function ($s) use ($db) { return "host LIKE '%" . $db->escapeString($s) . "%'"; }, $_GET['host']);
+        $likes = array_map(function ($s) use ($db) { return "host ~ '" . $db->escapeString($s) . "'"; }, $_GET['host']);
         $resources = $db->select("clist_resource", "*", "enable = $enable and (" . implode(" or ", $likes) . ")");
     } else {
         $resources = $db->select("clist_resource", "*", "enable = $enable");

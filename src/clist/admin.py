@@ -139,10 +139,10 @@ class ResourceAdmin(BaseModelAdmin):
     ]
     list_display = ['host', 'short_host', 'enable', 'n_contests', 'n_accounts', 'modified',
                     '_has_rating', '_has_profile_url', '_has_problem_rating', '_has_accounts_infos_update',
-                    '_has_multi_account', '_has_standings_renamed_account', '_has_upsolving']
+                    '_has_multi_account', '_has_standings_renamed_account', '_has_upsolving', '_has_verification']
     search_fields = ['host', 'url']
     list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone', 'has_problem_rating',
-                   'has_accounts_infos_update', 'has_multi_account', 'has_upsolving']
+                   'has_accounts_infos_update', 'has_multi_account', 'has_upsolving', 'has_account_verification']
 
     def _has_profile_url(self, obj):
         return bool(obj.profile_url)
@@ -178,6 +178,11 @@ class ResourceAdmin(BaseModelAdmin):
         return obj.has_upsolving
     _has_upsolving.boolean = True
     _has_upsolving.short_description = 'Upsolv'
+
+    def _has_verification(self, obj):
+        return obj.has_account_verification
+    _has_verification.boolean = True
+    _has_verification.short_description = 'AVerif'
 
     def get_list_display(self, request):
         ret = super().get_list_display(request)

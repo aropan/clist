@@ -25,6 +25,7 @@ from django.utils.crypto import get_random_string
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
 from sql_util.utils import Exists, SubqueryCount, SubquerySum
+from urllib.parse import quote
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import add_prefix_to_problem_short, get_problem_short, slug
@@ -71,6 +72,9 @@ class Account(BaseModel):
     def dict_with_info(self):
         ret = self.dict()
         ret.update(self.info.get('profile_url', {}))
+        for k, v in ret.items():
+            if isinstance(v, str):
+                ret[k] = quote(v)
         return ret
 
     def avatar_url(self, resource=None):
@@ -366,7 +370,7 @@ def account_verification_pre_save(sender, instance, *args, **kwargs):
 
 
 class Rating(BaseModel):
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='ratings')
     party = models.ForeignKey(Party, on_delete=models.CASCADE)
 
     def __str__(self):

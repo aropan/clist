@@ -125,7 +125,7 @@ class Coder(BaseModel):
             if filter_.contest_id:
                 query &= Q(pk=filter_.contest_id)
             if filter_.party_id:
-                query &= Q(rating__party_id=filter_.party_id)
+                query &= Q(ratings__party_id=filter_.party_id)
 
             if filter_.to_show:
                 show |= query

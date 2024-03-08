@@ -141,8 +141,10 @@ class Command(BaseCommand):
                 order = ['-has_coders', 'updated']
                 if args.top:
                     order = [F('rating').desc(nulls_last=True)] + order
-                if args.contest_id:
+                elif args.contest_id:
                     order = ['statistics__place_as_int'] + order
+                elif args.limit:
+                    order = ['updated']
                 accounts = accounts.order_by(*order)
 
                 if args.limit or not resource_info.get('nolimit', False) or resource_info.get('limit'):

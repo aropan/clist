@@ -94,6 +94,11 @@
       {% for stage in contest.stages.all %}
         <a href="{% url 'ranking:standings' stage.contest.title|slug stage.contest.pk %}" class="badge progress-bar-info">{% icon_to "stage" stage.contest.title %}</a>
       {% endfor %}
+
+      {% if contest.series_id %}
+        <a href="{% url 'ranking:standings_list' %}?series={{ contest.series.slug }}" class="badge progress-bar-info">{% icon_to "series" contest.series.name %}</a>
+      {% endif %}
+
       {% if not other_contests %}
       <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><span title="Show nearby" data-toggle="tooltip"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></span></a>
       {% endif %}

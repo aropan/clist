@@ -179,12 +179,3 @@ class Statistic(BaseModule):
         return standings
 
 
-if __name__ == "__main__":
-    statictic = Statistic(
-        name='First Contest',
-        url='http://usaco.org/',
-        key='First Contest 2019',
-        start_time=datetime.strptime('Dec 20 2019', '%b %d %Y'),
-        standings_url=None,
-    )
-    pprint(statictic.get_standings())

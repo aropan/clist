@@ -18,7 +18,7 @@ from django.utils.timezone import now
 from pytimeparse.timeparse import timeparse
 from telegram.constants import MAX_MESSAGE_LENGTH
 
-from clist.api.v1 import ContestResource
+from clist.api.v2 import ContestResource
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number, hr_timedelta, md_escape
 from tg.models import Chat, History

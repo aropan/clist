@@ -94,6 +94,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                 'advance': {'fields': ['with_advance'], 'func': lambda v: True},
                 'year': {'fields': ['start_time__year', 'end_time__year']},
                 'invisible': {'fields': ['invisible'], 'func': lambda v: v in settings.YES_},
+                'has_problems': {'fields': ['n_problems'], 'suff': '__isnull',
+                                 'func': lambda v: v not in settings.YES_},
+                'n_problems': {'fields': ['n_problems'], 'suff': ''},
             },
             logger=request.logger,
         ))
@@ -1230,6 +1233,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         else:
             cond = get_iregex_filter(search,
                                      'account__key', 'account__name',
+                                     suffix='__icontains',
                                      logger=request.logger)  # FIXME: add addition__name
             statistics = statistics.filter(cond)
 
@@ -1679,7 +1683,7 @@ def solutions(request, sid, problem_key):
 
 @login_required
 @xframe_options_exempt
-def action(request):
+def standings_action(request):
     user = request.user
     error = None
     message = None

@@ -26,7 +26,7 @@ from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
-from utils.datetime import parse_datetime
+from utils.timetools import parse_datetime
 
 
 class Statistic(BaseModule):

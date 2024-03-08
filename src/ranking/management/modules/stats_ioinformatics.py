@@ -364,6 +364,3 @@ class Statistic(BaseModule):
                 yield info
 
 
-if __name__ == "__main__":
-    statictic = Statistic(url='http://stats.ioinformatics.org/olympiads/2008', standings_url=None)
-    pprint(statictic.get_result('804'))

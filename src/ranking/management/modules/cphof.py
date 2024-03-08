@@ -6,8 +6,7 @@ from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import timedelta
-from pprint import pprint  # noqa
-from urllib.parse import quote, unquote, urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 from django.conf import settings
 from django.db import transaction
@@ -17,7 +16,7 @@ from tqdm import tqdm
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number
 from notification.models import NotificationMessage
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table, LOG
 from ranking.management.modules.excepts import ExceptionParseAccounts
 from true_coders.models import Coder
 
@@ -29,11 +28,13 @@ class Statistic(BaseModule):
         page = REQ.get(url)
         info = {}
 
-        if 'university' in url:
+        info['profile_url'] = {'type': urlparse(url).path.split('/')[1]}
+        if '/profile/' not in url:
             handle = unquote(urlparse(url).path)
             handle = handle.strip('/')
             handle = handle.replace('/', ':')
             info['member'] = handle
+            info['profile_url']['account'] = handle.split(':', 1)[1]
         else:
             match = re.search('<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"[^>]*>', page)
             handle = match.group('handle')
@@ -148,6 +149,7 @@ class Statistic(BaseModule):
         html_table = match.group(0)
         table = parsed_table.ParsedTable(html_table)
 
+        result = {}
         profile_urls = {}
         for r in table:
             row = OrderedDict()
@@ -170,8 +172,6 @@ class Statistic(BaseModule):
             val = r.pop('Score').value.strip()
             row['solving'] = as_number(val) if val and val != '?' else 0
 
-            row['_no_update_name'] = True
-
             for k, v in r.items():
                 k = k.lower()
                 if k in row:
@@ -181,10 +181,16 @@ class Statistic(BaseModule):
                     continue
                 row[k.lower()] = as_number(v)
 
-            for member in members:
-                url = urljoin(standings_url, member.attrib['href'])
-                row['_profile_url'] = url
-                profile_urls[url] = deepcopy(row)
+            if members:
+                for member in members:
+                    url = urljoin(standings_url, member.attrib['href'])
+                    row['_profile_url'] = url
+                    row['_no_update_name'] = True
+                    profile_urls[url] = deepcopy(row)
+            else:
+                row['member'] = f"{row['name']} {self.get_season()}"
+                row['info'] = {'is_team': True, '_no_profile_url': True}
+                result[row['member']] = row
 
         statistics_profiles_urls = {}
         if statistics:
@@ -214,7 +220,6 @@ class Statistic(BaseModule):
             row['_info'] = dict(row['info'])
             return row
 
-        result = {}
         members = defaultdict(list)
         with PoolExecutor(max_workers=4) as executor, tqdm(total=len(result), desc='urls') as pbar:
             for row in executor.map(get_handle, profile_urls.values()):
@@ -310,7 +315,7 @@ class Statistic(BaseModule):
                                 account = resource.account_set.filter(key__iexact=key).first()
                             break
                         except Exception as e:
-                            print(f'Error on get {profile_url} = {e}')
+                            LOG.error(f'Error on get {profile_url} = {e}')
                 if account is None and related is not None and name is not None:
                     s = list(related.statistics_set.filter(place=stat.place))
                     if len(s) == 1:
@@ -318,7 +323,7 @@ class Statistic(BaseModule):
                         account = s.account
                         account_name = account.name or s.addition.get('name') or account.key
                         if not is_similar_names(account_name, name):
-                            print(f'Different names in {related}:\n{name}\n{account_name}')
+                            LOG.info(f'Different names in {related}: "{name}" vs "{account_name}"')
                 if account is None:
                     return
                 accounts_set.add(account)
@@ -410,11 +415,11 @@ class Statistic(BaseModule):
         for user, cphof_account in zip(users, accounts):
             if pbar:
                 pbar.update()
-            if user.startswith('university:'):
-                yield {'info': {}}
+            if user.startswith('university:') or cphof_account.info.get('is_team'):
+                yield {'info': cphof_account.info}
                 continue
 
-            profile_url = cphof_resource.profile_url.format(account=quote(cphof_account.key))
+            profile_url = cphof_resource.profile_url.format(**cphof_account.dict_with_info())
             try:
                 info = Statistic._parse_profile_page(profile_url)
             except FailOnGetResponse as e:

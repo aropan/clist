@@ -38,8 +38,17 @@ class Epoch(models.expressions.Func):
     output_field = models.IntegerField()
 
 
+def get_timeformat(request):
+    if "time_format" in request.GET:
+        return request.GET["time_format"]
+    ret = settings.TIME_FORMAT_
+    if request.user.is_authenticated and hasattr(request.user, "coder"):
+        ret = request.user.coder.settings.get("time_format", ret)
+    return ret
+
+
 def get_timezone(request):
-    tz = request.GET.get("timezone", None)
+    tz = request.GET.get("timezone")
     if tz:
         result = None
         try:
@@ -47,12 +56,17 @@ def get_timezone(request):
             result = tz
         except Exception:
             if tz.startswith(" "):
-                tz = tz.replace(" ", "+")
+                tz = tz.replace(" ", "+", 1)
+            tzname = request.GET.get("tzname")
             for tzdata in get_timezones():
                 if str(tzdata["offset"]) == tz or tzdata["repr"] == tz:
-                    result = tzdata["name"]
-                    break
-
+                    if result is None:
+                        result = tzdata["name"]
+                    if tzname is None:
+                        break
+                    if tzdata["name"] == tzname:
+                        result = tzdata["name"]
+                        break
         if result:
             if "update" in request.GET:
                 if request.user.is_authenticated:

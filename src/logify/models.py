@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.utils import timezone
 
 from pyclist.models import BaseManager, BaseModel
 
@@ -37,17 +38,20 @@ class EventLog(BaseModel):
     name = models.CharField(max_length=50, db_index=True)
     status = models.CharField(max_length=20, choices=EventStatus.choices, default=EventStatus.DEFAULT, db_index=True)
     message = models.TextField(blank=True, null=True)
+    elapsed = models.DurationField(blank=True, null=True)
 
     objects = EventLogManager()
 
     def update_status(self, status, message=None):
         self.status = status
         self.message = message
-        self.save(update_fields=['status', 'message', 'modified'])
+        self.elapsed = timezone.now() - self.created
+        self.save(update_fields=['status', 'message', 'modified', 'elapsed'])
 
     def update_message(self, message):
         self.message = message
-        self.save(update_fields=['message', 'modified'])
+        self.elapsed = timezone.now() - self.created
+        self.save(update_fields=['message', 'modified', 'elapsed'])
 
 
 class PgStatTuple(BaseModel):

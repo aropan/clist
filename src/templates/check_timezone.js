@@ -1,11 +1,12 @@
 <script type="text/javascript">
     var time = new Date();
     var offset = -time.getTimezoneOffset()
+    var tzname = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (Math.abs(offset - {{offset}}) > 1e-6) {
         $.ajax({
             type: "GET",
             url: "{% url 'clist:main' %}",
-            data: "timezone=" + offset + "&update",
+            data: "timezone=" + offset + "&tzname=" + (tzname || "") + "&update",
             success: function(data) {
                 if (data == "reload") {
                     location.reload()

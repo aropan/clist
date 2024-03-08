@@ -2,25 +2,49 @@
     require_once dirname(__FILE__) . "/../../config.php";
 
     $urls = array($URL, 'https://hackerrank.com/rest/contests/college');
-    foreach ($urls as $url) {
-        $json = curlexec($url, NULL, array('json_output' => true));
-        if (!is_array($json['models'])) {
-            print_r($json);
-            trigger_error("Expected array ['models']", E_USER_WARNING);
-            continue;
-        }
-        foreach ($json['models'] as $model)
-        {
-            $contests[] = array(
-                'start_time' => date('r', $model['epoch_starttime']),
-                'end_time' => date('r', $model['epoch_endtime']),
-                'title' => $model['name'],
-                'url' => 'https://hackerrank.com/contests/' . $model['slug'],
-                'host' => $HOST,
-                'rid' => $RID,
-                'timezone' => 'UTC',
-                'key' => $model['id']
-            );
+    $limit = 50;
+    $offset = 0;
+    $seen = array();
+    foreach ($urls as $base_url) {
+        for (;;) {
+            $url = "$base_url?limit=$limit&offset=$offset";
+            $json = curlexec($url, NULL, array('json_output' => true));
+            if (!is_array($json['models'])) {
+                print_r($json);
+                trigger_error("Expected array ['models']", E_USER_WARNING);
+                break;
+            }
+
+            $n_added = 0;
+            foreach ($json['models'] as $model)
+            {
+                $key = $model['id'];
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $n_added += 1;
+
+                $kind = isset($model['track'])? $model['track']['slug'] : null;
+
+                $contests[] = array(
+                    'start_time' => date('r', $model['epoch_starttime']),
+                    'end_time' => date('r', $model['epoch_endtime']),
+                    'title' => $model['name'],
+                    'url' => 'https://hackerrank.com/contests/' . $model['slug'],
+                    'host' => $HOST,
+                    'rid' => $RID,
+                    'timezone' => 'UTC',
+                    'kind' => $kind,
+                    'key' => $key,
+                    'info' => array('parse' => $model),
+                );
+            }
+
+            if (!isset($_GET['parse_full_list']) || !$n_added) {
+                break;
+            }
+            $offset += $limit;
         }
     }
 

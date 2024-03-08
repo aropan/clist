@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from clist.views import get_timeformat, get_timezone
+from utils.timetools import get_timeformat, get_timezone
 
 
 def global_settings(request):

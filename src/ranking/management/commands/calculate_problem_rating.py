@@ -252,16 +252,15 @@ class Command(BaseCommand):
                                                 related=contest,
                                                 status=EventStatus.IN_PROGRESS)
 
-            statistics = get_statistics(contest)
-
-            self.logger.info(f'number of statistics = {statistics.count()}, contest = {contest}')
-
             problems_contests = OrderedDict()
-            problems_contests[contest] = statistics
             for problem in contest.problem_set.all():
                 for problem_contest in problem.contests.select_related('resource').all():
+                    if problem_contest.info.get('skip_problem_rating'):
+                        continue
                     if problem_contest not in problems_contests:
-                        problems_contests[problem_contest] = get_statistics(problem_contest)
+                        statistics = get_statistics(problem_contest)
+                        problems_contests[problem_contest] = statistics
+                        self.logger.info(f'number of statistics = {statistics.count()}, contest = {problem_contest}')
 
             rows_values = []
             for current_contest, current_statistics in problems_contests.items():

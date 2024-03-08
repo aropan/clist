@@ -174,14 +174,3 @@ class Statistic(BaseModule):
                 yield info
 
 
-if __name__ == "__main__":
-    statistic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-2/', key='62344')
-    standings = statistic.get_standings('aropan')
-    result = standings.pop('result')
-    pprint(list(itertools.islice(result.items(), 0, 10)))
-    pprint(standings)
-    statistic = Statistic(name='42', url='https://csacademy.com/contest/fii-code-2020-round-1/', key='61564')
-    standings = statistic.get_standings('aropan')
-    result = standings.pop('result')
-    pprint(list(itertools.islice(result.items(), 0, 10)))
-    pprint(standings)

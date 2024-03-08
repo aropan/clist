@@ -139,16 +139,3 @@ class Statistic(BaseModule):
         return standings
 
 
-if __name__ == "__main__":
-    statictic = Statistic(
-        name='Олимпиада «Абитуриент ФПМИ» по направлению «Программирование» 2020',
-        standings_url='https://acm.bsu.by/contests/106/standings/',
-        key='2019-2020 Олимпиада Абитуриент ФПМИ',
-    )
-    pprint(statictic.get_result('Владислав Олешко 2019-2020'))
-    statictic = Statistic(
-        name='42',
-        standings_url='https://acm.bsu.by/contests/40/standings/wide/',
-        key='2017-2018 Олимпиада БГУ',
-    )
-    pprint(statictic.get_result('BelarusianSUIR #2 (Волчек, Соболь, Вистяж) 2017-2018'))

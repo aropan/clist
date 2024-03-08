@@ -15,7 +15,7 @@ from django_super_deduper.merge import MergedModelInstance
 from ranking.management.modules.common import LOG
 from ranking.models import AccountRenaming, Statistics
 from utils.logger import suppress_db_logging_context
-from utils.math import max_with_none
+from utils.mathutils import max_with_none
 
 
 @transaction.atomic
@@ -30,6 +30,8 @@ def rename_account(old_account, new_account):
         old_key=new_account.key,
     ).delete()
 
+    new_contests = new_account.statistics_set.filter(skip_in_stats=False).values('contest')
+    old_account.statistics_set.filter(contest__in=new_contests).delete()
     old_contests = old_account.statistics_set.values('contest')
     new_account.statistics_set.filter(contest__in=old_contests).delete()
 
@@ -75,7 +77,8 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         total_counter += 1
         conditions = (Q(**{f'contest__{field}': contest_key}) for field in fields)
         condition = functools.reduce(operator.__or__, conditions)
-        condition &= Q(place=addition_update['_rank'], contest__resource=account.resource)
+        condition &= Q(contest__resource=account.resource)
+        condition &= Q(place=addition_update['_rank'])
         queryset_filter |= condition
     if not queryset_filter:
         return
@@ -191,7 +194,9 @@ def account_update_contest_additions(
                 contest.save()
         if iteration > 1 and not total:
             break
+
         if try_renaming_check and renaming_check(account, renaming_contest_keys, fields, contest_addition_update):
+            try_renaming_check = False
             continue
         if contest_keys:
             out_contests = list(grouped_contest_keys.values()) or list(contest_keys)

@@ -17,7 +17,7 @@ import pytz
 
 from clist.templatetags.extras import as_number, is_solved
 from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table, utc_now
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table, utc_now, UNCHANGED
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.utils import create_upsolving_statistic
 from utils.aes import AESModeOfOperation
@@ -453,7 +453,7 @@ class Statistic(BaseModule):
                             r['place'] = row['rank']
                         elif unofficial:
                             if users:
-                                r['place'] = '__unchanged__'
+                                r['place'] = UNCHANGED
                             elif 'team_id' not in r and not (participant_types & set(r['participant_type'])):
                                 r['place'] = None
                             else:

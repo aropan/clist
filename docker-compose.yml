@@ -16,12 +16,7 @@ services:
     secrets:
       - db_conf
       - sentry_conf
-    env_file:
-      - ./.env.supervisor
-      - ./.env.proxylist
-    ports:
-      - 10043:9043
-    restart: always
+    restart: unless-stopped
   dev:
     build:
       context: .
@@ -40,12 +35,10 @@ services:
       - sentry_conf
     ports:
       - ${CLIST_DEV_PORT:-10042}:10042
-    env_file:
-      - ./.env.proxylist
-    restart: always
+    restart: unless-stopped
   memcached:
     image: memcached
-    restart: always
+    restart: unless-stopped
   legacy:
     build: ./legacy
     volumes:
@@ -55,7 +48,7 @@ services:
     secrets:
       - db_conf
       - sentry_conf
-    restart: always
+    restart: unless-stopped
   pgadmin:
     image: dpage/pgadmin4:latest
     volumes:
@@ -64,7 +57,7 @@ services:
       - ./.env.db
     depends_on:
       - db
-    restart: always
+    restart: unless-stopped
   db:
     image: postgres:14.3-alpine
     volumes:
@@ -81,7 +74,7 @@ services:
       -c work_mem=64MB
       -c maintenance_work_mem=500MB
     shm_size: 4GB
-    restart: always
+    restart: unless-stopped
   nginx:
     build:
       context: .
@@ -98,7 +91,7 @@ services:
       - 80:80
       - 443:443
     command: "/bin/sh -c 'while :; do logrotate /etc/logrotate.conf; sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-    restart: always
+    restart: unless-stopped
   certbot:
     image: certbot/certbot:latest
     volumes:
@@ -108,7 +101,7 @@ services:
     depends_on:
       - nginx
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 1d & wait $${!}; done;'"
-    restart: always
+    restart: unless-stopped
   loggly:
     build:
       context: .
@@ -117,7 +110,31 @@ services:
       - ./logs/:/logs/
     secrets:
       - loggly_token
-    restart: always
+    restart: unless-stopped
+  netdata:
+    image: netdata/netdata:latest
+    hostname: netdata.clist.by
+    pid: host
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - netdata_config:/etc/netdata
+      - netdata_lib:/var/lib/netdata
+      - netdata_cache:/var/cache/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      - /var/log:/host/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    env_file:
+      - ./.env.netdata
+    restart: unless-stopped
 
 secrets:
   db_conf:
@@ -164,3 +181,21 @@ volumes:
       type: none
       o: bind
       device: ${PWD}/volumes/certbot_conf
+  netdata_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/netdata/config
+  netdata_lib:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/netdata/lib
+  netdata_cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/netdata/cache

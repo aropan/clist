@@ -22,7 +22,7 @@ from ratelimiter import RateLimiter
 from clist.templatetags.extras import get_item, is_improved_solution
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
-from utils.datetime import datetime_from_timestamp
+from utils.timetools import datetime_from_timestamp
 from utils.logger import suppress_db_logging_context
 
 # from ranking.management.modules import conf
@@ -46,7 +46,7 @@ class Statistic(BaseModule):
         #     for kw in conf.LEETCODE_COOKIES:
         #         req.add_cookie(**kw)
         #     setattr(self, '_authorized', True)
-        return req.get(*args, **kwargs)
+        return req.get(*args, **kwargs, additional_attempts={429: 12}, additional_delay=5)
 
     @staticmethod
     def _get_source_code_proxies_file():
@@ -58,7 +58,7 @@ class Statistic(BaseModule):
         domain = Statistic.DOMAINS[data_region.lower()]
         url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission['submission_id'])
         try:
-            content = req.get(url, n_attempts=n_attempts)
+            content = Statistic._get(url, req=req, n_attempts=n_attempts)
             content = json.loads(content)
         except FailOnGetResponse as e:
             if raise_on_error:
@@ -101,7 +101,7 @@ class Statistic(BaseModule):
                 'variables': {'titleSlug': slug},
                 'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { profileUrl } topicTags { name } hints } }',  # noqa: E501
             }
-            page = REQ.get(
+            page = Statistic._get(
                 'https://leetcode.com/graphql',
                 content_type='application/json',
                 post=json.dumps(params).encode('utf-8'),
@@ -124,7 +124,7 @@ class Statistic(BaseModule):
                 return
             with fetch_page_rate_limiter:
                 url = api_ranking_url_format.format(page + 1)
-                content = REQ.get(url, n_attempts=3)
+                content = Statistic._get(url, n_attempts=3)
                 data = json.loads(content)
                 return data
 
@@ -709,7 +709,7 @@ class Statistic(BaseModule):
                 ratings, rankings, contest_keys = [], [], []
 
                 info = page.pop('profile')
-                if info is None:
+                if info is None or info.get('slug') == 'deleted_user':
                     yield {'delete': True}
                     continue
                 history = page.pop('history') or []
@@ -926,7 +926,7 @@ class Statistic(BaseModule):
             while True:
                 url = Statistic.API_SUBMISSIONS_URL_FORMAT_.format(offset, limit)
                 try:
-                    submissions_page = req.get(url, n_attempts=5)
+                    submissions_page = Statistic._get(url, req=req, n_attempts=5)
                 except FailOnGetResponse as e:
                     if e.code == 401:
                         leetcode_session['disabled'] = True

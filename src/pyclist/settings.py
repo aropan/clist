@@ -54,7 +54,7 @@ DEFAULT_FROM_EMAIL = 'Clist <%s>' % EMAIL_HOST_USER
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
@@ -62,7 +62,8 @@ SECRET_KEY = conf.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = env('DJANGO_ENV') == 'dev'
+PYLINT_ENV = env('DJANGO_ENV') == 'pylint'
+DEBUG = env('DJANGO_ENV') == 'dev' or PYLINT_ENV
 
 # Application definition
 
@@ -130,6 +131,7 @@ MIDDLEWARE = (
     'pyclist.middleware.TimezoneMiddleware',
     'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',
+    'pyclist.middleware.StatementTimeoutMiddleware',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -205,16 +207,15 @@ RQ_SHOW_ADMIN_LINK = True
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 
-DATABASES_ = {
-    'postgresql': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+DATABASES_ = {'postgresql': {'ENGINE': 'django.db.backends.postgresql_psycopg2'}}
+if not PYLINT_ENV:
+    DATABASES_['postgresql'].update({
         'NAME': env('POSTGRES_DB'),
         'USER': env('POSTGRES_USER'),
         'PASSWORD': env('POSTGRES_PASSWORD'),
         'HOST': env('POSTGRES_HOST'),
         'PORT': env('POSTGRES_PORT'),
-    },
-}
+    })
 
 DATABASES = {
     'default': DATABASES_['postgresql'],
@@ -278,7 +279,7 @@ APPEND_SLASH = True
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': PYLINT_ENV,
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
@@ -334,6 +335,7 @@ LOGGING = {
             'backupCount': 7,
             'filename': os.path.join(BASE_DIR, 'logs', 'dev.log'),
             'formatter': 'verbose',
+            'delay': True,
         },
         'production': {
             'level': 'WARNING',
@@ -344,6 +346,7 @@ LOGGING = {
             'backupCount': 7,
             'filename': os.path.join(BASE_DIR, 'logs', 'prod.log'),
             'formatter': 'verbose',
+            'delay': True,
         },
         'debug': {
             'level': 'DEBUG',
@@ -354,6 +357,7 @@ LOGGING = {
             'backupCount': 2,
             'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
             'formatter': 'verbose',
+            'delay': True,
         },
         'telegrambot': {
             'level': 'DEBUG',
@@ -363,6 +367,7 @@ LOGGING = {
             'backupCount': 7,
             'filename': os.path.join(BASE_DIR, 'logs', 'telegram.log'),
             'formatter': 'verbose',
+            'delay': True,
         },
     },
     'loggers': {
@@ -690,7 +695,7 @@ FONTAWESOME_ICONS_ = {
     'n_participants': {'icon': '<i class="fas fa-users"></i>', 'title': 'Number of participants', 'position': 'bottom'},
     'n_problems': {'icon': '<i class="fa-solid fa-list-check"></i>', 'title': 'Number of problems',
                    'position': 'bottom'},
-    'series': '<i class="fas fa-trophy text-muted"></i>',
+    'series': '<i class="fas fa-trophy"></i>',
     'app': '<i class="fas fa-desktop"></i>',
     'sort-asc': '<i class="fas fa-sort-amount-down-alt"></i>',
     'sort-desc': '<i class="fas fa-sort-amount-down"></i>',

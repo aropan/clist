@@ -85,6 +85,9 @@
                     if (empty($url)) {
                         $url = "https://algotester.com/en/Tournament/Display/$tournament_id";
                     }
+                    if (empty($standings_url)) {
+                        $standings_url = 'https://algotester.com/en/Contest/ViewScoreboard/'. $c['Id'];
+                    }
                     $title = $c['Name']['Text'];
                     $invisible = in_array($tournament_id, $tournament_ids)? 'false' : 'true';
                     $contest = array(
@@ -97,10 +100,8 @@
                         'timezone' => $TIMEZONE,
                         'key' => $c['Id'],
                         'invisible' => $invisible,
+                        'standings_url' => $standings_url,
                     );
-                    if (!empty($standings_url)) {
-                        $contest['standings_url'] = $standings_url;
-                    }
                     $contests[] = $contest;
                 }
             } else {

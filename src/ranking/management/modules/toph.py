@@ -364,25 +364,3 @@ class Statistic(BaseModule):
                 yield info
 
 
-if __name__ == "__main__":
-    statictic = Statistic(
-        name='Criterion 2020 Round 1 Standings',
-        url='https://toph.co/c/criterion-2020-round-1',
-        key='criterion-2020-round-1',
-        start_time=datetime.strptime('20.09.2019', '%d.%m.%Y'),
-    )
-    pprint(statictic.get_standings(['EgorKulikov']))
-    statictic = Statistic(
-        name='DIU Intra University Programming Contest 2019 (Replay)',
-        url='https://toph.co/c/diu-inter-section-summer-2019-preliminary-a',
-        key='diu-inter-section-summer-2019-preliminary-a',
-        start_time=datetime.strptime('20.09.2019', '%d.%m.%Y'),
-    )
-    pprint(statictic.get_standings())
-    statictic = Statistic(
-        name='DIU Intra University Programming Contest 2019 (Replay)',
-        url='https://toph.co/c/diu-intra-2019-r',
-        key='diu-intra-2019-r',
-        start_time=datetime.strptime('20.09.2019', '%d.%m.%Y'),
-    )
-    pprint(statictic.get_standings(['salman.exe']))

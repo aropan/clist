@@ -59,12 +59,3 @@ class Statistic(BaseModule):
         return standings
 
 
-if __name__ == "__main__":
-    statistic = Statistic(
-        name='Later is better than never',
-        url='http://acm.timus.ru/contest.aspx?id=423',
-        standings_url=None,
-        key='http://acm.timus.ru/contest.aspx?id=423',
-    )
-    from pprint import pprint
-    pprint(statistic.get_standings())

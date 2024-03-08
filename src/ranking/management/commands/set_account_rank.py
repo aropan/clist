@@ -15,7 +15,7 @@ from logify.models import EventLog, EventStatus
 from logify.utils import failed_on_exception
 from ranking.models import Account
 from utils.attrdict import AttrDict
-from utils.datetime import parse_duration
+from utils.timetools import parse_duration
 from utils.logger import suppress_db_logging_context
 
 
