@@ -150,52 +150,52 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/postgres_data
+      device: ./volumes/postgres_data
   pgadmin_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/pgadmin
+      device: ./volumes/pgadmin
   static_files:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/static_files
+      device: ./volumes/static_files
   media_files:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/media_files
+      device: ./volumes/media_files
   certbot_www:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/certbot_www
+      device: ./volumes/certbot_www
   certbot_conf:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/certbot_conf
+      device: ./volumes/certbot_conf
   netdata_config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/netdata/config
+      device: ./volumes/netdata/config
   netdata_lib:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/netdata/lib
+      device: ./volumes/netdata/lib
   netdata_cache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${PWD}/volumes/netdata/cache
+      device: ./volumes/netdata/cache

@@ -2,10 +2,9 @@
 
 from django.db import migrations, models
 
-from clist.models import Contest
-
 
 def set_n_problems(apps, schema_editor):
+    Contest = apps.get_model('clist', 'Contest')
     for contest in Contest.objects.all():
         if hasattr(contest, 'stage'):
             continue

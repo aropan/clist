@@ -83,7 +83,7 @@ tailslide==0.1.1
 feedgen==0.9.0
 pycountry==22.3.5
 multiset==3.0.1
-twisted[tls,http2]==22.10.0
+twisted[tls,http2]==24.3.0
 uWSGI==2.0.22
 supervisor==4.2.5
 daphne==4.0.0

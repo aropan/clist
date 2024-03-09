@@ -6,6 +6,7 @@ import random
 import re
 import string
 import subprocess
+import time
 
 
 def random_string(length=40):
@@ -34,7 +35,7 @@ def enter_value(variable, old_value):
     return value
 
 
-def fill_template(target_file, accept_default=False):
+def fill_template(target_file, accept_default=False, allow_empty=False):
     template_file = target_file + '.template'
     if os.path.exists(target_file):
         logger.info(f'File {target_file} already exists')
@@ -64,7 +65,7 @@ def fill_template(target_file, accept_default=False):
                 n_sep_skip += 1
                 generated += f'{line}\n'
                 continue
-            if accept_default and old_value:
+            if accept_default and (allow_empty or old_value):
                 value = old_value
                 logger.info(f'Accept default value "{old_value}" for "{variable}"')
             else:
@@ -80,16 +81,33 @@ def fill_template(target_file, accept_default=False):
 
 def run_command(cmd):
     cmd = cmd.replace('\n', ' ')
-    logger.info(f'Run command = {cmd}')
+    not_sensitive_data = re.sub('"[^"]*"', '***', cmd)
+    logger.info(f'Run command = {not_sensitive_data}')
     subprocess.run(cmd, shell=True, check=True)
+
+
+def create_volumes():
+    with open('docker-compose.yml', 'r') as fo:
+        content = fo.read()
+    folders = re.findall(r'^\s*device:\s*(.*)', content, re.MULTILINE)
+    for folder in folders:
+        if not os.path.exists(folder):
+            logger.info(f'Creating volume {folder}')
+            os.makedirs(folder)
 
 
 def main():
     fill_template('.env.db')
+    fill_template('.env.netdata', accept_default=True, allow_empty=True)
+    fill_template('.env.sentry', accept_default=True, allow_empty=True)
     fill_template('src/.env.dev', accept_default=True)
     fill_template('src/.env.prod', accept_default=True)
     fill_template('src/pyclist/conf.py')
+    create_volumes()
     run_command('docker compose build dev')
+    run_command('docker compose up --build --detach db')
+    logger.info('Waiting 30 seconds for database to start')
+    time.sleep(30)
     run_command('docker compose run dev ./manage.py migrate contenttypes')
     run_command('docker compose run dev ./manage.py migrate auth')
     run_command('docker compose run dev ./manage.py migrate')

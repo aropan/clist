@@ -61,7 +61,7 @@ class ExpressionIndex(models.Index):
         condition = self._get_condition_sql(model, schema_editor)
         statement = schema_editor._create_index_sql(
             model,
-            [Descriptor(e) for e in self.expressions],
+            fields=[Descriptor(e) for e in self.expressions],
             name=self.name,
             using=using,
             db_tablespace=self.db_tablespace,
