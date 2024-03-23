@@ -29,6 +29,13 @@ RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
 # Sentry CLI
 RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.20.7" sh
 
+# Curl
+RUN wget https://github.com/stunnel/static-curl/releases/download/8.6.0-1/curl-linux-aarch64-8.6.0.tar.xz -O /tmp/curl.tar.xz && \
+    tar -xvf /tmp/curl.tar.xz -C /tmp && \
+    sha256sum /tmp/curl | grep -q "b42ad13ff77ea6baaacc2d560ace242ae449f8429ec47aa61ce3edd99879973c" && \
+    mv /tmp/curl /usr/local/bin/curl && \
+    rm /tmp/curl.tar.xz
+
 RUN apt update --fix-missing
 
 ENV APPDIR=/usr/src/clist

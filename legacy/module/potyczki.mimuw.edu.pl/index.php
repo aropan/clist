@@ -72,6 +72,8 @@
         $name = $match['name'];
 
         $prev_time = false;
+        $stage_start_time = null;
+        $stage_end_time = null;
 
         foreach ($matches['info'] as $info) {
             $info = preg_replace('#<[^>]*>#', "\n", $info);
@@ -113,6 +115,24 @@
                 'host' => $HOST,
                 'timezone' => $TIMEZONE,
                 'rid' => $RID,
+            );
+
+            $stage_start_time = $stage_start_time ?? $start_time;
+            $stage_end_time = $end_time ?? $stage_end_time;
+
+        }
+
+        if ($stage_start_time) {
+            $contests[] = array(
+                'start_time' => $stage_start_time,
+                'end_time' => $stage_end_time,
+                'title' => $name,
+                'url' => $HOST_URL,
+                'key' => slugify($name),
+                'host' => $HOST,
+                'timezone' => $TIMEZONE,
+                'rid' => $RID,
+                'info' => array('_inherit_stage' => true),
             );
         }
 

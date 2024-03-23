@@ -1,6 +1,28 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
+    $url = 'https://acm.bsuir.by/solve/api/v0/contests';
+    $data = curlexec($url, NULL, array('json_output' => true));
+    foreach ($data['contests'] as $contest) {
+        if (!preg_match('#bsuir#i', $contest['title'])) {
+            continue;
+        }
+        $url = "https://acm.bsuir.by/solve/contests/{$contest['id']}";
+        $standings_url = "$url/standings";
+        $contests[] = array(
+            'start_time' => $contest['begin_time'],
+            'duration' => $contest['duration'] / 60,
+            'title' => $contest['title'],
+            'url' => $url,
+            'standings_url' => $standings_url,
+            'key' => "solve:{$contest['id']}",
+            'host' => $HOST,
+            'rid' => $RID,
+            'timezone' => $TIMEZONE,
+        );
+    }
+    return;
+
     for ($year = date('Y'); ; --$year) {
         $url = "http://contest.yandex.ru/bsuir{$year}";
 

@@ -608,4 +608,10 @@
         $escaped_content = htmlspecialchars($content);
         return '<pre style="font-family: monospace;">' . $escaped_content . '</pre>';
     }
+
+    function html_decode($content) {
+        $content = html_entity_decode($content);
+        $content = preg_replace('/\s+/u', ' ', $content);
+        return $content;
+    }
 ?>

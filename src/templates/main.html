@@ -20,7 +20,7 @@
 <div id="timezone-and-filter">
   {% if not request.GET.timezone %}
   {% if not request.user.is_authenticated or request.user.coder.settings.check_timezone != 0 %}
-    {% include "check_timezone.js" %}
+    {% include "check_timezone.html" %}
   {% endif %}
   {% endif %}
   <div id="time-view-search">

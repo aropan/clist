@@ -281,7 +281,7 @@
         //$contest['start_time'] -= $timezone_offset;
         //$contest['end_time'] -= $timezone_offset;
 
-        $contest['title'] = strip_tags(html_entity_decode($contest['title']));
+        $contest['title'] = trim(strip_tags(html_decode($contest['title'])));
         $contest['title'] = preg_replace_callback(
             "/(&#[0-9]+;)/",
             function($m) {
@@ -343,7 +343,7 @@
 
         $contest = $db->escapeArray($contest);
 
-        if (isset($contest['old_key'])) {
+        if (isset($contest['old_key']) && $contest['old_key']) {
             $old_key = $contest['old_key'];
             unset($contest['old_key']);
             $key = $contest['key'];

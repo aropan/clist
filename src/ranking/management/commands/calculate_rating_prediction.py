@@ -268,9 +268,7 @@ class Command(BaseCommand):
                 prev_prediction = stat.rating_prediction
                 if prev_prediction and 'rating_change' in prev_prediction and 'rating_change' in ranking:
                     ranking['change_diff'] = ranking.get('rating_change') - prev_prediction['rating_change']
-                else:
-                    ranking['change_diff'] = ''
-                table.add_row([ranking[field] for field in fields])
+                table.add_row([ranking.get(field, '') for field in fields])
             print(table)
 
             with transaction.atomic(), suppress_db_logging_context():

@@ -8,22 +8,22 @@ table.standings th {
   vertical-align: middle !important;
 }
 
-.acc {
+.acc, .upsolved {
   color: #090;
   font-weight: bold;
 }
 
-.rej {
+.rej, .upsolving {
   color: #d22;
   font-weight: bold;
 }
 
-.hid, .upsolving {
+.hid {
   color: #da2;
   font-weight: bold;
 }
 
-.par, .upsolved {
+.par {
   color: #07f;
   font-weight: bold;
 }

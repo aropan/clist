@@ -42,11 +42,19 @@ class Statistic(BaseModule):
     @classmethod
     def _get(self, *args, req=None, **kwargs):
         req = req or REQ
+
+        headers = kwargs.setdefault('headers', {})
+        headers['User-Agent'] = 'Mediapartners-Google'
+        headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+
+        kwargs['with_curl'] = req.proxer is None and 'post' not in kwargs
+        kwargs['with_referer'] = False
+
         # if not getattr(self, '_authorized', None) and getattr(conf, 'LEETCODE_COOKIES', False):
         #     for kw in conf.LEETCODE_COOKIES:
         #         req.add_cookie(**kw)
         #     setattr(self, '_authorized', True)
-        return req.get(*args, **kwargs, additional_attempts={429: 12}, additional_delay=5)
+        return req.get(*args, **kwargs, additional_attempts={429: 12, 403: 10}, additional_delay=5)
 
     @staticmethod
     def _get_source_code_proxies_file():
@@ -124,7 +132,7 @@ class Statistic(BaseModule):
                 return
             with fetch_page_rate_limiter:
                 url = api_ranking_url_format.format(page + 1)
-                content = Statistic._get(url, n_attempts=3)
+                content = Statistic._get(url, ignore_codes={404}, n_attempts=3)
                 data = json.loads(content)
                 return data
 
@@ -762,6 +770,7 @@ class Statistic(BaseModule):
                         'by': contest_addition_update_by,
                         'clear_rating_change': True,
                         'try_renaming_check': True,
+                        'try_fill_missed_ranks': True,
                     },
                     'replace_info': True,
                 }

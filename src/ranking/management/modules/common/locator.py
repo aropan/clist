@@ -13,19 +13,28 @@ class Locator:
 
     def __init__(
         self,
-        locations_file=os.path.join(os.path.dirname(__file__), '.locations.yaml')
+        locations_file=os.path.join(os.path.dirname(__file__), '.locations.yaml'),
+        default_locations=None,
     ):
         self.locations_file = locations_file
         geolocator = Nominatim(user_agent="clist.by", timeout=5)
         self.geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1, max_retries=3)
         self.lock = FileLock(os.path.realpath(self.locations_file) + '.lock')
         self.locations = None
+        self.default_locations = default_locations
 
     def get_address(self, location, lang='en'):
         if not location:
             return
 
         location = re.sub(r'(\bг\.|\bг\b)', '', location)
+        location = re.sub(r'<[^>]*>', ' ', location)
+
+        location_lower = location.lower()
+        if self.default_locations and location_lower in self.default_locations:
+            location = self.default_locations[location_lower]
+            if location is None:
+                return
 
         if self.locations is None or location not in self.locations:
             try:
@@ -57,6 +66,23 @@ class Locator:
             return
         city, *_ = map(str.strip, address.split(','))
         return city
+
+    def get_location_dict(self, location, lang='en'):
+        ret = {}
+
+        address = self.get_address(location, lang=lang)
+        if not address:
+            return ret
+
+        country = self.get_country(location, lang=lang)
+        if country:
+            ret['country'] = country
+
+        city = self.get_city(location, lang=lang)
+        if city:
+            ret['city'] = city
+
+        return ret
 
     def read(self):
         with self.lock.acquire(timeout=60):

@@ -1378,3 +1378,19 @@ def get_admin_url(obj):
 @register.simple_tag
 def stat_has_failed_verdict(stat, small):
     return small and not is_solved(stat) and stat.get('verdict') and not stat.get('binary') and not stat.get('icon')
+
+
+@register.simple_tag
+def search_linked_coder(request, account):
+    name_instead_key = get_item(account, 'resource.info.standings.name_instead_key')
+    value = account.name if name_instead_key else account.key
+
+    search = request.GET.get('search')
+    if search:
+        if value in search.split(' || '):
+            return False
+        search = f'{search} || {value}'
+    else:
+        search = value
+
+    return search

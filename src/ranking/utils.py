@@ -11,7 +11,10 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django_super_deduper.merge import MergedModelInstance
+# from django.core.management import call_command
+from sql_util.utils import Exists
 
+from clist.models import Contest
 from ranking.management.modules.common import LOG
 from ranking.models import AccountRenaming, Statistics
 from utils.logger import suppress_db_logging_context
@@ -94,13 +97,66 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         return
     max_counter_val = key_counter.pop(max_counter_key)
     other_max_counter_val = max(key_counter.values(), default=0)
-    if max_counter_val < max(other_max_counter_val * 2, 3):
-        LOG.warning('Failed renaming %s, counter = %s', account, key_counter)
+    threshold_val = max(other_max_counter_val * 2, 3)
+    if max_counter_val < threshold_val:
+        LOG.warning('Failed renaming %s, max_key = %s, max_val = %d, threshold = %d, n_counters = %d',
+                    account, max_counter_key, max_counter_val, threshold_val, len(key_counter))
         return
     old_account = account.resource.account_set.get(key=max_counter_key)
     LOG.info('Renaming %s to %s', old_account, account)
     rename_account(old_account, account)
     return True
+
+
+def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
+    account.save()
+    ok = False
+    updated = 0
+    for contest_key in contest_keys:
+        addition_update = contest_addition_update[contest_key]
+        if '_rank' not in addition_update:
+            continue
+        rank = addition_update['_rank']
+        conditions = (Q(**{f'{field}': contest_key}) for field in fields)
+        condition = functools.reduce(operator.__or__, conditions)
+        condition &= Q(resource=account.resource)
+        base_contests = Contest.objects.filter(condition)
+        qs = base_contests.annotate(has_rank=Exists('statistics', filter=Q(place_as_int=rank)))
+        qs = qs.filter(Q(has_rank=False))
+        contests = list(qs)
+        if not contests:
+            contests = list(base_contests)
+            if len(contests) == 1:
+                contest = contests[0]
+                LOG.info('Missed rank %s for %s in %s', rank, account, contest)
+                # call_command('parse_statistic', contest_id=contest.pk, users=['jcaoso1a@.com'])
+                # ok = True
+            continue
+        if len(contests) > 1:
+            LOG.warning('Multiple contests with same key %s = %s', contest_key, contests)
+            continue
+        contest = contests[0]
+        updated += 1
+        statistic, created = Statistics.objects.update_or_create(
+            account=account,
+            contest=contest,
+            defaults={
+                'place': rank,
+                'place_as_int': rank,
+                'skip_in_stats': False,
+            },
+        )
+        statistic.addition.pop('_no_update_n_contests', None)
+        statistic.addition['_skip_on_update'] = True
+        if account.name:
+            statistic.addition['name'] = account.name
+        statistic.save(update_fields=['addition'])
+        if created:
+            ok = True
+    if updated:
+        LOG.info('Filled %d missed ranks for %s', updated, account)
+    account.refresh_from_db()
+    return ok
 
 
 @suppress_db_logging_context()
@@ -111,6 +167,7 @@ def account_update_contest_additions(
     by=None,
     clear_rating_change=None,
     try_renaming_check=None,
+    try_fill_missed_ranks=None,
 ):
     contest_keys = set(contest_addition_update.keys())
 
@@ -126,6 +183,10 @@ def account_update_contest_additions(
     for contest_key, update in contest_addition_update.items():
         group = update.get('_group')
         if group:
+            if try_fill_missed_ranks:
+                try_fill_missed_ranks = False
+                LOG.warning("Grouped contests don't support fill_missed_ranks")
+                continue
             grouped_contest_keys[group].append(contest_key)
 
     iteration = 0
@@ -195,9 +256,15 @@ def account_update_contest_additions(
         if iteration > 1 and not total:
             break
 
-        if try_renaming_check and renaming_check(account, renaming_contest_keys, fields, contest_addition_update):
+        if try_renaming_check:
             try_renaming_check = False
-            continue
+            if renaming_check(account, renaming_contest_keys, fields, contest_addition_update):
+                try_fill_missed_ranks = False
+                continue
+        if try_fill_missed_ranks:
+            try_fill_missed_ranks = False
+            if fill_missed_ranks(account, renaming_contest_keys, fields, contest_addition_update):
+                continue
         if contest_keys:
             out_contests = list(grouped_contest_keys.values()) or list(contest_keys)
             LOG.warning('Not found %d contests for %s = %s', len(out_contests), account, out_contests[:5])

@@ -421,8 +421,9 @@ class Command(BaseCommand):
                             if users:
                                 statistics = statistics.filter(account__key__in=users)
                             for s in statistics.iterator():
-                                if with_stats:
-                                    statistics_by_key[s.account.key] = s.addition or {}
+                                addition = s.addition or {}
+                                if with_stats and not addition.get('_skip_on_update'):
+                                    statistics_by_key[s.account.key] = addition
                                     more_statistics_by_key[s.account.key] = {
                                         'pk': s.pk,
                                         'place': s.place,
@@ -558,6 +559,8 @@ class Command(BaseCommand):
                                 else:
                                     result[new_key] = result.pop(old_key)
                                     result[new_key]['member'] = new_key
+                                    result[new_key]['_no_update_name'] = True
+                                    result[new_key].pop('info', None)
 
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics') or {}
@@ -1198,17 +1201,17 @@ class Command(BaseCommand):
                                 update_problems_first_ac()
                             defaults, addition, try_calculate_time = get_addition()
 
-                            statistic, statistics_created = Statistics.objects.update_or_create(
+                            statistic, statistic_created = Statistics.objects.update_or_create(
                                 account=account,
                                 contest=contest,
                                 defaults=defaults,
                             )
                             n_statistics_total += 1
-                            n_statistics_created += statistics_created
+                            n_statistics_created += statistic_created
                             contest_log_counter['statistics_total'] += 1
-                            contest_log_counter['statistics_created'] += statistics_created
+                            contest_log_counter['statistic_created'] += statistic_created
 
-                            update_after_update_or_create(statistic, statistics_created, addition, try_calculate_time)
+                            update_after_update_or_create(statistic, statistic_created, addition, try_calculate_time)
 
                             if link_accounts:
                                 link_account(statistic)
@@ -1218,7 +1221,7 @@ class Command(BaseCommand):
                                 and not skip_result
                                 and not addition.get('_skip_subscription')
                                 and (
-                                    statistics_created
+                                    statistic_created
                                     or stat.get('score', 0) < statistic.solving + EPS
                                 )
                             )

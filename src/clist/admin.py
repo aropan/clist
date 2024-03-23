@@ -6,7 +6,7 @@ from sql_util.utils import SubqueryCount
 from clist.models import Banner, Contest, ContestSeries, Problem, ProblemTag, Resource
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
-from ranking.models import Rating
+from ranking.models import Rating, Module
 
 
 @admin_register(Contest)
@@ -196,6 +196,11 @@ class ResourceAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return ['n_accounts', 'n_contests'] + list(super().get_readonly_fields(request, obj))
+
+    class ModuleInline(admin.StackedInline):
+        model = Module
+
+    inlines = (ModuleInline, )
 
 
 @admin_register(Problem)

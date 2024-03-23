@@ -78,7 +78,12 @@ class Statistic(BaseModule):
                     next_page = p
             page = next_page
 
-            table = parsed_table.ParsedTable(html=content, xpath="//table[contains(@class,'table-ranking')]//tr")
+            mapping = {'Użytkownik': 'User'}
+            table = parsed_table.ParsedTable(
+                html=content,
+                xpath="//table[contains(@class,'table-ranking')]//tr",
+                header_mapping=mapping,
+            )
             for r in table:
                 row = collections.OrderedDict()
                 problems = row.setdefault('problems', {})

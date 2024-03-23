@@ -74,6 +74,8 @@ services:
       -c work_mem=64MB
       -c maintenance_work_mem=500MB
     shm_size: 4GB
+    ports:
+      - ${CLIST_DB_PORT:-5432}:5432
     restart: unless-stopped
   nginx:
     build:

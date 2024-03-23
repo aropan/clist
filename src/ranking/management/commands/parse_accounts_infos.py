@@ -197,7 +197,9 @@ class Command(BaseCommand):
                                 seen.add(account.key)
                                 continue
 
-                            account.deleted = data.get('delete', False)
+                            if (deleted := data.get('delete', False)) != account.deleted:
+                                account.deleted = deleted
+                                account.save(update_fields=['deleted'])
                             if account.deleted:
                                 if 'coder' in data:
                                     account.coders.filter(username=data['coder']).delete()

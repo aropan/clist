@@ -13,6 +13,7 @@ from clist.templatetags.extras import get_item
 from my_oauth.models import Service
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common.locator import Locator
 
 
 class Statistic(BaseModule):
@@ -207,6 +208,18 @@ class Statistic(BaseModule):
             if not match:
                 break
             url = urljoin(url, match.group('href'))
+
+        default_locations = get_item(self.resource, 'info.standings.default_locations')
+        with Locator(default_locations=default_locations) as locator:
+            for row in result.values():
+                if 'country' in row:
+                    continue
+                name = row['name']
+                match = re.search(r',\s*(?P<address>[^,]+)$', name)
+                if not match:
+                    continue
+                address = match.group('address')
+                row.update(locator.get_location_dict(address, lang='ru'))
 
         names = {row['name'] for row in result.values()}
         submission_infos = self.get_submission_infos(statistics, names) or {}

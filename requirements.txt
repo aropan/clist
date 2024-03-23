@@ -1,4 +1,4 @@
-Django==4.2.10
+Django==4.2.11
 django-add-default-value==0.10.0
 django-cache-machine==1.2.0
 django-countries==7.5.1

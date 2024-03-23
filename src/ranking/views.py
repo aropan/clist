@@ -1000,13 +1000,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     division = request.GET.get('division')
     divisions_order = get_standings_divisions_order(contest)
 
-    if division == 'any' or contests_ids:
-        with_row_num = True
-        if 'penalty' in contest_fields:
-            order.append('addition__penalty')
-        if 'place_as_int' in order:
-            order.remove('place_as_int')
-            order.append('place_as_int')
     if division != 'any' and divisions_order and division not in divisions_order:
         if find_me:
             values = statistics.filter(pk=find_me).values('addition__division')
@@ -1022,6 +1015,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             division = divisions_order[0]
         if not values and values is not None and not inplace_division:
             division = 'any'
+    if division == 'any' or contests_ids:
+        with_row_num = True
+        if 'penalty' in contest_fields:
+            order.append('addition__penalty')
+        if 'place_as_int' in order:
+            order.remove('place_as_int')
+            order.append('place_as_int')
 
     division_addition = contest.info.get('divisions_addition', {}).get(division, {})
 

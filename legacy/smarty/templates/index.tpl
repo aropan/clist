@@ -13,8 +13,8 @@
         <script type="text/javascript" src="/js/countdown.js"></script>
         <script type="text/javascript" src="/js/yepnope.1.5.4-min.js"></script>
         <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/helper.js"}
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/google.analytics.js"}
+{include file="{$smarty.server.DOCUMENT_ROOT}/js/helper.tpl"}
+{include file="{$smarty.server.DOCUMENT_ROOT}/js/google.analytics.tpl"}
 
     </head>
     <body>
@@ -42,7 +42,7 @@
 {/if}
 
         <div id="fb-root"></div>
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/yandex.metrika.js"}
+{include file="{$smarty.server.DOCUMENT_ROOT}/js/yandex.metrika.tpl"}
 
 <!--
         <div id="logins">
@@ -220,9 +220,9 @@ style="width:80px; height:15px; border:0;" alt="Яндекс.Метрика" tit
             </a>
 -->
         </div>
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/block.share.js"}
+{include file="{$smarty.server.DOCUMENT_ROOT}/js/block.share.tpl"}
 
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/afterload.js"}
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/reformal.js"}
+{include file="{$smarty.server.DOCUMENT_ROOT}/js/afterload.tpl"}
+{include file="{$smarty.server.DOCUMENT_ROOT}/js/reformal.tpl"}
     </body>
 </html>

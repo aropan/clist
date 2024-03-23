@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
+from requests.models import Response
 import atexit
+import subprocess
 import copy
 import html
 import json
@@ -82,6 +84,12 @@ class FailOnGetResponse(BaseException):
         return self.response_
 
 
+class CurlFailedResponse(FailOnGetResponse):
+
+    def __getattr__(self, name):
+        return getattr(self.args[0], name, None)
+
+
 def raise_fail(err):
     exc = FailOnGetResponse(err)
     if exc.url:
@@ -89,7 +97,7 @@ def raise_fail(err):
     if exc.response:
         cropped_response = exc.response.strip().replace('\n', '\\n')[:200]
         logger.warning(f'response = {cropped_response}')
-    raise exc
+    raise exc from err
 
 
 class NoVerifyWord(Exception):
@@ -389,6 +397,36 @@ def read_response(response):
         return buf.read()
 
 
+def curl_response(url, headers=None):
+
+    args = ['curl', '-i', url, '-L']
+    if headers:
+        for k, v in headers.items():
+            args.extend(['-H', f'{k}: {v}'])
+
+    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+
+    output = stdout.decode('utf-8')
+    headers_raw, body = output.split('\r\n\r\n', 1)
+    headers_lines = headers_raw.split('\r\n')
+
+    response = Response()
+    response._content = body.encode('utf-8')
+
+    for header in headers_lines[1:]:
+        key, value = header.split(": ", 1)
+        response.headers[key] = value
+
+    status_line = headers_lines[0].split(' ')
+    response.code = int(status_line[1])
+    response.reason = ' '.join(status_line[2:])
+    response.url = url
+    response.info = lambda *args, **kwargs: response.headers
+    response.read = lambda: response._content
+    return response
+
+
 class requester():
     cache_timeout = 10940
     caching = True
@@ -502,6 +540,8 @@ class requester():
         additional_delay=0,
         last_info=True,
         params=None,
+        with_curl=False,
+        with_referer=True,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -563,7 +603,7 @@ class requester():
                 sleep(v_time_sleep)
             if not headers:
                 headers = {}
-            if self.last_url and 'Referer' not in headers:
+            if with_referer and self.last_url and 'Referer' not in headers:
                 headers.update({"Referer": self.last_url})
             if self.last_url:
                 prev = urllib.parse.urlparse(self.last_url)
@@ -600,24 +640,32 @@ class requester():
                     if self.proxer:
                         time_out = min(time_out, self.proxer.time_limit)
                     proxy = self.proxy
-                    response = self.opener.open(
-                        request,
-                        post_urlencoded if post else None,
-                        timeout=time_out,
-                    )
 
-                    last_url = response.geturl() if response else url
+                    if with_curl:
+                        response = curl_response(url, headers)
+                        if response.code != 200:
+                            raise CurlFailedResponse(response)
+                        last_url = url
+                    else:
+                        response = self.opener.open(
+                            request,
+                            post_urlencoded if post else None,
+                            timeout=time_out,
+                        )
+                        last_url = response.geturl() if response else url
+
                     if return_last_url:
                         return last_url
                     page = read_response(response)
                 except Exception as err:
-                    error_code = err.code if isinstance(err, urllib.error.HTTPError) else None
+                    with_error_code = isinstance(err, (urllib.error.HTTPError, CurlFailedResponse))
+                    error_code = err.code if with_error_code else None
                     if ignore_codes and error_code in ignore_codes:
                         force_json = False
                         response = err
                         page = read_response(response)
                     else:
-                        self.print('[error]', str(err)[:200])
+                        self.print(f'[error] code = {error_code}, response = {str(err)[:200]}')
                         self.error = err
                         if self.proxer:
                             self.proxer.fail(proxy=str(proxy))
@@ -931,20 +979,3 @@ class requester():
             diff_time = (datetime.now() - datetime.fromtimestamp(getctime(self.dir_cache + file_cache)))
             if diff_time.seconds >= self.cache_timeout:
                 remove(self.dir_cache + file_cache)
-
-
-if __name__ == "__main__":
-    headers = [
-        ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'),
-        ('Accept-Encoding', 'gzip,deflate,sdch'),
-        ('Accept-Language', 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4'),
-        ('Proxy-Connection', 'keep-alive'),
-        ('User-Agent',
-         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
-         'Ubuntu Chromium/37.0.2062.120 Chrome/37.0.2062.120 Safari/537.36'),
-    ]
-    req = requester(headers=headers)
-    req.caching = False
-    req.time_sleep = 1
-    req.get("http://opencup.ru")
-    req.get("http://clist.by")
