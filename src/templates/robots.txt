@@ -13,7 +13,7 @@ Disallow: /profile/
 Disallow: /telegram/
 Disallow: /login/
 Disallow: /logout/
-Disallow: /singup/
+Disallow: /signup/
 Disallow: /oauth/
 Disallow: /auth/
 Disallow: /o/
