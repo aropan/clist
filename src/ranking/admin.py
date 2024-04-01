@@ -6,7 +6,7 @@ from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import (Account, AccountRenaming, AccountVerification, AutoRating, Module, Rating, Stage,
-                            Statistics, VerifiedAccount, VirtualStart)
+                            Statistics, VerifiedAccount, VirtualStart, StageContest)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -150,6 +150,19 @@ class StageAdmin(BaseModelAdmin):
 
     actions = [parse_stage]
 
+    class StageContestInline(admin.TabularInline):
+        model = StageContest
+        raw_id_fields = ['contest']
+        ordering = ['-contest__start_time']
+
+        def has_add_permission(self, request, obj=None):
+            return False
+
+        def has_change_permission(self, request, obj=None):
+            return False
+
+    inlines = [StageContestInline]
+
 
 @admin_register(Module)
 class ModuleAdmin(BaseModelAdmin):
@@ -170,3 +183,9 @@ class ModuleAdmin(BaseModelAdmin):
 class VirtualStartAdmin(BaseModelAdmin):
     list_display = ['id', 'coder', 'entity', 'start_time']
     search_fields = ['coder__username']
+
+
+@admin_register(StageContest)
+class StageContestAdmin(BaseModelAdmin):
+    list_display = ['stage', 'contest', 'created', 'modified']
+    list_filter = ['contest__resource']

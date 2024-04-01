@@ -31,7 +31,7 @@ class Command(BaseCommand):
         parser.add_argument('-bs', '--batch-size', type=int, help='batch size', default=1000)
         parser.add_argument('-n', '--limit', type=int, help='number of accounts')
         parser.add_argument('--rank-update-delay', help='time delay after rank last update time',
-                            default='1 week')
+                            default='5 days')
         parser.add_argument('--rating-update-delay', help='time delay after rating last update time',
                             default='1 day')
         parser.add_argument('--without-delay', action='store_true', help='do not check delay')

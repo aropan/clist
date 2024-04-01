@@ -488,11 +488,16 @@ class Module(BaseModel):
         return f'{self.resource.host} Module#{self.id}'
 
 
+class StageContest(BaseModel):
+    stage = models.ForeignKey('ranking.Stage', on_delete=models.CASCADE)
+    contest = models.ForeignKey('clist.Contest', on_delete=models.CASCADE)
+
+
 class Stage(BaseModel):
     contest = models.OneToOneField(Contest, on_delete=models.CASCADE)
     filter_params = models.JSONField(default=dict, blank=True)
     score_params = models.JSONField(default=dict, blank=True)
-    contests = models.ManyToManyField(Contest, related_name='stages', blank=True)
+    contests = models.ManyToManyField(Contest, related_name='stages', through='StageContest', blank=True)
 
     def __str__(self):
         return 'Stage#%d %s' % (self.pk, self.contest)

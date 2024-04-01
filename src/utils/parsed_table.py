@@ -98,6 +98,7 @@ class ParsedTable(object):
         without_header=False,
         strip_empty_columns=False,
         default_header_rowspan=1,
+        skip_header_rows=None,
     ):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
@@ -110,12 +111,17 @@ class ParsedTable(object):
         self.ignore_display_none = ignore_display_none
         self.without_header = without_header
         self.strip_empty_columns = strip_empty_columns
+        self.skip_header_rows = skip_header_rows
         self.init_iter(default_header_rowspan)
         self.last_row = None
 
     def init_iter(self, default_header_rowspan=1):
         self.n_rows = len(self.table) - 1
         self.iter_table = iter(self.table)
+        if self.skip_header_rows:
+            for _ in range(self.skip_header_rows):
+                next(self.iter_table)
+
         if self.without_header:
             self.header = ParsedTableRow()
         else:
@@ -152,6 +158,33 @@ class ParsedTable(object):
 
     def __len__(self):
         return self.n_rows
+
+    def get_item(self, row, columns):
+        kv = []
+        colspan = 0
+        for h, r in zip(self.header.columns, columns):
+            if self.with_duplicate_colspan and colspan > 0:
+                colspan -= 1
+                continue
+            k = h.value
+            if k in self.header_mapping:
+                k = self.header_mapping[k]
+            v = ParsedTableValue(row, r, h)
+            kv.append((k, v))
+            colspan = r.colspan - 1
+
+        if self.as_list:
+            return kv
+
+        ret = OrderedDict()
+        for k, v in kv:
+            if k in ret:
+                if not isinstance(ret[k], list):
+                    ret[k] = [ret[k]]
+                ret[k].append(v)
+            else:
+                ret[k] = v
+        return ret
 
     def __next__(self):
         while True:
@@ -192,28 +225,4 @@ class ParsedTable(object):
             if not self.ignore_wrong_header_number:
                 return row
 
-        kv = []
-        colspan = 0
-        for h, r in zip(self.header.columns, row.columns):
-            if self.with_duplicate_colspan and colspan > 0:
-                colspan -= 1
-                continue
-            k = h.value
-            if k in self.header_mapping:
-                k = self.header_mapping[k]
-            v = ParsedTableValue(row, r, h)
-            kv.append((k, v))
-            colspan = r.colspan - 1
-
-        if self.as_list:
-            return kv
-
-        ret = OrderedDict()
-        for k, v in kv:
-            if k in ret:
-                if not isinstance(ret[k], list):
-                    ret[k] = [ret[k]]
-                ret[k].append(v)
-            else:
-                ret[k] = v
-        return ret
+        return self.get_item(row, row.columns)

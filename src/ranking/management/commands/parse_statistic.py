@@ -27,7 +27,7 @@ from django_print_sql import print_sql_decorator
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
-                                       time_in_seconds, time_in_seconds_format)
+                                       time_in_seconds, time_in_seconds_format, get_item)
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
@@ -477,6 +477,14 @@ class Command(BaseCommand):
                                     row['_skip_update'] = True
                                     contest_log_counter['skip_update'] += 1
                                     result[member] = row
+
+                        if get_item(resource, 'info.standings.skip_not_solving'):
+                            result = standings.setdefault('result', {})
+                            for member in list(result):
+                                row = result[member]
+                                if not row.get('solving'):
+                                    contest_log_counter['skip_not_solving'] += 1
+                                    result.pop(member)
 
                         for key, more_stat in more_statistics_by_key.items():
                             statistics_by_key[key].update(more_stat)

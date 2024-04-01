@@ -17,6 +17,7 @@ import pytz
 import tqdm
 import yaml
 from django.db import transaction
+from django.utils.timezone import now
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import get_item, is_improved_solution
@@ -30,6 +31,7 @@ from utils.logger import suppress_db_logging_context
 
 class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global'
+    QUESTIONS_URL_FORMAT_ = 'https://leetcode.com/contest/api/info/{key}/'
     RANKING_URL_FORMAT_ = '{url}/ranking'
     API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}/api/submissions/{}/'
     STATE_FILE = os.path.join(os.path.dirname(__file__), '.leetcode.yaml')
@@ -54,7 +56,7 @@ class Statistic(BaseModule):
         #     for kw in conf.LEETCODE_COOKIES:
         #         req.add_cookie(**kw)
         #     setattr(self, '_authorized', True)
-        return req.get(*args, **kwargs, additional_attempts={429: 12, 403: 10}, additional_delay=5)
+        return req.get(*args, **kwargs, additional_attempts={429: 20, 403: 20}, additional_delay=5)
 
     @staticmethod
     def _get_source_code_proxies_file():
@@ -87,6 +89,10 @@ class Statistic(BaseModule):
         if not data:
             return {'result': {}, 'url': standings_url}
 
+        questions_url = self.QUESTIONS_URL_FORMAT_.format(**self.__dict__)
+        page = Statistic._get(questions_url)
+        questions_data = json.loads(page)
+
         problems_info = OrderedDict((
             (
                 str(p['question_id']),
@@ -99,7 +105,7 @@ class Statistic(BaseModule):
                     'slug': p['title_slug'],
                 }
             )
-            for i, p in enumerate(data['questions'], start=1)
+            for i, p in enumerate(questions_data['questions'], start=1)
         ))
 
         def update_problem_info(info):
@@ -294,7 +300,11 @@ class Statistic(BaseModule):
                             last = value
                         row['place'] = place
 
-                if solutions_for_get:
+                to_get_solutions = os.environ.get('SKIP_GET_SOLUTIONS') is None and (
+                    self.contest.has_rating_prediction
+                    or self.end_time + timedelta(hours=2) < now()
+                )
+                if solutions_for_get and to_get_solutions:
                     try:
                         if n_top_submissions:
                             n_solutions_limit = n_top_submissions * len(problems_info)

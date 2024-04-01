@@ -103,6 +103,16 @@ class BaseModelAdmin(GuardedModelAdmin):
             formfield.widget = forms.TextInput()
         return formfield
 
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        if search_term and getattr(self, 'search_entirely', False):
+            search_fields = getattr(self, 'search_fields', [])
+            condition = models.Q()
+            for field in search_fields:
+                condition |= models.Q(**{f'{field}__contains': search_term})
+            queryset = queryset.filter(condition)
+        return queryset, use_distinct
+
     class Meta:
         abstract = True
 

@@ -26,6 +26,23 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   var coloring_field = get_or_default(resource_info['coloring_field'], 'new_rating')
   var with_url = !get_or_default(resource_info['without_url'], false)
 
+  function hsl_to_color(hsl) {
+    return 'hsl(' + hsl[0] * 360 + ',' + hsl[1] * 100 + '%,' + (hsl[2] * 100 + 100) * 0.5 + '%)'
+  }
+
+  function get_color(val, space='rgb') {
+    for (var idx in resource_info['colors']) {
+      var rating = resource_info['colors'][idx]
+      if (rating['low'] <= val[coloring_field] && val[coloring_field] <= rating['high']) {
+        if (space == 'rgb') {
+          return rating['hex_rgb']
+        } else if (space == 'hsl') {
+          return hsl_to_color(rating.hsl)
+        }
+      }
+    }
+  }
+
   var datasets = [].concat.apply([], $.map(resource_info['data'], function(data, index) {
     var dataset = {
       data: $.map(data, function(val) { return {x: val['date'], y: is_addition? val['values'][y_field] : val['new_rating']}; }),
@@ -38,14 +55,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
       pointHitRadius: get_or_default(resource_info['point_hit_radius'], 1),
       pointHoverRadius: 5,
       fill: false,
-      pointBackgroundColor: $.map(data, function(val) {
-        for (var idx in resource_info['colors']) {
-          var rating = resource_info['colors'][idx]
-          if (rating['low'] <= val[coloring_field] && val[coloring_field] <= rating['high']) {
-            return rating['hex_rgb']
-          }
-        }
-      }),
+      pointBackgroundColor: $.map(data, function(val) { return get_color(val, 'rgb') }),
     }
     var ret = [dataset]
     if (get_or_default(resource_info['outline'], false)) {
@@ -78,9 +88,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
           for (var i = 0; i < rating_colors.length; ++i) {
             var to = get_y_chart(rating_colors[i].low, y_axis)
             var from = get_y_chart(rating_colors[i].high + 1, y_axis)
-            hsl = rating_colors[i].hsl
-            color = 'hsl(' + hsl[0] * 360 + ',' + hsl[1] * 100 + '%,' + (hsl[2] * 100 + 100) * 0.5 + '%)'
-            ctx.fillStyle = color
+            ctx.fillStyle = hsl_to_color(rating_colors[i].hsl)
             ctx.fillRect(x_axis.left, from, x_axis.width, to - from)
           }
 
@@ -280,8 +288,8 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
               if (dataset.history === undefined) {
                 return
               }
-              var color = dataset.pointBackgroundColor[tooltipItem.dataIndex]
               var hist = dataset.history[tooltipItem.dataIndex]
+              var color = get_color(hist, 'hsl')
               var rating = '<span style="font-weight: bold; color: ' + color + '">' + hist['new_rating'] + '</span>'
               if (hist['old_rating'] || hist['rating_change']) {
                 var change = hist['old_rating']? hist['new_rating'] - hist['old_rating'] : hist['rating_change']

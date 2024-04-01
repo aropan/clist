@@ -92,11 +92,14 @@ class CurlFailedResponse(FailOnGetResponse):
 
 def raise_fail(err):
     exc = FailOnGetResponse(err)
-    if exc.url:
-        logger.warning(f'url = {exc.url}')
-    if exc.response:
-        cropped_response = exc.response.strip().replace('\n', '\\n')[:200]
-        logger.warning(f'response = {cropped_response}')
+    if exc.code or exc.url:
+        msg = f'code = {exc.code}, url = `{exc.url}`'
+        if exc.response:
+            response = exc.response.strip().replace('\n', '\\n')
+            if len(response) > 200:
+                response = response[:200] + '...'
+            msg += f', response = `{response}`'
+        logger.warning(msg)
     raise exc from err
 
 

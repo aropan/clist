@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules import conf
 
 
 class Statistic(BaseModule):
@@ -17,6 +18,49 @@ class Statistic(BaseModule):
 
         if not self.name or not self.start_time or not self.url:
             raise InitModuleException()
+
+    @staticmethod
+    def _get(url):
+        page = REQ.get(url)
+        form = REQ.form(name='logon', action='login.jsp')
+        if form:
+            REQ.submit_form(form=form, data={
+                'id': conf.DLGSU_ID,
+                'password': conf.DLGSU_PASSWORD,
+            })
+            form = REQ.form(name='dllogon')
+            if form:
+                REQ.submit_form(data={}, form=form)
+            page = REQ.get(url)
+        return page
+
+    @staticmethod
+    def _get_byio_problems(year):
+        page = Statistic._get('https://dl.gsu.by/tasks/taskchoi.jsp?c.id=19')
+        table = parsed_table.ParsedTable(page)
+        problems = []
+        for row in table:
+            name = row[''].value.strip()
+            if name != 'Белорусская':
+                continue
+            value = row[str(year)]
+            href = value.column.node.xpath('a/@href')
+            if not href:
+                continue
+            page = Statistic._get(href[0])
+            table = parsed_table.ParsedTable(page, as_list=True)
+            for idx, row in enumerate(table):
+                (_, name), *_, (_, full_score) = row
+                url = urljoin(REQ.last_url, name.column.node.xpath('a/@href')[0])
+                name = name.value.split('. ', 1)[-1].strip()
+                full_score = int(full_score.value)
+                problems.append({
+                    'name': name,
+                    'full_score': full_score,
+                    'url': url,
+                    'visible': True,
+                })
+        return problems
 
     def get_standings(self, users=None, statistics=None):
         standings_data = None
@@ -112,7 +156,7 @@ class Statistic(BaseModule):
             html_table = re.search('<table[^>]*bgcolor="silver"[^>]*>.*?</table>',
                                    page,
                                    re.MULTILINE | re.DOTALL).group(0)
-            table = parsed_table.ParsedTable(html_table, as_list=True)
+            table = parsed_table.ParsedTable(html_table, as_list=True, ignore_wrong_header_number=False)
             return table
 
         table = get_table(page)
@@ -142,6 +186,15 @@ class Statistic(BaseModule):
 
         result = {}
         for r in table:
+            if isinstance(r, parsed_table.ParsedTableRow):
+                values = []
+                for v in r.columns:
+                    if re.search('^[0-9]*$', v.value.strip()) or (not values or values[-1].value != v.value):
+                        values.append(v)
+                if not len(values) <= len(table.header.columns) <= len(values) + 2:
+                    raise ExceptionParseStandings('Not match columns count')
+                r = table.get_item(row=r, columns=values)
+
             row = OrderedDict()
             problems = row.setdefault('problems', {})
             pid = 0
@@ -164,10 +217,9 @@ class Statistic(BaseModule):
                     if v.value:
                         row['solving'] = float(v.value)
                 elif k == 'Область':
-                    row['region'] = v.value
+                    row['region'] = v.value.strip()
                 elif k == 'Класс':
-                    match = re.search('^[0-9]+', v.value)
-                    row['class'] = int(match.group(0)) if match else v.value
+                    row['class'] = v.value.strip()
                 elif is_problem(v):
                     if is_olymp:
                         pid += 1
@@ -215,6 +267,12 @@ class Statistic(BaseModule):
             if 'member' not in row:
                 continue
             result[row['member']] = row
+
+        additions = self.info.get('additions')
+        if additions:
+            for row in result.values():
+                if row['name'] in additions:
+                    row.update(additions[row['name']])
 
         last_solving = None
         last_rank = None
@@ -272,6 +330,12 @@ class Statistic(BaseModule):
 
         if self.info.get('series'):
             standings['series'] = self.info['series']
+            if self.info['series'] == 'byio':
+                problems = self._get_byio_problems(self.start_time.year)
+                if len(problems) != len(standings['problems']):
+                    raise ExceptionParseStandings('Not match problems count')
+                for p, p_info in zip(problems, standings['problems']):
+                    p_info.update(p)
 
         if result and standings_data:
             standings['_standings_data'] = standings_data
@@ -279,36 +343,3 @@ class Statistic(BaseModule):
             self.resource.save(update_fields=['info'])
 
         return standings
-
-
-if __name__ == '__main__':
-    import os
-    import sys
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'pyclist.settings'
-
-    from django import setup
-    setup()
-
-    from django.utils import timezone
-
-    from clist.models import Contest
-
-    qs = Contest.objects \
-        .filter(host='dl.gsu.by', end_time__lt=timezone.now()) \
-        .order_by('-start_time')
-    for contest in qs[:1]:
-        contest.standings_url = None
-
-        statistic = Statistic(
-            name=contest.title,
-            url=contest.url,
-            key=contest.key,
-            standings_url=contest.standings_url,
-            start_time=contest.start_time,
-        )
-
-        try:
-            pprint(statistic.get_standings())
-        except Exception:
-            pass

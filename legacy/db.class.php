@@ -88,10 +88,19 @@
             return $this->query($sql);
         }
 
-        function delete($table, $where = false)
+        function delete($table, $where = false, $references = false)
         {
             $sql = "delete from " . $table . "";
-            if ($where) $sql  .= " where " . $where;
+            if ($where) {
+                $sql .= " where " . $where;
+                if ($references) {
+                    foreach ($references as $ref_table => $ref_field) {
+                        $delete_from_sql = "delete from " . $ref_table . " where " . $ref_field . " in (select id from " . $table . " where " . $where . ")";
+                        $sql = $delete_from_sql . "; " . $sql;
+                    }
+                }
+            }
+
             return $this->query($sql);
         }
 

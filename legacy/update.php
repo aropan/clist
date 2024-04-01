@@ -429,7 +429,7 @@
                     "{$contest['title']} [{$contest['key']}] <{$contest['url']}></span><br>\n";
             }
             if (!DEBUG) {
-                $db->delete("clist_contest", $query);
+                $db->delete("clist_contest", $query, array('ranking_stagecontest' => 'contest_id'));
             }
         }
     }

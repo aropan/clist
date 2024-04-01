@@ -10,7 +10,7 @@
         $page = curlexec($page_url);
 
         preg_match_all('#
-            <a[^>]*href="(?<url>[^"]+/contests/(?P<key>[0-9]+))">(?<title>[^<]+)
+            <a[^>]*href="(?<url>[^"]+/contests/(?P<key>[a-z0-9]+))">(?<title>[^<]+)
             <span[^>]*>[^<]*<i[^>]*>[^<]*</i>[^<]*</span>[^<]*</a>[^<]*
             <div[^>]*class="eo-competition-row__dates">[^<]*
             (?:

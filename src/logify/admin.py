@@ -9,7 +9,8 @@ from pyclist.admin import BaseModelAdmin, admin_register
 class EventLogAdmin(BaseModelAdmin):
     list_display = ['id', 'related_object_link', 'name', 'status', 'message', 'created', 'elapsed']
     list_filter = ['name', 'status', 'resource']
-    search_fields = ['contest__title', 'contest__host', 'contest__pk', 'resource__host', 'name', 'message']
+    search_fields = ['contest__title', 'contest__host', 'resource__host', 'name', 'message']
+    search_entirely = True
 
     def related_object_link(self, obj):
         url = reverse(f'admin:{obj.content_type.app_label}_{obj.content_type.model}_change', args=[obj.object_id])

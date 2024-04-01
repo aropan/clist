@@ -20,6 +20,7 @@ import pytz
 import tqdm
 from django.core.cache import cache
 from django.utils.timezone import now
+from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -40,6 +41,7 @@ class Statistic(BaseModule):
         escape_url = challenge.get('externalUrl', '')
         is_escape = '://escape.' in escape_url
 
+        @RateLimiter(max_calls=10, period=1)
         def get_leaderboard(url, column="", value="", limit=None):
             active = 'true' if column else 'false'
             filt = f'{{"active":{active},"column":"{column}","filter":"{value}"}}'
@@ -162,6 +164,8 @@ class Statistic(BaseModule):
                         row['update_time'] = row.pop('updateTime') / 1000
                     if 'creationTime' in row:
                         row['submit_time'] = row.pop('creationTime') / 1000
+                    if 'duration' in row:
+                        row['duration'] = self.to_time(row['duration'] / 1000, 3)
 
                     row.pop('public_handle', None)
                     row.pop('test_session_handle', None)
@@ -309,6 +313,7 @@ class Statistic(BaseModule):
             ('league_rank', 'league_rank'),
             ('language', 'language'),
             ('clashes_count', 'clashes_count'),
+            ('duration', 'duration'),
         ]
 
         if self.end_time > now():

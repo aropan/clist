@@ -128,7 +128,7 @@ class Resource(BaseModel):
                 if isinstance(value, str):
                     value = int(value)
                 for rating in self.ratings:
-                    if rating['low'] <= value <= rating['high']:
+                    if rating['low'] <= value < rating['high'] + rating.get('sign', 1):
                         return rating, value
         return None, None
 
