@@ -5,7 +5,7 @@ import os
 import re
 from copy import deepcopy
 from pydoc import locate
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 import magic
 import requests
@@ -25,7 +25,6 @@ from django.utils.crypto import get_random_string
 from django_countries.fields import CountryField
 from django_print_sql import print_sql
 from sql_util.utils import Exists, SubqueryCount, SubquerySum
-from urllib.parse import quote
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import add_prefix_to_problem_short, get_problem_short, slug
@@ -47,6 +46,7 @@ class Account(BaseModel):
     n_writers = models.IntegerField(default=0, db_index=True)
     last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     last_submission = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
+    last_rating_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
     resource_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
@@ -59,7 +59,7 @@ class Account(BaseModel):
     deleted = models.BooleanField(null=True, blank=True, default=None, db_index=True)
 
     def __str__(self):
-        return '%s on %s' % (str(self.key), str(self.resource_id))
+        return 'Account#%d %s on %s' % (self.pk, str(self.key), str(self.resource_id))
 
     def dict(self):
         return {
@@ -105,6 +105,33 @@ class Account(BaseModel):
             return True
         if 'email' in field:
             return True
+
+    def get_last_season(self):
+        if not self.last_activity:
+            return
+        date = self.last_activity
+        year = date.year - (0 if date.month > 8 else 1)
+        season = f'{year}-{year + 1}'
+        return season
+
+    def update_last_activity(self, statistic):
+        if (
+            statistic.last_activity and
+            (not self.last_activity or self.last_activity < statistic.last_activity)
+        ):
+            self.last_activity = statistic.last_activity
+            self.save(update_fields=['last_activity'])
+
+    def update_last_rating_activity(self, statistic, contest=None, resource=None):
+        contest = contest or statistic.contest
+        resource = resource or contest.resource
+        if (
+            statistic.is_rated and statistic.last_activity and
+            (not self.last_rating_activity or self.last_rating_activity < statistic.last_activity) and
+            resource.is_major_kind(contest)
+        ):
+            self.last_rating_activity = statistic.last_activity
+            self.save(update_fields=['last_rating_activity'])
 
     class Meta:
         indexes = [
@@ -152,13 +179,28 @@ class Account(BaseModel):
 
         unique_together = ('resource', 'key')
 
-    def get_last_season(self):
-        if not self.last_activity:
-            return
-        date = self.last_activity
-        year = date.year - (0 if date.month > 8 else 1)
-        season = f'{year}-{year + 1}'
-        return season
+
+class CountryAccount(BaseModel):
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    country = CountryField(null=False, db_index=True)
+    n_accounts = models.IntegerField(default=0, db_index=True)
+    n_rating_accounts = models.IntegerField(default=0, db_index=True)
+    rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
+    resource_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
+    raw_rating = models.FloatField(default=None, null=True, blank=True, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['resource', 'country']),
+            models.Index(fields=['resource', 'rating', 'country']),
+            models.Index(fields=['resource', '-rating', 'country']),
+            models.Index(fields=['resource', 'resource_rank', 'country']),
+            models.Index(fields=['resource', '-resource_rank', 'country']),
+            models.Index(fields=['resource', 'n_accounts', 'country']),
+            models.Index(fields=['resource', '-n_accounts', 'country']),
+        ]
+
+        unique_together = ('resource', 'country')
 
 
 class AccountRenaming(BaseModel):
@@ -414,7 +456,7 @@ class Statistics(BaseModel):
         return field in settings.ADDITION_HIDE_FIELDS_
 
     def __str__(self):
-        return f'{self.account_id} on {self.contest_id} = {self.solving} + {self.upsolving}'
+        return f'Statistics#{self.id} {self.account_id} on {self.contest_id}'
 
     def get_old_rating(self, use_rating_prediction=True):
         rating_datas = [self.addition]
@@ -427,6 +469,12 @@ class Statistics(BaseModel):
                 return rating_data['old_rating']
             if 'new_rating' in rating_data and 'rating_change' in rating_data:
                 return rating_data['new_rating'] - rating_data['rating_change']
+
+    @property
+    def is_rated(self):
+        if self.skip_in_stats:
+            return False
+        return 'new_rating' in self.addition or 'rating_change' in self.addition
 
     class Meta:
         verbose_name_plural = 'Statistics'
@@ -459,12 +507,8 @@ def count_account_contests(signal, instance, **kwargs):
             instance.account.n_contests += 1
             instance.account.save(update_fields=['n_contests'])
 
-        if (
-            instance.last_activity and
-            (not instance.account.last_activity or instance.account.last_activity < instance.last_activity)
-        ):
-            instance.account.last_activity = instance.last_activity
-            instance.account.save(update_fields=['last_activity'])
+        instance.account.update_last_activity(statistic=instance)
+        instance.account.update_last_rating_activity(statistic=instance)
 
 
 class Module(BaseModel):

@@ -445,7 +445,7 @@ class CoderList(BaseModel):
             accounts |= set(Account.objects.filter(coders__pk__in=coders).values_list('pk', flat=True))
         if accounts:
             ret |= Q(pk__in=accounts)
-        if not ret:
+        if not ret and uuids:
             ret = Q(id=0)
         return ret
 
@@ -458,7 +458,7 @@ class CoderList(BaseModel):
             coders |= set(Coder.objects.filter(account__pk__in=accounts).values_list('pk', flat=True))
         if coders:
             ret |= Q(pk__in=coders)
-        if not ret:
+        if not ret and uuids:
             ret = Q(id=0)
         return ret
 

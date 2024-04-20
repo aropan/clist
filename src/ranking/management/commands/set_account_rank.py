@@ -15,8 +15,8 @@ from logify.models import EventLog, EventStatus
 from logify.utils import failed_on_exception
 from ranking.models import Account
 from utils.attrdict import AttrDict
-from utils.timetools import parse_duration
 from utils.logger import suppress_db_logging_context
+from utils.timetools import parse_duration
 
 
 class Command(BaseCommand):
@@ -46,7 +46,7 @@ class Command(BaseCommand):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        resources = Resource.objects.filter(has_rating_history=True)
+        resources = Resource.available_for_update_objects.filter(has_rating_history=True)
         now = timezone.now()
 
         if not args.without_delay:
@@ -73,8 +73,7 @@ class Command(BaseCommand):
         n_updated = 0
         for resource in tqdm(resources, total=len(resources), desc='resources'):
             event_log = EventLog.objects.create(name='set_account_rank',
-                                                related=resource,
-                                                status=EventStatus.IN_PROGRESS)
+                                                related=resource, status=EventStatus.IN_PROGRESS)
             field = 'resource_rank'
             with failed_on_exception(event_log):
                 qs = Account.objects.filter(resource=resource, rating__isnull=False)
@@ -102,9 +101,9 @@ class Command(BaseCommand):
                         update_values_batch = update_values[offset:offset + args.batch_size]
                         n_updated += Account.objects.bulk_update(update_values_batch, [field])
 
-            event_log.update_status(EventStatus.COMPLETED, message=message)
             resource.rank_update_time = now
             resource.n_rating_accounts = n_rating_accounts
             resource.save(update_fields=['rank_update_time', 'n_rating_accounts'])
+            event_log.update_status(EventStatus.COMPLETED, message=message)
 
         self.logger.info('n_updated = %d', n_updated)

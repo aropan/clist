@@ -44,7 +44,7 @@
                 $diff = abs($duration_time - $duration_in_secs);
                 if ($diff < $opt) {
                     $opt = $diff;
-                    $duration = $duration_time;
+                    $duration = $duration_time / 60;
                     $opt_start_time = trim($start_time);
                 }
             }

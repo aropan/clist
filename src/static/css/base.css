@@ -128,7 +128,8 @@ img.resource-icon {
   border-color: #ccc;
 }
 
-.navbar-static-top .navbar-right .dropdown-menu i {
+.navbar-static-top .navbar-nav .dropdown-menu i,
+.navbar-static-top .navbar-nav .dropdown-menu img {
   width: 20px;
   text-align: center;
 }

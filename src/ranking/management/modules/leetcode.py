@@ -23,8 +23,8 @@ from ratelimiter import RateLimiter
 from clist.templatetags.extras import get_item, is_improved_solution
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
-from utils.timetools import datetime_from_timestamp
 from utils.logger import suppress_db_logging_context
+from utils.timetools import datetime_from_timestamp
 
 # from ranking.management.modules import conf
 

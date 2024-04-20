@@ -66,13 +66,14 @@ class Command(BaseCommand):
 
         has_param = args.resources or args.query or args.limit
 
+        resources = Resource.available_for_update_objects
         if args.resources:
             filt = Q()
             for r in args.resources:
                 filt |= Q(host__iregex=r)
-            resources = Resource.objects.filter(filt)
+            resources = resources.filter(filt)
         else:
-            resources = Resource.objects.filter(has_accounts_infos_update=True)
+            resources = resources.filter(has_accounts_infos_update=True)
 
         countrier = Countrier()
 

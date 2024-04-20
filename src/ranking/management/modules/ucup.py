@@ -2,6 +2,7 @@
 
 import html
 import re
+import copy
 import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -183,7 +184,7 @@ class Statistic(BaseModule):
             for handle, row in statistics.items():
                 if handle not in result:
                     row['member'] = handle
-                    result[handle] = row
+                    result[handle] = copy.deepcopy(row)
 
         REQ.add_cookie('show_all_submissions', 'true')
         submission_url = urllib.parse.urljoin(self.standings_url.rstrip('/'), 'submissions/')

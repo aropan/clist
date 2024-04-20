@@ -15,6 +15,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import F, Q
+from django.db.models.expressions import Exists, OuterRef
 from django.db.models.functions import Cast, Ln
 from django.urls import reverse
 from django.utils import timezone
@@ -25,7 +26,7 @@ from clist.templatetags.extras import get_item, get_problem_key, slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
-from utils.timetools import parse_duration
+from utils.timetools import Epoch, parse_duration
 
 
 class PriorityResourceManager(BaseManager):
@@ -36,6 +37,17 @@ class PriorityResourceManager(BaseManager):
         priority = Ln(F('n_contests') + 1) + Ln(F('n_accounts') + 1) + 4 * (F('rval') + F('pval'))
         ret = ret.annotate(priority=priority)
         ret = ret.order_by('-priority')
+        return ret
+
+
+class AvailableForUpdateResourceManager(BaseManager):
+    def get_queryset(self):
+        ret = super().get_queryset()
+        with_updating = (Q(has_rating_history=True) | Q(has_country_rating=True) | Q(has_problem_rating=True)
+                         | Q(has_accounts_infos_update=True))
+        ongoing_contests = Contest.ongoing_objects.filter(resource_id=OuterRef('pk'))
+        ret = ret.annotate(has_ongoing_contests=Exists(ongoing_contests))
+        ret = ret.filter(~with_updating | Q(has_ongoing_contests=False))
         return ret
 
 
@@ -57,9 +69,12 @@ class Resource(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     ratings = models.JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
+    has_country_rating = models.BooleanField(default=False)
     rating_prediction = models.JSONField(default=None, null=True, blank=True)
     rating_update_time = models.DateTimeField(null=True, blank=True)
     rank_update_time = models.DateTimeField(null=True, blank=True)
+    country_rank_update_time = models.DateTimeField(null=True, blank=True)
+    contest_update_time = models.DateTimeField(null=True, blank=True)
     has_problem_rating = models.BooleanField(default=False)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
@@ -85,6 +100,7 @@ class Resource(BaseModel):
 
     objects = BaseManager()
     priority_objects = PriorityResourceManager()
+    available_for_update_objects = AvailableForUpdateResourceManager()
 
     class Meta:
         indexes = [
@@ -279,6 +295,10 @@ class Resource(BaseModel):
             return any(self.is_major_kind(kind) for kind in instance)
         raise ValueError(f'Invalid instance type = {type(instance)}')
 
+    def major_contests(self):
+        major_kind = self.info.get('major_kind')
+        return self.contest_set.filter(Q(kind=major_kind) | Q(kind__isnull=True) | Q(kind=''))
+
     def rating_step(self):
         prev = 0
         step = 0
@@ -314,6 +334,20 @@ class SignificantContestManager(VisibleContestManager):
         return super().get_queryset().filter(related__isnull=True)
 
 
+class OngoingContestManager(SignificantContestManager):
+    def get_queryset(self):
+        ret = super().get_queryset()
+        ret = Contest.objects.annotate(
+            duration_time=Epoch(F('end_time') - F('start_time'))
+        ).filter(
+            resource__module__isnull=False,
+            duration_time__lt=Epoch('resource__module__long_contest_idle'),
+            start_time__lt=timezone.now() + timedelta(hours=1),
+            end_time__gt=timezone.now() - timedelta(hours=1),
+        )
+        return ret
+
+
 class Contest(BaseModel):
     STANDINGS_KINDS = {
         'icpc': 'ICPC',
@@ -347,6 +381,7 @@ class Contest(BaseModel):
     parsed_time = models.DateTimeField(null=True, blank=True)
     has_hidden_results = models.BooleanField(null=True, blank=True)
     related = models.ForeignKey('Contest', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_set')
+    merging_contests = models.ManyToManyField('Contest', blank=True, related_name='merged_set')
     is_rated = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     with_medals = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     with_advance = models.BooleanField(null=True, blank=True, default=None, db_index=True)
@@ -373,6 +408,7 @@ class Contest(BaseModel):
     objects = BaseContestManager()
     visible = VisibleContestManager()
     significant = SignificantContestManager()
+    ongoing_objects = OngoingContestManager()
 
     class Meta:
         unique_together = ('resource', 'key', )
@@ -663,6 +699,15 @@ class Contest(BaseModel):
                     yield problem
         else:
             raise ValueError(f'Unknown problems types = {type(problems)}')
+
+    @property
+    def full_score(self):
+        if 'full_score' in self.info:
+            return self.info['full_score']
+        full_score = 0
+        for problem in self.problems_list:
+            full_score += problem.get('full_score', 1)
+        return full_score
 
     @property
     def division_problems(self):

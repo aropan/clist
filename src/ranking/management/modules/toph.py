@@ -6,8 +6,7 @@ import re
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
-from datetime import datetime, timedelta
-from pprint import pprint
+from datetime import timedelta
 
 import tqdm
 import yaml
@@ -131,7 +130,7 @@ class Statistic(BaseModule):
                             penalty = str(score.column.node.xpath('.//*[@title]/@title')[-1]).lower()
 
                             try:
-                                data = yaml.safe_load(re.sub(r'\s*,\s*', '\n', penalty))
+                                data = yaml.safe_load(re.sub(r'\s*[,;]\s*', '\n', penalty))
                                 if isinstance(data, dict):
                                     for key, value in data.items():
                                         row.setdefault(key, as_number(value))
@@ -140,7 +139,7 @@ class Statistic(BaseModule):
                                     if match:
                                         penalty = match.group(0)
                             except Exception as e:
-                                LOG.warning(f'Failed to parse penalt = {penalty}: {e}')
+                                LOG.warning(f'Failed to parse penalty = {penalty}: {e}')
                         row.setdefault('penalty', as_number(penalty))
                         has_penalty |= bool(penalty)
 
@@ -177,7 +176,8 @@ class Statistic(BaseModule):
                                                                  contest_problems[pind].get('short') == letter)
                         ):
                             is_hidden = bool(v.column.node.xpath('.//img[contains(@src,"/question.svg")]'))
-                            if v.value or is_hidden:
+                            is_failed = bool(v.column.node.xpath('.//img[contains(@src,"/cross.svg")]'))
+                            if v.value or is_hidden or is_failed:
                                 title = v.column.node.xpath('.//div[@title]/@title')
                                 if title:
                                     title = title[0]
@@ -217,10 +217,16 @@ class Statistic(BaseModule):
                                         solved['solving'] += 1
                                     if attempt > 1:
                                         p['penalty'] = attempt - 1
-                                elif time:
-                                    result = '+' if attempt == 1 else f'+{attempt - 1}'
+                                elif attempt is not None:
+                                    if time:
+                                        result = '+' if attempt == 1 else f'+{attempt - 1}'
+                                    else:
+                                        result = f'-{attempt}'
+                                elif is_failed:
+                                    result = 0
+                                    p['binary'] = False
                                 else:
-                                    result = f'-{attempt}'
+                                    raise ExceptionParseStandings(f'Unknown result = {v.value}')
                                 if time:
                                     time = f'{time // 60:02}:{time % 60:02}'
                                     p['time'] = time
@@ -362,5 +368,3 @@ class Statistic(BaseModule):
                     },
                 }
                 yield info
-
-

@@ -172,7 +172,10 @@ def get_profile_context(request, statistics, writers, resources):
         options = list(sorted(fields_types.keys()))
         fields = request.GET.getlist('field')
         statistics_fields = {
-            'values': [v for v in fields if v and v in options],
+            'values': [
+                v for v in fields
+                if v and (v in options or request.user.has_perm('ranking.view_statistics_fields'))
+            ],
             'types': fields_types,
             'options': options,
             'noajax': True,
@@ -2239,7 +2242,7 @@ def accounts(request, template='accounts.html'):
         params['to_list'] = to_list
 
     context = {'params': params}
-    addition_table_fields = ('modified', 'updated', 'created', 'key')
+    addition_table_fields = ('modified', 'updated', 'created', 'key', 'last_rating_activity')
     table_fields = ('rating', 'resource_rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')

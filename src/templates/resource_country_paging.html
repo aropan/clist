@@ -1,23 +1,27 @@
 {% load el_pagination_tags %}
 
-{% lazy_paginate first_per_page,per_page countries using "country_page" %}
+{% coder_account_filter country_distribution primary_country row_number_field="n_accounts" operator="__gt" as primary_country_distribution %}
+{% lazy_paginate first_per_page,10 country_distribution using "country_page" %}
 {% get_pages %}
-{% for country in countries %}
-  {% with name=country.country|get_country_name %}
-  {% with code=country.country|get_country_code %}
-  <tr{% if code == coder.country %} class="info"{% endif %}>
+{% for country_account in country_distribution|chain:primary_country_distribution %}
+  {% with name=country_account.country|get_country_name %}
+  {% with code=country_account.country|get_country_code %}
+  <tr
+    {% if code == coder.country %} class="info"{% endif %}
+    {% include "delete_on_duplicate_attrs.html" with name="country_distribution" entry=country_account primary=primary_country %}
+  >
     <td>
-      {{ forloop.counter0|add:pages.current_start_index }}
+      {% if country_account.delete_on_duplicate %}{{ country_account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}
     </td>
     <td>
       <a href="{% url_transform request country=code %}"><div class="flag flag-{{ code|lower }}"></div> {{ name }}</a>
     </td>
     <td>
-      {{ country.count }}
+      {{ country_account.n_accounts }}
     </td>
   </tr>
   {% endwith %}
   {% endwith %}
 {% endfor %}
-
 {% show_more_table %}
+<script>delete_on_duplicate()</script>

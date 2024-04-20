@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import copy
 import json
 import re
-import copy
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from contextlib import ExitStack
 from time import sleep
@@ -12,9 +12,9 @@ from urllib.parse import urljoin
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, UNCHANGED, utc_now
+from clist.templatetags.extras import as_number, get_problem_key
+from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, FailOnGetResponse, utc_now
 from ranking.management.modules.excepts import ExceptionParseStandings
-from clist.templatetags.extras import get_problem_key, as_number
 
 
 class Statistic(BaseModule):
@@ -383,14 +383,23 @@ class Statistic(BaseModule):
                     for category in ratings:
                         last_rating = None
                         for rating in category['events']:
-                            update = contest_addition_update.setdefault(rating['contest_name'],
-                                                                        collections.OrderedDict())
+                            update = collections.OrderedDict()
                             new_rating = int(rating['rating'])
                             if last_rating is not None:
                                 update['old_rating'] = last_rating
                                 update['rating_change'] = new_rating - last_rating
                             update['new_rating'] = new_rating
                             last_rating = new_rating
+
+                            for field in ('contest_slug', 'contest_name'):
+                                if rating.get(field):
+                                    update['_group'] = rating[field]
+                                    break
+
+                            contest_name = rating['contest_name']
+                            for contest_key in {contest_name, contest_name.strip()}:
+                                contest_addition_update[contest_key] = update
+
                         if last_rating is not None and category['category'].lower() == 'algorithms':
                             info['rating'] = last_rating
 

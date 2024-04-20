@@ -29,12 +29,12 @@ from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
-from ranking.models import Account, Rating, Statistics
+from ranking.models import Account, CountryAccount, Rating, Statistics
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import make_bins, make_chart
-from utils.timetools import get_timeformat, get_timezone
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
+from utils.timetools import get_timeformat, get_timezone
 
 
 def get_add_to_calendar(request):
@@ -349,9 +349,9 @@ def resources(request):
     return render(request, 'resources.html', context)
 
 
-@page_templates((('resources_top_paging.html', None),))
+@page_templates((('resources_account_rating_paging.html', None),))
 @context_pagination()
-def resources_top(request, template='resources_top.html'):
+def resources_account_rating(request, template='resources_account_rating.html'):
     params = {}
     accounts_filter = Q()
 
@@ -415,6 +415,72 @@ def resources_top(request, template='resources_top.html'):
             'from': 0,
             'to': (timezone.now() - earliest_last_activity).days + 1,
         },
+        'first_per_page': 10,
+        'per_page': 50,
+    }
+
+    return render(request, template, context)
+
+
+@page_templates((('resources_country_rating_paging.html', None),))
+@context_pagination()
+def resources_country_rating(request, template='resources_country_rating.html'):
+    params = {}
+    country_accounts = CountryAccount.objects.filter(rating__isnull=False).order_by('-rating')
+
+    if request.user.is_authenticated:
+        coder = request.as_coder or request.user.coder
+        primary_countries_filter = Q()
+        for account in coder.primary_accounts():
+            primary_countries_filter |= Q(country=account.country) & Q(resource_id=account.resource_id)
+
+        primary_countries = {
+            country_account.resource_id: country_account
+            for country_account in CountryAccount.objects.filter(primary_countries_filter)
+        }
+
+        qs = CountryAccount.objects.filter(primary_countries_filter | Q(country=coder.country))
+        coder_country_accounts_ids = set()
+        for country_account in qs:
+            coder_country_accounts_ids.add(country_account.id)
+            primary_countries.setdefault(country_account.resource_id, country_account)
+    else:
+        coder = None
+        primary_countries = dict()
+        coder_country_accounts_ids = set()
+
+    resources = Resource.priority_objects.filter(has_country_rating=True)
+    resources_ids = [r for r in request.GET.getlist('resource') if r]
+    if resources_ids:
+        params['resources'] = list(Resource.objects.filter(pk__in=resources_ids))
+        resources = resources.filter(pk__in=resources_ids)
+
+    countries = request.GET.getlist('country')
+    countries = set([c for c in countries if c])
+    if countries:
+        params['countries'] = countries
+        country_accounts = country_accounts.filter(country__in=countries)
+
+    qs_key = request.GET.get(QS_KEY)
+    if qs_key:
+        _, host = qs_key.split('__')
+        resources = resources.filter(host=host)
+
+    resources = resources.annotate(has_country_accounts=Exists(country_accounts.filter(resource=OuterRef('pk'))))
+    resources = resources.filter(has_country_accounts=True)
+    resources = resources.prefetch_related(Prefetch('countryaccount_set',
+                                                    queryset=country_accounts))
+
+    resources = list(resources)
+
+    context = {
+        'resource': resources[0],
+        'resources': resources,
+        'params': params,
+        'coder_country_accounts_ids': coder_country_accounts_ids,
+        'primary_countries': primary_countries,
+        'first_per_page': 10,
+        'per_page': 50,
     }
 
     return render(request, template, context)
@@ -450,7 +516,9 @@ def resource_problem_rating_chart(resource):
 
 @page_templates((
     ('resource_country_paging.html', 'country_page'),
+    ('resource_top_country_paging.html', 'top_country_page'),
     ('resource_last_activity_paging.html', 'last_activity_page'),
+    ('resource_last_rating_activity_paging.html', 'last_rating_activity_page'),
     ('resource_top_paging.html', 'top_page'),
     ('resource_most_participated_paging.html', 'most_participated_page'),
     ('resource_most_writer_paging.html', 'most_writer_page'),
@@ -472,11 +540,17 @@ def resource(request, host, template='resource.html', extra_context=None):
         primary_account = None
         coder_accounts_ids = set()
 
+    if primary_account:
+        primary_country = resource.countryaccount_set.filter(country=primary_account.country).first()
+    else:
+        primary_country = None
+
     params = {}
 
     contests = resource.contest_set.all()
 
     accounts = Account.objects.filter(resource=resource)
+    country_accounts = resource.countryaccount_set
 
     has_country = accounts.filter(country__isnull=False).exists()
     countries = request.GET.getlist('country')
@@ -484,6 +558,7 @@ def resource(request, host, template='resource.html', extra_context=None):
     if countries:
         params['countries'] = countries
         accounts = accounts.filter(country__in=countries)
+        country_accounts = country_accounts.filter(country__in=countries)
 
     period = request.GET.get('period', 'all')
     params['period'] = period
@@ -519,12 +594,6 @@ def resource(request, host, template='resource.html', extra_context=None):
     if not request.as_coder:
         update_coder_range_filter(coder, range_filter_values, resource.host)
 
-    countries = (accounts
-                 .filter(country__isnull=False)
-                 .values('country')
-                 .annotate(count=Count('country'))
-                 .order_by('-count', 'country'))
-
     min_rating = 0
     max_rating = 5000
     if resource.ratings:
@@ -544,6 +613,7 @@ def resource(request, host, template='resource.html', extra_context=None):
 
         coloring_field = resource.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
         if coloring_field:
+            ratings = ratings.filter(**{f'info__{coloring_field}__isnull': False})
             ratings = ratings.annotate(_rank=Cast(JSONF(f'info__{coloring_field}'), IntegerField()))
             aggregations = {'coloring_field': Avg('_rank')}
         else:
@@ -578,9 +648,13 @@ def resource(request, host, template='resource.html', extra_context=None):
         'resource': resource,
         'coder': coder,
         'primary_account': primary_account,
+        'primary_country': primary_country,
         'coder_accounts_ids': coder_accounts_ids,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
-        'countries': countries,
+        'country_distribution': country_accounts.order_by(F('n_accounts').desc(nulls_last=True), 'country'),
+        'country_ratings': (country_accounts
+                            .filter(rating__isnull=False)
+                            .order_by(F('rating').desc(nulls_last=True), 'country')),
         'rating': {
             'chart': rating_chart,
             'min': min_rating,
@@ -610,6 +684,9 @@ def resource(request, host, template='resource.html', extra_context=None):
         'first_per_page': 10,
         'per_page': 50,
         'last_activities': accounts.filter(last_activity__isnull=False).order_by('-last_activity', 'id'),
+        'last_rating_activities': (accounts
+                                   .filter(last_rating_activity__isnull=False)
+                                   .order_by('-last_rating_activity', 'id')),
         'top': accounts.filter(rating__isnull=False).order_by('-rating', 'id'),
         'most_participated': accounts.order_by('-n_contests', 'id'),
         'most_writer': accounts.filter(n_writers__gt=0).order_by('-n_writers', 'id'),
@@ -1096,7 +1173,7 @@ def problems(request, template='problems.html'):
         'html': True,
         'nomultiply': True,
     }
-    statuses = request.GET.getlist('status')
+    statuses = [s for s in request.GET.getlist('status') if s]
     if statuses:
         if not coder:
             return redirect('auth:login')

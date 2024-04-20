@@ -17,6 +17,8 @@
   <div class="{% if params.more_fields %}col-lg-12{% else %}col-md-12 col-xl-8 col-xl-offset-2 col-lg-10 col-lg-offset-1{% endif %}">
     {% include "filter_collapse.html" with include_filter="standings_list_filters.html" %}
 
+    {% include "chart.html" with chart=medal_scores_chart without_toggle_accumulate=True get_query_chart='with_medal_scores' %}
+
     <script>configure_pagination()</script>
     <div id="standings_list" class="panel panel-default table-responsive">
       <table class="table table-hover table-striped table-float-head">

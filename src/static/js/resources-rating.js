@@ -1,4 +1,4 @@
-function resources_top_setup_hover() {
+function resources_account_rating_setup_hover() {
   $(".to-hover[data-coder]").hover(
     function() {
       var coder = $(this).attr('data-coder')
@@ -36,4 +36,4 @@ function resources_top_setup_hover() {
   $(".to-hover").removeClass('to-hover')
 }
 
-$(resources_top_setup_hover)
+$(resources_account_rating_setup_hover)

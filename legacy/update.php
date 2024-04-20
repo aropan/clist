@@ -343,14 +343,15 @@
 
         $contest = $db->escapeArray($contest);
 
-        if (isset($contest['old_key']) && $contest['old_key']) {
+        if (isset($contest['old_key'])) {
             $old_key = $contest['old_key'];
             unset($contest['old_key']);
-            $key = $contest['key'];
-
-            $old_update = "$update and key = '${old_key}'";
-            if (!$db->query("UPDATE clist_contest SET key = '$key' WHERE $old_update", true)) {
-                $db->query("DELETE FROM clist_contest WHERE $old_update", true);
+            if ($old_key) {
+                $key = $contest['key'];
+                $old_update = "$update and key = '${old_key}'";
+                if (!$db->query("UPDATE clist_contest SET key = '$key' WHERE $old_update", true)) {
+                    $db->query("DELETE FROM clist_contest WHERE $old_update", true);
+                }
             }
         }
 

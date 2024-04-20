@@ -299,6 +299,8 @@ def aslist(value):
 
 @register.simple_tag
 def calc_mod_penalty(info, contest, solving, penalty):
+    if not isinstance(penalty, (int, float)):
+        return
     time = min((now() - contest.start_time).total_seconds(), contest.duration_in_secs) // 60
     return int(round(penalty + (info['solving'] - solving) * time - info['penalty']))
 
@@ -1205,6 +1207,12 @@ def to_list(value):
 
 
 @register.filter
+def prepend(array, value):
+    array.insert(0, value)
+    return array
+
+
+@register.filter
 def media_size(path, size):
     ret = os.path.join(settings.MEDIA_URL, 'sizes', size, path)
     return ret
@@ -1337,14 +1345,14 @@ def queryset_filter(qs, **kwargs):
 
 
 @register.simple_tag
-def coder_account_filter(qs, account, row_number_field=None, operator=None):
-    if account is None:
+def coder_account_filter(queryset, entity, row_number_field=None, operator=None):
+    if entity is None:
         return []
-    ret = qs.filter(pk=account.pk).annotate(delete_on_duplicate=Value(True))
+    ret = queryset.filter(pk=entity.pk).annotate(delete_on_duplicate=Value(True))
     if row_number_field:
-        value = getattr(account, row_number_field)
+        value = getattr(entity, row_number_field)
         if value is not None:
-            row_number = qs.filter(**{row_number_field + operator: value}).count() + 1
+            row_number = queryset.filter(**{row_number_field + operator: value}).count() + 1
             ret = ret.annotate(row_number=Value(row_number))
     return ret
 
@@ -1361,7 +1369,7 @@ def accounts_split(value):
 
 @register.filter
 def is_yes(value):
-    return value and str(value).lower() in settings.YES_
+    return str(value).lower() in settings.YES_
 
 
 @register.filter

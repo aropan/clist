@@ -30,7 +30,7 @@ from clist.models import Contest, ContestSeries, Resource
 from clist.templatetags.extras import (as_number, format_time, get_country_name, get_item, get_problem_short,
                                        get_problem_title, get_standings_divisions_order,
                                        has_update_statistics_permission, is_ip_field, is_private_field, is_reject,
-                                       is_solved, query_transform, slug, time_in_seconds, timestamp_to_datetime)
+                                       is_solved, is_yes, query_transform, slug, time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
@@ -131,6 +131,63 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         stages = stages.filter(series_id__in={s.pk for s in series})
         contests = contests.filter(series_id__in={s.pk for s in series})
 
+    with_medal_scores = len(series) == 1
+    if with_medal_scores and is_yes(request.GET.get('with_medal_scores')):
+        ordering = ('contest__start_time', 'contest_id', 'addition__medal')
+        qs = Statistics.objects.distinct(*ordering)
+        qs = qs.order_by(*ordering, 'solving')
+        qs = contests.prefetch_related(Prefetch('statistics_set', to_attr='medal_scores', queryset=qs))
+        qs = qs.order_by('start_time')
+
+        medal_scores_chart = dict(
+            field='medal_scores',
+            type='scatter',
+            show_line=True,
+            legend={'position': 'right'},
+            x_type='time',
+            mode='x',
+            hover_mode='x',
+        )
+
+        datas = medal_scores_chart.setdefault('datas', {})
+        titles = medal_scores_chart.setdefault('titles', {})
+        subtitles = medal_scores_chart.setdefault('subtitles', {})
+        urls = medal_scores_chart.setdefault('urls', {})
+        last_values = {}
+        for contest in qs:
+            full_score = contest.full_score
+            contest_title = contest.start_time.strftime('%Y-%m-%d')
+            if not full_score:
+                continue
+            for medal_score in contest.medal_scores:
+                medal = medal_score.addition.get('medal')
+                if not medal:
+                    continue
+                medal_datas = datas.setdefault(medal, {})
+                medal_value = medal_score.solving / full_score
+                medal_datas[contest.end_time.isoformat()] = medal_value
+                titles.setdefault(medal, []).append(contest_title)
+                urls.setdefault(medal, []).append(contest.actual_url)
+
+                subtitle = 'Score: {:.2f}'.format(medal_score.solving)
+                if medal in last_values:
+                    delta = medal_value / last_values[medal] - 1
+                    print(contest.start_time, medal_value, last_values[medal], medal_value / last_values[medal], delta)
+                    subtitle += f' ({delta:+.2%})'
+                last_values[medal] = medal_value
+                subtitles.setdefault(medal, []).append(subtitle)
+
+        medal_fields = list(datas.keys())
+        medal_names = ['bronze', 'silver', 'gold']
+        for rev_order in medal_names:
+            if rev_order in medal_fields:
+                medal_fields.remove(rev_order)
+                medal_fields.insert(0, rev_order)
+        medal_scores_chart['fields'] = medal_fields
+        medal_scores_chart['hidden'] = set([f for f in medal_fields if f not in medal_names])
+    else:
+        medal_scores_chart = None
+
     context = {
         'stages': stages,
         'contests': contests,
@@ -143,7 +200,9 @@ def standings_list(request, template='standings_list.html', extra_context=None):
             'series': series,
             'series_link': 'series' in more_fields,
             'more_fields': more_fields,
+            'with_medal_scores': with_medal_scores,
         },
+        'medal_scores_chart': medal_scores_chart,
     }
 
     if get_group_list(request) and len(resources) != 1:

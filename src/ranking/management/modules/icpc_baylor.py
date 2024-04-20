@@ -3,22 +3,52 @@
 import html
 import json
 import logging
+import os
 import re
 import traceback
 from collections import OrderedDict
 from datetime import timedelta
-from pprint import pprint
 from urllib.parse import urljoin, urlparse
 
 import coloredlogs
 from django.utils.timezone import now
 from lxml import etree
 
+from ranking.management.modules.codeforces import _get as codeforces_get
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+from utils.strings import list_string_iou, string_iou
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
+
+
+def canonize_name(name):
+    name = name.lower()
+    name = name.replace('&', ' and ')
+    name = name.replace(',', ' ')
+    name = re.sub(r'[^A-Za-z0-9\s+]', ' ', name)
+    name = re.sub(r'\s+', ' ', name)
+    return tuple(name.split())
+
+
+def names_iou(name1, name2):
+    canonized_name1 = canonize_name(name1)
+    canonized_name2 = canonize_name(name2)
+    list_iou = list_string_iou(canonized_name1, canonized_name2)
+
+    canonized_name1_str = ''.join(canonized_name1)
+    canonized_name2_str = ''.join(canonized_name2)
+    str_iou = string_iou(canonized_name1_str, canonized_name2_str)
+
+    iou = max(list_iou, str_iou)
+
+    n = min(len(canonized_name1), len(canonized_name2))
+    prefix_iou = list_string_iou(canonized_name1[:n], canonized_name2[:n])
+    suffix_iou = list_string_iou(canonized_name1[-n:], canonized_name2[-n:])
+    iou = max(iou, prefix_iou, suffix_iou)
+
+    return iou
 
 
 class Statistic(BaseModule):
@@ -287,6 +317,7 @@ class Statistic(BaseModule):
 
                         if k in ('rank', 'rk', 'place'):
                             if not isinstance(vs, list):
+                                classes = vs.column.attrs.get('class', '').split()
                                 medal = vs.column.node.xpath('.//img/@alt')
                                 if medal and medal[0].endswith('medal'):
                                     row['medal'] = medal[0].split()[0]
@@ -294,6 +325,8 @@ class Statistic(BaseModule):
                                     if v.endswith(ending):
                                         row['medal'] = medal
                                         v = v[:-len(ending)].strip()
+                                    if f'{medal}-medal' in classes:
+                                        row['medal'] = medal
                             row['place'] = v
                         elif k in ('team', 'name', 'university'):
                             if isinstance(vs, list):
@@ -426,7 +459,11 @@ class Statistic(BaseModule):
                             hidden_fields.add(k)
                             row[k] = v
 
-            if not is_regional and any(['region' not in r for r in result.values()]):
+            if (
+                not is_regional
+                and any(['region' not in r for r in result.values()])
+                and os.environ.get('USE_ICPC_REGION')
+            ):
                 try:
                     url = f'https://icpc.global/api/team/wf/{year}/published'
                     page = REQ.get(url, time_out=60)
@@ -436,15 +473,6 @@ class Statistic(BaseModule):
                     data = None
 
                 if data:
-                    def canonize_name(name):
-                        name = name.lower()
-                        name = name.replace('&', ' and ')
-                        name = name.replace(',', ' ')
-                        name = re.sub(r'\s{2,}', ' ', name)
-                        name = re.split(r'(?:\s-\s|\s-|-\s|,\s)', name)
-                        name = tuple(sorted([n.strip() for n in name]))
-                        return name
-
                     matching = {}
                     for key, row in result.items():
                         name = row['name']
@@ -452,24 +480,65 @@ class Statistic(BaseModule):
                         name = canonize_name(name)
                         matching.setdefault(name, key)
 
+                    def add_region(name, region, team):
+                        row = result[matching[name]]
+                        row['region'] = region
+                        for k, v in team.items():
+                            k = k.lower()
+                            if k not in row:
+                                hidden_fields.add(k)
+                                row[k] = v
+
+                    skipped = []
                     for site in data:
                         region = site['siteName']
                         for team in site['teams']:
-                            name = team['university']
-                            if name not in matching:
+                            names = {team['university']}
+                            for val in team['name'], site['siteName']:
+                                new_names = set(names)
+                                for old_name in names:
+                                    new_names.add(old_name + ' ' + val)
+                                    new_names.add(val + ' ' + old_name)
+                                names = new_names
+
+                            for name in names:
+                                if name in matching:
+                                    break
                                 name = canonize_name(name)
+                                if name in matching:
+                                    break
+
                             if name not in matching:
-                                name = tuple(sorted(name + canonize_name(team['name'])))
-                            if name not in matching:
-                                logger.warning(f'Not found team = {name}')
+                                skipped.append((region, team, names))
                             else:
-                                row = result[matching[name]]
-                                row['region'] = region
-                                for k, v in team.items():
-                                    k = k.lower()
-                                    if k not in row:
-                                        hidden_fields.add(k)
-                                        row[k] = v
+                                add_region(name, region, team)
+
+                    processed = set()
+                    while True:
+                        max_iou = 0
+                        best_region = None
+                        best_name = None
+                        for region, team, names in skipped:
+                            if team['university'] in processed:
+                                continue
+                            for name in names:
+                                for key, row in result.items():
+                                    if 'region' in row:
+                                        continue
+                                    iou = names_iou(name, row['name'])
+                                    if iou > max_iou:
+                                        max_iou = iou
+                                        best_region = region
+                                        best_team = team
+                                        best_name = row['name']
+                                        print(name)
+                        if best_name is None:
+                            break
+                        logger.info(f'max iou = {max_iou:.3f}, best_name = {best_name}')
+                        if max_iou < 0.9:
+                            break
+                        processed.add(best_team['university'])
+                        add_region(best_name, best_region, best_team)
 
             first_ac_of_all = None
             for team in result.values():
@@ -478,8 +547,8 @@ class Statistic(BaseModule):
                     if not problem['result'].startswith('+'):
                         continue
                     time = problem['time']
-                    if 'first_ac' not in p_info or time < p_info['first_ac']:
-                        p_info['first_ac'] = time
+                    if 'first_ac' not in p_info or time < p_info['_first_ac_time']:
+                        p_info['_first_ac_time'] = time
                     if first_ac_of_all is None or time < first_ac_of_all:
                         first_ac_of_all = time
                     if problem.get('first_ac'):
@@ -491,7 +560,7 @@ class Statistic(BaseModule):
                     if problem['result'].startswith('+'):
                         if p_info.get('has_first_ac') and not problem.get('first_ac'):
                             continue
-                        if problem['time'] == p_info['first_ac']:
+                        if problem['time'] == p_info['_first_ac_time']:
                             problem['first_ac'] = True
                         if problem['time'] == first_ac_of_all:
                             problem['first_ac_of_all'] = True
@@ -511,6 +580,83 @@ class Statistic(BaseModule):
                     medals = [{'name': k, 'count': v} for k, v in medals.items()]
                     options['medals'] = medals
 
+            if 'use_codeforces_list' in self.info and os.environ.get('USE_CODEFORCES_LIST'):
+                cf_info = self.info['use_codeforces_list']
+                page = codeforces_get(cf_info['url'])
+                fields = [cf_info['fields']['university'], *cf_info['fields']['members']]
+                matches = re.finditer('<table[^>]*>.*?</table>', page, re.DOTALL)
+                names_rows = {}
+                for row in result.values():
+                    region = row.get('region')
+                    name = row['name']
+                    if region and name.startswith(region):
+                        name = name[len(region):].strip()
+                    names_rows[name] = row
+                skipped = []
+
+                def add_team(university, handles):
+                    result_row = names_rows[university]
+                    members = result_row.setdefault('_members', [])
+                    accounts = {m['account'] for m in members}
+                    for handle in handles:
+                        if handle in accounts:
+                            continue
+                        members.append({
+                            'account': handle,
+                            'resource': cf_info['resource'],
+                            'without_country': True,
+                        })
+
+                for match in matches:
+                    html_table = match.group(0)
+                    table = parsed_table.ParsedTable(html_table)
+                    columns = [col.value for col in table.header.columns]
+                    if len(set(columns) & set(fields)) != len(set(fields)):
+                        continue
+                    for row in table:
+                        university = row.get(cf_info['fields']['university']).value
+                        handles = []
+                        for member in cf_info['fields']['members']:
+                            val = row.get(member)
+                            hrefs = val.column.node.xpath('.//a/@href')
+                            if not hrefs:
+                                continue
+                            handle = hrefs[0].strip('/').split('/')[-1]
+                            handles.append(handle)
+                        if university not in names_rows:
+                            skipped.append((university, handles))
+                            continue
+                        add_team(university, handles)
+
+                candidates = []
+                for university, handles in skipped:
+                    best_iou = 0
+                    university_re = university
+                    university_re = re.sub('[- —,()"]+', '[- —,()"]+', university_re)
+                    university_re = re.sub(r'\b[A-Z]+\b',
+                                           lambda m: ''.join(f'{c}[^A-Z]*' for c in m.group(0)),
+                                           university_re)
+                    for name, row in names_rows.items():
+                        iou = names_iou(name, university)
+                        if re.match(university_re, name):
+                            iou = max(iou, 0.999)
+                        if iou > best_iou:
+                            best_iou = iou
+                            best_name = name
+                    candidates.append((best_iou, best_name, university, handles))
+                candidates.sort(reverse=True)
+                processed = set()
+                for best_iou, best_name, university, handles in candidates:
+                    if university in processed:
+                        continue
+                    processed.add(university)
+                    if best_iou < 0.85:
+                        logger_func = logger.warning
+                    else:
+                        logger_func = logger.info
+                        add_team(best_name, handles)
+                    logger_func(f'best_iou = {best_iou:.3f}, best_name = {best_name}, university = {university}')
+
             standings = {
                 'result': result,
                 'url': icpc_standings_url if is_icpc_api_standings_url else standings_url,
@@ -523,5 +669,3 @@ class Statistic(BaseModule):
             return standings
 
         raise ExceptionParseStandings(f'Not found standings url from {standings_urls}')
-
-

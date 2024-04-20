@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django import template
+from django.db.models import Q
 
 from ranking.models import Account
 
@@ -8,14 +9,21 @@ register = template.Library()
 
 
 @register.simple_tag
-def preload_statistics(statistics, resource):
+def preload_statistics(statistics, base_resource):
     ret = {}
-    members = []
+    members = defaultdict(list)
     for s in statistics:
         if '_members' in s.addition:
-            members.extend([m['account'] for m in s.addition['_members'] if m and 'account' in m])
+            for member in s.addition['_members']:
+                if not member or 'account' not in member:
+                    continue
+                resource = member.get('resource', base_resource.id)
+                members[resource].append(member['account'])
     if members:
-        qs = Account.objects.filter(resource=resource, key__in=set(members))
+        accounts_filter = Q()
+        for resource, members in members.items():
+            accounts_filter |= Q(resource_id=resource, key__in=set(members))
+        qs = Account.objects.filter(accounts_filter).select_related('resource')
         ret['accounts'] = defaultdict(dict)
         ret['accounts'].update({a.key: a for a in qs})
     else:

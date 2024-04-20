@@ -100,7 +100,14 @@
       {% endif %}
 
       {% if not other_contests %}
+
       <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><span title="Show nearby" data-toggle="tooltip"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></span></a>
+
+      {% call_method contest.merging_contests 'values_list' 'id' flat=True as merging_contests_ids %}
+      {% if merging_contests_ids %}
+      <a href="{% url 'ranking:standings_by_ids' merging_contests_ids|to_list|prepend:contest.id|join:"," %}" class="badge progress-bar-info">{% icon_to "merged_standings" %}</a>
+      {% endif %}
+
       {% endif %}
 
       {% if user|has_update_statistics_permission:contest %}

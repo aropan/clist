@@ -110,6 +110,8 @@ class Statistic(BaseModule):
             paths = [
                 ['1', '1', '1', '5', '3'],
                 ['1', '1', '1', '5', '4'],
+                ['1', '1', '1', '5', '11', '4', '9', '1', '9'],
+                ['1', '1', '1', '5', '11', '4', '9', '1', '14'],
                 ['1', '2', '2', '1'],
                 ['1', '2', '2', '2'],
                 ['1', '2', '2', '4'],
@@ -146,6 +148,8 @@ class Statistic(BaseModule):
             return problems
 
         def process_page(message):
+            if '1' not in message or '2' not in message['1']:
+                return
             for r in to_list(message['1']['2']):
                 team_info = get_by_key(r, '8')
                 user_info = get_by_key(r, '2')
@@ -244,9 +248,10 @@ class Statistic(BaseModule):
         process_page(message)
 
         with PoolExecutor(max_workers=4) as executor:
-            n_pages = (message['2']['2'] - 1) // per_page + 1
-            for message in executor.map(get_page, range(1, n_pages)):
-                process_page(message)
+            if '2' in message and '2' in message['2']:
+                n_pages = (message['2']['2'] - 1) // per_page + 1
+                for message in executor.map(get_page, range(1, n_pages)):
+                    process_page(message)
 
         standings = {
             'result': result,

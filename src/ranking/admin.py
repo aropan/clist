@@ -5,8 +5,8 @@ from sql_util.utils import Exists
 from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
-from ranking.models import (Account, AccountRenaming, AccountVerification, AutoRating, Module, Rating, Stage,
-                            Statistics, VerifiedAccount, VirtualStart, StageContest)
+from ranking.models import (Account, AccountRenaming, AccountVerification, AutoRating, CountryAccount, Module, Rating,
+                            Stage, StageContest, Statistics, VerifiedAccount, VirtualStart)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -59,7 +59,7 @@ class AccountAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return (
-            ['updated', 'n_contests', 'n_writers', 'last_activity', 'last_submission'] +
+            ['updated', 'n_contests', 'n_writers', 'last_activity', 'last_submission', 'last_rating_activity'] +
             super().get_readonly_fields(request, obj)
         )
 
@@ -189,3 +189,10 @@ class VirtualStartAdmin(BaseModelAdmin):
 class StageContestAdmin(BaseModelAdmin):
     list_display = ['stage', 'contest', 'created', 'modified']
     list_filter = ['contest__resource']
+
+
+@admin_register(CountryAccount)
+class CountryAccountAdmin(BaseModelAdmin):
+    list_display = ['resource', 'country', 'n_accounts', 'n_rating_accounts', 'rating', 'resource_rank', 'raw_rating']
+    search_fields = ['country']
+    list_filter = ['resource']

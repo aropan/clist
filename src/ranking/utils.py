@@ -85,11 +85,13 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         queryset_filter |= condition
     if not queryset_filter:
         return
-    for old_account_key in tqdm.tqdm(
-        Statistics.objects.filter(queryset_filter).values_list('account__key', flat=True).iterator(),
+    for contest_id, old_account_key in tqdm.tqdm(
+        Statistics.objects.filter(queryset_filter).values_list('contest_id', 'account__key').iterator(),
         total=total_counter,
         desc='renaming check',
     ):
+        if old_account_key == account.key:
+            continue
         key_counter[old_account_key] += 1
         if max_counter_key is None or key_counter[max_counter_key] < key_counter[old_account_key]:
             max_counter_key = old_account_key
@@ -122,8 +124,12 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
         condition &= Q(resource=account.resource)
         base_contests = Contest.objects.filter(condition)
         qs = base_contests.annotate(has_rank=Exists('statistics', filter=Q(place_as_int=rank)))
-        qs = qs.filter(Q(has_rank=False))
-        contests = list(qs)
+        contests = list(qs.filter(has_rank=False))
+        if not contests:
+            qs = base_contests.annotate(has_skip=Exists('statistics', filter=Q(
+                place_as_int=rank, skip_in_stats=True, account=account
+            )))
+            contests = list(qs.filter(has_skip=True))
         if not contests:
             contests = list(base_contests)
             if len(contests) == 1:
@@ -241,6 +247,8 @@ def account_update_contest_additions(
             stat.addition = addition
             stat.save(update_fields=['addition'])
 
+            account.update_last_rating_activity(statistic=stat, contest=contest, resource=account.resource)
+
             to_save = False
             contest_fields = contest.info.setdefault('fields', [])
             for k in ordered_dict.keys():
@@ -278,8 +286,8 @@ def create_upsolving_statistic(contest, account):
     }
     if account.name:
         defaults['addition']['name'] = account.name
-    stat, created = contest.statistics_set.get_or_create(account=account, defaults=defaults)
-    if stat.skip_in_stats:
+    stat, created = Statistics.objects.get_or_create(contest=contest, account=account, defaults=defaults)
+    if stat.skip_in_stats or stat.is_rated:
         return stat, created
 
     problems = stat.addition.get('problems', {})

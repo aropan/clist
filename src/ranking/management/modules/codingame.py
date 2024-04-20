@@ -337,6 +337,7 @@ class Statistic(BaseModule):
                 'fixed_fields': fixed_fields,
             },
             'grouped_team': grouped_team,
+            'is_rated': False,
         }
 
         if self.end_time < now():

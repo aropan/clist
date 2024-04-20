@@ -99,7 +99,6 @@ INSTALLED_APPS = (
     'django_ltree',
     'webpush',
     'oauth2_provider',
-    'tastypie_oauth',
     'channels',
     'chats',
     'favorites',
@@ -404,6 +403,7 @@ LOGGING = {
         '': {
             'handlers': ['console_debug', 'console_info', 'development', 'production', 'debug'],
             'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
@@ -665,7 +665,7 @@ FONTAWESOME_ICONS_ = {
     'n_participations': {'icon': '<i class="fa-fw fas fa-running"></i>', 'title': 'Number of participations'},
     'chart': '<i class="fa-fw fas fa-chart-bar"></i>',
     'ghost': '<i class="fs-fw fas fa-ghost"></i>',
-    'top': {'icon': '<i class="fas fa-list-ol"></i>', 'title': 'Top for resource'},
+    'top': '<i class="fas fa-list-ol"></i>',
     'accounts': '<i class="fa-regular fa-rectangle-list"></i>',
     'problems': '<i class="fa-solid fa-list-check"></i>',
     'versus': '<i class="fas fa-people-arrows"></i>',
@@ -726,6 +726,8 @@ FONTAWESOME_ICONS_ = {
     'full_table': {'icon': '<i class="fa-solid fa-up-down"></i>', 'title': 'Load full table'},
     'charts': '<i class="fa-solid fa-chart-line"></i>',
     'dev': '<i class="fa-regular fa-clone"></i>',
+    'medal_scores': '<i class="fa-fw fas fa-chart-line"></i>',
+    'merged_standings': '<i class="fa-solid fa-object-group"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

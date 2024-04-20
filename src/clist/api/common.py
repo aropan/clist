@@ -3,8 +3,8 @@ from django.http import HttpResponse
 from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication, MultiAuthentication, SessionAuthentication
 from tastypie.resources import NamespacedModelResource as ModelResource
-from tastypie_oauth.authentication import OAuth2ScopedAuthentication
 
+from clist.api.authentication import OAuth2ScopedAuthentication
 from clist.api.throttle import CustomCacheThrottle
 
 

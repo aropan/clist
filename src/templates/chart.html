@@ -2,6 +2,7 @@
 <div id="chart_{{ chart.field }}" class="chart">
   {% if not without_buttons %}
   <div class="chart-buttons">
+    {% if not without_toggle_accumulate %}
     <span class="toggle-accumulate">
       <input
           type="checkbox"
@@ -13,6 +14,7 @@
           data-size="mini"
           />
     </span>
+    {% endif %}
     <span class="toggle-log-scale">
       <input
           type="checkbox"
@@ -97,6 +99,15 @@
             data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{% if field in hist %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:field }}'}{% endif %}{% endfor %}],
           {% endif %}
           label: {% if chart.labels %}'{{ chart.labels|get_item:field|escapejs }}'{% elif chart.slice == 'country' %}'{{ field|get_country_name|escapejs }}'{% else %}'{{ field|escapejs }}'{% endif %},
+          {% if chart.titles %}
+          title: [{% for title in chart.titles|get_item:field %}{% if forloop.counter0 %},{% endif %}'{{ title }}'{% endfor %}],
+          {% endif %}
+          {% if chart.subtitles %}
+          subtitle: [{% for subtitle in chart.subtitles|get_item:field %}{% if forloop.counter0 %},{% endif %}'{{ subtitle }}'{% endfor %}],
+          {% endif %}
+          {% if chart.urls %}
+          url: [{% for url in chart.urls|get_item:field %}{% if forloop.counter0 %},{% endif %}'{{ url }}'{% endfor %}],
+          {% endif %}
           backgroundColor: bg_colors[{{ forloop.counter0 }}],
           borderColor: border_colors[{{ forloop.counter0 }}],
           borderWidth: {{ chart.border_width|default:1 }},
@@ -113,6 +124,9 @@
           {% endif %}
           {% if chart.show_line is not None %}
           showLine: {{ chart.show_line|lower }},
+          {% endif %}
+          {% if chart.hidden and field in chart.hidden %}
+          hidden: true,
           {% endif %}
         },
         {% endfor %}
@@ -172,6 +186,31 @@
           intersect: false,
         },
         {% endif %}
+        onClick: function (context, items) {
+          for (var i = 0; i < items.length; ++i) {
+            var item = items[i]
+            var dataset = context.chart.data.datasets[item.datasetIndex]
+            if (!dataset.url) {
+              continue;
+            }
+            var url = Array.isArray(dataset.url)? dataset.url[item.index] : dataset.url
+            window.open(url, '_blank')
+            break
+          }
+        },
+        onHover: (context, items) => {
+          var canvas = context.target || context.native.target
+          canvas.style.cursor = 'default'
+          for (var i = 0; i < items.length; ++i) {
+            var item = items[i]
+            var dataset = context.chart.data.datasets[item.datasetIndex]
+            if (!dataset.url) {
+              continue;
+            }
+            canvas.style.cursor = 'pointer'
+            break
+          }
+        },
         plugins: {
           title: {
             display: true,
@@ -195,7 +234,7 @@
                 context = context[0]
                 return context.chart.config.options.scales.x.ticks.callback(context.parsed.x)
               },
-              {% elif not chart.fields and chart.data.0.title %}
+              {% elif not chart.fields and chart.data.0.title or chart.fields and chart.titles %}
               title: function(context) {
                 context = context[0]
                 if (context.dataset.title) {
@@ -204,10 +243,20 @@
               },
               {% endif %}
               beforeBody: function(context) {
-                context = context[0]
-                if (context.dataset.subtitle) {
-                  return Array.isArray(context.dataset.subtitle)? context.dataset.subtitle[context.dataIndex] : context.dataset.subtitle
-                }
+                ret = ''
+                context.forEach(function(item) {
+                  if (item.dataset.subtitle) {
+                    if (ret) {
+                      ret += '\n'
+                    }
+                    if (Array.isArray(item.dataset.subtitle)) {
+                      ret += item.dataset.subtitle[item.dataIndex]
+                    } else {
+                      ret += item.dataset.subtitle
+                    }
+                  }
+                })
+                return ret
               },
               label: function(context) {
                 ret = context.formattedValue

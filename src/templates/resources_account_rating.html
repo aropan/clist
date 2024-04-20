@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block ogtitle %}{% block title %}Top - Resources{% endblock %}{% endblock %}
+{% block ogtitle %}{% block title %}Account rating - Resources{% endblock %}{% endblock %}
 {% block description %}Explore our lists of top-performing accounts across all resources. Discover the frontrunners in the competitive programming arena and gain inspiration from their achievements.{% endblock %}
 
 {% block end-head %}
-<link href="{% static_ts 'css/resources-top.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/resources-top.js' %}"></script>
+<link href="{% static_ts 'css/resources-rating.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/resources-rating.js' %}"></script>
 {% endblock %}
 
 {% block content %}
 <script>configure_pagination(false)</script>
 <script>versus_url = "{% url 'ranking:make_versus' %}"</script>
 
-{% include "filter_collapse.html" with include_filter="resources_top_filters.html" %}
+{% include "filter_collapse.html" with include_filter="resources_account_rating_filters.html" %}
 
-<div id="resources-top" class="row">
+<div id="resources-rating" class="row">
 {% for resource in resources %}
   <div class="col-sm-6 col-md-4 col-lg-3">
     <div class="panel panel-default table-responsive">
@@ -33,7 +33,7 @@
               <th>Handle</th>
               <th>Rating</th>
             </tr>
-            {% include 'resources_top_paging.html' with resource=resource %}
+            {% include 'resources_account_rating_paging.html' with resource=resource %}
         </table>
     </div>
   </div>

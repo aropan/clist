@@ -44,7 +44,8 @@ class EventLog(BaseModel):
 
     def update_status(self, status, message=None):
         self.status = status
-        self.message = message
+        if message is not None:
+            self.message = message
         self.elapsed = timezone.now() - self.created
         self.save(update_fields=['status', 'message', 'modified', 'elapsed'])
 

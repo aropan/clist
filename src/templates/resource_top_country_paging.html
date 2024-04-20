@@ -1,0 +1,28 @@
+{% load el_pagination_tags %}
+
+{% coder_account_filter country_ratings primary_country row_number_field="rating" operator="__gt" as primary_country_top %}
+{% lazy_paginate first_per_page,per_page country_ratings using "top_country_page" %}
+{% get_pages %}
+{% for country_account in country_ratings|chain:primary_country_top %}
+  {% with name=country_account.country|get_country_name %}
+  {% with code=country_account.country|get_country_code %}
+  <tr
+    {% if code == coder.country or primary_country and code == primary_country.country %} class="info"{% endif %}
+    {% include "delete_on_duplicate_attrs.html" with name="top_country" entry=country_account primary=primary_country %}
+  >
+    <td>
+      {% if country_account.delete_on_duplicate %}{{ country_account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}
+    </td>
+    <td>
+      <a href="{% url_transform request country=code %}"><div class="flag flag-{{ code|lower }}"></div> {{ name }}</a>
+    </td>
+    <td>
+      {% coder_color_circle resource country_account.rating %}
+      <span class="{% coder_color_class resource country_account.rating %}">{{ country_account.rating }}</span>
+    </td>
+  </tr>
+  {% endwith %}
+  {% endwith %}
+{% endfor %}
+{% show_more_table %}
+<script>delete_on_duplicate()</script>

@@ -43,6 +43,15 @@
 
   {% include 'more_fields_filter.html' %}
 
+  {% if params.with_medal_scores %}
+  {% if request.GET.with_medal_scores|is_yes %}
+  <input type="hidden" name="with_medal_scores" value="{{ request.GET.with_medal_scores }}"/>
+  {% endif %}
+  <div class="input-group input-group-sm">
+    <button class="btn btn-default btn-sm{% if request.GET.with_medal_scores|is_yes %} active{% endif %}" name="with_medal_scores"{% if medal_scores_chart %} value="off"{% endif %}>{% icon_to 'medal_scores' %}</button>
+  </div>
+  {% endif %}
+
   {% if perms.clist.view_full_table %}
   <div class="input-group input-group-sm">
     <button class="btn btn-default btn-sm" type="submit" name="full_table"{% if not request.GET %} disabled{% endif %}>{% icon_to 'full_table' %}</button>

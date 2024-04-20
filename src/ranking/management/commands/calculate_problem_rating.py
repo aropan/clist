@@ -19,47 +19,7 @@ from clist.views import update_problems
 from logify.models import EventLog, EventStatus
 from utils.attrdict import AttrDict
 from utils.json_field import JSONF
-
-
-def get_rating(wratings, target, threshold=0.95, cache=None):
-    left = 0
-    right = 5000
-
-    for _ in range(14):
-        middle = (left + right) / 2
-
-        if cache is not None and middle in cache:
-            e_total, weight_sum, positive_prob, negative_prob = cache[middle]
-        else:
-            e_total = 0
-            weight_sum = 0
-            positive_prob = 1
-            negative_prob = 1
-            for weight, rating in wratings:
-                exp = (middle - rating) / 400
-                e = 1 / (1 + 10 ** exp)
-                weight_sum += weight
-                e_total += weight * e
-                positive_prob *= e
-                negative_prob *= 1 - e
-            if cache is not None:
-                cache[middle] = e_total, weight_sum, positive_prob, negative_prob
-
-        """
-        Chmel_Tolstiy proposed for special case:
-        * the maximum rating, in which everything will be solved with a probability of >= X%
-        * the minimum rating of the problem, in which no one will solve with a probability of >= X%
-        """
-        if positive_prob > threshold:
-            left = middle
-        elif negative_prob > threshold:
-            right = middle
-        elif e_total < target:
-            right = middle
-        else:
-            left = middle
-    rating = (left + right) / 2
-    return rating
+from utils.rating import get_weighted_rating
 
 
 def get_statistics(contest):
@@ -360,7 +320,7 @@ class Command(BaseCommand):
                             break
                         if not ratings:
                             continue
-                        old_rating = get_rating(ratings, target=0.5)
+                        old_rating = get_weighted_rating(ratings, target=0.5)
                         n_contests = max(n_contests_values)
                     else:
                         old_rating = stat.get_old_rating()
@@ -414,7 +374,7 @@ class Command(BaseCommand):
 
                     info = contests_divisions_data[get_info_key(stat)]
                     cache = caches.setdefault(get_info_key(stat), {})
-                    perfomance = get_rating(info['wratings'], info['orders'][stat.place_as_int], cache=cache)
+                    perfomance = get_weighted_rating(info['wratings'], info['orders'][stat.place_as_int], cache=cache)
                     rating = (perfomance + stats[stat.pk]['old_rating']) / 2
 
                     problems = current_contest.info['problems']
@@ -444,7 +404,7 @@ class Command(BaseCommand):
             for problem_key, problem_info in problems_infos.items():
                 if problem_key in skip_problems:
                     continue
-                rating = get_rating(problem_info['wratings'], problem_info['solved'])
+                rating = get_weighted_rating(problem_info['wratings'], problem_info['solved'])
                 problems_ratings[problem_key] = round(rating)
 
             if not args.dryrun:

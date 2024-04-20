@@ -56,7 +56,7 @@
     {% for member in members %}
       {% if member and member.account %}
         {% with account=preload_statistics_data.accounts|get_item:member.account %}
-        {% if account %}
+        {% if account and not member.without_country %}
         {% get_country_from_account account as country %}
         {% if country %}
         <div class="flag-width-fixed">
@@ -78,7 +78,7 @@
       {% if forloop.counter0 %}|{% endif %}
       {% if member and member.account %}
         {% with account=preload_statistics_data.accounts|get_item:member.account %}
-        {% if not account %}{{ member.account }}{% else %}{% include "account_table_cell.html" with account=account addition=None resource=resource without_circle=True without_country=True %}{% endif %}
+        {% if not account %}{{ member.account }}{% else %}{% include "account_table_cell.html" with account=account addition=None resource=account.resource without_circle=True without_country=True %}{% endif %}
         {% endwith %}
       {% elif member and member.name %}
         {{ member.name }}

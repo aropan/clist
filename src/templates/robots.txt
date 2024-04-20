@@ -28,7 +28,7 @@ Disallow: *?*&
 Disallow: *?*__*
 Disallow: /standings/*/*?resource=
 Disallow: /coders/*?resource=
-Disallow: /resources/top/*?resource=
+Disallow: /resources/*/*?resource=
 Allow:    *?country=
 Allow:    *?resource=
 Disallow: *?country=*&

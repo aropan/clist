@@ -26,14 +26,14 @@ from django.utils import timezone
 from django_print_sql import print_sql_decorator
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import (as_number, canonize, get_number_from_str, get_problem_key, get_problem_short,
-                                       time_in_seconds, time_in_seconds_format, get_item)
+from clist.templatetags.extras import (as_number, canonize, get_item, get_number_from_str, get_problem_key,
+                                       get_problem_short, time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
 from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.parse_accounts_infos import rename_account
-from ranking.management.modules.common import REQ, ProxyLimitReached, UNCHANGED
+from ranking.management.modules.common import REQ, UNCHANGED, ProxyLimitReached
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from ranking.utils import account_update_contest_additions
@@ -345,6 +345,11 @@ class Command(BaseCommand):
         else:
             resource_event_log = None
 
+        problems_values_fields = (
+            ('language', '_languages'),
+            ('verdict', '_verdicts'),
+        )
+
         processed_group = set()
         for contest in progress_bar:
             if stop_on_error and has_error:
@@ -497,6 +502,7 @@ class Command(BaseCommand):
                         ('duration_in_secs', 'duration_in_secs'),
                         ('kind', 'kind'),
                         ('standings_kind', 'standings_kind'),
+                        ('is_rated', 'is_rated'),
                     ):
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
@@ -713,7 +719,8 @@ class Command(BaseCommand):
                                         in_seconds = v.get('time_in_seconds')
                                         if in_seconds is not None:
                                             activity_time = contest.start_time + timedelta(seconds=in_seconds)
-                                            last_activity = max(last_activity, activity_time)
+                                            if contest.start_time <= activity_time <= contest.end_time:
+                                                last_activity = max(last_activity, activity_time)
                                         cmp_seconds = in_seconds
                                         if v.get('first_ac') or v.get('first_ac_of_all'):
                                             cmp_seconds = -1
@@ -963,10 +970,7 @@ class Command(BaseCommand):
                             def update_stat_info():
                                 problems = r.get('problems', {})
 
-                                for field, out in (
-                                    ('language', '_languages'),
-                                    ('verdict', '_verdicts'),
-                                ):
+                                for field, out in problems_values_fields:
                                     values = set()
                                     for problem in problems.values():
                                         value = problem.get(field)
@@ -1257,6 +1261,12 @@ class Command(BaseCommand):
                                     values = list(sorted(values))
                                     if canonize(values) != canonize(contest.info.get(field)):
                                         contest.info[field] = values
+                            for _, field in problems_values_fields:
+                                contest_field = field.strip('_')
+                                if field in fields_set or not contest.info.get(contest_field):
+                                    continue
+                                fields_set.add(field)
+                                fields.append(field)
 
                             if fields_set and not addition_was_ordereddict:
                                 fields.sort()
@@ -1307,6 +1317,9 @@ class Command(BaseCommand):
                                 contest.calculate_time = True
 
                             contest.n_statistics = n_statistics.pop('__total__', 0)
+                            if contest.end_time <= now and (contest.parsed_time is None or contest.parsed_time < now):
+                                resource.contest_update_time = now
+                                resource.save(update_fields=['contest_update_time'])
                             contest.parsed_time = now
 
                             if standings_problems is not None:
@@ -1447,6 +1460,8 @@ class Command(BaseCommand):
                 self.logger.warning(f'contest = {contest}, row = {r}')
                 self.logger.error(f'parse_statistic exception: {e}')
                 has_error = True
+                if stop_on_error:
+                    print(colored_format_exc())
 
             if not users:
                 module = resource.module

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block ogtitle %}{% block title %}Country rating - Resources{% endblock %}{% endblock %}
+{% block description %}Explore our lists of top-performing countries across all resources. Discover the frontrunners in the competitive programming arena and gain inspiration from their achievements.{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/resources-rating.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/resources-rating.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<script>configure_pagination(false)</script>
+
+{% include "filter_collapse.html" with include_filter="resources_country_rating_filters.html" %}
+
+<div id="resources-rating" class="row">
+{% for resource in resources %}
+  <div class="col-sm-6 col-md-4 col-lg-3">
+    <div class="panel panel-default table-responsive">
+        <table class="table table-hover table-condensed table-striped">
+            <tr>
+              <th class="host" colspan="100%">
+                <a class="lead" href="{% url 'clist:resource' resource.host %}">
+                  <img src="{{ resource.icon|media_size:'64x64' }}" width="24" height="24"/>
+                  {{ resource.host }}
+                </a>
+              </th>
+            </tr>
+            <tr>
+              <th>N</th>
+              <th>Country</th>
+              <th>Rating</th>
+            </tr>
+            {% include 'resources_country_rating_paging.html' with resource=resource %}
+        </table>
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+{% endblock %}

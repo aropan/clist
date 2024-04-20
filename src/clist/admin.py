@@ -6,7 +6,7 @@ from sql_util.utils import SubqueryCount
 from clist.models import Banner, Contest, ContestSeries, Problem, ProblemTag, Resource
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
-from ranking.models import Rating, Module
+from ranking.models import Module, Rating
 
 
 @admin_register(Contest)
@@ -60,7 +60,8 @@ class ContestAdmin(BaseModelAdmin):
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['was_auto_added', 'auto_updated', 'n_statistics', 'has_hidden_results',
                                              'calculate_time', 'info', 'invisible', 'is_rated', 'with_medals',
-                                             'related', 'series', 'allow_updating_statistics_for_participants']}],
+                                             'related', 'merging_contests', 'series',
+                                             'allow_updating_statistics_for_participants']}],
         ['Timing', {'fields': ['parsed_time', 'notification_timing', 'statistic_timing', 'rating_prediction_timing',
                                'created', 'modified', 'updated']}],
         ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
@@ -128,7 +129,10 @@ class ResourceAdmin(BaseModelAdmin):
                            'n_accounts', 'n_contests']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone', 'auto_remove_started']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
-        ['Rating information', {'fields': ['has_rating_history', 'avg_rating', 'rating_update_time', 'rank_update_time',
+        ['Rating information', {'fields': ['has_rating_history', 'has_country_rating',
+                                           'avg_rating', 'n_rating_accounts',
+                                           'rating_update_time', 'rank_update_time',
+                                           'contest_update_time', 'country_rank_update_time',
                                            'ratings', 'rating_prediction']}],
         ['Account information', {'fields': ['has_accounts_infos_update', 'has_multi_account',
                                             'has_account_verification', 'has_standings_renamed_account',
@@ -141,8 +145,9 @@ class ResourceAdmin(BaseModelAdmin):
                     '_has_rating', '_has_profile_url', '_has_problem_rating', '_has_accounts_infos_update',
                     '_has_multi_account', '_has_standings_renamed_account', '_has_upsolving', '_has_verification']
     search_fields = ['host', 'url']
-    list_filter = ['has_rating_history', HasProfileListFilter, 'enable', 'timezone', 'has_problem_rating',
-                   'has_accounts_infos_update', 'has_multi_account', 'has_upsolving', 'has_account_verification']
+    list_filter = ['has_rating_history', 'has_country_rating', HasProfileListFilter, 'enable', 'timezone',
+                   'has_problem_rating', 'has_accounts_infos_update', 'has_multi_account', 'has_upsolving',
+                   'has_account_verification']
 
     def _has_profile_url(self, obj):
         return bool(obj.profile_url)
@@ -199,6 +204,7 @@ class ResourceAdmin(BaseModelAdmin):
 
     class ModuleInline(admin.StackedInline):
         model = Module
+        extra = 0
 
     inlines = (ModuleInline, )
 
