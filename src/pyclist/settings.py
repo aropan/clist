@@ -728,6 +728,8 @@ FONTAWESOME_ICONS_ = {
     'dev': '<i class="fa-regular fa-clone"></i>',
     'medal_scores': '<i class="fa-fw fas fa-chart-line"></i>',
     'merged_standings': '<i class="fa-solid fa-object-group"></i>',
+    'finish': '<i class="fa-solid fa-flag-checkered"></i>',
+    'virtual_start': '<i class="fa-solid fa-stopwatch"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

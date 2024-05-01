@@ -314,7 +314,8 @@
             <div class="key">Resource</div>
             <div class="value"><select class="form-control" id="add-account-resource"></select></div>
             <div class="key">Handle</div>
-            <div class="value"><input type="text" class="form-control" id="add-account-search"{% if selected_account %} value="{{ selected_account.key }}"{% endif %}></div>
+            <div class="value"><input type="text" class="form-control" id="add-account-search"{% if selected_account %} value="{{ selected_account }}"{% endif %}></div>
+            <div id="account-suggests"></div>
             <div class="text-left">
                 <button class="btn btn-primary" id="add-account">Add</button>
                 <a class="btn btn-default" id="add-account-advanced-search" target="_blank" rel="noopener">Advanced Search</a>

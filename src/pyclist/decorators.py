@@ -48,8 +48,8 @@ def group_and_calculate_times(queries):
         query_sql = re.sub(r'\b\d+\b', '%d', query_sql)  # replace number
         query_sql = re.sub(r'\'.+?\'', '%s', query_sql)  # replace string
         query_sql = re.sub(r'\bs\d+_x\d+\b', '%s', query_sql)  # replace savepoint
-        query_sql = re.sub(r'\b%d\b(, %d\b)+', '%ds', query_sql)  # replace many numbers
-        query_sql = re.sub(r'\b%s\b(, %s\b)+', '%ss', query_sql)  # replace many strings
+        query_sql = re.sub(r'%d\b(, %d\b)+', '%ds', query_sql)  # replace many numbers
+        query_sql = re.sub(r'%s\b(, %s\b)+', '%ss', query_sql)  # replace many strings
         grouped.setdefault(query_sql, []).append(query)
     total_times = []
     for key, queries in grouped.items():

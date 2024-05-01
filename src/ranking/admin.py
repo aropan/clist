@@ -182,6 +182,7 @@ class ModuleAdmin(BaseModelAdmin):
 @admin_register(VirtualStart)
 class VirtualStartAdmin(BaseModelAdmin):
     list_display = ['id', 'coder', 'entity', 'start_time']
+    date_hierarchy = 'created'
     search_fields = ['coder__username']
 
 

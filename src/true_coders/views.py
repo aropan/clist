@@ -34,8 +34,9 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
 from clist.models import Contest, ContestSeries, ProblemTag, Resource
-from clist.templatetags.extras import (accounts_split, asfloat, format_time, get_timezones,
-                                       has_update_statistics_permission, query_transform, quote_url, relative_url)
+from clist.templatetags.extras import (accounts_split, as_number, asfloat, format_time, get_problem_short,
+                                       get_timezones, has_update_statistics_permission, query_transform, quote_url,
+                                       relative_url)
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
@@ -849,8 +850,6 @@ def settings(request, tab=None):
     if selected_resource:
         selected_resource = Resource.objects.filter(host=selected_resource).first()
         selected_account = request.GET.get('account')
-        if selected_account:
-            selected_account = Account.objects.filter(resource=selected_resource, key=selected_account).first()
 
     categories = coder.get_categories()
     custom_categories = {c.get_notification_method(): c.title for c in coder.chat_set.filter(is_group=True)}
@@ -1260,7 +1259,21 @@ def change(request):
             if "resource" in request.POST:
                 resource_id = int(request.POST.get("resource"))
                 resource = Resource.objects.get(pk=resource_id)
-                account = Account.objects.get(resource=resource, key=value)
+                account = Account.objects.filter(resource=resource, key=value).first()
+                if account is None:
+                    accounts = resource.account_set.filter(Q(key__istartswith=value) | Q(key__iexact=value))
+                    n_limit = 5
+                    accounts = list(accounts[:n_limit + 1])
+                    if len(accounts) == 0:
+                        return HttpResponseBadRequest("Account not found")
+                    elif len(accounts) > n_limit:
+                        return HttpResponseBadRequest("Too many accounts")
+                    else:
+                        response = {
+                            'message': 'suggest',
+                            'accounts': [a.dict() for a in accounts],
+                        }
+                        return JsonResponse(response)
             else:
                 account = Account.objects.get(pk=request.POST.get("id"))
                 resource = account.resource
@@ -1284,7 +1297,8 @@ def change(request):
                 return JsonResponse({'url': url, 'message': 'redirect'}, status=HttpResponseRedirect.status_code)
 
             coder.add_account(account)
-            return HttpResponse(json.dumps(account.dict()), content_type="application/json")
+            response = {'message': 'add', 'account': account.dict()}
+            return JsonResponse(response)
         except Exception as e:
             return HttpResponseBadRequest(e)
     elif name == "delete-account":
@@ -1428,8 +1442,75 @@ def change(request):
             return HttpResponseBadRequest(f'unknown action = {action}')
 
         return JsonResponse({'status': 'ok', 'state': value})
+    elif name == 'delete-virtual-start':
+        pk = int(request.POST.get('id', -1))
+        virtual_start = get_object_or_404(VirtualStart, pk=pk, coder=coder)
+        virtual_start.delete()
+    elif name == 'finish-virtual-start':
+        pk = int(request.POST.get('id', -1))
+        virtual_start = get_object_or_404(VirtualStart, pk=pk, coder=coder, finish_time__isnull=True)
+        virtual_start.finish_time = timezone.now()
+        virtual_start.save(update_fields=['finish_time'])
+    elif name == 'reset-virtual-start' and request.user.has_perm('ranking.change_virtualstart'):
+        pk = int(request.POST.get('id', -1))
+        virtual_start = get_object_or_404(VirtualStart, pk=pk, coder=coder)
+        virtual_start.start_time = timezone.now()
+        virtual_start.finish_time = None
+        virtual_start.addition = {}
+        virtual_start.save(update_fields=['start_time', 'finish_time', 'addition'])
+    elif name == 'update-virtual-start-statistic':
+        pk = int(request.POST.get('id', -1))
+        virtual_start = get_object_or_404(VirtualStart, pk=pk, coder=coder)
+        contest = virtual_start.contest.first()
+        if not contest:
+            return HttpResponseBadRequest('contest not found')
+
+        problem_short = request.POST.get('problem')
+        for problem in contest.problems_list:
+            if get_problem_short(problem) == problem_short:
+                break
+        else:
+            return HttpResponseBadRequest(f'unknown problem = {problem_short}')
+
+        addition = virtual_start.addition
+        problems = addition.setdefault('problems', {})
+
+        def get_field(name):
+            if name not in request.POST:
+                return None
+            val = request.POST.get(name)
+            if not re.match('^[-+?:.,0-9]{0,50}$', val):
+                raise ValueError(f'invalid {name} value = {val}')
+            return val
+
+        try:
+            result = get_field('result')
+            time = get_field('time')
+            penalty = get_field('penalty')
+            solving = get_field('solving')
+        except ValueError as e:
+            return HttpResponseBadRequest(e)
+
+        if not result and not time:
+            problems.pop(problem_short, None)
+            message = 'result was deleted'
+        else:
+            if result[0].isdigit():
+                result = as_number(result)
+            if problem_short in problems:
+                message = 'result was updated'
+            else:
+                message = 'result was added'
+            problems[problem_short] = {'result': result, 'time': time}
+        if penalty is not None:
+            addition['penalty'] = penalty
+        if solving is not None:
+            addition['solving'] = solving
+        virtual_start.save(update_fields=['addition'])
+        message = f'{problem_short}: {message}'
+        return JsonResponse({'status': 'success', 'message': message})
     else:
-        return HttpResponseBadRequest(f'unknown query = {name}')
+        return HttpResponseBadRequest(f'unknown name = {name}')
 
     return HttpResponse('accepted')
 

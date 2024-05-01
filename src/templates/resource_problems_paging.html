@@ -7,6 +7,14 @@
     <td>
       {{ problem.time|timezone:timezone|naturalday }}
     </td>
+    {% if resource.has_problem_rating %}<td>
+      {% if problem.rating is not None %}
+        {% coder_color_circle resource problem.rating %}
+        <span class="{% coder_color_class resource problem.rating %}">{{ problem.rating }}</span>
+      {% else %}
+        <span class="text-muted">&mdash;</span>
+      {% endif %}
+    </td>{% endif %}
     <td class="title">
       {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
       {{ problem.name }}

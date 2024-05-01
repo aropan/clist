@@ -5,22 +5,33 @@
 {% for virtual_start in virtual_starts %}
 {% with contest=virtual_start.entity %}
 {% with resource=contest.resource %}
-<tr>
+<tr class="virtual-start">
   <td class="start-time">
     <span title="{{ virtual_start.start_time|timezone:timezone|naturalday }}" data-toggle="tooltip">{{ virtual_start.start_time|timezone:timezone|format_time:timeformat }}</span>
   </td>
   <td class="event">
     <a href="{% url_transform request resource=resource.id %}">
-      <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+      <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon|media_size:"32x32" }}" width="16" height="16"/>
     </a>
-    <a href="{{ contest.url }}">
+    <a href="{{ contest.actual_url }}">
       {% trim_to contest.title 60 %}
     </a>
 
-    {% if perms.ranking.change_virtualstart %}
     <span class="inline-button">
-        <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_virtualstart_change' virtual_start.id %}"><i class="fas fa-database"></i></button>
+      <button class="btn btn-danger btn-xs delete-virtual-start" data-contest-title="{{ contest.title }}" data-virtual-start-id="{{ virtual_start.pk }}">{% icon_to "delete" %}</button>
+      {% if perms.ranking.change_virtualstart %}
+      <button class="btn btn-default btn-xs reset-virtual-start" data-virtual-start-id="{{ virtual_start.pk }}">{% icon_to "update" "Reset" %}</button>
+      {% endif %}
+      {% if perms.ranking.change_virtualstart %}
+      <button class="database-href btn btn-default btn-xs" data-href="{% url "admin:ranking_virtualstart_change" virtual_start.id %}">{% icon_to "database" "VirtualStart#"|concat:virtual_start.pk %}</button>
+      {% endif %}
     </span>
+  </td>
+  <td>
+    {% if virtual_start.finish_time %}
+    <span title="{{ virtual_start.finish_time|timezone:timezone|naturalday }}" data-toggle="tooltip">{{ virtual_start.finish_time|timezone:timezone|format_time:timeformat }}</span>
+    {% else %}
+    <span class="text-muted">&#183;</span>
     {% endif %}
   </td>
 </tr>

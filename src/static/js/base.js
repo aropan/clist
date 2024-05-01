@@ -215,6 +215,10 @@ function log_ajax_error(response, element = null) {
   }
 }
 
+function log_ajax_error_callback(response) {
+  log_ajax_error(response, null)
+}
+
 
 ;!(function ($) {
   $.fn.classes = function (callback) {

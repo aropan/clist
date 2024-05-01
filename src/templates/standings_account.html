@@ -1,5 +1,5 @@
 {% with team_id=addition.team_id %}
-{% if resource.avatar_url %}
+{% if resource.avatar_url and account %}
   <div class="avatar-width-fixed">
   {% if not team_id %}
   {% with avatar_url=account.avatar_url %}{% if avatar_url|not_empty %}<img class="account-avatar" src="{{ avatar_url }}"/>{% endif %}{% endwith %}
@@ -7,7 +7,7 @@
   </div>
 {% endif %}
 
-{% if has_country %}
+{% if has_country and account %}
   <div class="flag-width-fixed">
   {% if not team_id %}
     {% get_country_from_account account as country %}{% if country %}
@@ -36,6 +36,8 @@
   {% else %}
     <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
   {% endif %}
+
+  {% if statistic.virtual_start %}<i>Your virtual participation</i>{% endif %}
 
   {% if account.url and not team_id or '_account_url' in addition %}</a>{% endif %}
 
@@ -116,8 +118,11 @@
   </a>
 {% endif %}
 
-{% if perms.ranking.statistics_change and statistic %}
+{% if statistic and not statistic.virtual_start and statistic.id and perms.ranking.change_statistics %}
   <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+{% endif %}
+{% if statistic and statistic.virtual_start and statistic.virtual_start_pk and perms.ranking.change_virtualstart %}
+  <a href="{% url 'admin:ranking_virtualstart_change' statistic.virtual_start_pk %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
 {% endif %}
 
 {% endwith %}

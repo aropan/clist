@@ -17,7 +17,7 @@ import pytz
 
 from clist.templatetags.extras import as_number, is_solved
 from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table, utc_now, UNCHANGED
+from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, FailOnGetResponse, parsed_table, utc_now
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 from ranking.utils import create_upsolving_statistic
 from utils.aes import AESModeOfOperation
@@ -211,7 +211,7 @@ class Statistic(BaseModule):
         return standings
 
     @staticmethod
-    def process_submission(submission, result, upsolve, contest, binary):
+    def process_submission(submission, result, upsolve, contest, with_binary=False):
         contest_url = contest.url.replace('contests', 'contest')
 
         info = {
@@ -251,10 +251,10 @@ class Statistic(BaseModule):
                 p['submission_id'] > info['submission_id'] and is_accepted
             ):
                 p.update(info)
-                if binary:
-                    p['binary'] = binary
+                if with_binary:
+                    p['binary'] = is_accepted
                 if update_result:
-                    p['result'] = '+' if is_accepted else '-1'
+                    p['result'] = '+' if is_accepted else '-'
                 info['updated'] = True
             r = as_number(p.get('result'), force=True)
             p['partial'] = not is_accepted and p.get('partial', True) and r and r > 0
@@ -542,7 +542,7 @@ class Statistic(BaseModule):
             ):
                 upsolve = True
 
-            info = Statistic.process_submission(submission, result, upsolve, contest=self, binary=False)
+            info = Statistic.process_submission(submission, result, upsolve, contest=self)
 
             has_accepted |= info['is_accepted']
             if contest_type == 'IOI' and info['is_accepted']:
@@ -556,7 +556,7 @@ class Statistic(BaseModule):
 
         def to_score(x):
             return (
-                (1 if x.startswith('+') or not x.startswith('?') and float(x) > 0 else 0)
+                (1 if x.startswith('+') or not x.startswith('-') and not x.startswith('?') and float(x) > 0 else 0)
                 if isinstance(x, str) else x
             )
 
@@ -772,7 +772,7 @@ class Statistic(BaseModule):
 
                 result = {account.key: deepcopy(addition)}
                 submission_info = Statistic.process_submission(submission, result,
-                                                               upsolve=True, contest=contest, binary=True)
+                                                               upsolve=True, contest=contest, with_binary=True)
                 if not submission_info.get('updated'):
                     continue
 

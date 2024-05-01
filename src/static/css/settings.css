@@ -120,3 +120,7 @@ form.editableform .has-error .editable-input .form-control:focus {
 #subscriptions .subscription .key-column {
   text-align: right;
 }
+
+.account-suggest {
+  margin-right: 5px;
+}

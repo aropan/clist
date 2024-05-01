@@ -233,10 +233,13 @@ def standings_list(request, template='standings_list.html', extra_context=None):
     return render(request, template, context)
 
 
-def _standings_highlight(statistics, options):
+def _standings_highlight(contest, statistics, options):
+    contest_penalty_time = min((timezone.now() - contest.start_time).total_seconds(), contest.duration_in_secs) // 60
+
     ret = {}
     data_1st_u = options.get('1st_u')
     participants_info = {}
+
     if data_1st_u:
         lasts = {}
         n_quota = {}
@@ -267,7 +270,7 @@ def _standings_highlight(statistics, options):
             penalty = s.addition.get('penalty')
 
             info = participants_info.setdefault(s.id, {})
-            info['search'] = rf'^{k}'
+            info['search'] = rf'regex:^{k}'
 
             n_quota[k] = n_quota.get(k, 0) + 1
             if (n_quota[k] > quota or last_hl) and (not more or more['n'] >= more['n_highlight'] or more_last_hl):
@@ -276,9 +279,13 @@ def _standings_highlight(statistics, options):
                     p_info = last_hl
                 if (not p_info or more_last_hl and (-more_last_hl['solving'], more_last_hl['penalty']) > (-p_info['solving'], p_info['penalty'])):  # noqa
                     p_info = more_last_hl
+
                 info.update({
                     't_solving': p_info['solving'] - solving,
-                    't_penalty': p_info['penalty'] - penalty if penalty is not None else None,
+                    't_penalty': (
+                        p_info['penalty'] - penalty - round((p_info['solving'] - solving) * contest_penalty_time)
+                        if penalty is not None else None
+                    ),
                 })
             elif n_quota[k] <= quota:
                 n_highlight += 1
@@ -719,12 +726,15 @@ def render_standings_paging(contest, statistics, with_detail=True):
         'per_page_more': 0,
         'mod_penalty': mod_penalty,
         'colored_by_group_score': mod_penalty or colored_by_group_score,
+        'virtual_start': None,
+        'virtual_start_statistics': None,
+        'with_virtual_start': False,
     }
 
     options = contest.info.get('standings', {})
     data_1st_u = options.get('1st_u')
     if data_1st_u:
-        n_highlight_context = _standings_highlight(contest.statistics_set.order_by(*order), options)
+        n_highlight_context = _standings_highlight(contest, contest.statistics_set.order_by(*order), options)
         context.update(n_highlight_context)
 
     return {
@@ -919,7 +929,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         groupby = None
 
     query = request.GET.copy()
-    switched_fields = {'timeline', 'charts', 'fullscreen'}
+    switched_fields = {'timeline', 'charts', 'fullscreen', 'play'}
     for k, v in request.GET.items():
         if (
             not v and k not in switched_fields or
@@ -1135,7 +1145,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 fields[v] = v
                 hidden_fields.append(v)
 
-    n_highlight_context = _standings_highlight(statistics, options) if not contests_ids else {}
+    n_highlight_context = _standings_highlight(contest, statistics, options) if not contests_ids else {}
 
     # field to select
     fields_to_select_defaults = {
@@ -1233,6 +1243,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                 timeline = f'{val / contest.duration_in_secs:.6f}'
         else:
             timeline = None
+    contest_timeline = contest.get_timeline_info()
+    enable_timeline = enable_timeline and contest_timeline
 
     problems = get_standings_problems(contest, division)
     mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)
@@ -1290,9 +1302,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
                                            Q(account__coders__in=party.admins.all()) |
                                            Q(account__coders=party.author))
         else:
-            cond = get_iregex_filter(search,
-                                     'account__key', 'account__name',
-                                     suffix='__icontains',
+            if search.startswith('regex:'):
+                search = search[search.index(':') + 1:]
+                suffix = '__regex'
+            else:
+                suffix = '__icontains'
+
+            cond = get_iregex_filter(search, 'account__key', 'account__name', suffix=suffix,
                                      logger=request.logger)  # FIXME: add addition__name
             statistics = statistics.filter(cond)
 
@@ -1598,6 +1614,11 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
     name_instead_key = contest.info.get('standings', {}).get('name_instead_key', name_instead_key)
     context['name_instead_key'] = name_instead_key
 
+    virtual_start = VirtualStart.objects.filter(contest=contest, coder=coder).first()
+    with_virtual_start = bool(virtual_start and virtual_start.is_active() and enable_timeline)
+    if with_virtual_start:
+        timeline = None
+
     inner_scroll = not request.user_agent.is_mobile
 
     context.update({
@@ -1616,6 +1637,9 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'contests_timelines': contests_timelines,
         'statistics': statistics,
         'my_statistics': my_statistics,
+        'virtual_start': virtual_start,
+        'virtual_start_statistics': virtual_start.statistics() if with_virtual_start else None,
+        'with_virtual_start': with_virtual_start,
         'problems': problems,
         'params': params,
         'settings_standings_fields': settings.STANDINGS_FIELDS_,
@@ -1646,7 +1670,7 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
         'without_neighbors_aligment': not inner_scroll or 'safari' in request.user_agent.browser.family.lower(),
         'with_table_inner_scroll': inner_scroll,
         'enable_timeline': enable_timeline,
-        'contest_timeline': contest.get_timeline_info(),
+        'contest_timeline': contest_timeline,
         'timeline': timeline,
         'timeline_durations': [
             ('100', '100 ms'),
@@ -1676,6 +1700,13 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             ('01:00:00', '1h'),
             ('0.5', '50%'),
             ('1.0', '100%'),
+        ],
+        'timeline_follow': [
+            ('1', '1 sec'),
+            ('10', '10 sec'),
+            ('60', '1 min'),
+            ('300', '5 min'),
+            ('0', 'disable'),
         ],
         'groupby_data': statistics,
         'groupby_fields': fields,
@@ -2161,16 +2192,19 @@ def virtual_start(request, template='virtual_start.html'):
         return HttpResponseBadRequest('Invalid contest')
     if contest:
         params['contests'] = [contest]
+
     action = request.GET.get('action')
     if action == 'start':
-        if contest:
-            if VirtualStart.objects.filter(coder=coder, contest=contest).exists():
-                request.logger.error('Already started')
-            else:
-                VirtualStart.objects.create(coder=coder, entity=contest, start_time=timezone.now())
-                return redirect(contest.url)
-        else:
+        return_redirect = redirect(url_transform(request, action=None, with_remove=True))
+        if not contest:
             request.logger.error('No contest to start')
-        return redirect(url_transform(request, action=None, with_remove=True))
+            return return_redirect
+        if VirtualStart.objects.filter(coder=coder, contest=contest).exists():
+            request.logger.error('Already started')
+            return return_redirect
+        VirtualStart.objects.create(coder=coder, entity=contest, start_time=timezone.now())
+        context['open_url'] = contest.url
+        params.pop('contests', None)
+
     context['virtual_starts'] = virtual_starts
     return template, context

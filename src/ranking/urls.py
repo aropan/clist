@@ -14,5 +14,5 @@ urlpatterns = [
     re_path(r'^solutions/(?P<sid>[0-9]+)/(?P<problem_key>.*)/$', views.solutions, name='solution'),
     re_path(r'^versus/$', views.make_versus, name='make_versus'),
     re_path(r'^versus/(.+/vs/.+)/$', views.versus, name='versus'),
-    re_path(r'^virtual-start/$', views.virtual_start, name='virtual-start'),
+    re_path(r'^virtual-start/$', views.virtual_start, name='virtual_start'),
 ]

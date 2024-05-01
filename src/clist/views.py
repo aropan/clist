@@ -351,7 +351,7 @@ def resources(request):
 
 @page_templates((('resources_account_rating_paging.html', None),))
 @context_pagination()
-def resources_account_rating(request, template='resources_account_rating.html'):
+def resources_account_ratings(request, template='resources_account_ratings.html'):
     params = {}
     accounts_filter = Q()
 
@@ -424,7 +424,7 @@ def resources_account_rating(request, template='resources_account_rating.html'):
 
 @page_templates((('resources_country_rating_paging.html', None),))
 @context_pagination()
-def resources_country_rating(request, template='resources_country_rating.html'):
+def resources_country_ratings(request, template='resources_country_ratings.html'):
     params = {}
     country_accounts = CountryAccount.objects.filter(rating__isnull=False).order_by('-rating')
 
@@ -546,6 +546,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         primary_country = None
 
     params = {}
+    mute_country_rating = False
 
     contests = resource.contest_set.all()
 
@@ -573,6 +574,7 @@ def resource(request, host, template='resource.html', extra_context=None):
     delta_period = deltas_period.get(period, None)
     if delta_period:
         accounts = accounts.filter(last_activity__gte=now - delta_period)
+        mute_country_rating = True
 
     default_variables = resource.info.get('default_variables', {})
     range_filter_values = {}
@@ -590,6 +592,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         if value is not None:
             params[field] = value
             accounts = accounts.filter(**{operator: value})
+            mute_country_rating = True
 
     if not request.as_coder:
         update_coder_range_filter(coder, range_filter_values, resource.host)
@@ -679,6 +682,7 @@ def resource(request, host, template='resource.html', extra_context=None):
         },
         'contest_key': None,
         'has_country': has_country,
+        'mute_country_rating': mute_country_rating,
         'periods': periods,
         'params': params,
         'first_per_page': 10,
@@ -1009,6 +1013,8 @@ def problems(request, template='problems.html'):
             mapping={
                 'name': {'fields': ['name__iregex']},
                 'key': {'fields': ['key__iexact']},
+                'index': {'fields': ['index']},
+                'short': {'fields': ['short']},
                 'contest': {'fields': ['contest__title__iregex'], 'exists': 'contests'},
                 'resource': {'fields': ['resource__host__iregex']},
                 'tag': {'fields': ['problemtag__name'], 'exists': 'tags'},

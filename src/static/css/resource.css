@@ -27,3 +27,10 @@ table.table.contests tr .title,
 table.table.problems tr .title {
   text-align: left;
 }
+
+.update-time {
+  font-size: 70%;
+  font-weight: normal;
+  margin-top: 5px;
+  margin-right: 5px;
+}

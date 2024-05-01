@@ -47,7 +47,21 @@ class Statistic(BaseModule):
 
         headers = kwargs.setdefault('headers', {})
         headers['User-Agent'] = 'Mediapartners-Google'
-        headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        headers['Accept-Encoding'] = 'gzip, deflate, br'
+
+        for key, value in (
+            ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'),
+            ('Accept-Language', 'en-US,en;q=0.5'),
+            ('Connection', 'keep-alive'),
+            ('DNT', '1'),
+            ('Upgrade-Insecure-Requests', '1'),
+            ('Sec-Fetch-Dest', 'document'),
+            ('Sec-Fetch-Mode', 'navigate'),
+            ('Sec-Fetch-Site', 'cross-site'),
+            ('Pragma', 'no-cache'),
+            ('Cache-Control', 'no-cache'),
+        ):
+            headers.setdefault(key, value)
 
         kwargs['with_curl'] = req.proxer is None and 'post' not in kwargs
         kwargs['with_referer'] = False

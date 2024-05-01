@@ -1147,6 +1147,23 @@ $(function() {
     }
     $('.delete-account').click(deleteAccount)
 
+    var $account_suggests = $('#account-suggests')
+
+    function selectAccountSuggest() {
+        $search.val($(this).data('handle')).trigger('change')
+        $account_suggests.children().remove()
+    }
+
+    function addAccountSuggest(account) {
+        var $suggest = $('<a>', {
+            class: 'account-suggest badge progress-bar-info',
+            data: {handle: account.account},
+            text: account.account + (account.name && account.account.indexOf(account.name) == -1? ' | ' + account.name : '')
+        })
+        $suggest.click(selectAccountSuggest)
+        $account_suggests.append($suggest)
+    }
+
     var $search = $('#add-account-search')
     $search.css({'width': '40%'});
 
@@ -1181,10 +1198,16 @@ $(function() {
             },
             success: function(data) {
                 $add_account_loading.addClass('hidden')
-                addAccount(-1, data)
-                $resource.val(null).trigger('change');
-                $search.val(null).trigger('change');
-
+                $account_suggests.children().remove()
+                if (data.message == 'add') {
+                    addAccount(-1, data.account)
+                    $resource.val(null).trigger('change')
+                    $search.val(null).trigger('change')
+                } else if (data.message == 'suggest') {
+                    for (var i = 0; i < data.accounts.length; i++) {
+                        addAccountSuggest(data.accounts[i])
+                    }
+                }
             },
             error: function(data) {
                 if (data.responseJSON && data.responseJSON.message == 'redirect') {

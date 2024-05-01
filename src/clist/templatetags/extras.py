@@ -20,6 +20,7 @@ from django import template
 from django.apps import apps
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Value
 from django.template.base import Node
 from django.template.defaultfilters import floatformat, slugify, stringfilter
@@ -295,6 +296,11 @@ def aslist(value):
     if isinstance(value, (list, tuple)):
         return value
     return [value]
+
+
+@register.filter
+def asbool(value):
+    return bool(value)
 
 
 @register.simple_tag
@@ -723,6 +729,8 @@ def to_escaped_json(data):
 
 @register.filter
 def chain(value, arg):
+    if arg is None:
+        return value
     return itertools.chain(value, arg)
 
 
@@ -1402,3 +1410,10 @@ def search_linked_coder(request, account):
         search = value
 
     return search
+
+
+@register.simple_tag(takes_context=True)
+def time_ago(context, time):
+    title = format_time(timezone(time, context['timezone']), context['timeformat'])
+    value = naturaltime(timezone(time, context['timezone']))
+    return mark_safe(f'<span title="{title}" data-placement="top" data-toggle="tooltip">{value}</span>')

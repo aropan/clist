@@ -1152,9 +1152,9 @@ class Command(BaseCommand):
                                             v_result = v.get('result', '')
                                             if isinstance(v_result, str) and '?' in v_result:
                                                 calculate_time = True
-                                            p = p_problems.get(k, {})
-                                            if 'time' in v:
+                                            if 'time' in v or 'result' not in v:
                                                 continue
+                                            p = p_problems.get(k, {})
                                             has_change = v.get('result') != p.get('result')
                                             if (not has_change or contest.end_time < now) and 'time' in p:
                                                 v['time'] = p['time']

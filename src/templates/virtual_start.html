@@ -11,7 +11,14 @@
 
 {% block content %}
 
-<h2 class="text-center">Virtual start</h2>
+<h2 class="text-center">Virtual Start</h2>
+
+{% if open_url %}
+<script>
+  update_urls_params({'action': undefined})
+  window.open('{{ open_url }}', '_blank').focus()
+</script>
+{% endif %}
 
 <div id="virtual-start">
   <form class="form-inline" method="get" action="">
@@ -34,6 +41,7 @@
           <tr>
             <th class="start-time">Start time</th>
             <th class="event">Event</th>
+            <th class="finish-time">Finish time</th>
           </tr>
         </thead>
         <tbody>

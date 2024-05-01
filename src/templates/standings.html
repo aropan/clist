@@ -19,8 +19,13 @@
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script>
   contest_duration = {{ contest.duration_in_secs }}
+  {% if with_virtual_start %}
+  contest_start_timestamp = {{ virtual_start.start_time.timestamp }}
+  contest_time_percentage = 0
+  {% else %}
   contest_start_timestamp = {{ contest.standings_start_time.timestamp }}
   contest_time_percentage = {{ contest.time_percentage }}
+  {% endif %}
   contest_timeline = {{ contest_timeline|default:"{}"|to_json }}
   freeze_duration = {{ freeze_duration|to_json }}
   contest_pk = {{ contest.pk }}
@@ -29,6 +34,9 @@
   with_detail = {{ with_detail|lower }}
   starred_cookie_path = window.location.pathname
   starred_cookie_expires = 365
+  with_virtual_start = {{ with_virtual_start|asbool|lower }}
+  virtual_start_pk = {{ virtual_start.pk|default:-1 }}
+  update_contest_time_percentage_multiplier = {{ request.GET|get_item:"_multiplier"|asfloat|default:1 }}
 </script>
 
 {% endblock %}
@@ -37,7 +45,6 @@
 
 <script>
   $(function() {
-
 {% if not contest.resource.info.standings.no_change_problem_width %}
     var problem_selector = 'tr.header-row th.problem-cell:not(.header-score):not(.problem-cell-stat), tr.header-problems th.problem-cell:not(.header-score):not(.problem-cell-stat)'
   {% if contest.resource.info.standings.avg_problem_width or contest.info.standings.avg_problem_width %}
@@ -119,7 +126,7 @@
       </a>
       {% endif %}
 
-      {% include "contest_inline_buttons.html" with contest=contest with_stage=True %}
+      {% include "contest_inline_buttons.html" with contest=contest with_stage=True virtual_start=virtual_start %}
     </div>
 
     {% if contest.related is not None %}
@@ -216,7 +223,7 @@
     <div id="timeline-tooltip" class="badge"></div>
 
     <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default fullscreen-border{% if not with_table_inner_scroll %} table-responsive{% endif %} {{ request.user_agent.browser.family|lower }}">
-      <table class="standings table table-hover table-condensed{% if with_detail %}-detail{% else %}-non-detail{% endif %} table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}{% if timeline %} invisible{% endif %}{% if merge_problems %} table-merge-problems{% endif %}">
+      <table class="standings table table-hover table-condensed{% if with_detail %}-detail{% else %}-non-detail{% endif %} table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}{% if timeline or with_virtual_start %} invisible{% endif %}{% if merge_problems %} table-merge-problems{% endif %}{% if with_virtual_start %} no-hints{% endif %}">
           <thead>
             <tr class="header-row">
               <th class="place-cell sticky-column" data-sticky-column="place-cell"{{ default_rowspan }}>
@@ -259,7 +266,7 @@
 
               {% for problem in problems %}
               {% if not problem.skip %}
-              <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}>
+              <th class="problem-cell{% if merge_problems %} header-score{% endif %}"{% if problem.colspan %} colspan="{{ problem.colspan }}"{% endif %}{% if not merge_problems and problem %} data-problem-key="{{ problem|get_problem_short }}"{% endif %}>
                 <div class="nowrap" title="{% if problem.group %}{{ problem.group }}{% else %}{{ problem|get_problem_name }}{% endif %}" data-placement="bottom" data-toggle="tooltip">
                 {% if problem.rating is not None %}
                 {% coder_color_circle contest.resource problem.rating size=12 %}
@@ -317,7 +324,7 @@
             {% if merge_problems %}
             <tr class="header-problems">
               {% for problem in problems %}
-              <th class="problem-cell{% if problem.colspan %} subheader-score{% endif %}">
+              <th class="problem-cell{% if problem.colspan %} subheader-score{% endif %}"{% if problem %} data-problem-key="{{ problem|get_problem_short }}"{% endif %}>
                 <small{% if problem.group %} title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>
                   {% if problem.suburl %}<a href="{{ problem.suburl }}">{% endif %}
                     {% if problem.subname %}<div{% if problem.subname_class %} class="{{ problem.subname_class }}"{% endif %}>{{ problem.subname }}</div>{% endif %}

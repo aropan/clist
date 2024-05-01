@@ -1179,6 +1179,9 @@ class VirtualStart(BaseModel):
     entity = GenericForeignKey('content_type', 'object_id')
 
     start_time = models.DateTimeField()
+    finish_time = models.DateTimeField(default=None, null=True, blank=True)
+
+    addition = models.JSONField(default=dict, blank=True)
 
     class Meta:
         unique_together = ('coder', 'content_type', 'object_id')
@@ -1194,3 +1197,17 @@ class VirtualStart(BaseModel):
         has_virtual_start = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef('id'))
         has_verdict = coder.verdicts.filter(problem__contests=OuterRef('pk'))
         return Exists(has_virtual_start) | Exists(has_verdict)
+
+    def is_active(self):
+        return self.finish_time is None or self.finish_time > timezone.now()
+
+    def statistics(self):
+        return [{
+            'id': f'virtualstart{self.pk}',
+            'contest_id': self.object_id if self.content_type.model == 'contest' else None,
+            'place': self.addition.get('place'),
+            'solving': self.addition.get('solving'),
+            'addition': self.addition,
+            'virtual_start': True,
+            'virtual_start_pk': self.pk,
+        }]

@@ -9,6 +9,10 @@
     <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:clist_contest_change' contest.id %}">{% icon_to 'database' "Contest#"|concat:contest.id %}</button>
     {% endif %}
 
+    {% if perms.ranking.change_virtualstart and virtual_start %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_virtualstart_change' virtual_start.id %}">{% icon_to 'database' "VirtualStart#"|concat:virtual_start.id %}</button>
+    {% endif %}
+
     {% if perms.ranking.change_stage and with_stage and contest.stage %}
     <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_stage_change' contest.stage.id %}">{% icon_to 'database' "Stage#"|concat:contest.stage.id %}</button>
     {% endif %}
@@ -18,5 +22,6 @@
     {% endif %}
 
     <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.pk }}">{% icon_to 'copy' contest.pk %}</button>
+
 </span>
 {% endif %}

@@ -1,3 +1,7 @@
+function resize_window() {
+  $(window).trigger('resize')
+}
+
 function update_sticky() {
   $('tr.header-problems').css('top', $('tr.header-row:first').height())
 
@@ -88,32 +92,42 @@ var UNFREEZE_ORDER = null
 var UNFREEZE_SIZE = 0
 var CLEAR_STARRED_UNFREEZED_TIMER_ID = null
 var PROBLEM_PROGRESS_STATS = {}
+var UPDATE_TIMELINE_TEXT_TIMER_ID = null
+var UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID = null
+var UNFREEZE_INDEX_UNDEF = -1
+var ERASE_SWITCHER_SELECTOR = '.stat-cell:not(.virtual-start-statistic) .problem-cell[data-result-switcher]'
 
 function freeze_percent() {
   return freeze_duration? freeze_duration / contest_duration : 0
 }
 
 function unfreeze_percent() {
-  return Math.min(contest_time_percentage, 1 - freeze_percent())
+  return 1 - freeze_percent()
+}
+
+function unfreeze_is_active(percent) {
+  return !with_virtual_start && freeze_percent() && unfreeze_percent() < percent && percent < 1
 }
 
 function step_timeline(multiplier = 1, stop = false) {
   var next_percent = CURRENT_PERCENT + multiplier * parseFloat($('#timeline-step').val())
 
-  if (unfreeze_percent() < next_percent && next_percent < contest_time_percentage || CURRENT_PERCENT > unfreeze_percent()) {
-    var unfreeze_index = Math.max(0, CURRENT_PERCENT - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
-    if (multiplier > 0) {
-      unfreeze_index = Math.ceil(unfreeze_index) + 0.5
-    } else if (multiplier < 0) {
-      unfreeze_index = Math.floor(unfreeze_index) - 0.5
+  if (!with_virtual_start) {
+    if (unfreeze_is_active(next_percent) || CURRENT_PERCENT > unfreeze_percent()) {
+      var unfreeze_index = Math.max(0, CURRENT_PERCENT - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
+      if (multiplier > 0) {
+        unfreeze_index = Math.ceil(unfreeze_index) + 0.5
+      } else if (multiplier < 0) {
+        unfreeze_index = Math.floor(unfreeze_index) - 0.5
+      }
+      next_percent = unfreeze_index / UNFREEZE_SIZE * freeze_percent() + unfreeze_percent()
+      next_percent = Math.max(next_percent, 0)
+      next_percent = Math.min(next_percent, 1)
     }
-    next_percent = unfreeze_index / UNFREEZE_SIZE * freeze_percent() + unfreeze_percent()
-    next_percent = Math.max(next_percent, 0)
-    next_percent = Math.min(next_percent, 1)
-  }
 
-  if (Math.min(next_percent, CURRENT_PERCENT) < unfreeze_percent() && unfreeze_percent() < Math.max(next_percent, CURRENT_PERCENT)) {
-    next_percent = unfreeze_percent()
+    if (Math.min(next_percent, CURRENT_PERCENT) < unfreeze_percent() && unfreeze_percent() < Math.max(next_percent, CURRENT_PERCENT)) {
+      next_percent = unfreeze_percent()
+    }
   }
 
   set_timeline(next_percent)
@@ -124,18 +138,25 @@ function step_timeline(multiplier = 1, stop = false) {
 
 function update_timeline_text(percent = null) {
   percent = percent || CURRENT_PERCENT
-  $('#timeline-progress-select').css('width', Math.min(percent, unfreeze_percent()) * 100 + '%')
-  $('#timeline-progress-hidden').css('width', Math.max(unfreeze_percent() - percent, 0) * 100 + '%')
-  $('#timeline-progress-freeze').css('width', Math.max(percent - unfreeze_percent(), 0) * 100 + '%')
-  $('#timeline-progress-freeze-hidden').css('width', Math.min(Math.max(contest_time_percentage - percent, 0), freeze_percent()) * 100 + '%')
+  var unfreeze_start = Math.min(contest_time_percentage, unfreeze_percent())
+  $('#timeline-progress-select').css('width', Math.min(percent, unfreeze_start) * 100 + '%')
+  $('#timeline-progress-hidden').css('width', Math.max(unfreeze_start - percent, 0) * 100 + '%')
+  $('#timeline-progress-freeze').css('width', Math.max(percent - unfreeze_start, 0) * 100 + '%')
+  var freeze_hidden_percent = Math.min(Math.max(contest_time_percentage - Math.max(percent, unfreeze_start), 0), freeze_percent()) * 100
+  $('#timeline-progress-freeze-hidden').css('width', freeze_hidden_percent + '%')
   var unparsed_percent = Math.min(1, ($.now() / 1000 - contest_start_timestamp) / contest_duration)
   $('#timeline-progress-unparsed').css('width', (unparsed_percent - contest_time_percentage) * 100 + '%')
 
-  if (freeze_percent() && unfreeze_percent() < percent && percent < 1) {
+  if (unfreeze_is_active(percent)) {
     var value = (percent - unfreeze_percent()) / freeze_percent() * 100
     $('#timeline-text').text(value.toFixed(2) + '%')
   } else {
     $('#timeline-text').text(duration_to_text(contest_duration * percent) + ' of ' + duration_to_text(contest_duration))
+  }
+
+  if (percent >= 1 && UPDATE_TIMELINE_TEXT_TIMER_ID) {
+    clearInterval(UPDATE_TIMELINE_TEXT_TIMER_ID)
+    UPDATE_TIMELINE_TEXT_TIMER_ID = null
   }
 }
 
@@ -170,6 +191,8 @@ function clear_data_stat_cell(e) {
 function process_problem_cell(e, current_time, unfreeze_index, percentage_filled, callback) {
   var $e = $(e)
   var score = e.getAttribute('data-score')
+  var is_hidden = score.startsWith('?')
+  var is_solved = score.startsWith('+') || parseFloat(score) > 0
   var penalty = e.getAttribute('data-penalty')
   var penalty_in_seconds = e.getAttribute('data-penalty-in-seconds')
   var result = e.getAttribute('data-result')
@@ -197,7 +220,14 @@ function process_problem_cell(e, current_time, unfreeze_index, percentage_filled
   var unfreeze_opening = UNFREEZE_OPENING.get(statistic_id + '_' + problem_key)
   if (unfreeze_opening !== undefined && unfreeze_opening < unfreeze_index) {
     visible = true
+  } else if (with_virtual_start && !stat.hasClass('virtual-start-statistic')) {
+    if (unfreeze_opening !== undefined && unfreeze_index == UNFREEZE_INDEX_UNDEF) {
+      visible = false
+    } else if (!is_solved) {
+      visible = false
+    }
   }
+
   var pvisible = $e.attr('data-visible')
   $e.attr('data-visible', visible)
 
@@ -209,8 +239,6 @@ function process_problem_cell(e, current_time, unfreeze_index, percentage_filled
     problem_status = 'warning'
   }
 
-  var is_hidden = score.startsWith('?')
-  var is_solved = score.startsWith('+') || parseFloat(score) > 0
   if (visible && is_solved) {
     problem_status = $e.find('.par').length? 'info' : 'success'
 
@@ -291,7 +319,7 @@ function prepare_unfreeze() {
   stat_cells.find('.problem-cell.problem-cell-stat').each((_, e) => {
     var problem_key = $(e).attr('data-problem-key')
     problems_popularity[problem_key] = (problems_popularity[problem_key] || 0) + 1
-    process_problem_cell(e, current_time, 0, false, null)
+    process_problem_cell(e, current_time, UNFREEZE_INDEX_UNDEF, false, null)
     if ($(e).hasClass('result-hidden')) {
       has_empty_penalty |= !$(e).attr('data-penalty')
     }
@@ -393,22 +421,23 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     percent_sign = Math.sign(percent - CURRENT_PERCENT)
     CURRENT_PERCENT = percent
   }
-  percentage_filled = percent >= contest_time_percentage
+  // percentage_filled = percent >= contest_time_percentage
+  percentage_filled = percent >= 1
   update_timeline_text(percent)
 
   var current_time, unfreeze_index, highlight_problem_duration
-  if (unfreeze_percent() < percent && percent < 1) {
+  if (unfreeze_is_active(percent)) {
     current_time = Math.round(contest_duration * unfreeze_percent())
     unfreeze_index = (percent - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
     highlight_problem_duration = 0
   } else {
     current_time = Math.round(contest_duration * percent)
-    unfreeze_index = -1
+    unfreeze_index = UNFREEZE_INDEX_UNDEF
     highlight_problem_duration = duration
   }
 
   clear_starred_unfreezed()
-  if (unfreeze_index != -1 && scroll_to_element === null) {
+  if (unfreeze_index != UNFREEZE_INDEX_UNDEF && scroll_to_element === null) {
     var target_index = Math.floor(unfreeze_index) + (percent_sign < 0? 1 : 0)
     if (0 <= target_index && target_index < UNFREEZE_SIZE) {
       var statistic_id = UNFREEZE_ORDER[target_index].statistic_id
@@ -475,6 +504,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     var $e = $(e)
     var current_score = $e.find('.score-cell').text().trim()
     var new_score = e.getAttribute('data-score')
+    $e.data('current-solving', new_score)
     $e.find('.score-cell').text(new_score)
     $e.css('z-index', current_score != new_score? '5' : '1')
 
@@ -509,6 +539,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     }
 
     var selector = contest_timeline['penalty_selector'] || '.addition-penalty-cell'
+    $e.data('current-penalty', penalty)
     $e.find(selector).text(penalty)
 
     var medals = ['gold', 'silver', 'bronze']
@@ -532,13 +563,15 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
   var total = rows.length
   if (total) {
-    $('.problem-progress').each((_, e) => {
-      $(e).parent('.problem-cell').find('.rej').removeClass('rej')
+    $('th.problem-cell[data-problem-key]').each((_, e) => {
+      var problem_key = e.getAttribute('data-problem-key')
+      var problem_cell = $(e)
+      problem_cell.find('.rej').removeClass('rej')
+      var problem_progress = $(e).find('.problem-progress')
       var sum = 0
       var tooltip = ""
       var numbers = ['accepted', 'partial', 'hidden', 'wrong']
       var statuses = ['success', 'info', 'warning', 'danger']
-      var problem_key = e.getAttribute('data-problem-key')
       var problem_progress_stat = problem_progress_stats[problem_key] || {}
       var previous_problem_progress_stat = PROBLEM_PROGRESS_STATS[problem_key] || {}
       var changed_statuses = []
@@ -550,27 +583,31 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
         if (value != previous_value && problem_status != 'warning') {
           changed_statuses.push(problem_status)
         }
+        sum += value
+
+        if (with_virtual_start && numbers[i] == 'hidden') {
+          return;
+        }
 
         var percent = value * 100 / total
         if (value) {
           tooltip += 'Number of ' + numbers[i] + ': ' + value + ' (' + percent.toFixed(2) + '%)<br/>'
         }
-        sum += value
-        $(e).find('.progress-bar.progress-bar-' + problem_status).css('width', percent.toFixed(3) + '%')
+        problem_progress.find('.progress-bar.progress-bar-' + problem_status).css('width', percent.toFixed(3) + '%')
       })
       tooltip += 'Total: ' + total
       if (sum == 0) {
-        $(e).remove()
+        problem_progress.remove()
       } else {
         if (problem_progress_stat['danger'] == sum) {
-          $(e).parent('.problem-cell').find('span').addClass('rej')
+          problem_cell.find('span').addClass('rej')
         }
-        $(e).attr('data-original-title', tooltip)
+        problem_progress.attr('data-original-title', tooltip)
       }
       if (duration && changed_statuses.length) {
         var problem_status = changed_statuses.length == 1? changed_statuses[0] : 'info'
         var problem_status_class = 'progress-bar-' + problem_status
-        var el = $(e).closest('th').children().first()
+        var el = problem_cell.children().first()
         el.addClass(problem_status_class, duration / 2, function() {
           el.removeClass(problem_status_class, duration / 2)
         })
@@ -610,6 +647,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
     var $r = $(r)
     var place_text = percentage_filled && standings_filtered? $r.attr('data-place') + ' (' + place + ')' : place;
+    $r.data('current-place', place)
     $r.find('>.place-cell').attr('data-text', place_text)
 
     var gap = (get_row_penalty(r) - get_row_penalty(first)) + (get_row_score(first) - get_row_score(r)) * current_time
@@ -638,12 +676,19 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     }
   })
 
-  var first_u_cells = rows.find('.first-u-cell')
-  if (first_u_cells.length) {
-    if (percentage_filled) {
-      first_u_cells.removeClass('result-hidden')
-    } else {
-      first_u_cells.addClass('result-hidden')
+
+  var toggle_hidden_selectors = ['.first-u-cell', 'table.standings td .trophy']
+  var toggle_hidden_selector = ''
+  toggle_hidden_selectors.forEach((selector) => {
+    if (toggle_hidden_selector) {
+      toggle_hidden_selector += ','
+    }
+    toggle_hidden_selector += selector + (percentage_filled && !with_virtual_start? '.hidden' : ':not(.hidden)')
+  })
+  if (toggle_hidden_selector) {
+    var toggle_hidden_elements = $(toggle_hidden_selector)
+    if (toggle_hidden_elements.length) {
+      toggle_hidden_elements.toggleClass('hidden')
     }
   }
 
@@ -676,6 +721,8 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     },
     delay_duration,
   )
+
+  resize_window()
 }
 
 function highlight_element(el, after = 1000, duration = 500, before_toggle_class = false, callback = undefined, duration_ratio = 1.0) {
@@ -724,17 +771,135 @@ function parse_factors_time(timeline_factors, penalty) {
   }
 }
 
+function edit_active_swicher_click(event, element) {
+  var stat = $(element).closest('.problem-cell')
+  var score = stat.attr('data-score')
+  var penalty = stat.attr('data-penalty')
+  var x_pos = stat.offset().left + stat.outerWidth() / 2
+  var y_pos = stat.offset().top + stat.outerHeight() / 2
+
+  var dialog = bootbox.dialog({
+    size: 'small',
+    message:
+      '<input placeholder="Result" type="text" class="form-control input-sm" value="' + score + '" name="result" autocomplete="off">' +
+      '<input placeholder="Penalty" type="text" class="form-control input-sm" value="' + penalty + '" name="penalty" autocomplete="off">',
+    buttons: {
+      cancel: {
+        label: 'Cancel',
+        className: 'btn-default btn-xs',
+      },
+      confirm: {
+        label: 'Ok',
+        className: 'btn-primary btn-xs confirm-button',
+        callback: function (message) {
+          var result = $('.bootbox-body input[name="result"]').val()
+          var penalty = $('.bootbox-body input[name="penalty"]').val()
+          stat.attr('data-score', result)
+          stat.attr('data-result', result)
+          stat.attr('data-penalty', penalty)
+          stat.find('.edit-score').text(result)
+          stat.find('.edit-penalty').text(penalty)
+          switcher_updated(stat)
+        },
+      },
+    },
+    closeButton: false,
+    className: 'edit-active-switcher-bootbox',
+  })
+
+  dialog.on('shown.bs.modal', function() {
+    var input = $('.bootbox-body input[name="result"]')
+    input.focus()
+    input[0].setSelectionRange(score.length, score.length)
+  })
+
+  dialog.init(function() {
+    dialog.find('input').on('keypress', function(e) {
+      if (e.which == 13) {
+        e.preventDefault()
+        dialog.find('.confirm-button').click()
+      }
+    })
+  })
+
+  $('.modal-dialog').css({
+    'position': 'absolute',
+    'left': x_pos,
+    'top': y_pos,
+    'width': '100px',
+  })
+
+  event.preventDefault()
+  event.stopImmediatePropagation()
+}
+
+function switcher_updated(stat) {
+  UNFREEZE_ORDER = null
+  if (!SWITCHER_CLICK_WITHOUT_UPDATE) {
+    var tr = stat.closest('tr')
+    set_timeline(null, null, tr)
+
+    if (tr.hasClass('virtual-start-statistic')) {
+      $.ajax({
+        type: 'POST',
+        url: change_url,
+        data: {
+          pk: coder_pk,
+          name: 'update-virtual-start-statistic',
+          id: virtual_start_pk,
+          problem: stat.data('problem-key'),
+          result: stat.data('score'),
+          time: stat.data('penalty'),
+          penalty: tr.data('current-penalty'),
+          solving: tr.data('current-solving'),
+        },
+        success: function(data) { $.notify(data.message, data.status) },
+        error: log_ajax_error_callback,
+      })
+    }
+  }
+}
+
+function has_penalty(result) {
+  return result && result.startsWith('+') && result != '+'
+}
+
+function update_switcher() {
+  var stat = $(this)
+  var score = stat.attr('data-score')
+  var penalty = stat.attr('data-penalty')
+  var result = stat.attr('data-result')
+
+  if (stat.attr('data-problem-full-score') && contest_timeline['penalty_score_more'] && has_penalty(result)) {
+    score += ' ('  + parseInt(result) + ')'
+  }
+  if (contest_timeline['penalty_more'] && score != result && has_penalty(result)) {
+    penalty += result
+  }
+
+  stat.children().addClass('hidden')
+  var edit_btn = '<span class="edit-active-switcher" onclick="edit_active_swicher_click(event, this)"><i class="fa-regular fa-pen-to-square"></i></span>'
+  var edit_score = '<span class="edit-score">' + score + '</span>'
+  var edit_penalty = '<span class="edit-penalty">' + penalty + '</span>'
+  stat.prepend('<div class="swi">' + edit_score + edit_btn + '</div><small class="text-muted"><div>' + edit_penalty + '</div></small>')
+
+  if (!stat.hasClass('problem-cell-stat')) {
+    stat.addClass('problem-cell-stat')
+    stat.addClass('problem-cell-stat-switcher')
+  }
+}
+
 function switcher_click(event) {
   const hidden_regex = /^[-+0-9]+$/
   var stat = $(this)
-  if (stat.attr('data-score-switcher') === undefined) {
+  if (stat.attr('data-active-switcher') != 'true') {
+    stat.attr('data-active-switcher', 'true')
     stat.attr('data-result-switcher', stat.attr('data-result') || '')
     stat.attr('data-score-switcher', stat.attr('data-score') || '')
     stat.attr('data-penalty-switcher', stat.attr('data-penalty') || '')
 
-
     var result = stat.attr('data-result')
-    var penalty = Math.floor(contest_duration * (unfreeze_percent() < CURRENT_PERCENT? 1.0 : CURRENT_PERCENT))
+    var penalty = Math.floor(contest_duration * CURRENT_PERCENT)
     var score = stat.attr('data-problem-full-score')
     if (contest_timeline['result_switcher_type'] == 'next_min') {
       var index = stat.parent().find('td').index(stat)
@@ -754,14 +919,12 @@ function switcher_click(event) {
       penalty = parse_factors_time(contest_timeline['time_factor'], stat.attr('data-penalty')) || penalty
     }
 
-    var has_result_penalty = result && result.startsWith('+') && result != '+'
-
     stat.attr('data-result', result)
     if (score) {
       if (contest_timeline['full_score_reduction_factor']) {
         score = Math.floor(score - score * contest_timeline['full_score_reduction_factor'] * penalty / 60)
       }
-      if (contest_timeline['penalty_score_more'] && has_result_penalty) {
+      if (contest_timeline['penalty_score_more'] && has_penalty(result)) {
         score -= contest_timeline['penalty_score_more'] * parseFloat(result)
       }
       if (contest_timeline['guaranteed_full_score_factor']) {
@@ -784,24 +947,20 @@ function switcher_click(event) {
     }
     stat.attr('data-penalty', penalty)
 
-    if (stat.attr('data-problem-full-score') && contest_timeline['penalty_score_more'] && has_result_penalty) {
-      score += ' ('  + parseInt(result) + ')'
-    }
-    if (contest_timeline['penalty_more'] && score != result && has_result_penalty) {
-      penalty += result
-    }
-
-    stat.children().addClass('hidden')
-    stat.prepend('<div class="swi">' + score + '</div><small class="text-muted"><div>' + penalty + '</div></small>')
-
-    if (!stat.hasClass('problem-cell-stat')) {
-      stat.addClass('problem-cell-stat')
-      stat.addClass('problem-cell-stat-switcher')
-    }
+    update_switcher.call(stat)
   } else {
-    stat.attr('data-result', stat.attr('data-result-switcher'))
-    stat.attr('data-score', stat.attr('data-score-switcher'))
-    stat.attr('data-penalty', stat.attr('data-penalty-switcher'))
+    if (stat.attr('data-result-switcher') === undefined) {
+      stat.removeAttr('data-result')
+      stat.removeAttr('data-score')
+      stat.removeAttr('data-penalty')
+      stat.removeClass('result-hidden')
+      stat.removeClass('problem-cell-stat')
+    } else {
+      stat.attr('data-result', stat.attr('data-result-switcher'))
+      stat.attr('data-score', stat.attr('data-score-switcher'))
+      stat.attr('data-penalty', stat.attr('data-penalty-switcher'))
+    }
+    stat.removeAttr('data-active-switcher')
     stat.removeAttr('data-result-switcher')
     stat.removeAttr('data-score-switcher')
     stat.removeAttr('data-penalty-switcher')
@@ -815,13 +974,11 @@ function switcher_click(event) {
       stat.removeClass('problem-cell-stat-switcher')
     }
   }
-  $('#erase-switchers-timeline').prop('disabled', $('.problem-cell[data-result-switcher]').length == 0)
-  UNFREEZE_ORDER = null
-  if (!SWITCHER_CLICK_WITHOUT_UPDATE) {
-    var tr = stat.closest('tr')
-    set_timeline(null, null, tr)
-  }
+
+  $('#erase-switchers-timeline').prop('disabled', $(ERASE_SWITCHER_SELECTOR).length == 0)
+  switcher_updated(stat)
   clear_tooltip()
+
   event.preventDefault()
   event.stopImmediatePropagation()
 }
@@ -835,7 +992,6 @@ function clear_extra_info_timeline() {
       $(e).removeClass(c)
     }
   })
-  $('table.standings td .trophy').remove()
 
   $('.other-problem-progress').remove()
 
@@ -855,7 +1011,6 @@ function show_timeline() {
   clear_extra_info_timeline()
 
   update_timeline_text(CURRENT_PERCENT)
-  $(window).trigger('resize')
   shown_timeline = true
 
   var input_timeline = $('[name="timeline"]')
@@ -867,10 +1022,11 @@ function show_timeline() {
 
   if (CURRENT_PERCENT < 1) {
     var update_timeline_text_interval = Math.max(10, contest_duration / 1000)
-    setInterval(update_timeline_text, update_timeline_text_interval * 1000)
+    UPDATE_TIMELINE_TEXT_TIMER_ID = setInterval(update_timeline_text, update_timeline_text_interval * 1000)
   }
 
   recalc_pinned()
+  resize_window()
 }
 
 function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500, el = null) {
@@ -933,7 +1089,7 @@ $(function() {
     $tooltip.css({'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() + 30})
     $tooltip.show()
 
-    if (freeze_percent() && unfreeze_percent() < percent && percent < 1) {
+    if (unfreeze_is_active(percent)) {
       var value = (percent - unfreeze_percent()) / freeze_percent() * 100
       $tooltip.text(value.toFixed(2) + '%')
     } else {
@@ -1152,7 +1308,7 @@ $(function() {
   }
 
   function update_standings(data) {
-    if (shown_timeline) {
+    if (shown_timeline && !with_virtual_start) {
       clear_on_update_standings()
       set_contest_time_percentage(data.time_percentage)
     }
@@ -1242,9 +1398,7 @@ function update_statistics(e) {
       name: 'update-statistics',
       id: contest_pk,
     },
-    error: function(response) {
-      log_ajax_error(response)
-    },
+    error: log_ajax_error_callback,
     success: function() {
       $.notify('Queued update', 'success')
     },
@@ -1326,3 +1480,103 @@ $(document).keydown(function(event) {
     $('#pudate-statistics-logs').modal('hide')
   }
 });
+
+
+/*
+ * Virtual start
+ */
+
+function click_finish_virtual_start(btn) {
+  bootbox.confirm({
+    size: 'small',
+    message: 'Are you sure you want to finish virtual start?',
+    callback: function(result) {
+      if (!result) {
+        return
+      }
+      $.ajax({
+        type: 'POST',
+        url: change_url,
+        data: {
+          pk: coder_pk,
+          name: 'finish-virtual-start',
+          id: virtual_start_pk,
+        },
+        error: log_ajax_error_callback,
+        success: function() {
+          finish_virtual_start()
+          $(btn).remove()
+        },
+      })
+    },
+  })
+}
+
+function finish_virtual_start() {
+  if (UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID) {
+    clearInterval(UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID)
+    UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID = null
+  }
+
+  set_contest_time_percentage(1)
+  with_virtual_start = false
+
+  var standings = $('table.standings')
+  standings.removeClass('no-hints')
+  standings.removeAttr('style').addClass('invisible')
+
+  if (freeze_percent()) {
+    prepare_unfreeze()
+  }
+  set_timeline(unfreeze_percent())
+  visible_standings()
+}
+
+function update_contest_time_percentage_by_virtual_start() {
+  var percentage = ($.now() / 1000 - contest_start_timestamp) / contest_duration
+  percentage *= update_contest_time_percentage_multiplier
+  percentage = Math.max(0, Math.min(1, percentage))
+  set_contest_time_percentage(percentage)
+  set_timeline()
+  if (percentage >= 1 && UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID) {
+    finish_virtual_start()
+  }
+}
+
+function visible_standings() {
+  $('.standings.invisible').removeClass('invisible').css({opacity: 0.0, visibility: "visible"}).animate({opacity: 1.0}, 1000);
+  highlight_element($('.find-me-row'))
+}
+
+function setup_update_contest_time_percentage_by_virtual_start() {
+  var val = parseFloat($('#timeline-follow').val())
+  if (val) {
+    UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID = setInterval(update_contest_time_percentage_by_virtual_start, val * 1000)
+  }
+}
+
+function change_follow_interval() {
+  if (UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID) {
+    clearInterval(UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID)
+    UPDATE_CONTEST_TIME_PERCENTAGE_BY_VIRTUAL_START_TIMER_ID = null
+  }
+  setup_update_contest_time_percentage_by_virtual_start()
+}
+
+$(() => {
+  if (with_virtual_start) {
+    $('.problem-cell[data-active-switcher="true"]').each(function() {
+      var stat = $(this)
+      update_switcher.call(stat)
+      stat.children('.hidden').remove()
+    })
+
+    shuffle_statistics_rows()
+    show_timeline()
+
+    setup_update_contest_time_percentage_by_virtual_start()
+    update_contest_time_percentage_by_virtual_start()
+
+    visible_standings()
+  }
+})

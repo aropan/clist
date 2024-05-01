@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from requests.models import Response
 import atexit
-import subprocess
 import copy
 import html
 import json
@@ -14,6 +12,7 @@ import random
 import re
 import ssl
 import string
+import subprocess
 import threading
 import traceback
 import urllib.error
@@ -38,6 +37,7 @@ from time import sleep
 import brotli
 import chardet
 from filelock import FileLock
+from requests.models import Response
 
 from utils.proxy_list import ProxyList
 
@@ -402,7 +402,7 @@ def read_response(response):
 
 def curl_response(url, headers=None):
 
-    args = ['curl', '-i', url, '-L']
+    args = ['curl', '-i', url, '-L', '--compressed']
     if headers:
         for k, v in headers.items():
             args.extend(['-H', f'{k}: {v}'])
@@ -419,6 +419,8 @@ def curl_response(url, headers=None):
 
     for header in headers_lines[1:]:
         key, value = header.split(": ", 1)
+        if key.lower() == 'content-encoding':
+            continue
         response.headers[key] = value
 
     status_line = headers_lines[0].split(' ')

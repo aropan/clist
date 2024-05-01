@@ -28,9 +28,25 @@ table.standings th {
   font-weight: bold;
 }
 
-.swi {
+.swi, .vir {
   color: #f0f;
   font-weight: bold;
+}
+
+tr:hover .edit-active-switcher, .edit-active-switcher:hover {
+  display: inline-block;
+}
+
+.edit-active-switcher:hover {
+  color: #f0f;
+}
+
+.edit-active-switcher {
+  display: none;
+  color: #888;
+  cursor: pointer;
+  position: absolute;
+  margin-left: 5px;
 }
 
 .standings tr.parity-border td,
@@ -296,6 +312,12 @@ a.solution:hover span {
   color: #da2;
 }
 
+.standings.no-hints .first-u-cell.result-hidden::before,
+.standings.no-hints .problem-cell.result-hidden::before {
+  content: "·";
+  color: #333;
+}
+
 .standings .result-hidden * {
   background: inherit !important;
   display: none !important;
@@ -370,4 +392,14 @@ table.standings.table-condensed-non-detail tr>* {
 table.standings.table-merge-problems th {
   height: 20px;
   line-height: normal;
+}
+
+.edit-active-switcher-bootbox .modal-body,
+.edit-active-switcher-bootbox .modal-footer {
+  padding: 5px;
+}
+
+.edit-active-switcher-bootbox input:not(:first-child) {
+  margin-top: 5px;
+
 }

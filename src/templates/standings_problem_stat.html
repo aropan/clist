@@ -21,6 +21,7 @@
       {% elif stat.partial %}
         par
       {% endif %}
+      {% if statistic.virtual_start %}vir{% endif %}
       "
       {% if not with_detail %}
         {% if stat.status or stat.time or stat.upsolving or stat.verdict or stat.language %}

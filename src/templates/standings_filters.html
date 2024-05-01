@@ -98,7 +98,7 @@
       <button id="toggle-fullscreen" class="btn btn-default btn-sm{% if fullscreen %} active{% endif %}" name="fullscreen"{% if not fullscreen %} value=""{% else %} value="off"{% endif %}>{% icon_to 'fullscreen' default='Fullscreen (F)' %}</button>
     </div>
 
-    {% if enable_timeline and contest.resource.info.standings.timeline and groupby == 'none' %}
+    {% if enable_timeline and groupby == 'none' %}
 
       <div class="input-group input-group-sm">
         {% if timeline %}
@@ -106,6 +106,12 @@
         {% endif %}
         <button id="show-timeline" onclick="show_timeline(); update_urls_params({'timeline': ''}); return false" class="btn btn-default btn-sm"{% if disable_switches %} disabled{% endif %}>{% icon_to 'timeline' default='Timeline (T)' %}</button>
       </div>
+
+      {% if with_virtual_start %}
+      <div class="input-group input-group-sm">
+        <button id="finish-virtual-start" onclick="click_finish_virtual_start(this); return false" class="btn btn-default btn-sm">{% icon_to 'finish' default='Finish virtual start' %}</button>
+      </div>
+      {% endif %}
 
       <div id="timeline-buttons" class="hidden">
 
@@ -115,12 +121,12 @@
           <button id="play-timeline" class="btn btn-default btn-sm" data-title="Play (G)" data-toggle="tooltip"><i class="fas fa-play"></i></button>
           <button id="step-forward-timeline" onclick="step_timeline(1, true); return false" class="btn btn-default btn-sm" data-title="Step forward (J)" data-toggle="tooltip"><i class="fas fa-step-forward"></i></button>
           <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1.0); return false" class="btn btn-default btn-sm" data-title="Fast forward (L)" data-toggle="tooltip"><i class="fas fa-fast-forward"></i></button>
-          <button id="erase-switchers-timeline" onclick="SWITCHER_CLICK_WITHOUT_UPDATE = true; $('.problem-cell[data-result-switcher]').click(); set_timeline(); SWITCHER_CLICK_WITHOUT_UPDATE = false; return false" class="btn btn-default btn-sm" disabled data-title="Clear selected (D)" data-toggle="tooltip"><i class="fas fa-eraser"></i></button>
+          <button id="erase-switchers-timeline" onclick="SWITCHER_CLICK_WITHOUT_UPDATE = true; $(ERASE_SWITCHER_SELECTOR).click(); set_timeline(); SWITCHER_CLICK_WITHOUT_UPDATE = false; return false" class="btn btn-default btn-sm" disabled data-title="Clear selected (D)" data-toggle="tooltip"><i class="fas fa-eraser"></i></button>
         </div>
 
         <div class="input-group input-group-sm">
           <div class="input-group-addon">Duration</div>
-          {% with value=request.GET.t_duration %}
+          {% with value=request.GET.t_duration|toint %}
           <select id="timeline-duration"{% if value %} name="t_duration"{% endif %}>
             {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
             {% for k, v in timeline_durations %}
@@ -132,7 +138,7 @@
 
         <div class="input-group input-group-sm">
           <div class="input-group-addon">Step</div>
-          {% with value=request.GET.t_step %}
+          {% with value=request.GET.t_step|asfloat %}
           <select id="timeline-step"{% if value %} name="t_step"{% endif %}>
             {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
             {% for k, v in timeline_steps %}
@@ -144,7 +150,7 @@
 
         <div class="input-group input-group-sm">
           <div class="input-group-addon">Delay</div>
-          {% with value=request.GET.t_delay %}
+          {% with value=request.GET.t_delay|toint %}
           <select id="timeline-delay"{% if value %} name="t_delay"{% endif %}>
             {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
             {% for k, v in timeline_delays %}
@@ -166,6 +172,20 @@
           {% endwith %}
         </div>
 
+        {% if with_virtual_start %}
+        <div class="input-group input-group-sm">
+          <div class="input-group-addon">Follow</div>
+          {% with value=request.GET.t_follow|toint %}
+          <select id="timeline-follow"{% if request.GET.t_follow %} name="t_follow"{% endif %} onchange="change_follow_interval(this)">
+            {% if value %}<option value="{{ value }}">{{ value }}</option>{% endif %}
+            {% for k, v in timeline_follow %}
+            <option value="{{ k }}"{% if not value and k == '60' %} selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+          {% endwith %}
+        </div>
+        {% endif %}
+
         <div class="input-group input-group-sm">
           <button id="share-timeline" class="btn btn-default btn-sm"><i class="fas fa-share-square"></i></button>
         </div>
@@ -177,20 +197,24 @@
         $('#timeline-step').select2(timeline_select_config)
         $('#timeline-delay').select2(timeline_select_config)
         $('#timeline-freeze').select2(timeline_select_config)
+        $('#timeline-follow').select2(timeline_select_config)
 
         {% if timeline and not disable_switches %}
         $(function() {
           shuffle_statistics_rows()
           show_timeline()
-          {% if timeline == 'play' %}
-          $('#fast-backward-timeline').click()
+          {% if timeline == 'play' or 'play' in request.GET %}
+          {% if timeline == 'play' or not timeline %}
+            $('#fast-backward-timeline').click()
+          {% else %}
+            set_timeline({{ timeline|asfloat }})
+          {% endif %}
           $('#play-timeline').click()
           {% elif timeline|asfloat is not None %}
           CURRENT_PERCENT = null
           set_timeline({{ timeline|asfloat }})
           {% endif %}
-          $('.standings.invisible').removeClass('invisible').css({opacity: 0.0, visibility: "visible"}).animate({opacity: 1.0}, 1000);
-          highlight_element($('.find-me-row'))
+          visible_standings()
         })
         {% endif %}
       </script>

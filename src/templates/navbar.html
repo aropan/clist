@@ -15,14 +15,20 @@
                 <li class="dropdown-menu-hover">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">News <span class="caret"></span></a>
                     <ul class="dropdown-menu">
+                        <li><a href="https://github.com/aropan/clist/discussions/categories/news" rel="noopener noreferrer"><i class="fab fa-github"></i>&nbsp;Github</a></li>
                         <li><a href="https://t.me/s/clistbynews" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;Telegram</a></li>
-                        <li><a href="https://github.com/aropan/clist/discussions/categories/announcements" rel="noopener noreferrer"><i class="fab fa-github"></i>&nbsp;Github</a></li>
-                        <li><a href="https://codeforces.com/blog/entry/109095" rel="noopener noreferrer">
-                            <img src="{{ 'img/resources/codeforces_com.png'|media_size:'32x32' }}" width="16" height="16"></img>&nbsp;Codeforces
-                        </a></li>
                         <li><a href="https://discord.gg/n8VxASFbfh" rel="noopener noreferrer"><i class="fab fa-discord"></i>&nbsp;Discord</a></li>
                         <li><a href="https://facebook.com/clistby" rel="noopener noreferrer"><i class="fab fa-facebook"></i>&nbsp;Facebook</a></li>
                         <li><a href="https://twitter.com/clistby" rel="noopener noreferrer"><i class="fab fa-twitter"></i>&nbsp;Twitter</a></li>
+                        <li><a href="https://codeforces.com/blog/entry/109095" rel="noopener noreferrer">
+                            <img src="{{ 'img/resources/codeforces_com.png'|media_size:'32x32' }}"></img>&nbsp;Codeforces
+                        </a></li>
+                        <li><a href="https://discuss.codechef.com/t/clist-news/117412" rel="noopener noreferrer">
+                            <img src="{{ 'img/resources/codechef_com.png'|media_size:'32x32' }}"></img>&nbsp;Codechef
+                        </a></li>
+                        <li><a href="https://leetcode.com/discuss/general-discussion/5052009/CLIST-News" rel="noopener noreferrer">
+                            <img src="{{ 'img/resources/leetcode_com.png'|media_size:'32x32' }}"></img>&nbsp;Leetcode
+                        </a></li>
                     </ul>
                 </li>
                 <li><a href="{% url 'clist:resources' %}">Resources</a></li>
@@ -30,7 +36,15 @@
                 <li><a href="{% url 'clist:problems' %}">Problems</a></li>
                 <li><a href="{% url 'coder:coders' %}">Coders</a></li>
                 <li><a href="{% url 'coder:accounts' %}">Accounts</a></li>
-                <li><a href="{% url 'ranking:make_versus' %}">Versus</a></li>
+
+                <li class="dropdown-menu-hover">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Tools <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'ranking:make_versus' %}">{% icon_to 'versus' '' %}&nbsp;Versus</a></li>
+                        <li><a href="{% url 'ranking:virtual_start' %}">{% icon_to 'virtual_start' '' %}&nbsp;Virtual Start</a></li>
+                    </ul>
+                </li>
+
                 <li><a href="https://github.com/aropan/clist/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
                 <li class="dropdown-menu-hover">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Donate <span class="caret"></span></a>
@@ -102,7 +116,6 @@
                                 <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
                                 <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
                                 <li><a href="{% url 'coder:settings' 'calendars' %}" class="authorized"><i class="far fa-calendar-alt"></i>&nbsp;Calendars</a></li>
-                                <!-- <li><a href="{% url 'ranking:virtual-start' %}" class="authorized"><i class="fa-solid fa-clock-rotate-left"></i>&nbsp;Virtual start</a></li> -->
                                 <li role="separator" class="divider"></li>
                                 <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
                                 <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>

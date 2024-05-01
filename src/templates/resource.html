@@ -65,7 +65,8 @@
         <h4>
             Top rating
             <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
-            <a href="{% url 'clist:resources_account_rating' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Account rating' %}</a>
+            <a href="{% url 'clist:resources_account_ratings' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Account ratings' %}</a>
+            <span class="pull-right text-muted update-time">updated {% time_ago resource.rating_update_time %}</span>
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -223,10 +224,11 @@
     {% endif %}
 
     {% if has_country and country_ratings.exists and resource.has_rating_history %}
-    <div id="country-ratings" class="col-md-6 col-lg-4">
+    <div id="country-ratings" class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
         <h4>
             Country rating
-            <a href="{% url 'clist:resources_country_rating' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Country rating' %}</a>
+            <a href="{% url 'clist:resources_country_ratings' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Country ratings' %}</a>
+            <span class="pull-right text-muted update-time">updated {% time_ago resource.country_rank_update_time %}</span>
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -327,6 +329,7 @@
             <table class="problems table table-hover table-condensed table-striped">
                 <tr>
                     <th>Date</th>
+                    {% if resource.has_problem_rating %}<th>Rating</th>{% endif %}
                     <th class="title">Name</th>
                 </tr>
                 {% include 'resource_problems_paging.html' %}
