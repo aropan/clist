@@ -39,6 +39,7 @@
         return {
           query: 'contests',
           {% if has_problems %}has_problems: true,{% endif %}
+          {% if has_submissions %}has_submissions: true,{% endif %}
           {% if has_statistics %}has_statistics: true,{% endif %}
           {% if has_started %}has_started: true,{% endif %}
           {% if has_virtual_start %}has_virtual_start: true,{% endif %}

@@ -1,6 +1,6 @@
 {% with account_id=account|default:"account" %}
 {% with resource_id=account_id|add:"_resource" %}
-{% include "resource_filter.html" with resource=resource_id noname=True nosubmit=True nomultiply=True %}
+{% if not without_resource %}{% include "resource_filter.html" with resource=resource_id noname=True nosubmit=True nomultiply=True %}{% endif %}
 <div class="input-group input-group-sm hidden" id="{{ account_id }}-hidden">
   <span class="input-group-addon">Account</span>
 
@@ -34,8 +34,9 @@
       data: function (params) {
         return {
           query: 'accounts',
-          regex: params.term,
-          resource: $('#{{ resource_id }}').val(),
+          search: params.term,
+          {% if not without_resource %}resource: $('#{{ resource_id }}').val(),{% endif %}
+          {% if with_contest %}contest: {{ with_contest.pk }},{% endif %}
           page: params.page || 1
         };
       },

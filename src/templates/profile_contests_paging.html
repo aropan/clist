@@ -147,6 +147,9 @@
                 {% endif %}
             {% endif %}
         </span>
+        {% if contest.has_submissions %}
+        <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ statistic.account_id }}" class="database-link external-link invisible" target="_blank" rel="noopener noreferrer">{% icon_to "submissions" %}</a>
+        {% endif %}
         {% if perms.ranking.change_statistics %}
         <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
         {% endif %}

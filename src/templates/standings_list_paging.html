@@ -45,6 +45,10 @@
   {% trim_to contest.title 60 %}
   </a>
 
+  {% if contest.has_submissions %}
+  <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}" class="submissions">{% icon_to 'submissions' %}</a>
+  {% endif %}
+
   {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
 
   {% if contests_groups %}

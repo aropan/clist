@@ -1,4 +1,4 @@
-{% with team_id=addition.team_id %}
+{% with team_id=statistic.addition.team_id %}
 {% if resource.avatar_url and account %}
   <div class="avatar-width-fixed">
   {% if not team_id %}
@@ -21,27 +21,27 @@
   </div>
 {% endif %}
 
-{% if not team_id and not addition.style %}{% coder_color_circle resource addition account.info %}{% endif %}
+{% if not team_id and not statistic.addition.style %}{% coder_color_circle resource statistic.addition account.info %}{% endif %}
 
-<div class="handle-div{% if not team_id and not addition.style %} {% coder_color_class resource addition account.info %}{% endif %}" style="display: inline-block; {% if addition.style %}{% for k, v in addition.style.items %}{{k}}: {{v}}; {% endfor %}{% endif %}">
-  {% with members=addition|get_item:"_members" %}
-  {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in addition %}<a href="{{ addition|get_item:"_account_url" }}">{% endif %}
+<div class="handle-div{% if not team_id and not statistic.addition.style %} {% coder_color_class resource statistic.addition account.info %}{% endif %}" style="display: inline-block; {% if statistic.addition.style %}{% for k, v in statistic.addition.style.items %}{{k}}: {{v}}; {% endfor %}{% endif %}">
+  {% with members=statistic.addition|get_item:"_members" %}
+  {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in statistic.addition %}<a href="{{ statistic.addition|get_item:"_account_url" }}">{% endif %}
 
   {% if with_detail and resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
     {% with names=account.key|split_account_key:resource.info.standings.subname %}
     <span>{{ names.0 }}<div class="text-muted small">{{ names.1 }}</div></span>
     {% endwith %}
-  {% elif addition.name and account.key|has_season:addition.name or members or addition.name and resource.info.standings.name_instead_key or addition.name and addition|get_item:"_name_instead_key" %}
-    <span>{% trim_to addition.name 50 %}</span>
+  {% elif statistic.addition.name and account.key|has_season:statistic.addition.name or members or statistic.addition.name and resource.info.standings.name_instead_key or statistic.addition.name and statistic.addition|get_item:"_name_instead_key" %}
+    <span>{% trim_to statistic.addition.name 50 %}</span>
   {% else %}
-    <span{% if addition.name or account.name %} title="{{ addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
+    <span{% if statistic.addition.name or account.name %} title="{{ statistic.addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
   {% endif %}
 
   {% if statistic.virtual_start %}<i>Your virtual participation</i>{% endif %}
 
-  {% if account.url and not team_id or '_account_url' in addition %}</a>{% endif %}
+  {% if account.url and not team_id or '_account_url' in statistic.addition %}</a>{% endif %}
 
-  {% with addition_countries=addition|get_item:"_countries" %}
+  {% with addition_countries=statistic.addition|get_item:"_countries" %}
   {% if addition_countries %}
   {% for country_name in addition_countries %}
     {% with country_code=country_name|get_country_code %}
@@ -93,8 +93,10 @@
   {% endwith %}
 </div>
 
-{% if addition.url %}
-  <a href="{{ addition.url }}" class="external-link invisible" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
+{% if not without_addition_url %}
+
+{% if statistic.addition.url %}
+  <a href="{{ statistic.addition.url }}" class="external-link invisible" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
 {% endif %}
 
 {% if has_versus %}
@@ -118,11 +120,17 @@
   </a>
 {% endif %}
 
+{% if contest.has_submissions %}
+  <a onclick="open_submissions(this); return false" data-url="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ account.pk }}" class="open-submissions external-link invisible" target="_blank" rel="noopener noreferrer">{% icon_to "submissions" %}</a>
+{% endif %}
+
 {% if statistic and not statistic.virtual_start and statistic.id and perms.ranking.change_statistics %}
   <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
 {% endif %}
 {% if statistic and statistic.virtual_start and statistic.virtual_start_pk and perms.ranking.change_virtualstart %}
   <a href="{% url 'admin:ranking_virtualstart_change' statistic.virtual_start_pk %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+{% endif %}
+
 {% endif %}
 
 {% endwith %}

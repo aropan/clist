@@ -1,0 +1,33 @@
+{% load el_pagination_tags %}
+
+{% lazy_paginate per_page,per_page_more submissions using 'submissions_paging' %}
+
+{% for submission in submissions %}
+{% get_result_class submission.current_result as solution_class %}
+<tr>
+  <td class="no-stretch">{{ submission.contest_time|strip_milliseconds }}</td>
+  <td class="no-stretch">{% value_with_select 'problem' submission.problem_short %}</td>
+  <td class="no-stretch">{% value_with_select 'verdict' submission.verdict_id default="&mdash;" %}</td>
+  <td class="no-stretch">{% value_with_select 'language' submission.language_id default="&mdash;" %}</td>
+  <td class="no-stretch">{{ submission.failed_test|default:"&mdash;" }}</td>
+  <td class="no-stretch">{{ submission.run_time|default:"&mdash;" }}</td>
+  <td class="no-stretch {{ solution_class }} result-column">
+    <span class="{% if solution_class %}text-{{ solution_class }}{% endif %}">{{ submission.current_result|default:"&mdash;" }}</span>
+  </td>
+  {% if contest.has_submissions_tests %}
+  <td class="no-stretch">
+    {% tests_distribution submission.tests.all %}
+  </td>
+  {% endif %}
+  <td class="account-column">
+    {% include "standings_account.html" with statistic=submission.statistic account=submission.account resource=submission.contest.resource contest=submission.contest without_addition_url=True %}
+    <a href="{% url 'ranking:standings' submission.contest.title|slug submission.contest.pk %}?find_me={{ submission.statistic.pk }}" class="external-link invisible" target="_blank">{% icon_to "find_me" "View in standings" %}</a>
+
+    {% if perms.submissions.change_submission %}
+      <a href="{% url 'admin:submissions_submission_change' submission.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% endfor %}
+
+{% show_more_table %}

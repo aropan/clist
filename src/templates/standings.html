@@ -37,6 +37,14 @@
   with_virtual_start = {{ with_virtual_start|asbool|lower }}
   virtual_start_pk = {{ virtual_start.pk|default:-1 }}
   update_contest_time_percentage_multiplier = {{ request.GET|get_item:"_multiplier"|asfloat|default:1 }}
+
+  {% if contest.has_submissions %}
+  submissions = {% contest_submissions_to_timeline_json contest.submissions %}
+  {% else %}
+  submissions = false
+  {% endif %}
+
+  unfreezing = false
 </script>
 
 {% endblock %}
@@ -104,6 +112,10 @@
 
       {% if contest.series_id %}
         <a href="{% url 'ranking:standings_list' %}?series={{ contest.series.slug }}" class="badge progress-bar-info">{% icon_to "series" contest.series.name %}</a>
+      {% endif %}
+
+      {% if contest.has_submissions %}
+        <a onclick="open_submissions(this); return false" data-url="{% url 'submissions:submissions' contest.title|slug contest.pk %}" class="open-submissions badge progress-bar-info">{% icon_to "submissions" %}</a>
       {% endif %}
 
       {% if not other_contests %}
@@ -244,7 +256,12 @@
                   <span class="small nobold members-message">{{ standings_options.members_message }}</span>
                 </div>
                 {% endif %}
-                <a id="unstar" class="external-link invisible hidden">{% icon_to 'unpin' false %}</a>
+                <span id="unstar" class="external-link invisible hidden">
+                  <a id="unstar_unpin">{% icon_to 'unpin' false %}</a>
+                  {% if contest.has_submissions %}
+                  <a id="unstar_submissions" data-submissions-url="{% url 'submissions:submissions' contest.title|slug contest.pk %}">{% icon_to 'submissions' false %}</a>
+                  {% endif %}
+                </span>
               </th>
               {% if versus_data %}
               <th{{ default_rowspan }}>Games</th>

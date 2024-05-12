@@ -94,14 +94,12 @@ tr:hover .edit-active-switcher, .edit-active-switcher:hover {
 
 table.standings .handle-cell {
   text-align: left;
-  white-space: nowrap;
 }
 
-table.standings .rating-cell {
-  white-space: nowrap;
-}
-
-table.standings .place-cell {
+table.standings .handle-cell,
+table.standings .rating-cell,
+table.standings .place-cell,
+table.standings .first-u-cell {
   white-space: nowrap;
 }
 
@@ -129,10 +127,6 @@ table.standings .place-cell {
 
 a.coder, .standings td a {
   color: inherit !important;
-}
-
-.inline {
-  display: inline;
 }
 
 .standings a.coder:hover span,
@@ -221,6 +215,10 @@ a.solution:hover span {
   background-color: #f9f9f9;
 }
 
+.open-submissions {
+  cursor: pointer;
+}
+
 /*
  * starred
  */
@@ -234,7 +232,7 @@ a.solution:hover span {
   cursor: pointer;
 }
 
-#unstar {
+#unstar > a {
   cursor: pointer;
   color: inherit;
 }
@@ -306,14 +304,14 @@ a.solution:hover span {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-.first-u-cell.result-hidden::before,
-.problem-cell.result-hidden::before {
+.standings .problem-cell.result-hidden.result-question::before,
+.standings.unfreezing .problem-cell.result-hidden::before {
   content: "?";
   color: #da2;
 }
 
-.standings.no-hints .first-u-cell.result-hidden::before,
-.standings.no-hints .problem-cell.result-hidden::before {
+.standings .problem-cell.result-hidden::before,
+.standings.no-hints .problem-cell.result-hidden:not(.result-question)::before {
   content: "·";
   color: #333;
 }

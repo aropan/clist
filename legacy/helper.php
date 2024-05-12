@@ -28,6 +28,11 @@
         return substr($haystack, 0, strlen($needle)) == $needle;
     }
 
+    function ends_with($haystack, $needle)
+    {
+        return substr($haystack, -strlen($needle)) == $needle;
+    }
+
     function microtime_float()
     {
         list($usec, $sec) = explode(" ", microtime());

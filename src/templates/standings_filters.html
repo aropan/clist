@@ -116,12 +116,14 @@
       <div id="timeline-buttons" class="hidden">
 
         <div class="btn-group">
-          <button id="fast-backward-timeline" onclick="step_timeline(0, true); set_timeline(0.0); return false" class="btn btn-default btn-sm" data-title="Fast backward (H)" data-toggle="tooltip"><i class="fas fa-fast-backward"></i></button>
+          <button id="fast-backward-timeline" onclick="step_timeline(-Infinity, true); return false" class="btn btn-default btn-sm" data-title="Fast backward (H)" data-toggle="tooltip"><i class="fas fa-fast-backward"></i></button>
           <button id="step-backward-timeline" onclick="step_timeline(-1, true); return false" class="btn btn-default btn-sm" data-title="Step backward (K)" data-toggle="tooltip"><i class="fas fa-step-backward"></i></button>
           <button id="play-timeline" class="btn btn-default btn-sm" data-title="Play (G)" data-toggle="tooltip"><i class="fas fa-play"></i></button>
           <button id="step-forward-timeline" onclick="step_timeline(1, true); return false" class="btn btn-default btn-sm" data-title="Step forward (J)" data-toggle="tooltip"><i class="fas fa-step-forward"></i></button>
-          <button id="fast-forward-timeline" onclick="step_timeline(0, true); set_timeline(1.0); return false" class="btn btn-default btn-sm" data-title="Fast forward (L)" data-toggle="tooltip"><i class="fas fa-fast-forward"></i></button>
+          <button id="fast-forward-timeline" onclick="step_timeline(Infinity, true); return false" class="btn btn-default btn-sm" data-title="Fast forward (L)" data-toggle="tooltip"><i class="fas fa-fast-forward"></i></button>
           <button id="erase-switchers-timeline" onclick="SWITCHER_CLICK_WITHOUT_UPDATE = true; $(ERASE_SWITCHER_SELECTOR).click(); set_timeline(); SWITCHER_CLICK_WITHOUT_UPDATE = false; return false" class="btn btn-default btn-sm" disabled data-title="Clear selected (D)" data-toggle="tooltip"><i class="fas fa-eraser"></i></button>
+
+          <button id="unfreezing-timeline" onclick="toggle_unfreezing(this); return false" class="btn btn-default btn-sm" data-title="Unfreezing (U)" data-toggle="tooltip"{% if with_virtual_start or not freeze_duration %} disabled{% endif %}>{% icon_to 'unfreezing' False %}</button>
         </div>
 
         <div class="input-group input-group-sm">
@@ -201,7 +203,9 @@
 
         {% if timeline and not disable_switches %}
         $(function() {
+          {% if timeline != 'show' %}
           shuffle_statistics_rows()
+          {% endif %}
           show_timeline()
           {% if timeline == 'play' or 'play' in request.GET %}
           {% if timeline == 'play' or not timeline %}
@@ -210,6 +214,8 @@
             set_timeline({{ timeline|asfloat }})
           {% endif %}
           $('#play-timeline').click()
+          {% elif timeline == 'unfreezing' %}
+          $('#unfreezing-timeline').click()
           {% elif timeline|asfloat is not None %}
           CURRENT_PERCENT = null
           set_timeline({{ timeline|asfloat }})

@@ -100,9 +100,9 @@ class Statistic(BaseModule):
                             problems_max_score[k] = max(problems_max_score.get(k, 0), p['result'])
                         else:
                             p['binary'] = False
-                        handle = scoring['author']['nickname']
-                        if handle:
-                            members.add(handle)
+                        member = scoring['author']['nickname'] or scoring['author']['fullName']
+                        p['author'] = member
+                        members.add(member)
                 if r.get('problemStatus'):
                     for status in r['problemStatus']:
                         k = status['name']

@@ -8,11 +8,75 @@ from functools import wraps
 import numpy as np
 from django.conf import settings
 from django.db import connection
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import redirect, render
+from django.urls import resolve, reverse
 from stringcolor import bold, cs
 
+from clist.models import Contest
+from clist.templatetags.extras import query_transform, slug, toint
+
 logger = logging.getLogger(__name__)
+
+
+def inject_contest():
+    def decorator(view):
+        @wraps(view)
+        def decorated(request, title_slug=None, contest_id=None, contests_ids=None, *args, **kwargs):
+
+            contests = Contest.objects.annotate_favorite(request.user)
+            to_redirect = False
+            contest = None
+            if contest_id is not None:
+                contest = contests.filter(pk=contest_id).first()
+                if title_slug is None:
+                    to_redirect = True
+                else:
+                    if contest is None or slug(contest.title) != title_slug:
+                        contest = None
+                        title_slug += f'-{contest_id}'
+            if contest is None and title_slug is not None:
+                contests_iterator = contests.filter(slug=title_slug).iterator()
+
+                contest = None
+                try:
+                    contest = next(contests_iterator)
+                    another = next(contests_iterator)
+                except StopIteration:
+                    another = None
+                if contest is None:
+                    return HttpResponseNotFound()
+                if another is None:
+                    to_redirect = True
+                else:
+                    return redirect(reverse('ranking:standings_list') + f'?search=slug:{title_slug}')
+
+            if contests_ids is not None:
+                cids, contests_ids = list(map(toint, contests_ids.split(','))), []
+                for cid in cids:
+                    if cid not in contests_ids:
+                        contests_ids.append(cid)
+                contest = contests.filter(pk=contests_ids[0]).first()
+                kwargs['other_contests'] = list(contests.filter(pk__in=contests_ids[1:]))
+            if contest is None:
+                return HttpResponseNotFound()
+
+            if to_redirect:
+                resolved = resolve(request.path)
+                viewname = resolved.app_name + ':' + resolved.url_name.split('_')[0]
+                query = query_transform(request)
+                url = reverse(viewname, kwargs={'title_slug': slug(contest.title),
+                                                'contest_id': str(contest.pk)})
+                if query:
+                    query = '?' + query
+                return redirect(url + query)
+
+            response = view(request, *args, contest=contest, **kwargs)
+            return response
+
+        return decorated
+
+    return decorator
 
 
 def context_pagination():

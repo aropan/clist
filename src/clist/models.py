@@ -6,6 +6,7 @@ import os
 import re
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import numpy as np
@@ -26,7 +27,7 @@ from clist.templatetags.extras import get_item, get_problem_key, slug
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
-from utils.timetools import Epoch, parse_duration
+from utils.timetools import Epoch, parse_duration, timed_cache
 
 
 class PriorityResourceManager(BaseManager):
@@ -404,6 +405,9 @@ class Contest(BaseModel):
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='contest')
     virtual_starts = GenericRelation('ranking.VirtualStart', related_query_name='contest')
+
+    has_submissions = models.BooleanField(default=None, null=True, blank=True, db_index=True)
+    has_submissions_tests = models.BooleanField(default=None, null=True, blank=True, db_index=True)
 
     objects = BaseContestManager()
     visible = VisibleContestManager()
@@ -865,6 +869,14 @@ class Problem(BaseModel):
             and self.resource.has_problem_rating
             and self.resource.is_major_kind(self.contests.all())
         )
+
+    @staticmethod
+    @timed_cache('15m')
+    def cached_get(contest, short) -> Optional['Problem']:
+        try:
+            return Problem.objects.get(Q(short=short) & (Q(contest=contest) | Q(contests=contest)))
+        except Problem.DoesNotExist:
+            return None
 
 
 class ProblemTag(BaseModel):

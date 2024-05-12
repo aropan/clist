@@ -1,0 +1,19 @@
+<form class="form-inline" id="problems-filter" method="get" action="">
+  {% include "field_to_select.html" with data=fields_to_select.problem|simple_select_data %}
+
+  {% include "field_to_select.html" with data=fields_to_select.verdict|simple_select_data %}
+
+  {% include "field_to_select.html" with data=fields_to_select.language|simple_select_data %}
+
+  {% include "account_filter.html" with without_resource=True with_contest=contest %}
+
+  {% if request.GET.timeline %}
+  <div class="input-group input-group-sm">
+    <div class="input-group-addon">{% icon_to 'timeline' %}</div>
+    <input type="number" step="0.001" min="0" max="1" class="form-control" name="timeline" value="{{ request.GET.timeline }}">
+  </div>
+  <input type="submit" style="display: none;">
+  {% endif %}
+
+  {% include "admin_filters.html" %}
+</form>

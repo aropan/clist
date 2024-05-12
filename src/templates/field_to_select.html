@@ -89,6 +89,9 @@
     {% if data.html %}
     escapeMarkup: function (m) { return m },
     {% endif %}
+    {% if data.allow_new %}
+    tags: true,
+    {% endif %}
     {% if not data.noajax %}
     ajax: {
         url: '/settings/search/',

@@ -20,16 +20,20 @@
         $url = "https://ucup.ac/?season=$season";
         $schedule_page = curlexec($url);
 
+        if (!preg_match('#<h1[^>]*>[^<]*\bseason\b\s*\b' . $season . '\b[^<]*</h1>#i', $schedule_page)) {
+            continue;
+        }
+
         preg_match_all('#<tr>.*?</tr>#s', $schedule_page, $rows, PREG_SET_ORDER);
         $headers = false;
         foreach ($rows as $row) {
-            preg_match_all('#<t[hd][^>]*>(.*?)</t[hd]>#s', $row[0], $cols);
-            if ($headers === false) {
-                $headers = array_map('strtolower', $cols[1]);
+            preg_match_all('#<t[hd][^>]*>(?P<values>.*?)</(?P<tag>t[hd])>#s', $row[0], $cols);
+            if ($headers === false || $cols['tag'][0] == 'th') {
+                $headers = array_map('strtolower', $cols['values']);
                 continue;
             }
 
-            $values = $cols[1];
+            $values = $cols['values'];
             foreach ($values as &$value) {
                 if (preg_match('#<a[^>]*href="(?P<href>[^"]*)"[^>]*>#', $value, $match)) {
                     $value = url_merge($url, $match['href']);
@@ -43,11 +47,19 @@
                 array_slice($values, 0, $min_count),
             );
 
+            if (!isset($c['stage']) || !isset($c['contest']) || !isset($c['date']) || !isset($c['scoreboard'])) {
+                continue;
+            }
+
             $title = "The " . ordinal($season) . " Universal Cup. Stage {$c['stage']}: " . trim($c['contest']);
             $date = $c['date'];
 
             if (strpos($date, 'TBD') !== false) {
                 continue;
+            }
+
+            if (strpos($date, "to") !== false) {
+                $date = trim(explode("to", $date)[0]);
             }
 
             $parts = explode('.', $date);

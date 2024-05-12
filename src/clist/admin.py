@@ -66,6 +66,7 @@ class ContestAdmin(BaseModelAdmin):
                                'created', 'modified', 'updated']}],
         ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
                                'rating_prediction_fields']}],
+        ['Submission', {'fields': ['has_submissions', 'has_submissions_tests']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
                     'created', 'modified', 'updated', 'parsed_time', 'auto_updated']

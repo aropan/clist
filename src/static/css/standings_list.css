@@ -11,6 +11,10 @@
   white-space: nowrap;
 }
 
+#standings_list .submissions {
+  color: #bbb;
+}
+
 #standings_list tr td[colspan="100%"] {
   padding: 4px;
 }

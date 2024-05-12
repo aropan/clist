@@ -108,6 +108,7 @@ INSTALLED_APPS = (
     'logify',
     'fontawesomefree',
     'corsheaders',
+    'submissions',
 )
 
 MIDDLEWARE = (
@@ -588,6 +589,7 @@ TIME_FORMAT_ = '%d.%m %a %H:%M'
 LIMIT_N_TOKENS_VIEW = 3
 LIMIT_TOKENS_VIEW_WAIT_IN_HOURS = 24
 YES_ = {'', '1', 'yes', 'y', 'true', 't', 'on'}
+NONE_ = {'null', 'none'}
 ACE_CALENDARS_ = {
     'enable': {'id': 'enable', 'name': 'Enable'},
     'disable': {'id': 'disable', 'name': 'Disable'},
@@ -668,6 +670,7 @@ FONTAWESOME_ICONS_ = {
     'top': '<i class="fas fa-list-ol"></i>',
     'accounts': '<i class="fa-regular fa-rectangle-list"></i>',
     'problems': '<i class="fa-solid fa-list-check"></i>',
+    'submissions': '<i class="fa-solid fa-bars"></i>',
     'versus': '<i class="fas fa-people-arrows"></i>',
     'last_activity': '<i class="fa-fw far fa-clock"></i>',
     'fullscreen': '<i class="fas fa-expand-arrows-alt"></i>',
@@ -730,6 +733,7 @@ FONTAWESOME_ICONS_ = {
     'merged_standings': '<i class="fa-solid fa-object-group"></i>',
     'finish': '<i class="fa-solid fa-flag-checkered"></i>',
     'virtual_start': '<i class="fa-solid fa-stopwatch"></i>',
+    'unfreezing': '<i class="fa-regular fa-snowflake"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 from datetime import datetime, timedelta
+from functools import wraps
 
 import dateutil.parser
 import pytz
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
 from django.utils.timezone import now, utc
 from pytimeparse.timeparse import timeparse
@@ -13,7 +15,7 @@ from clist.templatetags.extras import get_timezones
 
 
 def parse_duration(value):
-    seconds = int(value) if value.isdigit() else timeparse(value)
+    seconds = int(value) if str(value).isdigit() else timeparse(value)
     return timedelta(seconds=seconds)
 
 
@@ -80,3 +82,22 @@ def get_timezone(request):
     if request.user.is_authenticated and hasattr(request.user, "coder"):
         return request.user.coder.timezone
     return request.session.get("timezone", settings.DEFAULT_TIME_ZONE_)
+
+
+def timed_cache(timeout_cache):
+    timeout_cache = parse_duration(timeout_cache).total_seconds()
+
+    def decorator(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            key = f'{func.__module__}.{func.__qualname__}.{args}.{kwargs}'
+            key = key.replace(' ', '')
+            ret = cache.get(key)
+            if ret is None:
+                ret = func(*args, **kwargs)
+                cache.set(key, ret, timeout_cache)
+            return ret
+
+        return decorated
+
+    return decorator

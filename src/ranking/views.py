@@ -30,11 +30,11 @@ from clist.models import Contest, ContestSeries, Resource
 from clist.templatetags.extras import (as_number, format_time, get_country_name, get_item, get_problem_short,
                                        get_problem_title, get_standings_divisions_order,
                                        has_update_statistics_permission, is_ip_field, is_private_field, is_reject,
-                                       is_solved, is_yes, query_transform, slug, time_in_seconds, timestamp_to_datetime)
+                                       is_solved, is_yes, time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
-from pyclist.decorators import context_pagination, extra_context_without_pagination
+from pyclist.decorators import context_pagination, extra_context_without_pagination, inject_contest
 from pyclist.middleware import RedirectException
 from ranking.management.modules.common import FailOnGetResponse
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -100,6 +100,10 @@ def standings_list(request, template='standings_list.html', extra_context=None):
             },
             logger=request.logger,
         ))
+
+    with_submissions = is_yes(request.GET.get('with_submissions'))
+    if with_submissions:
+        contests = contests.filter(has_submissions=True)
 
     resources = [r for r in request.GET.getlist('resource') if r]
     if resources:
@@ -920,9 +924,16 @@ def get_advancing_contests(contest):
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
 ))
-def standings(request, title_slug=None, contest_id=None, contests_ids=None,
-              template='standings.html', extra_context=None):
+@inject_contest()
+def standings(request, contest, other_contests=None, template='standings.html', extra_context=None):
     context = {}
+
+    contests_timelines = dict()
+    contests_ids = dict()
+    if other_contests is not None:
+        for i, c in enumerate([contest] + other_contests, start=1):
+            contests_ids[c.pk] = i
+            contests_timelines[c.pk] = c.get_timeline_info()
 
     groupby = request.GET.get('groupby')
     if groupby == 'none':
@@ -965,64 +976,6 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             find_me = False
         else:
             find_me = int(find_me)
-
-    contests = Contest.objects.annotate_favorite(request.user)
-    to_redirect = False
-    contest = None
-    if contest_id is not None:
-        contest = contests.filter(pk=contest_id).first()
-        if title_slug is None:
-            to_redirect = True
-        else:
-            if contest is None or slug(contest.title) != title_slug:
-                contest = None
-                title_slug += f'-{contest_id}'
-    if contest is None and title_slug is not None:
-        contests_iterator = contests.filter(slug=title_slug).iterator()
-
-        contest = None
-        try:
-            contest = next(contests_iterator)
-            another = next(contests_iterator)
-        except StopIteration:
-            another = None
-        if contest is None:
-            return HttpResponseNotFound()
-        if another is None:
-            to_redirect = True
-        else:
-            return redirect(reverse('ranking:standings_list') + f'?search=slug:{title_slug}')
-
-    contests_resources = set()
-    other_contests = list()
-    contests_timelines = dict()
-    if contests_ids is not None:
-        cids, contests_ids = list(map(toint, contests_ids.split(','))), []
-        for cid in cids:
-            if cid not in contests_ids:
-                contests_ids.append(cid)
-        contest = contests.filter(pk=contests_ids[0]).first()
-        other_contests = list(contests.filter(pk__in=contests_ids[1:]))
-        contests_ids = dict()
-        for i, c in enumerate([contest] + other_contests, start=1):
-            contests_resources.add(c.resource_id)
-            contests_ids[c.pk] = i
-            contests_timelines[c.pk] = c.get_timeline_info()
-    if contest is None:
-        return HttpResponseNotFound()
-    if to_redirect:
-        query = query_transform(request)
-        url = reverse('ranking:standings', kwargs={'title_slug': slug(contest.title), 'contest_id': str(contest.pk)})
-        if query:
-            query = '?' + query
-        return redirect(url + query)
-
-    if request.GET.get('advanced_accounts'):
-        url = reverse('coder:accounts')
-        advacing_contests = get_advancing_contests(contest)
-        query = '&'.join(f'contest={c.pk}' for c in advacing_contests)
-        url += f'?{query}&advanced=true'
-        return redirect(url)
 
     with_detail = request.GET.get('detail', 'true') in ['true', 'on']
     if request.user.is_authenticated:
@@ -1236,8 +1189,8 @@ def standings(request, title_slug=None, contest_id=None, contests_ids=None,
             first_problems = list(first.addition.get('problems', {}).values())
             enable_timeline = all(not is_reject(p) for p in first_problems) or any('time' in p for p in first_problems)
     if enable_timeline and 'timeline' in request.GET:
-        timeline = request.GET.get('timeline') or '1'
-        if timeline and re.match(r'^(play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):
+        timeline = request.GET.get('timeline') or 'show'
+        if timeline and re.match(r'^(show|unfreezing|play|[01]|[01]?(?:\.[0-9]+)?|[0-9]+(?::[0-9]+){2})$', timeline):
             if ':' in timeline:
                 val = reduce(lambda x, y: x * 60 + int(y), timeline.split(':'), 0)
                 timeline = f'{val / contest.duration_in_secs:.6f}'

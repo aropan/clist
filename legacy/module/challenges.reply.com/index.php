@@ -2,13 +2,9 @@
     require_once dirname(__FILE__) . "/../../config.php";
     require_once dirname(__FILE__) . "/secret.php";
 
-    $page = curlexec($URL);
-    preg_match_all('#<a[^>]*href="(?P<url>[^"]*/challenges/[^"]*/home/?)"[^>]*>#', $page, $matches);
-    $challenges_urls = array_unique($matches['url']);
-
-    $url = "https://challenges.reply.com/";
-    $page = curlexec($url);
-    if (!preg_match('#<a[^>]*id="[^"]*logout[^"]*"[^>]*>#', $page)) {
+    $url = 'https://challenges.reply.com/tamtamy/api/user-in-session.json';
+    $session = curlexec($url, null, array("json_output" => true));
+    if (is_string($session) && ends_with($session, 'null')) {
         $url = "https://challenges.reply.com/tamtamy/user/signIn.action";
         $data = array(
             "username" => $CHALLENGE_REPLY_EMAIL,
@@ -24,12 +20,12 @@
             trigger_error("Invalid singin: ${data['message']}", E_USER_WARNING);
             return;
         }
+        $url = 'https://challenges.reply.com/tamtamy/api/user-in-session.json';
+        $session = curlexec($url, null, array("json_output" => true));
     }
     unset($CHALLENGE_REPLY_EMAIL);
     unset($CHALLENGE_REPLY_PASSWORD);
 
-    $url = 'https://challenges.reply.com/tamtamy/api/user-in-session.json';
-    $session = curlexec($url, null, array("json_output" => true));
     $keys = array();
     if (isset($session['roles'])) {
         foreach ($session['roles'] as $role) {
@@ -38,6 +34,9 @@
         }
     }
 
+    $page = curlexec($URL);
+    preg_match_all('#<a[^>]*href="(?P<url>[^"]*/challenges/[^"]*/home/?)"[^>]*>#', $page, $matches);
+    $challenges_urls = array_unique($matches['url']);
     foreach ($challenges_urls as $url) {
         $url = url_merge($URL, $url);
         $page = curlexec($url);

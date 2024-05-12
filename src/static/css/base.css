@@ -38,6 +38,10 @@ table.center {
   margin-right: auto;
 }
 
+.inline {
+  display: inline;
+}
+
 
 /*
  * Row flex

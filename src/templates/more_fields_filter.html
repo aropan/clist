@@ -1,4 +1,4 @@
-{% if params.more_fields %}
+{% if perms.clist.view_more_fields %}
 {% with more_fields_id=more_fields|default:"more" %}
 <div class="input-group input-group-sm hidden" id="{{ more_fields_id }}-hidden">
 {% if groupby %}
@@ -27,6 +27,7 @@
     theme: 'bootstrap',
     placeholder: '',
     allowClear: true,
+    tags: true,
   }).on('select2:unselecting', function() {
     $(this).data('unselecting', true);
   }).on('select2:opening', function(e) {

@@ -105,34 +105,48 @@ function unfreeze_percent() {
   return 1 - freeze_percent()
 }
 
+function unfreeze_duration() {
+  return Math.round(contest_duration * unfreeze_percent())
+}
+
 function unfreeze_is_active(percent) {
-  return !with_virtual_start && freeze_percent() && unfreeze_percent() < percent && percent < 1
+  return unfreezing && !with_virtual_start && freeze_percent() && unfreeze_percent() <= percent && percent < 1
 }
 
 function step_timeline(multiplier = 1, stop = false) {
-  var next_percent = CURRENT_PERCENT + multiplier * parseFloat($('#timeline-step').val())
+  var prev_percent = CURRENT_PERCENT
+  var next_percent = prev_percent + multiplier * parseFloat($('#timeline-step').val())
 
-  if (!with_virtual_start) {
-    if (unfreeze_is_active(next_percent) || CURRENT_PERCENT > unfreeze_percent()) {
-      var unfreeze_index = Math.max(0, CURRENT_PERCENT - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
-      if (multiplier > 0) {
-        unfreeze_index = Math.ceil(unfreeze_index) + 0.5
-      } else if (multiplier < 0) {
-        unfreeze_index = Math.floor(unfreeze_index) - 0.5
-      }
+  if (unfreeze_is_active(next_percent) || unfreeze_is_active(CURRENT_PERCENT)) {
+    var unfreeze_index = Math.max(0, CURRENT_PERCENT - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
+    if (multiplier > 0) {
+      unfreeze_index = Math.ceil(unfreeze_index) + 0.5
+    } else if (multiplier < 0) {
+      unfreeze_index = Math.floor(unfreeze_index) - 0.5
+    }
+    if (next_percent === Infinity) {
+      next_percent = 1
+    } else if (next_percent === -Infinity) {
+      next_percent = 0
+    } else {
       next_percent = unfreeze_index / UNFREEZE_SIZE * freeze_percent() + unfreeze_percent()
       next_percent = Math.max(next_percent, 0)
       next_percent = Math.min(next_percent, 1)
     }
+  }
 
-    if (Math.min(next_percent, CURRENT_PERCENT) < unfreeze_percent() && unfreeze_percent() < Math.max(next_percent, CURRENT_PERCENT)) {
-      next_percent = unfreeze_percent()
-    }
+  if (unfreezing && Math.min(next_percent, CURRENT_PERCENT) < unfreeze_percent() && unfreeze_percent() < Math.max(next_percent, CURRENT_PERCENT)) {
+    next_percent = unfreeze_percent()
+  }
+
+  if (stop && TIMELINE_TIMER_ID || !stop && CURRENT_PERCENT >= contest_time_percentage) {
+    $('#play-timeline').click()
   }
 
   set_timeline(next_percent)
-  if (stop && TIMELINE_TIMER_ID || !stop && CURRENT_PERCENT >= contest_time_percentage) {
-    $('#play-timeline').click()
+
+  if (!unfreezing && prev_percent >= 1 && next_percent >= 1 && freeze_duration) {
+    $('#unfreezing-timeline').click()
   }
 }
 
@@ -188,22 +202,107 @@ function clear_data_stat_cell(e) {
   $(e).attr('data-last', 0)
 }
 
-function process_problem_cell(e, current_time, unfreeze_index, percentage_filled, callback) {
-  var $e = $(e)
-  var score = e.getAttribute('data-score')
-  var is_hidden = score.startsWith('?')
-  var is_solved = score.startsWith('+') || parseFloat(score) > 0
-  var penalty = e.getAttribute('data-penalty')
-  var penalty_in_seconds = e.getAttribute('data-penalty-in-seconds')
-  var result = e.getAttribute('data-result')
-  var more_penalty = e.getAttribute('data-more-penalty')
-  var problem_key = e.getAttribute('data-problem-key')
+function is_hidden(score) {
+  return score.startsWith('?')
+}
+
+function is_solved(score) {
+  return score.startsWith('+') || parseFloat(score) > 0
+}
+
+function process_problem_cell(element, current_time, unfreeze_index, percentage_filled, callback) {
+  var stat = $(element)
+  var score = element.getAttribute('data-score')
+  var penalty = element.getAttribute('data-penalty')
+  var penalty_in_seconds = element.getAttribute('data-penalty-in-seconds')
+  var result = element.getAttribute('data-result')
+  var more_penalty = element.getAttribute('data-more-penalty')
+  var problem_key = element.getAttribute('data-problem-key')
   var problem_status = null
-  var stat = $e.parent('.stat-cell')
-  var statistic_id = stat.attr('data-statistic-id')
+  var stat_cell = stat.parent('.stat-cell')
+  var statistic_id = stat_cell.data('statistic-id')
+  var unfreeze_open_index = UNFREEZE_OPENING.get(statistic_id + '_' + problem_key)
+  var finished_unfreeze = unfreeze_index === UNFREEZE_INDEX_UNDEF && percentage_filled
+  var unfreeze_open = unfreeze_open_index !== undefined && (finished_unfreeze || unfreeze_open_index < unfreeze_index)
+  var is_virtual_start = stat_cell.hasClass('virtual-start-statistic')
+
+  var statistic_submissions = submissions[statistic_id]
+  var problem_submissions = false
+  var problem_submission = false
+  var is_final_submission = false
+
+  if (statistic_submissions) {
+    problem_submissions = submissions[statistic_id][problem_key]
+    last_index = problem_submissions? problem_submissions.length - 1 : undefined
+    if (problem_submissions && unfreezing && problem_submissions[last_index][0] > unfreeze_duration()) {
+      problem_submission = problem_submissions[last_index]
+      is_final_submission = true
+    } else if (problem_submissions) {
+      for (var i = 0; i < problem_submissions.length; i++) {
+        if (problem_submissions[i][0] < current_time) {
+          problem_submission = problem_submissions[i]
+          is_final_submission = i == last_index
+        } else {
+          break
+        }
+      }
+    }
+  }
+
+  var pvisible = stat.attr('data-visible')
+  if (stat.attr('data-final') === 'false' || stat.hasClass('result-unfreeze')) {
+    pvisible = 'false'
+  } else if (stat.attr('data-final') === 'true' && !stat.hasClass('result-unfreeze')) {
+    pvisible = 'true'
+  }
 
   var visible = true
-  if (penalty) {
+
+  if (stat.attr('data-active-switcher')) {
+    if (problem_submission) {
+      data_penalty = Math.floor(problem_submission[0] / 60)
+      data_score = problem_submission[1]
+      data_result = problem_submission[1]
+
+      stat.attr('data-score-switcher', data_score)
+      stat.attr('data-result-switcher', data_result)
+      stat.attr('data-penalty-switcher', data_penalty)
+      stat.attr('data-final-switcher', is_final_submission)
+    }
+    problem_submission = false
+    problem_submissions = false
+  }
+
+  if (problem_submission) {
+    penalty = String(problem_submission[0] / 60)
+    data_penalty = Math.floor(problem_submission[0] / 60)
+    time = problem_submission[0]
+    score = problem_submission[1]
+    result = problem_submission[1]
+    attempt = problem_submission[2]
+    visible = unfreezing || time <= current_time
+
+    if (time > unfreeze_duration() && !unfreeze_open) {
+      score = '?' + (attempt + is_solved(score))
+    }
+
+    var updated_submissions = (
+      stat.attr('data-score') != score ||
+      stat.attr('data-result') != result ||
+      stat.attr('data-penalty') != penalty ||
+      stat.attr('data-final') != is_final_submission
+    )
+
+    stat.attr('data-score', score)
+    stat.attr('data-result', result)
+    stat.attr('data-penalty', data_penalty)
+    stat.attr('data-final', is_final_submission)
+    if (updated_submissions) {
+      update_score_penalty_result.call(stat, 'submission')
+    }
+  } else if (problem_submissions) {
+    visible = false
+  } else if (penalty) {
     var times = penalty.split(/[:\s]+/)
     if (times.length in contest_timeline['time_factor']) {
       var time = parse_factors_time(contest_timeline['time_factor'], penalty)
@@ -213,34 +312,52 @@ function process_problem_cell(e, current_time, unfreeze_index, percentage_filled
       var time = 0
       console.log('Unknown problem time')
     }
-    visible = time <= current_time
+    visible = unfreezing || time <= current_time
+
+    if (unfreezing || !is_virtual_start) {
+      if (time > unfreeze_duration() && !unfreeze_open) {
+        score = '?'
+        visible = false
+      }
+      if (!with_virtual_start && time <= current_time) {
+        stat.addClass('result-question')
+      } else {
+        stat.removeClass('result-question')
+      }
+    }
   } else {
     visible = percentage_filled
   }
-  var unfreeze_opening = UNFREEZE_OPENING.get(statistic_id + '_' + problem_key)
-  if (unfreeze_opening !== undefined && unfreeze_opening < unfreeze_index) {
+
+  var is_hidden_score = is_hidden(score)
+  var is_solved_score = is_solved(score)
+
+  if (unfreeze_open) {
     visible = true
-  } else if (with_virtual_start && !stat.hasClass('virtual-start-statistic')) {
-    if (unfreeze_opening !== undefined && unfreeze_index == UNFREEZE_INDEX_UNDEF) {
+  } else if (with_virtual_start && !is_virtual_start) {
+    if (unfreeze_open_index !== undefined && unfreeze_index == UNFREEZE_INDEX_UNDEF) {
       visible = false
-    } else if (!is_solved) {
+    } else if (!submissions && !is_solved_score) {
       visible = false
     }
   }
 
-  var pvisible = $e.attr('data-visible')
-  $e.attr('data-visible', visible)
+  stat.attr('data-visible', visible)
 
   if (visible) {
-    $e.removeClass('result-hidden')
-    problem_status = 'danger'
+    stat.removeClass('result-hidden')
   } else {
-    $e.addClass('result-hidden')
-    problem_status = 'warning'
+    stat.addClass('result-hidden')
   }
 
-  if (visible && is_solved) {
-    problem_status = $e.find('.par').length? 'info' : 'success'
+  if (is_hidden_score || !visible) {
+    stat.addClass('result-unfreeze')
+  } else {
+    stat.removeClass('result-unfreeze')
+  }
+
+  if (visible && is_solved_score) {
+    problem_status = stat.find('.par').length? 'info' : 'success'
 
     if (result && result.startsWith('+') && contest_timeline['penalty_more'] && !more_penalty) {
       more_penalty = result == '+'? 0 : parseInt(result)
@@ -248,8 +365,8 @@ function process_problem_cell(e, current_time, unfreeze_index, percentage_filled
 
     if (score.startsWith('+')) {
       if (penalty) {
-        last = parseFloat(stat.attr('data-last'))
-        stat.attr('data-last', Math.max(last, time))
+        last = parseFloat(stat_cell.attr('data-last'))
+        stat_cell.attr('data-last', Math.max(last, time))
         var attempt_penalty = contest_timeline['attempt_penalty']
         attempt_penalty = attempt_penalty === undefined? 1200 : attempt_penalty
         time += score == '+'? 0 : parseInt(score) * attempt_penalty
@@ -258,71 +375,92 @@ function process_problem_cell(e, current_time, unfreeze_index, percentage_filled
     } else {
       score = parseFloat(score)
     }
-    score += parseFloat(stat.attr('data-score'))
-    stat.attr('data-score', score)
+    score += parseFloat(stat_cell.attr('data-score'))
+    stat_cell.attr('data-score', score)
     if (penalty) {
       var agg = contest_timeline['penalty_aggregate'] || 'sum'
       if (agg == 'max') {
-        time = Math.max(time, parseFloat(stat.attr('data-penalty')))
+        time = Math.max(time, parseFloat(stat_cell.attr('data-penalty')))
       } else if (agg == 'sum') {
-        time += parseFloat(stat.attr('data-penalty'))
+        time += parseFloat(stat_cell.attr('data-penalty'))
       } else {
         console.log('Unknown aggregate:', agg)
       }
-      stat.attr('data-penalty', time)
+      stat_cell.attr('data-penalty', time)
     }
 
     if (more_penalty) {
-      more_penalty = parseFloat(more_penalty) + parseFloat(stat.attr('data-more-penalty'))
-      stat.attr('data-more-penalty', more_penalty)
+      more_penalty = parseFloat(more_penalty) + parseFloat(stat_cell.attr('data-more-penalty'))
+      stat_cell.attr('data-more-penalty', more_penalty)
     }
-  } else if (visible && is_hidden) {
+  } else if (visible && is_hidden_score) {
     problem_status = 'warning'
+  } else if (visible) {
+    problem_status = 'danger'
+  } else {
+    problem_status = ''
   }
+
   if (callback !== null) {
-    callback(e, visible, pvisible, problem_status)
+    callback(element, visible, pvisible, problem_status)
   }
 }
 
-function process_stat_cell(e) {
-  var $e = $(e)
-  var penalty = parseFloat(e.getAttribute('data-penalty'))
-  var more_penalty = parseFloat(e.getAttribute('data-more-penalty'))
+function process_stat_cell(element) {
+  var stat_cell = $(element)
+  var penalty = parseFloat(element.getAttribute('data-penalty'))
+  var more_penalty = parseFloat(element.getAttribute('data-more-penalty'))
   var more_penalty_factor = contest_timeline['penalty_more'] || 0
   var penalty_more_selector = contest_timeline['penalty_more_selector']
   if (penalty_more_selector) {
-    $e.find(penalty_more_selector).text(more_penalty)
+    stat_cell.find(penalty_more_selector).text(more_penalty)
   }
   if (more_penalty) {
     penalty += more_penalty * more_penalty_factor
-    $e.attr('data-penalty', penalty)
+    stat_cell.attr('data-penalty', penalty)
   }
-  var additional_penalty = parseFloat(e.getAttribute('data-additional-penalty'))
+  var additional_penalty = parseFloat(element.getAttribute('data-additional-penalty'))
   if (additional_penalty) {
     penalty += additional_penalty
-    $e.attr('data-penalty', penalty)
+    stat_cell.attr('data-penalty', penalty)
   }
 }
 
-function prepare_unfreeze() {
+function clear_unfreeze() {
+  unfreezing = false
   UNFREEZE_OPENING.clear()
   UNFREEZE_ORDER = []
   UNFREEZE_SIZE = 0
+}
+
+function toggle_unfreezing(btn) {
+  btn = $(btn)
+  if (!unfreezing) {
+    prepare_unfreeze()
+    set_timeline(unfreeze_percent())
+    btn.addClass('active')
+  } else {
+    clear_unfreeze()
+    set_timeline()
+    btn.removeClass('active')
+  }
+  return false
+}
+
+function prepare_unfreeze() {
+  clear_unfreeze()
+  unfreezing = true
 
   var stat_cells = $('.stat-cell').clone()
 
   stat_cells.each((_, e) => { clear_data_stat_cell(e) })
 
-  var current_time = Math.round(contest_duration * unfreeze_percent())
+  var current_time = unfreeze_duration()
   var problems_popularity = []
-  var has_empty_penalty = false
   stat_cells.find('.problem-cell.problem-cell-stat').each((_, e) => {
     var problem_key = $(e).attr('data-problem-key')
     problems_popularity[problem_key] = (problems_popularity[problem_key] || 0) + 1
     process_problem_cell(e, current_time, UNFREEZE_INDEX_UNDEF, false, null)
-    if ($(e).hasClass('result-hidden')) {
-      has_empty_penalty |= !$(e).attr('data-penalty')
-    }
   })
 
   stat_cells.each((_, e) => { process_stat_cell(e) })
@@ -330,9 +468,14 @@ function prepare_unfreeze() {
   stat_cells.sort(cmp_row)
 
   var last_problem_cell = null
+  var candidates_selector = '.problem-cell.problem-cell-stat.result-unfreeze'
+
+  var has_empty_penalty = false
+  $(candidates_selector).each((_, e) => has_empty_penalty |= !$(e).attr('data-penalty'))
+
   for (var index = stat_cells.length - 1; index >= 0; index--) {
     var candidates, stat_cell
-    while ((candidates = $(stat_cell = stat_cells[index]).find('.problem-cell.problem-cell-stat.result-hidden')).length) {
+    while ((candidates = $(stat_cell = stat_cells[index]).find(candidates_selector)).length) {
       var min_penalty, max_popularity, problem_cell
       min_penalty = max_popularity = problem_cell = null
       candidates.each((_, e) => {
@@ -387,7 +530,9 @@ function change_freeze_duration(select) {
   } else {
     freeze_duration = parseFloat(value) * contest_duration
   }
-  UNFREEZE_ORDER = null
+  if (unfreezing) {
+    prepare_unfreeze()
+  }
   set_timeline()
 }
 
@@ -401,10 +546,6 @@ function clear_starred_unfreezed() {
 }
 
 function set_timeline(percent = null, duration = null, scroll_to_element = null) {
-  init_unfreeze = UNFREEZE_ORDER === null
-  if (init_unfreeze) {
-    prepare_unfreeze()
-  }
   if (duration == null) {
     duration = parseInt($('#timeline-duration').val())
   }
@@ -427,13 +568,15 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
   var current_time, unfreeze_index, highlight_problem_duration
   if (unfreeze_is_active(percent)) {
-    current_time = Math.round(contest_duration * unfreeze_percent())
+    current_time = unfreeze_duration()
     unfreeze_index = (percent - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
     highlight_problem_duration = 0
+    $('table.standings').addClass('unfreezing')
   } else {
     current_time = Math.round(contest_duration * percent)
     unfreeze_index = UNFREEZE_INDEX_UNDEF
     highlight_problem_duration = duration
+    $('table.standings').removeClass('unfreezing')
   }
 
   clear_starred_unfreezed()
@@ -443,7 +586,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       var statistic_id = UNFREEZE_ORDER[target_index].statistic_id
       var statistic_element = $('.stat-cell[data-statistic-id="' + statistic_id + '"]')
 
-      if (!scroll_to_element && $('.find-me-row').length == 0) {
+      if (!scroll_to_element && $('.find-me-row').length == 0 && percent > unfreeze_percent()) {
         if (percent_sign < 0) {
           scroll_to_element = statistic_element
         } else {
@@ -451,7 +594,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
         }
       }
 
-      if (!init_unfreeze && !statistic_element.hasClass('starred')) {
+      if (!statistic_element.hasClass('starred')) {
         change_starring.call(statistic_element)
         statistic_element.addClass('unfreezed')
         CLEAR_STARRED_UNFREEZED_TIMER_ID = setInterval(clear_starred_unfreezed, 10000)
@@ -478,19 +621,27 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     toggle_tooltip()
   }
 
-  function process_problem_cell_callback(e, visible, pvisible, problem_status) {
-    var $e = $(e)
-    var toggle_class = e.getAttribute('data-class')
-    if (visible && pvisible === 'false') {
-      $e.addClass(toggle_class)
-      highlight_element($e, 0, duration / 2, toggle_class, function() { return $e.attr('data-visible') !== 'false' }, 0.25)
-    }
-    if (!visible && pvisible !== 'false') {
-      $e.removeClass(toggle_class)
+  function process_problem_cell_callback(stat, visible, pvisible, problem_status) {
+    stat = $(stat)
+    var is_non_final = stat.attr('data-final') === 'false' || stat.hasClass('result-unfreeze')
+    var toggle_class = stat.attr('data-active-switcher')? '' : stat.attr('data-class')
+    var is_appearancing = (visible && !is_non_final) && pvisible === 'false'
+    var is_disappearancing = (!visible || is_non_final) && pvisible !== 'false'
+
+    if (toggle_class) {
+      if (is_appearancing) {
+        stat.addClass(toggle_class)
+        highlight_element(stat, 0, duration / 2, toggle_class, function() { return stat.attr('data-visible') !== 'false' }, 0.25)
+      }
+      if (is_disappearancing) {
+        stat.removeClass(toggle_class)
+        // clear after highlight_element during fast timeline changing
+        setTimeout(() => { stat.removeClass(toggle_class) }, duration)
+      }
     }
 
     if (problem_status) {
-      var problem_key = e.getAttribute('data-problem-key')
+      var problem_key = stat.attr('data-problem-key')
       var problem_progress_stat = problem_progress_stats[problem_key] || (problem_progress_stats[problem_key] = {})
       problem_progress_stat[problem_status] = (parseInt(problem_progress_stat[problem_status]) || 0) + 1
     }
@@ -577,10 +728,10 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       var changed_statuses = []
 
       statuses.forEach((problem_status, i) => {
-        var attr = 'data-' + problem_status
         var value = problem_progress_stat[problem_status] || 0
         var previous_value = previous_problem_progress_stat[problem_status] || 0
-        if (value != previous_value && problem_status != 'warning') {
+
+        if (value > previous_value && problem_status != 'warning') {
           changed_statuses.push(problem_status)
         }
         sum += value
@@ -593,16 +744,22 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
         if (value) {
           tooltip += 'Number of ' + numbers[i] + ': ' + value + ' (' + percent.toFixed(2) + '%)<br/>'
         }
+
         problem_progress.find('.progress-bar.progress-bar-' + problem_status).css('width', percent.toFixed(3) + '%')
       })
       tooltip += 'Total: ' + total
       if (sum == 0) {
-        problem_progress.remove()
+        problem_progress.hide()
       } else {
+        problem_progress.show()
         if (problem_progress_stat['danger'] == sum) {
           problem_cell.find('span').addClass('rej')
         }
-        problem_progress.attr('data-original-title', tooltip)
+        if (problem_progress.attr('title')) {
+          problem_progress.attr('title', tooltip)
+        } else {
+          problem_progress.attr('data-original-title', tooltip)
+        }
       }
       if (duration && changed_statuses.length) {
         var problem_status = changed_statuses.length == 1? changed_statuses[0] : 'info'
@@ -683,7 +840,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     if (toggle_hidden_selector) {
       toggle_hidden_selector += ','
     }
-    toggle_hidden_selector += selector + (percentage_filled && !with_virtual_start? '.hidden' : ':not(.hidden)')
+    toggle_hidden_selector += selector + (percentage_filled && unfreezing && !with_virtual_start? '.hidden' : ':not(.hidden)')
   })
   if (toggle_hidden_selector) {
     var toggle_hidden_elements = $(toggle_hidden_selector)
@@ -771,7 +928,7 @@ function parse_factors_time(timeline_factors, penalty) {
   }
 }
 
-function edit_active_swicher_click(event, element) {
+function edit_active_switcher_click(event, element) {
   var stat = $(element).closest('.problem-cell')
   var score = stat.attr('data-score')
   var penalty = stat.attr('data-penalty')
@@ -834,7 +991,9 @@ function edit_active_swicher_click(event, element) {
 }
 
 function switcher_updated(stat) {
-  UNFREEZE_ORDER = null
+  if (unfreezing) {
+    prepare_unfreeze()
+  }
   if (!SWITCHER_CLICK_WITHOUT_UPDATE) {
     var tr = stat.closest('tr')
     set_timeline(null, null, tr)
@@ -864,7 +1023,7 @@ function has_penalty(result) {
   return result && result.startsWith('+') && result != '+'
 }
 
-function update_switcher() {
+function update_score_penalty_result(type) {
   var stat = $(this)
   var score = stat.attr('data-score')
   var penalty = stat.attr('data-penalty')
@@ -878,14 +1037,26 @@ function update_switcher() {
   }
 
   stat.children().addClass('hidden')
-  var edit_btn = '<span class="edit-active-switcher" onclick="edit_active_swicher_click(event, this)"><i class="fa-regular fa-pen-to-square"></i></span>'
-  var edit_score = '<span class="edit-score">' + score + '</span>'
-  var edit_penalty = '<span class="edit-penalty">' + penalty + '</span>'
-  stat.prepend('<div class="swi">' + edit_score + edit_btn + '</div><small class="text-muted"><div>' + edit_penalty + '</div></small>')
+
+  if (type == 'switcher') {
+    var edit_btn = '<span class="edit-active-switcher" onclick="edit_active_switcher_click(event, this)"><i class="fa-regular fa-pen-to-square"></i></span>'
+    var edit_score = '<span class="edit-score">' + score + '</span>'
+    var edit_penalty = '<span class="edit-penalty">' + penalty + '</span>'
+    stat.prepend('<div class="swi">' + edit_score + edit_btn + '</div><small class="text-muted"><div>' + edit_penalty + '</div></small>')
+  } else if (type == 'submission') {
+    if (is_hidden(score)) {
+      stat_class = 'hid'
+    } else if (is_solved(score)) {
+      stat_class = 'acc'
+    } else {
+      stat_class = 'rej'
+    }
+    stat.prepend('<div class="' + stat_class + '">' + score + '</div><small class="text-muted"><div>' + penalty + '</div></small>')
+  }
 
   if (!stat.hasClass('problem-cell-stat')) {
     stat.addClass('problem-cell-stat')
-    stat.addClass('problem-cell-stat-switcher')
+    stat.addClass('problem-cell-stat-' + type)
   }
 }
 
@@ -947,29 +1118,33 @@ function switcher_click(event) {
     }
     stat.attr('data-penalty', penalty)
 
-    update_switcher.call(stat)
+    update_score_penalty_result.call(stat, 'switcher')
   } else {
     if (stat.attr('data-result-switcher') === undefined) {
       stat.removeAttr('data-result')
       stat.removeAttr('data-score')
       stat.removeAttr('data-penalty')
-      stat.removeClass('result-hidden')
+      stat.removeAttr('data-final')
       stat.removeClass('problem-cell-stat')
     } else {
       stat.attr('data-result', stat.attr('data-result-switcher'))
       stat.attr('data-score', stat.attr('data-score-switcher'))
       stat.attr('data-penalty', stat.attr('data-penalty-switcher'))
+      stat.attr('data-final', stat.attr('data-final-switcher'))
     }
     stat.removeAttr('data-active-switcher')
     stat.removeAttr('data-result-switcher')
     stat.removeAttr('data-score-switcher')
     stat.removeAttr('data-penalty-switcher')
+    stat.removeAttr('data-final-switcher')
+    stat.removeClass('result-hidden')
+    stat.removeClass('result-unfreeze')
+    stat.removeClass('result-question')
 
     stat.children().toggleClass('hidden')
     stat.children('.hidden').remove()
 
     if (stat.hasClass('problem-cell-stat-switcher')) {
-      stat.removeClass('result-hidden')
       stat.removeClass('problem-cell-stat')
       stat.removeClass('problem-cell-stat-switcher')
     }
@@ -1191,6 +1366,8 @@ $(function() {
         $('#play-timeline').focus().click()
       } else if (key == 'd') {
         $('#erase-switchers-timeline').focus().click()
+      } else if (key == 'u') {
+        $('#unfreezing-timeline').focus().click()
       }
     }
 
@@ -1283,10 +1460,20 @@ function apply_starring() {
 }
 
 $(function() {
-  $('#unstar').click(function() {
+  $('#unstar_unpin').click(function() {
     $('.stat-cell.starred .star').click()
     Cookies.remove('starred', {path: starred_cookie_path})
     update_unstar_hidden()
+  })
+
+  $('#unstar_submissions').click(function() {
+    var starred = Cookies.get('starred', {path: starred_cookie_path})
+    var url = $(this).data('submissions-url')
+    starred.split(',').forEach((element, index) => {
+      url += (index? '&' : '?') + 'statistic=' + element
+    })
+    $(this).data('url', url)
+    open_submissions(this)
   })
 
   var starred = Cookies.get('starred', {path: starred_cookie_path})
@@ -1437,6 +1624,14 @@ function update_statistics_log(data) {
 }
 
 
+function open_submissions(btn) {
+  var url = $(btn).data('url')
+  if (shown_timeline && CURRENT_PERCENT < 1) {
+    url += (url.includes('?') ? '&' : '?') + 'timeline=' + CURRENT_PERCENT
+  }
+  window.open(url, "_blank")
+}
+
 /*
  * View solution
  */
@@ -1477,7 +1672,7 @@ function viewSolution(a) {
 $(document).keydown(function(event) {
   if (event.keyCode == 27) {
     $('#view-solution-modal').modal('hide')
-    $('#pudate-statistics-logs').modal('hide')
+    $('#update-statistics-log').modal('hide')
   }
 });
 
@@ -1567,7 +1762,7 @@ $(() => {
   if (with_virtual_start) {
     $('.problem-cell[data-active-switcher="true"]').each(function() {
       var stat = $(this)
-      update_switcher.call(stat)
+      update_score_penalty_result.call(stat, 'switcher')
       stat.children('.hidden').remove()
     })
 

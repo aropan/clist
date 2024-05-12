@@ -1417,3 +1417,83 @@ def time_ago(context, time):
     title = format_time(timezone(time, context['timezone']), context['timeformat'])
     value = naturaltime(timezone(time, context['timezone']))
     return mark_safe(f'<span title="{title}" data-placement="top" data-toggle="tooltip">{value}</span>')
+
+
+@register.filter
+def strip_milliseconds(value):
+    return re.sub(r'\.[0-9]+$', '', str(value))
+
+
+@register.simple_tag
+def get_result_class(result):
+    if is_solved(result, True):
+        return 'success'
+    if is_hidden(result, True):
+        return 'warning'
+    if is_reject(result, True):
+        return 'danger'
+    if is_partial(result, True):
+        return 'info'
+    return ''
+
+
+@register.simple_tag
+def tests_distribution(tests):
+    counter = {}
+    for test in tests:
+        test_counter = counter.setdefault(test.verdict, {})
+        test_counter.setdefault('total', 0)
+        test_counter['total'] += 1
+        if test.test_number is not None:
+            test_counter.setdefault('tests', []).append(test.test_number)
+    ret = ''
+    for verdict, test_counter in sorted(counter.items(), key=lambda x: -x[1]['total']):
+        title = ''
+        if 'tests' in test_counter:
+            start = None
+            last = None
+            tests = []
+            for t in sorted(test_counter['tests']):
+                if not last or last + 1 != t:
+                    if start:
+                        tests.append(f'{start}-{last}' if start != last else str(start))
+                    start = t
+                last = t
+            if last:
+                tests.append(f'{start}-{last}' if start != last else str(start))
+            if tests:
+                title = f' data-toggle="tooltip" title="Tests: {", ".join(tests)}"'
+
+        badge_class = 'success' if verdict.solved else 'danger'
+        ret += (
+            f'''<span class="testing-verdict-result"{title}>'''
+            f'''<span class="badge progress-bar-{badge_class}">{verdict.id}</span>'''
+            f'''&times;<span>{test_counter['total']}</span>'''
+            f'''</span>'''
+        )
+    return mark_safe(ret)
+
+
+@register.simple_tag
+def contest_submissions_to_timeline_json(submissions):
+    ret = {}
+    for submission in submissions.order_by('contest_time'):
+        d = ret.setdefault(str(submission.statistic_id), {})
+        d = d.setdefault(submission.problem_index, [])
+        d.append([
+            int(submission.contest_time.total_seconds()),
+            submission.current_result,
+            submission.current_attempt,
+        ])
+    return mark_safe(json.dumps(ret))
+
+
+@register.simple_tag(takes_context=True)
+def value_with_select(context, field, value, default=None):
+    if value is None:
+        return default
+    values = (f for f in context['request'].GET.getlist(field) if f)
+    if any(values):
+        return value
+    url = url_transform(context['request'], field, value)
+    return mark_safe(f'<a href="{url}">{value}</a>')

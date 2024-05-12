@@ -4,6 +4,7 @@
 import copy
 import logging
 import operator
+import os
 import re
 from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
@@ -25,9 +26,11 @@ from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 
-from clist.models import Contest, Resource
+from submissions.models import Language, Submission, Testing, Verdict
+
+from clist.models import Contest, Problem, Resource
 from clist.templatetags.extras import (as_number, canonize, get_item, get_number_from_str, get_problem_key,
-                                       get_problem_short, time_in_seconds, time_in_seconds_format)
+                                       get_problem_short, is_solved, time_in_seconds, time_in_seconds_format)
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
@@ -41,6 +44,7 @@ from ranking.views import update_standings_socket
 from true_coders.models import Coder
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
+from utils.logger import suppress_db_logging_context
 from utils.timetools import parse_datetime
 from utils.traceback_with_vars import colored_format_exc
 
@@ -586,6 +590,7 @@ class Command(BaseCommand):
                     standings_kinds = set(Contest.STANDINGS_KINDS.keys())
                     has_more_solving = bool(contest.info.get('_more_solving'))
                     updated_statistics_ids = list()
+                    contest_timeline = contest.get_timeline_info()
 
                     results = []
                     if result or users:
@@ -712,9 +717,8 @@ class Command(BaseCommand):
 
                                     if ac and v.get('time'):
                                         if contest.info.get('with_time_from_timeline') and 'time_in_seconds' not in v:
-                                            timeline = contest.get_timeline_info()
-                                            if timeline:
-                                                v['time_in_seconds'] = time_in_seconds(timeline, v['time'])
+                                            if contest_timeline:
+                                                v['time_in_seconds'] = time_in_seconds(contest_timeline, v['time'])
 
                                         in_seconds = v.get('time_in_seconds')
                                         if in_seconds is not None:
@@ -804,6 +808,10 @@ class Command(BaseCommand):
                                 previous_account = resource.account_set.filter(key=previous_member).first()
                                 if previous_account:
                                     account = rename_account(previous_account, account)
+
+                            result_submissions = r.pop('submissions', [])
+                            if contest.has_submissions and not result_submissions:
+                                self.logger.warning(f'Not found submissions for account = {account}')
 
                             def update_addition_fields():
                                 addition_fields = parse_info.get('addition_fields', [])
@@ -968,18 +976,6 @@ class Command(BaseCommand):
                                     account.save()
 
                             def update_stat_info():
-                                problems = r.get('problems', {})
-
-                                for field, out in problems_values_fields:
-                                    values = set()
-                                    for problem in problems.values():
-                                        value = problem.get(field)
-                                        if value:
-                                            problems_values[out].add(value)
-                                            values.add(value)
-                                    if out not in r and values:
-                                        r[out] = list(values)
-
                                 advance = contest.info.get('advance')
                                 if advance:
                                     k = 'advanced'
@@ -1140,13 +1136,12 @@ class Command(BaseCommand):
                                     if statistics_ids:
                                         statistics_ids.remove(statistic.pk)
 
-                                    timeline = contest.get_timeline_info()
-                                    if timeline and try_calculate_time:
+                                    if contest_timeline and try_calculate_time:
                                         p_problems = statistic.addition.get('problems', {})
 
                                         ts = int((now - contest.start_time).total_seconds())
                                         ts = min(ts, contest.duration_in_secs)
-                                        time = time_in_seconds_format(timeline, ts, num=2)
+                                        time = time_in_seconds_format(contest_timeline, ts, num=2)
 
                                         for k, v in problems.items():
                                             v_result = v.get('result', '')
@@ -1185,6 +1180,156 @@ class Command(BaseCommand):
                                     statistic.addition = addition
                                     statistic.save()
 
+                            @suppress_db_logging_context()
+                            def update_submissions(statistic, result_submissions):
+                                if not result_submissions:
+                                    return
+
+                                if not contest.has_submissions:
+                                    contest.has_submissions = True
+                                    contest.save(update_fields=['has_submissions'])
+
+                                statistic_problems = statistic.addition.get('problems', {})
+                                updated_problems = False
+                                submission_ids = set()
+                                for result_submission in result_submissions:
+                                    language = Language.cached_get(result_submission['language'])
+                                    verdict = Verdict.cached_get(result_submission['verdict'])
+                                    problem = Problem.cached_get(contest=contest,
+                                                                 short=result_submission['problem_short'])
+                                    problem_short = result_submission['problem_short']
+
+                                    defaults = {
+                                        'problem': problem,
+                                        'contest_time': result_submission['contest_time'],
+                                        'language': language,
+                                        'verdict': verdict,
+                                        'time': result_submission.get('time'),
+                                        'current_result': result_submission.get('current_result'),
+                                        'current_attempt': result_submission.get('current_attempt'),
+                                        'problem_key': problem.key if problem is not None else None,
+                                    }
+
+                                    for field in ('run_time', 'failed_test'):
+                                        if field in result_submission:
+                                            defaults[field] = result_submission[field]
+
+                                    run_time = result_submission.get('run_time')
+                                    if run_time is not None:
+                                        defaults['run_time'] = run_time
+
+                                    submission, submission_created = Submission.objects.update_or_create(
+                                        account=account,
+                                        contest=contest,
+                                        statistic=statistic,
+                                        secondary_key=result_submission['id'],
+                                        problem_short=problem_short,
+                                        defaults=defaults,
+                                    )
+                                    submission_ids.add(submission.pk)
+
+                                    contest_log_counter['submissions_total'] += 1
+                                    if submission_created:
+                                        contest_log_counter['submissions_created'] += 1
+
+                                    if result_submission.get('testing') and not contest.has_submissions_tests:
+                                        contest.has_submissions_tests = True
+                                        contest.save(update_fields=['has_submissions_tests'])
+
+                                    if 'testing' in result_submission and submission_created:
+                                        update_fields = {}
+                                        for testing in result_submission['testing']:
+                                            verdict = Verdict.cached_get(testing['verdict'])
+                                            test_number = testing.get('test_number')
+                                            run_time = testing.get('run_time')
+
+                                            if (
+                                                not verdict.solved and
+                                                test_number is not None and
+                                                'failed_test' not in defaults and
+                                                ('failed_test' not in update_fields
+                                                 or test_number < update_fields['failed_test'])
+                                            ):
+                                                update_fields['failed_test'] = test_number
+
+                                            if (
+                                                verdict.solved and
+                                                run_time is not None and
+                                                'run_time' not in defaults and
+                                                ('run_time' not in update_fields
+                                                 or run_time > update_fields['run_time'])
+                                            ):
+                                                update_fields['run_time'] = run_time
+
+                                            _, testing_created = Testing.objects.update_or_create(
+                                                submission=submission,
+                                                secondary_key=testing['id'],
+                                                defaults={
+                                                    'verdict': verdict,
+                                                    'test_number': test_number,
+                                                    'run_time': run_time,
+                                                    'contest_time': testing.get('contest_time'),
+                                                    'time': testing.get('time'),
+                                                }
+                                            )
+                                            contest_log_counter['testing_total'] += 1
+                                            if testing_created:
+                                                contest_log_counter['testing_created'] += 1
+
+                                        if update_fields:
+                                            for field, value in update_fields.items():
+                                                setattr(submission, field, value)
+                                            submission.save(update_fields=list(update_fields))
+
+                                    statistic_problem = statistic_problems.get(problem_short, {})
+                                    if (
+                                        statistic_problem and
+                                        submission.current_result == statistic_problem.get('result')
+                                    ):
+                                        fields_values = (
+                                            ('language', submission.language_id),
+                                            ('verdict', submission.verdict_id),
+                                            ('run_time', submission.run_time),
+                                            ('failed_test', submission.failed_test),
+                                        )
+                                        if contest.calculate_time and not is_solved(submission.current_result):
+                                            time = time_in_seconds_format(contest_timeline,
+                                                                          int(submission.contest_time.total_seconds()),
+                                                                          num=2)
+                                            fields_values += (('time', time),)
+
+                                        for field, value in fields_values:
+                                            if value is not None and statistic_problem.get(field) != value:
+                                                statistic_problem[field] = value
+                                                updated_problems = True
+                                if update_problems_values(statistic.addition):
+                                    updated_problems = True
+                                if updated_problems:
+                                    statistic.save(update_fields=['addition'])
+                                if os.environ.get('DELETE_SUBMISSIONS'):
+                                    extra = Submission.objects.filter(statistic=statistic)
+                                    extra = extra.exclude(pk__in=submission_ids)
+                                    delete_info = extra.delete()
+                                    n_deleted, delete_info = delete_info
+                                    if n_deleted:
+                                        self.logger.warning(f'Delete extra submissions: {delete_info}')
+                                        contest_log_counter['submissions_deleted'] += n_deleted
+
+                            def update_problems_values(addition):
+                                problems = addition.get('problems', {})
+                                updated_addition = False
+                                for field, out in problems_values_fields:
+                                    values = set()
+                                    for problem in problems.values():
+                                        value = problem.get(field)
+                                        if value:
+                                            problems_values[out].add(value)
+                                            values.add(value)
+                                    if out not in addition and values:
+                                        addition[out] = list(values)
+                                        updated_addition = True
+                                return updated_addition
+
                             def link_account(statistic):
                                 account_keys = set()
                                 for member in statistic.addition.get('_members', []):
@@ -1209,6 +1354,7 @@ class Command(BaseCommand):
                             update_account_time()
                             update_account_info()
                             update_stat_info()
+                            update_problems_values(r)
                             if not users:
                                 update_problems_first_ac()
                             defaults, addition, try_calculate_time = get_addition()
@@ -1221,9 +1367,12 @@ class Command(BaseCommand):
                             n_statistics_total += 1
                             n_statistics_created += statistic_created
                             contest_log_counter['statistics_total'] += 1
-                            contest_log_counter['statistic_created'] += statistic_created
+                            if statistic_created:
+                                contest_log_counter['statistics_created'] += 1
 
                             update_after_update_or_create(statistic, statistic_created, addition, try_calculate_time)
+
+                            update_submissions(statistic, result_submissions)
 
                             if link_accounts:
                                 link_account(statistic)
@@ -1282,7 +1431,8 @@ class Command(BaseCommand):
                                 delete_info = Statistics.objects.filter(pk__in=statistics_ids).delete()
                                 self.logger.info(f'Delete info: {delete_info}')
                                 progress_bar.set_postfix(deleted=str(delete_info))
-                                contest_log_counter['deleted'] = delete_info
+                                n_deleted, _ = delete_info
+                                contest_log_counter['statistics_deleted'] += n_deleted
 
                             for f in fields_preceding.keys():
                                 fields.remove(f)

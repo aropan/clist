@@ -6,7 +6,7 @@ import logging
 import os
 import re
 import traceback
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import timedelta
 from urllib.parse import urljoin, urlparse
 
@@ -14,10 +14,14 @@ import coloredlogs
 from django.utils.timezone import now
 from lxml import etree
 
+from submissions.models import Language, Verdict
+
+from clist.templatetags.extras import get_item
 from ranking.management.modules.codeforces import _get as codeforces_get
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 from utils.strings import list_string_iou, string_iou
+from utils.timetools import parse_duration
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
@@ -101,6 +105,127 @@ class Statistic(BaseModule):
         ret = get_from_icpc(year)
         return ret
 
+    def _parse_event_feed(self, event_feed, result, problems_info):
+        result_names = {}
+        for row in result.values():
+            if row['name'] in result_names:
+                raise ValueError('Duplicate name')
+            result_names[row['name']] = row
+
+        entities = defaultdict(dict)
+        members = {}
+        event_feed = os.path.join(os.path.dirname(__file__), event_feed)
+        with open(event_feed, 'r') as fo:
+            for line in fo:
+                entity = json.loads(line.strip())
+                entity_type = entity['type']
+                if entity_type in {'contest', 'organizations'}:
+                    continue
+
+                if entity_type in {'groups', 'problems', 'judgement-types', 'languages', 'submissions',
+                                   'judgements', 'runs', 'teams'}:
+                    entities[entity_type][entity['data']['id']] = entity['data']
+
+                if entity_type == 'teams':
+                    team = entity['data']
+                    name = (team['affiliation'] or '').strip()
+                    if name in result_names:
+                        members[team['id']] = result_names[name]['member']
+                    elif not any(
+                        group_id not in entities['groups'] or entities['groups'][group_id]['hidden']
+                        for group_id in entity['data']['group_ids']
+                    ):
+                        raise ValueError(f'Not found team = {team}')
+                    continue
+
+        for language in entities['languages'].values():
+            if Language.get(language['name']) is None:
+                Language.objects.create(id=language['id'],
+                                        name=language['name'],
+                                        extensions=language['extensions'])
+
+        for judgement_type in entities['judgement-types'].values():
+            if Verdict.get(judgement_type['id']) is None:
+                Verdict.objects.create(id=judgement_type['id'],
+                                       name=judgement_type['name'],
+                                       penalty=judgement_type['penalty'],
+                                       solved=judgement_type['solved'])
+
+        for problem in entities['problems'].values():
+            short = problem['short_name']
+            p_info = problems_info[short]
+            p_info['time_limit'] = problem['time_limit']
+            p_info['color'] = {'rgb': problem['rgb'], 'name': problem['color']}
+            p_info['test_data_count'] = problem['test_data_count']
+            p_info.setdefault('name', problem['name'])
+
+        for run in entities['runs'].values():
+            judgement = entities['judgements'][run['judgement_id']]
+            run['id'] = int(run['id'])
+            run['test_number'] = int(run.pop('ordinal'))
+            run['verdict'] = entities['judgement-types'][run['judgement_type_id']]['id']
+            run['contest_time'] = parse_duration(run['contest_time'])
+            judgement.setdefault('runs', []).append(run)
+        for judgement in entities['judgements'].values():
+            submission = entities['submissions'][judgement['submission_id']]
+            submission.setdefault('judgements', []).append(judgement)
+
+        submissions = []
+        for submission in entities['submissions'].values():
+            if submission['team_id'] not in members:
+                continue
+            submission['contest_time'] = parse_duration(submission['contest_time'])
+            if submission['contest_time'] >= self.contest.duration:
+                continue
+            submissions.append(submission)
+        submissions.sort(key=lambda s: s['contest_time'])
+
+        teams_attempts = defaultdict(int)
+        teams_solved = set()
+
+        for submission in submissions:
+            if submission['team_id'] not in members:
+                continue
+            judgements = submission.pop('judgements', [])
+            if len(judgements) != 1:
+                logger.warning(f'len(judgements) = {len(judgements)}, submission_id = {submission["id"]}')
+            judgement = max(judgements, key=lambda j: len(j.get('runs', [])))
+
+            member = members[submission.pop('team_id')]
+
+            problem_id = submission.pop('problem_id')
+            submission['problem_short'] = entities['problems'][problem_id]['short_name']
+
+            language_id = submission.pop('language_id')
+            submission['language'] = entities['languages'][language_id]['id']
+
+            row = result[member]
+
+            judgement_type = entities['judgement-types'][judgement.pop('judgement_type_id')]
+            submission['verdict'] = judgement_type['id']
+
+            submission['run_time'] = judgement.pop('max_run_time')
+            submission['testing'] = judgement.pop('runs', [])
+            submission['valid'] = judgement.pop('valid')
+
+            team_problem = (member, submission['problem_short'])
+            if team_problem in teams_solved:
+                continue
+            if judgement_type['solved']:
+                teams_solved.add(team_problem)
+            teams_attempts[team_problem] += judgement_type['penalty'] and team_problem not in teams_solved
+
+            submission['current_attempt'] = teams_attempts[team_problem]
+            submission['current_result'] = '+' if team_problem in teams_solved else '-'
+            if teams_attempts[team_problem]:
+                submission['current_result'] += str(teams_attempts[team_problem])
+
+            submission.pop('external_id', None)
+            submission.pop('entry_point', None)
+            submission.pop('files', None)
+
+            row.setdefault('submissions', []).append(submission)
+
     def get_standings(self, users=None, statistics=None):
         is_regional = getattr(self, 'is_regional', False)
         entry = re.search(r'\b[0-9]{4}\b-\b[0-9]{4}\b', self.key)
@@ -134,6 +259,9 @@ class Statistic(BaseModule):
                 if urlparse(REQ.last_url).hostname == 'web.archive.org' and f'/{year}' not in REQ.last_url:
                     continue
 
+                if not page:
+                    continue
+
                 if not re.search(rf'\b(world\s*finals\s*{year}|{year}\s*world\s*finals)\b', page, re.IGNORECASE):
                     continue
 
@@ -160,17 +288,26 @@ class Statistic(BaseModule):
             result = {}
             hidden_fields = set(self.info.get('hidden_fields', [])) | {'region'}
             problems_info = OrderedDict()
+            has_more_members = False
 
             if 'zibada' in standings_url:
-                match = re.search(r' = (?P<data>[\{\[].*?);?\s*$', page, re.MULTILINE)
-                if match:
-                    names = self._json_load(match.group('data'))
-                else:
-                    names = None
+                names = None
+                for f in (
+                    lambda: page,
+                    lambda: REQ.get('teams.js'),
+                ):
+                    try:
+                        teams_page = f()
+                    except FailOnGetResponse:
+                        continue
+                    match = re.search(r' = (?P<data>[\{\[].*?);?\s*$', teams_page, re.MULTILINE)
+                    if match:
+                        names = self._json_load(match.group('data'))
+                        break
 
                 try:
-                    page = REQ.get('standings.js')
-                    match = re.search(r' = (?P<data>\{.*?);?\s*$', page, re.MULTILINE)
+                    standings_page = REQ.get('standings.js')
+                    match = re.search(r' = (?P<data>\{.*?);?\s*$', standings_page, re.MULTILINE)
                     data = self._json_load(match.group('data'))
                 except Exception:
                     assert names
@@ -199,6 +336,8 @@ class Statistic(BaseModule):
                             'time': time,
                             'result': '+' if status == '+' and attempt == 0 else f'{status}{attempt}',
                         }
+                    for idx in range(len(names)):
+                        teams.setdefault(str(idx), {})
                     for tid, team in teams.items():
                         name = names[int(tid)][0]
                         name = html.unescape(name)
@@ -213,6 +352,16 @@ class Statistic(BaseModule):
                                 penalty += problem['time'] + attempt_penalty
                         team['penalty'] = int(round(penalty / time_divider))
                         team['solving'] = solving
+
+                        more_members = names[int(tid)][1] or []
+                        for more_member in more_members:
+                            _, more_member = more_member.split(':', 1)
+                            has_more_members = True
+                            team.setdefault('_more_members', []).append({
+                                'account': more_member,
+                                'resource': 1,
+                                'without_country': True,
+                            })
                 else:
                     teams = {}
                     time_divider = 1
@@ -267,7 +416,6 @@ class Statistic(BaseModule):
                             else:
                                 problem['result'] = f'{status}{result}'
                         teams[row['member']] = row
-
                 teams = list(teams.values())
                 teams.sort(key=lambda t: (t['solving'], -t['penalty']), reverse=True)
                 rank = 0
@@ -458,6 +606,19 @@ class Statistic(BaseModule):
                         if k not in row:
                             hidden_fields.add(k)
                             row[k] = v
+
+            if has_more_members:
+                for team, row in result.items():
+                    added_members = {(m['account'], m['resource']) for m in row.get('_members', [])}
+                    more_members = row.pop('_more_members', [])
+                    for m in more_members:
+                        k = m['account'], m['resource']
+                        if k not in added_members:
+                            members = row.setdefault('_members', [])
+                            members.append(m)
+                            added_members.add(k)
+                            if len(members) > 3:
+                                LOG.warning(f'Too many members: {members}, team = {team}')
 
             if (
                 not is_regional
@@ -656,6 +817,10 @@ class Statistic(BaseModule):
                         logger_func = logger.info
                         add_team(best_name, handles)
                     logger_func(f'best_iou = {best_iou:.3f}, best_name = {best_name}, university = {university}')
+
+            event_feed = get_item(self.info, 'standings._event_feed')
+            if event_feed:
+                self._parse_event_feed(event_feed, result, problems_info)
 
             standings = {
                 'result': result,

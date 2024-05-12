@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Submissions{% endblock %}{% endblock %}
+{% block description %}View all submissions across a some of contests. Monitor submissions, view detailed statistics, and understand overall competition trends.{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/submissions.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<h3 class="text-center">
+  <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="24" height="24"/></a>
+  <a href="{{ contest.actual_url }}">{{ contest.title }}</a>
+  <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+    <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
+  </span>
+</h3>
+
+<div class="col-xl-10 col-xl-offset-1">
+  {% include "filter_collapse.html" with include_filter="submissions_filters.html" %}
+
+  <script>configure_pagination()</script>
+
+  <div id="submissions" class="panel panel-default table-responsive">
+    <table class="table table-hover table-striped table-float-head">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Problem</th>
+          <th>Verdict</th>
+          <th>Language</th>
+          <th>Test</th>
+          <th>Runtime</th>
+          <th>Result</th>
+          {% if contest.has_submissions_tests %}
+          <th>Testing</th>
+          {% endif %}
+          <th class="account-column">Account</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% include "submissions_paging.html" %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{% endblock %}

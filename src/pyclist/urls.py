@@ -20,6 +20,7 @@ urlpatterns = [
     re_path(r'', include('events.urls')),
     re_path(r'', include('chats.urls')),
     re_path(r'', include('notification.urls')),
+    re_path(r'', include('submissions.urls')),
 
     re_path(r'charts/', charts, name='charts'),
     re_path(r'change-environment/', change_environment, name='change_environment'),

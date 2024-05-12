@@ -1,0 +1,19 @@
+.account-column:hover .external-link {
+  visibility: visible;
+}
+
+#submissions th,
+#submissions td
+{
+  text-align: center;
+}
+
+#submissions th.account-column,
+#submissions td.account-column
+{
+  text-align: left;
+}
+
+#submissions .testing-verdict-result {
+  margin: 0px 3px;
+}

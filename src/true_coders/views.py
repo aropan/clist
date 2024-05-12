@@ -1555,6 +1555,8 @@ def search(request, **kwargs):
             qs = qs.filter(get_iregex_filter(request.GET['regex'], 'title'))
         if request.GET.get('has_problems') in django_settings.YES_:
             qs = qs.filter(info__problems__isnull=False, stage__isnull=True).exclude(info__problems__exact=[])
+        if request.GET.get('has_submissions') in django_settings.YES_:
+            qs = qs.filter(has_submissions=True)
         if request.GET.get('has_statistics') in django_settings.YES_:
             qs = qs.filter(n_statistics__gt=0)
         if request.GET.get('has_started') in django_settings.YES_:
@@ -1785,32 +1787,28 @@ def search(request, **kwargs):
         if request.GET.get('resource'):
             qs = qs.filter(resource_id=int(request.GET.get('resource')))
 
-        order = ['-n_contests', 'pk']
-        if 'regex' in request.GET:
-            re_search = request.GET['regex']
+        with_resource = True
+        if request.GET.get('contest'):
+            qs = qs.filter(statistics__contest_id=int(request.GET.get('contest')))
+            with_resource = False
+        if with_resource:
+            qs = qs.select_related('resource')
 
-            exact_qs = qs.filter(key__iexact=re_search)
-            if exact_qs.exists():
-                qs = exact_qs
-            else:
-                qs = qs.filter(get_iregex_filter(re_search, 'key', 'name'))
-                search_striped = re_search.rstrip('$').lstrip('^')
-                qs = qs.annotate(match=Case(
-                    When(Q(key__iexact=search_striped) | Q(name__iexact=search_striped), then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField(),
-                ))
-                order.insert(0, '-match')
-        qs = qs.select_related('resource')
+        order = ['-n_contests', 'pk']
+        if 'search' in request.GET:
+            search = request.GET['search']
+            qs = qs.filter(get_iregex_filter(search, 'key', 'name', suffix='__icontains'))
+            qs = qs.annotate(match=Case(
+                When(Q(key__iexact=search) | Q(name__iexact=search), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ))
+            order.insert(0, '-match')
+
         qs = qs.order_by(*order, 'pk')
 
         qs = qs[(page - 1) * count:page * count]
-        ret = [
-            {
-                'id': r.id,
-                'text': f'{r.key}, {r.name}, {r.resource.host}' if r.name else f'{r.key}, {r.resource.host}'
-            } for r in qs
-        ]
+        ret = [{'id': r.id, 'text': r.display(with_resource=with_resource)} for r in qs]
     else:
         return HttpResponseBadRequest(f'invalid query = {query}')
 

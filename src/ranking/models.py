@@ -27,7 +27,7 @@ from django_print_sql import print_sql
 from sql_util.utils import Exists, SubqueryCount, SubquerySum
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import add_prefix_to_problem_short, get_problem_short, slug
+from clist.templatetags.extras import add_prefix_to_problem_short, get_problem_short, has_season, slug
 from pyclist.indexes import ExpressionIndex, GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from true_coders.models import Coder, Party
@@ -132,6 +132,15 @@ class Account(BaseModel):
         ):
             self.last_rating_activity = statistic.last_activity
             self.save(update_fields=['last_rating_activity'])
+
+    def display(self, with_resource=None):
+        if not with_resource and self.name and has_season(self.key, self.name):
+            ret = self.name
+        else:
+            ret = f'{self.key}, {self.name}'
+        if with_resource:
+            ret += f' ({self.resource.host})'
+        return ret
 
     class Meta:
         indexes = [

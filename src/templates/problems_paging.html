@@ -16,17 +16,7 @@
 {% define '' as manual_solution_class %}
 {% endif %}
 
-{% if solution.result|is_solved:True %}
-{% define 'success' as system_solution_class %}
-{% elif solution.result|is_hidden:True %}
-{% define 'warning' as system_solution_class %}
-{% elif solution.result|is_reject:True %}
-{% define 'danger' as system_solution_class %}
-{% elif solution.result|is_partial:True %}
-{% define 'info' as system_solution_class %}
-{% else %}
-{% define '' as system_solution_class %}
-{% endif %}
+{% get_result_class solution.result as system_solution_class %}
 
 {% define manual_solution_class|default:system_solution_class as solution_class %}
 
@@ -126,6 +116,4 @@
 {% endfor %}
 
 {% show_more_table %}
-
-<script>$(function() { $(window).trigger('resize') })</script> <!-- tags column auto width -->
 <script>add_hidden_tag_event()</script>
