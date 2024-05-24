@@ -23,6 +23,7 @@ $(function() {
         id: $(this).attr('data-account-id'),
       },
       success: function(data) {
+        btn.attr('data-original-title', '')
         btn.attr('disabled', 'disabled')
       },
       error: function(response) {

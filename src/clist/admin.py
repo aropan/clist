@@ -135,7 +135,7 @@ class ResourceAdmin(BaseModelAdmin):
                                            'rating_update_time', 'rank_update_time',
                                            'contest_update_time', 'country_rank_update_time',
                                            'ratings', 'rating_prediction']}],
-        ['Account information', {'fields': ['has_accounts_infos_update', 'has_multi_account',
+        ['Account information', {'fields': ['has_accounts_infos_update', 'n_accounts_to_update', 'has_multi_account',
                                             'has_account_verification', 'has_standings_renamed_account',
                                             'accounts_fields']}],
         ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving', 'problems_fields']}],

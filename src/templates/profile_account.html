@@ -51,10 +51,8 @@
   {% if account.resource.has_accounts_infos_update %}
   {% if this_is_me or perms.ranking.update_account %}
   {% with delta=account.updated|timedelta_with_now %}
-  <a class="update-account" data-account-id="{{ account.pk }}"{% if delta.total_seconds < 0 %} disabled{% endif %}>
-    <span title="{% if 0 < delta.total_seconds %}Update{% else %}Update in progress{% endif %}" data-toggle="tooltip" data-placement="top">
-      <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
-    </span>
+  <a class="update-account" data-account-id="{{ account.pk }}"{% if delta.total_seconds < 0 %} disabled{% endif %} data-html="true" title="{% if 0 < delta.total_seconds %}Update{% else %}In progress{% if account.resource.n_accounts_to_update %}<br>{{ account.resource.n_accounts_to_update }} accounts left{% endif %}{% endif %}" data-toggle="tooltip" data-placement="top">
+    <i class="fas fa-sync{% if delta.total_seconds < 0 %} fa-spin{% endif %}"></i>
   </a>
   {% endwith %}
   {% endif %}

@@ -560,7 +560,8 @@ def standings_charts(request, context):
 
         if short in my_values.get('problems', {}):
             idx = bisect.bisect(problems_bins, my_values['problems'][short]) - 1
-            my_data.append({'x': problems_bins[idx], 'y': problems_chart['data'][idx][short], 'field': short})
+            if idx < len(problems_chart['data']):
+                my_data.append({'x': problems_bins[idx], 'y': problems_chart['data'][idx][short], 'field': short})
     if my_data:
         my_data.sort(key=lambda d: (d['x'], -d['y']))
         for d in my_data:

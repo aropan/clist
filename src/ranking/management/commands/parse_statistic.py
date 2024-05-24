@@ -935,8 +935,9 @@ class Command(BaseCommand):
                                     account.save()
 
                                 no_update_name = r.pop('_no_update_name', False)
+                                no_update_name |= 'team_id' in r and '_field_update_name' not in r
                                 field_update_name = r.pop('_field_update_name', 'name')
-                                if r.get(field_update_name) and 'team_id' not in r:
+                                if r.get(field_update_name):
                                     r[field_update_name] = canonize_name(r[field_update_name])
                                     if (
                                         not no_update_name and
@@ -1617,12 +1618,15 @@ class Command(BaseCommand):
                 module = resource.module
                 delay = module.max_delay_after_end
                 reparse_statistics = contest.info.get('_reparse_statistics')
+                with_shortly_after = not parsed and contest.n_statistics
                 if reparse_statistics or contest.end_time < now or not module.long_contest_divider:
                     delay = min(delay, module.delay_on_success if parsed else module.delay_on_error)
                 if now < contest.end_time and module.long_contest_divider:
                     delay = min(delay, contest.full_duration / module.long_contest_divider)
+                if with_shortly_after and contest.end_time < now < contest.end_time + module.shortly_after:
+                    delay = min(delay, module.delay_shortly_after)
                 if now < contest.end_time < now + delay:
-                    delay = min(delay, contest.end_time - now + (module.min_delay_after_end or timedelta(minutes=5)))
+                    delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=5)) - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
                     delay = min(delay, timing_delta)

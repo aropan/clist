@@ -49,7 +49,7 @@ class HasInfo(admin.SimpleListFilter):
 
 @admin_register(Account)
 class AccountAdmin(BaseModelAdmin):
-    list_display = ['resource', 'key', 'name', 'country', '_has_coder', 'updated']
+    list_display = ['resource', 'key', 'name', 'country', '_has_coder', 'deleted', 'updated']
     search_fields = ['=key', '=name']
     list_filter = [HasCoders, HasInfo, 'deleted', 'resource__host']
 

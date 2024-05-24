@@ -6,13 +6,13 @@ import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
-from clist.templatetags.extras import as_number
 from clist.models import Contest
+from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
 
@@ -147,23 +147,40 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=10) as executor:
 
+            subdomain = urlparse(standings_url).netloc.split('.')[0]
+            has_subdomain = subdomain not in ('open', 'kattis')
+
             def fetch_members(row):
                 page = REQ.get(row['_account_url'])
                 entry = re.search(r'"team_members":\s*(?P<members>\[.*\]),?$', page, re.MULTILINE)
                 members = json.loads(entry.group('members'))
 
-                row['_members'] = [{'account': m.get('username'), 'name': m['name']} for m in members]
+                for m in members:
+                    if not m.get('username'):
+                        m['username'] = ''
+                    else:
+                        m['profile_url'] = {'subdomain': subdomain, 'account': m['username']}
+
+                if has_subdomain:
+                    for m in members:
+                        m['username'] = f'{subdomain}:{m["username"]}'
+
+                row['_members'] = [{'account': m['username'], 'name': m['name']} for m in members]
                 entry = re.search(r'"team_id":\s*"?(?P<team_id>[0-9]+)"?,$', page, re.MULTILINE)
                 row['team_id'] = entry.group('team_id')
+
                 return members, row
 
             for members, row in executor.map(fetch_members, rows):
-                real_members = [m for m in members if m.get('username')]
+                real_members = [m for m in members if m['username']]
                 if real_members:
                     members = real_members
 
                 for member in members:
                     row['member'] = member['username']
+                    account_info = row.setdefault('info', {})
+                    account_info['name'] = member['name']
+                    account_info['profile_url'] = member.get('profile_url')
                     result[row['member']] = deepcopy(row)
 
         standings = {

@@ -79,6 +79,7 @@ class Resource(BaseModel):
     has_problem_rating = models.BooleanField(default=False)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
+    n_accounts_to_update = models.IntegerField(default=None, null=True, blank=True)
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
     n_rating_accounts = models.IntegerField(default=None, null=True, blank=True)
@@ -91,8 +92,8 @@ class Resource(BaseModel):
     problems_fields = models.JSONField(default=dict, blank=True)
     statistics_fields = models.JSONField(default=dict, blank=True)
 
-    RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'perfomance', 'raw_rating',
-                     'OldRating', 'Rating', 'NewRating', 'Perfomance',
+    RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
+                     'OldRating', 'Rating', 'NewRating', 'Performance',
                      'predicted_old_rating', 'predicted_new_rating', 'predicted_rating_perf', 'predicted_raw_rating',
                      'rating_prediction_old_rating', 'rating_prediction_new_rating', 'rating_prediction_rating_perf',
                      'rating_prediction_raw_rating')

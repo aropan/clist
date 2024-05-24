@@ -77,11 +77,12 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         addition_update = contest_addition_update[contest_key]
         if '_rank' not in addition_update:
             continue
+        rank_field = addition_update.get('_rank_field', 'place')
         total_counter += 1
         conditions = (Q(**{f'contest__{field}': contest_key}) for field in fields)
         condition = functools.reduce(operator.__or__, conditions)
         condition &= Q(contest__resource=account.resource)
-        condition &= Q(place=addition_update['_rank'])
+        condition &= Q(**{rank_field: addition_update['_rank']})
         queryset_filter |= condition
     if not queryset_filter:
         return
@@ -97,6 +98,10 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
             max_counter_key = old_account_key
     if max_counter_key is None:
         return
+
+    account.try_renaming_check_time = timezone.now()
+    account.save(update_fields=['try_renaming_check_time'])
+
     max_counter_val = key_counter.pop(max_counter_key)
     other_max_counter_val = max(key_counter.values(), default=0)
     threshold_val = max(other_max_counter_val * 2, 3)
@@ -114,16 +119,20 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
     account.save()
     ok = False
     updated = 0
-    for contest_key in contest_keys:
+    missed = 0
+    total = 0
+    for contest_key in tqdm.tqdm(contest_keys, desc='fill missed ranks', total=len(contest_keys)):
         addition_update = contest_addition_update[contest_key]
         if '_rank' not in addition_update:
             continue
+        total += 1
         rank = addition_update['_rank']
+        rank_field = addition_update.get('_rank_field', 'place_as_int')
         conditions = (Q(**{f'{field}': contest_key}) for field in fields)
         condition = functools.reduce(operator.__or__, conditions)
         condition &= Q(resource=account.resource)
         base_contests = Contest.objects.filter(condition)
-        qs = base_contests.annotate(has_rank=Exists('statistics', filter=Q(place_as_int=rank)))
+        qs = base_contests.annotate(has_rank=Exists('statistics', filter=Q(**{rank_field: rank})))
         contests = list(qs.filter(has_rank=False))
         if not contests:
             qs = base_contests.annotate(has_skip=Exists('statistics', filter=Q(
@@ -134,24 +143,21 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
             contests = list(base_contests)
             if len(contests) == 1:
                 contest = contests[0]
-                LOG.info('Missed rank %s for %s in %s', rank, account, contest)
+                missed += 1
+                LOG.info('Missed #%d rank %s for %s in %s', missed,  rank, account, contest)
                 # call_command('parse_statistic', contest_id=contest.pk, users=['jcaoso1a@.com'])
                 # ok = True
             continue
         if len(contests) > 1:
             LOG.warning('Multiple contests with same key %s = %s', contest_key, contests)
             continue
+        defaults = {'skip_in_stats': False}
+        if '_rank_field' not in addition_update:
+            defaults['place'] = rank
+            defaults['place_as_int'] = rank
         contest = contests[0]
         updated += 1
-        statistic, created = Statistics.objects.update_or_create(
-            account=account,
-            contest=contest,
-            defaults={
-                'place': rank,
-                'place_as_int': rank,
-                'skip_in_stats': False,
-            },
-        )
+        statistic, created = Statistics.objects.update_or_create(account=account, contest=contest, defaults=defaults)
         statistic.addition.pop('_no_update_n_contests', None)
         statistic.addition['_skip_on_update'] = True
         if account.name:
@@ -159,8 +165,11 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
         statistic.save(update_fields=['addition'])
         if created:
             ok = True
+    if total:
+        account.try_fill_missed_ranks_time = timezone.now()
+        account.save(update_fields=['try_fill_missed_ranks_time'])
     if updated:
-        LOG.info('Filled %d missed ranks for %s', updated, account)
+        LOG.info('Filled %d missed ranks (missed %d) of %d for %s', updated, missed, total, account)
     account.refresh_from_db()
     return ok
 
@@ -264,12 +273,12 @@ def account_update_contest_additions(
         if iteration > 1 and not total:
             break
 
-        if try_renaming_check:
+        if try_renaming_check and account.try_renaming_check_time is None:
             try_renaming_check = False
             if renaming_check(account, renaming_contest_keys, fields, contest_addition_update):
                 try_fill_missed_ranks = False
                 continue
-        if try_fill_missed_ranks:
+        if try_fill_missed_ranks and account.try_fill_missed_ranks_time is None:
             try_fill_missed_ranks = False
             if fill_missed_ranks(account, renaming_contest_keys, fields, contest_addition_update):
                 continue

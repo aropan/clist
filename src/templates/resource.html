@@ -66,7 +66,7 @@
             Top rating
             <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
             <a href="{% url 'clist:resources_account_ratings' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Account ratings' %}</a>
-            <span class="pull-right text-muted update-time">updated {% time_ago resource.rating_update_time %}</span>
+            {% if resource.rating_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.rating_update_time %}</span>{% endif %}
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -228,7 +228,7 @@
         <h4>
             Country rating
             <a href="{% url 'clist:resources_country_ratings' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Country ratings' %}</a>
-            <span class="pull-right text-muted update-time">updated {% time_ago resource.country_rank_update_time %}</span>
+            {% if resource.country_rank_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.country_rank_update_time %}</span>{% endif %}
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">

@@ -409,7 +409,10 @@ class Statistic(BaseModule):
                             ret = {}
 
                             post = '''
-                            {"operationName":"userProfilePublicProfile","variables":{"userSlug":"''' + handle + '''"},"query":"
+                            {
+                                "operationName":"userProfilePublicProfile",
+                                "variables":{"userSlug":"''' + handle + '''"},
+                                "query":"
                                 query userProfilePublicProfile($userSlug: String!) {
                                   userProfilePublicProfile(userSlug: $userSlug) {
                                     haveFollowed
@@ -473,7 +476,7 @@ class Statistic(BaseModule):
                                     }
                                   }
                                 }
-                            "}'''  # noqa: E501
+                            "}'''
                             post = re.sub(r'\s+', ' ', post)
 
                             page = Statistic._get(
@@ -764,12 +767,16 @@ class Statistic(BaseModule):
                 contest_addition_update = {}
                 last_rating = None
                 for rating, ranking, contest_key in zip(ratings, rankings, contest_keys):
+                    if not ranking:
+                        continue
                     int_rating = round(rating)
                     update = contest_addition_update.setdefault(contest_key, OrderedDict())
                     update['rating_change'] = int_rating - last_rating if last_rating is not None else None
                     update['new_rating'] = int_rating
                     update['raw_rating'] = rating
                     update['_rank'] = ranking
+                    if Statistic.is_china(account):
+                        update['_rank_field'] = 'addition___rank'
                     last_rating = int_rating
                 if last_rating and 'rating' not in info:
                     info['rating'] = last_rating

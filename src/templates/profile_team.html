@@ -1,0 +1,25 @@
+{% extends "profile.html" %}
+
+{% block ogtitle %}{% block title %}{{ query }} - Team{% endblock %}{% endblock %}
+
+{% block description %}{{ query }}{% endblock %}
+
+{% block profile_header %}
+<h2 id="team-profile">
+{% for coder in coders %}
+<div>
+  <a href="{% url 'coder:profile' coder.username %}">
+    {% if coder.user.first_name or coder.user.last_name %}
+    {{ coder.user.first_name|default:"" }} {{ coder.user.last_name|default:"" }} aka
+    {% endif %}
+    {{ coder.display_name }}
+  </a>
+
+  {% if perms.true_coders.change_coder %}
+    <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+  {% endif %}
+</div>
+{% endfor %}
+</h2>
+{% endblock %}
+

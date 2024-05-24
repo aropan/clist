@@ -60,7 +60,7 @@ class Statistic(BaseModule):
         api_standings_url = urljoin(self.url, f'/api/contests/{self.key}/contestants')
         data = query(api_standings_url)
 
-        hidden_fields = {'perfomance'}
+        hidden_fields = {'performance'}
         result = OrderedDict()
         grouped_team = False
         has_penalty = False
@@ -97,7 +97,9 @@ class Statistic(BaseModule):
                     r['_members'] = row.pop('_members')
                     r['_no_update_name'] = row.pop('_no_update_name')
 
-                r['perfomance'] = row.pop('perfomance')
+                performance = row.pop('perfomance', row.pop('performance', None))
+                if performance is not None:
+                    r['performance'] = performance
                 r['place'] = row.pop('rank')
                 r['solving'] = row.pop('points')
                 r['penalty'] = row.pop('penalties')

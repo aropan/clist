@@ -14,9 +14,11 @@
 
 {% block profile_body %}
 
+{% if show_history_ratings and history_resources %}
 <script>
 ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ search_resource.host }}{% endif %}'
 </script>
+{% endif %}
 
 <div class="row">
   <div{% if two_columns %} class="col-lg-6"{% endif %}>

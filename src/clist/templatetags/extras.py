@@ -522,7 +522,10 @@ def get_country_code(name):
 
 @register.filter
 def format_dict(format_, dict_values):
-    return format_.format(**dict_values)
+    try:
+        return format_.format(**dict_values)
+    except KeyError:
+        return ''
 
 
 @register.filter
@@ -1414,6 +1417,8 @@ def search_linked_coder(request, account):
 
 @register.simple_tag(takes_context=True)
 def time_ago(context, time):
+    if not time:
+        return
     title = format_time(timezone(time, context['timezone']), context['timeformat'])
     value = naturaltime(timezone(time, context['timezone']))
     return mark_safe(f'<span title="{title}" data-placement="top" data-toggle="tooltip">{value}</span>')

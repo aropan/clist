@@ -24,6 +24,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import escape
 from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
@@ -512,7 +513,7 @@ def account_verification(request, key, host, template='account_verification.html
     return render(request, template, context)
 
 
-def _get_data_mixed_profile(request, query):
+def _get_data_mixed_profile(request, query, is_team=False):
     statistics_filter = Q()
     writers_filter = Q()
     accounts_filter = Q()
@@ -532,30 +533,38 @@ def _get_data_mixed_profile(request, query):
         n_accounts += ':' in v
 
     account_prefilter = Q()
+    team_accounts = Account.objects.all()
     n_coder = 0
     for v in query:
         if ':' in v:
+            if is_team:
+                request.logger.warning(f'Account {v} was skipped: team profile does not support accounts')
+                continue
             host, key = v.split(':', 1)
             resource = Resource.objects.filter(Q(host=host) | Q(short_host=host)).first()
             if not resource:
                 continue
             account_prefilter |= Q(key=key, resource=resource)
-        elif n_coder:
+        elif n_coder and not is_team:
             request.logger.warning(f'Coder {v} was skipped: only the first one is used')
         else:
             coder = Coder.objects.filter(username=v).first()
-            if coder:
-                if n_accounts == 0:
-                    statistics_filter |= Q(account__coders=coder)
-                    writers_filter |= Q(writers__coders=coder)
-                    accounts_filter |= Q(coders=coder)
-                else:
-                    accounts = list(coder.account_set.all())
-                    statistics_filter |= Q(account__in=accounts)
-                    writers_filter |= Q(writers__in=accounts)
-                    accounts_filter |= Q(pk__in={a.pk for a in accounts})
-                profiles.append(coder)
-                n_coder += 1
+            if not coder:
+                request.logger.warning(f'Coder {v} was skipped: not found')
+                continue
+            if is_team:
+                team_accounts = team_accounts.filter(coders=coder)
+            elif n_accounts == 0:
+                statistics_filter |= Q(account__coders=coder)
+                writers_filter |= Q(writers__coders=coder)
+                accounts_filter |= Q(coders=coder)
+            else:
+                accounts = list(coder.account_set.all())
+                statistics_filter |= Q(account__in=accounts)
+                writers_filter |= Q(writers__in=accounts)
+                accounts_filter |= Q(pk__in={a.pk for a in accounts})
+            profiles.append(coder)
+            n_coder += 1
 
     if account_prefilter:
         for account in Account.objects.filter(account_prefilter):
@@ -563,6 +572,11 @@ def _get_data_mixed_profile(request, query):
             writers_filter |= Q(writers=account)
             accounts_filter |= Q(pk=account.pk)
             profiles.append(account)
+    if is_team and n_coder:
+        accounts = list(team_accounts)
+        statistics_filter = Q(account__in=accounts)
+        writers_filter = Q(writers__in=accounts)
+        accounts_filter = Q(pk__in={a.pk for a in accounts})
 
     if not profiles:
         statistics = Statistics.objects.none()
@@ -573,7 +587,8 @@ def _get_data_mixed_profile(request, query):
         writers = Contest.objects.filter(writers_filter).select_related('resource').order_by('-end_time', '-id')
         accounts = Account.objects.filter(accounts_filter).order_by('-n_contests')
         if n_coder:
-            accounts = accounts.annotate(verified=Exists('verified_accounts', filter=Q(coder=coder)))
+            coders = profiles if is_team else [coder]
+            accounts = accounts.annotate(verified=Exists('verified_accounts', filter=Q(coder__in=coders)))
 
         resources = Resource.objects \
             .prefetch_related(Prefetch(
@@ -603,6 +618,20 @@ def profiles(request, query, template='profile_mixed.html'):
     data = _get_data_mixed_profile(request, query)
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['profiles'] = data['profiles']
+    context['query'] = query
+    return template, context
+
+
+@page_templates((
+    ('profile_contests_paging.html', 'contest_page'),
+))
+@context_pagination()
+def team(request, query, template='profile_team.html'):
+    data = _get_data_mixed_profile(request, query, is_team=True)
+    context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
+    context['two_columns'] = False
+    context['history_resources'] = False
+    context['coders'] = data['profiles']
     context['query'] = query
     return template, context
 
@@ -939,8 +968,8 @@ def change(request):
     elif name == "time-format":
         try:
             format_time(timezone.now(), value)
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('invalid time format')
         coder.settings["time_format"] = value
         if value == "":
             coder.settings.pop("time_format")
@@ -995,9 +1024,9 @@ def change(request):
     elif name == "custom-countries":
         country = request.POST.get("country", None)
         if country not in django_settings.CUSTOM_COUNTRIES_:
-            return HttpResponseBadRequest(f"invalid custom country '{country}'")
+            return HttpResponseBadRequest(f"invalid custom country = '{escape(country)}'")
         if value not in django_settings.CUSTOM_COUNTRIES_[country]:
-            return HttpResponseBadRequest(f"invalid custom value '{value}' for country '{country}'")
+            return HttpResponseBadRequest(f"invalid custom value '{escape(value)}' for country '{escape(country)}'")
 
         with transaction.atomic():
             coder.settings.setdefault('custom_countries', {})[country] = value
@@ -1097,7 +1126,8 @@ def change(request):
 
             filter_.save()
         except Exception as e:
-            return HttpResponseBadRequest("%s: %s" % (field, e))
+            logger.error(f'Error while updating filter (field = {field}): {e}')
+            return HttpResponseBadRequest('Something went wrong')
     elif name == "add-filter":
         if coder.filter_set.filter(contest__isnull=True).count() >= 50:
             return HttpResponseBadRequest("reached the limit number of filters")
@@ -1108,8 +1138,8 @@ def change(request):
             id_ = int(request.POST.get("id", -1))
             filter_ = Filter.objects.get(pk=id_, coder=coder)
             filter_.delete()
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('invalid filter id')
     elif name in ("enable-filter", "disable-filter"):
         try:
             with transaction.atomic():
@@ -1120,8 +1150,8 @@ def change(request):
                 for category in filter_.categories:
                     Notification.objects.filter(coder=coder, method__endswith=category).update(last_time=None)
                 filter_.save(update_fields=['enabled'])
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('invalid filter id')
     elif name == "add-list" or name == "edit-list":
         try:
             if not value:
@@ -1148,15 +1178,16 @@ def change(request):
                 coder_list.shared_with_coders.set(shared_with)
             coder_list.save()
         except Exception as e:
-            return HttpResponseBadRequest(e)
+            logger.error(f'Error while adding/editing list: {e}')
+            return HttpResponseBadRequest('Something went wrong')
         return HttpResponse(json.dumps({'id': coder_list.pk, 'name': coder_list.name}), content_type="application/json")
     elif name == "delete-list":
         try:
             pk = int(request.POST.get("id", -1))
             coder_list = CoderList.objects.get(pk=pk, owner=coder)
             coder_list.delete()
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('invalid list id')
     elif name in ["add-calendar", "edit-calendar"]:
         try:
             pk = int(request.POST.get("id") or -1)
@@ -1193,7 +1224,8 @@ def change(request):
                 calendar.descriptions = descriptions
                 calendar.save()
         except Exception as e:
-            return HttpResponseBadRequest(e)
+            logger.error(f'Error while adding/editing calendar: {e}')
+            return HttpResponseBadRequest('Something went wrong')
         return HttpResponse(json.dumps({'id': calendar.pk, 'name': calendar.name, 'filter': calendar.category}),
                             content_type="application/json")
     elif name == "delete-calendar":
@@ -1201,8 +1233,8 @@ def change(request):
             pk = int(request.POST.get("id", -1))
             calendar = Calendar.objects.get(pk=pk, coder=coder)
             calendar.delete()
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('invalid calendar id')
     elif name in ("delete-notification", "reset-notification", ):
         try:
             id_ = int(request.POST.get("id", -1))
@@ -1212,8 +1244,8 @@ def change(request):
             elif name == "reset-notification":
                 n.last_time = timezone.now()
                 n.save()
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('invalid notification id')
     elif name == "add-subscription":
         if coder.subscription_set.count() >= 3:
             return HttpResponseBadRequest("reached the limit number of subscriptions")
@@ -1300,7 +1332,8 @@ def change(request):
             response = {'message': 'add', 'account': account.dict()}
             return JsonResponse(response)
         except Exception as e:
-            return HttpResponseBadRequest(e)
+            logger.error(f'Error while adding account: {e}')
+            return HttpResponseBadRequest('Something went wrong')
     elif name == "delete-account":
         try:
             pk = request.POST.get("id")
@@ -1312,11 +1345,11 @@ def change(request):
                 host = request.POST.get("resource")
                 resource = Resource.objects.get(host=host)
                 account = Account.objects.get(resource=resource, key=value)
-            account.coders.remove(coder)
-            account.updated = timezone.now()
-            account.save()
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('Account not found')
+        account.coders.remove(coder)
+        account.updated = timezone.now()
+        account.save()
     elif name == "update-account":
         try:
             pk = request.POST.get('id')
@@ -1324,8 +1357,8 @@ def change(request):
                 account = Account.objects.get(pk=int(pk))
             else:
                 account = Account.objects.get(pk=int(pk), coders=coder)
-        except Exception as e:
-            return HttpResponseBadRequest(e)
+        except Exception:
+            return HttpResponseBadRequest('Account not found')
 
         if not account.resource.has_accounts_infos_update:
             return HttpResponseBadRequest(f'Update not supported for {account.resource.host} resource')
@@ -1371,7 +1404,8 @@ def change(request):
     elif name == "delete-user":
         username = request.POST.get("username")
         if username != user.username:
-            return HttpResponseBadRequest(f"invalid username: found '{username}', expected '{user.username}'")
+            return HttpResponseBadRequest(f"invalid username: found '{escape(username)}'"
+                                          f", expected '{escape(user.username)}'")
         with transaction.atomic():
             user.delete()
     elif name == "activity":
@@ -1439,7 +1473,7 @@ def change(request):
             Note.objects.filter(**kwargs).delete()
             value = ''
         else:
-            return HttpResponseBadRequest(f'unknown action = {action}')
+            return HttpResponseBadRequest(f'unknown action = {escape(action)}')
 
         return JsonResponse({'status': 'ok', 'state': value})
     elif name == 'delete-virtual-start':
@@ -1470,7 +1504,7 @@ def change(request):
             if get_problem_short(problem) == problem_short:
                 break
         else:
-            return HttpResponseBadRequest(f'unknown problem = {problem_short}')
+            return HttpResponseBadRequest(f'unknown problem = {escape(problem_short)}')
 
         addition = virtual_start.addition
         problems = addition.setdefault('problems', {})
@@ -1489,7 +1523,8 @@ def change(request):
             penalty = get_field('penalty')
             solving = get_field('solving')
         except ValueError as e:
-            return HttpResponseBadRequest(e)
+            logger.error(f'Error while updating virtual start statistic: {e}')
+            return HttpResponseBadRequest('invalid value')
 
         if not result and not time:
             problems.pop(problem_short, None)
@@ -1510,7 +1545,7 @@ def change(request):
         message = f'{problem_short}: {message}'
         return JsonResponse({'status': 'success', 'message': message})
     else:
-        return HttpResponseBadRequest(f'unknown name = {name}')
+        return HttpResponseBadRequest(f'unknown name = {escape(name)}')
 
     return HttpResponse('accepted')
 
@@ -1810,7 +1845,7 @@ def search(request, **kwargs):
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.display(with_resource=with_resource)} for r in qs]
     else:
-        return HttpResponseBadRequest(f'invalid query = {query}')
+        return HttpResponseBadRequest(f'invalid query = {escape(query)}')
 
     result = {
         'items': ret,
@@ -2263,6 +2298,9 @@ def accounts(request, template='accounts.html'):
             mapping={
                 'key': {'fields': ['key']},
                 'name': {'fields': ['name']},
+                'with_coder': {'fields': ['coders'],
+                               'suff': '__isnull',
+                               'func': lambda v: v not in django_settings.YES_},
             },
             logger=request.logger,
         )

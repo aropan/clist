@@ -362,7 +362,7 @@ class Command(BaseCommand):
             caches = dict()
             skip_problems = set()
             for current_contest, current_statistics in problems_contests.items():
-                for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc='perfomances'):
+                for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc='performances'):
                     if is_skip(current_contest, stat):
                         continue
 
@@ -374,8 +374,8 @@ class Command(BaseCommand):
 
                     info = contests_divisions_data[get_info_key(stat)]
                     cache = caches.setdefault(get_info_key(stat), {})
-                    perfomance = get_weighted_rating(info['wratings'], info['orders'][stat.place_as_int], cache=cache)
-                    rating = (perfomance + stats[stat.pk]['old_rating']) / 2
+                    performance = get_weighted_rating(info['wratings'], info['orders'][stat.place_as_int], cache=cache)
+                    rating = (performance + stats[stat.pk]['old_rating']) / 2
 
                     problems = current_contest.info['problems']
                     if 'division' in problems:

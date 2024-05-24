@@ -26,6 +26,7 @@ urlpatterns = [
     re_path(r'^accounts/$', views.accounts, name='accounts'),
     re_path(r'^profile/(?P<query>.*)/ratings/$', views.ratings),
     re_path(r'^profile/(?P<query>.*)/$', views.profiles, name='mixed_profile'),
+    re_path(r'^team/(?P<query>.*)/$', views.team, name='coders_team'),
     re_path(r'^api/key/$', views.get_api_key, name='api-key'),
     re_path(r'^remove/api/key/$', views.remove_api_key, name='remove-api-key'),
     re_path(r'^party/([^/]*)/(join|leave)/$', views.party_action, name='party-action'),

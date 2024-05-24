@@ -64,7 +64,8 @@ class Command(BaseCommand):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        has_param = args.resources or args.query or args.limit
+        has_custom_params = args.resources or args.query or args.limit or args.all
+        regular_update = not has_custom_params
 
         resources = Resource.available_for_update_objects
         if args.resources:
@@ -166,6 +167,7 @@ class Command(BaseCommand):
             account = None
             exception_error = None
             seen = set()
+            n_accounts_to_update = total
             try:
                 with tqdm(total=len(accounts), desc=f'getting {resource.host} (total = {total})') as pbar:
                     infos = resource.plugin.Statistic.get_users_infos(
@@ -185,8 +187,11 @@ class Command(BaseCommand):
                         if args.all:
                             member = data.pop('member')
                             account, created = Account.objects.get_or_create(key=member, resource=resource)
+                        else:
+                            account.refresh_from_db()
                         is_team = account.info.get('is_team', False)
                         do_upsolve = resource.has_upsolving and account.has_coders and not is_team
+                        n_accounts_to_update -= 1
                         with transaction.atomic():
                             if 'delta' in data or 'delta' in (data.get('info') or {}):
                                 n_counter['deferred'] += 1
@@ -220,7 +225,7 @@ class Command(BaseCommand):
                                 account_update_contest_additions(
                                     account,
                                     contest_addition_update,
-                                    timedelta_limit=timedelta(days=31) if account.info and not has_param else None,
+                                    timedelta_limit=timedelta(days=31) if account.info and regular_update else None,
                                     by=contest_addition_update_by,
                                     **params,
                                 )
@@ -292,13 +297,17 @@ class Command(BaseCommand):
                 self.logger.warning(f'resource = {resource}')
                 self.logger.error(f'Parse accounts infos: {e}')
 
+            if regular_update and n_accounts_to_update != resource.n_accounts_to_update:
+                resource.n_accounts_to_update = n_accounts_to_update
+                resource.save(update_fields=['n_accounts_to_update'])
+
             message = f'{count} of {total} accounts, {dict(n_counter)}'
             if exception_error:
                 event_log.update_status(EventStatus.FAILED, message=exception_error)
             else:
                 event_log.update_status(EventStatus.COMPLETED, message=message)
 
-            if exception_error and not has_param and not args.all:
+            if exception_error and regular_update:
                 try:
                     updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
                     for a in tqdm(accounts, desc='changing update time'):

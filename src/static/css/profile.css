@@ -1,4 +1,4 @@
-#profile-header h2 {
+#profile-header h2:not(#team-profile) {
   height: 40px;
 }
 

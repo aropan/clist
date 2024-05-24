@@ -31,14 +31,7 @@ DOT = '.'
 
 UNCHANGED = '__unchanged__'
 
-ch = logging.StreamHandler()
-ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)-10s - %(name)s - %(message)s',
-                                  datefmt='%Y-%m-%d %H:%M:%S'))
-ch.setLevel(logging.DEBUG)
-
 LOG = logging.getLogger('ranking.modules')
-LOG.setLevel(logging.INFO)
-LOG.addHandler(ch)
 
 
 class BaseModule(object, metaclass=ABCMeta):
@@ -160,5 +153,3 @@ def main():
     with REQ:
         page = REQ.get('http://httpbin.org/get?env')
         print(page)
-
-

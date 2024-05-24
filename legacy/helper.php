@@ -619,4 +619,13 @@
         $content = preg_replace('/\s+/u', ' ', $content);
         return $content;
     }
+
+    function array_pop_assoc(&$array, $key, $default = null) {
+        if (array_key_exists($key, $array)) {
+            $value = $array[$key];
+            unset($array[$key]);
+            return $value;
+        }
+        return $default;
+    }
 ?>

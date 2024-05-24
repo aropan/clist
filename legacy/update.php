@@ -354,6 +354,12 @@
                 }
             }
         }
+        if (isset($contest['delete_key'])) {
+            $delete_key = $contest['delete_key'];
+            unset($contest['delete_key']);
+            $delete_update = "$update and key = '${delete_key}'";
+            $db->query("DELETE FROM clist_contest WHERE $delete_update", true);
+        }
 
         $contest['was_auto_added'] = 1;
         $contest['auto_updated'] = date("Y-m-d H:i:s");

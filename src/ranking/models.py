@@ -57,6 +57,8 @@ class Account(BaseModel):
     need_verification = models.BooleanField(default=False)
     is_subscribed = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     deleted = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+    try_renaming_check_time = models.DateTimeField(null=True, blank=True, default=None)
+    try_fill_missed_ranks_time = models.DateTimeField(null=True, blank=True, default=None)
 
     def __str__(self):
         return 'Account#%d %s on %s' % (self.pk, str(self.key), str(self.resource_id))
@@ -530,6 +532,8 @@ class Module(BaseModel):
     delay_on_success = models.DurationField(null=True, blank=True)
     long_contest_idle = models.DurationField(default='06:00:00', blank=True)
     long_contest_divider = models.IntegerField(default=15)
+    shortly_after = models.DurationField(default='00:30:00', blank=True)
+    delay_shortly_after = models.DurationField(default='00:05:00', blank=True)
 
     class BaseModuleManager(BaseManager):
         def get_queryset(self):

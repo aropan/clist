@@ -18,7 +18,7 @@ from first import first
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
-from clist.templatetags.extras import as_number, is_solved
+from clist.templatetags.extras import as_number, get_problem_key, is_solved
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -47,7 +47,7 @@ class Statistic(BaseModule):
         self._password = conf.ATCODER_PASSWORD
         self._stop = None
         self._forbidden = None
-        self._fetch_submissions_limit = 2000
+        self._fetch_submissions_limit = 500
 
     def _get(self, *args, **kwargs):
         page = REQ.get(*args, **kwargs)
@@ -357,11 +357,22 @@ class Statistic(BaseModule):
                 'url': url,
             }
 
+        info_problems = {get_problem_key(p): p for p in self.info.get('problems', [])}
+
         def get_problem_full_score(info):
-            page = REQ.get(info['url'])
-            match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
-            if match:
-                info['full_score'] = int(match.group('score'))
+            try:
+                page = REQ.get(info['url'])
+                match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
+                if match:
+                    info['full_score'] = int(match.group('score'))
+            except FailOnGetResponse as e:
+                problem_key = get_problem_key(info)
+                if problem_key in info_problems and 'full_score' in info_problems[problem_key]:
+                    info['full_score'] = info_problems[problem_key]['full_score']
+                    LOG.warning(f'Failed to get full score for {problem_key}'
+                                f', using cached value = {info["full_score"]}')
+                else:
+                    raise e
 
         with PoolExecutor(max_workers=8) as executor:
             executor.map(get_problem_full_score, task_info.values())

@@ -126,9 +126,7 @@ data-place="{{ place }}"
   {% define addition|get_item:field as value %}
   {% endif %}
   <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
-    <span
-      {% if field == 'advance' and advance_medal %} class="trophy {{ advance_medal|lower }}-trophy"{% endif %}
-    >
+    <span{% if field == 'advance' and advance_medal %} class="trophy {{ advance_medal|lower }}-trophy"{% endif %}>
       {% if field == 'advance' and advance_url %}<a href="{{ advance_url }}">{% endif %}
       {% if field == 'new_global_rating' and statistic.new_global_rating is not None %}
         {{ statistic.new_global_rating }}
