@@ -8,16 +8,18 @@
     }
 
     foreach ($data['data'] as $_ => $contest) {
-        foreach ($contest['rounds'] as $_ => $round) {
+        $rounds = pop_item($contest, 'rounds');
+        foreach ($rounds as $_ => $round) {
             $contests[] = array(
-                'start_time' => $round['round_from'],
-                'end_time' => $round['round_to'],
+                'start_time' => pop_item($round, 'round_from'),
+                'end_time' => pop_item($round, 'round_to'),
                 'title' => $contest['caption'] . '. ' . $round['caption'],
                 'url' => url_merge($HOST_URL, "/timed_competitions/${contest['id']}"),
                 'standings_url' => url_merge($HOST_URL, "/timed_competitions/${contest['id']}/leaderboard/${round['id']}/"),
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
+                'info' => ['parse' => ['round' => $round, 'contest' => $contest]],
                 'key' => $contest['id'] . '/' . $round['id'],
             );
         }

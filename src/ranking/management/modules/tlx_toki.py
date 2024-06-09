@@ -211,10 +211,7 @@ class Statistic(BaseModule):
                     continue
                 assert user == data['username']
 
-                ret = {
-                    'info': data,
-                    'replace_info': True,
-                }
+                ret = {'info': data}
 
                 if history:
                     contests = history['data']

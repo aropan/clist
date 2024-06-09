@@ -37,6 +37,10 @@ EOD;
     for (;;) {
         $request_data  = json_encode(['query' => $list_contests_query, 'variables' => ['first' => 100, 'after' => $after]]);
         $data = curlexec($url, $request_data, ['json_output' => true]);
+        if (!isset($data['data']['contests'])) {
+            trigger_error('data = ' . json_encode($data), E_USER_WARNING);
+            break;
+        }
         $data = $data['data']['contests'];
         foreach ($data['nodes'] as $node) {
             $contests[] = array(

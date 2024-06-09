@@ -628,4 +628,31 @@
         }
         return $default;
     }
+
+    function get_item($array, $path, $default = null) {
+        $result = $array;
+        foreach ($path as $key) {
+            if (!isset($result[$key])) {
+                return null;
+            }
+            $result = $result[$key];
+        }
+        return $result;
+    }
+
+    function pop_item(&$array, $path, $default = null) {
+        if (is_string($path)) {
+            $path = explode('.', $path);
+        }
+        $result = &$array;
+        foreach ($path as $key) {
+            if (!isset($result[$key])) {
+                return null;
+            }
+            $last_result = &$result;
+            $result = &$result[$key];
+        }
+        unset($last_result[$key]);
+        return $result;
+    }
 ?>

@@ -440,7 +440,6 @@ class Statistic(BaseModule):
                     ret = {
                         'info': info,
                         'contest_addition_update_params': contest_addition_update_params,
-                        'replace_info': True,
                     }
 
                 yield ret

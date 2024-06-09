@@ -729,3 +729,41 @@ $(function() {
   })
   checkbox_mouseover_toggle()
 })
+
+
+/*
+ * Clear url parameters
+ */
+
+function clear_url_parameters() {
+  var url = new URL(window.location.href)
+  if (url.searchParams.has('search') || url.searchParams.has('sort_order')) {
+    var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play'])
+    var to_remove = new Set()
+    var remove_sort = true
+    for ([field, value] of url.searchParams.entries()) {
+      if (field.startsWith('sort') && field != 'sort_order') {
+        remove_sort = false
+      }
+      if (
+        (disabled_fields.has(field) && value == 'off') ||
+        (!disabled_fields.has(field) && !value) ||
+        (field == 'groupby' && value == 'none')
+      ) {
+        to_remove.add(field)
+      } else {
+        to_remove.delete(field)
+      }
+    }
+    remove_sort = remove_sort || [...to_remove].some((x) => x.startsWith('sort'))
+    if (remove_sort) {
+      to_remove.add('sort_order')
+    }
+    if (to_remove) {
+      to_remove = [...to_remove].reduce((obj, key) => { obj[key] = undefined; return obj }, {})
+      update_urls_params(to_remove)
+    }
+  }
+}
+
+$(clear_url_parameters)

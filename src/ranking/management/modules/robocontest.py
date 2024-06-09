@@ -191,9 +191,6 @@ class Statistic(BaseModule):
                         yield {'skip': True}
                     continue
 
-                ret = {
-                    'info': data,
-                    'replace_info': True,
-                }
+                ret = {'info': data}
 
                 yield ret

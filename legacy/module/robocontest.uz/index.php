@@ -21,7 +21,9 @@
 
             $url = url_merge($URL, $olympiads['href']);
             $page = curlexec($url);
-            preg_match_all('#<tr[^>]*>\s*<th[^>]*>(?P<key>[^<]*)</th>\s*<td[^>]*>(?:\s*<[^>]*>)*\s*(?P<value>[^\s][^<]*)#', $page, $values_matches, PREG_SET_ORDER);
+            if (!preg_match_all('#<tr[^>]*>\s*<th[^>]*>(?P<key>[^<]*)</th>\s*<td[^>]*>(?:\s*<[^>]*>)*\s*(?P<value>[^\s][^<]*)#', $page, $values_matches, PREG_SET_ORDER)) {
+                continue;
+            }
 
             $values = array();
             foreach ($values_matches as $match) {

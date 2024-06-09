@@ -38,12 +38,17 @@ function countdown()
         var el = $(this)
         var timer
         if (el.is('[data-timestamp]')) {
-            timer = parseInt($(this).attr('data-timestamp'))
+            timer = parseInt(el.attr('data-timestamp'))
+            timer = timer - now / 1000
         } else {
-            timer = parseInt(el.find('.countdown-timestamp').html())
-            el = $(el.find('.countdown-format')[0])
+            if (el.is('[data-countdown]')) {
+                timer = parseInt(el.attr('data-countdown'))
+            } else {
+                timer = parseInt(el.find('.countdown-timestamp').html())
+                el = $(el.find('.countdown-format')[0])
+            }
+            timer = timer - (now - page_load) / 1000
         }
-        timer = timer - (now - page_load) / 1000
         var value;
         if (timer < 0) {
             var countdown_reload_time = Cookies.get(reload_time_cookie_name)

@@ -584,13 +584,14 @@ class Command(BaseCommand):
                     resource_statistics = resource.info.get('statistics') or {}
                     wait_rating = resource_statistics.get('wait_rating', {})
                     has_hidden = standings.pop('has_hidden', False)
-                    link_accounts = standings.pop('link_accounts', False)
+                    with_link_accounts = standings.pop('link_accounts', False)
                     is_major_kind = resource.is_major_kind(contest.kind)
                     custom_fields_types = standings.pop('fields_types', {})
                     standings_kinds = set(Contest.STANDINGS_KINDS.keys())
                     has_more_solving = bool(contest.info.get('_more_solving'))
                     updated_statistics_ids = list()
                     contest_timeline = contest.get_timeline_info()
+                    lazy_fetch_accounts = standings.pop('lazy_fetch_accounts', False)
 
                     results = []
                     if result or users:
@@ -782,9 +783,10 @@ class Command(BaseCommand):
                                 contest.standings_kind = standings_kind
                                 contest.save(update_fields=['standings_kind'])
 
-                        members = [r['member'] for r in results]
-                        accounts = resource.account_set.filter(key__in=members)
-                        accounts = {a.key: a for a in accounts}
+                        if not lazy_fetch_accounts:
+                            members = [r['member'] for r in results]
+                            accounts = resource.account_set.filter(key__in=members)
+                            accounts = {a.key: a for a in accounts}
 
                         for r in tqdm(results, desc='update results'):
                             skip_update = bool(r.get('_skip_update'))
@@ -793,12 +795,15 @@ class Command(BaseCommand):
                             member = r.pop('member')
                             skip_result = bool(r.get('_no_update_n_contests'))
 
-                            account_created = member not in accounts
-                            if account_created:
+                            if lazy_fetch_accounts:
+                                account, account_created = Account.objects.get_or_create(resource=resource, key=member)
+                            elif member not in accounts:
                                 account = resource.account_set.create(key=member)
                                 accounts[member] = account
+                                account_created = True
                             else:
                                 account = accounts[member]
+                                account_created = False
 
                             stat = statistics_by_key.get(member, {})
 
@@ -1340,9 +1345,10 @@ class Command(BaseCommand):
                                     if not account_key:
                                         continue
                                     account_keys.add(account_key)
-                                accounts = resource.account_set.filter(key__in=account_keys).prefetch_related('coders')
-                                for account in accounts:
-                                    coders = account.coders.all()
+                                link_accounts = resource.account_set.filter(key__in=account_keys)
+                                link_accounts = link_accounts.prefetch_related('coders')
+                                for link_account in link_accounts:
+                                    coders = link_account.coders.all()
                                     if len(coders) != 1:
                                         continue
                                     coder = coders[0]
@@ -1375,7 +1381,7 @@ class Command(BaseCommand):
 
                             update_submissions(statistic, result_submissions)
 
-                            if link_accounts:
+                            if with_link_accounts:
                                 link_account(statistic)
 
                             has_subscription_update = (
@@ -1618,15 +1624,14 @@ class Command(BaseCommand):
                 module = resource.module
                 delay = module.max_delay_after_end
                 reparse_statistics = contest.info.get('_reparse_statistics')
-                with_shortly_after = not parsed and contest.n_statistics
                 if reparse_statistics or contest.end_time < now or not module.long_contest_divider:
                     delay = min(delay, module.delay_on_success if parsed else module.delay_on_error)
                 if now < contest.end_time and module.long_contest_divider:
                     delay = min(delay, contest.full_duration / module.long_contest_divider)
-                if with_shortly_after and contest.end_time < now < contest.end_time + module.shortly_after:
+                if not parsed and contest.end_time < now < contest.end_time + module.shortly_after:
                     delay = min(delay, module.delay_shortly_after)
                 if now < contest.end_time < now + delay:
-                    delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=5)) - now)
+                    delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=3)) - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
                     delay = min(delay, timing_delta)

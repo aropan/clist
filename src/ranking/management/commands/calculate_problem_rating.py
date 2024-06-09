@@ -188,13 +188,27 @@ class Command(BaseCommand):
         if args.limit:
             contests = contests[:args.limit]
 
+        contests_count = contests.count()
+        if resources.count() == 1 and contests_count > 5:
+            resource_event_log = EventLog.objects.create(name='calculate_problem_rating',
+                                                         related=contests.first().resource,
+                                                         status=EventStatus.IN_PROGRESS)
+        else:
+            resource_event_log = None
+
         ratings = []
         n_empty = 0
         n_done = 0
         n_total = 0
         n_skip_hash = 0
         n_skip_missing = 0
-        for contest in tqdm.tqdm(contests, total=contests.count(), desc='contests'):
+        n_contest_progress = 0
+        for contest in tqdm.tqdm(contests, total=contests_count, desc='contests'):
+            if resource_event_log:
+                message = f'progress {n_contest_progress} of {contests_count} ({n_done} parsed), contest = {contest}'
+                resource_event_log.update_message(message)
+            n_contest_progress += 1
+
             resource = contest.resource
             rating_adjustment = resource.info.get('ratings', {}).get('adjustment')
             problems_ratings_info = resource.info.get('ratings', {}).get('problems', {})
@@ -426,5 +440,9 @@ class Command(BaseCommand):
                 event_log.update_status(EventStatus.COMPLETED)
                 contest.info.pop('_reparse_problem_rating', None)
                 contest.save(update_fields=['info'])
+
+        if resource_event_log:
+            resource_event_log.delete()
+
         self.logger.info(f'done = {n_done}, skip hash = {n_skip_hash}, skip missing = {n_skip_missing}'
                          f', skip empty = {n_empty} of total = {n_total}')

@@ -48,7 +48,10 @@
     <span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }} contest(s)</span>
 
     {% if resource.module %}
-    <span class="badge progress-bar-{% if resource.has_accounts_infos_update %}success{% else %}info{% endif %}">{{ resource.n_accounts|intcomma }} accounts(s)</span>
+    <span class="badge progress-bar-{% if resource.has_accounts_infos_update %}success{% else %}info{% endif %}">
+        {{ resource.n_accounts|intcomma }} accounts(s)
+        {% if resource.n_accounts_to_update %}<span title="{{ resource.n_accounts_to_update|intcomma }} accounts to update" data-toggle="tooltip">{% icon_to 'exclamation' '' %}</span>{% endif %}
+    </span>
     {% if perms.ranking.change_module %}
       <a href="{% url 'admin:ranking_module_change' resource.module.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
     {% endif %}

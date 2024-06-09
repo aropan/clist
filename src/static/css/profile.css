@@ -23,11 +23,9 @@
   white-space: normal;
 }
 
+#list-accounts tr td,
+#writers td,
 #contests tr td {
-  white-space: nowrap;
-}
-
-#writers td {
   white-space: nowrap;
 }
 

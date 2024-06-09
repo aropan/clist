@@ -38,8 +38,8 @@ AVATAR_RELPATH_FIELD = 'avatar_relpath_'
 class Account(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    key = models.CharField(max_length=1024, null=False, blank=False)
-    name = models.CharField(max_length=1024, null=True, blank=True)
+    key = models.CharField(max_length=400, null=False, blank=False, db_index=True)
+    name = models.CharField(max_length=400, null=True, blank=True, db_index=True)
     country = CountryField(null=True, blank=True, db_index=True)
     url = models.CharField(max_length=4096, null=True, blank=True)
     n_contests = models.IntegerField(default=0, db_index=True)
@@ -146,13 +146,12 @@ class Account(BaseModel):
 
     class Meta:
         indexes = [
-            GistIndexTrgrmOps(fields=['key']),
-            GistIndexTrgrmOps(fields=['name']),
-            GistIndexTrgrmOps(fields=['key', 'name']),
-            ExpressionIndex(expressions=[Upper('key')]),
-            models.Index(fields=['resource', 'key']),
             models.Index(fields=['resource', 'name']),
             models.Index(fields=['resource', 'country']),
+
+            GistIndexTrgrmOps(fields=['key']),
+            GistIndexTrgrmOps(fields=['name']),
+            ExpressionIndex(expressions=[Upper('key')]),
 
             models.Index(fields=['resource', 'rating']),
             models.Index(fields=['resource', '-rating']),
@@ -283,6 +282,8 @@ def set_account_rating(sender, instance, *args, **kwargs):
         instance.rating50 = instance.rating / 50 if instance.rating is not None else None
         if instance.rating is None:
             instance.resource_rank = None
+    elif instance.rating is None and instance.rating50 is not None:
+        instance.rating50 = None
     download_avatar_url(instance)
 
 

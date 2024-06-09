@@ -734,6 +734,8 @@ FONTAWESOME_ICONS_ = {
     'finish': '<i class="fa-solid fa-flag-checkered"></i>',
     'virtual_start': '<i class="fa-solid fa-stopwatch"></i>',
     'unfreezing': '<i class="fa-regular fa-snowflake"></i>',
+    'exclamation': '<i class="fa-solid fa-circle-exclamation"></i>',
+    'close': '<i class="fa-solid fa-xmark"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
@@ -756,6 +758,8 @@ STANDINGS_FIELDS_ = {
 
 STANDINGS_SMALL_N_STATISTICS = 1000
 STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT = 0.2
+
+UPSOLVING_FILTER_DEFAULT = True
 
 
 class NOTIFICATION_CONF:

@@ -42,7 +42,7 @@ class Statistic(BaseModule):
         super(Statistic, self).__init__(**kwargs)
 
     @classmethod
-    def _get(self, *args, req=None, **kwargs):
+    def _get(self, *args, req=None, n_addition_attempts=20, **kwargs):
         req = req or REQ
 
         headers = kwargs.setdefault('headers', {})
@@ -70,11 +70,13 @@ class Statistic(BaseModule):
         #     for kw in conf.LEETCODE_COOKIES:
         #         req.add_cookie(**kw)
         #     setattr(self, '_authorized', True)
-        return req.get(*args, **kwargs, additional_attempts={429: 20, 403: 20}, additional_delay=5)
+
+        additional_attempts = {code: {'count': n_addition_attempts} for code in [429, 403]}
+        return req.get(*args, **kwargs, additional_attempts=additional_attempts, additional_delay=5)
 
     @staticmethod
-    def _get_source_code_proxies_file():
-        return os.path.join(os.path.dirname(__file__), '.leetcode.get_source_code.proxies')
+    def _get_proxies_file(region):
+        return os.path.join(os.path.dirname(__file__), f'.leetcode.{region or "DEFAULT"}.proxies')
 
     @staticmethod
     def fetch_submission(submission, req=REQ, raise_on_error=False, n_attempts=1):
@@ -82,14 +84,12 @@ class Statistic(BaseModule):
         domain = Statistic.DOMAINS[data_region.lower()]
         url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission['submission_id'])
         try:
-            content = Statistic._get(url, req=req, n_attempts=n_attempts)
+            content = Statistic._get(url, req=req, n_attempts=n_attempts, n_addition_attempts=0)
             content = json.loads(content)
         except FailOnGetResponse as e:
             if raise_on_error:
                 raise e
             content = {}
-        except ProxyLimitReached:
-            return submission, {'url': url}
 
         return submission, content
 
@@ -323,8 +323,9 @@ class Statistic(BaseModule):
                         if n_top_submissions:
                             n_solutions_limit = n_top_submissions * len(problems_info)
                             solutions_for_get = solutions_for_get[:n_solutions_limit]
+                        fetch_submission_func = partial(Statistic.fetch_submission, raise_on_error=True)
                         for submission, data in tqdm.tqdm(
-                            executor.map(Statistic.fetch_submission, solutions_for_get),
+                            executor.map(fetch_submission_func, solutions_for_get),
                             total=len(solutions_for_get),
                             desc='fetching submissions',
                         ):
@@ -352,11 +353,10 @@ class Statistic(BaseModule):
             with REQ.with_proxy(
                 time_limit=10,
                 n_limit=30,
-                filepath_proxies=Statistic._get_source_code_proxies_file(),
+                filepath_proxies=Statistic._get_proxies_file(problem.get('data_region')),
                 connect=partial(Statistic.fetch_submission, problem, raise_on_error=True),
             ) as req:
                 _, data = req.proxer.get_connect_ret()
-
             if not data:
                 return {}
 
@@ -803,7 +803,6 @@ class Statistic(BaseModule):
                         'try_renaming_check': True,
                         'try_fill_missed_ranks': True,
                     },
-                    'replace_info': True,
                 }
 
                 profile_url = account.info.setdefault('profile_url', {})

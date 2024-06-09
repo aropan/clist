@@ -167,7 +167,7 @@ data-place="{{ place }}"
       data-problem-key="{{ key }}"
       data-problem-full-score="{{ problem.full_score }}"
     >
-      {% include "standings_problem_stat.html" with stat=stat %}
+      {% include "standings_problem_stat.html" with stat=stat my_stat=statistic.my_stat %}
     </{{ tag }}>
     {% endwith %}
     {% endwith %}

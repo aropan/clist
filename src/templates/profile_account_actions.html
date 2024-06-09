@@ -6,7 +6,7 @@
 {% with delta=account.updated|timedelta_with_now %}
 {% with with_tooltip=delta|less_24_hours in_progress=account.updated|is_past %}
 {% if with_update or with_tooltip %}
-<a class="update-account btn btn-default btn-xs" data-account-id="{{ account.id }}" data-html="true" target="_blank" rel="noopener"{% if with_tooltip %} title="{% if in_progress %}in progress{% if resource.n_accounts_to_update %}<br>{{ resource.n_accounts_to_update }} accounts left{% endif %}{% else %}within {{ account.updated|naturaltime }}{% endif %}" data-toggle="tooltip" data-placement="top"{% endif %}{% if in_progress or not with_update %} disabled{% endif %}>
+<a class="update-account btn btn-default btn-xs" data-account-id="{{ account.id }}" data-html="true" target="_blank" rel="noopener"{% if with_tooltip %} title="{% if in_progress %}in progress{% if resource.n_accounts_to_update %}<br>{{ resource.n_accounts_to_update }} accounts to update{% endif %}{% else %}within {{ account.updated|naturaltime }}{% endif %}" data-toggle="tooltip" data-placement="top"{% endif %}{% if in_progress or not with_update %} disabled{% endif %}>
 <span><i class="fas fa-sync{% if in_progress %} fa-spin{% endif %}"></i></span>
 </a>
 {% endif %}

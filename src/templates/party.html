@@ -78,7 +78,7 @@
                                 <img src="{{ r.contest.resource.icon|media_size:'32x32' }}" width="18" height="18"/>
                                 {{ contest.title|truncatechars:33 }}
                             </div>
-                            <div>{% if contest.is_coming %}starts{% else %}ends{% endif %} in <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span></div>
+                            <div>{% if contest.is_coming %}starts{% else %}ends{% endif %} in <span class="timeleft countdown" data-countdown="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span></div>
                         </a>
                     </li>
                 {% endfor %}

@@ -42,6 +42,9 @@ class EventLog(BaseModel):
 
     objects = EventLogManager()
 
+    def __str__(self):
+        return f'{self.related} EventLog#{self.id}'
+
     def update_status(self, status, message=None):
         self.status = status
         if message is not None:

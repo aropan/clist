@@ -1158,7 +1158,7 @@ def rating_from_probability(b, p, min_rating=0, max_rating=5000):
 
 
 @register.simple_tag
-def icon_to(value, default=None, icons=None, html_class=None):
+def icon_to(value, default=None, icons=None, html_class=None, **kwargs):
     icons = icons or settings.FONTAWESOME_ICONS_
     if default is None:
         default = value.title().replace('_', ' ')
@@ -1166,6 +1166,9 @@ def icon_to(value, default=None, icons=None, html_class=None):
         value = icons[value]
         inner = ''
         if isinstance(value, dict):
+            if kwargs:
+                value = deepcopy(value)
+                value.update(kwargs)
             if 'position' in value:
                 inner += f' data-placement="{value["position"]}"'
             value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
@@ -1502,3 +1505,25 @@ def value_with_select(context, field, value, default=None):
         return value
     url = url_transform(context['request'], field, value)
     return mark_safe(f'<a href="{url}">{value}</a>')
+
+
+@register.simple_tag
+def filtered_admin_url(url, field_selects):
+    params = []
+    for field_select in field_selects:
+        field = field_select['name']
+        values = field_select['values']
+        if not values:
+            continue
+        if len(values) > 1:
+            params.append(f'{field}__in={",".join(values)}')
+        else:
+            params.append(f'{field}={values[0]}')
+    if params:
+        url += '?' + '&'.join(params)
+    return url
+
+
+@register.filter
+def camel_to_snake(value):
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', value).lower()

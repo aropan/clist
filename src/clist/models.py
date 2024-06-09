@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import Case, F, Q, When
 from django.db.models.expressions import Exists, OuterRef
 from django.db.models.functions import Cast, Ln
 from django.urls import reverse
@@ -24,6 +24,7 @@ from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
 
 from clist.templatetags.extras import get_item, get_problem_key, slug
+from logify.models import EventLog, EventStatus
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
@@ -49,6 +50,15 @@ class AvailableForUpdateResourceManager(BaseManager):
         ongoing_contests = Contest.ongoing_objects.filter(resource_id=OuterRef('pk'))
         ret = ret.annotate(has_ongoing_contests=Exists(ongoing_contests))
         ret = ret.filter(~with_updating | Q(has_ongoing_contests=False))
+
+        parse_statistic_in_progress = EventLog.objects.filter(
+            name='parse_statistic',
+            status=EventStatus.IN_PROGRESS,
+            contest__resource_id=OuterRef('pk'),
+        )
+        ret = ret.annotate(parse_statistic_in_progress=Exists(parse_statistic_in_progress))
+        ret = ret.filter(parse_statistic_in_progress=False)
+
         return ret
 
 
@@ -91,6 +101,7 @@ class Resource(BaseModel):
     has_standings_renamed_account = models.BooleanField(default=False)
     problems_fields = models.JSONField(default=dict, blank=True)
     statistics_fields = models.JSONField(default=dict, blank=True)
+    skip_for_contests_chart = models.BooleanField(default=False)
 
     RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
                      'OldRating', 'Rating', 'NewRating', 'Performance',
@@ -280,8 +291,11 @@ class Resource(BaseModel):
                 self.plugin_ = __import__(self.module.path.replace('/', '.'), fromlist=['Statistic'])
         return self.plugin_
 
-    def with_single_account(self):
-        return not self.has_multi_account
+    def with_single_account(self, account=None):
+        return (
+            not self.has_multi_account
+            or (account is not None and account.rating is not None)
+        )
 
     def with_multi_account(self):
         return self.has_multi_account
@@ -354,6 +368,7 @@ class Contest(BaseModel):
     STANDINGS_KINDS = {
         'icpc': 'ICPC',
         'scoring': 'SCORING',
+        'cf': 'CF',
     }
 
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
@@ -409,6 +424,8 @@ class Contest(BaseModel):
 
     has_submissions = models.BooleanField(default=None, null=True, blank=True, db_index=True)
     has_submissions_tests = models.BooleanField(default=None, null=True, blank=True, db_index=True)
+
+    is_promoted = models.BooleanField(default=None, null=True, blank=True, db_index=True)
 
     objects = BaseContestManager()
     visible = VisibleContestManager()
@@ -910,3 +927,38 @@ class Banner(BaseModel):
         if self.end_time < now:
             return 0
         return int(round((self.end_time - now).total_seconds()))
+
+
+class PromotionManager(models.Manager):
+    def get_queryset(self):
+        qs = super().get_queryset().filter(contest__is_promoted=True, enable=True)
+        qs = qs.annotate(target_time=Case(
+            When(time_attribute='start_time', then=F('contest__start_time')),
+            When(time_attribute='end_time', then=F('contest__end_time')),
+        ))
+        qs = qs.filter(target_time__gt=timezone.now())
+        qs = qs.order_by('target_time')
+        return qs
+
+
+class PromotionTimeAttribute(models.TextChoices):
+    START_TIME = 'start_time'
+    END_TIME = 'end_time'
+
+
+class Promotion(BaseModel):
+    name = models.CharField(max_length=50)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    timer_message = models.CharField(max_length=200, null=True, blank=True)
+    time_attribute = models.CharField(max_length=50, choices=PromotionTimeAttribute.choices)
+    enable = models.BooleanField(default=True, null=True, blank=True)
+    background = models.ImageField(upload_to='promotions', null=True, blank=True)
+
+    objects = BaseManager()
+    promoting = PromotionManager()
+
+    class Meta:
+        unique_together = ('contest', 'time_attribute', )
+
+    def __str__(self):
+        return f'{self.name} Promotion#{self.id}'

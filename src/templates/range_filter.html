@@ -33,7 +33,6 @@ $slider = $("#{{ range_id }}").slider({
     if (!ui.handle) {
       return;
     }
-    console.log(event, typeof(event))
     if (typeof(event) != 'number') {
       $('#range-filter-apply').parent().removeClass('hidden')
       $(window).trigger('resize')

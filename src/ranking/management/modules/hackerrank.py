@@ -374,7 +374,11 @@ class Statistic(BaseModule):
                 if avatar_url:
                     info['avatar_url'] = avatar_url
 
-                info['name'] = data.pop('name', None)
+                name = data.pop('name', None)
+                if name is not None:
+                    name = name.strip()
+                    name = re.sub(r'\s+', ' ', name)
+                info['name'] = name
 
                 contest_addition_update = {}
 

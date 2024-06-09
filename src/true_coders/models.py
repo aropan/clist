@@ -195,7 +195,7 @@ class Coder(BaseModel):
         coder = self
         resource = account.resource
 
-        if resource.with_single_account():
+        if resource.with_single_account(account):
             virtual = account.coders.filter(is_virtual=True).first()
             if virtual:
                 accounts = list(virtual.account_set.all())
@@ -205,6 +205,7 @@ class Coder(BaseModel):
                 NotificationMessage = apps.get_model('notification.NotificationMessage')
                 NotificationMessage.link_accounts(to=coder, accounts=accounts)
                 virtual.delete()
+            account.coders.clear()
 
         account.coders.add(coder)
         account.updated = timezone.now()

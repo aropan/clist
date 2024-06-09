@@ -284,7 +284,8 @@ def account_update_contest_additions(
                 continue
         if contest_keys:
             out_contests = list(grouped_contest_keys.values()) or list(contest_keys)
-            LOG.warning('Not found %d contests for %s = %s', len(out_contests), account, out_contests[:5])
+            LOG.warning('Not found %d contests for %s = %s%s',
+                        len(out_contests), account, out_contests[:5], '...' if len(out_contests) > 5 else '')
         break
 
 

@@ -34,10 +34,12 @@
       dataType: 'json',
       delay: 314,
       data: function (params) {
+        var resources = [{% for resource in params.resources %}{{ resource.pk }}{% if not forloop.last %},{% endif %}{% endfor %}]
         return {
           query: 'tags',
+          resources: resources,
           regex: params.term,
-          page: params.page || 1
+          page: params.page || 1,
         };
       },
       processResults: function (data, params) {

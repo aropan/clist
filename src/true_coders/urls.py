@@ -34,4 +34,5 @@ urlpatterns = [
     re_path(r'^party/([^/]*)/(?:(calendar|ranking|information)/)?$', views.party, name='party'),
     re_path(r'^parties/$', views.parties, name='parties'),
     re_path(r'^list/([^/]*)/$', views.view_list, name='list'),
+    re_path(r'^promotion/skip/$', views.skip_promotion, name='skip-promotion'),
 ]

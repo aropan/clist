@@ -1,0 +1,22 @@
+<div class="input-group input-group-sm">
+  <input
+    id="toggle-{{ field }}"
+    type="checkbox"
+    data-toggle="toggle"
+    data-size="small"
+    data-on='{% icon_to 'show' 'Hide '|concat:field %}'
+    data-off='{% icon_to 'hide' 'Show '|concat:field %}'
+    data-onstyle="default"
+    data-offstyle="default"
+    {% if params|get_item:field %} checked{% endif %}
+  >
+</div>
+<input type="hidden" name="{{ field }}">
+<script>
+  $('#toggle-{{ field }}').bootstrapToggle()
+  $('#toggle-{{ field }}').change(function() {
+    var form = $(this).closest('form')
+    var input = form.find('input[name="{{ field }}"]').val($(this).prop('checked')? 'on': 'off')
+    form.submit()
+  })
+</script>

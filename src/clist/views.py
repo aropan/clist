@@ -22,7 +22,7 @@ from django_super_deduper.merge import MergedModelInstance
 from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
-from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, Resource
+from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, Promotion, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
                                        get_timezone_offset, rating_from_probability, win_probability)
 from favorites.models import Activity
@@ -302,6 +302,15 @@ def main(request, party=None):
     if not settings.DEBUG:
         banners = banners.filter(enable=True)
 
+    promotion = Promotion.promoting.first()
+    if promotion is not None:
+        skip_promotion_ids = [request.COOKIES.get('_skip_promotion_id')]
+        if coder is not None:
+            skip_promotion_ids.append(coder.settings.get('skip_promotion_id'))
+        skip_promotion_ids = [as_number(i) for i in skip_promotion_ids if i]
+        if promotion.id in skip_promotion_ids:
+            promotion = None
+
     offset = get_timezone_offset(tzname)
 
     context.update({
@@ -315,6 +324,7 @@ def main(request, party=None):
         "open_new_tab": open_new_tab,
         "add_to_calendar": get_add_to_calendar(request),
         "banners": banners,
+        "promotion": promotion,
     })
 
     return render(request, "main.html", context)
