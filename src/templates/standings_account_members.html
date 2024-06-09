@@ -1,0 +1,29 @@
+{% if members %}
+  <div class="small{% if inline %} inline{% else %} wrap{% endif %}">{% if inline %}:{% endif %}
+    {% if with_fixed_width %}
+    <div class="resource-width-fixed"></div>
+    <div class="avatar-width-fixed"></div>
+    <div class="flag-width-fixed"></div>
+    {% endif %}
+    {% for member in members %}
+      <span{% if not inline %} class="nowrap"{% endif %}>
+      {% if member and member.account %}
+        {% with account=preload_statistics_data.accounts|get_item:member.account %}
+          {% if not account %}
+            {{ member.account }}
+          {% else %}
+            {% include "account_table_cell.html" with account=account addition=None resource=account.resource without_circle=True without_country=True with_fixed_width=False %}
+          {% endif %}
+        {% endwith %}
+      {% elif member and member.coder %}
+        <a href="{% url 'coder:profile' member.coder %}">{{ member.name|default:member.coder }}</a>
+      {% elif member and member.name %}
+        {{ member.name }}
+      {% else %}
+        ?
+      {% endif %}
+      {% if forloop.revcounter0 %}|{% endif %}
+      </span>
+    {% endfor %}
+  </div>
+{% endif %}

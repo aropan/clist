@@ -87,7 +87,7 @@ class Command(BaseCommand):
         n_total = 0
         n_deleted = 0
         for coder in tqdm(coders, total=coders.count(), desc='coders'):
-            with transaction.atomic(), suppress_db_logging_context():
+            with suppress_db_logging_context(), transaction.atomic():
                 def process_problem(problems, desc):
                     nonlocal n_created, n_total, n_deleted
 

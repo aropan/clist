@@ -1225,3 +1225,31 @@ class VirtualStart(BaseModel):
             'virtual_start': True,
             'virtual_start_pk': self.pk,
         }]
+
+
+class MatchingStatus(models.TextChoices):
+    NEW = 'new', 'New'
+    PENDING = 'pending', 'Pending'
+    SKIP = 'skip', 'Skip'
+    ALREADY = 'already', 'Already'
+    DONE = 'done', 'Done'
+    ERROR = 'error', 'Error'
+
+
+class AccountMatching(BaseModel):
+    name = models.CharField(max_length=400)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    statistic = models.ForeignKey(Statistics, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='account_matchings')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    n_found_accounts = models.IntegerField(default=None, null=True, blank=True)
+    n_found_coders = models.IntegerField(default=None, null=True, blank=True)
+    n_different_coders = models.IntegerField(default=None, null=True, blank=True)
+    coder = models.ForeignKey(Coder, default=None, blank=True, null=True, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=MatchingStatus.choices, default=MatchingStatus.NEW)
+
+    class Meta:
+        unique_together = ('name', 'statistic')
+
+    def __str__(self):
+        return f'AccountMatching#{self.pk} {self.name}, statistic#{self.statistic_id}'

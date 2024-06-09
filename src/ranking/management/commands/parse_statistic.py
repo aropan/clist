@@ -788,6 +788,13 @@ class Command(BaseCommand):
                             accounts = resource.account_set.filter(key__in=members)
                             accounts = {a.key: a for a in accounts}
 
+                        if contest.set_matched_coders_to_members:
+                            matched_coders = contest.account_matchings
+                            matched_coders = matched_coders.filter(account__coders=F('coder'))
+                            matched_coders = matched_coders.values('name', 'statistic_id', 'coder__username')
+                            matched_coders = {(m['name'], m['statistic_id']): m['coder__username']
+                                              for m in matched_coders}
+
                         for r in tqdm(results, desc='update results'):
                             skip_update = bool(r.get('_skip_update'))
                             if skip_update:
@@ -1357,6 +1364,18 @@ class Command(BaseCommand):
                                     statistic.account.coders.add(coder)
                                     NotificationMessage.link_accounts(to=coder, accounts=[statistic.account])
 
+                            def set_matched_coders_to_members(statistic):
+                                to_update = False
+                                for member in statistic.addition.get('_members', []):
+                                    if 'name' not in member or len(member) > 1:
+                                        continue
+                                    matched_coder_key = (member['name'], statistic.pk)
+                                    if matched_coder_key in matched_coders:
+                                        member['coder'] = matched_coders[matched_coder_key]
+                                        to_update = True
+                                if to_update:
+                                    statistic.save(update_fields=['addition'])
+
                             update_addition_fields()
                             update_account_time()
                             update_account_info()
@@ -1383,6 +1402,9 @@ class Command(BaseCommand):
 
                             if with_link_accounts:
                                 link_account(statistic)
+
+                            if contest.set_matched_coders_to_members:
+                                set_matched_coders_to_members(statistic)
 
                             has_subscription_update = (
                                 account.is_subscribed

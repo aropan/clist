@@ -1,6 +1,9 @@
 {% load el_pagination_tags %}
+{% load preload_statistics %}
 
 {% lazy_paginate 50,200 accounts %}{% get_pages %}
+
+{% preload_statistics accounts 'resource_id' attr='selected_stats' as preload_statistics_data %}
 
 {% for account in accounts %}
 <tr{% if account.my_account %} class="info"{% endif %}>
@@ -26,6 +29,12 @@
     {% endif %}
 
     </span>
+
+    {% for members_statistic in account.selected_stats %}
+    {% if not members_statistic.addition.team_id %}
+    {% include "standings_account_members.html" with members=members_statistic.addition|get_item:"_members" resource=resource inline=False with_fixed_width=True %}
+    {% endif %}
+    {% endfor %}
 
     {% if request.user.is_authenticated and request.GET.add_account %}
     <div class="buttons pull-right">

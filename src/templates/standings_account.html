@@ -1,4 +1,4 @@
-{% with team_id=statistic.addition.team_id %}
+{% with team_id=statistic.addition.team_id  members=statistic.addition|get_item:"_members" %}
 {% if resource.avatar_url and account %}
   <div class="avatar-width-fixed">
   {% if not team_id %}
@@ -23,114 +23,97 @@
 
 {% if not team_id and not statistic.addition.style %}{% coder_color_circle resource statistic.addition account.info %}{% endif %}
 
-<div class="handle-div{% if not team_id and not statistic.addition.style %} {% coder_color_class resource statistic.addition account.info %}{% endif %}" style="display: inline-block; {% if statistic.addition.style %}{% for k, v in statistic.addition.style.items %}{{k}}: {{v}}; {% endfor %}{% endif %}">
-  {% with members=statistic.addition|get_item:"_members" %}
-  {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in statistic.addition %}<a href="{{ statistic.addition|get_item:"_account_url" }}">{% endif %}
+<div class="inline-block">
+  <div class="handle-div inline{% if not team_id and not statistic.addition.style %} {% coder_color_class resource statistic.addition account.info %}{% endif %}" style="{% if statistic.addition.style %}{% for k, v in statistic.addition.style.items %}{{k}}: {{v}}; {% endfor %}{% endif %}">
+    {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in statistic.addition %}<a href="{{ statistic.addition|get_item:"_account_url" }}">{% endif %}
 
-  {% if with_detail and resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
-    {% with names=account.key|split_account_key:resource.info.standings.subname %}
-    <span>{{ names.0 }}<div class="text-muted small">{{ names.1 }}</div></span>
-    {% endwith %}
-  {% elif statistic.addition.name and account.key|has_season:statistic.addition.name or members or statistic.addition.name and resource.info.standings.name_instead_key or statistic.addition.name and statistic.addition|get_item:"_name_instead_key" %}
-    <span>{% trim_to statistic.addition.name 50 %}</span>
-  {% else %}
-    <span{% if statistic.addition.name or account.name %} title="{{ statistic.addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
-  {% endif %}
+    {% if with_detail and resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
+      {% with names=account.key|split_account_key:resource.info.standings.subname %}
+      <span>{{ names.0 }}<div class="text-muted small">{{ names.1 }}</div></span>
+      {% endwith %}
+    {% elif statistic.addition.name and account.key|has_season:statistic.addition.name or members or statistic.addition.name and resource.info.standings.name_instead_key or statistic.addition.name and statistic.addition|get_item:"_name_instead_key" %}
+      <span>{% trim_to statistic.addition.name 50 %}</span>
+    {% else %}
+      <span{% if statistic.addition.name or account.name %} title="{{ statistic.addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
+    {% endif %}
 
-  {% if statistic.virtual_start %}<i>Your virtual participation</i>{% endif %}
+    {% if statistic.virtual_start %}<i>Your virtual participation</i>{% endif %}
 
-  {% if account.url and not team_id or '_account_url' in statistic.addition %}</a>{% endif %}
+    {% if account.url and not team_id or '_account_url' in statistic.addition %}</a>{% endif %}
 
-  {% with addition_countries=statistic.addition|get_item:"_countries" %}
-  {% if addition_countries %}
-  {% for country_name in addition_countries %}
-    {% with country_code=country_name|get_country_code %}
-      {% if country_code %}
-        <div class="flag-width-fixed">
-          <a href="{% url_transform request country=country_code %}" title="{{ country_name }}" data-toggle="tooltip">
-            <div class="flag flag-{{ country_code|lower }}"></div>
-          </a>
-        </div>
-      {% endif %}
-    {% endwith %}
-  {% endfor %}
-  {% elif members %}
-    {% for member in members %}
-      {% if member and member.account %}
-        {% with account=preload_statistics_data.accounts|get_item:member.account %}
-        {% if account and not member.without_country %}
-        {% get_country_from_account account as country %}
-        {% if country %}
-        <div class="flag-width-fixed">
+    {% with addition_countries=statistic.addition|get_item:"_countries" %}
+    {% if addition_countries %}
+    {% for country_name in addition_countries %}
+      {% with country_code=country_name|get_country_code %}
+        {% if country_code %}
+        <a href="{% url_transform request country=country_code %}">
+          <div class="small flag flag-{{ country_code|lower }}" title="{{ country_name }}" data-toggle="tooltip"></div>
+        </a>
+        {% endif %}
+      {% endwith %}
+    {% endfor %}
+    {% elif members %}
+      {% for member in members %}
+        {% if member and member.account %}
+          {% with account=preload_statistics_data.accounts|get_item:member.account %}
+          {% if account and not member.without_country %}
+          {% get_country_from_account account as country %}
+          {% if country %}
           <a href="{% url_transform request country=country.code %}">
-            <div class="flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></div>
+            <div class="small flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></div>
           </a>
-        </div>
+          {% endif %}
+          {% endif %}
+          {% endwith %}
         {% endif %}
-        {% endif %}
-        {% endwith %}
-      {% endif %}
-    {% endfor %}
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+  </div>
+
+  {% if not with_detail %}{% include "standings_account_members.html" with members=members inline=True %}{% endif %}
+
+  {% if not without_addition_url %}
+
+  {% if statistic.addition.url %}
+    <a href="{{ statistic.addition.url }}" class="external-link invisible" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
   {% endif %}
-  {% endwith %}
 
-  {% if members %}
-    {% if with_detail %}<div class="small">{% else %}<div class="small inline">:{% endif %}
-    {% for member in members %}
-      {% if forloop.counter0 %}|{% endif %}
-      {% if member and member.account %}
-        {% with account=preload_statistics_data.accounts|get_item:member.account %}
-        {% if not account %}{{ member.account }}{% else %}{% include "account_table_cell.html" with account=account addition=None resource=account.resource without_circle=True without_country=True %}{% endif %}
-        {% endwith %}
-      {% elif member and member.name %}
-        {{ member.name }}
-      {% else %}
-        ?
-      {% endif %}
-    {% endfor %}
-    </div>
+  {% if has_versus %}
+    {% if versus_statistic_id == statistic.id %}
+      <a href="{% url_transform request versus='statistics' versus_id=statistic.id with_remove=1 %}" class="external-link">
+        <i class="fas fa-times"{% if versus_data.cache_time %}
+           title="Time in cache: {{ versus_data.cache_time|timestamp_to_datetime|timezone:timezone|timedelta_with_now|hr_timedelta }}"
+           data-toggle="tooltip"
+           data-placement="right"
+        {% endif %}></i>
+      </a>
+    {% else %}
+      <a href="{% url_transform request versus='statistics' versus_id=statistic.id with_replace=1 %}" class="external-link invisible"><i class="fas fa-desktop"></i></a>
+    {% endif %}
   {% endif %}
-  {% endwith %}
-</div>
 
-{% if not without_addition_url %}
-
-{% if statistic.addition.url %}
-  <a href="{{ statistic.addition.url }}" class="external-link invisible" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
-{% endif %}
-
-{% if has_versus %}
-  {% if versus_statistic_id == statistic.id %}
-    <a href="{% url_transform request versus='statistics' versus_id=statistic.id with_remove=1 %}" class="external-link">
-      <i class="fas fa-times"{% if versus_data.cache_time %}
-         title="Time in cache: {{ versus_data.cache_time|timestamp_to_datetime|timezone:timezone|timedelta_with_now|hr_timedelta }}"
-         data-toggle="tooltip"
-         data-placement="right"
-      {% endif %}></i>
+  {% if not statistic.my_stat %}
+    <a class="star external-link invisible">
+      {% icon_to 'pin' false %}
+      {% icon_to 'unpin' false %}
     </a>
-  {% else %}
-    <a href="{% url_transform request versus='statistics' versus_id=statistic.id with_replace=1 %}" class="external-link invisible"><i class="fas fa-desktop"></i></a>
   {% endif %}
-{% endif %}
 
-{% if not statistic.my_stat %}
-  <a class="star external-link invisible">
-    {% icon_to 'pin' false %}
-    {% icon_to 'unpin' false %}
-  </a>
-{% endif %}
+  {% if contest.has_submissions %}
+    <a onclick="open_submissions(this); return false" data-url="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ account.pk }}" class="open-submissions external-link invisible" target="_blank" rel="noopener noreferrer">{% icon_to "submissions" %}</a>
+  {% endif %}
 
-{% if contest.has_submissions %}
-  <a onclick="open_submissions(this); return false" data-url="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ account.pk }}" class="open-submissions external-link invisible" target="_blank" rel="noopener noreferrer">{% icon_to "submissions" %}</a>
-{% endif %}
+  {% if statistic and not statistic.virtual_start and statistic.id and perms.ranking.change_statistics %}
+    <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+  {% endif %}
+  {% if statistic and statistic.virtual_start and statistic.virtual_start_pk and perms.ranking.change_virtualstart %}
+    <a href="{% url 'admin:ranking_virtualstart_change' statistic.virtual_start_pk %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+  {% endif %}
 
-{% if statistic and not statistic.virtual_start and statistic.id and perms.ranking.change_statistics %}
-  <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-{% endif %}
-{% if statistic and statistic.virtual_start and statistic.virtual_start_pk and perms.ranking.change_virtualstart %}
-  <a href="{% url 'admin:ranking_virtualstart_change' statistic.virtual_start_pk %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-{% endif %}
+  {% endif %}
 
-{% endif %}
+  {% if with_detail %}{% include "standings_account_members.html" with members=members inline=False %}{% endif %}
+</div>
 
 {% endwith %}

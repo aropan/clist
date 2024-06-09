@@ -42,6 +42,10 @@ table.center {
   display: inline;
 }
 
+.inline-block {
+  display: inline-block;
+}
+
 
 /*
  * Row flex
@@ -321,6 +325,10 @@ a.database-link {
 
 .nowrap {
   white-space: nowrap !important;
+}
+
+.wrap {
+  white-space: normal !important;
 }
 
 /*

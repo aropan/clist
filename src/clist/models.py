@@ -404,6 +404,7 @@ class Contest(BaseModel):
     with_advance = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     series = models.ForeignKey('ContestSeries', null=True, blank=True, default=None, on_delete=models.SET_NULL)
     allow_updating_statistics_for_participants = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+    set_matched_coders_to_members = models.BooleanField(null=True, blank=True, default=None)
 
     notification_timing = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
@@ -480,8 +481,9 @@ class Contest(BaseModel):
             stats = stats.filter(new_global_rating__isnull=False)
             stats.update(new_global_rating=None, global_rating_change=None)
 
-        self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
-        self.with_advance = 'advanced' in fields or '_advance' in fields
+        if self.is_over():
+            self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
+            self.with_advance = 'advanced' in fields or '_advance' in fields
 
         if not self.kind:
             if hasattr(self, 'stage'):
