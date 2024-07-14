@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 import dateutil.parser
@@ -8,7 +8,7 @@ import pytz
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
-from django.utils.timezone import now, utc
+from django.utils.timezone import now
 from pytimeparse.timeparse import timeparse
 
 from clist.templatetags.extras import get_timezones
@@ -28,7 +28,7 @@ def parse_datetime(value, timezone=None):
 
 
 def datetime_from_timestamp(timestamp):
-    return datetime.fromtimestamp(timestamp, tz=utc)
+    return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
 
 def datetime_to_str(dt):

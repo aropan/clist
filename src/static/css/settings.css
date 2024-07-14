@@ -124,3 +124,8 @@ form.editableform .has-error .editable-input .form-control:focus {
 .account-suggest {
   margin-right: 5px;
 }
+
+#chats-tab .panel-container {
+  display: inline-block;
+  max-width: 100%;
+}

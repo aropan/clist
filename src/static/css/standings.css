@@ -401,3 +401,32 @@ table.standings.table-merge-problems th {
   margin-top: 5px;
 
 }
+
+
+.progress-container {
+  display: inline;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin-left: -25px;
+}
+
+.progress-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: conic-gradient(#4caf50 var(--progress), #e0e0e0 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+.progress-circle::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.5);
+}

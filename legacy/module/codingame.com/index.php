@@ -121,7 +121,8 @@
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
-            'key' => $data['publicId']
+            'key' => $data['publicId'],
+            'kind' => isset($data['type'])? strtolower($data['type']) : NULL,
         );
     }
 

@@ -56,7 +56,7 @@ class BaseModule(object, metaclass=ABCMeta):
 
     @abstractmethod
     def get_standings(self, users=None):
-        pass
+        raise NotImplementedError()
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
@@ -82,7 +82,7 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
-    def to_time(delta, num=None):
+    def to_time(delta, num=3, short=False):
         if isinstance(delta, timedelta):
             delta = delta.total_seconds()
         delta = int(delta)
@@ -90,10 +90,16 @@ class BaseModule(object, metaclass=ABCMeta):
         if delta < 0:
             return '-' + BaseModule.to_time(-delta, num=num)
 
-        if num == 2:
-            return f'{delta // 60:02d}:{delta % 60:02d}'
+        a = []
+        for _ in range(num - 1):
+            a.append(delta % 60)
+            delta //= 60
+        a.append(delta)
 
-        return f'{delta // 3600}:{delta // 60 % 60:02d}:{delta % 60:02d}'
+        if short:
+            while len(a) > 1 and a[-1] == 0:
+                a.pop()
+        return ':'.join(f'{x:02d}' if i else f'{x}' for i, x in enumerate(reversed(a)))
 
     @staticmethod
     def merge_dict(src, dst):
@@ -136,6 +142,10 @@ class BaseModule(object, metaclass=ABCMeta):
 
     @staticmethod
     def update_submissions(account, resource):
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_problem_info(problem):
         raise NotImplementedError()
 
 

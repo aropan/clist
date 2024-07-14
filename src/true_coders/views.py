@@ -909,6 +909,11 @@ def settings(request, tab=None):
     my_lists = coder.my_list_set.annotate(n_records=SubqueryCount('values'))
     my_lists = my_lists.prefetch_related('shared_with_coders')
 
+    my_chats = coder.chat_set.order_by('-modified')
+    my_chats = my_chats.annotate(n_coders=SubqueryCount('coders'))
+    my_chats = my_chats.annotate(n_accounts=SubqueryCount('accounts'))
+    my_chats_fields = ['chat_id', 'title', 'name', 'n_coders', 'n_accounts']
+
     return render(
         request,
         "settings.html",
@@ -920,6 +925,8 @@ def settings(request, tab=None):
             "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,
             "my_lists": my_lists,
+            "my_chats": my_chats,
+            "my_chats_fields": my_chats_fields,
             "categories": categories,
             "calendars": coder.calendar_set.order_by('-modified'),
             "subscriptions": coder.subscription_set.order_by('-modified'),

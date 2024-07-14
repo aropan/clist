@@ -105,7 +105,7 @@ class Account(BaseModel):
         field = field.lower()
         if field in {'telegram', 'dateofbirth'}:
             return True
-        if 'email' in field:
+        if 'email' in field or 'password' in field:
             return True
 
     def get_last_season(self):
@@ -563,13 +563,14 @@ class Stage(BaseModel):
     def update(self):
         eps = 1e-9
         stage = self.contest
+        timezone_now = timezone.now()
 
         filter_params = dict(self.filter_params)
         spec_filter_params = dict()
         for field in ('info__fields_types__new_rating__isnull',):
             if field in filter_params:
                 spec_filter_params[field] = filter_params.pop(field)
-        is_over = self.contest.end_time < timezone.now()
+        is_over = self.contest.end_time < timezone_now
 
         contests = Contest.objects.filter(
             resource=self.contest.resource,
@@ -579,7 +580,7 @@ class Stage(BaseModel):
         ).exclude(pk=self.contest.pk)
 
         if spec_filter_params:
-            contests = contests.filter(Q(**spec_filter_params) | Q(end_time__gt=timezone.now()))
+            contests = contests.filter(Q(**spec_filter_params) | Q(end_time__gt=timezone_now))
 
         contests = contests.order_by('start_time')
         contests = contests.prefetch_related('writers')
@@ -618,8 +619,8 @@ class Stage(BaseModel):
                 ),
             }
 
-            if contest.end_time > timezone.now():
-                info['subtext'] = {'text': 'upcoming', 'title': str(contest.end_time)}
+            if contest.start_time > timezone_now:
+                info['subtext'] = {'text': 'upcoming', 'title': str(contest.start_time)}
 
             for division in contest.info.get('divisions_order', []):
                 if division not in divisions_order:
@@ -837,6 +838,8 @@ class Stage(BaseModel):
                             row[out_n] = row.get(out_n, 0) + 1
                             row[out_s] = row.get(out_s, 0) + val
                             val = round(row[out_s] / row[out_n], 2)
+                        if field.get('aggregate') == 'max' and out in row:
+                            val = max(val, row[out])
                         row[out] = val
 
                     if 'solved' in s.addition and isinstance(s.addition['solved'], dict):
@@ -854,7 +857,7 @@ class Stage(BaseModel):
                     else:
                         for field in order_by:
                             field = field.lstrip('-')
-                            if field in ['score', 'rating']:
+                            if field in ['score', 'rating', 'penalty']:
                                 continue
                             status = field_values.get(field, row.get(field))
                             if status is None:
@@ -1168,10 +1171,14 @@ class Stage(BaseModel):
             stage.info['fields'] = list(fields)
             stage.info['hidden_fields'] = hidden_fields
 
+            fields_types = self.score_params.get('fields_types', {})
+            if fields_types:
+                stage.info.setdefault('fields_types', {}).update(fields_types)
+
             if not parsed_statistic:
                 stage.statistics_set.exclude(pk__in=pks).delete()
                 stage.n_statistics = len(results)
-                stage.parsed_time = timezone.now()
+                stage.parsed_time = timezone_now
 
                 standings_info = self.score_params.get('info', {})
                 standings_info['fixed_fields'] = fixed_fields + [(f.lstrip('-'), f.lstrip('-')) for f in order_by]

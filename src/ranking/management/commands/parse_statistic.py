@@ -7,7 +7,7 @@ import operator
 import os
 import re
 from collections import OrderedDict, defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from html import unescape
 from math import isclose
@@ -23,14 +23,15 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Q
-from django.utils import timezone
+from django.utils.timezone import now as timezone_now
 from django_print_sql import print_sql_decorator
 
 from submissions.models import Language, Submission, Testing, Verdict
 
 from clist.models import Contest, Problem, Resource
 from clist.templatetags.extras import (as_number, canonize, get_item, get_number_from_str, get_problem_key,
-                                       get_problem_short, is_solved, time_in_seconds, time_in_seconds_format)
+                                       get_problem_short, is_solved, normalize_field, time_in_seconds,
+                                       time_in_seconds_format)
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
@@ -248,7 +249,7 @@ class Command(BaseCommand):
         tqdm._channel_layer_handler = channel_layer_handler
         _tqdm.tqdm = tqdm
 
-        now = timezone.now()
+        now = timezone_now()
 
         contests = contests.select_related('resource__module')
 
@@ -413,7 +414,7 @@ class Command(BaseCommand):
             try:
                 r = {}
 
-                now = timezone.now()
+                now = timezone_now()
                 is_coming = now < contest.start_time
                 plugin = resource.plugin.Statistic(contest=contest)
 
@@ -592,6 +593,7 @@ class Command(BaseCommand):
                     updated_statistics_ids = list()
                     contest_timeline = contest.get_timeline_info()
                     lazy_fetch_accounts = standings.pop('lazy_fetch_accounts', False)
+                    has_problem_stats = False
 
                     results = []
                     if result or users:
@@ -635,7 +637,7 @@ class Command(BaseCommand):
                             total_problems_solving = 0
 
                             def update_problems_info():
-                                nonlocal last_activity, total_problems_solving
+                                nonlocal last_activity, total_problems_solving, has_problem_stats
 
                                 problems = r.get('problems', {})
 
@@ -759,6 +761,7 @@ class Command(BaseCommand):
                                         p['n_partial'] = p.get('n_partial', 0) + 1
                                     elif is_hidden:
                                         p['n_hidden'] = p.get('n_hidden', 0) + 1
+                                    has_problem_stats = True
 
                                 if 'default_problem_full_score' in contest.info and solved and 'solved' not in r:
                                     r['solved'] = solved
@@ -791,9 +794,12 @@ class Command(BaseCommand):
                         if contest.set_matched_coders_to_members:
                             matched_coders = contest.account_matchings
                             matched_coders = matched_coders.filter(account__coders=F('coder'))
-                            matched_coders = matched_coders.values('name', 'statistic_id', 'coder__username')
-                            matched_coders = {(m['name'], m['statistic_id']): m['coder__username']
-                                              for m in matched_coders}
+                            matched_coders = matched_coders.values('name', 'statistic_id', 'coder__username',
+                                                                   'coder__country')
+                            matched_coders = {
+                                (m['name'], m['statistic_id']): (m['coder__username'], m['coder__country'])
+                                for m in matched_coders
+                            }
 
                         for r in tqdm(results, desc='update results'):
                             skip_update = bool(r.get('_skip_update'))
@@ -1082,10 +1088,7 @@ class Command(BaseCommand):
                                 for k, v in r.items():
                                     orig_k = k
                                     is_hidden_field = orig_k in standings_hidden_fields_set
-                                    if k[0].isalpha() and not re.match('^[A-Z]+([0-9]+)?$', k):
-                                        k = k[0].upper() + k[1:]
-                                        k = '_'.join(map(str.lower, re.findall('([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)', k)))
-                                        k = re.sub('_+', '_', k)
+                                    k = normalize_field(k)
                                     if is_hidden_field:
                                         standings_hidden_fields_mapping[orig_k] = k
                                         hidden_fields.add(k)
@@ -1146,8 +1149,7 @@ class Command(BaseCommand):
 
                                 if not created:
                                     nonlocal calculate_time
-                                    if statistics_ids:
-                                        statistics_ids.remove(statistic.pk)
+                                    statistics_ids.discard(statistic.pk)
 
                                     if contest_timeline and try_calculate_time:
                                         p_problems = statistic.addition.get('problems', {})
@@ -1371,7 +1373,9 @@ class Command(BaseCommand):
                                         continue
                                     matched_coder_key = (member['name'], statistic.pk)
                                     if matched_coder_key in matched_coders:
-                                        member['coder'] = matched_coders[matched_coder_key]
+                                        member['coder'], country = matched_coders[matched_coder_key]
+                                        if country:
+                                            statistic.addition.setdefault('_countries', []).append(country)
                                         to_update = True
                                 if to_update:
                                     statistic.save(update_fields=['addition'])
@@ -1518,7 +1522,8 @@ class Command(BaseCommand):
                                             if not short:
                                                 continue
                                             p.update(d_problems.get(d, {}).get(short, {}))
-                                            p.setdefault('n_total', n_statistics[d])
+                                            if has_problem_stats:
+                                                p.setdefault('n_total', n_statistics[d])
                                             p.get('first_ac', {}).pop('_cmp_seconds', None)
                                             p.get('last_ac', {}).pop('_cmp_seconds', None)
                                             if key in problems_ratings:
@@ -1534,7 +1539,8 @@ class Command(BaseCommand):
                                         if not short:
                                             continue
                                         p.update(d_problems.get(short, {}))
-                                        p.setdefault('n_total', contest.n_statistics)
+                                        if has_problem_stats:
+                                            p.setdefault('n_total', contest.n_statistics)
                                         p.get('first_ac', {}).pop('_cmp_seconds', None)
                                         p.get('last_ac', {}).pop('_cmp_seconds', None)
                                         if key in problems_ratings:
@@ -1567,9 +1573,9 @@ class Command(BaseCommand):
                             if now < contest.end_time:
                                 timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
                         if updated_statistics_ids and contest.end_time < now < contest.end_time + timedelta(hours=1):
-                            timing_delta = timing_delta or timedelta(minutes=10)
+                            timing_delta = timing_delta or timedelta(minutes=20)
                         if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
-                            timing_delta = timing_delta or timedelta(minutes=30)
+                            timing_delta = timing_delta or timedelta(minutes=60)
                         if wait_rating and not has_statistics and results and 'days' in wait_rating:
                             timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
                         timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
@@ -1653,7 +1659,7 @@ class Command(BaseCommand):
                 if not parsed and contest.end_time < now < contest.end_time + module.shortly_after:
                     delay = min(delay, module.delay_shortly_after)
                 if now < contest.end_time < now + delay:
-                    delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=3)) - now)
+                    delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=7)) - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
                     delay = min(delay, timing_delta)
@@ -1676,7 +1682,7 @@ class Command(BaseCommand):
             status = EventStatus.COMPLETED if parsed else EventStatus.FAILED
             messages = []
             if exception_error:
-                messages += [exception_error]
+                messages += [f'exception error = {exception_error}']
             if contest_log_counter:
                 messages += [f'log_counter = {dict(contest_log_counter)}']
             event_log.update_status(status=status, message='\n\n'.join(messages))

@@ -1,0 +1,17 @@
+{% if perms.clist.change_resource %}
+<span class="inline-button">
+  {% if perms.clist.change_resource %}
+  <button data-href="{% url 'admin:clist_resource_change' resource.id %}" class="database-href btn btn-default btn-xs" target="_blank" rel="noopener">{% icon_to 'database' resource %}</button>
+  {% endif %}
+
+  {% if perms.ranking.change_module and resource.module.id %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_module_change' resource.module.id %}">{% icon_to 'database' "Module#"|concat:resource.module.id %}</button>
+  {% endif %}
+
+  {% if perms.logify.view_eventlog %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:logify_eventlog_changelist' %}?q={{ resource.host }}" target="_blank">{% icon_to 'logify' "View logs" %}</button>
+  {% endif %}
+
+  <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ resource.host }}">{% icon_to 'copy' resource.host %}</button>
+</span>
+{% endif %}

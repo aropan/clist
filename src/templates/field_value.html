@@ -41,7 +41,7 @@
       {% elif field|is_rating_change_field and intvalue %}
         <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
       {% elif 'delta' in types and value %}
-        <i class="fas fa-angle-{% if value > 0 %}up{% else %}down{% endif %}"></i>{{ value|abs }}
+        <i class="fas fa-angle-{% if value > 0 %}up{% else %}down{% endif %}"></i>{{ value|abs|to_template_value }}
       {% elif 'timestamp' in types and value %}
         <span title="{{ value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
           {{ value|timestamp_to_datetime|timezone:timezone|naturaltime }}

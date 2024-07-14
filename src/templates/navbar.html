@@ -82,7 +82,11 @@
                         {% if user.is_staff %}
                         <li><a href="{% url 'change_environment' %}" rel="noopener">{% icon_to 'dev' False %}</a></li>
                         <li><a href="{% url 'charts' %}">{% icon_to 'charts' False %}</a></li>
-                        <li><a href="{% url 'admin:index' %}"><i class="fas fa-server"></i></a></li>
+                        <li>
+                            <a href="{% if navbar_database_viewname %}{% url 'admin:'|concat:navbar_database_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
+                            {% icon_to 'database' navbar_database_viewname|default:'databse'|title_field position='bottom' %}
+                            </a>
+                        </li>
                         {% endif %}
                         <li><a href="{% url 'coder:profile' user.username %}">{{ user.username }}</a></li>
                     {% else %}

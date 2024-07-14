@@ -1,7 +1,7 @@
 <?php
   require_once dirname(__FILE__) . "/../config.php";
 
-  header('Content-type: application/json; charset=utf-8');
+  header('Content-Type: application/json; charset=utf-8');
 
   $time = date('Y-m-d H:i:s', time());
   $coming_contests = $db->getArray("

@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load el_pagination_tags %}
 
 {% block ogtitle %}{% block title %}{{ contest.title }} - Standings{% endblock %}{% endblock %}
 {% block description %}View our comprehensive standings table for {{ contest.title }} from {{ contest.resource.host }} with additional statistics. Gain insights into the event's dynamics and participant performance.{% endblock %}
@@ -130,6 +129,10 @@
       {% if merging_contests_ids %}
       <a href="{% url 'ranking:standings_by_ids' merging_contests_ids|to_list|prepend:contest.id|join:"," %}" class="badge progress-bar-info">{% icon_to "merged_standings" %}</a>
       {% endif %}
+
+      {% for external_url in contest.info.standings.external_urls %}
+      <a href="{{ external_url.url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' external_url.name %}</a>
+      {% endfor %}
 
       {% endif %}
 

@@ -4,7 +4,7 @@
 import json
 from collections import OrderedDict, defaultdict
 
-from clist.templatetags.extras import as_number, toint
+from clist.templatetags.extras import as_number, get_item, toint
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
@@ -15,10 +15,13 @@ class Statistic(BaseModule):
         if not self.standings_url:
             raise ExceptionParseStandings('not standings url')
 
+        problems_infos = OrderedDict()
+
         def get_results(standings_url, division_data):
             page = REQ.get(standings_url)
 
             page_format = division_data.get('format')
+            problems_results = defaultdict(lambda: defaultdict(int))
             if page_format == 'json':
                 data = json.loads(page)
                 scores_field = None
@@ -26,6 +29,12 @@ class Statistic(BaseModule):
                     scores_field = 'problem'
                 elif 'tournaments' in data:
                     scores_field = 'tournament'
+
+                if 'columns' in data and 'rows' in data:
+                    columns = data.pop('columns')
+                    data['teams'] = [dict(zip(columns, row['values'])) for row in data.pop('rows')]
+                else:
+                    columns = None
 
                 if scores_field:
                     scores_fields_mapping = {'submission': 'T', 'request': 'R'}
@@ -37,15 +46,35 @@ class Statistic(BaseModule):
                 table = []
                 for team in data['teams']:
                     row = OrderedDict()
-                    row['name'] = team['team']['teamName']
-                    row['solving'] = team['score']
-                    row['country'] = team['team']['customData']['country']
+                    row['name'] = get_item(team, 'team.teamName') or get_item(team, 'team')
+                    place = get_item(team, '#')
+                    if place:
+                        row['place'] = place
+                    if 'score' in team:
+                        row['solving'] = team['score']
+                    country = get_item(team, 'team.customData.country')
+                    if country:
+                        row['country'] = country
                     if scores_field:
                         problems = row.setdefault('_scores', OrderedDict())
                         scores = team[f'{scores_field}s']
                         for field, out in scores_mapping.items():
                             if field in scores:
                                 problems[out] = as_number(scores.get(field, {}).get('score'))
+                    if division_data.get('remaining_fields_are_problems'):
+                        problems = row.setdefault('problems', {})
+                        keys = columns or team.keys()
+                        for k in keys:
+                            if k in {'#', 'team'} or k not in team:
+                                continue
+                            if k not in problems_infos:
+                                problems_infos[k] = {'short': k}
+                            v = as_number(team[k])
+                            if v is None:
+                                continue
+                            problems[k] = {'result': v}
+                            if isinstance(v, (int, float)):
+                                problems_results[k][v] += 1
                     table.append(row)
             else:
                 mapping = {
@@ -77,10 +106,23 @@ class Statistic(BaseModule):
                         row['name'] = v
                         row['member'] = f'{v} {season}'
                     else:
-                        if k in {'place', 'solving'}:
+                        if k in {'place', 'solving'} and isinstance(v, str):
                             v = as_number(v.replace(',', ''))
                         row[k] = v
+                if division_data.get('borda_count') and 'problems' in row:
+                    solving = 0
+                    for short, problem in row['problems'].items():
+                        v = problem['result']
+                        if isinstance(v, (int, float)):
+                            problem['status'] = f'#{v}'
+                            v += problems_results[short][v] - 1
+                            v = len(table) - v
+                            problem['result'] = v
+                            solving += v
+                    if 'solving' not in row:
+                        row['solving'] = solving
                 ret[row['member']] = row
+
             if not was_place:
                 place = None
                 last = None
@@ -188,4 +230,5 @@ class Statistic(BaseModule):
             divisions_addition={k: dict(fields=list(fields_types.keys()), fields_types=fields_types)
                                 for k, fields_types in divisions_fields_types.items()},
             divisions_order=divisions_order,
+            problems=list(problems_infos.values()),
         )

@@ -303,6 +303,7 @@ html {
 .rating-change {
   font-weight: bold !important;
   color: grey;
+  white-space: nowrap;
 }
 
 .rating-change.rating-change-up {
@@ -882,7 +883,7 @@ a[data-toggle="tooltip"][disabled],
  * Promotoin
  */
 
-#promotion > * {
+#promotion.dark-background > * {
   color: #eee;
   text-shadow: 0 0 5px #000;
 }

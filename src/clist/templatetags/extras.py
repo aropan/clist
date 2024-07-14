@@ -8,7 +8,6 @@ from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime, timedelta
-from functools import reduce
 from sys import float_info
 from urllib.parse import quote_plus, urlparse
 
@@ -29,6 +28,7 @@ from django.utils.functional import keep_lazy
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django_countries.fields import countries
+from ipware import get_client_ip
 from unidecode import unidecode
 
 register = template.Library()
@@ -46,9 +46,10 @@ def strip(string, val):
 
 
 @register.filter
-def get_item(data, key):
+def get_item(data, key, default=None):
     if not data:
-        return None
+        return default
+
     if isinstance(data, (dict, defaultdict, OrderedDict)):
         if key in data:
             return data.get(key)
@@ -58,10 +59,23 @@ def get_item(data, key):
             return data[key_as_number]
     elif hasattr(data, key):
         return getattr(data, key)
-    for sep in ('.', '__'):
-        if sep in str(key):
-            return reduce(lambda d, k: get_item(d, k) if d else None, str(key).split(sep), data)
-    return None
+
+    if isinstance(key, str):
+        for sep in ('.', '__'):
+            if sep in key:
+                for k in key.split(sep):
+                    data = get_item(data, k)
+                    if data is None:
+                        return default
+                return data
+    return default
+
+
+def get_copy_item(*args, copy=False, **kwargs):
+    ret = get_item(*args, **kwargs)
+    if copy and ret is not None:
+        ret = deepcopy(ret)
+    return ret
 
 
 @register.simple_tag
@@ -1000,6 +1014,14 @@ def title_field(value):
     return value
 
 
+def normalize_field(k):
+    if k[0].isalpha() and not re.match('^[A-Z]+([0-9]+)?$', k):
+        k = k[0].upper() + k[1:]
+        k = '_'.join(map(str.lower, re.findall('([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)', k)))
+        k = re.sub('_+', '_', k)
+    return k
+
+
 @register.filter
 def scoreformat(value, with_shorten=True):
     str_value = str(value)
@@ -1069,12 +1091,37 @@ def time_in_seconds_format(timeline, seconds, num=2):
     return ':'.join(ret)
 
 
+@register.filter
+def allow_custom_countries(request, country):
+    if country.code in settings.FILTER_CUSTOM_COUNTRIES_:
+        geo_country_code = get_geo_country_code(request)
+        if geo_country_code in settings.FILTER_CUSTOM_COUNTRIES_[country.code]:
+            return False
+    return True
+
+
+@register.filter
+def get_geo_country_code(request):
+    client_ip, routable = get_client_ip(request)
+    if not client_ip:
+        return
+    return settings.GEOIP.country_code(client_ip)
+
+
+def get_custom_country(request, country, custom_countries):
+    user = getattr(request, 'user', None)
+    if not custom_countries or country.code not in custom_countries:
+        return
+    if not user or not user.is_authenticated:
+        return
+    if not allow_custom_countries(request, country):
+        return
+    return custom_countries[country.code]
+
+
 def get_country_from(context, country, custom_countries):
-    user = getattr(context['request'], 'user', None)
-    if custom_countries and user and user.is_authenticated and country.code in custom_countries:
-        setattr(country, 'flag_code', custom_countries[country.code])
-    else:
-        setattr(country, 'flag_code', country.code)
+    country_code = get_custom_country(context['request'], country, custom_countries) or country.code
+    setattr(country, 'flag_code', country_code)
     return country
 
 
@@ -1165,13 +1212,21 @@ def icon_to(value, default=None, icons=None, html_class=None, **kwargs):
     if value in icons:
         value = icons[value]
         inner = ''
+        params = kwargs
         if isinstance(value, dict):
+            params = deepcopy(value)
             if kwargs:
-                value = deepcopy(value)
-                value.update(kwargs)
-            if 'position' in value:
-                inner += f' data-placement="{value["position"]}"'
-            value, default, html_class = value['icon'], value.get('title', default), value.get('class', html_class)
+                params.update(kwargs)
+
+        if 'position' in kwargs:
+            inner += f' data-placement="{kwargs["position"]}"'
+        if 'icon' in params:
+            value = params['icon']
+        if 'class' in params:
+            html_class = params['class']
+        if 'title' in params:
+            default = params['title']
+
         if default:
             inner += f' title="{default}" data-toggle="tooltip"'
         if html_class:

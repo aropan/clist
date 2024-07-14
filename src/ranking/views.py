@@ -719,6 +719,7 @@ def render_standings_paging(contest, statistics, with_detail=True):
     context = {
         'request': HttpRequest(),
         'contest': contest,
+        'division': division,
         'statistics': statistics,
         'problems': problems,
         'fields': fields,
@@ -811,6 +812,7 @@ def get_standings_problems(contest, division):
             problems = problems['division'][division]
     if division:
         problems = [p for p in problems if division not in p.get('skip_for_divisions', [])]
+    problems = [p for p in problems if not p.get('skip_in_standings')]
     return problems
 
 
@@ -1350,7 +1352,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
                     continue
                 chat = Chat.objects.filter(chat_id=q, is_group=True).first()
                 if chat:
-                    filt |= Q(account__coders__in=chat.coders.all())
+                    filt |= Q(account__coders__in=chat.coders.all()) | Q(account__in=chat.accounts.all())
             # subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
             # statistics = statistics.annotate(chat_name=Subquery(subquery))
         elif field == 'list':
@@ -1573,6 +1575,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         't_freeze': t_freeze,
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
         'contest': contest,
+        'division': division,
         'contests_ids': contests_ids,
         'other_contests': other_contests,
         'contests_timelines': contests_timelines,

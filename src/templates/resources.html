@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="resources" class="panel panel-default table-responsive col-md-12 col-xl-8 col-xl-offset-2 col-lg-10 col-lg-offset-1">
+<div id="resources" class="panel panel-default table-responsive{% if params.more_fields %} col-lg-12{% else %} col-md-12 col-xl-8 col-xl-offset-2 col-lg-10 col-lg-offset-1{% endif %}">
   <table class="table table-condensed table-float-head table-striped">
     <tr>
       <th>
@@ -38,9 +38,7 @@
           <img src="{{ resource.icon|media_size:'64x64' }}" width="24" height="24"/>
           {{ resource.host }}
         </a>
-        {% if perms.clist.change_resource %}
-          <a href="{% url 'admin:clist_resource_change' resource.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
-        {% endif %}
+        {% include "resource_inline_buttons.html" %}
       </td>
       <td>
         <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>

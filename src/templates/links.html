@@ -17,27 +17,22 @@
     <h1>Links</h1>
     <hr/>
     <ul class="list-group lead">
+      {% for link in links %}
       <li class="list-group-item">
-        <img src="{% static_ts 'img/links/zibada-guru-gcj.png' %}" width="40px" height="40px">
+        <img{% if link.icon %} src="{{ link.icon.url }}"{% endif %} width="40px" height="40px">
         <span>
-          <a href="https://zibada.guru/gcj/" rel="external noopener" target="_blank">Google Coding Competitions Archive</a>
-          &mdash; unofficial archive
+          <a href="{{ link.url }}" rel="external noopener" target="_blank">{{ link.name }}</a>
+          {% if link.desc %}&mdash; {{ link.desc }}{% endif %}
         </span>
-      </li>
-      <li class="list-group-item">
-        <img src="{% static_ts 'img/links/zibada-finals.png' %}" width="40px" height="40px">
-        <span>
-          <a href="https://zibada.guru/finals/" rel="external noopener" target="_blank">ICPC World Finals</a>
-          &mdash; unofficial standings
+
+        {% if perms.clist.change_promolink %}
+        <span class="inline-button">
+          <a class="database-href btn btn-default" data-href="{% url 'admin:clist_promolink_change' link.id %}">{% icon_to 'database' "PromoLink#"|concat:link.id %}</a>
         </span>
+        {% endif %}
       </li>
-      <li class="list-group-item">
-        <img src="{% static_ts 'img/links/coding-list.webp' %}" width="40px" height="40px">
-        <span>
-          <a href="https://play.google.com/store/apps/details?id=io.github.vikasgola.coding_list" rel="external nofollow noopener" target="_blank">Coding List: A Coders Calendar</a>
-          &mdash; unofficial android app
-        </span>
-      </li>
+
+      {% endfor %}
     </ul>
   </div>
 </div>

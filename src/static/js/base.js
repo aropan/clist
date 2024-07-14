@@ -738,7 +738,7 @@ $(function() {
 function clear_url_parameters() {
   var url = new URL(window.location.href)
   if (url.searchParams.has('search') || url.searchParams.has('sort_order')) {
-    var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play'])
+    var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play', 'full_table'])
     var to_remove = new Set()
     var remove_sort = true
     for ([field, value] of url.searchParams.entries()) {

@@ -23,7 +23,7 @@
 </script>
 <div id="promotion"
 {% if promotion.background %}
-  class="text-center"
+  class="text-center dark-background"
   style="background-image: url('{{ promotion.background.url }}'); background-size: cover; background-position: center;"
 {% else %}
   class="alert-info text-center"
@@ -150,7 +150,7 @@
           <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
           {% endif %}
 
-          {% include "contest_inline_buttons.html" with contest=contest %}
+          {% include "contest_inline_buttons.html" with user=request.user contest=contest only %}
 
           <div class="resource">
             <a class="resource_search" href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>

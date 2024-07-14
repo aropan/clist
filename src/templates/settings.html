@@ -61,8 +61,11 @@
         <li{% if tab == 'social' %} class="active"{% endif %}><a href="#social-tab" data-toggle="tab">Social</a></li>
         <li{% if tab == 'accounts' %} class="active"{% endif %}><a href="#accounts-tab" data-toggle="tab">Accounts</a></li>
         <li{% if tab == 'filters' %} class="active"{% endif %}><a href="#filters-tab" data-toggle="tab">Filters</a></li>
-        <li{% if tab == 'lists' %} class="active"{% endif %}><a href="#lists-tab" data-toggle="tab">Lists</a></li>
         <li{% if tab == 'notifications' %} class="active"{% endif %}><a href="#notifications-tab" data-toggle="tab">Notifications</a></li>
+        <li{% if tab == 'lists' %} class="active"{% endif %}><a href="#lists-tab" data-toggle="tab">Lists</a></li>
+        {% if my_chats %}
+        <li{% if tab == 'chats' %} class="active"{% endif %}><a href="#chats-tab" data-toggle="tab">Chats</a></li>
+        {% endif %}
         <li{% if tab == 'calendars' %} class="active"{% endif %}><a href="#calendars-tab" data-toggle="tab">Calendars</a></li>
         {% comment %} <li{% if tab == 'subscriptions' %} class="active"{% endif %}><a href="#subscriptions-tab" data-toggle="tab">Subscriptions</a></li> {% endcomment %}
     </ul>
@@ -203,6 +206,32 @@
                 {% endfor %}
             </div>
         </div>
+        {% if my_chats %}
+        <div id="chats-tab" class="tab-pane{% if tab == 'chats' %} active{% endif %}">
+            <div class="value">
+                <div class="panel panel-default panel-container">
+                    <table class="table table-hover">
+                    {% for chat in my_chats %}
+                    <tr>
+                        {% for field in my_chats_fields %}
+                        <td>
+                        {% with value=chat|get_item:field %}
+                        {% if value is None %}&mdash;{% else %}{{ value }}{% endif %}
+                        {% endwith %}
+                        </td>
+                        {% endfor %}
+                        {% if perms.chat.change_chat %}
+                        <td>
+                            <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:tg_chat_change' chat.id %}" target="_blank">{% icon_to 'database' "Chat#"|concat:chat.id %}</button>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         <div id="notifications-tab" class="tab-pane{% if tab == 'notifications' %} active{% endif %}">
             <div>
                 {% if not notification_form.errors %}
@@ -262,7 +291,7 @@
             <div class="key">Country</div>
             <div class="value">
                 <a href="#" id="country" data-value="{{ coder.country.code }}"></a>
-
+                {% if request|allow_custom_countries:coder.country %}
                 {% for name, values in custom_countries.items %}
                     {% with value=coder.settings.custom_countries|get_item:name %}
                         {% for val in values %}
@@ -271,6 +300,7 @@
                     {% endwith %}
                 {% endfor %}
                 <i id="custom_countries_loading" class="fas fa-circle-notch fa-spin hidden"></i>
+                {% endif %}
             </div>
 
             {% with chat=coder.chat %}

@@ -124,6 +124,8 @@ def main():
     ''')
 
 
+logger = create_logger()
+
+
 if __name__ == '__main__':
-    logger = create_logger()
     main()

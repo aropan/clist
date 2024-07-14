@@ -5,7 +5,7 @@ import math
 import os
 import re
 from collections.abc import Iterable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from urllib.parse import urljoin, urlparse
 
@@ -15,11 +15,11 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Case, F, Q, When
+from django.db.models import Case, F, Max, Q, When
 from django.db.models.expressions import Exists, OuterRef
 from django.db.models.functions import Cast, Ln
 from django.urls import reverse
-from django.utils import timezone
+from django.utils.timezone import now as timezone_now
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
 
@@ -87,6 +87,7 @@ class Resource(BaseModel):
     country_rank_update_time = models.DateTimeField(null=True, blank=True)
     contest_update_time = models.DateTimeField(null=True, blank=True)
     has_problem_rating = models.BooleanField(default=False)
+    has_problem_update = models.BooleanField(default=False)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
     n_accounts_to_update = models.IntegerField(default=None, null=True, blank=True)
@@ -358,8 +359,8 @@ class OngoingContestManager(SignificantContestManager):
         ).filter(
             resource__module__isnull=False,
             duration_time__lt=Epoch('resource__module__long_contest_idle'),
-            start_time__lt=timezone.now() + timedelta(hours=1),
-            end_time__gt=timezone.now() - timedelta(hours=1),
+            start_time__lt=timezone_now() + timedelta(hours=1),
+            end_time__gt=timezone_now() - timedelta(hours=1),
         )
         return ret
 
@@ -409,6 +410,7 @@ class Contest(BaseModel):
     notification_timing = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
     rating_prediction_timing = models.DateTimeField(default=None, null=True, blank=True)
+    wait_for_successful_update_timing = models.DateTimeField(default=None, null=True, blank=True)
 
     rating_prediction_fields = models.JSONField(default=dict, blank=True, null=True)
     has_fixed_rating_prediction_field = models.BooleanField(default=False, null=True, blank=True)
@@ -520,13 +522,13 @@ class Contest(BaseModel):
         return super().save(*args, **kwargs)
 
     def is_over(self):
-        return self.end_time <= timezone.now()
+        return self.end_time <= timezone_now()
 
     def is_running(self):
-        return not self.is_over() and self.start_time <= timezone.now()
+        return not self.is_over() and self.start_time <= timezone_now()
 
     def is_coming(self):
-        return timezone.now() < self.start_time
+        return timezone_now() < self.start_time
 
     @property
     def next_time(self):
@@ -535,7 +537,7 @@ class Contest(BaseModel):
     def next_time_to(self, now):
         if self.is_over():
             return 0
-        delta = self.next_time_datetime() - (now or timezone.now())
+        delta = self.next_time_datetime() - (now or timezone_now())
         seconds = delta.total_seconds()
         return int(round(seconds))
 
@@ -759,7 +761,7 @@ class Contest(BaseModel):
     @property
     def is_rating_prediction_timespan(self):
         timespan = self.resource.rating_prediction.get('timespan')
-        return not timespan or timezone.now() < self.end_time + parse_duration(timespan)
+        return not timespan or timezone_now() < self.end_time + parse_duration(timespan)
 
     @property
     def has_rating_prediction(self):
@@ -827,6 +829,7 @@ class Problem(BaseModel):
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     skip_rating = models.BooleanField(default=None, null=True, blank=True)
     info = models.JSONField(default=dict, blank=True)
+    updated = models.DateTimeField(auto_now=True, db_index=True)
 
     activities = GenericRelation('favorites.Activity', related_query_name='problem')
     notes = GenericRelation('notes.Note', related_query_name='problem')
@@ -870,10 +873,10 @@ class Problem(BaseModel):
             return True
 
     def rating_is_coming(self):
-        return self.end_time <= timezone.now() <= self.end_time + self.resource.module.max_delay_after_end
+        return self.end_time <= timezone_now() <= self.end_time + self.resource.module.max_delay_after_end
 
     def rating_status(self):
-        now = timezone.now()
+        now = timezone_now()
         if now < self.end_time:
             return "waiting for end of contest"
         if self.n_hidden:
@@ -925,7 +928,7 @@ class Banner(BaseModel):
 
     @property
     def next_time(self):
-        now = timezone.now()
+        now = timezone_now()
         if self.end_time < now:
             return 0
         return int(round((self.end_time - now).total_seconds()))
@@ -938,7 +941,7 @@ class PromotionManager(models.Manager):
             When(time_attribute='start_time', then=F('contest__start_time')),
             When(time_attribute='end_time', then=F('contest__end_time')),
         ))
-        qs = qs.filter(target_time__gt=timezone.now())
+        qs = qs.filter(target_time__gt=timezone_now())
         qs = qs.order_by('target_time')
         return qs
 
@@ -964,3 +967,37 @@ class Promotion(BaseModel):
 
     def __str__(self):
         return f'{self.name} Promotion#{self.id}'
+
+    def save(self, *args, **kwargs):
+        ret = super().save(*args, **kwargs)
+        contest = self.contest
+        contest.is_promoted = contest.promotion_set.filter(enable=True).exists()
+        contest.save(update_fields=['is_promoted'])
+        return ret
+
+
+class PromoLinkManager(BaseManager):
+
+    def get_queryset(self):
+        return super().get_queryset().filter(enable=True).order_by('order')
+
+
+class PromoLink(BaseModel):
+    name = models.CharField(max_length=200)
+    desc = models.TextField(default=None, null=True, blank=True)
+    icon = models.ImageField(upload_to='promolinks', null=True, blank=True)
+    url = models.URLField()
+    order = models.IntegerField(default=None, blank=True)
+    enable = models.BooleanField(default=True)
+
+    objects = BaseManager()
+    enabled_objects = PromoLinkManager()
+
+    def save(self, *args, **kwargs):
+        if self.order is None:
+            max_order = PromoLink.objects.exclude(pk=self.pk).aggregate(Max('order'))['order__max']
+            self.order = (max_order or 0) + 1
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.name} PromoLink#{self.id}'

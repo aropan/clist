@@ -15,6 +15,7 @@ from datetime import datetime
 
 import pycountry
 import sentry_sdk
+from django.contrib.gis.geoip2 import GeoIP2
 from django.core.paginator import UnorderedObjectListWarning
 from django.utils.translation import gettext_lazy as _
 from environ import Env
@@ -155,7 +156,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
+        'APP_DIRS': False,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -172,7 +173,17 @@ TEMPLATES = [
                 'clist.templatetags.extras',
                 'django.contrib.humanize.templatetags.humanize',
                 'favorites.templatetags.favorites_extras',
+                'django.templatetags.cache',
+                'el_pagination.templatetags.el_pagination_tags',
             ],
+            'loaders': [
+                ('django.template.loaders.cached.Loader', [
+                    'django.template.loaders.filesystem.Loader',
+                    'django.template.loaders.app_directories.Loader',
+                ]),
+            ],
+            'string_if_invalid': '',
+            'debug': DEBUG,
         },
     },
 ]
@@ -472,9 +483,8 @@ for country in pycountry.historic_countries:
         override.setdefault('numeric', country.numeric)
 
 
-CUSTOM_COUNTRIES_ = {
-    'BY': ['BY', 'BPR'],
-}
+CUSTOM_COUNTRIES_ = getattr(conf, 'CUSTOM_COUNTRIES', {})
+FILTER_CUSTOM_COUNTRIES_ = getattr(conf, 'FILTER_CUSTOM_COUNTRIES', {})
 
 
 # guardian
@@ -486,21 +496,30 @@ GUARDIAN_AUTO_PREFETCH = True
 if DEBUG:
     MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
+
+    DEBUG_TOOLBAR_DISABLE_PANELS = {
+        'debug_toolbar.panels.templates.TemplatesPanel',
+        'debug_toolbar.panels.redirects.RedirectsPanel',
+        'debug_toolbar.panels.request.RequestPanel',
+    }
+
     DEBUG_TOOLBAR_PANELS = [
-      'debug_toolbar.panels.history.HistoryPanel',
-      'debug_toolbar.panels.versions.VersionsPanel',
-      'debug_toolbar.panels.timer.TimerPanel',
-      'debug_toolbar.panels.settings.SettingsPanel',
-      'debug_toolbar.panels.headers.HeadersPanel',
-      'debug_toolbar.panels.sql.SQLPanel',
-      'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-      'debug_toolbar.panels.cache.CachePanel',
-      'debug_toolbar.panels.signals.SignalsPanel',
-      'debug_toolbar.panels.logging.LoggingPanel',
-      'debug_toolbar.panels.profiling.ProfilingPanel',
-      # 'debug_toolbar.panels.templates.TemplatesPanel',
-      # 'debug_toolbar.panels.redirects.RedirectsPanel',
-      # 'debug_toolbar.panels.request.RequestPanel',
+        panel for panel in [
+          'debug_toolbar.panels.history.HistoryPanel',
+          'debug_toolbar.panels.versions.VersionsPanel',
+          'debug_toolbar.panels.timer.TimerPanel',
+          'debug_toolbar.panels.settings.SettingsPanel',
+          'debug_toolbar.panels.headers.HeadersPanel',
+          'debug_toolbar.panels.sql.SQLPanel',
+          'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+          'debug_toolbar.panels.cache.CachePanel',
+          'debug_toolbar.panels.signals.SignalsPanel',
+          'debug_toolbar.panels.profiling.ProfilingPanel',
+          'debug_toolbar.panels.templates.TemplatesPanel',
+          'debug_toolbar.panels.redirects.RedirectsPanel',
+          'debug_toolbar.panels.request.RequestPanel',
+        ]
+        if panel not in DEBUG_TOOLBAR_DISABLE_PANELS
     ]
 
     def show_toolbar_callback(request):
@@ -514,11 +533,7 @@ if DEBUG:
 
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_TOOLBAR_CALLBACK': show_toolbar_callback,
-        'DISABLE_PANELS': {
-            'debug_toolbar.panels.templates.TemplatesPanel',
-            'debug_toolbar.panels.redirects.RedirectsPanel',
-            'debug_toolbar.panels.request.RequestPanel',
-        },
+        'DISABLE_PANELS': DEBUG_TOOLBAR_DISABLE_PANELS,
     }
 
 # WEBPUSH
@@ -760,6 +775,16 @@ STANDINGS_SMALL_N_STATISTICS = 1000
 STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT = 0.2
 
 UPSOLVING_FILTER_DEFAULT = True
+
+GEOIP_PATH = os.path.join(BASE_DIR, 'sharedfiles', 'GeoLite2-Country.mmdb')
+GEOIP_ACCOUNT_ID = getattr(conf, 'GEOIP_ACCOUNT_ID')
+GEOIP_LICENSE_KEY = getattr(conf, 'GEOIP_LICENSE_KEY')
+
+GEOIP = None
+if os.path.exists(GEOIP_PATH):
+    GEOIP = GeoIP2(GEOIP_PATH)
+elif GEOIP_ACCOUNT_ID or GEOIP_LICENSE_KEY:
+    logging.warning('GeoIP database not found. Run ./manage.py download_geoip_database to download it.')
 
 
 class NOTIFICATION_CONF:

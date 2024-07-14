@@ -19,6 +19,7 @@ from urllib.parse import urljoin
 import pytz
 import tqdm
 from django.core.cache import cache
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from ratelimiter import RateLimiter
 
@@ -40,6 +41,7 @@ class Statistic(BaseModule):
         is_clash = bool(clash_hubs)
         escape_url = challenge.get('externalUrl', '')
         is_escape = '://escape.' in escape_url
+        is_battle = challenge.get('type') == 'BATTLE'
 
         @RateLimiter(max_calls=10, period=1)
         def get_leaderboard(url, column="", value="", limit=None):
@@ -109,6 +111,7 @@ class Statistic(BaseModule):
         opening = {}
         percentages = []
         has_codinpoints = False
+        now_timestamp = int(now().timestamp())
         with PoolExecutor(max_workers=8) as executor:
             hidden_fields = set()
             result = {}
@@ -152,13 +155,12 @@ class Statistic(BaseModule):
                         ('clashes_count', 'clashes_count'),
                         ('pseudo', 'name'),
                         ('countryId', 'country'),
-                        ('company', 'company'),
-                        ('school', 'school'),
+                        ('agentId', 'agent_id'),
                     ):
                         if field in row:
                             r[out] = row.pop(field)
-                            if field in ('school', 'company'):
-                                hidden_fields.add(field)
+                            if out in {'agent_id'}:
+                                hidden_fields.add(out)
 
                     if 'updateTime' in row:
                         row['update_time'] = row.pop('updateTime') / 1000
@@ -177,13 +179,31 @@ class Statistic(BaseModule):
 
                     stat = (statistics or {}).get(handle)
                     if stat:
-                        for field in ['codinpoints', '_last_agent_id']:
+                        saved_fields = ['codinpoints', '_agent_id', '_score_history']
+                        for field in saved_fields:
                             if field in stat and field not in r:
                                 r[field] = stat[field]
 
-                    if 'percentage' in row:
-                        row['percentage'] = min(row['percentage'], 100)
-                        percentages.append(row['percentage'])
+                    if 'percentage' in r:
+                        r['percentage'] = min(r['percentage'], 100)
+                        percentages.append(r['percentage'])
+
+                        if is_battle and r['percentage'] < 100:
+                            r['_score_percentage'] = r['percentage'] / 100
+
+                        if r['percentage'] == 100 and r.get('agent_id') != r.get('_agent_id'):
+                            r['_new_agent'] = True
+                            r['_agent_id'] = r['agent_id']
+
+                        if r['percentage'] == 100:
+                            score_history = r.setdefault('_score_history', [])
+                            score_history.append({
+                                'timestamp': now_timestamp,
+                                'score': r['solving'],
+                                'rank': r['place'],
+                                **({'league': r['league']} if 'league' in r else {}),
+                                **({'updated': True} if r.get('_new_agent') else {}),
+                            })
 
                     has_codinpoints |= bool(row.get('codinpoints'))
 
@@ -303,10 +323,8 @@ class Statistic(BaseModule):
 
         for row in result.values():
             row['_skip_subscriptions'] = True
-            if 'agent_id' in row and row.get('percentage') == 100:
-                if row['agent_id'] != row.get('_last_agent_id'):
-                    row['_force_subscriptions'] = True
-                row['_last_agent_id'] = row['agent_id']
+            if row.get('_new_agent'):
+                row['_force_subscriptions'] = True
 
         fixed_fields = [
             ('league', 'league'),
@@ -354,7 +372,7 @@ class Statistic(BaseModule):
                 standings['timing_statistic_delta'] = timedelta(minutes=30)
                 standings['options'].pop('medals', None)
 
-        if challenge.get('type') == 'BATTLE':
+        if is_battle:
             standings['_has_versus'] = {'enable': True}
 
         return standings
@@ -480,27 +498,40 @@ class Statistic(BaseModule):
         for gidx, game in zip(reversed(range(len(data))), data):
             if not game.get('done'):
                 continue
-            for player in game['players']:
-                if player['userId'] != user_id:
+            for me in game['players']:
+                if me['userId'] != user_id:
                     continue
                 for opponent in game['players']:
                     if opponent['userId'] == user_id:
                         continue
                     stat = stats.setdefault(str(opponent['userId']), defaultdict(int))
 
-                    players = sorted([player, opponent], key=lambda p: p['position'])
+                    players = sorted(deepcopy(game['players']), key=lambda p: p['position'])
+                    players_info = []
+                    for player in players:
+                        player_info = f'{player.get("nickname","")}#{player["position"] + 1}'
+                        if player['userId'] == user_id:
+                            player_info = f'<strong>{player_info}</strong>'
+                        elif player['userId'] == opponent['userId']:
+                            pass
+                        else:
+                            player_info = f'<small class="text-muted">{player_info}</small>'
+                        players_info.append(player_info)
+                    players_info = ' vs '.join(players_info)
+
                     game_info = {
                         'url': self.host + f'/replay/{game["gameId"]}',
                         'index': gidx + 1,
                         'game_id': game["gameId"],
-                        'players': ' vs '.join(f'{p.get("nickname","")}#{p["position"] + 1}' for p in players),
+                        'players': mark_safe(players_info),
                     }
+
                     stat['total'] += 1
                     my['total'] += 1
-                    if player['position'] == opponent['position']:
+                    if me['position'] == opponent['position']:
                         result = 'draw'
                     else:
-                        result = 'win' if player['position'] < opponent['position'] else 'lose'
+                        result = 'win' if me['position'] < opponent['position'] else 'lose'
                     game_info['result'] = result
                     stat[result] += 1
                     my[result] += 1

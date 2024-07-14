@@ -24,7 +24,6 @@
         type="search"
         name="search"
         {% if request.GET.search %}value="{{ request.GET.search }}"{% endif %}
-        placeholder="Regex filter to username"
         {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %}
         autocomplete="off"
         class="form-control"

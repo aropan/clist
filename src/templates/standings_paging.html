@@ -1,4 +1,3 @@
-{% load el_pagination_tags %}
 {% load preload_statistics %}
 
 {% lazy_paginate per_page,per_page_more statistics using 'standings_paging' %}{% get_pages %}
@@ -106,7 +105,12 @@ data-place="{{ place }}"
     {% endwith %}
   {% endif %}
   <{{ tag }} class="score-cell sticky-column" data-sticky-column="score-cell">
-    <div>{{ statistic.addition_replacement.solving|default:statistic.solving|scoreformat }}</div>
+    {% with score_percentage=statistic.addition|get_item:"_score_percentage" %}{% if score_percentage %}
+    <div class="progress-container" data-toggle="tooltip" title="{{ score_percentage|multiply:100|floatformat }}%">
+      <div class="progress-circle" style="--progress: {{ score_percentage|multiply:100|floatformat:0 }}%;"></div>
+    </div>
+    {% endif %}{% endwith %}
+    {{ statistic.addition_replacement.solving|default:statistic.solving|scoreformat }}
   </{{ tag }}>
   {% if mod_penalty %}
   <{{ tag }} class="gap-cell">
@@ -143,36 +147,13 @@ data-place="{{ place }}"
   {% endfor %}
   {% endwith %}
 
-  {% for problem in problems %}
-    {% with key=problem|get_problem_short  %}
-    {% with stat=addition.problems|get_item:key %}
-    {% with with_first=params.division|pass_arg:problem|allow_first:stat %}
-    <{{ tag }}
-      class="problem-cell{% if stat %} problem-cell-stat{% if '_class' in stat %} {{ stat|get_item:"_class" }}{% elif with_first and stat.first_ac_of_all %} first-ac-of-all{% elif with_first and stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}"
-      {% if stat %}
-      data-score="{% if not problem.full_score or not stat.binary and not stat.result|slice:":1" == "+" %}{{ stat.result }}{% else %}{{ problem.full_score }}{% endif %}"
-      data-result="{{ stat.result }}"
-      {% if other_contests and contest_timeline %}
-      {% with other_timeline=contests_timelines|get_item:statistic.contest_id %}
-      data-penalty="{% if stat.time %}{% if other_timeline %}{{ other_timeline|time_in_seconds:stat.time|divide:contest_timeline.time_factor.1.0 }}{% else %}{{ stat.time }}{% endif %}{% endif %}"
-      {% endwith %}
-      {% else %}
-      data-penalty="{% if relative_problem_time and stat.absolute_time %}{{ stat.absolute_time }}{% else %}{{ stat.time }}{% endif %}"
-      {% endif %}
-      data-penalty-in-seconds="{{ stat.time_in_seconds }}"
-      data-more-penalty="{{ stat.penalty }}"
-      data-class="{% if '_class' in stat %}{{ stat|get_item:"_class" }}{% elif with_first and stat.first_ac_of_all %}first-ac-of-all{% elif with_first and stat.first_ac %}first-ac{% elif stat.max_score %}max-score{% endif %}"
-      {% if statistic.virtual_start %}data-active-switcher="true"{% endif %}
-      {% endif %}
-      data-problem-key="{{ key }}"
-      data-problem-full-score="{{ problem.full_score }}"
-    >
-      {% include "standings_problem_stat.html" with stat=stat my_stat=statistic.my_stat %}
-    </{{ tag }}>
-    {% endwith %}
-    {% endwith %}
-    {% endwith %}
-  {% endfor %}
+  {% if request.GET.languages or request.GET.verdicts %}
+    {% include "standings_statistic_problems.html" %}
+  {% else %}
+    {% cache None "standings_statistic_problems" division statistic.id statistic.modified statistic.my_stat with_detail %}
+    {% include "standings_statistic_problems.html" %}
+    {% endcache %}
+  {% endif %}
 </tr>
 {% if statistic.my_stat and statistic.floating and rev %}{% include "standings_paging_previous.html" %}{% endif %}
 {% endwith %}

@@ -416,9 +416,10 @@ def read_response(response):
         return buf.read()
 
 
-def curl_response(url, headers=None):
-
+def curl_response(url, headers=None, cookie_file=None):
     args = ['curl', '-i', url, '-L', '--compressed']
+    if cookie_file:
+        args.extend(['-b', cookie_file, '-c', cookie_file])
     if headers:
         for k, v in headers.items():
             args.extend(['-H', f'{k}: {v}'])
@@ -564,6 +565,7 @@ class requester():
         params=None,
         with_curl=False,
         with_referer=True,
+        curl_cookie_file=None,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -643,7 +645,7 @@ class requester():
                 post_urlencoded, multipart_headers = encode_multipart(fields=post, files=files)
                 headers.update(multipart_headers)
             elif content_type:
-                headers.update({"Content-type": content_type})
+                headers.update({"Content-Type": content_type})
 
             n_attempts = n_attempts or self.n_attempts
             attempt = 0
@@ -664,7 +666,7 @@ class requester():
                     proxy = self.proxy
 
                     if with_curl:
-                        response = curl_response(url, headers)
+                        response = curl_response(url, headers=headers, cookie_file=curl_cookie_file)
                         if response.code != 200:
                             raise CurlFailedResponse(response)
                         last_url = url
