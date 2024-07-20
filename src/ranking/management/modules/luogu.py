@@ -30,7 +30,7 @@ class Statistic(BaseModule):
         }
         return REQ.get(*args, **kwargs, additional_attempts=additional_attempts, additional_delay=50, n_attempts=3)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         is_icpc = self.contest.standings_kind == 'icpc'
         with_partial = self.contest.standings_kind not in {'cf'}
         standings_url = Statistic.SCOREBOARD_URL_FORMAT_.format(url=self.url)

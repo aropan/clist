@@ -40,7 +40,7 @@ class Statistic(BaseModule):
                 raise e
         return page
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         standings_url = self.url.rstrip('/') + '/leaderboard'
 
@@ -316,9 +316,9 @@ class Statistic(BaseModule):
         pages_offset += n_pages
         if pages_offset <= total_pages:
             standings['_pages_offset'] = pages_offset
-            standings['_reparse_statistics'] = True
+            standings['require_statistics_update'] = True
             standings['skip_problem_rating'] = True
-            standings.setdefault('info_fields', []).extend(['_pages_offset', '_reparse_statistics'])
+            standings.setdefault('info_fields', []).extend(['_pages_offset'])
 
         return standings
 

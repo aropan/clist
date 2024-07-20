@@ -34,7 +34,7 @@ def query(url, *args, **kwargs):
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         parse_info = self.info.get('parse', {})
         is_rated = parse_info.get('isRated', False)
 
@@ -87,10 +87,15 @@ class Statistic(BaseModule):
                 if re.match('cholpan[0-9]*', handle):
                     continue
                 r = result.setdefault(handle, {'member': handle})
-                if is_rated:
+                is_unrated = row.get('isUnrated')
+                if not is_unrated and is_rated:
                     r['old_rating'] = row.pop('rating')
                     r['rating_change'] = row.pop('delta')
                     r['new_rating'] = row.pop('newRating')
+                else:
+                    row.pop('rating', None)
+                    row.pop('delta', None)
+                    row.pop('newRating', None)
 
                 if team:
                     r['name'] = row.pop('name')
@@ -103,9 +108,7 @@ class Statistic(BaseModule):
                 r['place'] = row.pop('rank')
                 r['solving'] = row.pop('points')
                 r['penalty'] = row.pop('penalties')
-
                 upsolving = row.get('isVirtual')
-
                 problems = r.setdefault('problems', {})
                 for problem_info in row.pop('problemsInfo'):
                     short = problem_info['problemSymbol']
@@ -132,7 +135,7 @@ class Statistic(BaseModule):
                         problem['time_in_seconds'] = (accepted_time - self.start_time).total_seconds()
 
                 for k, v in row.items():
-                    if k not in hidden_fields:
+                    if k not in r:
                         r[k] = v
                         hidden_fields.add(k)
 

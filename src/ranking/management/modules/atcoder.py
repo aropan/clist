@@ -243,7 +243,7 @@ class Statistic(BaseModule):
                     submissions_info['last_submission_time'] = \
                         last_submission_time if last_page == self.DEFAULT_LAST_PAGE else last_page_st
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         result = {}
         standings_url = self.standings_url or self.STANDING_URL_.format(self)
 

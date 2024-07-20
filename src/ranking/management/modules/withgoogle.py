@@ -555,7 +555,7 @@ class Statistic(BaseModule):
 
         return standings
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if 'hashcode_scoreboard' in self.info:
             ret = self._hashcode(users, statistics)
         elif '/codingcompetitions.withgoogle.com/' in self.url:

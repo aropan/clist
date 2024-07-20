@@ -13,7 +13,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if self.standings_url is None:
             raise ExceptionParseStandings('Standings url is none')
 

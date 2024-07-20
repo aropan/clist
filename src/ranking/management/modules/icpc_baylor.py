@@ -226,7 +226,7 @@ class Statistic(BaseModule):
 
             row.setdefault('submissions', []).append(submission)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         is_regional = getattr(self, 'is_regional', False)
         entry = re.search(r'\b[0-9]{4}\b-\b[0-9]{4}\b', self.key)
         if entry:

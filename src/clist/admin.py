@@ -68,6 +68,7 @@ class ContestAdmin(BaseModelAdmin):
                                'rating_prediction_timing', 'created', 'modified', 'updated']}],
         ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
                                'rating_prediction_fields']}],
+        ['Problem', {'fields': ['n_problems', 'problem_rating_hash']}],
         ['Submission', {'fields': ['has_submissions', 'has_submissions_tests']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
@@ -219,9 +220,6 @@ class ProblemAdmin(BaseModelAdmin):
     list_display = ['name', 'index', 'key', 'short', 'n_attempts', 'n_accepted', 'divisions', 'url', 'visible']
     list_filter = ['visible', 'resource']
     search_fields = ['contest', 'name']
-
-    def get_readonly_fields(self, request, obj=None):
-        return ['updated'] + list(super().get_readonly_fields(request, obj))
 
 
 @admin_register(ProblemTag)

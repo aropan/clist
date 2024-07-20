@@ -70,7 +70,7 @@ class Statistic(BaseModule):
             self.standings_url = f'{self.url.rstrip("/")}/leaderboard'
         self.authorize()
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         result = {}
         problems_info = OrderedDict()

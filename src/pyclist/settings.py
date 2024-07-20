@@ -63,8 +63,11 @@ SECRET_KEY = conf.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-PYLINT_ENV = env('DJANGO_ENV') == 'pylint'
-DEBUG = env('DJANGO_ENV') == 'dev' or PYLINT_ENV
+DEV_ENV = 'dev'
+PROD_ENV = 'prod'
+ENVIRONMENT = env('DJANGO_ENV')
+PYLINT_ENV = ENVIRONMENT == 'pylint'
+DEBUG = ENVIRONMENT == DEV_ENV or PYLINT_ENV
 
 # Application definition
 
@@ -797,6 +800,13 @@ class NOTIFICATION_CONF:
         (TELEGRAM, 'Telegram'),
         (WEBBROWSER, 'WebBrowser'),
     )
+
+
+SHELL_PLUS_IMPORTS = [
+    ('django.core.management', 'call_command'),
+    ('collections', 'defaultdict'),
+    ('tqdm'),
+]
 
 
 # Sentry

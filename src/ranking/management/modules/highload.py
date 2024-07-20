@@ -11,7 +11,7 @@ class Statistic(BaseModule):
 
     API_STANDINGS_URL_FORMAT_ = '/api/timed_competitions/leaderboard/v1/'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         api_standings_url = urljoin(self.url, Statistic.API_STANDINGS_URL_FORMAT_)
 
         standings_data = REQ.get(

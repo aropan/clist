@@ -119,7 +119,7 @@
 {% for more_field in params.more_fields %}
 <td>
   {% with value=contest|get_item:more_field info_value=contest.info|get_item:more_field %}
-  {% include "field_value.html" with value=value|default:info_value field=more_field %}
+  {% include "field_value.html" with value=value|ifnone:info_value field=more_field %}
   {% endwith %}
 </td>
 {% endfor %}

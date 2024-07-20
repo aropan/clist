@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import re
-from pprint import pprint
 
 from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.excepts import InitModuleException, ExceptionParseStandings
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
 class Statistic(BaseModule):
@@ -16,7 +15,7 @@ class Statistic(BaseModule):
         if not self.key:
             raise InitModuleException()
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = Statistic.STANDING_URL_FORMAT_.format(self)
         page = REQ.get(standings_url, time_out=12)
 
@@ -81,8 +80,3 @@ class Statistic(BaseModule):
             'url': standings_url,
         }
         return standings
-
-
-if __name__ == '__main__':
-    pprint(Statistic(key='18947').get_standings())
-    pass

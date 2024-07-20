@@ -16,7 +16,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         try:
             page = REQ.get(self.url)
         except FailOnGetResponse as e:

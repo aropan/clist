@@ -6,7 +6,6 @@ import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime
-from pprint import pprint
 from time import sleep
 
 import pytz
@@ -38,7 +37,7 @@ class Statistic(BaseModule):
         #     if form and 'validate-password' in form['url']:
         #         REQ.submit_form(data=data, form=form, headers=self.headers)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         is_final = bool(re.search(r'\bfinals?\b', self.name, re.IGNORECASE))
         page = REQ.get(self.standings_url, headers=self.headers)
         matches = re.finditer(r'\["(?P<name>[^"]*)",\[\],{"token":"(?P<token>[^"]*)"', page)
@@ -259,13 +258,3 @@ class Statistic(BaseModule):
     def get_source_code(contest, problem):
         solution = requests.get(problem['url']).content.decode('utf8')
         return {'solution': solution}
-
-
-def run():
-    from clist.models import Contest
-    qs = Contest.objects.filter(resource__host__regex='facebook').order_by('start_time')
-
-    contest = qs.first()
-    print(contest.title, contest.start_time.year)
-    statictic = Statistic(contest=contest)
-    pprint(statictic.get_standings())

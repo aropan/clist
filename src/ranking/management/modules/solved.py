@@ -17,7 +17,7 @@ class Statistic(BaseModule):
     SCOREBOARD_URL_FORMAT_ = 'https://scoreboard.solved.ac/?contestId={cid}'
     API_SCOREBOARD_URL_FORMAT_ = 'https://solved.ac/api/v3/contest/scoreboard?contestId={cid}&page={page}&rated=true&rivals=false'  # noqa
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         cid = self.info.get('parse', {}).get('arenaBojContestId')
         if cid is None:

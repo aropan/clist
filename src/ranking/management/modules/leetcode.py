@@ -21,8 +21,10 @@ from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_copy_item, get_item, is_improved_solution
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
+from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
 from utils.logger import suppress_db_logging_context
+from utils.mathutils import round_sig
 from utils.timetools import datetime_from_timestamp
 
 # from ranking.management.modules import conf
@@ -106,7 +108,7 @@ class Statistic(BaseModule):
 
         return submission, content
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, more_statistics=None, **kwargs):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
 
@@ -149,7 +151,8 @@ class Statistic(BaseModule):
             problems_info_list = list(problems_info.values())
             fetched_problems_info = executor.map(Statistic.get_problem_info, problems_info_list)
             for info, fetched_info in zip(problems_info_list, fetched_problems_info):
-                info.update(fetched_info)
+                if fetched_info is not None:
+                    info.update(fetched_info)
 
         n_top_submissions = get_item(self.resource.info, 'statistics.n_top_download_submissions')
 
@@ -184,10 +187,24 @@ class Statistic(BaseModule):
                         if str(p['question_id']) not in problems_info:
                             return
 
-                    n_page = n_page or (data['user_num'] - 1) // len(data['total_rank']) + 1
+                    per_page = len(data['total_rank'])
+                    n_page = n_page or (data['user_num'] - 1) // per_page + 1
+
+                    if users and more_statistics:
+                        pages = set()
+                        for more_stat in more_statistics.values():
+                            place = as_number(more_stat['place'], force=True)
+                            if place is None:
+                                raise ExceptionParseStandings(f'Invalid place {more_stat["place"]}')
+                            page = (place - 1) // per_page
+                            pages.add(page)
+                        n_page = len(pages)
+                    else:
+                        pages = range(n_page)
+
                     rank_index0 = False
                     for data in tqdm.tqdm(
-                        executor.map(fetch_standings_page, range(n_page)),
+                        executor.map(fetch_standings_page, pages),
                         total=n_page,
                         desc=f'parsing statistics paging from {domain}',
                     ):
@@ -1016,7 +1033,7 @@ class Statistic(BaseModule):
             difficulty=question['difficulty'].lower(),
             hints=question['hints'],
             premium=question['isPaidOnly'],
-            accepted_rate=question['acRate'],
+            accepted_rate=round_sig(question['acRate'], 3),
             id=as_number(question['questionFrontendId']),
         )
         return ret

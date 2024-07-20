@@ -12,7 +12,7 @@ from utils.timetools import parse_datetime
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         url = urljoin(self.resource.parse_url, f'/api/contests/{self.key}')
         data = REQ.get(url, return_json=True)
         data = data.get('data') or {}

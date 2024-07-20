@@ -29,7 +29,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         page = REQ.get(
             self.host + 'services/Challenge/findWorldCupByPublicId',
             post=f'["{self.key}"]',

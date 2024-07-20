@@ -7,7 +7,6 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import sha512
-from pprint import pprint
 from random import choice
 from string import ascii_lowercase
 from time import sleep, time
@@ -262,7 +261,7 @@ class Statistic(BaseModule):
         info['is_accepted'] = is_accepted
         return info
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         now = utc_now()
 
         def parse_points_info(points_info):
@@ -791,13 +790,3 @@ class Statistic(BaseModule):
 
         ret['n_contests'] = len(stats_caches)
         return ret
-
-
-def run(*args):
-    standings = Statistic(
-        url='http://codeforces.com/group/u45n6JRJMl/contest/206201',
-        key='206201:aropan',
-        standings_url=None,
-        info={}
-    ).get_standings()
-    pprint(standings)

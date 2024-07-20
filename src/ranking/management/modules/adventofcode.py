@@ -44,7 +44,7 @@ class Statistic(BaseModule):
                         row.setdefault(key, 0)
                         row[key] += 1
 
-    def _get_private_standings(self, users=None, statistics=None):
+    def _get_private_standings(self, users=None, **kwargs):
         REQ.add_cookie('session', conf.ADVENTOFCODE_SESSION, '.adventofcode.com')
         page = REQ.get(self.url.rstrip('/') + '.json')
         data = json.loads(page)
@@ -264,7 +264,7 @@ class Statistic(BaseModule):
 
         return ret
 
-    def _get_global_standings(self, users=None, statistics=None):
+    def _get_global_standings(self, users=None, **kwargs):
         year = self.start_time.year
         year = year if self.start_time.month >= 9 else year - 1
         ret = {}

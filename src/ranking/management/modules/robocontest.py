@@ -16,7 +16,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.url.rstrip('/') + '/results'
 
         def is_english_locale(page):

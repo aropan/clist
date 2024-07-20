@@ -4,7 +4,6 @@
 import json
 import re
 from tqdm import tqdm
-from pprint import pprint
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
@@ -15,7 +14,7 @@ from ranking.management.modules.common import REQ, BaseModule
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if not self.standings_url:
             name = self.name.lower().replace('-', '')
             info = None
@@ -130,15 +129,3 @@ class Statistic(BaseModule):
             standings['options'] = {'medals': [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]}
 
         return standings
-
-
-def run():
-    from clist.models import Contest
-    qs = Contest.objects.filter(resource__host__regex='russiancodecup').order_by('start_time')
-
-    for contest in qs:
-        statictic = Statistic(contest=contest)
-        standings = statictic.get_standings()
-        standings.pop('result', None)
-        pprint(standings)
-        break

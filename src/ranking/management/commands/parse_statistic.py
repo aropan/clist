@@ -165,8 +165,8 @@ def canonize_name(name):
 class Command(BaseCommand):
     help = 'Parsing statistics'
 
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.logger = logging.getLogger('ranking.parse.statistic')
 
     def add_arguments(self, parser):
@@ -421,6 +421,12 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     _ = Contest.objects.select_for_update().get(pk=contest.pk)
 
+                    statistics_users = copy.deepcopy(users)
+                    if resource.has_standings_renamed_account and users:
+                        renamings = AccountRenaming.objects.filter(resource=resource, old_key__in=users)
+                        renamings = renamings.values_list('new_key', flat=True)
+                        statistics_users.extend(renamings)
+
                     with REQ:
                         statistics_by_key = {}
                         more_statistics_by_key = {}
@@ -429,7 +435,7 @@ class Command(BaseCommand):
                         if not no_update_results:
                             statistics = Statistics.objects.filter(contest=contest).select_related('account')
                             if users:
-                                statistics = statistics.filter(account__key__in=users)
+                                statistics = statistics.filter(account__key__in=statistics_users)
                             for s in statistics.iterator():
                                 addition = s.addition or {}
                                 if with_stats and not addition.get('_skip_on_update'):
@@ -442,7 +448,9 @@ class Command(BaseCommand):
                                     }
                                     has_statistics = True
                                 statistics_ids.add(s.pk)
-                        standings = plugin.get_standings(users=copy.deepcopy(users), statistics=statistics_by_key)
+                        standings = plugin.get_standings(users=copy.deepcopy(users),
+                                                         statistics=statistics_by_key,
+                                                         more_statistics=more_statistics_by_key)
                         has_standings_result = bool(standings.get('result'))
 
                         if resource.has_upsolving:
@@ -580,6 +588,10 @@ class Command(BaseCommand):
                                     result[new_key]['member'] = new_key
                                     result[new_key]['_no_update_name'] = True
                                     result[new_key].pop('info', None)
+
+                    require_statistics_update = standings.pop('require_statistics_update', False)
+                    if require_statistics_update:
+                        contest.require_statistics_update()
 
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics') or {}
@@ -1584,8 +1596,8 @@ class Command(BaseCommand):
                             contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
                         else:
                             contest.info.pop('_timing_statistic_delta_seconds', None)
-                        if not info_fields_values.get('_reparse_statistics'):
-                            contest.info.pop('_reparse_statistics', None)
+                        if not require_statistics_update:
+                            contest.statistics_update_done()
                         contest.save()
                     else:
                         without_calculate_rating_prediction = True
@@ -1611,8 +1623,7 @@ class Command(BaseCommand):
                             contest.url = args[0]
                             contest.save()
 
-                reparse_statistics = contest.info.get('_reparse_statistics')
-                if not reparse_statistics:
+                if not contest.statistics_update_required:
                     if resource.rating_prediction and not without_calculate_rating_prediction and contest.pk:
                         call_command('calculate_rating_prediction', contest=contest.pk)
                         contest.refresh_from_db()
@@ -1651,8 +1662,7 @@ class Command(BaseCommand):
             if not users:
                 module = resource.module
                 delay = module.max_delay_after_end
-                reparse_statistics = contest.info.get('_reparse_statistics')
-                if reparse_statistics or contest.end_time < now or not module.long_contest_divider:
+                if contest.statistics_update_required or contest.end_time < now or not module.long_contest_divider:
                     delay = min(delay, module.delay_on_success if parsed else module.delay_on_error)
                 if now < contest.end_time and module.long_contest_divider:
                     delay = min(delay, contest.full_duration / module.long_contest_divider)
@@ -1776,7 +1786,7 @@ class Command(BaseCommand):
             contests = contests.filter(with_medals=True)
 
         if args.reparse:
-            contests = contests.filter(info___reparse_statistics=True)
+            contests = contests.filter(statistics_update_required=True)
 
         self.parse_statistic(
             contests=contests,

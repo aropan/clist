@@ -14,7 +14,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if self.end_time + timedelta(days=30) < timezone.now():
             raise ExceptionParseStandings('Contest is long over')
 

@@ -18,7 +18,7 @@ from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         url = self.url.split('?')[0].rstrip('/')
         standings_url = url + '/standings'
         problems_url = url + '/problems'

@@ -20,7 +20,7 @@ coloredlogs.install(logger=logger)
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         api_server_url = self.info['parse'].get('contestServerUrl')
         if not api_server_url:
             api_server_url = 'https://server.prepbytes.com'

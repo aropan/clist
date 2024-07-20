@@ -17,7 +17,7 @@ class Statistic(BaseModule):
     API_PROBLEM_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/question/h/{}/details/'
     API_PROFILE_URL_FORMAT_ = '/api/v1/user/{}/'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = urljoin(self.url, '?tab=leaderboard')
 
         hashes = self.key.split('/')

@@ -24,6 +24,4 @@ run_command() {
 
 python3 api/google_calendar/common.py
 
-mkdir -p logs/update
-mkdir -p logs/working
-run_command "php -f update.php 2>&1" "$SENTRY_CRON_MONITOR_LIST_UPDATE" | tee logs/update/index.html
+run_command "php -f update.php 2>&1" "$SENTRY_CRON_MONITOR_LIST_UPDATE" | tee logs/update.log

@@ -118,7 +118,7 @@ class Statistic(BaseModule):
                 if str(dround['id']) == key and dround['tasks']:
                     return dround['tasks'][0]['id']
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if self.standings_url and '/aicups.ru/' in self.standings_url:
             return self.old_aicups_get_standings(users=users, statistics=statistics)
 

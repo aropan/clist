@@ -68,7 +68,7 @@
         global $NLOGMSG;
 
         $curr_time = microtime_float();
-        $msg = date('d.m  H:i:s   ', intval($curr_time)) . sprintf("+%-7.2lf-  ", $curr_time - $PREV_TIME) . $msg . "\n";
+        $msg = date('Y.m.d H:i:s ', intval($curr_time)) . sprintf("%6.2f - ", $curr_time - $PREV_TIME) . $msg . "\n";
 
         $fp = fopen(LOGFILE, 'a');
         fwrite($fp, $msg);

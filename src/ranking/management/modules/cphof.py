@@ -65,7 +65,7 @@ class Statistic(BaseModule):
         info['name'] = html.unescape(match.group('name').strip())
         return info
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.standings_url or self.url
         page = REQ.get(standings_url)
 

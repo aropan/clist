@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
+import copy
 import html
 import re
-import copy
 import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -24,7 +24,7 @@ def extract_team_name(name):
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if not self.standings_url:
             raise ExceptionParseStandings('No standings url')
 
@@ -40,20 +40,27 @@ class Statistic(BaseModule):
                 total_rating = 0
                 season_rating = None
                 handle = None
+                found = False
                 for k, v in row.items():
                     k = k.lower()
                     if rating_idx is not None:
                         season_rating = as_number(v.value, force=True)
                         if season_rating:
                             total_rating += season_rating
+
                         rating_idx += 1
-                        if str(rating_idx) == stage:
+                        href = v.header.node.xpath('.//a/@href')
+                        if not href and str(rating_idx) == stage:
+                            found = True
+                            break
+                        if href and self.standings_url.startswith(href[0]):
+                            found = True
                             break
                     elif 'team' in k:
                         handle = v.value
                     elif 'rating' in k:
                         rating_idx = 0
-                if handle and season_rating:
+                if found and handle and season_rating:
                     rating_data = {
                         'total_rating': total_rating,
                         'season_rating': season_rating,
@@ -101,23 +108,26 @@ class Statistic(BaseModule):
 
         problems_infos = []
         with PoolExecutor(max_workers=8) as executor:
-            problems_short = variables['problems_id']
+            problems_short = variables.pop('problems_id')
             for idx in range(len(problems_short)):
                 if not problems_short[idx]:
                     problems_short[idx] = chr(ord('A') + idx)
-            problems_id = variables['problems']
+            problems_id = variables.pop('problems')
             problems_data = zip(problems_short, problems_id)
             for problem_info in executor.map(fetch_problem, problems_data):
                 problems_infos.append(problem_info)
+        variables.pop('my_name', None)
 
         result = {}
         handle_mapping = {}
         for standings_row in standings:
             solving, penalty, name, rank, rating = standings_row
             if isinstance(name, dict):
-                orig_handle, name = name['0'], name['3']
+                row_data = name
             else:
-                orig_handle, _, _, name, *_ = name
+                row_data = dict(zip(map(str, range(len(name))), name))
+            orig_handle, name = row_data.pop('0'), row_data.pop('3')
+
             scoring = scorings[orig_handle]
             if not scoring:
                 continue
@@ -148,6 +158,7 @@ class Statistic(BaseModule):
                 if rating_data:
                     break
 
+            participant_type = as_number(row_data.pop('2', None))
             row = dict(
                 member=handle,
                 solving=int(solving) // 100,
@@ -155,6 +166,13 @@ class Statistic(BaseModule):
                 penalty=penalty // 60,
                 name=name,
                 original_handle=orig_handle,
+                standings_rating=rating,
+                rating=row_data.pop('1', None),
+                # color=row_data.pop('4', None),
+                # rated=row_data.pop('5', None),
+                affiliation=row_data.pop('6', None),
+                participant_type=participant_type,
+                out_of_competition=participant_type in {1, 2},
                 **rating_data,
             )
 
@@ -195,7 +213,12 @@ class Statistic(BaseModule):
         last_submission_id = submissions_info.get('last_submission_id') if statistics else None
 
         def process_submission_page(page):
-            submission_page = REQ.get(submission_url + '?page=' + str(page))
+            try:
+                submission_page = REQ.get(submission_url + '?page=' + str(page))
+            except FailOnGetResponse as e:
+                if page == 1 and e.code == 404:
+                    return
+                raise e
 
             table = parsed_table.ParsedTable(submission_page)
             n_added = 0
@@ -257,9 +280,11 @@ class Statistic(BaseModule):
         standings = {
             'result': result,
             'problems': problems_infos,
-            'hidden_fields': ['total_rating', 'original_handle'],
+            'hidden_fields': ['total_rating', 'original_handle', 'affiliation', 'rating', 'standings_rating',
+                              'out_of_competition'],
             '_submissions_info': submissions_info,
             'info_fields': ['_submissions_info'],
+            'options': {'data': variables},
         }
         return standings
 

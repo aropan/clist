@@ -1063,6 +1063,11 @@ def iffalse(val, ret=True):
 
 
 @register.filter
+def ifnone(val, ret):
+    return ret if val is None else val
+
+
+@register.filter
 def time_in_seconds(timeline, val):
     times = re.split(r'[:\s]+', str(val))
     factors = timeline.get('time_factor', {}).get(str(len(times)))

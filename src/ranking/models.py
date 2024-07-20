@@ -684,6 +684,9 @@ class Stage(BaseModel):
         filter_statistics = self.score_params.get('filter_statistics')
         if filter_statistics:
             statistics = statistics.filter(**filter_statistics)
+        exclude_statistics = self.score_params.get('exclude_statistics')
+        if exclude_statistics:
+            statistics = statistics.exclude(**exclude_statistics)
 
         def get_placing(placing, stat):
             return placing['division'][stat.addition['division']] if 'division' in placing else placing

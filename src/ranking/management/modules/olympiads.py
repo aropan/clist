@@ -25,7 +25,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         geolocator = Nominatim(user_agent="clist.by")
         geocode_func = partial(geolocator.geocode, timeout=10)
         geocode = RateLimiter(geocode_func, min_delay_seconds=1, max_retries=3)

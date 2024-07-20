@@ -411,10 +411,14 @@ class Contest(BaseModel):
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
     rating_prediction_timing = models.DateTimeField(default=None, null=True, blank=True)
     wait_for_successful_update_timing = models.DateTimeField(default=None, null=True, blank=True)
+    statistics_update_required = models.BooleanField(default=False)
 
     rating_prediction_fields = models.JSONField(default=dict, blank=True, null=True)
     has_fixed_rating_prediction_field = models.BooleanField(default=False, null=True, blank=True)
     rating_prediction_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
+
+    problem_rating_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
+    problem_rating_update_required = models.BooleanField(default=False)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -771,9 +775,25 @@ class Contest(BaseModel):
     def channel_update_statistics_group_name(self):
         return f'{self.channel_group_name}__update_statistics'
 
-    def reparse(self):
-        self.info['_reparse_statistics'] = True
-        self.save(update_fields=['info'])
+    def require_statistics_update(self):
+        if not self.statistics_update_required:
+            self.statistics_update_required = True
+            self.save(update_fields=['statistics_update_required'])
+
+    def require_problem_rating_update(self):
+        if not self.problem_rating_update_required:
+            self.problem_rating_update_required = True
+            self.save(update_fields=['problem_rating_update_required'])
+
+    def statistics_update_done(self):
+        if self.statistics_update_required:
+            self.statistics_update_required = False
+            self.save(update_fields=['statistics_update_required'])
+
+    def problem_rating_update_done(self):
+        if self.problem_rating_update_required:
+            self.problem_rating_update_required = False
+            self.save(update_fields=['problem_rating_update_required'])
 
 
 class ContestSeries(BaseModel):
@@ -829,7 +849,6 @@ class Problem(BaseModel):
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     skip_rating = models.BooleanField(default=None, null=True, blank=True)
     info = models.JSONField(default=dict, blank=True)
-    updated = models.DateTimeField(auto_now=True, db_index=True)
 
     activities = GenericRelation('favorites.Activity', related_query_name='problem')
     notes = GenericRelation('notes.Note', related_query_name='problem')

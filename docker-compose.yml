@@ -87,7 +87,7 @@ services:
       - static_files:/staticfiles/
       - media_files:/mediafiles/
       - ./legacy:/usr/src/legacy/
-      - ./nginx/conf.d:/etc/nginx/conf.d/
+      - ./config/nginx/conf.d:/etc/nginx/conf.d/
       - certbot_www:/var/www/certbot/
       - certbot_conf:/etc/letsencrypt/
       - ./logs/nginx:/var/log/nginx/
@@ -146,7 +146,7 @@ secrets:
   sentry_conf:
     file: ./.env.sentry
   loggly_token:
-    file: ./loggly/.env.token
+    file: ./config/loggly/.env.token
 
 volumes:
   postgres_data:

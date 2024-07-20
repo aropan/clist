@@ -55,7 +55,7 @@ class BaseModule(object, metaclass=ABCMeta):
             setattr(self, k, v)
 
     @abstractmethod
-    def get_standings(self, users=None):
+    def get_standings(self, **kwargs):
         raise NotImplementedError()
 
     @staticmethod
@@ -117,11 +117,6 @@ class BaseModule(object, metaclass=ABCMeta):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
         return season
-
-    def get_result(self, *users):
-        standings = self.get_standings(users)
-        result = standings.get('result', {})
-        return [result.get(u, None) for u in users]
 
     def get_versus(self, *args, **kwargs):
         raise NotImplementedError()

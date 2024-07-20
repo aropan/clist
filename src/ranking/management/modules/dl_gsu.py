@@ -62,7 +62,7 @@ class Statistic(BaseModule):
                 })
         return problems
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_data = None
         if not self.standings_url:
             page = REQ.get(urljoin(self.url, '/'))

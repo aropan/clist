@@ -19,7 +19,7 @@ coloredlogs.install(logger=logger)
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if not self.standings_url:
             raise ExceptionParseStandings('Not set stnadings url')
         is_final = self.name.lower().startswith('final round')

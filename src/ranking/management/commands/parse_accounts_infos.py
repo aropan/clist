@@ -213,6 +213,10 @@ class Command(BaseCommand):
                                 n_counter['deleted'] += 1
                                 account.updated = now + timedelta(days=365)
                                 account.save(update_fields=['deleted', 'updated'])
+                                if not resource.accountrenaming_set.filter(old_key=account.key).exists():
+                                    deleted_count, _ = resource.accountrenaming_set.filter(new_key=account.key).delete()
+                                    if deleted_count:
+                                        n_counter['deleted_renaming'] += deleted_count
                                 seen.add(account.key)
                                 continue
 

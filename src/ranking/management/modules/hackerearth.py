@@ -62,7 +62,7 @@ class Statistic(BaseModule):
                     raise ExceptionParseStandings(e.args[0])
                 sleep(2 * attempt)
 
-    def get_standings(self, users=None, statistics=None, fixed_rank=None):
+    def get_standings(self, users=None, statistics=None, fixed_rank=None, **kwargs):
         standings_url = urllib.parse.urljoin(self.url, 'leaderboard/')
 
         try:

@@ -45,7 +45,7 @@ class Statistic(BaseModule):
         self._username = conf.CODECHEF_USERNAME
         self._password = conf.CODECHEF_PASSWORD
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         # REQ.get('https://www.codechef.com/')
 
         # try:

@@ -14,7 +14,7 @@ class Statistic(BaseModule):
     PROBLEM_URL_FORMAT_ = '/seasons/{season}/tracks/{track}/problem/{problem}'
     API_PROBLEM_URL_FORMAT_ = '/api/seasons/{season}/tracks/{track}/problem/search?currentPage={{page}}&pageSize={{page_size}}'  # noqa
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         season = get_item(self, 'info.parse.slug')
         if not season:
             raise ExceptionParseStandings('Not found season')
@@ -52,6 +52,7 @@ class Statistic(BaseModule):
                         'slug': row.pop('slug'),
                         'tags': tags,
                         'skip_in_standings': True,
+                        'id': row.pop('number'),
                     }
 
                     for k, v in row.items():

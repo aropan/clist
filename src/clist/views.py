@@ -765,6 +765,7 @@ def update_problems(contest, problems=None, force=False):
     if problems is not None and not force:
         if canonize(problems) == canonize(contest.info.get('problems')):
             return
+
     contest.info['problems'] = problems
     contest.save(update_fields=['info'])
 
@@ -1110,7 +1111,7 @@ def problems(request, template='problems.html'):
     custom_info_fields = set()
     if selected_resource:
         fixed_fields = selected_resource.problems_fields.get('fixed_fields', [])
-        custom_fields = fixed_fields + custom_fields
+        custom_fields = custom_fields + fixed_fields
         fixed_fields_set = set(fixed_fields)
         fields_types = selected_resource.problems_fields.get('types', {})
         for field in fields_types:

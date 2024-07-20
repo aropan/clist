@@ -147,13 +147,14 @@ data-place="{{ place }}"
   {% endfor %}
   {% endwith %}
 
-  {% if request.GET.languages or request.GET.verdicts %}
-    {% include "standings_statistic_problems.html" %}
-  {% else %}
-    {% cache None "standings_statistic_problems" division statistic.id statistic.modified statistic.my_stat with_detail %}
-    {% include "standings_statistic_problems.html" %}
-    {% endcache %}
-  {% endif %}
+  {% comment %} {% if request.GET.languages or request.GET.verdicts %} {% endcomment %}
+  {% comment %}   {% include "standings_statistic_problems.html" %} {% endcomment %}
+  {% comment %} {% else %} {% endcomment %}
+  {% comment %}   {% cache None "standings_statistic_problems" division statistic.id statistic.modified statistic.my_stat with_detail %} {% endcomment %}
+  {% comment %}   {% include "standings_statistic_problems.html" %} {% endcomment %}
+  {% comment %}   {% endcache %} {% endcomment %}
+  {% comment %} {% endif %} {% endcomment %}
+  {% include "standings_statistic_problems.html" %}
 </tr>
 {% if statistic.my_stat and statistic.floating and rev %}{% include "standings_paging_previous.html" %}{% endif %}
 {% endwith %}

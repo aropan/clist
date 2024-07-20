@@ -177,14 +177,14 @@ class Command(BaseCommand):
         if args.staleness:
             contests = contests.filter(updated__lt=now() - timedelta(days=args.staleness))
         if args.reparse:
-            contests = contests.filter(info___reparse_problem_rating=True)
+            contests = contests.filter(problem_rating_update_required=True)
 
         contests = contests.order_by('-end_time')
         contests = contests.filter(end_time__lt=now())
         contests = contests.exclude(problem_set=None)
         contests = contests.select_related('resource')
         if args.onlynew:
-            contests = contests.filter(info___problems_ratings_hash__isnull=True)
+            contests = contests.filter(problem_rating_hash__isnull=True)
         if args.limit:
             contests = contests[:args.limit]
 
@@ -211,10 +211,10 @@ class Command(BaseCommand):
 
             resource = contest.resource
             rating_adjustment = resource.info.get('ratings', {}).get('adjustment')
-            problems_ratings_info = resource.info.get('ratings', {}).get('problems', {})
+            problem_rating_info = resource.info.get('ratings', {}).get('problems', {})
             ignore_missing_account = (
                 args.ignore_missing_account
-                or problems_ratings_info.get('ignore_missing_account')
+                or problem_rating_info.get('ignore_missing_account')
             )
 
             if not contest.is_major_kind():
@@ -259,13 +259,12 @@ class Command(BaseCommand):
                 n_empty += 1
                 self.logger.warning(f'skip empty contest = {contest}')
                 event_log.update_status(EventStatus.SKIPPED, message='empty contest')
-                contest.info.pop('_reparse_problem_rating', None)
-                contest.save(update_fields=['info'])
+                contest.problem_rating_update_done()
                 continue
 
             rows_values = tuple(sorted(rows_values))
-            problems_ratings_value = (self.VERSION, rows_values)
-            problems_ratings_hash = hashlib.sha256(str(problems_ratings_value).encode('utf8')).hexdigest()
+            problem_rating_value = (self.VERSION, rows_values)
+            problem_rating_hash = hashlib.sha256(str(problem_rating_value).encode('utf8')).hexdigest()
             empty_problem_rating = False
             for problem in contest.problem_set.all():
                 if problem.rating is None:
@@ -274,13 +273,12 @@ class Command(BaseCommand):
             if (
                 not empty_problem_rating and
                 not args.force and
-                contest.info.get('_problems_ratings_hash') == problems_ratings_hash
+                contest.problem_rating_hash == problem_rating_hash
             ):
                 n_skip_hash += 1
                 self.logger.warning(f'skip unchanged hash contest = {contest}')
                 event_log.update_status(EventStatus.SKIPPED, message='unchanged hash')
-                contest.info.pop('_reparse_problem_rating', None)
-                contest.save(update_fields=['info'])
+                contest.problem_rating_update_done()
                 continue
 
             contests_divisions_data = dict()
@@ -362,8 +360,7 @@ class Command(BaseCommand):
                 n_skip_missing += 1
                 self.logger.warning(f'skip by missing account = {contest}')
                 event_log.update_status(EventStatus.SKIPPED, message='missing account')
-                contest.info.pop('_reparse_problem_rating', None)
-                contest.save(update_fields=['info'])
+                contest.problem_rating_update_done()
                 continue
 
             for info in contests_divisions_data.values():
@@ -414,12 +411,12 @@ class Command(BaseCommand):
                         problem_info['wratings'].append((weight, rating))
                         problem_info['solved'] += weight * solved
 
-            problems_ratings = {}
+            problem_ratings = {}
             for problem_key, problem_info in problems_infos.items():
                 if problem_key in skip_problems:
                     continue
                 rating = get_weighted_rating(problem_info['wratings'], problem_info['solved'])
-                problems_ratings[problem_key] = round(rating)
+                problem_ratings[problem_key] = round(rating)
 
             if not args.dryrun:
                 problems = contest.info['problems']
@@ -431,15 +428,17 @@ class Command(BaseCommand):
                     list_problems = problems
                 for problem in list_problems:
                     key = get_problem_key(problem)
-                    problem['rating'] = problems_ratings.get(key)
+                    problem['rating'] = problem_ratings.get(key)
                 update_problems(contest, problems, force=True)
-                contest.info['_problems_ratings_hash'] = problems_ratings_hash
-                contest.save()
+                contest.problem_rating_hash = problem_rating_hash
+                if args.force:
+                    contest.save(update_fields=['problem_rating_hash'])
+                else:
+                    contest.save()
                 n_done += 1
                 self.logger.info(f'done contest = {contest}')
                 event_log.update_status(EventStatus.COMPLETED)
-                contest.info.pop('_reparse_problem_rating', None)
-                contest.save(update_fields=['info'])
+                contest.problem_rating_update_done()
 
         if resource_event_log:
             resource_event_log.delete()
