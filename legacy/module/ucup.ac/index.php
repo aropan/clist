@@ -5,24 +5,27 @@
     $near_season = date('Y') - 2022;
     $seen = array();
     for ($season = $near_season; $season <= $near_season + 1; $season += 1) {
-        $url = "https://ucup.ac/rating?season=$season";
-        $rating_page = curlexec($url);
+        $stage_standings_url = "https://ucup.ac/rating?season=$season";
+        $rating_page = curlexec($stage_standings_url);
         preg_match_all('#<th[^>]*>\s*<a[^>]*href="(?P<href>[^"]*)"[^>]*>(?P<title>[^<]*)</a>\s*</th>#s', $rating_page, $matches, PREG_SET_ORDER);
         $standings = array();
         foreach ($matches as $stage => $th) {
-            $standings_url = url_merge($url, $th['href']);
+            $standings_url = url_merge($stage_standings_url, $th['href']);
             $parsed_url = parse_url($standings_url);
             $parsed_url['path'] = rtrim($parsed_url['path'], '/') . '/standings/';
             $standings_url = unparse_url($parsed_url);
             $standings[$stage] = array("standings_url" => $standings_url, "title" => $th['title'], "stage" => $stage);
         }
 
-        $url = "https://ucup.ac/?season=$season";
-        $schedule_page = curlexec($url);
+        $stage_url = "https://ucup.ac/?season=$season";
+        $schedule_page = curlexec($stage_url);
 
         if (!preg_match('#<h1[^>]*>[^<]*\bseason\b\s*\b' . $season . '\b[^<]*</h1>#i', $schedule_page)) {
             continue;
         }
+
+        $stage_start_time = null;
+        $stage_end_time = null;
 
         preg_match_all('#<tr>.*?</tr>#s', $schedule_page, $rows, PREG_SET_ORDER);
         $headers = false;
@@ -36,7 +39,7 @@
             $values = $cols['values'];
             foreach ($values as &$value) {
                 if (preg_match('#<a[^>]*href="(?P<href>[^"]*)"[^>]*>#', $value, $match)) {
-                    $value = url_merge($url, $match['href']);
+                    $value = url_merge($stage_url, $match['href']);
                 }
                 $value = preg_replace('#<[^?]*>.*$#', '', $value);
                 $value = trim($value);
@@ -96,12 +99,17 @@
             }
             $seen[$start_and_title] = true;
 
+            if ($stage_start_time === null) {
+                $stage_start_time = $start_time;
+            }
+            $stage_end_time = $end_time;
+
             $contest = array(
                 'start_time' => $start_time,
                 'end_time' => $end_time,
                 'duration' => $duration,
                 'title' => trim($title),
-                'url' => isset($c['announcement'])? $c['announcement'] : $url,
+                'url' => isset($c['announcement'])? $c['announcement'] : $stage_url,
                 'standings_url' => $standings_url,
                 'key' => $key,
                 'info' => $info,
@@ -112,5 +120,21 @@
 
             $contests[] = $contest;
         }
+
+        $two_weeks = 14 * 24 * 60 * 60;
+        $stage_end_time = strtotime($stage_end_time) + $two_weeks;
+        $contest = array(
+            'start_time' => $stage_start_time,
+            'end_time' => $stage_end_time,
+            'title' => "The " . ordinal($season) . " Universal Cup. Rating",
+            'url' => $stage_url,
+            'standings_url' => $stage_standings_url,
+            'key' => 'ucup-' . $season . '-rating',
+            'info' => array('_inherit_stage' => true),
+            'host' => $HOST,
+            'timezone' => $TIMEZONE,
+            'rid' => $RID,
+        );
+        $contests[] = $contest;
     }
 ?>

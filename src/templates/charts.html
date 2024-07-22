@@ -42,6 +42,12 @@
   {% endfor %}
 
   {% include "field_to_select.html" with field="field" data=entity_fields_select %}
+
+  {% if model.admin_url %}
+  <div class="input-group{% if not nosm %} input-group-sm{% endif %}">
+    <a class="btn btn-default btn-sm" href="{% filtered_admin_url model.admin_url field_selects=selection_field_selects %}" target="_blank">{% icon_to 'extra_url' %}</a>
+  </div>
+  {% endif %}
 </form>
 
 <script>configure_pagination()</script>
@@ -50,7 +56,7 @@
 {% include 'chart.html' with chart=chart without_close_chart=True %}
 </div>
 
-{% if entities is not None %}
+{% if entities is not None and entities.exists %}
 <div id="entities" class="panel panel-default table-responsive">
   <table class="table table-hover table-striped table-float-head">
     <thead>

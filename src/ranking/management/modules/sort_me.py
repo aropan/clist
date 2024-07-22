@@ -8,7 +8,7 @@ from ranking.management.modules.common import REQ, BaseModule
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         total_pages = None
         curr_page = 0
         result = {}

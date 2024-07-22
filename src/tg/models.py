@@ -1,6 +1,7 @@
 from django.db import models
 
 from pyclist.models import BaseModel
+from ranking.models import Account
 from true_coders.models import Coder
 
 
@@ -14,10 +15,16 @@ class Chat(BaseModel):
     last_command = models.JSONField(default=dict, blank=True)
     is_group = models.BooleanField(default=False)
     coders = models.ManyToManyField(Coder, blank=True, related_name='chats')
+    accounts = models.ManyToManyField(Account, blank=True, related_name='chats')
     settings = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return "%s Chat#%s" % (self.title or self.name or self.chat_id, self.id)
+
+    def save(self, *args, **kwargs):
+        if not self.thread_id:
+            self.thread_id = None
+        super().save(*args, **kwargs)
 
     def get_group_name(self):
         return "%s@%s" % (self.chat_id, self.title)

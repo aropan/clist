@@ -48,21 +48,31 @@
         return;
     }
     $json['status'] == 'OK' or trigger_error("status = '${json['status']}' for $url");
+    $global_rounds_stage_year = false;
     foreach ($json['result'] as $c) {
         $title = $c['name'];
         if (!isset($c['startTimeSeconds'])) {
             continue;
+        }
+        $url = 'https://codeforces.com/contests/' . $c['id'];
+
+        if (preg_match('/^Codeforces Global Round /', $title)) {
+            $year = date('Y', $c['startTimeSeconds']);
+            if (!$global_rounds_stage_year || $global_rounds_stage_year < $year) {
+                $global_rounds_stage_year = $year;
+                $global_rounds_url = $url;
+            }
         }
 
         $contest = array(
             'start_time' => $c['startTimeSeconds'],
             'duration' => $c['durationSeconds'] / 60,
             'title' => $title,
-            'url' => 'https://codeforces.com/contests/' . $c['id'],
-            'host' => $HOST,
+            'url' => $url,
             'key' => $c['id'],
+            'host' => $HOST,
             'rid' => $RID,
-            'timezone' => $TIMEZONE
+            'timezone' => $TIMEZONE,
         );
 
         if (isset($authors[$c['id']])) {
@@ -74,5 +84,20 @@
         }
 
         $contests[] = $contest;
+    }
+
+    if ($global_rounds_stage_year) {
+        $contests[] = array(
+            'start_time' =>  "$global_rounds_stage_year-01-01 12:00",
+            'end_time' =>  "$global_rounds_stage_year-12-31 12:00",
+            'title' => "Codeforces Global Rounds $global_rounds_stage_year",
+            'url' => $global_rounds_url,
+            'host' => $HOST,
+            'key' => "codeforces-global-rounds-$global_rounds_stage_year",
+            'info' => array('_inherit_stage' => true),
+            'host' => $HOST,
+            'rid' => $RID,
+            'timezone' => $TIMEZONE,
+        );
     }
 ?>

@@ -5,7 +5,7 @@ import math
 import os
 import re
 from collections.abc import Iterable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from urllib.parse import urljoin, urlparse
 
@@ -15,15 +15,16 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import Case, F, Max, Q, When
 from django.db.models.expressions import Exists, OuterRef
 from django.db.models.functions import Cast, Ln
 from django.urls import reverse
-from django.utils import timezone
+from django.utils.timezone import now as timezone_now
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
 
 from clist.templatetags.extras import get_item, get_problem_key, slug
+from logify.models import EventLog, EventStatus
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
@@ -49,6 +50,15 @@ class AvailableForUpdateResourceManager(BaseManager):
         ongoing_contests = Contest.ongoing_objects.filter(resource_id=OuterRef('pk'))
         ret = ret.annotate(has_ongoing_contests=Exists(ongoing_contests))
         ret = ret.filter(~with_updating | Q(has_ongoing_contests=False))
+
+        parse_statistic_in_progress = EventLog.objects.filter(
+            name='parse_statistic',
+            status=EventStatus.IN_PROGRESS,
+            contest__resource_id=OuterRef('pk'),
+        )
+        ret = ret.annotate(parse_statistic_in_progress=Exists(parse_statistic_in_progress))
+        ret = ret.filter(parse_statistic_in_progress=False)
+
         return ret
 
 
@@ -77,6 +87,7 @@ class Resource(BaseModel):
     country_rank_update_time = models.DateTimeField(null=True, blank=True)
     contest_update_time = models.DateTimeField(null=True, blank=True)
     has_problem_rating = models.BooleanField(default=False)
+    has_problem_update = models.BooleanField(default=False)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
     n_accounts_to_update = models.IntegerField(default=None, null=True, blank=True)
@@ -91,6 +102,7 @@ class Resource(BaseModel):
     has_standings_renamed_account = models.BooleanField(default=False)
     problems_fields = models.JSONField(default=dict, blank=True)
     statistics_fields = models.JSONField(default=dict, blank=True)
+    skip_for_contests_chart = models.BooleanField(default=False)
 
     RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
                      'OldRating', 'Rating', 'NewRating', 'Performance',
@@ -280,8 +292,11 @@ class Resource(BaseModel):
                 self.plugin_ = __import__(self.module.path.replace('/', '.'), fromlist=['Statistic'])
         return self.plugin_
 
-    def with_single_account(self):
-        return not self.has_multi_account
+    def with_single_account(self, account=None):
+        return (
+            not self.has_multi_account
+            or (account is not None and account.rating is not None)
+        )
 
     def with_multi_account(self):
         return self.has_multi_account
@@ -344,8 +359,8 @@ class OngoingContestManager(SignificantContestManager):
         ).filter(
             resource__module__isnull=False,
             duration_time__lt=Epoch('resource__module__long_contest_idle'),
-            start_time__lt=timezone.now() + timedelta(hours=1),
-            end_time__gt=timezone.now() - timedelta(hours=1),
+            start_time__lt=timezone_now() + timedelta(hours=1),
+            end_time__gt=timezone_now() - timedelta(hours=1),
         )
         return ret
 
@@ -354,6 +369,7 @@ class Contest(BaseModel):
     STANDINGS_KINDS = {
         'icpc': 'ICPC',
         'scoring': 'SCORING',
+        'cf': 'CF',
     }
 
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
@@ -389,14 +405,20 @@ class Contest(BaseModel):
     with_advance = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     series = models.ForeignKey('ContestSeries', null=True, blank=True, default=None, on_delete=models.SET_NULL)
     allow_updating_statistics_for_participants = models.BooleanField(null=True, blank=True, default=None, db_index=True)
+    set_matched_coders_to_members = models.BooleanField(null=True, blank=True, default=None)
 
     notification_timing = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
     rating_prediction_timing = models.DateTimeField(default=None, null=True, blank=True)
+    wait_for_successful_update_timing = models.DateTimeField(default=None, null=True, blank=True)
+    statistics_update_required = models.BooleanField(default=False)
 
     rating_prediction_fields = models.JSONField(default=dict, blank=True, null=True)
     has_fixed_rating_prediction_field = models.BooleanField(default=False, null=True, blank=True)
     rating_prediction_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
+
+    problem_rating_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
+    problem_rating_update_required = models.BooleanField(default=False)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
@@ -409,6 +431,8 @@ class Contest(BaseModel):
 
     has_submissions = models.BooleanField(default=None, null=True, blank=True, db_index=True)
     has_submissions_tests = models.BooleanField(default=None, null=True, blank=True, db_index=True)
+
+    is_promoted = models.BooleanField(default=None, null=True, blank=True, db_index=True)
 
     objects = BaseContestManager()
     visible = VisibleContestManager()
@@ -463,8 +487,9 @@ class Contest(BaseModel):
             stats = stats.filter(new_global_rating__isnull=False)
             stats.update(new_global_rating=None, global_rating_change=None)
 
-        self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
-        self.with_advance = 'advanced' in fields or '_advance' in fields
+        if self.is_over():
+            self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
+            self.with_advance = 'advanced' in fields or '_advance' in fields
 
         if not self.kind:
             if hasattr(self, 'stage'):
@@ -501,13 +526,13 @@ class Contest(BaseModel):
         return super().save(*args, **kwargs)
 
     def is_over(self):
-        return self.end_time <= timezone.now()
+        return self.end_time <= timezone_now()
 
     def is_running(self):
-        return not self.is_over() and self.start_time <= timezone.now()
+        return not self.is_over() and self.start_time <= timezone_now()
 
     def is_coming(self):
-        return timezone.now() < self.start_time
+        return timezone_now() < self.start_time
 
     @property
     def next_time(self):
@@ -516,7 +541,7 @@ class Contest(BaseModel):
     def next_time_to(self, now):
         if self.is_over():
             return 0
-        delta = self.next_time_datetime() - (now or timezone.now())
+        delta = self.next_time_datetime() - (now or timezone_now())
         seconds = delta.total_seconds()
         return int(round(seconds))
 
@@ -740,7 +765,7 @@ class Contest(BaseModel):
     @property
     def is_rating_prediction_timespan(self):
         timespan = self.resource.rating_prediction.get('timespan')
-        return not timespan or timezone.now() < self.end_time + parse_duration(timespan)
+        return not timespan or timezone_now() < self.end_time + parse_duration(timespan)
 
     @property
     def has_rating_prediction(self):
@@ -750,9 +775,25 @@ class Contest(BaseModel):
     def channel_update_statistics_group_name(self):
         return f'{self.channel_group_name}__update_statistics'
 
-    def reparse(self):
-        self.info['_reparse_statistics'] = True
-        self.save(update_fields=['info'])
+    def require_statistics_update(self):
+        if not self.statistics_update_required:
+            self.statistics_update_required = True
+            self.save(update_fields=['statistics_update_required'])
+
+    def require_problem_rating_update(self):
+        if not self.problem_rating_update_required:
+            self.problem_rating_update_required = True
+            self.save(update_fields=['problem_rating_update_required'])
+
+    def statistics_update_done(self):
+        if self.statistics_update_required:
+            self.statistics_update_required = False
+            self.save(update_fields=['statistics_update_required'])
+
+    def problem_rating_update_done(self):
+        if self.problem_rating_update_required:
+            self.problem_rating_update_required = False
+            self.save(update_fields=['problem_rating_update_required'])
 
 
 class ContestSeries(BaseModel):
@@ -851,10 +892,10 @@ class Problem(BaseModel):
             return True
 
     def rating_is_coming(self):
-        return self.end_time <= timezone.now() <= self.end_time + self.resource.module.max_delay_after_end
+        return self.end_time <= timezone_now() <= self.end_time + self.resource.module.max_delay_after_end
 
     def rating_status(self):
-        now = timezone.now()
+        now = timezone_now()
         if now < self.end_time:
             return "waiting for end of contest"
         if self.n_hidden:
@@ -906,7 +947,76 @@ class Banner(BaseModel):
 
     @property
     def next_time(self):
-        now = timezone.now()
+        now = timezone_now()
         if self.end_time < now:
             return 0
         return int(round((self.end_time - now).total_seconds()))
+
+
+class PromotionManager(models.Manager):
+    def get_queryset(self):
+        qs = super().get_queryset().filter(contest__is_promoted=True, enable=True)
+        qs = qs.annotate(target_time=Case(
+            When(time_attribute='start_time', then=F('contest__start_time')),
+            When(time_attribute='end_time', then=F('contest__end_time')),
+        ))
+        qs = qs.filter(target_time__gt=timezone_now())
+        qs = qs.order_by('target_time')
+        return qs
+
+
+class PromotionTimeAttribute(models.TextChoices):
+    START_TIME = 'start_time'
+    END_TIME = 'end_time'
+
+
+class Promotion(BaseModel):
+    name = models.CharField(max_length=50)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    timer_message = models.CharField(max_length=200, null=True, blank=True)
+    time_attribute = models.CharField(max_length=50, choices=PromotionTimeAttribute.choices)
+    enable = models.BooleanField(default=True, null=True, blank=True)
+    background = models.ImageField(upload_to='promotions', null=True, blank=True)
+
+    objects = BaseManager()
+    promoting = PromotionManager()
+
+    class Meta:
+        unique_together = ('contest', 'time_attribute', )
+
+    def __str__(self):
+        return f'{self.name} Promotion#{self.id}'
+
+    def save(self, *args, **kwargs):
+        ret = super().save(*args, **kwargs)
+        contest = self.contest
+        contest.is_promoted = contest.promotion_set.filter(enable=True).exists()
+        contest.save(update_fields=['is_promoted'])
+        return ret
+
+
+class PromoLinkManager(BaseManager):
+
+    def get_queryset(self):
+        return super().get_queryset().filter(enable=True).order_by('order')
+
+
+class PromoLink(BaseModel):
+    name = models.CharField(max_length=200)
+    desc = models.TextField(default=None, null=True, blank=True)
+    icon = models.ImageField(upload_to='promolinks', null=True, blank=True)
+    url = models.URLField()
+    order = models.IntegerField(default=None, blank=True)
+    enable = models.BooleanField(default=True)
+
+    objects = BaseManager()
+    enabled_objects = PromoLinkManager()
+
+    def save(self, *args, **kwargs):
+        if self.order is None:
+            max_order = PromoLink.objects.exclude(pk=self.pk).aggregate(Max('order'))['order__max']
+            self.order = (max_order or 0) + 1
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.name} PromoLink#{self.id}'

@@ -46,7 +46,7 @@ class Statistic(BaseModule):
                                               f'year = {self.start_time.year}, '
                                               f'name = {self.name}')
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         def parse_problems(page, full=False):
             matches = re.finditer(r'''

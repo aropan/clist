@@ -90,7 +90,7 @@ class Statistic(BaseModule):
             ret[k] = v
         return ret
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         result = {}
         hidden_fields = []
         fields_types = {}

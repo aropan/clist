@@ -5,8 +5,8 @@ from sql_util.utils import Exists
 from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
-from ranking.models import (Account, AccountRenaming, AccountVerification, AutoRating, CountryAccount, Module, Rating,
-                            Stage, StageContest, Statistics, VerifiedAccount, VirtualStart)
+from ranking.models import (Account, AccountMatching, AccountRenaming, AccountVerification, AutoRating, CountryAccount,
+                            Module, Rating, Stage, StageContest, Statistics, VerifiedAccount, VirtualStart)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -197,3 +197,26 @@ class CountryAccountAdmin(BaseModelAdmin):
     list_display = ['resource', 'country', 'n_accounts', 'n_rating_accounts', 'rating', 'resource_rank', 'raw_rating']
     search_fields = ['country']
     list_filter = ['resource']
+
+
+@admin_register(AccountMatching)
+class AccountMatchingAdmin(BaseModelAdmin):
+    list_display = ['name', 'status', 'coder', '_n_found_accounts', '_n_found_coders', '_n_different_coders',
+                    'modified', 'statistic']
+    search_fields = ['name', 'account__key', 'contest__title', 'resource__host', 'coder__username']
+    list_filter = ['status']
+
+    def _n_found_accounts(self, obj):
+        return obj.n_found_accounts
+    _n_found_accounts.admin_order_field = 'n_found_accounts'
+    _n_found_accounts.short_description = 'NA'
+
+    def _n_found_coders(self, obj):
+        return obj.n_found_coders
+    _n_found_coders.admin_order_field = 'n_found_coders'
+    _n_found_coders.short_description = 'NC'
+
+    def _n_different_coders(self, obj):
+        return obj.n_different_coders
+    _n_different_coders.admin_order_field = 'n_different_coders'
+    _n_different_coders.short_description = 'NDC'

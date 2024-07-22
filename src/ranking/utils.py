@@ -260,15 +260,18 @@ def account_update_contest_additions(
 
             to_save = False
             contest_fields = contest.info.setdefault('fields', [])
+            external_fields = contest.info.setdefault('_external_fields', [])
+            updated_external_fields = False
             for k in ordered_dict.keys():
                 if k not in contest_fields:
                     contest_fields.append(k)
                     to_save = True
+                    if k not in external_fields:
+                        external_fields.append(k)
+                        updated_external_fields = True
             if to_save:
-                if contest.end_time + timedelta(days=31) > timezone.now():
-                    next_timing_statistic = timezone.now() + timedelta(minutes=10)
-                    if next_timing_statistic < contest.statistic_timing:
-                        contest.statistic_timing = next_timing_statistic
+                if updated_external_fields and contest.end_time + timedelta(days=31) > timezone.now():
+                    contest.wait_for_successful_update_timing = timezone.now() + timedelta(days=1)
                 contest.save()
         if iteration > 1 and not total:
             break
@@ -284,7 +287,8 @@ def account_update_contest_additions(
                 continue
         if contest_keys:
             out_contests = list(grouped_contest_keys.values()) or list(contest_keys)
-            LOG.warning('Not found %d contests for %s = %s', len(out_contests), account, out_contests[:5])
+            LOG.warning('Not found %d contests for %s = %s%s',
+                        len(out_contests), account, out_contests[:5], '...' if len(out_contests) > 5 else '')
         break
 
 

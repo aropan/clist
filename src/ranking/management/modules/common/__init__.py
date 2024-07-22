@@ -55,8 +55,8 @@ class BaseModule(object, metaclass=ABCMeta):
             setattr(self, k, v)
 
     @abstractmethod
-    def get_standings(self, users=None):
-        pass
+    def get_standings(self, **kwargs):
+        raise NotImplementedError()
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
@@ -82,7 +82,7 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
-    def to_time(delta, num=None):
+    def to_time(delta, num=3, short=False):
         if isinstance(delta, timedelta):
             delta = delta.total_seconds()
         delta = int(delta)
@@ -90,10 +90,16 @@ class BaseModule(object, metaclass=ABCMeta):
         if delta < 0:
             return '-' + BaseModule.to_time(-delta, num=num)
 
-        if num == 2:
-            return f'{delta // 60:02d}:{delta % 60:02d}'
+        a = []
+        for _ in range(num - 1):
+            a.append(delta % 60)
+            delta //= 60
+        a.append(delta)
 
-        return f'{delta // 3600}:{delta // 60 % 60:02d}:{delta % 60:02d}'
+        if short:
+            while len(a) > 1 and a[-1] == 0:
+                a.pop()
+        return ':'.join(f'{x:02d}' if i else f'{x}' for i, x in enumerate(reversed(a)))
 
     @staticmethod
     def merge_dict(src, dst):
@@ -111,11 +117,6 @@ class BaseModule(object, metaclass=ABCMeta):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
         season = f'{year}-{year + 1}'
         return season
-
-    def get_result(self, *users):
-        standings = self.get_standings(users)
-        result = standings.get('result', {})
-        return [result.get(u, None) for u in users]
 
     def get_versus(self, *args, **kwargs):
         raise NotImplementedError()
@@ -136,6 +137,10 @@ class BaseModule(object, metaclass=ABCMeta):
 
     @staticmethod
     def update_submissions(account, resource):
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_problem_info(problem):
         raise NotImplementedError()
 
 

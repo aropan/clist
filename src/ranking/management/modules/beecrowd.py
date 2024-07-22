@@ -10,7 +10,7 @@ from ranking.management.modules.common import REQ, BaseModule, parsed_table
 class Statistic(BaseModule):
     STANDING_URL_FORMAT_ = '{0.host}judge/en/users/contest/{0.key}'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.STANDING_URL_FORMAT_.format(self)
 
         page = REQ.get(standings_url)

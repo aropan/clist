@@ -54,7 +54,7 @@ class Statistic(BaseModule):
     def norm_timestamp(t):
         return t // 1000 - Statistic.TIMESTAMP_DELTA
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         raise ExceptionParseStandings('Is outdated')
 
         standings_url = self.standings_url

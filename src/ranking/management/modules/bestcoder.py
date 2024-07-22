@@ -21,7 +21,7 @@ class Statistic(BaseModule):
     SETTINGS_URL_ = '/setting.php'
     USER_RATING_API_URL_ = '/api/api.php?type=user-rating&user={0}'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         page = REQ.get(self.url)
         if 'login.php' in REQ.last_url:

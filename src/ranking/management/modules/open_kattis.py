@@ -18,7 +18,7 @@ from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         url = self.url.split('?')[0].rstrip('/')
         standings_url = url + '/standings'
         problems_url = url + '/problems'
@@ -152,12 +152,16 @@ class Statistic(BaseModule):
 
             def fetch_members(row):
                 page = REQ.get(row['_account_url'])
+
                 entry = re.search(r'"team_members":\s*(?P<members>\[.*\]),?$', page, re.MULTILINE)
                 members = json.loads(entry.group('members'))
 
+                entry = re.search(r'"team_id":\s*"?(?P<team_id>[0-9]+)"?,$', page, re.MULTILINE)
+                row['team_id'] = entry.group('team_id')
+
                 for m in members:
                     if not m.get('username'):
-                        m['username'] = ''
+                        m['username'] = f'hidden-user-{row["team_id"]}'
                     else:
                         m['profile_url'] = {'subdomain': subdomain, 'account': m['username']}
 
@@ -166,8 +170,6 @@ class Statistic(BaseModule):
                         m['username'] = f'{subdomain}:{m["username"]}'
 
                 row['_members'] = [{'account': m['username'], 'name': m['name']} for m in members]
-                entry = re.search(r'"team_id":\s*"?(?P<team_id>[0-9]+)"?,$', page, re.MULTILINE)
-                row['team_id'] = entry.group('team_id')
 
                 return members, row
 

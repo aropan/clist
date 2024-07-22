@@ -17,7 +17,7 @@ class Statistic(BaseModule):
         if not self.standings_url:
             raise InitModuleException('Not set standings url for %s' % self.name)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         def parse_problems_infos():
             problem_url = self.standings_url.replace('/ranking', '/p')

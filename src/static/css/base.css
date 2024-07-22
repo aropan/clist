@@ -1,5 +1,5 @@
 a {
-  text-decoration: none;
+  text-decoration: none !important;
 }
 
 a:hover, a:focus {
@@ -40,6 +40,10 @@ table.center {
 
 .inline {
   display: inline;
+}
+
+.inline-block {
+  display: inline-block;
 }
 
 
@@ -299,6 +303,7 @@ html {
 .rating-change {
   font-weight: bold !important;
   color: grey;
+  white-space: nowrap;
 }
 
 .rating-change.rating-change-up {
@@ -323,6 +328,10 @@ a.database-link {
   white-space: nowrap !important;
 }
 
+.wrap {
+  white-space: normal !important;
+}
+
 /*
  * tooltip nowrap
  */
@@ -333,7 +342,6 @@ a.database-link {
 }
 
 .input-group-addon.tooltip-help {
-  background-color: #fff;
   border-left: 0px;
   border-right: 0px;
 }
@@ -569,7 +577,7 @@ canvas.rating_history {
 }
 
 .fullscreen .fullscreen-hidden {
-  display: none;
+  display: none !important;
 }
 
 .fullscreen .progress.fullscreen-border {
@@ -733,47 +741,23 @@ textarea.note {
  * Footer
  */
 
-#footer {
+#footer .navbar {
+  margin-top: 20px;
+  margin-bottom: 0px;
+  display: flex;
+  justify-content: center;
   text-align: center;
   white-space: nowrap;
 }
 
-#footer {
-  margin-bottom: 0px;
-  margin-top: 20px;
-}
-
-#footer ul {
-  margin: 0px;
-  padding-left: 0px;
-  padding-right: 0px;
-  padding-top: 15px;
-  padding-bottom: 15px;
-}
-
-#footer ul li {
-  display: inline-block;
-}
-
-#footer .footer-divider {
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-#footer a {
-  color: #777;
-}
-
-#footer a:hover {
-  color: #000;
-}
-
-#footer .icons a {
-  padding-left: 5px;
-  padding-right: 5px;
+#footer .navbar-nav {
+  float: none;
 }
 
 @media (max-width: 768px) {
+  #footer .navbar {
+    display: block;
+  }
   #footer ul li {
     display: block;
   }
@@ -884,4 +868,40 @@ a[data-toggle="tooltip"][disabled],
 .table td:has(.both-stars),
 .table td:has(.first-star) {
   padding: 0px;
+}
+
+
+/*
+ * Bootstrap themes
+ */
+
+.input-group-addon {
+  line-height: 1.0 !important;
+}
+
+/*
+ * Promotoin
+ */
+
+#promotion.dark-background > * {
+  color: #eee;
+  text-shadow: 0 0 5px #000;
+}
+
+#promotion {
+  margin-top: 0px;
+  margin-bottom: 20px;
+  font-size: 20px;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+#promotion a {
+  font-weight: bold;
+}
+
+#skip-promotion {
+  padding-right: 5px;
+  font-size: 80%;
+  cursor: pointer;
 }

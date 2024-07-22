@@ -15,7 +15,7 @@ from clist.templatetags.extras import get_item
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         slug = self.url.rstrip('/').rsplit('/', 1)[-1]
         api_standings_url = urljoin(self.url, f'/api/v1/contest/{slug}/public-ranking')

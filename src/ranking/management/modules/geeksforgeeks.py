@@ -30,7 +30,7 @@ class Statistic(BaseModule):
                 form=form,
             )
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         result = {}
 

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -39,8 +40,17 @@ class EventLog(BaseModel):
     status = models.CharField(max_length=20, choices=EventStatus.choices, default=EventStatus.DEFAULT, db_index=True)
     message = models.TextField(blank=True, null=True)
     elapsed = models.DurationField(blank=True, null=True)
+    environment = models.CharField(max_length=20, blank=True, null=True, default=None)
 
     objects = EventLogManager()
+
+    def __str__(self):
+        return f'{self.related} EventLog#{self.id}'
+
+    def save(self, *args, **kwargs):
+        if self.environment is None:
+            self.environment = settings.ENVIRONMENT
+        super().save(*args, **kwargs)
 
     def update_status(self, status, message=None):
         self.status = status

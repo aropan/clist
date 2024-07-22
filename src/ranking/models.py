@@ -38,8 +38,8 @@ AVATAR_RELPATH_FIELD = 'avatar_relpath_'
 class Account(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    key = models.CharField(max_length=1024, null=False, blank=False)
-    name = models.CharField(max_length=1024, null=True, blank=True)
+    key = models.CharField(max_length=400, null=False, blank=False, db_index=True)
+    name = models.CharField(max_length=400, null=True, blank=True, db_index=True)
     country = CountryField(null=True, blank=True, db_index=True)
     url = models.CharField(max_length=4096, null=True, blank=True)
     n_contests = models.IntegerField(default=0, db_index=True)
@@ -105,7 +105,7 @@ class Account(BaseModel):
         field = field.lower()
         if field in {'telegram', 'dateofbirth'}:
             return True
-        if 'email' in field:
+        if 'email' in field or 'password' in field:
             return True
 
     def get_last_season(self):
@@ -146,13 +146,12 @@ class Account(BaseModel):
 
     class Meta:
         indexes = [
-            GistIndexTrgrmOps(fields=['key']),
-            GistIndexTrgrmOps(fields=['name']),
-            GistIndexTrgrmOps(fields=['key', 'name']),
-            ExpressionIndex(expressions=[Upper('key')]),
-            models.Index(fields=['resource', 'key']),
             models.Index(fields=['resource', 'name']),
             models.Index(fields=['resource', 'country']),
+
+            GistIndexTrgrmOps(fields=['key']),
+            GistIndexTrgrmOps(fields=['name']),
+            ExpressionIndex(expressions=[Upper('key')]),
 
             models.Index(fields=['resource', 'rating']),
             models.Index(fields=['resource', '-rating']),
@@ -283,6 +282,8 @@ def set_account_rating(sender, instance, *args, **kwargs):
         instance.rating50 = instance.rating / 50 if instance.rating is not None else None
         if instance.rating is None:
             instance.resource_rank = None
+    elif instance.rating is None and instance.rating50 is not None:
+        instance.rating50 = None
     download_avatar_url(instance)
 
 
@@ -562,13 +563,14 @@ class Stage(BaseModel):
     def update(self):
         eps = 1e-9
         stage = self.contest
+        timezone_now = timezone.now()
 
         filter_params = dict(self.filter_params)
         spec_filter_params = dict()
         for field in ('info__fields_types__new_rating__isnull',):
             if field in filter_params:
                 spec_filter_params[field] = filter_params.pop(field)
-        is_over = self.contest.end_time < timezone.now()
+        is_over = self.contest.end_time < timezone_now
 
         contests = Contest.objects.filter(
             resource=self.contest.resource,
@@ -578,7 +580,7 @@ class Stage(BaseModel):
         ).exclude(pk=self.contest.pk)
 
         if spec_filter_params:
-            contests = contests.filter(Q(**spec_filter_params) | Q(end_time__gt=timezone.now()))
+            contests = contests.filter(Q(**spec_filter_params) | Q(end_time__gt=timezone_now))
 
         contests = contests.order_by('start_time')
         contests = contests.prefetch_related('writers')
@@ -617,8 +619,8 @@ class Stage(BaseModel):
                 ),
             }
 
-            if contest.end_time > timezone.now():
-                info['subtext'] = {'text': 'upcoming', 'title': str(contest.end_time)}
+            if contest.start_time > timezone_now:
+                info['subtext'] = {'text': 'upcoming', 'title': str(contest.start_time)}
 
             for division in contest.info.get('divisions_order', []):
                 if division not in divisions_order:
@@ -682,6 +684,9 @@ class Stage(BaseModel):
         filter_statistics = self.score_params.get('filter_statistics')
         if filter_statistics:
             statistics = statistics.filter(**filter_statistics)
+        exclude_statistics = self.score_params.get('exclude_statistics')
+        if exclude_statistics:
+            statistics = statistics.exclude(**exclude_statistics)
 
         def get_placing(placing, stat):
             return placing['division'][stat.addition['division']] if 'division' in placing else placing
@@ -836,6 +841,8 @@ class Stage(BaseModel):
                             row[out_n] = row.get(out_n, 0) + 1
                             row[out_s] = row.get(out_s, 0) + val
                             val = round(row[out_s] / row[out_n], 2)
+                        if field.get('aggregate') == 'max' and out in row:
+                            val = max(val, row[out])
                         row[out] = val
 
                     if 'solved' in s.addition and isinstance(s.addition['solved'], dict):
@@ -853,7 +860,7 @@ class Stage(BaseModel):
                     else:
                         for field in order_by:
                             field = field.lstrip('-')
-                            if field in ['score', 'rating']:
+                            if field in ['score', 'rating', 'penalty']:
                                 continue
                             status = field_values.get(field, row.get(field))
                             if status is None:
@@ -1167,10 +1174,14 @@ class Stage(BaseModel):
             stage.info['fields'] = list(fields)
             stage.info['hidden_fields'] = hidden_fields
 
+            fields_types = self.score_params.get('fields_types', {})
+            if fields_types:
+                stage.info.setdefault('fields_types', {}).update(fields_types)
+
             if not parsed_statistic:
                 stage.statistics_set.exclude(pk__in=pks).delete()
                 stage.n_statistics = len(results)
-                stage.parsed_time = timezone.now()
+                stage.parsed_time = timezone_now
 
                 standings_info = self.score_params.get('info', {})
                 standings_info['fixed_fields'] = fixed_fields + [(f.lstrip('-'), f.lstrip('-')) for f in order_by]
@@ -1224,3 +1235,31 @@ class VirtualStart(BaseModel):
             'virtual_start': True,
             'virtual_start_pk': self.pk,
         }]
+
+
+class MatchingStatus(models.TextChoices):
+    NEW = 'new', 'New'
+    PENDING = 'pending', 'Pending'
+    SKIP = 'skip', 'Skip'
+    ALREADY = 'already', 'Already'
+    DONE = 'done', 'Done'
+    ERROR = 'error', 'Error'
+
+
+class AccountMatching(BaseModel):
+    name = models.CharField(max_length=400)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    statistic = models.ForeignKey(Statistics, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='account_matchings')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    n_found_accounts = models.IntegerField(default=None, null=True, blank=True)
+    n_found_coders = models.IntegerField(default=None, null=True, blank=True)
+    n_different_coders = models.IntegerField(default=None, null=True, blank=True)
+    coder = models.ForeignKey(Coder, default=None, blank=True, null=True, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=MatchingStatus.choices, default=MatchingStatus.NEW)
+
+    class Meta:
+        unique_together = ('name', 'statistic')
+
+    def __str__(self):
+        return f'AccountMatching#{self.pk} {self.name}, statistic#{self.statistic_id}'

@@ -23,7 +23,7 @@ class Statistic(BaseModule):
         if '//stats.ioinformatics.org/olympiads/' not in self.url:
             raise InitModuleException(f'Url {self.url} should be contains stats.ioinformatics.org/olympiads')
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         result = {}
         hidden_fields = OrderedDict()
         problems_info = OrderedDict()

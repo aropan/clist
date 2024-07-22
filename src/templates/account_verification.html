@@ -2,7 +2,7 @@
 
 {% block profile_body %}
 <script>
-account_url = window.location.href + '../'
+account_url = '{{ account_url }}'
 verify_url = window.location.href
 </script>
 
@@ -25,7 +25,7 @@ verify_url = window.location.href
         Restore the modified field in <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener">your profile</a>.
       </li>
       <li class="list-group-item">
-        Refresh the page or go to <a href="../">your account</a>.
+        Refresh the page or go to <a href="{{ account_url }}">your account</a>.
       </li>
     </ol>
   </div>

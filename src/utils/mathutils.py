@@ -25,3 +25,8 @@ def max_with_none(*args):
     if not valid_args:
         return None
     return max(valid_args)
+
+
+def round_sig(number, n_sig_digits):
+    n_digits = max(0, n_sig_digits - len(str(int(abs(number)))))
+    return round(number, n_digits)

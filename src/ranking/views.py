@@ -36,7 +36,7 @@ from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
 from pyclist.decorators import context_pagination, extra_context_without_pagination, inject_contest
 from pyclist.middleware import RedirectException
-from ranking.management.modules.common import FailOnGetResponse
+from ranking.management.modules.common import FailOnGetResponse, ProxyLimitReached
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics, VirtualStart
 from tg.models import Chat
@@ -719,6 +719,7 @@ def render_standings_paging(contest, statistics, with_detail=True):
     context = {
         'request': HttpRequest(),
         'contest': contest,
+        'division': division,
         'statistics': statistics,
         'problems': problems,
         'fields': fields,
@@ -811,6 +812,7 @@ def get_standings_problems(contest, division):
             problems = problems['division'][division]
     if division:
         problems = [p for p in problems if division not in p.get('skip_for_divisions', [])]
+    problems = [p for p in problems if not p.get('skip_in_standings')]
     return problems
 
 
@@ -939,19 +941,6 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     groupby = request.GET.get('groupby')
     if groupby == 'none':
         groupby = None
-
-    query = request.GET.copy()
-    switched_fields = {'timeline', 'charts', 'fullscreen', 'play'}
-    for k, v in request.GET.items():
-        if (
-            not v and k not in switched_fields or
-            k == 'groupby' and v == 'none' or
-            k in switched_fields and v == 'off'
-        ):
-            query.pop(k, None)
-    if request.GET.urlencode() != query.urlencode():
-        query = query.urlencode()
-        return redirect(f'{request.path}' + (f'?{query}' if query else ''))
 
     orderby = request.GET.getlist('orderby')
     if orderby:
@@ -1363,7 +1352,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
                     continue
                 chat = Chat.objects.filter(chat_id=q, is_group=True).first()
                 if chat:
-                    filt |= Q(account__coders__in=chat.coders.all())
+                    filt |= Q(account__coders__in=chat.coders.all()) | Q(account__in=chat.accounts.all())
             # subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
             # statistics = statistics.annotate(chat_name=Subquery(subquery))
         elif field == 'list':
@@ -1586,6 +1575,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         't_freeze': t_freeze,
         'colored_by_group_score': mod_penalty or options.get('colored_by_group_score'),
         'contest': contest,
+        'division': division,
         'contests_ids': contests_ids,
         'other_contests': other_contests,
         'contests_timelines': contests_timelines,
@@ -1671,7 +1661,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     if extra_context is not None:
         context.update(extra_context)
 
-    if groupby == 'none' and 'charts' in request.GET:
+    if groupby == 'none' and is_yes(request.GET.get('charts')):
         standings_charts(request, context)
         context['with_table_inner_scroll'] = False
         context['disable_switches'] = True
@@ -1706,8 +1696,12 @@ def solutions(request, sid, problem_key):
             try:
                 source_code = resource.plugin.Statistic.get_source_code(statistic.contest, stat)
                 stat.update(source_code)
-            except (NotImplementedError, ExceptionParseStandings, FailOnGetResponse) as e:
-                return HttpResponseNotFound(str(e))
+            except NotImplementedError:
+                return HttpResponseBadRequest('Not implemented')
+            except (ExceptionParseStandings, FailOnGetResponse):
+                return HttpResponseNotFound('Unable to obtain a solution')
+            except ProxyLimitReached:
+                return HttpResponseNotFound('Proxy limit reached')
         elif not stat.get('url'):
             return HttpResponseNotFound()
 

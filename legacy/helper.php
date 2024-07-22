@@ -68,7 +68,7 @@
         global $NLOGMSG;
 
         $curr_time = microtime_float();
-        $msg = date('d.m  H:i:s   ', intval($curr_time)) . sprintf("+%-7.2lf-  ", $curr_time - $PREV_TIME) . $msg . "\n";
+        $msg = date('Y.m.d H:i:s ', intval($curr_time)) . sprintf("%6.2f - ", $curr_time - $PREV_TIME) . $msg . "\n";
 
         $fp = fopen(LOGFILE, 'a');
         fwrite($fp, $msg);
@@ -627,5 +627,32 @@
             return $value;
         }
         return $default;
+    }
+
+    function get_item($array, $path, $default = null) {
+        $result = $array;
+        foreach ($path as $key) {
+            if (!isset($result[$key])) {
+                return null;
+            }
+            $result = $result[$key];
+        }
+        return $result;
+    }
+
+    function pop_item(&$array, $path, $default = null) {
+        if (is_string($path)) {
+            $path = explode('.', $path);
+        }
+        $result = &$array;
+        foreach ($path as $key) {
+            if (!isset($result[$key])) {
+                return null;
+            }
+            $last_result = &$result;
+            $result = &$result[$key];
+        }
+        unset($last_result[$key]);
+        return $result;
     }
 ?>

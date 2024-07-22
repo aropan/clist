@@ -12,7 +12,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if not self.name.endswith('Finale'):
             raise ExceptionParseStandings('not final')
 

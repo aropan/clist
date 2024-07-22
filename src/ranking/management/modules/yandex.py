@@ -98,7 +98,7 @@ class Statistic(BaseModule):
 
         return submission_infos
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if not hasattr(self, 'season'):
             year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
             season = f'{year}-{year + 1}'

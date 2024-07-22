@@ -79,4 +79,14 @@ $(function() {
         });
         e.preventDefault();
     });
+
+    $('#skip-promotion').click(function() {
+        $.ajax({
+            type: 'POST',
+            url: skip_promotion_url,
+            data: {'id': $(this).data('promotion-id')},
+            success: function() { $('#promotion').hide() },
+            error: log_ajax_error_callback,
+        })
+    })
 })

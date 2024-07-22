@@ -22,7 +22,7 @@ from django_super_deduper.merge import MergedModelInstance
 from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
-from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, Resource
+from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion, Resource
 from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
                                        get_timezone_offset, rating_from_probability, win_probability)
 from favorites.models import Activity
@@ -302,6 +302,15 @@ def main(request, party=None):
     if not settings.DEBUG:
         banners = banners.filter(enable=True)
 
+    promotion = Promotion.promoting.first()
+    if promotion is not None:
+        skip_promotion_ids = [request.COOKIES.get('_skip_promotion_id')]
+        if coder is not None:
+            skip_promotion_ids.append(coder.settings.get('skip_promotion_id'))
+        skip_promotion_ids = [as_number(i) for i in skip_promotion_ids if i]
+        if promotion.id in skip_promotion_ids:
+            promotion = None
+
     offset = get_timezone_offset(tzname)
 
     context.update({
@@ -315,6 +324,7 @@ def main(request, party=None):
         "open_new_tab": open_new_tab,
         "add_to_calendar": get_add_to_calendar(request),
         "banners": banners,
+        "promotion": promotion,
     })
 
     return render(request, "main.html", context)
@@ -755,6 +765,7 @@ def update_problems(contest, problems=None, force=False):
     if problems is not None and not force:
         if canonize(problems) == canonize(contest.info.get('problems')):
             return
+
     contest.info['problems'] = problems
     contest.save(update_fields=['info'])
 
@@ -1099,6 +1110,9 @@ def problems(request, template='problems.html'):
                       'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_total']
     custom_info_fields = set()
     if selected_resource:
+        fixed_fields = selected_resource.problems_fields.get('fixed_fields', [])
+        custom_fields = custom_fields + fixed_fields
+        fixed_fields_set = set(fixed_fields)
         fields_types = selected_resource.problems_fields.get('types', {})
         for field in fields_types:
             if field not in custom_options:
@@ -1106,9 +1120,10 @@ def problems(request, template='problems.html'):
                 custom_info_fields.add(field)
     else:
         fields_types = None
+        fixed_fields_set = set()
     custom_fields_select = {
         'values': [v for v in custom_fields if v and v in custom_options],
-        'options': custom_options,
+        'options': [v for v in custom_options if v not in fixed_fields_set]
     }
 
     chart_select = {
@@ -1232,7 +1247,7 @@ def problems(request, template='problems.html'):
     groupby_fields['n_problems'] = 'Num'
 
     # sort problems
-    sort_options = ['date', 'rating'] + [f for f in custom_fields_select['values']]
+    sort_options = ['date', 'rating', 'name'] + [f for f in custom_fields_select['values']]
     sort_select = {'options': sort_options, 'rev_order': True}
     sort_field = request.GET.get('sort')
     sort_order = request.GET.get('sort_order')
@@ -1268,3 +1283,8 @@ def problems(request, template='problems.html'):
     }
 
     return template, context
+
+
+def promo_links(request, template='links.html'):
+    context = {'navbar_database_viewname': 'clist_promolink_changelist', 'links': PromoLink.enabled_objects.all()}
+    return render(request, 'links.html', context)

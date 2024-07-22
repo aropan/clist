@@ -29,7 +29,7 @@ class Statistic(BaseModule):
     FETCH_USER_INFO_URL_ = '{resource}/api/user/info/{user}'
     API_USER_URL_ = '{resource}/api/v2/user/{user}'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         api_ranking_url_version = self.resource.info.get('statistics', {}).get('api_ranking_url_version', 'v2')
         resource = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(self.url))
         infos = self.__dict__

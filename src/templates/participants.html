@@ -1,4 +1,3 @@
-{% load el_pagination_tags %}
 {% paginate 20 participants using "participants" %}
 {% for participant in participants %}
   {% include "inline-participant.html" with participant=participant %}

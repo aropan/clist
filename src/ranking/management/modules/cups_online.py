@@ -4,8 +4,10 @@ import html
 import json
 import math
 import re
+import urllib
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
 
@@ -15,6 +17,7 @@ from django.core.cache import cache
 from django.utils.timezone import now
 from tqdm import tqdm
 
+from clist.templatetags.extras import get_problem_short
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -25,6 +28,9 @@ class Statistic(BaseModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        urlinfo = urllib.parse.urlparse(self.resource.url)
+        self.host_url = f'{urlinfo.scheme}://{urlinfo.netloc}'
+
         page = REQ.get('https://cups.online/en/')
         data_profile = re.search('data-profile="(?P<value>[^"]*)"', page).group('value')
         if data_profile:
@@ -32,7 +38,7 @@ class Statistic(BaseModule):
         else:
             csrf_token = REQ.get_cookie('csrftoken', domain_regex='cups.online')
             page = REQ.get(
-                url='https://cups.online/api_v2/login/',
+                url=f'{self.host_url}/api_v2/login/',
                 post=f'{{"email":"{conf.CUPS_EMAIL}","password":"{conf.CUPS_PASSWORD}"}}',
                 headers={
                     'Content-Type': 'application/json',
@@ -105,21 +111,19 @@ class Statistic(BaseModule):
             'options': options,
         }
 
-    @staticmethod
-    def _get_task_id(key):
-        data = REQ.get('/api_v2/contests/battles/?page_size=100500', return_json=True)
+    def _get_task_id(self, key):
+        data = REQ.get(f'{self.host_url}/api_v2/contests/battles/?page_size=100500', return_json=True)
         for dcontest in data['results']:
             for dround in dcontest['rounds']:
                 if str(dround['id']) == key and dround['tasks']:
                     return dround['tasks'][0]['id']
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         if self.standings_url and '/aicups.ru/' in self.standings_url:
             return self.old_aicups_get_standings(users=users, statistics=statistics)
 
         slug = self.info.get('parse').get('slug')
         period = self.info.get('parse').get('round', {}).get('round_status', 'past')
-        standings_url = urljoin(self.url, f'/results/{slug}?roundId={self.key}&period={period}')
 
         iter_time_delta = timedelta(hours=3)
         is_running = self.start_time < now() < self.end_time + iter_time_delta or not statistics
@@ -128,31 +132,106 @@ class Statistic(BaseModule):
         is_round = is_raic and (is_final or bool(re.search('раунд|round', self.name, re.I)))
         is_long = self.end_time - self.start_time > timedelta(days=60)
 
-        query_params = f'?period={period}&page_size=500&round={self.key}'
-        api_standings_url = urljoin(self.url, f'/api_v2/contests/{slug}/result/{query_params}')
+        standings_list = [
+            {
+                'standings_url': f'/rounds/{self.key}/leaderboard',
+                'api_standings_url': f'/api_v2/round/{self.key}/fast_leaderboard/?page_size=500',
+            },
+            {
+                'standings_url': f'/results/{slug}?roundId={self.key}&period={period}',
+                'api_standings_url': f'/api_v2/contests/{slug}/result/?period={period}&page_size=500&round={self.key}',
+            },
+        ]
+
         result = OrderedDict()
-        while api_standings_url:
-            data = REQ.get(api_standings_url, return_json=True, ignore_codes={404})
+        errors = []
+        problems_infos = OrderedDict()
 
-            if 'results' not in data:
-                raise ExceptionParseStandings(f'response = {data}')
+        for standings_data in standings_list:
+            standings_url = urljoin(self.host_url, standings_data['standings_url'])
+            api_standings_url = urljoin(self.host_url, standings_data['api_standings_url'])
+            has_penalty = False
+            while api_standings_url:
+                data = REQ.get(api_standings_url, return_json=True, ignore_codes={404})
 
-            for row in data['results']:
-                r = OrderedDict()
-                r['place'] = row.pop('rank')
-                user = row.pop('user')
-                r['member'] = user['login']
-                if user.get('cropping'):
-                    avatar_url = urljoin(api_standings_url, user['cropping'])
-                    r['info'] = {'avatar_url': avatar_url}
-                names = [user.get(field) for field in ('first_name', 'last_name') if user.get(field)]
-                if names:
-                    r['name'] = ' '.join(names)
-                r['solving'] = row.pop('score')
+                if 'results' not in data:
+                    errors.append(f'response = {data}')
+                    break
 
-                result[r['member']] = r
+                round_data = data.get('round')
+                if round_data and not problems_infos:
+                    tasks = round_data.pop('tasks')
+                    for task in tasks:
+                        task['code'] = str(task.pop('id'))
+                        task['short'] = task.pop('order_sign', None)
+                        task['full_score'] = task.pop('complete_score', None)
+                        task['url'] = urljoin(self.resource.url, '/tasks/' + task['code'])
+                        task = {k: v for k, v in task.items() if v is not None}
+                        problems_infos[task['code']] = task
 
-            api_standings_url = data.get('next')
+                for row in data['results']:
+                    user = row.pop('user')
+                    member = user.pop('login')
+                    r = result.setdefault(member, OrderedDict())
+                    r['member'] = member
+                    r['place'] = row.pop('rank')
+                    if user.get('cropping'):
+                        avatar_url = urljoin(api_standings_url, user.pop('cropping'))
+                        r['info'] = {'avatar_url': avatar_url, **deepcopy(user)}
+                    names = [user[field] for field in ('first_name', 'last_name') if user.get(field)]
+                    if names:
+                        r['name'] = ' '.join(names)
+                    r['solving'] = row.pop('score')
+                    if row.get('passed_count') is not None:
+                        solved = row.pop('passed_count')
+                        if r['solving'] is None:
+                            r['solving'] = solved
+                        else:
+                            r['solved'] = {'solving': solved}
+                    if row.get('penalty_total') is not None:
+                        r['penalty'] = round(row.pop('penalty_total'))
+                        has_penalty |= bool(r['penalty'])
+
+                    task_results = row.pop('task_results', [])
+                    if task_results:
+                        problems = r.setdefault('problems', {})
+                        for task_result in task_results:
+                            problem_code = str(task_result.pop('task_id'))
+                            if problem_code not in problems_infos:
+                                continue
+                            short = get_problem_short(problems_infos[problem_code])
+                            problem = problems.setdefault(short, {})
+                            score = task_result.pop('score')
+                            attempts = task_result.pop('attempts_number')
+                            is_passed = task_result.pop('is_passed')
+                            is_frozen = task_result.pop('is_frozen')
+                            if is_passed and attempts is not None:
+                                attempts -= 1
+                            if score is None:
+                                score = '?' if is_frozen else '+' if is_passed else '-'
+                                score += str(attempts if attempts else '')
+                                attempts = None
+                            problem['result'] = score
+                            if attempts:
+                                problem['attempts'] = attempts
+                            if not is_frozen and is_passed is not None and not is_passed:
+                                problem['partial'] = True
+                            time_in_seconds = task_result.pop('is_passed_time')
+                            if time_in_seconds is not None:
+                                problem['time'] = self.to_time(round(time_in_seconds), short=True)
+                                problem['time_in_seconds'] = time_in_seconds
+
+                api_standings_url = data.get('next')
+
+            if not has_penalty:
+                for r in result.values():
+                    r.pop('penalty', None)
+
+            if result:
+                break
+
+        if not result and errors:
+            raise ExceptionParseStandings(errors)
 
         cache_key = f'cups_online__get_statistics__{self.key}'
         if not statistics:
@@ -174,7 +253,7 @@ class Statistic(BaseModule):
             page_size = 108
 
             def fetch_battle(page=None):
-                url = f'/api_v2/battles/task/{task_id}?page_size={page_size}'
+                url = f'{self.host_url}/api_v2/battles/task/{task_id}?page_size={page_size}'
                 if page:
                     url += f'&page={page}'
                 data = REQ.get(url, return_json=True)
@@ -295,6 +374,9 @@ class Statistic(BaseModule):
                         last_rank = rank
                     result[row['member']]['place'] = last_rank
 
+        problems = list(problems_infos.values())
+        problems = [p for p in problems if not p.get('hide_leaderboard')]
+
         ret = {
             'url': standings_url,
             'result': result,
@@ -302,6 +384,7 @@ class Statistic(BaseModule):
             'hidden_fields': ['average_points', 'solution_id', 'solution_external_id', 'language_id',
                               'total_scores', 'total_places', 'last_battle', 'first_battle'],
             'info_fields': ['_has_versus'],
+            'problems': problems,
         }
 
         if is_round and not self.info.get('advance'):
@@ -352,7 +435,7 @@ class Statistic(BaseModule):
         seen = set()
         while not stop and (total is None or page * page_size < total):
             page += 1
-            url = f'/api_v2/battles/task/{task_id}?page={page}&page_size={page_size}&search={member.encode("utf-8")}'
+            url = f'{self.host_url}/api_v2/battles/task/{task_id}?page={page}&page_size={page_size}&search={member.encode("utf-8")}'  # noqa
             data = REQ.get(url, return_json=True)
             total = data['totals']
             stop = True

@@ -213,21 +213,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
     {% endif %}
     {% endwith %}
 
-    <form class="form-inline" method="get" action="">
-    <div class="input-group">
-      <div class="input-group-addon">Results</div>
-      <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Regex filter" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-      <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL}, type:{TYPE} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
-        <i class="fas fa-info"></i>
-      </span>
-      <span class="input-group-btn">
-        <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
-      </span>
-    </div>
-    {% if statistics_fields %}
-    {% include "field_to_select.html" with field="field" data=statistics_fields nosm=True %}
-    {% endif %}
-    </form>
+    {% include "filter_collapse.html" with include_filter="profile_statistics_filters.html" %}
 
     {% if statistics.exists %}
     <div class="panel panel-default table-responsive">

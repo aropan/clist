@@ -22,7 +22,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.STANDING_URL_FORMAT_.format(self)
         try:
             REQ.get(standings_url)
@@ -174,9 +174,6 @@ class Statistic(BaseModule):
 
                 assert user == data['userName']
 
-                ret = {
-                    'info': data,
-                    'replace_info': True,
-                }
+                ret = {'info': data}
 
                 yield ret

@@ -24,7 +24,7 @@ class Statistic(BaseModule):
     PROBLEM_URL_ = 'https://www.bubblecup.org/CompetitorsCorner/Problem/{code}'
     STANDING_URL_ = 'https://www.bubblecup.org/CompetitorsCorner/Results/{cid}/Overall/Team'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         page = REQ.get(self.COMPETITION_INFO_API_URL_)
         data = json.loads(page)
         for round_data in data['rounds']:

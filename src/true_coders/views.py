@@ -53,7 +53,7 @@ from ranking.models import (Account, AccountRenaming, AccountVerification, Modul
                             VirtualStart, update_account_by_coders)
 from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListValue, Organization, Party
-from true_coders.utils import add_query_to_list
+from true_coders.utils import add_query_to_list, get_or_set_upsolving_filter
 from utils.chart import make_chart
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
@@ -98,6 +98,7 @@ def get_medals_for_profile_context(statistics):
 def get_profile_context(request, statistics, writers, resources):
     context = {}
     context.update(get_medals_for_profile_context(statistics))
+    context_params = context.setdefault('params', {})
 
     statistics = statistics \
         .select_related('contest', 'contest__resource', 'account') \
@@ -136,13 +137,31 @@ def get_profile_context(request, statistics, writers, resources):
             conditions = [Q(host=host) for host in filter_resources]
             resources = resources.filter(functools.reduce(operator.ior, conditions))
 
-    kinds_resources = collections.defaultdict(dict)
+    query_resources = request.get_filtered_list('resource')
+    if query_resources:
+        statistics = statistics.filter(contest__resource_id__in=query_resources)
+        resources = resources.filter(pk__in=query_resources)
+        context_params['resources'] = list(Resource.objects.filter(pk__in=query_resources))
+
+    upsolving_filter = get_or_set_upsolving_filter(request)
+    if not upsolving_filter:
+        statistics = statistics.filter(Q(skip_in_stats=False) | Q(contest__stage__isnull=False))
+    context_params['upsolving'] = upsolving_filter
+
     rated_stats = statistics.filter(
         Q(addition__new_rating__isnull=False) |
         Q(addition__rating_change__isnull=False) |
         Q(addition___rating_data__isnull=False)
-    )
-    for stat in rated_stats.order_by().distinct('contest__resource__host', 'contest__kind'):
+    ).order_by().distinct('contest__resource__host', 'contest__kind')
+
+    external_ratings = statistics.filter(
+        contest__resource__has_rating_history=True,
+        contest__resource__info__ratings__external=True,
+        account__info___rating_data__isnull=False,
+    ).order_by().distinct('contest__resource__host')
+
+    kinds_resources = collections.defaultdict(dict)
+    for stat in rated_stats.union(external_ratings):
         resource = stat.contest.resource
         kind = stat.contest.kind
         kind = None if resource.is_major_kind(kind) else kind
@@ -185,6 +204,10 @@ def get_profile_context(request, statistics, writers, resources):
             'nourl': True,
         }
 
+    if not resources:
+        writers = writers.none()
+        statistics = statistics.none()
+
     context.update({
         'statistics': statistics,
         'writers': writers,
@@ -200,6 +223,7 @@ def get_profile_context(request, statistics, writers, resources):
 
     qs = statistics.annotate(date=F('contest__start_time'))
     qs = qs.filter(place__isnull=False).order_by()
+    qs = qs.filter(contest__resource__skip_for_contests_chart=False)
     contests_chart = make_chart(qs, field='date', n_bins=21, norm_value=timedelta(days=1))
     context['contests_chart'] = contests_chart
 
@@ -332,7 +356,7 @@ def coders(request, template='coders.html'):
         )
 
     # ordering
-    orderby = request.GET.get('sort_column')
+    orderby = request.GET.get('sort_column') or []
     if orderby in ['username', 'global_rating', 'created', 'n_accounts', 'n_contests']:
         pass
     elif orderby and orderby.startswith('resource_'):
@@ -374,7 +398,7 @@ def profile(request, username, template='profile_coder.html', extra_context=None
     data = _get_data_mixed_profile(request, [username])
     context = get_profile_context(request, data['statistics'], data['writers'], data['resources'])
     context['coder'] = coder
-    if coder.has_global_rating:
+    if coder.has_global_rating and len(context['resources']) > 1:
         context['history_resources'].insert(0, dict(django_settings.CLIST_RESOURCE_DICT_))
 
     if request.user.is_authenticated and request.user.coder == coder:
@@ -472,7 +496,7 @@ def account_verification(request, key, host, template='account_verification.html
     resource = account.resource
     coder = request.user.coder
     this_is_me = bool(context.get('this_is_me'))
-    is_single_account = resource.with_single_account() or account.rating is not None
+    is_single_account = resource.with_single_account(account)
     if not request.user.has_perm('true_coders.force_account_verification'):
         if not resource.has_account_verification:
             return HttpResponseBadRequest(f'Account verification is not supported for {resource.host} resource')
@@ -482,6 +506,7 @@ def account_verification(request, key, host, template='account_verification.html
             return HttpResponseBadRequest('Account already verified')
     verification, created = AccountVerification.objects.get_or_create(coder=coder, account=account)
     context['verification'] = verification
+    context['account_url'] = reverse('coder:account', kwargs=dict(key=key, host=host))
 
     action = request.POST.get('action')
     if action == 'verify':
@@ -501,8 +526,6 @@ def account_verification(request, key, host, template='account_verification.html
                 return HttpResponseBadRequest('Verification text not found')
             with transaction.atomic():
                 if not this_is_me:
-                    if is_single_account:
-                        account.coders.clear()
                     coder.add_account(account)
                 VerifiedAccount.objects.get_or_create(coder=coder, account=account)
             return HttpResponse('ok')
@@ -886,6 +909,11 @@ def settings(request, tab=None):
     my_lists = coder.my_list_set.annotate(n_records=SubqueryCount('values'))
     my_lists = my_lists.prefetch_related('shared_with_coders')
 
+    my_chats = coder.chat_set.order_by('-modified')
+    my_chats = my_chats.annotate(n_coders=SubqueryCount('coders'))
+    my_chats = my_chats.annotate(n_accounts=SubqueryCount('accounts'))
+    my_chats_fields = ['chat_id', 'title', 'name', 'n_coders', 'n_accounts']
+
     return render(
         request,
         "settings.html",
@@ -897,6 +925,8 @@ def settings(request, tab=None):
             "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,
             "my_lists": my_lists,
+            "my_chats": my_chats,
+            "my_chats_fields": my_chats_fields,
             "categories": categories,
             "calendars": coder.calendar_set.order_by('-modified'),
             "subscriptions": coder.subscription_set.order_by('-modified'),
@@ -1293,7 +1323,12 @@ def change(request):
                 resource = Resource.objects.get(pk=resource_id)
                 account = Account.objects.filter(resource=resource, key=value).first()
                 if account is None:
-                    accounts = resource.account_set.filter(Q(key__istartswith=value) | Q(key__iexact=value))
+                    accounts = resource.account_set.filter(
+                        Q(key__istartswith=value) |
+                        Q(key__iexact=value) |
+                        Q(name__istartswith=value) |
+                        Q(name__iexact=value)
+                    )
                     n_limit = 5
                     accounts = list(accounts[:n_limit + 1])
                     if len(accounts) == 0:
@@ -1311,19 +1346,20 @@ def change(request):
                 resource = account.resource
 
             if account.coders.filter(pk=coder.id).first():
-                raise Exception('Account is already connect to you')
+                return HttpResponseBadRequest('Account is already connect to you')
+
+            need_verification = account.need_verification or (
+                resource.has_account_verification and
+                account.coders.exists() and
+                not VerifiedAccount.objects.filter(coder=coder, account=account).exists()
+            )
 
             if resource.with_single_account():
                 if coder.account_set.filter(resource=resource).exists():
-                    raise Exception(f'Allow only one account for {resource.host}')
-                if account.coders.filter(is_virtual=False).exists():
-                    raise Exception('Account is already connect')
+                    return HttpResponseBadRequest(f'Allow only one account for {resource.host}')
+                if account.coders.filter(is_virtual=False).exists() and not need_verification:
+                    return HttpResponseBadRequest('Account is already connect')
 
-            need_verification = account.need_verification
-            if not need_verification and resource.has_account_verification:
-                need_verification = account.coders.exists()
-            if need_verification:
-                need_verification = not VerifiedAccount.objects.filter(coder=coder, account=account).exists()
             if need_verification:
                 url = reverse('coder:account_verification', kwargs=dict(key=account.key, host=resource.host))
                 return JsonResponse({'url': url, 'message': 'redirect'}, status=HttpResponseRedirect.status_code)
@@ -1370,8 +1406,10 @@ def change(request):
         if usage['should_limit']:
             delta = timedelta(seconds=usage['time_left'])
             return HttpResponseBadRequest(f'Try again in {humanize.naturaldelta(delta)}', status=429)
+        account.resource.n_accounts_to_update = (account.resource.n_accounts_to_update or 0) + 1
+        account.resource.save(update_fields=['n_accounts_to_update'])
         account.updated = now
-        account.save()
+        account.save(update_fields=['updated'])
     elif name == "update-statistics":
         usage = get_usage(request, group='update-statistics', key='user', rate='20/h', increment=True)
         if usage['should_limit']:
@@ -1629,6 +1667,11 @@ def search(request, **kwargs):
         qs = ProblemTag.objects.all()
         if 'regex' in request.GET:
             qs = qs.filter(get_iregex_filter(request.GET['regex'], 'name'))
+        resources = request.get_filtered_list('resources[]')
+        if resources:
+            qs = qs.annotate(has_resource=Exists('problems', filter=Q(problem__resource_id__in=resources)))
+            qs = qs.filter(has_resource=True)
+
         qs = qs.order_by('name')
 
         qs = qs[(page - 1) * count:page * count]
@@ -2451,3 +2494,17 @@ def accounts(request, template='accounts.html'):
     context['resources_custom_fields'] = custom_fields
 
     return template, context
+
+
+@require_http_methods(['POST'])
+def skip_promotion(request):
+    promotion_id = request.POST.get('id')
+    if not promotion_id:
+        return HttpResponseBadRequest('No promotion id')
+    if request.user.is_authenticated:
+        coder = request.user.coder
+        coder.settings['skip_promotion_id'] = promotion_id
+        coder.save()
+    response = HttpResponse('ok')
+    response.set_cookie('_skip_promotion_id', promotion_id)
+    return response

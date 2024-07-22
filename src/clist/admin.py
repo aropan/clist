@@ -3,7 +3,7 @@ from django.contrib.admin import SimpleListFilter
 from django.utils import timezone
 from sql_util.utils import SubqueryCount
 
-from clist.models import Banner, Contest, ContestSeries, Problem, ProblemTag, Resource
+from clist.models import Banner, Contest, ContestSeries, Problem, ProblemTag, PromoLink, Promotion, Resource
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import Module, Rating
@@ -59,13 +59,16 @@ class ContestAdmin(BaseModelAdmin):
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['was_auto_added', 'auto_updated', 'n_statistics', 'has_hidden_results',
-                                             'calculate_time', 'info', 'invisible', 'is_rated', 'with_medals',
-                                             'related', 'merging_contests', 'series',
-                                             'allow_updating_statistics_for_participants']}],
-        ['Timing', {'fields': ['parsed_time', 'notification_timing', 'statistic_timing', 'rating_prediction_timing',
-                               'created', 'modified', 'updated']}],
+                                             'calculate_time', 'info', 'invisible', 'is_rated', 'is_promoted',
+                                             'with_medals', 'related', 'merging_contests', 'series',
+                                             'allow_updating_statistics_for_participants',
+                                             'set_matched_coders_to_members']}],
+        ['Timing', {'fields': ['parsed_time', 'wait_for_successful_update_timing',
+                               'statistic_timing', 'notification_timing',
+                               'rating_prediction_timing', 'created', 'modified', 'updated']}],
         ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
                                'rating_prediction_fields']}],
+        ['Problem', {'fields': ['n_problems', 'problem_rating_hash']}],
         ['Submission', {'fields': ['has_submissions', 'has_submissions_tests']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',
@@ -76,7 +79,8 @@ class ContestAdmin(BaseModelAdmin):
     actions = [parse_statistic]
 
     def get_readonly_fields(self, request, obj=None):
-        ret = ['auto_updated', 'updated', 'notification_timing', 'statistic_timing']
+        ret = ['auto_updated', 'updated', 'parsed_time', 'wait_for_successful_update_timing',
+               'statistic_timing', 'notification_timing', 'rating_prediction_timing']
         ret += list(super().get_readonly_fields(request, obj))
         return ret
 
@@ -137,8 +141,9 @@ class ResourceAdmin(BaseModelAdmin):
                                            'ratings', 'rating_prediction']}],
         ['Account information', {'fields': ['has_accounts_infos_update', 'n_accounts_to_update', 'has_multi_account',
                                             'has_account_verification', 'has_standings_renamed_account',
-                                            'accounts_fields']}],
-        ['Problem information', {'fields': ['has_problem_rating', 'has_upsolving', 'problems_fields']}],
+                                            'skip_for_contests_chart', 'accounts_fields']}],
+        ['Problem information', {'fields': ['has_problem_rating', 'has_problem_update', 'has_upsolving',
+                                            'problems_fields']}],
         ['Statistics information', {'fields': ['statistics_fields']}],
         ['Other information', {'fields': ['info']}],
     ]
@@ -228,3 +233,14 @@ class BannerAdmin(BaseModelAdmin):
     list_display = ['name', 'url', 'end_time', 'template']
     list_filter = ['template']
     search_fields = ['name', 'url', 'data']
+
+
+@admin_register(Promotion)
+class PromotionAdmin(BaseModelAdmin):
+    list_display = ['contest', 'timer_message', 'time_attribute', 'background']
+
+
+@admin_register(PromoLink)
+class PromoLinkAdmin(BaseModelAdmin):
+    list_display = ['name', 'enable', 'desc', 'url']
+    search_fields = ['name']

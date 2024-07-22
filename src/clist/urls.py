@@ -16,8 +16,8 @@ urlpatterns = [
     re_path(r'^resource/(.*)/$', views.resource, name='resource'),
     re_path(r'^get/events/$', views.get_events),
     re_path(r'^problems/$', views.problems, name='problems'),
+    re_path(r'^links/$', views.promo_links, name='links'),
     re_path(r'^api/', include('clist.api.urls', namespace='api')),
     re_path(r'^donate/$', TemplateView.as_view(template_name='donate.html'), name='donate'),
-    re_path(r'^links/$', TemplateView.as_view(template_name='links.html'), name='links'),
 
 ]

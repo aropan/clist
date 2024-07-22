@@ -17,7 +17,7 @@ class Statistic(BaseModule):
     API_RANKING_URL_FORMAT_ = 'https://api.binarysearch.io/rooms/{id}/sessions/{sid}/leaderboards?page={page}'
     API_PROFILE_URL_FORMAT_ = 'https://api.binarysearch.io/users/{user}/profile'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         per_page = 10
         stop = False
 

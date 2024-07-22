@@ -7,7 +7,7 @@ import operator
 import os
 import re
 from collections import OrderedDict, defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from html import unescape
 from math import isclose
@@ -23,14 +23,15 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Q
-from django.utils import timezone
+from django.utils.timezone import now as timezone_now
 from django_print_sql import print_sql_decorator
 
 from submissions.models import Language, Submission, Testing, Verdict
 
 from clist.models import Contest, Problem, Resource
 from clist.templatetags.extras import (as_number, canonize, get_item, get_number_from_str, get_problem_key,
-                                       get_problem_short, is_solved, time_in_seconds, time_in_seconds_format)
+                                       get_problem_short, is_solved, normalize_field, time_in_seconds,
+                                       time_in_seconds_format)
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
@@ -164,8 +165,8 @@ def canonize_name(name):
 class Command(BaseCommand):
     help = 'Parsing statistics'
 
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.logger = logging.getLogger('ranking.parse.statistic')
 
     def add_arguments(self, parser):
@@ -248,7 +249,7 @@ class Command(BaseCommand):
         tqdm._channel_layer_handler = channel_layer_handler
         _tqdm.tqdm = tqdm
 
-        now = timezone.now()
+        now = timezone_now()
 
         contests = contests.select_related('resource__module')
 
@@ -413,12 +414,18 @@ class Command(BaseCommand):
             try:
                 r = {}
 
-                now = timezone.now()
+                now = timezone_now()
                 is_coming = now < contest.start_time
                 plugin = resource.plugin.Statistic(contest=contest)
 
                 with transaction.atomic():
                     _ = Contest.objects.select_for_update().get(pk=contest.pk)
+
+                    statistics_users = copy.deepcopy(users)
+                    if resource.has_standings_renamed_account and users:
+                        renamings = AccountRenaming.objects.filter(resource=resource, old_key__in=users)
+                        renamings = renamings.values_list('new_key', flat=True)
+                        statistics_users.extend(renamings)
 
                     with REQ:
                         statistics_by_key = {}
@@ -428,7 +435,7 @@ class Command(BaseCommand):
                         if not no_update_results:
                             statistics = Statistics.objects.filter(contest=contest).select_related('account')
                             if users:
-                                statistics = statistics.filter(account__key__in=users)
+                                statistics = statistics.filter(account__key__in=statistics_users)
                             for s in statistics.iterator():
                                 addition = s.addition or {}
                                 if with_stats and not addition.get('_skip_on_update'):
@@ -441,7 +448,9 @@ class Command(BaseCommand):
                                     }
                                     has_statistics = True
                                 statistics_ids.add(s.pk)
-                        standings = plugin.get_standings(users=copy.deepcopy(users), statistics=statistics_by_key)
+                        standings = plugin.get_standings(users=copy.deepcopy(users),
+                                                         statistics=statistics_by_key,
+                                                         more_statistics=more_statistics_by_key)
                         has_standings_result = bool(standings.get('result'))
 
                         if resource.has_upsolving:
@@ -580,17 +589,23 @@ class Command(BaseCommand):
                                     result[new_key]['_no_update_name'] = True
                                     result[new_key].pop('info', None)
 
+                    require_statistics_update = standings.pop('require_statistics_update', False)
+                    if require_statistics_update:
+                        contest.require_statistics_update()
+
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics') or {}
                     wait_rating = resource_statistics.get('wait_rating', {})
                     has_hidden = standings.pop('has_hidden', False)
-                    link_accounts = standings.pop('link_accounts', False)
+                    with_link_accounts = standings.pop('link_accounts', False)
                     is_major_kind = resource.is_major_kind(contest.kind)
                     custom_fields_types = standings.pop('fields_types', {})
                     standings_kinds = set(Contest.STANDINGS_KINDS.keys())
                     has_more_solving = bool(contest.info.get('_more_solving'))
                     updated_statistics_ids = list()
                     contest_timeline = contest.get_timeline_info()
+                    lazy_fetch_accounts = standings.pop('lazy_fetch_accounts', False)
+                    has_problem_stats = False
 
                     results = []
                     if result or users:
@@ -634,7 +649,7 @@ class Command(BaseCommand):
                             total_problems_solving = 0
 
                             def update_problems_info():
-                                nonlocal last_activity, total_problems_solving
+                                nonlocal last_activity, total_problems_solving, has_problem_stats
 
                                 problems = r.get('problems', {})
 
@@ -758,6 +773,7 @@ class Command(BaseCommand):
                                         p['n_partial'] = p.get('n_partial', 0) + 1
                                     elif is_hidden:
                                         p['n_hidden'] = p.get('n_hidden', 0) + 1
+                                    has_problem_stats = True
 
                                 if 'default_problem_full_score' in contest.info and solved and 'solved' not in r:
                                     r['solved'] = solved
@@ -782,9 +798,20 @@ class Command(BaseCommand):
                                 contest.standings_kind = standings_kind
                                 contest.save(update_fields=['standings_kind'])
 
-                        members = [r['member'] for r in results]
-                        accounts = resource.account_set.filter(key__in=members)
-                        accounts = {a.key: a for a in accounts}
+                        if not lazy_fetch_accounts:
+                            members = [r['member'] for r in results]
+                            accounts = resource.account_set.filter(key__in=members)
+                            accounts = {a.key: a for a in accounts}
+
+                        if contest.set_matched_coders_to_members:
+                            matched_coders = contest.account_matchings
+                            matched_coders = matched_coders.filter(account__coders=F('coder'))
+                            matched_coders = matched_coders.values('name', 'statistic_id', 'coder__username',
+                                                                   'coder__country')
+                            matched_coders = {
+                                (m['name'], m['statistic_id']): (m['coder__username'], m['coder__country'])
+                                for m in matched_coders
+                            }
 
                         for r in tqdm(results, desc='update results'):
                             skip_update = bool(r.get('_skip_update'))
@@ -793,12 +820,15 @@ class Command(BaseCommand):
                             member = r.pop('member')
                             skip_result = bool(r.get('_no_update_n_contests'))
 
-                            account_created = member not in accounts
-                            if account_created:
+                            if lazy_fetch_accounts:
+                                account, account_created = Account.objects.get_or_create(resource=resource, key=member)
+                            elif member not in accounts:
                                 account = resource.account_set.create(key=member)
                                 accounts[member] = account
+                                account_created = True
                             else:
                                 account = accounts[member]
+                                account_created = False
 
                             stat = statistics_by_key.get(member, {})
 
@@ -1070,10 +1100,7 @@ class Command(BaseCommand):
                                 for k, v in r.items():
                                     orig_k = k
                                     is_hidden_field = orig_k in standings_hidden_fields_set
-                                    if k[0].isalpha() and not re.match('^[A-Z]+([0-9]+)?$', k):
-                                        k = k[0].upper() + k[1:]
-                                        k = '_'.join(map(str.lower, re.findall('([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)', k)))
-                                        k = re.sub('_+', '_', k)
+                                    k = normalize_field(k)
                                     if is_hidden_field:
                                         standings_hidden_fields_mapping[orig_k] = k
                                         hidden_fields.add(k)
@@ -1134,8 +1161,7 @@ class Command(BaseCommand):
 
                                 if not created:
                                     nonlocal calculate_time
-                                    if statistics_ids:
-                                        statistics_ids.remove(statistic.pk)
+                                    statistics_ids.discard(statistic.pk)
 
                                     if contest_timeline and try_calculate_time:
                                         p_problems = statistic.addition.get('problems', {})
@@ -1340,9 +1366,10 @@ class Command(BaseCommand):
                                     if not account_key:
                                         continue
                                     account_keys.add(account_key)
-                                accounts = resource.account_set.filter(key__in=account_keys).prefetch_related('coders')
-                                for account in accounts:
-                                    coders = account.coders.all()
+                                link_accounts = resource.account_set.filter(key__in=account_keys)
+                                link_accounts = link_accounts.prefetch_related('coders')
+                                for link_account in link_accounts:
+                                    coders = link_account.coders.all()
                                     if len(coders) != 1:
                                         continue
                                     coder = coders[0]
@@ -1350,6 +1377,20 @@ class Command(BaseCommand):
                                         continue
                                     statistic.account.coders.add(coder)
                                     NotificationMessage.link_accounts(to=coder, accounts=[statistic.account])
+
+                            def set_matched_coders_to_members(statistic):
+                                to_update = False
+                                for member in statistic.addition.get('_members', []):
+                                    if 'name' not in member or len(member) > 1:
+                                        continue
+                                    matched_coder_key = (member['name'], statistic.pk)
+                                    if matched_coder_key in matched_coders:
+                                        member['coder'], country = matched_coders[matched_coder_key]
+                                        if country:
+                                            statistic.addition.setdefault('_countries', []).append(country)
+                                        to_update = True
+                                if to_update:
+                                    statistic.save(update_fields=['addition'])
 
                             update_addition_fields()
                             update_account_time()
@@ -1375,8 +1416,11 @@ class Command(BaseCommand):
 
                             update_submissions(statistic, result_submissions)
 
-                            if link_accounts:
+                            if with_link_accounts:
                                 link_account(statistic)
+
+                            if contest.set_matched_coders_to_members:
+                                set_matched_coders_to_members(statistic)
 
                             has_subscription_update = (
                                 account.is_subscribed
@@ -1490,7 +1534,8 @@ class Command(BaseCommand):
                                             if not short:
                                                 continue
                                             p.update(d_problems.get(d, {}).get(short, {}))
-                                            p.setdefault('n_total', n_statistics[d])
+                                            if has_problem_stats:
+                                                p.setdefault('n_total', n_statistics[d])
                                             p.get('first_ac', {}).pop('_cmp_seconds', None)
                                             p.get('last_ac', {}).pop('_cmp_seconds', None)
                                             if key in problems_ratings:
@@ -1506,7 +1551,8 @@ class Command(BaseCommand):
                                         if not short:
                                             continue
                                         p.update(d_problems.get(short, {}))
-                                        p.setdefault('n_total', contest.n_statistics)
+                                        if has_problem_stats:
+                                            p.setdefault('n_total', contest.n_statistics)
                                         p.get('first_ac', {}).pop('_cmp_seconds', None)
                                         p.get('last_ac', {}).pop('_cmp_seconds', None)
                                         if key in problems_ratings:
@@ -1539,9 +1585,9 @@ class Command(BaseCommand):
                             if now < contest.end_time:
                                 timing_delta = parse_info.get('timing_statistic_delta', timing_delta)
                         if updated_statistics_ids and contest.end_time < now < contest.end_time + timedelta(hours=1):
-                            timing_delta = timing_delta or timedelta(minutes=10)
+                            timing_delta = timing_delta or timedelta(minutes=20)
                         if has_hidden and contest.end_time < now < contest.end_time + timedelta(days=1):
-                            timing_delta = timing_delta or timedelta(minutes=30)
+                            timing_delta = timing_delta or timedelta(minutes=60)
                         if wait_rating and not has_statistics and results and 'days' in wait_rating:
                             timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
                         timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
@@ -1550,8 +1596,8 @@ class Command(BaseCommand):
                             contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
                         else:
                             contest.info.pop('_timing_statistic_delta_seconds', None)
-                        if not info_fields_values.get('_reparse_statistics'):
-                            contest.info.pop('_reparse_statistics', None)
+                        if not require_statistics_update:
+                            contest.statistics_update_done()
                         contest.save()
                     else:
                         without_calculate_rating_prediction = True
@@ -1577,8 +1623,7 @@ class Command(BaseCommand):
                             contest.url = args[0]
                             contest.save()
 
-                reparse_statistics = contest.info.get('_reparse_statistics')
-                if not reparse_statistics:
+                if not contest.statistics_update_required:
                     if resource.rating_prediction and not without_calculate_rating_prediction and contest.pk:
                         call_command('calculate_rating_prediction', contest=contest.pk)
                         contest.refresh_from_db()
@@ -1617,16 +1662,14 @@ class Command(BaseCommand):
             if not users:
                 module = resource.module
                 delay = module.max_delay_after_end
-                reparse_statistics = contest.info.get('_reparse_statistics')
-                with_shortly_after = not parsed and contest.n_statistics
-                if reparse_statistics or contest.end_time < now or not module.long_contest_divider:
+                if contest.statistics_update_required or contest.end_time < now or not module.long_contest_divider:
                     delay = min(delay, module.delay_on_success if parsed else module.delay_on_error)
                 if now < contest.end_time and module.long_contest_divider:
                     delay = min(delay, contest.full_duration / module.long_contest_divider)
-                if with_shortly_after and contest.end_time < now < contest.end_time + module.shortly_after:
+                if not parsed and contest.end_time < now < contest.end_time + module.shortly_after:
                     delay = min(delay, module.delay_shortly_after)
                 if now < contest.end_time < now + delay:
-                    delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=5)) - now)
+                    delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=7)) - now)
                 if '_timing_statistic_delta_seconds' in contest.info:
                     timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
                     delay = min(delay, timing_delta)
@@ -1649,7 +1692,7 @@ class Command(BaseCommand):
             status = EventStatus.COMPLETED if parsed else EventStatus.FAILED
             messages = []
             if exception_error:
-                messages += [exception_error]
+                messages += [f'exception error = {exception_error}']
             if contest_log_counter:
                 messages += [f'log_counter = {dict(contest_log_counter)}']
             event_log.update_status(status=status, message='\n\n'.join(messages))
@@ -1743,7 +1786,7 @@ class Command(BaseCommand):
             contests = contests.filter(with_medals=True)
 
         if args.reparse:
-            contests = contests.filter(info___reparse_statistics=True)
+            contests = contests.filter(statistics_update_required=True)
 
         self.parse_statistic(
             contests=contests,

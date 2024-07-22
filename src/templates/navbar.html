@@ -1,7 +1,7 @@
 <div class="navbar navbar-default navbar-static-top fullscreen-hidden">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
@@ -10,7 +10,7 @@
                 <img id="logo" src="{% static_ts 'img/logo-48.png' %}" height="24px">
             </a>
         </div>
-        <div class="navbar-collapse collapse">
+        <div class="navbar-collapse collapse" id="navbar-collapse">
             <ul class="nav navbar-nav">
                 <li class="dropdown-menu-hover">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">News <span class="caret"></span></a>
@@ -65,7 +65,7 @@
                                         data-placement="bottom"
                                         data-toggle="tooltip"
                                         class="countdown"
-                                        data-timestamp="{{ b.next_time }}"
+                                        data-countdown="{{ b.next_time }}"
                                     >
                                         {{ b.end_time|countdown }}
                                     </strong>
@@ -82,7 +82,11 @@
                         {% if user.is_staff %}
                         <li><a href="{% url 'change_environment' %}" rel="noopener">{% icon_to 'dev' False %}</a></li>
                         <li><a href="{% url 'charts' %}">{% icon_to 'charts' False %}</a></li>
-                        <li><a href="{% url 'admin:index' %}"><i class="fas fa-server"></i></a></li>
+                        <li>
+                            <a href="{% if navbar_database_viewname %}{% url 'admin:'|concat:navbar_database_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
+                            {% icon_to 'database' navbar_database_viewname|default:'databse'|title_field position='bottom' %}
+                            </a>
+                        </li>
                         {% endif %}
                         <li><a href="{% url 'coder:profile' user.username %}">{{ user.username }}</a></li>
                     {% else %}

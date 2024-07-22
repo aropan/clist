@@ -20,7 +20,7 @@ class Statistic(BaseModule):
         if not self.standings_url:
             self.standings_url = f'{self.url.rstrip("/")}/leaderboard'
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
 
         slug = self.url.split('/')[-1]
         per_page = 100

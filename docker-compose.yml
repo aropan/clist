@@ -8,6 +8,7 @@ services:
     volumes:
       - static_files:/usr/src/clist/staticfiles/
       - media_files:/usr/src/clist/mediafiles/
+      - shared_files:/usr/src/clist/sharedfiles/
       - ./logs/production:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
@@ -26,6 +27,7 @@ services:
       - ./legacy/api/:/usr/src/clist/legacy/api/
       - ./src/static:/usr/src/clist/staticfiles/
       - media_files:/usr/src/clist/mediafiles/
+      - shared_files:/usr/src/clist/sharedfiles/
       - ./logs/development:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
@@ -85,7 +87,7 @@ services:
       - static_files:/staticfiles/
       - media_files:/mediafiles/
       - ./legacy:/usr/src/legacy/
-      - ./nginx/conf.d:/etc/nginx/conf.d/
+      - ./config/nginx/conf.d:/etc/nginx/conf.d/
       - certbot_www:/var/www/certbot/
       - certbot_conf:/etc/letsencrypt/
       - ./logs/nginx:/var/log/nginx/
@@ -144,7 +146,7 @@ secrets:
   sentry_conf:
     file: ./.env.sentry
   loggly_token:
-    file: ./loggly/.env.token
+    file: ./config/loggly/.env.token
 
 volumes:
   postgres_data:
@@ -201,3 +203,9 @@ volumes:
       type: none
       o: bind
       device: ./volumes/netdata/cache
+  shared_files:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/shared_files

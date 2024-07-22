@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load el_pagination_tags %}
 
 {% block ogtitle %}{% block title %}{{ contest.title }} - Standings{% endblock %}{% endblock %}
 {% block description %}View our comprehensive standings table for {{ contest.title }} from {{ contest.resource.host }} with additional statistics. Gain insights into the event's dynamics and participant performance.{% endblock %}
@@ -122,10 +121,18 @@
 
       <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><span title="Show nearby" data-toggle="tooltip"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></span></a>
 
+      {% if contest.n_problems is not None %}
+      <a href="{% url 'clist:problems' %}?contest={{ contest.pk }}" class="badge progress-bar-info">{% icon_to 'problems' %}</a>
+      {% endif %}
+
       {% call_method contest.merging_contests 'values_list' 'id' flat=True as merging_contests_ids %}
       {% if merging_contests_ids %}
       <a href="{% url 'ranking:standings_by_ids' merging_contests_ids|to_list|prepend:contest.id|join:"," %}" class="badge progress-bar-info">{% icon_to "merged_standings" %}</a>
       {% endif %}
+
+      {% for external_url in contest.info.standings.external_urls %}
+      <a href="{{ external_url.url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' external_url.name %}</a>
+      {% endfor %}
 
       {% endif %}
 
@@ -182,14 +189,14 @@
   {% if contest.is_running or contest.is_coming %}
   <h4 class="text-center">
     {% if contest.is_running %}Time remaining: {% elif contest.is_coming %}Time before the start: {% endif %}
-    <span class="timeleft countdown" data-timestamp="{{ contest.next_time }}" title="{{ contest.next_time_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.next_time|countdown }}</span>
+    <span class="timeleft countdown" data-countdown="{{ contest.next_time }}" title="{{ contest.next_time_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.next_time|countdown }}</span>
     {% with opening=contest.info|get_item:"_opening" %}
     {% if opening %}
       {% for o in opening %}
       {% with otimedelta=o.date|timestamp_to_datetime|timezone:timezone|timedelta_with_now  %}
       {% with oseconds=otimedelta.total_seconds %}
       {% if oseconds > 0 %}
-      | {{ o.title }}: <span class="timeleft countdown" data-timestamp="{{ oseconds }}" title="{{ o.date|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ oseconds|countdown }}</span>
+      | {{ o.title }}: <span class="timeleft countdown" data-countdown="{{ oseconds }}" title="{{ o.date|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ oseconds|countdown }}</span>
       {% endif %}
       {% endwith %}
       {% endwith %}

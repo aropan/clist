@@ -31,7 +31,7 @@
         }
     }
 
-    define("LOGFILE", dirname(__FILE__) . "/logs/working/index.txt");
+    define("LOGFILE", dirname(__FILE__) . "/logs/general.log");
     define("COUNTLINEINLOGFILE", 10000);
     define("LOGREMOVEDDIR", dirname(__FILE__) . '/logs/removed/');
 

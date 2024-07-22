@@ -1,4 +1,5 @@
 
+from copy import deepcopy
 from urllib.parse import urlparse
 
 from django.apps import apps
@@ -6,6 +7,7 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import F
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.urls import NoReverseMatch, reverse
 from django.utils.timezone import now
 from el_pagination.decorators import page_templates
 
@@ -31,6 +33,8 @@ def create_field_to_select(**kwargs):
     if kwargs.pop('groupby', False):
         ret.pop('nogroupby')
     ret.update(kwargs)
+    if 'options' in ret:
+        ret['options'] = deepcopy(ret['options'])
     return ret
 
 
@@ -50,6 +54,8 @@ def update_context_by_source(request, context):
 
     models = context['models']
     entities = models[source]['model'].objects.all()
+    entity_first = entities.first()
+
     fields = []
     for field, field_data in models[source]['fields'].items():
         field_type = field_data['type']
@@ -151,17 +157,18 @@ def update_context_by_source(request, context):
                 }
 
     entity_fields = []
-    entity = entities.first()
-    if entity is not None:
-        for field in dir(entity):
+    if entity_first is not None:
+        for field in dir(entity_first):
             if field.startswith('_') or field in entity_fields:
                 continue
-            if hasattr(getattr(entity, field, None), '__call__'):
+            if hasattr(getattr(entity_first, field, None), '__call__'):
                 continue
             entity_fields.append(field)
     entity_fields_select = create_field_to_select(options=entity_fields, multiply=True)
     entity_fields = request.get_filtered_list('field', options=entity_fields_select['options'])
     for field in entity_fields[::-1]:
+        if field in fields:
+            fields.remove(field)
         fields.insert(1, field)
 
     context.update({
@@ -173,7 +180,7 @@ def update_context_by_source(request, context):
         'selection_field_select': selection_field_select,
         'selection_field_selects': selection_field_selects,
         'entity_fields_select': entity_fields_select,
-        'per_page': 10,
+        'per_page': 25,
         'per_page_more': 50,
         'entities': entities,
         'fields': fields,
@@ -200,10 +207,15 @@ def charts(request, template='charts.html'):
         app_label = model._meta.app_label
         model_name = model.__name__
         source = f'{app_label}.{model_name}'
+        try:
+            admin_url = reverse('admin:%s_%s_changelist' % (app_label, model_name.lower()))
+        except NoReverseMatch:
+            admin_url = None
 
         model_fields = models.setdefault(source, {
             'name': source,
             'model': model,
+            'admin_url': admin_url,
             'fields': {},
         })
         for field in model._meta.get_fields():
@@ -213,7 +225,7 @@ def charts(request, template='charts.html'):
             }
 
     source = request.get_filtered_value('source', models)
-    source_field_select = create_field_to_select(options=models.keys())
+    source_field_select = create_field_to_select(options=list(models.keys()))
 
     context = {
         'source': source,

@@ -10,7 +10,7 @@ from ranking.management.modules.common import REQ, DOT, BaseModule, parsed_table
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         year = self.start_time.year
         year = year if self.start_time.month >= 9 else year - 1
         season = '%d-%d' % (year, year + 1)

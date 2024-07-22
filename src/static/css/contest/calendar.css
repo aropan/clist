@@ -24,15 +24,6 @@
     font-size: 20px;
 }
 
-.tooltip.top .tooltip-inner {
-    background-color: #555;
-    min-width: 200px;
-}
-
-.tooltip.top .tooltip-arrow {
-    border-top-color: #555;
-}
-
 .dropdown-menu .ignore-filter {
     border: 0;
     width: 100%;

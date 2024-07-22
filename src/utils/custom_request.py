@@ -18,11 +18,16 @@ class RequestLogger:
 
 
 def get_filtered_list(request, field, options=None):
-    return [
-        option
-        for option in request.GET.getlist(field)
-        if options is not None and option in options or options is None and option
+    values = [
+        value
+        for value in request.GET.getlist(field)
+        if options is not None and value in options or options is None and value
     ]
+    if values and isinstance(options, list):
+        for value in values[::-1]:
+            options.remove(value)
+            options.insert(0, value)
+    return values
 
 
 def get_filtered_value(request, field, options=None, default_first=None, allow_empty=False):

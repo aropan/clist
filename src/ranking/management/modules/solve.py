@@ -8,7 +8,7 @@ from ranking.management.modules.common import REQ, BaseModule
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         url = self.standings_url.replace('/contests/', '/api/v0/contests/')
         data = REQ.get(url, return_json=True)
         problems_info = OrderedDict()

@@ -9,13 +9,14 @@
     }
 
     foreach ($data['rounds'] as $round) {
+        $desc = $round['description'];
         if (!preg_match(
             '#
                 start\s+date\s+(?:<b[^>]*>)?(?P<start_time>[^<]*)(?:</b>)?.*?
                 end\s+date\s+(?:<b[^>]*>)?(?P<end_time>[^<]*)
             #ix',
-            $round['description'],
-            $match
+            $desc,
+            $match,
         )) {
             continue;
         }

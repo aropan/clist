@@ -61,16 +61,14 @@ class Command(BaseCommand):
         check_logs_cache = cache.setdefault('check_logs', {})
 
         self._check(
-            './logs/legacy/update/index.html',
+            './logs/legacy/update.log',
             regex=r'php[\w\s]*:.*$',
             cache=check_logs_cache,
-            key='legacy/update/index.html',
-            href='https://legacy.clist.by/logs/update/',
+            key='legacy/update.log',
         )
 
         files = []
         files.extend(glob.glob('./logs/*/**/*.log', recursive=True))
-        files.extend(glob.glob('./logs/*/**/*.txt', recursive=True))
         for log_file in files:
             if log_file.endswith('check_logs.log'):
                 continue

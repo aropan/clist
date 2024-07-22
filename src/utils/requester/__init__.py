@@ -83,6 +83,10 @@ class FailOnGetResponse(BaseException):
             self.response_ = read_response(err).decode() if hasattr(err, 'fp') else None
         return self.response_
 
+    def has_message(self, message):
+        response = self.response
+        return response is not None and message in self.response
+
 
 class CurlFailedResponse(FailOnGetResponse):
 
@@ -119,6 +123,16 @@ class proxer():
             self._data = {}
         self._data.setdefault('proxies', {})
         self._data.setdefault('sources', {})
+
+    def clear_data(self):
+        created_threshold = self.get_timestamp() - 60 * 60
+        removed = []
+        for k, v in self.proxies.items():
+            if v['_success'] == 0 and v.get('_created', -1) < created_threshold:
+                removed.append(k)
+        for k in removed:
+            del self.proxies[k]
+        self.print(f'remove {len(removed)} proxies')
 
     @property
     def proxies(self):
@@ -174,6 +188,7 @@ class proxer():
         value.update(proxy)
         value.setdefault('_success', 0)
         value.setdefault('_fail', 0)
+        value.setdefault('_created', self.get_timestamp())
         value.setdefault('_timestamp', self.get_timestamp())
 
     def add_free_proxies(self):
@@ -285,6 +300,7 @@ class proxer():
         self.connect_func = connect
         self.connect_ret = None
         self.load_data()
+        self.clear_data()
         self.n_limit = n_limit
         if path.exists(file_name):
             with open(file_name, 'r') as fo:
@@ -400,9 +416,10 @@ def read_response(response):
         return buf.read()
 
 
-def curl_response(url, headers=None):
-
+def curl_response(url, headers=None, cookie_file=None):
     args = ['curl', '-i', url, '-L', '--compressed']
+    if cookie_file:
+        args.extend(['-b', cookie_file, '-c', cookie_file])
     if headers:
         for k, v in headers.items():
             args.extend(['-H', f'{k}: {v}'])
@@ -450,6 +467,7 @@ class requester():
     verify_word = None
     n_attempts = 1
     attempt_delay = 2
+    additional_lock = threading.Lock()
 
     def print(self, *objs, force=False):
         if self.debug_output or force:
@@ -547,6 +565,7 @@ class requester():
         params=None,
         with_curl=False,
         with_referer=True,
+        curl_cookie_file=None,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -626,7 +645,7 @@ class requester():
                 post_urlencoded, multipart_headers = encode_multipart(fields=post, files=files)
                 headers.update(multipart_headers)
             elif content_type:
-                headers.update({"Content-type": content_type})
+                headers.update({"Content-Type": content_type})
 
             n_attempts = n_attempts or self.n_attempts
             attempt = 0
@@ -647,7 +666,7 @@ class requester():
                     proxy = self.proxy
 
                     if with_curl:
-                        response = curl_response(url, headers)
+                        response = curl_response(url, headers=headers, cookie_file=curl_cookie_file)
                         if response.code != 200:
                             raise CurlFailedResponse(response)
                         last_url = url
@@ -675,10 +694,16 @@ class requester():
                         if self.proxer:
                             self.proxer.fail(proxy=str(proxy))
 
-                        if additional_attempts and additional_attempts.get(error_code, 0) > 0:
-                            additional_attempts[error_code] -= 1
-                            attempt -= 1
-                            sleep(additional_delay)
+                        if additional_attempts and error_code in additional_attempts:
+                            additional_attempt = additional_attempts[error_code]
+                            if (
+                                additional_attempt['count'] > 0 and
+                                ('func' not in additional_attempt or additional_attempt['func'](FailOnGetResponse(err)))
+                            ):
+                                additional_attempt['count'] -= 1
+                                attempt -= 1
+                                with self.additional_lock:
+                                    sleep(additional_delay)
 
                         attempt += 1
                         if attempt < n_attempts:

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import collections
-import itertools
 import json
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from pprint import pprint
 
 from flatten_dict import flatten
 from ratelimiter import RateLimiter
@@ -27,7 +25,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         slug = self.url.rstrip('/').rsplit('/', 1)[-1]
         config_url = self.CONFIG_URL_FORMAT_.format(slug=slug)
         page = REQ.get(config_url)
@@ -211,10 +209,7 @@ class Statistic(BaseModule):
                     continue
                 assert user == data['username']
 
-                ret = {
-                    'info': data,
-                    'replace_info': True,
-                }
+                ret = {'info': data}
 
                 if history:
                     contests = history['data']
@@ -251,10 +246,3 @@ class Statistic(BaseModule):
                         }
 
                 yield ret
-
-
-if __name__ == '__main__':
-    statistic = Statistic(url='https://tlx.toki.id/contests/troc-11-div-1', key='380')
-    standings = statistic.get_standings()
-    result = standings.pop('result', {})
-    pprint(list(itertools.islice(result.items(), 0, 10)))

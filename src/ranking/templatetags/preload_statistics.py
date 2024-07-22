@@ -9,16 +9,23 @@ register = template.Library()
 
 
 @register.simple_tag
-def preload_statistics(statistics, base_resource):
+def preload_statistics(instances, base_resource, attr=None):
     ret = {}
     members = defaultdict(list)
-    for s in statistics:
-        if '_members' in s.addition:
-            for member in s.addition['_members']:
-                if not member or 'account' not in member:
-                    continue
-                resource = member.get('resource', base_resource.id)
-                members[resource].append(member['account'])
+    for instance in instances:
+        statistics = getattr(instance, attr, []) if attr else [instance]
+        for statistic in statistics:
+            if '_members' in statistic.addition:
+                for member in statistic.addition['_members']:
+                    if not member or 'account' not in member:
+                        continue
+                    if 'resource' in member:
+                        resource = member['resource']
+                    elif isinstance(base_resource, str):
+                        resource = getattr(instance, base_resource)
+                    else:
+                        resource = base_resource.id
+                    members[resource].append(member['account'])
     if members:
         accounts_filter = Q()
         for resource, members in members.items():

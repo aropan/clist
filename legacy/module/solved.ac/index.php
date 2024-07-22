@@ -5,6 +5,10 @@
     $contests_page = curlexec($contests_url);
 
     preg_match('#<script[^>]*id="__NEXT_DATA__"[^>]*>(?P<json>[^<]*)</script>#', $contests_page, $match);
+    if (!isset($match['json'])) {
+        echo " No json data found";
+        return;
+    }
     $data = json_decode($match['json'], true);
     $data = $data['props']['pageProps']['data'];
 

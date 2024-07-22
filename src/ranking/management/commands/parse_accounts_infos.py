@@ -67,13 +67,14 @@ class Command(BaseCommand):
         has_custom_params = args.resources or args.query or args.limit or args.all
         regular_update = not has_custom_params
 
-        resources = Resource.available_for_update_objects
         if args.resources:
+            resources = Resource.objects
             filt = Q()
             for r in args.resources:
                 filt |= Q(host__iregex=r)
             resources = resources.filter(filt)
         else:
+            resources = Resource.available_for_update_objects
             resources = resources.filter(has_accounts_infos_update=True)
 
         countrier = Countrier()
@@ -212,6 +213,10 @@ class Command(BaseCommand):
                                 n_counter['deleted'] += 1
                                 account.updated = now + timedelta(days=365)
                                 account.save(update_fields=['deleted', 'updated'])
+                                if not resource.accountrenaming_set.filter(old_key=account.key).exists():
+                                    deleted_count, _ = resource.accountrenaming_set.filter(new_key=account.key).delete()
+                                    if deleted_count:
+                                        n_counter['deleted_renaming'] += deleted_count
                                 seen.add(account.key)
                                 continue
 

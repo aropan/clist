@@ -9,20 +9,20 @@ from ranking.management.modules.excepts import InitModuleException
 
 class Statistic(BaseModule):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if not self.standings_url:
             raise InitModuleException('No standings url')
         if 'yandex' in self.standings_url:
-            self._module = yandex.Statistic(*args, **kwargs)
+            self._module = yandex.Statistic(**kwargs)
         elif self.key.startswith('solve:'):
             kwargs['prefix_handle'] = 'solve:'
-            self._module = solve.Statistic(*args, **kwargs)
+            self._module = solve.Statistic(**kwargs)
         else:
             raise InitModuleException(f'No support standings url = {self.standings_url}')
 
-    def get_standings(self, users=None, statistics=None):
-        standings = self._module.get_standings(users, statistics)
+    def get_standings(self, **kwargs):
+        standings = self._module.get_standings(**kwargs)
         is_final = re.search(r'\bfinal\b', self.name, re.IGNORECASE)
         if is_final:
             has_hidden = standings.get('has_hidden')

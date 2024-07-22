@@ -17,13 +17,14 @@ import pytz
 import tqdm
 import yaml
 from django.db import transaction
-from django.utils.timezone import now
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import get_item, is_improved_solution
+from clist.templatetags.extras import as_number, get_copy_item, get_item, is_improved_solution
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
+from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
 from utils.logger import suppress_db_logging_context
+from utils.mathutils import round_sig
 from utils.timetools import datetime_from_timestamp
 
 # from ranking.management.modules import conf
@@ -39,42 +40,58 @@ class Statistic(BaseModule):
     API_SUBMISSIONS_URL_FORMAT_ = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def _external_standings_urls(contest):
+        ret = []
+        try:
+            contest_name_slug = contest.key
+            count = REQ.get(f'https://lccn.lbao.site/api/v1/contest-records/count?contest_name={contest_name_slug}')
+            if re.match('^[0-9]+$', count) and int(count):
+                ret.append({'name': 'lccn.lbao.site',
+                            'url': f'https://lccn.lbao.site/predicted/{contest_name_slug}',
+                            'count': int(count)})
+        except FailOnGetResponse:
+            pass
+        return ret
 
     @classmethod
-    def _get(self, *args, req=None, **kwargs):
+    def _get(self, *args, req=None, n_addition_attempts=20, **kwargs):
         req = req or REQ
 
         headers = kwargs.setdefault('headers', {})
         headers['User-Agent'] = 'Mediapartners-Google'
         headers['Accept-Encoding'] = 'gzip, deflate, br'
 
+        url = args[0]
+        if '/api/' in url:
+            headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
+            headers['Content-Type'] = 'application/json'
+            headers['X-Requested-With'] = 'XMLHttpRequest'
+
         for key, value in (
             ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'),
             ('Accept-Language', 'en-US,en;q=0.5'),
-            ('Connection', 'keep-alive'),
             ('DNT', '1'),
-            ('Upgrade-Insecure-Requests', '1'),
-            ('Sec-Fetch-Dest', 'document'),
-            ('Sec-Fetch-Mode', 'navigate'),
-            ('Sec-Fetch-Site', 'cross-site'),
-            ('Pragma', 'no-cache'),
-            ('Cache-Control', 'no-cache'),
         ):
             headers.setdefault(key, value)
 
         kwargs['with_curl'] = req.proxer is None and 'post' not in kwargs
+        kwargs['curl_cookie_file'] = os.path.join(os.path.dirname(__file__), '.leetcode.cookies')
         kwargs['with_referer'] = False
 
         # if not getattr(self, '_authorized', None) and getattr(conf, 'LEETCODE_COOKIES', False):
         #     for kw in conf.LEETCODE_COOKIES:
         #         req.add_cookie(**kw)
         #     setattr(self, '_authorized', True)
-        return req.get(*args, **kwargs, additional_attempts={429: 20, 403: 20}, additional_delay=5)
+
+        additional_attempts = {code: {'count': n_addition_attempts} for code in [429, 403]}
+        return req.get(*args, **kwargs, additional_attempts=additional_attempts, additional_delay=5)
 
     @staticmethod
-    def _get_source_code_proxies_file():
-        return os.path.join(os.path.dirname(__file__), '.leetcode.get_source_code.proxies')
+    def _get_proxies_file(region):
+        return os.path.join(os.path.dirname(__file__), f'.leetcode.{region or "DEFAULT"}.proxies')
 
     @staticmethod
     def fetch_submission(submission, req=REQ, raise_on_error=False, n_attempts=1):
@@ -82,24 +99,32 @@ class Statistic(BaseModule):
         domain = Statistic.DOMAINS[data_region.lower()]
         url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission['submission_id'])
         try:
-            content = Statistic._get(url, req=req, n_attempts=n_attempts)
+            content = Statistic._get(url, req=req, n_attempts=n_attempts, n_addition_attempts=0)
             content = json.loads(content)
         except FailOnGetResponse as e:
             if raise_on_error:
                 raise e
             content = {}
-        except ProxyLimitReached:
-            return submission, {'url': url}
 
         return submission, content
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, more_statistics=None, **kwargs):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
-
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
-        url = api_ranking_url_format.format(1)
-        content = Statistic._get(url)
-        data = json.loads(content)
+
+        stop_fetch_standings = False
+        fetch_page_rate_limiter = RateLimiter(max_calls=5, period=1)
+
+        def fetch_standings_page(page):
+            if stop_fetch_standings:
+                return
+            with fetch_page_rate_limiter:
+                url = api_ranking_url_format.format(page + 1)
+                content = Statistic._get(url, ignore_codes={404}, n_attempts=3)
+                data = json.loads(content)
+                return data
+
+        data = fetch_standings_page(0)
         if not data:
             return {'result': {}, 'url': standings_url}
 
@@ -122,39 +147,12 @@ class Statistic(BaseModule):
             for i, p in enumerate(questions_data['questions'], start=1)
         ))
 
-        def update_problem_info(info):
-            slug = info['url'].strip('/').rsplit('/', 1)[-1]
-            params = {
-                'operationName': 'questionData',
-                'variables': {'titleSlug': slug},
-                'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { profileUrl } topicTags { name } hints } }',  # noqa: E501
-            }
-            page = Statistic._get(
-                'https://leetcode.com/graphql',
-                content_type='application/json',
-                post=json.dumps(params).encode('utf-8'),
-                n_attempts=3,
-            )
-            question = json.loads(page)['data']['question']
-            if question:
-                info['tags'] = [t['name'].lower() for t in question['topicTags']]
-                info['difficulty'] = question['difficulty'].lower()
-                info['hints'] = question['hints']
-            return info
-
         with PoolExecutor(max_workers=8) as executor:
-            executor.map(update_problem_info, problems_info.values())
-
-        fetch_page_rate_limiter = RateLimiter(max_calls=4, period=1)
-
-        def fetch_page(page):
-            if stop:
-                return
-            with fetch_page_rate_limiter:
-                url = api_ranking_url_format.format(page + 1)
-                content = Statistic._get(url, ignore_codes={404}, n_attempts=3)
-                data = json.loads(content)
-                return data
+            problems_info_list = list(problems_info.values())
+            fetched_problems_info = executor.map(Statistic.get_problem_info, problems_info_list)
+            for info, fetched_info in zip(problems_info_list, fetched_problems_info):
+                if fetched_info is not None:
+                    info.update(fetched_info)
 
         n_top_submissions = get_item(self.resource.info, 'statistics.n_top_download_submissions')
 
@@ -162,25 +160,23 @@ class Statistic(BaseModule):
         parsed_domains = set()
         badges = set()
         result = {}
-        stop = False
         if users is None or users:
             if users:
                 users = list(users)
             start_time = self.start_time.replace(tzinfo=None)
             with PoolExecutor(max_workers=4) as executor:
-                solutions_for_get = []
                 solutions_ids = set()
                 times = {}
 
-                def fetch_ranking(domain, region):
-                    nonlocal api_ranking_url_format, stop, hidden_fields, parsed_domains
+                def fetch_ranking(domain, region, n_page=None):
+                    nonlocal api_ranking_url_format, stop_fetch_standings
                     api_ranking_url_format = re.sub('[.][^./]+(?=/)', domain, api_ranking_url_format)
                     api_ranking_url_format = re.sub('&region=[^&]+', f'&region={region}', api_ranking_url_format)
 
-                    stop = False
+                    stop_fetch_standings = False
 
                     try:
-                        data = fetch_page(1)
+                        data = fetch_standings_page(0)
                     except FailOnGetResponse as e:
                         if e.code == 404:
                             return
@@ -191,14 +187,28 @@ class Statistic(BaseModule):
                         if str(p['question_id']) not in problems_info:
                             return
 
-                    n_page = (data['user_num'] - 1) // len(data['total_rank']) + 1
+                    per_page = len(data['total_rank'])
+                    n_page = n_page or (data['user_num'] - 1) // per_page + 1
+
+                    if users and more_statistics:
+                        pages = set()
+                        for more_stat in more_statistics.values():
+                            place = as_number(more_stat['place'], force=True)
+                            if place is None:
+                                raise ExceptionParseStandings(f'Invalid place {more_stat["place"]}')
+                            page = (place - 1) // per_page
+                            pages.add(page)
+                        n_page = len(pages)
+                    else:
+                        pages = range(n_page)
+
                     rank_index0 = False
                     for data in tqdm.tqdm(
-                        executor.map(fetch_page, range(n_page)),
+                        executor.map(fetch_standings_page, pages),
                         total=n_page,
                         desc=f'parsing statistics paging from {domain}',
                     ):
-                        if stop:
+                        if stop_fetch_standings:
                             break
                         n_added = 0
                         for row, submissions in zip(data['total_rank'], data['submissions']):
@@ -206,36 +216,18 @@ class Statistic(BaseModule):
                             data_region = row.pop('data_region').lower()
                             data_domain = Statistic.DOMAINS[data_region]
                             member = f'{handle}@{data_domain}'
-
-                            if users is not None and member not in users or member in result:
+                            already_added = member in result
+                            if users is not None and member not in users:
                                 continue
                             row.pop('contest_id')
                             row.pop('global_ranking')
 
                             r = result.setdefault(member, OrderedDict())
-                            r['_ranking_domain'] = domain
-                            r['member'] = member
-                            r['solving'] = row.pop('score')
-                            r['name'] = row.pop('username')
-
-                            rank = int(row.pop('rank'))
-                            rank_index0 |= rank == 0
-                            r['place'] = rank + (1 if rank_index0 else 0)
-
-                            r['info'] = {'profile_url': {'_domain': data_domain, '_handle': handle}}
-
-                            country = None
-                            for field in 'country_code', 'country_name':
-                                country = country or row.pop(field, None)
-                            if country:
-                                r['country'] = country
-
-                            has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
 
                             skip = False
                             solved = 0
-                            stats = (statistics or {}).get(handle, {})
-                            problems = r.setdefault('problems', stats.get('problems', {}))
+                            stats = get_item(statistics, member, {})
+                            problems = r.setdefault('problems', get_copy_item(stats, 'problems', {}))
                             clear_problems_fields(problems)
                             for i, (k, s) in enumerate(submissions.items(), start=1):
                                 short = problems_info[k]['short']
@@ -251,26 +243,41 @@ class Statistic(BaseModule):
                                 if s.get('lang'):
                                     p['language'] = s['lang'].lower()
                                 if 'submission_id' in s:
-                                    if (has_download_submissions or statistics) and (
-                                        'submission_id' in p and p['submission_id'] != s['submission_id']
-                                        or 'language' not in p
-                                    ):
-                                        solutions_for_get.append(p)
                                     p['submission_id'] = s['submission_id']
                                     p['external_solution'] = True
                                     p['data_region'] = s['data_region']
 
-                                    skip = skip or s['submission_id'] in solutions_ids
-                                    solutions_ids.add(s['submission_id'])
+                                    skip = skip or p['submission_id'] in solutions_ids
+                                    solutions_ids.add(p['submission_id'])
+
+                            if already_added:
+                                continue
 
                             if users:
                                 users.remove(member)
                                 if not users:
-                                    stop = True
+                                    stop_fetch_standings = True
 
                             if not problems or skip:
                                 result.pop(member)
                                 continue
+
+                            r['_ranking_domain'] = domain
+                            r['member'] = member
+                            r['solving'] = row.pop('score')
+                            r['name'] = row.pop('username')
+                            rank = int(row.pop('rank'))
+                            rank_index0 |= rank == 0
+                            rank += (1 if rank_index0 else 0)
+                            r['place'] = rank
+
+                            r['info'] = {'profile_url': {'_domain': data_domain, '_handle': handle}}
+
+                            country = None
+                            for field in 'country_code', 'country_name':
+                                country = country or row.pop(field, None)
+                            if country:
+                                r['country'] = country
 
                             r['solved'] = {'solving': solved}
                             penalty_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
@@ -288,7 +295,8 @@ class Statistic(BaseModule):
 
                             r.update(row)
 
-                            hidden_fields |= set(row.keys())
+                            for k in set(row):
+                                hidden_fields.add(k)
                             if statistics and member in statistics:
                                 stat = statistics[member]
                                 for k in ('rating_change', 'new_rating', 'raw_rating', '_rank'):
@@ -298,7 +306,7 @@ class Statistic(BaseModule):
                             parsed_domains.add(domain)
 
                         if n_added == 0 and not users:
-                            stop = True
+                            stop_fetch_standings = True
 
                 fetch_ranking(domain='.com', region='global')
                 fetch_ranking(domain='.cn', region='local')
@@ -314,17 +322,28 @@ class Statistic(BaseModule):
                             last = value
                         row['place'] = place
 
-                to_get_solutions = os.environ.get('SKIP_GET_SOLUTIONS') is None and (
-                    self.contest.has_rating_prediction
-                    or self.end_time + timedelta(hours=2) < now()
+                to_get_solutions = (
+                    os.environ.get('SKIP_GET_SOLUTIONS') is None and
+                    self.contest.parsed_time is not None and
+                    self.contest.end_time + timedelta(minutes=20) < self.contest.parsed_time
                 )
-                if solutions_for_get and to_get_solutions:
+                solutions_for_get = []
+                if to_get_solutions:
+                    for r in result.values():
+                        has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
+                        if not has_download_submissions:
+                            continue
+                        for p in r['problems'].values():
+                            if 'submission_id' in p and 'language' not in p:
+                                solutions_for_get.append(p)
+                if solutions_for_get:
                     try:
                         if n_top_submissions:
                             n_solutions_limit = n_top_submissions * len(problems_info)
                             solutions_for_get = solutions_for_get[:n_solutions_limit]
+                        fetch_submission_func = partial(Statistic.fetch_submission, raise_on_error=True)
                         for submission, data in tqdm.tqdm(
-                            executor.map(Statistic.fetch_submission, solutions_for_get),
+                            executor.map(fetch_submission_func, solutions_for_get),
                             total=len(solutions_for_get),
                             desc='fetching submissions',
                         ):
@@ -343,6 +362,12 @@ class Statistic(BaseModule):
             'badges': list(sorted(badges)),
             'info_fields': ['badges'],
         }
+
+        external_standings_urls = self._external_standings_urls(self.contest)
+        if external_standings_urls:
+            options = standings.setdefault('options', {})
+            options['external_urls'] = external_standings_urls
+
         return standings
 
     @staticmethod
@@ -352,11 +377,10 @@ class Statistic(BaseModule):
             with REQ.with_proxy(
                 time_limit=10,
                 n_limit=30,
-                filepath_proxies=Statistic._get_source_code_proxies_file(),
+                filepath_proxies=Statistic._get_proxies_file(problem.get('data_region')),
                 connect=partial(Statistic.fetch_submission, problem, raise_on_error=True),
             ) as req:
                 _, data = req.proxer.get_connect_ret()
-
             if not data:
                 return {}
 
@@ -803,7 +827,6 @@ class Statistic(BaseModule):
                         'try_renaming_check': True,
                         'try_fill_missed_ranks': True,
                     },
-                    'replace_info': True,
                 }
 
                 profile_url = account.info.setdefault('profile_url', {})
@@ -985,4 +1008,32 @@ class Statistic(BaseModule):
         if save_account:
             account.info['submissions_'] = info
             account.save(update_fields=['info', 'last_submission'])
+        return ret
+
+    @staticmethod
+    def get_problem_info(problem):
+        slug = get_item(problem, 'slug')
+        params = {
+            'operationName': 'questionData',
+            'variables': {'titleSlug': slug},
+            'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { profileUrl } topicTags { name } hints acRate questionFrontendId isPaidOnly } }',  # noqa: E501
+        }
+        page = Statistic._get(
+            'https://leetcode.com/graphql',
+            content_type='application/json',
+            post=json.dumps(params).encode('utf-8'),
+            n_attempts=3,
+        )
+        question = json.loads(page)['data']['question']
+        if not question:
+            return None
+
+        ret = dict(
+            tags=[t['name'].lower() for t in question['topicTags']],
+            difficulty=question['difficulty'].lower(),
+            hints=question['hints'],
+            premium=question['isPaidOnly'],
+            accepted_rate=round_sig(question['acRate'], 3),
+            id=as_number(question['questionFrontendId']),
+        )
         return ret

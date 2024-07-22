@@ -19,3 +19,11 @@ WEBPUSH_SETTINGS = {
     'VAPID_PRIVATE_KEY': '{str}',
     'VAPID_ADMIN_EMAIL': '{str}',
 }
+
+SENTRY_DNS = '{str}'
+
+GEOIP_ACCOUNT_ID = '{str}'
+GEOIP_LICENSE_KEY = '{str}'
+
+CUSTOM_COUNTRIES = {dict}
+FILTER_CUSTOM_COUNTRIES = {dict}

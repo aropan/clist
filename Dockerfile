@@ -45,10 +45,9 @@ WORKDIR $APPDIR
 FROM base as dev
 ENV DJANGO_ENV_FILE .env.dev
 RUN apt install -y redis-server
-COPY ./scripts/watchdog.bash /
-CMD sh -c 'redis-server --daemonize yes; /watchdog.bash "python manage.py rqworker" "*.py"; python manage.py runserver 0.0.0.0:10042'
+CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker" "*.py"; python manage.py runserver 0.0.0.0:10042'
 
-COPY ipython_config.py .
+COPY config/ipython_config.py .
 RUN ipython profile create
 RUN cat ipython_config.py >> ~/.ipython/profile_default/ipython_config.py
 RUN rm ipython_config.py
@@ -58,32 +57,32 @@ FROM base as prod
 ENV DJANGO_ENV_FILE .env.prod
 RUN apt install -y cron redis-server
 
-COPY ./src/ $APPDIR/
-COPY ./legacy/api/ $APPDIR/legacy/api/
+COPY src/ $APPDIR/
+COPY legacy/api/ $APPDIR/legacy/api/
 
-COPY cron /etc/cron.d/clist
+COPY config/cron /etc/cron.d/clist
 RUN chmod 0644 /etc/cron.d/clist
 RUN crontab /etc/cron.d/clist
 
-COPY ./uwsgi.ini $APPDIR/
+COPY config/uwsgi.ini $APPDIR/
 
 RUN mkdir /run/daphne
 
-COPY ./redis.conf /etc/redis/redis.conf
+COPY config/redis.conf /etc/redis/redis.conf
 
-COPY supervisord.conf /etc/supervisord.conf
+COPY config/supervisord.conf /etc/supervisord.conf
 CMD supervisord -c /etc/supervisord.conf
 
 
 FROM ubuntu:latest as loggly
 RUN apt-get update && apt-get install -y rsyslog
 RUN sed -i '/imklog/s/^/# /g' /etc/rsyslog.conf
-COPY ./loggly/entrypoint.sh /entrypoint.sh
-COPY ./loggly/60-loggly.conf /etc/rsyslog.d/60-loggly.conf
+COPY config/loggly/entrypoint.sh /entrypoint.sh
+COPY config/loggly/60-loggly.conf /etc/rsyslog.d/60-loggly.conf
 ENTRYPOINT /entrypoint.sh
 
 
 FROM nginx:alpine as nginx
 RUN apk add --no-cache logrotate
-COPY ./nginx/logrotate.d/nginx /etc/logrotate.d/nginx
+COPY config/nginx/logrotate.d/nginx /etc/logrotate.d/nginx
 RUN chmod 0644 /etc/logrotate.d/nginx

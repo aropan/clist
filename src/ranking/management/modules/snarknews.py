@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os
 from urllib.parse import urlparse
 
+from ranking.management.modules import opencup, yandex
 from ranking.management.modules.common import BaseModule
-from ranking.management.modules import yandex, opencup
 
 
 class Statistic(BaseModule):
@@ -21,7 +20,5 @@ class Statistic(BaseModule):
         else:
             self.module = opencup.Statistic(**kwargs)
 
-    def get_standings(self, users=None, statistics=None):
-        return self.module.get_standings(users)
-
-
+    def get_standings(self, **kwargs):
+        return self.module.get_standings(**kwargs)

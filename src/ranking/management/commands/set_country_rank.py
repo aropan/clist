@@ -29,9 +29,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='resources hosts')
         parser.add_argument('--rank-update-delay', help='time delay after rank last update time',
-                            default='3 days')
+                            default='5 days')
         parser.add_argument('--contest-update-delay', help='time delay after rating last update time',
-                            default='1 day')
+                            default='1 days')
         parser.add_argument('--without-delay', action='store_true', help='do not check delay')
         parser.add_argument('--verbose', action='store_true', help='verbose output')
         parser.add_argument('-f', '--force', action='store_true', help='force update')
@@ -48,25 +48,29 @@ class Command(BaseCommand):
         resources = Resource.available_for_update_objects.all()
         now = timezone.now()
 
-        if not args.without_delay and not args.force:
-            rank_update_delay = parse_duration(args.rank_update_delay)
-            contest_update_delay = parse_duration(args.contest_update_delay)
-            need_update = (
-                Q(country_rank_update_time__isnull=True) |
-                (Q(contest_update_time__isnull=False) & Q(country_rank_update_time__lt=F('contest_update_time')))
-            )
-            long_update = (
-                Q(country_rank_update_time__isnull=True) |
-                Q(country_rank_update_time__lt=now - rank_update_delay)
-            )
-            short_update = Q(contest_update_time__isnull=True) | Q(contest_update_time__lt=now - contest_update_delay)
-            resources = resources.filter(need_update & (long_update | short_update))
-
         if args.resources:
             resource_filter = Q()
             for r in args.resources:
                 resource_filter |= Q(host=r) | Q(short_host=r)
             resources = resources.filter(resource_filter)
+
+        if not args.without_delay and not args.force:
+            rank_update_delay = parse_duration(args.rank_update_delay)
+            contest_update_delay = parse_duration(args.contest_update_delay)
+            need_update = (
+                Q(country_rank_update_time__isnull=True) |
+                (
+                    Q(rank_update_time__isnull=False)
+                    & Q(country_rank_update_time__lt=F('rank_update_time'))
+                    & (Q(rating_update_time__isnull=False) & Q(rank_update_time__gt=F('rating_update_time')))
+                )
+            )
+            long_update = (
+                Q(country_rank_update_time__isnull=True) |
+                Q(country_rank_update_time__lt=now - rank_update_delay)
+            )
+            short_update = Q(rank_update_time__isnull=True) | Q(rank_update_time__lt=now - contest_update_delay)
+            resources = resources.filter(need_update & (long_update | short_update))
 
         self.log_queryset('resources', resources)
 

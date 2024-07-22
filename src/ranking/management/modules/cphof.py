@@ -16,7 +16,7 @@ from tqdm import tqdm
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number
 from notification.models import NotificationMessage
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table, LOG
+from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseAccounts
 from true_coders.models import Coder
 
@@ -65,7 +65,7 @@ class Statistic(BaseModule):
         info['name'] = html.unescape(match.group('name').strip())
         return info
 
-    def get_standings(self, users=None, statistics=None):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.standings_url or self.url
         page = REQ.get(standings_url)
 
@@ -432,7 +432,7 @@ class Statistic(BaseModule):
             with transaction.atomic():
                 link_accounts(info, user, cphof_resource, cphof_account)
 
-            ret = {'info': info, 'replace_info': True}
+            ret = {'info': info}
             if cphof_account.key != info['member']:
                 ret['rename'] = info['member']
 
