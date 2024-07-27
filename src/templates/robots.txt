@@ -20,6 +20,7 @@ Disallow: /o/
 Disallow: /coder/*/ratings/
 Disallow: /account/*/ratings/
 Disallow: /profile/*/ratings/
+Disallow: /account/*/verification/
 
 Allow: /api/v*/doc
 Disallow: /api/

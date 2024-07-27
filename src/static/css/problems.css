@@ -8,6 +8,20 @@
   white-space: nowrap;
 }
 
+.problem-column-hints {
+  text-align: left;
+  white-space: normal;
+}
+
+.problem-column-hints ul {
+  padding-left: 15px;
+}
+
+#problems table th {
+  vertical-align: middle;
+  padding: 2px 8px;
+}
+
 #problems table td {
   vertical-align: middle;
 }

@@ -61,7 +61,7 @@
   </td>
   {% endif %}
   {% for field in custom_fields_select.values %}
-  <td class="problem-field-column">
+  <td class="problem-field-column problem-column-{{ field }}">
     {% if field in custom_info_fields %}
     {% define problem.info|get_item:field as value %}
     {% else %}

@@ -10,34 +10,33 @@
     vertical-align: middle;
 }
 
-.header-start-time,
-.header-duration,
-.header-timeleft,
-.header-event {
-    /*font-weight: bold;*/
+#contests th,
+#contests .start-time,
+#contests .duration,
+#contests .timeleft {
+    white-space: nowrap;
+}
+
+#contests th,
+#contests td {
+    border-width: 1px 0px;
+    border-style: solid #ddd;
+    padding: 5px 10px;
 }
 
 .header-start-time,
 .header-duration,
 .header-timeleft,
-.start-time,
-.duration,
-.timeleft {
+#contests .start-time,
+#contests .duration,
+#contests .timeleft {
     text-align: center;
 }
 
-#contests>div:first-child {
-    border-top: 1px solid #c9c9c9;
-}
 
-#contests>div {
-    border-bottom: 1px solid #c9c9c9;
-    border-left: 1px solid #c9c9c9;
-    border-right: 1px solid #c9c9c9;
-}
-
-#contests>div {
-    padding: 4px 0px;
+.header-resource,
+#contests .resource {
+    text-align: right;
 }
 
 #contests a {
@@ -50,14 +49,10 @@
  */
 
 .hide-contest.fa-eye,
-.fc-content .data-ace
+.fc-event .data-ace
 {
     visibility: hidden;
     margin-right: 2px;
-}
-
-.fc-content .data-ace {
-    color: #fff;
 }
 
 :hover > .hide-contest,
@@ -73,12 +68,6 @@
     color: #23527c;
 }
 
-.fc-content a.data-ace:hover,
-.fc-content i.hide-contest:hover
-{
-    color: black;
-}
-
 .event .hide-contest,
 .event .data-ace,
 .event .share-to-category
@@ -91,42 +80,26 @@
     cursor: pointer;
 }
 
-.contest.nofilter {
-    display: none;
-}
-
-.contest.onfilter {
-    display: block !important;
-}
-
+.contest.nofilter,
 .contest.subcontest {
     display: none;
 }
 
+
 @media(max-width:767px) {
-    #contests>div:nth-child(2) {
-        border-top: 1px solid #c9c9c9;
-    }
-    .event {
+    #contests td {
+        border: none;
+        display: block;
+        padding: 2px;
         text-align: center;
     }
-    #switch {
-        position: absolute;
-        visibility: hidden;
+    #contests td:first-child {
+        padding-top: 5px;
     }
-}
-
-@media(min-width:1200px) {
-    .event .resource{
-        float: right;
+    #contests td:last-child {
+        padding-bottom: 5px;
     }
-}
-
-.event .resource a {
-    text-decoration: none;
-}
-
-#contests .row {
-  margin-right: inherit;
-  margin-left: inherit;
+    #contests tr {
+        border: 1px solid #ddd;
+    }
 }

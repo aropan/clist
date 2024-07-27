@@ -32,7 +32,7 @@
           <th class="problem-result-column">Result</th>
           {% endif %}
           {% for field in custom_fields_select.values %}
-          <th class="problem-field-column">{{ field|title_field }}</th>
+          <th class="problem-field-column problem-column-{{ field }}">{{ field|title_field_div }}</th>
           {% endfor %}
           <th>Name <span class="pull-right text-muted">Contest</span></th>
           <th>Tags</th>

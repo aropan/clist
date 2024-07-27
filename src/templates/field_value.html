@@ -78,6 +78,8 @@
         {% for v in value %}{% if forloop.counter0 %}<br/>{% endif %}<a class="nowrap field-to-select" href="{% url_transform request field|strip:"_" v with_replace=1 %}">{{ v }}</a>{% endfor %}
       {% elif field == 'first_ac__accounts' and types|to_json == '["list"]' %}
         {% for handle in value %}{% if forloop.counter0 %}<br/>{% endif %}{% if resource %}<a href="{% url 'coder:account' handle resource.host %}">{{ handle }}</a>{% else %}{{ handle }}{% endif %}{% endfor %}
+      {% elif field == 'hints' and types|to_json == '["list"]' %}
+        <ul>{% for hint in value %}<li>{{ hint }}</li>{% endfor %}</ul>
       {% else %}
         {{ template_value }}
       {% endif %}

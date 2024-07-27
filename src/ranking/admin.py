@@ -139,9 +139,10 @@ class StatisticsAdmin(BaseModelAdmin):
 
 @admin_register(Stage)
 class StageAdmin(BaseModelAdmin):
-    list_display = ['contest', 'filter_params', 'score_params']
-    search_fields = ['contest__title', 'contest__resource__host']
+    list_display = ['contest', 'filter_params']
+    search_fields = ['contest__title', 'contest__resource__host', 'filter_params', 'score_params']
     list_filter = ['contest__host']
+    ordering = ['-contest__start_time']
 
     def parse_stage(self, request, queryset):
         for stage in queryset:

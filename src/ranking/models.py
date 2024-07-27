@@ -909,7 +909,7 @@ class Stage(BaseModel):
                     problem['status'] = 'W'
 
         if self.score_params.get('writers_proportionally_score'):
-            n_contests = len(contests)
+            n_contests = sum(contest.start_time < timezone_now for contest in contests)
             for account in writers:
                 row = results[account]
                 if n_contests == row['writer'] or 'score' not in row:

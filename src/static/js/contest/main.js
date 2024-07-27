@@ -26,8 +26,8 @@ function filterCallbackList() {
         })
         var count = 0
         $('.contest').each(function() {
-            var title = $(this).find('.event .title_search').attr('title')
-            var host = $(this).find('.event .resource_search').text()
+            var title = $(this).find('.event .title-search').attr('title')
+            var host = $(this).find('.event .resource-search').text()
             var fav = Boolean($(this).find('.fav.selected-activity').length)
             var regexed = regex? regex.test(title) || regex.test(host) : true
             var favorited = favorite_value? String(fav) == favorite_value : true

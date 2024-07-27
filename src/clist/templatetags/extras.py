@@ -1006,12 +1006,21 @@ def as_number(value, force=False):
     return value
 
 
-@register.filter
-def title_field(value):
+def _title_field(value):
     value = re.sub('([A-Z]+)', r'_\1', value)
     values = re.split('_+', value)
-    value = ' '.join([v.title() for v in values])
-    return value
+    values = [v.title() for v in values]
+    return values
+
+
+@register.filter
+def title_field(value):
+    return ' '.join(_title_field(value))
+
+
+@register.filter
+def title_field_div(value, split=False):
+    return mark_safe(''.join([f'<div>{f}</div>' for f in _title_field(value)]))
 
 
 def normalize_field(k):

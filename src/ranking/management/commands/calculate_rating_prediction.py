@@ -118,6 +118,8 @@ def get_old_ratings(contest):
         contest__start_time__lt=contest.start_time,
         contest__resource=resource,
         account__in=accounts,
+    ).exclude(
+        contest__is_rated=False,
     ).annotate(
         latest_rating=Case(
             When(**{f'addition__{rating_field}__isnull': False}, then=FloatJSONF(f'addition__{rating_field}')),
@@ -133,6 +135,7 @@ def get_old_ratings(contest):
     ).distinct('account').values('member', 'latest_rating')
 
     n_contests_filter = Q(contest__start_time__lt=contest.start_time, skip_in_stats=False)
+    n_contests_filter &= Q(contest__is_rated=True) | Q(contest__is_rated__isnull=True)
     statistics = Statistics.objects.filter(
         contest=contest,
         account__in=accounts,

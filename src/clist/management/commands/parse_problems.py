@@ -64,6 +64,7 @@ class Command(BaseCommand):
         contests = contests.order_by('-end_time')
 
         for contest in tqdm(contests, total=contests.count(), desc='Contests'):
+            cache = dict()
             modules = dict()
             resource = contest.resource
             if resource not in modules:
@@ -73,7 +74,7 @@ class Command(BaseCommand):
             problems = deepcopy(contest.info.get('problems'))
             updated = False
             for problem in contest.problems_list:
-                info = module.get_problem_info(problem)
+                info = module.get_problem_info(problem, contest=contest, cache=cache)
                 if info is None:
                     continue
                 problem.update(info)

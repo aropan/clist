@@ -34,7 +34,11 @@ $(function() {
         var target_view = $(this).prop('checked')? 'list' : 'calendar'
         $('.list-calendar-views .active').toggleClass('active')
         $('#' + target_view + '-view').toggleClass('active')
-        $(window).resize()  // to collapse list day events in calendar
+
+        // to collapse list day events in calendar
+        $(window).resize()
+        calendar.render()
+
         update_urls_params({'view': target_view})
     })
 

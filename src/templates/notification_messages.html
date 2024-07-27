@@ -8,22 +8,25 @@
 
 {% block content %}
 
+<div class="col-sm-offset-2 col-sm-8 col-lg-offset-3 col-lg-6">
 {% if notification_messages %}
   {% for message in notification_messages %}
   {% ifchanged message.is_read %}
     {% if forloop.counter0 %}<hr/>{% endif %}
   {% endifchanged %}
   <div class="text-center alert alert-{{ message.level|default:"info" }}{% if message.is_read %} read{% endif %}">
-    <small class="created_at text-muted pull-right">
+    <span class="text{% if message.is_read %} text-muted small{% endif %}">{{ message.text|safe }}<span>
+    <div class="created_at text-muted pull-right">
       <span title="{{ message.created|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
         <small>{{ message.created|timezone:timezone|naturaltime }}</small>
       </span>
-    </small>
-    <span class="text{% if message.is_read %} text-muted small{% endif %}">{{ message.text|safe }}<span>
+    </div>
   </div>
   {% endfor %}
 {% else %}
   <div class="row alert alert-info text-center">There are no messages</div>
 {% endif %}
+
+</div>
 
 {% endblock %}

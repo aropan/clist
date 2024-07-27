@@ -686,6 +686,7 @@ FONTAWESOME_ICONS_ = {
     'chart': '<i class="fa-fw fas fa-chart-bar"></i>',
     'ghost': '<i class="fs-fw fas fa-ghost"></i>',
     'top': '<i class="fas fa-list-ol"></i>',
+    'coders': '<i class="fas fa-users"></i>',
     'accounts': '<i class="fa-regular fa-rectangle-list"></i>',
     'problems': '<i class="fa-solid fa-list-check"></i>',
     'submissions': '<i class="fa-solid fa-bars"></i>',

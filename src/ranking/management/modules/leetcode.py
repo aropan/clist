@@ -36,7 +36,7 @@ class Statistic(BaseModule):
     RANKING_URL_FORMAT_ = '{url}/ranking'
     API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}/api/submissions/{}/'
     STATE_FILE = os.path.join(os.path.dirname(__file__), '.leetcode.yaml')
-    DOMAINS = {'': '.com', 'us': '.com', 'cn': '.cn'}
+    DOMAINS = {'': '.com', 'us': '.com', 'cn': '.cn', 'ly': '.com'}
     API_SUBMISSIONS_URL_FORMAT_ = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
 
     def __init__(self, **kwargs):
@@ -1011,7 +1011,7 @@ class Statistic(BaseModule):
         return ret
 
     @staticmethod
-    def get_problem_info(problem):
+    def get_problem_info(problem, **kwargs):
         slug = get_item(problem, 'slug')
         params = {
             'operationName': 'questionData',

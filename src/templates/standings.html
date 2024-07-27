@@ -275,7 +275,7 @@
               <th{{ default_rowspan }}>Win Rate</th>
               <th{{ default_rowspan }}>Results</th>
               {% for field in versus_data.fields %}
-              <th{{ default_rowspan }}>{% with title_field=field|title_field %}{% for f in title_field.split %}<div>{{ f }}</div>{% endfor %}{% endwith %}</th>
+              <th{{ default_rowspan }}>{{ field|title_field_div }}</th>
               {% endfor %}
               {% endif %}
               <th class="score-cell sticky-column" data-sticky-column="score-cell"{{ default_rowspan }}>Score</th>

@@ -140,7 +140,7 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
-    def get_problem_info(problem):
+    def get_problem_info(problem, **kwargs):
         raise NotImplementedError()
 
 

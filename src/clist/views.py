@@ -202,6 +202,7 @@ def get_events(request):
                 'hr_duration': contest.hr_duration,
                 'color': color,
                 'icon': contest.resource.icon,
+                'allDay': contest.full_duration >= timedelta(days=1),
             }
             if coder:
                 c['favorite'] = contest.is_favorite
@@ -680,7 +681,7 @@ def resource(request, host, template='resource.html', extra_context=None):
                 'url': reverse('ranking:standings_list') + f'?resource={resource.pk}',
             },
             'coming': {
-                'contests': contests.filter(start_time__gt=now).order_by('start_time'),
+                'contests': contests.filter(start_time__gt=now).order_by('start_time', 'id'),
                 'field': 'start_time',
                 'url': reverse('clist:main') + f'?resource={resource.pk}&view=list&group=no&status=coming',
             },

@@ -21,7 +21,7 @@ from django.db.models import Q
 from first import first
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import as_number, is_improved_solution
+from clist.templatetags.extras import as_number, is_improved_solution, slug
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -44,6 +44,19 @@ class Statistic(BaseModule):
         super(Statistic, self).__init__(**kwargs)
         self._username = conf.CODECHEF_USERNAME
         self._password = conf.CODECHEF_PASSWORD
+
+    @staticmethod
+    def _get_headers_with_csrf_token(key):
+        standings_url = Statistic.STANDINGS_URL_FORMAT_.format(key=key)
+        page = REQ.get(standings_url)
+        for regex in (
+            r'window.csrfToken\s*=\s*"([^"]*)"',
+            '<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"',
+        ):
+            match = re.search(regex, page)
+            if match:
+                csrf_token = match.group(1)
+                return {'x-csrf-token': csrf_token, 'x-requested-with': 'XMLHttpRequest'}
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         # REQ.get('https://www.codechef.com/')
@@ -95,19 +108,9 @@ class Statistic(BaseModule):
         writers = defaultdict(int)
 
         for key, contest_info in contest_infos.items():
-            standings_url = self.STANDINGS_URL_FORMAT_.format(key=key)
-            page = REQ.get(standings_url)
-            for regex in (
-                r'window.csrfToken\s*=\s*"([^"]*)"',
-                '<input[^>]*name="csrfToken"[^>]*id="edit-csrfToken"[^>]*value="([^"]*)"',
-            ):
-                match = re.search(regex, page)
-                if match:
-                    break
-            if not match:
+            headers = Statistic._get_headers_with_csrf_token(key)
+            if not headers:
                 raise ExceptionParseStandings('not found csrf token')
-            csrf_token = match.group(1)
-            headers = {'x-csrf-token': csrf_token, 'x-requested-with': 'XMLHttpRequest'}
 
             n_page = 0
             per_page = 150
@@ -168,32 +171,13 @@ class Statistic(BaseModule):
                             }
                             d.append(problem_info)
 
-                            if code not in problems_data:
-                                problem_url = self.API_PROBLEM_URL_FORMAT_.format(key='PRACTICE', code=code)
-                                problem_data = REQ.get(problem_url,
-                                                       headers=headers,
-                                                       return_json=True,
-                                                       ignore_codes={404, 403})
+                            more_problem_info = self.get_problem_info(problem_info,
+                                                                      contest=self.contest,
+                                                                      cache=problems_data)
+                            problem_info.update(more_problem_info)
 
-                                if problem_data.get('status') == 'error':
-                                    problem_info['url'] = self.CONTEST_PROBLEM_URL_FORMAT_.format(key=key, code=code)
-                                    problem_url = self.API_PROBLEM_URL_FORMAT_.format(key=key, code=code)
-                                    problem_data = REQ.get(problem_url,
-                                                           headers=headers,
-                                                           return_json=True,
-                                                           ignore_codes={404, 403})
-
-                                writer = problem_data.get('problem_author')
-                                if writer:
-                                    writers[writer] += 1
-                                    problems_data[code]['writers'] = [writer]
-
-                                tags = problem_data.get('tags')
-                                if tags:
-                                    matches = re.findall('<a[^>]*>([^<]+)</a>', tags)
-                                    problems_data[code]['tags'] = matches
-
-                            problem_info.update(problems_data[code])
+                            for writer in problem_info.get('writers', []):
+                                writers[writer] += 1
 
                         n_total_page = data['availablePages']
                         pbar = tqdm.tqdm(total=n_total_page * len(urls))
@@ -213,7 +197,10 @@ class Statistic(BaseModule):
                         row['solving'] = d.pop('score')
                         for k in 'time', 'total_time':
                             if k in d:
-                                row['time'] = d.pop(k)
+                                t = d.pop(k)
+                                if t.startswith('-'):
+                                    continue
+                                row['time'] = t
                                 break
 
                         stats = (statistics or {}).get(handle, {})
@@ -251,7 +238,11 @@ class Statistic(BaseModule):
 
                                 problem = problems.setdefault(k, {})
                                 if k in unscored_problems:
-                                    problem = problem.setdefault('upsolving', {})
+                                    problem_upsolving = problem.setdefault('upsolving', {})
+                                    if not isinstance(problem_upsolving, dict):
+                                        problem_upsolving = {'result': problem_upsolving}
+                                        problem['upsolving'] = problem_upsolving
+                                    problem = problem_upsolving
                                     if not is_improved_solution(v, problem):
                                         continue
                                 problem.update(v)
@@ -615,3 +606,72 @@ class Statistic(BaseModule):
         account.info['submissions_'] = submissions_info
         account.save(update_fields=['info', 'last_submission'])
         return ret
+
+    @staticmethod
+    def get_problem_info(problem, contest, cache, **kwargs):
+        code = problem['code']
+        if code in cache:
+            return cache[code]
+        problem_info = cache.setdefault(code, {})
+
+        problem_url = Statistic.API_PROBLEM_URL_FORMAT_.format(key='PRACTICE', code=code)
+        problem_data = REQ.get(problem_url, return_json=True, ignore_codes={404, 403})
+
+        if problem_data.get('status') == 'error':
+            problem_info['url'] = Statistic.CONTEST_PROBLEM_URL_FORMAT_.format(key=contest.key, code=code)
+            problem_url = Statistic.API_PROBLEM_URL_FORMAT_.format(key=contest.key, code=code)
+            problem_data = REQ.get(problem_url, return_json=True, ignore_codes={404, 403})
+
+        problem_data.pop('body', None)
+        problem_data.pop('problemComponents', None)
+        problem_data.pop('practice_special_banner', None)
+        problem_data.pop('problem_display_authors_html_handle', None)
+
+        problem_writers = []
+        authors = problem_data.pop('problem_display_authors', None)
+        if authors:
+            problem_writers.extend(authors)
+        author = problem_data.pop('problem_author', None)
+        if author and author not in problem_writers:
+            problem_writers.append(author)
+        if problem_writers:
+            problem_info['writers'] = problem_writers
+
+        problem_tags = []
+        for tags_field in ('tags', 'user_tags', 'computed_tags'):
+            tags = problem_data.pop(tags_field, None)
+            if not tags:
+                continue
+            if isinstance(tags, str):
+                tags = re.findall('<a[^>]*>([^<]+)</a>', tags)
+            problem_tags.extend(tags)
+        if problem_tags:
+            problem_info['tags'] = [slug(t) for t in problem_tags]
+        languages_supported = problem_data.pop('languages_supported', None)
+        if languages_supported:
+            if isinstance(languages_supported, str):
+                languages_supported = languages_supported.split(', ')
+            problem_info['languages_supported'] = languages_supported
+
+        native_rating = problem_data.pop('difficulty_rating', None)
+        native_rating = as_number(native_rating, force=True)
+        if native_rating and native_rating > 0:
+            problem_info['native_rating'] = native_rating
+
+        for field in (
+            ('hints'),
+            ('best_tag'),
+            ('editorial_url'),
+            ('video_editorial_url'),
+            ('max_timelimit'),
+            ('source_sizelimit'),
+        ):
+            if isinstance(field, tuple):
+                key, field = field
+            else:
+                key = field
+            value = problem_data.pop(key, None)
+            if value:
+                problem_info[field] = value
+
+        return problem_info

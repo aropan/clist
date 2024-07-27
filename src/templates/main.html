@@ -73,94 +73,99 @@
 <div class="tab-content list-calendar-views">
   <div class="tab-pane{% if viewmode == "list" %} active{% endif %}" id="list-view">
     {% if contests %}
-    <div id="contests">
-      <div class="header row hidden-xs">
-        <div class="col-md-5 col-sm-4">
-          <div class="col-md-5 col-sm-12 header-start-time">Start/End Time</div>
-          <div class="col-md-3 col-sm-6 header-duration">Duration</div>
-          <div class="col-md-4 col-sm-6 header-timeleft">Time Left</div>
-        </div>
-        <div class="col-md-7 col-sm-8 header-event">
-          {% if hide_contest %}
-          <i class="fa fa-eye invisible"></i>
-          {% endif %}
-          Event
-          {% if contests|total_sub_contest > 0 %}
-          <a href="#" id="toggle-all" class="badge progress-bar-info">{{ contests|total_sub_contest }}&nbsp;<i class="fa fa-caret-down"></i></a>
-          {% endif %}
-          <span id="filter-count-matches" class="badge progress-bar-info hidden"></span>
-        </div>
-      </div>
+    <table id="contests" class="table table-bordered table-hover">
       {% for contest in contests %}
       {% with rid=contest.resource.id|stringformat:"s"  %}
       {% with group=contest.state|add:"-"|add:rid %}
-      <div class="contest row {{ contest.state }}{% if contest.state == 'running' %} bg-success{% elif contest.state == 'past' %} text-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
-        <div class="col-md-5 col-sm-4">
-          <div class="col-md-5 col-sm-12 start-time">
-            {% if contest.state == 'coming' %}
-            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest.start_time|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}&msg={{ contest.title|urlencode }}">
-              {{ contest.start_time|timezone:timezone|format_time:time_format }}
-            </a>
-            {% else %}
-            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}&msg={{ contest.title|urlencode }}">
-              {{ contest.end_time|timezone:timezone|format_time:time_format }}
-            </a>
+      {% if contest.state == 'coming' %}
+        {% define 'start' as time_field %}
+      {% else %}
+        {% define 'end' as time_field %}
+      {% endif %}
+
+      {% ifchanged time_field %}
+        {% with is_first=forloop.counter0|yesno:",y" %}
+        {% if not is_first  %}<tr class="hidden-xs text-muted"><th colspan="100%"></th></tr>{% endif %}
+        <tr class="hidden-xs text-muted">
+          <th class="header-start-time">{{ time_field|title }} time</th>
+          <th class="header-timeleft">{{ time_field|title }}s in</th>
+          <th class="header-duration">Duration</th>
+          <th class="header-event">
+            {% if hide_contest %}
+            <i class="fa fa-eye invisible"></i>
             {% endif %}
-          </div>
-          <div class="col-md-3 col-sm-6 duration">{{ contest.hr_duration }}</div>
+            Event
+            {% if is_first %}
+              {% if contests|total_sub_contest > 0 %}
+              <a href="#" id="toggle-all" class="badge progress-bar-info">{{ contests|total_sub_contest }}&nbsp;<i class="fa fa-caret-down"></i></a>
+              {% endif %}
+              <span id="filter-count-matches" class="badge progress-bar-info hidden"></span>
+            {% endif %}
+          </th>
+        </tr>
+        {% endwith %}
+      {% endifchanged %}
+
+        <tr class="contest {{ contest.state }}{% if contest.state == 'running' %} success{% elif contest.state == 'past' %} text-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
+          <td class="start-time">
+            {% with contest_time_field=time_field|add:"_time" %}
+            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest|get_item:contest_time_field|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}&msg={{ contest.title|urlencode }}">
+              {{ contest|get_item:contest_time_field|timezone:timezone|format_time:time_format }}
+            </a>
+            {% endwith %}
+          </td>
           {% with next_time=contest|next_time_to:now %}
-          <div class="col-md-4 col-sm-6 timeleft{% if next_time %} countdown{% endif %}"{% if next_time %} data-timestamp="{{ contest.next_time_datetime.timestamp }}"{% endif %}>
+          <td class="timeleft{% if next_time %} countdown{% endif %}"{% if next_time %} data-timestamp="{{ contest.next_time_datetime.timestamp }}"{% endif %}>
             {% if contest.is_over %}over{% else %}{{ next_time|countdown }}{% endif %}
-          </div>
+          </td>
           {% endwith %}
-        </div>
-        <div class="col-md-7 col-sm-8 event">
-          {% if hide_contest %}
-          <i onclick="toggle_hide_contest(event, this)" class="hide-contest fa fa-eye" data-contest-id="{{ contest.id }}"></i>
-          {% endif %}
-          {% if party %}
-          <i class="party-check{% if party.has_permission_toggle %} has-permission-toggle-party-contest{% endif %} fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" data-contest-id="{{ contest.id }}"></i>
-          {% endif %}
-          <span class="contest_title">
-            {% if contest.sub_contest %}
-            <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
+          <td class="duration">{{ contest.hr_duration }}</td>
+          <td class="event">
+            {% if hide_contest %}
+            <i onclick="toggle_hide_contest(event, this)" class="hide-contest fa fa-eye" data-contest-id="{{ contest.id }}"></i>
             {% endif %}
-            <a href="{% url 'clist:resource' contest.resource.host %}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="16" height="16"/></a>
-            <a class="title_search" href="{{ contest.actual_url }}"{% if open_new_tab %} target="_blank" rel="noopener"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
-          </span>
-          {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
-          {% if contest.state != "past" and add_to_calendar != "disable" %}
-          <a class="data-ace" data-ace='{
-            "title":"{{ contest.title }}",
-            "desc":"url: {{ contest.url }}",
-            "location":"{{ contest.host }}",
-            "time":{
-              "start":"{{ contest.start_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
-              "end":"{{ contest.end_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
-              "zone":"{{ timezone|get_timezone_offset_hm }}"
-            }
-          }'><i class="far fa-calendar-alt"></i></a>
-          {% endif %}
-          {% if share_to_category and share_to_category != "disable" %}
-          <a data-toggle="modal" data-target="#send_notification" data-title="{{ contest.title }}" data-contest-id="{{ contest.id }}" data-method="{{ share_to_category }}">
-            <i class="share-to-category fas fa-share-square"></i>
-          </a>
-          {% endif %}
-          {% if contest.group_size %}
-          <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
-          {% endif %}
+            {% if party %}
+            <i class="party-check{% if party.has_permission_toggle %} has-permission-toggle-party-contest{% endif %} fa-fw far {% if contest.id in party.contest_ids %}fa-check-square{% else %}fa-square{% endif %}" data-contest-id="{{ contest.id }}"></i>
+            {% endif %}
+            <span class="contest_title">
+              {% if contest.sub_contest %}
+              <a href="#" class="toggle" data-group=".{{ group }}"><i class="fa fa-caret-up"></i></a>
+              {% endif %}
+              <a href="{% url 'clist:resource' contest.resource.host %}" title="{{ contest.resource.host }}" data-toggle="tooltip"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="16" height="16"/></a>
+              <a class="title-search" href="{{ contest.actual_url }}"{% if open_new_tab %} target="_blank" rel="noopener"{% endif %} title="{{ contest.title }}">{{ contest.title }}</a>
+            </span>
+            {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
+            {% if contest.state != "past" and add_to_calendar != "disable" %}
+            <a class="data-ace" data-ace='{
+              "title":"{{ contest.title }}",
+              "desc":"url: {{ contest.url }}",
+              "location":"{{ contest.host }}",
+              "time":{
+                "start":"{{ contest.start_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
+                "end":"{{ contest.end_time|timezone:timezone|format_time:"%B %d, %Y %H:%M:%S" }}",
+                "zone":"{{ timezone|get_timezone_offset_hm }}"
+              }
+            }'><i class="far fa-calendar-alt"></i></a>
+            {% endif %}
+            {% if share_to_category and share_to_category != "disable" %}
+            <a data-toggle="modal" data-target="#send_notification" data-title="{{ contest.title }}" data-contest-id="{{ contest.id }}" data-method="{{ share_to_category }}">
+              <i class="share-to-category fas fa-share-square"></i>
+            </a>
+            {% endif %}
+            {% if contest.group_size %}
+            <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
+            {% endif %}
 
-          {% include "contest_inline_buttons.html" with user=request.user contest=contest only %}
+            {% include "contest_inline_buttons.html" with user=request.user contest=contest only %}
 
-          <div class="resource">
-            <a class="resource_search" href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a>
-          </div>
-        </div>
-      </div>
+            <span class="pull-right hidden-xs"><a class="resource-search resource" href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a></span>
+            <div class="visible-xs"><a class="resource-search resource" href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a></div>
+          </td>
+        </tr>
       {% endwith %}
       {% endwith %}
       {% endfor %}
-    </div>
+    </table>
     {% else %}
     <div class="alert alert-info text-center">List of competitions is empty</div>
     {% endif %}

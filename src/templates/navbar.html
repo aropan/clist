@@ -38,15 +38,6 @@
                 <li><a href="{% url 'coder:accounts' %}">Accounts</a></li>
 
                 <li class="dropdown-menu-hover">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Tools <span class="caret"></span></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="{% url 'ranking:make_versus' %}">{% icon_to 'versus' '' %}&nbsp;Versus</a></li>
-                        <li><a href="{% url 'ranking:virtual_start' %}">{% icon_to 'virtual_start' '' %}&nbsp;Virtual Start</a></li>
-                    </ul>
-                </li>
-
-                <li><a href="https://github.com/aropan/clist/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
-                <li class="dropdown-menu-hover">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Donate <span class="caret"></span></a>
                     <ul class="dropdown-menu">
                         <li><a href="https://www.patreon.com/clist" rel="noopener noreferrer">{% icon_to "patreon" %}&nbsp;Patreon</a></li>
@@ -106,13 +97,9 @@
                                 <li><a href="{% url 'coder:my_profile' %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
                                 <li role="separator" class="divider"></li>
                                 {% endif %}
-                                <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
-                                <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
-                                <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
                                 <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
-                                <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i>&nbsp;Atom&RSS</a></li>
-                                <li><a href="{% url 'clist:links' %}"><i class="fas fa-link"></i>&nbsp;Links</a></li>
                                 <li role="separator" class="divider"></li>
+                                <li class="dropdown-header">User Settings</li>
                                 <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
                                 <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fas fa-info-circle"></i>&nbsp;Social</a></li>
                                 <li><a href="{% url 'coder:settings' 'accounts' %}"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
@@ -121,8 +108,20 @@
                                 <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
                                 <li><a href="{% url 'coder:settings' 'calendars' %}" class="authorized"><i class="far fa-calendar-alt"></i>&nbsp;Calendars</a></li>
                                 <li role="separator" class="divider"></li>
-                                <li><a href="{% url 'coder:parties' %}"><i class="far fa-handshake"></i>&nbsp;Parties</a></li>
-                                <li><a href="{% url 'events:events' %}"><i class="far fa-calendar-check"></i>&nbsp;Events</a></li>
+                                <li class="dropdown-header">Tools</li>
+                                <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
+                                <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
+                                <li><a href="{% url 'ranking:make_versus' %}">{% icon_to 'versus' '' %}&nbsp;Versus</a></li>
+                                <li><a href="{% url 'ranking:virtual_start' %}">{% icon_to 'virtual_start' '' %}&nbsp;Virtual Start</a></li>
+                                <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
+                                <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i>&nbsp;Atom&RSS</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li class="dropdown-header">Support</li>
+                                <li><a href="https://github.com/aropan/clist/issues" rel="noopener noreferrer"><i class="fab fa-github"></i>&nbsp;Github</a></li>
+                                <li><a href="https://t.me/clistby/552" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;Telegram</a></li>
+                                <li><a href="https://discord.gg/ADqQs9NWhb" rel="noopener noreferrer"><i class="fab fa-discord"></i>&nbsp;Discord</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="{% url 'clist:links' %}"><i class="fas fa-link"></i>&nbsp;Links</a></li>
                                 {% if user.is_authenticated %}
                                 <li role="separator" class="divider"></li>
                                 <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Log out</a></li>

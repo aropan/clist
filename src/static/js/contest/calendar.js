@@ -9,20 +9,63 @@ $(function() {
 
     $(window).resize(function() {
         calendar.setOption('height', get_calendar_height())
-    });
+    })
 
-    calendar = new FullCalendar.Calendar($('#calendar')[0], {
-        plugins: ['dayGrid', 'timeGrid', 'list', 'moment', 'momentTimezone'],
+    function stylize_button(button) {
+        $('.fc-button').addClass('btn btn-default btn-sm').removeClass('fc-button fc-button-primary')
+        $('.fc-button-group').addClass('btn-group').removeClass('fc-button-group')
+
+        if (customButtonSelector) {
+            $(customButtonSelector).hide()
+            $('.dropdown-menu').find(customButtonSelector).show()
+        }
+
+        if (calendar.view.type === 'fiveDayWindow') {
+            calendar_el.querySelector('.fc-prev-button').style.visibility = 'hidden'
+            calendar_el.querySelector('.fc-next-button').style.visibility = 'hidden'
+        } else {
+            calendar_el.querySelector('.fc-prev-button').style.visibility = 'visible'
+            calendar_el.querySelector('.fc-next-button').style.visibility = 'visible'
+        }
+    }
+
+    var calendar_views = {
+        dayGridMonth: {},
+        timeGridWeek: {},
+        listWeek: {},
+        multiMonthYear: {},
+        fiveDayWindow: {
+            type: 'timeGrid',
+            buttonText: '5days',
+            visibleRange: function(current_date) {
+                let start_date = new Date(current_date);
+                start_date.setDate(start_date.getDate() - 1);
+                let end_date = new Date(current_date);
+                end_date.setDate(end_date.getDate() + 3);
+                return {start: start_date, end: end_date};
+            },
+        },
+    }
+    var calendar_view = Cookies.get('calendar_view')
+    if (!(calendar_view in calendar_views)) {
+        calendar_view = Object.keys(calendar_views)[0];
+    }
+
+    var calendar_el = document.getElementById('calendar')
+    calendar = new FullCalendar.Calendar(calendar_el, {
+        views: calendar_views,
+        initialView: calendar_view,
         nowIndicator: true,
         customButtons: customButtonDesc,
-        header: {
+        eventDisplay: 'block',
+        headerToolbar: {
             left: 'title',
-            right: customButtonGroup + ' today,dayGridMonth,timeGridWeek,listWeek prev,next'
+            right: customButtonGroup + ' today,dayGridMonth,timeGridWeek,listWeek,multiMonthYear,fiveDayWindow prev,next'
         },
-        titleFormat: '{MMMM {D}}, YYYY',
+        titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
         firstDay: 1,
-        allDaySlot: false,
-        timezone: timezone,
+        allDaySlot: true,
+        timeZone: timezone,
         events: function (fetchInfo, successCallback, failureCallback) {
             var url = new URL(window.location.href)
             $.ajax({
@@ -53,12 +96,12 @@ $(function() {
                 }
             });
         },
-        eventRender: function (info) {
+        eventDidMount: function (info) {
             var event = info.event
             var element = info.el
-            var start = FullCalendarMoment.toMoment(event.start, calendar)
-            var end = FullCalendarMoment.toMoment(event.end, calendar)
-            var now = FullCalendarMoment.toMoment($.now(), calendar)
+            var start = FullCalendar.Moment.toMoment(event.start, calendar)
+            var end = FullCalendar.Moment.toMoment(event.end, calendar)
+            var now = FullCalendar.Moment.toMoment($.now(), calendar)
             var countdown = event.extendedProps.countdown
             var start_time = start.format('YYYY-MM-DD HH:mm')
             var end_time = event.end? end.format('YYYY-MM-DD HH:mm') : null;
@@ -91,35 +134,56 @@ $(function() {
                     $(val).html(getFormatTime(countdown - ($.now() - page_load) / 1000))
                 })
             })
-            var icon = $('<img src="' + main_host_url + '/media/sizes/32x32/' + event.extendedProps.icon + '" height="14" width="14">&nbsp;</img>')
-            icon.prependTo(element.querySelector('.fc-content'))
+
+            var event_element
+            var is_list = false
+            if (calendar.view.type == 'timeGridWeek' || calendar.view.type == 'fiveDayWindow') {
+                event_element = $(element).find('.fc-event-title')[0]
+            } else if (calendar.view.type == 'listWeek') {
+                event_element = $(element).find('.fc-list-event-title')[0]
+                is_list = true
+            } else {
+                event_element = $(element).find('.fc-event-main-frame')[0]
+            }
+
+            var addition_info = $('<span></span>')
+
+            var icon = $('<img src="' + main_host_url + '/media/sizes/32x32/' + event.extendedProps.icon + '" height="18" width="18">&nbsp;</img>')
+            icon.prependTo(addition_info)
+
             if (contest_toggle) {
                 var toggle_part_contest_link = $('<i class="party-check fa-fw far" data-contest-id="' + event.id + '">&nbsp;</i>')
                 toggle_part_contest_link.toggleClass(party_contests_set.has(parseInt(event.id))? 'fa-check-square' : 'fa-square')
                 if (has_permission_toggle_party_contests) {
                     toggle_part_contest_link.click(toggle_party_contest)
                 }
-                toggle_part_contest_link.prependTo(element.querySelector('.fc-content'))
+                toggle_part_contest_link.prependTo(addition_info)
             }
-            if (favorite_contests) {
+            if (favorite_contests && !is_list) {
                 var icon_class = event.extendedProps.favorite? 'selected-activity fas' : 'far'
                 var favorite_data = 'data-activity-type="fav" data-content-type="contest" data-object-id="' + event.id + '" data-selected-class="fas" data-unselected-class="far"'
                 var favorite_icon = $('<i onclick="click_activity(event, this)" class="activity fa-star fav ' + icon_class + '" ' + favorite_data + '></i>')
-                favorite_icon.prependTo(element.querySelector('.fc-content'))
+                favorite_icon.prependTo(addition_info)
             }
-            if (hide_contest) {
+            if (hide_contest && !is_list) {
                 var hide_contest_link=$('<i onclick="toggle_hide_contest(event, this)" class="hide-contest fa fa-eye" data-contest-id="' + event.id + '">&nbsp;</i>')
-                hide_contest_link.prependTo(element.querySelector('.fc-content'))
+                hide_contest_link.prependTo(addition_info)
             }
-            if (add_to_calendar && add_to_calendar.length == 1) {
+            if (add_to_calendar && add_to_calendar.length == 1 && !is_list) {
                 var data_ace = '{ "title":"' + event.title + '", "desc":"url: ' + event.url + '", "location":"' + event.extendedProps.host + '", "time":{ "start":"' + start_time + '", "end":"' + end_time + '", "zone":"' + timezone_hm + '" } }'
                 var ace = $('<a onclick="return false" class="data-ace" data-ace=' + "'" + data_ace + "'" + '><i class="far fa-calendar-alt"></i></a>')
                 $(ace).addcalevent({
                   'onclick': true,
                   'apps': [parseInt(add_to_calendar)],
                 })
-                ace.prependTo(element.querySelector('.fc-content'))
+                ace.prependTo(addition_info)
             }
+
+            addition_info.prependTo(event_element)
+        },
+        viewDidMount: function() {
+            Cookies.set('calendar_view', calendar.view.type)
+            stylize_button()
         },
         eventClick: function (data, event, view) {
             return true
@@ -127,14 +191,11 @@ $(function() {
         loading: function(bool) {
             $('#loading').toggle(bool)
         },
-        eventLimit: event_limit,
-        height: get_calendar_height()
+        dayMaxEventRows: event_limit,
+        height: get_calendar_height(),
     })
 
     calendar.render()
-
-    $('.fc-button').addClass('btn btn-default btn-sm').removeClass('fc-button fc-button-primary')
-    $('.fc-button-group').addClass('btn-group').removeClass('fc-button-group')
 
     for (var name in customButtonDesc) {
         var desc = customButtonDesc[name]
@@ -147,7 +208,7 @@ $(function() {
         $btnGroup = $(customButtonSelector).first().parent()
         $btnGroup.html(
             '<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">Custom filters <span class="caret"></span></button>'
-            + '<div class="dropdown-menu">' + $btnGroup.html() + '</div>'
+            + '<div class="dropdown-menu">' + $btnGroup.clone().html() + '</div>'
         )
 
         $(customButtonSelector).click(function (e) {
@@ -162,7 +223,7 @@ $(function() {
         })
     }
 
-    $('.fc-cb0-button').attr('id', 'spam-filter');
+    $('.fc-cb0-button').attr('id', 'spam-filter').addClass('hidden');
     $spam_filter = $('#spam-filter')
     $spam_filter.wrap('<div class="btn-group"></div>')
     $spam_filter.toggleClass('ignore-filter')
@@ -186,4 +247,6 @@ $(function() {
         calendar.refetchEvents()
         return false
     })
+
+    stylize_button()
 })

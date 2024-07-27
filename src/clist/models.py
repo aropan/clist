@@ -104,11 +104,14 @@ class Resource(BaseModel):
     statistics_fields = models.JSONField(default=dict, blank=True)
     skip_for_contests_chart = models.BooleanField(default=False)
 
-    RATING_FIELDS = ('old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
-                     'OldRating', 'Rating', 'NewRating', 'Performance',
-                     'predicted_old_rating', 'predicted_new_rating', 'predicted_rating_perf', 'predicted_raw_rating',
-                     'rating_prediction_old_rating', 'rating_prediction_new_rating', 'rating_prediction_rating_perf',
-                     'rating_prediction_raw_rating')
+    RATING_FIELDS = (
+        'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
+        'OldRating', 'Rating', 'NewRating', 'Performance',
+        'predicted_old_rating', 'predicted_new_rating', 'predicted_rating_perf', 'predicted_raw_rating',
+        'rating_prediction_old_rating', 'rating_prediction_new_rating', 'rating_prediction_rating_perf',
+        'rating_prediction_raw_rating',
+        'native_rating',
+    )
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='resource')
 

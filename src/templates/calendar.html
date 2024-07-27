@@ -1,11 +1,11 @@
 <script>
   customButtonDesc = { {% for i in ignore_filters %}cb{{ i.id }}: { text: '{{ i.name|safe }}', data: '{{ i.id }}' }{% if forloop.revcounter0 %}, {% endif %}{% endfor %} }
-  customButtonGroup = '{% for i in ignore_filters %}{% if i.id == 0 %} {% endif %}cb{{ i.id }}{% if forloop.revcounter0 %},{% endif %}{% endfor %}'
+  customButtonGroup = '{% for i in ignore_filters %}{% if i.id == 0 %} {% elif forloop.counter0 %},{% endif %}cb{{ i.id }}{% endfor %}'
   customButtonSelector = [{% for i in ignore_filters %}{% if i.id > 0 %}'.fc-cb{{ i.id }}-button',{% endif %}{% endfor %}].join(',')
   timezone = '{{ timezone }}'
   timezone_hm = '{{ timezone|get_timezone_offset_hm }}'
   hide_contest = {{ hide_contest|default:0 }}
-  favorite_contests = {{ favorite_contests|default:1 }}
+  favorite_contests = {{ favorite_contests }}
   contest_toggle = {{ party.toggle_contest|default:0 }}
   party_contests_set = new Set([{% for i in party.contest_ids %}{% if forloop.counter0 %},{% endif %}{{ i }}{% endfor %}])
   has_permission_toggle_party_contests = {{ party.has_permission_toggle|default:0 }}
@@ -22,17 +22,9 @@
 </script>
 {% endif %}
 
-<link href="{% static_ts 'fullcalendar/core/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/core/main.min.js' %}"></script>
-
-<link href="{% static_ts 'fullcalendar/daygrid/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/daygrid/main.min.js' %}"></script>
-<link href="{% static_ts 'fullcalendar/timegrid/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/timegrid/main.min.js' %}"></script>
-<link href="{% static_ts 'fullcalendar/list/main.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'fullcalendar/list/main.min.js' %}"></script>
-<script src="{% static_ts 'fullcalendar/moment/main.min.js' %}"></script>
-<script src="{% static_ts 'fullcalendar/moment-timezone/main.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/index.global.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment/index.global.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/moment-timezone/index.global.min.js' %}"></script>
 
 <link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/calendar.js' %}"></script>
