@@ -1,4 +1,4 @@
-Django==5.0.7
+Django==5.0.8
 django-add-default-value==0.10.0
 django-brotli==0.2.1
 django-cache-machine==1.2.0
