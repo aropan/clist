@@ -38,7 +38,7 @@
         );
 
         foreach ($matches as $match) {
-            $title = strip_tags("Problem ${match['key']}. ${match['name']}");
+            $title = strip_tags("Problem {$match['key']}. {$match['name']}");
             $contests[] = array(
                 'start_time' => $match['start_time'],
                 'duration' => '00:00',

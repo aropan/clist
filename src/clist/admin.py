@@ -142,8 +142,8 @@ class ResourceAdmin(BaseModelAdmin):
         ['Account information', {'fields': ['has_accounts_infos_update', 'n_accounts_to_update', 'has_multi_account',
                                             'has_account_verification', 'has_standings_renamed_account',
                                             'skip_for_contests_chart', 'accounts_fields']}],
-        ['Problem information', {'fields': ['has_problem_rating', 'has_problem_update', 'has_upsolving',
-                                            'problems_fields']}],
+        ['Problem information', {'fields': ['has_problem_rating', 'has_problem_update', 'has_new_problems',
+                                            'has_upsolving', 'problems_fields', 'problem_rating_predictor']}],
         ['Statistics information', {'fields': ['statistics_fields']}],
         ['Other information', {'fields': ['info']}],
     ]

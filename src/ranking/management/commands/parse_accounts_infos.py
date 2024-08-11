@@ -312,7 +312,7 @@ class Command(BaseCommand):
             else:
                 event_log.update_status(EventStatus.COMPLETED, message=message)
 
-            if exception_error and regular_update:
+            if regular_update:
                 try:
                     updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
                     for a in tqdm(accounts, desc='changing update time'):

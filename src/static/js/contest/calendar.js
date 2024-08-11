@@ -29,6 +29,14 @@ $(function() {
         }
     }
 
+    var hour12 = is_12_hour_clock()
+    var time_format = {
+        hour: 'numeric',
+        minute: '2-digit',
+        meridiem: hour12? 'short' : false,
+        hour12: hour12,
+    }
+
     var calendar_views = {
         dayGridMonth: {},
         timeGridWeek: {},
@@ -66,6 +74,8 @@ $(function() {
         firstDay: 1,
         allDaySlot: true,
         timeZone: timezone,
+        eventTimeFormat: time_format,
+        slotLabelFormat: time_format,
         events: function (fetchInfo, successCallback, failureCallback) {
             var url = new URL(window.location.href)
             $.ajax({
@@ -182,6 +192,10 @@ $(function() {
             addition_info.prependTo(event_element)
         },
         viewDidMount: function() {
+            Cookies.set('calendar_view', calendar.view.type)
+            stylize_button()
+        },
+        datesSet: function() {
             Cookies.set('calendar_view', calendar.view.type)
             stylize_button()
         },

@@ -36,7 +36,7 @@
                 $ok = true;
                 foreach (array('id', 'title', 'competitionName', 'dateEnabled', 'deadline') as $f) {
                     if (!isset($c[$f])) {
-                        trigger_error("Not found ${f} field", E_USER_WARNING);
+                        trigger_error("Not found {$f} field", E_USER_WARNING);
                         $ok = false;
                         break;
                     }

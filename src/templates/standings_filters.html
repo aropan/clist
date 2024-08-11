@@ -205,20 +205,25 @@
           {% if timeline != 'show' %}
           shuffle_statistics_rows()
           {% endif %}
+
           show_timeline()
+
+          {% if request.GET.unfreezing|is_yes %}
+            $('#unfreezing-timeline').click()
+          {% endif %}
+
           {% if timeline == 'play' or 'play' in request.GET %}
-          {% if timeline == 'play' or not timeline %}
-            $('#fast-backward-timeline').click()
-          {% else %}
+            {% if timeline == 'play' or not timeline %}
+              $('#fast-backward-timeline').click()
+            {% else %}
+              set_timeline({{ timeline|asfloat }})
+            {% endif %}
+            $('#play-timeline').click()
+          {% elif timeline|asfloat is not None %}
+            CURRENT_PERCENT = null
             set_timeline({{ timeline|asfloat }})
           {% endif %}
-          $('#play-timeline').click()
-          {% elif timeline == 'unfreezing' %}
-          $('#unfreezing-timeline').click()
-          {% elif timeline|asfloat is not None %}
-          CURRENT_PERCENT = null
-          set_timeline({{ timeline|asfloat }})
-          {% endif %}
+
           visible_standings()
         })
         {% endif %}

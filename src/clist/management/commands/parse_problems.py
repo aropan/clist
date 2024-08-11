@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kw):
         super(Command, self).__init__(*args, **kw)
-        self.logger = getLogger('ranking.parse.problem')
+        self.logger = getLogger('clist.parse.problem')
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
@@ -59,22 +59,22 @@ class Command(BaseCommand):
 
         problems_filter = Q(problem__id__in=problems.values_list('pk', flat=True))
         contests = Contest.objects.annotate(has_problems=Exists('problem_set', filter=problems_filter))
-        contests = contests.filter(Q(has_problems=True))
+        contests = contests.filter(has_problems=True)
         contests = contests.select_related('resource')
         contests = contests.order_by('-end_time')
 
+        modules_cache = dict()
         for contest in tqdm(contests, total=contests.count(), desc='Contests'):
             cache = dict()
-            modules = dict()
             resource = contest.resource
-            if resource not in modules:
-                modules[resource] = resource.plugin.Statistic
-            module = modules[resource]
+            if resource not in modules_cache:
+                modules_cache[resource] = resource.plugin.Statistic
+            plugin_statistic = modules_cache[resource]
 
             problems = deepcopy(contest.info.get('problems'))
             updated = False
             for problem in contest.problems_list:
-                info = module.get_problem_info(problem, contest=contest, cache=cache)
+                info = plugin_statistic.get_problem_info(problem, contest=contest, cache=cache)
                 if info is None:
                     continue
                 problem.update(info)

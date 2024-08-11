@@ -355,7 +355,8 @@ def resources(request):
         'resources': resources,
         'params': {
             'more_fields': more_fields,
-        }
+        },
+        'navbar_database_viewname': 'clist_resource_changelist',
     }
     return render(request, 'resources.html', context)
 
@@ -831,12 +832,21 @@ def update_problems(contest, problems=None, force=False):
 
                 skip_rating = bool(contest.info.get('skip_problem_rating'))
 
+                kinds = getattr(added_problem, 'kinds', [])
+                if contest.kind and contest.kind not in kinds:
+                    kinds.append(contest.kind)
+
+                divisions = getattr(added_problem, 'divisions', [])
+                if division and division not in divisions:
+                    divisions.append(division)
+
                 defaults = {
                     'index': index if getattr(added_problem, 'index', index) == index else None,
                     'short': short if getattr(added_problem, 'short', short) == short else None,
                     'name': name,
                     'slug': info.pop('slug', getattr(added_problem, 'slug', None)),
-                    'divisions': getattr(added_problem, 'divisions', []) + ([division] if division else []),
+                    'divisions': divisions,
+                    'kinds': kinds,
                     'url': url,
                     'n_attempts': info.pop('n_teams', 0) + getattr(added_problem, 'n_attempts', 0),
                     'n_accepted': info.pop('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
@@ -848,6 +858,11 @@ def update_problems(contest, problems=None, force=False):
                     'end_time': max(contest.end_time, getattr(added_problem, 'end_time', contest.end_time)),
                     'skip_rating': skip_rating and getattr(added_problem, 'skip_rating', skip_rating),
                 }
+                for optional_field in 'n_accepted_submissions', 'n_total_submissions':
+                    if optional_field not in info:
+                        continue
+                    added_value = getattr(added_problem, optional_field, 0) or 0
+                    defaults[optional_field] = info.pop(optional_field) + added_value
                 if getattr(added_problem, 'rating', None) is not None:
                     problem_info['rating'] = added_problem.rating
                     info.pop('rating', None)
@@ -889,19 +904,7 @@ def update_problems(contest, problems=None, force=False):
                 )
                 problem.contests.add(contest)
 
-                old_tags = set(problem.tags.all())
-                if 'tags' in problem_info:
-                    if '' in problem_info['tags']:
-                        problem_info['tags'].remove('')
-                    for name in problem_info['tags']:
-                        tag, _ = ProblemTag.objects.get_or_create(name=name)
-                        if tag in old_tags:
-                            old_tags.discard(tag)
-                        else:
-                            problem.tags.add(tag)
-                if not added_problem:
-                    for tag in old_tags:
-                        problem.tags.remove(tag)
+                problem.update_tags(problem_info.get('tags'), replace=not added_problem)
 
                 added_problems[key] = problem
 
@@ -969,7 +972,7 @@ def problems(request, template='problems.html'):
     problems = problems.prefetch_related('tags')
     problems = problems.annotate(min_contest_id=SubqueryMin('contests__id'))
     problems = problems.annotate(date=F('time'))
-    problems = problems.order_by('-time', '-min_contest_id', 'rating', 'index', 'short')
+    problems = problems.order_by(F('time').desc(nulls_last=True), '-min_contest_id', 'rating', 'index', 'short')
 
     show_tags = True
     if request.user.is_authenticated:
@@ -1037,6 +1040,7 @@ def problems(request, template='problems.html'):
                 'n_partial':  {'fields': ['n_partial']},
                 'n_hidden':  {'fields': ['n_hidden']},
                 'n_total':  {'fields': ['n_total']},
+                'archive': {'fields': ['is_archive'], 'func': lambda v: v in settings.YES_},
                 'note': {'fields': ['note_text__iregex']},
                 'year': {'fields': ['time__year']},
             },
@@ -1107,10 +1111,13 @@ def problems(request, template='problems.html'):
         tags = list(ProblemTag.objects.filter(pk__in=tags))
 
     custom_fields = [f for f in request.GET.getlist('field') if f]
-    custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url', 'divisions',
-                      'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_total']
+    custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url', 'divisions', 'kinds',
+                      'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_total',
+                      'n_accepted_submissions', 'n_total_submissions']
     custom_info_fields = set()
     if selected_resource:
+        if selected_resource.has_new_problems:
+            custom_options.append('is_archive')
         fixed_fields = selected_resource.problems_fields.get('fixed_fields', [])
         custom_fields = custom_fields + fixed_fields
         fixed_fields_set = set(fixed_fields)
@@ -1279,8 +1286,10 @@ def problems(request, template='problems.html'):
         'groupby_data': groupby_data,
         'groupby_fields': groupby_fields,
         'groupby_select_first_column': True,
+        'selected_resource': selected_resource,
         'per_page': 50,
         'per_page_more': 200,
+        'navbar_database_viewname': 'clist_problem_changelist',
     }
 
     return template, context

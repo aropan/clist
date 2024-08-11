@@ -88,7 +88,7 @@
             $title = htmlspecialchars_decode($title);
             $title = preg_replace('#\s+#', ' ', trim($title));
 
-            $key = "${season}_vkoshp";
+            $key = "{$season}_vkoshp";
 
             $_contests[$key] = array(
                 'start_time' => $date,

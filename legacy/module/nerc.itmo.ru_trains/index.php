@@ -7,7 +7,7 @@
     $title = 'NRU ITMO Training';
     for ($i = 0; $i < 10; $i++)
     {
-        $day = strftime('%A', $start_time);
+        $day = date('l', $start_time);
         if (preg_match('/Contests will be[^<]*' . $day . '/', $page)) {
             if ($start_time > time()) {
                 $contests[] = array(

@@ -738,18 +738,15 @@ $(function() {
 function clear_url_parameters() {
   var url = new URL(window.location.href)
   if (url.searchParams.has('search') || url.searchParams.has('sort_order')) {
-    var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play', 'full_table'])
+    var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play', 'full_table', 'unfreezing'])
     var to_remove = new Set()
     var remove_sort = true
     for ([field, value] of url.searchParams.entries()) {
       if (field.startsWith('sort') && field != 'sort_order') {
         remove_sort = false
       }
-      if (
-        (disabled_fields.has(field) && value == 'off') ||
-        (!disabled_fields.has(field) && !value) ||
-        (field == 'groupby' && value == 'none')
-      ) {
+      var disabled = disabled_fields.has(field) || field.startsWith('with_')
+      if ((disabled && value == 'off') || (!disabled && !value) || (field == 'groupby' && value == 'none')) {
         to_remove.add(field)
       } else {
         to_remove.delete(field)
@@ -767,3 +764,19 @@ function clear_url_parameters() {
 }
 
 $(clear_url_parameters)
+
+
+/*
+ * user locale
+ */
+
+function user_locale() {
+  return navigator.language || navigator.userLanguage || navigator.browserLanguage || navigator.systemLanguage || 'en'
+}
+
+function is_12_hour_clock() {
+  var time_format_options = {hour: 'numeric', minute: 'numeric'}
+  var date_time_format = new Intl.DateTimeFormat(user_locale(), time_format_options)
+  var time_parts = date_time_format.formatToParts(new Date())
+  return time_parts.some(time_part => time_part.type === 'dayPeriod')
+}

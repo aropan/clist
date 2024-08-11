@@ -12,20 +12,20 @@
 }
 
 #writers .date,
-#contests td,
-#contests th {
+.contests td,
+.contests th {
   text-align: center;
   vertical-align: middle !important;
 }
 
-#contests .title {
+.contest .title {
   text-align: left;
   white-space: normal;
 }
 
 #list-accounts tr td,
 #writers td,
-#contests tr td {
+.contests tr td {
   white-space: nowrap;
 }
 
@@ -40,7 +40,7 @@
   height: 10px;
 }
 
-#contests .endless_container {
+.contests .endless_container {
   margin-right: -15px;
   margin-left: -15px;
 }

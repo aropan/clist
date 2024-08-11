@@ -1302,10 +1302,14 @@ $(function() {
     url = window.location.href
     url = url.replace(/\btimeline=[^&]+&?/gi, '')
     url = url.replace(/\bt_[a-z]+=[^&]+&?/gi, '')
+    url = url.replace(/\bunfreezing\b&?/gi, '')
     url = url.replace(/[\?&]$/, '')
     url += (url.indexOf('?') == -1? '?' : '&') + 'timeline=' + duration_to_text(contest_duration * CURRENT_PERCENT)
     const keys = ['duration', 'step', 'delay', 'freeze']
     keys.forEach(function(k) { el = $('#timeline-' + k); url += '&t_' + k + '=' + el.val() })
+    if (unfreezing) {
+      url += '&unfreezing'
+    }
 
     var dialog = bootbox.dialog({
       title: "Share standings url with timeline",

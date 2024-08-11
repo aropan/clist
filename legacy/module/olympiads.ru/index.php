@@ -207,6 +207,9 @@
 
             foreach ($standings as $ind => $s) {
                 $date = strtotime($s['date']);
+                if (is_null($end_time)) {
+                    continue;
+                }
                 $end = strtotime($end_time);
                 if ($title != $long_title && $date < $end) {
                     continue;

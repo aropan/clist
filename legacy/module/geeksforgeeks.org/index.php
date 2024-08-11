@@ -31,7 +31,7 @@
                 'start_time' => $c['start_time'],
                 'end_time' => $c['end_time'],
                 'title' => $title,
-                'url' => url_merge($URL, "/contest/${c["slug"]}/"),
+                'url' => url_merge($URL, "/contest/{$c["slug"]}/"),
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,

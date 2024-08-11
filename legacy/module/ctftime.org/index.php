@@ -14,7 +14,7 @@
     }
     foreach ($data["items"] as $item) {
         if (!preg_match("#https?[^\s]*$#", $item["description"], $matches)) {
-            trigger_error("No found url in ${item["description"]}", E_USER_WARNING);
+            trigger_error("No found url in {$item["description"]}", E_USER_WARNING);
         }
         $url = $matches[0];
 

@@ -69,7 +69,9 @@ class CoderResource(v3.CoderResource):
 
 class ProblemResource(BaseModelResource):
     name = fields.CharField('name')
-    contests_ids = fields.ListField('contests_ids')
+    contests_ids = fields.ListField('contests_ids', null=True)
+    divisions = fields.ListField('divisions', null=True)
+    kinds = fields.ListField('kinds', null=True)
     resource = fields.CharField('resource__host',
                                 help_text='Unicode string data. Use comma to filter multiple resources')
     resource_id = fields.IntegerField('resource_id')

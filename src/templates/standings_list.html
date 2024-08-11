@@ -27,7 +27,8 @@
             <th class="n_statistics no-stretch text-muted">{% icon_to 'n_participants' %}</th>
             <th class="n_problems no-stretch text-muted">{% icon_to 'n_problems' %}</th>
             <th class="event">Event</th>
-            <th class="date text-muted">End Time</th>
+            <th class="rank no-stretch text-muted">Rank</th>
+            <th class="date no-stretch text-muted ">End Time</th>
             {% for more_field in params.more_fields %}
             <th class="text-muted">{{ more_field|title_field }}</th>
             {% endfor %}

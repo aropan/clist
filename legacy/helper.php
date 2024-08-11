@@ -168,11 +168,11 @@
             echo "url = $url\n";
         }
 
-        // echo "curl_setopt(CURLOPT_URL, $url)\n";
         empty($url) && die("Empty URL on " . __FILE__ . ":" . __LINE__);
         curl_setopt($CID, CURLOPT_URL, $url);
 
-        $header = array('Accept-Language: en;q=0.8, ru;q=0.2');
+        $header = array();
+        $header[] = 'Accept-Language: en;q=0.8, ru;q=0.2';
         if (isset($params["http_header"])) {
             $header = array_merge($header, $params["http_header"]);
         }
@@ -193,13 +193,30 @@
             curl_setopt($CID, CURLOPT_POST, false);
         }
 
+        $with_curl = isset($params["with_curl"]) && $params["with_curl"];
+
         if (CACHE && $postfields === NULL && file_exists($cachefile))
         {
             $page = file_get_contents($cachefile);
         }
         else
         {
-            $page = curl_exec($CID);
+            if ($with_curl) {
+                $command = "curl -i {$url} -L --silent";
+                foreach ($header as $h) {
+                    $command .= " -H " . escapeshellarg($h);
+                }
+                if ($postfields !== NULL) {
+                    $postfields = http_build_query($postfields);
+                    $command .= " --data " . escapeshellarg($postfields);
+                }
+                if (isset($params["cookie_file"])) {
+                    $command .= " -b " . escapeshellarg($params["cookie_file"]) . " -c " . escapeshellarg($params["cookie_file"]);
+                }
+                $page = shell_exec($command);
+            } else {
+                $page = curl_exec($CID);
+            }
             if (preg_match('#charset=["\']?([-a-z0-9]+)#i', $page, $match))
             {
                 $charset = $match[1];
@@ -254,7 +271,16 @@
                 $COOKIE[$k] = $v;
             }
         }
-        $url = curl_getinfo($CID, CURLINFO_EFFECTIVE_URL);
+        if ($with_curl) {
+            if (isset($header['location'])) {
+                $url = $header['location'];
+                if (is_array($url)) {
+                    $url = end($url);
+                }
+            }
+        } else {
+            $url = curl_getinfo($CID, CURLINFO_EFFECTIVE_URL);
+        }
         return $page;
     }
 
@@ -445,6 +471,11 @@
         $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
         $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
         return "$scheme$user$pass$host$port$path$query$fragment";
+    }
+
+
+    function parse_schema_host($url) {
+        return parse_url($url, PHP_URL_SCHEME) . "://" . parse_url($url, PHP_URL_HOST);
     }
 
     function url_merge($original, $new, $merge_query = false)

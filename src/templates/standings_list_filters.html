@@ -48,6 +48,13 @@
     <button class="btn btn-default btn-sm{% if request.GET.with_submissions|is_yes %} active{% endif %}" name="with_submissions"{% if request.GET.with_submissions|is_yes %} value="off"{% endif %}>{% icon_to 'submissions' %}</button>
   </div>
 
+  {% if request.GET.with_problems|is_yes %}
+  <input type="hidden" name="with_problems" value="{{ request.GET.with_problems }}"/>
+  {% endif %}
+  <div class="input-group input-group-sm">
+    <button class="btn btn-default btn-sm{% if request.GET.with_problems|is_yes %} active{% endif %}" name="with_problems"{% if request.GET.with_problems|is_yes %} value="off"{% endif %}>{% icon_to 'problems' %}</button>
+  </div>
+
   {% include 'more_fields_filter.html' %}
 
   {% if params.with_medal_scores %}

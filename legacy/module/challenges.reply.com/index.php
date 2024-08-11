@@ -17,7 +17,7 @@
             trigger_error("Invalid singin: $data", E_USER_WARNING);
             return;
         } else if (!isset($data["message"]) || strpos(strtolower($data["message"]), "success") === false) {
-            trigger_error("Invalid singin: ${data['message']}", E_USER_WARNING);
+            trigger_error("Invalid singin: {$data['message']}", E_USER_WARNING);
             return;
         }
         $url = 'https://challenges.reply.com/tamtamy/api/user-in-session.json';

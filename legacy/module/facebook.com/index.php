@@ -176,7 +176,7 @@
         foreach ($season['season_contests']['nodes'] as $node) {
             $info = array('parse' => $node);
             $year = $node['contest_season']['season_vanity'];
-            $url = rtrim($URL, '/') . "/$year/${node['contest_vanity']}";
+            $url = rtrim($URL, '/') . "/$year/{$node['contest_vanity']}";
             $scoreboard_url = rtrim($url) . '/scoreboard';
             $url_ = $scoreboard_url;
             $scoreboard_page = curlexec($url_);

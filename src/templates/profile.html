@@ -217,16 +217,14 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
 
     {% if statistics.exists %}
     <div class="panel panel-default table-responsive">
-      <table id="contests" class="table table-hover table-striped table-condensed">
-        <tr>
-          <th></th>
+      <table id="contests" class="contests table table-hover table-striped table-condensed table-stacked">
+        <thead><tr>
+          <th class="hidden-xs"></th>
           <th>Rank</th>
           <th>Score</th>
           <th>Rating</th>
-          <th title="Rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
           {% if coder.has_global_rating %}
           <th>Global</th>
-          <th title="Global rating change" data-toggle="tooltip" data-html="true" data-placement="bottom">&Delta;</th>
           {% endif %}
           <th class="date">Date</th>
 
@@ -235,11 +233,11 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
           <th>{{ field|title_field|split:" "|join:"<br>" }}</th>
           {% endfor %}
           {% endif %}
-
-          <th></th>
           <th class="title">Event</th>
-        </tr>
+        </tr></thead>
+        <tbody>
         {% include 'profile_contests_paging.html' %}
+        </tbody>
       </table>
     </div>
     <script>$('#contests').endlessPaginate({onCompleted: toggle_tooltip});</script>

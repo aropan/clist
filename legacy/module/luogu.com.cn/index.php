@@ -14,6 +14,7 @@
             $key = array_pop_assoc($c, 'id');
             $title = trim(array_pop_assoc($c, 'name'));
             $kind = null;
+            $standings_kind = null;
 
             $rule_type = array_pop_assoc($c, 'ruleType');
             if ($rule_type == 2) {

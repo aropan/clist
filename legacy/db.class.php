@@ -2,6 +2,14 @@
     $is_debug = true;
     class db
     {
+        private string $host;
+        private string $dbname;
+        private int $port;
+        private string $username;
+        private string $password;
+        private $link;
+        private $result;
+
         function __construct()
         {
             $db_conf = parse_ini_file("/run/secrets/db_conf");

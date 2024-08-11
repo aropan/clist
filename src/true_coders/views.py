@@ -161,10 +161,13 @@ def get_profile_context(request, statistics, writers, resources):
     ).order_by().distinct('contest__resource__host')
 
     kinds_resources = collections.defaultdict(dict)
+    major_kind = None
     for stat in rated_stats.union(external_ratings):
         resource = stat.contest.resource
         kind = stat.contest.kind
-        kind = None if resource.is_major_kind(kind) else kind
+        kind = major_kind if resource.is_major_kind(kind) else kind
+        if not kinds_resources[resource.pk]:
+            kinds_resources[resource.pk][major_kind] = None
         kinds_resources[resource.pk][kind] = {
             'host': resource.host,
             'pk': resource.pk,
@@ -173,6 +176,12 @@ def get_profile_context(request, statistics, writers, resources):
         }
     history_resources = list()
     for resource in resources.filter(has_rating_history=True):
+        if (
+            resource.pk in kinds_resources and
+            major_kind in kinds_resources[resource.pk] and
+            not kinds_resources[resource.pk][major_kind]
+        ):
+            kinds_resources[resource.pk].pop(major_kind)
         history_resources.extend(kinds_resources[resource.pk].values())
 
     resources = list(resources)

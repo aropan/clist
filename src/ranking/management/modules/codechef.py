@@ -8,7 +8,6 @@ import sys
 import time
 import traceback
 from collections import OrderedDict, defaultdict
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import timedelta
 from urllib.parse import quote, urljoin
@@ -57,6 +56,14 @@ class Statistic(BaseModule):
             if match:
                 csrf_token = match.group(1)
                 return {'x-csrf-token': csrf_token, 'x-requested-with': 'XMLHttpRequest'}
+
+    @RateLimiter(max_calls=1, period=6)
+    @staticmethod
+    def _get(*args, **kwargs):
+        additional_attempts = kwargs.setdefault('additional_attempts', {})
+        additional_attempts[429] = {'count': 5}
+        kwargs['additional_delay'] = 10
+        return REQ.get(*args, **kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         # REQ.get('https://www.codechef.com/')
@@ -137,7 +144,7 @@ class Statistic(BaseModule):
                             break
                         except Exception:
                             traceback.print_exc()
-                            delay = min(300, delay * 2)
+                            delay = min(100, delay * 2)
                             sys.stdout.write(f'url = {url}\n')
                             sys.stdout.write(f'Sleep {delay}... ')
                             sys.stdout.flush()
@@ -292,7 +299,6 @@ class Statistic(BaseModule):
 
         return standings
 
-    @RateLimiter(max_calls=5, period=1)
     @staticmethod
     def fetch_profle_page(user):
         for format_url in (
@@ -303,7 +309,7 @@ class Statistic(BaseModule):
             page_url = None
             url = format_url.format(user=quote(user))
             try:
-                ret = REQ.get(url, return_url=True)
+                ret = Statistic._get(url, return_url=True)
                 if not ret:
                     continue
                 page, page_url = ret
@@ -320,120 +326,121 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
-        with PoolExecutor(max_workers=4) as executor:
-            for user, (page, url) in zip(users, executor.map(Statistic.fetch_profle_page, users)):
-                if pbar:
-                    pbar.update()
+        for user, (page, url) in zip(users, map(Statistic.fetch_profle_page, users)):
+            if pbar:
+                pbar.update()
 
-                if page is None:
-                    yield {'delete': True}
-                    continue
+            if page is None:
+                yield {'delete': True}
+                continue
 
-                match = re.search(r'jQuery.extend\(Drupal.settings,(?P<data>[^;]*)\);$', str(page), re.MULTILINE)
-                data = json.loads(match.group('data'))
-                if 'date_versus_rating' not in data:
-                    info = {}
-                    info['is_team'] = True
-                    regex = '<table[^>]*cellpadding=""[^>]*>.*?</table>'
-                    match = re.search(regex, page, re.DOTALL)
-                    if match:
-                        html_table = match.group(0)
-                        table = parsed_table.ParsedTable(html_table)
-                        for r in table:
-                            for k, v in list(r.items()):
-                                k = k.lower().replace(' ', '_')
-                                info[k] = v.value
+            match = re.search(r'jQuery.extend\(Drupal.settings,(?P<data>[^;]*)\);$', str(page), re.MULTILINE)
+            data = json.loads(match.group('data'))
+            if 'date_versus_rating' not in data:
+                info = {}
+                info['is_team'] = True
+                regex = '<table[^>]*cellpadding=""[^>]*>.*?</table>'
+                match = re.search(regex, page, re.DOTALL)
+                if match:
+                    html_table = match.group(0)
+                    table = parsed_table.ParsedTable(html_table)
+                    for r in table:
+                        for k, v in list(r.items()):
+                            k = k.lower().replace(' ', '_')
+                            info[k] = v.value
 
-                    matches = re.finditer(r'''
-                                          <td[^>]*>\s*<b[^>]*>Member[^<]*</b>\s*</td>\s*
-                                          <td[^>]*><a[^>]*href\s*=\s*"[^"]*/users/(?P<member>[^"/]*)"[^>]*>
-                                          ''', page, re.VERBOSE)
-                    coders = set()
-                    for match in matches:
-                        coders.add(match.group('member'))
-                    if coders:
-                        info['members'] = list(coders)
+                matches = re.finditer(r'''
+                                      <td[^>]*>\s*<b[^>]*>Member[^<]*</b>\s*</td>\s*
+                                      <td[^>]*><a[^>]*href\s*=\s*"[^"]*/users/(?P<member>[^"/]*)"[^>]*>
+                                      ''', page, re.VERBOSE)
+                coders = set()
+                for match in matches:
+                    coders.add(match.group('member'))
+                if coders:
+                    info['members'] = list(coders)
 
-                    ret = {'info': info, 'coders': coders}
-                else:
-                    data = data['date_versus_rating']['all']
+                ret = {'info': info, 'coders': coders}
+            else:
+                data = data['date_versus_rating']['all']
 
-                    matches = re.finditer(
-                        r'''
-                            <li[^>]*>\s*<label[^>]*>(?P<key>[^<]*):\s*</label>\s*
-                            <span[^>]*>(?P<value>[^<]*)</span>\s*</li>
-                        ''',
-                        page,
-                        re.VERBOSE,
-                    )
+                matches = re.finditer(
+                    r'''
+                        <li[^>]*>\s*<label[^>]*>(?P<key>[^<]*):\s*</label>\s*
+                        <span[^>]*>(?P<value>[^<]*)</span>\s*</li>
+                    ''',
+                    page,
+                    re.VERBOSE,
+                )
 
-                    info = {}
-                    for match in matches:
-                        key = match.group('key').strip().replace(' ', '_').lower()
-                        value = match.group('value').strip()
-                        info[key] = value
+                info = {}
+                for match in matches:
+                    key = match.group('key').strip().replace(' ', '_').lower()
+                    value = match.group('value').strip()
+                    info[key] = value
 
-                    match = re.search('<h1[^>]*class="h2-style"[^>]*>(?P<name>[^<]*)</h1>', page)
-                    if match:
-                        info['name'] = html.unescape(match.group('name').strip())
+                match = re.search('<h1[^>]*class="h2-style"[^>]*>(?P<name>[^<]*)</h1>', page)
+                if match:
+                    info['name'] = html.unescape(match.group('name').strip())
 
-                    match = re.search(r'''<header[^>]*>\s*<img[^>]*src=["'](?P<src>[^"']*)["'][^>]*>\s*<h1''', page)
-                    if match:
-                        src = urljoin(url, match.group('src'))
-                        if 'default' not in src.split('/')[-1]:
-                            response = requests.head(src)
-                            if response.status_code < 400 and response.headers.get('Content-Length', '0') != '0':
-                                info['avatar_url'] = src
+                match = re.search(r'''<header[^>]*>\s*<img[^>]*src=["'](?P<src>[^"']*)["'][^>]*>\s*<h1''', page)
+                if match:
+                    src = urljoin(url, match.group('src'))
+                    if 'default' not in src.split('/')[-1]:
+                        response = requests.head(src)
+                        if response.status_code < 400 and response.headers.get('Content-Length', '0') != '0':
+                            info['avatar_url'] = src
 
-                    contest_addition_update_params = {'clear_rating_change': True}
-                    update = contest_addition_update_params.setdefault('update', {})
-                    by = contest_addition_update_params.setdefault('by', ['key'])
-                    prev_rating = None
-                    for row in data:
-                        rating = row.get('rating')
-                        if not rating:
-                            continue
-                        rating = int(rating)
-                        info['rating'] = rating
+                contest_addition_update_params = {'clear_rating_change': True, 'try_fill_missed_ranks': True}
+                update = contest_addition_update_params.setdefault('update', {})
+                by = contest_addition_update_params.setdefault('by', ['key'])
+                prev_rating = None
+                for row in data:
+                    rating = row.get('rating')
+                    if not rating:
+                        continue
+                    rating = int(rating)
+                    info['rating'] = rating
 
-                        code = row.get('code')
-                        name = row.get('name')
-                        end_time = row.get('end_date')
-                        if code:
-                            if re.search(r'\bdiv[ision]*[-_\s]+[ABCD1234]\b', name, re.I) \
-                               and re.search('[ABCD]$', code):
-                                code = code[:-1]
+                    code = row.get('code')
+                    name = row.get('name')
+                    end_time = row.get('end_date')
+                    if code:
+                        if re.search(r'\bdiv[ision]*[-_\s]+[ABCD1234]\b', name, re.I) \
+                           and re.search('[ABCD]$', code):
+                            code = code[:-1]
 
-                            u = update.setdefault(code, OrderedDict())
-                            u['new_rating'] = rating
-                            if prev_rating is not None:
-                                u['old_rating'] = prev_rating
-                                u['rating_change'] = rating - prev_rating
-                            u['_group'] = row['code']
+                        u = update.setdefault(code, OrderedDict())
+                        u['new_rating'] = rating
+                        if prev_rating is not None:
+                            u['old_rating'] = prev_rating
+                            u['rating_change'] = rating - prev_rating
+                        u['_group'] = row['code']
+                        u['_rank'] = row['rank']
+                        u['_with_create'] = True
 
-                            new_name = name
-                            new_name = re.sub(r'\s*\([^\)]*\brated\b[^\)]*\)$', '', new_name, flags=re.I)
-                            new_name = re.sub(r'\s*\bdiv(ision)?[-_\s]+[ABCD1234]$', '', new_name, flags=re.I)
+                        new_name = name
+                        new_name = re.sub(r'\s*\([^\)]*\brated\b[^\)]*\)$', '', new_name, flags=re.I)
+                        new_name = re.sub(r'\s*\bdiv(ision)?[-_\s]+[ABCD1234]$', '', new_name, flags=re.I)
 
-                            if new_name != name:
-                                if 'title' not in by:
-                                    by.append('title')
-                                update[new_name] = u
+                        if new_name != name:
+                            if 'title' not in by:
+                                by.append('title')
+                            update[new_name] = u
 
-                            if end_time:
-                                end_time = arrow.get(end_time)
-                                year = str(end_time.year)
-                                if code.endswith(year[-2:]) and not code.endswith(year):
-                                    update[code[:-2] + year] = u
+                        if end_time:
+                            end_time = arrow.get(end_time)
+                            year = str(end_time.year)
+                            if code.endswith(year[-2:]) and not code.endswith(year):
+                                update[code[:-2] + year] = u
 
-                        prev_rating = rating
+                    prev_rating = rating
 
-                    ret = {
-                        'info': info,
-                        'contest_addition_update_params': contest_addition_update_params,
-                    }
+                ret = {
+                    'info': info,
+                    'contest_addition_update_params': contest_addition_update_params,
+                }
 
-                yield ret
+            yield ret
 
     @transaction.atomic()
     @staticmethod
@@ -453,10 +460,9 @@ class Statistic(BaseModule):
         contests_cache = dict()
         stats_cache = dict()
 
-        @RateLimiter(max_calls=5, period=1)
         def fetch_submissions(page=0):
             url = Statistic.SUBMISSIONS_URL_.format(user=account.key, page=page)
-            response = REQ.get(url)
+            response = Statistic._get(url)
             data = json.loads(response)
             data['url'] = url
             data['page'] = page
@@ -581,20 +587,19 @@ class Statistic(BaseModule):
         def process_pagination():
             nonlocal max_page
             last_page = -1
-            with PoolExecutor(max_workers=4) as executor:
-                while max_page is None or last_page + 1 < max_page:
-                    last_page += 1
-                    data = fetch_submissions(last_page)
-                    if not process_submissions(data):
-                        break
+            while max_page is None or last_page + 1 < max_page:
+                last_page += 1
+                data = fetch_submissions(last_page)
+                if not process_submissions(data):
+                    break
 
-                    with tqdm.tqdm(total=max_page - last_page - 1) as pbar:
-                        for data in executor.map(fetch_submissions, range(last_page + 1, max_page)):
-                            result = process_submissions(data)
-                            last_page = data['page']
-                            pbar.update()
-                            if not result:
-                                return
+                with tqdm.tqdm(total=max_page - last_page - 1) as pbar:
+                    for data in map(fetch_submissions, range(last_page + 1, max_page)):
+                        result = process_submissions(data)
+                        last_page = data['page']
+                        pbar.update()
+                        if not result:
+                            return
 
         max_page = None
         process_pagination()
@@ -608,6 +613,7 @@ class Statistic(BaseModule):
         return ret
 
     @staticmethod
+    @RateLimiter(max_calls=1, period=1)
     def get_problem_info(problem, contest, cache, **kwargs):
         code = problem['code']
         if code in cache:

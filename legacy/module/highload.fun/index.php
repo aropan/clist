@@ -3,7 +3,7 @@
 
     $data = curlexec($URL, null, array("json_output" => 1));
     if ($data['result'] !== 'OK') {
-        trigger_error("Failed to fetch data, result = '${data['result']}', error = '${data['error']}'", E_USER_WARNING);
+        trigger_error("Failed to fetch data, result = '{$data['result']}', error = '{$data['error']}'", E_USER_WARNING);
         return;
     }
 
@@ -14,8 +14,8 @@
                 'start_time' => pop_item($round, 'round_from'),
                 'end_time' => pop_item($round, 'round_to'),
                 'title' => $contest['caption'] . '. ' . $round['caption'],
-                'url' => url_merge($HOST_URL, "/timed_competitions/${contest['id']}"),
-                'standings_url' => url_merge($HOST_URL, "/timed_competitions/${contest['id']}/leaderboard/${round['id']}/"),
+                'url' => url_merge($HOST_URL, "/timed_competitions/{$contest['id']}"),
+                'standings_url' => url_merge($HOST_URL, "/timed_competitions/{$contest['id']}/leaderboard/{$round['id']}/"),
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,

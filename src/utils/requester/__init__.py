@@ -465,8 +465,8 @@ class requester():
     limit_file_cache = 200
     counter_file_cache = 0
     verify_word = None
-    n_attempts = 1
-    attempt_delay = 2
+    n_attempts = int(environ.get('REQUESTER_N_ATTEMPTS', 1))
+    attempt_delay = int(environ.get('REQUESTER_ATTEMPT_DELAY', 2))
     additional_lock = threading.Lock()
 
     def print(self, *objs, force=False):

@@ -1,19 +1,35 @@
 #!/usr/bin/env python3
 
+import os
 import re
 from collections import OrderedDict
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
 
 class Statistic(BaseModule):
-    STANDING_URL_FORMAT_ = '{0.host}judge/en/users/contest/{0.key}'
+    STANDING_URL_FORMAT_ = '{0.host}en/users/contest/{0.key}'
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.STANDING_URL_FORMAT_.format(self)
 
-        page = REQ.get(standings_url)
+        headers = dict()
+        user_agent = 'logs/legacy/beecrowd.user_agent'
+        if os.path.exists(user_agent):
+            with open(user_agent) as fo:
+                headers['User-Agent'] = fo.read().strip()
+        curl_cookie_file = 'logs/legacy/beecrowd.cookie'
+        if not os.path.exists(curl_cookie_file):
+            curl_cookie_file = None
+
+        try:
+            page = REQ.get(standings_url, headers=headers, with_curl=True, curl_cookie_file=curl_cookie_file)
+        except FailOnGetResponse as e:
+            if e.code == 404 and self.contest.is_over():
+                return {'action': 'delete'}
+            raise
+
         page = page.replace('&bullet;', '')
         table = parsed_table.ParsedTable(page, xpath='//table[@id="contest-rank"]//tr')
         problems_infos = OrderedDict()

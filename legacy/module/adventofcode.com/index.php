@@ -51,7 +51,7 @@
         preg_match_all('#<a[^>]*aria-label="(?P<label>[^"]*)"[^>]*href="(?P<href>[^>]*/day/[^>]*)"[^>]*class="calendar-day(?P<day>[0-9]+)"[^>]*>#', $page, $matches, PREG_SET_ORDER);
         foreach ($matches as $match) {
             $day = $match['day'];
-            $title = "$name. ${match['label']}";
+            $title = "$name. {$match['label']}";
             $contests[] = array(
                 'start_time' => "$day.12.$year 00:00",
                 'duration' => '00:00',

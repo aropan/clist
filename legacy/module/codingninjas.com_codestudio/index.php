@@ -30,7 +30,7 @@
                 'start_time' => $start_time,
                 'end_time' => $end_time,
                 'title' => $c['name'],
-                'url' => "$URL/${c['slug']}",
+                'url' => "$URL/{$c['slug']}",
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,

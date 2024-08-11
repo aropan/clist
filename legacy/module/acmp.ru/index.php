@@ -20,7 +20,7 @@
         }
 
         if (DEBUG) {
-            echo "$year - ${match['title']}\n";
+            echo "$year - {$match['title']}\n";
         }
 
         preg_match_all('#<a[^>]*href="?(?P<href>[^ ">]*)"?>\[Описание\]</a>#', $page, $matches, PREG_SET_ORDER);

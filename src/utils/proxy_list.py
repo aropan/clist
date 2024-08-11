@@ -30,6 +30,36 @@ class ProxyList:
         return re.match(r'^\d+\.\d+\.\d+\.\d+:\d+$', proxy)
 
     @staticmethod
+    def _get_proxy_from_html():
+        urls = [
+            'https://free-proxy-list.net',
+            'https://sslproxies.org',
+        ]
+        for url in urls:
+            source = url.split('//')[1].split('/')[0]
+            response = requests.get(url)
+            table = ParsedTable(response.content)
+            table = [{k.lower(): v.value for k, v in row.items()} for row in table]
+            for row in table:
+                if row['https'].lower() in {'true', '1', 't', 'y', 'yes'}:
+                    yield Proxy(proxy=f'{row["ip address"]}:{row["port"]}', source=source)
+
+    @staticmethod
+    def _get_proxy_from_json():
+        urls = [
+            ('https://proxylist.geonode.com/api/proxy-list?protocols=http%2Chttps&limit=500&page=1&sort_by=lastChecked&sort_type=desc&speed=medium', 'data'),  # noqa
+            ('https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=http&proxy_format=ipport&format=json&timeout=500', 'proxies'),  # noqa
+        ]
+        for url, key in urls:
+            source = url.split('//')[1].split('/')[0]
+            response = requests.get(url)
+            table = response.json()
+            table = table[key]
+
+            for row in table:
+                yield Proxy(proxy=f'{row["ip"]}:{row["port"]}', source=source)
+
+    @staticmethod
     def get():
         ret = []
         logging.info('Getting proxy list...')
@@ -41,18 +71,8 @@ class ProxyList:
                 if ProxyList.is_proxy(proxy):
                     ret.append(Proxy(proxy=proxy, source='hidemyna.me'))
 
-        urls = [
-            'https://free-proxy-list.net',
-            'https://sslproxies.org',
-        ]
-        for url in urls:
-            source = url.split('//')[1].split('/')[0]
-            page = requests.get(url)
-            table = ParsedTable(page.content)
-            for row in table:
-                row = {k.lower(): v.value for k, v in row.items()}
-                if row['https'].lower() in {'true', '1', 't', 'y', 'yes'}:
-                    ret.append(Proxy(proxy=f'{row["ip address"]}:{row["port"]}', source=source))
+        # ret.extend(ProxyList._get_proxy_from_html())
+        ret.extend(ProxyList._get_proxy_from_json())
 
         random.shuffle(ret)
 

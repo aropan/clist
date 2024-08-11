@@ -33,6 +33,12 @@
                 $values[$k] = trim($match['value']);
             }
 
+            foreach (array('starts at', 'finishes at', 'duration') as $k) {
+                if (!isset($values[$k])) {
+                    continue 1;
+                }
+            }
+
             $a = explode(':', $values['duration'], -1);
             $duration = implode(':', $a);
 

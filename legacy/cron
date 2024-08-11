@@ -1,3 +1,2 @@
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 7,25,42 * * * * /usr/src/legacy/update.bash >/usr/src/legacy/logs/cron.log 2>&1

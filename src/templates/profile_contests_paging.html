@@ -4,7 +4,7 @@
 {% for statistic in statistics %}
 {% with contest=statistic.contest resource=statistic.contest.resource %}
 <tr class="contest{% if statistic.addition.medal %} {{ statistic.addition.medal|lower }}-medal{% endif %}{% if contest.is_running %} success{% endif %}" id="cid-{{ contest.id }}">
-    <td>
+    <td class="hidden-xs">
     {% with division=statistic.addition.division %}
     {% with n_total=contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics %}
         {% if n_total and statistic.place_as_int %}
@@ -48,32 +48,19 @@
     </td>
 
     <td>
-        {% with value=resource|get_new_rating_value:statistic.addition %}
-        {% if value is not None %}
-        <div class="{% coder_color_class resource value %}">
-            {% coder_color_circle resource value %}
-            {{ value }}
-        </div>
+        {% with rating_value=resource|get_new_rating_value:statistic.addition %}
+        {% if rating_value is not None %}
+        <span class="{% coder_color_class resource rating_value %}">
+            {% coder_color_circle resource rating_value %}
+            {{ rating_value }}
+        </span>
         {% else %}
         <small class='text-muted'>&#183;</small>
         {% endif %}
-        {% endwith %}
-    </td>
-    <td>
-        {% with value=statistic.addition.rating_change %}
-        {% with intvalue=value|toint %}
-        {% if intvalue or 'rating_change' in statistic.addition %}
-            <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
-            {% if intvalue %}
-                <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
-            {% else %}
-                {{ value }}
-            {% endif %}
-            </span>
-        {% else %}
-            <small class='text-muted'>&#183;</small>
+
+        {% if 'rating_change' in statistic.addition %}
+            {% rating_change_template statistic.addition.rating_change %}
         {% endif %}
-        {% endwith %}
         {% endwith %}
     </td>
     {% if coder.has_global_rating %}
@@ -83,22 +70,9 @@
         {% else %}
             <small class='text-muted'>&#183;</small>
         {% endif %}
-    </td>
-    <td>
+
         {% if statistic.global_rating_change is not None %}
-            {% with value=statistic.global_rating_change %}
-            {% with intvalue=value|toint %}
-            <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
-            {% if intvalue %}
-                <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
-            {% else %}
-                {{ value }}
-            {% endif %}
-            </span>
-            {% endwith %}
-            {% endwith %}
-        {% else %}
-            <small class='text-muted'>&#183;</small>
+            {% rating_change_template statistic.global_rating_change %}
         {% endif %}
     </td>
     {% endif %}
@@ -118,8 +92,9 @@
     {% endfor %}
     {% endwith %}
     {% endif %}
-    <td><a{% if not search_resource and not params.resources %} href="{% url_transform request resource=resource.pk %}"{% endif %} title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/></a></td>
     <td class="title col-md-9 col-sm-8">
+        <a{% if not search_resource and not params.resources %} href="{% url_transform request resource=resource.pk %}"{% endif %} title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/></a>
+
         {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
         <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}{% if not without_findme %}?find_me={{ statistic.pk }}{% endif %}">{{ contest.title }}</a>
         {% if statistic.addition.hack %}
@@ -129,26 +104,26 @@
         </span>
         {% endwith %}
         {% endif %}
-        <span class="problems">
-            {% if 'problems' in statistic.addition %}
-                {% if contest.info.problems %}
-                  {% for problem in contest|get_division_problems:statistic.addition %}
-                    {% with key=problem|get_problem_short  %}
-                    {% with stat=statistic.addition.problems|get_item:key %}
-                      {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url full_score=problem.full_score %}
-                    {% endwith %}
-                    {% endwith %}
-                  {% endfor %}
-                {% else %}
-                  {% for k, v in statistic.addition.problems.items|sort %}
-                  {% include 'problem_stat.html' with short=k name=k stat=v problem_url=None full_score=None %}
-                  {% endfor %}
-                {% endif %}
-            {% endif %}
-        </span>
         {% if contest.has_submissions %}
-        <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ statistic.account_id }}" class="database-link external-link invisible" target="_blank" rel="noopener noreferrer">{% icon_to "submissions" %}</a>
+        <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ statistic.account_id }}" target="_blank" rel="noopener noreferrer">{% icon_to "submissions" %}</a>
         {% endif %}
+        <span class="problems display-block-xs">
+            {% with problems=statistic.addition.problems %}
+            {% if contest.info.problems %}
+              {% for problem in contest|get_division_problems:statistic.addition %}
+                {% with key=problem|get_problem_short  %}
+                {% with stat=problems|get_item:key %}
+                  {% include 'problem_stat.html' with short=problem|get_problem_header name=problem|get_problem_name stat=stat problem_url=problem.url full_score=problem.full_score %}
+                {% endwith %}
+                {% endwith %}
+              {% endfor %}
+            {% elif problems %}
+              {% for k, v in problems.items|sort %}
+              {% include 'problem_stat.html' with short=k name=k stat=v problem_url=None full_score=None %}
+              {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </span>
         {% if perms.ranking.change_statistics %}
         <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
         {% endif %}

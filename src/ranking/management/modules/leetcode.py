@@ -228,9 +228,10 @@ class Statistic(BaseModule):
                             solved = 0
                             stats = get_item(statistics, member, {})
                             problems = r.setdefault('problems', get_copy_item(stats, 'problems', {}))
-                            clear_problems_fields(problems)
+                            submitted_keys = set()
                             for i, (k, s) in enumerate(submissions.items(), start=1):
                                 short = problems_info[k]['short']
+                                submitted_keys.add(short)
                                 p = problems.setdefault(short, {})
                                 time = datetime.fromtimestamp(s['date']) - start_time
                                 p['time_in_seconds'] = time.total_seconds()
@@ -249,6 +250,7 @@ class Statistic(BaseModule):
 
                                     skip = skip or p['submission_id'] in solutions_ids
                                     solutions_ids.add(p['submission_id'])
+                            clear_problems_fields(problems, submitted_keys=submitted_keys)
 
                             if already_added:
                                 continue
@@ -1010,13 +1012,46 @@ class Statistic(BaseModule):
             account.save(update_fields=['info', 'last_submission'])
         return ret
 
+    def get_problem_info_from_dict(question):
+        ret = dict(
+            tags=[t['name'].lower() for t in question['topicTags']],
+            difficulty=question['difficulty'].lower(),
+            hints=question['hints'],
+            premium=question['isPaidOnly'],
+            accepted_rate=round_sig(question['acRate'], 3),
+            id=as_number(question['questionFrontendId']),
+            likes=as_number(question['likes']),
+            dislikes=as_number(question['dislikes']),
+        )
+
+        if ret['likes'] or ret['dislikes']:
+            ret['likes_percent'] = round_sig(ret['likes'] * 100 / (ret['likes'] + ret['dislikes']), 4)
+            ret['dislikes_percent'] = round_sig(ret['dislikes'] * 100 / (ret['likes'] + ret['dislikes']), 4)
+
+        if question.get('stats'):
+            stats = json.loads(question['stats'])
+            ret['n_accepted_submissions'] = stats['totalAcceptedRaw']
+            ret['n_total_submissions'] = stats['totalSubmissionRaw']
+
+        if 'categoryTitle' in question:
+            kinds = []
+            kind = question.get('categoryTitle')
+            if kind:
+                kind = kind.lower()
+                if kind not in ['algorithms']:
+                    if kind not in ret['tags']:
+                        ret['tags'].append(kind)
+                    kinds.append(kind)
+            ret['kinds'] = kinds
+        return ret
+
     @staticmethod
     def get_problem_info(problem, **kwargs):
         slug = get_item(problem, 'slug')
         params = {
             'operationName': 'questionData',
             'variables': {'titleSlug': slug},
-            'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty contributors { profileUrl } topicTags { name } hints acRate questionFrontendId isPaidOnly } }',  # noqa: E501
+            'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly likes dislikes stats } }',  # noqa: E501
         }
         page = Statistic._get(
             'https://leetcode.com/graphql',
@@ -1028,12 +1063,71 @@ class Statistic(BaseModule):
         if not question:
             return None
 
-        ret = dict(
-            tags=[t['name'].lower() for t in question['topicTags']],
-            difficulty=question['difficulty'].lower(),
-            hints=question['hints'],
-            premium=question['isPaidOnly'],
-            accepted_rate=round_sig(question['acRate'], 3),
-            id=as_number(question['questionFrontendId']),
-        )
-        return ret
+        return Statistic.get_problem_info_from_dict(question)
+
+    @staticmethod
+    def get_new_problems(resource, limit, **kwargs):
+        n_page = 0
+        per_page = 500
+        if limit:
+            per_page = min(per_page, limit)
+        new_problems = []
+        total = None
+        while (
+            (not limit or len(new_problems) < limit) and
+            (not total or len(new_problems) < total)
+        ):
+            params = {
+                "query": """
+                query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
+                    problemsetQuestionList: questionList(
+                        categorySlug: $categorySlug
+                        limit: $limit
+                        skip: $skip
+                        filters: $filters
+                    ) {
+                        total: totalNum
+                        questions: data { title titleSlug questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly likes dislikes stats categoryTitle }
+                    }
+                }
+                """,  # noqa: E501
+                "variables": {
+                    "categorySlug": "all-code-essentials",
+                    "skip": n_page * per_page,
+                    "limit": per_page,
+                    "filters": {
+                        "orderBy": "FRONTEND_ID",
+                        "sortOrder": "DESCENDING"
+                    }
+                },
+                "operationName": "problemsetQuestionList"
+            }
+            page = Statistic._get(
+                'https://leetcode.com/graphql',
+                content_type='application/json',
+                post=json.dumps(params).encode('utf-8'),
+                n_attempts=3,
+            )
+            data = json.loads(page)
+            data = data['data']['problemsetQuestionList']
+            total = data['total']
+            questions = data['questions']
+            for question in questions:
+                info = Statistic.get_problem_info_from_dict(question)
+                kinds = info.pop('kinds', [])
+                problem = dict(
+                    key=question['questionId'],
+                    name=question['title'],
+                    slug=question['titleSlug'],
+                    kinds=kinds,
+                    n_accepted_submissions=info.pop('n_accepted_submissions', None),
+                    n_total_submissions=info.pop('n_total_submissions', None),
+                    info=info,
+                )
+                new_problems.append(problem)
+                if len(new_problems) == limit:
+                    break
+            n_page += 1
+            if not questions:
+                break
+        return new_problems

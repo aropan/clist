@@ -20,7 +20,7 @@
     $url = "/api/seasons/$slug/season-info";
     $data = curlexec($url, null, ['json_output' => true]);
     if (isset($data['error'])) {
-      trigger_error("Warning error on $slug season: ${data['error']}", E_USER_WARNING);
+      trigger_error("Warning error on $slug season: {$data['error']}", E_USER_WARNING);
       continue;
     }
     $data = get_item($data, ['result']);
@@ -29,7 +29,7 @@
       $data['slug'] = $slug;
       $data['track'] = $track;
       $title = $data['title'] . '. ' . $track['title'];
-      $url = url_merge($HOST_URL, "/seasons/$slug/tracks/${track['slug']}/");
+      $url = url_merge($HOST_URL, "/seasons/$slug/tracks/{$track['slug']}/");
       $start_time = $data['startDate'];
       $end_time = $data['endDate'];
       $key = $slug . '/' . $track['slug'];

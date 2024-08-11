@@ -1423,6 +1423,20 @@ def to_rating_change_field(field):
 
 
 @register.simple_tag
+def rating_change_template(value):
+    if not isinstance(value, (float, int)):
+        value = as_number(value, force=True)
+    if not value:
+        span_class = 'rating-change-same'
+    elif value > 0:
+        span_class = 'rating-change-up'
+    else:
+        span_class = 'rating-change-down'
+    ret = f'<span class="rating-change {span_class}">{icon_to(span_class)}{abs(value)}</span>'
+    return mark_safe(ret)
+
+
+@register.simple_tag
 def queryset_filter(qs, **kwargs):
     return qs.filter(**kwargs)
 
@@ -1596,3 +1610,15 @@ def filtered_admin_url(url, field_selects):
 @register.filter
 def camel_to_snake(value):
     return re.sub(r'(?<!^)(?=[A-Z])', '_', value).lower()
+
+
+@register.simple_tag
+def label_tag(label, status=None):
+    label = html.escape(label)
+    status = status or 'info'
+    return mark_safe(f'<span class="label label-sm alert-{status} label-tag">{label}</span>')
+
+
+@register.filter
+def is_major_kind(resource, value):
+    return resource.is_major_kind(value)

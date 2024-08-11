@@ -21,8 +21,8 @@
             continue;
         }
 
-        $year = strftime('%Y', strtotime($match['start_time']));
-        $month = intval(strftime('%m', strtotime($match['start_time'])));
+        $year = date('Y', strtotime($match['start_time']));
+        $month = intval(date('m', strtotime($match['start_time'])));
         if ($month >= 9) {
             $year = $year + 1;
         }

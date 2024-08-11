@@ -31,6 +31,7 @@ warnings.filterwarnings('ignore', category=UnorderedObjectListWarning)
 
 # Build paths inside the project like this: path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SHARED_DIR = os.path.join(BASE_DIR, 'sharedfiles')
 
 env = Env()
 env.read_env(env('DJANGO_ENV_FILE'))
@@ -755,6 +756,10 @@ FONTAWESOME_ICONS_ = {
     'unfreezing': '<i class="fa-regular fa-snowflake"></i>',
     'exclamation': '<i class="fa-solid fa-circle-exclamation"></i>',
     'close': '<i class="fa-solid fa-xmark"></i>',
+    'locked': '<i class="fa-solid fa-lock"></i>',
+    'rating-change-up': dict(icon='<i class="fas fa-angle-up"></i>', title=False),
+    'rating-change-down': dict(icon='<i class="fas fa-angle-down"></i>', title=False),
+    'rating-change-same': dict(icon='<i class="fa-solid fa-equals fa-2xs"></i>', title=False),
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
@@ -780,7 +785,7 @@ STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT = 0.2
 
 UPSOLVING_FILTER_DEFAULT = True
 
-GEOIP_PATH = os.path.join(BASE_DIR, 'sharedfiles', 'GeoLite2-Country.mmdb')
+GEOIP_PATH = os.path.join(SHARED_DIR, 'GeoLite2-Country.mmdb')
 GEOIP_ACCOUNT_ID = getattr(conf, 'GEOIP_ACCOUNT_ID')
 GEOIP_LICENSE_KEY = getattr(conf, 'GEOIP_LICENSE_KEY')
 

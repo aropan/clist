@@ -104,3 +104,6 @@ ipwhois==1.2.0
 fontawesomefree==6.5.1
 brotli==1.0.9
 geoip2==4.8.0
+xgboost==2.1.1
+scikit-learn==1.5.1
+pandas==2.2.2

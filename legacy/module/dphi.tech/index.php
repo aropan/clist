@@ -15,7 +15,7 @@
             }
 
             foreach ($response['results'] as $c) {
-                $cid = "${c['challenge_id']}";
+                $cid = "{$c['challenge_id']}";
 
                 $title = $c['title'];
                 if ($c['datathon_type']) {
@@ -26,7 +26,7 @@
                     'start_time' => $c['start_date'],
                     'end_time' => $c['end_date'],
                     'title' => $title,
-                    'url' => url_merge($URL, "/challenges/${c['slug']}/$cid/"),
+                    'url' => url_merge($URL, "/challenges/{$c['slug']}/$cid/"),
                     'host' => $HOST,
                     'rid' => $RID,
                     'timezone' => $TIMEZONE,

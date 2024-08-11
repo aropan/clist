@@ -94,6 +94,11 @@ class Account(BaseModel):
             except KeyError:
                 pass
 
+    def profile_url(self, resource=None):
+        resource = resource or self.resource
+        info = self.dict_with_info()
+        return resource.profile_url.format(**info)
+
     @staticmethod
     def is_special_info_field(field):
         if not field:
@@ -320,7 +325,11 @@ def update_account_by_coders(account, default_url=None):
                 break
 
     if isinstance(url, bool):
-        url = default_url
+        if default_url is True:
+            args = [account.key, account.resource.host]
+            url = reverse('coder:account', args=args)
+        else:
+            url = default_url
 
     if url:
         account.url = url

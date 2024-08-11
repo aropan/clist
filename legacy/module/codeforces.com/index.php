@@ -47,7 +47,7 @@
     if (!is_array($json)) {
         return;
     }
-    $json['status'] == 'OK' or trigger_error("status = '${json['status']}' for $url");
+    $json['status'] == 'OK' or trigger_error("status = '{$json['status']}' for $url");
     $global_rounds_stage_year = false;
     foreach ($json['result'] as $c) {
         $title = $c['name'];

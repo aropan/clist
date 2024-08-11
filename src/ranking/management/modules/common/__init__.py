@@ -143,6 +143,10 @@ class BaseModule(object, metaclass=ABCMeta):
     def get_problem_info(problem, **kwargs):
         raise NotImplementedError()
 
+    @staticmethod
+    def get_new_problems(resource, **kwargs):
+        raise NotImplementedError()
+
 
 def save_proxy(req, filepath):
     if req.proxer.proxy:

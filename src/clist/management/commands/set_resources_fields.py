@@ -162,6 +162,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
+        parser.add_argument('--problems-only', action='store_true', help='update problems only')
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -175,7 +176,11 @@ class Command(BaseCommand):
         else:
             resources = Resource.objects.all()
         self.logger.info(f'resources [{len(resources)}] = {[r.host for r in resources]}')
-        set_accounts_fields(resources, logger=self.logger)
-        set_problems_fields(resources, logger=self.logger)
-        set_statistics_fields(resources, logger=self.logger)
-        set_n_fields(resources, logger=self.logger)
+
+        if args.problems_only:
+            set_problems_fields(resources, logger=self.logger)
+        else:
+            set_accounts_fields(resources, logger=self.logger)
+            set_problems_fields(resources, logger=self.logger)
+            set_statistics_fields(resources, logger=self.logger)
+            set_n_fields(resources, logger=self.logger)

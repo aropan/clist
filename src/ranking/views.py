@@ -90,6 +90,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                 'coder': {'fields': ['statistics__account__coders__username']},
                 'account': {'fields': ['statistics__account__key', 'statistics__account__name'], 'suff': '__iregex'},
                 'stage': {'fields': ['stage'], 'suff': '__isnull', 'func': lambda v: False},
+                'kind': {'fields': ['kind'], 'suff': '__isnull', 'func': lambda v: False},
                 'medal': {'fields': ['with_medals'], 'func': lambda v: True},
                 'advance': {'fields': ['with_advance'], 'func': lambda v: True},
                 'year': {'fields': ['start_time__year', 'end_time__year']},
@@ -1244,6 +1245,9 @@ def standings(request, contest, other_contests=None, template='standings.html', 
             statistics = statistics.filter(Q(account__coders__in=party.coders.all()) |
                                            Q(account__coders__in=party.admins.all()) |
                                            Q(account__coders=party.author))
+        elif search.startswith('score:'):
+            _, score = search.split(':')
+            statistics = statistics.filter(solving=score)
         else:
             if search.startswith('regex:'):
                 search = search[search.index(':') + 1:]

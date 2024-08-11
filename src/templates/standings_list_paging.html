@@ -48,6 +48,8 @@
   <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}" class="submissions">{% icon_to 'submissions' %}</a>
   {% endif %}
 
+  {% with shown_kind=contest.shown_kind %}{% if shown_kind %}{% label_tag shown_kind status %}{% endif %}{% endwith %}
+
   {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
 
   {% if contests_groups %}
@@ -58,32 +60,10 @@
     {% endwith %}
   {% endif %}
 
-  {% for stat in contest.stats %}
-  <span class="text-muted small">
-    {% if stat.place %}
-    {% with division=stat.addition|get_item:"division" %}
-    Rank {{ stat.place }}{% if contest.n_statistics %} of {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}{% endif %}
-    {% endwith %}
-    {% endif %}
-
-    {% with value=stat.addition.rating_change %}
-    {% with intvalue=value|toint %}
-      <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
-      {% if intvalue %}
-        <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
-      {% else %}
-        {{ value }}
-      {% endif %}
-      </span>
-    {% endwith %}
-    {% endwith %}
-  </span>
-  {% endfor %}
-
   {% include "contest_inline_buttons.html" with contest=contest with_stage=True %}
 
-  {% if 'with_problems' in request.GET %}
-    <table>
+  {% if request.GET.with_problems|is_yes %}
+  <table>
     {% for division, problems in contest.division_problems %}
     <tr class="problems">
       {% if division %}
@@ -102,18 +82,39 @@
           <span title="{{ problem|get_problem_title }}" data-toggle="tooltip">{% trim_to problem|get_problem_short 4 raw_text=True %}</span>
           {% if problem.url %}</a>{% endif %}
         </div>
-        <div>
-          {% include 'standings_problem_progress.html' with problem=problem contest=contest %}
-        </div>
+        {% if problem.n_total %}
+        <div>{% include 'standings_problem_progress.html' with problem=problem contest=contest %}</div>
+        {% endif %}
       </div>
       {% endfor %}
       </td>
     </tr>
     {% endfor %}
-    </table>
+  </table>
   {% endif %}
 </td>
-<td class="date text-muted small">
+<td class="rank no-stretch text-muted">
+  {% for stat in contest.stats %}
+  {% if stat.place %}
+  {% with division=stat.addition|get_item:"division" %}
+  {{ stat.place }}{% if contest.n_statistics %} of {{ contest.info.problems.n_statistics|get_item:division|default:contest.n_statistics }}{% endif %}
+  {% endwith %}
+  {% endif %}
+
+  {% with value=stat.addition.rating_change %}
+  {% with intvalue=value|toint %}
+    <span class="rating-change{% if intvalue %} rating-change-{% if intvalue > 0 %}up{% else %}down{% endif %}{% endif %}">
+    {% if intvalue %}
+      <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
+    {% else %}
+      {{ value }}
+    {% endif %}
+    </span>
+  {% endwith %}
+  {% endwith %}
+  {% endfor %}
+</td>
+<td class="date text-muted small no-stretch">
   <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>
 </td>
 {% for more_field in params.more_fields %}

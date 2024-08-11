@@ -52,14 +52,25 @@ def rename_account(old_account, new_account):
     return new_account
 
 
-def clear_problems_fields(problems):
+def clear_problems_fields(problems, submitted_keys=None):
     if not problems:
         return
-    for v in problems.values():
+    to_remove = []
+    for k, v in problems.items():
         if not isinstance(v, dict):
             continue
         v.pop('first_ac', None)
         v.pop('first_ac_of_all', None)
+
+        if submitted_keys is not None and k not in submitted_keys:
+            upsolving = v.pop('upsolving', None)
+            v.clear()
+            if upsolving:
+                v['upsolving'] = upsolving
+            if not v:
+                to_remove.append(k)
+    for k in to_remove:
+        problems.pop(k)
 
 
 def to_canonize_str(data):
@@ -141,13 +152,13 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
             contests = list(qs.filter(has_skip=True))
         if not contests:
             contests = list(base_contests)
-            if len(contests) == 1:
-                contest = contests[0]
+            if len(contests) == 0:
+                LOG.info('Not found contest with key %s, fields = %s', contest_key, fields)
+                continue
+            if len(contests) == 1 and not addition_update.get('_with_create'):
                 missed += 1
-                LOG.info('Missed #%d rank %s for %s in %s', missed,  rank, account, contest)
-                # call_command('parse_statistic', contest_id=contest.pk, users=['jcaoso1a@.com'])
-                # ok = True
-            continue
+                LOG.info('Missed #%d rank %s for %s in %s', missed,  rank, account, contests[0])
+                continue
         if len(contests) > 1:
             LOG.warning('Multiple contests with same key %s = %s', contest_key, contests)
             continue
@@ -198,11 +209,9 @@ def account_update_contest_additions(
     for contest_key, update in contest_addition_update.items():
         group = update.get('_group')
         if group:
-            if try_fill_missed_ranks:
-                try_fill_missed_ranks = False
-                LOG.warning("Grouped contests don't support fill_missed_ranks")
-                continue
             grouped_contest_keys[group].append(contest_key)
+    if grouped_contest_keys and try_fill_missed_ranks:
+        LOG.warning("Grouped contests with fill_missed_ranks")
 
     iteration = 0
     renaming_contest_keys = set(contest_keys)
@@ -247,6 +256,17 @@ def account_update_contest_additions(
                     contest_keys.discard(contest_key)
                     renaming_contest_keys.discard(contest_key)
 
+            if stat.place is None:
+                rank = ordered_dict.pop('_rank', None)
+                if rank is not None and '_rank_field' not in ordered_dict:
+                    LOG.info('Rank without rank_field for %s in %s = %s', account, contest, rank)
+                    stat.place = rank
+                    stat.place_as_int = rank
+                    stat.save(update_fields=['place', 'place_as_int'])
+
+            for k in [k for k in ordered_dict if k.startswith('_')]:
+                ordered_dict.pop(k)
+
             addition.update(dict(ordered_dict))
             for k, v in ordered_dict.items():
                 if v is None:
@@ -281,12 +301,12 @@ def account_update_contest_additions(
             if renaming_check(account, renaming_contest_keys, fields, contest_addition_update):
                 try_fill_missed_ranks = False
                 continue
-        if try_fill_missed_ranks and account.try_fill_missed_ranks_time is None:
+        if try_fill_missed_ranks:
             try_fill_missed_ranks = False
             if fill_missed_ranks(account, renaming_contest_keys, fields, contest_addition_update):
                 continue
         if contest_keys:
-            out_contests = list(grouped_contest_keys.values()) or list(contest_keys)
+            out_contests = list(grouped_contest_keys.items()) or list(contest_keys)
             LOG.warning('Not found %d contests for %s = %s%s',
                         len(out_contests), account, out_contests[:5], '...' if len(out_contests) > 5 else '')
         break

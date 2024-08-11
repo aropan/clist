@@ -22,7 +22,12 @@
 {% endif %}
 <tr class="show-hidden-activity-on-hover show-hidden-note-on-hover">
   <td class="problem-date-column">
-    <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div> </td>
+    {% if problem.time is not None %}
+    <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div>
+    {% else %}
+    <span class="text-muted">&mdash;</span>
+    {% endif %}
+  </td>
   <td class="problem-rating-column">
     {% if problem.rating is not None %}
       {% coder_color_circle problem.resource problem.rating %}
@@ -38,7 +43,7 @@
     {% endif %}
   </td>
   <td class="problem-progress-column">
-    {% if problem.n_total %}
+    {% if problem.n_total or problem.n_total_submissions %}
       {% include 'standings_problem_progress.html' with problem=problem contest="" %}
     {% else %}
       <span class="text-muted">&mdash;</span>
@@ -80,9 +85,27 @@
         <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
       </a>
       {% if problem.actual_url %}<a href="{{ problem.actual_url }}" target="_blank" rel="noopener">{% endif %}
+        {% if not selected_resource %}
+          {% for field in problem.resource.problems_fields.fixed_fields %}{{ problem.info|get_item:field }}{% endfor %}
+        {% endif %}
         {% trim_to problem.name 50 %}
       {% if problem.actual_url %}</a>{% endif %}
+
+      {% if problem.kinds %}
+        {% for kind in problem.kinds %}
+          {% if not problem.resource|is_major_kind:kind %}
+            {% label_tag kind solution_class %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
       {% if favorite_problems %}{% activity_action "fav" problem %}{% endif %}
+
+      {% if problem.resource.problems_fields.locking %}
+        {% with locked=problem.info|get_item:problem.resource.problems_fields.locking.field %}
+        {% if locked %}{% icon_to 'locked' problem.resource.problems_fields.locking.title class="text-muted" %}{% endif %}
+        {% endwith %}
+      {% endif %}
 
       {% note_action "note" problem %}
 

@@ -1,9 +1,19 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
+    $url_scheme_host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
+
+    $user_agent_file = dirname(__FILE__) . "/../../logs/beecrowd.user_agent";
+    $cookie_file = dirname(__FILE__) . "/../../logs/beecrowd.cookie";
+    $header = array();
+    if (file_exists($user_agent_file)) {
+        $user_agent = trim(file_get_contents($user_agent_file));
+        $header[] = "User-Agent: $user_agent";
+    }
+    $curlexec_params = ['http_header' => $header, 'with_curl' => true, 'cookie_file' => $cookie_file];
 
     for ($n_page = 1;; $n_page += 1) {
-        $url = "https://www.beecrowd.com.br/judge/en/contests?page=$n_page";
-        $page = curlexec($url);
+        $url = $url_scheme_host . "/en/contests?page=$n_page";
+        $page = curlexec($url, null, $curlexec_params);
 
         if (strpos($url, '/login') !== false) {
             preg_match_all('#<input[^>]*name="(?P<name>[^"]*)"(?:[^>]*value="(?P<value>[^"]*)")?[^>]*>#', $page, $matches, PREG_SET_ORDER);
@@ -14,7 +24,7 @@
             require_once dirname(__FILE__) . '/secret.php';
             $fields['email'] = $BEECROWD_EMAIL;
             $fields['password'] = $BEECROWD_PASSWORD;
-            $page = curlexec($url, $fields);
+            $page = curlexec($url, $fields, $curlexec_params);
         }
 
         preg_match_all('#
@@ -36,7 +46,7 @@
             $url = url_merge($URL, $c['url']);
             $title = $c['title'];
             if (substr($title, -3) == '...') {
-                $page = curlexec($url);
+                $page = curlexec($url, null, $curlexec_params);
                 if (preg_match('#</h2>\s*<p[^>]*>(?P<title>[^<]*)</p>#', $page, $match)) {
                     $title = $match['title'];
                 }

@@ -10,7 +10,9 @@ from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import numpy as np
+import pandas as pd
 import requests
+import xgboost as xgb
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
@@ -22,6 +24,7 @@ from django.urls import reverse
 from django.utils.timezone import now as timezone_now
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
+from scipy.stats import randint, uniform
 
 from clist.templatetags.extras import get_item, get_problem_key, slug
 from logify.models import EventLog, EventStatus
@@ -88,6 +91,7 @@ class Resource(BaseModel):
     contest_update_time = models.DateTimeField(null=True, blank=True)
     has_problem_rating = models.BooleanField(default=False)
     has_problem_update = models.BooleanField(default=False)
+    has_new_problems = models.BooleanField(default=False)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
     n_accounts_to_update = models.IntegerField(default=None, null=True, blank=True)
@@ -103,6 +107,7 @@ class Resource(BaseModel):
     problems_fields = models.JSONField(default=dict, blank=True)
     statistics_fields = models.JSONField(default=dict, blank=True)
     skip_for_contests_chart = models.BooleanField(default=False)
+    problem_rating_predictor = models.JSONField(default=dict, blank=True)
 
     RATING_FIELDS = (
         'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
@@ -308,7 +313,7 @@ class Resource(BaseModel):
         if not instance:
             return True
         if isinstance(instance, str):
-            return instance == self.info.get('major_kind')
+            return instance in self.info.get('major_kinds', [])
         if isinstance(instance, Contest):
             return self.is_major_kind(instance.kind)
         if isinstance(instance, Iterable):
@@ -316,8 +321,8 @@ class Resource(BaseModel):
         raise ValueError(f'Invalid instance type = {type(instance)}')
 
     def major_contests(self):
-        major_kind = self.info.get('major_kind')
-        return self.contest_set.filter(Q(kind=major_kind) | Q(kind__isnull=True) | Q(kind=''))
+        major_kinds = self.info.get('major_kinds', [])
+        return self.contest_set.filter(Q(kind__in=major_kinds) | Q(kind__isnull=True) | Q(kind=''))
 
     def rating_step(self):
         prev = 0
@@ -338,6 +343,50 @@ class Resource(BaseModel):
     def get_object(cls, value):
         condition = Q(pk=value) if value.isdigit() else Q(host__contains=value)
         return Resource.objects.get(condition)
+
+    def problem_rating_predictor_features(self, problem):
+        feature_fields = self.problem_rating_predictor['fields']
+        problem_data = dict()
+        problem_data.update(problem.__dict__)
+        problem_data.update(problem.info)
+        features = {}
+        for field_data in feature_fields:
+            field = field_data['field']
+            value = problem_data.get(field)
+            if field_data.get('mapping'):
+                value = field_data['mapping'][value]
+            if isinstance(value, bool):
+                value = int(value)
+            features[field] = value
+        features['rating'] = problem.rating
+        return features
+
+    def problem_rating_predictor_data(self, problems):
+        data = [self.problem_rating_predictor_features(problem) for problem in problems]
+        df = pd.DataFrame(data)
+        return df
+
+    def problem_rating_predictor_model(self):
+        param_distributions = {
+            'learning_rate': uniform(0.01, 0.3),
+            'max_depth': randint(3, 8),
+        }
+        return xgb.XGBRegressor(), param_distributions
+
+    def save_problem_rating_predictor(self, model):
+        model_path = os.path.join(settings.SHARED_DIR, self.problem_rating_predictor['path'])
+        model_folder = os.path.dirname(model_path)
+        if not os.path.exists(model_folder):
+            os.makedirs(model_folder, exist_ok=True)
+        model.save_model(model_path)
+
+    def load_problem_rating_predictor(self):
+        model_path = os.path.join(settings.SHARED_DIR, self.problem_rating_predictor['path'])
+        if not os.path.exists(model_path):
+            return None
+        model, _ = self.problem_rating_predictor_model()
+        model.load_model(model_path)
+        return model
 
 
 class BaseContestManager(BaseManager):
@@ -676,6 +725,11 @@ class Contest(BaseModel):
     def is_major_kind(self):
         return self.resource.is_major_kind(self.kind)
 
+    def shown_kind(self):
+        if not self.kind or self.kind == 'stage' or self.is_major_kind():
+            return None
+        return self.kind
+
     @property
     def standings_start_time(self):
         start_time = self.info.get('custom_start_time')
@@ -832,9 +886,9 @@ class Problem(BaseModel):
                                 related_name='individual_problem_set')
     contests = models.ManyToManyField(Contest, blank=True, related_name='problem_set')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    time = models.DateTimeField()
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    time = models.DateTimeField(default=None, null=True, blank=True)
+    start_time = models.DateTimeField(default=None, null=True, blank=True)
+    end_time = models.DateTimeField(default=None, null=True, blank=True)
     index = models.SmallIntegerField(null=True)
     key = models.TextField()
     name = models.TextField()
@@ -842,15 +896,19 @@ class Problem(BaseModel):
     short = models.TextField(default=None, null=True, blank=True)
     url = models.TextField(default=None, null=True, blank=True)
     archive_url = models.TextField(default=None, null=True, blank=True)
-    divisions = ArrayField(models.TextField(), default=None, null=True, blank=True)
+    divisions = ArrayField(models.TextField(), default=list, blank=True, db_index=True)
+    kinds = ArrayField(models.CharField(max_length=30), default=list, blank=True, db_index=True)
     n_attempts = models.IntegerField(default=None, null=True, blank=True)
     n_accepted = models.IntegerField(default=None, null=True, blank=True)
     n_partial = models.IntegerField(default=None, null=True, blank=True)
     n_hidden = models.IntegerField(default=None, null=True, blank=True)
     n_total = models.IntegerField(default=None, null=True, blank=True)
+    n_accepted_submissions = models.IntegerField(default=None, null=True, blank=True)
+    n_total_submissions = models.IntegerField(default=None, null=True, blank=True)
     visible = models.BooleanField(default=True, null=False)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     skip_rating = models.BooleanField(default=None, null=True, blank=True)
+    is_archive = models.BooleanField(default=None, null=True, blank=True)
     info = models.JSONField(default=dict, blank=True)
 
     activities = GenericRelation('favorites.Activity', related_query_name='problem')
@@ -870,6 +928,8 @@ class Problem(BaseModel):
             models.Index(fields=['-time', 'contest_id', 'index']),
             models.Index(fields=['resource_id', 'rating']),
             models.Index(fields=['resource_id', 'key']),
+            models.Index(fields=['resource_id', 'divisions']),
+            models.Index(fields=['resource_id', 'kinds']),
             GistIndexTrgrmOps(fields=['name']),
         ]
 
@@ -922,6 +982,24 @@ class Problem(BaseModel):
             return Problem.objects.get(Q(short=short) & (Q(contest=contest) | Q(contests=contest)))
         except Problem.DoesNotExist:
             return None
+
+    def update_tags(self, tags, replace):
+        if not tags:
+            return
+
+        old_tags = set(self.tags.all())
+        for name in tags:
+            if not name:
+                continue
+            tag, _ = ProblemTag.objects.get_or_create(name=name)
+            if tag in old_tags:
+                old_tags.discard(tag)
+            else:
+                self.tags.add(tag)
+
+        if replace:
+            for tag in old_tags:
+                self.tags.remove(tag)
 
 
 class ProblemTag(BaseModel):

@@ -114,7 +114,7 @@
             if ($i < count($schedule)) {
                 $s = $schedule[$i];
                 if (!isset($data['date'])) {
-                    $data['date'] = strftime('%B %d, %Y', strtotime($s['date']));
+                    $data['date'] = date('F d, Y', strtotime($s['date']));
                 }
                 $data['start_time'] = $s['start_time'];
                 if (isset($s['end_time'])) {
@@ -123,19 +123,19 @@
             } else {
                 $data['start_time'] = '10:00';
                 if (empty($schedule) && !isset($data['date']) && $camp_season) {
-                    $data['date'] = strftime('%B %d, %Y', $base_date + ($i - count($matches) + 1) * $DAY);
+                    $data['date'] = date('F d, Y', $base_date + ($i - count($matches) + 1) * $DAY);
                 }
             }
             $days[intval($values['day'])] = $data;
         }
         foreach ($days as $day => $data) {
             if (!isset($data['date']) && isset($days[$day - 1]) && isset($days[$day - 1]['date'])) {
-                $days[$day]['date'] = strftime('%B %d, %Y', strtotime($days[$day - 1]['date']) + 24 * 60 * 60);
+                $days[$day]['date'] = date('F d, Y', strtotime($days[$day - 1]['date']) + 24 * 60 * 60);
             }
         }
         foreach (array_reverse($days, true) as $day => $data) {
             if (!isset($data['date']) && isset($days[$day + 1]) && isset($days[$day + 1]['date'])) {
-                $days[$day]['date'] = strftime('%B %d, %Y', strtotime($days[$day + 1]['date']) - 24 * 60 * 60);
+                $days[$day]['date'] = date('F d, Y', strtotime($days[$day + 1]['date']) - 24 * 60 * 60);
             }
         }
 

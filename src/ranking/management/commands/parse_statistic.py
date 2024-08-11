@@ -356,6 +356,7 @@ class Command(BaseCommand):
         )
 
         processed_group = set()
+        error_counter = defaultdict(int)
         for contest in progress_bar:
             if stop_on_error and has_error:
                 break
@@ -412,8 +413,6 @@ class Command(BaseCommand):
             contest_log_counter = defaultdict(int)
 
             try:
-                r = {}
-
                 now = timezone_now()
                 is_coming = now < contest.start_time
                 plugin = resource.plugin.Statistic(contest=contest)
@@ -1652,8 +1651,8 @@ class Command(BaseCommand):
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 exception_error = str(e)
+                error_counter[str(e)] += 1
                 self.logger.debug(colored_format_exc())
-                self.logger.warning(f'contest = {contest}, row = {r}')
                 self.logger.error(f'parse_statistic exception: {e}')
                 has_error = True
                 if stop_on_error:
@@ -1699,6 +1698,8 @@ class Command(BaseCommand):
             if users:
                 event_log.delete()
             self.logger.info(f'log_counter = {dict(contest_log_counter)}')
+            if error_counter:
+                self.logger.info(f'error_counter = {dict(error_counter)}')
             channel_layer_handler.send_done(done=parsed)
 
         @lru_cache(maxsize=None)
@@ -1763,6 +1764,7 @@ class Command(BaseCommand):
         if args.only_new:
             has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
             contests = contests.annotate(has_statistics=Exists(has_statistics)).filter(has_statistics=False)
+            contests = contests.filter(Q(n_problems__isnull=True) | Q(n_problems=0))
 
         if args.year:
             contests = contests.filter(start_time__year=args.year)

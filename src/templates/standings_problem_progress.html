@@ -1,12 +1,12 @@
-{% with n_attempts_=problem.n_attempts|default:0 n_statistics_=contest.n_statistics|default:0 %}
-{% with n_accepted=problem.n_accepted|default:0 n_partial=problem.n_partial|default:0 n_hidden=problem.n_hidden|default:0 n_attempts=problem.n_teams|default:n_attempts_ n_statistics=problem.n_total|default:n_statistics_ %}
+{% with n_attempts_=problem.n_attempts|default:0 n_statistics_=contest.n_statistics|default:0 n_accepted_submissions=problem|get_item:"n_accepted_submissions" n_total_submissions=problem|get_item:"n_total_submissions"  %}
+{% with n_accepted=problem.n_accepted|default:n_accepted_submissions|default:0 n_partial=problem.n_partial|default:0 n_hidden=problem.n_hidden|default:0 n_attempts=problem.n_teams|default:n_attempts_ n_statistics=problem.n_total|default:n_total_submissions|default:n_statistics_ %}
 {% if n_statistics %}
 <div class="problem-progress progress" title="
-  Number of accepted: {{ n_accepted }} ({{ n_accepted|multiply:100|divide:n_statistics|floatformat:"2" }}%)
+  Number of accepted{% if not problem.n_accepted and n_accepted_submissions %} submissions{% endif %}: {{ n_accepted }} ({{ n_accepted|multiply:100|divide:n_statistics|floatformat:"2" }}%)
   {% if n_partial %}<br/>Number of partial: {{ n_partial }} ({{ n_partial|multiply:100|divide:n_statistics|floatformat:"2" }})%){% endif %}
   {% if n_hidden %}<br/>Number of hidden: {{ n_hidden }} ({{ n_hidden|multiply:100|divide:n_statistics|floatformat:"2" }})%){% endif %}
-  {% if n_accepted != n_attempts %}<br/>Number of attempts: {{ n_attempts }} ({{ n_attempts|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
-  <br/>Total: {{ n_statistics }}
+  {% if n_accepted != n_attempts and n_attempts %}<br/>Number of attempts: {{ n_attempts }} ({{ n_attempts|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
+  <br/>Total{% if not problem.n_total and n_total_submissions %} submissions{% endif %}: {{ n_statistics }}
   {% if problem.first_ac %}<br/>First accepted: {{ problem.first_ac.time }}{% endif %}
 " data-toggle="tooltip" data-html="true" data-placement="bottom">
   <div class="progress-bar progress-bar-success" style="width: {{ n_accepted|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>

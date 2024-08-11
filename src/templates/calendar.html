@@ -1,6 +1,6 @@
 <script>
   customButtonDesc = { {% for i in ignore_filters %}cb{{ i.id }}: { text: '{{ i.name|safe }}', data: '{{ i.id }}' }{% if forloop.revcounter0 %}, {% endif %}{% endfor %} }
-  customButtonGroup = '{% for i in ignore_filters %}{% if i.id == 0 %} {% elif forloop.counter0 %},{% endif %}cb{{ i.id }}{% endfor %}'
+  customButtonGroup = '{% for i in ignore_filters %}{% if forloop.counter0 %}{% if i.id == 0 %} {% else %},{% endif %}{% endif %}cb{{ i.id }}{% endfor %}'
   customButtonSelector = [{% for i in ignore_filters %}{% if i.id > 0 %}'.fc-cb{{ i.id }}-button',{% endif %}{% endfor %}].join(',')
   timezone = '{{ timezone }}'
   timezone_hm = '{{ timezone|get_timezone_offset_hm }}'
