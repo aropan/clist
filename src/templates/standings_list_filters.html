@@ -71,4 +71,10 @@
     <button class="btn btn-default btn-sm" type="submit" name="full_table"{% if not request.GET %} disabled{% endif %}>{% icon_to 'full_table' %}</button>
   </div>
   {% endif %}
+
+  {% if perms.clist.change_contest %}
+  <div class="input-group input-group-sm">
+    <a id="reparse" class="btn btn-default btn-sm">{% icon_to 'update' %}</a>
+  </div>
+  {% endif %}
 </form>

@@ -144,7 +144,7 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
-    def get_new_problems(resource, **kwargs):
+    def get_archive_problems(resource, **kwargs):
         raise NotImplementedError()
 
 

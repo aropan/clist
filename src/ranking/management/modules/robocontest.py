@@ -27,8 +27,9 @@ class Statistic(BaseModule):
             return REQ.get(urljoin(standings_url, '/locale/en'))
 
         def get_page(*args, **kwargs):
-            page = REQ.get(*args, **kwargs)
-            if not is_english_locale(page):
+            page, code = REQ.get(*args, return_code=True, **kwargs)
+            page = page if code == 200 else None
+            if page and not is_english_locale(page):
                 page = set_locale()
                 if not is_english_locale(page):
                     raise ExceptionParseStandings('Failed to set locale')
@@ -38,14 +39,19 @@ class Statistic(BaseModule):
         result = OrderedDict()
 
         n_page = 0
+        n_skip = 0
         nothing = False
-        while not nothing:
+        while not nothing and n_skip < 5:
             n_page += 1
 
             page = get_page(standings_url + f'?page={n_page}')
+            if page is None:
+                n_skip += 1
+                continue
             page = re.sub(r'<!(?:--)?\[[^\]]*\](?:--)?>', '', page)
             table = parsed_table.ParsedTable(page, as_list=True)
             nothing = True
+            n_skip = 0
 
             for row in table:
                 r = OrderedDict()
@@ -67,13 +73,13 @@ class Statistic(BaseModule):
                         i = v.header.node.xpath('.//i')
                         if i:
                             c = i[0].attrib['class']
-                            if 'strava' in c:
+                            if 'strava' in c or 'chart-line' in c:
                                 if v.value == '0':
                                     r['rating_change'] = 0
-                                elif v.value != '-':
-                                    new_rating, rating_change = v.value.split()
-                                    r['rating_change'] = int(rating_change)
-                                    r['new_rating'] = int(new_rating)
+                                elif len(vs := v.value.lstrip('~').split()) == 2:
+                                    new_rating, rating_change = map(int, vs)
+                                    r['rating_change'] = rating_change
+                                    r['new_rating'] = new_rating
                             elif 'tasks' in c:
                                 r['tasks'] = v.value
                     elif f == 'ball':
@@ -120,7 +126,9 @@ class Statistic(BaseModule):
 
         problems = list(problems_infos.values())
         for problem in problems:
-            problem_page = get_page(problem['url'])
+            problem_page = get_page(problem['url'], ignore_codes={403})
+            if problem_page is None:
+                continue
             match = re.search(r'<h[^>]*>\s*Task\s*#(?P<key>[^<]*)</h', problem_page)
             problem['code'] = match.group('key').strip()
             archive_url = self.resource.problem_url.format(key=problem['code'])

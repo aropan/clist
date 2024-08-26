@@ -16,8 +16,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
-from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, JSONField, Max,
-                              OuterRef, Prefetch, Q, Subquery, Value, When)
+from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
+                              Prefetch, Q, Subquery, Value, When)
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
@@ -35,9 +35,9 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
 from clist.models import Contest, ContestSeries, ProblemTag, Resource
-from clist.templatetags.extras import (accounts_split, as_number, asfloat, format_time, get_problem_short,
-                                       get_timezones, has_update_statistics_permission, query_transform, quote_url,
-                                       relative_url)
+from clist.templatetags.extras import (accounts_split, as_number, asfloat, format_time, get_item, get_problem_short,
+                                       get_timezones, has_update_statistics_permission, is_rating_prediction_field,
+                                       is_yes, query_transform, quote_url, relative_url)
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint
 from clist.views import get_timeformat, get_timezone, main
@@ -55,7 +55,7 @@ from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListValue, Organization, Party
 from true_coders.utils import add_query_to_list, get_or_set_upsolving_filter
 from utils.chart import make_chart
-from utils.json_field import JSONF
+from utils.json_field import JSONF, IntegerJSONF, JsonJSONF
 from utils.regex import get_iregex_filter, verify_regex
 
 logger = logging.getLogger(__name__)
@@ -197,6 +197,7 @@ def get_profile_context(request, statistics, writers, resources):
 
     # custom fields
     statistics_fields = None
+    has_rating_prediction_field = False
     if search_resource:
         fields_types = search_resource.statistics_fields.get('types', {})
         options = list(sorted(fields_types.keys()))
@@ -212,6 +213,7 @@ def get_profile_context(request, statistics, writers, resources):
             'nogroupby': True,
             'nourl': True,
         }
+        has_rating_prediction_field = any(is_rating_prediction_field(v) for v in statistics_fields['values'])
 
     if not resources:
         writers = writers.none()
@@ -228,6 +230,7 @@ def get_profile_context(request, statistics, writers, resources):
         'timezone': get_timezone(request),
         'timeformat': get_timeformat(request),
         'statistics_fields': statistics_fields,
+        'has_rating_prediction_field': has_rating_prediction_field,
     })
 
     qs = statistics.annotate(date=F('contest__start_time'))
@@ -329,7 +332,7 @@ def coders(request, template='coders.html'):
         resources = [r for r in resources if r]
         resources = list(Resource.objects.filter(pk__in=resources))
         for r in resources:
-            field = r.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
+            field = get_item(r.info, 'ratings.chartjs.coloring_field')
             if field:
                 field = Cast(KeyTextTransform(field, 'account__info'), IntegerField())
                 coders = coders.annotate(**{f'{r.pk}_coloring_rating': SubqueryMax(field, filter=Q(resource=r))})
@@ -674,7 +677,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         if username is not None:
             coder = get_object_or_404(Coder, username=username)
             statistics = Statistics.objects.filter(account__coders=coder)
-            with_global = True
+            with_global = django_settings.ENABLE_GLOBAL_RATING_
         else:
             resource = get_object_or_404(Resource, host=host)
             account = get_object_or_404(Account, key=key, resource=resource)
@@ -693,10 +696,10 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         .annotate(kind=F('contest__kind'))
         .annotate(resource=F('contest__resource'))
         .annotate(score=F('solving'))
-        .annotate(addition_solved=KeyTextTransform('solved', 'addition'))
-        .annotate(solved=Cast(KeyTextTransform('solving', 'addition_solved'), IntegerField()))
-        .annotate(problems=Cast(KeyTextTransform('problems', 'contest__info'), JSONField()))
+        .annotate(solved=IntegerJSONF('addition__solved__solving'))
         .annotate(division=KeyTextTransform('division', 'addition'))
+        .annotate(n_problems=F('contest__n_problems'))
+        .annotate(division_n_problems=JsonJSONF('contest__info__problems__n_problems'))
         .annotate(cid=F('contest__pk'))
         .annotate(sid=F('pk'))
         .filter(contest__is_rated=True)
@@ -709,17 +712,19 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         .annotate(new_rating=Cast(KeyTextTransform('new_rating', 'addition'), IntegerField()))
         .annotate(old_rating=Cast(KeyTextTransform('old_rating', 'addition'), IntegerField()))
         .annotate(is_unrated=Cast(KeyTextTransform('is_unrated', 'contest__info'), IntegerField()))
-        .filter(Q(is_unrated__isnull=True) | Q(is_unrated=0))
-        .filter(Q(new_rating__isnull=False) | Q(addition___rating_data__isnull=False))
     )
 
     qs_values = (
-        'cid', 'sid', 'name', 'key', 'kind', 'date',
-        'new_rating', 'old_rating', 'rating_change',
-        'place', 'score', 'solved',
-        'problems', 'division', 'addition___rating_data',
-        'resource', 'addition',
+        'resource', 'cid', 'sid', 'name', 'key', 'kind', 'date',
+        'new_rating', 'old_rating', 'rating_change', 'is_unrated',
+        'place', 'score',
     )
+    if not is_yes(request.GET.get('minimal')):
+        qs_values += (
+            'division', 'solved',
+            'n_problems', 'division_n_problems',
+            'addition___rating_data', 'addition',
+        )
 
     qs = qs.values(*qs_values)
 
@@ -747,7 +752,13 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             ret[k] = v
         return ret
 
-    qs = [stat for stat in qs if stat['resource'] in resources]
+    qs = [
+        stat for stat in qs if (
+            stat['resource'] in resources and
+            (stat['new_rating'] or stat.get('addition___rating_data')) and
+            not stat['is_unrated']
+        )
+    ]
     n_resources = len({stat['resource'] for stat in qs})
 
     if with_global:
@@ -757,18 +768,19 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             .annotate(new_rating=F('new_global_rating'))
             .annotate(old_rating=Value(None, IntegerField(null=True)))
             .annotate(resource=Value(0, IntegerField()))
+            .annotate(is_unrated=Value(0, IntegerField()))
             .filter(new_rating__isnull=False)
         )
         qs.extend(global_qs.values(*qs_values))
 
     for stat in qs:
-        if stat['addition___rating_data'] and n_resources > 1:
+        if stat.get('addition___rating_data') and n_resources > 1:
             continue
 
         addition = stat.pop('addition', {})
-        addition['n_solved'] = stat['solved']
-        addition['place'] = stat['place']
-        addition['score'] = stat['score']
+        for field, out in (('solved', 'n_solved'), ('place', 'place'), ('score', 'score')):
+            if field in stat:
+                addition[out] = stat[field]
         stat['values'] = dict_to_float_values(addition)
 
         if stat['resource'] == 0:  # global rating
@@ -791,7 +803,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         resource_info.setdefault('data', [])
         resource_info['fields'] |= set(stat['values'].keys())
 
-        if stat['addition___rating_data']:
+        if stat.get('addition___rating_data'):
             data = resource.plugin.Statistic.get_rating_history(stat['addition___rating_data'],
                                                                 stat,
                                                                 resource,
@@ -800,14 +812,14 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             if data:
                 resource_info['data'].extend(data)
         else:
-            stat.pop('addition___rating_data')
+            stat.pop('addition___rating_data', None)
             stat['slug'] = slugify(stat['name'])
-            division = stat['division']
-            problems = stat.pop('problems', {})
-            if division and 'division' in problems:
-                problems = problems['division'][division]
-            if problems:
-                stat['n_problems'] = len(problems)
+
+            if 'division' in stat:
+                division = stat['division']
+                division_n_problems = stat.pop('division_n_problems')
+                if division and division_n_problems and division in division_n_problems:
+                    stat['n_problems'] = division_n_problems[division]
 
             if stat['rating_change'] is not None and stat['old_rating'] is None:
                 stat['old_rating'] = stat['new_rating'] - stat['rating_change']
@@ -2466,6 +2478,15 @@ def accounts(request, template='accounts.html'):
         'nogroupby': True,
         'nourl': True,
     }
+    context['fields_types'] = fields_types
+
+    skip_actions_columns = set()
+    for field in list(custom_fields):
+        if is_rating_prediction_field(field):
+            custom_fields.remove(field)
+            skip_actions_columns.add(field)
+    context['skip_actions_columns'] = skip_actions_columns
+
     for field in context['custom_fields']['values']:
         if field not in custom_fields:
             continue

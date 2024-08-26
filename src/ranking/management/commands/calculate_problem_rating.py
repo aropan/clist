@@ -426,9 +426,21 @@ class Command(BaseCommand):
                         list_problems.extend(d)
                 else:
                     list_problems = problems
+                rating_diff = dict()
+                updated_rating = set()
                 for problem in list_problems:
                     key = get_problem_key(problem)
-                    problem['rating'] = problem_ratings.get(key)
+                    rating = problem_ratings.get(key)
+                    problem_rating = problem.get('rating')
+                    if rating != problem_rating:
+                        updated_rating.add(key)
+                        if problem_rating and rating and key not in rating_diff:
+                            rating_diff[key] = (rating, rating - problem_rating)
+                    problem['rating'] = rating
+                message = f'{len(updated_rating)} of {len(problem_ratings)} problems updated'
+                if rating_diff:
+                    rating_diff = dict(sorted(rating_diff.items(), key=lambda x: -abs(x[1][1])))
+                    message += f', rating difference = {rating_diff}'
                 update_problems(contest, problems, force=True)
                 contest.problem_rating_hash = problem_rating_hash
                 if args.force:
@@ -436,8 +448,8 @@ class Command(BaseCommand):
                 else:
                     contest.save()
                 n_done += 1
-                self.logger.info(f'done contest = {contest}')
-                event_log.update_status(EventStatus.COMPLETED)
+                self.logger.info(f'done {contest}: {message}')
+                event_log.update_status(EventStatus.COMPLETED, message=message)
                 contest.problem_rating_update_done()
 
         if resource_event_log:

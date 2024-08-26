@@ -961,7 +961,7 @@ class Command(BaseCommand):
                                     r['_name_instead_key'] = True
                                 if contest.info.get('_push_name_instead_key_to_account'):
                                     account.info['_name_instead_key'] = True
-                                    account.save()
+                                    account.save(update_fields=['info'])
 
                                 no_update_name = r.pop('_no_update_name', False)
                                 no_update_name |= 'team_id' in r and '_field_update_name' not in r
@@ -993,6 +993,7 @@ class Command(BaseCommand):
 
                                 account_info = r.pop('info', {})
                                 if account_info:
+                                    update_fields = ['info']
                                     if 'rating' in account_info:
                                         if is_major_kind:
                                             account_info['_rating_time'] = int(now.timestamp())
@@ -1000,10 +1001,12 @@ class Command(BaseCommand):
                                             account_info.pop('rating')
                                     if 'name' in account_info:
                                         name = account_info.pop('name')
-                                        account.name = name if name and name != account.key else None
-
+                                        name = name if name and name != account.key else None
+                                        if account.name != name:
+                                            account.name = name
+                                            update_fields.append('name')
                                     account.info.update(account_info)
-                                    account.save()
+                                    account.save(update_fields=update_fields)
 
                             def update_stat_info():
                                 advance = contest.info.get('advance')
@@ -1141,7 +1144,7 @@ class Command(BaseCommand):
                                 ):
                                     account.info['_rating_time'] = rating_time
                                     account.info['rating'] = addition['new_rating']
-                                    account.save()
+                                    account.save(update_fields=['info'])
 
                                 try_calculate_time = contest.calculate_time or (
                                     contest.start_time <= now < contest.end_time and
@@ -1526,7 +1529,9 @@ class Command(BaseCommand):
                                         problems_ratings[get_problem_key(problem)] = problem['rating']
 
                                 if 'division' in standings_problems:
+                                    n_problems = dict()
                                     for d, ps in standings_problems['division'].items():
+                                        n_problems[d] = len(ps)
                                         for p in ps:
                                             key = get_problem_key(p)
                                             short = get_problem_short(p)
@@ -1543,6 +1548,7 @@ class Command(BaseCommand):
                                         divisions_order = list(standings_problems['division'].keys())
                                         standings_problems['divisions_order'] = divisions_order
                                     standings_problems['n_statistics'] = n_statistics
+                                    standings_problems['n_problems'] = n_problems
                                 else:
                                     for p in standings_problems:
                                         key = get_problem_key(p)

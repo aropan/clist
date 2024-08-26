@@ -1,6 +1,4 @@
-{% if resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-<a class="btn btn-default btn-xs" href="{{ resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
-{% endif %}
+{% profile_url account resource=resource html_class="btn btn-default btn-xs" %}
 
 {% if resource.has_accounts_infos_update %}
 {% with delta=account.updated|timedelta_with_now %}

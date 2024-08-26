@@ -8,13 +8,11 @@
 <tr{% if account.my_account %} class="info"{% endif %}>
   <td class="no-stretch">{{ forloop.counter0|add:pages.current_start_index }}</td>
   <td class="account">
-    {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True %}
+    {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True without_inline_url=True %}
 
     <span class="inline-button">
 
-    {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-      <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" class="small" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
-    {% endif %}
+    {% profile_url account %}
 
     {% if perms.ranking.link_account %}
       {% search_linked_coder request account as search %}
@@ -31,7 +29,7 @@
 
     {% for members_statistic in account.selected_stats %}
     {% if not members_statistic.addition.team_id %}
-    {% include "standings_account_members.html" with members=members_statistic.addition|get_item:"_members" resource=resource inline=False with_fixed_width=True %}
+    {% include "standings_account_members.html" with members=members_statistic.addition|get_item:"_members" resource=account.resource inline=False with_fixed_width=True %}
     {% endif %}
     {% endfor %}
 
@@ -100,18 +98,20 @@
   </td>
   {% endif %}
   <td>
+    {% with rating_time=account.info|get_item:"_rating_time" %}
+    {% if rating_time and account.rating_prediction.time and rating_time < account.rating_prediction.time or not rating_time and account.rating_prediction.time %}
+      <span class="rating-prediction-label" title="{{ account.rating_prediction.new_rating }}" data-toggle="tooltip">{% icon_to "rating_prediction" False %}</span>
+    {% endif %}
     {% if account.rating is not None %}
-    {% with coloring_field=account.resource.info|get_item:'ratings'|get_item:'chartjs'|get_item:'coloring_field' %}
+    {% with coloring_field=account.resource.info|get_item:'ratings.chartjs.coloring_field' %}
     {% with coloring_value=account.info|get_item:coloring_field|pass_arg:coloring_field|ifelse:account.rating %}
-    <div class="{% coder_color_class account.resource coloring_value %}">
-        {% coder_color_circle account.resource coloring_value %}
-        {{ account.rating }}
-    </div>
+    {% include "field_value.html" with statistic=account addition=account.info resource=account.resource field="new_rating" value=account.rating %}
     {% endwith %}
     {% endwith %}
     {% else %}
     &mdash;
     {% endif %}
+    {% endwith %}
   </td>
   <td>{% if account.resource_rank %}{{ account.resource_rank }}{% else %}&mdash;{% endif %}</td>
   <td>{{ account.n_contests }}</td>
@@ -126,14 +126,14 @@
   {% if custom_fields %}
   {% for field in custom_fields.values %}
   <td>
-    {% with k=resources_custom_fields|contains:field|iftrue:"info__"|default:""|add:field %}
-    {% with v=account|get_item:k %}
-    {% if v is None %}
+    {% with key=resources_custom_fields|contains:field|iftrue:"info__"|default:""|add:field %}
+    {% with value=account|get_item:key %}
+    {% if value is None %}
       &mdash;
-    {% elif v|get_type == "datetime" %}
-      <div title="{{ v|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ v|timezone:timezone|naturalday }}</div>
+    {% elif value|get_type == "datetime" %}
+      <div title="{{ value|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ value|timezone:timezone|naturalday }}</div>
     {% else %}
-      {{ v }}
+      {% include "field_value.html" with statistic=account addition=account.info resource=account.resource field=field|normalize_rating_prediction_field value=value %}
     {% endif %}
     {% endwith %}
     {% endwith %}

@@ -1,7 +1,10 @@
+import json
+import zlib
 from functools import partial
 
-from django.db import connection
+import zstandard as zstd
 from django.conf import settings
+from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.middleware import csrf
@@ -162,3 +165,38 @@ def StatementTimeoutMiddleware(get_response):
         return get_response(request)
 
     return middleware
+
+
+def NonHtmlDebugToolbarMiddleware(get_response):
+
+    def middleware(request):
+        response = get_response(request)
+        if 'debug_dtb' in request.GET:
+            if 'application/json' in response['Content-Type']:
+                content = json.dumps(json.loads(response.content), sort_keys=True, indent=2)
+                response = HttpResponse(u'<html><body><pre>{}</pre></body></html>'.format(content))
+        return response
+
+    return middleware
+
+
+class CompressionMiddleware:
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if not response.streaming and 'Content-Encoding' not in response:
+            encodings = request.META.get('HTTP_ACCEPT_ENCODING', '')
+            if 'zstd' in encodings:
+                zstd_compressor = zstd.ZstdCompressor()
+                response.content = zstd_compressor.compress(response.content)
+                response['Content-Encoding'] = 'zstd'
+            elif 'deflate' in encodings:
+                response.content = zlib.compress(response.content)
+                response['Content-Encoding'] = 'deflate'
+            response['Content-Length'] = str(len(response.content))
+
+        return response

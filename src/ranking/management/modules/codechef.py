@@ -57,12 +57,12 @@ class Statistic(BaseModule):
                 csrf_token = match.group(1)
                 return {'x-csrf-token': csrf_token, 'x-requested-with': 'XMLHttpRequest'}
 
-    @RateLimiter(max_calls=1, period=6)
+    @RateLimiter(max_calls=1, period=1)
     @staticmethod
     def _get(*args, **kwargs):
         additional_attempts = kwargs.setdefault('additional_attempts', {})
-        additional_attempts[429] = {'count': 5}
-        kwargs['additional_delay'] = 10
+        additional_attempts[429] = {'count': 3}
+        kwargs['additional_delay'] = 5
         return REQ.get(*args, **kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
@@ -460,6 +460,7 @@ class Statistic(BaseModule):
         contests_cache = dict()
         stats_cache = dict()
 
+        @RateLimiter(max_calls=1, period=6)
         def fetch_submissions(page=0):
             url = Statistic.SUBMISSIONS_URL_.format(user=account.key, page=page)
             response = Statistic._get(url)

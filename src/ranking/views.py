@@ -210,6 +210,14 @@ def standings_list(request, template='standings_list.html', extra_context=None):
         'medal_scores_chart': medal_scores_chart,
     }
 
+    action = request.POST.get('action')
+    if action == 'reparse' and request.user.has_perm('clist.change_contest'):
+        n_contests = 0
+        for contest in contests:
+            contest.require_statistics_update()
+            n_contests += 1
+        return JsonResponse({'status': 'ok', 'message': f'{n_contests} contests are marked for reparse.'})
+
     if get_group_list(request) and len(resources) != 1:
         running_contest_query = Q(end_time__gt=timezone.now())
         running_contests = contests.filter(running_contest_query)

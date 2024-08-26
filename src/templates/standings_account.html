@@ -93,6 +93,8 @@
     {% endif %}
   {% endif %}
 
+  {% profile_url account html_class="external-link invisible" %}
+
   {% if not statistic.my_stat %}
     <a class="star external-link invisible">
       {% icon_to 'pin' false %}

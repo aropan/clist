@@ -134,3 +134,15 @@ table tr.contest.honorable-medal {
   list-style: decimal inside;
   display: list-item;
 }
+
+
+.loading-rating {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.rating-history-block {
+  position: relative;
+}

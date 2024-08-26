@@ -52,7 +52,6 @@ table.center {
   padding-bottom: 1px !important;
 }
 
-
 /*
  * Row flex
  */
@@ -320,6 +319,11 @@ html {
   color: #f00;
 }
 
+.rating-prediction-label {
+  position: absolute;
+  margin-left: -15px;
+}
+
 a.database-link {
   position: absolute;
   margin-left: 5px;
@@ -429,6 +433,10 @@ canvas.rating_history {
   -webkit-user-select: none;
   -ms-user-select: none;
   max-height: 250px;
+}
+
+#combined_rating {
+  max-height: 300px;
 }
 
 #chartjs-tooltip {

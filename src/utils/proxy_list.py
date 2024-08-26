@@ -61,6 +61,10 @@ class ProxyList:
 
     @staticmethod
     def get():
+        proxy = getenv('REQUESTER_PROXY')
+        if proxy and ':' in proxy:
+            return [Proxy(proxy=proxy, source='env')]
+
         ret = []
         logging.info('Getting proxy list...')
 

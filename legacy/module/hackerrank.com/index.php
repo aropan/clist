@@ -9,8 +9,8 @@
         for (;;) {
             $url = "$base_url?limit=$limit&offset=$offset";
             $json = curlexec($url, NULL, array('json_output' => true));
-            if (!is_array($json['models'])) {
-                print_r($json);
+            if (!is_array($json) || !is_array($json['models'])) {
+                var_dump($json);
                 trigger_error("Expected array ['models']", E_USER_WARNING);
                 break;
             }

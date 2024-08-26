@@ -58,3 +58,11 @@
 {% endif %}
 
 </span>
+
+{% if not without_url and not without_inline_url %}
+<span class="inline-button">
+{% if not without_profile_url %}
+{% profile_url account resource=resource %}
+{% endif %}
+</span>
+{% endif %}

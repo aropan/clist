@@ -162,15 +162,23 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
   </div>
 
   {% if show_history_ratings and history_resources %}
+  {% define 1 as history_resources_limit %}
   <div{% if two_columns %} class="col-lg-6"{% else %} class="col-xs-12"{% endif %}>
     <h3>Ratings{% if two_columns %}<a id="expand-ratings" href="#" onclick=""><i class="fas fa-expand-arrows-alt"></i></a>{% endif %}</h3>
+    {% if history_resources|length > history_resources_limit %}
+    <div class="rating-history-block">
+      <div class="text-center loading-rating">{% icon_to "rating" "placeholder" html_class="fa-3x" %}</div>
+      <div class="text-center loading-rating hidden">{% icon_to "loading" "loading" html_class="fa-3x" %}</div>
+      <canvas class="rating_history" id="combined_rating"></canvas>
+    </div>
+    {% endif %}
 
     {% for hr in history_resources %}
-    {% if forloop.counter0 == 3 %}
-      <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|add:"-3" }} more</span></a>
+    {% if forloop.counter0 == history_resources_limit %}
+      <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|substract:history_resources_limit }} more</span></a>
       <div class="collapse" id="history-resources-collapsed">
     {% endif %}
-    <div>
+    <div class="rating-history-block">
       {% if not hr.kind %}
       <div class="resource_fields">
         <a href="{% url 'clist:resource' hr.host %}" title="{{ hr.host }}" data-toggle="tooltip" data-placement="right"><img src="{{ hr.icon|media_size:'32x32' }}" width="16" height="16"/></a>
@@ -182,15 +190,18 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
       </div>
       {% endif %}
 
-      <div class="text-center loading-rating" data-id="{{ hr.host }}_rating" id="loading_{{ hr.host }}_rating"><i class="fa-3x fas fa-circle-notch fa-spin"></i></div>
+      <div class="text-center loading-rating">{% icon_to "rating" "placeholder" html_class="fa-3x" %}</div>
+      <div class="text-center loading-rating hidden">{% icon_to "loading" "loading" html_class="fa-3x" %}</div>
 
       <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}">{{ hr }}</canvas>
     </div>
     {% endfor %}
-    {% if history_resources|length > 3 %}
+    {% if history_resources|length > history_resources_limit %}
       </div>
     {% endif %}
   </div>
+
+  <script>load_rating_history()</script>
   {% endif %}
 
   <div class="col-xs-12">
@@ -226,13 +237,12 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
           {% if coder.has_global_rating %}
           <th>Global</th>
           {% endif %}
-          <th class="date">Date</th>
-
           {% if statistics_fields %}
           {% for field in statistics_fields.values %}
           <th>{{ field|title_field|split:" "|join:"<br>" }}</th>
           {% endfor %}
           {% endif %}
+          <th class="date">Date</th>
           <th class="title">Event</th>
         </tr></thead>
         <tbody>

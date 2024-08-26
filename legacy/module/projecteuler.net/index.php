@@ -9,8 +9,6 @@
     if ($proxy) {
         echo " (proxy)";
         curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
-    } else {
-        return;
     }
 
     $urls = array('https://projecteuler.net/recent');

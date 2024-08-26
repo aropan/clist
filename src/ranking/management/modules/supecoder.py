@@ -78,9 +78,14 @@ class Statistic(BaseModule):
 
             name = ' '.join(data[field] for field in ['firstName', 'lastName'] if data.get(field))
             data['name'] = name
+            data['profile_url'] = {'username': data['userName']}
 
-            if 'stats' in data and 'submissionHeatmap' in data['stats']:
-                data['stats'].pop('submissionHeatmap')
+            stats = data.get('stats') or {}
+            if 'submissionHeatmap' in stats:
+                stats.pop('submissionHeatmap')
+            for key, value in list(stats.items()):
+                if isinstance(value, list):
+                    stats.pop(key)
 
             if data.get('image'):
                 data['avatar_url'] = data.pop('image')

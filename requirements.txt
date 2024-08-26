@@ -1,4 +1,4 @@
-Django==5.0.7
+Django==5.1
 django-add-default-value==0.10.0
 django-brotli==0.2.1
 django-cache-machine==1.2.0
@@ -84,12 +84,12 @@ tailslide==0.1.1
 feedgen==1.0.0
 pycountry==24.6.1
 multiset==3.1.0
-twisted[tls,http2]==24.3.0
+twisted[tls,http2]==24.7.0
 uWSGI==2.0.26
 supervisor==4.2.5
 daphne==4.1.2
 tabulate==0.9.0
-sentry-sdk==2.5.1
+sentry-sdk==2.8.0
 chardet==5.2.0
 python-magic==0.4.27
 prettytable==3.10.0
@@ -103,6 +103,7 @@ numba==0.59.1
 ipwhois==1.2.0
 fontawesomefree==6.5.1
 brotli==1.0.9
+zstandard==0.23.0
 geoip2==4.8.0
 xgboost==2.1.1
 scikit-learn==1.5.1

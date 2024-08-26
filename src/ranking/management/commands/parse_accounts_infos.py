@@ -306,12 +306,6 @@ class Command(BaseCommand):
                 resource.n_accounts_to_update = n_accounts_to_update
                 resource.save(update_fields=['n_accounts_to_update'])
 
-            message = f'{count} of {total} accounts, {dict(n_counter)}'
-            if exception_error:
-                event_log.update_status(EventStatus.FAILED, message=exception_error)
-            else:
-                event_log.update_status(EventStatus.COMPLETED, message=message)
-
             if regular_update:
                 try:
                     updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
@@ -319,9 +313,17 @@ class Command(BaseCommand):
                         if a.key not in seen:
                             a.updated = updated
                             a.save(update_fields=['updated'])
+                            n_counter['reupdated'] += 1
                 except Exception as e:
                     self.logger.debug(colored_format_exc())
                     self.logger.error(f'Parse accounts infos changing update time: {e}')
+
+            message = f'{count} of {total} accounts, {dict(n_counter)}'
+            if exception_error:
+                message = f'{message}, {exception_error}'
+                event_log.update_status(EventStatus.FAILED, message=message)
+            else:
+                event_log.update_status(EventStatus.COMPLETED, message=message)
 
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {message}')
             if update_submissions_info:

@@ -1,6 +1,13 @@
 <?php
     require_once dirname(__FILE__) . '/../../config.php';
 
+    $proxy_file = dirname(__FILE__) . "/../../logs/hackerearth.proxy";
+    $proxy = file_exists($proxy_file)? json_decode(file_get_contents($proxy_file)) : false;
+    if ($proxy) {
+        echo " (proxy)";
+        curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
+    }
+
     $data = curlexec($URL, NULL, array('json_output' => 1));
     if (!isset($data['response'])) {
         echo "No response, data = " . debug_content($data);
@@ -102,5 +109,9 @@
 
     if ($RID === -1) {
         print_r($contests);
+    }
+
+    if ($proxy) {
+        curl_setopt($CID, CURLOPT_PROXY, null);
     }
 ?>

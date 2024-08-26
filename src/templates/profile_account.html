@@ -28,9 +28,7 @@
 
   <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
 
-  {% if account.resource.profile_url and not account.info|get_item:"_no_profile_url" %}
-  <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
-  {% endif %}
+  {% profile_url account %}
 
   {% if account.resource.has_account_verification %}
   <a href="{% url 'coder:account_verification' account.key account.resource.host %}"{% if not need_verify %} disabled{% endif %}>

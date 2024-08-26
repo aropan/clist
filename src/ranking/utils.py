@@ -132,11 +132,20 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
     updated = 0
     missed = 0
     total = 0
+    filled_groups = set()
+    missed_grouped_contest_keys = list()
+    seen_groups = set()
     for contest_key in tqdm.tqdm(contest_keys, desc='fill missed ranks', total=len(contest_keys)):
         addition_update = contest_addition_update[contest_key]
         if '_rank' not in addition_update:
             continue
-        total += 1
+
+        group = addition_update.get('_group')
+        if not group or group not in seen_groups:
+            total += 1
+        if group:
+            seen_groups.add(group)
+
         rank = addition_update['_rank']
         rank_field = addition_update.get('_rank_field', 'place_as_int')
         conditions = (Q(**{f'{field}': contest_key}) for field in fields)
@@ -153,7 +162,10 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
         if not contests:
             contests = list(base_contests)
             if len(contests) == 0:
-                LOG.info('Not found contest with key %s, fields = %s', contest_key, fields)
+                if not group:
+                    LOG.info('Not found contest with key %s, fields = %s', contest_key, fields)
+                else:
+                    missed_grouped_contest_keys.append(contest_key)
                 continue
             if len(contests) == 1 and not addition_update.get('_with_create'):
                 missed += 1
@@ -176,11 +188,17 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
         statistic.save(update_fields=['addition'])
         if created:
             ok = True
+        if group:
+            filled_groups.add(group)
+    for contest_key in missed_grouped_contest_keys:
+        group = contest_addition_update[contest_key]['_group']
+        if group not in filled_groups:
+            LOG.info('Not found contest with key %s, fields = %s, group = %s', contest_key, fields, group)
     if total:
         account.try_fill_missed_ranks_time = timezone.now()
         account.save(update_fields=['try_fill_missed_ranks_time'])
     if updated:
-        LOG.info('Filled %d missed ranks (missed %d) of %d for %s', updated, missed, total, account)
+        LOG.info('Filled %d missed ranks (%d missed) of %d for %s', updated, missed, total, account)
     account.refresh_from_db()
     return ok
 
@@ -210,8 +228,6 @@ def account_update_contest_additions(
         group = update.get('_group')
         if group:
             grouped_contest_keys[group].append(contest_key)
-    if grouped_contest_keys and try_fill_missed_ranks:
-        LOG.warning("Grouped contests with fill_missed_ranks")
 
     iteration = 0
     renaming_contest_keys = set(contest_keys)

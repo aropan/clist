@@ -70,9 +70,13 @@
           {% if custom_fields %}
           {% for field in custom_fields.values %}
           <th>
+            {% if field not in skip_actions_columns %}
             <div class="chart-column" data-field="{{ field }}"></div>
+            {% endif %}
             <div>{{ field|title_field|split:" "|join:"<br>" }}</div>
+            {% if field not in skip_actions_columns %}
             <div class="sortable-column" data-column="{{ field }}"></div>
+            {% endif %}
           </th>
           {% endfor %}
           {% endif %}

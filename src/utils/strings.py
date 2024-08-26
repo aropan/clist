@@ -1,3 +1,5 @@
+import random
+import string
 from collections import Counter
 
 
@@ -24,3 +26,7 @@ def list_string_iou(a, b):
     intersection += sum([max(string_iou(x, y) for y in a) for x in b])
     union = len(a) + len(b)
     return intersection / union if union > 0 else 0.0
+
+
+def random_string(length=40):
+    return ''.join(random.choices(list(string.ascii_letters + string.digits), k=length))

@@ -5,6 +5,8 @@ services:
     build:
       context: .
       target: prod
+    networks:
+      - clist_network
     volumes:
       - static_files:/usr/src/clist/staticfiles/
       - media_files:/usr/src/clist/mediafiles/
@@ -22,6 +24,8 @@ services:
     build:
       context: .
       target: dev
+    networks:
+      - clist_network
     volumes:
       - ./src/:/usr/src/clist/
       - ./legacy/api/:/usr/src/clist/legacy/api/
@@ -40,9 +44,13 @@ services:
     restart: unless-stopped
   memcached:
     image: memcached
+    networks:
+      - clist_network
     restart: unless-stopped
   legacy:
     build: ./legacy
+    networks:
+      - clist_network
     volumes:
       - ./legacy:/usr/src/legacy/
     depends_on:
@@ -53,6 +61,8 @@ services:
     restart: unless-stopped
   pgadmin:
     image: dpage/pgadmin4:latest
+    networks:
+      - clist_network
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     env_file:
@@ -62,6 +72,8 @@ services:
     restart: unless-stopped
   db:
     image: postgres:14.3-alpine
+    networks:
+      - clist_network
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
@@ -83,6 +95,8 @@ services:
     build:
       context: .
       target: nginx
+    networks:
+      - clist_network
     volumes:
       - static_files:/staticfiles/
       - media_files:/mediafiles/
@@ -98,6 +112,8 @@ services:
     restart: unless-stopped
   certbot:
     image: certbot/certbot:latest
+    networks:
+      - clist_network
     volumes:
       - ./logs/letsencrypt:/var/log/letsencrypt
       - certbot_www:/var/www/certbot/
@@ -110,6 +126,8 @@ services:
     build:
       context: .
       target: loggly
+    networks:
+      - clist_network
     volumes:
       - ./logs/:/logs/
     secrets:
@@ -117,6 +135,8 @@ services:
     restart: unless-stopped
   netdata:
     image: netdata/netdata:latest
+    networks:
+      - clist_network
     hostname: netdata.clist.by
     pid: host
     cap_add:
@@ -139,6 +159,13 @@ services:
     env_file:
       - ./.env.netdata
     restart: unless-stopped
+
+networks:
+  clist_network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-clist
+    name: clist
 
 secrets:
   db_conf:

@@ -48,18 +48,12 @@
     </td>
 
     <td>
-        {% with rating_value=resource|get_new_rating_value:statistic.addition %}
-        {% if rating_value is not None %}
-        <span class="{% coder_color_class resource rating_value %}">
-            {% coder_color_circle resource rating_value %}
-            {{ rating_value }}
-        </span>
+        {% with rating_value=resource|get_new_rating_value:statistic.addition with_rating_change=statistics_fields.values|contains:"rating_change"|iffalse %}
+        {% if not rating_value and statistic.rating_prediction.new_rating and contest.is_rated is not False and not has_rating_prediction_field %}
+            <span class="rating-prediction-label">{% icon_to "rating_prediction" %}</span>
+            {% include "field_value.html" with statistic=statistic addition=statistic.addition resource=resource field="rating_prediction_new_rating" value=statistic.rating_prediction.new_rating with_rating_change=True %}
         {% else %}
-        <small class='text-muted'>&#183;</small>
-        {% endif %}
-
-        {% if 'rating_change' in statistic.addition %}
-            {% rating_change_template statistic.addition.rating_change %}
+            {% include "field_value.html" with statistic=statistic addition=statistic.addition resource=resource field="new_rating" value=rating_value with_rating_change=with_rating_change %}
         {% endif %}
         {% endwith %}
     </td>
@@ -68,7 +62,7 @@
         {% if statistic.new_global_rating is not None %}
             {{ statistic.new_global_rating }}
         {% else %}
-            <small class='text-muted'>&#183;</small>
+            <small class="text-muted">&#183;</small>
         {% endif %}
 
         {% if statistic.global_rating_change is not None %}
@@ -76,7 +70,6 @@
         {% endif %}
     </td>
     {% endif %}
-    <td class="date"><div title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</div></td>
     {% if statistics_fields %}
     {% with fields_types=statistics_fields.types %}
     {% for field in statistics_fields.values %}
@@ -92,6 +85,7 @@
     {% endfor %}
     {% endwith %}
     {% endif %}
+    <td class="date"><div title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
         <a{% if not search_resource and not params.resources %} href="{% url_transform request resource=resource.pk %}"{% endif %} title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/></a>
 
@@ -109,7 +103,7 @@
         {% endif %}
         <span class="problems display-block-xs">
             {% with problems=statistic.addition.problems %}
-            {% if contest.info.problems %}
+            {% if problems and contest.info.problems %}
               {% for problem in contest|get_division_problems:statistic.addition %}
                 {% with key=problem|get_problem_short  %}
                 {% with stat=problems|get_item:key %}

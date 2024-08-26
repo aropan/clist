@@ -1398,7 +1398,7 @@ def is_private_field(field):
 
 @register.filter
 def get_rating_predicition_field(field):
-    for prefix in ('predicted', 'rating_prediction'):
+    for prefix in ('predicted_', 'rating_prediction_'):
         if field.startswith(prefix):
             field = field[len(prefix):]
             field = field.strip('_')
@@ -1418,8 +1418,18 @@ def is_new_rating_field(field):
 
 
 @register.filter
+def normalize_rating_prediction_field(field):
+    return field.replace('rating_prediction__', 'rating_prediction_')
+
+
+@register.filter
 def to_rating_change_field(field):
     return field.replace('new_rating', 'rating_change')
+
+
+@register.filter
+def is_rating_prediction_field(field):
+    return field and field.startswith('rating_prediction_')
 
 
 @register.simple_tag
@@ -1622,3 +1632,23 @@ def label_tag(label, status=None):
 @register.filter
 def is_major_kind(resource, value):
     return resource.is_major_kind(value)
+
+
+@register.simple_tag
+def profile_url(account, resource=None, inner=None, html_class=None):
+    resource = resource or account.resource
+    return_inner = ''
+    if not resource.profile_url:
+        return return_inner
+    if account.info.get('_no_profile_url'):
+        return return_inner
+    url = format_dict(resource.profile_url, account.dict_with_info())
+    if not url:
+        return return_inner
+    if inner and inner.startswith('icon_to:'):
+        _, inner = inner.split(':', 1)
+        inner = icon_to(inner)
+    else:
+        inner = inner or icon_to('profile')
+    html_class = f'class="{html_class}"' if html_class else ''
+    return mark_safe(f'<a href="{url}" {html_class} target="_blank" rel="noopener">{inner}</a>')

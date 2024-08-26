@@ -2,8 +2,12 @@
     require_once dirname(__FILE__) . '/../../config.php';
 
     $data = curlexec($URL, null, array("json_output" => 1));
+    if (!$data || !is_array($data)) {
+        trigger_error("Fetch data = '{$data}'", E_USER_WARNING);
+        return;
+    }
     if ($data['result'] !== 'OK') {
-        trigger_error("Failed to fetch data, result = '{$data['result']}', error = '{$data['error']}'", E_USER_WARNING);
+        trigger_error("Fetch result = '{$data['result']}', error = '{$data['error']}'", E_USER_WARNING);
         return;
     }
 

@@ -23,9 +23,14 @@ def set_accounts_fields(resources, logger):
             fields_types = defaultdict(set)
             pbar.set_postfix(resource=resource)
 
-            for info in resource.account_set.values('info').iterator():
+            for info in resource.account_set.values('info', 'rating_prediction').iterator():
+                rating_prediction = info.pop('rating_prediction')
                 info = info['info']
                 info = flatten(info, reducer=make_reducer(delimiter='__'))
+                if rating_prediction:
+                    rating_prediction = flatten(rating_prediction, reducer=make_reducer(delimiter='__'))
+                    raring_prediction = {f'rating_prediction__{k}': v for k, v in rating_prediction.items()}
+                    info.update(raring_prediction)
                 for k, v in info.items():
                     if Account.is_special_info_field(k):
                         continue
@@ -153,6 +158,25 @@ def set_n_fields(resources, logger):
             resource.save(update_fields=update_fields)
 
 
+def set_avg_rating(resources, logger, default_min_n_participations=10):
+    for resource in tqdm(resources.iterator(), total=resources.count()):
+        ratings = []
+        qs = resource.account_set.filter(rating__isnull=False)
+        min_n_participations = resource.info.get('default_variables', {}).get('min_n_participations')
+        min_n_participations = min_n_participations or default_min_n_participations
+        qs = qs.filter(n_contests__gte=min_n_participations)
+        qs = qs.values('rating')
+        for rating in tqdm(qs.iterator(), total=qs.count()):
+            ratings.append(rating['rating'])
+        if ratings:
+            avg_rating = sum(ratings) / len(ratings)
+            logger.info(f'{resource} avg_rating: {avg_rating:.3f} <- {resource.avg_rating:.3f}')
+            if resource.avg_rating:
+                logger.info(f'{resource} avg_rating_diff: {resource.avg_rating - avg_rating}')
+            resource.avg_rating = avg_rating
+            resource.save(update_fields=['avg_rating'])
+
+
 class Command(BaseCommand):
     help = 'Set resources fields'
 
@@ -162,6 +186,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
+        parser.add_argument('--avg-rating', action='store_true', help='update average rating')
         parser.add_argument('--problems-only', action='store_true', help='update problems only')
 
     def handle(self, *args, **options):
@@ -177,7 +202,9 @@ class Command(BaseCommand):
             resources = Resource.objects.all()
         self.logger.info(f'resources [{len(resources)}] = {[r.host for r in resources]}')
 
-        if args.problems_only:
+        if args.avg_rating:
+            set_avg_rating(resources, logger=self.logger)
+        elif args.problems_only:
             set_problems_fields(resources, logger=self.logger)
         else:
             set_accounts_fields(resources, logger=self.logger)

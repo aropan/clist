@@ -11,7 +11,7 @@ verify_url = window.location.href
     <div class="panel-heading">Verification</div>
     <ol class="list-group">
       <li class="list-group-item">
-        Put the text <code class="copy-to-clipboard">{{ verification.text }}</code> in one of the possible fields in <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener">your profile</a>. Possible fields are: {% for field in account.resource.account_verification_fields %}{% if forloop.counter0 %}, {% endif %}{{ field|title_field }}{% endfor %}.
+        Put the text <code class="copy-to-clipboard">{{ verification.text }}</code> in one of the possible fields in {% profile_url account inner="your profile" %}. Possible fields are: {% for field in account.resource.account_verification_fields %}{% if forloop.counter0 %}, {% endif %}{{ field|title_field }}{% endfor %}.
       </li>
       <li class="list-group-item">
         Click the button below to verify your account.
@@ -22,7 +22,7 @@ verify_url = window.location.href
         <div id="verify-error" class="alert alert-danger hidden padding-v-sm margin-zero" role="alert"></div>
       </li>
       <li class="list-group-item">
-        Restore the modified field in <a href="{{ account.resource.profile_url|format_dict:account.dict_with_info }}" target="_blank" rel="noopener">your profile</a>.
+        Restore the modified field in {% profile_url account inner="your profile" %}.
       </li>
       <li class="list-group-item">
         Refresh the page or go to <a href="{{ account_url }}">your account</a>.

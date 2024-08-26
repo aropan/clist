@@ -474,7 +474,7 @@ class requester():
             print(datetime.utcnow(), *objs, file=stderr)
 
     def __init__(self,
-                 proxy=bool(strtobool(environ.get('REQUESTER_PROXY', '0'))),
+                 proxy=environ.get('REQUESTER_PROXY'),
                  cookie_filename=None,
                  caching=None,
                  user_agent=None,
@@ -524,7 +524,7 @@ class requester():
         self.proxy = None
 
     def set_proxy(self, proxy, filepath_proxies=default_filepath_proxies, **kwargs):
-        if proxy is True:
+        if proxy is True or proxy == 'true':
             self.proxer = proxer(filepath_proxies, callback_new_proxy=self.set_proxy, logger=self.print, **kwargs)
             proxy = self.proxer.get()
 
@@ -556,6 +556,7 @@ class requester():
         return_url=False,
         return_last_url=False,
         return_json=False,
+        return_code=False,
         force_json=False,
         ignore_codes=None,
         n_attempts=None,
@@ -627,11 +628,11 @@ class requester():
                 sleep(v_time_sleep)
             if not headers:
                 headers = {}
-            if with_referer and self.last_url and 'Referer' not in headers:
-                headers.update({"Referer": self.last_url})
             if self.last_url:
                 prev = urllib.parse.urlparse(self.last_url)
                 curr = urllib.parse.urlparse(url)
+                if with_referer and 'Referer' not in headers and prev.netloc == curr.netloc:
+                    headers.update({"Referer": self.last_url})
                 if prev.netloc != curr.netloc or prev.path != curr.path:
                     self.opener.addheaders = self._init_opener_headers
             else:
@@ -783,8 +784,11 @@ class requester():
                 page = json.loads(page)
             else:
                 page = {'page': page, '__no_json': True}
-
-        return (page, last_url) if return_url else page
+        if return_url:
+            return page, last_url
+        if return_code:
+            return page, response.code
+        return page
 
     @property
     def current_url(self):

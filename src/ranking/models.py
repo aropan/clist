@@ -59,6 +59,7 @@ class Account(BaseModel):
     deleted = models.BooleanField(null=True, blank=True, default=None, db_index=True)
     try_renaming_check_time = models.DateTimeField(null=True, blank=True, default=None)
     try_fill_missed_ranks_time = models.DateTimeField(null=True, blank=True, default=None)
+    rating_prediction = models.JSONField(default=None, null=True, blank=True)
 
     def __str__(self):
         return 'Account#%d %s on %s' % (self.pk, str(self.key), str(self.resource_id))

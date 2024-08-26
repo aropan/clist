@@ -91,7 +91,8 @@ class Resource(BaseModel):
     contest_update_time = models.DateTimeField(null=True, blank=True)
     has_problem_rating = models.BooleanField(default=False)
     has_problem_update = models.BooleanField(default=False)
-    has_new_problems = models.BooleanField(default=False)
+    has_problem_archive = models.BooleanField(default=False)
+    problem_archive_update_time = models.DateTimeField(null=True, blank=True)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
     n_accounts_to_update = models.IntegerField(default=None, null=True, blank=True)
@@ -149,7 +150,7 @@ class Resource(BaseModel):
                     if ret[0]:
                         return ret
             elif isinstance(value, dict):
-                fields = self.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
+                fields = get_item(self.info, 'ratings.chartjs.coloring_field')
                 fields = [fields] if fields else self.RATING_FIELDS
                 for field in fields:
                     if ignore_old and field.lower().startswith('old'):

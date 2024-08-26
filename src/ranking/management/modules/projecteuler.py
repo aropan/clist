@@ -7,7 +7,6 @@ import random
 import re
 from collections import OrderedDict
 from datetime import timedelta
-from pprint import pprint
 
 import pytesseract
 from dateutil.relativedelta import relativedelta
@@ -67,7 +66,7 @@ class Statistic(BaseModule):
             return page
 
         with REQ.with_proxy(
-            time_limit=20,
+            time_limit=5,
             n_limit=25,
             filepath_proxies=os.path.join(os.path.dirname(__file__), '.projecteuler.proxies'),
             connect=get_standings_page,
@@ -149,5 +148,3 @@ class Statistic(BaseModule):
                 standings['timing_statistic_delta'] = timedelta(days=30)
 
         return standings
-
-

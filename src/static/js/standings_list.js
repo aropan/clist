@@ -8,3 +8,23 @@ function set_toggle_contest_groups() {
 }
 
 $(set_toggle_contest_groups)
+
+$(() => {
+    $('#reparse').click(function() {
+        bootbox.confirm({
+            size: 'small',
+            message: 'Are you sure you want to reparse all standings?',
+            callback: function (result) {
+                if (!result) {
+                    return
+                }
+                $.ajax({
+                    type: 'POST',
+                    data: {'action': 'reparse'},
+                    success: function(data) { location.reload() },
+                    error: log_ajax_error_callback,
+                })
+            }
+        })
+    })
+})

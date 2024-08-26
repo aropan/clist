@@ -3,15 +3,32 @@ function filterCallbackCalendar() {
 }
 
 $(function() {
+
+    var bottom_pad = 20
+
     function get_calendar_height() {
-        return $(window).height() - ($('#calendar').closest('.tab-content').position().top + 20)
+        return $(window).height() - ($('#calendar').closest('.tab-content').position().top + bottom_pad)
     }
 
     $(window).resize(function() {
-        calendar.setOption('height', get_calendar_height())
+        var height = get_calendar_height()
+        calendar.setOption('height', height)
+        calendar.setOption('contentHeight', height)
+
+        $('.fc-timegrid').each(function() {
+            var el = $(this).find('.fc-scroller:has(.fc-timegrid-body)')
+            var height = el.height()
+            var tr = $(this).find('.fc-timegrid-slots tr')
+            tr.height(height / tr.length)
+        })
     })
 
-    function stylize_button(button) {
+    function after_render() {
+        stylize_button()
+        $(window).trigger('resize')
+    }
+
+    function stylize_button() {
         $('.fc-button').addClass('btn btn-default btn-sm').removeClass('fc-button fc-button-primary')
         $('.fc-button-group').addClass('btn-group').removeClass('fc-button-group')
 
@@ -76,6 +93,8 @@ $(function() {
         timeZone: timezone,
         eventTimeFormat: time_format,
         slotLabelFormat: time_format,
+        slotDuration: '01:00',
+        slotLabelInterval: '01:00',
         events: function (fetchInfo, successCallback, failureCallback) {
             var url = new URL(window.location.href)
             $.ajax({
@@ -193,11 +212,11 @@ $(function() {
         },
         viewDidMount: function() {
             Cookies.set('calendar_view', calendar.view.type)
-            stylize_button()
+            after_render()
         },
         datesSet: function() {
             Cookies.set('calendar_view', calendar.view.type)
-            stylize_button()
+            after_render()
         },
         eventClick: function (data, event, view) {
             return true
@@ -262,5 +281,5 @@ $(function() {
         return false
     })
 
-    stylize_button()
+    after_render()
 })

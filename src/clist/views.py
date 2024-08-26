@@ -23,8 +23,8 @@ from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion, Resource
-from clist.templatetags.extras import (as_number, canonize, get_problem_key, get_problem_name, get_problem_short,
-                                       get_timezone_offset, rating_from_probability, win_probability)
+from clist.templatetags.extras import (as_number, canonize, get_item, get_problem_key, get_problem_name,
+                                       get_problem_short, get_timezone_offset, rating_from_probability, win_probability)
 from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
@@ -626,7 +626,7 @@ def resource(request, host, template='resource.html', extra_context=None):
             n_bins = 30
             step = resource.rating_step()
 
-        coloring_field = resource.info.get('ratings', {}).get('chartjs', {}).get('coloring_field')
+        coloring_field = get_item(resource.info, 'ratings.chartjs.coloring_field')
         if coloring_field:
             ratings = ratings.filter(**{f'info__{coloring_field}__isnull': False})
             ratings = ratings.annotate(_rank=Cast(JSONF(f'info__{coloring_field}'), IntegerField()))
@@ -873,7 +873,7 @@ def update_problems(contest, problems=None, force=False):
 
                 if 'archive_url' in info:
                     archive_url = info.pop('archive_url')
-                elif contest.resource.problem_url:
+                elif contest.resource.problem_url and problem_contest is None:
                     archive_url = contest.resource.problem_url.format(key=key, **defaults)
                 else:
                     archive_url = getattr(added_problem, 'archive_url', None)
@@ -1116,7 +1116,7 @@ def problems(request, template='problems.html'):
                       'n_accepted_submissions', 'n_total_submissions']
     custom_info_fields = set()
     if selected_resource:
-        if selected_resource.has_new_problems:
+        if selected_resource.has_problem_archive:
             custom_options.append('is_archive')
         fixed_fields = selected_resource.problems_fields.get('fixed_fields', [])
         custom_fields = custom_fields + fixed_fields

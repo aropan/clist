@@ -415,6 +415,11 @@ class Statistic(BaseModule):
             nonlocal rate_limiter
 
             profile_url = account.info.setdefault('profile_url', {})
+            if '_domain' not in profile_url:
+                handle, domain = account.key.split('@')
+                profile_url['_domain'] = domain
+                profile_url['_handle'] = handle
+                LOG.warning(f'No domain for account {account.key}, set profile_url to {profile_url}')
             key = (profile_url['_domain'], profile_url['_handle'])
             if key in global_ranking_users:
                 return account, global_ranking_users[key]
@@ -775,6 +780,8 @@ class Statistic(BaseModule):
                     continue
                 history = page.pop('history') or []
                 info.update(page.pop('ranking') or {})
+                if info.get('rating'):
+                    info['rating'] = round(info['rating'])
 
                 contest_addition_update_by = 'start_time'
                 for h in history:
@@ -1066,16 +1073,16 @@ class Statistic(BaseModule):
         return Statistic.get_problem_info_from_dict(question)
 
     @staticmethod
-    def get_new_problems(resource, limit, **kwargs):
+    def get_archive_problems(resource, limit, **kwargs):
         n_page = 0
         per_page = 500
         if limit:
             per_page = min(per_page, limit)
-        new_problems = []
+        archive_problems = []
         total = None
         while (
-            (not limit or len(new_problems) < limit) and
-            (not total or len(new_problems) < total)
+            (not limit or len(archive_problems) < limit) and
+            (not total or len(archive_problems) < total)
         ):
             params = {
                 "query": """
@@ -1124,10 +1131,10 @@ class Statistic(BaseModule):
                     n_total_submissions=info.pop('n_total_submissions', None),
                     info=info,
                 )
-                new_problems.append(problem)
-                if len(new_problems) == limit:
+                archive_problems.append(problem)
+                if len(archive_problems) == limit:
                     break
             n_page += 1
             if not questions:
                 break
-        return new_problems
+        return archive_problems

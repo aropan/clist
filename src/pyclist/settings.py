@@ -117,6 +117,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE = (
+    'pyclist.middleware.CompressionMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django_brotli.middleware.BrotliMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -498,7 +499,10 @@ GUARDIAN_AUTO_PREFETCH = True
 
 # DJANGO DEBUG TOOLBAR
 if DEBUG:
-    MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+    MIDDLEWARE += (
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+        'pyclist.middleware.NonHtmlDebugToolbarMiddleware',
+    )
     INSTALLED_APPS += ('debug_toolbar',)
 
     DEBUG_TOOLBAR_DISABLE_PANELS = {
@@ -531,7 +535,7 @@ if DEBUG:
         return (
             first_path not in DEBUG_PERMISSION_EXCLUDE_PATHS and
             not request.is_ajax() and
-            'disable_djtb' not in request.GET and
+            'disable_dtb' not in request.GET and
             (not DEBUG or request.user.is_authenticated)
         )
 
@@ -641,7 +645,7 @@ DEFAULT_API_THROTTLE_AT_ = 10
 
 CODER_LIST_N_VALUES_LIMIT_ = 100
 
-ENABLE_GLOBAL_RATING_ = DEBUG
+ENABLE_GLOBAL_RATING_ = False
 
 FONTAWESOME_ICONS_ = {
     'institution': '<i class="fa-fw fas fa-university"></i>',
@@ -760,6 +764,9 @@ FONTAWESOME_ICONS_ = {
     'rating-change-up': dict(icon='<i class="fas fa-angle-up"></i>', title=False),
     'rating-change-down': dict(icon='<i class="fas fa-angle-down"></i>', title=False),
     'rating-change-same': dict(icon='<i class="fa-solid fa-equals fa-2xs"></i>', title=False),
+    'loading': '<i class="fas fa-circle-notch fa-spin"></i>',
+    'profile': dict(icon='<i class="fa-regular fa-address-card"></i>', title=False),
+    'rating_prediction': '<i class="fa-solid fa-calculator"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},

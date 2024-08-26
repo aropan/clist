@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic.base import View
 
 from tg.bot import Bot
 from tg.models import Chat
+from utils.strings import random_string
 
 
 @login_required
@@ -18,7 +18,7 @@ def me(request):
     if chat is None:
         chat = Chat.objects.create(coder=coder)
     if not chat.chat_id:
-        chat.secret_key = User.objects.make_random_password(length=20)
+        chat.secret_key = random_string(length=20)
         url += '=' + chat.secret_key
         chat.save()
 

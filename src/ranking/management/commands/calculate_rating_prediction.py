@@ -9,7 +9,7 @@ import tqdm
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Case, F, FloatField, Q, When
-from django.utils.timezone import now
+from django.utils import timezone
 from numba import njit
 from prettytable import PrettyTable
 from sql_util.utils import SubqueryCount
@@ -201,8 +201,9 @@ class Command(BaseCommand):
         else:
             resources = resources.filter(rating_prediction__isnull=False)
 
+        now = timezone.now()
         contests = Contest.objects.filter(resource__in=resources, stage__isnull=True)
-        contests = contests.filter(start_time__lt=now())
+        contests = contests.filter(start_time__lt=now)
         if args.search:
             contests = contests.filter(title__regex=args.search)
         elif args.contest:
@@ -241,7 +242,8 @@ class Command(BaseCommand):
                 event_log.update_status(EventStatus.SKIPPED, message='not enough rankings')
                 continue
 
-            values = tuple(sorted((r['rank'], r['member'], r['old_rating']) for r in rankings))
+            values = (tuple(r[f] for f in ('rank', 'member', 'old_rating', 'n_contests')) for r in rankings)
+            values = tuple(sorted(values))
             values = (self.VERSION, values)
             rating_prediction_hash = hashlib.sha256(str(values).encode('utf8')).hexdigest()
 
@@ -279,16 +281,30 @@ class Command(BaseCommand):
                 statistics = Statistics.objects.filter(contest=contest).select_related('account')
                 has_fixed_field = False
                 fields_types = defaultdict(set)
+                time = int(min(contest.end_time, now).timestamp())
                 for stat in tqdm.tqdm(statistics.iterator(), total=contest.n_statistics,
                                       desc='update statistics rating predictions'):
-                    if stat.account.key not in rankings_dict:
+                    account = stat.account
+                    if account.key not in rankings_dict:
                         continue
                     if 'rating_change' not in stat.addition:
                         has_fixed_field = True
-                    stat.rating_prediction = rankings_dict[stat.account.key]
-                    for k, v in stat.rating_prediction.items():
+                    rating_prediction = rankings_dict[account.key]
+                    for k, v in rating_prediction.items():
                         fields_types[k].add(type(v).__name__)
+                    stat.rating_prediction = rating_prediction
                     stat.save(update_fields=['rating_prediction'])
+
+                    rating_prediction['time'] = time
+                    rating_prediction['contest'] = contest.pk
+                    if (
+                        not account.rating_prediction
+                        or account.rating_prediction.get('contest') == rating_prediction['contest']
+                        or account.rating_prediction.get('time', 0) < rating_prediction['time']
+                    ):
+                        account.rating_prediction = rating_prediction
+                        account.save(update_fields=['rating_prediction'])
+
                 fields_types = {k: list(v) for k, v in fields_types.items()}
 
                 rating_prediction_fields = contest.rating_prediction_fields or {}
@@ -297,7 +313,7 @@ class Command(BaseCommand):
                 contest.rating_prediction_fields = rating_prediction_fields
                 contest.rating_prediction_hash = rating_prediction_hash
                 contest.has_fixed_rating_prediction_field = has_fixed_field
-                contest.rating_prediction_timing = now()
+                contest.rating_prediction_timing = now
                 contest.save(update_fields=['rating_prediction_hash',
                                             'rating_prediction_timing',
                                             'has_fixed_rating_prediction_field',
