@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
@@ -14,6 +15,8 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
+
+    PROFILE_DATA_URL_FORMAT = 'https://www.geeksforgeeks.org/gfg-assets/_next/data/{buildid}/user/{handle}.json'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -80,3 +83,75 @@ class Statistic(BaseModule):
             'result': result,
         }
         return ret
+
+    def get_users_infos(users, resource, accounts, pbar=None):
+
+        @RateLimiter(max_calls=6, period=1)
+        def fetch_profile(account):
+            url = account.profile_url(resource)
+            try:
+                page = REQ.get(url)
+            except FailOnGetResponse as e:
+                if e.code == 404:
+                    return
+                if e.code == 308:
+                    return False
+                raise e
+            match = re.search('"buildId":"(?P<buildid>[^"]*)"', page)
+            buildid = match.group('buildid')
+            url = Statistic.PROFILE_DATA_URL_FORMAT.format(buildid=buildid, handle=account.key)
+            data = REQ.get(url, return_json=True)
+            data = data['pageProps']
+
+            info = {}
+            info = data.pop('userInfo')
+            info['handle'] = data.pop('userHandle')
+
+            contest_data = data.pop('contestData')
+            user_contest_data = contest_data.pop('user_contest_data')
+            info.update(contest_data)
+            contest_data = user_contest_data.pop('contest_data')
+            info.update(user_contest_data)
+            info['contest_data'] = contest_data
+
+            return info
+
+        with PoolExecutor(max_workers=4) as executor:
+            profiles = executor.map(fetch_profile, accounts)
+            for user, data in zip(users, profiles):
+                if pbar:
+                    pbar.update()
+
+                if not data:
+                    if data is None:
+                        yield {'delete': True}
+                    else:
+                        yield {'skip': True}
+                    continue
+
+                assert user == data.pop('handle')
+
+                contest_addition_update = {}
+                for contest_data in data.pop('contest_data'):
+                    contest_key = contest_data.pop('slug')
+                    update = contest_addition_update.setdefault(contest_key, OrderedDict())
+                    update['rating_change'] = contest_data.pop('rating_change')
+                    update['new_rating'] = contest_data.pop('display_rating')
+                    update['_rank'] = contest_data.pop('rank')
+
+                if data.get('current_rating'):
+                    data['rating'] = data.pop('current_rating')
+
+                for k in list(data.keys()):
+                    if isinstance(data[k], (dict, list, tuple)):
+                        data.pop(k)
+
+                ret = {
+                    'info': data,
+                    'contest_addition_update_params': {
+                        'update': contest_addition_update,
+                        'clear_rating_change': True,
+                    },
+                }
+
+                yield ret

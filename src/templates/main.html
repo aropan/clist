@@ -87,9 +87,9 @@
         {% with is_first=forloop.counter0|yesno:",y" %}
         {% if not is_first  %}<tr class="hidden-xs text-muted"><th colspan="100%"></th></tr>{% endif %}
         <tr class="hidden-xs text-muted">
-          <th class="header-start-time">{{ time_field|title }} time</th>
-          <th class="header-timeleft">{{ time_field|title }}s in</th>
-          <th class="header-duration">Duration</th>
+          <th class="header-start-time no-stretch">{{ time_field|title }} time</th>
+          <th class="header-timeleft no-stretch">{{ time_field|title }}s in</th>
+          <th class="header-duration no-stretch">Duration</th>
           <th class="header-event">
             {% if hide_contest %}
             <i class="fa fa-eye invisible"></i>

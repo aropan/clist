@@ -170,17 +170,29 @@ class Statistic(BaseModule):
                         problems_infos[task['code']] = task
 
                 for row in data['results']:
-                    user = row.pop('user')
-                    member = user.pop('login')
+                    user = row.pop('user', None)
+                    team = row.pop('team', None)
+                    if user is not None:
+                        team = None
+                        member = user.pop('login')
+                    elif team is not None:
+                        member = team.pop('uid')
+                        team['_no_profile_url'] = True
+                        team['is_team'] = True
+                        user = team
                     r = result.setdefault(member, OrderedDict())
                     r['member'] = member
                     r['place'] = row.pop('rank')
-                    if user.get('cropping'):
-                        avatar_url = urljoin(api_standings_url, user.pop('cropping'))
-                        r['info'] = {'avatar_url': avatar_url, **deepcopy(user)}
                     names = [user[field] for field in ('first_name', 'last_name') if user.get(field)]
                     if names:
                         r['name'] = ' '.join(names)
+                    if user.get('name'):
+                        r['name'] = user.pop('name')
+                    if team is not None:
+                        r['_name_instead_key'] = True
+                    if user.get('cropping'):
+                        avatar_url = urljoin(api_standings_url, user.pop('cropping'))
+                        r['info'] = {'avatar_url': avatar_url, **deepcopy(user)}
                     r['solving'] = row.pop('score')
                     if row.get('passed_count') is not None:
                         solved = row.pop('passed_count')
@@ -354,7 +366,7 @@ class Statistic(BaseModule):
 
         if is_round and task_id:
             for r in result.values():
-                if not math.isclose(r['solving'], r['total_points']):
+                if 'total_points' not in r or not math.isclose(r['solving'], r['total_points']):
                     r['leaderboard_points'] = round(r['solving'])
                 if r.get('games_number') == r.get('total_games'):
                     r.pop('games_number', None)

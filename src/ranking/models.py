@@ -68,7 +68,6 @@ class Account(BaseModel):
         return {
             'pk': self.pk,
             'account': self.key,
-            'resource': self.resource.host,
             'name': self.name,
         }
 
@@ -149,6 +148,25 @@ class Account(BaseModel):
         if with_resource:
             ret += f' ({self.resource.host})'
         return ret
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        prev_rating = self.rating
+        if self.deleted:
+            self.rating = None
+        elif 'rating' in self.info:
+            if self.rating != self.info['rating']:
+                self.resource.rating_update_time = timezone.now()
+                self.resource.save(update_fields=['rating_update_time'])
+            self.rating = self.info['rating']
+            self.rating50 = self.rating / 50 if self.rating is not None else None
+        if self.rating is None:
+            self.rating50 = None
+            self.resource_rank = None
+        if update_fields and self.rating != prev_rating:
+            update_fields.extend(['rating', 'rating50', 'resource_rank'])
+        download_avatar_url(self)
+        super().save(*args, **kwargs)
 
     class Meta:
         indexes = [
@@ -272,25 +290,6 @@ def download_avatar_url(account):
     account.info[AVATAR_RELPATH_FIELD] = relpath
     if checksum_field:
         account.info[checksum_field] = checksum_value
-
-
-@receiver(pre_save, sender=Account)
-def set_account_rating(sender, instance, *args, **kwargs):
-    if instance.deleted:
-        instance.rating = None
-        instance.rating50 = None
-        instance.resource_rank = None
-    elif 'rating' in instance.info:
-        if instance.rating != instance.info['rating']:
-            instance.resource.rating_update_time = timezone.now()
-            instance.resource.save(update_fields=['rating_update_time'])
-        instance.rating = instance.info['rating']
-        instance.rating50 = instance.rating / 50 if instance.rating is not None else None
-        if instance.rating is None:
-            instance.resource_rank = None
-    elif instance.rating is None and instance.rating50 is not None:
-        instance.rating50 = None
-    download_avatar_url(instance)
 
 
 @receiver(post_save, sender=Account)

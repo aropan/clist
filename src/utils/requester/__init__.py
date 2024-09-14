@@ -8,6 +8,7 @@ import html
 import json
 import logging
 import mimetypes
+import os
 import random
 import re
 import ssl
@@ -111,7 +112,7 @@ class NoVerifyWord(Exception):
     pass
 
 
-class proxer():
+class Proxer():
     DIVIDER = 3
     LIMIT_TIME = 2.5
 
@@ -123,12 +124,15 @@ class proxer():
             self._data = {}
         self._data.setdefault('proxies', {})
         self._data.setdefault('sources', {})
+        self._data.setdefault('deferred', {})
+        for proxy in self.proxies.values():
+            self.init_proxy(proxy)
 
     def clear_data(self):
         created_threshold = self.get_timestamp() - 60 * 60
         removed = []
         for k, v in self.proxies.items():
-            if v['_success'] == 0 and v.get('_created', -1) < created_threshold:
+            if v['_total_success'] == 0 and v.get('_created', -1) < created_threshold:
                 removed.append(k)
         for k in removed:
             del self.proxies[k]
@@ -142,10 +146,23 @@ class proxer():
     def sources(self):
         return self._data['sources']
 
+    def defer_proxy(self):
+        success = self.proxy.pop('_success')
+        if success:
+            self.proxy['_n_deferred'] = self.n_deferred
+        else:
+            self.proxy['_n_deferred'] -= 1
+        self._data['deferred'][self.proxy_key] = self.proxy
+
     def check_proxy(self):
         with self.lock:
-            if (self.proxy and self.proxy['_fail'] > 0 and self.proxy['_success'] == 0 or self.is_slow_proxy()):
-                self.print(f'remove {self.proxy_key}, info = {self.proxy}')
+            if (self.proxy and self.proxy['_fail'] > 0 and self.proxy['_state'] == 0 or self.is_slow_proxy()):
+                if (self.proxy['_success'] or self.proxy['_total_success']) and self.proxy['_n_deferred']:
+                    message = 'defer'
+                    self.defer_proxy()
+                else:
+                    message = 'remove'
+                self.print(f'{message} {self.proxy_key}, info = {self.proxy}')
                 del self.proxies[self.proxy_key]
                 self.proxy = None
                 self.proxy_key = None
@@ -159,12 +176,17 @@ class proxer():
             self.check_proxy()
             j = dumps(
                 self._data,
-                indent=4,
+                indent=2,
                 sort_keys=True,
-                ensure_ascii=False
+                ensure_ascii=False,
             )
+            os.makedirs(path.dirname(self.file_name), exist_ok=True)
             with open(self.file_name, 'w') as fo:
                 fo.write(j)
+
+            if self.dump_proxy_filepath and self.proxy:
+                with open(self.dump_proxy_filepath, 'w') as fo:
+                    json.dump(self.proxy, fo, indent=2)
 
     def is_slow_proxy(self):
         if self.proxy and self.proxy.get('_total_count', 0) > 9:
@@ -177,7 +199,17 @@ class proxer():
 
     @staticmethod
     def get_score(proxy):
-        return (proxy['_success'], -proxy['_timestamp'])
+        return (proxy['_state'], -proxy['_timestamp'])
+
+    def init_proxy(self, proxy):
+        proxy.setdefault('_state', 0)
+        proxy['_success'] = 0
+        proxy['_fail'] = 0
+        proxy.setdefault('_total_success', 0)
+        proxy.setdefault('_total_fail', 0)
+        proxy.setdefault('_created', self.get_timestamp())
+        proxy.setdefault('_timestamp', self.get_timestamp())
+        proxy.setdefault('_n_deferred', self.n_deferred)
 
     def add(self, proxy):
         if isinstance(proxy, str):
@@ -186,14 +218,24 @@ class proxer():
         key = f'{proxy["addr"]}:{proxy["port"]}'
         value = self.proxies.setdefault(key, {})
         value.update(proxy)
-        value.setdefault('_success', 0)
-        value.setdefault('_fail', 0)
-        value.setdefault('_created', self.get_timestamp())
-        value.setdefault('_timestamp', self.get_timestamp())
+        self.init_proxy(value)
 
     def add_free_proxies(self):
         for proxy in ProxyList().get():
             self.add(proxy)
+
+    def add_deferred_proxies(self):
+        deferred_proxies = self._data.pop('deferred', {})
+        self._data['deferred'] = {}
+
+        for proxy in deferred_proxies.values():
+            self.init_proxy(proxy)
+
+        self.proxies.update(deferred_proxies)
+
+    def add_proxies(self):
+        self.add_free_proxies()
+        self.add_deferred_proxies()
 
     def is_alive(self):
         return self.n_limit is None or self.n_limit > 0
@@ -212,7 +254,8 @@ class proxer():
             self.n_limit -= 1
 
         if not self.proxies:
-            self.add_free_proxies()
+            self.add_proxies()
+
         self.proxy = None
         for k, v in self.proxies.items():
             if self.proxy is None or self.get_score(v) > self.get_score(self.proxy):
@@ -237,6 +280,8 @@ class proxer():
         with self.lock:
             if not self.proxy or proxy != self.proxy_address:
                 return
+            self.proxy['_state'] += 1
+            self.proxy['_total_success'] += 1
             self.update_value('_success', 1)
             if time_response:
                 delta_time = time_response.total_seconds() + time_response.microseconds / 1000000.
@@ -250,7 +295,8 @@ class proxer():
         with self.lock:
             if not self.proxy or proxy != self.proxy_address:
                 return
-            self.proxy['_success'] //= self.DIVIDER
+            self.proxy['_state'] //= self.DIVIDER
+            self.proxy['_total_fail'] += 1
             self.update_value('_fail', 1)
             self.check_proxy()
 
@@ -291,17 +337,21 @@ class proxer():
         connect=None,
         time_limit=LIMIT_TIME,
         n_limit=None,
+        n_deferred=1,
+        dump_proxy_filepath=None,
     ):
         self.logger = logger
         self.file_name = file_name + '.json'
         self.time_limit = time_limit
+        self.n_limit = n_limit
+        self.n_deferred = n_deferred
+        self.dump_proxy_filepath = dump_proxy_filepath
         self.callback_new_proxy = callback_new_proxy
         self.without_new_proxy = False
         self.connect_func = connect
         self.connect_ret = None
         self.load_data()
         self.clear_data()
-        self.n_limit = n_limit
         if path.exists(file_name):
             with open(file_name, 'r') as fo:
                 for line in fo:
@@ -457,7 +507,7 @@ class requester():
     debug_output = True
     dir_cache = path.dirname(path.abspath(__file__)) + "/cache/"
     cookie_filename = path.join(path.dirname(path.abspath(__file__)), ".cookie")
-    default_filepath_proxies = path.join(path.dirname(__file__), "proxies.txt")
+    default_filepath_proxies = path.join(path.dirname(__file__), "proxy")
     last_page = None
     last_url = None
     ref_url = None
@@ -525,7 +575,7 @@ class requester():
 
     def set_proxy(self, proxy, filepath_proxies=default_filepath_proxies, **kwargs):
         if proxy is True or proxy == 'true':
-            self.proxer = proxer(filepath_proxies, callback_new_proxy=self.set_proxy, logger=self.print, **kwargs)
+            self.proxer = Proxer(filepath_proxies, callback_new_proxy=self.set_proxy, logger=self.print, **kwargs)
             proxy = self.proxer.get()
 
         if proxy:
@@ -784,11 +834,15 @@ class requester():
                 page = json.loads(page)
             else:
                 page = {'page': page, '__no_json': True}
-        if return_url:
-            return page, last_url
+
+        if not return_url and not return_code:
+            return page
+        ret = [page]
+        if return_url or return_code:
+            ret += [last_url]
         if return_code:
-            return page, response.code
-        return page
+            ret += [response.code]
+        return ret
 
     @property
     def current_url(self):

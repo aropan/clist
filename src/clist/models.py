@@ -389,6 +389,10 @@ class Resource(BaseModel):
         model.load_model(model_path)
         return model
 
+    @property
+    def problems_fields_types(self):
+        return self.problems_fields.get('types', {})
+
 
 class BaseContestManager(BaseManager):
     pass
@@ -755,6 +759,18 @@ class Contest(BaseModel):
         elif self.n_statistics and self.n_statistics <= 500:
             per_page = self.n_statistics
         return per_page
+
+    @property
+    def full_problems_list(self):
+        problems = self.info.get('problems')
+        if not problems:
+            return
+        if isinstance(problems, dict):
+            division_problems = list(problems.get('division', {}).values())
+            problems = []
+            for a in division_problems:
+                problems.extend(a)
+        return problems
 
     @property
     def problems_list(self):

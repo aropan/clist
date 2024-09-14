@@ -5,7 +5,6 @@ import json
 import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from pprint import pprint
 from urllib.parse import urljoin
 
 from first import first
@@ -30,6 +29,7 @@ class Statistic(BaseModule):
         year = self.start_time.year
         row_index = 0
         duration_in_secs = None
+        global_score_precision = None
 
         def set_member(v, row):
             nonlocal row_index
@@ -177,6 +177,7 @@ class Statistic(BaseModule):
             users = None
 
         if users:
+            team_data = self.info.get('_official_specific_team_data')
 
             def get_alpha_substring_multiset(value):
                 ret = Multiset()
@@ -205,7 +206,7 @@ class Statistic(BaseModule):
                 assert name_set_hash not in rows_sets
                 rows_sets[name_set_hash] = member
 
-            def add_mapping(user, member):
+            def add_mapping(user, member, team):
                 user_mapping[user] = member
 
                 name_set = get_alpha_substring_multiset(rows[member])
@@ -215,15 +216,19 @@ class Statistic(BaseModule):
                 users.pop(user)
                 rows.pop(member)
 
+                if team_data and team in team_data:
+                    result[member].update(team_data[team])
+
             while users:
                 mapping = []
                 max_iou = -1
                 for user, info in list(users.items()):
                     info_name = info['f_name'] + ' ' + info['l_name']
+                    info_team = info['team']
                     info_set = get_alpha_substring_multiset(info_name)
                     info_set_hash = multiset_hash(info_set)
                     if info_set_hash in rows_sets:
-                        add_mapping(user, rows_sets[info_set_hash])
+                        add_mapping(user, rows_sets[info_set_hash], info_team)
                         continue
 
                     for member, name in rows.items():
@@ -235,15 +240,17 @@ class Statistic(BaseModule):
                             mapping = []
                             max_iou = iou
                         if iou == max_iou:
-                            mapping.append((user, member, name, info_name))
-                user, member, *_ = mapping[0]
-                add_mapping(user, member)
+                            mapping.append((user, member, info_team, name, info_name))
+                user, member, team, *_ = mapping[0]
+                add_mapping(user, member, team)
 
             contests = get_ranking_url('contests/')
             duration_in_secs = 0
             for contest in contests.values():
                 contest['time_shift'] = duration_in_secs
                 duration_in_secs += contest['end'] - contest['begin']
+                if 'score_precision' in contest:
+                    global_score_precision = max(global_score_precision or 0, contest.get('score_precision', 0))
 
             tasks = get_ranking_url('tasks/')
             if isinstance(tasks, dict):
@@ -258,8 +265,18 @@ class Statistic(BaseModule):
                         'full_score': task['max_score'],
                     }
             for task in tasks.values():
-                if 'extra_headers' in task:
-                    problems_info[task['short_name']]['subtasks'] = task.pop('extra_headers')
+                short = task['short_name']
+                if short not in problems_info:
+                    continue
+                problem_info = problems_info[short]
+                for key, field in (
+                    ('extra_headers', 'subtasks'),
+                    ('order', 'order'),
+                    ('score_mode', 'score_mode'),
+                    ('score_precision', 'score_precision'),
+                ):
+                    if key in task:
+                        problem_info[field] = task[key]
 
             history = get_ranking_url('history')
             history.sort(key=lambda x: x[2])
@@ -270,12 +287,16 @@ class Statistic(BaseModule):
 
                 problems = row.setdefault('problems', {})
                 problem = problems.setdefault(short, {})
+                problem_info = problems_info[short]
+
+                if 'score_precision' in problem_info:
+                    score = round(score, problem_info['score_precision'])
 
                 if score > as_number(problem.get('result', -1)):
                     problem.pop('time', None)
                     problem['result'] = score
 
-                problem['partial'] = problem['result'] < problems_info[short]['full_score']
+                problem['partial'] = problem['result'] < problem_info['full_score']
                 contest = contests[task['contest']]
                 custom_start_time = max(custom_start_time, contest['end'] - duration_in_secs)
                 time_in_seconds = timestamp - contest['begin']
@@ -293,6 +314,8 @@ class Statistic(BaseModule):
                 for user, score in scores.items():
                     member = user_mapping[user]
                     solving = sum(score.values())
+                    if global_score_precision is not None:
+                        solving = round(solving, global_score_precision)
                     result[member]['solving'] = solving
                 for row in result.values():
                     row.setdefault('solving', 0)
@@ -306,6 +329,24 @@ class Statistic(BaseModule):
                         place = idx
                     row['place'] = place
 
+                medal_percentage = []
+                n_participants = len(result)
+                last = 0
+                for medal, divider in (('gold', 12), ('silver', 4), ('bronze', 2), ('honorable', 1)):
+                    curr = (n_participants - 1) // divider + 1
+                    medal_percentage.append((medal, curr, curr - last))
+                    last = curr
+
+                for row in result.values():
+                    for medal, rank, number in medal_percentage:
+                        if row['place'] <= rank:
+                            row['medal_percentage'] = {
+                                'medal': medal,
+                                'percent': (rank - row['place'] + 1) / number,
+                                'info': f'{rank - number + 1}-{rank}',
+                            }
+                            break
+
         standings = {
             'result': result,
             'url': self.standings_url,
@@ -313,6 +354,7 @@ class Statistic(BaseModule):
             'hidden_fields': [k for k, v in hidden_fields.items() if v],
             'custom_start_time': custom_start_time if custom_start_time else None,
             'series': 'ioi',
+            'options': {'score_precision': global_score_precision},
         }
 
         if duration_in_secs is not None:
@@ -362,5 +404,3 @@ class Statistic(BaseModule):
                     continue
                 info = {'info': info}
                 yield info
-
-

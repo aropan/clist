@@ -7,7 +7,8 @@
         $url = url_merge($url, "?format=json&page=$n_page");
         $data = curlexec($url, NULL, array('json_output' => true));
 
-        if (!is_array($data['list_competitions'])) {
+        if (!is_array($data) || !is_array($data['list_competitions'])) {
+            trigger_error('Unexpected response', E_USER_WARNING);
             break;
         }
 

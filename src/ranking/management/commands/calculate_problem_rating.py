@@ -39,6 +39,11 @@ def is_skip(contest, statistic):
     old_rating_only = get_item(contest.resource.info, 'problems.rating.old_rating_only')
     old_rating_only = not args.ignore_old_rating_only and old_rating_only
 
+    problems = contest.info.get('problems')
+    division = statistic.addition.get('division')
+    if isinstance(problems, dict) and 'division' in problems and division is None:
+        return True
+
     return bool(
         statistic.account.info.get('is_team') and not statistic.account.info.get('members')
         or statistic.addition.get('team_id') and not statistic.addition.get('_members')
@@ -58,20 +63,27 @@ def get_team(statistic):
     return team_id, handles
 
 
-def get_solved(result, problem):
+def get_solved(result, problem, not_full_multiplier=1e-3):
     score = max(0, as_number(result.get('result', 0), force=True) or 0)
-    if is_solved(result):
+    is_challenge = problem.get('is_challenge')
+    result_is_solved = is_solved(result)
+    if result_is_solved and not is_challenge:
         return 1
     elif result.get('partial') and problem.get('full_score'):
-        return score / problem['full_score']
+        ret = score / problem['full_score']
     elif problem.get('max_score'):
-        return score / problem['max_score']
+        ret = score / problem['max_score']
     elif problem.get('min_score') and score:
-        return problem['min_score'] / score
+        ret = problem['min_score'] / score
+    elif result_is_solved:
+        return 1
     elif str(result.get('result', '')).startswith('?'):
         return False
     else:
         return 0
+    if ret < 1 and not is_challenge:
+        ret = ret * not_full_multiplier
+    return ret
 
 
 def account_get_old_rating(account, before):
@@ -229,6 +241,9 @@ class Command(BaseCommand):
             problems_contests = OrderedDict()
             for problem in contest.problem_set.all():
                 for problem_contest in problem.contests.select_related('resource').all():
+                    if problem_contest.has_hidden_results:
+                        self.logger.info(f'skip hidden results contest = {problem_contest}')
+                        continue
                     if problem_contest.info.get('skip_problem_rating'):
                         continue
                     if problem_contest not in problems_contests:

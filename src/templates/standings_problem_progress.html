@@ -3,8 +3,8 @@
 {% if n_statistics %}
 <div class="problem-progress progress" title="
   Number of accepted{% if not problem.n_accepted and n_accepted_submissions %} submissions{% endif %}: {{ n_accepted }} ({{ n_accepted|multiply:100|divide:n_statistics|floatformat:"2" }}%)
-  {% if n_partial %}<br/>Number of partial: {{ n_partial }} ({{ n_partial|multiply:100|divide:n_statistics|floatformat:"2" }})%){% endif %}
-  {% if n_hidden %}<br/>Number of hidden: {{ n_hidden }} ({{ n_hidden|multiply:100|divide:n_statistics|floatformat:"2" }})%){% endif %}
+  {% if n_partial %}<br/>Number of partial: {{ n_partial }} ({{ n_partial|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
+  {% if n_hidden %}<br/>Number of hidden: {{ n_hidden }} ({{ n_hidden|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
   {% if n_accepted != n_attempts and n_attempts %}<br/>Number of attempts: {{ n_attempts }} ({{ n_attempts|multiply:100|divide:n_statistics|floatformat:"2" }}%){% endif %}
   <br/>Total{% if not problem.n_total and n_total_submissions %} submissions{% endif %}: {{ n_statistics }}
   {% if problem.first_ac %}<br/>First accepted: {{ problem.first_ac.time }}{% endif %}

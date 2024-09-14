@@ -39,7 +39,12 @@ class Statistic(BaseModule):
         is_rated = parse_info.get('isRated', False)
 
         api_problems_url = urljoin(self.url, f'/api/contests/{self.key}/problems')
-        data = query(api_problems_url)
+        try:
+            data = query(api_problems_url)
+        except FailOnGetResponse as e:
+            if e.code == 404:
+                return {'action': 'delete'}
+            raise e
 
         problems_infos = OrderedDict()
         problems_full_scores = {}

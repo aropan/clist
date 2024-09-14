@@ -8,7 +8,11 @@
         $data = curlexec($url, null, ['json_output' => true]);
         $contests_data = pop_item($data, ['currentData', 'contests', 'result']);
         $contests_info = pop_item($data, ['currentData', 'contests']);
-        $total_pages = $contests_info['count'] / $contests_info['perPage'];
+        if (!$contests_data || !$contests_info) {
+            trigger_error('Failed to parse contests data = ' . json_encode($data), E_USER_WARNING);
+            break;
+        }
+        $total_pages = $contests_info['perPage']? $contests_info['count'] / $contests_info['perPage'] : 0;
 
         foreach ($contests_data as $c) {
             $key = array_pop_assoc($c, 'id');

@@ -1,10 +1,9 @@
 from django.db.models import Q
-from django.shortcuts import redirect
 from el_pagination.decorators import page_templates
 
 from submissions.models import Submission
 
-from clist.templatetags.extras import get_problem_name, get_problem_short
+from clist.templatetags.extras import allowed_redirect, get_problem_name, get_problem_short
 from pyclist.decorators import context_pagination, inject_contest
 from ranking.models import Account
 
@@ -29,7 +28,7 @@ def submissions(request, contest, template='submissions.html'):
         del request.GET['statistic']
         for a in accounts:
             request.GET.appendlist('account', a)
-        return redirect(request.path + '?' + request.GET.urlencode())
+        return allowed_redirect(request.path + '?' + request.GET.urlencode())
 
     problems = list(contest.problems_list)
     if problems:

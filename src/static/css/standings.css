@@ -80,6 +80,26 @@ tr:hover .edit-active-switcher, .edit-active-switcher:hover {
   background: #d0e3f7 !important;
 }
 
+.standings .gold-medal-percentage {
+  fill: #f9d923 !important;
+  stroke: #f9d923 !important;
+}
+
+.standings .silver-medal-percentage {
+  fill: silver !important;
+  stroke: silver !important;
+}
+
+.standings .bronze-medal-percentage {
+  fill: #c08e55 !important;
+  stroke: #c08e55 !important;
+}
+
+.standings .honorable-medal-percentage {
+  fill: #d0e3f7 !important;
+  stroke: #d0e3f7 !important;
+}
+
 .standings .text-gold-medal {
   color: #ccab04 !important;
 }

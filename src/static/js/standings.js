@@ -196,7 +196,6 @@ function clear_data_stat_cell(e) {
   }
   score += parseFloat($(e).attr('data-additional-score') || 0)
   $(e).attr('data-score', score)
-
   $(e).attr('data-penalty', 0)
   $(e).attr('data-more-penalty', 0)
   $(e).attr('data-last', 0)
@@ -562,8 +561,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     percent_sign = Math.sign(percent - CURRENT_PERCENT)
     CURRENT_PERCENT = percent
   }
-  // percentage_filled = percent >= contest_time_percentage
-  percentage_filled = percent >= 1
+  percentage_filled = with_virtual_start? percent >= 1 : percent >= contest_time_percentage
   update_timeline_text(percent)
 
   var current_time, unfreeze_index, highlight_problem_duration
@@ -655,6 +653,9 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     var $e = $(e)
     var current_score = $e.find('.score-cell').text().trim()
     var new_score = e.getAttribute('data-score')
+    if (score_precision !== undefined) {
+      new_score = parseFloat(new_score).toFixed(score_precision)
+    }
     $e.data('current-solving', new_score)
     $e.find('.score-cell').text(new_score)
     $e.css('z-index', current_score != new_score? '5' : '1')
@@ -834,13 +835,14 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   })
 
 
-  var toggle_hidden_selectors = ['.first-u-cell', 'table.standings td .trophy']
+  var toggle_hidden_selectors = ['.first-u-cell', 'table.standings td .trophy', 'table.standings .medal-percentange']
+  var with_hidden = percentage_filled && (unfreezing || !freeze_duration) && !with_virtual_start
   var toggle_hidden_selector = ''
   toggle_hidden_selectors.forEach((selector) => {
     if (toggle_hidden_selector) {
       toggle_hidden_selector += ','
     }
-    toggle_hidden_selector += selector + (percentage_filled && unfreezing && !with_virtual_start? '.hidden' : ':not(.hidden)')
+    toggle_hidden_selector += selector + (with_hidden? '.hidden' : ':not(.hidden)')
   })
   if (toggle_hidden_selector) {
     var toggle_hidden_elements = $(toggle_hidden_selector)

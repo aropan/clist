@@ -29,7 +29,7 @@
 
     {% for members_statistic in account.selected_stats %}
     {% if not members_statistic.addition.team_id %}
-    {% include "standings_account_members.html" with members=members_statistic.addition|get_item:"_members" resource=account.resource inline=False with_fixed_width=True %}
+    {% include "standings_account_members.html" with members=members_statistic.addition|get_item:"_members" resource=account.resource without_country=True inline=False with_fixed_width=True %}
     {% endif %}
     {% endfor %}
 

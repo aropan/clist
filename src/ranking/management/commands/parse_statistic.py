@@ -207,6 +207,7 @@ class Command(BaseCommand):
         parser.add_argument('--after', type=str, help='Events after date')
         parser.add_argument('--for-account', type=str, help='Events for account')
         parser.add_argument('--ignore-stage', action='store_true', default=False, help='Ignore stage')
+        parser.add_argument('--disabled', action='store_true', default=False, help='Disabled module only')
 
     def parse_statistic(
         self,
@@ -238,6 +239,8 @@ class Command(BaseCommand):
         is_rated=None,
         for_account=None,
         ignore_stage=None,
+        with_reparse=None,
+        enabled=True,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -297,7 +300,7 @@ class Command(BaseCommand):
 
                     contests = Contest.objects.filter(Q(pk__in=parsed_contests) | Q(pk__in=in_range_contests))
                     contests = contests.filter(stage__isnull=True)
-                contests = contests.filter(resource__module__enable=True)
+                contests = contests.filter(resource__module__enable=enabled)
             else:
                 contests = contests.filter(start_time__lt=now)
             if title_regex:
@@ -515,6 +518,7 @@ class Command(BaseCommand):
                         ('kind', 'kind'),
                         ('standings_kind', 'standings_kind'),
                         ('is_rated', 'is_rated'),
+                        ('has_hidden_results', 'has_hidden_results'),
                     ):
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
@@ -890,7 +894,7 @@ class Command(BaseCommand):
                                     ('new_rating' in stat) + ('rating_change' in stat) + ('old_rating' in stat) < 2
                                 )
 
-                                updated_delta = resource_statistics.get('account_updated_delta', {'days': 1})
+                                updated_delta = resource_statistics.get('account_updated_delta', {'hours': 12})
                                 updated = now + timedelta(**updated_delta)
 
                                 has_coder = wait_rating.get('has_coder')
@@ -1193,16 +1197,19 @@ class Command(BaseCommand):
 
                                 previous_problems = stat.get('problems', {})
                                 for k, problem in problems.items():
+                                    if statistic.pk in updated_statistics_ids:
+                                        break
                                     previous_problem = previous_problems.get(k, {})
                                     if (
                                         problem.get('result') != previous_problem.get('result') or
                                         problem.get('time') != previous_problem.get('time') or
                                         force_socket
                                     ):
+                                        contest_log_counter['updated_statistics_problem'] += 1
                                         updated_statistics_ids.append(statistic.pk)
-                                        break
 
                                 if str(statistic.place) != str(stat.get('place')):
+                                    contest_log_counter['updated_statistics_place'] += 1
                                     updated_statistics_ids.append(statistic.pk)
 
                                 if try_calculate_time:
@@ -1447,7 +1454,7 @@ class Command(BaseCommand):
                                     pass
 
                         if not users:
-                            if has_hidden != contest.has_hidden_results:
+                            if has_hidden != contest.has_hidden_results and 'has_hidden_results' not in standings:
                                 contest.has_hidden_results = has_hidden
                                 contest.save(update_fields=['has_hidden_results'])
 
@@ -1630,11 +1637,13 @@ class Command(BaseCommand):
 
                 if not contest.statistics_update_required:
                     if resource.rating_prediction and not without_calculate_rating_prediction and contest.pk:
+                        self.logger.info(f'Calculate rating prediction for contest = {contest}')
                         call_command('calculate_rating_prediction', contest=contest.pk)
                         contest.refresh_from_db()
                         n_calculated_rating_prediction += 1
 
                     if to_calculate_problem_rating and not without_calculate_problem_rating and contest.pk:
+                        self.logger.info(f'Calculate problem rating for contest = {contest}')
                         call_command('calculate_problem_rating', contest=contest.pk, force=force_problems)
                         contest.refresh_from_db()
                         n_calculated_problem_rating += 1
@@ -1645,14 +1654,19 @@ class Command(BaseCommand):
                             users_coders = Coder.objects.filter(Exists(users_qs.filter(pk=OuterRef('account'))))
                             users_coders = users_coders.values_list('username', flat=True)
                             if users_coders:
+                                self.logger.info(f'Fill coder problems for contest = {contest}'
+                                                 f', coders = {users_coders}')
                                 call_command('fill_coder_problems', contest=contest.pk, coders=users_coders)
                         else:
+                            self.logger.info(f'Fill coder problems for contest = {contest}')
                             call_command('fill_coder_problems', contest=contest.pk)
 
                 if has_standings_result:
                     count += 1
                 parsed = True
             except (ExceptionParseStandings, InitModuleException, ProxyLimitReached) as e:
+                if with_reparse and isinstance(e, ExceptionParseStandings):
+                    contest.statistics_update_done()
                 exception_error = str(e)
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
@@ -1825,4 +1839,6 @@ class Command(BaseCommand):
             is_rated=args.is_rated,
             for_account=args.for_account,
             ignore_stage=args.ignore_stage,
+            with_reparse=args.reparse,
+            enabled=not args.disabled,
         )

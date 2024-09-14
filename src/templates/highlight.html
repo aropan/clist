@@ -1,0 +1,4 @@
+{% with highlight=request.user.coder.settings.highlight|default:"default" %}
+<link href="{% static_ts 'highlight/styles/'|concat:highlight|concat:'.min.css' %}" rel="stylesheet">
+<script src="{% static_ts 'highlight/highlight.min.js' %}"></script>
+{% endwith %}

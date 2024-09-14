@@ -7,16 +7,32 @@
   </div>
 {% endif %}
 
+{% define None as account_country_code %}
 {% if has_country and account %}
   <div class="flag-width-fixed">
   {% if not team_id %}
-    {% get_country_from_account account as country %}{% if country %}
-    <a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip"><div class="flag flag-{{ country.flag_code|lower }}"></div></a>
-    {% endif %}
+    {% get_country_from_account account as country %}
+    {% define country.name as account_country_name %}
+    {% define country.code as account_country_code %}
+    {% define country.flag_code as account_country_flag %}
   {% else %}
-    {% with code=statistic.addition.country|get_country_code %}{% if code %}
-    <a href="{% url_transform request country=code %}" title="{{ statistic.addition.country }}" data-toggle="tooltip"><div class="flag flag-{{ code|lower }}"></div></a>
-    {% endif %}{% endwith %}
+    {% define statistic.addition.country|get_country_code as code %}
+    {% if code %}
+      {% define code as account_country_code %}
+      {% define statistic.addition.country as account_country_name %}
+      {% define code as account_country_flag %}
+    {% elif members %}
+      {% get_country_from_members preload_statistics_data.accounts members as code %}
+      {% if code %}
+        {% define code as account_country_code %}
+        {% define code|get_country_name as account_country_name %}
+        {% define code as account_country_flag %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
+  {% if account_country_code %}
+  <a href="{% url_transform request country=account_country_code %}" title="{{ account_country_name }}" data-toggle="tooltip"><div class="flag flag-{{ account_country_flag|lower }}"></div></a>
   {% endif %}
   </div>
 {% endif %}
@@ -52,26 +68,11 @@
         {% endif %}
       {% endwith %}
     {% endfor %}
-    {% elif members %}
-      {% for member in members %}
-        {% if member and member.account %}
-          {% with account=preload_statistics_data.accounts|get_item:member.account %}
-          {% if account and not member.without_country %}
-          {% get_country_from_account account as country %}
-          {% if country %}
-          <a href="{% url_transform request country=country.code %}">
-            <div class="small flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></div>
-          </a>
-          {% endif %}
-          {% endif %}
-          {% endwith %}
-        {% endif %}
-      {% endfor %}
     {% endif %}
     {% endwith %}
   </div>
 
-  {% if not with_detail %}{% include "standings_account_members.html" with members=members inline=True %}{% endif %}
+  {% if not with_detail %}{% include "standings_account_members.html" with members=members except_country_code=account_country_code inline=True %}{% endif %}
 
   {% if not without_addition_url %}
 
@@ -115,7 +116,7 @@
 
   {% endif %}
 
-  {% if with_detail %}{% include "standings_account_members.html" with members=members inline=False %}{% endif %}
+  {% if with_detail %}{% include "standings_account_members.html" with members=members except_country_code=account_country_code inline=False %}{% endif %}
 </div>
 
 {% endwith %}

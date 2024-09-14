@@ -59,22 +59,22 @@ function toggle_party_contest(e) {
 
 $(function() {
     $(".toggle").click(function(e) {
-        var cls = $(this).attr("data-group");
+        var cls = $(this).data("group")
         $(cls).toggleClass("subcontest")
 
-        var icon = $(".badge[data-group='{0}']".format(cls)).find("i");
-        icon.toggleClass("fa-caret-down");
-        icon.toggleClass("fa-caret-up");
-        e.preventDefault();
+        var icon = $(".badge[data-group='{0}']".format(cls)).find("i")
+        icon.toggleClass("fa-caret-down")
+        icon.toggleClass("fa-caret-up")
+        e.preventDefault()
     })
 
     $("#toggle-all").click(function (e) {
-        var icon = $(this).find("i");
-        var cls = $(icon).attr("class").match(/fa-caret-[\w-]*/)[0];
-        icon.toggleClass("fa-caret-down");
-        icon.toggleClass("fa-caret-up");
-        $(".toggle.badge>i[class~='{0}']".format(cls)).click();
-        e.preventDefault();
+        var icon = $(this).find("i")
+        var cls = $(icon).attr("class").match(/fa-caret-[\w-]*/)[0]
+        icon.toggleClass("fa-caret-down")
+        icon.toggleClass("fa-caret-up")
+        $(".toggle.badge>i[class~='{0}']".format(cls)).click()
+        e.preventDefault()
     })
 
     $(".party-check.has-permission-toggle-party-contest[data-contest-id]").click(toggle_party_contest)

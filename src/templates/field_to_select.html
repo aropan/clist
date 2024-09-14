@@ -47,9 +47,11 @@
     {% with values=data|get_item:'values'|default:values %}
     {% if not data.noempty %}<option></option>{% endif %}
     {% for v in data.options %}
+    {% if not data.noempty or v %}
     <option value="{{ v }}"{% if v in values %} selected{% endif %}>
     {% if data.options|get_type == 'dict' %}{{ data.options|get_item:v|default:v }}{% else %}{{ v }}{% endif %}
     </option>
+    {% endif %}
     {% endfor %}
     {% endwith %}
     {% endwith %}

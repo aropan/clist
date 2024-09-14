@@ -19,7 +19,7 @@
 
 {% if not without_country %}
   {% if with_fixed_width %}<div class="flag-width-fixed">{% endif %}
-  {% get_country_from_account account as country %}{% if country %}
+  {% get_country_from_account account as country %}{% if country and country != except_country_code %}
   {% if not without_url_transform and request %}<a href="{% url_transform request country=country.code %}">{% endif %}
     <div class="flag flag-{{ country.flag_code|lower }}" title="{{ country.name }}" data-toggle="tooltip"></div>
   {% if not without_url_transform and request %}</a>{% endif %}

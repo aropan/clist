@@ -3,6 +3,10 @@
 
     $url = 'https://acm.bsuir.by/solve/api/v0/contests';
     $data = curlexec($url, NULL, array('json_output' => true));
+    if (!is_array($data) || !is_array($data['contests'])) {
+        trigger_error("Expected array ['contests']", E_USER_WARNING);
+        return;
+    }
     foreach ($data['contests'] as $contest) {
         if (!preg_match('#bsuir#i', $contest['title'])) {
             continue;

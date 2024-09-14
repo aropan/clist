@@ -93,9 +93,11 @@ data-place="{{ place }}"
         data-placement="top"
         data-toggle="tooltip"
         {% with medal_title_field=addition|get_item:"_medal_title_field" %}
-        title="{% if medal_title_field %}{{ medal_title_field|strip:"_"|title }} {{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
+        title="{% if medal_title_field %}{% if medal_title_field != '_medal_title' %}{{ medal_title_field|strip:"_"|title }} {% endif %}{{ addition|get_item:medal_title_field }}{% else %}{{ addition.medal|title }}{% endif %}"
         {% endwith %}
       >{% include "trophy.html" with statistic=statistic %}</span>
+      {% elif addition.medal_percentage %}
+      <span class="medal-percentange">{% medal_percentage addition.medal_percentage.medal addition.medal_percentage.percent info=addition.medal_percentage.info %}</span>
       {% endif %}
     </div>
   </{{ tag }}>

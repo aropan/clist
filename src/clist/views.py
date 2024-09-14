@@ -24,7 +24,8 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion, Resource
 from clist.templatetags.extras import (as_number, canonize, get_item, get_problem_key, get_problem_name,
-                                       get_problem_short, get_timezone_offset, rating_from_probability, win_probability)
+                                       get_problem_short, get_timezone_offset, is_yes, rating_from_probability,
+                                       win_probability)
 from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
@@ -32,6 +33,7 @@ from pyclist.decorators import context_pagination
 from ranking.models import Account, CountryAccount, Rating, Statistics
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import make_bins, make_chart
+from utils.custom_request import get_filtered_list
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter, verify_regex
 from utils.timetools import get_timeformat, get_timezone
@@ -1057,10 +1059,19 @@ def problems(request, template='problems.html'):
             problem_rating_accounts = problem_rating_accounts.filter(resource__pk__in=resources)
         resources = list(Resource.objects.filter(pk__in=resources))
 
+    contest_problems = None
     if contests:
         problems = problems.annotate(has_contests=Exists('contests', filter=Q(contest__in=contests)))
         problems = problems.filter(Q(has_contests=True) | Q(contest__in=contests))
         contests = list(Contest.objects.filter(pk__in=contests))
+        if len(contests) == 1:
+            contest_problems = {}
+            for problem in contests[0].full_problems_list:
+                problem_key = get_problem_key(problem)
+                if problem_key in contest_problems:
+                    contest_problems = None
+                    break
+                contest_problems[problem_key] = problem
 
     if len(resources) == 1:
         selected_resource = resources[0]
@@ -1119,6 +1130,8 @@ def problems(request, template='problems.html'):
         if selected_resource.has_problem_archive:
             custom_options.append('is_archive')
         fixed_fields = selected_resource.problems_fields.get('fixed_fields', [])
+        if contests:
+            fixed_fields.append('short')
         custom_fields = custom_fields + fixed_fields
         fixed_fields_set = set(fixed_fields)
         fields_types = selected_resource.problems_fields.get('types', {})
@@ -1127,12 +1140,35 @@ def problems(request, template='problems.html'):
                 custom_options.append(field)
                 custom_info_fields.add(field)
     else:
-        fields_types = None
+        fields_types = dict()
         fixed_fields_set = set()
     custom_fields_select = {
         'values': [v for v in custom_fields if v and v in custom_options],
         'options': [v for v in custom_options if v not in fixed_fields_set]
     }
+
+    filter_fields = []
+    for field in custom_options:
+        field_types = fields_types.get(field)
+        if not field_types or any(t in field_types for t in ('int', 'float', 'dict')):
+            continue
+        values_list = get_filtered_list(request, field)
+        if values_list:
+            values_filter = Q()
+            for value in values_list:
+                key = f'info__{field}'
+                if value == 'none':
+                    key = f'{key}__isnull'
+                    value = True
+                if 'bool' in field_types:
+                    value = is_yes(value)
+                if 'list' in field_types:
+                    key = f'{key}__contains'
+                values_filter |= Q(**{key: value})
+            problems = problems.filter(values_filter)
+        if field not in custom_fields and not values_list:
+            continue
+        filter_fields.append(field)
 
     chart_select = {
         'values': [v for v in request.GET.getlist('chart') if v],
@@ -1268,6 +1304,7 @@ def problems(request, template='problems.html'):
 
     context = {
         'problems': problems,
+        'contest_problems': contest_problems,
         'coder': coder,
         'show_tags': show_tags,
         'params': {
@@ -1275,6 +1312,7 @@ def problems(request, template='problems.html'):
             'contests': contests,
             'tags': tags,
         },
+        'filter_fields': filter_fields,
         'chart_select': chart_select,
         'status_select': status_select,
         'sort_select': sort_select,

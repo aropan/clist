@@ -9,6 +9,10 @@
     $python_bin = getenv('PYTHON_BIN');
     exec($python_bin . " " . dirname(__FILE__) . "/decode.py $path $path");
     $data = json_decode(file_get_contents($path), true);
+    if (!is_array($data) || !is_array($data[1])) {
+        trigger_error("Expected array [1]", E_USER_WARNING);
+        return;
+    }
 
     foreach ($data[1] as $c) {
         $c = $c[1];

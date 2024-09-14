@@ -9,7 +9,8 @@ import time
 import traceback
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from datetime import timedelta
+from datetime import datetime, timedelta
+from functools import partial
 from urllib.parse import quote, urljoin
 
 import arrow
@@ -20,7 +21,7 @@ from django.db.models import Q
 from first import first
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import as_number, is_improved_solution, slug
+from clist.templatetags.extras import as_number, get_item, is_improved_solution, slug
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -38,6 +39,8 @@ class Statistic(BaseModule):
     CONTEST_PROBLEM_URL_FORMAT_ = 'https://www.codechef.com/{key}/problems/{code}'
     TEAM_URL_FORMAT_ = 'https://www.codechef.com/teams/view/{user}'
     SUBMISSIONS_URL_ = 'https://www.codechef.com/recent/user?page={page}&user_handle={user}'
+    E429_TIMEOUT = None
+    E429_DELAY = timedelta(seconds=60)
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -59,11 +62,23 @@ class Statistic(BaseModule):
 
     @RateLimiter(max_calls=1, period=1)
     @staticmethod
-    def _get(*args, **kwargs):
-        additional_attempts = kwargs.setdefault('additional_attempts', {})
-        additional_attempts[429] = {'count': 3}
-        kwargs['additional_delay'] = 5
-        return REQ.get(*args, **kwargs)
+    def _get(*args, proxy=None, **kwargs):
+        now = datetime.now()
+        if proxy is None or Statistic.E429_TIMEOUT is None or Statistic.E429_TIMEOUT < now:
+            additional_attempts = kwargs.setdefault('additional_attempts', {})
+            additional_attempts[429] = {'count': 1}
+            kwargs.setdefault('additional_delay', 2)
+            try:
+                return REQ.get(*args, **kwargs)
+            except FailOnGetResponse as e:
+                if e.code != 429 or proxy is None:
+                    raise e
+            Statistic.E429_TIMEOUT = now + Statistic.E429_DELAY
+            kwargs.pop('additional_attempts')
+            return Statistic._get(*args, proxy=proxy, **kwargs)
+        else:
+            kwargs.setdefault('n_attempts', 20)
+            return proxy.get(*args, **kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         # REQ.get('https://www.codechef.com/')
@@ -89,6 +104,8 @@ class Statistic(BaseModule):
         data = json.loads(page)
         if data['status'] != 'success':
             raise ExceptionParseStandings(json.dumps(data))
+
+        is_frozen = data.get('isRanklistFrozen')
         if 'child_contests' in data:
             contest_infos = {
                 d['contest_code']: {'division': k}
@@ -124,6 +141,8 @@ class Statistic(BaseModule):
             n_total_page = None
             pbar = None
             ranking_type = None
+            problem_infos = {}
+            to_update_partial = []
             while n_total_page is None or n_page < n_total_page:
                 n_page += 1
                 time.sleep(2)
@@ -175,7 +194,9 @@ class Statistic(BaseModule):
                                 'short': code,
                                 'name': html.unescape(p['name']),
                                 'url': self.PROBLEM_URL_FORMAT_.format(code=code),
+                                'contest_key': key,
                             }
+                            problem_infos[code] = problem_info
                             d.append(problem_info)
 
                             more_problem_info = self.get_problem_info(problem_info,
@@ -213,10 +234,12 @@ class Statistic(BaseModule):
                         stats = (statistics or {}).get(handle, {})
                         problems = row.setdefault('problems', stats.get('problems', {}))
                         clear_problems_fields(problems)
-                        solved, upsolved = 0, 0
                         if problems_status:
+                            solved, upsolved = 0, 0
                             for k, v in problems_status.items():
                                 score = v.pop('score')
+                                is_solved = False
+                                is_scored = False
 
                                 if ranking_type == '1' and 'penalty' in v and score == 1:
                                     penalty = v.pop('penalty')
@@ -226,6 +249,7 @@ class Statistic(BaseModule):
                                         v['result'] = f'-{penalty}'
                                 else:
                                     v['result'] = score
+                                    is_scored = True
                                     penalty = 0
 
                                 if score > 0:
@@ -233,6 +257,10 @@ class Statistic(BaseModule):
                                         upsolved += 1
                                     else:
                                         solved += 1
+                                        is_solved = True
+
+                                if is_solved and is_scored and k in problem_infos and score:
+                                    problem_infos[k]['max_score'] = max(problem_infos[k].get('max_score', 0), score)
 
                                 if v.get('time'):
                                     time_in_seconds = 0
@@ -253,8 +281,9 @@ class Statistic(BaseModule):
                                     if not is_improved_solution(v, problem):
                                         continue
                                 problem.update(v)
-
+                                to_update_partial.append((problem, k))
                             row['solved'] = {'solving': solved, 'upsolving': upsolved}
+
                         country = d.pop('country_code')
                         if country:
                             d['country'] = country
@@ -274,16 +303,24 @@ class Statistic(BaseModule):
                     pbar.set_description(f'key={key} url={url}')
                     pbar.update()
 
-            has_penalty = False
-            for row in result.values():
-                p = row.get('penalty')
-                has_penalty = has_penalty or p and str(p) != "0"
-            if not has_penalty:
-                for row in result.values():
-                    row.pop('penalty', None)
+            if not users:
+                for problem, k in to_update_partial:
+                    max_score = get_item(problem_infos, (k, 'max_score'))
+                    if max_score and problem['result'] < max_score:
+                        problem['partial'] = True
+                    else:
+                        problem.pop('partial', None)
 
             if pbar is not None:
                 pbar.close()
+
+        has_penalty = False
+        for row in result.values():
+            p = row.get('penalty')
+            has_penalty = has_penalty or p and str(p) != "0"
+        if not has_penalty:
+            for row in result.values():
+                row.pop('penalty', None)
 
         standings = {
             'result': result,
@@ -293,6 +330,9 @@ class Statistic(BaseModule):
             'options': options,
         }
 
+        if is_frozen is not None:
+            standings['has_hidden_results'] = is_frozen
+
         if writers:
             writers = [w[0] for w in sorted(writers.items(), key=lambda w: w[1], reverse=True)]
             standings['writers'] = writers
@@ -300,7 +340,7 @@ class Statistic(BaseModule):
         return standings
 
     @staticmethod
-    def fetch_profle_page(user):
+    def fetch_profle_page(user, /, req):
         for format_url in (
             Statistic.PROFILE_URL_FORMAT_,
             Statistic.TEAM_URL_FORMAT_,
@@ -308,139 +348,144 @@ class Statistic(BaseModule):
             page = None
             page_url = None
             url = format_url.format(user=quote(user))
-            try:
-                ret = Statistic._get(url, return_url=True)
-                if not ret:
-                    continue
-                page, page_url = ret
-                if '/users/' not in page_url and '/teams/' not in page_url:
-                    page = None
-                break
-            except FailOnGetResponse as e:
-                if e.code == 404:
-                    page = None
-                else:
-                    raise e
+            response = Statistic._get(url, return_url=True, return_code=True, ignore_codes={404}, proxy=req)
+            page, page_url, page_code = response
+            if page_code == 404 or '/users/' not in page_url and '/teams/' not in page_url:
+                page = None
+            break
         return page, page_url
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
-        for user, (page, url) in zip(users, map(Statistic.fetch_profle_page, users)):
-            if pbar:
-                pbar.update()
+        with REQ.with_proxy(
+            time_limit=10,
+            filepath_proxies='sharedfiles/resource/codechef/proxies',
+            n_deferred=3,
+            inplace=False,
+        ) as req:
+            fetch_profle_page_func = partial(Statistic.fetch_profle_page, req=req)
+            for user, (page, url) in zip(users, map(fetch_profle_page_func, users)):
+                if pbar:
+                    pbar.update()
 
-            if page is None:
-                yield {'delete': True}
-                continue
+                if page is None:
+                    yield {'delete': True}
+                    continue
 
-            match = re.search(r'jQuery.extend\(Drupal.settings,(?P<data>[^;]*)\);$', str(page), re.MULTILINE)
-            data = json.loads(match.group('data'))
-            if 'date_versus_rating' not in data:
-                info = {}
-                info['is_team'] = True
-                regex = '<table[^>]*cellpadding=""[^>]*>.*?</table>'
-                match = re.search(regex, page, re.DOTALL)
-                if match:
-                    html_table = match.group(0)
-                    table = parsed_table.ParsedTable(html_table)
-                    for r in table:
-                        for k, v in list(r.items()):
-                            k = k.lower().replace(' ', '_')
-                            info[k] = v.value
+                match = re.search(r'jQuery.extend\(Drupal.settings,(?P<data>[^;]*)\);$', str(page), re.MULTILINE)
+                data = json.loads(match.group('data'))
+                if 'date_versus_rating' not in data:
+                    info = {}
+                    info['is_team'] = True
+                    regex = '<table[^>]*cellpadding=""[^>]*>.*?</table>'
+                    match = re.search(regex, page, re.DOTALL)
+                    if match:
+                        html_table = match.group(0)
+                        table = parsed_table.ParsedTable(html_table)
+                        for r in table:
+                            for k, v in list(r.items()):
+                                k = k.lower().replace(' ', '_')
+                                info[k] = v.value
 
-                matches = re.finditer(r'''
-                                      <td[^>]*>\s*<b[^>]*>Member[^<]*</b>\s*</td>\s*
-                                      <td[^>]*><a[^>]*href\s*=\s*"[^"]*/users/(?P<member>[^"/]*)"[^>]*>
-                                      ''', page, re.VERBOSE)
-                coders = set()
-                for match in matches:
-                    coders.add(match.group('member'))
-                if coders:
-                    info['members'] = list(coders)
+                    matches = re.finditer(r'''
+                                          <td[^>]*>\s*<b[^>]*>Member[^<]*</b>\s*</td>\s*
+                                          <td[^>]*><a[^>]*href\s*=\s*"[^"]*/users/(?P<member>[^"/]*)"[^>]*>
+                                          ''', page, re.VERBOSE)
+                    coders = set()
+                    for match in matches:
+                        coders.add(match.group('member'))
+                    if coders:
+                        info['members'] = list(coders)
 
-                ret = {'info': info, 'coders': coders}
-            else:
-                data = data['date_versus_rating']['all']
+                    ret = {'info': info, 'coders': coders}
+                else:
+                    data = data['date_versus_rating']['all']
 
-                matches = re.finditer(
-                    r'''
-                        <li[^>]*>\s*<label[^>]*>(?P<key>[^<]*):\s*</label>\s*
-                        <span[^>]*>(?P<value>[^<]*)</span>\s*</li>
-                    ''',
-                    page,
-                    re.VERBOSE,
-                )
+                    matches = re.finditer(
+                        r'''
+                            <li[^>]*>\s*<label[^>]*>(?P<key>[^<]*):\s*</label>\s*
+                            <span[^>]*>(?P<value>[^<]*)</span>\s*</li>
+                        ''',
+                        page,
+                        re.VERBOSE,
+                    )
 
-                info = {}
-                for match in matches:
-                    key = match.group('key').strip().replace(' ', '_').lower()
-                    value = match.group('value').strip()
-                    info[key] = value
+                    info = {}
+                    for match in matches:
+                        key = match.group('key').strip().replace(' ', '_').lower()
+                        value = match.group('value').strip()
+                        info[key] = value
 
-                match = re.search('<h1[^>]*class="h2-style"[^>]*>(?P<name>[^<]*)</h1>', page)
-                if match:
-                    info['name'] = html.unescape(match.group('name').strip())
+                    match = re.search('<h1[^>]*class="h2-style"[^>]*>(?P<name>[^<]*)</h1>', page)
+                    if match:
+                        info['name'] = html.unescape(match.group('name').strip())
 
-                match = re.search(r'''<header[^>]*>\s*<img[^>]*src=["'](?P<src>[^"']*)["'][^>]*>\s*<h1''', page)
-                if match:
-                    src = urljoin(url, match.group('src'))
-                    if 'default' not in src.split('/')[-1]:
-                        response = requests.head(src)
-                        if response.status_code < 400 and response.headers.get('Content-Length', '0') != '0':
-                            info['avatar_url'] = src
+                    match = re.search(r'''<header[^>]*>\s*<img[^>]*src=["'](?P<src>[^"']*)["'][^>]*>\s*<h1''', page)
+                    if match:
+                        src = urljoin(url, match.group('src'))
+                        if 'default' not in src.split('/')[-1]:
+                            response = requests.head(src)
+                            if response.status_code < 400 and response.headers.get('Content-Length', '0') != '0':
+                                info['avatar_url'] = src
 
-                contest_addition_update_params = {'clear_rating_change': True, 'try_fill_missed_ranks': True}
-                update = contest_addition_update_params.setdefault('update', {})
-                by = contest_addition_update_params.setdefault('by', ['key'])
-                prev_rating = None
-                for row in data:
-                    rating = row.get('rating')
-                    if not rating:
-                        continue
-                    rating = int(rating)
-                    info['rating'] = rating
+                    contest_addition_update_params = {'clear_rating_change': True, 'try_fill_missed_ranks': True}
+                    update = contest_addition_update_params.setdefault('update', {})
+                    by = contest_addition_update_params.setdefault('by', ['key'])
+                    prev_rating = None
+                    for row in data:
+                        rating = row.get('rating')
+                        if not rating:
+                            continue
+                        rating = int(rating)
+                        info['rating'] = rating
 
-                    code = row.get('code')
-                    name = row.get('name')
-                    end_time = row.get('end_date')
-                    if code:
-                        if re.search(r'\bdiv[ision]*[-_\s]+[ABCD1234]\b', name, re.I) \
-                           and re.search('[ABCD]$', code):
-                            code = code[:-1]
+                        code = row.get('code')
+                        name = row.get('name')
+                        end_time = row.get('end_date')
+                        if code:
+                            if (
+                                re.search(r'\bdiv[ision]*[-_\s]+[ABCD1234]\b', name, re.I)
+                                and re.search('[ABCDE]$', code)
+                                or re.search(r'^[A-Z]+[0-9]+[ABCD]$', code)
+                            ):
+                                code = code[:-1]
 
-                        u = update.setdefault(code, OrderedDict())
-                        u['new_rating'] = rating
-                        if prev_rating is not None:
-                            u['old_rating'] = prev_rating
-                            u['rating_change'] = rating - prev_rating
-                        u['_group'] = row['code']
-                        u['_rank'] = row['rank']
-                        u['_with_create'] = True
+                            u = update.setdefault(code, OrderedDict())
+                            u['new_rating'] = rating
+                            if prev_rating is not None:
+                                u['old_rating'] = prev_rating
+                                u['rating_change'] = rating - prev_rating
+                            u['_group'] = row['code']
+                            u['_rank'] = row['rank']
+                            u['_with_create'] = True
 
-                        new_name = name
-                        new_name = re.sub(r'\s*\([^\)]*\brated\b[^\)]*\)$', '', new_name, flags=re.I)
-                        new_name = re.sub(r'\s*\bdiv(ision)?[-_\s]+[ABCD1234]$', '', new_name, flags=re.I)
+                            new_name = name
+                            new_name = re.sub(r'\s*\([^\)]*\brated\b[^\)]*\)$', '', new_name, flags=re.I)
+                            new_name = re.sub(r'\s*\bdiv(ision)?[-_\s]+[ABCD1234]$', '', new_name, flags=re.I)
 
-                        if new_name != name:
-                            if 'title' not in by:
-                                by.append('title')
-                            update[new_name] = u
+                            if new_name != name:
+                                if 'title' not in by:
+                                    by.append('title')
+                                update[new_name] = u
 
-                        if end_time:
-                            end_time = arrow.get(end_time)
-                            year = str(end_time.year)
-                            if code.endswith(year[-2:]) and not code.endswith(year):
-                                update[code[:-2] + year] = u
+                            if row['code'] != u:
+                                update[row['code']] = u
 
-                    prev_rating = rating
+                            if end_time:
+                                end_time = arrow.get(end_time)
+                                year = str(end_time.year)
+                                if code.endswith(year[-2:]) and not code.endswith(year):
+                                    update[code[:-2] + year] = u
 
-                ret = {
-                    'info': info,
-                    'contest_addition_update_params': contest_addition_update_params,
-                }
+                        prev_rating = rating
 
-            yield ret
+                    ret = {
+                        'info': info,
+                        'contest_addition_update_params': contest_addition_update_params,
+                    }
+
+                yield ret
 
     @transaction.atomic()
     @staticmethod
@@ -625,8 +670,9 @@ class Statistic(BaseModule):
         problem_data = REQ.get(problem_url, return_json=True, ignore_codes={404, 403})
 
         if problem_data.get('status') == 'error':
-            problem_info['url'] = Statistic.CONTEST_PROBLEM_URL_FORMAT_.format(key=contest.key, code=code)
-            problem_url = Statistic.API_PROBLEM_URL_FORMAT_.format(key=contest.key, code=code)
+            contest_key = problem.get('contest_key', contest.key)
+            problem_info['url'] = Statistic.CONTEST_PROBLEM_URL_FORMAT_.format(key=contest_key, code=code)
+            problem_url = Statistic.API_PROBLEM_URL_FORMAT_.format(key=contest_key, code=code)
             problem_data = REQ.get(problem_url, return_json=True, ignore_codes={404, 403})
 
         problem_data.pop('body', None)
@@ -665,6 +711,8 @@ class Statistic(BaseModule):
         if native_rating and native_rating > 0:
             problem_info['native_rating'] = native_rating
 
+        problem_info['is_challenge'] = problem_data.get('category_name') == 'challenge'
+
         for field in (
             ('hints'),
             ('best_tag'),
@@ -672,6 +720,7 @@ class Statistic(BaseModule):
             ('video_editorial_url'),
             ('max_timelimit'),
             ('source_sizelimit'),
+            ('category_name'),
         ):
             if isinstance(field, tuple):
                 key, field = field

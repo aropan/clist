@@ -17,13 +17,13 @@ from django.core.management.commands import dumpdata
 from django.db import transaction
 from django.db.models import Count, Q
 from django.forms.models import model_to_dict
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from flatten_dict import flatten
 
-from clist.templatetags.extras import relative_url
+from clist.templatetags.extras import allowed_redirect, relative_url
 from my_oauth.models import Service, Token
 from true_coders.models import Coder
 
@@ -49,7 +49,7 @@ def unlink(request, name):
         messages.error(request, 'Not enough services')
     else:
         coder.token_set.filter(service__name=name).delete()
-    return HttpResponseRedirect(reverse('coder:settings', kwargs=dict(tab='social')))
+    return allowed_redirect(reverse('coder:settings', kwargs=dict(tab='social')))
 
 
 def process_data(request, service, access_token, data):
@@ -141,9 +141,9 @@ def response(request, name):
 def login(request):
     redirect_url = request.GET.get('next')
     if not redirect_url or not redirect_url.startswith('/'):
-        redirect_url = relative_url(request.META.get('HTTP_REFERER')) or 'clist:main'
+        redirect_url = relative_url(request.META.get('HTTP_REFERER')) or reverse('clist:main')
     if request.user.is_authenticated:
-        return redirect(redirect_url)
+        return allowed_redirect(redirect_url)
 
     session_durations = settings.SESSION_DURATIONS_
     session_duration = request.POST.get('session_duration')
@@ -160,7 +160,7 @@ def login(request):
             if user is None:
                 return HttpResponseBadRequest('Authentication failed')
             auth.login(request, user)
-            return redirect(redirect_url)
+            return allowed_redirect(redirect_url)
 
     request.session['next'] = redirect_url
     service = request.POST.get('service')
@@ -261,7 +261,7 @@ def signup(request, action=None):
         context['token'] = token
     else:
         if request.user.is_authenticated:
-            return redirect(request.session.pop('next', 'clist:main'))
+            return allowed_redirect(request.session.pop('next', reverse('clist:main')))
         return redirect('auth:login')
 
     return render(request, 'signup.html', context)

@@ -15,7 +15,7 @@ from django.db import models
 from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Value, When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast, window
-from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
+from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import get_template
 from django.urls import reverse
@@ -27,10 +27,10 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
-from clist.templatetags.extras import (as_number, format_time, get_country_name, get_item, get_problem_short,
-                                       get_problem_title, get_standings_divisions_order,
+from clist.templatetags.extras import (allowed_redirect, as_number, format_time, get_country_name, get_item,
+                                       get_problem_short, get_problem_title, get_standings_divisions_order,
                                        has_update_statistics_permission, is_ip_field, is_private_field, is_reject,
-                                       is_solved, is_yes, time_in_seconds, timestamp_to_datetime)
+                                       is_solved, is_yes, redirect_login, time_in_seconds, timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
@@ -857,7 +857,7 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     division_addition_fields = inplace_division and divisions_order and division != divisions_order[0]
     addition_fields = division_addition.get('fields', contest_fields) if division_addition_fields else contest_fields
     special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
-                      'medal', 'raw_rating']
+                      'medal', 'raw_rating', 'medal_percentage']
     if hidden_fields is None:
         hidden_fields = list(contest.info.get('hidden_fields', []))
     hidden_fields_values = hidden_fields_values or set()
@@ -966,7 +966,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         if updated_orderby != orderby:
             query = request.GET.copy()
             query.setlist('orderby', updated_orderby)
-            return redirect(f'{request.path}?{query.urlencode()}')
+            return allowed_redirect(f'{request.path}?{query.urlencode()}')
 
     find_me = request.GET.get('find_me')
     if find_me:
@@ -1683,9 +1683,13 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     return render(request, template, context)
 
 
-@login_required
 @ratelimit(key='user', rate='1000/h', block=True)
 def solutions(request, sid, problem_key):
+    is_modal = request.is_ajax()
+    if not request.user.is_authenticated:
+        if is_modal:
+            return HttpResponseForbidden()
+        return redirect_login(request)
     statistic = get_object_or_404(Statistics.objects.select_related('account', 'contest', 'contest__resource'), pk=sid)
     problems = statistic.addition.get('problems', {})
     if problem_key not in problems:
@@ -1719,9 +1723,9 @@ def solutions(request, sid, problem_key):
 
     return render(
         request,
-        'solution-source.html' if request.is_ajax() else 'solution.html',
+        'solution-source.html' if is_modal else 'solution.html',
         {
-            'is_modal': request.is_ajax(),
+            'is_modal': is_modal,
             'statistic': statistic,
             'account': statistic.account,
             'contest': statistic.contest,
@@ -1891,7 +1895,7 @@ def versus(request, query):
 
     if request.GET.get('coder'):
         coder = get_object_or_404(Coder, pk=request.GET.get('coder'))
-        return redirect(f'{request.path}vs/{coder.username}')
+        return allowed_redirect(f'{request.path}vs/{coder.username}')
 
     if request.GET.get('remove'):
         idx = int(request.GET.get('remove'))
@@ -2147,7 +2151,7 @@ def virtual_start(request, template='virtual_start.html'):
     elif contest and contest.isdigit():
         contest = Contest.objects.get(pk=contest)
         if resource and contest.resource_id != resource.id:
-            return redirect(url_transform(request, contest=None, with_remove=True))
+            return allowed_redirect(url_transform(request, contest=None, with_remove=True))
     elif contest:
         return HttpResponseBadRequest('Invalid contest')
     if contest:
@@ -2155,7 +2159,7 @@ def virtual_start(request, template='virtual_start.html'):
 
     action = request.GET.get('action')
     if action == 'start':
-        return_redirect = redirect(url_transform(request, action=None, with_remove=True))
+        return_redirect = allowed_redirect(url_transform(request, action=None, with_remove=True))
         if not contest:
             request.logger.error('No contest to start')
             return return_redirect

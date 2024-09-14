@@ -38,11 +38,11 @@
 
     {% if has_country or fields_to_select %}{% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}{% endif %}
 
-    {% include 'country_filter.html' %}
+    {% include "country_filter.html" %}
 
-    {% include 'fields_to_select.html' %}
+    {% include "fields_to_select.html" %}
 
-    {% include 'resource_filter.html' with groupby=False disabled=disable_switches %}
+    {% include "resource_filter.html" with groupby=False disabled=disable_switches %}
 
     {% if not request.user.is_authenticated %}
     <input type="hidden" name="detail" value="{% if with_detail %}true{% else %}false{% endif %}"/>

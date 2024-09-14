@@ -12,7 +12,7 @@
           {% if not account %}
             {{ member.account }}
           {% else %}
-            {% include "account_table_cell.html" with account=account addition=None resource=account.resource without_circle=True without_country=True with_fixed_width=False %}
+            {% include "account_table_cell.html" with account=account addition=None resource=account.resource without_circle=True with_fixed_width=False without_inline_url=True %}
           {% endif %}
         {% endwith %}
       {% elif member and member.coder %}

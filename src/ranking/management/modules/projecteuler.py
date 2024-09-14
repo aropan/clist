@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import io
-import json
-import os
 import random
 import re
 from collections import OrderedDict
@@ -68,13 +66,11 @@ class Statistic(BaseModule):
         with REQ.with_proxy(
             time_limit=5,
             n_limit=25,
-            filepath_proxies=os.path.join(os.path.dirname(__file__), '.projecteuler.proxies'),
+            filepath_proxies='sharedfiles/resource/projecteuler/proxies',
+            dump_proxy_filepath='logs/legacy/projecteuler.proxy',
             connect=get_standings_page,
         ) as req:
             page = req.proxer.get_connect_ret()
-            if req.proxer.proxy:
-                with open('logs/legacy/projecteuler.proxy', 'w') as fo:
-                    json.dump(req.proxer.proxy, fo, indent=2)
 
         result = {}
 

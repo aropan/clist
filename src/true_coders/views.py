@@ -35,11 +35,11 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
 from clist.models import Contest, ContestSeries, ProblemTag, Resource
-from clist.templatetags.extras import (accounts_split, as_number, asfloat, format_time, get_item, get_problem_short,
-                                       get_timezones, has_update_statistics_permission, is_rating_prediction_field,
-                                       is_yes, query_transform, quote_url, relative_url)
+from clist.templatetags.extras import (accounts_split, allowed_redirect, as_number, asfloat, format_time, get_item,
+                                       get_problem_short, get_timezones, has_update_statistics_permission,
+                                       is_rating_prediction_field, is_yes, query_transform, quote_url, relative_url)
 from clist.templatetags.extras import slug as slugify
-from clist.templatetags.extras import toint
+from clist.templatetags.extras import toint, url_transform
 from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from favorites.models import Activity
@@ -996,10 +996,18 @@ def change(request):
     if name == "theme":
         if value not in django_settings.THEMES_:
             return HttpResponseBadRequest("invalid theme name")
-        if value == 'default':
-            coder.settings.pop('theme')
+        if value == "default":
+            coder.settings.pop("theme")
         else:
-            coder.settings['theme'] = value
+            coder.settings["theme"] = value
+        coder.save()
+    if name == "highlight":
+        if value not in django_settings.HIGHLIGHT_STYLES:
+            return HttpResponseBadRequest("invalid highlight name")
+        if value == "default":
+            coder.settings.pop("highlight")
+        else:
+            coder.settings["highlight"] = value
         coder.save()
     elif name == "timezone":
         if value not in (tz["name"] for tz in get_timezones()):
@@ -1627,6 +1635,11 @@ def search(request, **kwargs):
         for tz in get_timezones():
             ret[tz["name"]] = f'{tz["name"]} {tz["repr"]}'
         return JsonResponse(ret)
+    elif query == 'highlights':
+        ret = {}
+        for h in django_settings.HIGHLIGHT_STYLES:
+            ret[h] = h
+        return JsonResponse(ret)
     elif query == 'resources':
         qs = Resource.objects.all()
         order = ['-n_accounts', 'pk']
@@ -1828,6 +1841,27 @@ def search(request, **kwargs):
 
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': f, 'text': f} for f in qs]
+    elif query == 'problem-field-to-select':
+        resource = get_object_or_404(Resource, pk=request.GET.get('resource'))
+        problems_fields_types = resource.problems_fields_types
+        field = request.GET.get('field')
+        if field in problems_fields_types:
+            field = f'info__{field}'
+        elif '__' in field:
+            return HttpResponseBadRequest('Invalid field')
+        qs = resource.problem_set.all()
+        text = request.GET.get('text')
+        if text:
+            qs = qs.filter(**{f'{field}__icontains': text})
+        qs = qs.distinct(field).values_list(field, flat=True)
+        qs = qs[(page - 1) * count:page * count]
+        ret = [
+            {
+                'id': f if f is not None else 'none',
+                'text': str(f),
+            }
+            for f in qs
+        ]
     elif query == 'charts-field-select':
         if not request.user.is_staff:
             return HttpResponseBadRequest('You have no permission')
@@ -2239,7 +2273,7 @@ def view_list(request, uuid):
                         logger.error(f'Error while adding raw to coder list: {e}')
                         request.logger.error(f'Some problem with value = "{value}"')
                 group_id += 1
-        return HttpResponseRedirect(request.path)
+        return allowed_redirect(request.path)
 
     coder_values = {}
     for v in coder_list.values.order_by('group_id').all():
@@ -2347,8 +2381,7 @@ def accounts(request, template='accounts.html'):
                 message = f'Added by <a href="{coder_url}">{coder.display_name}</a>.'
                 NotificationMessage.link_accounts(link_coder, linked_accounts, message=message, sender=coder)
                 request.logger.success(f'Linked {len(linked_accounts)} account(s) to {link_coder.username}')
-            query = query_transform(request, with_remove=True, accounts=None, action=None)
-            return HttpResponseRedirect(f'{request.path}?{query}')
+            return allowed_redirect(url_transform(request, with_remove=True, accounts=None, action=None))
     if action == 'add_to_list':
         to_list_accounts = set(request.GET.getlist('to_list_accounts'))
         to_list_accounts = Account.objects.filter(pk__in=to_list_accounts)

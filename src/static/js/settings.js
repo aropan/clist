@@ -26,6 +26,30 @@ $(function() {
         setTimeout(function() { editable.input.$input.select2('open'); }, 1);
     })
 
+    $('#highlight').editable({
+        type: 'select',
+        source: '/settings/search/?query=highlights',
+        showbuttons: false,
+        display: function(value, sourceData, response) {
+            if (response == 'accepted') {
+                window.location.replace(PREFERENCES_URL);
+            }
+            if (value) {
+                $(this).html(value.charAt(0).toUpperCase() + value.slice(1));
+            }
+        },
+        onblur: 'ignore',
+    }).on('shown', function(e, editable){
+        editable.input.$input.select2({
+            width: 250,
+            placeholder: 'Select highlight',
+            val: editable.input.$input.val(),
+        }).change(function() {
+            setTimeout(function() { editable.input.$input.select2('close'); }, 1);
+        })
+        setTimeout(function() { editable.input.$input.select2('open'); }, 1);
+    })
+
     $('#timezone').editable({
         type: 'select',
         source: '/settings/search/?query=timezones',

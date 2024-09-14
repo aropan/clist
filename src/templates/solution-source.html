@@ -18,6 +18,14 @@
   }
 </script>
 
+{% if stat.language %}
+{% define stat.language|highlight_class as solution_syntax %}
+{% elif stat.lang_class %}
+{% define stat.lang_class as solution_syntax %}
+{% else %}
+{% define "" as solution_syntax %}
+{% endif %}
+
 <{% if is_modal %}div class="modal-header"{% else %}h4{% endif %}>
   {% if is_modal %}
   <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -55,10 +63,14 @@
       {% endif %}
     {% endwith %}
   {% endfor %}
+
+  {% if solution_syntax %}
+  <span class="solution-attr-name">syntax</span>: {{ solution_syntax }}
+  {% endif %}
 </{% if is_modal %}div{% else %}h4{% endif %}>
 
 <div{% if is_modal %} class="modal-body"{% endif %}>
-  <pre style="padding: 0px"><code class="{% if stat.language %}{{ stat.language|highlight_class }}{% endif %}{% if stat.lang_class %} {{ stat.lang_class }}{% endif %}">{{ stat.solution }}</code></pre>
+  <pre style="padding: 0px"><code class="{{ solution_syntax }}">{{ stat.solution }}</code></pre>
 </div>
 
 {% if is_modal %}

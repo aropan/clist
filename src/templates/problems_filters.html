@@ -15,13 +15,15 @@
 
   {% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}
 
-  {% include 'resource_filter.html' %}
+  {% include "resource_filter.html" %}
 
-  {% include 'contest_filter.html' with has_problems=True %}
+  {% include "contest_filter.html" with has_problems=True %}
 
-  {% include 'tag_filter.html' %}
+  {% include "tag_filter.html" %}
 
   {% include "field_to_select.html" with field="field" data=custom_fields_select|simple_select_data %}
+
+  {% include "fields_to_select_filter.html" with query="problem-field-to-select" params="resource"|split fields=filter_fields resource=selected_resource %}
 
   <div class="input-group input-group-sm">
     <input

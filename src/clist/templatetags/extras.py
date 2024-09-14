@@ -21,10 +21,13 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Value
+from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
 from django.template.base import Node
 from django.template.defaultfilters import floatformat, slugify, stringfilter
 from django.urls import NoReverseMatch, reverse
 from django.utils.functional import keep_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django_countries.fields import countries
@@ -36,7 +39,7 @@ register = template.Library()
 
 @register.filter
 @stringfilter
-def split(string, sep):
+def split(string, sep=" "):
     return string.split(sep)
 
 
@@ -63,11 +66,16 @@ def get_item(data, key, default=None):
     if isinstance(key, str):
         for sep in ('.', '__'):
             if sep in key:
-                for k in key.split(sep):
-                    data = get_item(data, k)
-                    if data is None:
-                        return default
-                return data
+                key = key.split(sep)
+                break
+
+    if isinstance(key, (list, tuple)):
+        for k in key:
+            data = get_item(data, k)
+            if data is None:
+                return default
+        return data
+
     return default
 
 
@@ -491,6 +499,17 @@ def url_transform(request, *args, **kwargs):
     return request.path + '?' + query
 
 
+def allowed_redirect(url):
+    if not url_has_allowed_host_and_scheme(url, allowed_hosts=settings.ALLOWED_REDIRECT_HOSTS_):
+        return HttpResponseForbidden('Invalid URL')
+    return redirect(url)
+
+
+def redirect_login(request):
+    next_url = quote_url(request.get_full_path())
+    return allowed_redirect(reverse('auth:login') + f'?next={next_url}')
+
+
 @register.simple_tag
 def query_fields(request, *args, before='&'):
     updated = request.GET.copy()
@@ -574,55 +593,30 @@ def coder_color_class(resource, *values):
     return f'coder-color coder-{rating["color"]}'
 
 
-@register.simple_tag
-def coder_color_circle(resource, *values, size=16, **kwargs):
-    Account = apps.get_model('ranking', 'Account')
-    cleaned_values = [a.info if isinstance(a, Account) else a for a in values]
-    rating, value = resource.get_rating_color(cleaned_values)
-    if not rating:
-        return ''
-    color = rating['hex_rgb']
-    radius = size // 2
-    width = size // 10
-    reverse_percent = resource.info.get('ratings', {}).get('reverse_circle_percent')
-    if ('prev' if reverse_percent else 'next') not in rating:
-        fill = f'<circle cx="{radius}" cy="{radius}" r="{size // 5}" style="fill: {color}"></circle>'
-        title = f'{value}'
-    else:
-        prv = max(rating.get('prev', rating['low']), 0)
-        nxt = rating.get('next', value)
-        percent = (value - prv) / (nxt - prv)
-        if reverse_percent:
-            percent = 1 - percent
-        v = percent * (size - 2 * width) + width
+def circle_div(size, color, radius, width, fill, div_class=None, title=None):
+    if isinstance(fill, (float, int)):
+        v = fill * (size - 2 * width) + width
         fill = f'''
-<path
-    clip-path="url(#rating-clip-{size})"
-    d="M 0 {size} v-{round(v, 3)} h {size} 0 v{size} z"
-    style="fill: {color}"
-/>
-'''
-        title = f'{value}'
-        if 'next' in rating:
-            title += f' ({percent * 100:.1f}%)'
-    if 'name' in rating:
-        title += f'<br/>{rating["name"]}'
-    if len(values) == 1 and isinstance(values[0], Account):
-        resource_rank = values[0].resource_rank
-        if resource_rank:
-            total_rank = resource.n_rating_accounts
-            percent = resource_rank * 100 / total_rank
-            percent = format_to_significant_digits(percent, 2)
-            title += f'<br/>#{resource_rank} of {total_rank} ({percent}%)'
+            <path
+            clip-path="url(#rating-clip-{size})"
+            d="M 0 {size} v-{round(v, 3)} h {size} 0 v{size} z"
+            style="fill: {color}"
+            />
+        '''
 
     div_size = radius * 2 + width
+    div_attrs = {}
+    if div_class:
+        div_attrs['class'] = div_class
+    if title:
+        div_attrs['title'] = title
+        div_attrs['data-html'] = 'true'
+        div_attrs['data-toggle'] = 'tooltip'
+    div_attrs = ' '.join(f'{k}="{v}"' for k, v in div_attrs.items())
     return mark_safe(
         f'''
         <div
-            class="coder-circle"
-            title="{title}"
-            data-toggle="tooltip"
-            data-html="true"
+            {div_attrs}
             style="display: inline-block; vertical-align: top; padding-top: 1px"
         >
             <div style="height: {div_size}px; ">
@@ -638,6 +632,54 @@ def coder_color_circle(resource, *values, size=16, **kwargs):
             </div>
         </div>
         ''')
+
+
+@register.simple_tag
+def medal_percentage(medal, percent, info=None, size=16):
+    radius = size // 2
+    width = size // 10
+    title = f'{medal.title()}'
+    if info:
+        title += f'<br/>{info}'
+    title += f'<br/>{percent * 100:.2f}%'
+    return circle_div(size, 'inherit', radius, width, percent, title=title, div_class=f'{medal}-medal-percentage')
+
+
+@register.simple_tag
+def coder_color_circle(resource, *values, size=16, **kwargs):
+    Account = apps.get_model('ranking', 'Account')
+    cleaned_values = [a.info if isinstance(a, Account) else a for a in values]
+    rating, value = resource.get_rating_color(cleaned_values)
+    if not rating:
+        return ''
+    color = rating['hex_rgb']
+    radius = size // 2
+    width = size // 10
+    reverse_percent = resource.info.get('ratings', {}).get('reverse_circle_percent')
+
+    title = f'{value}'
+    has_percent = ('prev' if reverse_percent else 'next') in rating
+    if has_percent:
+        prv = max(rating.get('prev', rating['low']), 0)
+        nxt = rating.get('next', value)
+        percent = (value - prv) / (nxt - prv)
+        if reverse_percent:
+            percent = 1 - percent
+        fill = percent
+        if 'next' in rating:
+            title += f' ({percent * 100:.1f}%)'
+    if not has_percent or rating.get('target'):
+        fill = f'<circle cx="{radius}" cy="{radius}" r="{size // 5}" style="fill: {color}"></circle>'
+    if 'name' in rating:
+        title += f'<br/>{rating["name"]}'
+    if len(values) == 1 and isinstance(values[0], Account):
+        resource_rank = values[0].resource_rank
+        if resource_rank:
+            total_rank = resource.n_rating_accounts
+            percent = resource_rank * 100 / total_rank
+            percent = format_to_significant_digits(percent, 2)
+            title += f'<br/>#{resource_rank} of {total_rank} ({percent}%)'
+    return circle_div(size, color, radius, width, fill, title=title, div_class='coder-circle')
 
 
 @register.filter
@@ -945,9 +987,13 @@ def timestamp_to_datetime(value):
 
 @register.filter
 def highlight_class(lang):
-    if lang == 'python3':
-        return 'python'
-    return lang.replace(' ', '').lower()
+    lang = lang.lower()
+    lang = re.sub(r'\s*\(.*\)$', '', lang)
+    lang = re.sub(r'\s*[.0-9]+', '', lang)
+    lang = re.sub(r'([a-z])\+\+', r'\1pp', lang)
+    lang = re.sub(r'([a-z])\#', r'\1sharp', lang)
+    lang = re.sub(' ', '', lang)
+    return lang
 
 
 @register.tag
@@ -1147,6 +1193,24 @@ def get_country_from_account(context, account):
 @register.simple_tag(takes_context=True)
 def get_country_from_coder(context, coder):
     return get_country_from(context, coder.country, coder.settings.get('custom_countries'))
+
+
+@register.simple_tag
+def get_country_from_members(accounts, members):
+    counter = defaultdict(int)
+    for member in members:
+        if 'account' not in member or member.get('without_country'):
+            continue
+        account = accounts.get(member['account'])
+        if account is None or not account.country:
+            continue
+        counter[account.country.code] += 1
+    if not counter:
+        return
+    country = max(counter, key=counter.get)
+    if counter[country] <= len(members) / 2:
+        return
+    return country
 
 
 @register.simple_tag
@@ -1652,3 +1716,13 @@ def profile_url(account, resource=None, inner=None, html_class=None):
         inner = inner or icon_to('profile')
     html_class = f'class="{html_class}"' if html_class else ''
     return mark_safe(f'<a href="{url}" {html_class} target="_blank" rel="noopener">{inner}</a>')
+
+
+@register.simple_tag
+def create_dict(**kwargs):
+    return kwargs
+
+
+@register.simple_tag
+def create_list(*args):
+    return list(args)

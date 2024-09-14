@@ -681,7 +681,15 @@ class Statistic(BaseModule):
         if 'url' not in problem:
             raise ExceptionParseStandings('Not found url')
 
-        page = REQ.get(problem['url'])
+        filepath_proxies = 'sharedfiles/resource/atcoder/proxies'
+        with REQ.with_proxy(
+            time_limit=5,
+            n_limit=30,
+            filepath_proxies=filepath_proxies,
+            connect=lambda req: req.get(problem['url']),
+        ) as req:
+            _, page = req.proxer.get_connect_ret()
+
         match = re.search('<pre[^>]*id="submission-code"[^>]*>(?P<source>[^<]*)</pre>', page)
         if not match:
             raise ExceptionParseStandings('Not found source code')

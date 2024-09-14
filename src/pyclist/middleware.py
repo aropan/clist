@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from pytz import timezone as pytz_timezone
 
-from clist.templatetags.extras import quote_url
+from clist.templatetags.extras import redirect_login
 from true_coders.models import Coder
 from utils.custom_request import custom_request
 
@@ -24,7 +24,7 @@ def DebugPermissionOnlyMiddleware(get_response):
         if first_path not in settings.DEBUG_PERMISSION_EXCLUDE_PATHS:
             if not request.user.is_authenticated:
                 if first_path not in ('login', 'signup', 'oauth', 'calendar', 'telegram'):
-                    return HttpResponseRedirect(reverse('auth:login') + f'?next={quote_url(request.get_full_path())}')
+                    return redirect_login(request)
             elif not request.user.has_perm('auth.view_debug'):
                 return HttpResponseForbidden()
 

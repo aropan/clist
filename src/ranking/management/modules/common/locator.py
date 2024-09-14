@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import logging
 import os
 import re
 
@@ -8,12 +9,14 @@ from filelock import FileLock
 from geopy.extra.rate_limiter import RateLimiter
 from geopy.geocoders import Nominatim
 
+logging.getLogger('geopy').setLevel(logging.INFO)
+
 
 class Locator:
 
     def __init__(
         self,
-        locations_file=os.path.join(os.path.dirname(__file__), '.locations.yaml'),
+        locations_file='sharedfiles/locator/data.yaml',
         default_locations=None,
     ):
         self.locations_file = locations_file
@@ -29,6 +32,8 @@ class Locator:
 
         location = re.sub(r'(\bг\.|\bг\b)', '', location)
         location = re.sub(r'<[^>]*>', ' ', location)
+        location = re.sub(r'[.,\s]+', ' ', location)
+        location = location.strip()
 
         location_lower = location.lower()
         if self.default_locations and location_lower in self.default_locations:
@@ -101,10 +106,10 @@ class Locator:
                     yaml.dump(self.locations, fo, encoding='utf8', allow_unicode=True)
 
     def __enter__(self):
-        self.read()
         self.lock.acquire()
+        self.read()
         return self
 
     def __exit__(self, *args, **kwargs):
-        self.lock.release()
         self.write()
+        self.lock.release()

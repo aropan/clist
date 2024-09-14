@@ -3,7 +3,6 @@
 
 import html
 import json
-import os
 import re
 import xml.etree.ElementTree as ET
 from collections import OrderedDict, defaultdict
@@ -102,7 +101,7 @@ class Statistic(BaseModule):
         req = REQ.with_proxy(
             time_limit=10,
             n_limit=50,
-            filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
+            filepath_proxies='sharedfiles/resource/topcoder/proxies',
             connect=lambda req: req.get('https://www.topcoder.com/', n_attempts=1),
             attributes=dict(n_attempts=5),
         )
@@ -602,7 +601,7 @@ class Statistic(BaseModule):
         with REQ.with_proxy(
             time_limit=10,
             n_limit=20,
-            filepath_proxies=os.path.join(os.path.dirname(__file__), '.topcoder.proxies'),
+            filepath_proxies='sharedfiles/resource/topcoder/proxies',
             connect=lambda req: req.get(active_algorithm_list_url, n_attempts=1),
             attributes=dict(n_attempts=5),
         ) as req:

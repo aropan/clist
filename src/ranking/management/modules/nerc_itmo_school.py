@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import logging
-import os
 import re
 from collections import OrderedDict, defaultdict
 
@@ -13,11 +11,8 @@ from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules.nerc_itmo_helper import parse_xml
 
-logging.getLogger('geopy').setLevel(logging.INFO)
-
 
 class Statistic(BaseModule):
-    LOCATION_CACHE_FILE = os.path.join(os.path.dirname(__file__), '.locations.yaml')
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)

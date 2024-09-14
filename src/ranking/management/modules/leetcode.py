@@ -91,7 +91,8 @@ class Statistic(BaseModule):
 
     @staticmethod
     def _get_proxies_file(region):
-        return os.path.join(os.path.dirname(__file__), f'.leetcode.{region or "DEFAULT"}.proxies')
+        region = region or 'DEFAULT'
+        return f'sharedfiles/resource/leetcode/proxies.{region.lower()}',
 
     @staticmethod
     def fetch_submission(submission, req=REQ, raise_on_error=False, n_attempts=1):
@@ -679,7 +680,7 @@ class Statistic(BaseModule):
             time_limit=10,
             n_limit=30,
             inplace=False,
-            filepath_proxies=os.path.join(os.path.dirname(__file__), '.leetcode.proxies'),
+            filepath_proxies='sharedfiles/resource/leetcode/proxies',
         ) as req, PoolExecutor(max_workers=8) as executor:
             if os.path.exists(Statistic.STATE_FILE):
                 with open(Statistic.STATE_FILE, 'r') as fo:

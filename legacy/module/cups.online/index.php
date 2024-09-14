@@ -4,6 +4,11 @@
   $url = $URL;
   $data = curlexec($url, null, array("json_output" => 1));
 
+  if (!is_array($data) || !isset($data['results'])) {
+    trigger_error('Unexpected response', E_USER_WARNING);
+    return;
+  }
+
   foreach ($data['results'] as $contest) {
     $categories = implode(' ', $contest['categories']);
     foreach ($contest['round_set'] as $round) {

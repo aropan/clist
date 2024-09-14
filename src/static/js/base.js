@@ -568,15 +568,16 @@ function click_activity(event, el, callback) {
         selector += '[data-content-type="' + $(el).attr('data-content-type') + '"]'
         selector += '[data-object-id="' + $(el).attr('data-object-id') + '"]'
         selector += '[data-activity-type="' + $(el).attr('data-activity-type') + '"]'
-        $(selector).each(function() {
+        $.find(selector).forEach(function(el) {
+          var $el = $(el)
           if (data['state']) {
-            $(this).removeClass($(this).data('unselected-class'))
-            $(this).addClass($(this).data('selected-class'))
-            $(this).addClass('selected-activity')
+            $el.removeClass($el.data('unselected-class'))
+            $el.addClass($el.data('selected-class'))
+            $el.addClass('selected-activity')
           } else {
-            $(this).removeClass($(this).data('selected-class'))
-            $(this).addClass($(this).data('unselected-class'))
-            $(this).removeClass('selected-activity')
+            $el.removeClass($el.data('selected-class'))
+            $el.addClass($el.data('unselected-class'))
+            $el.removeClass('selected-activity')
           }
         })
         if (callback) {

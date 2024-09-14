@@ -7,8 +7,7 @@
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/standings.js' %}"></script>
 
-<link href="{% static_ts 'css/highlight-9.18.1-default.min.css' %}" rel="stylesheet">
-<script src="{% static_ts 'js/highlight.pack.js' %}"></script>
+{% include "highlight.html" %}
 
 {% if groupby and groupby != 'none' %}
 <script src="{% static_ts 'js/Chart.min.js' %}"></script>
@@ -43,6 +42,7 @@
   submissions = false
   {% endif %}
 
+  score_precision = {{ contest.info.standings.score_precision|default:"undefined" }}
   unfreezing = false
 </script>
 
@@ -171,7 +171,7 @@
     <div id="standings-authors" class="text-center">
       <b>Writer{% if writers|length > 1 %}s{% endif %}</b>
       {% for writer in writers %}
-        {% include "account_table_cell.html" with account=writer addition=None resource=contest.resource %}
+        {% include "account_table_cell.html" with account=writer addition=None resource=contest.resource without_inline_url=True %}
       {% endfor %}
     </div>
   {% endif %}

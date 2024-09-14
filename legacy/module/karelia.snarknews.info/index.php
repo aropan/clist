@@ -149,6 +149,7 @@
             $title = $data['title'];
             $date = $data['date'];
             $url = $data['url'];
+            $title = preg_replace("/^day {$day}[.:]*\s*/i", '', $title);
             $prefix = 'Day ' . $day . ': ';
             if (substr($title, 0, strlen($prefix)) != $prefix) {
                 $title = $prefix . $title;

@@ -281,7 +281,11 @@ STATIC_JSON_TIMEZONES = os.path.join(BASE_DIR, 'static', 'json', 'timezones.json
 RESOURCES_ICONS_PATHDIR = 'img/resources/'
 RESOURCES_ICONS_SIZES = [32, 64]
 
-STATICFILES_STORAGE = 'static_compress.CompressedStaticFilesStorage'
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileystemStorage"},
+    'staticfiles': {'BACKEND': 'static_compress.CompressedStaticFilesStorage'},
+}
+
 STATIC_COMPRESS_METHODS = ['gz']
 
 
@@ -290,6 +294,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 MEDIA_SIZES_PATHDIR = 'sizes/'
 
 TASTYPIE_DEFAULT_FORMATS = ['json', 'jsonp', 'yaml', 'xml', 'plist']
+
+HIGHLIGHT_STYLES_FOLDER = os.path.join(REPO_STATIC_ROOT, 'highlight/styles')
+HIGHLIGHT_STYLE_SUFFIX = '.min.css'
+HIGHLIGHT_STYLES = []
+for style in os.listdir(HIGHLIGHT_STYLES_FOLDER):
+    if style.endswith(HIGHLIGHT_STYLE_SUFFIX):
+        HIGHLIGHT_STYLES.append(style[:-len(HIGHLIGHT_STYLE_SUFFIX)])
+HIGHLIGHT_STYLES.sort()
 
 LOGIN_URL = '/login/'
 
@@ -596,6 +608,7 @@ FAVORITE_SETTINGS_ = {
 }
 DEFAULT_TIME_ZONE_ = 'UTC'
 CHANING_HOSTS_ = ['clist.by', 'dev.clist.by']
+ALLOWED_REDIRECT_HOSTS_ = {'clist.by', 'dev.clist.by'}
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
 HTTPS_HOST_URL_ = 'https://' + HOST_
 MAIN_HOST_URL_ = 'https://clist.by'
