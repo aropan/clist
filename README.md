@@ -1,21 +1,40 @@
-### Run locally
+## Prerequisites
 
-You need `python3` (more fresher is better, tested on 3.10) and `docker` (with `docker compose` v2).
+- [Python 3 (version 3.10 or later)](https://www.python.org/downloads/) 
+- [Docker (with Docker Compose v2)](https://www.docker.com/products/docker-desktop/)
 
-* Clone fork with `--recursive`:
+## Setup 
+
+1. Clone repository:  
+You need to clone the forked repository with all its submodules therfore use --recursive:
 ```
-git clone --recursive git@github.com:aropan/clist.git
-cd clist
+git clone --recursive https://github.com/userName/clist.git
 ```
-
-* Set default variables and build dev container (you can always press Enter and leave the defaults as they are):
+2. Change to `clist` Directory  
+``` 
+cd clist 
+```
+3. Set Default Variables and Build Dev Container :   
+Run the configure.py script to set up default variables. You can usually press Enter to accept the default values:
 ```
 python3 ./configure.py
 ```
-
-* Run dev container:
+4. Run the Development Container:  
+Use Docker Compose to build and run the development container:
 ```
 docker compose up --build dev
 ```
+If you are using Mac and if you are getting error `docker-compose not found` then try using below command first
+```
+brew install docker-compose
+```
+5. Access the Application:  
+Open your web browser and navigate to http://localhost:10042/ to start using the application.
 
-* Open [http://localhost:10042/](http://localhost:10042/) and enjoy.
+## Contributing
+
+1. Fork it And clone it.
+2. Create your feature branch: ```git checkout -b my-new-feature```
+3. Commit your changes: ```git commit -m 'Add some feature’```
+4. Push to the branch: ```git push origin my-new-feature```
+5. Submit a pull request :D
