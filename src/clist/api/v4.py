@@ -34,7 +34,7 @@ class AccountResource(v3.AccountResource):
             'id': ['exact', 'in'],
             'resource_id': ['exact', 'in'],
             'resource': ['exact', 'regex', 'iregex', 'in'],
-            'handle': ['exact', 'in'],
+            'handle': ['exact', 'in', 'startswith'],
             'rating': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
             'resource_rank': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
             'last_activity': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
