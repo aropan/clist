@@ -223,6 +223,10 @@ a.solution:hover span {
   z-index: 10;
 }
 
+#table-inner-scroll table tr:not(.info) .sticky-column {
+  background-color: inherit;
+}
+
 .table tr:nth-of-type(n).info td {
   background-color: #d9edf7;
 }

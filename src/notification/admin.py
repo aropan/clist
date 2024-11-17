@@ -1,3 +1,5 @@
+from sql_util.utils import SubqueryCount
+
 from notification.models import Calendar, Notification, NotificationMessage, Subscription, Task
 from pyclist.admin import BaseModelAdmin, admin_register
 
@@ -8,15 +10,28 @@ class NotificationAdmin(BaseModelAdmin):
     list_filter = ['method']
     search_fields = ['coder__user__username', 'method', 'period']
 
-    def get_readonly_fields(self, request, obj=None):
-        return super().get_readonly_fields(request, obj)
-
 
 @admin_register(Subscription)
 class SubscriptionAdmin(BaseModelAdmin):
-    list_display = ['coder', 'method', 'resource', 'contest', 'account', 'coder_list', 'coder_chat', 'enable']
+    list_display = ['coder', 'method', 'enable', 'n_accounts', 'n_coders',
+                    'resource', 'contest', 'coder_list', 'coder_chat']
     list_filter = ['enable', 'method']
-    search_fields = ['coder__username', 'account__key']
+    search_fields = ['coder__username', 'accounts__key', 'coders__username']
+
+    def n_accounts(self, obj):
+        return obj.n_accounts
+
+    def n_coders(self, obj):
+        return obj.n_coders
+
+    def get_queryset(self, request):
+        ret = super().get_queryset(request)
+        ret = ret.annotate(n_accounts=SubqueryCount('accounts'))
+        ret = ret.annotate(n_coders=SubqueryCount('coders'))
+        return ret
+
+    def get_readonly_fields(self, *args, **kwargs):
+        return ['last_contest', 'last_update'] + super().get_readonly_fields(*args, **kwargs)
 
 
 @admin_register(Task)

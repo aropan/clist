@@ -1,5 +1,6 @@
 Django==5.1
 django-add-default-value==0.10.0
+django-autoslug==1.9.9
 django-brotli==0.2.1
 django-cache-machine==1.2.0
 django-cors-headers==4.3.1
@@ -15,13 +16,13 @@ django-ical==1.9.2
 django-ipware==7.0.1
 django-jsonify==0.3.0
 django-json-widget==2.0.1
-django-ltree==0.5.3
+django-ltree-2==0.1.8
 django-oauth-toolkit==2.4.0
 django-phonenumber-field==7.3.0
 django-pivot==1.10.0
 django-print-sql==2018.3.6
 django-ratelimit==4.1.0
-django-rq==2.10.2
+django-rq==3.0.0
 django-sql-utils==0.7.0
 django-static-compress==2.0.0
 django-static-fontawesome==6.5.2.0
@@ -108,3 +109,5 @@ geoip2==4.8.0
 xgboost==2.1.1
 scikit-learn==1.5.1
 pandas==2.2.2
+beautifulsoup4==4.12.3
+markdown==3.7

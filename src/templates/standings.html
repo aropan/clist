@@ -223,6 +223,7 @@
     <div id="parsed-time">
       <small class="text-muted pull-right">
         updated
+        {% if contest.parsed_percentage and contest.parsed_percentage < 100 %}{{ contest.parsed_percentage|floatformat:1 }}%{% endif %}
         <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
       </small>
     </div>

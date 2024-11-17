@@ -17,6 +17,7 @@ Disallow: /signup/
 Disallow: /oauth/
 Disallow: /auth/
 Disallow: /o/
+Disallow: /form/
 Disallow: /coder/*/ratings/
 Disallow: /account/*/ratings/
 Disallow: /profile/*/ratings/

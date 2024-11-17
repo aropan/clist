@@ -23,7 +23,7 @@ from utils.aes import AESModeOfOperation
 
 API_KEYS = conf.CODEFORCES_API_KEYS
 DEFAULT_API_KEY = API_KEYS[API_KEYS['__default__']]
-SUBDOMAIN = ''
+SUBDOMAIN = 'mirror.'
 
 
 def api_query(
@@ -85,7 +85,7 @@ def api_query(
                 continue
             ret = {'status': str(e)}
         break
-
+    ret.setdefault('status', 'EMPTY')
     return ret
 
 
@@ -488,9 +488,9 @@ class Statistic(BaseModule):
 
         if not users:
             data = api_query(method='contest.ratingChanges', params=params, api_key=self.api_key)
-            if data.get('status') not in ['OK', 'FAILED']:
+            if data['status'] not in ['OK', 'FAILED']:
                 LOG.warning(f'Missing rating changes = {data}')
-            if data and data.get('status') == 'OK':
+            if data and data['status'] == 'OK':
                 for row in data['result']:
                     if str(row.pop('contestId')) != self.key:
                         continue
@@ -525,7 +525,7 @@ class Statistic(BaseModule):
         submissions = []
         for params in array_params:
             data = api_query('contest.status', params=params, api_key=self.api_key)
-            if data.get('status') not in ['OK', 'FAILED']:
+            if data['status'] not in ['OK', 'FAILED']:
                 raise ExceptionParseStandings(data)
             if data['status'] == 'OK':
                 submissions.extend(data.pop('result'))
@@ -647,7 +647,7 @@ class Statistic(BaseModule):
                 and (match := re.search('handles: User with handle (?P<handle>.*) not found', data['comment']))
             ):
                 handle = match.group('handle')
-                location = REQ.geturl(f'https://codeforces.com/profile/{handle}')
+                location = REQ.geturl(f'https://{SUBDOMAIN}codeforces.com/profile/{handle}')
                 index = users.index(handle)
                 if urlparse(location).path.rstrip('/'):
                     target = location.rstrip('/').split('/')[-1]

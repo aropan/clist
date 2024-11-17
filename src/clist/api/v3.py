@@ -49,7 +49,7 @@ class CoderResource(BaseModelResource):
             'with_accounts': ['exact'],
             'country': ['exact'],
             'id': ['exact', 'in'],
-            'handle': ['exact', 'iregex', 'regex', 'in'],
+            'handle': ['exact', 'in'],
             'is_virtual': ['exact'],
         }
         extra_actions = [

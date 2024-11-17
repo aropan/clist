@@ -258,7 +258,7 @@ class Command(BaseCommand):
 
                                 coders = list(account.coders.values_list('username', flat=True))
                                 if coders and updated_info.get('n_updated'):
-                                    call_command('fill_coder_problems', coders=coders, resources=[resource.host])
+                                    call_command('set_coder_problems', coders=coders, resources=[resource.host])
 
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])
@@ -310,7 +310,7 @@ class Command(BaseCommand):
                 try:
                     updated = arrow.get(now + timedelta(days=1)).ceil('day').datetime
                     for a in tqdm(accounts, desc='changing update time'):
-                        if a.key not in seen:
+                        if a.pk and a.key not in seen:
                             a.updated = updated
                             a.save(update_fields=['updated'])
                             n_counter['reupdated'] += 1

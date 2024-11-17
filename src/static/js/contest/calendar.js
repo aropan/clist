@@ -117,6 +117,10 @@ $(function() {
                         .toArray(),
                 },
                 success: function (response) {
+                    response.forEach(function(event) {
+                        event.original_start = event.start
+                        event.original_end = event.end
+                    })
                     successCallback(response)
                 },
                 error: function(response) {
@@ -128,8 +132,8 @@ $(function() {
         eventDidMount: function (info) {
             var event = info.event
             var element = info.el
-            var start = FullCalendar.Moment.toMoment(event.start, calendar)
-            var end = FullCalendar.Moment.toMoment(event.end, calendar)
+            var start = FullCalendar.Moment.toMoment(event.extendedProps.original_start, calendar)
+            var end = FullCalendar.Moment.toMoment(event.extendedProps.original_end, calendar)
             var now = FullCalendar.Moment.toMoment($.now(), calendar)
             var countdown = event.extendedProps.countdown
             var start_time = start.format('YYYY-MM-DD HH:mm')

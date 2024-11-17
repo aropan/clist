@@ -4,7 +4,6 @@
 import collections
 import re
 from datetime import timedelta
-from pprint import pprint
 
 from django.utils.timezone import now
 
@@ -34,7 +33,10 @@ class Statistic(BaseModule):
             if e.code == 403:
                 raise ExceptionParseStandings('Forbidden')
             raise e
-        table = parsed_table.ParsedTable(html=page, xpath="//table[@class='ir-contest-standings']//tr")
+        try:
+            table = parsed_table.ParsedTable(html=page, xpath="//table[@class='ir-contest-standings']//tr")
+        except StopIteration:
+            raise ExceptionParseStandings('Not found table with standings')
         problems_info = collections.OrderedDict()
         has_plus = False
         for r in table:
@@ -137,5 +139,3 @@ class Statistic(BaseModule):
             'problems_time_format': '{H}:{m:02d}',
         }
         return standings
-
-

@@ -78,9 +78,9 @@ host_2:account_2,host_3:account_3
               {% for v in data.list_values %}
                 {% if forloop.counter0 %}|{% endif %}
                 {% if v.coder %}
-                <a href="{% url 'coder:profile' v.coder.username %}">{{ v.coder.username }}</a>
+                {% include "coder.html" with coder=v.coder with_fixed_width=True %}
                 {% elif v.account %}
-                {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True %}
+                {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True with_fixed_width=True %}
                 {% else %}
                 &mdash;
                 {% endif %}

@@ -1,0 +1,1 @@
+5 0 * * thu /usr/src/clist/scripts/repack-database.bash >/var/log/repack_database.log 2>&1

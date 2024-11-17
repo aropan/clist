@@ -8,6 +8,7 @@ from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime, timedelta
+from numbers import Number
 from sys import float_info
 from urllib.parse import quote_plus, urlparse
 
@@ -33,6 +34,8 @@ from django.utils.timezone import now
 from django_countries.fields import countries
 from ipware import get_client_ip
 from unidecode import unidecode
+
+from utils.urlutils import absolute_url as utils_absolute_url
 
 register = template.Library()
 
@@ -143,30 +146,40 @@ def format_time(time, fmt):
 
 @register.filter
 def hr_timedelta(delta, n_significant=2):
-    if isinstance(delta, timedelta):
+    if isinstance(delta, datetime):
+        delta = (delta - now()).total_seconds()
+    elif isinstance(delta, timedelta):
         delta = delta.total_seconds()
     if delta <= 0:
         return 'past'
 
-    ret = []
-    n_used = 0
-    for c, s in (
+    units = [
         (364 * 24 * 60 * 60, 'year'),
         (7 * 24 * 60 * 60, 'week'),
         (24 * 60 * 60, 'day'),
         (60 * 60, 'hour'),
         (60, 'minute'),
         (1, 'second'),
-    ):
-        if c <= delta:
-            val = delta // c
-            delta %= c
-            ret.append('%d %s%s' % (val, s, 's' if val > 1 else ''))
-            n_used += 1
-        elif ret:
-            n_used += 1
-        if n_significant and n_significant == n_used:
+    ]
+
+    rounded_delta = 0
+    for seconds_per_unit, unit_name in units:
+        if delta >= seconds_per_unit:
+            n_significant -= 1
+            val = round(delta / seconds_per_unit) if n_significant == 0 else delta // seconds_per_unit
+            delta %= seconds_per_unit
+            rounded_delta += val * seconds_per_unit
+        elif rounded_delta:
+            n_significant -= 1
+        if n_significant == 0:
             break
+
+    ret = []
+    for seconds_per_unit, unit_name in units:
+        if rounded_delta >= seconds_per_unit:
+            val = rounded_delta // seconds_per_unit
+            rounded_delta %= seconds_per_unit
+            ret.append('%d %s%s' % (val, unit_name, 's' if val > 1 else ''))
     ret = ' '.join(ret)
     return ret.strip()
 
@@ -281,13 +294,13 @@ def md_escape(value, clear=False):
 
 
 @register.filter
-def md_url(value, clear=False):
-    return value.replace('(', '%28').replace(')', '%29')
+def md_url_text(value):
+    return value.replace('[', '(').replace(']', ')')
 
 
 @register.filter
-def md_italic_escape(value):
-    return value.replace('_', '_\\__')
+def md_url(url):
+    return utils_absolute_url(url.replace('(', '%28').replace(')', '%29'))
 
 
 @register.filter(name='sort')
@@ -334,24 +347,38 @@ def calc_mod_penalty(info, contest, solving, penalty):
 
 
 @register.filter
-def slug(value):
-    return slugify(unidecode(value)).strip('-')
+def slug(value, sep=None):
+    ret = slugify(unidecode(value)).strip('-')
+    if sep:
+        ret = ret.replace('-', sep)
+    return ret
 
 
-def get_standings_divisions_order(contest):
-    problems = contest.info.get('problems', {})
+def is_problems_(contest_or_problems):
+    return isinstance(contest_or_problems, (list, dict))
+
+
+def get_problems_(contest_or_problems):
+    if is_problems_(contest_or_problems):
+        return contest_or_problems
+    return contest_or_problems.info.get('problems', [])
+
+
+def get_standings_divisions_order(contest_or_problems):
+    problems = get_problems_(contest_or_problems)
     if 'division' in problems:
-        divisions_order = list(problems.get('divisions_order', sorted(contest.info['problems']['division'].keys())))
-    elif 'divisions_order' in contest.info:
-        divisions_order = contest.info['divisions_order']
+        divisions_order = list(problems.get('divisions_order', sorted(problems['division'].keys())))
+    elif not is_problems_(contest_or_problems) and 'divisions_order' in contest_or_problems.info:
+        divisions_order = contest_or_problems.info['divisions_order']
     else:
         divisions_order = []
     return divisions_order
 
 
 @register.filter
-def get_division_problems(contest, info):
-    problems = contest.info.get('problems', [])
+def get_division_problems(contest_or_problems, info):
+    problems = get_problems_(contest_or_problems)
+
     ret = []
     seen_keys = set()
     if 'division' in problems:
@@ -360,7 +387,7 @@ def get_division_problems(contest, info):
         division = info.get('division')
         if division and division not in divisions:
             divisions = [division] + divisions
-        for division in get_standings_divisions_order(contest):
+        for division in get_standings_divisions_order(contest_or_problems):
             if division not in divisions:
                 divisions.append(division)
         for division in divisions:
@@ -763,7 +790,7 @@ def divide(value, arg):
 
 
 @register.filter
-def substract(value, arg):
+def subtract(value, arg):
     return value - arg
 
 
@@ -975,6 +1002,25 @@ def is_improved_solution(curr, prev):
     return False
 
 
+def time_compare_value(val):
+    if isinstance(val, Number):
+        val = [val]
+    else:
+        val = list(map(int, val.split(':')))
+    return len(val), val
+
+
+def solution_time_compare(lhs, rhs):
+    for k in 'time_in_seconds', 'time':
+        if k not in lhs or k not in rhs:
+            continue
+        l_val = time_compare_value(lhs[k])
+        r_val = time_compare_value(rhs[k])
+        if l_val != r_val:
+            return -1 if l_val < r_val else 1
+    return 0
+
+
 @register.filter
 def timestamp_to_datetime(value):
     try:
@@ -1035,7 +1081,7 @@ def to_dict(**kwargs):
 
 
 @register.filter
-def as_number(value, force=False):
+def as_number(value, force=False, default=None):
     valf = str(value).replace(',', '.')
     retf = asfloat(valf)
     if retf is not None:
@@ -1047,6 +1093,8 @@ def as_number(value, force=False):
         percentf = asfloat(valf[:-1])
         if percentf is not None:
             return percentf / 100
+    if default is not None:
+        return default
     if force:
         return None
     return value
@@ -1199,7 +1247,7 @@ def get_country_from_coder(context, coder):
 def get_country_from_members(accounts, members):
     counter = defaultdict(int)
     for member in members:
-        if 'account' not in member or member.get('without_country'):
+        if not member or 'account' not in member:
             continue
         account = accounts.get(member['account'])
         if account is None or not account.country:
@@ -1555,6 +1603,13 @@ def get_admin_url(obj):
 
 
 @register.simple_tag
+def admin_url(obj):
+    url = get_admin_url(obj)
+    icon = icon_to('database', '')
+    return mark_safe(f'<a href="{url}" class="database-link invisible" target="_blank" rel="noopener">{icon}</a>')
+
+
+@register.simple_tag
 def stat_has_failed_verdict(stat, small):
     return small and not is_solved(stat) and stat.get('verdict') and not stat.get('binary') and not stat.get('icon')
 
@@ -1726,3 +1781,18 @@ def create_dict(**kwargs):
 @register.simple_tag
 def create_list(*args):
     return list(args)
+
+
+@register.filter
+def ne(value, arg):
+    return value != arg
+
+
+@register.simple_tag(takes_context=True)
+def absolute_url(context, viewname, *args, **kwargs):
+    return context['request'].build_absolute_uri(reverse(viewname, args=args, kwargs=kwargs))
+
+
+@register.filter
+def get_id(value):
+    return id(value)

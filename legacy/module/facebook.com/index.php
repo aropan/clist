@@ -7,12 +7,14 @@
         global $required_urls;
         preg_match_all('#<link[^>]*href="(?P<href>[^"]*rsrc[^"]*\.js\b[^"]*)"[^>]*>#', $page, $matches);
         $urls = $matches['href'];
-        // preg_match_all('#{"type":"js","src":"(?P<href>[^"]*rsrc[^"]*)"#', $page, $matches);
-        // foreach ($matches['href'] as $u) {
-        //     $u = str_replace('\/', '/', $u);
-        //     $urls[] = $u;
-        // }
-        // $urls = array_unique($urls);
+
+        preg_match_all('#{"type":"js","src":"(?P<href>[^"]*rsrc[^"]*)"#', $page, $matches);
+        foreach ($matches['href'] as $u) {
+            $u = str_replace('\/', '/', $u);
+            $urls[] = $u;
+        }
+
+        $urls = array_unique($urls);
 
         $urls_ = array_fill(0, count($urls), null);
         $offset = 0;
@@ -32,72 +34,43 @@
             "CodingCompetitionsContestScoreboardQuery",
             "CCEScoreboardQuery",
         );
+        $required_ids = array_fill_keys($required_ids, true);
 
         foreach ($urls as $u) {
-            if (DEBUG) {
-                echo "get id url = $u\n";
-            }
             $url = $u;
             $p = curlexec($u, null, array('no_logmsg' => true));
+            $new_ids = array();
             if (preg_match_all('#{id:"(?P<id>[^"]*)"(?:[^{}]*(?:{[^}]*})?)*}#', $p, $matches, PREG_SET_ORDER)) {
                 foreach ($matches as $match) {
                     if (preg_match('#,name:"(?P<name>[^"]*)"#', $match[0], $m)) {
                         $ids[$m['name']] = $match['id'];
+                        $new_ids[] = $m['name'];
                     }
                 }
             }
             if (preg_match_all('#__d\("(?P<name>[^_]*)_facebookRelayOperation"[^_]*exports="(?P<id>[^"]*)"#', $p, $matches, PREG_SET_ORDER)) {
                 foreach ($matches as $match) {
                     $ids[$match['name']] = $match['id'];
+                    $new_ids[] = $match['name'];
                 }
             }
 
-            $required_ids_ = array();
-            foreach ($required_ids as $id) {
-                if (!isset($ids[$id])) {
-                    $required_ids_[] = $id;
+            foreach ($new_ids as $k) {
+                if (isset($required_ids[$k])) {
+                    unset($required_ids[$k]);
                 }
             }
-            if (count($required_ids) != count($required_ids_)) {
-                $required_urls[$url] = true;
-            }
-            $required_ids = $required_ids_;
-
-            if (!count($required_ids)) {
+            if (empty($required_ids)) {
                 break;
             }
         }
         return $ids;
     }
 
-    $url = "https://www.facebook.com/?_fb_noscript=1";
-    $page = curlexec($url);
-
-    if (preg_match('#<form[^>]*action="(?P<url>[^"]*/login/[^"]*)"#', $page, $match)) {
-        $url = $match['url'];
-        preg_match_all('#<input[^>]*name="(?P<name>[^"]*)"[^>]*value="(?P<value>[^"]*)"#', $page, $matches, PREG_SET_ORDER);
-        $data = array();
-        foreach ($matches as $match) {
-            $data[$match['name']] = $match['value'];
-        }
-        require_once dirname(__FILE__) . "/secret.php";
-        $data['email'] = $FACEBOOK_USERNAME;
-        $data['pass'] = $FACEBOOK_PASSWORD;
-        unset($FACEBOOK_EMAIL);
-        unset($FACEBOOK_USERNAME);
-        unset($FACEBOOK_PASSWORD);
-        $page = curlexec($url, $data);
-    }
-
-    $headers = array(
-        'pragma: no-cache',
-        'cache-control: no-cache',
-        'upgrade-insecure-requests: 1',
-        'sec-fetch-site: same-origin',
-        'sec-fetch-mode: navigate',
-        'sec-fetch-user: ?1',
-        'sec-fetch-dest: document',
-    );
+    $headers = json_decode(file_get_contents('sharedfiles/resource/facebook/headers.json'));
+    $headers = array_map(function($k, $v) { return "$k: $v"; }, array_keys((array)$headers), (array)$headers);
+    $cookie_file = 'sharedfiles/resource/facebook/cookies.txt';
+    $curlexec_params = array('http_header' => $headers, 'with_curl' => true, 'cookie_file' => $cookie_file);
 
     unset($year);
     for (;;) {
@@ -108,7 +81,7 @@
         if (DEBUG) {
             echo "url = $url\n";
         }
-        $page = curlexec($url, null, array("http_header" => $headers));
+        $page = curlexec($url, null, $curlexec_params);
 
         unset($fb_dtsg);
         if (preg_match('#\["DTSGInitialData",\[\],{"token":"(?P<token>[^"]*)"#', $page, $match)) {
@@ -179,7 +152,7 @@
             $url = rtrim($URL, '/') . "/$year/{$node['contest_vanity']}";
             $scoreboard_url = rtrim($url) . '/scoreboard';
             $url_ = $scoreboard_url;
-            $scoreboard_page = curlexec($url_);
+            $scoreboard_page = curlexec($url_, NULL, ['with_curl' => true]);
             $scoreboard_ids = get_ids($scoreboard_page);
             if ($scoreboard_ids) {
                 $info['_scoreboard_ids'] = $scoreboard_ids;

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
 from functools import partial
+from typing import Optional
 
 from django.contrib import messages
+
+from clist.models import Resource
 
 
 class RequestLogger:
@@ -17,10 +20,15 @@ class RequestLogger:
         return ret
 
 
-def get_filtered_list(request, field, options=None):
+def get_resource(self, field='resource') -> Optional[Resource]:
+    resource = self.GET.get(field)
+    return Resource.get(resource)
+
+
+def get_filtered_list(self, field, options=None):
     values = [
         value
-        for value in request.GET.getlist(field)
+        for value in self.GET.getlist(field)
         if options is not None and value in options or options is None and value
     ]
     if values and isinstance(options, list):
@@ -30,10 +38,10 @@ def get_filtered_list(request, field, options=None):
     return values
 
 
-def get_filtered_value(request, field, options=None, default_first=None, allow_empty=False):
+def get_filtered_value(self, field, options=None, default_first=None, allow_empty=False):
     if allow_empty and '' not in options:
         options = options + ['']
-    ret = get_filtered_list(request, field, options)
+    ret = self.get_filtered_list(field, options)
     if ret:
         return ret[-1]
     if default_first and options:
@@ -41,8 +49,17 @@ def get_filtered_value(request, field, options=None, default_first=None, allow_e
     return None
 
 
-def custom_request(request):
+def set_canonical(self, url):
+    url = self.build_absolute_uri(url)
+    self.canonical_url = url
+    return self
+
+
+def CustomRequest(request):
     setattr(request, 'logger', RequestLogger(request))
+    setattr(request, 'get_resource', partial(get_resource, request))
     setattr(request, 'get_filtered_list', partial(get_filtered_list, request))
     setattr(request, 'get_filtered_value', partial(get_filtered_value, request))
+    setattr(request, 'canonical_url', None)
+    setattr(request, 'set_canonical', partial(set_canonical, request))
     return request

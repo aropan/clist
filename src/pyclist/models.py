@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from django.apps import apps
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
@@ -24,6 +26,15 @@ Field.register_lookup(DateDuringLookup, lookup_name='during')
 class BaseModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     modified = models.DateTimeField(auto_now=True, db_index=True)
+
+    def fetched_field(self, field) -> Optional[Any]:
+        fields = field.split('__')
+        obj = self
+        for field in fields:
+            if field not in obj._state.fields_cache:
+                return
+            obj = getattr(obj, field)
+        return obj
 
     class Meta:
         abstract = True
@@ -67,7 +78,6 @@ class BaseQuerySet(models.QuerySet):
         content_type = ContentType.objects.get_for_model(self.model)
         qs = Note.objects.filter(coder=coder, content_type=content_type, object_id=OuterRef('pk'))
         ret = self.annotate(is_note=Exists(qs))
-
         ret = ret.annotate(note_text=Subquery(qs.values('text')[:1]))
         return ret
 

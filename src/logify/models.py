@@ -65,7 +65,7 @@ class EventLog(BaseModel):
         self.save(update_fields=['message', 'modified', 'elapsed'])
 
 
-class PgStatTuple(BaseModel):
+class PgStat(BaseModel):
     table_name = models.CharField(max_length=255, db_index=True, unique=True)
     app_name = models.CharField(max_length=255, blank=True, null=True)
     table_len = models.BigIntegerField()
@@ -78,5 +78,16 @@ class PgStatTuple(BaseModel):
     free_space = models.BigIntegerField()
     free_percent = models.FloatField()
 
+    last_vacuum = models.DateTimeField(blank=True, null=True)
+    last_autovacuum = models.DateTimeField(blank=True, null=True)
+    last_analyze = models.DateTimeField(blank=True, null=True)
+    last_autoanalyze = models.DateTimeField(blank=True, null=True)
+
+    table_size = models.BigIntegerField(blank=True, null=True)
+    pretty_table_size = models.CharField(max_length=20, blank=True, null=True)
+    initial_table_size = models.BigIntegerField(blank=True, null=True)
+    diff_size = models.BigIntegerField(blank=True, null=True)
+    pretty_diff_size = models.CharField(max_length=20, blank=True, null=True)
+
     def __str__(self):
-        return f'{self.table_name} PgStatTuple#{self.id}'
+        return f'{self.table_name} PgStat#{self.id}'

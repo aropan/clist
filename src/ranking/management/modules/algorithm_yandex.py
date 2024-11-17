@@ -14,4 +14,6 @@ class Statistic(yandex.Statistic):
             if 'medals' not in standings.get('options', {}) and 'medals' not in self.info.get('standings', {}):
                 options = standings.setdefault('options', {})
                 options['medals'] = [{'name': name, 'count': 1} for name in ('gold', 'silver', 'bronze')]
+            if re.search(r'\balgorithm\b', self.name, re.I):
+                standings['series'] = 'yandex-algorithm'
         return standings

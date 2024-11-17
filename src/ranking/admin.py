@@ -6,7 +6,8 @@ from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import (Account, AccountMatching, AccountRenaming, AccountVerification, AutoRating, CountryAccount,
-                            Module, Rating, Stage, StageContest, Statistics, VerifiedAccount, VirtualStart)
+                            Module, ParseStatistics, Rating, Stage, StageContest, Statistics, VerifiedAccount,
+                            VirtualStart)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -59,8 +60,9 @@ class AccountAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return (
-            ['updated', 'n_contests', 'n_writers', 'last_activity', 'last_submission', 'last_rating_activity'] +
-            super().get_readonly_fields(request, obj)
+            ['updated', 'n_contests', 'n_writers', 'n_subscribers',
+             'last_activity', 'last_submission', 'last_rating_activity']
+            + super().get_readonly_fields(request, obj)
         )
 
     def get_queryset(self, request):
@@ -144,13 +146,6 @@ class StageAdmin(BaseModelAdmin):
     list_filter = ['contest__host']
     ordering = ['-contest__start_time']
 
-    def parse_stage(self, request, queryset):
-        for stage in queryset:
-            stage.update()
-    parse_stage.short_description = 'Parse stages'
-
-    actions = [parse_stage]
-
     class StageContestInline(admin.TabularInline):
         model = StageContest
         raw_id_fields = ['contest']
@@ -221,3 +216,13 @@ class AccountMatchingAdmin(BaseModelAdmin):
         return obj.n_different_coders
     _n_different_coders.admin_order_field = 'n_different_coders'
     _n_different_coders.short_description = 'NDC'
+
+
+@admin_register(ParseStatistics)
+class ParseStatisticsAdmin(BaseModelAdmin):
+    list_display = ['contest', 'enable', 'delay', 'created', 'modified']
+    search_fields = ['contest__title', 'contest__host']
+    list_filter = ['contest__host']
+
+    def get_readonly_fields(self, *args, **kwargs):
+        return ['parse_time'] + super().get_readonly_fields(*args, **kwargs)

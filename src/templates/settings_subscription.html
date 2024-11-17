@@ -1,5 +1,5 @@
-<div class="col-sm-6 col-md-4 col-lg-3">
-  <div class="subscription panel panel-default table-responsive">
+<div class="subscription col-sm-6 col-md-4 col-lg-3{% if not subscription.enable %} text-muted{% endif %}">
+  <div class="panel panel-default table-responsive">
     <table class="table">
       <tr>
         <td class="no-stretch key-column">Method</td>
@@ -29,34 +29,76 @@
         </td>
       </tr>
       {% endif %}
-      {% if subscription.account %}
+      {% if subscription.with_first_accepted %}
       <tr>
-        <td class="no-stretch key-column">Account</td>
-        <td>
-          {% include "account_table_cell.html" with account=subscription.account resource=subscription.account.resource without_country=True without_avatar=True without_circle=True %}
-        </td>
+        <td class="no-stretch key-column">First AC</td>
+        <td>On</td>
       </tr>
       {% endif %}
-      {% if subscription.coder_list %}
+      {% if subscription.top_n %}
+      <tr>
+        <td class="no-stretch key-column">Top N</td>
+        <td>{{ subscription.top_n }}</td>
+      </tr>
+      {% endif %}
+      {% if subscription.coder_list_id %}
       <tr>
         <td class="no-stretch key-column">List</td>
         <td>
-          <a href="{% url 'coder:list' subscription.coder_list.uuid %}">
-            {{ subscription.coder_list.name }}
-          </a>
+          <a href="{% url 'coder:list' subscription.coder_list.uuid %}">{{ subscription.coder_list.name }}</a>
+          {% if perms.true_coders.change_coderlist %}{% admin_url subscription.coder_list %}{% endif %}
         </td>
       </tr>
       {% endif %}
-      {% if subscription.coder_chat %}
+      {% if subscription.coder_chat_id %}
       <tr>
         <td class="no-stretch key-column">Chat</td>
-        <td>{{ subscription.coder_chat.title }}</td>
+        <td>
+          {{ subscription.coder_chat.title }}
+          {% if perms.tg.change_chat %}{% admin_url subscription.coder_chat %}{% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if subscription.accounts.all %}
+      <tr>
+        {% with n_split=3 %}
+        <td class="no-stretch key-column">Accounts</td>
+        <td>
+          {% for account in subscription.accounts.all %}
+          {% if forloop.counter0 == n_split %}<div id="extra-accounts-{{ subscription.pk }}" class="hidden">{% endif %}
+          <div class="subscription-account">{% include "account_table_cell.html" with account=account resource=account.resource %}</div>
+          {% endfor %}
+          {% with n_more=subscription.accounts.all|length|subtract:n_split %}
+          {% if n_more > 0 %}</div><a href="#" data-id="extra-accounts-{{ subscription.pk }}" data-toggle-text="{{ n_more }} less" onclick="show_extra(this)">{{ n_more }} more</a>{% endif %}
+          {% endwith %}
+        </td>
+        {% endwith %}
+      </tr>
+      {% endif %}
+      {% if subscription.coders.all %}
+      <tr>
+        {% with n_split=3 %}
+        <td class="no-stretch key-column">Coders</td>
+        <td>
+          {% for coder in subscription.coders.all %}
+          {% if forloop.counter0 == n_split %}<div id="extra-coders-{{ subscription.pk }}" class="hidden">{% endif %}
+          <div class="subscription-coder">{% include "coder.html" with coder=coder %}</div>
+          {% endfor %}
+          {% with n_more=subscription.coders.all|length|subtract:n_split %}
+          {% if n_more > 0 %}</div><a href="#" data-id="extra-coders-{{ subscription.pk }}" data-toggle-text="{{ n_more }} less" onclick="show_extra(this)">{{ n_more }} more</a>{% endif %}
+          {% endwith %}
+        </td>
+        {% endwith %}
       </tr>
       {% endif %}
       <tr>
         <td colspan="100%">
           <span class="pull-right">
-            <button href="#" data-id="{{ subscription.id }}" data-action="delete-subscription" data-success="$div.remove();" class="action-subscription btn btn-danger btn-xs"><i class="far fa-trash-alt"></i></button>
+            <button href="#" data-id="{{ subscription.id }}" data-name="edit-subscription" data-form="{{ subscription.form_data|jsonify|force_escape }}" class="edit-subscription btn btn-default btn-xs">{% icon_to "edit" "Edit" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="disable-subscription" data-confirm="false" data-success="$this.addClass('hidden'); $element.find('[data-action=enable-subscription]').removeClass('hidden'); $element.closest('.subscription').addClass('text-muted')" class="action-subscription btn btn-default btn-xs{% if not subscription.enable %} hidden{% endif %}">{% icon_to "on" "Off" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="enable-subscription" data-confirm="false" data-success="$this.addClass('hidden'); $element.find('[data-action=disable-subscription]').removeClass('hidden'); $element.closest('.subscription').removeClass('text-muted')" class="action-subscription btn btn-default btn-xs{% if subscription.enable %} hidden{% endif %}">{% icon_to "off" "On" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="view-subscription" data-closest-element=".subscription" class="action-subscription btn btn-default btn-xs">{% icon_to "show" "View" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="delete-subscription" data-closest-element=".subscription" data-success="$element.remove(); $('#n-subscriptions').text($('.subscription').length)" class="action-subscription btn btn-danger btn-xs"{% icon_to "delete" "Delete" %}</button>
           </span>
         </td>
       </tr>

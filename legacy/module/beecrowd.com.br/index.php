@@ -30,12 +30,12 @@
         preg_match_all('#
             <tr[^>]*>\s*
                 <td[^>]*>\s*<a[^>]*href="(?P<url>[^"]*)"[^>]*>\s*(?P<key>[0-9]+)\s*</a>\s*</td>\s*
-                <td[^>]*>.*?</td>\s*
-                <td[^>]*>.*?</td>\s*
-                <td[^>]*>\s*<a[^>]*>(?P<title>[^<]*)</a>\s*</td>\s*
+                <td[^>]*>(?:\s*<[^/][^>]*>)*\s*</td>\s*
+                <td[^>]*>(?:\s*<[^/][^>]*>)*\s*</td>\s*
+                <td[^>]*>\s*(?:<[^/][^>]*>\s*)*<a[^>]*>(?P<title>[^<]*)</a>\s*(?:<[^>]*>\s*)*</td>\s*
                 <td[^>]*class="[^"]*date[^"]*"[^>]*>(?P<start>[^<]*)</td>\s*
                 <td[^>]*>(?P<duration>[^<]*)</td>\s*
-            </tr>#xs',
+            </tr>#x',
             $page,
             $matches,
             PREG_SET_ORDER,
@@ -43,6 +43,9 @@
 
         $nothing = true;
         foreach ($matches as $c) {
+            foreach ($c as $k => $v) {
+                $c[$k] = trim($v);
+            }
             $url = url_merge($URL, $c['url']);
             $title = $c['title'];
             if (substr($title, -3) == '...') {

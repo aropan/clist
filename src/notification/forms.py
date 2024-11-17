@@ -29,7 +29,6 @@ class NotificationForm(ModelForm):
 
     def __init__(self, coder, *args, **kwargs):
         super(NotificationForm, self).__init__(*args, **kwargs)
-
         methods = coder.get_notifications()
         self.fields['method'] = ChoiceField(choices=methods)
 

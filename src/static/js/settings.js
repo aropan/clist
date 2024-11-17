@@ -639,7 +639,7 @@ $(function() {
                 var $div = $('\
 <div> \
     <a href="#" class="filter" data-name="filter" data-value=\'' + JSON.stringify(data) + '\'></a> \
-    <a href="#" data-id="' + data.id + '" data-action="delete-filter" data-success="$div.remove();" class="action-filter btn btn-default btn-xs"> \
+    <a href="#" data-id="' + data.id + '" data-action="delete-filter" data-success="$element.remove();" class="action-filter btn btn-default btn-xs"> \
         <i class="far fa-trash-alt"></i> \
     </a> \
 </div> \
@@ -894,51 +894,150 @@ $(function() {
 
     function process_subscription() {
         name = $(this).attr('data-name')
+        data = $(this).data('form')
 
         var form = $(`
-          <form id="process_subscription-form">
+          <h3>` + (data? 'Edit' : 'Create') + ` subscription</h3>
+          <form id="subscription_form">
             <div class="form-group">
-              <label class="control-label">Contest</label>
-              <select class="form-control" name="contest" required></select>
-              <small class="form-text text-muted">Required field</small>
+              <label class="control-label">Resource</label>
+              <select class="form-control" name="resource"></select>
             </div>
             <div class="form-group">
-              <label class="control-label">Account</label>
-              <select class="form-control" name="account" required></select>
-              <small class="form-text text-muted">Will be available after selecting a contest. Required field</small>
+              <label class="control-label">Contest</label>
+              <select class="form-control" name="contest"></select>
+            </div>
+            <div class="form-group">
+              <label class="control-label">First accepted</label>
+              <input type="checkbox" data-toggle="toggle" data-on="On" data-off="Off" data-onstyle="default" data-offstyle="default" data-size="normal" name="with_first_accepted">
+            </div>
+            <div class="form-group">
+              <label class="control-label">Top n</label>
+              <input type="number" class="form-control" name="top_n" min="1" max="` + SUBSCRIPTION_TOP_N_LIMIT + `">
+            </div>
+            <div class="form-group">
+              <label class="control-label">Accounts <a href="` + ACCOUNTS_URL + `" target="_blank">` + EXTRA_URL_ICON + `</a></label>
+              <select class="form-control" name="accounts" multiple></select>
+              <small class="form-text text-muted">Limit ` + SUBSCRIPTION_N_LIMIT + ` accounts</small>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Coders <a href="` + CODERS_URL + `" target="_blank">` + EXTRA_URL_ICON + `</a></label>
+              <select class="form-control" name="coders" multiple></select>
+              <small class="form-text text-muted">Limit ` + SUBSCRIPTION_N_LIMIT + ` coders</small>
+            </div>
+            <div class="form-group">
+              <label class="control-label">List <a href="` + LISTS_URL + `" target="_blank">` + EXTRA_URL_ICON + `</a></label>
+              <select class="form-control" name="list"></select>
+              <small class="form-text text-muted">Use coders and accounts from updated list</small>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Chat <a href="` + CHATS_URL + `" target="_blank">` + EXTRA_URL_ICON + `</a></label>
+              <select class="form-control" name="chat"></select>
+              <small class="form-text text-muted">Use coders and accounts from updated chat</small>
             </div>
             <div class="form-group">
               <label class="control-label">Method</label>
               <select class="form-control" name="method" required></select>
-              <small class="form-text text-muted">Required field</small>
+              <small class="form-text text-muted">Notification method</small>
             </div>
+            <input type="hidden" name="no_stage" value="true">
           </form>
         `);
 
+        function set_disabled() {
+            var disable_addition = !$select_resource.val() && !$select_contest.val()
+            $with_first_accepted.prop('disabled', disable_addition)
+            $top_n.prop('disabled', disable_addition)
+
+            var disabled_chat_and_list = $select_accounts.val().length || $select_coders.val().length
+            var disabled_accounts_and_coders = $select_coder_list.val() || $select_coder_chat.val()
+            $select_coders.prop('disabled', disabled_accounts_and_coders)
+            $select_accounts.prop('disabled', disabled_accounts_and_coders)
+            $select_coder_chat.prop('disabled', $select_coder_list.val() || disabled_chat_and_list)
+            $select_coder_list.prop('disabled', $select_coder_chat.val() || disabled_chat_and_list)
+        }
+
+        var $select_resource = form.find('select[name=resource]')
+        $select_resource.select2({
+            dropdownAutoWidth : true,
+            width: '100%',
+            theme: 'bootstrap',
+            placeholder: 'Select resource',
+            ajax: select2_ajax_conf('resources', 'regex'),
+            minimumInputLength: 0,
+            allowClear: true,
+        })
+        $select_resource.on('change', set_disabled)
+
+        var $select_no_stage = form.find('input[name=no_stage]')
         var $select_contest = form.find('select[name=contest]')
         $select_contest.select2({
             dropdownAutoWidth : true,
             width: '100%',
             theme: 'bootstrap',
             placeholder: 'Select contest',
-            ajax: select2_ajax_conf('contest-for-add-subscription', 'regex'),
+            ajax: select2_ajax_conf('contests', 'regex', {resource: $select_resource, 'no_stage': $select_no_stage}),
             minimumInputLength: 0,
+            allowClear: true,
         })
-        $select_contest.on('change', () => {
-            $select_account.prop('disabled', false)
-            $select_account.val(null).trigger('change')
-        })
+        $select_contest.on('change', set_disabled)
 
-        var $select_account = form.find('select[name=account]')
-        $select_account.select2({
+        var $with_first_accepted = form.find('input[name=with_first_accepted]')
+        $with_first_accepted.bootstrapToggle()
+        $with_first_accepted.prop('disabled', true)
+
+        var $top_n = form.find('input[name=top_n]')
+        $top_n.prop('disabled', true)
+
+        var $select_accounts = form.find('select[name=accounts]')
+        $select_accounts.select2({
             dropdownAutoWidth : true,
             width: '100%',
             theme: 'bootstrap',
-            placeholder: 'Select account',
-            ajax: select2_ajax_conf('account-for-add-subscription', 'search', {contest: $select_contest}),
-            disabled: true,
+            placeholder: 'Select accounts',
+            ajax: select2_ajax_conf('accounts', 'search', {contest: $select_contest, resource: $select_resource}),
             minimumInputLength: 0,
+            allowClear: true,
+            multiple: true,
         })
+        $select_accounts.on('change', set_disabled)
+
+        var $select_coders = form.find('select[name=coders]')
+        $select_coders.select2({
+            dropdownAutoWidth : true,
+            width: '100%',
+            theme: 'bootstrap',
+            placeholder: 'Select coders',
+            ajax: select2_ajax_conf('coders', 'search', {contest: $select_contest, resource: $select_resource}),
+            minimumInputLength: 0,
+            allowClear: true,
+            multiple: true,
+        })
+        $select_coders.on('change', set_disabled)
+
+        var $select_coder_list = form.find('select[name=list]')
+        $select_coder_list.select2({
+            dropdownAutoWidth : true,
+            width: '100%',
+            theme: 'bootstrap',
+            placeholder: 'Select coder list',
+            ajax: select2_ajax_conf('coder_lists', 'search'),
+            minimumInputLength: 0,
+            allowClear: true,
+        })
+        $select_coder_list.on('change', set_disabled)
+
+        var $select_coder_chat = form.find('select[name=chat]')
+        $select_coder_chat.select2({
+            dropdownAutoWidth : true,
+            width: '100%',
+            theme: 'bootstrap',
+            placeholder: 'Select coder chat',
+            ajax: select2_ajax_conf('coder_chats', 'search'),
+            minimumInputLength: 0,
+            allowClear: true,
+        })
+        $select_coder_chat.on('change', set_disabled)
 
         var $select_method = form.find('select[name=method]')
         $select_method.select2({
@@ -948,37 +1047,80 @@ $(function() {
             placeholder: 'Select method',
         })
 
+        if (data) {
+            if (data.resource) {
+                $select_resource.select2('trigger', 'select', {data: data.resource})
+            }
+            if (data.contest) {
+                $select_contest.select2('trigger', 'select', {data: data.contest})
+            }
+            if (data.coder_list) {
+                $select_coder_list.select2('trigger', 'select', {data: data.coder_list})
+            } else if (data.coder_chat) {
+                $select_coder_chat.select2('trigger', 'select', {data: data.coder_chat})
+            } else {
+                if (data.accounts) {
+                    data.accounts.forEach(option => {
+                        $select_accounts.append(new Option(option.text, option.id, true, true)).trigger('change')
+                    })
+                    $select_accounts.trigger('change')
+                }
+                if (data.coders) {
+                    data.coders.forEach(option => {
+                        $select_coders.append(new Option(option.text, option.id, true, true)).trigger('change')
+                    })
+                    $select_coders.trigger('change')
+                }
+            }
+            if (data.with_first_accepted) {
+                $with_first_accepted.bootstrapToggle('on')
+            }
+            if (data.top_n) {
+                $top_n.val(data.top_n)
+            }
+            if (data.method) {
+                $select_method.select2('trigger', 'select', {data: data.method})
+            }
+        }
+
         bootbox.confirm(form, function(result) {
             if (!result) {
                 return
             }
-            var form = document.getElementById('process_subscription-form')
-            if (!form.checkValidity()) {
-                form.reportValidity()
-                return false
-            }
+
+            $('.bootbox-accept').attr('disabled', 'disabled')
             $.ajax({
                 type: 'POST',
                 url: $.fn.editable.defaults.url,
                 data: {
                     pk: $.fn.editable.defaults.pk,
                     name: name,
+                    resource: $select_resource.val(),
                     contest: $select_contest.val(),
-                    account: $select_account.val(),
+                    accounts: $select_accounts.val(),
+                    coders: $select_coders.val(),
+                    coder_list: $select_coder_list.val(),
+                    coder_chat: $select_coder_chat.val(),
                     method: $select_method.val(),
+                    with_first_accepted: $with_first_accepted.prop('checked'),
+                    top_n: $top_n.val(),
+
+                    ...(data && data.id ? {id: data.id} : {}),
                 },
-                success: function(data) {
-                    window.location.replace(SUBSCRIPTIONS_URL)
-                },
-                error: function(response) {
+                success: (data) => window.location.replace(SUBSCRIPTIONS_URL),
+                error: (response) => {
+                    $('.bootbox-accept').removeAttr('disabled')
                     log_ajax_error(response)
                 },
             })
+
+            return false
         })
         $('.bootbox.modal').removeAttr('tabindex')
     }
 
     $('#add-subscription').click(process_subscription)
+    $('.edit-subscription').click(process_subscription)
 
     var ntf_form = $('#notification-form')
     var ntf_add = $('#add-notification')
@@ -1036,10 +1178,12 @@ $(function() {
 
     function sentAction() {
         var $this = $(this)
-        var $div = $this.parent()
+        var element_closest = $this.attr('data-closest-element')
+        var $element = element_closest? $this.closest(element_closest) : $this.parent()
         var url = $this.attr('data-url') || $.fn.editable.defaults.url
         var name = $this.attr('data-name') || 'name'
         var type = $this.attr('data-type') || 'POST'
+        var dialog = undefined
 
         var data = {
             pk: $.fn.editable.defaults.pk,
@@ -1053,28 +1197,37 @@ $(function() {
         }
 
         function queryAction() {
+            if (dialog) dialog.find('.bootbox-accept').attr('disabled', 'disabled')
             $.ajax({
                 type: type,
                 url: url,
                 data: data,
                 success: function(data) {
                     eval($this.attr('data-success'))
+                    if (dialog) dialog.modal('hide')
                 },
-                error: function(data) {
-                    $.notify("{status} {statusText}: {responseText}".format(data), "error");
-                },
+                error: (response) => log_ajax_error(response),
+                complete: () => {
+                    if (dialog) dialog.find('.bootbox-accept').removeAttr('disabled')
+                }
             })
         }
 
         if ($this.attr('data-confirm') === 'false') {
             queryAction()
         } else {
-            bootbox.confirm({
+            dialog = bootbox.confirm({
                 size: 'small',
-                message: $div.text() +
+                message: $element.text() +
                     "<br/><br/>" +
                     "<b>" + $this.attr('data-action').replace('-', ' ').toTitleCase() + "?</b>",
-                callback: function(result) { if (result) { queryAction() } },
+                callback: (result) => {
+                    if (!result) {
+                        return
+                    }
+                    queryAction()
+                    return false
+                },
             })
         }
         return false
@@ -1097,8 +1250,8 @@ $(function() {
     $('#first-name-native').editable({ type: 'text', })
     $('#last-name-native').editable({ type: 'text', })
 
-    var $resource = $('select#add-account-resource')
-    $resource.select2({
+    var $search_resource = $('select#add-account-resource')
+    $search_resource.select2({
         width: '40%',
         allowClear: true,
         placeholder: 'Search resource by regex',
@@ -1158,23 +1311,12 @@ $(function() {
         })
     }
 
-    function addAccount(index, element) {
-        var $block = $('<div class="account">')
-            .append($('<a>', {class: 'delete-account btn btn-default btn-xs'}).attr('data-id', element.pk).append($('<i>', {class: 'far fa-trash-alt'})))
-            .append($('<span>', {text: ' '}))
-            .append($('<span>', {text: element.account + (element.name && element.account.indexOf(element.name) == -1? ' | ' + element.name : '')}))
-            .append($('<span>', {text: ' '}))
-            .append($('<a>', {class: 'text-muted small', href: 'http://' + element.resource, text: element.resource}))
-
-        $block.find('.delete-account').click(deleteAccount)
-        $listAccount.prepend($block)
-    }
     $('.delete-account').click(deleteAccount)
 
     var $account_suggests = $('#account-suggests')
 
     function selectAccountSuggest() {
-        $search.val($(this).data('handle')).trigger('change')
+        $search_account.val($(this).data('handle')).trigger('change')
         $account_suggests.children().remove()
     }
 
@@ -1188,46 +1330,64 @@ $(function() {
         $account_suggests.append($suggest)
     }
 
-    var $search = $('#add-account-search')
-    $search.css({'width': '40%'});
+    var $search_account = $('#add-account-search')
+    $search_account.css({'width': '40%'});
 
     var $add_account_button = $('#add-account')
     var $add_account_loading = $('#add-account-loading')
 
     function update_advanced_search() {
+        $add_account_button.prop('disabled', !($search_resource.val() && $search_account.val()))
+
         $advanced_search = $('#add-account-advanced-search')
         href = ACCOUNTS_ADVANCED_SEARCH_URL
-        if ($resource.val()) {
-            href += '&resource=' + $resource.val()
+        if ($search_resource.val()) {
+            href += '&resource=' + $search_resource.val()
         }
-        if ($search.val()) {
-            href += '&search=' + encodeURIComponent($search.val())
+        if ($search_account.val()) {
+            href += '&search=' + encodeURIComponent($search_account.val())
         }
         $advanced_search.attr('href', href)
     }
-    $resource.on('change', update_advanced_search)
-    $search.on('keyup', update_advanced_search)
+
+    $search_resource.on('change', update_advanced_search)
+    $search_account.on('keyup', update_advanced_search)
     update_advanced_search()
+
+    function filter_account_table() {
+        var resource_pk = $search_resource.val()
+        if (resource_pk) {
+            $('#list-accounts .account').addClass('hidden')
+            $('#list-accounts .account[data-account-resource="' + resource_pk + '"]').removeClass('hidden')
+        } else {
+            $('#list-accounts .account').removeClass('hidden')
+        }
+    }
+    $search_resource.on('change', filter_account_table)
+    filter_account_table()
 
     $add_account_button.click(function() {
         $add_account_loading.removeClass('hidden')
+        $add_account_button.prop('disabled', true)
         $.ajax({
             type: 'POST',
             url: $.fn.editable.defaults.url,
             data: {
                 pk: $.fn.editable.defaults.pk,
                 name: 'add-account',
-                resource: $resource.val(),
-                value: $search.val(),
+                resource: $search_resource.val(),
+                value: $search_account.val(),
             },
             success: function(data) {
-                $add_account_loading.addClass('hidden')
-                $account_suggests.children().remove()
                 if (data.message == 'add') {
-                    addAccount(-1, data.account)
-                    $resource.val(null).trigger('change')
-                    $search.val(null).trigger('change')
-                } else if (data.message == 'suggest') {
+                    window.location.replace(ACCOUNTS_TAB_URL + '?resource=' + $search_resource.val())
+                    return
+                }
+
+                $add_account_loading.addClass('hidden')
+                $add_account_button.prop('disabled', false)
+                if (data.message == 'suggest') {
+                    $account_suggests.children().remove()
                     for (var i = 0; i < data.accounts.length; i++) {
                         addAccountSuggest(data.accounts[i])
                     }
@@ -1239,13 +1399,14 @@ $(function() {
                     return
                 }
                 $add_account_loading.addClass('hidden')
+                $add_account_button.prop('disabled', false)
                 $errorAccountTab.show().html(data.responseText)
                 setTimeout(function() { $errorAccountTab.hide(500) }, 3000)
             },
         })
     })
 
-    $search.keypress(function(e) {
+    $search_account.keypress(function(e) {
         if (e.which == 13 ) {
             e.preventDefault()
             $add_account_button.click()

@@ -61,7 +61,7 @@ $(function() {
         var modal = $(this)
         modal.find('.modal-title').text(title)
         modal.find('[name="contest_id"]').val(contest_id)
-        modal.find('select option[value="' + method + '"]').attr('selected', 'true')
+        modal.find('select option[value="' + method + '"]').attr('selected', 'true').trigger('change')
     })
 
     $('#send_notification form').submit(function(e) {
@@ -74,7 +74,8 @@ $(function() {
         }).done(function() {
             form.reset();
             $('#send_notification').modal('hide')
-        }).fail(function() {
+        }).fail(function(response) {
+            log_ajax_error(response)
             $('#send_notification').effect("shake")
         });
         e.preventDefault();

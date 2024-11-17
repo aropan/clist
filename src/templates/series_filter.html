@@ -15,7 +15,7 @@
   <select{% if not noname %} name="{{ series_id }}"{% endif %} id="{{ series_id }}"{% if not nosubmit %} onchange="this.form.submit()"{% endif %}{% if not nomultiply %} multiple{% endif %}{% if disabled %} disabled{% endif %}>
     <option></option>
     {% for series in params.series %}
-      <option value="{{ series.slug }}" selected>{{ series.short }}</option>
+    <option value="{{ series.slug }}" selected>{{ series.short }}</option>
     {% endfor %}
   </select>
 
@@ -44,6 +44,9 @@
         };
       },
       processResults: function (data, params) {
+        {% if with_all %}if ((params.page || 1) == 1) {
+          data.items.unshift({slug: 'all', text: 'Select All'})
+        }{% endif %}
         return {
           results: data.items.map(function (item) { return {id: item.slug, text: item.text} }),
           pagination: {

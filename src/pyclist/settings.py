@@ -180,6 +180,7 @@ TEMPLATES = [
                 'favorites.templatetags.favorites_extras',
                 'django.templatetags.cache',
                 'el_pagination.templatetags.el_pagination_tags',
+                'jsonify.templatetags.jsonify',
             ],
             'loaders': [
                 ('django.template.loaders.cached.Loader', [
@@ -212,11 +213,16 @@ CHANNEL_LAYERS = {
 
 # django_rq
 RQ_QUEUES = {
+    'system': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DEFAULT_TIMEOUT': 60,
+    },
     'default': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 3600,
-    }
+        'DEFAULT_TIMEOUT': 300,
+    },
 }
 RQ_SHOW_ADMIN_LINK = True
 
@@ -282,7 +288,7 @@ RESOURCES_ICONS_PATHDIR = 'img/resources/'
 RESOURCES_ICONS_SIZES = [32, 64]
 
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileystemStorage"},
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
     'staticfiles': {'BACKEND': 'static_compress.CompressedStaticFilesStorage'},
 }
 
@@ -592,6 +598,9 @@ CSP_SCRIPT_SRC += ('https://www.google-analytics.com', 'https://www.googletagman
 CSP_IMG_SRC += ('https://www.google-analytics.com', )
 CSP_CONNECT_SRC += ('https://www.google-analytics.com', )
 
+# CSP Yandex form
+CSP_SCRIPT_SRC += ('https://forms.yandex.ru', )
+
 # X-XSS-Protection
 SECURE_BROWSER_XSS_FILTER = True
 
@@ -657,6 +666,9 @@ VIRTUAL_CODER_PREFIX_ = '∨'
 DEFAULT_API_THROTTLE_AT_ = 10
 
 CODER_LIST_N_VALUES_LIMIT_ = 100
+CODER_N_SUBSCRIPTIONS_LIMIT_ = 10
+CODER_SUBSCRIPTION_N_LIMIT_ = CODER_LIST_N_VALUES_LIMIT_
+CODER_SUBSCRIPTION_TOP_N_LIMIT_ = 50
 
 ENABLE_GLOBAL_RATING_ = False
 
@@ -780,6 +792,13 @@ FONTAWESOME_ICONS_ = {
     'loading': '<i class="fas fa-circle-notch fa-spin"></i>',
     'profile': dict(icon='<i class="fa-regular fa-address-card"></i>', title=False),
     'rating_prediction': '<i class="fa-solid fa-calculator"></i>',
+    'https': '<i class="fa-regular fa-square-check"></i>',
+    'http': '<i class="fa-regular fa-rectangle-xmark"></i>',
+    'edit': '<i class="fa-regular fa-pen-to-square"></i>',
+    'login': '<i class="fa-solid fa-right-to-bracket"></i>',
+    'logout': '<i class="fa-solid fa-right-from-bracket"></i>',
+    'expires': '<i class="fa-solid fa-clock-rotate-left"></i>',
+    'subscription': '<i class="fa-regular fa-newspaper"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
@@ -790,7 +809,7 @@ FONTAWESOME_ICONS_ = {
     'discord': {'icon': '<i class="fab fa-discord"></i>', 'title': None},
     'vk': {'icon': '<i class="fab fa-vk"></i>', 'title': None},
     'patreon': {'icon': '<i class="fab fa-patreon"></i>', 'title': None},
-    'competitive-hustle': {'icon': '<i class="fas fa-tools"></i>'},
+    'yandex-contest': {'icon': '<i class="fas fa-tools"></i>'},
 }
 
 
@@ -822,9 +841,9 @@ class NOTIFICATION_CONF:
     WEBBROWSER = 'webbrowser'
 
     METHODS_CHOICES = (
-        (EMAIL, 'Email'),
         (TELEGRAM, 'Telegram'),
         (WEBBROWSER, 'WebBrowser'),
+        # (EMAIL, 'Email'),
     )
 
 
@@ -843,8 +862,8 @@ if not DEBUG:
             DjangoIntegration(),
             LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
         ],
-        traces_sample_rate=0.01,
-        profiles_sample_rate=0.01,
+        traces_sample_rate=0.005,
+        profiles_sample_rate=0.005,
         send_default_pii=True,
         environment='development' if DEBUG else 'production',
     )

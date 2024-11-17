@@ -1,9 +1,9 @@
 <form method="POST" action="/send-event-notification/">
   <div class="form-group">
     <label class="control-label">Method:</label>
-    <select name="method" class="input-sm select form-control">
+    <select data-init="select2" name="method" class="input-sm select form-control" multiple>
       {% for k, v in request.user.coder.get_notifications %}
-        <option value="{{ k }}">{{ v }}</option>
+      <option value="{{ k }}">{{ v }}</option>
       {% endfor %}
     </select>
   </div>

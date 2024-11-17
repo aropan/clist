@@ -91,10 +91,6 @@
 
             preg_match_all($resource['regexp'], $page, $matches,  PREG_SET_ORDER);
 
-            if (DEBUG) {
-                print_r($matches);
-            }
-
             $timezone_offset = timezone_offset_get(new DateTimeZone($resource['timezone']), new DateTime("now"));
 
             $registration = NULL;
@@ -190,9 +186,10 @@
         $updated_resources[$contest['rid']] = true;
         foreach (array('start_time', 'end_time') as $k) {
             if (isset($contest[$k]) && !is_numeric($contest[$k]) && $contest[$k]) {
-                if (!preg_match('/(?:[\-\+][0-9]+:[0-9]+|\s[A-Z]{3,}|Z)$/', $contest[$k]) and !empty($contest['timezone']) and strpos($contest[$k], $contest['timezone']) === false) {
+                if (!preg_match('/(?:[\-\+][0-9]+:[0-9]+|\s[A-Z]{3,}|Z|UTC\+[0-9]+)$/', $contest[$k]) and !empty($contest['timezone']) and strpos($contest[$k], $contest['timezone']) === false) {
                     $contest[$k] .= " " . $contest['timezone'];
                 }
+                $contest[$k] = preg_replace('/\bUTC\b([+-][0-9]+)/i', '\1', $contest[$k]);
                 $contest[$k] = preg_replace_callback(
                     '/\s([A-Z]{3,})$/',
                     function ($match) {

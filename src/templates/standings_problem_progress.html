@@ -12,7 +12,7 @@
   <div class="progress-bar progress-bar-success" style="width: {{ n_accepted|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
   <div class="progress-bar progress-bar-info" style="width: {{ n_partial|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
   <div class="progress-bar progress-bar-warning" style="width: {{ n_hidden|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
-  <div class="progress-bar progress-bar-danger" style="width: {{ n_attempts|substract:n_accepted|substract:n_partial|substract:n_hidden|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
+  <div class="progress-bar progress-bar-danger" style="width: {{ n_attempts|subtract:n_accepted|subtract:n_partial|subtract:n_hidden|multiply:100|divide:n_statistics|floatformat:"3" }}%"></div>
 </div>
 {% else %}
 <div class="small text-muted nobold">

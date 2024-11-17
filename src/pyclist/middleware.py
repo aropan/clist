@@ -6,15 +6,14 @@ import zstandard as zstd
 from django.conf import settings
 from django.db import connection
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseForbidden
 from django.middleware import csrf
-from django.urls import reverse
 from django.utils import timezone
 from pytz import timezone as pytz_timezone
 
 from clist.templatetags.extras import redirect_login
 from true_coders.models import Coder
-from utils.custom_request import custom_request
+from utils.custom_request import CustomRequest
 
 
 def DebugPermissionOnlyMiddleware(get_response):
@@ -23,7 +22,7 @@ def DebugPermissionOnlyMiddleware(get_response):
         first_path = request.path.split('/')[1]
         if first_path not in settings.DEBUG_PERMISSION_EXCLUDE_PATHS:
             if not request.user.is_authenticated:
-                if first_path not in ('login', 'signup', 'oauth', 'calendar', 'telegram'):
+                if first_path not in ('login', 'signup', 'oauth', 'calendar', 'telegram', 'form'):
                     return redirect_login(request)
             elif not request.user.has_perm('auth.view_debug'):
                 return HttpResponseForbidden()
@@ -43,7 +42,7 @@ def DebugPermissionOnlyMiddleware(get_response):
 def CustomRequestMiddleware(get_response):
 
     def middleware(request):
-        request = custom_request(request)
+        request = CustomRequest(request)
         response = get_response(request)
         return response
 

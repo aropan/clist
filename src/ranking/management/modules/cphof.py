@@ -105,7 +105,7 @@ class Statistic(BaseModule):
             ignore_n_statistics = False
             ignore_title = None
             for mapping in host_mapping:
-                if re.search(mapping['regex'], host):
+                if re.search(mapping['regex'], host, re.IGNORECASE):
                     host = mapping['host']
                     ignore_title = mapping.get('ignore_title')
                     ignore_n_statistics = mapping.get('ignore_n_statistics', ignore_n_statistics)

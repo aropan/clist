@@ -90,6 +90,9 @@
           <th class="header-start-time no-stretch">{{ time_field|title }} time</th>
           <th class="header-timeleft no-stretch">{{ time_field|title }}s in</th>
           <th class="header-duration no-stretch">Duration</th>
+          {% for field in more_fields %}
+          <th class="no-stretch">{% with title_field=field|title_field %}{% for f in title_field.split %}{% if forloop.counter0 %}<br/>{% endif %}{{ f }}{% endfor %}{% endwith %}</th>
+          {% endfor %}
           <th class="header-event">
             {% if hide_contest %}
             <i class="fa fa-eye invisible"></i>
@@ -109,7 +112,7 @@
         <tr class="contest {{ contest.state }}{% if contest.state == 'running' %} success{% elif contest.state == 'past' %} text-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
           <td class="start-time">
             {% with contest_time_field=time_field|add:"_time" %}
-            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest|get_item:contest_time_field|format_time:"%Y%m%dT%H%M" }}{% if contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}&msg={{ contest.title|urlencode }}">
+            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest|get_item:contest_time_field|format_time:"%Y%m%dT%H%M" }}{% if time_field == "start" and contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}&msg={{ contest.title|urlencode }}">
               {{ contest|get_item:contest_time_field|timezone:timezone|format_time:time_format }}
             </a>
             {% endwith %}
@@ -119,7 +122,19 @@
             {% if contest.is_over %}over{% else %}{{ next_time|countdown }}{% endif %}
           </td>
           {% endwith %}
-          <td class="duration">{{ contest.hr_duration }}</td>
+          <td class="duration">
+            {{ contest.hr_duration }}
+            {% if contest.is_coming and contest.with_virtual_start %}
+            <a class="text-muted small" href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}&msg={{ contest.title|urlencode }}" title="Window duration: {{ contest.full_duration|hr_timedelta }}<br>End time: {{ contest.end_time|timezone:timezone|format_time:time_format }}" data-toggle="tooltip" data-html="true">{% icon_to "period" %}</a>
+            {% endif %}
+          </td>
+          {% for field in more_fields %}
+          <td class="nowrap">
+            {% with value=contest|get_item:field %}
+            {% if value is None %}&#183;{% else %}{{ value }}{% endif %}
+            {% endwith %}
+          </td>
+          {% endfor %}
           <td class="event">
             {% if hide_contest %}
             <i onclick="toggle_hide_contest(event, this)" class="hide-contest fa fa-eye" data-contest-id="{{ contest.id }}"></i>
@@ -156,7 +171,7 @@
             <a href="#" class="toggle badge progress-bar-info" data-group=".{{ group }}">{{ contest.group_size }}&nbsp;<i class="fa fa-caret-down"></i></a>
             {% endif %}
 
-            {% include "contest_inline_buttons.html" with user=request.user contest=contest only %}
+            {% include "contest_inline_buttons.html" with user=request.user contest=contest perms=perms only %}
 
             <span class="pull-right hidden-xs"><a class="resource-search resource" href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a></span>
             <div class="visible-xs"><a class="resource-search resource" href="{{ contest.resource|resource_href:contest.host }}"><small class="text-muted">{{ contest.host }}</small></a></div>

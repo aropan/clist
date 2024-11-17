@@ -17,11 +17,11 @@ from utils.logger import suppress_db_logging_context
 
 
 class Command(BaseCommand):
-    help = 'Fill coder problems using linked accounts'
+    help = 'Set coder problems using linked accounts'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.logger = getLogger('coders.fill_coder_problems')
+        self.logger = getLogger('coders.set_coder_problems')
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='resources hosts')
@@ -40,10 +40,10 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         coders = Coder.objects.all()
-        update_need_fill_coder_problems = False
+        update_need_set_coder_problems = False
         if args.no_filled:
-            coders = coders.filter(Q(settings__need_fill_coder_problems=True))
-            update_need_fill_coder_problems = True
+            coders = coders.filter(Q(settings__need_set_coder_problems=True))
+            update_need_set_coder_problems = True
 
         if args.coders:
             coders_filters = Q()
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 coders_filters |= Q(username=c)
             coders = coders.filter(coders_filters)
             self.log_queryset('coders', coders)
-            update_need_fill_coder_problems = False
+            update_need_set_coder_problems = False
 
         resources = Resource.objects.all()
         if args.resources:
@@ -64,7 +64,7 @@ class Command(BaseCommand):
             if not args.coders:
                 coders = coders.annotate(has_resource=Exists('account', filter=Q(account__resource__in=resources)))
                 coders = coders.filter(has_resource=True)
-            update_need_fill_coder_problems = False
+            update_need_set_coder_problems = False
 
         if args.contest:
             contest = Contest.objects.get(pk=args.contest)
@@ -73,7 +73,7 @@ class Command(BaseCommand):
             coders = coders.filter(has_account=True)
             self.log_queryset('contest problems', problems)
             self.log_queryset('contest coders', coders)
-            update_need_fill_coder_problems = False
+            update_need_set_coder_problems = False
         else:
             problems = None
 
@@ -140,8 +140,8 @@ class Command(BaseCommand):
                     for resource in tqdm(coder_resources, total=len(coder_resources), desc='resources'):
                         resource_problems = resource.problem_set.all()
                         process_problem(resource_problems, desc=f'{resource}')
-            if update_need_fill_coder_problems:
-                coder.settings.pop('need_fill_coder_problems', None)
+            if update_need_set_coder_problems:
+                coder.settings.pop('need_set_coder_problems', None)
                 coder.save(update_fields=['settings'])
 
         self.logger.info(f'n_created = {n_created}, n_deleted = {n_deleted}, n_total = {n_total}')

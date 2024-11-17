@@ -22,6 +22,20 @@ from ranking.management.modules.excepts import ExceptionParseAccounts, Exception
 from utils.requester import FailOnGetResponse
 
 
+def parse_xml(page, exc=None):
+    try:
+        root = ET.fromstring(page)
+    except ET.ParseError as e:
+        if exc is not None:
+            raise exc(f'Failed to parse xml: {e}')
+        raise e
+    for child in root:
+        data = {}
+        for field in child:
+            data[field.tag] = field.text
+        yield data
+
+
 class Statistic(BaseModule):
     LEGACY_PROXY_PATH = 'logs/legacy/topcoder.proxy'
 
@@ -104,6 +118,7 @@ class Statistic(BaseModule):
             filepath_proxies='sharedfiles/resource/topcoder/proxies',
             connect=lambda req: req.get('https://www.topcoder.com/', n_attempts=1),
             attributes=dict(n_attempts=5),
+            inplace=False,
         )
 
         if not self.standings_url and datetime.now() - start_time < timedelta(days=30):
@@ -161,11 +176,7 @@ class Statistic(BaseModule):
 
             url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_round_list'
             page = req.get(url)
-            root = ET.fromstring(page)
-            for child in root:
-                data = {}
-                for field in child:
-                    data[field.tag] = field.text
+            for data in parse_xml(page, exc=ExceptionParseStandings):
                 date = dateutil.parser.parse(data['date'])
                 url = 'https://www.topcoder.com/stat?c=round_overview&er=5&rd=' + data['round_id']
                 process_match(date, data['full_name'], url)
@@ -263,11 +274,7 @@ class Statistic(BaseModule):
                 url = f'https://www.topcoder.com/tc?module=BasicData&c=dd_round_results&rd={rd}'
                 try:
                     dd_round_results_page = req.get(url)
-                    root = ET.fromstring(dd_round_results_page)
-                    for child in root:
-                        data = {}
-                        for field in child:
-                            data[field.tag] = field.text
+                    for data in parse_xml(dd_round_results_page, exc=ExceptionParseStandings):
                         handle = data.pop('handle')
                         dd_round_results[handle] = self._dict_as_number(data)
                 except FailOnGetResponse:
@@ -589,14 +596,6 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
-        def parse_xml(page):
-            root = ET.fromstring(page)
-            for child in root:
-                data = {}
-                for field in child:
-                    data[field.tag] = field.text
-                yield data
-
         active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
         with REQ.with_proxy(
             time_limit=10,
@@ -607,7 +606,7 @@ class Statistic(BaseModule):
         ) as req:
             page = req.proxer.get_connect_ret()
             dd_active_algorithm = {}
-            for data in parse_xml(page):
+            for data in parse_xml(page, exc=ExceptionParseAccounts):
                 dd_active_algorithm[data.pop('handle')] = data
 
             def fetch_profile(user):
@@ -652,7 +651,7 @@ class Statistic(BaseModule):
                     page = req.get(url)
                     max_rating_order = -1
                     ret['rating'], ret['volatility'], n_rating = None, None, 0
-                    for data in parse_xml(page):
+                    for data in parse_xml(page, exc=ExceptionParseAccounts):
                         n_rating += 1
                         rating_order = as_number(data['rating_order'])
                         if rating_order > max_rating_order:

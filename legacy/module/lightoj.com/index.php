@@ -16,10 +16,12 @@
             }
 
             foreach ($response['data']['contests']['data'] as $c) {
-                if ($c['contestVisibilityStr'] == 'private') {
-                    continue;
+                $visibility = $c['contestVisibilityStr'];
+                if ($c['isPasswordProtectedBool']) {
+                    $visibility = 'protected';
                 }
-                $title = $c['contestTitleStr'] . ' [' . $c['contestVisibilityStr'] . ', ' . $c['contestTypeStr'] . ', ' . $c['contestParticipationTypeStr'] . ']';
+                $title = $c['contestTitleStr'] . ' [' . $visibility . ', ' . $c['contestTypeStr'] . ', ' . $c['contestParticipationTypeStr'] . ']';
+                $info = array('parse' => $c);
                 $contests[] = array(
                     'start_time' => $c['contestStartTimestamp'],
                     'end_time' => $c['contestEndTimestamp'],
@@ -29,6 +31,7 @@
                     'rid' => $RID,
                     'timezone' => $TIMEZONE,
                     'key' => $c['contestId'],
+                    'info' => $info,
                 );
             }
 

@@ -1,18 +1,18 @@
 PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 DJANGO_ENV_FILE=.env.prod
 
-20,35,55  *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_CALENDAR_UPDATE         /usr/src/clist/run-manage.bash  update_google_calendars
-*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_CREATING_NOTIFICATIONS  /usr/src/clist/run-manage.bash  notification_to_task
-*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SENDING_NOTIFICATIONS   /usr/src/clist/run-manage.bash  sendout_tasks
-*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSING_STATISTICS      /usr/src/clist/run-manage.bash  parse_statistic
-*/3       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSING_ACCOUNTS        /usr/src/clist/run-manage.bash  parse_accounts_infos
-30        *    *  *  *                                                                  /usr/src/clist/run-manage.bash  parse_archive_problems
-*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_CHECKING_LOGS           /usr/src/clist/run-manage.bash  check_logs
-*/15      *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SET_ACCOUNT_RANK        /usr/src/clist/run-manage.bash  set_account_rank
-*/20      *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SET_COUNTRY_RANK        /usr/src/clist/run-manage.bash  set_country_rank
-15        *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_UPDATE_AUTO_RATING      /usr/src/clist/run-manage.bash  update_auto_rating
+20,35,55  *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_CALENDAR_UPDATE        /usr/src/clist/run-manage.bash update_google_calendars
+*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_CREATING_NOTIFICATIONS /usr/src/clist/run-manage.bash notification_to_task
+*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SENDING_NOTIFICATIONS  /usr/src/clist/run-manage.bash sendout_tasks
+*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSING_STATISTICS     /usr/src/clist/run-manage.bash parse_statistic
+*/1       *    *  *  *                                                                 /usr/src/clist/run-manage.bash parse_live_statistics
+*/3       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSING_ACCOUNTS       /usr/src/clist/run-manage.bash parse_accounts_infos
+30        *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSE_ARCHIVE_PROBLEMS /usr/src/clist/run-manage.bash parse_archive_problems
+*/1       *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_CHECKING_LOGS          /usr/src/clist/run-manage.bash check_logs
+*/15      *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SET_ACCOUNT_RANK       /usr/src/clist/run-manage.bash set_account_rank
+*/20      *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SET_COUNTRY_RANK       /usr/src/clist/run-manage.bash set_country_rank
+15        *    *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_UPDATE_AUTO_RATING     /usr/src/clist/run-manage.bash update_auto_rating
 
-# 32        1    *  *  wed  env  MONITOR_NAME=SENTRY_CRON_MONITOR_REINDEX                 /usr/src/clist/run-manage.bash  reindex
 # # 58 3 14-20 * * [ "$(date '+\%u')" -eq 4 ] && cd $PROJECT_DIR && run-one ./manage.py runscript calculate_account_contests >logs/command/calculate_account_contests.log 2>&1
 # 58 4 * * 4 cd $PROJECT_DIR && run-one ./manage.py runscript calculate_coder_n_accounts_and_coder_n_contests >logs/command/calculate_coder_n_accounts_and_coder_n_contests.log 2>&1
 # 58 5 * * 4 cd $PROJECT_DIR && run-one ./manage.py runscript calculate_resource_contests >logs/command/calculate_resource_contests.log 2>&1

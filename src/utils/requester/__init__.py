@@ -95,8 +95,7 @@ class CurlFailedResponse(FailOnGetResponse):
         return getattr(self.args[0], name, None)
 
 
-def raise_fail(err):
-    exc = FailOnGetResponse(err)
+def raise_fail(err, exc):
     if exc.code or exc.url:
         msg = f'code = {exc.code}, url = `{exc.url}`'
         if exc.response:
@@ -114,7 +113,7 @@ class NoVerifyWord(Exception):
 
 class Proxer():
     DIVIDER = 3
-    LIMIT_TIME = 2.5
+    LIMIT_TIME = float(environ.get('PROXY_LIMIT_TIME', 3))
 
     def load_data(self):
         try:
@@ -125,6 +124,12 @@ class Proxer():
         self._data.setdefault('proxies', {})
         self._data.setdefault('sources', {})
         self._data.setdefault('deferred', {})
+
+        env_proxy = environ.get('REQUESTER_PROXY')
+        if env_proxy and re.match(r'^[0-9]+\.+[0-9]+\.+[0-9]+\.+[0-9]+:[0-9]+$', env_proxy):
+            self._data['proxies'] = {}
+            self.add(env_proxy)
+
         for proxy in self.proxies.values():
             self.init_proxy(proxy)
 
@@ -291,11 +296,14 @@ class Proxer():
             self.print(f'ok, {time_response} with average {self.time_response()}')
             self.check_proxy()
 
-    def fail(self, proxy):
+    def fail(self, proxy, force=False):
         with self.lock:
             if not self.proxy or proxy != self.proxy_address:
                 return
-            self.proxy['_state'] //= self.DIVIDER
+            if force:
+                self.proxy['_state'] = 0
+            else:
+                self.proxy['_state'] //= self.DIVIDER
             self.proxy['_total_fail'] += 1
             self.update_value('_fail', 1)
             self.check_proxy()
@@ -529,7 +537,7 @@ class requester():
                  caching=None,
                  user_agent=None,
                  headers=None,
-                 file_name_with_proxies=default_filepath_proxies):
+                 proxy_filepath=default_filepath_proxies):
         if cookie_filename:
             self.cookie_filename = cookie_filename
         if caching is not None:
@@ -550,7 +558,7 @@ class requester():
             ]
         self._init_opener_headers = self.headers
         self.init_opener()
-        self.set_proxy(proxy, file_name_with_proxies)
+        self.set_proxy(proxy, proxy_filepath)
         atexit.register(self.cleanup)
 
     def init_opener(self):
@@ -590,6 +598,10 @@ class requester():
 
             if self.proxer:
                 self.proxer.connect(req=self, set_proxy=set_proxy)
+
+    def proxy_fail(self, proxy=None, force=False):
+        if self.proxer:
+            self.proxer.fail(proxy=proxy or self.proxy, force=force)
 
     def get(
         self,
@@ -742,14 +754,14 @@ class requester():
                     else:
                         self.print(f'[error] code = {error_code}, response = {str(err)[:200]}')
                         self.error = err
-                        if self.proxer:
-                            self.proxer.fail(proxy=str(proxy))
+                        self.proxy_fail(proxy)
+                        error_exception = FailOnGetResponse(err)
 
                         if additional_attempts and error_code in additional_attempts:
                             additional_attempt = additional_attempts[error_code]
                             if (
                                 additional_attempt['count'] > 0 and
-                                ('func' not in additional_attempt or additional_attempt['func'](FailOnGetResponse(err)))
+                                ('func' not in additional_attempt or additional_attempt['func'](error_exception))
                             ):
                                 additional_attempt['count'] -= 1
                                 attempt -= 1
@@ -760,8 +772,11 @@ class requester():
                         if attempt < n_attempts:
                             sleep(attempt_delay)
                             continue
+                        if (fp := os.environ.get('REQUESTER_PAGE_ON_FAIL')) and error_exception.response:
+                            with open(fp, 'w') as fo:
+                                fo.write(error_exception.response)
                         if self.assert_on_fail:
-                            raise_fail(err)
+                            raise_fail(err, error_exception)
                         else:
                             traceback.print_exc()
                         return
@@ -838,7 +853,7 @@ class requester():
         if not return_url and not return_code:
             return page
         ret = [page]
-        if return_url or return_code:
+        if return_url:
             ret += [last_url]
         if return_code:
             ret += [response.code]
@@ -849,7 +864,10 @@ class requester():
         return self.last_url
 
     def head(self, url):
-        return self.opener.open(url).getheaders()
+        try:
+            self.opener.open(url).getheaders()
+        except urllib.error.HTTPError as e:
+            raise FailOnGetResponse(e)
 
     def geturl(self, url):
         try:
@@ -1030,20 +1048,27 @@ class requester():
             self.proxer.save_data()
         self.save_cookie()
 
+    def duplicate(self, **kwargs):
+        ret = copy.copy(self)
+        for k, v in kwargs.items():
+            setattr(ret, k, v)
+        ret.init_opener()
+        return ret
+
     def with_proxy(self, inplace=True, attributes=None, **kwargs):
         self.save_cookie()
-        if inplace:
-            ret = self
-        else:
-            ret = copy.copy(self)
-            ret.init_opener()
-        ret.set_proxy(proxy=True, **kwargs)
+        ret = self if inplace else copy.copy(self)
+
         if attributes:
             orig_attributes = {}
             for field, value in attributes.items():
                 orig_attributes[field] = getattr(ret, field, None)
                 setattr(ret, field, value)
             setattr(ret, 'orig_attributes', orig_attributes)
+
+        if not inplace:
+            ret.init_opener()
+        ret.set_proxy(proxy=True, **kwargs)
         return ret
 
     def __enter__(self):

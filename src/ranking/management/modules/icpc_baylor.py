@@ -48,8 +48,8 @@ def names_iou(name1, name2):
     iou = max(list_iou, str_iou)
 
     n = min(len(canonized_name1), len(canonized_name2))
-    prefix_iou = list_string_iou(canonized_name1[:n], canonized_name2[:n])
-    suffix_iou = list_string_iou(canonized_name1[-n:], canonized_name2[-n:])
+    prefix_iou = list_string_iou(canonized_name1[:n], canonized_name2[:n]) * 0.99
+    suffix_iou = list_string_iou(canonized_name1[-n:], canonized_name2[-n:]) * 0.95
     iou = max(iou, prefix_iou, suffix_iou)
 
     return iou
@@ -433,7 +433,7 @@ class Statistic(BaseModule):
                 if is_icpc_api_standings_url:
                     page = re.sub(r'</table>\s*<table>\s*(<tr[^>]*>\s*<t[^>]*>)', r'\1', page, flags=re.I)
 
-                regex = '''(?:<table[^>]*(?:id=["']standings|class=["']scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>'''  # noqa
+                regex = '''(?:<table[^>]*(?:id=["']standings|class=["'][^"']*scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>'''  # noqa
                 match = re.search(regex, page, re.DOTALL)
                 if match:
                     html_table = match.group(0)
@@ -489,9 +489,9 @@ class Statistic(BaseModule):
                                                 logo = urljoin(standings_url, src)
                                                 row.setdefault('info', {}).setdefault('logo', logo)
                                 for el in vs:
-                                    region = el.column.node.xpath('.//*[@class="badge badge-warning"]')
+                                    region = el.column.node.xpath('.//*[contains(@class, "badge")]')
                                     if region:
-                                        region = ''.join([s.strip() for s in region[0].xpath('text()')])
+                                        region = ' '.join([s.strip() for s in region[0].xpath('text()')])
                                     if region:
                                         if is_regional:
                                             if region.lower() == 'ineligible':
@@ -586,6 +586,25 @@ class Statistic(BaseModule):
                         region = ''.join([s.strip() for s in prv.xpath('text()')])
                         row['region'] = region
 
+                regex = '''<table[^>]*class="[^"]*table-sm[^"]*"[^>]*>.*?</table>'''
+                tables = re.findall(regex, page, re.DOTALL)
+                for table in tables:
+                    table = parsed_table.ParsedTable(table)
+                    values = []
+                    for r in table:
+                        for k, v in r.items():
+                            values.append(k)
+                            values.append(v.value)
+                        if len(values) > 4:
+                            break
+                    if len(values) == 4 and values[:2] == ['Name', 'Category']:
+                        name, region = values[2:]
+                        member = f'{name} {season}'
+                        if member not in result:
+                            logger.warning(f'Not found member = {member} for region = {region}')
+                            continue
+                        result[member]['region'] = region
+
                 for team, row in result.items():
                     if statistics and team in statistics:
                         row.pop('info', None)
@@ -603,6 +622,8 @@ class Statistic(BaseModule):
                     if not stat:
                         continue
                     for k, v in stat.items():
+                        if k in ['medal']:
+                            continue
                         if k not in row:
                             hidden_fields.add(k)
                             row[k] = v
@@ -692,7 +713,6 @@ class Statistic(BaseModule):
                                         best_region = region
                                         best_team = team
                                         best_name = row['name']
-                                        print(name)
                         if best_name is None:
                             break
                         logger.info(f'max iou = {max_iou:.3f}, best_name = {best_name}')
@@ -817,10 +837,56 @@ class Statistic(BaseModule):
                         logger_func = logger.info
                         add_team(best_name, handles)
                     logger_func(f'best_iou = {best_iou:.3f}, best_name = {best_name}, university = {university}')
+            if 'use_zibada_list' in self.info and os.environ.get('USE_ZIBADA_LIST'):
+                zibada_info = self.info['use_zibada_list']
+                data = REQ.get(zibada_info['url'])
+                data = re.sub(r'^[\w\d]+\s*=\s*', '', data)
+                data = json.loads(data)
+                for team in data:
+                    name, handles = team
+                    name = html.unescape(name)
+                    member = f'{name} {season}'
+                    if member not in result:
+                        logger.warning(f'Not found team = {member}')
+                        continue
+                    row = result[member]
+                    members = row.setdefault('_members', [])
+                    accounts = {m['account'] for m in members}
+                    for handle in handles:
+                        handle = handle.split(':')[-1]
+                        if handle in accounts:
+                            continue
+                        members.append({
+                            'account': handle,
+                            'resource': zibada_info['resource'],
+                            'without_country': True,
+                        })
+                    if len(members) > 3:
+                        logger.warning(f'Too many members: {members}, team = {member}')
 
             event_feed = get_item(self.info, 'standings._event_feed')
             if event_feed:
                 self._parse_event_feed(event_feed, result, problems_info)
+
+            info_external_urls = get_item(self.info, 'standings.external_urls', [])
+            info_external_urls_set = set(i['url'] for i in info_external_urls)
+
+            external_urls = [
+                f'https://icpc.kimden.online/wf/{year}/',
+                f'https://zibada.guru/finals/{year}/',
+            ]
+            for external_url in external_urls:
+                if external_url in info_external_urls_set:
+                    continue
+                try:
+                    REQ.head(external_url)
+                except FailOnGetResponse:
+                    continue
+                info_external_urls.append({
+                    'url': external_url,
+                    'name': urlparse(external_url).hostname,
+                })
+                options['external_urls'] = info_external_urls
 
             standings = {
                 'result': result,

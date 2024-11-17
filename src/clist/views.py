@@ -33,9 +33,8 @@ from pyclist.decorators import context_pagination
 from ranking.models import Account, CountryAccount, Rating, Statistics
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import make_bins, make_chart
-from utils.custom_request import get_filtered_list
 from utils.json_field import JSONF
-from utils.regex import get_iregex_filter, verify_regex
+from utils.regex import get_iregex_filter
 from utils.timetools import get_timeformat, get_timezone
 
 
@@ -77,11 +76,16 @@ def get_view_contests(request, coder):
     resources = [r for r in request.GET.getlist('resource') if r]
     if resources:
         base_contests = base_contests.filter(resource_id__in=resources)
+    search_query = request.GET.get('search_query', None)
+    if search_query:
+        base_contests = base_contests.filter(get_iregex_filter(search_query, 'host', 'title'))
 
     now = timezone.now()
     result = []
     status = request.GET.get('status')
+    past_days = int(request.GET.get('past_days', 1))
     for group, query, order in (
+        ("past", Q(start_time__gt=now - timedelta(days=past_days), end_time__lte=now), "end_time"),
         ("running", Q(start_time__lte=now, end_time__gte=now), "end_time"),
         ("coming", Q(start_time__gt=now), "start_time"),
     ):
@@ -152,10 +156,9 @@ def get_events(request):
     end_time = arrow.get(request.POST.get('end', now + timedelta(days=31))).datetime
     query = query & Q(end_time__gte=start_time) & Q(start_time__lte=end_time)
 
-    search_query = request.POST.get('search_query', None)
+    search_query = request.POST.get('search_query')
     if search_query:
-        search_query_re = verify_regex(search_query)
-        query &= Q(host__iregex=search_query_re) | Q(title__iregex=search_query_re)
+        query &= get_iregex_filter(search_query, 'host', 'title')
 
     favorite_value = request.POST.get('favorite')
     if favorite_value == 'on':
@@ -193,13 +196,15 @@ def get_events(request):
             if past_action not in ['show', 'hide'] and contest.end_time < now:
                 color = contest.resource.info.get('get_events', {}).get('colors', {}).get(past_action, color)
 
+            start_time = (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S")
+            end_time = (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S")
             c = {
                 'id': contest.pk,
                 'title': contest.title,
                 'host': contest.host,
                 'url': contest.actual_url,
-                'start': (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
-                'end': (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S"),
+                'start': start_time,
+                'end': end_time,
                 'countdown': contest.next_time_to(now),
                 'hr_duration': contest.hr_duration,
                 'color': color,
@@ -210,25 +215,35 @@ def get_events(request):
                 c['favorite'] = contest.is_favorite
             result.append(c)
     except Exception as e:
-        return JsonResponse({'message': f'query = `{search_query}`, error = {e}'}, safe=False, status=400)
+        return JsonResponse({'error': str(e)}, safe=False, status=400)
     return JsonResponse(result, safe=False)
 
 
 @login_required
 def send_event_notification(request):
-    method = request.POST['method']
+    methods = request.POST.getlist('method')
+    methods = set(methods)
     contest_id = request.POST['contest_id']
     message = request.POST['message']
 
     coder = request.user.coder
 
-    sendout_tasks.Command().send_message(
-        coder=coder,
-        method=method,
-        data={'contests': [int(contest_id)]},
-        message=message.strip() + '\n',
-    )
+    if len(methods) > 10:
+        return HttpResponseBadRequest('Too many methods')
 
+    notifications = coder.get_notifications()
+    notifications = {k for k, v in notifications}
+    for method in methods:
+        if method not in notifications:
+            return HttpResponseBadRequest('Invalid method')
+
+    for method in methods:
+        sendout_tasks.Command().send_message(
+            coder=coder,
+            method=method,
+            data={'contests': [int(contest_id)]},
+            message=message.strip() + '\n',
+        )
     return HttpResponse('ok')
 
 
@@ -316,6 +331,9 @@ def main(request, party=None):
 
     offset = get_timezone_offset(tzname)
 
+    more_fields = request.user.has_perm('clist.view_more_fields')
+    more_fields = more_fields and [f for f in request.GET.getlist('more') if f] or []
+
     context.update({
         "offset": offset,
         "now": now,
@@ -328,6 +346,7 @@ def main(request, party=None):
         "add_to_calendar": get_add_to_calendar(request),
         "banners": banners,
         "promotion": promotion,
+        "more_fields": more_fields,
     })
 
     return render(request, "main.html", context)
@@ -1152,7 +1171,7 @@ def problems(request, template='problems.html'):
         field_types = fields_types.get(field)
         if not field_types or any(t in field_types for t in ('int', 'float', 'dict')):
             continue
-        values_list = get_filtered_list(request, field)
+        values_list = request.get_filtered_list(field)
         if values_list:
             values_filter = Q()
             for value in values_list:

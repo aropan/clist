@@ -36,6 +36,9 @@ RUN wget https://github.com/stunnel/static-curl/releases/download/8.6.0-1/curl-l
     mv /tmp/curl /usr/local/bin/curl && \
     rm /tmp/curl.tar.xz
 
+# psql
+RUN apt install -y postgresql-client
+
 RUN apt update --fix-missing
 
 ENV APPDIR=/usr/src/clist
@@ -45,7 +48,7 @@ WORKDIR $APPDIR
 FROM base as dev
 ENV DJANGO_ENV_FILE .env.dev
 RUN apt install -y redis-server
-CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker" "*.py"; python manage.py runserver 0.0.0.0:10042'
+CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker system default" "*.py"; python manage.py runserver 0.0.0.0:10042'
 
 COPY config/ipython_config.py .
 RUN ipython profile create
@@ -71,6 +74,7 @@ RUN mkdir /run/daphne
 COPY config/redis.conf /etc/redis/redis.conf
 
 COPY config/supervisord.conf /etc/supervisord.conf
+
 CMD supervisord -c /etc/supervisord.conf
 
 
@@ -82,7 +86,50 @@ COPY config/loggly/60-loggly.conf /etc/rsyslog.d/60-loggly.conf
 ENTRYPOINT /entrypoint.sh
 
 
-FROM nginx:alpine as nginx
+FROM nginx:stable-alpine as nginx
+# logrotate
 RUN apk add --no-cache logrotate
 COPY config/nginx/logrotate.d/nginx /etc/logrotate.d/nginx
 RUN chmod 0644 /etc/logrotate.d/nginx
+# cron
+RUN apk add --no-cache logrotate dcron
+COPY config/nginx/cron /etc/cron.d/nginx
+RUN chmod 0644 /etc/cron.d/nginx
+RUN crontab /etc/cron.d/nginx
+
+CMD crond && nginx -g "daemon off;"
+
+
+FROM postgres:14.3-alpine as postgres
+# pg_repack
+RUN apk add --no-cache --virtual .build-deps \
+        gcc \
+        g++ \
+        make \
+        musl-dev \
+        postgresql-dev \
+        git \
+        lz4-dev \
+        zlib-dev \
+        bash \
+        util-linux \
+        gawk \
+    && cd /tmp \
+    && git clone https://github.com/reorg/pg_repack.git \
+    && cd pg_repack \
+    && make \
+    && make install \
+    && apk del .build-deps \
+    && rm -rf /tmp/pg_repack
+# numfmt
+RUN apk add --no-cache coreutils
+# cron
+RUN apk add --no-cache dcron
+COPY config/postgres/cron /etc/cron.d/postgres
+RUN chmod 0644 /etc/cron.d/postgres
+RUN crontab /etc/cron.d/postgres
+# supervisord
+RUN apk add --no-cache supervisor
+COPY config/postgres/supervisord.conf /etc/supervisord.conf
+
+CMD supervisord -c /etc/supervisord.conf

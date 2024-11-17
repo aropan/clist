@@ -175,7 +175,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
 
     {% for hr in history_resources %}
     {% if forloop.counter0 == history_resources_limit %}
-      <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|substract:history_resources_limit }} more</span></a>
+      <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|subtract:history_resources_limit }} more</span></a>
       <div class="collapse" id="history-resources-collapsed">
     {% endif %}
     <div class="rating-history-block">

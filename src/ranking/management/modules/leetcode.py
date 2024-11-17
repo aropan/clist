@@ -78,7 +78,7 @@ class Statistic(BaseModule):
             headers.setdefault(key, value)
 
         kwargs['with_curl'] = req.proxer is None and 'post' not in kwargs
-        kwargs['curl_cookie_file'] = os.path.join(os.path.dirname(__file__), '.leetcode.cookies')
+        kwargs['curl_cookie_file'] = 'sharedfiles/resource/leetcode/cookies.txt'
         kwargs['with_referer'] = False
 
         # if not getattr(self, '_authorized', None) and getattr(conf, 'LEETCODE_COOKIES', False):
@@ -123,6 +123,7 @@ class Statistic(BaseModule):
                 url = api_ranking_url_format.format(page + 1)
                 content = Statistic._get(url, ignore_codes={404}, n_attempts=3)
                 data = json.loads(content)
+                data['_page'] = page + 1
                 return data
 
         data = fetch_standings_page(0)
@@ -184,21 +185,25 @@ class Statistic(BaseModule):
                         raise e
                     if not data:
                         return
-                    for p in data['questions']:
-                        if str(p['question_id']) not in problems_info:
-                            return
+                    if 'questions' in data:
+                        for p in data['questions']:
+                            if str(p['question_id']) not in problems_info:
+                                return
 
                     per_page = len(data['total_rank'])
                     n_page = n_page or (data['user_num'] - 1) // per_page + 1
 
                     if users and more_statistics:
-                        pages = set()
+                        pages = []
                         for more_stat in more_statistics.values():
                             place = as_number(more_stat['place'], force=True)
                             if place is None:
                                 raise ExceptionParseStandings(f'Invalid place {more_stat["place"]}')
-                            page = (place - 1) // per_page
-                            pages.add(page)
+                            base_page = (place - 1) // per_page
+                            for page_delta in (0, -1, +1, -2, +2):
+                                page = base_page + page_delta
+                                if page not in pages:
+                                    pages.append(page)
                         n_page = len(pages)
                     else:
                         pages = range(n_page)
@@ -212,6 +217,8 @@ class Statistic(BaseModule):
                         if stop_fetch_standings:
                             break
                         n_added = 0
+                        if 'submissions' not in data:
+                            data['submissions'] = [r.pop('submissions') for r in data['total_rank']]
                         for row, submissions in zip(data['total_rank'], data['submissions']):
                             handle = row.pop('user_slug').lower()
                             data_region = row.pop('data_region').lower()
@@ -220,8 +227,8 @@ class Statistic(BaseModule):
                             already_added = member in result
                             if users is not None and member not in users:
                                 continue
-                            row.pop('contest_id')
-                            row.pop('global_ranking')
+                            row.pop('contest_id', None)
+                            row.pop('global_ranking', None)
 
                             r = result.setdefault(member, OrderedDict())
 
@@ -230,14 +237,14 @@ class Statistic(BaseModule):
                             stats = get_item(statistics, member, {})
                             problems = r.setdefault('problems', get_copy_item(stats, 'problems', {}))
                             submitted_keys = set()
-                            for i, (k, s) in enumerate(submissions.items(), start=1):
+                            for k, s in submissions.items():
                                 short = problems_info[k]['short']
                                 submitted_keys.add(short)
                                 p = problems.setdefault(short, {})
                                 time = datetime.fromtimestamp(s['date']) - start_time
                                 p['time_in_seconds'] = time.total_seconds()
                                 p['time'] = self.to_time(time)
-                                if s['status'] == 10:
+                                if 'status' not in s or s['status'] == 10:
                                     solved += 1
                                     p['result'] = '+' + str(s['fail_count'] or '')
                                 else:
@@ -247,7 +254,7 @@ class Statistic(BaseModule):
                                 if 'submission_id' in s:
                                     p['submission_id'] = s['submission_id']
                                     p['external_solution'] = True
-                                    p['data_region'] = s['data_region']
+                                    p['data_region'] = data_region
 
                                     skip = skip or p['submission_id'] in solutions_ids
                                     solutions_ids.add(p['submission_id'])
@@ -275,10 +282,17 @@ class Statistic(BaseModule):
                             r['place'] = rank
 
                             r['info'] = {'profile_url': {'_domain': data_domain, '_handle': handle}}
+                            if 'avatar_url' in row:
+                                r['info']['userAvatar'] = row.pop('avatar_url')
+
+                            url = f"{standings_url.rstrip('/')}/{data['_page']}"
+                            url = re.sub('[.][^./]+(?=/)', domain, url)
+                            r['url'] = url
 
                             country = None
                             for field in 'country_code', 'country_name':
-                                country = country or row.pop(field, None)
+                                country_value = row.pop(field, None)
+                                country = country or country_value
                             if country:
                                 r['country'] = country
 
@@ -296,8 +310,6 @@ class Statistic(BaseModule):
                             if row.get('badge') or not row.get('user_badge'):
                                 row.pop('user_badge', None)
 
-                            r.update(row)
-
                             for k in set(row):
                                 hidden_fields.add(k)
                             if statistics and member in statistics:
@@ -311,8 +323,9 @@ class Statistic(BaseModule):
                         if n_added == 0 and not users:
                             stop_fetch_standings = True
 
-                fetch_ranking(domain='.com', region='global')
-                fetch_ranking(domain='.cn', region='local')
+                fetch_ranking(domain='.com', region='global_v2')
+                if users is None or users:
+                    fetch_ranking(domain='.cn', region='local_v2')
 
                 if len(parsed_domains) > 1:
                     def get_key(row):

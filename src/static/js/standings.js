@@ -256,8 +256,9 @@ function process_problem_cell(element, current_time, unfreeze_index, percentage_
   }
 
   var visible = true
+  var is_active_switcher = stat.attr('data-active-switcher')
 
-  if (stat.attr('data-active-switcher')) {
+  if (is_active_switcher) {
     if (problem_submission) {
       data_penalty = Math.floor(problem_submission[0] / 60)
       data_score = problem_submission[1]
@@ -311,14 +312,18 @@ function process_problem_cell(element, current_time, unfreeze_index, percentage_
       var time = 0
       console.log('Unknown problem time')
     }
-    visible = unfreezing || time <= current_time
+    to_show = time <= current_time
+    visible = unfreezing || to_show
 
     if (unfreezing || !is_virtual_start) {
-      if (time > unfreeze_duration() && !unfreeze_open) {
+      if (
+        !unfreeze_open && time > unfreeze_duration() && !is_hidden(score) && !is_active_switcher ||
+        !unfreeze_open && unfreezing && is_active_switcher
+      ) {
         score = '?'
         visible = false
       }
-      if (!with_virtual_start && time <= current_time) {
+      if (!with_virtual_start && to_show) {
         stat.addClass('result-question')
       } else {
         stat.removeClass('result-question')
@@ -466,8 +471,7 @@ function prepare_unfreeze() {
 
   stat_cells.sort(cmp_row)
 
-  var last_problem_cell = null
-  var candidates_selector = '.problem-cell.problem-cell-stat.result-unfreeze'
+  var candidates_selector = '.problem-cell.problem-cell-stat.result-unfreeze:not(.prepered-unfreeze)'
 
   var has_empty_penalty = false
   $(candidates_selector).each((_, e) => has_empty_penalty |= !$(e).attr('data-penalty'))
@@ -491,17 +495,8 @@ function prepare_unfreeze() {
         }
       })
 
-      if (last_problem_cell == problem_cell) {
-        bootbox.alert({
-          message: 'Something went wrong while building the unfreezing.',
-          className: 'text-danger text-weight-bold',
-          backdrop: true,
-        });
-        return
-      }
-      last_problem_cell = problem_cell
-
       var opening = $(problem_cell)
+      opening.addClass('prepered-unfreeze')
       var stat = opening.parent('.stat-cell')
       var statistic_id = stat.attr('data-statistic-id')
       var problem_key = opening.attr('data-problem-key')
@@ -519,6 +514,7 @@ function prepare_unfreeze() {
       }
     }
   }
+  $('.prepered-unfreeze').removeClass('prepered-unfreeze')
 }
 
 function change_freeze_duration(select) {

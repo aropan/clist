@@ -200,7 +200,7 @@ function log_ajax_error(response, element = null) {
       message = response.responseJSON.message
     }
   } else {
-    if (response.responseText.length < 100) {
+    if (response.responseText && response.responseText.length < 100) {
       message = "{status} {statusText}: {responseText}".format(response)
     } else {
       message = "{status} {statusText}, more in console".format(response)
@@ -213,6 +213,7 @@ function log_ajax_error(response, element = null) {
   } else {
     $.notify(message, 'error')
   }
+  $('.bootbox').effect('shake')
 }
 
 function log_ajax_error_callback(response) {
@@ -657,7 +658,7 @@ function coders_select(id, submit) {
       data: function (params) {
         return {
           query: 'coders',
-          regex: params.term,
+          search: params.term,
           page: params.page || 1
         }
       },
@@ -780,4 +781,25 @@ function is_12_hour_clock() {
   var date_time_format = new Intl.DateTimeFormat(user_locale(), time_format_options)
   var time_parts = date_time_format.formatToParts(new Date())
   return time_parts.some(time_part => time_part.type === 'dayPeriod')
+}
+
+
+/*
+ * select2
+ */
+
+$(() => {
+  $('[data-init="select2"]').select2({theme: 'bootstrap', dropdownAutoWidth: true})
+})
+
+
+function show_extra(element) {
+  var $element = $(element)
+  var extra_id = $element.data('id')
+  var $extra = $('#' + extra_id)
+  $extra.toggleClass('hidden')
+
+  var text = $element.data('toggle-text') || 'hide'
+  $element.data('toggle-text', $element.text())
+  $element.text(text)
 }

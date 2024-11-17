@@ -7,6 +7,7 @@ import re
 from collections import Counter
 from datetime import datetime, timedelta
 
+import django_rq
 import humanize
 import pytz
 from django.apps import apps
@@ -29,7 +30,6 @@ from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
 from django_ratelimit.core import get_usage
-from django_rq import job
 from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
@@ -47,6 +47,7 @@ from my_oauth.models import Service
 from notes.models import Note
 from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
+from notification.utils import compose_message_by_problems, send_messages
 from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
@@ -290,6 +291,7 @@ def coders(request, template='coders.html'):
         'noajax': True,
         'nogroupby': True,
         'nourl': True,
+        'icon': 'ghost',
     }
 
     chat_fields = None
@@ -918,11 +920,8 @@ def settings(request, tab=None):
         services = Service.active_objects
     services = services.annotate(n_tokens=Count('token')).order_by('-n_tokens')
 
-    selected_resource = request.GET.get('resource')
-    selected_account = None
-    if selected_resource:
-        selected_resource = Resource.objects.filter(host=selected_resource).first()
-        selected_account = request.GET.get('account')
+    selected_resource = request.get_resource()
+    selected_account = request.GET.get('account') if selected_resource else None
 
     categories = coder.get_categories()
     custom_categories = {c.get_notification_method(): c.title for c in coder.chat_set.filter(is_group=True)}
@@ -930,10 +929,17 @@ def settings(request, tab=None):
     my_lists = coder.my_list_set.annotate(n_records=SubqueryCount('values'))
     my_lists = my_lists.prefetch_related('shared_with_coders')
 
-    my_chats = coder.chat_set.order_by('-modified')
-    my_chats = my_chats.annotate(n_coders=SubqueryCount('coders'))
-    my_chats = my_chats.annotate(n_accounts=SubqueryCount('accounts'))
-    my_chats_fields = ['chat_id', 'title', 'name', 'n_coders', 'n_accounts']
+    owned_chats = coder.chat_set.order_by('-modified')
+    owned_chats = owned_chats.annotate(n_coders=SubqueryCount('coders'))
+    owned_chats = owned_chats.annotate(n_accounts=SubqueryCount('accounts'))
+    joined_chats = coder.chats.order_by('-modified')
+    joined_chats = joined_chats.annotate(n_coders=SubqueryCount('coders'))
+    joined_chats = joined_chats.annotate(n_accounts=SubqueryCount('accounts'))
+    chats_fields = ['chat_id', 'title', 'name', 'n_coders', 'n_accounts']
+
+    subscriptions = coder.subscription_set.order_by('-modified')
+    subscriptions = subscriptions.prefetch_related('coders__user', 'accounts__resource')
+    subscriptions = subscriptions.select_related('contest__resource')
 
     return render(
         request,
@@ -946,11 +952,14 @@ def settings(request, tab=None):
             "tokens": {t.service_id: t for t in coder.token_set.all()},
             "services": services,
             "my_lists": my_lists,
-            "my_chats": my_chats,
-            "my_chats_fields": my_chats_fields,
+            "chats": {
+                "owned": owned_chats,
+                "joined": joined_chats,
+                "fields": chats_fields,
+            },
             "categories": categories,
             "calendars": coder.calendar_set.order_by('-modified'),
-            "subscriptions": coder.subscription_set.order_by('-modified'),
+            "subscriptions": subscriptions,
             "event_description": Calendar.EventDescription,
             "custom_categories": custom_categories,
             "coder_notifications": coder.notification_set.order_by('method'),
@@ -966,7 +975,7 @@ def settings(request, tab=None):
     )
 
 
-@job
+@django_rq.job
 def call_command_parse_statistics(**kwargs):
     return call_command('parse_statistic', **kwargs)
 
@@ -1305,46 +1314,155 @@ def change(request):
                 n.save()
         except Exception:
             return HttpResponseBadRequest('invalid notification id')
-    elif name == "add-subscription":
-        if coder.subscription_set.count() >= 3:
-            return HttpResponseBadRequest("reached the limit number of subscriptions")
-        contest = get_object_or_404(Contest, pk=request.POST.get("contest"))
-        account = get_object_or_404(Account, pk=request.POST.get("account"))
+    elif name == "add-subscription" or name == "edit-subscription":
+        n_subscriptions_limit = coder.n_subscriptions_limit
+        if name == "edit-subscription":
+            n_subscriptions_limit += 1
+        if coder.subscription_set.count() >= n_subscriptions_limit:
+            return HttpResponseBadRequest(f"reached the limit number of subscriptions ({n_subscriptions_limit})")
+
+        resource_id = request.POST.get("resource") or None
+        contest_id = request.POST.get("contest") or None
+        coder_list_id = request.POST.get("coder_list") or None
+        coder_chat_id = request.POST.get("coder_chat") or None
+        with_first_accepted = is_yes(request.POST.get("with_first_accepted"))
+        top_n = as_number(request.POST.get("top_n"), force=True) or None
+
+        accounts_limit = coder.subscription_n_limit
+        account_ids = request.POST.getlist("accounts[]")
+        if len(account_ids) > accounts_limit:
+            return HttpResponseBadRequest(f"reached the limit number of accounts ({accounts_limit})")
+        accounts = Account.objects.filter(pk__in=account_ids).values_list('pk', flat=True)
+        if resource_id:
+            accounts = accounts.filter(resource_id=resource_id)
+        elif contest_id:
+            accounts = accounts.filter(statistics__contest_id=contest_id)
+        else:
+            with_first_accepted = False
+            top_n = None
+        accounts = list(accounts)
+
+        coders_limit = coder.subscription_n_limit
+        coder_ids = request.POST.getlist("coders[]")
+        if len(coder_ids) > coders_limit:
+            return HttpResponseBadRequest(f"reached the limit number of coders ({coders_limit})")
+        coders = Coder.objects.filter(pk__in=coder_ids).values_list('pk', flat=True)
+        coders = list(coders)
+
+        if top_n and not 1 <= top_n <= coder.subscription_top_n_limit:
+            return HttpResponseBadRequest(f"top n should be in [1, {coder.subscription_top_n_limit}]")
+
+        n_choosen = bool(accounts or coders) + bool(coder_list_id) + bool(coder_chat_id)
+        if n_choosen > 1:
+            return HttpResponseBadRequest("choose only one of accounts/coders or coder list or coder chat")
+        n_addition = bool(with_first_accepted or top_n)
+        if n_choosen + n_addition < 1:
+            return HttpResponseBadRequest("choose at least one of accounts/coders or coder list or coder chat"
+                                          " or first accepted/top n")
+        if coder_list_id:
+            coder_list = get_object_or_404(coder.my_list_set, pk=coder_list_id)
+            coders, accounts = CoderList.coders_and_accounts_ids([coder_list.uuid], coder=coder)
+        if coder_chat_id:
+            coder_chat = get_object_or_404(coder.chat_set, pk=coder_chat_id)
+            coders, accounts = coder_chat.coders.all(), coder_chat.accounts.all()
+
         method = request.POST.get("method")
         categories = [k for k, v in coder.get_notifications()]
         if method not in categories:
             return HttpResponseBadRequest("invalid method value")
-        sub, created = Subscription.objects.get_or_create(
-            coder=coder,
-            method=method,
-            contest=contest,
-            account=account,
-        )
-        return HttpResponse("created" if created else "ok")
+
+        if name == "add-subscription":
+            subscription = Subscription.objects.create(
+                resource_id=resource_id,
+                contest_id=contest_id,
+                with_first_accepted=with_first_accepted,
+                top_n=top_n,
+                coder_list_id=coder_list_id,
+                coder_chat_id=coder_chat_id,
+                coder=coder,
+                method=method,
+            )
+        elif name == "edit-subscription":
+            pk = int(request.POST.get("id"))
+            subscription = Subscription.objects.get(pk=pk, coder=coder)
+            subscription.resource_id = resource_id
+            subscription.contest_id = contest_id
+            subscription.with_first_accepted = with_first_accepted
+            subscription.top_n = top_n
+            subscription.coder_list_id = coder_list_id
+            subscription.coder_chat_id = coder_chat_id
+            subscription.method = method
+            subscription.save()
+        else:
+            return HttpResponseBadRequest("invalid name")
+
+        subscription.accounts.set(accounts)
+        subscription.coders.set(coders)
+    elif name == "disable-subscription" or name == "enable-subscription":
+        subscription = get_object_or_404(coder.subscription_set, pk=request.POST.get("id"))
+        subscription.enable = name == "enable-subscription"
+        subscription.save(update_fields=['enable'])
     elif name == "delete-subscription":
         pk = int(request.POST.get("id", -1))
-        sub = Subscription.objects.get(pk=pk, coder=coder)
-        sub.delete()
+        Subscription.objects.get(pk=pk, coder=coder).delete()
+    elif name == "view-subscription":
+        pk = int(request.POST.get("id", -1))
+        subscription = Subscription.objects.get(pk=pk, coder=coder)
+
+        if subscription.contest:
+            contest = subscription.contest
+        elif subscription.resource:
+            contest = subscription.resource.latest_parsed_contest()
+        else:
+            contest = None
+
+        sent_statistics = set()
+
+        def view_statistic_by_filter(query):
+            statistics = Statistics.objects.filter(query, skip_in_stats=False)
+            if contest:
+                statistics = statistics.filter(contest=contest).order_by('place_as_int')
+            else:
+                statistics = statistics.order_by('-contest__end_time')[:1]
+            for statistic in statistics:
+                if statistic.pk in sent_statistics:
+                    continue
+                sent_statistics.add(statistic.pk)
+                view_contest = contest or statistic.contest
+                message = compose_message_by_problems('all', statistic, {}, view_contest)
+                subscription.send(message=message, contest=view_contest)
+
+        if subscription.top_n:
+            view_statistic_by_filter(Statistics.top_n_filter(subscription.top_n))
+        if subscription.with_first_accepted:
+            view_statistic_by_filter(Statistics.first_ac_filter())
+        for subscription_account in subscription.accounts.all():
+            view_statistic_by_filter(Q(account=subscription_account))
+        for subscription_coder in subscription.coders.all():
+            view_statistic_by_filter(Q(account__coders=subscription_coder))
+
+        if sent_statistics:
+            send_messages(coders=[coder.username])
     elif name == "first-name":
         if not value:
             return HttpResponseBadRequest("empty first name")
         user.first_name = value
-        user.save()
+        user.save(update_fields=['first_name'])
     elif name == "last-name":
         if not value:
             return HttpResponseBadRequest("empty last name")
         user.last_name = value
-        user.save()
+        user.save(update_fields=['last_name'])
     elif name == "first-name-native":
         if not value:
             return HttpResponseBadRequest("empty first name in native language")
         coder.first_name_native = value
-        coder.save()
+        coder.save(update_fields=['first_name_native'])
     elif name == "last-name-native":
         if not value:
             return HttpResponseBadRequest("empty last name in native language")
         coder.last_name_native = value
-        coder.save()
+        coder.save(update_fields=['last_name_native'])
     elif name == "add-account":
         try:
             if "resource" in request.POST:
@@ -1658,8 +1776,8 @@ def search(request, **kwargs):
         ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
     elif query == 'contests':
         qs = Contest.objects.select_related('resource')
-        if 'regex' in request.GET:
-            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'title'))
+        if resource_regex := request.GET.get('regex'):
+            qs = qs.filter(get_iregex_filter(resource_regex, 'title'))
         if request.GET.get('has_problems') in django_settings.YES_:
             qs = qs.filter(info__problems__isnull=False, stage__isnull=True).exclude(info__problems__exact=[])
         if request.GET.get('has_submissions') in django_settings.YES_:
@@ -1672,9 +1790,12 @@ def search(request, **kwargs):
             if request.user.is_authenticated:
                 qs = qs.annotate(disabled=VirtualStart.contests_filter(request.user.coder))
             qs = qs.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
-        resources = [r for r in request.GET.getlist('resources[]') if r]
-        if resources:
+        if resources := [r for r in request.GET.getlist('resources[]') if r]:
             qs = qs.filter(resource__pk__in=resources)
+        if resource_id := request.GET.get('resource'):
+            qs = qs.filter(resource_id=resource_id)
+        if no_stage := request.GET.get('no_stage'):
+            qs = qs.filter(stage__isnull=is_yes(no_stage))
         qs = qs.order_by('-end_time', '-id')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon, 'disabled': getattr(r, 'disabled', False)}
@@ -1771,29 +1892,6 @@ def search(request, **kwargs):
             qs = [(c, n) for c, n in countries if name in n.lower()]
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': c, 'text': n} for c, n in qs]
-    elif query == 'account-for-add-subscription':
-        contest = get_object_or_404(Contest, pk=request.GET.get('contest'))
-        qs = contest.statistics_set.select_related('account')
-        search = request.GET.get('search')
-        if search:
-            qs = qs.filter(Q(account__key__icontains=search) | Q(account__name__icontains=search))
-        qs = qs.order_by('place', '-solving')
-        qs = qs[(page - 1) * count:page * count]
-        ret = [
-            {
-                'id': s.account.id,
-                'text': f'{s.account.key}, {s.account.name}' if s.account.name else s.account.key,
-            }
-            for s in qs
-        ]
-    elif query == 'contest-for-add-subscription':
-        qs = Contest.objects.filter(n_statistics__gt=0, end_time__gte=timezone.now())
-        regex = request.GET.get('regex')
-        if regex:
-            qs = qs.filter(title__iregex=verify_regex(regex))
-        qs = qs.order_by('-end_time', '-id')
-        qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': c.id, 'text': c.title} for c in qs]
     elif query == 'notpast':
         qs = Contest.objects.filter(end_time__gte=timezone.now())
         regex = request.GET.get('regex')
@@ -1898,50 +1996,80 @@ def search(request, **kwargs):
             f_text = str(getattr(f, field_name))
             ret.append({'id': f_id, 'text': f_text})
     elif query == 'coders':
-        qs = Coder.objects.all()
+        qs = Coder.objects.select_related('user')
 
-        if 'regex' in request.GET:
-            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'username'))
+        if contest_id := request.GET.get('contest'):
+            qs = qs.annotate(has_contest=Exists('account', filter=Q(account__statistics__contest_id=contest_id)))
+            qs = qs.filter(has_contest=True)
+        if resource_id := request.GET.get('resource'):
+            qs = qs.annotate(has_resource=Exists('account', filter=Q(account__resource_id=resource_id)))
+            qs = qs.filter(has_resource=True)
 
-        order = ['-n_accounts', 'pk']
+        order = []
+        if search := request.GET.get('search'):
+            qs = qs.filter(
+                Q(username__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search)
+            )
+            qs = qs.annotate(search_weight=Case(
+                When(username__iexact=search, then=Value(0)),
+                When(user__first_name__iexact=search, then=Value(1)),
+                When(user__last_name__iexact=search, then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField()
+            ))
+            order.append('search_weight')
         if request.user.is_authenticated:
-            qs = qs.annotate(iam=Case(
+            qs = qs.annotate(my_weight=Case(
                 When(pk=request.user.coder.pk, then=Value(0)),
                 default=Value(1),
                 output_field=IntegerField()
             ))
-            order.insert(0, 'iam')
-        qs = qs.order_by(*order, 'pk')
+            order.append('my_weight')
+        qs = qs.order_by(*order, '-n_contests', 'pk')
 
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.username} for r in qs]
+        ret = [{'id': coder.id, 'text': coder.detailed_name} for coder in qs]
     elif query == 'accounts':
-        qs = Account.objects.all()
-        if request.GET.get('resource'):
-            qs = qs.filter(resource_id=int(request.GET.get('resource')))
-
-        with_resource = True
-        if request.GET.get('contest'):
-            qs = qs.filter(statistics__contest_id=int(request.GET.get('contest')))
+        qs = Account.objects
+        if contest_id := request.GET.get('contest'):
+            qs = qs.filter(statistics__contest_id=contest_id)
+            order = ['statistics__place_as_int', '-statistics__solving']
             with_resource = False
-        if with_resource:
+        elif resource_id := request.GET.get('resource'):
+            qs = qs.filter(resource_id=resource_id)
+            order = ['resource_rank']
+            with_resource = False
+        else:
+            order = ['-n_contests', 'pk']
+            with_resource = True
             qs = qs.select_related('resource')
 
-        order = ['-n_contests', 'pk']
-        if 'search' in request.GET:
-            search = request.GET['search']
+        if search := request.GET.get('search'):
             qs = qs.filter(get_iregex_filter(search, 'key', 'name', suffix='__icontains'))
-            qs = qs.annotate(match=Case(
+            qs = qs.annotate(search_match=Case(
                 When(Q(key__iexact=search) | Q(name__iexact=search), then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
             ))
-            order.insert(0, '-match')
-
+            order = ['-search_match'] + order
         qs = qs.order_by(*order, 'pk')
 
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.display(with_resource=with_resource)} for r in qs]
+        ret = [{'id': account.id, 'text': account.display(with_resource=with_resource)} for account in qs]
+    elif query == 'coder_lists' and request.user.is_authenticated:
+        qs = request.user.coder.my_list_set.all()
+        if search := request.GET.get('search'):
+            qs = qs.filter(name__icontains=search)
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': coder_list.id, 'text': coder_list.name} for coder_list in qs]
+    elif query == 'coder_chats' and request.user.is_authenticated:
+        qs = request.user.coder.chats.all()
+        if search := request.GET.get('search'):
+            qs = qs.filter(title__icontains=search)
+        qs = qs[(page - 1) * count:page * count]
+        ret = [{'id': coder_chat.id, 'text': coder_chat.title} for coder_chat in qs]
     else:
         return HttpResponseBadRequest(f'invalid query = {escape(query)}')
 
@@ -2113,6 +2241,8 @@ def party(request, slug, tab='ranking'):
                 place = i + 1
             s['place'] = place
 
+    admins = party.admins.all()
+
     return render(
         request,
         'party.html',
@@ -2125,6 +2255,7 @@ def party(request, slug, tab='ranking'):
             'party_contests': party_contests,
             'results': results,
             'coders': coders,
+            'admins': admins,
             'tab': 'ranking' if tab is None else tab,
         },
     )
@@ -2165,7 +2296,7 @@ def view_list(request, uuid):
     qs = qs.prefetch_related('values__coder')
     coder_list = get_object_or_404(qs, uuid=uuid)
 
-    is_owner = coder_list.owner == coder
+    is_owner = coder and coder_list.owner_id == coder.pk
     can_modify = is_owner
 
     request_post = request.session.pop('view_list_request_post', None) or request.POST
@@ -2276,7 +2407,7 @@ def view_list(request, uuid):
         return allowed_redirect(request.path)
 
     coder_values = {}
-    for v in coder_list.values.order_by('group_id').all():
+    for v in coder_list.related_values.order_by('group_id').all():
         data = coder_values.setdefault(v.group_id, {})
         data.setdefault('list_values', []).append(v)
 

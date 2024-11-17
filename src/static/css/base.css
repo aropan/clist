@@ -112,6 +112,21 @@ body {
   flex: 1;
 }
 
+.center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.scroll-container {
+  max-height: 100vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 50px;
+}
+
 img.resource-icon {
   vertical-align: top;
   margin-top: 3px;
@@ -825,6 +840,16 @@ a[disabled] {
   padding: 0px;
 }
 
+#filter-collapse .input-group {
+  display: inline-table;
+  vertical-align: middle;
+}
+
+#filter-collapse .input-group-addon,
+#filter-collapse .input-group-btn {
+  width: auto;
+}
+
 #filter-toggle {
   margin-bottom: 5px;
   font-size: 10px;
@@ -956,4 +981,13 @@ a[data-toggle="tooltip"][disabled],
   padding-right: 5px;
   font-size: 80%;
   cursor: pointer;
+}
+
+
+/*
+ * select2
+ */
+
+.select2-search__field:not([placeholder=""]) {
+  width: 100% !important;
 }

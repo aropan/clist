@@ -15,22 +15,18 @@
     {% define country.name as account_country_name %}
     {% define country.code as account_country_code %}
     {% define country.flag_code as account_country_flag %}
-  {% else %}
+  {% endif %}
+  {% if not account_country_code %}
     {% define statistic.addition.country|get_country_code as code %}
+    {% if not code and members %}
+      {% get_country_from_members preload_statistics_data.accounts members as code %}
+    {% endif %}
     {% if code %}
       {% define code as account_country_code %}
-      {% define statistic.addition.country as account_country_name %}
+      {% define code|get_country_name as account_country_name %}
       {% define code as account_country_flag %}
-    {% elif members %}
-      {% get_country_from_members preload_statistics_data.accounts members as code %}
-      {% if code %}
-        {% define code as account_country_code %}
-        {% define code|get_country_name as account_country_name %}
-        {% define code as account_country_flag %}
-      {% endif %}
     {% endif %}
   {% endif %}
-
   {% if account_country_code %}
   <a href="{% url_transform request country=account_country_code %}" title="{{ account_country_name }}" data-toggle="tooltip"><div class="flag flag-{{ account_country_flag|lower }}"></div></a>
   {% endif %}
@@ -43,14 +39,19 @@
   <div class="handle-div inline{% if not team_id and not statistic.addition.style %} {% coder_color_class resource statistic.addition account.info %}{% endif %}" style="{% if statistic.addition.style %}{% for k, v in statistic.addition.style.items %}{{k}}: {{v}}; {% endfor %}{% endif %}">
     {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in statistic.addition %}<a href="{{ statistic.addition|get_item:"_account_url" }}">{% endif %}
 
-    {% if with_detail and resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
-      {% with names=account.key|split_account_key:resource.info.standings.subname %}
-      <span>{{ names.0 }}<div class="text-muted small">{{ names.1 }}</div></span>
-      {% endwith %}
-    {% elif statistic.addition.name and account.key|has_season:statistic.addition.name or members or statistic.addition.name and resource.info.standings.name_instead_key or statistic.addition.name and statistic.addition|get_item:"_name_instead_key" %}
-      <span>{% trim_to statistic.addition.name 50 %}</span>
+    {% if account.deleted %}
+    {% define "strike" as account_tag %}
     {% else %}
-      <span{% if statistic.addition.name or account.name %} title="{{ statistic.addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</span>
+    {% define "span" as account_tag %}
+    {% endif %}
+    {% define False as subnames %}
+    {% if resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
+      {% define account.key|split_account_key:resource.info.standings.subname as subnames %}
+      <{{ account_tag }}>{% trim_to subnames.0 40 %}</{{ account_tag }}>
+    {% elif statistic.addition.name and account.key|has_season:statistic.addition.name or members or statistic.addition.name and resource.info.standings.name_instead_key or statistic.addition.name and statistic.addition|get_item:"_name_instead_key" %}
+      <{{ account_tag }}>{% trim_to statistic.addition.name 50 %}</{{ account_tag }}>
+    {% else %}
+      <{{ account_tag }}{% if statistic.addition.name or account.name %} title="{{ statistic.addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</{{ account_tag }}>
     {% endif %}
 
     {% if statistic.virtual_start %}<i>Your virtual participation</i>{% endif %}
@@ -58,7 +59,7 @@
     {% if account.url and not team_id or '_account_url' in statistic.addition %}</a>{% endif %}
 
     {% with addition_countries=statistic.addition|get_item:"_countries" %}
-    {% if addition_countries %}
+    {% if not members and addition_countries %}
     {% for country_name in addition_countries %}
       {% with country_code=country_name|get_country_code %}
         {% if country_code %}
@@ -72,7 +73,9 @@
     {% endwith %}
   </div>
 
-  {% if not with_detail %}{% include "standings_account_members.html" with members=members except_country_code=account_country_code inline=True %}{% endif %}
+  {% if not with_detail %}
+    {% include "standings_account_members.html" with subnames=subnames members=members except_country_code=account_country_code inline=True %}
+  {% endif %}
 
   {% if not without_addition_url %}
 
@@ -116,7 +119,9 @@
 
   {% endif %}
 
-  {% if with_detail %}{% include "standings_account_members.html" with members=members except_country_code=account_country_code inline=False %}{% endif %}
+  {% if with_detail %}
+    {% include "standings_account_members.html" with subnames=subnames members=members except_country_code=account_country_code inline=False %}
+  {% endif %}
 </div>
 
 {% endwith %}

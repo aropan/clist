@@ -1,3 +1,6 @@
+{% if subnames %}
+    <div class="text-muted small{% if inline %} inline{% else %} wrap{% endif %}">{{ subnames.1 }}</div>
+{% endif %}
 {% if members %}
   <div class="small{% if inline %} inline{% else %} wrap{% endif %}">{% if inline %}:{% endif %}
     {% if with_fixed_width %}
@@ -8,11 +11,11 @@
     {% for member in members %}
       <span{% if not inline %} class="nowrap"{% endif %}>
       {% if member and member.account %}
-        {% with account=preload_statistics_data.accounts|get_item:member.account %}
+        {% with account=preload_statistics_data.accounts|get_item:member.account without_country=member|get_item:'without_country' %}
           {% if not account %}
             {{ member.account }}
           {% else %}
-            {% include "account_table_cell.html" with account=account addition=None resource=account.resource without_circle=True with_fixed_width=False without_inline_url=True %}
+            {% include "account_table_cell.html" with account=account addition=None resource=account.resource without_avatar=account.resource|ne:resource without_circle=True with_fixed_width=False without_inline_url=True without_country=has_country|iffalse:without_country %}
           {% endif %}
         {% endwith %}
       {% elif member and member.coder %}

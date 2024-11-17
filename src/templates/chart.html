@@ -1,43 +1,50 @@
 {% if chart %}
+{% define chart.type|default:"bar" as chart_type %}
 <div id="chart_{{ chart.field }}" class="chart">
   {% if not without_buttons %}
   <div class="chart-buttons">
     {% if not without_toggle_accumulate %}
+    {% if chart_type == 'line' or chart_type == 'bar' or chart.accumulate %}
     <span class="toggle-accumulate">
       <input
-          type="checkbox"
-          data-toggle="toggle"
-          data-on="accumulate"
-          data-off="normal"
-          data-onstyle="default active"
-          data-offstyle="default active"
-          data-size="mini"
-          />
+        type="checkbox"
+        data-toggle="toggle"
+        data-on="accumulate"
+        data-off="normal"
+        data-onstyle="default active"
+        data-offstyle="default active"
+        data-size="mini"
+        {% if chart.accumulate %}checked{% endif %}
+      />
     </span>
+    {% endif %}
     {% endif %}
     <span class="toggle-log-scale">
       <input
-          type="checkbox"
-          data-toggle="toggle"
-          data-on="logarithmic"
-          data-off="linear"
-          data-onstyle="default active"
-          data-offstyle="default active"
-          data-size="mini"
-          />
+        type="checkbox"
+        data-toggle="toggle"
+        data-on="logarithmic"
+        data-off="linear"
+        data-onstyle="default active"
+        data-offstyle="default active"
+        data-size="mini"
+      />
     </span>
     {% if not without_toggle_type %}
+    {% if chart_type == 'line' or chart_type == 'bar' %}
     <span class="toggle-type">
       <input
-          type="checkbox"
-          data-toggle="toggle"
-          data-on="line"
-          data-off="bar"
-          data-onstyle="default active"
-          data-offstyle="default active"
-          data-size="mini"
-          />
+        type="checkbox"
+        data-toggle="toggle"
+        data-on="line"
+        data-off="bar"
+        data-onstyle="default active"
+        data-offstyle="default active"
+        data-size="mini"
+        {% if chart_type == 'line' %}checked{% endif %}
+      />
     </span>
+    {% endif %}
     {% endif %}
     {% if expand_class %}
     <span>
@@ -170,7 +177,7 @@
     }
 
     var config = {
-      type: '{{ chart.type|default:"bar" }}',
+      type: '{{ chart_type }}',
       data: data,
       options: {
         responsive: true,
@@ -422,7 +429,7 @@
         original_data = null
       }
       chart.update()
-    })
+    }){% if chart.accumulate %}.prop('checked', true).change(){% endif %}
 
     $('#chart_{{ chart.field }} .toggle-log-scale').change(function() {
       chart.options.scales.y.type = chart.options.scales.y.type == 'linear'? 'logarithmic' : 'linear'

@@ -80,6 +80,8 @@ class Statistic(BaseModule):
             for row in data['rows']:
                 contestant = row.pop('Contestant')
                 url = contestant.pop('Url')
+                if url is None:
+                    continue
                 match = re.search('(?P<type>Account|Team)/Display/(?P<key>[0-9]+)', url)
                 handle = match.group('type').lower() + match.group('key')
                 r = result.setdefault(handle, OrderedDict())

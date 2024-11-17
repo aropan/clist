@@ -39,7 +39,7 @@
 
   {% if favorite_contests %}{% include 'favorite_filter.html' %}{% endif %}
 
-  {% include 'series_filter.html' %}
+  {% include 'series_filter.html' with with_all=True %}
 
   {% if request.GET.with_submissions|is_yes %}
   <input type="hidden" name="with_submissions" value="{{ request.GET.with_submissions }}"/>

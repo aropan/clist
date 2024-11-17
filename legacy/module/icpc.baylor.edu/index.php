@@ -23,7 +23,7 @@
     $year = $match['year'];
     $title = trim($match['title']);
 
-    if (!preg_match("#>hosted by(?:[^,<]*,)?\s*(?P<where>[^<]*?)\s*<#i", $page, $match)) {
+    if (!preg_match("#>hosted by\s+(?:the\s+)(?:[^,<]*,)?\s*(?P<where>[^<]*?)\s*<#i", $page, $match)) {
         trigger_error('Not found where', E_USER_WARNING);
         return;
     }
@@ -63,6 +63,9 @@
         $title .= ". $where, Egypt";
         $timezone = 'Africa/Cairo';
         $start_date = str_replace($year, $year + 1, $start_date);
+    } else if (starts_with($where, 'Kazakhstan')) {
+        $title .= ". $where";
+        $timezone = 'Asia/Almaty';
     } else {
         $title .= ". $where";
         $timezone = $TIMEZONE;

@@ -32,6 +32,7 @@ from tg.models import Chat
 from utils.traceback_with_vars import colored_format_exc
 
 logger = getLogger('notification.sendout.tasks')
+lock = FileLock('sharedfiles/lock/sendout_tasks.lock')
 
 
 class Command(BaseCommand):
@@ -185,6 +186,7 @@ class Command(BaseCommand):
                 yaml.dump(self.config, fo, indent=2)
 
     @print_sql_decorator()
+    @lock
     def handle(self, *args, **options):
         self.load_config()
         dryrun = options.get('dryrun')
@@ -206,7 +208,11 @@ class Command(BaseCommand):
 
         qs = Task.objects.all() if coders and options.get('force') else Task.unsent.all()
         if coders:
-            qs = qs.filter(periodical_notification__coder__username__in=coders)
+            qs = qs.filter(
+                Q(periodical_notification__coder__username__in=coders) |
+                Q(subscription__coder__username__in=coders)
+            )
+
         qs = qs.prefetch_related(
             Prefetch(
                 'notification__coder__chat_set',

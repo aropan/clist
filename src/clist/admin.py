@@ -63,8 +63,8 @@ class ContestAdmin(BaseModelAdmin):
                                              'with_medals', 'related', 'merging_contests', 'series',
                                              'allow_updating_statistics_for_participants',
                                              'set_matched_coders_to_members']}],
-        ['Timing', {'fields': ['statistics_update_required', 'parsed_time', 'wait_for_successful_update_timing',
-                               'statistic_timing', 'notification_timing',
+        ['Timing', {'fields': ['statistics_update_required', 'parsed_time', 'parsed_percentage',
+                               'wait_for_successful_update_timing', 'statistic_timing', 'notification_timing',
                                'rating_prediction_timing', 'created', 'modified', 'updated']}],
         ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
                                'rating_prediction_fields']}],
@@ -79,8 +79,9 @@ class ContestAdmin(BaseModelAdmin):
     actions = [parse_statistic]
 
     def get_readonly_fields(self, request, obj=None):
-        ret = ['auto_updated', 'updated', 'parsed_time', 'wait_for_successful_update_timing',
-               'statistic_timing', 'notification_timing', 'rating_prediction_timing']
+        ret = ['auto_updated', 'updated', 'parsed_time', 'parsed_percentage', 'wait_for_successful_update_timing',
+               'statistic_timing', 'notification_timing', 'rating_prediction_timing',
+               'slug', 'title_path']
         ret += list(super().get_readonly_fields(request, obj))
         return ret
 
@@ -132,7 +133,8 @@ class ResourceAdmin(BaseModelAdmin):
     fieldsets = [
         [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'avatar_url', 'problem_url', 'icon',
                            'n_accounts', 'n_contests']}],
-        ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone', 'auto_remove_started']}],
+        ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'timezone', 'auto_remove_started',
+                                          'has_inherit_medals_to_related']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
         ['Rating information', {'fields': ['has_rating_history', 'has_country_rating',
                                            'avg_rating', 'n_rating_accounts',

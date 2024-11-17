@@ -1,9 +1,11 @@
 import calendar
+import copy
 import itertools
 import logging
 import math
 import os
 import re
+from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -16,7 +18,7 @@ import xgboost as xgb
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, F, Max, Q, When
 from django.db.models.expressions import Exists, OuterRef
 from django.db.models.functions import Cast, Ln
@@ -109,6 +111,7 @@ class Resource(BaseModel):
     statistics_fields = models.JSONField(default=dict, blank=True)
     skip_for_contests_chart = models.BooleanField(default=False)
     problem_rating_predictor = models.JSONField(default=dict, blank=True)
+    has_inherit_medals_to_related = models.BooleanField(default=False)
 
     RATING_FIELDS = (
         'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
@@ -389,6 +392,17 @@ class Resource(BaseModel):
         model.load_model(model_path)
         return model
 
+    def latest_parsed_contest(self):
+        return self.contest_set.filter(parsed_time__isnull=False).order_by('-end_time').first()
+
+    @staticmethod
+    def get(value) -> Optional['Resource']:
+        if isinstance(value, int) or isinstance(value, str) and value.isdigit():
+            return Resource.objects.filter(pk=value).first()
+        if isinstance(value, str):
+            return Resource.objects.filter(Q(host=value) | Q(short_host=value)).first()
+        return None
+
     @property
     def problems_fields_types(self):
         return self.problems_fields.get('types', {})
@@ -454,6 +468,7 @@ class Contest(BaseModel):
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
     n_problems = models.IntegerField(null=True, blank=True, db_index=True)
     parsed_time = models.DateTimeField(null=True, blank=True)
+    parsed_percentage = models.FloatField(null=True, blank=True)
     has_hidden_results = models.BooleanField(null=True, blank=True)
     related = models.ForeignKey('Contest', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_set')
     merging_contests = models.ManyToManyField('Contest', blank=True, related_name='merged_set')
@@ -545,7 +560,8 @@ class Contest(BaseModel):
             stats.update(new_global_rating=None, global_rating_change=None)
 
         if self.is_over():
-            self.with_medals = bool(get_item(self.info, 'standings.medals')) or 'medal' in fields
+            standings_medals = bool(get_item(self.info, 'standings.medals'))
+            self.with_medals = standings_medals and not self.has_hidden_results or 'medal' in fields
             self.with_advance = 'advanced' in fields or '_advance' in fields
 
         if not self.kind:
@@ -590,6 +606,9 @@ class Contest(BaseModel):
 
     def is_coming(self):
         return timezone_now() < self.start_time
+
+    def with_virtual_start(self):
+        return self.duration_in_secs and self.duration != self.full_duration
 
     @property
     def next_time(self):
@@ -764,7 +783,7 @@ class Contest(BaseModel):
     def full_problems_list(self):
         problems = self.info.get('problems')
         if not problems:
-            return
+            return []
         if isinstance(problems, dict):
             division_problems = list(problems.get('division', {}).values())
             problems = []
@@ -776,7 +795,7 @@ class Contest(BaseModel):
     def problems_list(self):
         problems = self.info.get('problems')
         if not problems:
-            return
+            return []
         if isinstance(problems, dict):
             division_problems = list(problems.get('division', {}).values())
             problems = []
@@ -868,6 +887,80 @@ class Contest(BaseModel):
         if self.problem_rating_update_required:
             self.problem_rating_update_required = False
             self.save(update_fields=['problem_rating_update_required'])
+
+    def get_statistics_order(self):
+        options = self.info.get('standings', {})
+        contest_fields = self.info.get('fields', []).copy()
+        resource_standings = self.resource.info.get('standings', {})
+        order = copy.copy(options.get('order', resource_standings.get('order')))
+        if order:
+            for f in order:
+                if f.startswith('addition__') and f.split('__', 1)[1] not in contest_fields:
+                    order = None
+                    break
+        if order is None:
+            order = ['place_as_int', '-solving']
+        return order
+
+    @transaction.atomic
+    def inherit_medals(self, other):
+        if self.with_medals:
+            raise ValueError('already has medals')
+        if not other.with_medals:
+            raise ValueError('other contest has no medals')
+        if self.n_statistics != other.n_statistics:
+            raise ValueError('different number of statistics')
+
+        rank_medals = {}
+        rank_n_medals = defaultdict(int)
+        seen_teams = set()
+        for stat in other.statistics_set.filter(addition__medal__isnull=False):
+            if (team := stat.addition.get('team_id')):
+                if team in seen_teams:
+                    continue
+                seen_teams.add(team)
+            rank = stat.place_as_int
+            medal = stat.addition['medal']
+            if rank in rank_medals and rank_medals[rank] != medal:
+                raise ValueError('multiple medals for the same place')
+            rank_medals[rank] = medal
+            rank_n_medals[rank] += 1
+
+        for stat in self.statistics_set.all():
+            rank = stat.place_as_int
+            if rank not in rank_medals:
+                continue
+            if not rank_n_medals[rank]:
+                raise ValueError('no medals left for the place')
+            stat.addition['medal'] = rank_medals[rank]
+            stat.save(update_fields=['addition'])
+            rank_n_medals[rank] -= 1
+
+        if any(rank_n_medals.values()):
+            raise ValueError('not all medals were used')
+
+        if 'medal' not in self.info.get('fields', []):
+            self.info['fields'].append('medal')
+            self.save(update_fields=['info'])
+        self.with_medals = True
+        self.save(update_fields=['with_medals'])
+
+    def is_finalized(self):
+        return (
+            self.is_over() and
+            not self.has_hidden_results and
+            not self.info.get('_timing_statistic_delta_seconds')
+        )
+
+    @staticmethod
+    def get(value) -> Optional['Contest']:
+        if isinstance(value, int) or isinstance(value, str) and value.isdigit():
+            return Contest.objects.filter(pk=value).first()
+        if isinstance(value, str):
+            qs = Contest.objects.filter(Q(title=value) | Q(resource__host=value) |
+                                        Q(series__name=value) | Q(series__slug=slug(value)))
+            return qs.order_by('-end_time').first()
+        return None
 
 
 class ContestSeries(BaseModel):

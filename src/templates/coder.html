@@ -1,0 +1,12 @@
+{% if with_fixed_width %}<div class="flag-width-fixed">{% endif %}
+{% get_country_from_coder coder as country %}
+{% if country %}
+<a href="{% url_transform request country=country.code %}" title="{{ country.name }}" data-toggle="tooltip">
+  <div class="flag flag-{{ country.flag_code|lower }}"></div>
+</a>
+{% endif %}
+{% if with_fixed_width %}</div>{% endif %}
+
+<span{% if coder.detailed_name != coder.display_name %} data-toggle="tooltip" data-title="{{ coder.detailed_name }}"{% endif %}>
+  <a href="{% url 'coder:profile' coder.username %}">{{ coder.display_name }}</a>
+</span>

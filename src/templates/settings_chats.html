@@ -1,0 +1,30 @@
+<h4>{{ title }}</h4>
+{% if not chats %}
+<div class="alert alert-info">Empty list</div>
+{% else %}
+<div class="panel panel-default panel-container">
+<table class="table table-hover">
+<tr>
+  {% for field in fields %}
+  <th>{{ field|title_field }}</th>
+  {% endfor %}
+</tr>
+{% for chat in chats %}
+<tr>
+  {% for field in fields %}
+  <td>
+  {% with value=chat|get_item:field %}
+  {% if value is None %}&mdash;{% else %}{{ value }}{% endif %}
+  {% endwith %}
+  </td>
+  {% endfor %}
+  {% if perms.chat.change_chat %}
+  <td>
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:tg_chat_change' chat.id %}" target="_blank">{% icon_to 'database' "Chat#"|concat:chat.id %}</button>
+  </td>
+  {% endif %}
+</tr>
+{% endfor %}
+</table>
+</div>
+{% endif %}

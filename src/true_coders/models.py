@@ -10,6 +10,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Case, Count, F, Q, When, signals
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django_countries.fields import CountryField
@@ -37,6 +38,7 @@ class Coder(BaseModel):
     addition_fields = models.JSONField(default=dict, blank=True)
     n_accounts = models.IntegerField(default=0, db_index=True)
     n_contests = models.IntegerField(default=0, db_index=True)
+    n_subscribers = models.IntegerField(default=0, db_index=True, blank=True)
     tshirt_size = models.CharField(max_length=10, default=None, null=True, blank=True)
     is_virtual = models.BooleanField(default=False, db_index=True)
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
@@ -176,6 +178,24 @@ class Coder(BaseModel):
         return self.settings['display_name'] if self.is_virtual else self.username
 
     @property
+    def detailed_name(self):
+        if self.is_virtual:
+            return self.settings['display_name']
+
+        if self.user.first_name and self.user.last_name:
+            ret = f'{self.user.first_name} {self.user.last_name}'
+        elif self.user.first_name or self.user.last_name:
+            ret = self.user.first_name or self.user.last_name
+        elif self.first_name_native and self.last_name_native:
+            ret = f'{self.first_name_native} {self.last_name_native}'
+        elif self.first_name_native or self.last_name_native:
+            ret = self.first_name_native or self.last_name_native
+        else:
+            return self.username
+
+        return f'{self.username} aka {ret}'
+
+    @property
     def has_global_rating(self):
         return django_settings.ENABLE_GLOBAL_RATING_ and self.global_rating is not None
 
@@ -189,7 +209,7 @@ class Coder(BaseModel):
             if self.country != max_country and 2 * max_counter > len(countries):
                 self.country = max_country
                 self.auto_detect_country = True
-                self.save()
+                self.save(update_fields=['country', 'auto_detect_country'])
 
     def add_account(self, account):
         coder = self
@@ -222,6 +242,27 @@ class Coder(BaseModel):
         qs = qs.order_by('resource', '-has_rating', '-n_contests')
         qs = qs.distinct('resource')
         return qs
+
+    def get_limit(self, name, default=None):
+        return self.settings.get('limits', {}).get(name, default)
+
+    def set_limit(self, name, value):
+        limits = self.settings.setdefault('limits', {})
+        ret = limits.get(name) != value
+        limits[name] = value
+        return ret
+
+    @property
+    def n_subscriptions_limit(self):
+        return self.get_limit('n_subscriptions', django_settings.CODER_N_SUBSCRIPTIONS_LIMIT_)
+
+    @property
+    def subscription_top_n_limit(self):
+        return self.get_limit('subscription_top_n', django_settings.CODER_SUBSCRIPTION_TOP_N_LIMIT_)
+
+    @property
+    def subscription_n_limit(self):
+        return self.get_limit('subscription_n', django_settings.CODER_SUBSCRIPTION_N_LIMIT_)
 
 
 class CoderProblem(BaseModel):
@@ -401,9 +442,8 @@ class CoderList(BaseModel):
         qs = CoderList.objects
         condition = Q(access_level=AccessLevel.PUBLIC)
         if coder is not None:
-            condition |= Q(owner=coder)
             qs = qs.annotate(has_shared_with=Exists('shared_with_coders', filter=Q(coder=coder)))
-            condition |= Q(access_level=AccessLevel.RESTRICTED, has_shared_with=True)
+            condition |= Q(owner=coder) | Q(access_level=AccessLevel.RESTRICTED, has_shared_with=True)
         return qs.filter(condition)
 
     @staticmethod
@@ -430,7 +470,7 @@ class CoderList(BaseModel):
                 if logger:
                     logger.warning(f'Ignore list with uuid = "{uuid}"')
                 continue
-            for v in coder_list.values.select_related('coder').select_related('account'):
+            for v in coder_list.related_values:
                 if v.coder:
                     coders.add(v.coder.pk)
                 if v.account:
@@ -463,6 +503,16 @@ class CoderList(BaseModel):
             ret = Q(id=0)
         return ret
 
+    @property
+    def related_values(self):
+        return self.values.select_related('coder__user', 'account__resource')
+
+    def update_coders_or_accounts(self):
+        coders, accounts = CoderList.coders_and_accounts_ids([self.uuid], coder=self.owner)
+        for subscription in self.subscription_set.all():
+            subscription.coders.set(coders)
+            subscription.accounts.set(accounts)
+
 
 class ListValue(BaseModel):
     coder = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE)
@@ -487,6 +537,11 @@ class ListValue(BaseModel):
         indexes = [
             models.Index(fields=['coder_list', 'group_id']),
         ]
+
+
+@receiver([post_save, post_delete], sender=ListValue)
+def update_list(sender, instance, **kwargs):
+    instance.coder_list.update_coders_or_accounts()
 
 
 class ListProblem(BaseModel):

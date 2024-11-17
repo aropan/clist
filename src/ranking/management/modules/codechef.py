@@ -215,7 +215,7 @@ class Statistic(BaseModule):
                         handle = d.pop('user_handle')
                         d.pop('html_handle', None)
                         problems_status = d.pop('problems_status')
-                        if d['score'] < 1e-9 and not problems_status:
+                        if handle is None or d['score'] < 1e-9 and not problems_status:
                             LOG.warning(f'Skip handle = {handle}: {d}')
                             continue
                         row = result.setdefault(handle, OrderedDict())

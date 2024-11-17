@@ -14,9 +14,53 @@ from django.urls import resolve, reverse
 from stringcolor import bold, cs
 
 from clist.models import Contest
-from clist.templatetags.extras import query_transform, slug, toint
+from clist.templatetags.extras import slug, toint, trim_to
+from utils.strings import slug_string_iou
 
 logger = logging.getLogger(__name__)
+
+
+def get_contest_by_id_and_slug(contests, contest_id, title_slug) -> None | Contest:
+    contest = contests.filter(pk=contest_id).first()
+    if contest is None:
+        return
+    if slug_string_iou(title_slug, slug(contest.title)) < 0.3:
+        return
+    return contest
+
+
+def get_contest_by_series(contests, series) -> None | Contest:
+    contest = contests.filter(series__aliases__contains=slug(series)).order_by('-end_time').first()
+    if contest is None:
+        return
+    return contest
+
+
+def guess_contest(contests, contest_id, title_slug):
+    contests_iterator = contests.filter(slug=title_slug).iterator()
+
+    try:
+        contest = None
+        contest = next(contests_iterator)
+        another = next(contests_iterator)
+    except StopIteration:
+        another = None
+
+    if another is not None:
+        return redirect(reverse('ranking:standings_list') + f'?search=slug:{title_slug}')
+
+    if contest is not None:
+        return contest
+
+    contest = get_contest_by_id_and_slug(contests, contest_id, title_slug)
+    if contest is not None:
+        return contest
+
+    contest = get_contest_by_series(contests, title_slug)
+    if contest is not None:
+        return contest
+
+    return HttpResponseNotFound()
 
 
 def inject_contest():
@@ -25,31 +69,21 @@ def inject_contest():
         def decorated(request, title_slug=None, contest_id=None, contests_ids=None, *args, **kwargs):
 
             contests = Contest.objects.annotate_favorite(request.user)
-            to_redirect = False
+            to_canonical = False
             contest = None
             if contest_id is not None:
                 contest = contests.filter(pk=contest_id).first()
                 if title_slug is None:
-                    to_redirect = True
+                    to_canonical = True
                 else:
                     if contest is None or slug(contest.title) != title_slug:
                         contest = None
                         title_slug += f'-{contest_id}'
             if contest is None and title_slug is not None:
-                contests_iterator = contests.filter(slug=title_slug).iterator()
-
-                contest = None
-                try:
-                    contest = next(contests_iterator)
-                    another = next(contests_iterator)
-                except StopIteration:
-                    another = None
-                if contest is None:
-                    return HttpResponseNotFound()
-                if another is None:
-                    to_redirect = True
-                else:
-                    return redirect(reverse('ranking:standings_list') + f'?search=slug:{title_slug}')
+                contest = guess_contest(contests, contest_id, title_slug)
+                if not isinstance(contest, Contest):
+                    return contest
+                to_canonical = True
 
             if contests_ids is not None:
                 cids, contests_ids = list(map(toint, contests_ids.split(','))), []
@@ -58,18 +92,16 @@ def inject_contest():
                         contests_ids.append(cid)
                 contest = contests.filter(pk=contests_ids[0]).first()
                 kwargs['other_contests'] = list(contests.filter(pk__in=contests_ids[1:]))
+
             if contest is None:
                 return HttpResponseNotFound()
 
-            if to_redirect:
+            if to_canonical:
                 resolved = resolve(request.path)
                 viewname = resolved.app_name + ':' + resolved.url_name.split('_')[0]
-                query = query_transform(request)
                 url = reverse(viewname, kwargs={'title_slug': slug(contest.title),
                                                 'contest_id': str(contest.pk)})
-                if query:
-                    query = '?' + query
-                return redirect(url + query)
+                request.set_canonical(url)
 
             response = view(request, *args, contest=contest, **kwargs)
             return response
@@ -136,7 +168,7 @@ def log_grouped_times(grouped_times):
         msg = bold(f'{g["sum"]:.3f}') + ' ms'
         msg += ' (avg ' + bold(f'{g["avg"]:.3f}') + ' ms)'
         msg += ' ' + bold(f'{g["count"]}') + ' times'
-        msg += ': ' + cs(g['query'], 'grey')
+        msg += ': ' + cs(trim_to(g['query'], 100, raw_text=True), 'grey')
         print(msg)
 
 

@@ -2,7 +2,9 @@ import json
 import re
 
 import arrow
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import CharField, IntegerField, JSONField, Value
+from django.db.models.constants import LOOKUP_SEP
 from django.db.models.expressions import F
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
@@ -33,7 +35,31 @@ class BaseModelResource(CommmonBaseModuelResource):
     def build_filters(self, filters=None, *args, **kwargs):
         filters = filters or {}
         filters.pop('total_count', None)
-        return super().build_filters(filters, *args, **kwargs)
+
+        custom_filters = {}
+        for filter_expr in list(filters):
+            filter_bits = filter_expr.split(LOOKUP_SEP)
+            field_name = filter_bits.pop(0)
+            if field_name not in self.fields:
+                continue
+            try:
+                django_field_name = self.fields[field_name].attribute
+                self._meta.object_class._meta.get_field(django_field_name)
+                continue
+            except FieldDoesNotExist:
+                pass
+            filter_type = filter_bits.pop() if filter_bits else 'exact'
+            lookup_bits = self.check_filtering(field_name, filter_type, filter_bits)
+            value = self.filter_value_to_python(filters[filter_expr], field_name, filters, filter_expr, filter_type)
+            db_field_name = LOOKUP_SEP.join(lookup_bits)
+            qs_filter = "%s%s%s" % (db_field_name, LOOKUP_SEP, filter_type)
+            custom_filters[qs_filter] = value
+            filters.pop(filter_expr)
+
+        filters = super().build_filters(filters, *args, **kwargs)
+
+        filters.update(custom_filters)
+        return filters
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
@@ -73,8 +99,8 @@ class ResourceResource(BaseModelResource):
         filtering = {
             'total_count': ['exact'],
             'id': ['exact', 'in'],
-            'name': ['exact', 'iregex', 'regex', 'in'],
-            'short': ['exact', 'iregex', 'regex', 'in'],
+            'name': ['exact', 'in'],
+            'short': ['exact', 'in'],
             'n_accounts': ['exact', 'gt', 'lt', 'gte', 'lte'],
             'n_contests': ['exact', 'gt', 'lt', 'gte', 'lte'],
         }
@@ -87,8 +113,7 @@ class ResourceResource(BaseModelResource):
 
 
 class ContestResource(BaseModelResource):
-    resource = fields.CharField('resource__host',
-                                help_text='Unicode string data. Use comma to filter multiple resources')
+    resource = fields.CharField('resource__host')
     resource_id = fields.IntegerField('resource_id')
     host = fields.CharField('host')
     event = fields.CharField('title')
@@ -127,7 +152,7 @@ class ContestResource(BaseModelResource):
             'end_time__during': ['exact'],
             'id': ['exact', 'in'],
             'resource_id': ['exact', 'in'],
-            'resource': ['exact'],
+            'resource': ['exact', 'iregex', 'regex', 'in'],
             'host': ['exact', 'iregex', 'regex'],
             'event': ['exact', 'iregex', 'regex'],
             'start': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
@@ -173,7 +198,6 @@ class ContestResource(BaseModelResource):
         upcoming = filters.pop('upcoming', None)
         filtered = filters.pop('filtered', None)
         category = filters.pop('category', ['api'])
-        resource = filters.pop('resource', None)
         with_problems = filters.pop('with_problems', None)
         format_time = filters.pop('format_time', None)
         start_time__during = filters.pop('start_time__during', None)
@@ -182,8 +206,6 @@ class ContestResource(BaseModelResource):
         if filtered is not None:
             filters['filtered'] = filtered[-1]
             filters['category'] = category[-1]
-        if resource:
-            filters['resource__host__in'] = ','.join(resource).split(',')
         if upcoming:
             filters['upcoming'] = upcoming[-1]
         if with_problems:
@@ -362,20 +384,12 @@ class AccountResource(BaseModelResource):
             'total_count': ['exact'],
             'id': ['exact', 'in'],
             'resource_id': ['exact', 'in'],
-            'resource': ['exact'],
-            'handle': ['exact', 'iregex', 'regex'],
+            'resource': ['exact', 'iregex', 'regex', 'in'],
+            'handle': ['exact', 'in'],
             'rating': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
             'overall_rank': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
         }
         ordering = ['id', 'handle', 'rating', 'overall_rank', 'n_contests']
-
-    def build_filters(self, filters=None, *args, **kwargs):
-        filters = filters or {}
-        resource = filters.pop('resource', None)
-        filters = super().build_filters(filters, *args, **kwargs)
-        if resource:
-            filters['resource__host'] = resource[-1]
-        return filters
 
     def apply_filters(self, request, applicable_filters):
         qs = super().apply_filters(request, applicable_filters)
@@ -430,7 +444,7 @@ class CoderResource(BaseModelResource):
             'with_accounts': ['exact'],
             'country': ['exact'],
             'id': ['exact', 'in'],
-            'username': ['exact', 'iregex', 'regex', 'in'],
+            'username': ['exact', 'in'],
         }
         extra_actions = [
             {

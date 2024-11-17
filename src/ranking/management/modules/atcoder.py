@@ -403,10 +403,10 @@ class Statistic(BaseModule):
             if users is not None and handle not in users:
                 continue
             r = result.setdefault(handle, collections.OrderedDict())
+            account_info = r.setdefault('info', {})
             r['member'] = handle
-            if row.pop('UserIsDeleted', None):
-                r['action'] = 'delete'
-                continue
+            if (v := row.pop('UserIsDeleted', None)) is not None:
+                account_info['deleted'] = v
             r['place'] = row.pop('Rank')
             total_result = row.pop('TotalResult')
 
@@ -461,7 +461,7 @@ class Statistic(BaseModule):
                 row['AtcoderRank'] = row.pop('AtCoderRank')
             rating = row.pop('Rating', None)
             if rating is not None:
-                r['info'] = {'rating': rating}
+                account_info['rating'] = rating
             old_rating = row.pop('OldRating', None)
 
             for k, v in sorted(row.items()):
@@ -495,11 +495,10 @@ class Statistic(BaseModule):
             if users is not None and handle not in users:
                 continue
             r = result.setdefault(handle, collections.OrderedDict())
+            account_info = r.setdefault('info', {})
             r['member'] = handle
-            if row.pop('UserIsDeleted', None):
-                r['action'] = 'delete'
-                continue
-
+            if (v := row.pop('UserIsDeleted', None)) is not None:
+                account_info['deleted'] = v
             r['country'] = row.pop('Country')
             if 'UserName' in row:
                 r['name'] = row.pop('UserName')
@@ -688,7 +687,7 @@ class Statistic(BaseModule):
             filepath_proxies=filepath_proxies,
             connect=lambda req: req.get(problem['url']),
         ) as req:
-            _, page = req.proxer.get_connect_ret()
+            page = req.proxer.get_connect_ret()
 
         match = re.search('<pre[^>]*id="submission-code"[^>]*>(?P<source>[^<]*)</pre>', page)
         if not match:

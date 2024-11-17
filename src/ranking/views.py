@@ -4,7 +4,6 @@ import copy
 import re
 from collections import OrderedDict, defaultdict
 from functools import reduce
-from itertools import accumulate
 
 import arrow
 from asgiref.sync import async_to_sync
@@ -50,7 +49,8 @@ from utils.regex import get_iregex_filter
 
 @page_template('standings_list_paging.html')
 @extra_context_without_pagination('clist.view_full_table')
-def standings_list(request, template='standings_list.html', extra_context=None):
+@context_pagination()
+def standings_list(request, template='standings_list.html'):
     contests = (
         Contest.objects.annotate_favorite(request.user)
         .select_related('resource', 'stage')
@@ -89,10 +89,12 @@ def standings_list(request, template='standings_list.html', extra_context=None):
                 'writer': {'fields': ['info__writers__contains']},
                 'coder': {'fields': ['statistics__account__coders__username']},
                 'account': {'fields': ['statistics__account__key', 'statistics__account__name'], 'suff': '__iregex'},
-                'stage': {'fields': ['stage'], 'suff': '__isnull', 'func': lambda v: False},
-                'kind': {'fields': ['kind'], 'suff': '__isnull', 'func': lambda v: False},
-                'medal': {'fields': ['with_medals'], 'func': lambda v: True},
-                'advance': {'fields': ['with_advance'], 'func': lambda v: True},
+                'stage': {'fields': ['stage'], 'suff': '__isnull', 'func': lambda v: v not in settings.YES_},
+                'kind': {'fields': ['kind'], 'suff': '__isnull', 'func': lambda v: v not in settings.YES_},
+                'medal': {'fields': ['with_medals'], 'func': lambda v: v in settings.YES_},
+                'related_set': {'fields': ['related_set'], 'suff': '__isnull',
+                                'func': lambda v: v not in settings.YES_},
+                'advance': {'fields': ['with_advance'], 'func': lambda v: v in settings.YES_},
                 'year': {'fields': ['start_time__year', 'end_time__year']},
                 'invisible': {'fields': ['invisible'], 'func': lambda v: v in settings.YES_},
                 'has_problems': {'fields': ['n_problems'], 'suff': '__isnull',
@@ -127,7 +129,10 @@ def standings_list(request, template='standings_list.html', extra_context=None):
 
     series = [s for s in request.GET.getlist('series') if s]
     if series:
-        series = list(ContestSeries.objects.filter(slug__in=series))
+        if 'all' in series:
+            series = list(ContestSeries.objects.all())
+        else:
+            series = list(ContestSeries.objects.filter(slug__in=series))
         link_series = request.GET.get('link_series') in settings.YES_
         link_series = link_series and request.user.has_perm('clist.change_contestseries')
         link_series = link_series and len(series) == 1
@@ -240,10 +245,7 @@ def standings_list(request, template='standings_list.html', extra_context=None):
             'contests': contests,
         })
 
-    if extra_context is not None:
-        context.update(extra_context)
-
-    return render(request, template, context)
+    return template, context
 
 
 def _standings_highlight(contest, statistics, options):
@@ -546,6 +548,7 @@ def standings_charts(request, context):
     problems_chart = dict(
         field='solved_problems',
         type='line',
+        accumulate=True,
         fields=[],
         labels={},
         bins=problems_bins,
@@ -562,7 +565,7 @@ def standings_charts(request, context):
         values = problems_values.get(short, [])
         total_values.extend(values)
         hist, _ = make_histogram(values=values, bins=problems_bins)
-        for val, d in zip(accumulate(hist), problems_chart['data']):
+        for val, d in zip(hist, problems_chart['data']):
             d[short] = val
         problems_chart['fields'].append(short)
         problems_chart['labels'][short] = get_problem_title(problem)
@@ -600,7 +603,7 @@ def standings_charts(request, context):
             deltas = [v[1] for v in values]
             values = [v[0] for v in values]
             hist, _ = make_histogram(values=values, deltas=deltas, bins=problems_bins)
-            for val, d in zip(accumulate(hist), problems_scoring_chart['data']):
+            for val, d in zip(hist, problems_scoring_chart['data']):
                 d[short] = val
 
         charts.append(problems_scoring_chart)
@@ -611,9 +614,10 @@ def standings_charts(request, context):
         fields=False,
         labels=False,
         my_dataset=None,
+        accumulate=False,
     ))
     hist, _ = make_histogram(values=total_values, bins=problems_bins)
-    for val, d in zip(accumulate(hist), total_solved_chart['data']):
+    for val, d in zip(hist, total_solved_chart['data']):
         d['value'] = val
     if total_values:
         charts.append(total_solved_chart)
@@ -629,7 +633,7 @@ def standings_charts(request, context):
         values = [v[0] for v in total_scoring_values]
         deltas = [v[1] for v in total_scoring_values]
         hist, _ = make_histogram(values=values, deltas=deltas, bins=problems_bins)
-        for val, d in zip(accumulate(hist), total_scoring_chart['data']):
+        for val, d in zip(hist, total_scoring_chart['data']):
             d['value'] = val
         charts.append(total_scoring_chart)
 
@@ -701,7 +705,7 @@ def render_standings_paging(contest, statistics, with_detail=True):
             statistics = statistics[:per_page]
         statistics = Statistics.objects.filter(pk__in=statistics)
 
-    order = get_statistics_order(contest) + ['pk']
+    order = contest.get_statistics_order() + ['pk']
     statistics = statistics.order_by(*order)
 
     divisions_order = get_standings_divisions_order(contest)
@@ -898,21 +902,6 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     return fields
 
 
-def get_statistics_order(contest):
-    options = contest.info.get('standings', {})
-    contest_fields = contest.info.get('fields', []).copy()
-    resource_standings = contest.resource.info.get('standings', {})
-    order = copy.copy(options.get('order', resource_standings.get('order')))
-    if order:
-        for f in order:
-            if f.startswith('addition__') and f.split('__', 1)[1] not in contest_fields:
-                order = None
-                break
-    if order is None:
-        order = ['place_as_int', '-solving']
-    return order
-
-
 def get_advancing_contests(contest):
     ret = set()
 
@@ -1005,7 +994,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     per_page = 50 if contests_ids else contest.standings_per_page
     per_page_more = per_page if find_me else 200
 
-    order = get_statistics_order(contest)
+    order = contest.get_statistics_order()
 
     statistics = statistics \
         .select_related('account') \

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e -x
+set -e
 
 cd "$(dirname "$0")"
 
@@ -13,10 +13,21 @@ function allow_to_proxy() {
   bridge="br-clist"
   proxy_port=3128
   comment="from $name to proxy"
-  sudo ufw status numbered | grep "# $comment" | grep -o -E "[0-9]+" | head -n 1 | xargs --no-run-if-empty -I {} sh -c 'yes | sudo ufw delete {}'
-  sudo ufw allow in on $bridge from $ip to any port $proxy_port comment "$comment"
+
+  existing_rule=$(sudo ufw status numbered | grep "$comment" | grep "$ip")
+  if [ -n "$existing_rule" ]; then
+    echo "Rule already exists: $existing_rule"
+    return
+  fi
+
+  rule_number=$(sudo ufw status numbered | grep "# $comment" | grep -o -E "[0-9]+" | head -n 1)
+  if [ -n "$rule_number" ]; then
+    yes | sudo ufw delete $rule_number
+  fi
+  (set -x; sudo ufw allow in on $bridge from $ip to any port $proxy_port comment "$comment")
 }
 
+allow_to_proxy "prod"
 allow_to_proxy "dev"
 allow_to_proxy "legacy"
 

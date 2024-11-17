@@ -26,7 +26,12 @@
   {% endif %}
   {% coder_color_circle account.resource account size=28 %}
 
-  <span class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</span>
+  {% if account.deleted %}
+  {% define "strike" as account_tag %}
+  {% else %}
+  {% define "span" as account_tag %}
+  {% endif %}
+  <{{ account_tag }} class="{% coder_color_class account.resource account.info %}">{% if account.resource.info.standings.name_instead_key and account.name or account.info|get_item:"_name_instead_key" and account.name %}{{ account.name }}{% else %}{{ account.key }}{% endif %}</{{ account_tag }}>
 
   {% profile_url account %}
 

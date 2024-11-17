@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 
 from pyclist.models import BaseModel
 from ranking.models import Account
@@ -37,6 +39,24 @@ class Chat(BaseModel):
 
     class Meta:
         unique_together = ['chat_id', 'thread_id']
+
+    def update_coders_or_accounts(self):
+        coders, accounts = list(self.coders.all()), list(self.accounts.all())
+        for subscription in self.subscription_set.all():
+            subscription.coders.set(coders)
+            subscription.accounts.set(accounts)
+
+
+@receiver(m2m_changed, sender=Chat.coders.through)
+@receiver(m2m_changed, sender=Chat.accounts.through)
+def update_coders_or_accounts(sender, instance, reverse, pk_set, action, **kwargs):
+    if not action.startswith('post_'):
+        return
+    if reverse:
+        for chat in Chat.objects.filter(pk__in=pk_set):
+            chat.update_coders_or_accounts()
+    else:
+        instance.update_coders_or_accounts()
 
 
 class History(BaseModel):

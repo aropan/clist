@@ -11,6 +11,12 @@ class CoderAdmin(BaseModelAdmin):
     list_display = ['username', 'global_rating', 'last_activity', 'settings']
     list_filter = ['party', 'account__resource']
 
+    def get_readonly_fields(self, request, obj=None):
+        return (
+            ['n_accounts', 'n_contests', 'n_subscribers', 'last_activity']
+            + super().get_readonly_fields(request, obj)
+        )
+
     def clean_settings(self, request, queryset):
         count = 0
         for c in queryset:

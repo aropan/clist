@@ -6,7 +6,8 @@ services:
       context: .
       target: prod
     networks:
-      - clist_network
+      clist_network:
+        ipv4_address: 172.42.0.102
     volumes:
       - static_files:/usr/src/clist/staticfiles/
       - media_files:/usr/src/clist/mediafiles/
@@ -25,7 +26,8 @@ services:
       context: .
       target: dev
     networks:
-      - clist_network
+      clist_network:
+        ipv4_address: 172.42.0.103
     volumes:
       - ./src/:/usr/src/clist/
       - ./legacy/api/:/usr/src/clist/legacy/api/
@@ -50,9 +52,11 @@ services:
   legacy:
     build: ./legacy
     networks:
-      - clist_network
+      clist_network:
+        ipv4_address: 172.42.0.104
     volumes:
       - ./legacy:/usr/src/legacy/
+      - shared_files:/sharedfiles/
     depends_on:
       - db
     secrets:
@@ -71,22 +75,17 @@ services:
       - db
     restart: unless-stopped
   db:
-    image: postgres:14.3-alpine
+    build:
+      context: .
+      target: postgres
     networks:
       - clist_network
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+      - ./src/scripts/:/usr/src/clist/scripts/
+      - ./logs/postgres/:/var/log/
     env_file:
       - ./.env.db
-    command: >
-      postgres
-      -c max_connections=50
-      -c checkpoint_timeout=60min
-      -c track_activity_query_size=4096
-      -c shared_buffers=1GB
-      -c effective_cache_size=3GB
-      -c work_mem=64MB
-      -c maintenance_work_mem=500MB
     shm_size: 4GB
     ports:
       - ${CLIST_DB_PORT:-5432}:5432
@@ -96,7 +95,8 @@ services:
       context: .
       target: nginx
     networks:
-      - clist_network
+      clist_network:
+        ipv4_address: 172.42.0.101
     volumes:
       - static_files:/staticfiles/
       - media_files:/mediafiles/
@@ -104,11 +104,10 @@ services:
       - ./config/nginx/conf.d:/etc/nginx/conf.d/
       - certbot_www:/var/www/certbot/
       - certbot_conf:/etc/letsencrypt/
-      - ./logs/nginx:/var/log/nginx/
+      - ./logs/nginx:/var/log/
     ports:
       - 80:80
       - 443:443
-    command: "/bin/sh -c 'while :; do logrotate /etc/logrotate.conf; sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     restart: unless-stopped
   certbot:
     image: certbot/certbot:latest
@@ -166,6 +165,9 @@ networks:
     driver_opts:
       com.docker.network.bridge.name: br-clist
     name: clist
+    ipam:
+      config:
+        - subnet: 172.42.0.0/24
 
 secrets:
   db_conf:

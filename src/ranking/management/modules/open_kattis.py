@@ -12,7 +12,7 @@ from ratelimiter import RateLimiter
 from tqdm import tqdm
 
 from clist.models import Contest
-from clist.templatetags.extras import as_number
+from clist.templatetags.extras import as_number, get_item, slug
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 
 
@@ -22,6 +22,8 @@ class Statistic(BaseModule):
         url = self.url.split('?')[0].rstrip('/')
         standings_url = url + '/standings'
         problems_url = url + '/problems'
+        subdomain = urlparse(standings_url).netloc.split('.')[0]
+        has_subdomain = subdomain not in ('open', 'kattis')
 
         result = {}
         problems_info = OrderedDict()
@@ -39,116 +41,146 @@ class Statistic(BaseModule):
             table = parsed_table.ParsedTable(html_table)
 
             for r in table:
-                short = r[''].value
+                short = r.pop('').value
                 problem_info = problems_info.setdefault(short, {'short': short})
 
-                problem_info['name'] = r['Name'].value
-                url = r['Name'].column.node.xpath('.//a/@href')
-                if url:
-                    url = urljoin(problems_url, url[0])
-                    problem_info['url'] = url
-                    code = url.rstrip('/').rsplit('/', 1)[-1]
-                    problem_info['code'] = code
+                if 'Name' in r:
+                    name = r.pop('Name')
+                    problem_info['name'] = name.value
+                    url = name.column.node.xpath('.//a/@href')
+                    if url:
+                        url = urljoin(problems_url, url[0])
+                        problem_info['url'] = url
+                        code = url.rstrip('/').rsplit('/', 1)[-1]
+                        if has_subdomain:
+                            code = f'{subdomain}:{code}'
+                        problem_info['code'] = code
+                if r:
+                    more_fields = problem_info.setdefault('_more_fields', {})
+                    for k, v in r.items():
+                        more_fields[slug(k, sep='_')] = as_number(v.value)
 
         page = REQ.get(standings_url)
-
-        regex = '<table[^>]*class="[^"]*standings-table[^"]*"[^>]*>.*?</table>'
-        entry = re.search(regex, page, re.DOTALL)
-        html_table = entry.group(0)
-        table = parsed_table.ParsedTable(html_table)
+        standings_urls = [standings_url]
+        options = re.findall(r'value="(?P<option>\?filter=[0-9]+)"', page)
+        for option in options:
+            standings_urls.append(urljoin(standings_url, option))
 
         rows = []
         standings_kind = Contest.STANDINGS_KINDS['icpc']
-        for r in table:
-            row = {}
-            problems = row.setdefault('problems', {})
+        seen_urls = set()
+        with PoolExecutor(max_workers=10) as executor:
+            for page in executor.map(REQ.get, standings_urls):
+                regex = '<table[^>]*class="[^"]*standings-table[^"]*"[^>]*>.*?</table>'
+                entry = re.search(regex, page, re.DOTALL)
+                html_table = entry.group(0)
+                table = parsed_table.ParsedTable(html_table)
 
-            if 'Rk' in r:
-                row['place'] = r.pop('Rk').value
+                for r in table:
+                    row = {}
+                    problems = row.setdefault('problems', {})
 
-            team = r.pop('Team')
-            if isinstance(team, list):
-                if 'place' not in row:
-                    v, *team = team
-                    row['place'] = v.value
-                team, *more = team
-                for addition in more:
-                    for img in addition.column.node.xpath('.//img'):
-                        alt = img.attrib.get('alt', '')
-                        if not alt:
-                            continue
-                        src = img.attrib.get('src', '')
-                        if '/countries/' in src and 'country' not in row:
-                            row['country'] = alt
-                        elif '/universities/' in src and 'university' not in row:
-                            row['university'] = alt
-            if not team.value:
-                continue
+                    if 'Rk' in r:
+                        row['place'] = r.pop('Rk').value
 
-            row['name'] = team.value
-
-            if 'Slv.' in r:
-                row['solving'] = as_number(r.pop('Slv.').value, force=True)
-            elif 'Score' in r:
-                row['solving'] = as_number(r.pop('Score').value, force=True)
-
-            if 'Time' in r:
-                row['penalty'] = int(r.pop('Time').value)
-
-            for k, v in r.items():
-                k, *other = k.split()
-                if len(k) == 1:
-                    full_score = None
-                    if other and (match := re.match(r'\((\d+)\)', other[0])):
-                        full_score = int(match.group(1))
-                        problems_info[k].setdefault('full_score', full_score)
-                        standings_kind = Contest.STANDINGS_KINDS['scoring']
-
-                    if not v.value:
+                    team = r.pop('Team')
+                    if isinstance(team, list):
+                        if 'place' not in row:
+                            v, *team = team
+                            row['place'] = v.value
+                        team, *more = team
+                        for addition in more:
+                            for img in addition.column.node.xpath('.//img'):
+                                alt = img.attrib.get('alt', '')
+                                if not alt:
+                                    continue
+                                src = img.attrib.get('src', '')
+                                if '/countries/' in src and 'country' not in row:
+                                    row['country'] = alt
+                                elif '/universities/' in src and 'university' not in row:
+                                    row['university'] = alt
+                    if not team.value:
                         continue
 
-                    p = problems.setdefault(k, {})
+                    row['name'] = team.value
 
-                    score, *values = v.value.split()
-                    if '+' in score:
-                        score = sum(map(int, score.split('+')))
-                    else:
-                        score = as_number(score)
-                    classes = v.column.node.xpath('@class')[0].split()
+                    if 'Slv.' in r:
+                        row['solving'] = as_number(r.pop('Slv.').value, force=True)
+                    elif 'Score' in r:
+                        row['solving'] = as_number(r.pop('Score').value, force=True)
 
-                    pending = 'pending' in classes
-                    first = 'solvedfirst' in classes or bool(v.column.node.xpath('.//i[contains(@class,"cell-first")]'))
-                    solved = first or 'solved' in classes
+                    if 'Time' in r:
+                        row['penalty'] = int(r.pop('Time').value)
 
-                    if not full_score:
-                        if solved:
-                            p['result'] = '+' if score == 1 else f'+{score - 1}'
-                            p['time'] = self.to_time(int(values[0]), 2)
-                        elif pending:
-                            p['result'] = '?' if score == 1 else f'?{score - 1}'
-                        else:
-                            p['result'] = f'-{score}'
-                    else:
-                        p['result'] = score
-                        p['partial'] = not solved and full_score > score
+                    for k, v in r.items():
+                        k, *other = k.split()
+                        if len(k) == 1:
+                            full_score = None
+                            if other and (match := re.match(r'\((\d+)\)', other[0])):
+                                full_score = int(match.group(1))
+                                problems_info[k].setdefault('full_score', full_score)
+                                standings_kind = Contest.STANDINGS_KINDS['scoring']
 
-                    if first:
-                        p['first_ac'] = True
+                            if not v.value:
+                                continue
 
-            if not problems:
-                continue
+                            p = problems.setdefault(k, {})
 
-            urls = team.column.node.xpath('.//a/@href')
-            assert len(urls) == 1
-            url = urls[0]
-            assert url.startswith('/contests/')
-            row['_account_url'] = urljoin(standings_url, url)
-            rows.append(row)
+                            score, *values = v.value.split()
+                            if '+' in score:
+                                score = sum(map(int, score.split('+')))
+                            else:
+                                score = as_number(score)
+                            classes = v.column.node.xpath('@class')[0].split()
+
+                            pending = 'pending' in classes
+                            first = 'solvedfirst' in classes
+                            first = first or bool(v.column.node.xpath('.//i[contains(@class,"cell-first")]'))
+                            solved = first or 'solved' in classes
+                            if options:
+                                first = False
+
+                            if not full_score:
+                                if solved:
+                                    p['result'] = '+' if score == 1 else f'+{score - 1}'
+                                    p['time'] = self.to_time(int(values[0]), 2)
+                                elif pending:
+                                    p['result'] = '?' if score == 1 else f'?{score - 1}'
+                                else:
+                                    p['result'] = f'-{score}'
+                            else:
+                                p['result'] = score
+                                p['partial'] = not solved and full_score > score
+
+                            if first:
+                                p['first_ac'] = True
+
+                    if not problems:
+                        continue
+
+                    urls = team.column.node.xpath('.//a/@href')
+                    assert len(urls) == 1
+                    url = urls[0]
+                    assert url.startswith('/contests/')
+                    url = urljoin(standings_url, url)
+                    if url in seen_urls:
+                        continue
+                    seen_urls.add(url)
+                    row['_account_url'] = url
+                    rows.append(row)
+        if options:
+            sorted_rows = sorted(rows, key=lambda x: (-x.get('solving', 0), x.get('penalty', 0)))
+            last_rank = None
+            last_score = None
+            for rank, row in enumerate(sorted_rows, start=1):
+                score = (row.get('solving', 0), row.get('penalty', 0))
+                if last_score != score:
+                    last_rank = rank
+                    last_score = score
+                row['place'] = last_rank
 
         with PoolExecutor(max_workers=10) as executor:
-
-            subdomain = urlparse(standings_url).netloc.split('.')[0]
-            has_subdomain = subdomain not in ('open', 'kattis')
+            split_team = get_item(self.resource.info, 'statistics.split_team', default=True)
 
             def fetch_members(row):
                 page = REQ.get(row['_account_url'])
@@ -178,12 +210,23 @@ class Statistic(BaseModule):
                 if real_members:
                     members = real_members
 
-                for member in members:
-                    row['member'] = member['username']
-                    account_info = row.setdefault('info', {})
-                    account_info['name'] = member['name']
-                    account_info['profile_url'] = member.get('profile_url')
-                    result[row['member']] = deepcopy(row)
+                if split_team:
+                    for member in members:
+                        row['member'] = member['username']
+                        account_info = row.setdefault('info', {})
+                        account_info['name'] = member['name']
+                        account_info['profile_url'] = member.get('profile_url')
+                        result[row['member']] = deepcopy(row)
+                else:
+                    for member in row['_members']:
+                        member.pop('account', None)
+                    member = f'team-{row["team_id"]}'
+                    if has_subdomain:
+                        member = f'{subdomain}:{member}'
+                    row['member'] = member
+                    row.pop('team_id')
+                    row.pop('_account_url')
+                    result[member] = deepcopy(row)
 
         standings = {
             'result': result,

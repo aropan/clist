@@ -80,6 +80,8 @@
         {% for handle in value %}{% if forloop.counter0 %}<br/>{% endif %}{% if resource %}<a href="{% url 'coder:account' handle resource.host %}">{{ handle }}</a>{% else %}{{ handle }}{% endif %}{% endfor %}
       {% elif field == 'hints' and types|to_json == '["list"]' %}
         <ul>{% for hint in value %}<li>{{ hint }}</li>{% endfor %}</ul>
+      {% elif value|get_type == 'RelatedManager' %}
+        {% for object in value.all %}{{ object }}{% endfor %}
       {% else %}
         {{ template_value }}
       {% endif %}

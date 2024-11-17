@@ -121,6 +121,11 @@ form.editableform .has-error .editable-input .form-control:focus {
   text-align: right;
 }
 
+#subscriptions .subscription-account,
+#subscriptions .subscription-coder {
+  margin-right: 10px;
+}
+
 .account-suggest {
   margin-right: 5px;
 }
@@ -128,4 +133,17 @@ form.editableform .has-error .editable-input .form-control:focus {
 #chats-tab .panel-container {
   display: inline-block;
   max-width: 100%;
+}
+
+#list-accounts .panel-container {
+  display: inline-block;
+  max-width: 100%;
+}
+
+#subscription_form .form-group .toggle {
+  display: block;
+}
+
+#subscription_form .form-group:has(input:disabled) {
+  color: #888;
 }

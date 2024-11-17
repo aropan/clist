@@ -10,7 +10,6 @@ from sql_util.utils import Exists
 from tastypie import fields
 
 from clist.api import v3
-from clist.api.common import is_true_value
 from clist.api.v3 import (BaseModelResource, ContestResource, ResourceResource, StatisticsResource,  # noqa
                           use_for_is_real, use_for_is_virtual, use_in_detail_only, use_in_me_only)
 from clist.models import Contest, Problem, ProblemVerdict
@@ -34,8 +33,8 @@ class AccountResource(v3.AccountResource):
             'total_count': ['exact'],
             'id': ['exact', 'in'],
             'resource_id': ['exact', 'in'],
-            'resource': ['exact'],
-            'handle': ['exact', 'iregex', 'regex'],
+            'resource': ['exact', 'regex', 'iregex', 'in'],
+            'handle': ['exact', 'in'],
             'rating': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
             'resource_rank': ['exact', 'gt', 'lt', 'gte', 'lte', 'isnull'],
             'last_activity': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
@@ -69,11 +68,11 @@ class CoderResource(v3.CoderResource):
 
 class ProblemResource(BaseModelResource):
     name = fields.CharField('name')
-    contests_ids = fields.ListField('contests_ids', null=True)
+    contest_ids = fields.ListField('contest_ids', null=True,
+                                   help_text="A list of data. Ex: {'abc', 26.73, 8}")
     divisions = fields.ListField('divisions', null=True)
     kinds = fields.ListField('kinds', null=True)
-    resource = fields.CharField('resource__host',
-                                help_text='Unicode string data. Use comma to filter multiple resources')
+    resource = fields.CharField('resource__host')
     resource_id = fields.IntegerField('resource_id')
     slug = fields.CharField('slug', null=True)
     short = fields.CharField('short', null=True)
@@ -87,8 +86,8 @@ class ProblemResource(BaseModelResource):
     rating = fields.IntegerField('rating', null=True, help_text='Resource rating')
     favorite = fields.BooleanField('is_favorite', null=True, help_text='User-marked as favorite')
     note = fields.CharField('note_text', null=True, help_text='User-specified note')
-    solved = fields.BooleanField(help_text='Solved in resource system or user-marked as solved')
-    reject = fields.BooleanField(help_text='Rejected in resource system or user-marked as reject')
+    solved = fields.BooleanField('solved', help_text='Solved in resource system or user-marked as solved')
+    reject = fields.BooleanField('reject', help_text='Rejected in resource system or user-marked as reject')
     system_solved = fields.BooleanField('system_solved', help_text='Solved in resource system')
     system_reject = fields.BooleanField('system_reject', help_text='Rejected in resource system')
     user_solved = fields.BooleanField('user_solved', help_text='User-marked as solved')
@@ -102,12 +101,12 @@ class ProblemResource(BaseModelResource):
         excludes = ('total_count', 'solved', 'reject')
         filtering = {
             'total_count': ['exact'],
-            'name': ['exact', 'iregex', 'regex'],
-            'contests_ids': ['exact', 'contains'],
-            'resource': ['exact', 'iregex', 'regex'],
+            'name': ['exact', 'in'],
+            'contest_ids': ['exact', 'contains'],
+            'resource': ['exact', 'iregex', 'regex', 'in'],
             'resource_id': ['exact', 'in'],
-            'slug': ['exact', 'regex'],
-            'short': ['exact', 'iregex', 'regex'],
+            'slug': ['exact', 'in'],
+            'short': ['exact', 'in'],
             'url': ['exact', 'regex'],
             'archive_url': ['exact', 'regex'],
             'n_attempts': ['exact', 'gt', 'lt', 'gte', 'lte'],
@@ -117,7 +116,7 @@ class ProblemResource(BaseModelResource):
             'n_total': ['exact', 'gt', 'lt', 'gte', 'lte'],
             'rating': ['exact', 'gt', 'lt', 'gte', 'lte'],
             'favorite': ['exact'],
-            'note': ['exact', 'iregex', 'regex'],
+            'note': ['exact', 'in'],
             'solved': ['exact'],
             'reject': ['exact'],
             'system_solved': ['exact'],
@@ -137,7 +136,7 @@ class ProblemResource(BaseModelResource):
 
         contests = Contest.objects.filter(problem_set__id=OuterRef('pk'))
         contests = contests.values('problem_set__id').annotate(ids=ArrayAgg('id')).values('ids')
-        problems = problems.annotate(contests_ids=Subquery(contests, output_field=ArrayField(models.IntegerField())))
+        problems = problems.annotate(contest_ids=Subquery(contests, output_field=ArrayField(models.IntegerField())))
 
         content_type = ContentType.objects.get_for_model(Problem)
         coder = request.user.coder if request.user.is_authenticated else None
@@ -156,23 +155,3 @@ class ProblemResource(BaseModelResource):
                                                               output_field=models.BooleanField()))
 
         return problems
-
-    def build_filters(self, filters=None, *args, **kwargs):
-        filters = filters or {}
-
-        custom_filters = {}
-        for k in list(filters.keys()):
-            if k.startswith('note'):
-                custom_filters[k.replace('note', 'note_text')] = filters.pop(k)[-1]
-            elif k.startswith('resource'):
-                custom_filters[k.replace('resource', 'resource__host')] = filters.pop(k)[-1]
-            elif k.startswith('favorite'):
-                custom_filters['is_' + k] = is_true_value(filters.pop(k)[-1])
-            elif k in ['solved', 'reject', 'system_solved', 'system_reject', 'user_solved', 'user_todo', 'user_reject']:
-                custom_filters[k] = is_true_value(filters.pop(k)[-1])
-            elif k.startswith('contests_ids'):
-                custom_filters[k] = filters.pop(k)
-
-        filters = super().build_filters(filters, *args, **kwargs)
-        filters.update(custom_filters)
-        return filters

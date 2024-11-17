@@ -1,0 +1,2 @@
+0 */6 * * * /usr/sbin/logrotate /etc/logrotate.conf >/var/log/logrotate.log 2>&1
+0 0 */9 * * nginx -s reload >/var/log/nginx-reload.log 2>&1

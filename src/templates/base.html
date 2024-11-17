@@ -7,6 +7,7 @@
         <meta name="description" property="og:description" content="{% block description %}Join us on a journey into the world of competitive programming. Our platform keeps you updated about past events and future contests. Get personalized alerts for contests you're interested in and track the progress of coders worldwide. Learn from others, improve your coding skills, and become part of an active community of programmers. Begin your programming adventure with us today.{% endblock %}{% include "filter_title.html" with pretext="For" %}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+        {% if not nofavicon %}
         <link rel="apple-touch-icon" sizes="180x180" href="{% static_ts 'img/favicon/apple-touch-icon.png' %}">
         <link rel="icon" type="image/png" sizes="32x32" href="{% static_ts 'img/favicon/favicon-32x32.png' %}">
         <link rel="icon" type="image/png" sizes="16x16" href="{% static_ts 'img/favicon/favicon-16x16.png' %}">
@@ -15,6 +16,7 @@
         <meta name="msapplication-TileColor" content="#2b5797">
         <meta name="theme-color" content="#f8f8f8">
         <meta name="msapplication-config" content="{% static_ts 'img/favicon/browserconfig.xml' %}">
+        {% endif %}
 
         {% if user.is_authenticated %}
         <meta name="sw" content="{% static_ts 'js/sw.js' %}">
@@ -24,9 +26,9 @@
         <meta property="og:title" content="{% block full_ogtitle %}{% block ogtitle %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}">
         <title>{% block full_title %}{% block title %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}</title>
 
-        <link rel="canonical" href="{% block canonical %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}">
+        <link rel="canonical" href="{% block canonical %}{% if request.canonical_url %}{{ request.canonical_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endif %}{% endblock %}">
 
-        {% if not DEBUG %}
+        {% if not DEBUG and not nocounter %}
         {% include 'counter/base.html' %}
         {% endif %}
 
@@ -92,6 +94,7 @@
         {% block end-head %}{% endblock %}
     </head>
     <body{% if fullscreen %} class="fullscreen"{% endif %}>
+        {% block body %}
         <script>
             page_load = $.now()
             coder_pk = {% if request.user.is_authenticated %}{{ request.user.coder.pk }}{% else %}undefined{% endif %}
@@ -130,5 +133,6 @@
         {% if user.is_authenticated %}
         <script src="{% static_ts 'js/register-sw.js' %}"></script>
         {% endif %}
+        {% endblock %}
     </body>
 </html>

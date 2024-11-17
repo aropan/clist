@@ -1,0 +1,25 @@
+#form .btn {
+  margin-bottom: 15px;
+}
+
+.iframe-panel {
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 40px;
+}
+
+.center-container .scroll-container {
+  padding: 50px 200px;
+}
+
+@media (max-width: 1200px) {
+  .center-container .scroll-container {
+    padding: 50px 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .center-container .scroll-container {
+    padding: 50px 50px;
+  }
+}

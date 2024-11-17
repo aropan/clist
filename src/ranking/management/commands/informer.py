@@ -8,7 +8,6 @@ import re
 import subprocess
 import time
 from datetime import timedelta
-from numbers import Number
 from pprint import pprint  # noqa
 
 import coloredlogs
@@ -17,6 +16,7 @@ import humanize
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from rich.console import Console
@@ -24,8 +24,9 @@ from rich.markdown import Markdown
 from rich.table import Table
 
 from clist.models import Contest
-from clist.templatetags.extras import (as_number, get_problem_name, get_problem_short, has_season, md_escape,
-                                       md_italic_escape, md_url, scoreformat)
+from clist.templatetags.extras import (as_number, get_problem_name, get_problem_short, has_season, md_escape, md_url,
+                                       scoreformat, solution_time_compare)
+from notification.models import Subscription
 from ranking.models import Statistics
 from tg.bot import MAX_MESSAGE_LENGTH, Bot, telegram
 from tg.models import Chat
@@ -76,6 +77,8 @@ class Command(BaseCommand):
         parser.add_argument('--dryrun', action='store_true', help='Do not send to bot message', default=False)
         parser.add_argument('--dump', help='Dump and restore log file', default=None)
         parser.add_argument('--force-iterations', type=int, help='Minimum number of iterations before stop', default=0)
+        parser.add_argument('--with-history', action='store_true', help='Show history', default=False)
+        parser.add_argument('--with-subscriptions', action='store_true', help='Send to subscriptions', default=False)
         parser.add_argument('--no-parse-statistic', action='store_true',
                             help='Do not call command to parse statistics', default=False)
 
@@ -110,7 +113,7 @@ class Command(BaseCommand):
             print(now)
 
             if not args.no_parse_statistic:
-                call_command('parse_statistic', contest_id=args.cid, without_fill_coder_problems=True)
+                call_command('parse_statistic', contest_id=args.cid, without_set_coder_problems=True)
             contest = Contest.objects.get(pk=args.cid)
             resource = contest.resource
             qs = Statistics.objects.filter(contest=contest)
@@ -204,25 +207,6 @@ class Command(BaseCommand):
 
                 in_time = None
 
-                def time_compare(lhs, rhs):
-
-                    def get_value(val):
-                        if isinstance(val, Number):
-                            val = [val]
-                        else:
-                            val = list(val.split(':'))
-                        return len(val), val
-
-                    for k in ('time_in_seconds', 'time'):
-                        if k not in lhs or k not in rhs:
-                            continue
-                        l_val = get_value(lhs[k])
-                        r_val = get_value(rhs[k])
-                        if l_val != r_val:
-                            return -1 if l_val < r_val else 1
-
-                    return 0
-
                 for k, v in stat_problems.items():
                     if 'result' not in v:
                         continue
@@ -261,14 +245,14 @@ class Command(BaseCommand):
                         m = '%s%s `%s`' % (short, ('. ' + v['name']) if 'name' in v else '', scoreformat(result))
 
                         if verdict:
-                            m += ' ' + md_italic_escape(verdict)
+                            m += ' ' + md_escape(verdict)
 
                         if has_change:
                             if p_result is not None and v.get('partial'):
                                 delta = as_number(result) - (as_number(p_result) or 0)
                                 m += " `%s%s`" % ('+' if delta >= 0 else '', delta)
 
-                            if in_time is None or time_compare(in_time, v) < 0:
+                            if in_time is None or solution_time_compare(in_time, v) < 0:
                                 in_time = v
 
                             if verdict not in ['U']:
@@ -343,8 +327,9 @@ class Command(BaseCommand):
                 if filtered:
                     table.add_row(str(stat.place), str(stat.solving), Markdown(msg), str(stat.pk))
                 if not args.dryrun and (filtered and has_update or has_first_ac or has_try_first_ac or has_max_score):
-                    delete_message()
-                    msg = combine_messages(msg, message_text)
+                    if args.with_history:
+                        delete_message()
+                        msg = combine_messages(msg, message_text)
                     n_attempts = 5
                     delay_on_timeout = 3
                     for it in range(n_attempts):
@@ -357,9 +342,20 @@ class Command(BaseCommand):
                         except telegram.error.BadRequest as e:
                             logger.error(str(e))
                         wait('send message', it * delay_on_timeout)
-                        continue
                     if not skip_in_message_text:
                         message_text = combine_messages(history_msg, message_text)
+
+                if args.with_subscriptions:
+                    has_subscription_update = stat.account.n_subscribers and has_update
+                    if has_subscription_update:
+                        subscriptions_filter = (
+                            Q(accounts=stat.account)
+                            & (Q(resource__isnull=True) | Q(resource=resource))
+                            & (Q(contest__isnull=True) | Q(contest=contest))
+                        )
+                        subscriptions = Subscription.objects.filter(subscriptions_filter)
+                        for subscription in subscriptions:
+                            subscription.send(message=msg)
 
                 data = {
                     'solving': stat.solving,

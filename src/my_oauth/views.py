@@ -6,7 +6,7 @@ import string
 from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
-from urllib.parse import parse_qsl
+from urllib.parse import quote
 
 import requests
 from django.conf import settings
@@ -17,14 +17,15 @@ from django.core.management.commands import dumpdata
 from django.db import transaction
 from django.db.models import Count, Q
 from django.forms.models import model_to_dict
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from flatten_dict import flatten
 
-from clist.templatetags.extras import allowed_redirect, relative_url
-from my_oauth.models import Service, Token
+from clist.templatetags.extras import allowed_redirect, as_number, relative_url
+from my_oauth.models import Form, Service, Token
+from my_oauth.utils import access_token_from_response, refresh_acccess_token
 from true_coders.models import Coder
 
 
@@ -49,7 +50,19 @@ def unlink(request, name):
         messages.error(request, 'Not enough services')
     else:
         coder.token_set.filter(service__name=name).delete()
-    return allowed_redirect(reverse('coder:settings', kwargs=dict(tab='social')))
+    return allowed_redirect(reverse('coder:settings', kwargs={'tab': 'social'}))
+
+
+@login_required
+def refresh(request, name):
+    token = get_object_or_404(request.user.coder.token_set,
+                              service__name=name,
+                              service__refresh_token_uri__isnull=False)
+    access_token = refresh_acccess_token(token)
+    request.session['token_url'] = reverse('coder:settings', kwargs={'tab': 'social'})
+    ret = process_access_token(request, token.service, access_token)
+    request.logger.success(f'Token {token.service.title} refreshed')
+    return ret
 
 
 def process_data(request, service, access_token, data):
@@ -57,28 +70,34 @@ def process_data(request, service, access_token, data):
     d.update(access_token)
     d = flatten(d, reducer='underscore')
 
-    email = d.get(service.email_field, None)
     user_id = d.get(service.user_id_field, None)
-    if not email or not user_id:
-        raise Exception('Email or User ID not found.')
+    email = d.get(service.email_field, None)
+    redirect_url = request.session.pop('token_url', None)
+    if not user_id:
+        raise Exception('User ID not found.')
+    if not email and not redirect_url:
+        raise Exception('Email not found.')
 
     token, created = Token.objects.get_or_create(service=service, user_id=user_id)
     token.access_token = access_token
     token.data = data
     token.email = email
+    expires_in = as_number(d.get('expires_in'), force=True)
+    if expires_in:
+        token.expires_at = timezone.now() + timedelta(seconds=expires_in)
     token.save()
+
+    if redirect_url:
+        token_id_field = request.session.pop('token_id_field', None)
+        if token_id_field:
+            request.session[token_id_field] = token.id
+        return allowed_redirect(redirect_url)
 
     request.session['token_id'] = token.id
     return redirect('auth:signup')
 
 
-def process_access_token(request, service, response):
-    if response.status_code != requests.codes.ok:
-        raise Exception('Response status code not equal ok.')
-    try:
-        access_token = json.loads(response.text)
-    except Exception:
-        access_token = dict(parse_qsl(response.text))
+def process_access_token(request, service, access_token):
 
     if service.data_header:
         args = model_to_dict(service)
@@ -132,13 +151,16 @@ def response(request, name):
         else:
             url = re.sub('[\n\r]', '', service.token_uri % args)
             response = requests.get(url)
-        return process_access_token(request, service, response)
+        access_token = access_token_from_response(response)
+        return process_access_token(request, service, access_token)
     except Exception as e:
         messages.error(request, "ERROR: {}".format(str(e).strip("'")))
         return signup(request)
 
 
 def login(request):
+    request.session.pop('token_url', None)
+
     redirect_url = request.GET.get('next')
     if not redirect_url or not redirect_url.startswith('/'):
         redirect_url = relative_url(request.META.get('HTTP_REFERER')) or reverse('clist:main')
@@ -287,3 +309,55 @@ def services_dumpdata(request):
         service['fields']['secret'] = None
         service['fields']['app_id'] = None
     return HttpResponse(json.dumps(services), content_type="application/json")
+
+
+def form(request, uuid):
+    form = get_object_or_404(Form.objects, pk=uuid)
+    token_id = request.session.get('form_token_id', None)
+    token = Token.objects.filter(pk=token_id).first() if token_id else None
+
+    if form.is_closed():
+        token = None
+        code = None
+    elif token:
+        data = {k: quote(str(v)) for k, v in flatten(token.data, reducer='underscore').items()}
+        code = form.code.format(**data)
+    else:
+        code = None
+
+    action = request.GET.get('action')
+    if action:
+        if form.is_closed():
+            return HttpResponseBadRequest('Form is closed')
+        form_url = reverse('auth:form', args=(uuid, ))
+        if action == 'login':
+            request.session['token_id_field'] = 'form_token_id'
+            request.session['token_url'] = form_url
+            return redirect(reverse('auth:query', args=(form.service.name, )))
+        elif action == 'logout':
+            request.session.pop('form_token_id', None)
+        elif action == 'register':
+            if request.headers.get('X-Secret') != form.secret:
+                return HttpResponseBadRequest('Unauthorized')
+            register_url = form.register_url.format(**request.GET.dict())
+            register_headers = form.register_headers.format(**request.headers)
+            response = requests.post(register_url, headers=json.loads(register_headers))
+            return JsonResponse(
+                {
+                    'status': 'ok',
+                    'code': response.status_code,
+                    'text': response.text,
+                },
+                status=response.status_code,
+            )
+        else:
+            return HttpResponseBadRequest('Unknown action')
+        return allowed_redirect(form_url)
+
+    return render(request, 'form.html', {
+        'form': form,
+        'code': code,
+        'token': token,
+        'nofavicon': True,
+        'nocounter': True,
+    })

@@ -1,5 +1,5 @@
 {% autoescape off %}
 {% if prefix %}*{{ prefix }}*
-{% endif %}{% for c in contests %}[{{ c.title|md_escape }}]({{ c.url }}) `{{ c.host }}`{% if c.is_over %} is over{% else %} will {% if c.is_running %}end{% else %}start{% endif %} in [{{ c.next_time|hr_timedelta }}](https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ c.title|urlencode }}&iso={% if c.is_running %}{{ c.end_time|format_time:"%Y%m%dT%H%M" }}{% else %}{{ c.start_time|format_time:"%Y%m%dT%H%M" }}{% endif %}{% if c.duration|less_24_hours %}&ah={{ c.duration|hours }}&am={{ c.duration|minutes }}{% endif %}){% endif %}
+{% endif %}{% for c in contests %}[{{ c.title|md_url_text }}]({{ c.actual_url }}) `{{ c.host }}`{% if c.is_over %} ended{% else %} will {% if c.is_running %}end{% else %}start{% endif %} in{% endif %} [{% if c.is_over %}{{ c.end_time|naturaltime }}{% else %}{{ c.next_time|hr_timedelta }}{% endif %}](https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ c.title|urlencode }}&iso={% if c.is_running or c.is_over %}{{ c.end_time|format_time:"%Y%m%dT%H%M" }}{% else %}{{ c.start_time|format_time:"%Y%m%dT%H%M" }}{% if c.duration|less_24_hours %}&ah={{ c.duration|hours }}&am={{ c.duration|minutes }}{% endif %}{% endif %})
 {% endfor %}
 {% endautoescape %}

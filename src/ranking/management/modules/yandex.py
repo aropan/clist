@@ -12,8 +12,8 @@ from ipwhois import IPWhois
 from clist.templatetags.extras import get_item
 from my_oauth.models import Service
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.management.modules.common.locator import Locator
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
@@ -50,7 +50,7 @@ class Statistic(BaseModule):
         if not coder_pk:
             return submission_infos
 
-        ouath_service = Service.objects.get(name='competitive-hustle')
+        ouath_service = Service.objects.get(name='yandex-contest')
         oauth_token = ouath_service.token_set.filter(coder__pk=coder_pk).first()
         if not oauth_token:
             return submission_infos

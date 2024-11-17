@@ -12,4 +12,6 @@ urlpatterns = [
     re_path(r'^oauth/([-a-z]+)/$', views.query, name='query'),
     re_path(r'^oauth/([-a-z]+)/unlink/$', views.unlink, name='unlink'),
     re_path(r'^oauth/([-a-z]+)/response/$', views.response, name='response'),
+    re_path(r'^oauth/([-a-z]+)/refresh/$', views.refresh, name='refresh'),
+    re_path(r'^form/(?P<uuid>[-\w\d]+)/$', views.form, name='form'),
 ]

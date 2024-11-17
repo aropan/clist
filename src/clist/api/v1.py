@@ -2,9 +2,9 @@ from pytimeparse.timeparse import timeparse
 from tastypie import fields
 from tastypie.resources import ALL_WITH_RELATIONS
 
-from clist.models import Resource, Contest
-from true_coders.models import Filter
 from clist.api.common import BaseModelResource
+from clist.models import Contest, Resource
+from true_coders.models import Filter
 
 
 class ResourceResource(BaseModelResource):
@@ -17,7 +17,7 @@ class ResourceResource(BaseModelResource):
         resource_name = 'resource'
         filtering = {
             'id': ['exact', 'in'],
-            'name': ['exact', 'iregex', 'regex', 'in'],
+            'name': ['exact', 'in'],
         }
         ordering = ['id', 'name', ]
 

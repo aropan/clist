@@ -184,6 +184,12 @@
             curl_setopt($CID, CURLOPT_HEADER, true);
         }
 
+        if (isset($params["no_body"])) {
+            curl_setopt($CID, CURLOPT_NOBODY, true);
+        } else {
+            curl_setopt($CID, CURLOPT_NOBODY, false);
+        }
+
         $cachefile = CACHEDIR . "/" . parse_url($url, PHP_URL_HOST) . "-" . md5(preg_replace("#/?timeMin=[^&]*#", "", $url)) . ".html";
         if ($postfields !== NULL)
         {
@@ -217,7 +223,7 @@
             } else {
                 $page = curl_exec($CID);
             }
-            if (preg_match('#charset=["\']?([-a-z0-9]+)#i', $page, $match))
+            if (preg_match('#charset=["\']?([-a-z0-9]+)#i', $page, $match) && !isset($params['no_convert_charset']))
             {
                 $charset = $match[1];
                 if (!preg_match('#^utf.*8$#i', $charset))
@@ -685,5 +691,48 @@
         }
         unset($last_result[$key]);
         return $result;
+    }
+
+    function parsed_table($table_html) {
+        $dom = new DOMDocument();
+        $dom->loadHTML($table_html);
+
+        $cols = $dom->getElementsByTagName('th');
+        $header = array();
+        foreach ($cols as $col) {
+            $header[] = slugify($col->nodeValue);
+        }
+
+        $rows = $dom->getElementsByTagName('tr');
+        $data = array();
+        foreach ($rows as $row) {
+            $cols = $row->getElementsByTagName('td');
+            if ($cols->length == 0) {
+                continue;
+            }
+            if ($cols->length != count($header)) {
+                continue;
+            }
+            $headered_cols = array_combine($header, iterator_to_array($cols));
+            $row_data = array();
+            foreach ($headered_cols as $field => $col) {
+                $row_data[$field] = trim($col->nodeValue);
+                $a = $col->getElementsByTagName('a');
+                if ($a->length > 0) {
+                    $row_data[$field . ':url'] = $a[0]->getAttribute('href');
+                }
+            }
+            $data[] = $row_data;
+        }
+        return $data;
+    }
+
+    function current_season_year() {
+        $year = date('Y');
+        $month = date('n');
+        if ($month <= 8) {
+            return $year - 1;
+        }
+        return $year;
     }
 ?>
