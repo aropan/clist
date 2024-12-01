@@ -50,7 +50,7 @@ def compose_message_by_problems(problem_shorts, statistic, previous_addition, co
         if 'name' in solution:
             problem_message = '%s. %s' % (problem_message, md_escape(solution['name']))
         problem_message = '%s `%s`' % (problem_message, scoreformat(result, with_shorten=False))
-        if verdict:
+        if not is_solved_result and verdict:
             problem_message = '%s %s' % (problem_message, md_escape(verdict))
 
         if previous_result and is_partial(solution):

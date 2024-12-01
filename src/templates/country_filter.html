@@ -1,53 +1,7 @@
 {% if has_country %}
-<div class="input-group input-group-sm hidden" id="country-hidden">
-{% if groupby %}
-  <div class="input-group-btn">
-    <button class="btn btn-default{% if groupby == 'country' %} active{% endif %}" name="groupby" value="{% if groupby != 'country' %}country{% endif %}">
-      {% icon_to 'country' %}
-    </button>
-  </div>
-{% else %}
-  <span class="input-group-addon">{% icon_to 'country' %}</span>
-{% endif %}
-  <select name="country" id="country" onchange="this.form.submit()" multiple>
-    <option></option>
-    {% with country=request.user.coder.country %}
-      {% if country %}
-      <option value="{{ country.code }}"{% if country.code in params.countries %} selected{% endif %}>{{ country.name }}</option>
-      {% endif %}
-      {% get_countries as countries %}
-      {% for c in countries %}
-        {% if country.code != c.code %}
-          <option value="{{ c.code }}"{% if c.code in params.countries %} selected{% endif %}>{{ c.name }}</option>
-        {% endif %}
-      {% endfor %}
-    {% endwith %}
-  </select>
-</div>
 
-<script>
-  $('#country').select2({
-    dropdownAutoWidth : true,
-    theme: 'bootstrap',
-    placeholder: '',
-    allowClear: true,
-    templateResult: function (data) {
-        var $result = $('<span></span>')
-        $result.text(data.text)
-        if (data.id) {
-            var code = data.id.toLowerCase()
-            $result.prepend('<div class="flag flag-' + code + '"></div>')
-        }
-        return $result
-    },
-  }).on('select2:unselecting', function() {
-    $(this).data('unselecting', true);
-  }).on('select2:opening', function(e) {
-    if ($(this).data('unselecting')) {
-      $(this).removeData('unselecting');
-      e.preventDefault();
-    }
-  })
-  $('#country-hidden').removeClass('hidden');
-</script>
+{% get_countries as countries %}
+{% create_dict icon="country" title="country" field="country" nosmall=nosmall nogroupby=groupby|iffalse nosubmit=nosubmit nomultiply=nomultiply noajax=True options=countries values=params.countries value_id="code" value_option="name" pinned_id=request.user.coder.country.code template_format="<span><div class='flag flag-{data.id.toLowerCase}'></div>{data.text}</span>" as data %}
+{% include "field_to_select.html" with data=data %}
+
 {% endif %}

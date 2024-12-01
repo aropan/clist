@@ -40,6 +40,7 @@ from clist.templatetags.extras import (accounts_split, allowed_redirect, as_numb
                                        is_rating_prediction_field, is_yes, query_transform, quote_url, relative_url)
 from clist.templatetags.extras import slug as slugify
 from clist.templatetags.extras import toint, url_transform
+from clist.utils import update_accounts_by_coders
 from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from favorites.models import Activity
@@ -51,13 +52,13 @@ from notification.utils import compose_message_by_problems, send_messages
 from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
-                            VirtualStart, update_account_by_coders)
+                            VirtualStart)
 from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListValue, Organization, Party
 from true_coders.utils import add_query_to_list, get_or_set_upsolving_filter
 from utils.chart import make_chart
 from utils.json_field import JSONF, IntegerJSONF, JsonJSONF
-from utils.regex import get_iregex_filter, verify_regex
+from utils.regex import get_icontains_filter, get_iregex_filter, verify_regex
 
 logger = logging.getLogger(__name__)
 
@@ -353,7 +354,7 @@ def coders(request, template='coders.html'):
     custom_fields = None
     if len(resources) == 1:
         resource = resources[0]
-        options = list(resource.accounts_fields.get('types', {}).keys())
+        options = list(resource.accounts_fields_types.keys())
         custom_fields = {
             'values': [v for v in request.GET.getlist('field') if v and v in options],
             'options': options,
@@ -1099,9 +1100,7 @@ def change(request):
         with transaction.atomic():
             coder.settings.setdefault('custom_countries', {})[country] = value
             coder.save()
-
-            for account in coder.account_set.prefetch_related('coders'):
-                update_account_by_coders(account)
+            update_accounts_by_coders(coder.account_set)
     elif name == "filter":
         try:
             field = "Filter id"
@@ -1759,11 +1758,10 @@ def search(request, **kwargs):
             ret[h] = h
         return JsonResponse(ret)
     elif query == 'resources':
-        qs = Resource.objects.all()
-        order = ['-n_accounts', 'pk']
-        if 'regex' in request.GET:
-            query = request.GET['regex']
-            qs = qs.filter(get_iregex_filter(query, 'host__regex', 'short_host', suffix=''))
+        qs = Resource.priority_objects.all()
+        order = ['-priority', 'pk']
+        if query := request.GET.get('text'):
+            qs = qs.filter(get_iregex_filter(query, 'host__icontains', 'short_host', suffix=''))
             qs = qs.annotate(is_short=Case(
                 When(short_host=query, then=Value(True)),
                 default=Value(False),
@@ -1771,22 +1769,23 @@ def search(request, **kwargs):
             ))
             order = ['-is_short'] + order
         qs = qs.order_by(*order)
-
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.host, 'icon': r.icon} for r in qs]
+        ret = [{'id': r.id, 'host': r.host, 'text': r.host, 'icon': r.icon} for r in qs]
     elif query == 'contests':
         qs = Contest.objects.select_related('resource')
-        if resource_regex := request.GET.get('regex'):
-            qs = qs.filter(get_iregex_filter(resource_regex, 'title'))
-        if request.GET.get('has_problems') in django_settings.YES_:
+        if title_regex := request.GET.get('regex'):
+            qs = qs.filter(get_iregex_filter(title_regex, 'title'))
+        if title_text := request.GET.get('text'):
+            qs = qs.filter(get_icontains_filter(title_text, 'title'))
+        if is_yes(request.GET.get('has_problems')):
             qs = qs.filter(info__problems__isnull=False, stage__isnull=True).exclude(info__problems__exact=[])
-        if request.GET.get('has_submissions') in django_settings.YES_:
+        if is_yes(request.GET.get('has_submissions')):
             qs = qs.filter(has_submissions=True)
-        if request.GET.get('has_statistics') in django_settings.YES_:
+        if is_yes(request.GET.get('has_statistics')):
             qs = qs.filter(n_statistics__gt=0)
-        if request.GET.get('has_started') in django_settings.YES_:
+        if is_yes(request.GET.get('has_started')):
             qs = qs.filter(start_time__lt=timezone.now())
-        if request.GET.get('has_virtual_start') in django_settings.YES_:
+        if is_yes(request.GET.get('has_virtual_start')):
             if request.user.is_authenticated:
                 qs = qs.annotate(disabled=VirtualStart.contests_filter(request.user.coder))
             qs = qs.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
@@ -1798,8 +1797,13 @@ def search(request, **kwargs):
             qs = qs.filter(stage__isnull=is_yes(no_stage))
         qs = qs.order_by('-end_time', '-id')
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon, 'disabled': getattr(r, 'disabled', False)}
-               for r in qs]
+        ret = [{
+            'id': r.id,
+            'text': r.title,
+            'icon': r.resource.icon,
+            'title': r.title,
+            'disabled': getattr(r, 'disabled', False)
+        } for r in qs]
     elif query == 'show-filter':
         coder = request.user.coder
         filter_ = Filter.objects.get(pk=request.GET.get('id'), coder=coder)
@@ -1813,8 +1817,8 @@ def search(request, **kwargs):
     elif query == 'series':
         qs = ContestSeries.objects.all()
         qs = qs.annotate(n_contests=SubqueryCount('contest'))
-        if 'regex' in request.GET:
-            qs = qs.filter(get_iregex_filter(request.GET['regex'], 'name', 'short'))
+        if text := request.GET.get('text'):
+            qs = qs.filter(get_icontains_filter(text, 'name', 'short'))
         qs = qs.order_by('-n_contests', '-pk')
         qs = qs[(page - 1) * count:page * count]
         ret = [{'id': r.id, 'slug': r.slug, 'text': r.text, 'short': r.short, 'name': r.name} for r in qs]
@@ -1911,7 +1915,7 @@ def search(request, **kwargs):
         field = request.GET.get('field')
         assert '__' not in field
 
-        view_private_fields = request.user.has_perm('view_private_fields', contest.resource)
+        view_private_fields = request.has_contest_perm('view_private_fields', contest)
         if field.startswith('_') and not view_private_fields:
             return HttpResponseBadRequest('You have no permission to view this field')
 
@@ -1953,13 +1957,7 @@ def search(request, **kwargs):
             qs = qs.filter(**{f'{field}__icontains': text})
         qs = qs.distinct(field).values_list(field, flat=True)
         qs = qs[(page - 1) * count:page * count]
-        ret = [
-            {
-                'id': f if f is not None else 'none',
-                'text': str(f),
-            }
-            for f in qs
-        ]
+        ret = [{'id': str(f) if f is not None else 'none', 'text': str(f)} for f in qs]
     elif query == 'charts-field-select':
         if not request.user.is_staff:
             return HttpResponseBadRequest('You have no permission')
@@ -2600,7 +2598,7 @@ def accounts(request, template='accounts.html'):
     custom_fields = set()
     fields_types = {}
     for resource in resources:
-        for k, v in resource.accounts_fields.get('types', {}).items():
+        for k, v in resource.accounts_fields_types.items():
             if k in table_fields:
                 continue
             v = set(v)

@@ -564,6 +564,24 @@ def resource(request, host, template='resource.html', extra_context=None):
     now = timezone.now()
     resource = get_object_or_404(Resource, host=host)
 
+    action = request.POST.get('action')
+    if action:
+        if action == 'set_verification_fields' and request.user.has_perm('clist.change_resource'):
+            verification_fields = request.get_filtered_list(
+                'verification_fields',
+                options=resource.account_verification_fields_options,
+                method='POST',
+            )
+            if not resource.has_account_verification:
+                request.logger.error(f'Account verification is not enabled for {resource}')
+            elif not verification_fields:
+                request.logger.error(f'No fields selected for {resource}')
+            else:
+                request.logger.success(f'Verification fields for {resource} updated = {verification_fields}')
+                resource.accounts_fields['verification_fields'] = verification_fields
+                resource.save(update_fields=['accounts_fields'])
+        return redirect(request.get_full_path())
+
     if request.user.is_authenticated:
         coder = request.as_coder or request.user.coder
         primary_account = coder.primary_account(resource)
@@ -680,8 +698,18 @@ def resource(request, host, template='resource.html', extra_context=None):
     else:
         rating_chart = None
 
+    verification_fields_select = None
+    if resource.has_account_verification:
+        verification_fields_select = {
+            'values': resource.account_verification_fields,
+            'options': resource.account_verification_fields_options,
+            'collapse': True,
+            'icon': 'verification',
+        }
+
     context = {
         'resource': resource,
+        'verification_fields_select': verification_fields_select,
         'coder': coder,
         'primary_account': primary_account,
         'primary_country': primary_country,
@@ -1151,7 +1179,6 @@ def problems(request, template='problems.html'):
         fixed_fields = selected_resource.problems_fields.get('fixed_fields', [])
         if contests:
             fixed_fields.append('short')
-        custom_fields = custom_fields + fixed_fields
         fixed_fields_set = set(fixed_fields)
         fields_types = selected_resource.problems_fields.get('types', {})
         for field in fields_types:
@@ -1160,18 +1187,20 @@ def problems(request, template='problems.html'):
                 custom_info_fields.add(field)
     else:
         fields_types = dict()
+        fixed_fields = []
         fixed_fields_set = set()
     custom_fields_select = {
         'values': [v for v in custom_fields if v and v in custom_options],
         'options': [v for v in custom_options if v not in fixed_fields_set]
     }
+    custom_fields += fixed_fields
 
     filter_fields = []
     for field in custom_options:
         field_types = fields_types.get(field)
         if not field_types or any(t in field_types for t in ('int', 'float', 'dict')):
             continue
-        values_list = request.get_filtered_list(field)
+        values_list = request.get_filtered_list(field + settings.FILTER_FIELD_SUFFIX)
         if values_list:
             values_filter = Q()
             for value in values_list:
@@ -1310,7 +1339,7 @@ def problems(request, template='problems.html'):
     groupby_fields['n_problems'] = 'Num'
 
     # sort problems
-    sort_options = ['date', 'rating', 'name'] + [f for f in custom_fields_select['values']]
+    sort_options = ['date', 'rating', 'name'] + custom_fields
     sort_select = {'options': sort_options, 'rev_order': True}
     sort_field = request.GET.get('sort')
     sort_order = request.GET.get('sort_order')
@@ -1335,6 +1364,7 @@ def problems(request, template='problems.html'):
         'chart_select': chart_select,
         'status_select': status_select,
         'sort_select': sort_select,
+        'custom_fields': custom_fields,
         'custom_fields_select': custom_fields_select,
         'custom_info_fields': custom_info_fields,
         'fields_types': fields_types,

@@ -14,6 +14,8 @@ def global_settings(request):
         'icons': settings.FONTAWESOME_ICONS_,
         'coder_list_n_values_limit': settings.CODER_LIST_N_VALUES_LIMIT_,
         'telegram_bot_name': settings.TELEGRAM_NAME,
+        'unspecified_place': settings.STANDINGS_UNSPECIFIED_PLACE,
+        'filter_field_suffix': settings.FILTER_FIELD_SUFFIX,
     }
 
 

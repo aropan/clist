@@ -25,12 +25,19 @@ def get_resource(self, field='resource') -> Optional[Resource]:
     return Resource.get(resource)
 
 
-def get_filtered_list(self, field, options=None):
-    values = [
-        value
-        for value in self.GET.getlist(field)
-        if options is not None and value in options or options is None and value
-    ]
+def get_filtered_list(self, field, options=None, method='GET'):
+    if method not in ['GET', 'POST']:
+        raise ValueError(f'Invalid method: {method}')
+
+    values = []
+    values_set = set()
+    for value in getattr(self, method).getlist(field):
+        if value in values_set:
+            continue
+        if options is not None and value in options or options is None and value:
+            values.append(value)
+            values_set.add(value)
+
     if values and isinstance(options, list):
         for value in values[::-1]:
             options.remove(value)
@@ -55,6 +62,14 @@ def set_canonical(self, url):
     return self
 
 
+def has_contest_perm(self, perm, contest):
+    if not self.user.is_authenticated:
+        return False
+    if self.user.is_superuser:
+        return True
+    return self.user.has_perm(perm, contest.resource) or self.user.has_perm(perm, contest)
+
+
 def CustomRequest(request):
     setattr(request, 'logger', RequestLogger(request))
     setattr(request, 'get_resource', partial(get_resource, request))
@@ -62,4 +77,5 @@ def CustomRequest(request):
     setattr(request, 'get_filtered_value', partial(get_filtered_value, request))
     setattr(request, 'canonical_url', None)
     setattr(request, 'set_canonical', partial(set_canonical, request))
+    setattr(request, 'has_contest_perm', partial(has_contest_perm, request))
     return request

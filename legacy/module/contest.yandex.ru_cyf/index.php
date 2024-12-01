@@ -3,7 +3,7 @@
 
     $page = curlexec($URL);
 
-    preg_match_all('#<a[^>]*href="(?P<url>[^"]*contest.yandex.ru/CYF/contest/(?P<key>[0-9]+))#i', $page, $matches, PREG_SET_ORDER);
+    preg_match_all('#<a[^>]*href="(?P<url>[^"]*contest.yandex.ru/(?:CYF/)?contest/(?P<key>[0-9]+))#i', $page, $matches, PREG_SET_ORDER);
 
     $ids = array();
     foreach ($matches as $match) {
@@ -18,7 +18,7 @@
             $values[$m['name']] = $m;
         }
 
-        if (!preg_match('#<div[^>]*class="[^"]*title">[^<]*<a[^>]*contest/[0-9]+[^>]*>(?P<title>[^<]*)</a>#', $page, $m)) {
+        if (!preg_match('#<div[^>]*class="[^"]*title">[^<]*(<[^/>]*>[^<]*)*<a[^>]*contest/[0-9]+[^>]*>(?P<title>[^<]*)</a>#', $page, $m)) {
             continue;
         }
         $title = html_entity_decode($m['title']);

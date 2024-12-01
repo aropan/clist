@@ -65,7 +65,7 @@
     {% endif %}
   </td>
   {% endif %}
-  {% for field in custom_fields_select.values %}
+  {% for field in custom_fields %}
   <td class="problem-field-column problem-column-{{ field }}">
     {% with problem_key=problem|get_problem_key %}
     {% with contest_problem=contest_problems|get_item:problem_key %}

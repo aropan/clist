@@ -150,6 +150,7 @@ class Statistic(BaseModule):
 
             name = name.encode('utf8', 'replace').decode('utf8')
             name = re.sub(r'<([a-z]+)[^>]*>.*</\1>$', '', name)
+            name = re.sub(r'\(<([a-z]+)[^>]*>.*</\1>\)$', '', name)
             name = name.strip()
 
             season_ratings_keys = [orig_handle, name, extract_team_name(name)]
@@ -320,7 +321,7 @@ class Statistic(BaseModule):
                     cond |= Q(name__contains=rev)
                 for team in qs.filter(cond):
                     counter[team] += member_weight
-            total_weight = team_weight + len(members) * member_weight
+            total_weight = team_weight + max(len(members), 3) * member_weight
             teams = [team for team, count in counter.items() if 2 * count > total_weight]
 
             if len(teams) > 1:

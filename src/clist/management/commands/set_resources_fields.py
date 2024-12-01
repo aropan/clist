@@ -37,7 +37,7 @@ def set_accounts_fields(resources, logger):
                     fields_types[k].add(type(v).__name__)
                 pbar.update()
             fields_types = {k: list(v) for k, v in fields_types.items()}
-            resource_accounts_fields_types = resource.accounts_fields.get('types', {})
+            resource_accounts_fields_types = resource.accounts_fields_types
 
             fields = list(sorted(set(resource_accounts_fields_types.keys()) | set(fields_types.keys())))
             first_log = True

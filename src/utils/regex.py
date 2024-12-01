@@ -81,3 +81,8 @@ def get_iregex_filter(
     if queryset is not None:
         return ret, queryset
     return ret
+
+
+def get_icontains_filter(*args, **kwargs):
+    kwargs['suffix'] = '__icontains'
+    return get_iregex_filter(*args, **kwargs)

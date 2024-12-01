@@ -15,10 +15,6 @@ table.table tr th {
   }
 }
 
-#resource-filters .short-value {
-  width: 70px !important;
-}
-
 table.table td {
   white-space: nowrap;
 }

@@ -361,11 +361,6 @@ class Command(BaseCommand):
         else:
             resource_event_log = None
 
-        problems_values_fields = (
-            ('language', '_languages'),
-            ('verdict', '_verdicts'),
-        )
-
         processed_group = set()
         error_counter = defaultdict(int)
         for contest in progress_bar:
@@ -425,7 +420,8 @@ class Command(BaseCommand):
             try:
                 now = timezone_now()
                 is_coming = now < contest.start_time
-                is_archive_contest = now > contest.end_time + timedelta(days=30) and contest.parsed_time
+                is_archive_contest = (max(contest.created, contest.end_time) + timedelta(days=30) < now and
+                                      contest.parsed_time)
 
                 with_subscription = not without_subscriptions and not is_archive_contest and with_stats
                 prefetch_subscribed_coders = Prefetch('coders', queryset=Coder.objects.filter(n_subscribers__gt=0),
@@ -556,6 +552,8 @@ class Command(BaseCommand):
                             update_fields.append(attr)
                     if parsed_percentage is not None:
                         contest.parsed_percentage = parsed_percentage if parsed_percentage < 100 else None
+                        if contest.parsed_percentage:
+                            self.logger.info(f'parsed percentage = {contest.parsed_percentage}')
                         update_fields.append('parsed_percentage')
                     if update_fields:
                         contest.save(update_fields=update_fields)
@@ -624,6 +622,7 @@ class Command(BaseCommand):
                                     result.pop(old_key)
                                 else:
                                     result[new_key] = result.pop(old_key)
+                                    result[new_key]['_old_key'] = result[new_key]['member']
                                     result[new_key]['member'] = new_key
                                     result[new_key]['_no_update_name'] = True
                                     result[new_key].pop('info', None)
@@ -639,7 +638,8 @@ class Command(BaseCommand):
                     with_link_accounts = standings.pop('link_accounts', False)
                     is_major_kind = resource.is_major_kind(contest.kind)
                     custom_fields_types = standings.pop('fields_types', {})
-                    standings_kinds = set(Contest.STANDINGS_KINDS.keys())
+                    guess_standings_kinds = ['icpc', 'scoring']
+                    standings_kinds = set(guess_standings_kinds)
                     has_more_solving = bool(contest.info.get('_more_solving'))
                     updated_statistics_ids = list()
                     contest_timeline = contest.get_timeline_info()
@@ -832,11 +832,13 @@ class Command(BaseCommand):
                             r.setdefault('last_activity', last_activity)
                             results.append(r)
 
-                        if len(standings_kinds) == 1:
-                            standings_kind = standings_kinds.pop()
-                            if contest.standings_kind != standings_kind:
-                                contest.standings_kind = standings_kind
-                                contest.save(update_fields=['standings_kind'])
+                        if (
+                            len(standings_kinds) == 1 and
+                            (not contest.standings_kind or contest.standings_kind in guess_standings_kinds) and
+                            contest.standings_kind != (standings_kind := standings_kinds.pop())
+                        ):
+                            contest.standings_kind = standings_kind
+                            contest.save(update_fields=['standings_kind'])
 
                         if has_hidden and not contest.has_hidden_results and is_archive_contest:
                             raise ExceptionParseStandings(f'archive contest = {contest} has hidden results')
@@ -1207,7 +1209,7 @@ class Command(BaseCommand):
 
                                 try_calculate_time = contest.calculate_time or (
                                     contest.start_time <= now < contest.end_time and
-                                    not resource.info.get('parse', {}).get('no_calculate_time', False) and
+                                    not get_item(resource, 'info.parse.no_calculate_time') and
                                     contest.full_duration < resource.module.long_contest_idle and
                                     'penalty' in fields_set
                                 )
@@ -1418,15 +1420,15 @@ class Command(BaseCommand):
                             def update_problems_values(addition):
                                 problems = addition.get('problems', {})
                                 updated_addition = False
-                                for field, out in problems_values_fields:
+                                for problem_field, field, contest_field in settings.PROBLEM_STATISTIC_FIELDS:
                                     values = set()
                                     for problem in problems.values():
-                                        value = problem.get(field)
+                                        value = problem.get(problem_field)
                                         if value:
-                                            problems_values[out].add(value)
+                                            problems_values[contest_field].add(value)
                                             values.add(value)
-                                    if out not in addition and values:
-                                        addition[out] = list(values)
+                                    if field not in addition and values:
+                                        addition[field] = list(values)
                                         updated_addition = True
                                 return updated_addition
 
@@ -1548,13 +1550,10 @@ class Command(BaseCommand):
 
                         if not specific_users:
                             for field, values in problems_values.items():
-                                if values:
-                                    field = field.strip('_')
-                                    values = list(sorted(values))
-                                    if canonize(values) != canonize(contest.info.get(field)):
-                                        contest.info[field] = values
-                            for _, field in problems_values_fields:
-                                contest_field = field.strip('_')
+                                values = list(sorted(values))
+                                if canonize(values) != canonize(contest.info.get(field)):
+                                    contest.info[field] = values
+                            for _, field, contest_field in settings.PROBLEM_STATISTIC_FIELDS:
                                 if field in fields_set or not contest.info.get(contest_field):
                                     continue
                                 fields_set.add(field)

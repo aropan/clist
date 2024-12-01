@@ -45,7 +45,7 @@ class Command(BaseCommand):
         def set_n_contests(resources):
             total_resources = resources.count()
 
-            fields = ['host', 'n_accounts', 'n_changes', 'percent', 'time', 'n_removed']
+            fields = ['host', 'n_accounts', 'n_contests', 'n_writers', 'n_removed', 'n_changes', 'time']
             table = PrettyTable(field_names=fields, sortby=args.sortby)
             with tqdm(total=total_resources, desc='resources') as pbar_resource:
                 for resource in resources:
@@ -64,12 +64,12 @@ class Command(BaseCommand):
 
                     qs = accounts.annotate(count=SubqueryCount('statistics', filter=Q(skip_in_stats=False)))
                     qs = qs.exclude(count=F('n_contests'))
-                    n_contests_diff = 0
+                    n_contests = 0
                     with tqdm(desc='updating n_contests') as pbar:
                         for a in qs.iterator():
                             to_save = False
                             if a.count != a.n_contests:
-                                n_contests_diff += 1
+                                n_contests += 1
                                 a.n_contests = a.count
                                 to_save = True
                             if to_save:
@@ -77,30 +77,47 @@ class Command(BaseCommand):
                             pbar.update()
                         pbar.close()
 
-                    n_removed = '-'
+                    qs = accounts.annotate(count=SubqueryCount('writer_set'))
+                    qs = qs.exclude(count=F('n_writers'))
+                    n_writers = 0
+                    with tqdm(desc='updating n_writers') as pbar:
+                        for a in qs.iterator():
+                            to_save = False
+                            if a.count != a.n_writers:
+                                n_writers += 1
+                                a.n_writers = a.count
+                                to_save = True
+                            if to_save:
+                                a.save(update_fields=['n_writers'])
+                            pbar.update()
+                        pbar.close()
+
+                    n_removed = 0
                     if args.remove_empty:
                         qs = accounts.filter(
                             coders__isnull=True,
                             statistics__isnull=True,
                             writer_set__isnull=True,
                         )
-                        n_removed = qs.delete()
+                        n_removed, _ = qs.delete()
+                    n_changes = n_contests + n_writers + n_removed
 
                     delta_time = timezone.now() - start_time
                     pbar_resource.set_postfix(
                         resource=resource.host,
                         time=delta_time,
                         total=accounts.count(),
-                        diff=n_contests_diff,
+                        n_changes=n_changes,
                     )
                     pbar_resource.update()
                     table.add_row([
                         resource.host,
                         total_accounts,
-                        n_contests_diff,
-                        round(n_contests_diff / total_accounts, 3) if total_accounts else None,
-                        delta_time,
+                        n_contests,
+                        n_writers,
                         n_removed,
+                        n_changes,
+                        delta_time,
                     ])
 
                 pbar_resource.close()

@@ -136,7 +136,6 @@ MIDDLEWARE = (
     'pyclist.middleware.CustomRequestMiddleware',
     'pyclist.middleware.RequestIsAjaxFunction',
     'pyclist.middleware.RedirectMiddleware',
-    'pyclist.middleware.TimezoneMiddleware',
     'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',
     'pyclist.middleware.StatementTimeoutMiddleware',
@@ -216,12 +215,12 @@ RQ_QUEUES = {
     'system': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 60,
+        'DEFAULT_TIMEOUT': 100,
     },
     'default': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 300,
+        'DEFAULT_TIMEOUT': 1000,
     },
 }
 RQ_SHOW_ADMIN_LINK = True
@@ -269,8 +268,6 @@ LANGUAGES = [
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
-
-USE_L10N = True
 
 USE_TZ = True
 
@@ -486,6 +483,7 @@ ALPHA2_FIXES_MAPPING = {
     'CSXX': 'Y0',
 }
 
+HISTORICAL_COUNTRIES = set()
 for country in pycountry.historic_countries:
     code = ALPHA2_FIXES_MAPPING.pop(country.alpha_4, country.alpha_2)
     assert not pycountry.countries.get(alpha_2=code)
@@ -504,7 +502,7 @@ for country in pycountry.historic_countries:
         override.setdefault('alpha3', country.alpha_3)
     if hasattr(country, 'numeric'):
         override.setdefault('numeric', country.numeric)
-
+    HISTORICAL_COUNTRIES.add(code)
 
 CUSTOM_COUNTRIES_ = getattr(conf, 'CUSTOM_COUNTRIES', {})
 FILTER_CUSTOM_COUNTRIES_ = getattr(conf, 'FILTER_CUSTOM_COUNTRIES', {})
@@ -660,6 +658,11 @@ DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
 
 ADDITION_HIDE_FIELDS_ = {'problems', 'solved', 'hack', 'challenges', 'url'}
+PROBLEM_STATISTIC_FIELDS = (
+    # problem_field, statistic_field, contest_field
+    ('language', '_languages', 'languages'),
+    ('verdict', '_verdicts', 'verdicts'),
+)
 
 VIRTUAL_CODER_PREFIX_ = '∨'
 
@@ -684,6 +687,7 @@ FONTAWESOME_ICONS_ = {
     'rating': '<i class="fa-fw fas fa-chart-line"></i>',
     'medal': '<i class="fa-fw fas fa-medal"></i>',
     'region': '<i class="fa-fw fas fa-map-signs"></i>',
+    'location': '<i class="fa-solid fa-location-dot"></i>',
     'chat': '<i class="fa-fw fas fa-user-friends"></i>',
     'advanced': '<i class="fa-fw far fa-check-circle"></i>',
     'company': '<i class="fa-fw fas fa-building"></i>',
@@ -751,6 +755,7 @@ FONTAWESOME_ICONS_ = {
                    'position': 'bottom'},
     'series': '<i class="fas fa-trophy"></i>',
     'app': '<i class="fas fa-desktop"></i>',
+    'sort': '<i class="fa-solid fa-sort"></i>',
     'sort-asc': '<i class="fas fa-sort-amount-down-alt"></i>',
     'sort-desc': '<i class="fas fa-sort-amount-down"></i>',
     'verification': '<i class="far fa-check-circle"></i>',
@@ -821,6 +826,7 @@ STANDINGS_FIELDS_ = {
 
 STANDINGS_SMALL_N_STATISTICS = 1000
 STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT = 0.2
+STANDINGS_UNSPECIFIED_PLACE = '-'
 
 UPSOLVING_FILTER_DEFAULT = True
 
@@ -833,6 +839,8 @@ if os.path.exists(GEOIP_PATH):
     GEOIP = GeoIP2(GEOIP_PATH)
 elif GEOIP_ACCOUNT_ID or GEOIP_LICENSE_KEY:
     logging.warning('GeoIP database not found. Run ./manage.py download_geoip_database to download it.')
+
+FILTER_FIELD_SUFFIX = '_field'
 
 
 class NOTIFICATION_CONF:

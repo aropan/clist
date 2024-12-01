@@ -22,7 +22,6 @@ from django_print_sql import print_sql
 from django_super_deduper.merge import MergedModelInstance
 from sql_util.utils import Exists
 
-from clist.models import Contest
 from clist.templatetags.extras import add_prefix_to_problem_short, get_item, get_problem_short, slug
 from ranking.management.modules.common import LOG
 from ranking.models import Account, AccountRenaming, Statistics
@@ -159,8 +158,7 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
         rank_field = addition_update.get('_rank_field', 'place_as_int')
         conditions = (Q(**{f'{field}': contest_key}) for field in fields)
         condition = functools.reduce(operator.__or__, conditions)
-        condition &= Q(resource=account.resource)
-        base_contests = Contest.objects.filter(condition)
+        base_contests = account.resource.contest_set.filter(condition)
         qs = base_contests.annotate(has_rank=Exists('statistics', filter=Q(**{rank_field: rank})))
         contests = list(qs.filter(has_rank=False))
         if not contests:
@@ -373,8 +371,7 @@ def update_stage(self):
             spec_filter_params[field] = filter_params.pop(field)
     is_over = self.contest.end_time < timezone_now
 
-    contests = Contest.objects.filter(
-        resource=self.contest.resource,
+    contests = self.contest.resource.contest_set.filter(
         start_time__gte=self.contest.start_time,
         end_time__lte=self.contest.end_time,
         **filter_params,
@@ -403,6 +400,16 @@ def update_stage(self):
     order_by = self.score_params['order_by']
     advances = self.score_params.get('advances', {})
     results = collections.defaultdict(collections.OrderedDict)
+
+    processed_fields = []
+    for field in fields:
+        if (many_fields := field.pop('fields', None)):
+            for f in many_fields:
+                field['field'] = f
+                processed_fields.append(deepcopy(field))
+        else:
+            processed_fields.append(field)
+    fields = processed_fields
 
     mapping_account_by_coder = {}
     fixed_fields = []
@@ -494,6 +501,7 @@ def update_stage(self):
         return placing['division'][stat.addition['division']] if 'division' in placing else placing
 
     account_keys = dict()
+    problem_values = defaultdict(set)
     total = statistics.filter(contest__in=contests).count()
     with tqdm.tqdm(total=total, desc=f'getting statistics for stage {stage}') as pbar, print_sql(count_only=True):
         for idx, contest in enumerate(contests, start=1):
@@ -663,6 +671,13 @@ def update_stage(self):
                         val = max(val, row[out])
                     row[out] = val
 
+                for _, field, contest_field in settings.PROBLEM_STATISTIC_FIELDS:
+                    values = stat.addition.get(field)
+                    if not values:
+                        continue
+                    problem_values[contest_field] |= set(values)
+                    row[field] = list(sorted(set(row.get(field, []) + values)))
+
                 if 'solved' in stat.addition and isinstance(stat.addition['solved'], dict):
                     solved = row.setdefault('solved', {})
                     for k, v in stat.addition['solved'].items():
@@ -824,7 +839,7 @@ def update_stage(self):
         else:
             raise ValueError(f'Unknown field type = {t}')
 
-    hidden_fields += [field.get('out', field.get('inp')) for field in fields if field.get('hidden')]
+    hidden_fields += [field.get('out', field['field']) for field in fields if field.get('hidden')]
 
     results = list(results.values())
     if n_best:
@@ -962,6 +977,20 @@ def update_stage(self):
                     fields_set.add(k)
                     fields.append(k)
         stage.info['problems'] = list(problems_infos.values())
+
+        for contest_field, values in problem_values.items():
+            stage.info[contest_field] = list(sorted(values))
+        for _, field, contest_field in settings.PROBLEM_STATISTIC_FIELDS:
+            if field not in fields_set and stage.info.get(contest_field):
+                fields_set.add(field)
+                fields.append(field)
+
+        stage.duration_in_secs = sum([contest.duration_in_secs for contest in contests])
+        if stage.duration_in_secs:
+            time_elapsed = sum([contest.duration_in_secs for contest in contests if contest.is_over()])
+            stage.info['_time_percentage'] = time_elapsed / stage.duration_in_secs
+        else:
+            stage.info.pop('_time_percentage', None)
 
         if field_to_problem:
             for stat in stage.statistics_set.all():

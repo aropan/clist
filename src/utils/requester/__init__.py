@@ -11,6 +11,7 @@ import mimetypes
 import os
 import random
 import re
+import shlex
 import ssl
 import string
 import subprocess
@@ -474,10 +475,12 @@ def read_response(response):
         return buf.read()
 
 
-def curl_response(url, headers=None, cookie_file=None):
+def curl_response(url, headers=None, cookie_file=None, curl_args=None):
     args = ['curl', '-i', url, '-L', '--compressed']
     if cookie_file:
         args.extend(['-b', cookie_file, '-c', cookie_file])
+    if curl_args:
+        args.extend(shlex.split(curl_args))
     if headers:
         for k, v in headers.items():
             args.extend(['-H', f'{k}: {v}'])
@@ -627,6 +630,7 @@ class requester():
         last_info=True,
         params=None,
         with_curl=False,
+        curl_args=None,
         with_referer=True,
         curl_cookie_file=None,
     ):
@@ -729,7 +733,8 @@ class requester():
                     proxy = self.proxy
 
                     if with_curl:
-                        response = curl_response(url, headers=headers, cookie_file=curl_cookie_file)
+                        response = curl_response(url, headers=headers, cookie_file=curl_cookie_file,
+                                                 curl_args=curl_args)
                         if response.code != 200:
                             raise CurlFailedResponse(response)
                         last_url = url

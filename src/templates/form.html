@@ -11,7 +11,9 @@
     <h1>
       {{ form.name|safe }}
     </h1>
-    {% if form.is_closed %}
+    {% if form.is_coming %}
+      <div class="alert alert-info">From will open in <a href="{{ form.start_time|get_timeanddate_href }}">{{ form.start_time|hr_timedelta }}<a></div>
+    {% elif form.is_closed %}
       <div class="alert alert-warning">This form is closed</div>
     {% else %}
       {% if token %}
@@ -27,12 +29,11 @@
       <div>
         <a class="btn btn-default" href="?action=login">{% icon_to 'login' '' %} Log in with {{ form.service.title }}</a>
       </div>
-      {% endif %}
-
       {% if form.end_time %}
-      <div class="small text-muted pull-right">
-        <span>Form will close in {{ form.end_time|hr_timedelta }}</span>
+      <div class="small text-muted">
+        <span>Form will close in <a href="{{ form.end_time|get_timeanddate_href }}">{{ form.end_time|hr_timedelta }}</a></span>
       </div>
+      {% endif %}
       {% endif %}
     {% endif %}
   </div>

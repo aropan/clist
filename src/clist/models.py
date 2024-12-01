@@ -29,11 +29,17 @@ from PIL import Image, UnidentifiedImageError
 from scipy.stats import randint, uniform
 
 from clist.templatetags.extras import get_item, get_problem_key, slug
+from clist.utils import update_accounts_by_coders
 from logify.models import EventLog, EventStatus
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
 from utils.timetools import Epoch, parse_duration, timed_cache
+
+contest_and_resource_permissions = (
+    ('update_statistics', 'Can update statistics'),
+    ('view_private_fields', 'Can view private fields'),
+)
 
 
 class PriorityResourceManager(BaseManager):
@@ -134,13 +140,14 @@ class Resource(BaseModel):
             GistIndexTrgrmOps(fields=['short_host']),
         ]
 
-        permissions = (
-            ('update_statistics', 'Can update statistics'),
-            ('view_private_fields', 'Can view private fields'),
-        )
+        permissions = contest_and_resource_permissions
 
     def __str__(self):
         return f'{self.host} Resource#{self.id}'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_host = self.host
 
     def href(self, host=None):
         return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=host or self.host)
@@ -195,6 +202,13 @@ class Resource(BaseModel):
             self.update_icon()
 
         super().save(*args, **kwargs)
+
+        if self.__original_host != self.host:
+            self.__original_host = self.host
+            self.update_account_urls()
+
+    def update_account_urls(self):
+        update_accounts_by_coders(self.account_set)
 
     def update_get_events_colors(self, force=False, alpha=0.7):
         if self.info.get('get_events', {}).get('colors') and not force:
@@ -336,12 +350,19 @@ class Resource(BaseModel):
             prev = rating['next']
         return step
 
+    @property
+    def accounts_fields_types(self):
+        return self.accounts_fields.get('types', {})
+
+    @property
+    def account_verification_fields_options(self):
+        return [field for field, values in self.accounts_fields_types.items() if 'str' in values]
+
+    @property
     def account_verification_fields(self):
-        verification_fields = self.accounts_fields.get('verification_fields', [])
-        ret = [field for field, values in self.accounts_fields.get('types', {}).items() if 'str' in values]
-        if verification_fields:
-            ret = [field for field in ret if field in verification_fields]
-        return ret
+        verification_fields = set(self.accounts_fields.get('verification_fields', []))
+        verification_fields_options = self.account_verification_fields_options
+        return [field for field in verification_fields_options if field in verification_fields]
 
     @classmethod
     def get_object(cls, value):
@@ -452,7 +473,7 @@ class Contest(BaseModel):
     end_time = models.DateTimeField()
     duration_in_secs = models.IntegerField(null=False, blank=True)
     url = models.CharField(max_length=255)
-    key = models.CharField(max_length=255)
+    key = models.CharField(max_length=255, blank=True)
     host = models.CharField(max_length=255)
     uid = models.CharField(max_length=100, null=True, blank=True)
     edit = models.CharField(max_length=100, null=True, blank=True)
@@ -464,6 +485,7 @@ class Contest(BaseModel):
     registration_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
     info = models.JSONField(default=dict, blank=True)
+    variables = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
     n_problems = models.IntegerField(null=True, blank=True, db_index=True)
@@ -534,6 +556,8 @@ class Contest(BaseModel):
             GistIndexTrgrmOps(fields=['title']),
         ]
 
+        permissions = contest_and_resource_permissions
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_is_rated = self.is_rated
@@ -543,6 +567,7 @@ class Contest(BaseModel):
             self.duration_in_secs = (self.end_time - self.start_time).total_seconds()
         self.slug = slug(self.title)
         self.title_path = self.slug.replace('-', '.')
+        self.key = self.key or self.slug
 
         fields = self.info.get('fields', [])
 
@@ -730,14 +755,20 @@ class Contest(BaseModel):
         return qs
 
     def get_timeline_info(self):
-        ret = self.resource.info.get('standings', {}).get('timeline', {})
-        ret.update(self.info.get('standings', {}).get('timeline', {}))
+        ret = get_item(self.resource, 'info.standings.timeline', {})
+        ret.update(get_item(self, 'info.standings.timeline', {}))
         return ret
+
+    def has_timeline(self):
+        return bool(self.get_timeline_info())
 
     @property
     def actual_url(self):
         if self.n_statistics or self.info.get('problems'):
-            return settings.HTTPS_HOST_URL_ + reverse('ranking:standings', args=(slug(self.title), self.pk))
+            url = settings.HTTPS_HOST_URL_ + reverse('ranking:standings', args=(slug(self.title), self.pk))
+            if self.is_live_statistics() and self.has_timeline():
+                url += '?timeline'
+            return url
         if self.registration_url and self.is_coming():
             return self.registration_url
         if self.url and self.is_coming():
@@ -748,6 +779,9 @@ class Contest(BaseModel):
 
     def is_major_kind(self):
         return self.resource.is_major_kind(self.kind)
+
+    def is_stage(self):
+        return self.kind == 'stage' and getattr(self, 'stage', None)
 
     def shown_kind(self):
         if not self.kind or self.kind == 'stage' or self.is_major_kind():
@@ -767,6 +801,8 @@ class Contest(BaseModel):
             return 0
         if self.is_over() or not self.duration_in_secs or not self.parsed_time:
             return 1
+        if '_time_percentage' in self.info:
+            return self.info['_time_percentage']
         ret = (self.parsed_time - self.standings_start_time).total_seconds() / self.duration_in_secs
         return max(min(ret, 1), 0)
 
@@ -952,12 +988,17 @@ class Contest(BaseModel):
             not self.info.get('_timing_statistic_delta_seconds')
         )
 
+    def is_live_statistics(self):
+        if not self.parsed_time or self.parsed_time + timedelta(minutes=5) < timezone_now() or not self.is_running():
+            return
+        return hasattr(self, 'live_statistics')
+
     @staticmethod
     def get(value) -> Optional['Contest']:
         if isinstance(value, int) or isinstance(value, str) and value.isdigit():
             return Contest.objects.filter(pk=value).first()
         if isinstance(value, str):
-            qs = Contest.objects.filter(Q(title=value) | Q(resource__host=value) |
+            qs = Contest.objects.filter(Q(title=value) | Q(resource__host=value) | Q(host=value) |
                                         Q(series__name=value) | Q(series__slug=slug(value)))
             return qs.order_by('-end_time').first()
         return None

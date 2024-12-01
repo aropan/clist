@@ -44,7 +44,7 @@
   {% include "field_to_select.html" with field="field" data=entity_fields_select %}
 
   {% if model.admin_url %}
-  <div class="input-group{% if not nosm %} input-group-sm{% endif %}">
+  <div class="input-group{% if not nosmall %} input-group-sm{% endif %}">
     <a class="btn btn-default btn-sm" href="{% filtered_admin_url model.admin_url field_selects=selection_field_selects %}" target="_blank">{% icon_to 'extra_url' %}</a>
   </div>
   {% endif %}

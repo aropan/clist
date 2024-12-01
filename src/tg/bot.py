@@ -380,8 +380,11 @@ class Bot(telegram.Bot):
         else:
             contest = ParseStatistics.relevant_contest()
         if not contest:
-            yield 'No set contest. Use `-c` or `--contest` option to choose contest.'
-            yield from show_subscribed(method)
+            if args.contest:
+                yield f'Contest "{args.contest}" not found.'
+            else:
+                yield 'No set contest. Use `-c` or `--contest` option to choose contest.'
+                yield from show_subscribed(method)
             return
 
         contest_msg = f'[{contest.title}]({md_url(contest.actual_url)}) `{contest.pk}`'
@@ -577,7 +580,7 @@ class Bot(telegram.Bot):
             subscribe_p.add_argument('names', metavar='NAME', nargs='*',
                                      help='Participants names (partial matches allowed). '
                                      'Double quote names with spaces')
-            subscribe_p.add_argument('-c', '--contest', help='Contest id, series or name')
+            subscribe_p.add_argument('-c', '--contest', help='Contest id, series, name or host')
             subscribe_p.add_argument('-fa', '--first-ac', action='store_true',
                                      help='Subscribe to first accepted', default=None)
             subscribe_p.add_argument('-nofa', '--no-first-ac', dest='first_ac', action='store_false',

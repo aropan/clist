@@ -6,6 +6,7 @@ from collections import OrderedDict, defaultdict
 from functools import reduce
 
 import arrow
+import yaml
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
@@ -113,8 +114,15 @@ def standings_list(request, template='standings_list.html'):
         contests = contests.filter(resource_id__in=resources)
         resources = list(Resource.objects.filter(pk__in=resources))
 
-    more_fields = request.user.has_perm('clist.view_more_fields')
-    more_fields = more_fields and [f for f in request.GET.getlist('more') if f] or []
+    more_fields = []
+    if request.user.has_perm('clist.view_more_fields'):
+        more_fields = [f for f in request.GET.getlist('more') if f]
+        for field in more_fields:
+            if '=' not in field:
+                continue
+            key, value = field.split('=')
+            value = yaml.safe_load(value)
+            contests = contests.filter(**{key: value})
 
     if request.user.is_authenticated:
         contests = contests.prefetch_related(Prefetch(
@@ -208,7 +216,6 @@ def standings_list(request, template='standings_list.html'):
         'params': {
             'resources': resources,
             'series': series,
-            'series_link': 'series' in more_fields,
             'more_fields': more_fields,
             'with_medal_scores': with_medal_scores,
         },
@@ -407,7 +414,7 @@ def standings_charts(request, context):
     int_scores = True
     my_values = {}
     is_stage = hasattr(contest, 'stage') and contest.stage is not None
-    is_scoring = contest.standings_kind in {'scoring'}
+    is_scoring = contest.standings_kind in {'cf', 'scoring'}
 
     full_scores = dict()
     for problem in problems:
@@ -748,6 +755,7 @@ def render_standings_paging(contest, statistics, with_detail=True):
         'virtual_start': None,
         'virtual_start_statistics': None,
         'with_virtual_start': False,
+        'unspecified_place': settings.STANDINGS_UNSPECIFIED_PLACE,
     }
 
     options = contest.info.get('standings', {})
@@ -1066,7 +1074,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     order.append('pk')
     statistics = statistics.order_by(*order)
 
-    view_private_fields = request.user.has_perm('view_private_fields', contest.resource)
+    view_private_fields = request.has_contest_perm('view_private_fields', contest)
     fields = get_standings_fields(
         contest,
         division=division,
@@ -1103,7 +1111,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     def add_field_to_select(f):
         f = map_fields_to_select.get(f, f)
         field_to_select = fields_to_select.setdefault(f, {})
-        field_to_select['values'] = [v for v in request.GET.getlist(f) if v]
+        field_to_select['values'] = request.get_filtered_list(f)
         if is_ip_field(f):
             field_to_select['icon'] = 'secret'
         field_to_select.update(fields_to_select_defaults.get(f, {}))
@@ -1115,7 +1123,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         if (
             is_hidden_field and fk in ['languages', 'verdicts']
             or fk in [
-                'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region',
+                'institution', 'room', 'affiliation', 'city', 'school', 'class', 'job', 'region', 'location',
                 'rating_change', 'advanced', 'company', 'language', 'league', 'onsite',
                 'degree', 'university', 'list', 'group', 'group_ex', 'college', 'ghost', 'badge',
             ]
@@ -1321,11 +1329,15 @@ def standings(request, contest, other_contests=None, template='standings.html', 
                 else:
                     filt |= Q(**{'addition__badge__title': badge})
         elif is_ip_field(field):
+            field = '_' + field
+            types = fields_types.get(field)
             for value in values:
-                if value == 'any':
-                    filt |= Q(**{f'addition___{field}__isnull': False})
-                    break
-                filt |= Q(**{f'addition___{field}__contains': [value]})
+                key = f'addition__{field}'
+                if 'list' in types:
+                    key += '__contains'
+                if 'int' in types or 'float' in types:
+                    value = as_number(value)
+                filt |= Q(**{key: value})
         elif field == 'rating':
             for q in values:
                 if q not in field_to_select['options']:
@@ -1409,6 +1421,10 @@ def standings(request, contest, other_contests=None, template='standings.html', 
 
         default_orderby = not orderby
         orderby = [f for f in orderby if f.lstrip('-') in fields] or ['-n_accounts', '-avg_score']
+        field = groupby
+        if is_private_field(field):
+            field = f'_{field}'
+        types = fields_types.get(field, [])
 
         if groupby == 'rating':
             statistics = statistics.annotate(
@@ -1426,7 +1442,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
             else:
                 field = 'account__country'
             statistics = statistics.annotate(groupby=F(field))
-        elif is_ip_field(groupby):
+        elif is_ip_field(groupby) and 'list' in types:
             raw_sql = f'''json_array_elements((("addition" ->> '_{groupby}'))::json)'''
             raw_sql += ''' #>>'{}' '''  # trim double quotes
             field = groupby
@@ -1446,8 +1462,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         elif groupby == 'advanced':
             statistics = statistics.annotate(groupby=Cast(F('advanced'), models.TextField()))
         else:
-            field = f'addition__{groupby}'
-            types = contest.info.get('fields_types', {}).get(groupby, [])
+            field = f'addition__{field}'
             value = JSONF(field)
             if 'int' in types:
                 value = Cast(value, models.IntegerField())
@@ -1737,7 +1752,7 @@ def standings_action(request):
             contest_id = request.POST['cid']
             contest = Contest.objects.get(pk=contest_id)
             if has_update_statistics_permission(user, contest):
-                message = f'Updated statistic timing = {contest.statistic_timing}.'
+                message = f'Reset statistic timing for {contest}'
                 contest.statistic_timing = None
                 contest.save()
             else:
@@ -1746,11 +1761,10 @@ def standings_action(request):
             error = 'Unknown action'
     except Exception as e:
         error = str(e)
-
     if error is not None:
         ret = {'status': 'error', 'message': error}
     else:
-        ret = {'status': 'ok', 'message': message}
+        ret = {'status': 'success', 'message': message}
     return JsonResponse(ret)
 
 

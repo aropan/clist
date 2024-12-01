@@ -80,5 +80,8 @@ class Form(BaseModel):
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
 
+    def is_coming(self):
+        return self.start_time is not None and timezone.now() < self.start_time
+
     def is_closed(self):
         return self.end_time is not None and self.end_time < timezone.now()

@@ -38,6 +38,10 @@ function color_by_group_score(attr = 'data-result') {
   })
 }
 
+function get_row_place(r) {
+  return r.getAttribute('data-place')
+}
+
 function get_row_score(r) {
   return parseFloat(r.getAttribute('data-score'))
 }
@@ -51,6 +55,11 @@ function get_row_last(r) {
 }
 
 function cmp_row(a, b) {
+  var a_place = get_row_place(a)
+  var b_place = get_row_place(b)
+  if (a_place != b_place && (a_place == unspecified_place || b_place == unspecified_place)) {
+    return b_place == unspecified_place? -1 : 1;
+  }
   var a_score = get_row_score(a)
   var b_score = get_row_score(b)
   if (a_score != b_score) {
@@ -801,6 +810,9 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
     var $r = $(r)
     var place_text = percentage_filled && standings_filtered? $r.attr('data-place') + ' (' + place + ')' : place;
+    if (get_row_place(r) == unspecified_place) {
+      place_text = unspecified_place
+    }
     $r.data('current-place', place)
     $r.find('>.place-cell').attr('data-text', place_text)
 

@@ -37,8 +37,7 @@
         <span class="detail-alternative-result hidden">{{ stat|get_item:standings_options.alternative_result_field|default:'&#183;' }}</span>
         <span class="detail-alternative-result">
       {% endif %}
-
-      {% if contest.is_over or my_stat %}{% if stat.url or stat.solution or stat.external_solution %}
+      {% if contest.is_over or my_stat or contest.stage %}{% if stat.url or stat.solution or stat.external_solution %}
         {% if contest and contest.stage or not stat.solution and not stat.external_solution %}
           <a href="{% if stat.url %}{{ stat.url }}{% else %}{% url 'ranking:solution' statistic.pk key %}{% endif %}" target="_blank" rel="noopener noreferrer">
         {% else %}
@@ -71,7 +70,7 @@
 
       {% if stat.is_virtual %}<span class="is-virtual">{% icon_to 'is_virtual' %}</span>{% endif %}
 
-      {% if contest.is_over or my_stat %}{% if stat.url or stat.solution or stat.external_solution %}</a>{% endif %}{% endif %}
+      {% if contest.is_over or my_stat or contest.stage %}{% if stat.url or stat.solution or stat.external_solution %}</a>{% endif %}{% endif %}
     </div>
   {% endif %}
   {% if stat.extra_score is not None %}
@@ -106,6 +105,11 @@
   {% if stat.language and request.GET.languages %}
     <small{% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %} class="text-muted"{% endif %}><div class="language">{{ stat.language }}</div></small>
   {% endif %}
+
+  {% if stat.verdict and request.GET.verdicts %}
+    <small{% if request.GET.verdicts and stat.verdict not in request.GET|get_list:'verdicts' and 'any' not in request.GET|get_list:'verdicts' %} class="text-muted"{% endif %}><div class="verdict">{{ stat.verdict }}</div></small>
+  {% endif %}
+
   {% if request.GET.ips and fields_to_select.ips %}
     {% submission_info_field stat 'ip' %}
   {% endif %}

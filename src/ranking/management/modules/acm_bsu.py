@@ -86,13 +86,15 @@ class Statistic(BaseModule):
                     if k not in row and k in stats:
                         row[k] = stats[k]
 
-                if 'provisional_rank' not in row or is_running:
+                if is_running:
                     row['provisional_rank'] = as_number(row['place'])
-                row['delta_rank'] = row['provisional_rank'] - as_number(row['place'])
-                if 'provisional_score' not in row or is_running:
+                if 'provisional_rank' in row:
+                    row['delta_rank'] = row['provisional_rank'] - as_number(row['place'])
+                if is_running:
                     row['provisional_score'] = row['solving']
-                row['delta_score'] = row['solving'] - row['provisional_score']
-                has_provisional |= bool(row['delta_rank']) or bool(row['delta_score'])
+                if 'provisional_score' in row:
+                    row['delta_score'] = row['solving'] - row['provisional_score']
+                has_provisional |= bool(row.get('delta_rank')) or bool(row.get('delta_score'))
 
                 if 'best_score' not in row:
                     row['best_score'] = row['solving']

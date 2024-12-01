@@ -1,11 +1,22 @@
 var format = function (str, col) {
   col = typeof col === 'object' ? col : Array.prototype.slice.call(arguments, 1);
-
-  return str.replace(/\{\{|\}\}|\{(\w+)\}/g, function (m, n) {
+  ret = str.replace(/\{\{|\}\}|\{([\w.]+)\}/g, function (m, n) {
     if (m == "{{") { return "{"; }
     if (m == "}}") { return "}"; }
-    return col[n];
+
+    var keys = n.split(".");
+    var value = col;
+    for (var i = 0; i < keys.length; i++) {
+      if (value[keys[i]] === undefined) return m;
+      if (typeof value[keys[i]] === 'function') {
+        value = value[keys[i]](value);
+      } else {
+        value = value[keys[i]];
+      }
+    }
+    return value;
   });
+  return ret;
 };
 
 String.prototype.format = function (col) {
@@ -142,9 +153,12 @@ function inline_button() {
   $('.reset-timing-statistic').removeClass('reset-timing-statistic').click(function(e) {
     e.preventDefault()
     var btn = $(this)
-    $.post('/standings/action/', {action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')}).done(function(data) {
+    $.post('/standings/action/', {
+      action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')
+    }).done(function(data) {
       btn.attr('data-original-title', data.message).tooltip('show')
-    })
+      $.notify(data.message, data.status)
+    }).fail(log_ajax_error_callback)
   })
 
   $('.database-href').removeClass('database-href').click(function(e) {
@@ -802,4 +816,15 @@ function show_extra(element) {
   var text = $element.data('toggle-text') || 'hide'
   $element.data('toggle-text', $element.text())
   $element.text(text)
+}
+
+function show_field_to_select(event, element, field_id) {
+  $(element).closest('.input-group').remove()
+  $field = $('#' + field_id)
+  $field.prop('disabled', false)
+  $field.closest('.field-to-select').removeClass('hidden')
+  clear_tooltip()
+  event.preventDefault()
+  $field.select2('open')
+  return false
 }

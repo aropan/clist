@@ -116,6 +116,10 @@ class ParsedTable(object):
         self.last_row = None
 
     def init_iter(self, default_header_rowspan=1):
+        if not self.table:
+            self.n_rows = 0
+            return
+
         self.n_rows = len(self.table) - 1
         self.iter_table = iter(self.table)
         if self.skip_header_rows:
@@ -187,6 +191,9 @@ class ParsedTable(object):
         return ret
 
     def __next__(self):
+        if not self.table:
+            raise StopIteration
+
         while True:
             nxt = next(self.iter_table)
             row = ParsedTableRow(nxt)

@@ -1,3 +1,4 @@
+<div class="inline nowrap">
 {% with values=coder.settings.range_filter|get_item:value_key range_id=name|add:"-range" from_key=name|add:"_from" to_key=name|add:"_to" %}
 {% with from_val=request.GET|get_item:from_key to_val=request.GET|get_item:to_key %}
 {% with default_from=default_from|default:from default_to=default_to|default:to %}
@@ -119,3 +120,4 @@ $('button[data-id="{{ range_id }}"]').click(function() {
 {% endwith %}
 {% endwith %}
 {% endwith %}
+</div>

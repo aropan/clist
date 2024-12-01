@@ -221,8 +221,10 @@
                     if (!isset($match[$arg]) || empty($match[$arg])) $match[$arg] = 0;
                 $contest['duration'] = (($match['d'] * 24 + $match['hr']) * 60 + $match['min']) * 60;
             }
+            else if (preg_match('#^(\d+)\.(\d+):(\d+):(\d+)$#', $contest['duration'], $match))
+                $contest['duration'] = (((int)$match[1] * 24 + (int)$match[2]) * 60 + (int)$match[3]) * 60 + (int)$match[4];
             else if (preg_match('#^(\d+):(\d+):(\d+)$#', $contest['duration'], $match))
-                $contest['duration'] = (((int)$match[1] * 24 + (int)$match[2]) * 60 + (int)$match[3]) * 60;
+                $contest['duration'] = ((int)$match[1] * 60 + (int)$match[2]) * 60 + (int)$match[3];
             else if (preg_match('#^(\d+):(\d+)$#', $contest['duration'], $match))
                 $contest['duration'] = ((int)$match[1] * 60 + (int)$match[2]) * 60;
             else if (preg_match('#^(\d+)$#', $contest['duration'], $match))

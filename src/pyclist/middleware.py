@@ -9,7 +9,6 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.middleware import csrf
 from django.utils import timezone
-from pytz import timezone as pytz_timezone
 
 from clist.templatetags.extras import redirect_login
 from true_coders.models import Coder
@@ -140,20 +139,6 @@ class RedirectMiddleware:
     def process_exception(self, request, exception):
         if isinstance(exception, RedirectException):
             return exception.redirect
-
-
-class TimezoneMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if request.user.is_authenticated:
-            tzname = request.user.coder.timezone
-            if tzname:
-                timezone.activate(timezone.now().astimezone(pytz_timezone(tzname)).tzinfo)
-            else:
-                timezone.deactivate()
-        return self.get_response(request)
 
 
 def StatementTimeoutMiddleware(get_response):

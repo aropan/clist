@@ -13,7 +13,7 @@
 {% for statistic in statistics_chained %}
 
 {% with tag="td" %}
-{% with addition=statistic.addition_replacement|default:statistic.addition place=statistic.addition_replacement.place|default:statistic.place|default:'-' %}
+{% with addition=statistic.addition_replacement|default:statistic.addition place=statistic.addition_replacement.place|default:statistic.place|default:unspecified_place %}
 {% if statistic.my_stat and statistic.floating and not rev %}{% include "standings_paging_next.html" %}{% endif %}
 <tr
     class="stat-cell {{ statistic.id }}{% if statistic.my_stat %} my-stat info starred{% endif %}{% if statistic.floating %} floating hidden{% endif %}{% if statistic.id == request.GET.find_me|toint %} find-me-row info starred{% endif %}{% if versus_statistic_id == statistic.id %} success{% endif %}{% if statistic.virtual_start %} info starred virtual-start-statistic{% endif %}"

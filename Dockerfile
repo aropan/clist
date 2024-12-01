@@ -22,9 +22,11 @@ RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/
 RUN apt install -y lsof htop vim
 
 # Setup python requirements
-RUN pip install "pip==23.2"
+COPY --from=ghcr.io/astral-sh/uv:0.5.3 /uv /uvx /bin/
+ENV UV_SYSTEM_PYTHON=1
+ENV UV_LINK_MODE=copy
 COPY requirements.txt .
-RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install -r requirements.txt
 
 # Sentry CLI
 RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.20.7" sh

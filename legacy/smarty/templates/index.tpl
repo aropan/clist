@@ -201,6 +201,7 @@
         </div>
         </div>
 
+{*
 <!-- Yandex.Metrika informer -->{literal}
         <div class='informer'>
 <a href="http://metrika.yandex.ru/stat/?id=9707797&amp;from=informer"
@@ -209,8 +210,8 @@ style="width:80px; height:15px; border:0;" alt="Яндекс.Метрика" tit
         </div>
 {/literal}<!-- /Yandex.Metrika informer -->
 
-        {*<a href='http://validator.w3.org/check?uri=referer'><span class='hidden'>HTML5</span></a><br>*}
-        {*<a href='http://jigsaw.w3.org/css-validator/check/referer?profile=css3'><span class='hidden'>CSS</span></a><br>*}
+        <a href='http://validator.w3.org/check?uri=referer'><span class='hidden'>HTML5</span></a><br>
+        <a href='http://jigsaw.w3.org/css-validator/check/referer?profile=css3'><span class='hidden'>CSS</span></a><br>
 
         <div id="author">
             <a href="https://plus.google.com/100014771119535019566?prsrc=3" rel="author" style="text-decoration:none;"><img src="https://ssl.gstatic.com/images/icons/gplus-32.png" alt="" style="border:0;width:32px;height:32px;"/></a>            <a rel="author" href="https://plus.google.com/100014771119535019566"></a>
@@ -220,9 +221,10 @@ style="width:80px; height:15px; border:0;" alt="Яндекс.Метрика" tit
             </a>
 -->
         </div>
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/block.share.tpl"}
+*}
 
+{* {include file="{$smarty.server.DOCUMENT_ROOT}/js/block.share.tpl"} *}
 {include file="{$smarty.server.DOCUMENT_ROOT}/js/afterload.tpl"}
-{include file="{$smarty.server.DOCUMENT_ROOT}/js/reformal.tpl"}
+{* {include file="{$smarty.server.DOCUMENT_ROOT}/js/reformal.tpl"} *}
     </body>
 </html>

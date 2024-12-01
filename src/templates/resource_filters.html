@@ -1,4 +1,4 @@
-<form class="form-inline" method="get" action="">
+<form class="form-inline inline" method="get" action="">
     <div id="resource-filters" class="form-group">
         {% include 'country_filter.html' %}
 
@@ -6,7 +6,7 @@
             <span class="input-group-addon">{% icon_to 'period' %}</span>
             <select name="period" onchange="this.form.submit()">
                 {% for p in periods %}
-                    <option value="{{ p }}"{% if p == params.period %} selected{% endif %}>{{ p }}</option>
+                <option value="{{ p }}"{% if p == params.period %} selected{% endif %}>{{ p }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -21,3 +21,11 @@
         {% include 'range_filter_apply.html' %}
     </div>
 </form>
+
+{% if perms.clist.change_resource %}
+<form class="form-inline inline" method="post" action="">
+{% csrf_token %}
+<input type="hidden" name="action" value="set_verification_fields">
+{% include "field_to_select.html" with field="verification_fields" data=verification_fields_select|simple_select_data %}
+</form>
+{% endif %}

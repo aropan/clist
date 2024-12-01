@@ -44,6 +44,7 @@
 
   score_precision = {{ contest.info.standings.score_precision|default:"undefined" }}
   unfreezing = false
+  unspecified_place = '{{ unspecified_place }}'
 </script>
 
 {% endblock %}
@@ -285,7 +286,7 @@
               <th class="score-cell sticky-column" data-sticky-column="score-cell"{{ default_rowspan }}>Score</th>
               {% if mod_penalty %}
               <th class="gap-cell"{{ default_rowspan }}>
-                <span title="penalty - penalty_best_team + (solved_best_team - solved) * current_time<br/>suggested by tourist" data-html="true" data-placement="bottom" data-toggle="tooltip">Gap</span>
+                <span title="penalty - penalty_best_team + (solved_best_team - solved) * (total_time - current_time)<br/>suggested by tourist" data-html="true" data-placement="bottom" data-toggle="tooltip">Gap</span>
               </th>
               {% endif %}
               {% for key, field in fields.items %}

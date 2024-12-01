@@ -59,9 +59,8 @@ def get_item(data, key, default=None):
     if isinstance(data, (dict, defaultdict, OrderedDict)):
         if key in data:
             return data.get(key)
-    elif isinstance(data, (list, tuple)):
-        key_as_number = as_number(key, force=True)
-        if key_as_number is not None and -len(data) <= key_as_number < len(data):
+    elif isinstance(data, (list, tuple)) and (key_as_number := as_number(key, force=True)) is not None:
+        if -len(data) <= key_as_number < len(data):
             return data[key_as_number]
     elif hasattr(data, key):
         return getattr(data, key)
@@ -82,6 +81,13 @@ def get_item(data, key, default=None):
     return default
 
 
+@register.filter
+def get_item_from_list(data, key, default=None):
+    if not data:
+        return []
+    return [get_item(item, key, default) for item in data]
+
+
 def get_copy_item(*args, copy=False, **kwargs):
     ret = get_item(*args, **kwargs)
     if copy and ret is not None:
@@ -98,6 +104,11 @@ def set_item(data, key, value):
 @register.filter
 def get_list(query_dict, key):
     return query_dict.getlist(key)
+
+
+@register.filter
+def get_nonempty_list(query_dict, key):
+    return [v for v in query_dict.getlist(key) if v]
 
 
 @register.filter
@@ -343,7 +354,7 @@ def calc_mod_penalty(info, contest, solving, penalty):
     if not isinstance(penalty, (int, float)):
         return
     time = min((now() - contest.start_time).total_seconds(), contest.duration_in_secs) // 60
-    return int(round(penalty + (info['solving'] - solving) * time - info['penalty']))
+    return int(round(penalty - info['penalty'] + (info['solving'] - solving) * time))
 
 
 @register.filter
@@ -551,15 +562,19 @@ def query_fields(request, *args, before='&'):
 
 @register.simple_tag
 def get_countries():
-    ret = []
+    actual = []
+    histrocal = []
     for c in countries:
         if not re.search(r'[a-zA-Z]', c.name) or c.code in settings.DISABLED_COUNTRIES:
             continue
         override_names = settings.COUNTRIES_OVERRIDE.get(c.code, {}).get('names')
         if override_names and override_names[0] != c.name:
             continue
-        ret.append(c)
-    return ret
+        if c.code in settings.HISTORICAL_COUNTRIES:
+            histrocal.append(c)
+        else:
+            actual.append(c)
+    return actual + histrocal
 
 
 def is_country_code(val):
@@ -586,6 +601,11 @@ def format_dict(format_, dict_values):
         return format_.format(**dict_values)
     except KeyError:
         return ''
+
+
+@register.simple_tag
+def format(format_, *args, **kwargs):
+    return mark_safe(format_.format(*args, **kwargs))
 
 
 @register.filter
@@ -965,6 +985,8 @@ def normalized_result(value):
         return '+'
     if str(value).startswith('-'):
         return '-'
+    if str(value).startswith('?'):
+        return '?'
     return as_number(value)
 
 
@@ -1500,7 +1522,7 @@ def format_to_significant_digits(number, digits):
 @register.filter
 def is_ip_field(field):
     field = field.strip('_')
-    return field == 'ips' or field.startswith('whois_')
+    return field in ['ips', 'n_ips'] or field.startswith('whois_')
 
 
 @register.filter
@@ -1779,6 +1801,11 @@ def create_dict(**kwargs):
 
 
 @register.simple_tag
+def create_nonempty_dict(**kwargs):
+    return {k: v for k, v in kwargs.items() if v is not None and v != ''}
+
+
+@register.simple_tag
 def create_list(*args):
     return list(args)
 
@@ -1796,3 +1823,63 @@ def absolute_url(context, viewname, *args, **kwargs):
 @register.filter
 def get_id(value):
     return id(value)
+
+
+@register.filter
+def get_more_fields(more_fields):
+    for field in more_fields:
+        field = field.split('=')[0]
+        field = field.split('__')[0]
+        yield field
+
+
+@register.filter
+def capitalize_field(value):
+    return title_field(value).capitalize()
+
+
+@register.simple_tag(takes_context=True)
+def field_to_select_values(context):
+    data = context['data']
+    if data.get('options') is not None:
+        field_name = data.get('field_name', context['field'])
+        values = context['request'].get_filtered_list(field_name, options=data['options'])
+        if values:
+            return values
+    if data.get('data'):
+        if (values := [d['id'] for d in data['data'] if d.get('selected')]):
+            return values
+    return data.get('values')
+
+
+@register.simple_tag(takes_context=True)
+def field_to_select_collapse(context):
+    if 'collapse' in context['data']:
+        return context['data']['collapse']
+    if context['values']:
+        return False
+    if context['data'].get('nomultiply'):
+        return False
+    if (
+        not context.get('noinputgroup') and
+        not context['data'].get('nogroupby') and
+        context['groupby'] == context['field']
+    ):
+        return False
+    return True
+
+
+@register.simple_tag(takes_context=True)
+def field_to_select_id(context, value):
+    if 'value_id' in context['data']:
+        return get_item(value, context['data']['value_id'])
+    return value
+
+
+@register.simple_tag(takes_context=True)
+def field_to_select_option(context, value):
+    if isinstance(options := context['data'].get('options'), dict):
+        value = options.get(value, value)
+    if 'value_option' in context['data']:
+        return get_item(value, context['data']['value_option'])
+    return value

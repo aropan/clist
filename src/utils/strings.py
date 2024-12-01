@@ -54,3 +54,11 @@ def markdown_to_text(markdown_text):
 
 def markdown_to_html(markdown_text):
     return markdown(markdown_text)
+
+
+def cut_prefix(text, prefix, strip=True):
+    if text.startswith(prefix):
+        text = text[len(prefix):]
+        if strip:
+            text = text.strip()
+    return text

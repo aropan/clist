@@ -22,6 +22,7 @@ from sql_util.utils import Exists, SubqueryCount, SubquerySum
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import get_item, has_season
+from clist.utils import update_account_by_coders
 from pyclist.indexes import ExpressionIndex, GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from true_coders.models import Coder, Party
@@ -153,6 +154,9 @@ class Account(BaseModel):
         name_instead_key = name and (name_instead_key or has_season(self.key, name))
         return name if name_instead_key else self.key
 
+    def account_default_url(self):
+        return reverse('coder:account', args=[self.key, self.resource.host])
+
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
         prev_rating = self.rating
@@ -281,6 +285,7 @@ def download_avatar_url(account):
     if not content_type:
         content_type = magic.from_buffer(response.content, mime=True)
     ext = content_type.split('/')[-1]
+    ext = ext.split('+')[0]
     folder = re.sub('[./]', '_', account.resource.host)
     hashname = hashlib.md5(download_avatar_url.encode()).hexdigest()
     hashname = hashname[:2] + '/' + hashname[2:4] + '/' + hashname[4:]
@@ -307,42 +312,6 @@ def count_resource_accounts(signal, instance, **kwargs):
         instance.resource.save(update_fields=['n_accounts'])
 
 
-def update_account_by_coders(account, default_url=None):
-    url = False
-    custom_countries = None
-    for idx, coder in enumerate(account.coders.iterator()):
-        if url:
-            url = True
-        else:
-            url = reverse('coder:profile', args=[coder.username]) + f'?search=resource:{account.resource.host}'
-
-        if custom_countries is None:
-            custom_countries = coder.settings.get('custom_countries', {})
-        else:
-            d = {}
-            for k, v in coder.settings.get('custom_countries', {}).items():
-                if custom_countries.get(k) == v:
-                    d[k] = v
-            custom_countries = d
-
-            if idx >= 1 and not custom_countries:
-                break
-
-    if isinstance(url, bool):
-        if default_url is True:
-            args = [account.key, account.resource.host]
-            url = reverse('coder:account', args=args)
-        else:
-            url = default_url
-
-    if url:
-        account.url = url
-
-    account.info['custom_countries_'] = custom_countries or {}
-
-    account.save()
-
-
 @receiver(pre_save, sender=Account)
 @receiver(m2m_changed, sender=Account.coders.through)
 def update_account_url(signal, instance, **kwargs):
@@ -350,18 +319,15 @@ def update_account_url(signal, instance, **kwargs):
         return
     account = instance
 
-    def default_url():
-        args = [account.key, account.resource.host]
-        return reverse('coder:account', args=args)
-
     if signal is pre_save:
         if account.url:
             return
-        account.url = default_url()
+        account.url = account.account_default_url()
     elif signal is m2m_changed:
-        if not kwargs.get('action').startswith('post_'):
+        action = kwargs.get('action')
+        if not action or not action.startswith('post_'):
             return
-        update_account_by_coders(account, default_url=default_url())
+        update_account_by_coders(account)
 
 
 @receiver(m2m_changed, sender=Account.writer_set.through)
@@ -661,7 +627,7 @@ class AccountMatching(BaseModel):
 
 
 class ParseStatistics(BaseModel):
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    contest = models.OneToOneField(Contest, on_delete=models.CASCADE, related_name='live_statistics')
     delay = models.DurationField(null=True, blank=True)
     parse_time = models.DateTimeField(null=True, blank=True)
     enable = models.BooleanField(default=True, blank=True)

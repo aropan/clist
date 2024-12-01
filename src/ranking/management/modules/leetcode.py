@@ -27,20 +27,38 @@ from utils.logger import suppress_db_logging_context
 from utils.mathutils import round_sig
 from utils.timetools import datetime_from_timestamp
 
-# from ranking.management.modules import conf
+
+def get_headers():
+    if not hasattr('get_headers', '_headers'):
+        headers_filepath = 'sharedfiles/resource/leetcode/headers.json'
+        if os.path.exists(headers_filepath):
+            with open(headers_filepath) as file:
+                get_headers._headers = json.load(file)
+        else:
+            get_headers._headers = {}
+    return get_headers._headers
+
+
+def get_curl_args():
+    if not hasattr('get_curl_args', '_curl_args'):
+        curl_args_filepath = 'sharedfiles/resource/leetcode/curl.args'
+        if os.path.exists(curl_args_filepath):
+            with open(curl_args_filepath) as file:
+                get_curl_args._curl_args = file.read().strip()
+        else:
+            get_curl_args._curl_args = None
+    return get_curl_args._curl_args
 
 
 class Statistic(BaseModule):
-    API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global'
+    API_REGION_SUFFIX = '_v2'
+    API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global{region_suffix}'  # noqa E501
     QUESTIONS_URL_FORMAT_ = 'https://leetcode.com/contest/api/info/{key}/'
     RANKING_URL_FORMAT_ = '{url}/ranking'
     API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}/api/submissions/{}/'
     STATE_FILE = os.path.join(os.path.dirname(__file__), '.leetcode.yaml')
     DOMAINS = {'': '.com', 'us': '.com', 'cn': '.cn', 'ly': '.com'}
     API_SUBMISSIONS_URL_FORMAT_ = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     @staticmethod
     def _external_standings_urls(contest):
@@ -56,13 +74,12 @@ class Statistic(BaseModule):
             pass
         return ret
 
-    @classmethod
-    def _get(self, *args, req=None, n_addition_attempts=20, **kwargs):
+    @staticmethod
+    def _get(*args, req=None, n_addition_attempts=20, **kwargs):
         req = req or REQ
 
         headers = kwargs.setdefault('headers', {})
-        headers['User-Agent'] = 'Mediapartners-Google'
-        headers['Accept-Encoding'] = 'gzip, deflate, br'
+        headers.update(get_headers())
 
         url = args[0]
         if '/api/' in url:
@@ -70,21 +87,10 @@ class Statistic(BaseModule):
             headers['Content-Type'] = 'application/json'
             headers['X-Requested-With'] = 'XMLHttpRequest'
 
-        for key, value in (
-            ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'),
-            ('Accept-Language', 'en-US,en;q=0.5'),
-            ('DNT', '1'),
-        ):
-            headers.setdefault(key, value)
-
         kwargs['with_curl'] = req.proxer is None and 'post' not in kwargs
+        kwargs['curl_args'] = get_curl_args()
         kwargs['curl_cookie_file'] = 'sharedfiles/resource/leetcode/cookies.txt'
         kwargs['with_referer'] = False
-
-        # if not getattr(self, '_authorized', None) and getattr(conf, 'LEETCODE_COOKIES', False):
-        #     for kw in conf.LEETCODE_COOKIES:
-        #         req.add_cookie(**kw)
-        #     setattr(self, '_authorized', True)
 
         additional_attempts = {code: {'count': n_addition_attempts} for code in [429, 403]}
         return req.get(*args, **kwargs, additional_attempts=additional_attempts, additional_delay=5)
@@ -111,23 +117,27 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None, more_statistics=None, **kwargs):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
-        api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(**self.__dict__)
+        region_suffix = Statistic.API_REGION_SUFFIX
+        api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(region_suffix=region_suffix, **self.__dict__)
 
         stop_fetch_standings = False
         fetch_page_rate_limiter = RateLimiter(max_calls=5, period=1)
 
         def fetch_standings_page(page):
+            nonlocal stop_fetch_standings
             if stop_fetch_standings:
                 return
             with fetch_page_rate_limiter:
                 url = api_ranking_url_format.format(page + 1)
                 content = Statistic._get(url, ignore_codes={404}, n_attempts=3)
                 data = json.loads(content)
+                if not data:
+                    stop_fetch_standings = True
                 data['_page'] = page + 1
                 return data
 
         data = fetch_standings_page(0)
-        if not data:
+        if stop_fetch_standings:
             return {'result': {}, 'url': standings_url}
 
         questions_url = self.QUESTIONS_URL_FORMAT_.format(**self.__dict__)
@@ -323,9 +333,9 @@ class Statistic(BaseModule):
                         if n_added == 0 and not users:
                             stop_fetch_standings = True
 
-                fetch_ranking(domain='.com', region='global_v2')
+                fetch_ranking(domain='.com', region=f'global{region_suffix}')
                 if users is None or users:
-                    fetch_ranking(domain='.cn', region='local_v2')
+                    fetch_ranking(domain='.cn', region=f'local{region_suffix}')
 
                 if len(parsed_domains) > 1:
                     def get_key(row):

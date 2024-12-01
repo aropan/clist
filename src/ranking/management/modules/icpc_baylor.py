@@ -20,7 +20,7 @@ from clist.templatetags.extras import get_item
 from ranking.management.modules.codeforces import _get as codeforces_get
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
-from utils.strings import list_string_iou, string_iou
+from utils.strings import cut_prefix, list_string_iou, string_iou
 from utils.timetools import parse_duration
 
 logger = logging.getLogger(__name__)
@@ -444,6 +444,7 @@ class Statistic(BaseModule):
                 last_place = None
                 is_ineligible = False
                 is_honorable_mention = False
+                participant_type = None
                 for r in table:
                     row = {}
                     problems = row.setdefault('problems', {})
@@ -488,6 +489,12 @@ class Statistic(BaseModule):
                                             else:
                                                 logo = urljoin(standings_url, src)
                                                 row.setdefault('info', {}).setdefault('logo', logo)
+                                    spans = el.column.node.xpath('.//span')
+                                    for span in spans:
+                                        classes = span.attrib.get('class', '')
+                                        if 'badge' in classes.split() and 'warning' in classes:
+                                            participant_type = span.text.strip()
+                                            v = cut_prefix(v, participant_type)
                                 for el in vs:
                                     region = el.column.node.xpath('.//*[contains(@class, "badge")]')
                                     if region:
@@ -496,10 +503,9 @@ class Statistic(BaseModule):
                                         if is_regional:
                                             if region.lower() == 'ineligible':
                                                 is_ineligible = True
-                                        else:
+                                        elif region != participant_type:
                                             row['region'] = region
-                                            if v.lower().startswith(region.lower()):
-                                                v = v[len(region):].strip()
+                                        v = cut_prefix(v, region)
 
                             tr = vs[0] if isinstance(vs, list) else vs
                             if tr.row.node.attrib.get('id') in ['scoresummary']:
@@ -561,8 +567,12 @@ class Statistic(BaseModule):
                         last_place = row['place']
                     elif last_place:
                         row['place'] = last_place
-                    if is_ineligible:
+                    if is_ineligible or participant_type.lower() in {'companies'}:
                         row.pop('place')
+                        row.pop('medal')
+                        for problem in problems.values():
+                            problem.pop('first_ac', None)
+                        row['_no_update_n_contests'] = True
                     if 'member' not in row or row['member'].startswith(' '):
                         continue
                     result[row['member']] = row
@@ -723,6 +733,8 @@ class Statistic(BaseModule):
 
             first_ac_of_all = None
             for team in result.values():
+                if team.get('_no_update_n_contests'):
+                    continue
                 for p_name, problem in team.get('problems', {}).items():
                     p_info = problems_info[p_name]
                     if not problem['result'].startswith('+'):
@@ -736,6 +748,8 @@ class Statistic(BaseModule):
                         p_info['has_first_ac'] = True
 
             for team in result.values():
+                if team.get('_no_update_n_contests'):
+                    continue
                 for p_name, problem in team.get('problems', {}).items():
                     p_info = problems_info[p_name]
                     if problem['result'].startswith('+'):
@@ -754,7 +768,7 @@ class Statistic(BaseModule):
                 for p in row.get('problems', {}).values()
             )
 
-            options = {'per_page': None}
+            options = {'per_page': None, 'external_urls': []}
             if not without_medals and not is_regional:
                 medals = self._get_medals(year)
                 if medals:
@@ -868,34 +882,35 @@ class Statistic(BaseModule):
             if event_feed:
                 self._parse_event_feed(event_feed, result, problems_info)
 
-            info_external_urls = get_item(self.info, 'standings.external_urls', [])
-            info_external_urls_set = set(i['url'] for i in info_external_urls)
-
-            external_urls = [
-                f'https://icpc.kimden.online/wf/{year}/',
-                f'https://zibada.guru/finals/{year}/',
-            ]
-            for external_url in external_urls:
-                if external_url in info_external_urls_set:
-                    continue
-                try:
-                    REQ.head(external_url)
-                except FailOnGetResponse:
-                    continue
-                info_external_urls.append({
-                    'url': external_url,
-                    'name': urlparse(external_url).hostname,
-                })
-                options['external_urls'] = info_external_urls
-
             standings = {
                 'result': result,
                 'url': icpc_standings_url if is_icpc_api_standings_url else standings_url,
                 'problems': list(problems_info.values()),
                 'options': options,
                 'hidden_fields': list(hidden_fields),
-                'series': 'icpc',
             }
+
+            if not is_regional:
+                standings['series'] = 'icpc'
+
+                info_external_urls = get_item(self.info, 'standings.external_urls', [])
+                info_external_urls_set = set(i['url'] for i in info_external_urls)
+                external_urls = [
+                    f'https://icpc.kimden.online/wf/{year}/',
+                    f'https://zibada.guru/finals/{year}/',
+                ]
+                for external_url in external_urls:
+                    if external_url in info_external_urls_set:
+                        continue
+                    try:
+                        REQ.head(external_url)
+                    except FailOnGetResponse:
+                        continue
+                    info_external_urls.append({
+                        'url': external_url,
+                        'name': urlparse(external_url).hostname,
+                    })
+                options['external_urls'] = info_external_urls
 
             return standings
 

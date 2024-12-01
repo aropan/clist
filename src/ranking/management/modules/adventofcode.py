@@ -223,12 +223,11 @@ class Statistic(BaseModule):
             if is_main:
                 for k, v in division_result.items():
                     result[k].update(v)
-            else:
-                if is_virtual and not has_virtual:
-                    continue
-                self._set_medals(division_result, n_medals=True)
-                for k, v in division_result.items():
-                    result[k].setdefault('_division_addition', {}).update({division: v})
+            elif is_virtual and not has_virtual:
+                continue
+            self._set_medals(division_result, n_medals=True)
+            for k, v in division_result.items():
+                result[k].setdefault('_division_addition', {}).update({division: v})
             divisions_order.append(division)
 
         problems = list(sorted(problems_infos.values(), key=lambda p: p['_order']))

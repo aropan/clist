@@ -143,7 +143,8 @@ class Command(BaseCommand):
                 ))
                 order = ['-has_coders', 'updated']
                 if args.top:
-                    order = [F('rating').desc(nulls_last=True)] + order
+                    order_field = 'rating' if resource.has_rating_history else 'n_contests'
+                    order = [F(order_field).desc(nulls_last=True)] + order
                 elif args.contest_id:
                     order = ['statistics__place_as_int'] + order
                 elif args.limit:

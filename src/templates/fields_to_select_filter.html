@@ -1,4 +1,6 @@
 {% for field in fields %}
-{% create_dict options=request.GET|get_list:field noajax=False ajax_query=query ajax_params=params noempty=True as data %}
+{% with field_name=field|add:filter_field_suffix %}
+{% create_dict field_name=field_name values=request.GET|get_nonempty_list:field_name noajax=False ajax_query=query ajax_params=params noempty=True collapse=False as data %}
 {% include "field_to_select.html" with field=field data=data|simple_select_data %}
+{% endwith %}
 {% endfor %}

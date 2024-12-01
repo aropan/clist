@@ -13,6 +13,7 @@ logging.getLogger('geopy').setLevel(logging.INFO)
 
 
 class Locator:
+    location_fields = ['country', 'city', 'region', 'district', 'location']
 
     def __init__(
         self,
@@ -69,8 +70,28 @@ class Locator:
         address = self.get_address(location=location, lang=lang)
         if not address or ',' not in address:
             return
-        city, *_ = map(str.strip, address.split(','))
-        return city
+        *parts, _ = map(str.strip, address.split(','))
+        for city in parts:
+            name = city.split(' ')[-1].lower()
+            if not city or name in ['район', 'district', 'область', 'обл', 'region']:
+                continue
+            return city
+
+    def get_additional_info(self, location, lang='en'):
+        address = self.get_address(location=location, lang=lang)
+        if not address or ',' not in address:
+            return
+        *parts, _ = map(str.strip, address.split(','))
+        ret = {}
+        for part in parts:
+            name = part.split(' ')[-1].lower()
+            if not part:
+                continue
+            if name in ['район', 'district']:
+                ret['district'] = part
+            elif name in ['область', 'обл', 'region']:
+                ret['region'] = part
+        return ret
 
     def get_location_dict(self, location, lang='en'):
         ret = {}
@@ -78,6 +99,8 @@ class Locator:
         address = self.get_address(location, lang=lang)
         if not address:
             return ret
+
+        ret['location'] = location
 
         country = self.get_country(location, lang=lang)
         if country:
@@ -87,6 +110,7 @@ class Locator:
         if city:
             ret['city'] = city
 
+        ret.update(self.get_additional_info(location, lang=lang))
         return ret
 
     def read(self):

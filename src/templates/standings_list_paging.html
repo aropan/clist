@@ -40,7 +40,7 @@
     <span class="toggle" data-group=".group-resource-{{ resource.pk }}"><i class="fa fa-caret-down"></i></span>
   {% endif %}
 
-  <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}" class="{% if status %} text-{{ status }}{% endif %}">
+  <a href="{{ contest.actual_url }}" class="{% if status %} text-{{ status }}{% endif %}">
   {% trim_to contest.title 60 %}
   </a>
 
@@ -117,7 +117,7 @@
 <td class="date text-muted small no-stretch">
   <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</span>
 </td>
-{% for more_field in params.more_fields %}
+{% for more_field in params.more_fields|get_more_fields %}
 <td>
   {% with value=contest|get_item:more_field info_value=contest.info|get_item:more_field %}
   {% include "field_value.html" with value=value|ifnone:info_value field=more_field %}

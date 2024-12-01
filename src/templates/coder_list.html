@@ -80,7 +80,7 @@ host_2:account_2,host_3:account_3
                 {% if v.coder %}
                 {% include "coder.html" with coder=v.coder with_fixed_width=True %}
                 {% elif v.account %}
-                {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True with_fixed_width=True %}
+                {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True with_fixed_width=True without_inline_button=True %}
                 {% else %}
                 &mdash;
                 {% endif %}

@@ -1,14 +1,24 @@
 {% if data %}
-{% if 'field' in data %}
-{% define data.field as field %}
-{% endif %}
+{% if 'field' in data %}{% define data.field as field %}{% endif %}
+{% field_to_select_values as values %}
+{% field_to_select_collapse as collapse %}
+
 {% if data.state %}
   {% with value=request.GET|get_item:data.state.name|default:data.state.values.0 total=data.state.values|length %}
   <input type="hidden" name="{{ data.state.name }}" value="{{ value }}">
   {% endwith %}
 {% endif %}
+
+{% if collapse %}
+<div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-select">
+  <button class="btn{% if not nosmall %} btn-sm{% endif %} btn-default" onclick="show_field_to_select(event, this, '{{ field }}')">
+    {% icon_to data.icon|default:field data.title|default:field|capitalize_field|add:" selection" %}
+  </button>
+</div>
+{% endif %}
+
 {% if not noinputgroup %}
-<div class="input-group{% if not nosm %} input-group-sm{% endif %} field-to-select hidden">
+<div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-select hidden">
   {% if data.state %}
   <div class="input-group-btn">
     {% with value=request.GET|get_item:data.state.name|default:data.state.values.0 total=data.state.values|length %}
@@ -22,42 +32,37 @@
     {% endwith %}
   </div>
   {% elif data.nogroupby %}
-    <span class="input-group-addon">
-      {% if data.icon is False %}
-        {{ data.title|default:field|title_field }}
-      {% else %}
-        {% icon_to data.icon|default:field data.title|default:field|title_field %}
-      {% endif %}
-    </span>
+  <span class="input-group-addon">
+    {% if data.icon is False %}
+      {{ data.title|default:field|capitalize_field }}
+    {% else %}
+      {% icon_to data.icon|default:field data.title|default:field|capitalize_field %}
+    {% endif %}
+  </span>
   {% else %}
   <div class="input-group-btn">
     <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">
       {% if data.icon is False %}
-        {{ data.title|default:field|title_field }}
+        {{ data.title|default:field|capitalize_field }}
       {% else %}
-        {% icon_to data.icon|default:field data.title|default:field|title_field %}
+        {% icon_to data.icon|default:field data.title|default:field|capitalize_field %}
       {% endif %}
     </button>
   </div>
   {% endif %}
 {% endif %}
-  <select name="{{ field }}" id="{{ field }}"{% if not data.nosubmit %} onchange="this.form.submit()"{% endif %}{% if not data.nomultiply %} multiple{% endif %}{% if disabled or data.disabled %} disabled{% endif %}>
+<select{% if not noname %} name="{{ data.field_name|default:field }}"{% endif %} id="{{ field }}"{% if data.with_update_url %} onchange="update_urls_params({'{{ field }}': $(this).val()})"{% elif not data.nosubmit %} onchange="this.form.submit()"{% endif %}{% if not data.nomultiply and values %} multiple{% endif %}{% if disabled or data.disabled or collapse %} disabled{% endif %}>
   {% if data.options is not None %}
-    {% with values=request.GET|get_list:field %}
-    {% with values=data|get_item:'values'|default:values %}
     {% if not data.noempty %}<option></option>{% endif %}
     {% for v in data.options %}
     {% if not data.noempty or v %}
-    <option value="{{ v }}"{% if v in values %} selected{% endif %}>
-    {% if data.options|get_type == 'dict' %}{{ data.options|get_item:v|default:v }}{% else %}{{ v }}{% endif %}
-    </option>
+    {% field_to_select_id v as id %}
+    <option value="{% field_to_select_id v %}"{% if id in values %} selected{% endif %}>{% field_to_select_option v %}</option>
     {% endif %}
     {% endfor %}
-    {% endwith %}
-    {% endwith %}
-  {% elif data.values %}
-    {% for v in data.values %}
-      <option value="{{ v }}" selected>{{ v }}</option>
+  {% elif values and not data.data %}
+    {% for v in values %}
+    <option value="{% field_to_select_id v %}" selected>{% field_to_select_option v %}</option>
     {% endfor %}
   {% else %}
     <option></option>
@@ -78,12 +83,23 @@
 {% if not noinputgroup %}
 </div>
 {% endif %}
+
 <script>
-  $('#{{ field }}').select2({
+  var $field = $('#{{ field }}')
+
+  {% if data.pinned_id %}
+  var element = $field.find('option[value="{{ data.pinned_id }}"]')
+  if (element.length) {
+    element.detach()
+    $field.prepend(element)
+  }
+  {% endif %}
+
+  $field.select2({
     {% if data.data %}
     data: {{ data.data|safe }},
     {% endif %}
-    minimumResultsForSearch: 10,
+    minimumResultsForSearch: 7,
     dropdownAutoWidth : true,
     theme: 'bootstrap',
     placeholder: '',
@@ -94,35 +110,63 @@
     {% if data.allow_new %}
     tags: true,
     {% endif %}
+    {% if data.template_format %}
+    templateResult: function (data) {
+      if (!data.id) {
+        return data.text;
+      }
+      return $("{{ data.template_format }}".format({'data': data}))
+    },
+    {% endif %}
     {% if not data.noajax %}
     ajax: {
-        url: '/settings/search/',
-        dataType: 'json',
-        delay: 314,
-        data: function (params) {
-            return {
-                query: '{{ data.ajax_query|default:'field-to-select' }}',
-                {% if not data.ajax_query %}
-                cid: {{ contest.pk|default:-1 }},
-                division: '{{ request.GET.division }}',
-                {% endif %}
-                {% for field in data.ajax_params %}
-                {{ field }}: '{{ request.GET|get_item:field }}',
-                {% endfor %}
-                field: $(this).attr('name'),
-                text: params.term,
-                page: params.page || 1
-            };
-        },
-        processResults: function (data, params) {
-            return {
-                results: data.items,
-                pagination: {
-                    more: data.more
-                }
-            };
-        },
-        cache: true,
+      url: '/settings/search/',
+      dataType: 'json',
+      delay: 500,
+      data: function (params) {
+        return {
+          query: '{{ data.ajax_query|default:'field-to-select' }}',
+          {% if not data.ajax_query %}
+          cid: {{ contest.pk|default:-1 }},
+          division: '{{ request.GET.division }}',
+          {% endif %}
+
+          {% if data.ajax_params|get_type == "dict" %}
+          ...{{ data.ajax_params|to_json }},
+          {% elif data.ajax_params|get_type == "list" %}
+          {% for field in data.ajax_params %}
+          {{ field }}: '{{ request.GET|get_item:field }}',
+          {% endfor %}
+          {% endif %}
+
+          field: $(this).attr('id'),
+          text: params.term,
+          page: params.page || 1
+        };
+      },
+      processResults: function (data, params) {
+        {% if data.value_id or data.value_text %}
+        var items = data.items.map(function (item) {
+          item['id'] = item['{{ data.value_id|default:"id" }}']
+          item['text'] = item['{{ data.value_text|default:"text" }}']
+          return item
+        })
+        {% else %}
+        var items = data.items
+        {% endif %}
+
+        {% if data.with_all_option %}if ((params.page || 1) == 1) {
+          items.unshift({id: 'all', text: 'Select All'})
+        }{% endif %}
+
+        return {
+          results: items,
+          pagination: {
+            more: data.more
+          }
+        };
+      },
+      cache: true,
     },
     {% endif %}
   }).on('select2:unselecting', function() {
@@ -134,9 +178,12 @@
     }
   }).on('select2:open', function(e) {
     $('.select2-dropdown').addClass('select2-dropdown-{{ field }}');
+    document.querySelector('.select2-container--open .select2-search__field').focus()
   }).on('select2:closing', function(e) {
     $('.select2-dropdown').removeClass('select2-dropdown-{{ field }}');
   })
-  $('#{{ field }}').closest('.field-to-select').removeClass('hidden')
+  {% if not collapse %}
+  $field.closest('.field-to-select').removeClass('hidden')
+  {% endif %}
 </script>
 {% endif %}
