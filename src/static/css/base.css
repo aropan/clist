@@ -345,7 +345,6 @@ html {
 }
 
 .rating-prediction-label {
-  position: absolute;
   margin-left: -15px;
 }
 
@@ -439,14 +438,12 @@ a.database-link {
  */
 
 :hover > .inline-button, .inline-button:hover {
-  display: inline-block;
+  visibility: visible;
 }
 
 .inline-button {
-  display: none;
-  position: absolute;
+  visibility: hidden;
   z-index: 1;
-  margin-left: 5px;
 }
 
 /*
@@ -990,4 +987,47 @@ a[data-toggle="tooltip"][disabled],
 
 .select2-search__field:not([placeholder=""]) {
   width: 100% !important;
+}
+
+
+/*
+ * Table inner scroll
+ */
+
+#table-inner-scroll table thead tr,
+#table-inner-scroll:not(.firefox) table tr.starred,
+#table-inner-scroll.firefox table tr.starred td  /* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */
+{
+  position: sticky;
+  position: -webkit-sticky;
+  top: 0;
+  z-index: 20;
+}
+
+#table-inner-scroll table thead tr.header-problems {
+  z-index: 19;
+}
+
+#table-inner-scroll table tr.starred td {
+  border-top: 1px solid #c8e5f3;
+}
+
+#table-inner-scroll table .sticky-column {
+  position: sticky;
+  position: -webkit-sticky;
+  left: 0;
+  z-index: 10;
+}
+
+#table-inner-scroll table tr:not(.info) .sticky-column {
+  background-color: inherit;
+}
+
+#table-inner-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+table.table-border-collapse-separate {
+  border-collapse: separate;
 }

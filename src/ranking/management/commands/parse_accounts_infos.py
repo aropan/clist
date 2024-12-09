@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 from clist.models import Resource
 from logify.models import EventLog, EventStatus
+from ranking.management.modules.excepts import ExceptionParseAccounts
 from ranking.models import Account
 from ranking.utils import account_update_contest_additions, rename_account
 from true_coders.models import Coder
@@ -168,6 +169,7 @@ class Command(BaseCommand):
             update_submissions_info = {}
             account = None
             exception_error = None
+            event_status = EventStatus.COMPLETED
             seen = set()
             n_accounts_to_update = total
             try:
@@ -297,7 +299,11 @@ class Command(BaseCommand):
                             account.updated = arrow.get(now + delta).ceil('day').datetime
                             account.save()
                             seen.add(account.key)
+            except ExceptionParseAccounts as e:
+                event_status = EventStatus.WARNING
+                exception_error = str(e)
             except Exception as e:
+                event_status = EventStatus.FAILED
                 exception_error = str(e)
                 self.logger.debug(colored_format_exc())
                 self.logger.warning(f'resource = {resource}')
@@ -320,11 +326,7 @@ class Command(BaseCommand):
                     self.logger.error(f'Parse accounts infos changing update time: {e}')
 
             message = f'{count} of {total} accounts, {dict(n_counter)}'
-            if exception_error:
-                message = f'{message}, {exception_error}'
-                event_log.update_status(EventStatus.FAILED, message=message)
-            else:
-                event_log.update_status(EventStatus.COMPLETED, message=message)
+            event_log.update(status=event_status, message=message, error=exception_error)
 
             self.logger.info(f'Parsed accounts infos (resource = {resource}): {message}')
             if update_submissions_info:

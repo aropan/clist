@@ -18,6 +18,7 @@ from ranking.models import Account, VirtualStart
 
 
 class Statistic(BaseModule):
+    PROBLEM_YEAR_STATS_URL_FORMAT = 'https://adventofcode.com/{year}/stats'
 
     def get_standings(self, *args, **kwargs):
         is_private = '/private/' in self.url
@@ -26,6 +27,28 @@ class Statistic(BaseModule):
 
         self._set_medals(standings['result'], n_medals=is_private)
         return standings
+
+    @staticmethod
+    def _get_problem_stats(year, day='[0-9]+'):
+        url = Statistic.PROBLEM_YEAR_STATS_URL_FORMAT.format(year=year)
+        page = REQ.get(url)
+        matches = re.finditer(rf'''
+            <a[^>]*href="[^"]*{year}/day/[0-9]+"[^>]*>
+            \s*(?P<day>{day})\s*
+            <span[^>]*class="stats-both"[^>]*>\s*(?P<both>[0-9]+)</span>\s*
+            <span[^>]*class="stats-firstonly"[^>]*>\s*(?P<firstonly>[0-9]+)</span>
+            ''', page, re.VERBOSE)
+        ret = {}
+        for match in matches:
+            day = match.group('day')
+            n_both = int(match.group('both'))
+            n_firstonly = int(match.group('firstonly'))
+            ret[day] = {
+                'n_solved_both': n_both,
+                'n_solved_firstonly': n_firstonly,
+                'n_solved_total': n_both + n_firstonly,
+            }
+        return ret
 
     @staticmethod
     def _set_medals(result, n_medals=False):
@@ -366,6 +389,13 @@ class Statistic(BaseModule):
                 'diff_first_ac': self.to_time(first_ac['1'] - first_ac['2']),
                 'diff_last_ac': self.to_time(last_ac['1'] - last_ac['2']),
             })
+        problem_stats = Statistic._get_problem_stats(year, day)
+        if problem_stats:
+            problem_stat = problem_stats[day]
+            problems[0].update({'n_solved_firstonly': problem_stat['n_solved_firstonly']})
+            if len(problems) > 1:
+                problems[1].update({'n_solved_both': problem_stat['n_solved_both']})
+            problems[-1].update({'n_solved_total': problem_stat['n_solved_total']})
 
         place = None
         last = None
@@ -384,4 +414,21 @@ class Statistic(BaseModule):
         })
         if n_results < 200:
             ret['timing_statistic_delta'] = timedelta(minutes=1)
+        return ret
+
+    @staticmethod
+    def get_archive_problems(resource, limit, **kwargs):
+        start_year = 2015
+        current_year = datetime.now().year
+        ret = []
+        for year in reversed(range(start_year, current_year + 1)):
+            problem_stats = Statistic._get_problem_stats(year)
+            for day, info in problem_stats.items():
+                problem = {
+                    'key': f'Y{year}D{day}',
+                    'info': info,
+                }
+                ret.append(problem)
+                if len(ret) == limit:
+                    return ret
         return ret

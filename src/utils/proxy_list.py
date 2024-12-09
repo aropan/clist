@@ -4,7 +4,6 @@
 import logging
 import random
 import re
-from collections import defaultdict
 from os import getenv
 
 import requests
@@ -80,9 +79,9 @@ class ProxyList:
 
         random.shuffle(ret)
 
-        sources = defaultdict(int)
+        sources = {}
         for proxy in ret:
-            sources[proxy.source] += 1
+            sources[proxy.source] = sources.get(proxy.source, 0) + 1
         logging.info(f'Got {len(ret)} proxies: {sources}')
 
         return ret

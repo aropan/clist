@@ -38,6 +38,10 @@ def query(request, name):
     args = model_to_dict(service)
     args['redirect_uri'] = settings.HTTPS_HOST_URL_ + reverse('auth:response', args=(name, ))
     args['state'] = generate_state()
+    if service.code_args:
+        args.update(json.loads(service.code_args % args))
+    if (code_args := request.session.pop('token_code_args', None)):
+        args.update(json.loads(code_args % args))
     request.session['state'] = args['state']
     url = re.sub('[\n\r]', '', service.code_uri % args)
     return redirect(url)
@@ -61,7 +65,7 @@ def refresh(request, name):
     access_token = refresh_acccess_token(token)
     request.session['token_url'] = reverse('coder:settings', kwargs={'tab': 'social'})
     ret = process_access_token(request, token.service, access_token)
-    request.logger.success(f'Token {token.service.title} refreshed')
+    request.logger.success(f'{token.service.title} token refreshed')
     return ret
 
 
@@ -333,6 +337,7 @@ def form(request, uuid):
         if action == 'login':
             request.session['token_id_field'] = 'form_token_id'
             request.session['token_url'] = form_url
+            request.session['token_code_args'] = form.service_code_args
             return redirect(reverse('auth:query', args=(form.service.name, )))
         elif action == 'logout':
             request.session.pop('form_token_id', None)

@@ -540,7 +540,8 @@ class requester():
                  caching=None,
                  user_agent=None,
                  headers=None,
-                 proxy_filepath=default_filepath_proxies):
+                 proxy_filepath=default_filepath_proxies,
+                 insecure=strtobool(environ.get('REQUESTER_INSECURE', '0'))):
         if cookie_filename:
             self.cookie_filename = cookie_filename
         if caching is not None:
@@ -559,6 +560,7 @@ class requester():
                     if user_agent is None else user_agent
                 )
             ]
+        self.insecure = insecure
         self._init_opener_headers = self.headers
         self.init_opener()
         self.set_proxy(proxy, proxy_filepath)
@@ -576,7 +578,7 @@ class requester():
         http_cookie_processor = urllib.request.HTTPCookieProcessor(self.cookiejar)
         context = ssl.create_default_context()
         context.set_ciphers('DEFAULT')
-        if strtobool(environ.get('REQUESTER_INSECURE', '0')):
+        if self.insecure:
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
         https_handler = urllib.request.HTTPSHandler(context=context)

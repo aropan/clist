@@ -19,6 +19,7 @@ from notification.models import NotificationMessage
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseAccounts
 from true_coders.models import Coder
+from utils.timetools import parse_duration
 
 
 class Statistic(BaseModule):
@@ -83,6 +84,8 @@ class Statistic(BaseModule):
                 k = k.strip(':').lower().replace(' ', '_')
                 infos[k] = v
             options['parse'] = infos
+            if (duration := infos.get('duration')):
+                standings['duration_in_secs'] = parse_duration(duration).total_seconds()
 
         def find_related(statistics):
             infos = deepcopy(self.info.get('standings', {}).get('parse', {}))

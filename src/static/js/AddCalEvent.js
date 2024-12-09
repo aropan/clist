@@ -235,12 +235,10 @@
         // get the absolute position and min-width based on the parent button
         // could cause issues if the button moves around the page dynamically when it resizes
         _getStyle: function() {
-            var pos = this.el.position(),
+            var pos = this.el.offset(),
             left = pos.left + parseFloat(this.el.css('marginLeft')),
             top = pos.top + this.el.outerHeight() + parseFloat(this.el.css('marginTop')) - 1,
             minwidth = this.el.outerWidth() - parseFloat(this.el.css('borderLeftWidth'));
-
-
             return 'min-width:' + minwidth + 'px;top:' + top + 'px;left:' + left + 'px';
         },
 

@@ -2,7 +2,7 @@
 
 from contextlib import contextmanager
 
-from logify.models import EventStatus, EventLog
+from logify.models import EventLog, EventStatus
 
 
 @contextmanager
@@ -11,7 +11,7 @@ def failed_on_exception(event_log):
         yield
     except Exception as e:
         if event_log:
-            event_log.update_status(EventStatus.EXCEPTION, message=str(e))
+            event_log.update_error(str(e))
         raise e
 
 

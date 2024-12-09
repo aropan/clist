@@ -29,7 +29,7 @@ from PIL import Image, UnidentifiedImageError
 from scipy.stats import randint, uniform
 
 from clist.templatetags.extras import get_item, get_problem_key, slug
-from clist.utils import update_accounts_by_coders
+from clist.utils import similar_contests_queryset, update_accounts_by_coders
 from logify.models import EventLog, EventStatus
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
@@ -591,9 +591,9 @@ class Contest(BaseModel):
 
         if not self.kind:
             if hasattr(self, 'stage'):
-                self.kind = 'stage'
+                self.kind = settings.STAGE_CONTEST_KIND
             elif self.invisible:
-                self.kind = 'hidden'
+                self.kind = settings.INSIVIBLE_CONTEST_KIND
 
         last_index = None
         min_index = None
@@ -713,6 +713,9 @@ class Contest(BaseModel):
                         continue
                     Contest.title_neighbors_(new_title, deep=deep - 1, viewed=viewed)
 
+    def similar_contests(self):
+        return similar_contests_queryset(self)
+
     def neighbors(self):
         viewed = set()
         Contest.title_neighbors_(self.title, deep=1, viewed=viewed)
@@ -781,10 +784,10 @@ class Contest(BaseModel):
         return self.resource.is_major_kind(self.kind)
 
     def is_stage(self):
-        return self.kind == 'stage' and getattr(self, 'stage', None)
+        return self.kind == settings.STAGE_CONTEST_KIND and getattr(self, 'stage', None)
 
     def shown_kind(self):
-        if not self.kind or self.kind == 'stage' or self.is_major_kind():
+        if not self.kind or self.kind == settings.STAGE_CONTEST_KIND or self.is_major_kind():
             return None
         return self.kind
 
@@ -1225,6 +1228,29 @@ class Promotion(BaseModel):
         contest.is_promoted = contest.promotion_set.filter(enable=True).exists()
         contest.save(update_fields=['is_promoted'])
         return ret
+
+    @classmethod
+    def create_will_start_in(cls, contest):
+        return cls.objects.update_or_create(
+            name=contest.title,
+            contest=contest,
+            timer_message='will start in',
+            time_attribute=PromotionTimeAttribute.START_TIME,
+        )
+
+    @classmethod
+    def create_will_end_in(cls, contest):
+        return cls.objects.update_or_create(
+            name=contest.title,
+            contest=contest,
+            timer_message='will end in',
+            time_attribute=PromotionTimeAttribute.END_TIME,
+        )
+
+    @classmethod
+    def create_major_contest(cls, contest):
+        cls.create_will_start_in(contest)
+        cls.create_will_end_in(contest)
 
 
 class PromoLinkManager(BaseManager):

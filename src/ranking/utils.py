@@ -359,6 +359,14 @@ def create_upsolving_statistic(contest, account):
     return stat, created
 
 
+def _get_placing(placing, stat):
+    return placing['division'][stat.addition['division']] if 'division' in placing else placing
+
+
+def _get_placing_values(placing):
+    return placing['division'].values() if 'division' in placing else [placing]
+
+
 def update_stage(self):
     eps = 1e-9
     stage = self.contest
@@ -392,7 +400,7 @@ def update_stage(self):
                      ignore_stage=True)
         stage.refresh_from_db()
 
-    placing = self.score_params.get('place')
+    stage_placing = self.score_params.get('place')
     n_best = self.score_params.get('n_best')
     fields = self.score_params.get('fields', [])
     scoring = self.score_params.get('scoring', {})
@@ -444,11 +452,11 @@ def update_stage(self):
         problems = contest.info.get('problems', [])
         if not detail_problems:
             full_score = None
-            if placing:
-                if 'division' in placing:
-                    full_score = max([max(p.values()) for p in placing['division'].values()])
-                else:
-                    full_score = max(placing.values())
+            if stage_placing:
+                full_score = max([
+                    max(placing_value.values())
+                    for placing_value in _get_placing_values(stage_placing)
+                ])
             elif 'division' in problems:
                 full_scores = []
                 for ps in problems['division'].values():
@@ -497,9 +505,6 @@ def update_stage(self):
         statistics = statistics.exclude(**exclude_statistics)
     re_ranking = self.score_params.get('re_ranking')
 
-    def get_placing(placing, stat):
-        return placing['division'][stat.addition['division']] if 'division' in placing else placing
-
     account_keys = dict()
     problem_values = defaultdict(set)
     total = statistics.filter(contest__in=contests).count()
@@ -514,28 +519,6 @@ def update_stage(self):
             pbar.set_postfix(contest=contest)
             stats = statistics.filter(contest_id=contest.pk)
 
-            if placing:
-                placing_scores = deepcopy(placing)
-                n_rows = 0
-                for s in stats:
-                    n_rows += 1
-                    placing_ = get_placing(placing_scores, s)
-                    key = str(s.place_as_int)
-                    if key in placing_:
-                        placing_.setdefault('scores', {})
-                        placing_['scores'][key] = placing_.pop(key)
-                scores = []
-                for place in reversed(range(1, n_rows + 1)):
-                    placing_ = get_placing(placing_scores, s)
-                    key = str(place)
-                    if key in placing_:
-                        scores.append(placing_.pop(key))
-                    else:
-                        if scores:
-                            placing_['scores'][key] += sum(scores)
-                            placing_['scores'][key] /= len(scores) + 1
-                        scores = []
-
             max_solving = 0
             n_effective = 0
             for stat in stats:
@@ -545,36 +528,52 @@ def update_stage(self):
             if re_ranking:
                 order = contest.get_statistics_order()
                 stats = stats.order_by(*order)
-                stat_rank = 0
                 stat_last = None
                 stat_attrs = [attr.strip('-') for attr in order]
+                for stat_idx, stat in enumerate(stats, start=1):
+                    stat_value = tuple(get_item(stat, attr) for attr in stat_attrs)
+                    if stat_value != stat_last:
+                        stat_rank = stat_idx
+                        stat_last = stat_value
+                    stat.place_as_int = stat_rank
+
+            if stage_placing:
+                placing = deepcopy(stage_placing)
+                for placing_value in _get_placing_values(placing):
+                    placing_value.setdefault('_scores', {})
+                    placing_value.setdefault('_n_stats', 0)
+                for stat in stats:
+                    stat_placing = _get_placing(placing, stat)
+                    key = str(stat.place_as_int)
+                    if key in stat_placing:
+                        stat_placing['_scores'][key] = stat_placing.pop(key)
+                    stat_placing['_n_stats'] += 1
+                group_scores = []
+                for placing_value in _get_placing_values(placing):
+                    n_stats = placing_value['_n_stats']
+                    for place in reversed(range(1, n_stats + 1)):
+                        key = str(place)
+                        if key in placing_value:
+                            group_scores.append(placing_value.pop(key))
+                        else:
+                            if group_scores:
+                                placing_value['_scores'][key] += sum(group_scores)
+                                placing_value['_scores'][key] /= len(group_scores) + 1
+                            group_scores = []
+                    placing_value.update(placing_value.pop('_scores'))
 
             for stat_idx, stat in enumerate(stats, start=1):
                 if not detail_problems and not skip_problem_stat:
                     problems_infos[problem_info_key].setdefault('n_total', 0)
                     problems_infos[problem_info_key]['n_total'] += 1
-
-                if re_ranking:
-                    stat_value = tuple(get_item(stat, attr) for attr in stat_attrs)
-                    if stat_value != stat_last:
-                        stat_rank = stat_idx
-                        stat_last = stat_value
-                    rank = stat_rank
-                else:
-                    rank = stat.place_as_int
-
+                rank = stat.place_as_int
                 score = None
-                if stat.solving < eps:
-                    score = 0
-                    if placing:
-                        placing_ = get_placing(placing_scores, stat)
-                        score = placing_.get('zero', 0)
-                else:
-                    if placing:
-                        placing_ = get_placing(placing_scores, stat)
-                        score = placing_['scores'].get(str(rank), placing_.get('default'))
-                        if score is None:
-                            continue
+                if placing:
+                    placing_scores = _get_placing(placing, stat)
+                    score_rank = 'zero' if stat.solving < eps else str(rank)
+                    score = placing_scores.get(score_rank, placing_scores.get('default'))
+                    if score is None:
+                        continue
                 if scoring:
                     if score is None:
                         score = 0

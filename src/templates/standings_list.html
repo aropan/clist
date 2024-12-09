@@ -30,7 +30,7 @@
             <th class="rank no-stretch text-muted">Rank</th>
             <th class="date no-stretch text-muted ">End Time</th>
             {% for more_field in params.more_fields|get_more_fields %}
-            <th class="text-muted">{{ more_field|title_field }}</th>
+            <th class="text-muted">{{ more_field|title_field_div }}</th>
             {% endfor %}
           </tr>
         </thead>

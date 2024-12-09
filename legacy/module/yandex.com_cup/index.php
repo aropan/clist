@@ -19,10 +19,8 @@
             $duration = $stage['duration'];
             $duration = preg_replace('#\s*\(.*?\)$#', '', $duration);
 
-            $name = $stage['stage'];
-            $name = preg_replace('#\s+-\s+.*$#', '', $name);
-
-            $title = $category['name'] . '. ' . $name;
+            $stage_name = $stage['stage'];
+            $stage_name = preg_replace('#\s+-\s+.*$#', '', $stage_name);
 
             $year = date('Y', strtotime($start_time));
             $month = date('n', strtotime($start_time));
@@ -31,19 +29,31 @@
             } else {
                 $season = ($year - 1) . "-" . ($year + 0);
             }
-            $key = slugify($category['name']) . ' ' . slugify($name) . ' ' . $season;
 
-            $contests[] = array(
-                'start_time' => $start_time,
-                'end_time' => $end_time,
-                'duration' => $duration,
-                'title' => $title,
-                'url' => $url,
-                'host' => $HOST,
-                'rid' => $RID,
-                'timezone' => $TIMEZONE,
-                'key' => $key,
-            );
+            $subcategories = array(false);
+            if ($year == 2024 && $category['name'] == 'Mobile development' && $stage_name == 'Final round') {
+                $subcategories = array('iOS', 'Android');
+            }
+
+            foreach ($subcategories as $subcategory) {
+                $name = $category['name'];
+                if ($subcategory) {
+                    $name .= " $subcategory";
+                }
+                $title = "$name. $stage_name";
+                $key = slugify($name) . ' ' . slugify($stage_name) . ' ' . $season;
+                $contests[] = array(
+                    'start_time' => $start_time,
+                    'end_time' => $end_time,
+                    'duration' => $duration,
+                    'title' => $title,
+                    'url' => $url,
+                    'host' => $HOST,
+                    'rid' => $RID,
+                    'timezone' => $TIMEZONE,
+                    'key' => $key,
+                );
+            }
         }
     }
 

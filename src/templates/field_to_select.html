@@ -178,7 +178,6 @@
     }
   }).on('select2:open', function(e) {
     $('.select2-dropdown').addClass('select2-dropdown-{{ field }}');
-    document.querySelector('.select2-container--open .select2-search__field').focus()
   }).on('select2:closing', function(e) {
     $('.select2-dropdown').removeClass('select2-dropdown-{{ field }}');
   })

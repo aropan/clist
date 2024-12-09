@@ -22,6 +22,7 @@
     {% endif %}
 
     <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.pk }}">{% icon_to 'copy' contest.pk %}</button>
+    <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.title }}">{% icon_to 'copy' contest.title %}</button>
 
 </span>
 {% endif %}

@@ -1,7 +1,3 @@
-table.standings {
-  border-collapse: separate;
-}
-
 table.standings td,
 table.standings th {
   text-align: center;
@@ -198,35 +194,6 @@ a.solution:hover span {
   white-space: nowrap;
 }
 
-#table-inner-scroll table thead tr,
-#table-inner-scroll:not(.firefox) table tr.starred,
-#table-inner-scroll.firefox table tr.starred td  /* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */
-{
-  position: sticky;
-  position: -webkit-sticky;
-  top: 0;
-  z-index: 20;
-}
-
-#table-inner-scroll table thead tr.header-problems {
-  z-index: 19;
-}
-
-#table-inner-scroll table tr.starred td {
-  border-top: 1px solid #c8e5f3;
-}
-
-#table-inner-scroll table .sticky-column {
-  position: sticky;
-  position: -webkit-sticky;
-  left: 0;
-  z-index: 10;
-}
-
-#table-inner-scroll table tr:not(.info) .sticky-column {
-  background-color: inherit;
-}
-
 .table tr:nth-of-type(n).info td {
   background-color: #d9edf7;
 }
@@ -263,11 +230,6 @@ a.solution:hover span {
 
 .stat-cell.starred .fas.fa-star {
   display: inline;
-}
-
-#table-inner-scroll {
-  overflow-x: auto;
-  overflow-y: auto;
 }
 
 #standings-authors {

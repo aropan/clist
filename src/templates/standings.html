@@ -68,20 +68,6 @@
     $(problem_selector).each(function () { $(this).width(target_width); })
 {% endif %}
 
-    var table_inner_scroll = $('#table-inner-scroll')
-    var default_height = table_inner_scroll.height()
-    $(window).resize(function() {
-      if (table_inner_scroll.length) {
-          var val = $(window).height() - table_inner_scroll.offset().top - {% if fullscreen %}0{% else %}50{% endif %}
-        if (val < default_height) {
-          table_inner_scroll.height(val)
-        } else {
-          table_inner_scroll.height(default_height)
-        }
-      }
-    })
-    $(window).trigger('resize')
-
 {% if not timeline %}
     scroll_to_find_me()
 {% endif %}
@@ -247,7 +233,7 @@
     <div id="timeline-tooltip" class="badge"></div>
 
     <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default fullscreen-border{% if not with_table_inner_scroll %} table-responsive{% endif %} {{ request.user_agent.browser.family|lower }}">
-      <table class="standings table table-hover table-condensed{% if with_detail %}-detail{% else %}-non-detail{% endif %} table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}{% if timeline or with_virtual_start %} invisible{% endif %}{% if merge_problems %} table-merge-problems{% endif %}{% if with_virtual_start %} no-hints{% endif %}">
+      <table class="standings table table-border-collapse-separate table-hover table-condensed{% if with_detail %}-detail{% else %}-non-detail{% endif %} table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}{% if timeline or with_virtual_start %} invisible{% endif %}{% if merge_problems %} table-merge-problems{% endif %}{% if with_virtual_start %} no-hints{% endif %}">
           <thead>
             <tr class="header-row">
               <th class="place-cell sticky-column" data-sticky-column="place-cell"{{ default_rowspan }}>
@@ -396,16 +382,6 @@
         {% endfor %}
         {% endif %}
       </div>
-      {% if paginate_on_scroll %}
-      <script>
-        var el = $('#table-inner-scroll')
-        el.scroll(function() {
-          if (el.scrollTop() + el.height() + 10 >= document.getElementById("table-inner-scroll").scrollHeight) {
-            $('.endless_more').trigger('click')
-          }
-        });
-      </script>
-      {% endif %}
     {% else %}
       <div id="standings-groupby">
         {% include "standings_groupby.html" with groupby_data=statistics %}
@@ -446,11 +422,8 @@
   </div>
 </div>
 
-<script>
-{% block html %}{% if with_table_inner_scroll %}{% if not groupby or groupby == 'none' %} style="overflow-y: hidden"{% endif %}{% endif %}{% endblock %}
 {% if with_table_inner_scroll %}
-  $(window).resize(update_sticky)
+<script>$(window).resize(update_sticky)</script>
 {% endif %}
-</script>
 
 {% endblock %}

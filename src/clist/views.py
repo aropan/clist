@@ -882,7 +882,7 @@ def update_problems(contest, problems=None, force=False):
                 skip_rating = bool(contest.info.get('skip_problem_rating'))
 
                 kinds = getattr(added_problem, 'kinds', [])
-                if contest.kind and contest.kind not in kinds:
+                if contest.kind and contest.kind not in settings.PROBLEM_IGNORE_KINDS and contest.kind not in kinds:
                     kinds.append(contest.kind)
 
                 divisions = getattr(added_problem, 'divisions', [])

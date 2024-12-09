@@ -1579,6 +1579,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         timeline = None
 
     inner_scroll = not request.user_agent.is_mobile
+    is_charts = is_yes(request.GET.get('charts'))
 
     context.update({
         'has_versus': has_versus,
@@ -1628,7 +1629,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         'timeformat': get_timeformat(request),
         'with_neighbors': request.GET.get('neighbors') == 'on',
         'without_neighbors_aligment': not inner_scroll or 'safari' in request.user_agent.browser.family.lower(),
-        'with_table_inner_scroll': inner_scroll,
+        'with_table_inner_scroll': inner_scroll and (not groupby or groupby == 'none') and not is_charts,
         'enable_timeline': enable_timeline,
         'contest_timeline': contest_timeline,
         'timeline': timeline,
@@ -1677,9 +1678,8 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     if extra_context is not None:
         context.update(extra_context)
 
-    if groupby == 'none' and is_yes(request.GET.get('charts')):
+    if groupby == 'none' and is_charts:
         standings_charts(request, context)
-        context['with_table_inner_scroll'] = False
         context['disable_switches'] = True
         if 'field' in fields_to_select:
             fields_to_select['field']['disabled'] = True

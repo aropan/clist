@@ -19,7 +19,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None, **kwargs):
+    def get_standings(self, **kwargs):
         if not self.standings_url:
             self.standings_url = f'https://projecteuler.net/fastest={self.key}'
 
@@ -85,6 +85,7 @@ class Statistic(BaseModule):
         problems_info = [problem_info]
 
         regex = '<table[^>]*>.*?</table>'
+        page = re.sub('<span[^>]*class="[^"]*tooltiptext_narrow[^"]*"[^>]*>[^<]*</span>', '', page)
         html_table = re.search(regex, page, re.DOTALL)
 
         if html_table:
@@ -130,6 +131,7 @@ class Statistic(BaseModule):
             'url': self.standings_url,
             'problems': problems_info,
             'fields_types': {'penalty': ['timedelta']},
+            'keep_results_to_skip': True,
         }
 
         if len(result) < 100 and 'No data available' not in page:

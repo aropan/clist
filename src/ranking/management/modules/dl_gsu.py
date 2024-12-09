@@ -3,35 +3,42 @@
 import re
 from collections import OrderedDict, defaultdict
 from datetime import timedelta
-from pprint import pprint  # noqa
 from urllib.parse import urljoin
 
+from lazy_load import lz
+
+from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
-from ranking.management.modules import conf
+
+
+def insecure_requester():
+    return REQ.duplicate(insecure=True)
+
+
+req = lz(insecure_requester)
 
 
 class Statistic(BaseModule):
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
-
+        super().__init__(**kwargs)
         if not self.name or not self.start_time or not self.url:
             raise InitModuleException()
 
     @staticmethod
     def _get(url):
-        page = REQ.get(url)
-        form = REQ.form(name='logon', action='login.jsp')
+        page = req.get(url)
+        form = req.form(name='logon', action='login.jsp')
         if form:
-            REQ.submit_form(form=form, data={
+            req.submit_form(form=form, data={
                 'id': conf.DLGSU_ID,
                 'password': conf.DLGSU_PASSWORD,
             })
-            form = REQ.form(name='dllogon')
+            form = req.form(name='dllogon')
             if form:
-                REQ.submit_form(data={}, form=form)
-            page = REQ.get(url)
+                req.submit_form(data={}, form=form)
+            page = req.get(url)
         return page
 
     @staticmethod
@@ -51,7 +58,7 @@ class Statistic(BaseModule):
             table = parsed_table.ParsedTable(page, as_list=True)
             for idx, row in enumerate(table):
                 (_, name), *_, (_, full_score) = row
-                url = urljoin(REQ.last_url, name.column.node.xpath('a/@href')[0])
+                url = urljoin(req.last_url, name.column.node.xpath('a/@href')[0])
                 name = name.value.split('. ', 1)[-1].strip()
                 full_score = int(full_score.value)
                 problems.append({
@@ -65,7 +72,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_data = None
         if not self.standings_url:
-            page = REQ.get(urljoin(self.url, '/'))
+            page = req.get(urljoin(self.url, '/'))
 
             for name in (
                 'Соревнования',
@@ -73,7 +80,7 @@ class Statistic(BaseModule):
             ):
                 match = re.search('<a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<'.format(name), page)
                 url = match.group('url')
-                page = REQ.get(url)
+                page = req.get(url)
 
             regex = '''
             <a[^>]*href=["']?[^<"']*cid=(?P<cid>[0-9]+)[^>]*>[^>]*{}[^>]*</a>.*?
@@ -90,7 +97,7 @@ class Statistic(BaseModule):
             url = match.group('url')
             cid = match.group('cid')
             last_standings_data = self.resource.info['parse']['last_standings_data'].get(cid, {})
-            page = REQ.get(url)
+            page = req.get(url)
 
             dates = [self.start_time, self.start_time - timedelta(days=1)]
             dates = [d.strftime('%Y-%m-%d') for d in dates]
@@ -127,7 +134,7 @@ class Statistic(BaseModule):
                 urls_map = {}
                 for d in datas:
                     url = d['url']
-                    page = REQ.get(url)
+                    page = req.get(url)
                     path = re.findall('<td[^>]*nowrap><a[^>]*href="(?P<href>[^"]*)"', page)
                     if len(path) < 2:
                         ok = False
@@ -142,11 +149,11 @@ class Statistic(BaseModule):
             else:
                 standings_data = datas[0]
 
-            page = REQ.get(standings_data['url'])
-            self.standings_url = REQ.last_url
+            page = req.get(standings_data['url'])
+            self.standings_url = req.last_url
 
         try:
-            page = REQ.get(self.standings_url)
+            page = req.get(self.standings_url)
         except FailOnGetResponse as e:
             if e.code == 404:
                 raise ExceptionParseStandings('Not found response from standings url')
@@ -288,7 +295,7 @@ class Statistic(BaseModule):
         if scoring and not is_olymp:
             match = re.search(r'<b[^>]*>\s*<a[^>]*href="(?P<url>[^"]*)"[^>]*>ACM</a>\s*</b>', page)
             if match:
-                page = REQ.get(match.group('url'))
+                page = req.get(match.group('url'))
                 table = get_table(page)
                 for r in table:
                     uid = None

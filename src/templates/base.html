@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html{% block html %}{% endblock %}>
+<html{% block html %}{% endblock %}{% if with_table_inner_scroll %} style="overflow-y: hidden"{% endif %}>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta charset="utf-8">
@@ -29,7 +29,7 @@
         <link rel="canonical" href="{% block canonical %}{% if request.canonical_url %}{{ request.canonical_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endif %}{% endblock %}">
 
         {% if not DEBUG and not nocounter %}
-        {% include 'counter/base.html' %}
+        {% include "counter/base.html" %}
         {% endif %}
 
         {% block begin-head %}{% endblock %}
@@ -101,7 +101,7 @@
             change_url = '{% url "coder:change" %}'
         </script>
 
-        {% block navbar %}{% include 'navbar.html' %}{% endblock %}
+        {% block navbar %}{% include "navbar.html" %}{% endblock %}
         <div class="rating-clips">{% include "rating-clip.html" %}</div>
 
         <div class="container__main body-wrapper">
@@ -126,9 +126,11 @@
             {% endcomment %}
         </div>
 
-        {% block footer %}{% include 'footer.html' %}{% endblock %}
+        {% block footer %}{% include "footer.html" %}{% endblock %}
 
-        {% include 'messages.html' %}
+        {% if with_table_inner_scroll %}{% include "table_inner_scroll.html" %}{% endif %}
+
+        {% include "messages.html" %}
 
         {% if user.is_authenticated %}
         <script src="{% static_ts 'js/register-sw.js' %}"></script>

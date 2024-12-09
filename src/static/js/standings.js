@@ -546,7 +546,7 @@ function clear_starred_unfreezed() {
     CLEAR_STARRED_UNFREEZED_TIMER_ID = null
   }
   $('.starred.unfreezed').each((_, e) => { change_starring.call(e) })
-  recalc_pinned()
+  restarred()
 }
 
 function set_timeline(percent = null, duration = null, scroll_to_element = null) {
@@ -865,7 +865,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   var delay_duration = duration / 2
   clearInterval(TRANSFORM_TIMER_ID)
 
-  recalc_pinned()
+  restarred()
 
   TRANSFORM_TIMER_ID = setTimeout(() => {
       var transform_duration = duration - delay_duration
@@ -878,7 +878,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       $('.accepted-switcher').click(switcher_click)
 
       bind_starring()
-      recalc_pinned()
+      restarred()
 
       clear_tooltip()
       toggle_tooltip_object('table.standings [data-original-title]')
@@ -1210,7 +1210,7 @@ function show_timeline() {
     UPDATE_TIMELINE_TEXT_TIMER_ID = setInterval(update_timeline_text, update_timeline_text_interval * 1000)
   }
 
-  recalc_pinned()
+  restarred()
   resize_window()
 }
 
@@ -1394,24 +1394,6 @@ $(function() {
  * Starred
  */
 
-function recalc_pinned() {
-  var total_height = 0
-  var selector = '.starred'
-  var thead_height = $('#table-inner-scroll thead').height() || 0
-  var offset_height = 0
-  $(selector).each(function() {
-    total_height += $(this).height()
-  }).each(function() {
-    var el = $(this)
-    var selection = $.browser.firefox? el.find('td') : el
-    selection.css({
-      'top': offset_height + thead_height,
-      'bottom': total_height - offset_height - el.height(),
-    })
-    offset_height += el.height()
-  }).css('z-index', '')
-}
-
 function change_starring() {
   var element = $(this)
   if (!element.length) {
@@ -1452,7 +1434,7 @@ function update_unstar_hidden() {
 function starring() {
   change_starring.call(this)
   update_cookie_starring.call(this)
-  recalc_pinned()
+  restarred()
 }
 
 function bind_starring() {
@@ -1468,7 +1450,7 @@ function apply_starring() {
     change_starring.call($('.stat-cell.' + element + ':not(".starred") .star'))
   })
 
-  recalc_pinned()
+  restarred()
 
   update_unstar_hidden()
 }

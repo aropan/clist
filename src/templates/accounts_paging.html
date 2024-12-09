@@ -1,12 +1,14 @@
 {% load preload_statistics %}
 
+{% coder_account_filter accounts primary_account row_number_field=row_number_field operator=row_number_operator as coder_account %}
 {% lazy_paginate 50,200 accounts %}{% get_pages %}
-
 {% preload_statistics accounts 'resource_id' attr='selected_stats' as preload_statistics_data %}
-
-{% for account in accounts %}
-<tr{% if account.my_account %} class="info"{% endif %}>
-  <td class="no-stretch">{{ forloop.counter0|add:pages.current_start_index }}</td>
+{% for account in accounts|chain:coder_account %}
+<tr
+  {% if account.my_account %} class="info"{% endif %}
+  {% include "delete_on_duplicate_attrs.html" with name="coder-account" entry=account primary=primary_account %}
+>
+  <td class="no-stretch">{% if account.row_number %}{{ account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}</td>
   <td class="account">
     {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True without_inline_url=True %}
 
@@ -145,3 +147,4 @@
 {% show_more_table %}
 <script>init_account_buttons()</script>
 <script>init_clickable_has_coders()</script>
+<script>delete_on_duplicate(true)</script>

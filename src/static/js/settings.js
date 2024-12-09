@@ -944,144 +944,16 @@ $(function() {
           </form>
         `);
 
-        function set_disabled() {
-            var disable_addition = !$select_resource.val() && !$select_contest.val()
-            $with_first_accepted.prop('disabled', disable_addition)
-            $top_n.prop('disabled', disable_addition)
-
-            var disabled_chat_and_list = $select_accounts.val().length || $select_coders.val().length
-            var disabled_accounts_and_coders = $select_coder_list.val() || $select_coder_chat.val()
-            $select_coders.prop('disabled', disabled_accounts_and_coders)
-            $select_accounts.prop('disabled', disabled_accounts_and_coders)
-            $select_coder_chat.prop('disabled', $select_coder_list.val() || disabled_chat_and_list)
-            $select_coder_list.prop('disabled', $select_coder_chat.val() || disabled_chat_and_list)
-        }
-
         var $select_resource = form.find('select[name=resource]')
-        $select_resource.select2({
-            dropdownAutoWidth : true,
-            width: '100%',
-            theme: 'bootstrap',
-            placeholder: 'Select resource',
-            ajax: select2_ajax_conf('resources', 'regex'),
-            minimumInputLength: 0,
-            allowClear: true,
-        })
-        $select_resource.on('change', set_disabled)
-
         var $select_no_stage = form.find('input[name=no_stage]')
         var $select_contest = form.find('select[name=contest]')
-        $select_contest.select2({
-            dropdownAutoWidth : true,
-            width: '100%',
-            theme: 'bootstrap',
-            placeholder: 'Select contest',
-            ajax: select2_ajax_conf('contests', 'regex', {resource: $select_resource, 'no_stage': $select_no_stage}),
-            minimumInputLength: 0,
-            allowClear: true,
-        })
-        $select_contest.on('change', set_disabled)
-
         var $with_first_accepted = form.find('input[name=with_first_accepted]')
-        $with_first_accepted.bootstrapToggle()
-        $with_first_accepted.prop('disabled', true)
-
         var $top_n = form.find('input[name=top_n]')
-        $top_n.prop('disabled', true)
-
         var $select_accounts = form.find('select[name=accounts]')
-        $select_accounts.select2({
-            dropdownAutoWidth : true,
-            width: '100%',
-            theme: 'bootstrap',
-            placeholder: 'Select accounts',
-            ajax: select2_ajax_conf('accounts', 'search', {contest: $select_contest, resource: $select_resource}),
-            minimumInputLength: 0,
-            allowClear: true,
-            multiple: true,
-        })
-        $select_accounts.on('change', set_disabled)
-
         var $select_coders = form.find('select[name=coders]')
-        $select_coders.select2({
-            dropdownAutoWidth : true,
-            width: '100%',
-            theme: 'bootstrap',
-            placeholder: 'Select coders',
-            ajax: select2_ajax_conf('coders', 'search', {contest: $select_contest, resource: $select_resource}),
-            minimumInputLength: 0,
-            allowClear: true,
-            multiple: true,
-        })
-        $select_coders.on('change', set_disabled)
-
         var $select_coder_list = form.find('select[name=list]')
-        $select_coder_list.select2({
-            dropdownAutoWidth : true,
-            width: '100%',
-            theme: 'bootstrap',
-            placeholder: 'Select coder list',
-            ajax: select2_ajax_conf('coder_lists', 'search'),
-            minimumInputLength: 0,
-            allowClear: true,
-        })
-        $select_coder_list.on('change', set_disabled)
-
         var $select_coder_chat = form.find('select[name=chat]')
-        $select_coder_chat.select2({
-            dropdownAutoWidth : true,
-            width: '100%',
-            theme: 'bootstrap',
-            placeholder: 'Select coder chat',
-            ajax: select2_ajax_conf('coder_chats', 'search'),
-            minimumInputLength: 0,
-            allowClear: true,
-        })
-        $select_coder_chat.on('change', set_disabled)
-
         var $select_method = form.find('select[name=method]')
-        $select_method.select2({
-            data: SUBSCRIPTIONS_METHODS,
-            width: '100%',
-            theme: 'bootstrap',
-            placeholder: 'Select method',
-        })
-
-        if (data) {
-            if (data.resource) {
-                $select_resource.select2('trigger', 'select', {data: data.resource})
-            }
-            if (data.contest) {
-                $select_contest.select2('trigger', 'select', {data: data.contest})
-            }
-            if (data.coder_list) {
-                $select_coder_list.select2('trigger', 'select', {data: data.coder_list})
-            } else if (data.coder_chat) {
-                $select_coder_chat.select2('trigger', 'select', {data: data.coder_chat})
-            } else {
-                if (data.accounts) {
-                    data.accounts.forEach(option => {
-                        $select_accounts.append(new Option(option.text, option.id, true, true)).trigger('change')
-                    })
-                    $select_accounts.trigger('change')
-                }
-                if (data.coders) {
-                    data.coders.forEach(option => {
-                        $select_coders.append(new Option(option.text, option.id, true, true)).trigger('change')
-                    })
-                    $select_coders.trigger('change')
-                }
-            }
-            if (data.with_first_accepted) {
-                $with_first_accepted.bootstrapToggle('on')
-            }
-            if (data.top_n) {
-                $top_n.val(data.top_n)
-            }
-            if (data.method) {
-                $select_method.select2('trigger', 'select', {data: data.method})
-            }
-        }
 
         bootbox.confirm(form, function(result) {
             if (!result) {
@@ -1115,8 +987,146 @@ $(function() {
             })
 
             return false
+        }).on('shown.bs.modal', function() {
+            function set_disabled() {
+                var disable_addition = !$select_resource.val() && !$select_contest.val()
+                $with_first_accepted.prop('disabled', disable_addition)
+                $top_n.prop('disabled', disable_addition)
+
+                var disabled_chat_and_list = $select_accounts.val().length || $select_coders.val().length
+                var disabled_accounts_and_coders = $select_coder_list.val() || $select_coder_chat.val()
+                $select_coders.prop('disabled', disabled_accounts_and_coders)
+                $select_accounts.prop('disabled', disabled_accounts_and_coders)
+                $select_coder_chat.prop('disabled', $select_coder_list.val() || disabled_chat_and_list)
+                $select_coder_list.prop('disabled', $select_coder_chat.val() || disabled_chat_and_list)
+            }
+
+            var dropdown_parent = $('.bootbox-confirm .modal-body')
+            $select_resource.select2({
+                dropdownParent: dropdown_parent,
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select resource',
+                ajax: select2_ajax_conf('resources', 'text'),
+                minimumInputLength: 0,
+                allowClear: true,
+            })
+            $select_resource.on('change', set_disabled)
+
+            $select_contest.select2({
+                dropdownParent: dropdown_parent,
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select contest',
+                ajax: select2_ajax_conf('contests', 'text', {resource: $select_resource, 'no_stage': $select_no_stage}),
+                minimumInputLength: 0,
+                allowClear: true,
+            })
+            $select_contest.on('change', set_disabled)
+
+            $with_first_accepted.bootstrapToggle()
+            $with_first_accepted.prop('disabled', true)
+
+            $top_n.prop('disabled', true)
+
+            $select_accounts.select2({
+                dropdownParent: dropdown_parent,
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select accounts',
+                ajax: select2_ajax_conf('accounts', 'search', {contest: $select_contest, resource: $select_resource}),
+                minimumInputLength: 0,
+                allowClear: true,
+                multiple: true,
+            })
+            $select_accounts.on('change', set_disabled)
+
+            $select_coders.select2({
+                dropdownParent: dropdown_parent,
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select coders',
+                ajax: select2_ajax_conf('coders', 'search', {contest: $select_contest, resource: $select_resource}),
+                minimumInputLength: 0,
+                allowClear: true,
+                multiple: true,
+            })
+            $select_coders.on('change', set_disabled)
+
+            $select_coder_list.select2({
+                dropdownParent: dropdown_parent,
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select coder list',
+                ajax: select2_ajax_conf('coder_lists', 'search'),
+                minimumInputLength: 0,
+                allowClear: true,
+            })
+            $select_coder_list.on('change', set_disabled)
+
+            $select_coder_chat.select2({
+                dropdownParent: dropdown_parent,
+                dropdownAutoWidth : true,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select coder chat',
+                ajax: select2_ajax_conf('coder_chats', 'search'),
+                minimumInputLength: 0,
+                allowClear: true,
+            })
+            $select_coder_chat.on('change', set_disabled)
+
+            $select_method.select2({
+                dropdownParent: dropdown_parent,
+                data: SUBSCRIPTIONS_METHODS,
+                width: '100%',
+                theme: 'bootstrap',
+                placeholder: 'Select method',
+            })
+
+            if (data) {
+                if (data.resource) {
+                    $select_resource.select2('trigger', 'select', {data: data.resource})
+                }
+                if (data.contest) {
+                    $select_contest.select2('trigger', 'select', {data: data.contest})
+                }
+                if (data.coder_list) {
+                    $select_coder_list.select2('trigger', 'select', {data: data.coder_list})
+                } else if (data.coder_chat) {
+                    $select_coder_chat.select2('trigger', 'select', {data: data.coder_chat})
+                } else {
+                    if (data.accounts) {
+                        data.accounts.forEach(option => {
+                            $select_accounts.append(new Option(option.text, option.id, true, true)).trigger('change')
+                        })
+                        $select_accounts.trigger('change')
+                    }
+                    if (data.coders) {
+                        data.coders.forEach(option => {
+                            $select_coders.append(new Option(option.text, option.id, true, true)).trigger('change')
+                        })
+                        $select_coders.trigger('change')
+                    }
+                }
+                if (data.with_first_accepted) {
+                    $with_first_accepted.bootstrapToggle('on')
+                }
+                if (data.top_n) {
+                    $top_n.val(data.top_n)
+                }
+                if (data.method) {
+                    $select_method.select2('trigger', 'select', {data: data.method})
+                }
+            }
+
+            $('.bootbox-confirm').scrollTop(0)
         })
-        $('.bootbox.modal').removeAttr('tabindex')
     }
 
     $('#add-subscription').click(process_subscription)

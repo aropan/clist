@@ -629,7 +629,7 @@ $(function() {
   $('#filter-collapse').on('hidden.bs.collapse', () => { $(window).trigger('resize') })
 })
 
-function delete_on_duplicate() {
+function delete_on_duplicate(with_starred = false) {
   var elements = $('[data-delete-on-duplicate]')
   var lasts = {}
   var stops = {}
@@ -646,6 +646,17 @@ function delete_on_duplicate() {
         stops[id] = true
       }
       lasts[id] = $el
+      if (with_starred) {
+        $el.addClass('starred')
+        var $show_more_el = $el.next()
+        if ($show_more_el && $show_more_el.hasClass('endless_container')) {
+          $el.before($show_more_el)
+          $el.before($('<script/>'))
+        }
+      }
+    }
+    if (with_starred) {
+      restarred()
     }
   })
 }
@@ -804,8 +815,14 @@ function is_12_hour_clock() {
 
 $(() => {
   $('[data-init="select2"]').select2({theme: 'bootstrap', dropdownAutoWidth: true})
-})
 
+  $(document).on('select2:open', (e) => {
+    const search_field = document.querySelector('.select2-container--open .select2-search__field')
+    if (search_field) {
+      search_field.focus()
+    }
+  })
+})
 
 function show_extra(element) {
   var $element = $(element)
@@ -827,4 +844,27 @@ function show_field_to_select(event, element, field_id) {
   event.preventDefault()
   $field.select2('open')
   return false
+}
+
+
+/*
+ * Starred
+ */
+
+function restarred() {
+  var total_height = 0
+  var selector = '.starred'
+  var thead_height = $('#table-inner-scroll thead').height() || 0
+  var offset_height = 0
+  $(selector).each(function() {
+    total_height += $(this).height()
+  }).each(function() {
+    var el = $(this)
+    var selection = $.browser.firefox? el.find('td') : el
+    selection.css({
+      'top': offset_height + thead_height,
+      'bottom': total_height - offset_height - el.height(),
+    })
+    offset_height += el.height()
+  }).css('z-index', '')
 }

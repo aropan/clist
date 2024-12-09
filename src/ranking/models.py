@@ -30,6 +30,11 @@ from true_coders.models import Coder, Party
 AVATAR_RELPATH_FIELD = 'avatar_relpath_'
 
 
+class PriorityAccountManager(BaseManager):
+    def get_queryset(self):
+        return super().get_queryset().order_by('deleted', '-n_contests')
+
+
 class Account(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
@@ -55,6 +60,9 @@ class Account(BaseModel):
     try_renaming_check_time = models.DateTimeField(null=True, blank=True, default=None)
     try_fill_missed_ranks_time = models.DateTimeField(null=True, blank=True, default=None)
     rating_prediction = models.JSONField(default=None, null=True, blank=True)
+
+    objects = BaseManager()
+    priority_objects = PriorityAccountManager()
 
     def __str__(self):
         return 'Account#%d %s on %s' % (self.pk, str(self.key), str(self.resource_id))
@@ -640,8 +648,13 @@ class ParseStatistics(BaseModel):
 
     @staticmethod
     def relevant_contest():
-        contests = Contest.objects.filter(parsestatistics__isnull=False, end_time__gt=timezone.now())
+        contests = Contest.objects.filter(live_statistics__isnull=False, end_time__gt=timezone.now())
         return contests.order_by('end_time').first()
+
+    def create_for_contest(self, contest):
+        self.pk = None
+        self.contest = contest
+        self.save()
 
     def __str__(self):
         return f'ParseStatistics#{self.pk} contest#{self.contest_id}'

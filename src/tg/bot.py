@@ -350,6 +350,7 @@ class Bot(telegram.Bot):
             nonlocal aggregated_msg
             subscriptions = Subscription.objects.filter(coder=self.coder, method=method, contest__isnull=False)
             subscriptions = subscriptions.select_related('contest')
+            subscriptions = subscriptions.annotate(n_coders=SubqueryCount('coders'))
             subscriptions = subscriptions.annotate(n_accounts=SubqueryCount('accounts'))
             if subscriptions:
                 aggregated_msg = ''
@@ -357,9 +358,10 @@ class Bot(telegram.Bot):
                 for subscription in subscriptions:
                     contest = subscription.contest
                     message = (f'[{contest.title}]({md_url(contest.actual_url)}) `{contest.pk}` '
-                               f', {subscription.n_accounts} account(s)' +
-                               (f' + top {subscription.top_n}' if subscription.top_n else '') +
-                               (' + first ac' if subscription.with_first_accepted else ''))
+                               + (f', {subscription.n_accounts} account(s)' if subscription.n_accounts else '')
+                               + (f', {subscription.n_coders} coder(s)' if subscription.n_coders else '')
+                               + (f', top {subscription.top_n}' if subscription.top_n else '')
+                               + (', first ac' if subscription.with_first_accepted else ''))
                     yield from messaging(message)
                 yield aggregated_msg
 
@@ -739,6 +741,15 @@ class Bot(telegram.Bot):
             elif 'sender_chat' in data.get('channel_post', {}):
                 self.message = data['channel_post']
                 self.from_id = str(self.message['sender_chat']['id'])
+            elif data.get('inline_query'):
+                self.message = data['inline_query']
+                self.from_id = str(self.message['from']['id'])
+                self.message['is_inline_query'] = True
+                self.message['chat'] = {
+                    'id': self.message['from']['id'],
+                    'type': self.message['chat_type'],
+                }
+                return
             else:
                 return
 

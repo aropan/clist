@@ -429,7 +429,11 @@ class Statistic(BaseModule):
                             if response.status_code < 400 and response.headers.get('Content-Length', '0') != '0':
                                 info['avatar_url'] = src
 
-                    contest_addition_update_params = {'clear_rating_change': True, 'try_fill_missed_ranks': True}
+                    contest_addition_update_params = {
+                        'clear_rating_change': True,
+                        'try_fill_missed_ranks': True,
+                        'try_renaming_check': True,
+                    }
                     update = contest_addition_update_params.setdefault('update', {})
                     by = contest_addition_update_params.setdefault('by', ['key'])
                     prev_rating = None

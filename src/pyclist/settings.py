@@ -658,11 +658,14 @@ DEFAULT_COUNT_QUERY_ = 10
 DEFAULT_COUNT_LIMIT_ = 100
 
 ADDITION_HIDE_FIELDS_ = {'problems', 'solved', 'hack', 'challenges', 'url'}
+INSIVIBLE_CONTEST_KIND = 'hidden'
+STAGE_CONTEST_KIND = 'stage'
 PROBLEM_STATISTIC_FIELDS = (
     # problem_field, statistic_field, contest_field
     ('language', '_languages', 'languages'),
     ('verdict', '_verdicts', 'verdicts'),
 )
+PROBLEM_IGNORE_KINDS = {INSIVIBLE_CONTEST_KIND, STAGE_CONTEST_KIND}
 
 VIRTUAL_CODER_PREFIX_ = '∨'
 

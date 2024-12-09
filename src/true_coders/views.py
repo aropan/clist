@@ -201,19 +201,22 @@ def get_profile_context(request, statistics, writers, resources):
     statistics_fields = None
     has_rating_prediction_field = False
     if search_resource:
+        view_all_statistics_fields = request.user.has_perm('ranking.view_statistics_fields')
         fields_types = search_resource.statistics_fields.get('types', {})
         options = list(sorted(fields_types.keys()))
         fields = request.GET.getlist('field')
+        if view_all_statistics_fields:
+            for field in fields:
+                if field and field not in options:
+                    options.append(field)
         statistics_fields = {
-            'values': [
-                v for v in fields
-                if v and (v in options or request.user.has_perm('ranking.view_statistics_fields'))
-            ],
+            'values': [v for v in fields if v and v in options],
             'types': fields_types,
             'options': options,
             'noajax': True,
             'nogroupby': True,
             'nourl': True,
+            'allow_new': view_all_statistics_fields,
         }
         has_rating_prediction_field = any(is_rating_prediction_field(v) for v in statistics_fields['values'])
 
@@ -623,7 +626,7 @@ def _get_data_mixed_profile(request, query, is_team=False):
     else:
         statistics = Statistics.objects.filter(statistics_filter)
         writers = Contest.objects.filter(writers_filter).select_related('resource').order_by('-end_time', '-id')
-        accounts = Account.objects.filter(accounts_filter).order_by('-n_contests')
+        accounts = Account.priority_objects.filter(accounts_filter)
         if n_coder:
             coders = profiles if is_team else [coder]
             accounts = accounts.annotate(verified=Exists('verified_accounts', filter=Q(coder__in=coders)))
@@ -2675,6 +2678,11 @@ def accounts(request, template='accounts.html'):
         request.logger.error(f'Not found `{orderby}` column for sorting')
         orderby = []
     orderby = orderby if not orderby or isinstance(orderby, list) else [orderby]
+
+    if orderby:
+        context['row_number_field'] = orderby[0]
+        context['row_number_operator'] = '__gt' if order == 'desc' else '__lt'
+
     if order in ['asc', 'desc']:
         orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
     elif order:
@@ -2684,6 +2692,11 @@ def accounts(request, template='accounts.html'):
 
     context['accounts'] = accounts
     context['resources_custom_fields'] = custom_fields
+    context['with_table_inner_scroll'] = not request.user_agent.is_mobile
+
+    if coder and len(resources) == 1:
+        primary_account = Account.priority_objects.filter(resource=resource, coders=coder).first()
+        context['primary_account'] = primary_account
 
     return template, context
 

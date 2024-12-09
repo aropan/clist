@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kw):
         super(Command, self).__init__(*args, **kw)
-        self.logger = getLogger('clist.set_resources_acconts')
+        self.logger = getLogger('clist.set_resources_accounts')
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')

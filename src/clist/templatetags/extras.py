@@ -1136,7 +1136,7 @@ def title_field(value):
 
 @register.filter
 def title_field_div(value, split=False):
-    return mark_safe(''.join([f'<div>{f}</div>' for f in _title_field(value)]))
+    return mark_safe(''.join([f'<div>{f}</div>' for f in _title_field(value.strip('_'))]))
 
 
 def normalize_field(k):
@@ -1587,7 +1587,7 @@ def queryset_filter(qs, **kwargs):
 
 @register.simple_tag
 def coder_account_filter(queryset, entity, row_number_field=None, operator=None):
-    if entity is None:
+    if not entity:
         return []
     ret = queryset.filter(pk=entity.pk).annotate(delete_on_duplicate=Value(True))
     if row_number_field:
@@ -1595,6 +1595,8 @@ def coder_account_filter(queryset, entity, row_number_field=None, operator=None)
         if value is not None:
             row_number = queryset.filter(**{row_number_field + operator: value}).count() + 1
             ret = ret.annotate(row_number=Value(row_number))
+    else:
+        ret = ret.annotate(row_number=Value('—'))
     return ret
 
 
@@ -1829,7 +1831,6 @@ def get_id(value):
 def get_more_fields(more_fields):
     for field in more_fields:
         field = field.split('=')[0]
-        field = field.split('__')[0]
         yield field
 
 

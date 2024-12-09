@@ -260,6 +260,7 @@ class Command(BaseCommand):
         _tqdm.tqdm = tqdm
 
         now = timezone_now()
+        stage_delay = timedelta(days=1)
 
         contests = contests.select_related('resource__module')
 
@@ -301,12 +302,17 @@ class Command(BaseCommand):
                         start_time__lt=now - F('resource__module__long_contest_idle'),
                     )
                     after_start_query = after_start_limit_query | after_start_divider_query | long_contest_query
+                    in_range_contests = contests.filter(before_end_limit_query & after_start_query)
 
-                    query = before_end_limit_query & after_start_query
-                    in_range_contests = contests.filter(query)
+                    inherit_stage_query = Q(stage__isnull=True, info___inherit_stage=True, start_time__lt=now)
+                    inherit_contests = contests.filter(before_end_limit_query & inherit_stage_query)
 
-                    contests = Contest.objects.filter(Q(pk__in=parsed_contests) | Q(pk__in=in_range_contests))
-                    contests = contests.filter(stage__isnull=True)
+                    contests_query = (
+                        Q(pk__in=parsed_contests)
+                        | Q(pk__in=in_range_contests)
+                        | Q(pk__in=inherit_contests)
+                    )
+                    contests = Contest.objects.filter(contests_query).filter(stage__isnull=True)
                 contests = contests.filter(resource__module__enable=enabled)
             else:
                 contests = contests.filter(start_time__lt=now)
@@ -326,7 +332,7 @@ class Command(BaseCommand):
         if is_rated:
             contests = contests.filter(is_rated=True)
         if for_account:
-            contests = contests.filter(statistics__account__key=for_account)
+            contests = contests.filter(statistics__account__key=for_account, statistics__skip_in_stats=False)
 
         if limit:
             contests = contests.order_by(limit_order or '-end_time', '-id')[:limit]
@@ -397,6 +403,8 @@ class Command(BaseCommand):
             inherit_stage = contest.info.get('_inherit_stage')
             has_stage = hasattr(contest, 'stage')
             if not has_stage and inherit_stage:
+                contest.statistic_timing = now + stage_delay
+                contest.save(update_fields=['statistic_timing'])
                 call_command('inherit_stage', contest_id=contest.pk)
                 contest.refresh_from_db()
                 has_stage = hasattr(contest, 'stage')
@@ -422,6 +430,7 @@ class Command(BaseCommand):
                 is_coming = now < contest.start_time
                 is_archive_contest = (max(contest.created, contest.end_time) + timedelta(days=30) < now and
                                       contest.parsed_time)
+                is_fast_reparse = contest.parsed_time and now - contest.parsed_time < timedelta(minutes=5)
 
                 with_subscription = not without_subscriptions and not is_archive_contest and with_stats
                 prefetch_subscribed_coders = Prefetch('coders', queryset=Coder.objects.filter(n_subscribers__gt=0),
@@ -502,21 +511,32 @@ class Command(BaseCommand):
                                         result.pop(member)
 
                         keep_results = standings.pop('keep_results', False)
+                        skip_instead_update = standings.pop('keep_results_to_skip', False)
                         parsed_percentage = standings.pop('parsed_percentage', None)
-                        if keep_results:
+                        if keep_results or skip_instead_update:
                             reset_place = parsed_percentage and not contest.parsed_percentage
                             reset_place_ids = set()
                             result = standings.setdefault('result', {})
                             for member, row in statistics_by_key.items():
                                 if member in result:
                                     continue
-                                pk = more_statistics_by_key[member]['pk']
+                                more_stat = more_statistics_by_key[member]
+                                pk = more_stat['pk']
                                 if pk in statistics_to_delete:
                                     statistics_to_delete.remove(pk)
                                     row = copy.deepcopy(row)
                                     row['member'] = member
-                                    row['_skip_update'] = True
-                                    contest_log_counter['skip_update'] += 1
+                                    if skip_instead_update:
+                                        if more_stat['place']:
+                                            row['solving'] = more_stat['score']
+                                            row['_last_place'] = more_stat['place']
+                                            row['place'] = None
+                                            more_stat['place'] = None
+                                        row['_no_update_n_contests'] = True
+                                        contest_log_counter['skip_instead_update'] += 1
+                                    else:
+                                        row['_skip_update'] = True
+                                        contest_log_counter['skip_update'] += 1
                                     result[member] = row
                                     if reset_place:
                                         row.pop('place', None)
@@ -841,7 +861,7 @@ class Command(BaseCommand):
                             contest.save(update_fields=['standings_kind'])
 
                         if has_hidden and not contest.has_hidden_results and is_archive_contest:
-                            raise ExceptionParseStandings(f'archive contest = {contest} has hidden results')
+                            raise ExceptionParseStandings('archive contest has hidden results')
                         if has_hidden != contest.has_hidden_results and 'has_hidden_results' not in standings:
                             contest.has_hidden_results = has_hidden
                             contest.save(update_fields=['has_hidden_results'])
@@ -1211,7 +1231,8 @@ class Command(BaseCommand):
                                     contest.start_time <= now < contest.end_time and
                                     not get_item(resource, 'info.parse.no_calculate_time') and
                                     contest.full_duration < resource.module.long_contest_idle and
-                                    'penalty' in fields_set
+                                    'penalty' in fields_set and
+                                    is_fast_reparse
                                 )
 
                                 if not try_calculate_time:
@@ -1568,8 +1589,7 @@ class Command(BaseCommand):
 
                             if statistics_to_delete and not without_delete_statistics:
                                 if is_archive_contest and not allow_delete_statistics:
-                                    raise ExceptionParseStandings(f'archive contest = {contest} '
-                                                                  f'has statistics to delete')
+                                    raise ExceptionParseStandings('archive contest has statistics to delete')
                                 first = Statistics.objects.filter(pk__in=statistics_to_delete).first()
                                 if first:
                                     self.logger.info(f'First deleted: {first}, account = {first.account}')
@@ -1772,12 +1792,15 @@ class Command(BaseCommand):
                 if has_standings_result:
                     count += 1
                 parsed = True
+                event_status = EventStatus.COMPLETED
             except (ExceptionParseStandings, InitModuleException, ProxyLimitReached) as e:
+                event_status = EventStatus.WARNING
                 if with_reparse and isinstance(e, ExceptionParseStandings):
                     contest.statistics_update_done()
                 exception_error = str(e)
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
+                event_status = EventStatus.FAILED
                 exception_error = str(e)
                 error_counter[str(e)] += 1
                 self.logger.debug(colored_format_exc())
@@ -1816,13 +1839,10 @@ class Command(BaseCommand):
                             contest_log_counter['stage'] += 1
                             stages_ids.append(stage.pk)
 
-            status = EventStatus.COMPLETED if parsed else EventStatus.FAILED
             messages = []
-            if exception_error:
-                messages += [f'exception error = {exception_error}']
             if contest_log_counter:
                 messages += [f'log_counter = {dict(contest_log_counter)}']
-            event_log.update_status(status=status, message='\n\n'.join(messages))
+            event_log.update(status=event_status, message='\n\n'.join(messages), error=exception_error)
             if specific_users:
                 event_log.delete()
             self.logger.info(f'log_counter = {dict(contest_log_counter)}')
@@ -1844,6 +1864,8 @@ class Command(BaseCommand):
                                                         related=stage,
                                                         status=EventStatus.IN_PROGRESS)
                     channel_layer_handler.set_contest(stage.contest)
+                    stage.contest.statistic_timing = now + stage_delay
+                    stage.contest.save(update_fields=['statistic_timing'])
                     update_stage(stage)
                     channel_layer_handler.send_done(done=True)
                     event_log.update_status(EventStatus.COMPLETED)

@@ -7,9 +7,10 @@ from pyclist.admin import BaseModelAdmin, admin_register
 
 @admin_register(EventLog)
 class EventLogAdmin(BaseModelAdmin):
-    list_display = ['id', 'related_object_link', 'name', 'status', 'message', 'created', 'elapsed', 'environment']
+    list_display = ['id', 'related_object_link', 'name', 'status', 'message', 'error', 'created', 'elapsed',
+                    'environment']
     list_filter = ['environment', 'name', 'status', 'resource']
-    search_fields = ['contest__title', 'contest__host', 'resource__host', 'name', 'message']
+    search_fields = ['contest__title', 'contest__host', 'resource__host', 'name', 'message', 'error']
     search_entirely = True
 
     def related_object_link(self, obj):

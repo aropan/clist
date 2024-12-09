@@ -257,7 +257,7 @@ class Statistic(BaseModule):
                     elif 'table__header_type_penalty' in v.attrs['class']:
                         row['penalty'] = int(v.value) if re.match('^-?[0-9]+$', v.value) else v.value
                     elif 'table__header_type_score' in v.attrs['class']:
-                        row['solving'] = float(v.value.replace(',', ''))
+                        row['solving'] = as_number(v.value.replace(',', ''))
                 if has_solved:
                     row['solved'] = {'solving': solved}
                 if not problems:
