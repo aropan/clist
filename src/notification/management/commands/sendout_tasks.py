@@ -227,6 +227,10 @@ class Command(BaseCommand):
         deleted = 0
         for is_email_iteration in range(2):
             for task in tqdm.tqdm(qs, 'sending'):
+                if task.notification is None:
+                    if task.id:
+                        task.delete()
+                    continue
                 is_email = task.notification.method == settings.NOTIFICATION_CONF.EMAIL
                 if is_email_iteration != is_email:
                     continue

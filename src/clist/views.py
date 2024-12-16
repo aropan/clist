@@ -1,3 +1,4 @@
+import logging
 import re
 from collections import OrderedDict
 from copy import deepcopy
@@ -9,6 +10,7 @@ import arrow
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.core.management.commands import dumpdata
 from django.db import transaction
 from django.db.models import Avg, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Prefetch, Q, Subquery
@@ -189,33 +191,30 @@ def get_events(request):
     elif status == 'running':
         contests = contests.filter(start_time__lte=now, end_time__gte=now)
 
-    try:
-        result = []
-        for contest in contests.filter(query):
-            color = contest.resource.color
-            if past_action not in ['show', 'hide'] and contest.end_time < now:
-                color = contest.resource.info.get('get_events', {}).get('colors', {}).get(past_action, color)
+    result = []
+    for contest in contests.filter(query):
+        color = contest.resource.color
+        if past_action not in ['show', 'hide'] and contest.end_time < now:
+            color = contest.resource.info.get('get_events', {}).get('colors', {}).get(past_action, color)
 
-            start_time = (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S")
-            end_time = (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S")
-            c = {
-                'id': contest.pk,
-                'title': contest.title,
-                'host': contest.host,
-                'url': contest.actual_url,
-                'start': start_time,
-                'end': end_time,
-                'countdown': contest.next_time_to(now),
-                'hr_duration': contest.hr_duration,
-                'color': color,
-                'icon': contest.resource.icon,
-                'allDay': contest.full_duration >= timedelta(days=1),
-            }
-            if coder:
-                c['favorite'] = contest.is_favorite
-            result.append(c)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, safe=False, status=400)
+        start_time = (contest.start_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S")
+        end_time = (contest.end_time + timedelta(minutes=offset)).strftime("%Y-%m-%dT%H:%M:%S")
+        c = {
+            'id': contest.pk,
+            'title': contest.title,
+            'host': contest.host,
+            'url': contest.actual_url,
+            'start': start_time,
+            'end': end_time,
+            'countdown': contest.next_time_to(now),
+            'hr_duration': contest.hr_duration,
+            'color': color,
+            'icon': contest.resource.icon,
+            'allDay': contest.full_duration >= timedelta(days=1),
+        }
+        if coder:
+            c['favorite'] = contest.is_favorite
+        result.append(c)
     return JsonResponse(result, safe=False)
 
 
@@ -993,6 +992,16 @@ def update_problems(contest, problems=None, force=False):
             break
         old_problem_ids.remove(opt_old_problem.id)
         opt_old_problem.contest = opt_new_problem.contest
+
+        # FIXME: 'GenericRelation' object has no attribute 'field'
+        for activity in opt_old_problem.activities.all():
+            try:
+                activity.object_id = opt_new_problem.id
+                activity.validate_unique()
+            except ValidationError as e:
+                logging.warning(f'ValidationError: {e}')
+                activity.delete()
+
         MergedModelInstance.create(opt_new_problem, [opt_old_problem])
         opt_old_problem.delete()
 

@@ -44,6 +44,8 @@
 
     {% include "resource_filter.html" with groupby=False disabled=disable_switches %}
 
+    {% include "field_to_input.html" with field="n_advanced" default=standings_options.n_highlight type="number" %}
+
     {% if not request.user.is_authenticated %}
     <input type="hidden" name="detail" value="{% if with_detail %}true{% else %}false{% endif %}"/>
     {% endif %}
@@ -52,6 +54,17 @@
         {% icon_to 'detail_info' default='Detail' %}
       </button>
     </div>
+
+    {% if contest.upload_solved_problems_solutions %}
+    {% if not request.user.is_authenticated %}
+    <input type="hidden" name="solution" value="{% if with_solution %}true{% else %}false{% endif %}"/>
+    {% endif %}
+    <div class="input-group input-group-sm">
+      <button class="btn btn-default btn-sm{% if with_solution %} active{% endif %}" name="solution" value="{% if with_solution %}false{% else %}true{% endif %}"{% if disable_switches %} disabled{% endif %}>
+        {% icon_to 'solution_info' default='Solution' %}
+      </button>
+    </div>
+    {% endif %}
 
     {% with find_me=request.GET.find_me|toint %}
     {% if find_me or params.find_me %}

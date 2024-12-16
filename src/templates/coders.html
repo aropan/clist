@@ -12,9 +12,10 @@
 <div class="col-xl-10 col-xl-offset-1">
   {% include "filter_collapse.html" with include_filter="coders_filters.html" %}
 
-  <script>configure_pagination()</script>
-  <div id="coders" class="panel panel-default table-responsive">
-    <table class="table table-hover table-striped table-float-head">
+  <script>configure_pagination(true)</script>
+  <div id="coders">
+  <div{% if with_table_inner_scroll %} id="table-inner-scroll"{% endif %} class="panel panel-default{% if not with_table_inner_scroll %} table-responsive{% endif %} {{ request.user_agent.browser.family|lower }}">
+    <table class="table table-border-collapse-separate table-hover table-striped{% if not with_table_inner_scroll %} table-float-head{% endif %}">
       <thead>
         <tr>
           <th class="no-stretch">#</th>
@@ -60,6 +61,7 @@
         {% include page_template %}
       </tbody>
     </table>
+  </div>
   </div>
 </div>
 

@@ -76,6 +76,12 @@ tr:hover .edit-active-switcher, .edit-active-switcher:hover {
   background: #d0e3f7 !important;
 }
 
+.standings td.blurred-text,
+.standings td.blurred-text a {
+  color: #888 !important;
+  background: inherit !important;
+}
+
 .standings .gold-medal-percentage {
   fill: #f9d923 !important;
   stroke: #f9d923 !important;
@@ -407,4 +413,52 @@ table.standings.table-merge-problems th {
   border-radius: 50%;
   background: white;
   box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+
+/*
+ * upload solution
+ */
+
+
+.drop-zone {
+  position: relative;
+}
+
+.drop-zone::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px dashed transparent;
+  pointer-events: none;
+}
+
+.drop-zone.dragover::after {
+  border-color: magenta;
+}
+
+.drop-zone.uploading::after {
+  border-color: magenta;
+  animation: dash_compress 1.5s infinite linear;
+}
+
+@keyframes dash_compress {
+  0%, 100% { border-width: 2px; }
+  50% { border-width: 8px; }
+}
+
+
+/*
+ * first_u_cell
+ */
+
+.standings td a.out-of-quota {
+  color: #ccc !important;
+}
+
+.standings.intermediate .first-u-cell .small {
+  display: none;
 }

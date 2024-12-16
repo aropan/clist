@@ -1353,13 +1353,12 @@ def rating_from_probability(b, p, min_rating=0, max_rating=5000):
 
 
 @register.simple_tag
-def icon_to(value, default=None, icons=None, html_class=None, **kwargs):
+def icon_to(value, default=None, icons=None, html_class=None, inner='', **kwargs):
     icons = icons or settings.FONTAWESOME_ICONS_
     if default is None:
         default = value.title().replace('_', ' ')
     if value in icons:
         value = icons[value]
-        inner = ''
         params = kwargs
         if isinstance(value, dict):
             params = deepcopy(value)
@@ -1374,15 +1373,14 @@ def icon_to(value, default=None, icons=None, html_class=None, **kwargs):
             html_class = params['class']
         if 'title' in params:
             default = params['title']
-
-        if default:
-            inner += f' title="{default}" data-toggle="tooltip"'
-        if html_class:
-            inner += f' class="{html_class}"'
-        ret = f'<span{inner}>{value}</span>'
-        return mark_safe(ret)
     else:
-        return default
+        value = title_field(value)
+    if default:
+        inner += f' title="{default}" data-toggle="tooltip"'
+    if html_class:
+        inner += f' class="{html_class}"'
+    ret = f'<span{inner}>{value}</span>'
+    return mark_safe(ret)
 
 
 @register.simple_tag(takes_context=True)
@@ -1591,7 +1589,10 @@ def coder_account_filter(queryset, entity, row_number_field=None, operator=None)
         return []
     ret = queryset.filter(pk=entity.pk).annotate(delete_on_duplicate=Value(True))
     if row_number_field:
-        value = getattr(entity, row_number_field)
+        if hasattr(entity, row_number_field):
+            value = getattr(entity, row_number_field)
+        else:
+            value = queryset.filter(pk=entity.pk).values_list(row_number_field, flat=True).first()
         if value is not None:
             row_number = queryset.filter(**{row_number_field + operator: value}).count() + 1
             ret = ret.annotate(row_number=Value(row_number))
@@ -1612,6 +1613,13 @@ def accounts_split(value):
 
 @register.filter
 def is_yes(value):
+    return str(value).lower() in settings.YES_
+
+
+@register.filter
+def is_optional_yes(value):
+    if value is None:
+        return None
     return str(value).lower() in settings.YES_
 
 

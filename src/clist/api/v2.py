@@ -2,6 +2,7 @@ import json
 import re
 
 import arrow
+from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import CharField, IntegerField, JSONField, Value
 from django.db.models.constants import LOOKUP_SEP
@@ -352,7 +353,7 @@ class StatisticsResource(BaseModelResource):
                 for k in list(problem.keys()):
                     if k.startswith('_'):
                         problem.pop(k, None)
-                for k in 'solution', 'external_solution':
+                for k in settings.PROBLEM_API_IGNORE_FIELD:
                     problem.pop(k, None)
 
         more_fields = bundle.data['more_fields']

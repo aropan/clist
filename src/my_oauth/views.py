@@ -317,7 +317,7 @@ def services_dumpdata(request):
 
 def form(request, uuid):
     form = get_object_or_404(Form.objects, pk=uuid)
-    token_id = request.session.get('form_token_id', None)
+    token_id = request.session.pop('form_token_id', None)
     token = Token.objects.filter(pk=token_id).first() if token_id else None
 
     if form.is_closed():

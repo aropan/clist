@@ -45,6 +45,9 @@
   score_precision = {{ contest.info.standings.score_precision|default:"undefined" }}
   unfreezing = false
   unspecified_place = '{{ unspecified_place }}'
+
+  n_highlight = {{ standings_options.n_highlight|default:"undefined" }}
+  problem_user_solution_size_limit = {{ problem_user_solution_size_limit|default:"undefined" }}
 </script>
 
 {% endblock %}
@@ -113,6 +116,10 @@
 
       {% if contest.n_problems is not None %}
       <a href="{% url 'clist:problems' %}?contest={{ contest.pk }}" class="badge progress-bar-info">{% icon_to 'problems' %}</a>
+      {% endif %}
+
+      {% if contest.n_statistics %}
+      <a href="{% url 'coder:accounts' %}?contest={{ contest.pk }}" class="badge progress-bar-info">{% icon_to 'participants' %}</a>
       {% endif %}
 
       {% call_method contest.merging_contests 'values_list' 'id' flat=True as merging_contests_ids %}

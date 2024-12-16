@@ -3,7 +3,7 @@
   {% with stat=addition.problems|get_item:key %}
   {% with with_first=params.division|pass_arg:problem|allow_first:stat %}
   <{{ tag }}
-    class="problem-cell{% if stat %} problem-cell-stat{% if '_class' in stat %} {{ stat|get_item:"_class" }}{% elif with_first and stat.first_ac_of_all %} first-ac-of-all{% elif with_first and stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}"
+  class="problem-cell{% if stat %} problem-cell-stat{% if '_class' in stat %} {{ stat|get_item:"_class" }}{% elif with_first and stat.first_ac_of_all %} first-ac-of-all{% elif with_first and stat.first_ac %} first-ac{% elif stat.max_score %} max-score{% endif %}{% endif %}{% if hide_problems|contains:key and stat and not statistic.my_stat %} blurred-text{% endif %}{% if statistic.my_stat and with_solution and stat %} drop-zone{% endif %}"
     {% if stat %}
     data-score="{% if not problem.full_score or not stat.binary and not stat.result|slice:":1" == "+" %}{{ stat.result }}{% else %}{{ problem.full_score }}{% endif %}"
     data-result="{{ stat.result }}"

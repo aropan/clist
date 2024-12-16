@@ -629,23 +629,29 @@ $(function() {
   $('#filter-collapse').on('hidden.bs.collapse', () => { $(window).trigger('resize') })
 })
 
+var delete_on_duplicate_lasts = {}
+
 function delete_on_duplicate(with_starred = false) {
   var elements = $('[data-delete-on-duplicate]')
-  var lasts = {}
+  var lasts = delete_on_duplicate_lasts
   var stops = {}
   elements.each(function(index) {
+    if (!this.isConnected) {
+      return;
+    }
     var $el = $(this)
     var id = $el.attr('data-delete-on-duplicate')
     if (id in stops) {
       $el.remove()
     } else {
-      if (id in lasts) {
+      if (id in lasts && !lasts[id].is($el)) {
         lasts[id].remove()
       }
       if ($el.attr('data-delete-on-duplicate-stop')) {
         stops[id] = true
+      } else {
+        lasts[id] = $el
       }
-      lasts[id] = $el
       if (with_starred) {
         $el.addClass('starred')
         var $show_more_el = $el.next()
@@ -716,8 +722,11 @@ function coders_select(id, submit) {
 }
 
 
-function escape_html(str) {
-  return str.replace(/&/g, '&amp;')  // First, escape ampersands
+function escape_html(val) {
+  if (typeof val !== 'string') {
+    return val
+  }
+  return val.replace(/&/g, '&amp;')  // First, escape ampersands
             .replace(/"/g, '&quot;') // then double-quotes
             .replace(/'/g, '&#39;')  // and single quotes
             .replace(/</g, '&lt;')   // and less-than signs
@@ -846,6 +855,15 @@ function show_field_to_select(event, element, field_id) {
   return false
 }
 
+function show_field_to_input(event, element, field_id) {
+  $(element).closest('.input-group').remove()
+  $field = $('#' + field_id)
+  $field.prop('disabled', false)
+  $field.closest('.field-to-input').removeClass('hidden')
+  clear_tooltip()
+  event.preventDefault()
+  return false
+}
 
 /*
  * Starred
@@ -856,14 +874,16 @@ function restarred() {
   var selector = '.starred'
   var thead_height = $('#table-inner-scroll thead').height() || 0
   var offset_height = 0
+  var total_count = 0
   $(selector).each(function() {
     total_height += $(this).height()
-  }).each(function() {
+    total_count += 1
+  }).each(function(index) {
     var el = $(this)
     var selection = $.browser.firefox? el.find('td') : el
     selection.css({
-      'top': offset_height + thead_height,
-      'bottom': total_height - offset_height - el.height(),
+      'top': offset_height + thead_height - index,
+      'bottom': total_height - offset_height - el.height() - (total_count - index + 1),
     })
     offset_height += el.height()
   }).css('z-index', '')

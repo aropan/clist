@@ -46,27 +46,31 @@ data-place="{{ place }}"
   {% with info=participants_info|get_item:statistic.id %}
   <{{ tag }} class="first-u-cell sticky-column" data-sticky-column="first-u-cell">
     {% if info.search %}
-      {% if data_1st_u.field %}
-      <a href="{{ request.path }}?{% query_transform request data_1st_u.field statistic.addition|get_item:data_1st_u.field %}">
-      {% else %}
-      <a href="{{ request.path }}?{% query_transform request search=info.search %}">
-      {% endif %}
+      <a
+        {% if info.out_of_highlight %} class="out-of-quota"{% endif %}
+        {% if data_1st_u.field %}
+        href="{{ request.path }}?{% query_transform request data_1st_u.field statistic.addition|get_item:data_1st_u.field %}"
+        {% else %}
+        href="{{ request.path }}?{% query_transform request search=info.search %}"
+        {% endif %}
+        {% if info.first_u_key %} data-first-u-key="{{ info.first_u_key }}" data-first-u-quota="{{ info.first_u_quota }}"{% endif %}
+      >
       {% if info.n %}
       <div>{% if info.prefix %}{{ info.prefix }}{% endif %}{{ info.n }}{% if info.q %} ({{ info.q }}){% endif %}</div>
       {% endif %}
-      {% if with_detail or not info.n %}{% if info.t_solving is not None %}
-      <small class="text-muted">
-        {{ info.t_solving|scoreformat }}{% if info.t_penalty is not None %}<span class="text-{% if info.t_penalty >= 0 %}success{% else %}danger{% endif %}">{% if info.t_penalty >= 0 %}+{% endif %}{{ info.t_penalty }}{% endif %}</span>
-      </small>
-      {% endif %}{% endif %}
       </a>
+      {% if with_detail or not info.n %}{% if info.out_of_highlight %}
+      <div class="small">
+        {{ info.t_solving|scoreformat }}{% if info.t_penalty is not None %}<span class="text-{% if info.t_penalty >= 0 %}success{% else %}danger{% endif %}">{% if info.t_penalty >= 0 %}+{% endif %}{{ info.t_penalty }}{% endif %}</span>
+      </div>
+      {% endif %}{% endif %}
     {% endif %}
   </{{ tag }}>
   {% endwith %}
   {% endif %}
   <{{ tag }} class="handle-cell sticky-column
     {% with info=participants_info|get_item:statistic.id %}
-    {% if info and info.n and info.n <= standings_options.n_highlight or info and info.highlight %}bg-success{% endif %}
+    {% if info and info.n and not info.out_of_highlight and info.n <= standings_options.n_highlight or info and info.highlight %}bg-success{% endif %}
     {% endwith %}
   " data-sticky-column="handle-cell">
     <div class="handle-cell-flex">

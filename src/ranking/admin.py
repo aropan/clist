@@ -123,7 +123,7 @@ class AutoRatingAdmin(BaseModelAdmin):
 class StatisticsAdmin(BaseModelAdmin):
     list_display = ['account', 'contest', 'place', 'solving', 'upsolving', '_skip', '_adv']
     search_fields = ['=account__key']
-    list_filter = ['contest__host', 'skip_in_stats']
+    list_filter = ['skip_in_stats']
 
     def get_readonly_fields(self, *args, **kwargs):
         return ['last_activity'] + super().get_readonly_fields(*args, **kwargs)
@@ -220,9 +220,9 @@ class AccountMatchingAdmin(BaseModelAdmin):
 
 @admin_register(ParseStatistics)
 class ParseStatisticsAdmin(BaseModelAdmin):
-    list_display = ['contest', 'enable', 'delay', 'created', 'modified']
-    search_fields = ['contest__title', 'contest__host']
-    list_filter = ['contest__host']
+    list_display = ['enable', 'delay', 'contest__start_time', 'contest', 'created', 'modified']
+    search_fields = ['contest__title', 'contest__host', 'contest__resource__host']
+    list_filter = ['contest__resource']
 
     def get_readonly_fields(self, *args, **kwargs):
         return ['parse_time'] + super().get_readonly_fields(*args, **kwargs)

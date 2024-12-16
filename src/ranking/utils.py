@@ -568,7 +568,7 @@ def update_stage(self):
                     problems_infos[problem_info_key]['n_total'] += 1
                 rank = stat.place_as_int
                 score = None
-                if placing:
+                if stage_placing:
                     placing_scores = _get_placing(placing, stat)
                     score_rank = 'zero' if stat.solving < eps else str(rank)
                     score = placing_scores.get(score_rank, placing_scores.get('default'))

@@ -4,6 +4,7 @@
 import logging
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils import timezone
 
 from clist.models import Contest, Promotion, Resource
@@ -13,11 +14,15 @@ from utils.attrdict import AttrDict
 class Command(BaseCommand):
     help = 'Detect major contests'
 
+    def __init__(self, *args, **kwargs):
+        super(Command, self).__init__(*args, **kwargs)
+        self.logger = logging.getLogger('ranking.detect.major_contests')
+
     def add_arguments(self, parser):
         parser.add_argument('-n', '--dryrun', action='store_true', default=False)
         parser.add_argument('-r', '--resources', nargs='*', default=[])
-        self.logger = logging.getLogger('ranking.detect.major_contests')
 
+    @transaction.atomic()
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)

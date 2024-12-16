@@ -1,4 +1,4 @@
 {% if entry.delete_on_duplicate or entry == primary %}
 {% if not entry.delete_on_duplicate %}data-delete-on-duplicate-stop="true"{% endif %}
-data-delete-on-duplicate="{{ name }}-{{ entry.pk }}"
+data-delete-on-duplicate="delete-on-duplicate-{{ name }}-{{ entry.pk }}"
 {% endif %}

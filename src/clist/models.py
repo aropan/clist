@@ -517,7 +517,7 @@ class Contest(BaseModel):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, db_index=True)
-    was_auto_added = models.BooleanField(default=False)
+    is_auto_added = models.BooleanField(default=False)
     auto_updated = models.DateTimeField(auto_now_add=True)
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='contest')
@@ -527,6 +527,9 @@ class Contest(BaseModel):
     has_submissions_tests = models.BooleanField(default=None, null=True, blank=True, db_index=True)
 
     is_promoted = models.BooleanField(default=None, null=True, blank=True, db_index=True)
+
+    hide_unsolved_standings_problems = models.BooleanField(default=None, null=True, blank=True)
+    upload_solved_problems_solutions = models.BooleanField(default=None, null=True, blank=True)
 
     objects = BaseContestManager()
     visible = VisibleContestManager()
@@ -1206,7 +1209,7 @@ class PromotionTimeAttribute(models.TextChoices):
 
 
 class Promotion(BaseModel):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=200)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
     timer_message = models.CharField(max_length=200, null=True, blank=True)
     time_attribute = models.CharField(max_length=50, choices=PromotionTimeAttribute.choices)

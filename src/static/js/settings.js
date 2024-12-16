@@ -759,16 +759,16 @@ $(function() {
         descriptions = JSON.parse($(this).attr('data-descriptions') || "[]")
 
         var category_select = '<option></option>'
-        CATEGORIES.forEach(el => { category_select += '<option value="' + el['id'] + '"' + (category == el['id']? ' selected' : '') + '>' + el['text'] + '</option>' })
+        CATEGORIES.forEach(el => { category_select += '<option value="' + escape_html(el['id']) + '"' + (category == el['id']? ' selected' : '') + '>' + escape_html(el['text']) + '</option>' })
 
         var resources_select = ''
-        RESOURCES.forEach(el => { resources_select += '<option value="' + el['id'] + '"' + ($.inArray(parseInt(el['id']), resources) !== -1? ' selected' : '') + '>' + el['text'] + '</option>' })
+        RESOURCES.forEach(el => { resources_select += '<option value="' + escape_html(el['id']) + '"' + ($.inArray(parseInt(el['id']), resources) !== -1? ' selected' : '') + '>' + escape_html(el['text']) + '</option>' })
 
         var descriptions_select_after = ''
         var descriptions_options = {}
         EVENT_DESCRIPTIONS.forEach(el => {
             var has = $.inArray(parseInt(el['id']), descriptions) !== -1
-            var option = '<option value="' + el['id'] + '"' + (has? ' selected' : '') + '>' + el['text'] + '</option>'
+            var option = '<option value="' + escape_html(el['id']) + '"' + (has? ' selected' : '') + '>' + escape_html(el['text']) + '</option>'
             if (has) {
                 descriptions_options[el['id']] = option
             } else {
@@ -1390,7 +1390,7 @@ $(function() {
             },
             success: function(data) {
                 if (data.message == 'add') {
-                    window.location.replace(ACCOUNTS_TAB_URL + '?resource=' + $search_resource.val())
+                    window.location.replace(ACCOUNTS_TAB_URL + '?resource=' + encodeURIComponent($search_resource.val()))
                     return
                 }
 

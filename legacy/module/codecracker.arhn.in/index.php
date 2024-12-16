@@ -3,7 +3,7 @@
 
     $data = curlexec($URL, null, array("http_header" => array('content-type: application/json'), "json_output" => 1));
 
-    if (!is_array($data)) {
+    if (!is_array($data) || isset($data['error'])) {
         trigger_error('data = ' . json_encode($data), E_USER_WARNING);
         return;
     }

@@ -14,6 +14,7 @@ services:
       - shared_files:/usr/src/clist/sharedfiles/
       - ./logs/production:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
+      - ./logs/postgres/:/usr/src/clist/logs/postgres/
     depends_on:
       - db
       - memcached

@@ -264,6 +264,14 @@ class Coder(BaseModel):
     def subscription_n_limit(self):
         return self.get_limit('subscription_n', django_settings.CODER_SUBSCRIPTION_N_LIMIT_)
 
+    def update_or_get_setting(self, field, value):
+        if value is not None:
+            self.settings[field] = value
+            self.save(update_fields=['settings'])
+        else:
+            value = self.settings.get(field)
+        return value
+
 
 class CoderProblem(BaseModel):
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='verdicts')

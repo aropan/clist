@@ -14,6 +14,7 @@ class NotificationAdmin(BaseModelAdmin):
 @admin_register(Subscription)
 class SubscriptionAdmin(BaseModelAdmin):
     list_display = ['coder', 'method', 'enable', 'n_accounts', 'n_coders',
+                    'top_n', '_with_first_accepted',
                     'resource', 'contest', 'coder_list', 'coder_chat']
     list_filter = ['enable', 'method']
     search_fields = ['coder__username', 'accounts__key', 'coders__username']
@@ -23,6 +24,11 @@ class SubscriptionAdmin(BaseModelAdmin):
 
     def n_coders(self, obj):
         return obj.n_coders
+
+    def _with_first_accepted(self, obj):
+        return bool(obj.with_first_accepted)
+    _with_first_accepted.boolean = True
+    _with_first_accepted.short_description = 'AC'
 
     def get_queryset(self, request):
         ret = super().get_queryset(request)

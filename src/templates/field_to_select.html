@@ -9,10 +9,11 @@
   {% endwith %}
 {% endif %}
 
+{% with capitalized_field=data.title|default:field|capitalize_field %}
 {% if collapse %}
 <div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-select">
   <button class="btn{% if not nosmall %} btn-sm{% endif %} btn-default" onclick="show_field_to_select(event, this, '{{ field }}')">
-    {% icon_to data.icon|default:field data.title|default:field|capitalize_field|add:" selection" %}
+    {% icon_to data.icon|default:field capitalized_field|add:" selection" %}
   </button>
 </div>
 {% endif %}
@@ -33,24 +34,17 @@
   </div>
   {% elif data.nogroupby %}
   <span class="input-group-addon">
-    {% if data.icon is False %}
-      {{ data.title|default:field|capitalize_field }}
-    {% else %}
-      {% icon_to data.icon|default:field data.title|default:field|capitalize_field %}
-    {% endif %}
+    {% icon_to data.icon|default:field capitalized_field %}
   </span>
   {% else %}
   <div class="input-group-btn">
     <button class="btn btn-default{% if groupby == field %} active{% endif %}" name="groupby" value="{% if groupby != field %}{{ field }}{% endif %}">
-      {% if data.icon is False %}
-        {{ data.title|default:field|capitalize_field }}
-      {% else %}
-        {% icon_to data.icon|default:field data.title|default:field|capitalize_field %}
-      {% endif %}
+      {% icon_to data.icon|default:field "Group by "|add:capitalized_field %}
     </button>
   </div>
   {% endif %}
 {% endif %}
+{% endwith %}
 <select{% if not noname %} name="{{ data.field_name|default:field }}"{% endif %} id="{{ field }}"{% if data.with_update_url %} onchange="update_urls_params({'{{ field }}': $(this).val()})"{% elif not data.nosubmit %} onchange="this.form.submit()"{% endif %}{% if not data.nomultiply and values %} multiple{% endif %}{% if disabled or data.disabled or collapse %} disabled{% endif %}>
   {% if data.options is not None %}
     {% if not data.noempty %}<option></option>{% endif %}

@@ -7,6 +7,7 @@ verify_url = window.location.href
 </script>
 
 <div id="account-verification" class="col-md-offset-4 col-md-4 col-sm-offset-3 col-sm-6 col-xs-offset-2 col-xs-8">
+{% if account.resource.account_verification_fields %}
   <div class="panel panel-primary">
     <div class="panel-heading">Verification</div>
     <ol class="list-group">
@@ -29,5 +30,11 @@ verify_url = window.location.href
       </li>
     </ol>
   </div>
+{% else %}
+  <div class="alert alert-warning text-center" role="alert">
+    Automatic verification is not available.
+  </div>
+{% endif %}
 </div>
+
 {% endblock %}

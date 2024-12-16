@@ -8,6 +8,7 @@ from pprint import pprint
 
 from django.utils.timezone import now
 
+from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 from ranking.management.modules.nerc_itmo_helper import parse_xml
@@ -52,7 +53,7 @@ class Statistic(BaseModule):
             for k, v in r:
                 k = k.split()[0]
                 if k == 'Total' or k == '=':
-                    row['solving'] = int(v.value)
+                    row['solving'] = as_number(v.value)
                 elif len(k) <= 3:
                     problems_info[k] = {'short': k}
                     if 'title' in v.attrs:
@@ -75,7 +76,7 @@ class Statistic(BaseModule):
                         if len(first_ac):
                             p['first_ac'] = True
                 elif k == 'Time':
-                    row['penalty'] = int(v.value)
+                    row['penalty'] = as_number(v.value)
                 elif k.lower() in ['place', 'rank']:
                     row['place'] = v.value.strip('.')
                 elif 'team' in k.lower() or 'name' in k.lower():

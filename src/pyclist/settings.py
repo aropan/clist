@@ -666,6 +666,8 @@ PROBLEM_STATISTIC_FIELDS = (
     ('verdict', '_verdicts', 'verdicts'),
 )
 PROBLEM_IGNORE_KINDS = {INSIVIBLE_CONTEST_KIND, STAGE_CONTEST_KIND}
+PROBLEM_API_IGNORE_FIELDS = {'solution', 'external_solution', 'user_solution'}
+PROBLEM_USER_SOLUTION_SIZE_LIMIT = 65536
 
 VIRTUAL_CODER_PREFIX_ = '∨'
 
@@ -693,6 +695,7 @@ FONTAWESOME_ICONS_ = {
     'location': '<i class="fa-solid fa-location-dot"></i>',
     'chat': '<i class="fa-fw fas fa-user-friends"></i>',
     'advanced': '<i class="fa-fw far fa-check-circle"></i>',
+    'n_advanced': '<i class="fa-fw far fa-check-circle"></i>',
     'company': '<i class="fa-fw fas fa-building"></i>',
     'language': '<i class="fa-fw fas fa-code"></i>',
     'languages': '<i class="fa-fw fas fa-code"></i>',
@@ -710,6 +713,7 @@ FONTAWESOME_ICONS_ = {
     'find_me': '<i class="fa-fw fas fa-crosshairs"></i>',
     'search': '<i class="fa-fw fas fa-search"></i>',
     'detail_info': '<i class="fa-fw fas fa-info"></i>',
+    'solution_info': '<i class="fa-fw fa-regular fa-file-code"></i>',
     'short_info': '<i class="fa-fw fas fa-times"></i>',
     'score_in_row': '<i class="fa-fw fas fa-balance-scale"></i>',
     'luck': '<i class="fa-fw fas fa-dice"></i>',
@@ -726,6 +730,7 @@ FONTAWESOME_ICONS_ = {
     'coders': '<i class="fas fa-users"></i>',
     'accounts': '<i class="fa-regular fa-rectangle-list"></i>',
     'problems': '<i class="fa-solid fa-list-check"></i>',
+    'participants': '<i class="fas fa-users"></i>',
     'submissions': '<i class="fa-solid fa-bars"></i>',
     'versus': '<i class="fas fa-people-arrows"></i>',
     'last_activity': '<i class="fa-fw far fa-clock"></i>',
@@ -827,6 +832,8 @@ STANDINGS_FIELDS_ = {
     'n_bronze_problems': '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
 }
 
+STANDINGS_WITH_DETAIL_DEFAULT = True
+STANDINGS_WITH_SOLUTION_DEFAULT = False
 STANDINGS_SMALL_N_STATISTICS = 1000
 STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT = 0.2
 STANDINGS_UNSPECIFIED_PLACE = '-'

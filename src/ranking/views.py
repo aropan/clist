@@ -29,8 +29,9 @@ from sql_util.utils import Exists as SubqueryExists
 from clist.models import Contest, ContestSeries, Resource
 from clist.templatetags.extras import (allowed_redirect, as_number, format_time, get_country_name, get_item,
                                        get_problem_short, get_problem_title, get_standings_divisions_order,
-                                       has_update_statistics_permission, is_ip_field, is_private_field, is_reject,
-                                       is_solved, is_yes, redirect_login, time_in_seconds, timestamp_to_datetime)
+                                       has_update_statistics_permission, is_ip_field, is_optional_yes, is_private_field,
+                                       is_reject, is_solved, is_yes, redirect_login, time_in_seconds,
+                                       timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
@@ -293,6 +294,8 @@ def _standings_highlight(contest, statistics, options):
 
             info = participants_info.setdefault(s.id, {})
             info['search'] = rf'regex:^{k}'
+            info['first_u_key'] = k
+            info['first_u_quota'] = quota
 
             n_quota[k] = n_quota.get(k, 0) + 1
             if (n_quota[k] > quota or last_hl) and (not more or more['n'] >= more['n_highlight'] or more_last_hl):
@@ -302,7 +305,12 @@ def _standings_highlight(contest, statistics, options):
                 if (not p_info or more_last_hl and (-more_last_hl['solving'], more_last_hl['penalty']) > (-p_info['solving'], p_info['penalty'])):  # noqa
                     p_info = more_last_hl
 
+                if n_quota[k] <= quota:
+                    n_highlight += 1
+
                 info.update({
+                    'n': n_highlight,
+                    'out_of_highlight': True,
                     't_solving': p_info['solving'] - solving,
                     't_penalty': (
                         p_info['penalty'] - penalty - round((p_info['solving'] - solving) * contest_penalty_time)
@@ -973,16 +981,16 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         else:
             find_me = int(find_me)
 
-    with_detail = request.GET.get('detail', 'true') in ['true', 'on']
+    with_detail = is_optional_yes(request.GET.get('detail'))
+    with_solution = is_optional_yes(request.GET.get('solution'))
     if request.user.is_authenticated:
         coder = request.user.coder
-        if 'detail' in request.GET:
-            coder.settings['standings_with_detail'] = with_detail
-            coder.save()
-        else:
-            with_detail = coder.settings.get('standings_with_detail', False)
+        with_detail = coder.update_or_get_setting('standings_with_detail', with_detail)
+        with_solution = coder.update_or_get_setting('standings_with_solution', with_solution)
     else:
         coder = None
+        with_detail = with_detail if with_detail is not None else settings.STANDINGS_WITH_DETAIL_DEFAULT
+        with_solution = with_solution if with_solution is not None else settings.STANDINGS_WITH_SOLUTION_DEFAULT
 
     with_row_num = False
 
@@ -997,7 +1005,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     else:
         statistics = Statistics.objects.filter(contest=contest)
 
-    options = contest.info.get('standings', {})
+    options = copy.deepcopy(contest.info.get('standings', {}))
 
     per_page = 50 if contests_ids else contest.standings_per_page
     per_page_more = per_page if find_me else 200
@@ -1094,6 +1102,8 @@ def standings(request, contest, other_contests=None, template='standings.html', 
                 fields[v] = v
                 hidden_fields.append(v)
 
+    if (n_advanced := request.GET.get('n_advanced')) and n_advanced.isdigit() and 'n_highlight' in options:
+        options['n_highlight'] = int(n_advanced)
     n_highlight_context = _standings_highlight(contest, statistics, options) if not contests_ids else {}
 
     # field to select
@@ -1552,6 +1562,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         find_me_stat = None
 
     my_statistics = []
+    my_stat = None
     if groupby == 'none' and coder:
         statistics = statistics.annotate(my_stat=SubqueryExists('account__coders', filter=Q(coder=coder)))
         my_statistics = statistics.filter(account__coders=coder).extra(select={'floating': True})
@@ -1581,6 +1592,14 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     inner_scroll = not request.user_agent.is_mobile
     is_charts = is_yes(request.GET.get('charts'))
 
+    hide_problems = set()
+    if my_stat and contest.hide_unsolved_standings_problems and not contest.is_over():
+        my_stat_problems = my_stat.addition.get('problems', {})
+        for problem in problems:
+            short = get_problem_short(problem)
+            if not is_solved(my_stat_problems.get(short)):
+                hide_problems.add(short)
+
     context.update({
         'has_versus': has_versus,
         'versus_data': versus_data,
@@ -1602,8 +1621,10 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         'virtual_start_statistics': virtual_start.statistics() if with_virtual_start else None,
         'with_virtual_start': with_virtual_start,
         'problems': problems,
+        'hide_problems': hide_problems,
         'params': params,
         'settings_standings_fields': settings.STANDINGS_FIELDS_,
+        'problem_user_solution_size_limit': settings.PROBLEM_USER_SOLUTION_SIZE_LIMIT,
         'fields': fields,
         'fields_types': fields_types,
         'hidden_fields': hidden_fields,
@@ -1619,6 +1640,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         'fields_to_select': fields_to_select,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': with_detail,
+        'with_solution': with_solution,
         'groupby': groupby,
         'pie_limit_rows_groupby': 50,
         'labels_groupby': labels_groupby,
@@ -1743,9 +1765,8 @@ def solutions(request, sid, problem_key):
 @xframe_options_exempt
 def standings_action(request):
     user = request.user
-    error = None
     message = None
-
+    status, error = 200, None
     try:
         action = request.POST['action']
         if action == 'reset_contest_statistic_timing':
@@ -1756,16 +1777,16 @@ def standings_action(request):
                 contest.statistic_timing = None
                 contest.save()
             else:
-                error = 'Permission denied'
+                status, error = 403, 'Permission denied'
         else:
-            error = 'Unknown action'
-    except Exception as e:
-        error = str(e)
+            status, error = 400, 'Unknown action'
+    except Exception:
+        status, error = 500, 'Internal error'
     if error is not None:
         ret = {'status': 'error', 'message': error}
     else:
         ret = {'status': 'success', 'message': message}
-    return JsonResponse(ret)
+    return JsonResponse(ret, status=status)
 
 
 def get_versus_data(request, query, fields_to_select):

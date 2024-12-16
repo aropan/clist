@@ -360,7 +360,7 @@
             $db->query("DELETE FROM clist_contest WHERE $delete_update", true);
         }
 
-        $contest['was_auto_added'] = 1;
+        $contest['is_auto_added'] = 1;
         $contest['auto_updated'] = date("Y-m-d H:i:s");
 
         foreach ($contest as $field => $value)
@@ -423,7 +423,7 @@
             }
             $resources_filter .= "(resource_id = $resource_id AND $time_filter)";
         }
-        $query = "was_auto_added = true AND ($resources_filter)";
+        $query = "is_auto_added = true AND ($resources_filter)";
         $to_be_removed = $db->select("clist_contest", "*", $query);
         if ($to_be_removed) {
             $filename_log =  LOGREMOVEDDIR . date("Y-m-d_H-i-s", time()) . '.txt';

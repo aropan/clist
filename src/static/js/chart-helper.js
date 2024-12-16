@@ -642,7 +642,7 @@ function add_selection_chart_fields(resource_info, resource_rating_id, resource_
     }
     resource_fields.val(null).trigger('change')
     var resource_rating = $('#' + resource_rating_id)
-    var new_resource_rating_id = resource_rating_id + '_' + field
+    var new_resource_rating_id = escape_html(resource_rating_id + '_' + field)
     $('#' + new_resource_rating_id).remove()
     var div = $('<div></div>');
     div.append('<canvas id="' + new_resource_rating_id + '" height="75vh"></canvas>');

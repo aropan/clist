@@ -1280,6 +1280,7 @@ class Command(BaseCommand):
                                     previous_verdict = previous_problem.get('verdict')
                                     same_result = problem.get('result') == previous_problem.get('result')
                                     same_verdict = not verdict or not previous_verdict or verdict == previous_verdict
+                                    same_verdict |= is_solved(problem)
                                     if same_result and same_verdict:
                                         continue
                                     if not same_result and problem.get('first_ac'):

@@ -582,6 +582,13 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     $('table.standings').removeClass('unfreezing')
   }
 
+  var intermediate = !percentage_filled || (!unfreezing && freeze_duration) || with_virtual_start
+  if (intermediate) {
+    $('table.standings').addClass('intermediate')
+  } else {
+    $('table.standings').removeClass('intermediate')
+  }
+
   clear_starred_unfreezed()
   if (unfreeze_index != UNFREEZE_INDEX_UNDEF && scroll_to_element === null) {
     var target_index = Math.floor(unfreeze_index) + (percent_sign < 0? 1 : 0)
@@ -779,9 +786,6 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     PROBLEM_PROGRESS_STATS = problem_progress_stats
   }
 
-  var first = null
-  var last = null
-
   var table_inner_scroll = $('#table-inner-scroll')
   var scroll_object = table_inner_scroll.length? table_inner_scroll : $('html, body')
   var table_top = $('table.standings').parent().offset().top
@@ -798,7 +802,11 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
   rows.sort(cmp_row)
 
+  var first = null
+  var last = null
   var current_top = rows_top
+  var seen_first_u = new Map()
+  var n_first_u = 0
   rows.each((i, r) => {
     if (i == 0 || cmp_row(last, r) < 0) {
       if (first === null) {
@@ -818,6 +826,18 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
     var gap = (get_row_penalty(r) - get_row_penalty(first)) + (get_row_score(first) - get_row_score(r)) * current_time
     $r.find('>.gap-cell').attr('data-text', Math.round(gap / 60))
+
+    var first_u_cell = $r.find('>.first-u-cell >a[data-first-u-key]')
+    if (first_u_cell.length) {
+      var first_u_key = first_u_cell.attr('data-first-u-key')
+      var first_u_quota = first_u_cell.attr('data-first-u-quota')
+      seen_first_u.set(first_u_key, (seen_first_u.get(first_u_key) || 0) + 1)
+      var in_quota = seen_first_u.get(first_u_key) <= first_u_quota
+      n_first_u += in_quota
+      var class_func = in_quota && (!n_highlight || n_first_u <= n_highlight)? 'removeClass' : 'addClass'
+      first_u_cell[class_func]('out-of-quota')
+      first_u_cell.attr('data-text', n_first_u)
+    }
 
     var translation = $r.attr('data-offset') - current_top
     $r.removeAttr('data-offset')
@@ -843,14 +863,13 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   })
 
 
-  var toggle_hidden_selectors = ['.first-u-cell', 'table.standings td .trophy', 'table.standings .medal-percentange']
-  var with_hidden = percentage_filled && (unfreezing || !freeze_duration) && !with_virtual_start
+  var toggle_hidden_selectors = ['table.standings td .trophy', 'table.standings .medal-percentange']
   var toggle_hidden_selector = ''
   toggle_hidden_selectors.forEach((selector) => {
     if (toggle_hidden_selector) {
       toggle_hidden_selector += ','
     }
-    toggle_hidden_selector += selector + (with_hidden? '.hidden' : ':not(.hidden)')
+    toggle_hidden_selector += selector + (intermediate? ':not(.hidden)' : '.hidden')
   })
   if (toggle_hidden_selector) {
     var toggle_hidden_elements = $(toggle_hidden_selector)
@@ -861,6 +880,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
   rows.find('>.place-cell').each((i, e) => { $(e).text($(e).attr('data-text')) })
   rows.find('>.gap-cell').each((i, e) => { $(e).text($(e).attr('data-text')) })
+  rows.find('>.first-u-cell >a[data-text]').each((i, e) => { $(e).text($(e).attr('data-text')) })
 
   var delay_duration = duration / 2
   clearInterval(TRANSFORM_TIMER_ID)
@@ -1050,8 +1070,8 @@ function update_score_penalty_result(type) {
 
   if (type == 'switcher') {
     var edit_btn = '<span class="edit-active-switcher" onclick="edit_active_switcher_click(event, this)"><i class="fa-regular fa-pen-to-square"></i></span>'
-    var edit_score = '<span class="edit-score">' + score + '</span>'
-    var edit_penalty = '<span class="edit-penalty">' + penalty + '</span>'
+    var edit_score = '<span class="edit-score">' + escape_html(score) + '</span>'
+    var edit_penalty = '<span class="edit-penalty">' + escape_html(penalty) + '</span>'
     stat.prepend('<div class="swi">' + edit_score + edit_btn + '</div><small class="text-muted"><div>' + edit_penalty + '</div></small>')
   } else if (type == 'submission') {
     if (is_hidden(score)) {
@@ -1061,13 +1081,17 @@ function update_score_penalty_result(type) {
     } else {
       stat_class = 'rej'
     }
-    stat.prepend('<div class="' + stat_class + '">' + score + '</div><small class="text-muted"><div>' + penalty + '</div></small>')
+    stat.prepend('<div class="' + escape_html(stat_class) + '">' + escape_html(score) + '</div><small class="text-muted"><div>' + escape_html(penalty) + '</div></small>')
   }
 
   if (!stat.hasClass('problem-cell-stat')) {
     stat.addClass('problem-cell-stat')
     stat.addClass('problem-cell-stat-' + type)
   }
+}
+
+function n_switchers() {
+  return $(ERASE_SWITCHER_SELECTOR).length
 }
 
 function switcher_click(event) {
@@ -1160,7 +1184,7 @@ function switcher_click(event) {
     }
   }
 
-  $('#erase-switchers-timeline').prop('disabled', $(ERASE_SWITCHER_SELECTOR).length == 0)
+  $('#erase-switchers-timeline').prop('disabled', n_switchers() == 0)
   switcher_updated(stat)
   clear_tooltip()
 
@@ -1771,3 +1795,63 @@ $(() => {
     visible_standings()
   }
 })
+
+/*
+ * Upload solution
+ */
+
+$(() => {
+  $('.drop-zone').on('dragover', function (e) {
+    e.preventDefault()
+    e.stopPropagation()
+    $(this).addClass('dragover')
+  })
+
+  $('.drop-zone').on('dragleave', function (e) {
+    e.preventDefault()
+    e.stopPropagation()
+    $(this).removeClass('dragover')
+  })
+
+  $('.drop-zone').on('drop', function (e) {
+    e.preventDefault()
+    e.stopPropagation()
+    $(this).removeClass('dragover')
+
+    const files = e.originalEvent.dataTransfer.files
+    if (files.length > 1) {
+      $.notify('Only one file can be uploaded', 'warn')
+      return
+    }
+
+    if (!files.length) {
+      return
+    }
+    standings_upload_solution(files[0], $(this))
+  })
+
+  function standings_upload_solution(file, problem_cell) {
+    if (file.size > problem_user_solution_size_limit) {
+      $.notify('File is too large', 'warn')
+      return
+    }
+
+    const form_data = new FormData()
+    form_data.append('file', file)
+    form_data.append('pk', coder_pk)
+    form_data.append('problem-short', problem_cell.closest('.problem-cell').data('problem-key'))
+    form_data.append('statistic-id', problem_cell.closest('.stat-cell').data('statistic-id'))
+    form_data.append('name', 'standings-upload-solution')
+    $.ajax({
+      type: 'POST',
+      url: change_url,
+      processData: false,
+      contentType: false,
+      data: form_data,
+      beforeSend: function() { problem_cell.addClass('uploading') },
+      success: function(data) { $.notify(data.message, data.status), location.reload() },
+      error: log_ajax_error_callback,
+      complete: function() { problem_cell.removeClass('uploading') },
+    })
+  }
+});

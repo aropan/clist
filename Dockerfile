@@ -39,9 +39,7 @@ RUN wget https://github.com/stunnel/static-curl/releases/download/8.6.0-1/curl-l
     rm /tmp/curl.tar.xz
 
 # psql
-RUN apt install -y postgresql-client
-
-RUN apt update --fix-missing
+RUN apt update --fix-missing && apt install -y postgresql-client
 
 ENV APPDIR=/usr/src/clist
 WORKDIR $APPDIR
@@ -115,9 +113,9 @@ RUN apk add --no-cache --virtual .build-deps \
         zlib-dev \
         bash \
         util-linux \
-        gawk \
-    && cd /tmp \
-    && git clone https://github.com/reorg/pg_repack.git \
+        gawk
+RUN cd /tmp \
+    && git clone --depth 1 --branch ver_1.5.1 https://github.com/reorg/pg_repack.git \
     && cd pg_repack \
     && make \
     && make install \

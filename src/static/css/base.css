@@ -1031,3 +1031,20 @@ a[data-toggle="tooltip"][disabled],
 table.table-border-collapse-separate {
   border-collapse: separate;
 }
+
+/*
+ * Blurred
+ */
+
+.blurred-text {
+  filter: blur(5px);
+  cursor: default;
+}
+
+/*
+ * Input
+ */
+
+.field-to-input {
+  max-width: 100px;
+}

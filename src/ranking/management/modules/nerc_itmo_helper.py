@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 
-import tqdm
 import xml.etree.ElementTree as ET
+
+import tqdm
 
 
 def parse_xml(standings_xml):
@@ -25,7 +26,7 @@ def parse_xml(standings_xml):
             score = None
             language = None
             for run in problem.findall('run'):
-                v = run.attrib.get('outcome')
+                v = (run.attrib.get('outcome') or '').lower()
                 if v == 'compilation-error':
                     continue
                 n_attempt += 1
@@ -42,11 +43,9 @@ def parse_xml(standings_xml):
                     accepted = run.attrib['accepted'] == 'yes'
                     time = run_time
                     language = run.attrib.get('language-id')
+                    verdict = v
                     if accepted:
-                        verdict = None
                         break
-                    if v:
-                        verdict = ''.join(s[0] for s in v.upper().split('-'))
             if n_attempt == 0:
                 continue
 
@@ -57,6 +56,10 @@ def parse_xml(standings_xml):
             else:
                 if accepted:
                     result = '+' if n_attempt == 1 else f'+{n_attempt - 1}'
+                    result = f'?{result}'
+                elif verdict == 'undefined':
+                    result = f'?{n_attempt}'
+                    verdict = None
                 else:
                     result = f'-{n_attempt}'
 
@@ -65,7 +68,8 @@ def parse_xml(standings_xml):
             if time:
                 p['time'] = time
             if verdict:
-                p['verdict'] = verdict
+                verdict = ''.join(s[0] for s in verdict.upper().split('-'))
+                p['verdict'] = 'AC' if accepted else verdict
             if language:
                 p['language'] = language
     return ret

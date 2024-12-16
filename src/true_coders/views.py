@@ -34,7 +34,7 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
-from clist.models import Contest, ContestSeries, ProblemTag, Resource
+from clist.models import Contest, ContestSeries, ProblemTag, Promotion, Resource
 from clist.templatetags.extras import (accounts_split, allowed_redirect, as_number, asfloat, format_time, get_item,
                                        get_problem_short, get_timezones, has_update_statistics_permission,
                                        is_rating_prediction_field, is_yes, query_transform, quote_url, relative_url)
@@ -375,6 +375,7 @@ def coders(request, template='coders.html'):
 
     # ordering
     orderby = request.GET.get('sort_column') or []
+    order = request.GET.get('sort_order') if orderby else None
     if orderby in ['username', 'global_rating', 'created', 'n_accounts', 'n_contests']:
         pass
     elif orderby and orderby.startswith('resource_'):
@@ -387,7 +388,12 @@ def coders(request, template='coders.html'):
         request.logger.error(f'Not found `{orderby}` column for sorting')
         orderby = []
     orderby = orderby if not orderby or isinstance(orderby, list) else [orderby]
-    order = request.GET.get('sort_order')
+
+    context = {}
+    if orderby:
+        context['row_number_field'] = orderby[0]
+        context['row_number_operator'] = '__gt' if order == 'desc' else '__lt'
+
     if order in ['asc', 'desc']:
         orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
     elif order:
@@ -396,14 +402,16 @@ def coders(request, template='coders.html'):
     orderby = orderby or [F(main_field).desc(nulls_last=True), '-created']
     coders = coders.order_by(*orderby)
 
-    context = {
+    context.update({
         'coders': coders,
+        'primary_coder': coder,
         'params': params,
         'virtual_field': virtual_field,
         'chat_fields': chat_fields,
         'custom_fields': custom_fields,
         'view_coder_chat': view_coder_chat,
-    }
+        'with_table_inner_scroll': not request.user_agent.is_mobile,
+    })
     return template, context
 
 
@@ -1731,6 +1739,32 @@ def change(request):
         virtual_start.save(update_fields=['addition'])
         message = f'{problem_short}: {message}'
         return JsonResponse({'status': 'success', 'message': message})
+    elif name == 'standings-upload-solution':
+        statistic_id = request.POST.get('statistic-id')
+        if not statistic_id:
+            return HttpResponseBadRequest('empty statistic id')
+        statistic = get_object_or_404(Statistics, pk=statistic_id)
+        account = statistic.account
+        if not VerifiedAccount.objects.filter(coder=coder, account=account).exists():
+            return HttpResponseBadRequest('account is not verified')
+        problem_short = request.POST.get('problem-short')
+        if not problem_short:
+            return HttpResponseBadRequest('empty problem short')
+        problems = statistic.addition.get('problems', {})
+        if problem_short not in problems:
+            return HttpResponseBadRequest('problem not found')
+        file_size = request.FILES.get('file').size
+        if file_size > django_settings.PROBLEM_USER_SOLUTION_SIZE_LIMIT:
+            return HttpResponseBadRequest('file is too large')
+        try:
+            file_content = request.FILES.get('file').read().decode('utf-8')
+        except UnicodeDecodeError:
+            return HttpResponseBadRequest('file is not utf-8')
+        if not re.match(r'^[\x00-\x7F]*$', file_content):
+            return HttpResponseBadRequest('file is not text')
+        problems[problem_short]['user_solution'] = file_content
+        statistic.save(update_fields=['addition'])
+        return JsonResponse({'status': 'success', 'message': 'Solution was uploaded'})
     else:
         return HttpResponseBadRequest(f'unknown name = {escape(name)}')
 
@@ -2706,10 +2740,11 @@ def skip_promotion(request):
     promotion_id = request.POST.get('id')
     if not promotion_id:
         return HttpResponseBadRequest('No promotion id')
+    promotion = get_object_or_404(Promotion, pk=promotion_id)
     if request.user.is_authenticated:
         coder = request.user.coder
-        coder.settings['skip_promotion_id'] = promotion_id
+        coder.settings['skip_promotion_id'] = promotion.id
         coder.save()
     response = HttpResponse('ok')
-    response.set_cookie('_skip_promotion_id', promotion_id)
+    response.set_security_cookie('_skip_promotion_id', promotion.id)
     return response

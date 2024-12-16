@@ -125,10 +125,14 @@ table tr.contest.honorable-medal {
   pointer-events: none;
 }
 
+
+#account-verification {
+  margin-top: 10px;
+}
+
 #account-verification a {
   font-weight: bold;
 }
-
 
 #account-verification ol li.list-group-item {
   list-style: decimal inside;

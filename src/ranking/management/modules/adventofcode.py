@@ -97,7 +97,7 @@ class Statistic(BaseModule):
 
         has_virtual = False
         divisions_order = []
-        for division in 'diff', 'virtual', 'main':
+        for division in 'virtual', 'diff', 'main':
             is_main = division == 'main'
             is_virtual = division == 'virtual'
             is_diff = division == 'diff'
@@ -243,11 +243,11 @@ class Statistic(BaseModule):
                     rank = idx
                 r['place'] = rank
 
-            if is_main:
+            if is_virtual and not has_virtual:
+                continue
+            if not divisions_order:
                 for k, v in division_result.items():
                     result[k].update(v)
-            elif is_virtual and not has_virtual:
-                continue
             self._set_medals(division_result, n_medals=True)
             for k, v in division_result.items():
                 result[k].setdefault('_division_addition', {}).update({division: v})
@@ -268,7 +268,7 @@ class Statistic(BaseModule):
             'problems': problems,
         }
         if len(divisions_order) > 1:
-            ret['divisions_order'] = divisions_order[::-1]
+            ret['divisions_order'] = divisions_order
 
         now = datetime.now(tz=tz)
         if now.year == year and now.month == 12:

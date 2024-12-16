@@ -4,7 +4,7 @@ $(() => {
     var default_height = table_inner_scroll.height()
     $(window).resize(function() {
       if (table_inner_scroll.length) {
-          var val = $(window).height() - table_inner_scroll.offset().top - {% if fullscreen %}0{% else %}50{% endif %}
+          var val = $(window).height() - table_inner_scroll.offset().top - {% if fullscreen %}0{% else %}20{% endif %}
         if (val < default_height) {
           table_inner_scroll.height(val)
         } else {

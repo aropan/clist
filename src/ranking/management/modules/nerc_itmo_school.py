@@ -6,6 +6,7 @@ from collections import OrderedDict, defaultdict
 
 import tqdm
 
+from clist.templatetags.extras import as_number
 from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -101,6 +102,8 @@ class Statistic(BaseModule):
                             n_problem = False
                         c = mapping_key.get(c, c).lower()
                         row[c] = v.value.strip()
+                        if c in {'solving', 'place', 'penalty'}:
+                            row[c] = as_number(row[c])
                         if xml_result and c == 'name' and v.value in xml_result:
                             problems.update(xml_result[v.value])
 
@@ -163,8 +166,6 @@ class Statistic(BaseModule):
 
                     solved = [p for p in list(problems.values()) if p['result'] == '100']
                     row['solved'] = {'solving': len(solved)}
-                elif re.match('^[0-9]+$', row['penalty']):
-                    row['penalty'] = int(row['penalty'])
 
                 if self.resource.info.get('statistics', {}).get('key_as_full_name'):
                     row['member'] = name + ' ' + season

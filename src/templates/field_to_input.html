@@ -1,0 +1,20 @@
+{% with capitalized_field=field|capitalize_field %}
+{% with value=request.GET|get_item:field %}
+{% with collapse=value|iffalse %}
+
+{% if collapse %}
+<div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-input">
+  <button class="btn{% if not nosmall %} btn-sm{% endif %} btn-default" onclick="show_field_to_input(event, this, '{{ field }}')">
+    {% icon_to field capitalized_field|add:" input" %}
+  </button>
+</div>
+{% endif %}
+
+<div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-input{% if collapse %} hidden{% endif %}">
+  <span class="input-group-addon">{% icon_to field capitalized_field %}</span>
+  <input placeholder="{{ default }}" class="form-control" name="{{ field }}" id="{{ field }}" type="{{ type|default:"text" }}"{% if value %} value="{{ value }}"{% endif %}{% if collapse %} disabled{% endif %}>
+</div>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}

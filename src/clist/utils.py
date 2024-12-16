@@ -76,8 +76,11 @@ def similar_contests_replacing(match):
 
 
 def similar_contests_queryset(contest):
-    title = f'^{contest.title}$'
     regex = get_similar_contests_regex()
-    title_regex = re.sub(regex, similar_contests_replacing, title)
-    contests_filter = Q(title__iregex=title_regex, resource_id=contest.resource_id, stage__isnull=True)
+    title_regex = re.sub(regex, similar_contests_replacing, f'^{contest.title}$')
+    contests_filter = Q(title__iregex=title_regex)
+    if not re.match('^[^a-zA-Z]*$', contest.key):
+        key_regex = re.sub(regex, similar_contests_replacing, f'^{contest.key}$')
+        contests_filter |= Q(key__iregex=key_regex)
+    contests_filter &= Q(resource_id=contest.resource_id, stage__isnull=True)
     return contest._meta.model.objects.filter(contests_filter)

@@ -58,7 +58,7 @@ class ContestAdmin(BaseModelAdmin):
                            'standings_kind', 'registration_url', 'trial_standings_url']}],
         ['Date information', {'fields': ['start_time', 'end_time', 'duration_in_secs']}],
         ['Secury information', {'fields': ['key']}],
-        ['Addition information', {'fields': ['was_auto_added', 'auto_updated', 'n_statistics', 'has_hidden_results',
+        ['Addition information', {'fields': ['is_auto_added', 'auto_updated', 'n_statistics', 'has_hidden_results',
                                              'writers', 'calculate_time', 'info', 'variables', 'invisible',
                                              'is_rated', 'is_promoted', 'with_medals',
                                              'related', 'merging_contests', 'series',
@@ -69,7 +69,8 @@ class ContestAdmin(BaseModelAdmin):
                                'rating_prediction_timing', 'created', 'modified', 'updated']}],
         ['Rating', {'fields': ['rating_prediction_hash', 'has_fixed_rating_prediction_field',
                                'rating_prediction_fields']}],
-        ['Problem', {'fields': ['n_problems', 'problem_rating_hash', 'problem_rating_update_required']}],
+        ['Problem', {'fields': ['n_problems', 'problem_rating_hash', 'problem_rating_update_required',
+                                'hide_unsolved_standings_problems', 'upload_solved_problems_solutions']}],
         ['Submission', {'fields': ['has_submissions', 'has_submissions_tests']}],
     ]
     list_display = ['title', 'host', 'start_time', 'url', 'is_rated', 'invisible', 'key', 'standings_url',

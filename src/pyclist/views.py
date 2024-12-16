@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from django.apps import apps
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import F
+from django.db.models import F, Q
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import NoReverseMatch, reverse
 from django.utils.timezone import now
@@ -110,7 +110,10 @@ def update_context_by_source(request, context):
         if field_type == 'BooleanField':
             values = [is_yes(v) for v in values]
         if values:
-            entities = entities.filter(**{f'{field}__in': values})
+            entity_filter = Q(**{f'{field}__in': values})
+            if 'None' in values:
+                entity_filter |= Q(**{f'{field}__isnull': True})
+            entities = entities.filter(entity_filter)
 
     if x_axis:
         x_from = request.get_filtered_value('x_from')

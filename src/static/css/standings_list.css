@@ -43,3 +43,6 @@
   text-align: center;
 }
 
+#standings_list .contest .toggled {
+  cursor: pointer;
+}
