@@ -98,7 +98,6 @@ function addValueChange(change)
     for (var key in atable)
     {
         var table = atable[key];
-//        console.log(table);
         var afields = new Array();
         var avalues = new Array();
 
@@ -116,11 +115,9 @@ function addValueChange(change)
             afields.push('`' + field + '`');
             avalues.push(value);
         }
-        
 
         var obj = document.getElementById('aAdd_' + table);
         if (obj == null) return;
         obj.href = encodeURI('/?action=query&query=INSERT INTO `' + "clist_" + table + '` (' + afields.join(',') + ') VALUES (' + avalues.join(',') +')');
-//        console.log(obj.href);
     }
 }

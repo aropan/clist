@@ -1,4 +1,4 @@
-<div class="subscription col-sm-6 col-md-4 col-lg-3{% if not subscription.enable %} text-muted{% endif %}">
+<div class="subscription col-sm-6 col-lg-4{% if not subscription.enable %} text-muted{% endif %}">
   <div class="panel panel-default table-responsive">
     <table class="table">
       <tr>
@@ -59,9 +59,15 @@
         </td>
       </tr>
       {% endif %}
+      {% if subscription.with_custom_names %}
+      <tr>
+        <td class="no-stretch key-column">Namings</td>
+        <td>{{ subscription.with_custom_names }}</td>
+      </tr>
+      {% endif %}
       {% if subscription.accounts.all %}
       <tr>
-        {% with n_split=3 %}
+        {% with n_split=3 with_resource=subscription.resource|ifor:subscription.contest|iffalse %}
         <td class="no-stretch key-column">Accounts</td>
         <td>
           {% for account in subscription.accounts.all %}

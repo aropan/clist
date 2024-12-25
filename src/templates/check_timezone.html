@@ -11,9 +11,9 @@
                 if (data == "reload") {
                     location.reload()
                 } else if (data == "accepted") {
-                    $.notify("Warning! Timezone is set incorrectly. Please reload page.", "warn")
+                    notify("Warning! Timezone is set incorrectly. Please reload page.", "warn")
                 } else {
-                    $.notify(data, "error")
+                    notify(data, "error")
                 }
             }
         });

@@ -209,8 +209,10 @@ def countdown(timer):
     c = 0
     if d > 2:
         return "%d days" % d
+    if h > 5:
+        return "%d hours" % h
     if m + h > 0:
-        return "%02d:%02d:%02d" % (h, m, s)
+        return "%d:%02d:%02d" % (h, m, s)
     return "%d.%d" % (s, c)
 
 
@@ -493,7 +495,12 @@ def get_problem_solution(problem):
                                 group_scores[p['group']] += score
                                 result['result'] = group_scores[p['group']]
 
-                    res = {'statistic': statistic, 'result': result, 'key': short}
+                    res = {
+                        'contest': contest,
+                        'statistic': statistic,
+                        'result': result,
+                        'key': short,
+                    }
                     if (
                         not ret or ret['result'] is None or
                         result is not None and is_improved_solution(result, ret['result'])
@@ -906,8 +913,6 @@ def next_time_to(obj, now):
 
 @register.filter
 def is_solved(value, with_upsolving=False):
-    if not value:
-        return False
     if isinstance(value, dict):
         if with_upsolving and is_solved(value.get('upsolving')):
             return True
@@ -915,12 +920,12 @@ def is_solved(value, with_upsolving=False):
             return False
         if value.get('binary') is True:
             return True
-        value = value.get('result', 0)
+        value = value.get('result')
+    if value is None:
+        return False
     if isinstance(value, str):
         if value.startswith('+'):
             return True
-        if value.startswith('-'):
-            return False
         try:
             value = float(value)
         except ValueError:
@@ -930,22 +935,21 @@ def is_solved(value, with_upsolving=False):
 
 @register.filter
 def is_reject(value, with_upsolving=False):
-    if with_upsolving and is_solved(value, with_upsolving=with_upsolving):
-        return False
     if isinstance(value, dict):
         if with_upsolving and is_reject(value.get('upsolving')):
             return True
         if value.get('binary') is False:
             return True
         value = value.get('result')
-    if not value:
+    if value is None:
         return False
-    if str(value).startswith('-'):
-        return True
-    try:
-        value = float(value)
-    except ValueError:
-        return False
+    if isinstance(value, str):
+        if value.startswith('-'):
+            return True
+        try:
+            value = float(value)
+        except ValueError:
+            return False
     return value <= 0
 
 
@@ -953,27 +957,25 @@ def is_reject(value, with_upsolving=False):
 def is_upsolved(value):
     if not value:
         return False
-    return is_solved(value.get('upsolving'))
+    return isinstance(value, dict) and is_solved(value.get('upsolving'))
 
 
 @register.filter
 def is_hidden(value, with_upsolving=False):
-    if with_upsolving and is_solved(value, with_upsolving=with_upsolving):
-        return False
     if isinstance(value, dict):
         if with_upsolving and is_hidden(value.get('upsolving')):
             return True
         value = value.get('result')
-    if not value:
-        return False
-    return str(value).startswith('?')
+    return isinstance(value, str) and value.startswith('?')
 
 
 @register.filter
 def is_partial(value, with_upsolving=False):
-    if with_upsolving and is_solved(value, with_upsolving=with_upsolving):
+    if is_solved(value, with_upsolving=with_upsolving):
         return False
-    if not value:
+    if is_reject(value, with_upsolving=with_upsolving):
+        return False
+    if not value or not isinstance(value, dict):
         return False
     return value.get('partial') or with_upsolving and is_partial(value.get('upsolving'))
 
@@ -1051,6 +1053,11 @@ def timestamp_to_datetime(value):
         return datetime.fromtimestamp(value)
     except Exception:
         return None
+
+
+@register.filter
+def has_passed_since_timestamp(value):
+    return now().timestamp() - value
 
 
 @register.filter
@@ -1620,7 +1627,7 @@ def is_yes(value):
 def is_optional_yes(value):
     if value is None:
         return None
-    return str(value).lower() in settings.YES_
+    return is_yes(value)
 
 
 @register.filter
@@ -1892,3 +1899,13 @@ def field_to_select_option(context, value):
     if 'value_option' in context['data']:
         return get_item(value, context['data']['value_option'])
     return value
+
+
+@register.filter
+def ifor(value, arg):
+    return value or arg
+
+
+@register.filter
+def ifand(value, arg):
+    return value and arg

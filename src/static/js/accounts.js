@@ -17,7 +17,7 @@ function init_account_buttons() {
         $btn.parent().children().toggleClass('hidden')
         $btn.toggleClass('hidden')
         $btn.closest('tr').toggleClass('info')
-        $.notify($btn.attr('data-message'), 'success')
+        notify($btn.attr('data-message'), 'success')
       },
       error: function(response) {
         if (response.responseJSON && response.responseJSON.message == 'redirect') {
@@ -41,7 +41,7 @@ function init_clickable_has_coders() {
   })
 }
 
-function invert_linked_coder_accounts(e) {
+function invert_accounts(e, s) {
   e.preventDefault()
-  $('#accounts input[name="accounts"]').click()
+  $('#accounts input[name="' + $.escapeSelector(s) + '"]').click()
 }

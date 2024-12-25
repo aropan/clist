@@ -4,7 +4,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
     var min_field = Math.min(...values)
     var max_field = Math.max(...values)
     if (min_field === undefined || max_field === undefined || min_field == max_field) {
-      $.notify(
+      notify(
         'Skip ' + y_field + ' field, min value = ' + min_field + ', max value = ' + max_field,
         {position: 'bottom right', className: 'warn'},
       )

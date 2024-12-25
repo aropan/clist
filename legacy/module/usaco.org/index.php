@@ -2,18 +2,24 @@
     require_once dirname(__FILE__) . "/../../config.php";
 
     $url = 'http://usaco.org/index.php?page=contests';
-    $page = curlexec($url);
+    $curl_params = ['with_curl' => true, 'curl_args_file' => '/sharedfiles/resource/usaco/curl.args'];
+    $page = curlexec($url, NULL, $curl_params);
 
-    preg_match_all('#<a[^>]*href="(?<url>[^"]*)"[^>]*>(?<name>[^<]*[0-9]{4}[^<]*Results)</a>#', $page, $matches, PREG_SET_ORDER);
     $results = array();
+    preg_match_all('#<a[^>]*href="(?<url>[^"]*result[^"]*)"[^>]*>[^<]*(?<name>[0-9]{4}[^<]*Results)</a>#', $page, $matches, PREG_SET_ORDER);
     foreach ($matches as $match) {
         $k = implode(' ', array_slice(explode(' ', $match['name']), 0, 3));
-        $results[$k] = url_merge($url, $match['url']);
+        $results[strtolower($k)] = url_merge($url, $match['url']);
+    }
+    preg_match_all('#<p>[^<]*(?<name>[0-9]{4}[^<]*)<a[^>]*href="(?<url>[^"]*result[^"]*)"[^>]*>here</a>#', $page, $matches, PREG_SET_ORDER);
+    foreach ($matches as $match) {
+        $k = implode(' ', array_slice(explode(' ', $match['name']), 0, 3));
+        $results[strtolower($k)] = url_merge($url, $match['url']);
     }
 
-    $page = curlexec($URL);
+    $page = curlexec($URL, NULL, $curl_params);
 
-    if (!preg_match('#(\d{4})-(\d{4}) Schedule#', $page, $match)) return;
+    if (!preg_match('#>\s*(\d{4})-(\d{4})[^<]*Schedule#', $page, $match)) return;
     list(, $start_year, $end_year) = $match;
 
     preg_match_all("#(?<start_time>[^\s]+\s\d+)-(?<end_time>(?:[^\s]+\s)?\d+):(?<title>[^<]*)#", $page, $matches, PREG_SET_ORDER);
@@ -57,6 +63,7 @@
             date('Y', strtotime($start_time)) . ' ' . $title,
         );
         foreach ($keys as $k) {
+            $k = strtolower($k);
             if (isset($results[$k])) {
                 $c['standings_url'] = $results[$k];
                 unset($results[$k]);

@@ -67,7 +67,7 @@ function load_rating_history() {
       }
     },
     error: function(data) {
-      $.notify('{status} {statusText}'.format(data), 'error')
+      notify('{status} {statusText}'.format(data), 'error')
     },
     complete: function() {
       $(loading_selector).parent().remove()
@@ -130,7 +130,7 @@ $(function() {
         btn.text('Verified')
         btn.show()
         loading.addClass('hidden')
-        $.notify('Verified', 'success')
+        notify('Verified', 'success')
         window.history.replaceState(null, null, account_url)
       },
       error: function(response) {

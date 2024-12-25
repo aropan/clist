@@ -44,9 +44,9 @@
 
     {% include "resource_filter.html" with groupby=False disabled=disable_switches %}
 
-    {% include "field_to_input.html" with field="n_advanced" default=standings_options.n_highlight type="number" %}
+    {% include "field_to_input.html" with field="n_advanced" default=standings_options.n_highlight type="number" min="1" %}
 
-    {% if not request.user.is_authenticated %}
+    {% if not request.user.is_authenticated and request.GET.detail %}
     <input type="hidden" name="detail" value="{% if with_detail %}true{% else %}false{% endif %}"/>
     {% endif %}
     <div class="input-group input-group-sm">
@@ -56,7 +56,7 @@
     </div>
 
     {% if contest.upload_solved_problems_solutions %}
-    {% if not request.user.is_authenticated %}
+    {% if not request.user.is_authenticated and request.GET.solution %}
     <input type="hidden" name="solution" value="{% if with_solution %}true{% else %}false{% endif %}"/>
     {% endif %}
     <div class="input-group input-group-sm">
@@ -109,6 +109,16 @@
     <div class="input-group input-group-sm">
       <button id="toggle-fullscreen" class="btn btn-default btn-sm{% if fullscreen %} active{% endif %}" name="fullscreen"{% if not fullscreen %} value=""{% else %} value="off"{% endif %}>{% icon_to 'fullscreen' default='Fullscreen (F)' %}</button>
     </div>
+
+    <div class="input-group input-group-sm">
+      {% if not request.user.is_authenticated and request.GET.autoreload %}
+      <input type="hidden" name="autoreload" value="{{ request.GET.autoreload }}"/>
+      {% endif %}
+      <button href="#" class="standings-auto-reload btn btn-default btn-sm{% if not with_autoreload%} hidden{% endif %}" data-value="off">{% icon_to "on" "Disable auto reload" %}</button>
+      <button href="#" class="standings-auto-reload btn btn-default btn-sm{% if with_autoreload%} hidden{% endif %}" data-value="on">{% icon_to "off" "Enable auto reload" %}</button>
+    </div>
+
+    {% include "field_to_input.html" with field="field_instead_key" default=request.GET|get_item:"field_instead_key" force_collapse=True %}
 
     {% if enable_timeline and groupby == 'none' %}
 
@@ -243,4 +253,14 @@
       </script>
     {% endif %}
   </div>
+
+  {% if contest.parsed_time %}
+  <div id="parsed-time">
+    <small class="text-muted pull-right">
+      updated
+      {% if contest.parsed_percentage and contest.parsed_percentage < 100 %}{{ contest.parsed_percentage|floatformat:1 }}%{% endif %}
+      <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip" class="countdown" data-timestamp-up="{{ contest.parsed_time.timestamp }}" data-timeago="true">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
+    </small>
+  </div>
+  {% endif %}
 </form>

@@ -1,15 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import re
 import urllib.parse
 from collections import OrderedDict
 from copy import deepcopy
-from datetime import datetime
-from pprint import pprint
 
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
+
+
+def get_curl_args():
+    if not hasattr('get_curl_args', '_curl_args'):
+        curl_args_filepath = 'sharedfiles/resource/usaco/curl.args'
+        if os.path.exists(curl_args_filepath):
+            with open(curl_args_filepath) as file:
+                get_curl_args._curl_args = file.read().strip()
+        else:
+            get_curl_args._curl_args = None
+    return get_curl_args._curl_args
+
+
+def req_get(*args, **kwargs):
+    kwargs['with_curl'] = True
+    kwargs['curl_args'] = get_curl_args()
+    return REQ.get(*args, **kwargs)
 
 
 class Statistic(BaseModule):
@@ -18,7 +34,7 @@ class Statistic(BaseModule):
         super(Statistic, self).__init__(**kwargs)
         if not self.standings_url:
             url = 'http://usaco.org/index.php?page=contests'
-            page = REQ.get(url)
+            page = req_get(url)
             matches = re.finditer('<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<name>[^<]*[0-9]{4}[^<]*Results)</a>', page)
             month = self.start_time.strftime('%B').lower()
             prev_standings_url = None
@@ -33,7 +49,7 @@ class Statistic(BaseModule):
                 if prev_standings_url is not None:
                     pred_standings_url = re.sub('[0-9]+', lambda m: str(int(m.group(0)) + 1), prev_standings_url)
                     url = 'http://usaco.org/'
-                    page = REQ.get(url)
+                    page = req_get(url)
                     matches = re.finditer('<a[^>]*href="?(?P<url>[^"]*)"?[^>]*>here</a>', page)
                     for match in matches:
                         standings_url = urllib.parse.urljoin(url, match.group('url'))
@@ -83,7 +99,7 @@ class Statistic(BaseModule):
 
             return problemsets if full else problems
 
-        page = REQ.get(self.standings_url)
+        page = req_get(self.standings_url)
         divisions = list(re.finditer('<a[^>]*href="(?P<url>[^"]*data[^"]*_(?P<name>[^_]*)_results.html)"[^>]*>', page))
         descriptions = []
         prev_span = None
@@ -99,7 +115,7 @@ class Statistic(BaseModule):
         match = re.search('''<a[^>]*href=["'](?P<href>[^"']*page=[a-z0-9]+problems)["'][^>]*>''', page)
         if match:
             url = urllib.parse.urljoin(self.standings_url, match.group('href'))
-            page = REQ.get(url)
+            page = req_get(url)
             problemsets = parse_problems(page, full=True)
             assert len(divisions) == len(problemsets)
         else:
@@ -121,7 +137,7 @@ class Statistic(BaseModule):
                 p['short'] = d0 + p['short']
 
             url = urllib.parse.urljoin(self.standings_url, division_match.group('url'))
-            page = REQ.get(url)
+            page = req_get(url)
 
             tables = re.finditer(r'>(?P<title>[^<]*)</[^>]*>\s*(?P<html><table[^>]*>.*?</table>)', page, re.DOTALL)
             for table_match in tables:

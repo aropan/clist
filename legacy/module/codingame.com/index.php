@@ -113,8 +113,8 @@
         }
 
         $contests[] = array(
-            'start_time' => $data['date'] / 1000,
-            'end_time' => $end_time,
+            'start_time' => floor($data['date'] / 1000),
+            'end_time' => floor($end_time),
             'duration' => $duration,
             'title' => $data['title'],
             'url' => $prefix_contest . $data['publicId'],

@@ -43,6 +43,9 @@
         <link href="{% static_ts 'css/spacing.css' %}" rel="stylesheet">
         <link href="{% static_ts 'css/print.css' %}" media="print" rel="stylesheet">
 
+        <script src="{% static_ts 'js/toastify.js' %}"></script>
+        <link href="{% static_ts 'css/toastify.min.css' %}" rel="stylesheet">
+
         <script src="{% static_ts 'js/base.js' %}"></script>
 
         {% if user.is_authenticated and user.coder.settings.theme %}
@@ -62,9 +65,6 @@
         <link href="{% static_ts 'css/bootstrap-left-right-below-tabs.css' %}" rel="stylesheet">
 
         <link href="{% static_ts 'fontawesomefree/css/all.min.css' %}" rel="stylesheet" type="text/css">
-
-        <script src="{% static_ts 'js/notify.js' %}"></script>
-        <script src="{% static_ts 'js/notify-config.js' %}"></script>
 
         <script src="{% static_ts 'el-pagination/js/el-pagination.js' %}"></script>
 

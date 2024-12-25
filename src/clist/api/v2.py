@@ -353,7 +353,7 @@ class StatisticsResource(BaseModelResource):
                 for k in list(problem.keys()):
                     if k.startswith('_'):
                         problem.pop(k, None)
-                for k in settings.PROBLEM_API_IGNORE_FIELD:
+                for k in settings.PROBLEM_API_IGNORE_FIELDS:
                     problem.pop(k, None)
 
         more_fields = bundle.data['more_fields']

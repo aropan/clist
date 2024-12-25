@@ -5,6 +5,7 @@ import flag
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db.models import Q
 from django.urls import reverse
 
 from clist.templatetags.extras import (as_number, get_division_problems, get_problem_name, get_problem_short, is_hidden,
@@ -12,7 +13,23 @@ from clist.templatetags.extras import (as_number, get_division_problems, get_pro
                                        solution_time_compare)
 
 
-def compose_message_by_problems(problem_shorts, statistic, previous_addition, contest_or_problems):
+def compose_message_by_problems(
+    problem_shorts,
+    statistic,
+    previous_addition,
+    contest_or_problems,
+    subscription=None,
+    general_message=None,
+):
+    with_subscription_names = (
+        subscription
+        and subscription.with_custom_names
+        and subscription.coder_list
+        and subscription.coder_list.with_names
+    )
+    if general_message is not None and not with_subscription_names:
+        return general_message
+
     problems = statistic.addition.get('problems', {})
     previous_problems = previous_addition.get('problems', {})
 
@@ -79,7 +96,15 @@ def compose_message_by_problems(problem_shorts, statistic, previous_addition, co
         place_message = '%s->%s' % (previous_place, statistic.place)
 
     standings_url = reverse('ranking:standings_by_id', args=[statistic.contest_id]) + f'?find_me={statistic.pk}'
-    account_message = '[%s](%s)' % (md_url_text(statistic.account_name), md_url(standings_url))
+    account_name = statistic.account_name
+    if with_subscription_names:
+        groups = subscription.coder_list.groups.filter(name__isnull=False)
+        groups = groups.filter(Q(values__account=statistic.account) |
+                               Q(values__coder__account=statistic.account))
+        group = groups.first()
+        if group:
+            account_name = group.name
+    account_message = '[%s](%s)' % (md_url_text(account_name), md_url(standings_url))
     if statistic.account.country:
         account_message = flag.flag(statistic.account.country.code) + account_message
 

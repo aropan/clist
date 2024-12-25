@@ -257,6 +257,24 @@
         $schedule_page = curlexec($url);
         $schedule_page = $replace_months($schedule_page);
 
+        $standings = array();
+        preg_match_all('#<a[^>]*href="(?P<url>[^"]*standing[^"]*)"[^>]*>[^<]*результат[^<]*</a>#', $schedule_page, $matches);
+        $seen = array();
+        foreach ($matches['url'] as $standings_url) {
+            $standings_url = url_merge($url, $standings_url);
+            if (in_array($standings_url, $seen)) {
+                continue;
+            }
+            $seen[] = $standings_url;
+            $standings_page = curlexec($standings_url);
+            preg_match('#<h[0-9][^>]*>(?P<title>[^<]*)#s', $standings_page, $match);
+            $title = html_entity_decode($match['title']);
+            $standings[] = array(
+                "title" => $title,
+                "url" => $standings_url,
+            );
+        }
+
         preg_match_all('#<h4[^>]*id="[^"]*"[^>]*>(?P<title>[^<]*)</h4>.*?<strong>(?P<date>[^<]*[0-9]{4})\sгода</strong>#s', $schedule_page, $matches, PREG_SET_ORDER);
         foreach ($matches as $match) {
             $title = html_entity_decode($match['title']);
@@ -282,14 +300,31 @@
                 $year--;
             }
             $season = $year . '-' . ($year + 1);
+            $standings_season = $year . '-' . (($year + 1) % 100);
+
+            $standings_url = null;
+            foreach ($standings as $ind => $s) {
+                if (
+                    !preg_match("/[Оо]тборочный/i", $title) ||
+                    !preg_match("/[Зз]аочный/i", $s['title']) ||
+                    strpos($s['url'] . ' ' . $s['title'], $standings_season) === false
+                ) {
+                    continue;
+                }
+                $standings_url = $s['url'];
+                unset($standings[$ind]);
+                break;
+            }
+
 
             $contests[] = array(
                 "start_time" => $start_time,
                 "end_time" => $end_time,
-                "title" => $title . '. ' . $main_title,
+                "title" => "$title. $main_title",
                 "url" => $url,
+                "standings_url" => $standings_url,
                 "host" => $HOST,
-                "key" => $season . '. ' . $title,
+                "key" => "$season. $title",
                 "rid" => $RID,
                 "timezone" => $TIMEZONE,
             );

@@ -2,7 +2,7 @@
 <script>
     $(function() {
         {% for message in messages %}
-        $.notify(
+        notify(
             "{{ message|escapejs }}",
             {
                 className: "{% if message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}warn{% else %}{{ message.level_tag }}{% endif %}",

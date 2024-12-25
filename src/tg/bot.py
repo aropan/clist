@@ -262,10 +262,14 @@ class Bot(telegram.Bot):
         if self.group is False:
             msg = 'This command should be used in chat rooms.'
         else:
-            if self.group is None:
+            admins = self.getChatAdministrators(self.chat_id)
+            if not any(str(admin.user.id) == self.from_id for admin in admins):
+                msg = 'You are not admin in "%s" chat.' % self.message['chat']['title']
+            elif self.group is None:
                 title = self.message['chat']['title']
                 if self.thread_id:
                     title += f' # {self.thread_name}'
+
                 chat, created = Chat.objects.get_or_create(
                     chat_id=self.chat_id,
                     thread_id=self.thread_id,
@@ -829,3 +833,9 @@ class Bot(telegram.Bot):
     def unwebhook(self):
         self.logger.info('unwebhook')
         return self.setWebhook(None)
+
+    def create_topic(self, chat_id, title):
+        return self.createForumTopic(chat_id=chat_id, name=title)
+
+    def delete_topic(self, chat_id, thread_id):
+        return self.delete_forum_topic(chat_id=chat_id, message_thread_id=thread_id)

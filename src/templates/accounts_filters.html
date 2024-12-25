@@ -68,4 +68,6 @@
   {% endif %}
 
   {% include "list_filter.html" with list_field="to_list" nomultiply=True submit="add" submit_value="add_to_list" submit_enabled=params.to_list %}
+
+  {% include "field_to_input.html" with field="field_instead_key" default=request.GET|get_item:"field_instead_key" force_collapse=True %}
 </div>

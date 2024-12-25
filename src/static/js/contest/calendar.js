@@ -11,15 +11,16 @@ $(function() {
     }
 
     $(window).resize(function() {
-        var height = get_calendar_height()
-        calendar.setOption('height', height)
-        calendar.setOption('contentHeight', height)
+        var calendar_height = get_calendar_height()
+        calendar.setOption('height', calendar_height)
+        calendar.setOption('contentHeight', calendar_height)
 
         $('.fc-timegrid').each(function() {
             var el = $(this).find('.fc-scroller:has(.fc-timegrid-body)')
             var height = el.height()
             var tr = $(this).find('.fc-timegrid-slots tr')
-            tr.height(height / tr.length)
+            var h = Math.round(height / tr.length)
+            tr.height(h)
         })
     })
 

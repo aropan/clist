@@ -12,7 +12,7 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import models
-from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Value, When
+from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Value, When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast, window
 from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, JsonResponse
@@ -41,7 +41,7 @@ from ranking.management.modules.common import FailOnGetResponse, ProxyLimitReach
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics, VirtualStart
 from tg.models import Chat
-from true_coders.models import Coder, CoderList, Party
+from true_coders.models import Coder, CoderList, ListGroup, Party
 from true_coders.views import get_ratings_data
 from utils.chart import make_bins, make_histogram
 from utils.colors import get_n_colors
@@ -712,6 +712,8 @@ def standings_charts(request, context):
 
 
 def render_standings_paging(contest, statistics, with_detail=True):
+    contest_fields = contest.info.get('fields', [])
+
     n_total = None
     if isinstance(statistics, list):
         per_page = contest.standings_per_page
@@ -720,13 +722,18 @@ def render_standings_paging(contest, statistics, with_detail=True):
             statistics = statistics[:per_page]
         statistics = Statistics.objects.filter(pk__in=statistics)
 
-    order = contest.get_statistics_order() + ['pk']
+    order = contest.get_statistics_order()
     statistics = statistics.order_by(*order)
 
+    inplace_division = '_division_addition' in contest_fields
     divisions_order = get_standings_divisions_order(contest)
     division = divisions_order[0] if divisions_order else None
     if division:
-        statistics = statistics.filter(addition__division=division)
+        if inplace_division:
+            field = f'addition___division_addition__{division}'
+            statistics = statistics.filter(**{f'{field}__isnull': False})
+        else:
+            statistics = statistics.filter(addition__division=division)
 
     problems = get_standings_problems(contest, division)
 
@@ -737,7 +744,6 @@ def render_standings_paging(contest, statistics, with_detail=True):
     mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)
     colored_by_group_score = contest.info.get('standings', {}).get('colored_by_group_score')
 
-    contest_fields = contest.info.get('fields', [])
     has_country = (
         'country' in contest_fields or
         '_countries' in contest_fields or
@@ -857,7 +863,7 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
     fixed_fields = (
         'penalty',
         ('total_time', 'Time'),
-        ('advanced', 'Advance'),
+        ('advanced', 'Adv'),
     )
     fixed_fields += tuple(options.get('fixed_fields', []))
     if not with_detail:
@@ -983,14 +989,17 @@ def standings(request, contest, other_contests=None, template='standings.html', 
 
     with_detail = is_optional_yes(request.GET.get('detail'))
     with_solution = is_optional_yes(request.GET.get('solution'))
+    with_autoreload = is_optional_yes(request.GET.get('autoreload'))
     if request.user.is_authenticated:
         coder = request.user.coder
         with_detail = coder.update_or_get_setting('standings_with_detail', with_detail)
         with_solution = coder.update_or_get_setting('standings_with_solution', with_solution)
+        with_autoreload = coder.update_or_get_setting('standings_with_autoreload', with_autoreload)
     else:
         coder = None
-        with_detail = with_detail if with_detail is not None else settings.STANDINGS_WITH_DETAIL_DEFAULT
-        with_solution = with_solution if with_solution is not None else settings.STANDINGS_WITH_SOLUTION_DEFAULT
+    with_detail = with_detail if with_detail is not None else settings.STANDINGS_WITH_DETAIL_DEFAULT
+    with_solution = with_solution if with_solution is not None else settings.STANDINGS_WITH_SOLUTION_DEFAULT
+    with_autoreload = with_autoreload if with_autoreload is not None else settings.STANDINGS_WITH_AUTORELOAD_DEFAULT
 
     with_row_num = False
 
@@ -1102,8 +1111,9 @@ def standings(request, contest, other_contests=None, template='standings.html', 
                 fields[v] = v
                 hidden_fields.append(v)
 
-    if (n_advanced := request.GET.get('n_advanced')) and n_advanced.isdigit() and 'n_highlight' in options:
-        options['n_highlight'] = int(n_advanced)
+    if n_advanced := request.GET.get('n_advanced'):
+        if n_advanced.isdigit() and int(n_advanced) and 'n_highlight' in options:
+            options['n_highlight'] = int(n_advanced)
     n_highlight_context = _standings_highlight(contest, statistics, options) if not contests_ids else {}
 
     # field to select
@@ -1379,6 +1389,11 @@ def standings(request, contest, other_contests=None, template='standings.html', 
             # subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
             # statistics = statistics.annotate(chat_name=Subquery(subquery))
         elif field == 'list':
+            if values:
+                groups = ListGroup.objects.filter(coder_list__uuid__in=values, name__isnull=False)
+                groups = groups.filter(Q(values__account=OuterRef('account')) |
+                                       Q(values__coder__account=OuterRef('account')))
+                statistics = statistics.annotate(value_instead_key=Subquery(groups.values('name')[:1]))
             coders, accounts = CoderList.coders_and_accounts_ids(uuids=values, coder=coder)
             filt |= Q(account__coders__in=coders) | Q(account__in=accounts)
         else:
@@ -1576,6 +1591,11 @@ def standings(request, contest, other_contests=None, template='standings.html', 
             ):
                 context['my_statistics_rev'] = True
 
+    # field_instead_key
+    if field_instead_key := request.GET.get('field_instead_key'):
+        if field_instead_key in contest_fields:
+            context['field_instead_key'] = f'addition__{field_instead_key}'
+
     relative_problem_time = contest.resource.info.get('standings', {}).get('relative_problem_time')
     relative_problem_time = contest.info.get('standings', {}).get('relative_problem_time', relative_problem_time)
     context['relative_problem_time'] = relative_problem_time
@@ -1641,6 +1661,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': with_detail,
         'with_solution': with_solution,
+        'with_autoreload': with_autoreload,
         'groupby': groupby,
         'pie_limit_rows_groupby': 50,
         'labels_groupby': labels_groupby,
@@ -1709,7 +1730,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     return render(request, template, context)
 
 
-@ratelimit(key='user', rate='1000/h', block=True)
+@ratelimit(key='user', rate='20/m', block=True)
 def solutions(request, sid, problem_key):
     is_modal = request.is_ajax()
     if not request.user.is_authenticated:

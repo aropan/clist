@@ -32,6 +32,7 @@ from clist.models import Contest, Problem, Resource
 from clist.templatetags.extras import (as_number, canonize, get_item, get_number_from_str, get_problem_key,
                                        get_problem_short, is_hidden, is_solved, normalize_field, time_in_seconds,
                                        time_in_seconds_format)
+from clist.utils import create_contest_problem_discussions
 from clist.views import update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
@@ -1069,11 +1070,8 @@ class Command(BaseCommand):
                                 account_info = r.pop('info', {})
                                 if account_info:
                                     update_fields = ['info']
-                                    if 'rating' in account_info:
-                                        if is_major_kind:
-                                            account_info['_rating_time'] = int(now.timestamp())
-                                        else:
-                                            account_info.pop('rating')
+                                    if 'rating' in account_info and not is_major_kind:
+                                        account_info.pop('rating')
                                     if 'name' in account_info:
                                         name = account_info.pop('name')
                                         name = name if name and name != account.key else None
@@ -1170,6 +1168,7 @@ class Command(BaseCommand):
                                     'place_as_int': place if place == UNCHANGED else get_number_from_str(place),
                                     'solving': r.pop('solving', 0),
                                     'upsolving': r.pop('upsolving', 0),
+                                    'penalty': as_number(r.get('penalty'), force=True),
                                     'skip_in_stats': skip_result,
                                     'advanced': bool(r.get('advanced')),
                                     'last_activity': r.pop('last_activity', None),
@@ -1216,16 +1215,19 @@ class Command(BaseCommand):
                                     if not skip_result:
                                         fields_preceding[f] |= previous_fields
 
-                                rating_time = int(min(contest.end_time, now).timestamp())
+                                rating_time = min(contest.end_time, now)
                                 if (
                                     is_major_kind
                                     and 'new_rating' in addition
-                                    and ('rating' not in account.info
-                                         or account.info.get('_rating_time', -1) <= rating_time)
+                                    and (
+                                        'rating' not in account.info
+                                        or account.rating_update_time is None
+                                        or account.rating_update_time < rating_time
+                                    )
                                 ):
-                                    account.info['_rating_time'] = rating_time
                                     account.info['rating'] = addition['new_rating']
-                                    account.save(update_fields=['info'])
+                                    account.rating_update_time = rating_time
+                                    account.save(update_fields=['info', 'rating_update_time'])
 
                                 try_calculate_time = contest.calculate_time or (
                                     contest.start_time <= now < contest.end_time and
@@ -1292,7 +1294,7 @@ class Command(BaseCommand):
                                     updated_statistics_ids.append(statistic.pk)
 
                                 for field, lhs, rhs in (
-                                    ('place', statistic.place, stat.get('place')),
+                                    ('place', str(statistic.place), str(stat.get('place'))),
                                     ('score', statistic.solving, stat.get('score')),
                                 ):
                                     if lhs != rhs and statistic.pk not in updated_statistics_ids:
@@ -1507,12 +1509,13 @@ class Command(BaseCommand):
                                 ):
                                     return
 
-                                subscription_message = compose_message_by_problems(
-                                    updates['problems'],
-                                    statistic=statistic,
-                                    previous_addition=stat,
-                                    contest_or_problems=standings_problems,
-                                )
+                                kwargs = {
+                                    'problem_shorts': updates['problems'],
+                                    'statistic': statistic,
+                                    'previous_addition': stat,
+                                    'contest_or_problems': standings_problems,
+                                }
+                                subscription_message = compose_message_by_problems(**kwargs)
 
                                 subscriptions_filter = Q()
                                 if account.n_subscribers:
@@ -1534,7 +1537,13 @@ class Command(BaseCommand):
                                     if subscription.notification_key in already_sent:
                                         continue
                                     already_sent.add(subscription.notification_key)
-                                    subscription.send(message=subscription_message, contest=contest)
+
+                                    message = compose_message_by_problems(
+                                        subscription=subscription,
+                                        general_message=subscription_message,
+                                        **kwargs,
+                                    )
+                                    subscription.send(message=message, contest=contest)
                                     contest_log_counter['statistics_subscription'] += 1
 
                             update_addition_fields()
@@ -1684,6 +1693,9 @@ class Command(BaseCommand):
 
                                 if not no_update_problems:
                                     update_problems(contest, problems=standings_problems, force=force_problems)
+                                    if force_problems:
+                                        create_contest_problem_discussions(contest)
+
                             contest.save()
 
                             if to_update_socket:

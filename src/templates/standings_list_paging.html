@@ -40,9 +40,7 @@
     <span class="toggle" data-group=".group-resource-{{ resource.pk }}"><i class="fa fa-caret-down"></i></span>
   {% endif %}
 
-  <a href="{{ contest.actual_url }}" class="{% if status %} text-{{ status }}{% endif %}">
-  {% trim_to contest.title 60 %}
-  </a>
+  <a href="{{ contest.actual_url }}" class="{% if status %} text-{{ status }}{% endif %}">{% trim_to contest.title 60 %}</a>
 
   {% if contest.has_submissions %}
   <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}" class="submissions">{% icon_to 'submissions' %}</a>

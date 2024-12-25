@@ -28,6 +28,7 @@ from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, P
 from clist.templatetags.extras import (as_number, canonize, get_item, get_problem_key, get_problem_name,
                                        get_problem_short, get_timezone_offset, is_yes, rating_from_probability,
                                        win_probability)
+from clist.utils import create_contest_problem_discussion
 from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
@@ -834,6 +835,16 @@ def update_problems(contest, problems=None, force=False):
     old_problem_ids |= set(contest.individual_problem_set.values_list('id', flat=True))
     added_problems = dict()
 
+    def link_problem_to_contest(problem, contest):
+        ret = not problem.contests.filter(pk=contest.pk).exists()
+        if ret:
+            create_contest_problem_discussion(contest, problem)
+            problem.contests.add(contest)
+        if problem.id in old_problem_ids:
+            old_problem_ids.remove(problem.id)
+        new_problem_ids.add(problem.id)
+        return ret
+
     while not contests_queue.empty():
         current_contest = contests_queue.get()
         problem_sets = current_contest.division_problems
@@ -867,9 +878,7 @@ def update_problems(contest, problems=None, force=False):
                         key=key,
                     ).first()
                     if problem:
-                        problem.contests.add(contest)
-                        if problem.id in old_problem_ids:
-                            old_problem_ids.remove(problem.id)
+                        link_problem_to_contest(problem, contest)
                     continue
 
                 url = info.pop('url', None)
@@ -950,15 +959,12 @@ def update_problems(contest, problems=None, force=False):
                     key=key,
                     defaults=defaults,
                 )
-                problem.contests.add(contest)
+
+                link_problem_to_contest(problem, contest)
 
                 problem.update_tags(problem_info.get('tags'), replace=not added_problem)
 
                 added_problems[key] = problem
-
-                if problem.id in old_problem_ids:
-                    old_problem_ids.remove(problem.id)
-                new_problem_ids.add(problem.id)
 
                 for c in problem.contests.all():
                     if c.pk in contests_set:

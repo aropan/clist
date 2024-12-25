@@ -16,7 +16,8 @@ import pandas as pd
 import requests
 import xgboost as xgb
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Case, F, Max, Q, When
@@ -522,6 +523,12 @@ class Contest(BaseModel):
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='contest')
     virtual_starts = GenericRelation('ranking.VirtualStart', related_query_name='contest')
+    discussions = GenericRelation(
+        'clist.Discussion',
+        content_type_field='what_type',
+        object_id_field='what_id',
+        related_query_name='what_contest',
+    )
 
     has_submissions = models.BooleanField(default=None, null=True, blank=True, db_index=True)
     has_submissions_tests = models.BooleanField(default=None, null=True, blank=True, db_index=True)
@@ -683,21 +690,20 @@ class Contest(BaseModel):
         return cls._month_regex
 
     @staticmethod
-    def title_neighbors_(title, deep, viewed):
+    def _title_neighbors(title, deep, viewed):
         viewed.add(title)
         if deep == 0:
             return
 
-        for match in re.finditer(rf'([0-9]+|[A-Z]\b|{Contest.month_regex()})', title):
+        for match in re.finditer(rf'(?P<number>\b[0-9]+\b(?:[\W\S]\b[0-9]+\b)*)|(?P<letter>[A-Z]\b)|(?P<month>{Contest.month_regex()})', title):
             for delta in (-1, 1):
                 base_title = title
-                value = match.group(0)
                 values = []
-                if value.isdigit():
-                    value = str(int(value) + delta)
-                elif len(value) == 1:
+                if value := match.group('number'):
+                    value = re.sub('[0-9]+', lambda x: str(int(x.group()) + delta), value)
+                elif value := match.group('letter'):
                     value = chr(ord(value) + delta)
-                else:
+                elif value := match.group('month'):
                     mformat = '%b' if len(value) == 3 else '%B'
                     index = datetime.strptime(value.title(), mformat).month
                     mformats = ['%b', '%B'] if index == 5 else [mformat]
@@ -714,14 +720,14 @@ class Contest(BaseModel):
                     new_title = base_title[:match.start()] + value + base_title[match.end():]
                     if new_title in viewed:
                         continue
-                    Contest.title_neighbors_(new_title, deep=deep - 1, viewed=viewed)
+                    Contest._title_neighbors(new_title, deep=deep - 1, viewed=viewed)
 
     def similar_contests(self):
         return similar_contests_queryset(self)
 
     def neighbors(self):
         viewed = set()
-        Contest.title_neighbors_(self.title, deep=1, viewed=viewed)
+        Contest._title_neighbors(self.title, deep=1, viewed=viewed)
 
         qs = None
 
@@ -932,16 +938,18 @@ class Contest(BaseModel):
 
     def get_statistics_order(self):
         options = self.info.get('standings', {})
-        contest_fields = self.info.get('fields', []).copy()
+        fields = self.info.get('fields', [])
         resource_standings = self.resource.info.get('standings', {})
         order = copy.copy(options.get('order', resource_standings.get('order')))
         if order:
             for f in order:
-                if f.startswith('addition__') and f.split('__', 1)[1] not in contest_fields:
+                if f.startswith('addition__') and f.split('__', 1)[1] not in fields:
                     order = None
                     break
         if order is None:
             order = ['place_as_int', '-solving']
+        if 'penalty' in fields:
+            order.append('penalty')
         return order
 
     @transaction.atomic
@@ -1046,7 +1054,7 @@ class Problem(BaseModel):
     time = models.DateTimeField(default=None, null=True, blank=True)
     start_time = models.DateTimeField(default=None, null=True, blank=True)
     end_time = models.DateTimeField(default=None, null=True, blank=True)
-    index = models.SmallIntegerField(null=True)
+    index = models.SmallIntegerField(null=True, blank=True)
     key = models.TextField()
     name = models.TextField()
     slug = models.TextField(default=None, null=True, blank=True)
@@ -1070,6 +1078,12 @@ class Problem(BaseModel):
 
     activities = GenericRelation('favorites.Activity', related_query_name='problem')
     notes = GenericRelation('notes.Note', related_query_name='problem')
+    discussions = GenericRelation(
+        'clist.Discussion',
+        content_type_field='what_type',
+        object_id_field='what_id',
+        related_query_name='what_problem',
+    )
 
     objects = BaseManager()
     visible_objects = VisibleProblemManager()
@@ -1157,6 +1171,13 @@ class Problem(BaseModel):
         if replace:
             for tag in old_tags:
                 self.tags.remove(tag)
+
+    @property
+    def full_name(self):
+        short_or_key = self.short or self.key
+        if short_or_key == self.name:
+            return short_or_key
+        return f'{short_or_key}. {self.name}'
 
 
 class ProblemTag(BaseModel):
@@ -1281,3 +1302,28 @@ class PromoLink(BaseModel):
 
     def __str__(self):
         return f'{self.name} PromoLink#{self.id}'
+
+
+class Discussion(BaseModel):
+    name = models.CharField(max_length=255)
+    url = models.URLField()
+    resource = models.ForeignKey(Resource, null=True, blank=True, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE)
+    problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.CASCADE)
+    what_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name='discussion_what')
+    what_id = models.PositiveIntegerField()
+    what = GenericForeignKey('what_type', 'what_id')
+    where_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name='discussion_where')
+    where_id = models.PositiveIntegerField()
+    where = GenericForeignKey('where_type', 'where_id')
+    info = models.JSONField(default=dict, blank=True)
+    with_problem_discussions = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.name} Discussion#{self.id}'
+
+    class Meta:
+        unique_together = ('what_type', 'what_id', 'where_type', 'where_id')
+        indexes = [
+            models.Index(fields=['what_type', 'what_id', 'with_problem_discussions']),
+        ]

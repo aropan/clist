@@ -2,6 +2,7 @@
 
 import html
 import json
+import os
 import re
 from collections import OrderedDict
 from copy import deepcopy
@@ -225,6 +226,9 @@ class Statistic(BaseModule):
 
         if 'programmingLanguage' in submission:
             info['language'] = submission['programmingLanguage']
+
+        if 'creationTimeSeconds' in submission:
+            info['submission_time'] = submission['creationTimeSeconds']
 
         is_accepted = info.get('verdict') == 'OK'
         if not is_accepted and 'passedTestCount' in submission:
@@ -672,6 +676,8 @@ class Statistic(BaseModule):
             users.insert(index, user)
 
         assert len(infos) == len(users)
+
+        parse_russian_name = 'CODEFORCES_PARSE_RUSSIAN_NAME' in os.environ
         for data, user, orig in zip(infos, users, orig_users):
             if data:
                 if data['handle'].lower() != user.lower():
@@ -682,9 +688,25 @@ class Statistic(BaseModule):
                     data.pop('titlePhoto')
                 data['name'] = ' '.join([data[f] for f in ['firstName', 'lastName'] if data.get(f)])
             info = {'info': data}
+
+            if parse_russian_name:
+                page = REQ.get(f'https://{SUBDOMAIN}codeforces.com/profile/{user}?locale=ru')
+                match = re.search(
+                    r'''<div style="margin-top: 0.5em;">\s*'''
+                    r'''<div style="font-size: 0.8em; color: #777;">(?P<name>[^<,]*)''',
+                    page,
+                )
+                if match:
+                    data['name_ru'] = match.group('name').strip()
+            else:
+                info['special_info_fields'] = {'name_ru'}
+
             if data and data['handle'] != orig:
                 info['rename'] = data['handle']
             yield info
+        if parse_russian_name:
+            REQ.get(f'https://{SUBDOMAIN}codeforces.com/?locale=en')
+
 
     @staticmethod
     def get_source_code(contest, problem):

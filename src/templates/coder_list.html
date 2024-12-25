@@ -3,11 +3,23 @@
 {% block ogtitle %}{% block title %}{{ coder_list.name }} - List{% endblock %}{% endblock %}
 
 {% block end-head %}
+<link href="{% static_ts 'css/bootstrap-editable.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/bootstrap-editable.min.js' %}"></script>
+
 <link href="{% static_ts 'css/coder_list.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/coder_list.js' %}"></script>
+
 {% endblock %}
 
 {% block content %}
+
+{% if coder_list.with_names %}
+<script>
+  $.fn.editable.defaults.mode = 'popup'
+  $.fn.editable.defaults.url = change_url
+  $.fn.editable.defaults.pk = {{ coder.id }}
+</script>
+{% endif %}
 
 <h2>
   <i class="fas fa-list"></i>
@@ -49,9 +61,12 @@ host_2:account_2,host_3:account_3
             <th class="no-stretch">#</th>
             <th class="no-stretch"><i class="fas fa-external-link-alt"></i></th>
             <th class="no-stretch">VS</th>
+            {% if coder_list.with_names %}
+            <th class="no-stretch">Name</th>
+            {% endif %}
             <th class="value">
               Coder/Accounts
-              <span class="small text-muted">({{ coder_values|length }} of {{ coder_list_n_values_limit }})</span>
+              <span class="small text-muted">({{ coder_list_groups|length }} of {{ coder_list_n_values_limit }})</span>
             </th>
             {% for resource in params.resources %}
             <th>
@@ -63,38 +78,54 @@ host_2:account_2,host_3:account_3
           </tr>
         </thead>
         <tbody>
-          {% for group_id, data in coder_values.items %}
+          {% for group in coder_list_groups %}
+          {% with list_values=group.values %}
+          {% with has_list_values=list_values.count %}
           <tr>
             <td class="no-stretch">{{ forloop.counter }}</td>
-            <td class="no-stretch"><a href="{% url 'coder:mixed_profile' data.versus %}"><i class="fa fa-user"></i></a></td>
+            <td class="no-stretch">{% if has_list_values %}<a href="{% url 'coder:mixed_profile' group.profile_str %}"><i class="fa fa-user"></i></a>{% endif %}</td>
             <td class="no-stretch">
+              {% if has_list_values %}
               {% if request.user.is_authenticated %}
-              <a href="{% url 'ranking:versus' data.versus|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a>
+              <a href="{% url 'ranking:versus' group.profile_str|add:"/vs/"|add:coder.username %}"><i class="fas fa-people-arrows"></i></a>
               {% else %}
               <a href="{% url 'auth:login' %}?next={{ request.path }}"><i class="fa fa-sign-in-alt"></i></a>
               {% endif %}
+              {% endif %}
             </td>
+            {% if coder_list.with_names %}
+            <td class="no-stretch">
+              <a class="edit-name" href="#" data-name="group-name" data-type="text" data-group-id="{{ group.id }}" data-value="{{ group.name|default:'' }}"></a>
+            </td>
+            {% endif %}
             <td class="value">
-              {% for v in data.list_values %}
+              {% for v in list_values.all  %}
                 {% if forloop.counter0 %}|{% endif %}
                 {% if v.coder %}
-                {% include "coder.html" with coder=v.coder with_fixed_width=True %}
+                {% include "coder.html" with coder=v.coder with_fixed_width=False %}
                 {% elif v.account %}
-                {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True with_fixed_width=True without_inline_button=True %}
+                {% include "account_table_cell.html" with resource=v.account.resource account=v.account with_resource=True with_fixed_width=False without_inline_button=True %}
                 {% else %}
                 &mdash;
                 {% endif %}
+                <button class="btn btn-danger btn-xs hidden" name="delete_value_id" value="{{ v.id }}"><i class="far fa-trash-alt"></i></button>
               {% endfor %}
-              {% if can_modify %}
-              {% with v=data.list_values.0 %}
               <span class="inline-button">
-                <button href="#" class="add-account btn btn-primary btn-xs" data-gid="{{ v.group_id }}"><i class="fas fa-plus"></i></button>
-                <button class="btn btn-danger btn-xs" name="delete_gid" value="{{ v.group_id }}"><i class="far fa-trash-alt"></i></button>
+                {% if can_modify %}
+                <button href="#" class="add-account btn btn-primary btn-xs" data-group-id="{{ group.id }}">{% icon_to "add" %}</button>
+                {% if list_values|length > 1 %}
+                <button href="#" class="edit-group btn btn-primary btn-xs">{% icon_to "edit" %}</button>
+                {% endif %}
+                <button class="btn btn-danger btn-xs" name="delete_group_id" value="{{ group.id }}">{% icon_to "delete" %}</button>
+                {% endif %}
+                {% if perms.true_coders.change_coderlist %}
+                <a href="{% url 'admin:true_coders_listgroup_change' group.id %}" target="_blank" rel="noopener">{% icon_to "database" group %}</a>
+                {% endif %}
               </span>
-              {% endwith %}
-              {% endif %}
             </td>
           </tr>
+          {% endwith %}
+          {% endwith %}
           {% endfor %}
         </tbody>
       </table>

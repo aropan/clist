@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 from django.core.management.base import BaseCommand
@@ -111,23 +112,44 @@ class Command(BaseCommand):
                         if 'result' not in solution:
                             continue
                         result = solution['result']
-                        if is_solved(result, with_upsolving=True):
-                            verdict = ProblemVerdict.SOLVED
-                        elif is_reject(result, with_upsolving=True):
-                            verdict = ProblemVerdict.REJECT
-                        elif is_hidden(result, with_upsolving=True):
-                            verdict = ProblemVerdict.HIDDEN
-                        elif is_partial(result, with_upsolving=True):
-                            verdict = ProblemVerdict.PARTIAL
+                        upsolving = False
+                        for func, verdict in (
+                            (is_solved, ProblemVerdict.SOLVED),
+                            (is_reject, ProblemVerdict.REJECT),
+                            (is_partial, ProblemVerdict.PARTIAL),
+                            (is_hidden, ProblemVerdict.HIDDEN),
+                        ):
+                            if func(result, with_upsolving=True):
+                                if not func(result):
+                                    result = result['upsolving']
+                                    upsolving = True
+                                break
                         else:
                             continue
+
+                        contest = solution['contest']
+                        if 'time_in_seconds' in result:
+                            submission_time = contest.start_time + timedelta(seconds=result['time_in_seconds'])
+                        elif 'submission_time' in result:
+                            submission_time = datetime.fromtimestamp(result['submission_time'], tz=timezone.utc)
+                        else:
+                            submission_time = contest.end_time
+
                         status, created = CoderProblem.objects.update_or_create(
                             coder=coder,
                             problem=problem,
-                            defaults={'verdict': verdict},
+                            defaults={
+                                'contest': contest,
+                                'statistic': solution['statistic'],
+                                'problem_key': solution['key'],
+                                'verdict': verdict,
+                                'upsolving': upsolving,
+                                'submission_time': submission_time,
+                            },
                         )
                         n_created += created
                         n_total += 1
+
                         old_problem_ids.discard(status.id)
                     n_deleted += len(old_problem_ids)
                     coder.verdicts.filter(id__in=old_problem_ids).delete()

@@ -12,9 +12,10 @@ import arrow
 import tqdm
 
 from clist.models import Contest
+from clist.templatetags.extras import is_hidden
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
-from ranking.models import Account, VirtualStart
+from ranking.models import Account, Statistics, VirtualStart
 
 
 class Statistic(BaseModule):
@@ -54,6 +55,8 @@ class Statistic(BaseModule):
     def _set_medals(result, n_medals=False):
         for row in result.values():
             for problem in row.get('problems', {}).values():
+                if 'rank' not in problem:
+                    continue
                 rank = problem['rank']
                 if rank == 1:
                     problem['first_ac'] = True
@@ -98,7 +101,6 @@ class Statistic(BaseModule):
         has_virtual = False
         divisions_order = []
         for division in 'virtual', 'diff', 'main':
-            is_main = division == 'main'
             is_virtual = division == 'virtual'
             is_diff = division == 'diff'
             times = defaultdict(list)
@@ -123,14 +125,24 @@ class Statistic(BaseModule):
                 if not solutions:
                     division_result.pop(handle)
                     continue
+                solutions = {str(day): solution for day, solution in solutions.items()}
 
                 if is_virtual and handle in account_coders:
                     virtual_starts = VirtualStart.filter_by_content_type(Contest)
                     virtual_starts = virtual_starts.filter(object_id__in={c.pk for c in contests.values()},
                                                            coder__in=account_coders[handle])
-                    virtual_starts = {vs.entity.start_time: vs.start_time for vs in virtual_starts}
+                    virtual_starts = {vs.entity.start_time: vs.start_time for vs in virtual_starts
+                                      if vs.start_time >= vs.entity.start_time}
                 else:
                     virtual_starts = {}
+
+                for start_time, virtual_start_time in virtual_starts.items():
+                    day = str(start_time.day)
+                    for star in ['1', '2']:
+                        solution = solutions.setdefault(day, {})
+                        if star not in solution:
+                            solution[star] = {'hidden': True, 'virtual_start': virtual_start_time.timestamp()}
+                            break
 
                 problems = row.setdefault('problems', OrderedDict())
                 for day, solution in items_sort(solutions):
@@ -157,10 +169,18 @@ class Statistic(BaseModule):
                             if star == '1':
                                 problems_infos[k]['skip_for_divisions'] = ['diff']
 
-                        time = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc)
+                        if res.get('hidden'):
+                            problem = {
+                                'result': '?',
+                                'is_virtual': True,
+                                'virtual_start_ts': res['virtual_start'],
+                            }
+                            problems[k] = problem
+                            continue
 
+                        time = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc)
                         virtual_start = virtual_starts.get(contest.start_time)
-                        if is_virtual and virtual_start and day_start_time < virtual_start < time:
+                        if is_virtual and virtual_start and virtual_start < time:
                             time -= virtual_start - day_start_time
                             has_virtual = True
                             problem_is_virtual = True
@@ -198,26 +218,30 @@ class Statistic(BaseModule):
                     division_result.pop(handle)
 
             global_times = deepcopy(times)
-            for contest in contests.values():
-                day = contest.key.split()[-1]
-                for stat in contest.statistics_set.values('addition__problems', 'account__key'):
-                    account = stat['account__key']
-                    for star, p in stat['addition__problems'].items():
-                        star = 3 - int(star)
-                        k = f'{day}.{star}'
-                        if account in division_result and k in division_result[account]['problems']:
-                            division_result[account]['problems'][k].update({
-                                'global_rank': p['rank'],
-                                'global_score': p['result'],
-                            })
-                        elif 'time_in_seconds' in p:
-                            global_times[k].append((p['time_in_seconds'], -1))
+            stats = Statistics.objects.filter(contest__in=contests.values())
+            stats = stats.values('contest__key', 'addition__problems', 'account__key')
+            for stat in stats:
+                day = stat['contest__key'].split()[-1]
+                account = stat['account__key']
+                for star, p in stat['addition__problems'].items():
+                    star = 3 - int(star)
+                    k = f'{day}.{star}'
+                    if account in division_result and k in division_result[account]['problems']:
+                        division_result[account]['problems'][k].update({
+                            'global_rank': p['rank'],
+                            'global_score': p['result'],
+                        })
+                    elif 'time_in_seconds' in p:
+                        global_times[k].append((p['time_in_seconds'], -1))
+
             for t in (times, global_times):
                 for v in t.values():
                     v.sort()
             for row in division_result.values():
                 problems = row.setdefault('problems', {})
                 for k, p in row['problems'].items():
+                    if is_hidden(p):
+                        continue
                     time_value = (p['time_in_seconds'], p['time_index'])
                     rank = times[k].index(time_value) + 1
                     score = max(local_best_score - rank + 1, 0)
@@ -234,7 +258,7 @@ class Statistic(BaseModule):
                         row['global_score'] += p.get('global_score', 0)
 
             for row in division_result.values():
-                row['solving'] = sum(p['result'] for p in row['problems'].values())
+                row['solving'] = sum(p['result'] for p in row['problems'].values() if not is_hidden(p))
 
             last = None
             for idx, r in enumerate(sorted(division_result.values(), key=lambda r: -r['solving']), start=1):

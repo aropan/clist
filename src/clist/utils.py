@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 
+import logging
 import re
 from functools import cache
+from importlib import import_module
+from urllib.parse import urljoin
 
+from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
 
@@ -84,3 +90,42 @@ def similar_contests_queryset(contest):
         contests_filter |= Q(key__iregex=key_regex)
     contests_filter &= Q(resource_id=contest.resource_id, stage__isnull=True)
     return contest._meta.model.objects.filter(contests_filter)
+
+
+class CreateContestProblemDiscussionError(Exception):
+    pass
+
+
+def create_contest_problem_discussions(contest):
+    for problem in contest.problem_set.all():
+        create_contest_problem_discussion(contest, problem)
+
+
+def create_contest_problem_discussion(contest, problem):
+    Discussion = apps.get_model('clist.Discussion')
+    contest_discussions = Discussion.objects.filter(
+        contest=contest,
+        what_contest=contest,
+        with_problem_discussions=True,
+        where_telegram_chat__isnull=False,
+    )
+    TelegramBot = import_module('tg.bot').Bot()
+    for discussion in contest_discussions:
+        telegram_chat = discussion.where
+        if Discussion.objects.filter(what_problem=problem, where_telegram_chat=telegram_chat).exists():
+            continue
+        with transaction.atomic():
+            topic = None
+            try:
+                discussion.id = None
+                discussion.problem = problem
+                discussion.what = problem
+                discussion.save()
+                topic = TelegramBot.create_topic(telegram_chat.chat_id, problem.full_name)
+                discussion.url = urljoin(discussion.url, str(topic.message_thread_id))
+                discussion.info = {'topic': topic.to_dict()}
+                discussion.save()
+            except Exception as e:
+                if topic is not None:
+                    TelegramBot.delete_topic(telegram_chat.chat_id, topic.message_thread_id)
+                raise CreateContestProblemDiscussionError(e)

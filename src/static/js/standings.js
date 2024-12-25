@@ -18,6 +18,13 @@ function update_sticky() {
   })
 }
 
+function reload_standings(delay) {
+  var timestamp = ($.now() + delay) / 1000
+  notify(`The page will be reloaded after <span class="countdown" data-timestamp="${timestamp}">${delay / 1000}</span>`, {type: 'info', duration: delay, escapeHTML: false})
+  setTimeout(() => { location.reload() }, delay)
+  countdown()
+}
+
 function color_by_group_score(attr = 'data-result') {
   var prev = null
   var idx = 0
@@ -1042,7 +1049,7 @@ function switcher_updated(stat) {
           penalty: tr.data('current-penalty'),
           solving: tr.data('current-solving'),
         },
-        success: function(data) { $.notify(data.message, data.status) },
+        success: function(data) { notify(data.message, data.status) },
         error: log_ajax_error_callback,
       })
     }
@@ -1216,6 +1223,11 @@ function show_timeline() {
   $('#timeline-buttons').toggleClass('hidden')
   $('#timeline').show()
   $('.standings .endless_container').remove()
+
+  $('.standings-auto-reload').prop('disabled', true)
+  if ($('.standings-auto-reload.hidden[data-value="off"]').length) {
+    $('.standings-auto-reload').toggleClass('hidden')
+  }
 
   clear_extra_info_timeline()
 
@@ -1537,9 +1549,12 @@ $(function() {
       apply_starring()
       clear_extra_info_timeline()
       set_timeline()
-      $.notify('updated ' + n_rows_msg + ' row(s)', 'success')
+      notify('updated ' + n_rows_msg + ' row(s)', 'info')
+    } else if (with_autoreload) {
+      notify('updated ' + n_rows_msg + ' row(s)', 'info')
+      reload_standings(5000)
     } else {
-      $.notify('updated ' + n_rows_msg + ' row(s), reload page to see', 'warn')
+      notify('updated ' + n_rows_msg + ' row(s), reload page to see', 'info')
     }
   }
 
@@ -1554,14 +1569,17 @@ $(function() {
   }
 
   standings_socket.onclose = function(e) {
-    if (n_messages) {
-      $.notify('Socket closed unexpectedly', 'warn')
-      $.notify('The page will be reloaded in 10 seconds', 'warn')
-      setTimeout(() => { location.reload() }, 10000)
+    if (n_messages || with_autoreload) {
+      setTimeout(() => {
+        if (document.hidden) {
+          return
+        }
+        notify('Socket closed unexpectedly', 'warn')
+        reload_standings(5000)
+      }, 20000)
     }
   }
 })
-
 
 /*
  * Update statistics
@@ -1607,7 +1625,7 @@ function update_statistics(e) {
     },
     error: log_ajax_error_callback,
     success: function() {
-      $.notify('Queued update', 'success')
+      notify('Queued update', 'success')
     },
     complete: function(jqXHR, textStatus) {
       icon.removeClass('fa-spin')
@@ -1794,6 +1812,40 @@ $(() => {
 
     visible_standings()
   }
+
+  $('.standings-auto-reload').click(function(event) {
+    event.preventDefault()
+
+    var $btn = $(this)
+    var autoreload_new_value = $btn.data('value')
+    update_urls_params({'autoreload': autoreload_new_value})
+
+    function success() {
+        $('.standings-auto-reload').toggleClass('hidden')
+        with_autoreload = !with_autoreload
+    }
+
+    if (coder_pk === undefined) {
+      success()
+      return
+    }
+
+    $btn.prop('disabled', true)
+    $.ajax({
+      type: 'POST',
+      url: change_url,
+      data: {
+        pk: coder_pk,
+        name: 'standings-auto-reload',
+        value: autoreload_new_value,
+      },
+      error: log_ajax_error_callback,
+      success: success,
+      complete: function() {
+        $btn.prop('disabled', false)
+      },
+    })
+  })
 })
 
 /*
@@ -1820,7 +1872,7 @@ $(() => {
 
     const files = e.originalEvent.dataTransfer.files
     if (files.length > 1) {
-      $.notify('Only one file can be uploaded', 'warn')
+      notify('Only one file can be uploaded', 'warn')
       return
     }
 
@@ -1832,7 +1884,7 @@ $(() => {
 
   function standings_upload_solution(file, problem_cell) {
     if (file.size > problem_user_solution_size_limit) {
-      $.notify('File is too large', 'warn')
+      notify('File is too large', 'warn')
       return
     }
 
@@ -1849,7 +1901,7 @@ $(() => {
       contentType: false,
       data: form_data,
       beforeSend: function() { problem_cell.addClass('uploading') },
-      success: function(data) { $.notify(data.message, data.status), location.reload() },
+      success: function(data) { notify(data.message, data.status), location.reload() },
       error: log_ajax_error_callback,
       complete: function() { problem_cell.removeClass('uploading') },
     })

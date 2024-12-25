@@ -219,6 +219,9 @@
                 if (isset($params["cookie_file"])) {
                     $command .= " -b " . escapeshellarg($params["cookie_file"]) . " -c " . escapeshellarg($params["cookie_file"]);
                 }
+                if (isset($params["curl_args_file"])) {
+                    $command .= " " . file_get_contents($params["curl_args_file"]);
+                }
                 $page = shell_exec($command);
             } else {
                 $page = curl_exec($CID);

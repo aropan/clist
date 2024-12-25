@@ -14,6 +14,7 @@
 <script src="{% static_ts 'js/addon-chart.js' %}"></script>
 {% endif %}
 
+<script src="{% static_ts 'js/jquery.timeago.js' %}"></script>
 <script src="{% static_ts 'js/countdown.js' %}"></script>
 <script>
   contest_duration = {{ contest.duration_in_secs }}
@@ -48,6 +49,7 @@
 
   n_highlight = {{ standings_options.n_highlight|default:"undefined" }}
   problem_user_solution_size_limit = {{ problem_user_solution_size_limit|default:"undefined" }}
+  with_autoreload = {{ with_autoreload|lower }}
 </script>
 
 {% endblock %}
@@ -212,16 +214,6 @@
     {% include "standings_charts.html" with charts=charts %}
   {% elif statistics.exists %}
     {% if not groupby or groupby == 'none' %}
-
-    {% if contest.parsed_time %}
-    <div id="parsed-time">
-      <small class="text-muted pull-right">
-        updated
-        {% if contest.parsed_percentage and contest.parsed_percentage < 100 %}{{ contest.parsed_percentage|floatformat:1 }}%{% endif %}
-        <span title="{{ contest.parsed_time|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.parsed_time|timezone:timezone|naturaltime }}</span>
-      </small>
-    </div>
-    {% endif %}
 
     {% if contest.resource.info.standings.style %}
     <style>

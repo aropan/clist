@@ -19,7 +19,7 @@ from logify.models import EventLog, EventStatus
 from ranking.management.modules.excepts import ExceptionParseAccounts
 from ranking.models import Account
 from ranking.utils import account_update_contest_additions, rename_account
-from true_coders.models import Coder
+from true_coders.models import Coder, CoderList
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.traceback_with_vars import colored_format_exc
@@ -60,6 +60,8 @@ class Command(BaseCommand):
         parser.add_argument('--with-field', default=None, type=str, help='only parsed account which have field')
         parser.add_argument('--reset-upsolving', action='store_true', help='reset upsolving')
         parser.add_argument('--with-coders', action='store_true', help='with coders')
+        parser.add_argument('--coder-list', type=str, help='account from coder list')
+
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -132,6 +134,9 @@ class Command(BaseCommand):
                     accounts = accounts.filter(statistics__contest_id=args.contest_id)
                 if args.with_coders:
                     accounts = accounts.filter(coders__isnull=False)
+                if args.coder_list:
+                    accounts_filter = CoderList.accounts_filter(uuids=[args.coder_list])
+                    accounts = accounts.filter(accounts_filter)
 
                 total = accounts.count()
                 if not total:
@@ -268,8 +273,6 @@ class Command(BaseCommand):
                             if 'name' in info:
                                 name = info['name']
                                 account.name = name if name and name != account.key else None
-                            if 'rating' in info and account.info.get('rating') != info['rating']:
-                                info['_rating_time'] = int(now.timestamp())
                             delta = timedelta(**resource_info.get('delta', {'days': 365}))
                             delta = info.pop('delta', delta)
 
@@ -279,15 +282,16 @@ class Command(BaseCommand):
                                     if k not in info and not Account.is_special_info_field(k):
                                         info[k] = v
 
-                            for k, v in account.info.items():
-                                if args.all or k not in info and Account.is_special_info_field(k):
-                                    info[k] = v
-
                             outdated = account.info.pop('outdated_', {})
-                            outdated.update(account.info)
-                            for k in info.keys():
-                                if k in outdated:
-                                    outdated.pop(k)
+                            special_info_fields = data.get('special_info_fields') or set()
+                            for k, v in account.info.items():
+                                if (
+                                    args.all or
+                                    k not in info and (Account.is_special_info_field(k) or k in special_info_fields)
+                                ):
+                                    info[k] = v
+                                elif k not in info:
+                                    outdated[k] = v
                             info['outdated_'] = outdated
 
                             account.info = info

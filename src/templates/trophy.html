@@ -1,11 +1,11 @@
 {% if with_color %}<span class="trophy {{ statistic.addition.medal|lower }}-trophy no-user-select">{% endif %}
 
 {% if statistic.place_as_int == 1 %}
-<i class="fas fa-trophy"></i>
+<i class="fas fa-fw fa-trophy"></i>
 {% elif statistic.addition.medal == "gold" or statistic.addition.medal == "silver" or statistic.addition.medal == "bronze" %}
-<i class="fas fa-medal"></i>
+<i class="fas fa-fw fa-medal"></i>
 {% else %}
-<i class="fas fa-award"></i>
+<i class="fas fa-fw fa-award"></i>
 {% endif %}
 
 {% if with_color %}</span>{% endif %}

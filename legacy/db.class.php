@@ -70,7 +70,7 @@
 
         function escapeString($data)
         {
-            //return mysqli_real_escape_string($this->link, $data);
+            if ($data === null) return null;
             return pg_escape_string($this->link, $data);
         }
 

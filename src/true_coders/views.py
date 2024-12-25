@@ -30,6 +30,7 @@ from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
 from django_ratelimit.core import get_usage
+from django_super_deduper.merge import MergedModelInstance
 from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
@@ -54,7 +55,7 @@ from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
                             VirtualStart)
 from tg.models import Chat
-from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListValue, Organization, Party
+from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListGroup, ListValue, Organization, Party
 from true_coders.utils import add_query_to_list, get_or_set_upsolving_filter
 from utils.chart import make_chart
 from utils.json_field import JSONF, IntegerJSONF, JsonJSONF
@@ -475,18 +476,15 @@ def account_context(request, key, host):
     context['set_variables'] = set_variables
 
     wait_rating = account.resource.info.get('statistics', {}).get('wait_rating', {})
+    wait_rating_days = timedelta(days=wait_rating.get('days', 7))
     context['show_add_account_message'] = (
         wait_rating.get('has_coder')
         and account.resource.has_rating_history
         and not account.coders.all()
         and (
             account.last_activity is None
-            or '_rating_time' not in account.info
-            or (
-                account.last_activity
-                - make_aware(datetime.fromtimestamp(account.info['_rating_time']))
-                > timedelta(days=wait_rating.get('days', 7))
-            )
+            or account.rating_update_time is None
+            or account.last_activity - account.rating_update_time > wait_rating_days
         )
     )
 
@@ -1022,7 +1020,7 @@ def change(request):
         else:
             coder.settings["theme"] = value
         coder.save()
-    if name == "highlight":
+    elif name == "highlight":
         if value not in django_settings.HIGHLIGHT_STYLES:
             return HttpResponseBadRequest("invalid highlight name")
         if value == "default":
@@ -1266,6 +1264,11 @@ def change(request):
             coder_list.delete()
         except Exception:
             return HttpResponseBadRequest('invalid list id')
+    elif name == "group-name":
+        group_id = request.POST.get("group_id")
+        group = get_object_or_404(ListGroup, pk=group_id, coder_list__owner=coder)
+        group.name = value or None
+        group.save(update_fields=['name'])
     elif name in ["add-calendar", "edit-calendar"]:
         try:
             pk = int(request.POST.get("id") or -1)
@@ -1439,7 +1442,13 @@ def change(request):
                     continue
                 sent_statistics.add(statistic.pk)
                 view_contest = contest or statistic.contest
-                message = compose_message_by_problems('all', statistic, {}, view_contest)
+                message = compose_message_by_problems(
+                    problem_shorts='all',
+                    statistic=statistic,
+                    previous_addition={},
+                    contest_or_problems=view_contest,
+                    subscription=subscription,
+                )
                 subscription.send(message=message, contest=view_contest)
 
         if subscription.top_n:
@@ -1765,6 +1774,10 @@ def change(request):
         problems[problem_short]['user_solution'] = file_content
         statistic.save(update_fields=['addition'])
         return JsonResponse({'status': 'success', 'message': 'Solution was uploaded'})
+    elif name == 'standings-auto-reload':
+        value = is_yes(request.POST.get('value'))
+        coder.settings['standings_with_autoreload'] = value
+        coder.save(update_fields=['settings'])
     else:
         return HttpResponseBadRequest(f'unknown name = {escape(name)}')
 
@@ -2340,40 +2353,49 @@ def view_list(request, uuid):
             return HttpResponseBadRequest('Only the owner can change the list')
         if 'uuid' in request_post and request_post['uuid'] != uuid:
             return HttpResponseBadRequest('Wrong uuid value')
-        group_id = toint(request_post.get('gid'))
-        if not group_id:
-            group_id = (coder_list.values.aggregate(val=Max('group_id')).get('val') or 0) + 1
+        group_id, group = request_post.get('group_id'), None
+        existing_groups = set()
+
+        def reset_group_id():
+            nonlocal group_id, group
+            if group is not None and not group.values.exists():
+                group.delete()
+            group_id, group = None, None
+            existing_groups = set()
+
+        def get_group_id():
+            nonlocal group_id, group
+            if group is None:
+                if group_id is None:
+                    group = coder_list.groups.create()
+                else:
+                    group = get_object_or_404(coder_list.groups, pk=group_id)
+                group_id = group.pk
+            return group_id
 
         def add_coder(c, log_value=None):
             log_value = log_value or c.username
-            if ListValue.objects.filter(coder_list=coder_list).count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
+            if coder_list.values.count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
                 request.logger.warning(f'Limit reached. Coder {log_value} not added')
                 return
-            try:
-                ListValue.objects.create(coder_list=coder_list, coder=c, group_id=group_id)
-                request.logger.success(f'Added {log_value} coder to list')
-            except IntegrityError:
+            if qs := coder_list.groups.filter(values__coder=c):
+                existing_groups.update(qs)
                 request.logger.warning(f'Coder {log_value} has already been added')
+                return
+            ListValue.objects.create(coder_list=coder_list, coder=c, group_id=get_group_id())
+            request.logger.success(f'Added {log_value} coder to list')
 
         def add_account(a, log_value=None):
             log_value = log_value or a.key
-            if ListValue.objects.filter(coder_list=coder_list).count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
+            if coder_list.values.count() >= django_settings.CODER_LIST_N_VALUES_LIMIT_:
                 request.logger.warning(f'Limit reached. Account {log_value} not added')
                 return
-
-            added = False
-            try:
-                accounts_filter = CoderList.accounts_filter(uuids=[uuid], coder=coder, logger=request.logger)
-                if not Account.objects.filter(accounts_filter, pk=a.pk).exists():
-                    ListValue.objects.create(coder_list=coder_list, account=a, group_id=group_id)
-                    added = True
-            except IntegrityError:
-                pass
-
-            if added:
-                request.logger.success(f'Added {log_value} account to list')
-            else:
+            if qs := coder_list.groups.filter(Q(values__account=a) | Q(values__coder__account=a)):
+                existing_groups.update(qs)
                 request.logger.warning(f'Account {log_value} has already been added')
+                return
+            ListValue.objects.create(coder_list=coder_list, account=a, group_id=get_group_id())
+            request.logger.success(f'Added {log_value} account to list')
 
         if request_post.get('coder'):
             c = get_object_or_404(Coder, pk=request_post.get('coder'))
@@ -2381,9 +2403,8 @@ def view_list(request, uuid):
         elif request_post.get('account'):
             a = get_object_or_404(Account, pk=request_post.get('account'))
             add_account(a)
-        elif request_post.get('delete_gid'):
-            group_id = request_post.get('delete_gid')
-            deleted, *_ = coder_list.values.filter(group_id=group_id).delete()
+        elif delete_group_id := request_post.get('delete_group_id'):
+            deleted, *_ = coder_list.groups.filter(pk=delete_group_id).delete()
             if deleted:
                 request.logger.success('Deleted from list')
             else:
@@ -2392,15 +2413,17 @@ def view_list(request, uuid):
             raw = request_post.get('raw')
             lines = raw.strip().splitlines()
 
-            if request_post.get('gid'):
-                if len(lines) > 1:
-                    request.logger.warning(f'Ignore {len(lines) - 1} line(s)')
+            if group_id and len(lines) > 1:
+                request.logger.warning(f'Ignore {len(lines) - 1} line(s)')
                 lines = lines[:1]
 
-            for line in lines:
+            for index, line in enumerate(lines):
+                if index:
+                    reset_group_id()
                 values = accounts_split(line.strip())
                 n_coders = 0
                 n_accounts = 0
+                group_name = None
                 for value in values:
                     try:
                         if ':' not in value:
@@ -2418,6 +2441,11 @@ def view_list(request, uuid):
                             n_coders += 1
                         else:
                             host, account = value.split(':', 1)
+                            if host == 'NAME':
+                                if qs := coder_list.groups.filter(name=group_name):
+                                    existing_groups.add(qs)
+                                group_name = account
+                                continue
                             resources = list(Resource.objects.filter(Q(host=host) | Q(short_host=host)))
                             if not resources:
                                 request.logger.warning(f'Not found host = "{host}", value = "{value}"')
@@ -2426,7 +2454,14 @@ def view_list(request, uuid):
                                 request.logger.warning(f'Too many resources found = "{resources}", value = "{value}"')
                                 continue
                             resource = resources[0]
-                            accounts = list(Account.objects.filter(resource=resource, key=account))
+                            renamings = resource.accountrenaming_set
+                            for suffix in '__exact', '__iexact':
+                                last_account = account
+                                while (next_renaming := renamings.filter(**{f'old_key{suffix}': last_account}).first()):
+                                    last_account = next_renaming.new_key
+                                accounts = list(resource.account_set.filter(**{f'key{suffix}': last_account}))
+                                if accounts:
+                                    break
                             if not accounts:
                                 request.logger.warning(f'Not found account = "{account}", value = "{value}"')
                                 continue
@@ -2438,34 +2473,50 @@ def view_list(request, uuid):
                     except Exception as e:
                         logger.error(f'Error while adding raw to coder list: {e}')
                         request.logger.error(f'Some problem with value = "{value}"')
-                group_id += 1
+
+                if group_id:
+                    get_group_id()
+                if not group and existing_groups:
+                    group = existing_groups.pop()
+                if group and existing_groups:
+                    group = MergedModelInstance.create(group, existing_groups)
+                    for g in existing_groups:
+                        g.delete()
+                    request.logger.info(f'Merged {len(existing_groups) + 1} groups')
+                if group and group_name:
+                    group.name = group_name
+                    group.save(update_fields=['name'])
+        elif value_id := request_post.get('delete_value_id'):
+            list_value = get_object_or_404(coder_list.values, pk=value_id)
+            list_group = list_value.group
+            deleted, *_ = list_value.delete()
+            if deleted:
+                if not list_group.values.exists():
+                    deleted, *_ = list_group.delete()
+                    if deleted:
+                        request.logger.success('Deleted group from list')
+                    else:
+                        request.logger.error('Group has not been deleted')
+                request.logger.success('Deleted from list')
+            else:
+                request.logger.warning('Nothing has been deleted')
+        else:
+            request.logger.warning('No action specified')
+        reset_group_id()
         return allowed_redirect(request.path)
 
-    coder_values = {}
-    for v in coder_list.related_values.order_by('group_id').all():
-        data = coder_values.setdefault(v.group_id, {})
-        data.setdefault('list_values', []).append(v)
-
-    for data in coder_values.values():
-        vs = []
-        for v in data['list_values']:
-            if v.coder:
-                vs.append(v.coder.username)
-            elif v.account:
-                prefix = v.account.resource.short_host or v.account.resource.host
-                vs.append(f'{prefix}:{v.account.key}')
-        data['versus'] = ','.join(vs)
+    coder_list_groups = coder_list.related_groups
 
     context = {
         'coder_list': coder_list,
-        'coder_values': coder_values,
+        'coder_list_groups': coder_list_groups,
         'is_owner': is_owner,
         'can_modify': can_modify,
         'coder': coder,
     }
 
-    if len(coder_values) > 1:
-        context['versus'] = '/vs/'.join([d['versus'] for d in coder_values.values()])
+    if len(coder_list_groups) > 1:
+        context['versus'] = '/vs/'.join([group.profile_str() for group in coder_list_groups])
 
     return render(request, 'coder_list.html', context)
 
@@ -2591,6 +2642,11 @@ def accounts(request, template='accounts.html'):
 
     list_uuids = [v for v in request.GET.getlist('list') if v]
     if list_uuids:
+        if list_uuids:
+            groups = ListGroup.objects.filter(coder_list__uuid__in=list_uuids, name__isnull=False)
+            groups = groups.filter(Q(values__account=OuterRef('pk')) |
+                                   Q(values__coder__account=OuterRef('pk')))
+            accounts = accounts.annotate(value_instead_key=Subquery(groups.values('name')[:1]))
         accounts_filter = CoderList.accounts_filter(list_uuids, coder=coder, logger=request.logger)
         accounts = accounts.filter(accounts_filter)
 
@@ -2622,7 +2678,7 @@ def accounts(request, template='accounts.html'):
         params['to_list'] = to_list
 
     context = {'params': params}
-    addition_table_fields = ('modified', 'updated', 'created', 'key', 'last_rating_activity')
+    addition_table_fields = ('modified', 'updated', 'created', 'name', 'key', 'last_rating_activity')
     table_fields = ('rating', 'resource_rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
@@ -2644,6 +2700,8 @@ def accounts(request, template='accounts.html'):
                 field_type = 'float'
             elif v == {'int'}:
                 field_type = 'int'
+            elif v == {'str'}:
+                field_type = 'str'
             else:
                 continue
             fields_types[k] = field_type
@@ -2731,6 +2789,14 @@ def accounts(request, template='accounts.html'):
     if coder and len(resources) == 1:
         primary_account = Account.priority_objects.filter(resource=resource, coders=coder).first()
         context['primary_account'] = primary_account
+
+    # field_instead_key
+    if field_instead_key := request.GET.get('field_instead_key'):
+        if field_instead_key in custom_fields:
+            field_instead_key = f'info__{field_instead_key}'
+        elif field_instead_key not in table_fields:
+            field_instead_key = None
+        context['field_instead_key'] = field_instead_key
 
     return template, context
 

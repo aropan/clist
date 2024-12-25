@@ -807,11 +807,13 @@ FONTAWESOME_ICONS_ = {
     'rating_prediction': '<i class="fa-solid fa-calculator"></i>',
     'https': '<i class="fa-regular fa-square-check"></i>',
     'http': '<i class="fa-regular fa-rectangle-xmark"></i>',
+    'add': '<i class="fas fa-plus"></i>',
     'edit': '<i class="fa-regular fa-pen-to-square"></i>',
     'login': '<i class="fa-solid fa-right-to-bracket"></i>',
     'logout': '<i class="fa-solid fa-right-from-bracket"></i>',
     'expires': '<i class="fa-solid fa-clock-rotate-left"></i>',
     'subscription': '<i class="fa-regular fa-newspaper"></i>',
+    'field_instead_key': '<i class="fa-solid fa-pencil"></i>',
 
     'google': {'icon': '<i class="fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fab fa-facebook"></i>', 'title': None},
@@ -834,6 +836,7 @@ STANDINGS_FIELDS_ = {
 
 STANDINGS_WITH_DETAIL_DEFAULT = True
 STANDINGS_WITH_SOLUTION_DEFAULT = False
+STANDINGS_WITH_AUTORELOAD_DEFAULT = True
 STANDINGS_SMALL_N_STATISTICS = 1000
 STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT = 0.2
 STANDINGS_UNSPECIFIED_PLACE = '-'

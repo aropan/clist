@@ -133,6 +133,7 @@ class Subscription(TaskNotification):
     last_update = models.DateTimeField(null=True, blank=True)
     with_first_accepted = models.BooleanField(default=False)
     top_n = models.IntegerField(null=True, blank=True)
+    with_custom_names = models.BooleanField(default=False)
 
     tasks = GenericRelation(
         'Task',

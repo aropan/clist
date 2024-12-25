@@ -157,7 +157,7 @@ function inline_button() {
       action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')
     }).done(function(data) {
       btn.attr('data-original-title', data.message).tooltip('show')
-      $.notify(data.message, data.status)
+      notify(data.message, data.status)
     }).fail(log_ajax_error_callback)
   })
 
@@ -225,7 +225,7 @@ function log_ajax_error(response, element = null) {
     element.text(message)
     element.removeClass('hidden')
   } else {
-    $.notify(message, 'error')
+    notify(message, 'error')
   }
   $('.bootbox').effect('shake')
 }
@@ -297,7 +297,7 @@ function copyElementToClipboard(event, element) {
   copyTextToClipboard(text)
   el.attr('title', 'copied')
   el.tooltip('show')
-  $.notify('Copied "' + text + '" to clipboard', 'success')
+  notify('Copied "' + text + '" to clipboard', 'success')
   setTimeout(function() { el.attr('title', ''); el.tooltip('destroy'); }, 1000)
   return false
 }
@@ -887,4 +887,62 @@ function restarred() {
     })
     offset_height += el.height()
   }).css('z-index', '')
+}
+
+/*
+ * toastify notifications
+ */
+
+Toastify.defaults.style = {}
+Toastify.defaults.position = 'right'
+Toastify.defaults.gravity= 'bottom'
+Toastify.defaults.stopOnFocus = true
+Toastify.defaults.duration = 4000
+Toastify.defaults.escapeMarkup = true
+
+function notify(message, type = 'success', duration = Toastify.defaults.duration) {
+  var escapeHTML = Toastify.defaults.escapeMarkup
+  if (typeof type == 'object') {
+    var options = type
+    type = options.type ?? 'success'
+    duration = options.duration ?? duration
+    escapeHTML = options.escapeHTML ?? escapeHTML
+  }
+  type = {error: 'danger', warn: 'warning'}[type] || type
+  if (!['danger', 'warning', 'success', 'info'].includes(type)) {
+    type = 'undefined'
+  }
+
+  var toastify = Toastify({
+    text: message,
+    duration: duration,
+    escapeMarkup: escapeHTML,
+    className: `toastify-bootstrap alert alert-${type}`,
+  })
+  toastify.showToast()
+  const toastElement = $(toastify.toastElement)
+
+  const progressBar = $('<div>', {
+    class: `progress-bar-${type}`,
+    style: `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      margin: -3px -1px;
+      animation: progress-animation ${Math.floor(duration / 1000)}s linear;
+    `,
+  }).on('animationend', () => { progressBar.css('width', '0%') })
+  toastElement.append(progressBar)
+
+  if (Toastify.defaults.stopOnFocus) {
+    toastElement.on('mouseenter', () => {
+      progressBar.css('animation', 'none')
+      progressBar.toggleClass('hidden')
+    }).on('mouseleave', () => {
+      progressBar.css('animation', `progress-animation ${Math.floor(duration / 1000)}s linear`)
+      progressBar.toggleClass('hidden')
+    })
+  }
 }

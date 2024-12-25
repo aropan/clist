@@ -226,7 +226,7 @@ $(function() {
                 $('#custom_countries_loading').addClass('hidden')
             },
             error: function(data) {
-                $.notify(data.responseText, 'error')
+                notify(data.responseText, 'error')
                 $('#custom_countries_loading').addClass('hidden')
             },
         })
@@ -1478,7 +1478,7 @@ $(function() {
                                     document.location.href = "/"
                                 },
                                 error: function(data) {
-                                    $.notify(data.responseText, "error")
+                                    notify(data.responseText, "error")
                                 },
                             })
                         }
@@ -1503,7 +1503,7 @@ $(function() {
                 })
             },
             error: function(data) {
-                $.notify(data.responseText, "error")
+                notify(data.responseText, "error")
             },
         })
     })

@@ -10,7 +10,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.db import models
-from django.db.models import F, OuterRef, Q, Sum
+from django.db.models import F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Upper
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -50,6 +50,7 @@ class Account(BaseModel):
     last_rating_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     rating50 = models.SmallIntegerField(default=None, null=True, blank=True, db_index=True)
+    rating_update_time = models.DateTimeField(default=None, null=True, blank=True)
     resource_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
@@ -436,6 +437,7 @@ class Statistics(BaseModel):
     place_as_int = models.IntegerField(default=None, null=True, blank=True)
     solving = models.FloatField(default=0, blank=True)
     upsolving = models.FloatField(default=0, blank=True)
+    penalty = models.FloatField(default=None, null=True, blank=True)
     addition = models.JSONField(default=dict, blank=True)
     url = models.TextField(null=True, blank=True)
     new_global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
@@ -498,8 +500,10 @@ class Statistics(BaseModel):
         indexes = [
             models.Index(fields=['place_as_int', 'created']),
             models.Index(fields=['place_as_int', '-solving']),
+            models.Index(fields=['place_as_int', '-solving', 'penalty']),
             models.Index(fields=['place_as_int', '-created']),
             models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
+            models.Index(fields=['contest', 'place_as_int', '-solving', 'penalty', 'id']),
             models.Index(fields=['contest', 'account']),
             models.Index(fields=['contest', 'advanced', 'place_as_int']),
             models.Index(fields=['contest', 'account', 'advanced', 'place_as_int']),
@@ -581,9 +585,12 @@ class VirtualStart(BaseModel):
         indexes = [models.Index(fields=['coder', 'content_type', 'object_id'])]
 
     @classmethod
-    def filter_by_content_type(cls, model_class):
+    def filter_by_content_type(cls, model_class, prefetch=True):
         content_type = ContentType.objects.get_for_model(model_class)
-        return cls.objects.filter(content_type=content_type)
+        qs = cls.objects.filter(content_type=content_type)
+        if prefetch:
+            qs = qs.prefetch_related(Prefetch('entity', queryset=model_class.objects.all()))
+        return qs
 
     @staticmethod
     def contests_filter(coder):

@@ -10,9 +10,10 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import yaml
 from django.db.models import Q
 
-from clist.templatetags.extras import as_number, is_yes
+from clist.templatetags.extras import as_number, is_yes, slug
 from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+from utils.strings import string_iou
 
 
 def extract_team_name(name):
@@ -24,9 +25,38 @@ def extract_team_name(name):
 
 class Statistic(BaseModule):
 
+    def _detect_standings(self):
+        contest = self.resource.contest_set.filter(end_time__lt=self.start_time)
+        contest = contest.filter(standings_url__isnull=False, stage__isnull=True)
+        contest = contest.latest('end_time')
+        matches = list(re.finditer('[0-9]+', contest.standings_url))
+        if not matches:
+            raise ExceptionParseStandings('No standings url, not found contest id in previous contest')
+
+        match = matches[-1]
+        prefix = contest.standings_url[:match.start()]
+        suffix = contest.standings_url[match.end():]
+        contest_id = int(match.group())
+        for delta in range(1, 30):
+            url = f'{prefix}{contest_id + delta}{suffix}'
+            page, code = REQ.get(url, return_code=True, ignore_codes={403, 404})
+            if code == 403:
+                continue
+            if code == 404:
+                break
+            match = re.search('<div[^>]*class="text-center"[^>]*>\s*<h1[^>]*>([^<]+)</h1>', page)
+            if not match:
+                continue
+            title = match.group(1).strip()
+
+            if string_iou(slug(title), slug(self.name)) > 0.95:
+                return url
+
+        raise ExceptionParseStandings('No standings url, not found title matching')
+
     def get_standings(self, users=None, statistics=None, **kwargs):
         if not self.standings_url:
-            raise ExceptionParseStandings('No standings url')
+            self.standings_url = self._detect_standings()
 
         season = self.info.get('parse', {}).get('season')
         season_ratings = {}
@@ -279,6 +309,7 @@ class Statistic(BaseModule):
                     pass
 
         standings = {
+            'url': self.standings_url,
             'result': result,
             'problems': problems_infos,
             'hidden_fields': ['total_rating', 'original_handle', 'affiliation', 'rating', 'standings_rating',

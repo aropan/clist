@@ -87,21 +87,31 @@ class Statistic(BaseModule):
                 else:
                     row[k] = v.value
             for f in 'diploma', 'medal', 'qual':
-                medal = row.pop(f, None) or row.pop(f.title(), None)
-                if medal:
-                    if medal in ['З', 'G']:
+                value = row.pop(f, None) or row.pop(f.title(), None)
+                if not value:
+                    continue
+                words = value.split()
+                skipped = []
+                for w in words:
+                    if w in ['З', 'G']:
                         row['medal'] = 'gold'
-                    elif medal in ['С', 'S']:
+                    elif w in ['С', 'S']:
                         row['medal'] = 'silver'
-                    elif medal in ['Б', 'B']:
+                    elif w in ['Б', 'B']:
                         row['medal'] = 'bronze'
+                    elif w in ['I', 'II', 'III']:
+                        row['diploma'] = w
+                    elif w in ['Q']:
+                        row['advanced'] = True
                     else:
-                        row.update({
-                            "medal": "honorable",
-                            "_honorable": medal,
-                            "_medal_title_field": "_honorable"
-                        })
-                    break
+                        skipped.append(w)
+                if 'diploma' in row and 'medal' not in row:
+                    row.update({
+                        "medal": "Diploma",
+                        "_medal_title_field": "diploma"
+                    })
+                if skipped:
+                    row['_{f}'] = ' '.join(skipped)
             if university_regex:
                 match = re.search(university_regex, row['name'])
                 if match:
@@ -168,6 +178,6 @@ class Statistic(BaseModule):
             'url': self.standings_url,
             'problems': list(problems_info.values()),
             'problems_time_format': '{M}:{s:02d}',
-            'hidden_fields': ['university', 'region', 'medal'],
+            'hidden_fields': ['university', 'region', 'medal', 'diploma'],
         }
         return standings

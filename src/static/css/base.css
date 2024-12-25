@@ -88,7 +88,6 @@ input[type="search"]::-webkit-search-cancel-button {
   object-fit: cover;
   border-radius: 50%;
   vertical-align: top;
-  margin-right: 5px;
 }
 
 .avatar-width-fixed {
@@ -97,7 +96,6 @@ input[type="search"]::-webkit-search-cancel-button {
   display: inline-block;
   text-align: center;
   vertical-align: top;
-  margin-right: 5px;
 }
 
 /* Space out content a bit */
@@ -837,6 +835,10 @@ a[disabled] {
   padding: 0px;
 }
 
+#filter-collapse .form-group {
+  margin-bottom: 0px;
+}
+
 #filter-collapse .input-group {
   display: inline-table;
   vertical-align: middle;
@@ -848,6 +850,7 @@ a[disabled] {
 }
 
 #filter-toggle {
+  position: relative;
   margin-bottom: 5px;
   font-size: 10px;
   line-height: 1.0;
@@ -994,6 +997,10 @@ a[data-toggle="tooltip"][disabled],
  * Table inner scroll
  */
 
+#table-inner-scroll.firefox table tr.starred td.sticky-column {
+  z-index: 21;
+}
+
 #table-inner-scroll table thead tr,
 #table-inner-scroll:not(.firefox) table tr.starred,
 #table-inner-scroll.firefox table tr.starred td  /* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */
@@ -1047,4 +1054,40 @@ table.table-border-collapse-separate {
 
 .field-to-input {
   max-width: 100px;
+}
+
+
+/*
+ * Countdown
+ */
+
+.countdown {
+  white-space: nowrap !important;
+}
+
+
+/*
+ * toastify notifications
+ */
+
+.toastify-bootstrap {
+  border-radius: 3px 3px 0px 0px !important;
+  background-image: initial !important;
+  margin: 0px !important;
+  padding: 10px 15px !important;
+}
+
+.alert-undefined {
+  background-color: #f0f0f0 !important;
+  border-color: #ccc !important;
+  color: #333 !important;
+}
+
+.progress-bar-undefined {
+  background-color: #333 !important;
+}
+
+@keyframes progress-animation {
+  from { width: 100% }
+  to { width: 0% }
 }

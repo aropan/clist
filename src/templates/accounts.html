@@ -36,11 +36,11 @@
           </th>
           {% endif %}
           <th>
-            <div>Linked<br/>coder{% if perms.ranking.link_account %} <a href="#" onclick="invert_linked_coder_accounts(event)" id="switch-accounts">{% icon_to 'invert' %}</a>{% endif %}</div>
+            <div>Linked<br/>coder{% if perms.ranking.link_account %} <a href="#" onclick="invert_accounts(event, 'accounts')">{% icon_to 'invert' %}</a>{% endif %}</div>
           </th>
           {% if params.to_list %}
           <th>
-            <div>Add<br/>to list</div>
+            <div>Add to<br/>list <a href="#" onclick="invert_accounts(event, 'to_list_accounts')">{% icon_to 'invert' %}</a></div>
           </th>
           {% endif %}
           <th>
@@ -71,7 +71,7 @@
           {% if custom_fields %}
           {% for field in custom_fields.values %}
           <th>
-            {% if field not in skip_actions_columns %}
+            {% if field not in skip_actions_columns and fields_types|get_item:field != 'str' %}
             <div class="chart-column" data-field="{{ field }}"></div>
             {% endif %}
             <div>{{ field|title_field|split:" "|join:"<br>" }}</div>

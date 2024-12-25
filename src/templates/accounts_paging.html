@@ -95,13 +95,12 @@
     {% if account.to_list %}
     <i class="fas fa-check"></i>
     {% else %}
-    <input class="scale15" type="checkbox" name="to_list_accounts" value="{{ account.pk }}">
+    <input class="scale15 mouseover-toggle" type="checkbox" name="to_list_accounts" value="{{ account.pk }}">
     {% endif %}
   </td>
   {% endif %}
   <td>
-    {% with rating_time=account.info|get_item:"_rating_time" %}
-    {% if rating_time and account.rating_prediction.time and rating_time < account.rating_prediction.time or not rating_time and account.rating_prediction.time %}
+    {% if account.rating_update_time and account.rating_prediction.time and account.rating_update_time < account.rating_prediction.time or not account.rating_update_time and account.rating_prediction.time %}
       <span class="rating-prediction-label" title="{{ account.rating_prediction.new_rating }}" data-toggle="tooltip">{% icon_to "rating_prediction" False %}</span>
     {% endif %}
     {% if account.rating is not None %}
@@ -113,7 +112,6 @@
     {% else %}
     &mdash;
     {% endif %}
-    {% endwith %}
   </td>
   <td>{% if account.resource_rank %}{{ account.resource_rank }}{% else %}&mdash;{% endif %}</td>
   <td>{{ account.n_contests }}</td>

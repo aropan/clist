@@ -276,7 +276,12 @@ class Coder(BaseModel):
 class CoderProblem(BaseModel):
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='verdicts')
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE, related_name='verdicts')
+    contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE)
+    statistic = models.ForeignKey('ranking.Statistics', null=True, blank=True, on_delete=models.CASCADE)
+    problem_key = models.CharField(max_length=255, null=True, blank=True)
     verdict = models.CharField(max_length=2, choices=ProblemVerdict.choices, db_index=True)
+    upsolving = models.BooleanField(null=True, blank=True, db_index=True)
+    submission_time = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
         unique_together = ('coder', 'problem')
@@ -284,6 +289,7 @@ class CoderProblem(BaseModel):
         indexes = [
             models.Index(fields=['coder', 'verdict']),
             models.Index(fields=['problem', 'verdict']),
+            models.Index(fields=['coder', 'submission_time']),
         ]
 
 
@@ -438,6 +444,7 @@ class CoderList(BaseModel):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
     access_level = models.CharField(max_length=10, choices=AccessLevel.choices, default=AccessLevel.PRIVATE)
     shared_with_coders = models.ManyToManyField(Coder, related_name='shared_list_set', blank=True)
+    with_names = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.name} CoderList#{self.id}'
@@ -512,6 +519,10 @@ class CoderList(BaseModel):
         return ret
 
     @property
+    def related_groups(self):
+        return self.groups.prefetch_related('values__coder__user', 'values__account__resource').order_by('pk')
+
+    @property
     def related_values(self):
         return self.values.select_related('coder__user', 'account__resource')
 
@@ -522,11 +533,36 @@ class CoderList(BaseModel):
             subscription.accounts.set(accounts)
 
 
+class ListGroup(BaseModel):
+    name = models.CharField(max_length=200, null=True, blank=True)
+    coder_list = models.ForeignKey(CoderList, related_name='groups', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.name} ListGroup#{self.id}'
+
+    def profile_str(self):
+        ret = []
+        for value in self.values.all():
+            if value.coder:
+                ret.append(value.coder.username)
+            elif value.account:
+                prefix = value.account.resource.short_host or value.account.resource.host
+                ret.append(f'{prefix}:{value.account.key}')
+        return ','.join(ret)
+
+
 class ListValue(BaseModel):
     coder = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE)
     account = models.ForeignKey('ranking.Account', null=True, blank=True, on_delete=models.CASCADE)
-    group_id = models.PositiveIntegerField()
     coder_list = models.ForeignKey(CoderList, related_name='values', on_delete=models.CASCADE)
+    group = models.ForeignKey(ListGroup, related_name='values', on_delete=models.CASCADE)
+
+    def __str__(self):
+        if self.coder:
+            return f'Coder#{self.coder_id} ListValue#{self.id}'
+        if self.account:
+            return f'Account#{self.account_id} ListValue#{self.id}'
+        return f'{self.name} ListValue#{self.id}'
 
     class Meta:
         constraints = [
@@ -536,14 +572,14 @@ class ListValue(BaseModel):
                 name='unique_coder',
             ),
             models.UniqueConstraint(
-                fields=['coder_list', 'account', 'group_id'],
+                fields=['coder_list', 'account', 'group'],
                 condition=Q(account__isnull=False),
                 name='unique_account',
             ),
         ]
 
         indexes = [
-            models.Index(fields=['coder_list', 'group_id']),
+            models.Index(fields=['coder_list', 'group']),
         ]
 
 

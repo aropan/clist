@@ -3,7 +3,7 @@ from django.contrib.admin import SimpleListFilter
 from django.utils import timezone
 from sql_util.utils import SubqueryCount
 
-from clist.models import Banner, Contest, ContestSeries, Problem, ProblemTag, PromoLink, Promotion, Resource
+from clist.models import Banner, Contest, ContestSeries, Discussion, Problem, ProblemTag, PromoLink, Promotion, Resource
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import Module, Rating
@@ -249,3 +249,9 @@ class PromotionAdmin(BaseModelAdmin):
 class PromoLinkAdmin(BaseModelAdmin):
     list_display = ['name', 'enable', 'desc', 'url']
     search_fields = ['name']
+
+
+@admin_register(Discussion)
+class DiscussionAdmin(BaseModelAdmin):
+    list_display = ['name', 'resource', 'contest', 'problem', 'what', 'where', 'created', 'modified']
+    search_fields = ['name', 'resource', 'contest', 'problem']

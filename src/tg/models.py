@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
@@ -19,6 +20,13 @@ class Chat(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True, related_name='chats')
     accounts = models.ManyToManyField(Account, blank=True, related_name='chats')
     settings = models.JSONField(default=dict, blank=True)
+
+    discussions = GenericRelation(
+        'clist.Discussion',
+        content_type_field='where_type',
+        object_id_field='where_id',
+        related_query_name='where_telegram_chat',
+    )
 
     def __str__(self):
         return "%s Chat#%s" % (self.title or self.name or self.chat_id, self.id)

@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from events.models import Participant
 from pyclist.admin import BaseModelAdmin, admin_register
-from true_coders.models import Coder, CoderList, CoderProblem, Filter, ListValue, Organization, Party
+from true_coders.models import Coder, CoderList, CoderProblem, Filter, ListGroup, ListValue, Organization, Party
 
 
 @admin_register(Coder)
@@ -102,8 +102,27 @@ class CoderListAdmin(BaseModelAdmin):
     list_display = ['name', 'owner', 'access_level', 'uuid']
     search_fields = ['name', 'owner__username', 'uuid']
 
+    def get_readonly_fields(self, request, obj=None):
+        return ['uuid'] + super().get_readonly_fields(request, obj)
+
+
+@admin_register(ListGroup)
+class ListGroupAdmin(BaseModelAdmin):
+    list_display = ['id', 'coder_list']
+    search_fields = ['coder_list__name', 'coder_list__uuid']
+
+    class ListValueInline(admin.StackedInline):
+        model = ListValue
+        fields = ['coder', 'account']
+        readonly_fields = ['coder', 'account']
+        show_change_link = True
+        can_delete = False
+        extra = 0
+
+    inlines = [ListValueInline]
+
 
 @admin_register(ListValue)
 class ListValueAdmin(BaseModelAdmin):
-    list_display = ['id', 'coder_list', 'coder', 'account', 'group_id']
+    list_display = ['id', 'coder_list', 'group', 'coder', 'account']
     search_fields = ['coder_list__name', 'coder_list__uuid', 'coder__username', 'account__key', 'account__name']

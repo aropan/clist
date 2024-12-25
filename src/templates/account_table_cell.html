@@ -39,7 +39,11 @@
 <span class="{% coder_color_class resource account.info %}">
 {% endif %}
 
-{% if account.name and account.key|has_season:account.name %}
+{% if account.value_instead_key %}
+<span><b>{% trim_to account.value_instead_key trim_length %}</b></span>
+{% elif field_instead_key and account|get_item:field_instead_key %}
+<span>{% trim_to account|get_item:field_instead_key trim_length %}</span>
+{% elif account.name and account.key|has_season:account.name %}
 <span>{% trim_to account.name trim_length %}</span>
 {% elif account.name and resource.info.standings.name_instead_key %}
 <span>{% trim_to account.name trim_length %}</span>

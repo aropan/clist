@@ -45,7 +45,12 @@
     {% define "span" as account_tag %}
     {% endif %}
     {% define False as subnames %}
-    {% if resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
+
+    {% if statistic.value_instead_key %}
+      <{{ account_tag }}><b>{% trim_to statistic.value_instead_key 50 %}</b></{{ account_tag }}>
+    {% elif field_instead_key and statistic|get_item:field_instead_key %}
+      <{{ account_tag }}>{% trim_to statistic|get_item:field_instead_key 50 %}</{{ account_tag }}>
+    {% elif resource.info.standings.subname and account.key|split_account_key:resource.info.standings.subname %}
       {% define account.key|split_account_key:resource.info.standings.subname as subnames %}
       <{{ account_tag }}>{% trim_to subnames.0 40 %}</{{ account_tag }}>
     {% elif statistic.addition.name and account.key|has_season:statistic.addition.name or members or statistic.addition.name and resource.info.standings.name_instead_key or statistic.addition.name and statistic.addition|get_item:"_name_instead_key" %}
