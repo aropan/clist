@@ -35,7 +35,7 @@ from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, CountryAccount, Rating, Statistics
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
-from utils.chart import make_bins, make_chart
+from utils.chart import TooManyBinsException, make_bins, make_chart
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter
 from utils.timetools import get_timeformat, get_timezone
@@ -604,6 +604,10 @@ def resource(request, host, template='resource.html', extra_context=None):
     accounts = Account.objects.filter(resource=resource)
     country_accounts = resource.countryaccount_set
 
+    if coder_type := request.GET.get('coder_type'):
+        accounts = Account.apply_coder_type(accounts, coder_type, logger=request.logger)
+        params['coder_type'] = coder_type
+
     has_country = accounts.filter(country__isnull=False).exists()
     countries = request.GET.getlist('country')
     countries = set([c for c in countries if c])
@@ -648,12 +652,14 @@ def resource(request, host, template='resource.html', extra_context=None):
     if not request.as_coder:
         update_coder_range_filter(coder, range_filter_values, resource.host)
 
-    min_rating = 0
-    max_rating = 5000
-    if resource.ratings:
+    resource_ratings = resource.ratings
+    if not resource_ratings and resource.has_rating_history:
+        resource_ratings = [{'low': float('-inf'), 'high': float('inf'), 'hex_rgb': '#999'}]
+    if resource_ratings:
         values = resource.account_set.aggregate(min_rating=Min('rating'), max_rating=Max('rating'))
         min_rating = values['min_rating']
         max_rating = values['max_rating']
+
         ratings = accounts.filter(rating__isnull=False)
         rating_field = 'rating'
 
@@ -673,7 +679,11 @@ def resource(request, host, template='resource.html', extra_context=None):
         else:
             aggregations = None
 
-        rating_chart = make_chart(ratings, rating_field, n_bins=n_bins, step=step, aggregations=aggregations)
+        try:
+            rating_chart = make_chart(ratings, rating_field, n_bins=n_bins, step=step, aggregations=aggregations)
+        except TooManyBinsException as e:
+            rating_chart = None
+            request.logger.error(f'Rating chart for {resource} failed: {e}')
 
         if rating_chart:
             data = rating_chart['data']
@@ -690,13 +700,15 @@ def resource(request, host, template='resource.html', extra_context=None):
                     val = row['coloring_field']
                 else:
                     val = int(row['rating'])
-                while val > resource.ratings[idx]['high']:
+                while val > resource_ratings[idx]['high']:
                     idx += 1
-                while val < resource.ratings[idx]['low']:
+                while val < resource_ratings[idx]['low']:
                     idx -= 1
-                row['hex_rgb'] = resource.ratings[idx]['hex_rgb']
+                row['hex_rgb'] = resource_ratings[idx]['hex_rgb']
     else:
         rating_chart = None
+        min_rating = None
+        max_rating = None
 
     verification_fields_select = None
     if resource.has_account_verification:

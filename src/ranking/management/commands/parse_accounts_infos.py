@@ -260,6 +260,7 @@ class Command(BaseCommand):
                             if do_upsolve:
                                 if args.reset_upsolving:
                                     account.info.pop('submissions_', None)
+                                    account.submissions_info = {}
                                 updated_info = resource.plugin.Statistic.update_submissions(account=account,
                                                                                             resource=resource)
                                 add_dict_to_dict(updated_info, update_submissions_info)
@@ -276,7 +277,7 @@ class Command(BaseCommand):
                             delta = timedelta(**resource_info.get('delta', {'days': 365}))
                             delta = info.pop('delta', delta)
 
-                            extra = info.pop('data_', {})
+                            extra = info.pop('extra', {})
                             if isinstance(extra, dict):
                                 for k, v in extra.items():
                                     if k not in info and not Account.is_special_info_field(k):
@@ -292,6 +293,8 @@ class Command(BaseCommand):
                                     info[k] = v
                                 elif k not in info:
                                     outdated[k] = v
+                                elif info[k] == outdated.get(k):
+                                    outdated.pop(k, None)
                             info['outdated_'] = outdated
 
                             account.info = info

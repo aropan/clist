@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from functools import partial
 
+from django.conf import settings
 from django.db.models import Avg, Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.fields.related import RelatedField
 from django.db.models.functions import Cast
@@ -12,6 +13,10 @@ from clist.templatetags.extras import title_field
 from utils.json_field import JSONF
 from utils.logger import NullLogger
 from utils.mathutils import get_divisors
+
+
+class TooManyBinsException(Exception):
+    pass
 
 
 def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=None):
@@ -51,6 +56,8 @@ def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=N
         bins.append(bins[-1] + 1)
     elif len(bins) == 1 or force_ending:
         bins.append(bins[-1])
+    if len(bins) > settings.CHART_N_BINS_LIMIT:
+        raise TooManyBinsException(f'Too many bins, field = {field}, bins = {len(bins)}')
     return bins
 
 

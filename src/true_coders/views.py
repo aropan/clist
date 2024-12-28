@@ -2670,6 +2670,10 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.annotate(selected_contest=Subquery(subquery.values('contest_id')))
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
 
+    if coder_type := request.GET.get('coder_type'):
+        accounts = Account.apply_coder_type(accounts, coder_type, logger=request.logger)
+        params['coder_type'] = coder_type
+
     to_list = request.GET.get('to_list')
     if to_list:
         to_list_accounts_filter = CoderList.accounts_filter([to_list], coder=coder, logger=request.logger)

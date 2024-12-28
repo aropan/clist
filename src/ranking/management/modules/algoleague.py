@@ -133,7 +133,7 @@ class Statistic(BaseModule):
             avatar_url = data.pop('image', None)
             if avatar_url:
                 info['avatar_url'] = avatar_url
-            info_data = info.setdefault('data_', {})
+            info_data = info.setdefault('extra', {})
             for key, value in data.items():
                 if isinstance(value, (list, dict)):
                     continue

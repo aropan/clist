@@ -53,6 +53,7 @@ class Account(BaseModel):
     rating_update_time = models.DateTimeField(default=None, null=True, blank=True)
     resource_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     info = models.JSONField(default=dict, blank=True)
+    submissions_info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
@@ -109,7 +110,7 @@ class Account(BaseModel):
             return False
         if field[0] == '_' or field[-1] == '_' or '___' in field:
             return True
-        if field in {'profile_url', 'rating', 'is_virtual'}:
+        if field in {'profile_url', 'rating', 'raw_rating', 'is_virtual', 'name', 'country'}:
             return True
         field = field.lower()
         if field in {'telegram', 'dateofbirth'}:
@@ -165,6 +166,23 @@ class Account(BaseModel):
 
     def account_default_url(self):
         return reverse('coder:account', args=[self.key, self.resource.host])
+
+    @staticmethod
+    def apply_coder_type(queryset, coder_type, logger=None):
+        if not coder_type or coder_type == 'all':
+            return queryset
+        if coder_type == 'real':
+            coders = Coder.objects.filter(is_virtual=False, account=OuterRef('pk'))
+        elif coder_type == 'ghost' or coder_type == 'virtual':
+            coders = Coder.objects.filter(is_virtual=True, account=OuterRef('pk'))
+        elif coder_type == 'none':
+            return queryset.filter(coders=None)
+        else:
+            if logger:
+                logger.warning(f'Unknown coder type: {coder_type}')
+            return queryset
+        queryset = queryset.annotate(coder_types=Exists(coders)).filter(coder_types=True)
+        return queryset
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
@@ -431,7 +449,7 @@ class AutoRating(BaseModel):
 
 
 class Statistics(BaseModel):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, db_index=True)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
     place = models.CharField(max_length=17, default=None, null=True, blank=True)
     place_as_int = models.IntegerField(default=None, null=True, blank=True)
@@ -440,11 +458,11 @@ class Statistics(BaseModel):
     penalty = models.FloatField(default=None, null=True, blank=True)
     addition = models.JSONField(default=dict, blank=True)
     url = models.TextField(null=True, blank=True)
-    new_global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
+    new_global_rating = models.IntegerField(null=True, blank=True, default=None)
     global_rating_change = models.IntegerField(null=True, blank=True, default=None)
     skip_in_stats = models.BooleanField(default=False)
     advanced = models.BooleanField(default=False)
-    last_activity = models.DateTimeField(default=None, null=True, blank=True, db_index=True)
+    last_activity = models.DateTimeField(default=None, null=True, blank=True)
     rating_prediction = models.JSONField(default=None, null=True, blank=True)
 
     @staticmethod
@@ -498,16 +516,7 @@ class Statistics(BaseModel):
         unique_together = ('account', 'contest')
 
         indexes = [
-            models.Index(fields=['place_as_int', 'created']),
-            models.Index(fields=['place_as_int', '-solving']),
-            models.Index(fields=['place_as_int', '-solving', 'penalty']),
-            models.Index(fields=['place_as_int', '-created']),
             models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
-            models.Index(fields=['contest', 'place_as_int', '-solving', 'penalty', 'id']),
-            models.Index(fields=['contest', 'account']),
-            models.Index(fields=['contest', 'advanced', 'place_as_int']),
-            models.Index(fields=['contest', 'account', 'advanced', 'place_as_int']),
-            models.Index(fields=['account', 'advanced']),
             models.Index(fields=['account', 'skip_in_stats']),
         ]
 

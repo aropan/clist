@@ -42,16 +42,16 @@
         <i class="fas fa-angle-{% if intvalue > 0 %}up{% else %}down{% endif %}"></i>{{ intvalue|abs }}
       {% elif 'delta' in types and value %}
         <i class="fas fa-angle-{% if value > 0 %}up{% else %}down{% endif %}"></i>{{ value|abs|to_template_value }}
-      {% elif 'timestamp' in types and value %}
+      {% elif 'timestamp' in types and value and not contest.is_over %}
         <span title="{{ value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
           {{ value|timestamp_to_datetime|timezone:timezone|naturaltime }}
         <span>
-      {% elif 'time' in types %}
+      {% elif 'time' in types  or 'timestamp' in types and value and contest.is_over %}
         <span title="{{ value|timestamp_to_datetime|timezone:timezone|naturaltime }}" data-toggle="tooltip">
-          {{ value|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}
+          {{ value|timestamp_to_datetime|timezone:timezone }}
         <span>
       {% elif 'timedelta' in types and value %}
-        <span title="{{ value|hr_timedelta:False }}" data-toggle="tooltip">
+        <span title="{{ value|hr_timedelta:-1 }}" data-toggle="tooltip">
           {{ value|hr_timedelta }}
         <span>
       {% elif field == 'analysis' and 'dict' in types and value and 'url' in value %}

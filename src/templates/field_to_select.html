@@ -21,17 +21,23 @@
 {% if not noinputgroup %}
 <div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-select hidden">
   {% if data.state %}
-  <div class="input-group-btn">
     {% with value=request.GET|get_item:data.state.name|default:data.state.values.0 total=data.state.values|length %}
     {% with index=data.state.values|index:value|default:0 %}
     {% with next_index=index|add:1|mod:total %}
-    <button class="btn btn-default" name="{{ data.state.name }}" value="{{ data.state.values|get_item:next_index }}">
+    {% if collapse %}
+    <span class="input-group-addon">
       {% icon_to data.state.icons|get_item:index field|title %}
-    </button>
+    </span>
+    {% else %}
+    <div class="input-group-btn">
+      <button class="btn btn-default" name="{{ data.state.name }}" value="{{ data.state.values|get_item:next_index }}">
+        {% icon_to data.state.icons|get_item:index field|title %}
+      </button>
+    </div>
+    {% endif %}
     {% endwith %}
     {% endwith %}
     {% endwith %}
-  </div>
   {% elif data.nogroupby %}
   <span class="input-group-addon">
     {% icon_to data.icon|default:field capitalized_field %}

@@ -82,6 +82,7 @@ class Resource(BaseModel):
     regexp = models.CharField(max_length=1024, null=True, blank=True)
     path = models.CharField(max_length=255, null=True, blank=True)
     parse_url = models.CharField(max_length=255, null=True, blank=True)
+    api_url = models.URLField(null=True, blank=True)
     timezone = models.CharField(max_length=30, null=True, blank=True)
     auto_remove_started = models.BooleanField(default=False, null=False, blank=False)
     color = models.CharField(max_length=20, null=True, blank=True)
@@ -344,10 +345,11 @@ class Resource(BaseModel):
         return self.contest_set.filter(Q(kind__in=major_kinds) | Q(kind__isnull=True) | Q(kind=''))
 
     def rating_step(self):
-        prev = 0
+        prev = None
         step = 0
         for rating in self.ratings[:-1]:
-            step = math.gcd(step, rating['next'] - prev)
+            if prev is not None:
+                step = math.gcd(step, rating['next'] - prev)
             prev = rating['next']
         return step
 
@@ -486,6 +488,7 @@ class Contest(BaseModel):
     registration_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
     info = models.JSONField(default=dict, blank=True)
+    submissions_info = models.JSONField(default=dict, blank=True)
     variables = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)

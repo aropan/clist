@@ -945,4 +945,5 @@ function notify(message, type = 'success', duration = Toastify.defaults.duration
       progressBar.toggleClass('hidden')
     })
   }
+  setTimeout(() => toastElement.effect('shake'), 300)
 }

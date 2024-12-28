@@ -8,7 +8,7 @@
     $now = time();
     while (!$stop && (!$data || $page < $data['data']['total_pages'])) {
         $page += 1;
-        $url = "https://api.codingninjas.com/api/v3/public_section/contest_list?page=$page";
+        $url = "$API_URL/contest_list?page=$page";
         $data = curlexec($url, null, array("json_output" => 1));
 
         if (!isset($data['data']['events'])) {
@@ -25,16 +25,19 @@
                 }
             }
             $end_time = max($start_time, $c['event_end_time']);
+            $kind = strtolower($c['event_category']);
 
             $contests[] = array(
                 'start_time' => $start_time,
                 'end_time' => $end_time,
                 'title' => $c['name'],
                 'url' => "$URL/{$c['slug']}",
+                'kind' => $kind,
                 'host' => $HOST,
                 'rid' => $RID,
                 'timezone' => $TIMEZONE,
                 'key' => $c['slug'],
+                'info' => ['parse' => $c],
             );
         }
     }

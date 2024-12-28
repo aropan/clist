@@ -136,7 +136,7 @@ class Statistic(BaseModule):
             avatar = data.pop('avatar', None)
             if avatar:
                 info['avatar'] = avatar
-            info['data_'] = data
+            info['extra'] = data
 
             ratings = {}
             for stat in contest_ratings:

@@ -432,7 +432,7 @@ a.database-link {
 }
 
 /*
- * contest inline button
+ * contest button
  */
 
 :hover > .inline-button, .inline-button:hover {
@@ -443,6 +443,12 @@ a.database-link {
   visibility: hidden;
   z-index: 1;
 }
+
+.absolute-button {
+  position: absolute;
+  margin-left: 5px;
+}
+
 
 /*
  * rating history canvas
@@ -470,15 +476,6 @@ canvas.rating_history {
   transition: all .1s ease;
   pointer-events: none;
 }
-
-/*
- * notifyjs border
- */
-
-.notifyjs-container .notifyjs-bootstrap-base {
-  border: 1px solid #888;
-}
-
 
 /*
  * chart range selection
@@ -1072,14 +1069,14 @@ table.table-border-collapse-separate {
 
 .toastify-bootstrap {
   border-radius: 3px 3px 0px 0px !important;
-  background-image: initial !important;
+  background-image: unset !important;
   margin: 0px !important;
   padding: 10px 15px !important;
+  border: 1px solid !important;
 }
 
 .alert-undefined {
   background-color: #f0f0f0 !important;
-  border-color: #ccc !important;
   color: #333 !important;
 }
 

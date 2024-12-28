@@ -50,11 +50,13 @@ class Command(BaseCommand):
 
         if args.resources:
             resource_filter = Q()
-            for r in args.resources:
-                resource_filter |= Q(host=r) | Q(short_host=r)
+            for resource in args.resources:
+                resource = Resource.get(resource)
+                if resource:
+                    resource_filter |= Q(pk=resource.pk)
             resources = resources.filter(resource_filter)
 
-        if not args.without_delay and not args.force:
+        if not args.without_delay and not args.force and not args.resources:
             rank_update_delay = parse_duration(args.rank_update_delay)
             contest_update_delay = parse_duration(args.contest_update_delay)
             need_update = (

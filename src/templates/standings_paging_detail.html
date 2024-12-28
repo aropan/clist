@@ -35,27 +35,20 @@
 {% elif 'upsolving' in stat %}
   {% if has_failed_verdict %}
   <div class="rej">{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}<span
-     class="{% if stat.upsolving.result|is_solved %}upsolved{% else %}upsolving{% endif %}"
+     class="{% if stat.upsolving|is_solved %}upsolved{% else %}upsolving{% endif %}"
      data-toggle="tooltip"
      data-placement="top"
      data-html="true"
      title='upsolving<br/>
   {% endif %}
 
-  {% if stat.upsolving.binary %}
+  {% if stat.upsolving.binary is not None %}
     <i class="fas fa-{% if stat.upsolving|is_solved %}check{% else %}times{% endif %}"></i>
-  {% elif stat.upsolving.result|slice:":1" == "+" %}
-    {{ stat.upsolving.result }}
-  {% elif stat.upsolving.result|slice:":1" == "-" and stat.upsolving.verdict %}
-    {% if not small or small and stat.upsolving.verdict %}
-      {{ stat.upsolving.result|scoreformat }} {{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}
-    {% else %}
-      <span title="{{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}" data-toggle="tooltip">
-        {{ stat.upsolving.result|scoreformat }}
-      </span>
-    {% endif %}
   {% elif stat.upsolving.result is not None %}
     {{ stat.upsolving.result|scoreformat }}
+  {% endif %}
+  {% if not stat.upsolving|is_solved and stat.upsolving.verdict %}
+    {{ stat.upsolving.verdict }}{% if stat.upsolving.test %}({{ stat.upsolving.test }}){% endif %}
   {% endif %}
 
   {% if has_failed_verdict %}'>&#65290;</span></div>{% endif %}

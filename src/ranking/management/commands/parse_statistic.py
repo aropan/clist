@@ -213,6 +213,7 @@ class Command(BaseCommand):
         parser.add_argument('--disabled', action='store_true', default=False, help='Disabled module only')
         parser.add_argument('--without-delete-statistics', action='store_true')
         parser.add_argument('--allow-delete-statistics', action='store_true')
+        parser.add_argument('--clear-submissions-info', action='store_true')
 
     def parse_statistic(
         self,
@@ -249,6 +250,7 @@ class Command(BaseCommand):
         enabled=True,
         without_delete_statistics=None,
         allow_delete_statistics=None,
+        clear_submissions_info=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -336,7 +338,7 @@ class Command(BaseCommand):
             contests = contests.filter(statistics__account__key=for_account, statistics__skip_in_stats=False)
 
         if limit:
-            contests = contests.order_by(limit_order or '-end_time', '-id')[:limit]
+            contests = contests.order_by((limit_order or '-start_time').strip(), '-id')[:limit]
 
         contests = list(contests)
 
@@ -478,6 +480,9 @@ class Command(BaseCommand):
                                     }
                                     has_statistics = True
                                 statistics_to_delete.add(s.pk)
+                        if clear_submissions_info:
+                            contest.submissions_info = {}
+                            contest.save(update_fields=['submissions_info'])
                         standings = plugin.get_standings(users=copy.deepcopy(specific_users),
                                                          statistics=statistics_by_key,
                                                          more_statistics=more_statistics_by_key)
@@ -567,6 +572,7 @@ class Command(BaseCommand):
                         ('standings_kind', 'standings_kind'),
                         ('is_rated', 'is_rated'),
                         ('has_hidden_results', 'has_hidden_results'),
+                        ('submissions_info', 'submissions_info'),
                     ):
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
@@ -1752,7 +1758,10 @@ class Command(BaseCommand):
                                 continue
                         elif action == 'url':
                             contest.url = args[0]
-                            contest.save()
+                            contest.save(update_fields=['url'])
+                        elif action == 'skip':
+                            contest.parsed_time = now
+                            contest.save(update_fields=['parsed_time'])
 
                 if not contest.statistics_update_required and contest.pk:
                     if resource.rating_prediction and not without_calculate_rating_prediction and not specific_users:
@@ -1930,6 +1939,7 @@ class Command(BaseCommand):
             has_statistics = Statistics.objects.filter(contest_id=OuterRef('pk'))
             contests = contests.annotate(has_statistics=Exists(has_statistics)).filter(has_statistics=False)
             contests = contests.filter(Q(n_problems__isnull=True) | Q(n_problems=0))
+            contests = contests.filter(parsed_time__isnull=True)
 
         if args.year:
             contests = contests.filter(start_time__year=args.year)
@@ -1989,4 +1999,5 @@ class Command(BaseCommand):
             enabled=not args.disabled,
             without_delete_statistics=args.without_delete_statistics,
             allow_delete_statistics=args.allow_delete_statistics,
+            clear_submissions_info=args.clear_submissions_info,
         )

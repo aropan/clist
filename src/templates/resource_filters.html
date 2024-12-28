@@ -12,7 +12,9 @@
         </div>
         <script>$('select[name="period"]').select2({theme: 'bootstrap', placeholder: 'select period'})</script>
 
-        {% if rating.chart.data or request.GET.rating_from or request.GET.rating_to %}
+        {% include 'coder_type_filter.html' %}
+
+        {% if rating.chart %}
         {% include 'range_filter.html' with name='rating' value_key=resource.host from=rating.min to=rating.max %}
         {% endif %}
 

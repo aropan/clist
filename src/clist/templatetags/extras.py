@@ -503,7 +503,7 @@ def get_problem_solution(problem):
                     }
                     if (
                         not ret or ret['result'] is None or
-                        result is not None and is_improved_solution(result, ret['result'])
+                        result is not None and is_improved_solution(result, ret['result'], with_upsolving=True)
                     ):
                         ret = res
     return ret
@@ -992,13 +992,13 @@ def normalized_result(value):
     return as_number(value)
 
 
-def is_improved_solution(curr, prev):
+def is_improved_solution(curr, prev, with_upsolving=False):
     curr_solved = is_solved(curr)
     prev_solved = is_solved(prev)
     if curr_solved != prev_solved:
         return curr_solved
 
-    if not curr_solved:
+    if with_upsolving and not curr_solved:
         curr_upsolved = is_upsolved(curr)
         prev_upsolved = is_upsolved(prev)
         if curr_upsolved != prev_upsolved:
@@ -1011,17 +1011,16 @@ def is_improved_solution(curr, prev):
 
     curr_result = normalized_result(curr.get('result'))
     prev_result = normalized_result(prev.get('result'))
-    if type(curr_result) is not type(prev_result):
-        return prev_result is None
+    if isinstance(curr_result, Number) and isinstance(prev_result, Number) and curr_result != prev_result:
+        return curr_result > prev_result
 
-    if curr_result is not None:
-        if prev_result is None or prev_result < curr_result:
+    for f in ('id', 'submission_time'):
+        curr_in = f in curr
+        prev_in = f in prev
+        if curr_in != prev_in:
+            return curr_in
+        if curr_in and prev_in and curr[f] > prev[f]:
             return True
-        if prev_result > curr_result or curr_solved:
-            return False
-        for f in ('id', 'submission_time'):
-            if f in curr and f in prev and curr[f] > prev[f]:
-                return True
 
     return False
 
@@ -1845,7 +1844,8 @@ def get_id(value):
 @register.filter
 def get_more_fields(more_fields):
     for field in more_fields:
-        field = field.split('=')[0]
+        if '=' in field:
+            continue
         yield field
 
 
@@ -1873,8 +1873,6 @@ def field_to_select_collapse(context):
     if 'collapse' in context['data']:
         return context['data']['collapse']
     if context['values']:
-        return False
-    if context['data'].get('nomultiply'):
         return False
     if (
         not context.get('noinputgroup') and
@@ -1909,3 +1907,10 @@ def ifor(value, arg):
 @register.filter
 def ifand(value, arg):
     return value and arg
+
+
+@register.filter
+def html_unescape(value):
+    value = html.unescape(value)
+    value = value.replace('\xa0', ' ').strip()
+    return value

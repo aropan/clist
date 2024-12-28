@@ -1,5 +1,5 @@
 {% if user|has_update_statistics_permission:contest %}
-<span class="inline-button">
+<span class="inline-button absolute-button">
     <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}">
         <!-- <i class="fas fa-sync-alt"></i> -->
         {% icon_to 'update' contest.statistic_timing|naturaltime|to_str %}

@@ -2,7 +2,7 @@
   <div>&#183;</div>
 {% else %}
   <div>
-  {% if stat.result is not None %}
+  {% if stat %}
     <div
       class="inline text-nowrap
       {% if request.GET.languages and stat.language not in request.GET|get_list:'languages' and 'any' not in request.GET|get_list:'languages' %}
@@ -48,7 +48,7 @@
       {% if stat.icon %}
         <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}>{{ stat.icon|safe }}</span>
       {% elif stat.binary is not None %}
-      <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}><i class="fas fa-{% if stat.result|slice:":1" == "+" or stat.result|asfloat:0 > 0 %}check{% else %}times{% endif %}"></i></span>
+      <span{% if stat.verdict %} title="{{ stat.verdict }}" data-toggle="tooltip"{% endif %}><i class="fas fa-{% if stat|is_solved %}check{% else %}times{% endif %}"></i></span>
       {% elif with_detail and stat.subscores %}
         <span>{% for subscore in stat.subscores %}{% if forloop.counter0 %}+{% endif %}<span{% if subscore.verdict %} title="{{ subscore.verdict }}" data-toggle="tooltip"{% endif %} class="{% if subscore.result %}acc{% else %}rej{% endif %}">{{ subscore.status }}</span>{% endfor %}</span>
       {% elif stat.result|slice:":1" == "+" or stat.result|slice:":1" == "?" %}

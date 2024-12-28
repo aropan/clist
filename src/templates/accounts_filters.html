@@ -40,6 +40,8 @@
   {% include "field_to_select.html" with field="advanced" data=params.advanced_filter %}
   {% endif %}
 
+  {% include 'coder_type_filter.html' %}
+
   {% include "list_filter.html" %}
 
   {% if custom_fields %}

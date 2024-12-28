@@ -407,7 +407,7 @@ class Statistic(BaseModule):
                         if last_rating is not None and category['category'].lower() == 'algorithms':
                             info['rating'] = last_rating
 
-                info['data_'] = data
+                info['extra'] = data
 
                 ret = {
                     'info': info,

@@ -71,7 +71,7 @@ class BaseModule(object, metaclass=ABCMeta):
         infos = resource.plugin.Statistic.get_users_infos(users=[account.key], resource=resource, accounts=[account])
         info = next(iter(infos)).get('info') or {}
         ret = {}
-        for data in (info, info.pop('data_', None) or {}):
+        for data in (info, info.pop('extra', None) or {}):
             for k, v in data.items():
                 ret.setdefault(k, v)
         return ret

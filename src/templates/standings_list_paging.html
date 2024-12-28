@@ -10,7 +10,7 @@
 
 {% if not contest.has_module %}
 {% define 'info' as status %}
-{% elif contest.n_statistics is None and not contest.info.problems %}
+{% elif contest.n_statistics is None and not contest.info.problems and not contest.parsed_time %}
 {% define 'danger' as status %}
 {% elif contest.is_running %}
 {% define 'success' as status %}

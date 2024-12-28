@@ -4,12 +4,16 @@
 {% if name != short %}
   <div>Name: {{ name }}</div>
 {% endif %}
-{% if stat.result != None %}
+{% if stat.binary is not None %}
+  <div>Result: <i class='fas fa-{% if stat|is_solved %}check{% else %}times{% endif %}'></i>{% if full_score %} of {{ full_score|scoreformat:False }}{% endif %}</div>
+{% elif stat.result is not None %}
   <div>Result: {{ stat.result|scoreformat:False }}{% if full_score %} of {{ full_score|scoreformat:False }}{% endif %}</div>
 {% elif full_score %}
   <div>Full score: {{ full_score|scoreformat:False }}</div>
 {% endif %}
-{% if stat.upsolving.result %}
+{% if stat.upsolving.binary is not None %}
+  <div>Upsolving: <i class='fas fa-{% if stat.upsolving|is_solved %}check{% else %}times{% endif %}'></i>
+{% elif stat.upsolving.result %}
   <div>Upsolving: {{ stat.upsolving.result|scoreformat:False }}</div>
 {% endif %}
 {% if stat.time %}
@@ -22,7 +26,7 @@
   <div>Status: {{ stat.status }}</div>
 {% endif %}
 "
-  class="badge progress-bar-{% if stat and stat.result is not None %}{% if stat.result|is_solved %}{% if stat.partial %}info{% else %}success{% endif %}{% elif stat.result.0 == '?' %}warning{% elif stat.upsolving|is_solved %}info{% else %}danger{% endif %}{% else %}{% if stat.upsolving|is_solved %}info{% elif stat.upsolving %}danger{% else %}default{% endif %}{% endif %}"
+  class="badge progress-bar-{% if not stat %}default{% elif stat|is_solved %}success{% elif stat|is_hidden %}warning{% elif stat|is_partial or stat.upsolving|is_solved %}info{% else %}danger{% endif %}"
 >
 {{ short|truncatechars:10 }}
 </span>{% if stat.url or problem_url %}</a>{% endif %}

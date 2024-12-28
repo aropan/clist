@@ -1,5 +1,5 @@
 {% if perms.clist.change_resource %}
-<span class="inline-button">
+<span class="inline-button absolute-button">
   {% if perms.clist.change_resource %}
   <button data-href="{% url 'admin:clist_resource_change' resource.id %}" class="database-href btn btn-default btn-xs" target="_blank" rel="noopener">{% icon_to 'database' resource %}</button>
   {% endif %}

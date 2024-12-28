@@ -69,6 +69,7 @@
             $RID = $resource['id'];
             $TIMEZONE = $resource['timezone'];
             $INFO = json_decode($resource['info'], true);
+            $API_URL = $resource['api_url'];
 
             include $resource['path'];
 
