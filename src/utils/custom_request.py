@@ -20,9 +20,18 @@ class RequestLogger:
         return ret
 
 
-def get_resource(self, field='resource') -> Optional[Resource]:
-    resource = self.GET.get(field)
+def get_resource(self, field='resource', method='GET') -> Optional[Resource]:
+    if method not in ['GET', 'POST']:
+        raise ValueError(f'Invalid method: {method}')
+    resource = getattr(self, method).get(field)
     return Resource.get(resource)
+
+
+def get_resources(self, field='resource', method='GET') -> Optional[Resource]:
+    if method not in ['GET', 'POST']:
+        raise ValueError(f'Invalid method: {method}')
+    resources = getattr(self, method).getlist(field)
+    return Resource.get(resources)
 
 
 def get_filtered_list(self, field, options=None, method='GET'):
@@ -80,6 +89,7 @@ def set_security_cookie(request, *args, **kwargs):
 def CustomRequest(request):
     setattr(request, 'logger', RequestLogger(request))
     setattr(request, 'get_resource', partial(get_resource, request))
+    setattr(request, 'get_resources', partial(get_resources, request))
     setattr(request, 'get_filtered_list', partial(get_filtered_list, request))
     setattr(request, 'get_filtered_value', partial(get_filtered_value, request))
     setattr(request, 'canonical_url', None)

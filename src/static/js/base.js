@@ -171,6 +171,38 @@ function inline_button() {
 $(inline_button)
 
 
+function confirm_action() {
+  $('.confirm-action').removeClass('confirm-action').click(function(e) {
+    var btn = $(this)
+    if (btn.hasClass('confirmed')) {
+      btn.removeClass('confirmed')
+      return
+    }
+    e.preventDefault()
+    var action = $(this).attr('data-action')
+    var message = $(this).attr('data-message') || `Are you sure you want to ${(action || 'do this').toLowerCase()}?`
+    var confirm_class = $(this).attr('data-confirm-class') || 'btn-primary'
+    bootbox.confirm({
+      size: 'small',
+      message: message,
+      buttons: {
+        confirm: {
+          label: action,
+          className: confirm_class,
+        },
+      },
+      callback: function(result) {
+        if (result) {
+          btn.addClass('confirmed')
+          btn.click()
+        }
+      }
+    })
+  })
+}
+
+$(confirm_action)
+
 /*
   * Chartjs printable version
   * https://github.com/chartjs/Chart.js/issues/1350#issuecomment-320265946
@@ -737,6 +769,7 @@ function configure_pagination(paginate_on_scroll = true) {
   $.endlessPaginate({paginateOnScroll: paginate_on_scroll, onCompleted: function () {
     toggle_tooltip()
     inline_button()
+    confirm_action()
     checkbox_mouseover_toggle()
     $(window).trigger('resize')
   }})
@@ -845,7 +878,7 @@ function show_extra(element) {
 }
 
 function show_field_to_select(event, element, field_id) {
-  $(element).closest('.input-group').remove()
+  $(element).closest('.field-to-select').remove()
   $field = $('#' + field_id)
   $field.prop('disabled', false)
   $field.closest('.field-to-select').removeClass('hidden')
@@ -946,4 +979,15 @@ function notify(message, type = 'success', duration = Toastify.defaults.duration
     })
   }
   setTimeout(() => toastElement.effect('shake'), 300)
+}
+
+
+/*
+ * Modal
+ */
+
+function toggle_modal_fullscreen(btn) {
+  $(btn).toggleClass('active')
+  $(btn).closest('.modal').toggleClass('fullscreen')
+  $(btn).find('i').toggleClass('fa-compress-arrows-alt').toggleClass('fa-expand-arrows-alt')
 }

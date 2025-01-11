@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
 import arrow
+import tqdm
 from django.db import transaction
 from django.db.models import OuterRef
 from ratelimiter import RateLimiter
@@ -70,6 +71,7 @@ def process_submissions_url(resource, attempts_url, submissions_info, n_pages=-1
     match = re.search('<meta name="csrf-token" content="(?P<token>[^"]*)">', submissions_page)
     csrf_token = match.group('token')
 
+    progress_bar = tqdm.tqdm(desc='submissions fetching')
     while n_pages:
         n_pages -= 1
         n_processed = 0
@@ -83,6 +85,7 @@ def process_submissions_url(resource, attempts_url, submissions_info, n_pages=-1
                 submissions_info['time'] = arrow.now().isoformat()
             yield submission
             n_processed += 1
+        progress_bar.update(n_processed)
         if not n_processed:
             return
 
@@ -106,6 +109,7 @@ def process_submissions_url(resource, attempts_url, submissions_info, n_pages=-1
         component = data['components'][0]
         snapshot = component['snapshot']
         submissions_page = component['effects']['html']
+    progress_bar.close()
 
 
 def process_submission_problem(submission, upsolving, short, addition):
@@ -150,10 +154,11 @@ class Statistic(BaseModule):
         n_page = 0
         n_skip = 0
         nothing = False
+        progress_bar = tqdm.tqdm(desc='results pagination')
         while not nothing and n_skip < 5:
             n_page += 1
-
             page = get_page(standings_url + f'?page={n_page}')
+            progress_bar.update()
             if page is None:
                 n_skip += 1
                 continue
@@ -236,9 +241,10 @@ class Statistic(BaseModule):
                     r.pop('place', None)
                 result[r['member']] = r
                 nothing = False
+        progress_bar.close()
 
         contest_problems = list(problems_infos.values())
-        for problem in contest_problems:
+        for problem in tqdm.tqdm(contest_problems, desc='problems fetching'):
             problem_page = get_page(problem['url'], ignore_codes={403})
             if problem_page is None:
                 continue
@@ -260,6 +266,9 @@ class Statistic(BaseModule):
             submission.pop('task_id', None)
             handle = submission.pop('handle')
             upsolving = submission.pop('upsolving')
+
+            if task_name not in problem_shorts:
+                continue
             short = problem_shorts[task_name]
 
             created = handle not in result

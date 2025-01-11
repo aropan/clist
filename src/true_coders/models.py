@@ -446,10 +446,15 @@ class CoderList(BaseModel):
     shared_with_coders = models.ManyToManyField(Coder, related_name='shared_list_set', blank=True)
     with_names = models.BooleanField(default=False)
 
+    class Meta:
+        permissions = (
+            ('manage_coderlist', 'Can manage coder lists'),
+        )
+
     def __str__(self):
         return f'{self.name} CoderList#{self.id}'
 
-    def shared_with(self):
+    def shared_with_select_data(self):
         return [{'id': c.pk, 'username': c.username} for c in self.shared_with_coders.all()]
 
     @staticmethod
@@ -531,6 +536,9 @@ class CoderList(BaseModel):
         for subscription in self.subscription_set.all():
             subscription.coders.set(coders)
             subscription.accounts.set(accounts)
+
+    def can_manage(self, coder, user=None):
+        return coder and (coder == self.owner or (user or coder.user).has_perm('true_coders.manage_coderlist', self))
 
 
 class ListGroup(BaseModel):

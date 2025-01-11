@@ -1594,7 +1594,7 @@ function show_update_statistics_log() {
   replace_update_statistics_btn()
   var log_modal = $('#update-statistics-log')
   log_modal.modal('show')
-
+  $('#show_update_statistics_log_btn i').removeClass('fa-fade')
 }
 
 function spin_update_statistics_modal_btn(value) {
@@ -1643,15 +1643,26 @@ function update_statistics_log(data) {
   if (data.line) {
     var line = $('<span>').text(data.line + "\n")
     log_output.prepend(line)
+    $('#show_update_statistics_log_btn i').addClass('fa-fade')
   }
   if (data.progress !== undefined) {
     var progress_bar = $('#update-statistics-progress-bar')
     progress_bar.css('width', data.progress * 100 + '%')
+    progress_bar.removeClass('progress-bar-striped')
+    progress_bar.removeClass('active')
     var progress_text = $('#update-statistics-progress-text')
     progress_text.text(data.desc)
-
+    $('#update-statistics-progress').removeClass('hidden')
+  } else if (data.raw !== undefined) {
+    var progress_bar = $('#update-statistics-progress-bar')
+    progress_bar.css('width', '100%')
+    progress_bar.addClass('progress-bar-striped')
+    progress_bar.addClass('active')
+    var progress_text = $('#update-statistics-progress-text')
+    progress_text.text(data.raw)
     $('#update-statistics-progress').removeClass('hidden')
   }
+
   var is_done = data.done !== undefined
   if (is_done) {
     var line = $('<div class="horizontal-line"></div>')
@@ -1711,6 +1722,8 @@ $(document).keydown(function(event) {
   if (event.keyCode == 27) {
     $('#view-solution-modal').modal('hide')
     $('#update-statistics-log').modal('hide')
+    $('.bootbox').modal('hide')
+    $('.modal-versus-games').modal('hide')
   }
 });
 
@@ -1907,3 +1920,66 @@ $(() => {
     })
   }
 });
+
+
+/*
+ * Score history
+ */
+
+function show_score_history(a, e) {
+  $.ajax({
+    url: $(a).attr('href'),
+    type: 'get',
+    success: function(response) {
+      var $response = $(response)
+      var title = $response.filter('.modal-header').html()
+      var body = $response.filter('.modal-body').html()
+      bootbox.dialog({
+        title: title,
+        message: body,
+        size: 'large',
+        backdrop: true,
+        closeButton: false,
+      })
+    },
+    error: log_ajax_error_callback,
+  })
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}
+
+function show_score_histories(a, e) {
+  var statistic_ids = ''
+  var limit = 10
+  $('tr[data-statistic-id]').each(function() {
+    if (limit-- <= 0) {
+      return false
+    }
+    if (statistic_ids) {
+      statistic_ids += ','
+    }
+    statistic_ids += $(this).data('statistic-id')
+  })
+  var url = '/score-history/' + statistic_ids + '/' + $(a).data('params')
+  $.ajax({
+    url: url,
+    type: 'get',
+    success: function(response) {
+      var $response = $(response)
+      var title = $response.filter('.modal-header').html()
+      var body = $response.filter('.modal-body').html()
+      bootbox.dialog({
+        title: title,
+        message: body,
+        size: 'large',
+        backdrop: true,
+        closeButton: false,
+      })
+    },
+    error: log_ajax_error_callback,
+  })
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}

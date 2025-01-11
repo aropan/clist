@@ -7,6 +7,7 @@ import re
 from collections import Counter
 from datetime import datetime, timedelta
 
+import arrow
 import django_rq
 import humanize
 import pytz
@@ -168,7 +169,7 @@ def get_profile_context(request, statistics, writers, resources):
     for stat in rated_stats.union(external_ratings):
         resource = stat.contest.resource
         kind = stat.contest.kind
-        kind = major_kind if resource.is_major_kind(kind) else kind
+        kind = major_kind if resource.is_major_kind(kind) or get_item(resource, 'info.ratings.external') else kind
         if not kinds_resources[resource.pk]:
             kinds_resources[resource.pk][major_kind] = None
         kinds_resources[resource.pk][kind] = {
@@ -838,27 +839,28 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
 
             resource_info['data'].append(stat)
 
-    qs = statistics.filter(contest__resource__has_rating_history=True,
-                           contest__resource__info__ratings__external=True,
-                           account__info___rating_data__isnull=False)
-    resources_list = qs.distinct('contest__resource__host').values_list('contest__resource__pk', flat=True)
-    for pk in resources_list:
-        resource = resources[pk]
-        default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
-        default_info['pk'] = pk
-        default_info['host'] = resource.host
-        default_info['colors'] = resource.ratings
-        default_info['icon'] = resource.icon
-        resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
-        resource_info.setdefault('data', [])
-        for stat in qs.filter(contest__resource__pk=pk).distinct('account__key'):
-            data = resource.plugin.Statistic.get_rating_history(stat.account.info['_rating_data'],
-                                                                stat,
-                                                                resource,
-                                                                date_from=date_from,
-                                                                date_to=date_to)
-            if data:
-                resource_info['data'].extend(data)
+    if n_resources <= 1:
+        qs = statistics.filter(contest__resource__has_rating_history=True,
+                               contest__resource__info__ratings__external=True,
+                               account__info___rating_data__isnull=False)
+        resources_list = qs.distinct('contest__resource__host').values_list('contest__resource__pk', flat=True)
+        for pk in resources_list:
+            resource = resources[pk]
+            default_info = dict(resource.info.get('ratings', {}).get('chartjs', {}))
+            default_info['pk'] = pk
+            default_info['host'] = resource.host
+            default_info['colors'] = resource.ratings
+            default_info['icon'] = resource.icon
+            resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
+            resource_info.setdefault('data', [])
+            for stat in qs.filter(contest__resource__pk=pk).distinct('account__key'):
+                data = resource.plugin.Statistic.get_rating_history(stat.account.info['_rating_data'],
+                                                                    stat,
+                                                                    resource,
+                                                                    date_from=date_from,
+                                                                    date_to=date_to)
+                if data:
+                    resource_info['data'].extend(data)
 
     resources_to_remove = [k for k, v in ratings['data']['resources'].items() if not v['data']]
     for k in resources_to_remove:
@@ -1266,7 +1268,9 @@ def change(request):
             return HttpResponseBadRequest('invalid list id')
     elif name == "group-name":
         group_id = request.POST.get("group_id")
-        group = get_object_or_404(ListGroup, pk=group_id, coder_list__owner=coder)
+        group = get_object_or_404(ListGroup, pk=group_id)
+        if not group.coder_list.can_manage(coder, user=user):
+            return HttpResponseForbidden('You have no permission to change name')
         group.name = value or None
         group.save(update_fields=['name'])
     elif name in ["add-calendar", "edit-calendar"]:
@@ -1969,12 +1973,15 @@ def search(request, **kwargs):
         if field.startswith('_') and not view_private_fields:
             return HttpResponseBadRequest('You have no permission to view this field')
 
-        mapping_fields = {'badge': 'badges'}
+        mapping_fields = {'badge': 'badges', 'league': 'leagues'}
         field = mapping_fields.get(field, field)
+        without_any = {'leagues'}
 
-        if field in ['languages', 'verdicts', 'badges']:
+        if field in ['languages', 'verdicts', 'badges', 'leagues']:
             qs = contest.info.get(field, [])
-            qs = ['any'] + [q for q in qs if not text or text.lower() in q.lower()]
+            qs = [q for q in qs if not text or text.lower() in q.lower()]
+            if field not in without_any:
+                qs = ['any'] + qs
         elif field == 'rating':
             qs = ['rated', 'unrated']
         elif f'_{field}' in contest.info:
@@ -2343,9 +2350,7 @@ def view_list(request, uuid):
     qs = qs.prefetch_related('values__account__resource')
     qs = qs.prefetch_related('values__coder')
     coder_list = get_object_or_404(qs, uuid=uuid)
-
-    is_owner = coder and coder_list.owner_id == coder.pk
-    can_modify = is_owner
+    can_modify = coder_list.can_manage(coder)
 
     request_post = request.session.pop('view_list_request_post', None) or request.POST
     if request_post:
@@ -2510,7 +2515,6 @@ def view_list(request, uuid):
     context = {
         'coder_list': coder_list,
         'coder_list_groups': coder_list_groups,
-        'is_owner': is_owner,
         'can_modify': can_modify,
         'coder': coder,
     }

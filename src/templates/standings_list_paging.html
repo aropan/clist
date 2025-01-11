@@ -58,6 +58,8 @@
     {% endwith %}
   {% endif %}
 
+  {% if contest.has_active_executions %}{% icon_to "active_executions" %}{% endif %}
+
   {% include "contest_inline_buttons.html" with contest=contest with_stage=True %}
 
   {% if request.GET.with_problems|is_yes %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Score history {{ account.short_display }} for {{ contest.title }}{% endblock %}{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+{% include "score-history-modal.html" %}
+{% endblock %}

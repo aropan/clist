@@ -85,34 +85,37 @@ class ChannelLayerHandler(logging.Handler):
         if not self.group_name or not self.capacity:
             return
         if not progress_bar.n or not progress_bar.total:
-            return
-
-        n = min(progress_bar.n, progress_bar.total)
-        total = progress_bar.total
-        desc = progress_bar.desc
-        state = (n, total)
-
-        if desc not in self.states:
-            if n < total:
-                self.states[desc] = state
-            return
-        if self.states[desc] == state:
-            return
-
-        if n == total:
-            self.states.pop(desc)
+            context = {
+                'type': 'update_statistics',
+                'raw': str(progress_bar),
+            }
         else:
-            self.states[desc] = state
+            n = min(progress_bar.n, progress_bar.total)
+            total = progress_bar.total
+            desc = progress_bar.desc
+            state = (n, total)
 
-        rate = progress_bar.format_dict['rate']
-        estimate_time = (total - n) / rate if rate else None
-        estimate_time_str = f'{humanize.naturaldelta(timedelta(seconds=estimate_time))}' if estimate_time else '…'
-        percentage = n / total
-        context = {
-            'type': 'update_statistics',
-            'progress': percentage,
-            'desc': f'{desc} ({percentage * 100:.2f}%, {estimate_time_str})',
-        }
+            if desc not in self.states:
+                if n < total:
+                    self.states[desc] = state
+                return
+            if self.states[desc] == state:
+                return
+
+            if n == total:
+                self.states.pop(desc)
+            else:
+                self.states[desc] = state
+
+            rate = progress_bar.format_dict['rate']
+            estimate_time = (total - n) / rate if rate else None
+            estimate_time_str = f'{humanize.naturaldelta(timedelta(seconds=estimate_time))}' if estimate_time else '…'
+            percentage = n / total
+            context = {
+                'type': 'update_statistics',
+                'progress': percentage,
+                'desc': f'{desc} ({percentage * 100:.2f}%, {estimate_time_str})',
+            }
         async_to_sync(self.channel_layer.group_send)(self.group_name, context)
         self.decrease_capacity()
 
@@ -1868,9 +1871,9 @@ class Command(BaseCommand):
             if specific_users:
                 event_log.delete()
             self.logger.info(f'log_counter = {dict(contest_log_counter)}')
-            if error_counter:
-                self.logger.info(f'error_counter = {dict(error_counter)}')
             channel_layer_handler.send_done(done=parsed)
+        if error_counter:
+            self.logger.info(f'error_counter = {dict(error_counter)}')
 
         @lru_cache(maxsize=None)
         def advanced_update_stage(stage):

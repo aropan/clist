@@ -21,6 +21,7 @@ from pyclist.models import BaseManager, BaseModel
 from ranking.models import Account
 from tg.models import Chat as CoderChat
 from true_coders.models import Coder, CoderList
+from utils.signals import update_n_field_on_change, update_n_field_on_delete
 from utils.strings import markdown_to_html, markdown_to_text
 
 
@@ -190,45 +191,19 @@ class Subscription(TaskNotification):
 
 
 @receiver(m2m_changed, sender=Subscription.accounts.through)
-def update_account_n_subscribers_on_change(sender, instance, action, reverse, pk_set, **kwargs):
-    when, action = action.split('_', 1)
-    if when != 'post':
-        return
-    if action == 'add':
-        delta = 1
-    elif action == 'remove':
-        delta = -1
-    else:
-        return
-
-    if reverse:
-        Account.objects.filter(pk=instance.pk).update(n_subscribers=models.F('n_subscribers') + delta)
-    elif pk_set:
-        Account.objects.filter(pk__in=pk_set).update(n_subscribers=models.F('n_subscribers') + delta)
+def update_account_n_subscribers_on_change(**kwargs):
+    update_n_field_on_change(**kwargs, field='n_subscribers')
 
 
 @receiver(m2m_changed, sender=Subscription.coders.through)
-def update_coder_n_subscribers_on_change(sender, instance, action, reverse, pk_set, **kwargs):
-    when, action = action.split('_', 1)
-    if when != 'post':
-        return
-    if action == 'add':
-        delta = 1
-    elif action == 'remove':
-        delta = -1
-    else:
-        return
-
-    if reverse:
-        Coder.objects.filter(pk=instance.pk).update(n_subscribers=models.F('n_subscribers') + delta)
-    elif pk_set:
-        Coder.objects.filter(pk__in=pk_set).update(n_subscribers=models.F('n_subscribers') + delta)
+def update_coder_n_subscribers_on_change(**kwargs):
+    update_n_field_on_change(**kwargs, field='n_subscribers')
 
 
 @receiver(pre_delete, sender=Subscription)
-def update_n_subscribers_on_delete(sender, instance, **kwargs):
-    Account.objects.filter(subscribers=instance).update(n_subscribers=models.F('n_subscribers') - 1)
-    Coder.objects.filter(subscribers=instance).update(n_subscribers=models.F('n_subscribers') - 1)
+def update_n_subscribers_on_delete(instance, **kwargs):
+    update_n_field_on_delete(instance.accounts, field='n_subscribers')
+    update_n_field_on_delete(instance.coders, field='n_subscribers')
 
 
 class Task(BaseModel):

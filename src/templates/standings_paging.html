@@ -103,6 +103,23 @@ data-place="{{ place }}"
       {% elif addition.medal_percentage %}
       <span class="medal-percentange">{% medal_percentage addition.medal_percentage.medal addition.medal_percentage.percent info=addition.medal_percentage.info %}</span>
       {% endif %}
+      {% with score_percentage=statistic.addition|get_item:"_score_percentage" %}{% if score_percentage %}
+      <span data-toggle="tooltip" data-html="true" title="
+        Progress: {{ score_percentage.percent|multiply:100|floatformat }}%
+        <br>Score: {{ score_percentage.score|scoreformat }}
+        {% if score_percentage.delta_score is not None %}
+        <span class='rating-change{% if score_percentage.delta_score %} rating-change-{% if score_percentage.delta_score > 0 %}up{% else %}down{% endif %}'{% endif %}>{% if score_percentage.delta_score > 0 %}+{% endif %}{{ score_percentage.delta_score|scoreformat }}</span>
+        {% endif %}
+        {% if score_percentage.rank %}
+        <br>Rank: {{ score_percentage.rank }}
+        {% if score_percentage.delta_rank is not None %}
+        <span class='rating-change{% if score_percentage.delta_rank %} rating-change-{% if score_percentage.delta_rank > 0 %}up{% else %}down{% endif %}'{% endif %}>{% if score_percentage.delta_rank > 0 %}+{% endif %}{{ score_percentage.delta_rank }}</span>
+        {% endif %}
+        {% endif %}
+      ">
+        <div class="progress-circle" style="--progress: {{ score_percentage.percent|multiply:100|floatformat:0 }}%;"></div>
+      </span>
+      {% endif %}{% endwith %}
     </div>
   </{{ tag }}>
   {% if versus_data %}
@@ -111,11 +128,6 @@ data-place="{{ place }}"
     {% endwith %}
   {% endif %}
   <{{ tag }} class="score-cell sticky-column" data-sticky-column="score-cell">
-    {% with score_percentage=statistic.addition|get_item:"_score_percentage" %}{% if score_percentage %}
-    <div class="progress-container" data-toggle="tooltip" title="{{ score_percentage|multiply:100|floatformat }}%">
-      <div class="progress-circle" style="--progress: {{ score_percentage|multiply:100|floatformat:0 }}%;"></div>
-    </div>
-    {% endif %}{% endwith %}
     {{ statistic.addition_replacement.solving|default:statistic.solving|scoreformat }}
   </{{ tag }}>
   {% if mod_penalty %}

@@ -8,19 +8,9 @@
 
 <link href="{% static_ts 'css/coder_list.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/coder_list.js' %}"></script>
-
 {% endblock %}
 
 {% block content %}
-
-{% if coder_list.with_names %}
-<script>
-  $.fn.editable.defaults.mode = 'popup'
-  $.fn.editable.defaults.url = change_url
-  $.fn.editable.defaults.pk = {{ coder.id }}
-</script>
-{% endif %}
-
 <h2>
   <i class="fas fa-list"></i>
   {{ coder_list.name }}
@@ -95,7 +85,11 @@ host_2:account_2,host_3:account_3
             </td>
             {% if coder_list.with_names %}
             <td class="no-stretch">
+              {% if can_modify %}
               <a class="edit-name" href="#" data-name="group-name" data-type="text" data-group-id="{{ group.id }}" data-value="{{ group.name|default:'' }}"></a>
+              {% else %}
+              {{ group.name }}
+              {% endif %}
             </td>
             {% endif %}
             <td class="value">
@@ -108,15 +102,15 @@ host_2:account_2,host_3:account_3
                 {% else %}
                 &mdash;
                 {% endif %}
-                <button class="btn btn-danger btn-xs hidden" name="delete_value_id" value="{{ v.id }}"><i class="far fa-trash-alt"></i></button>
+                <button class="btn btn-danger btn-xs hidden confirm-action" data-action="Delete" data-confirm-class="btn-danger" name="delete_value_id" value="{{ v.id }}">{% icon_to "delete" %}</button>
               {% endfor %}
               <span class="inline-button">
                 {% if can_modify %}
                 <button href="#" class="add-account btn btn-primary btn-xs" data-group-id="{{ group.id }}">{% icon_to "add" %}</button>
-                {% if list_values|length > 1 %}
+                {% if list_values.all|length > 1 %}
                 <button href="#" class="edit-group btn btn-primary btn-xs">{% icon_to "edit" %}</button>
                 {% endif %}
-                <button class="btn btn-danger btn-xs" name="delete_group_id" value="{{ group.id }}">{% icon_to "delete" %}</button>
+                <button class="btn btn-danger btn-xs confirm-action" data-action="Delete" data-confirm-class="btn-danger" name="delete_group_id" value="{{ group.id }}">{% icon_to "delete" %}</button>
                 {% endif %}
                 {% if perms.true_coders.change_coderlist %}
                 <a href="{% url 'admin:true_coders_listgroup_change' group.id %}" target="_blank" rel="noopener">{% icon_to "database" group %}</a>
@@ -132,5 +126,4 @@ host_2:account_2,host_3:account_3
     </div>
   </form>
 </div>
-
 {% endblock %}

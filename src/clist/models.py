@@ -8,7 +8,7 @@ import re
 from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urljoin, urlparse
 
 import numpy as np
@@ -420,11 +420,21 @@ class Resource(BaseModel):
         return self.contest_set.filter(parsed_time__isnull=False).order_by('-end_time').first()
 
     @staticmethod
-    def get(value) -> Optional['Resource']:
+    def get(value: str | int | List[str | int]) -> Optional['Resource'] | List['Resource']:
         if isinstance(value, int) or isinstance(value, str) and value.isdigit():
             return Resource.objects.filter(pk=value).first()
         if isinstance(value, str):
             return Resource.objects.filter(Q(host=value) | Q(short_host=value)).first()
+        if isinstance(value, list):
+            values = value
+            filters = Q()
+            for value in values:
+                if isinstance(value, int) or isinstance(value, str) and value.isdigit():
+                    filters |= Q(pk=value)
+                elif isinstance(value, str):
+                    filters |= Q(host=value) | Q(short_host=value)
+            if filters:
+                return Resource.objects.filter(filters)
         return None
 
     @property

@@ -1,8 +1,9 @@
 {% with account_id=account|default:"account" %}
 {% with resource_id=account_id|add:"_resource" %}
-{% if not without_resource %}{% include "resource_filter.html" with resource=resource_id noname=True nosubmit=True nomultiply=True %}{% endif %}
 <div class="input-group input-group-sm hidden" id="{{ account_id }}-hidden">
   <span class="input-group-addon">Account</span>
+
+  {% if not without_resource %}{% include "resource_filter.html" with resource=resource_id noname=True nosubmit=True nomultiply=True noinputgroup=True %}{% endif %}
 
   <select name="{{ account_id }}" id="{{ account_id }}" onchange="this.form.submit()"{% if not nomultiply %} multiple{% endif %}>
     <option></option>

@@ -387,14 +387,6 @@ table.standings.table-merge-problems th {
 }
 
 
-.progress-container {
-  display: inline;
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  margin-left: -25px;
-}
-
 .progress-circle {
   width: 20px;
   height: 20px;

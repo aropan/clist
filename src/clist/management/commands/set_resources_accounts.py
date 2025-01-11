@@ -45,7 +45,8 @@ class Command(BaseCommand):
         def set_n_contests(resources):
             total_resources = resources.count()
 
-            fields = ['host', 'n_accounts', 'n_contests', 'n_writers', 'n_removed', 'n_changes', 'time']
+            fields = ['host', 'n_accounts', 'n_contests', 'n_writers', 'n_subscribers', 'n_removed', 'n_changes',
+                      'time']
             table = PrettyTable(field_names=fields, sortby=args.sortby)
             with tqdm(total=total_resources, desc='resources') as pbar_resource:
                 for resource in resources:
@@ -92,6 +93,21 @@ class Command(BaseCommand):
                             pbar.update()
                         pbar.close()
 
+                    qs = accounts.annotate(count=SubqueryCount('subscribers'))
+                    qs = qs.exclude(count=F('n_subscribers'))
+                    n_subscribers = 0
+                    with tqdm(desc='updating n_subscribers') as pbar:
+                        for a in qs.iterator():
+                            to_save = False
+                            if a.count != a.n_subscribers:
+                                n_subscribers += 1
+                                a.n_subscribers = a.count
+                                to_save = True
+                            if to_save:
+                                a.save(update_fields=['n_subscribers'])
+                            pbar.update()
+                        pbar.close()
+
                     n_removed = 0
                     if args.remove_empty:
                         qs = accounts.filter(
@@ -100,7 +116,7 @@ class Command(BaseCommand):
                             writer_set__isnull=True,
                         )
                         n_removed, _ = qs.delete()
-                    n_changes = n_contests + n_writers + n_removed
+                    n_changes = n_contests + n_writers + n_subscribers + n_removed
 
                     delta_time = timezone.now() - start_time
                     pbar_resource.set_postfix(
@@ -115,6 +131,7 @@ class Command(BaseCommand):
                         total_accounts,
                         n_contests,
                         n_writers,
+                        n_subscribers,
                         n_removed,
                         n_changes,
                         delta_time,

@@ -424,7 +424,7 @@ a.database-link {
 }
 
 .chart {
-  padding: 20px;
+  padding: 5px 5px 10px;
 }
 
 #chart_date canvas {
@@ -1087,4 +1087,12 @@ table.table-border-collapse-separate {
 @keyframes progress-animation {
   from { width: 100% }
   to { width: 0% }
+}
+
+/*
+ * field-to-select
+ */
+
+.input-group .select2:not(:last-child) .select2-selection {
+  border-right: 0px;
 }

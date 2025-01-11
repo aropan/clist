@@ -94,7 +94,7 @@ def Lightrope(get_response):
 def SetAsCoder(get_response):
 
     def middleware(request):
-        if request.GET.get('as_coder') and request.user.has_perm('as_coder'):
+        if request.GET.get('as_coder') and request.user.has_perm('true_coders.as_coder'):
             as_coder_str = request.GET['as_coder']
             coder_filter = Q(user__username=as_coder_str)
             if as_coder_str.isdigit():

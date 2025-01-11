@@ -1,4 +1,8 @@
 $(function() {
+  $.fn.editable.defaults.mode = 'popup'
+  $.fn.editable.defaults.url = change_url
+  $.fn.editable.defaults.pk = coder_pk
+
   $('#coder-list .add-account').click(function() {
     clear_tooltip()
     event.preventDefault()
@@ -21,7 +25,7 @@ $(function() {
     event.preventDefault()
     $(this).closest('td').find('[name="delete_value_id"]').toggleClass('hidden')
     $(this).closest('td').find('[name="delete_group_id"]').toggleClass('hidden')
-    $(this).remove()
+    $(this).toggleClass('active')
   })
 
   $('#raw-value').on('change keyup paste', function() {

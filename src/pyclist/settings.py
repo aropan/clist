@@ -774,7 +774,7 @@ FONTAWESOME_ICONS_ = {
     'unverified': '<i class="fa-fw unverified fas fa-check-circle"></i>',
     'ips': '<i class="fa-fw fas fa-user-secret"></i>',
     'secret': '<i class="fa-fw fas fa-user-secret"></i>',
-    'log': '<i class="fa-fw fas fa-scroll"></i>',
+    'log': '<i class="fa-fw fas fa-scroll" style="--fa-animation-duration: 2s;"></i>',
     'on': '<i class="fa-fw fas fa-toggle-on"></i>',
     'off': '<i class="fa-fw fas fa-toggle-off"></i>',
     'more': '<i class="fa-fw fas fa-ellipsis-h"></i>',
@@ -817,7 +817,10 @@ FONTAWESOME_ICONS_ = {
     'expires': '<i class="fa-fw fa-solid fa-clock-rotate-left"></i>',
     'subscription': '<i class="fa-fw fa-regular fa-newspaper"></i>',
     'field_instead_key': '<i class="fa-fw fa-solid fa-pencil"></i>',
-
+    'active_executions': {
+        'icon': '<i class="text-muted fa-solid fa-gear fa-spin fa-lg" style="--fa-animation-duration: 5s;"></i>',
+        'title': 'Updating…',
+    },
     'google': {'icon': '<i class="fa-fw fab fa-google"></i>', 'title': None},
     'facebook': {'icon': '<i class="fa-fw fab fa-facebook"></i>', 'title': None},
     'youtube': {'icon': '<i class="fa-fw fab fa-youtube"></i>', 'title': None},

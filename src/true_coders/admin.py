@@ -100,10 +100,20 @@ class OrganizationAdmin(BaseModelAdmin):
 @admin_register(CoderList)
 class CoderListAdmin(BaseModelAdmin):
     list_display = ['name', 'owner', 'access_level', 'uuid']
+    list_filter = ['access_level']
     search_fields = ['name', 'owner__username', 'uuid']
 
     def get_readonly_fields(self, request, obj=None):
         return ['uuid'] + super().get_readonly_fields(request, obj)
+
+    class ListGroupInline(admin.TabularInline):
+        model = ListGroup
+        fields = ['id', 'name', 'created', 'modified']
+        readonly_fields = ['name', 'created', 'modified']
+        show_change_link = True
+        can_delete = False
+        extra = 0
+    inlines = [ListGroupInline]
 
 
 @admin_register(ListGroup)
@@ -111,10 +121,10 @@ class ListGroupAdmin(BaseModelAdmin):
     list_display = ['id', 'coder_list']
     search_fields = ['coder_list__name', 'coder_list__uuid']
 
-    class ListValueInline(admin.StackedInline):
+    class ListValueInline(admin.TabularInline):
         model = ListValue
-        fields = ['coder', 'account']
-        readonly_fields = ['coder', 'account']
+        fields = ['coder', 'account', 'created', 'modified']
+        readonly_fields = ['coder', 'account', 'created', 'modified']
         show_change_link = True
         can_delete = False
         extra = 0

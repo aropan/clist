@@ -1,6 +1,7 @@
 $(function() {
     $.fn.editable.defaults.mode = 'inline'
     $.fn.editable.defaults.url = change_url
+    $.fn.editable.defaults.pk = coder_pk
 
     $('#theme').editable({
         type: 'select',

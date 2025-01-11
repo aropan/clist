@@ -99,7 +99,7 @@
         {% endwith %}
         {% endif %}
         {% if contest.has_submissions %}
-        <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ statistic.account_id }}" target="_blank" rel="noopener noreferrer">{% icon_to "submissions" %}</a>
+        <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}?account={{ statistic.account_id }}">{% icon_to "submissions" %}</a>
         {% endif %}
         <span class="problems display-block-xs">
             {% with problems=statistic.addition.problems %}

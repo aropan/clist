@@ -13,6 +13,7 @@ DJANGO_ENV_FILE=.env.prod
 */15      *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SET_ACCOUNT_RANK       /usr/src/clist/run-manage.bash set_account_rank
 */20      *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SET_COUNTRY_RANK       /usr/src/clist/run-manage.bash set_country_rank
 15        *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_UPDATE_AUTO_RATING     /usr/src/clist/run-manage.bash update_auto_rating
+0         1  *  *  *                                                                 /usr/src/clist/run-manage.bash set_coder_n_fields
 
 # # 58 3 14-20 * * [ "$(date '+\%u')" -eq 4 ] && cd $PROJECT_DIR && run-one ./manage.py runscript calculate_account_contests >logs/command/calculate_account_contests.log 2>&1
 # 58 4 * * 4 cd $PROJECT_DIR && run-one ./manage.py runscript calculate_coder_n_accounts_and_coder_n_contests >logs/command/calculate_coder_n_accounts_and_coder_n_contests.log 2>&1

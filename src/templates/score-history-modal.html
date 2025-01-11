@@ -1,0 +1,49 @@
+<{% if is_modal %}div class="modal-header"{% else %}h4{% endif %}>
+  Contest: <a href="{{ contest.actual_url }}">{{ contest.title }}</a>
+{% if statistic %}
+  Account: {% include "account_table_cell.html" with resource=resource account=account with_resource=False without_circle=True without_avatar=True without_country=True without_inline_button=True %}
+  Score: <a href="{{ contest.actual_url }}?find_me={{ statistic.pk }}">{{ statistic.solving|scoreformat }}</a>
+  {% if statistic.place %}
+  Rank: <a href="{{ contest.actual_url }}?find_me={{ statistic.pk }}">{{ statistic.place }}</a>
+  {% endif %}
+{% elif statistics %}
+  Accounts:
+  {% for statistic in statistics %}
+  <span class="nowrap">
+  {% if statistic.place %}<a href="{{ contest.actual_url }}?find_me={{ statistic.pk }}">{{ statistic.place }}</a>{% endif %}
+  {% include "account_table_cell.html" with resource=resource account=statistic.account with_resource=False without_circle=True without_avatar=True without_country=True without_inline_button=True %}
+  </span>
+  {% endfor %}
+{% endif %}
+
+  {% if is_modal %}
+  <span class="pull-right">
+    <a id="toggle-fullscreen-modal" class="btn btn-default btn-xs" onClick="toggle_modal_fullscreen(this)">{% icon_to 'fullscreen' %}</a>
+    <a href="{{ request.get_full_path }}" target="_blank" rel="noopener" class="btn btn-default btn-xs">{% icon_to 'open_in_tab' %}</a>
+    <a type="button" class="btn btn-default btn-xs" data-dismiss="modal">{% icon_to 'close' %}</a>
+  </span>
+  {% endif %}
+</{% if is_modal %}div{% else %}h4{% endif %}>
+
+<div{% if is_modal %} class="modal-body"{% endif %}>
+{% set_item base_chart "type" "line" %}
+{% set_item base_chart "x_value" "date" %}
+{% set_item base_chart "x_type" "time" %}
+{% set_item base_chart "cubic_interpolation" True %}
+{% set_item base_chart "point_radius" 0 %}
+{% set_item base_chart "border_width" 2 %}
+{% set_item base_chart "border_color" "#000" %}
+{% set_item base_chart "background_color" "#000" %}
+{% set_item base_chart "vertical_lines_color" "#5cc0df" %}
+{% set_item base_chart "duplicate_y_axis" True %}
+{% set_item base_chart "legend_position" "right" %}
+{% set_item base_chart "disable_legend_tooltip" True %}
+{% set_item base_chart "with_range_selection" True %}
+
+{% for chart_config in charts %}
+{% with chart=base_chart|deep_copy|update_dict:chart_config %}
+{% set_item chart "y_value" chart_config.field %}
+{% include "chart.html" with chart=chart without_buttons=True %}
+{% endwith %}
+{% endfor %}
+</div>

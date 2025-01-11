@@ -102,6 +102,10 @@
     {% endif %}
   {% endif %}
 
+  {% if statistic.addition|get_item:"_score_history" %}
+  <a href="{% url "ranking:score-history" statistic.id %}{% query_fields request before="?" %}" onClick="return show_score_history(this, event)" class="external-link invisible">{% icon_to "rating" "" %}</a>
+  {% endif %}
+
   {% profile_url account html_class="external-link invisible" %}
 
   {% if not statistic.my_stat %}

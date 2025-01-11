@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import bisect
 import json
 import os
 import re
@@ -29,7 +30,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None, **kwargs):
+    def get_standings(self, users=None, statistics=None, more_statistics=None, **kwargs):
         page = REQ.get(
             self.host + 'services/Challenge/findWorldCupByPublicId',
             post=f'["{self.key}"]',
@@ -93,11 +94,15 @@ class Statistic(BaseModule):
         if countries is None:
             raise ExceptionParseStandings('not found countries')
 
+        def get_league_index(league):
+            index = league['divisionCount'] - league['divisionIndex'] - 1 + league.get('divisionOffset', 0)
+            return index
+
         def get_league_name(league):
             nonlocal leagues_names
             if leagues_names is None:
                 raise ExceptionParseStandings('not found leagues_names')
-            index = league['divisionCount'] - league['divisionIndex'] - 1 + league.get('divisionOffset', 0)
+            index = get_league_index(league)
             number = index - len(leagues_names) + 2
             return f'{leagues_names[-1]} {number}' if number >= 1 else leagues_names[index]
 
@@ -113,15 +118,20 @@ class Statistic(BaseModule):
         has_codinpoints = False
         now_timestamp = int(now().timestamp())
         with PoolExecutor(max_workers=8) as executor:
-            hidden_fields = set()
+            hidden_fields = {'league_index', 'agent_id', 'rank'}
+            hidden_scoring_fields = ['_agent_id', '_league_index', '_solving']
             result = {}
+            has_percentage = False
 
             def process_data(data):
                 nonlocal hidden_fields
                 nonlocal result
                 nonlocal opening
                 nonlocal has_codinpoints
+                nonlocal has_percentage
+                n_rows = 0
                 for row in data['users']:
+                    n_rows += 1
                     if 'codingamer' not in row:
                         continue
                     info = row.pop('codingamer')
@@ -133,11 +143,12 @@ class Statistic(BaseModule):
                         continue
                     r = result.setdefault(handle, OrderedDict())
                     r['member'] = handle
-                    r['place'] = row.pop('rank')
+                    r['rank'] = row.pop('rank')
                     r['info'] = info
 
                     if 'league' in row:
                         league = row.pop('league')
+                        r['league_index'] = get_league_index(league)
                         r['league'] = get_league_name(league)
                         r['league_rank'] = row.pop('localRank')
 
@@ -159,8 +170,6 @@ class Statistic(BaseModule):
                     ):
                         if field in row:
                             r[out] = row.pop(field)
-                            if out in {'agent_id'}:
-                                hidden_fields.add(out)
 
                     if 'updateTime' in row:
                         row['update_time'] = row.pop('updateTime') / 1000
@@ -179,33 +188,26 @@ class Statistic(BaseModule):
 
                     stat = (statistics or {}).get(handle)
                     if stat:
-                        saved_fields = ['codinpoints', '_agent_id', '_score_history']
-                        for field in saved_fields:
+                        for field in ['codinpoints', '_score_history'] + hidden_scoring_fields:
                             if field in stat and field not in r:
                                 r[field] = stat[field]
 
                     if 'percentage' in r:
                         r['percentage'] = min(r['percentage'], 100)
                         percentages.append(r['percentage'])
-
                         if is_battle and r['percentage'] < 100:
-                            r['_score_percentage'] = r['percentage'] / 100
-
-                        if r['percentage'] == 100 and r.get('agent_id') != r.get('_agent_id'):
-                            r['_new_agent'] = True
-                            r['_agent_id'] = r['agent_id']
-
-                        if r['percentage'] == 100:
-                            score_history = r.setdefault('_score_history', [])
-                            score_history.append({
-                                'timestamp': now_timestamp,
+                            r['_score_percentage'] = {
+                                'percent': r['percentage'] / 100,
                                 'score': r['solving'],
-                                'rank': r['place'],
-                                **({'league': r['league']} if 'league' in r else {}),
-                                **({'updated': True} if r.get('_new_agent') else {}),
-                            })
+                            }
+                            if r.get('league_index') == r.get('_league_index'):
+                                if '_solving' in r:
+                                    r['_score_percentage']['delta_score'] = r['solving'] - r['_solving']
+                                r['solving'] = r['_solving']
+                            has_percentage = True
 
                     has_codinpoints |= bool(row.get('codinpoints'))
+                return n_rows
 
             def process_escape_data(data):
                 nonlocal result
@@ -310,21 +312,79 @@ class Statistic(BaseModule):
                 if len(data['users']) >= 1000:
                     leagues_ = [league.lower().replace(' ', '') for league in leagues]
                     fetch_data = partial(get_leaderboard, url, "LEAGUE")
+                    n_rows = []
                     for data in tqdm.tqdm(executor.map(fetch_data, leagues_), total=len(languages), desc='leagues'):
-                        process_data(data)
+                        n_rows.append(process_data(data))
 
-                    fetch_data = partial(get_leaderboard, url, "LANGUAGE")
-                    for data in tqdm.tqdm(executor.map(fetch_data, languages), total=len(languages), desc='languages'):
-                        process_data(data)
+                    if not n_rows or max(n_rows) >= 1000:
+                        fetch_data = partial(get_leaderboard, url, "LANGUAGE")
+                        for data in tqdm.tqdm(executor.map(fetch_data, languages), total=len(languages),
+                                              desc='languages'):
+                            process_data(data)
 
-                    fetch_data = partial(get_leaderboard, url, "COUNTRY")
-                    for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries), desc='countries'):
-                        process_data(data)
+                        fetch_data = partial(get_leaderboard, url, "COUNTRY")
+                        for data in tqdm.tqdm(executor.map(fetch_data, countries), total=len(countries),
+                                              desc='countries'):
+                            process_data(data)
 
-        for row in result.values():
-            row['_skip_subscriptions'] = True
-            if row.get('_new_agent'):
-                row['_force_subscriptions'] = True
+                scores = defaultdict(list)
+                if has_percentage:
+                    for r in result.values():
+                        r['order'] = (r.get('league_index', float('inf')), -r['solving'])
+                    last_rank = None
+                    last_order = None
+                    for rank, r in enumerate(sorted(result.values(), key=lambda r: r['order']), start=1):
+                        scores[r.get('league_index')].append(r['solving'])
+                        order = r.pop('order')
+                        if order != last_order:
+                            last_rank = rank
+                            last_order = order
+                        r['place'] = last_rank
+                    for league_scores in scores.values():
+                        league_scores.reverse()
+                else:
+                    for r in result.values():
+                        r['place'] = r.pop('rank')
+
+                for r in result.values():
+                    if 'percentage' not in r:
+                        continue
+                    if r['percentage'] < 100:
+                        if (
+                            (score_percentage := r.get('_score_percentage')) and
+                            (league_scores := scores.get(r.get('league_index')))
+                        ):
+                            right_idx = bisect.bisect_right(league_scores, score_percentage['score'])
+                            percentage_place = len(league_scores) - right_idx + 1
+                            score_percentage['rank'] = percentage_place
+                            score_percentage['delta_rank'] = r['place'] - percentage_place
+                        continue
+
+                    updated = r.get('agent_id') != r.get('_agent_id')
+                    for hidden_field in hidden_scoring_fields:
+                        field = hidden_field.lstrip('_')
+                        if field in r:
+                            r[hidden_field] = r[field]
+                        else:
+                            r.pop(hidden_field, None)
+
+                    score_history = r.setdefault('_score_history', [])
+                    if (
+                        not updated and
+                        score_history and
+                        score_history[-1]['score'] == r['solving'] and
+                        score_history[-1]['rank'] == r['place'] and
+                        score_history[-1]['timestamp'] > self.end_time.timestamp()
+                    ):
+                        continue
+
+                    score_history.append({
+                        'timestamp': now_timestamp,
+                        'score': r['solving'],
+                        'rank': r['place'],
+                        **({'league': r['league']} if 'league' in r else {}),
+                        **({'updated': True} if updated else {}),
+                    })
 
         fixed_fields = [
             ('league', 'league'),
@@ -347,8 +407,8 @@ class Statistic(BaseModule):
             'fields_types': {'update_time': ['timestamp'], 'submit_time': ['timestamp']},
             'fields_values': {},
             'hidden_fields': hidden_fields,
-            'info_fields': ['_league', '_challenge', '_has_versus', '_opening'],
-            '_league': leagues,
+            'info_fields': ['leagues', '_challenge', '_has_versus', '_opening'],
+            'leagues': leagues,
             '_challenge': challenge,
             '_opening': list(sorted(opening.values(), key=lambda o: o['date'])),
             'options': {

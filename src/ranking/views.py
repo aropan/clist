@@ -55,6 +55,7 @@ from utils.regex import get_iregex_filter
 def standings_list(request, template='standings_list.html'):
     contests = (
         Contest.objects.annotate_favorite(request.user)
+        .annotate_active_executions()
         .select_related('resource', 'stage')
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef('resource_id'))))
         .filter(Q(n_statistics__gt=0) | Q(end_time__lte=timezone.now()))
@@ -162,7 +163,7 @@ def standings_list(request, template='standings_list.html'):
             field='medal_scores',
             type='scatter',
             show_line=True,
-            legend={'position': 'right'},
+            legend_position='right',
             x_type='time',
             mode='x',
             hover_mode='x',
@@ -534,7 +535,7 @@ def standings_charts(request, context):
             point_radius=2,
             border_width=2,
             show_line=True,
-            legend={'position': 'right'},
+            legend_position='right',
             x_ticks_time_rounding=timeline.get('penalty_rounding', 'floor-minute'),
         )
         for scores_info in top_values:
@@ -571,7 +572,7 @@ def standings_charts(request, context):
         cubic_interpolation=True,
         point_radius=0,
         border_width=2,
-        legend={'position': 'right'},
+        legend_position='right',
     )
     total_values = []
     my_data = []
@@ -1517,8 +1518,8 @@ def standings(request, contest, other_contests=None, template='standings.html', 
                 pks.append(pk)
             statistics = statistics.annotate(n_advanced=Count(Case(When(pk__in=set(pks), then=1))))
 
-        if default_orderby and groupby == 'league' and '_league' in contest.info:
-            league_mapping = {league: idx for idx, league in enumerate(contest.info['_league'])}
+        if default_orderby and groupby == 'league' and 'leagues' in contest.info:
+            league_mapping = {league: idx for idx, league in enumerate(contest.info['leagues'])}
             statistics = statistics.annotate(
                 league_order=Case(
                     *[When(groupby=k, then=Value(v)) for k, v in league_mapping.items()],
@@ -1730,7 +1731,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     return render(request, template, context)
 
 
-@ratelimit(key='user', rate='20/m', block=True)
+@ratelimit(key='user', rate='20/m')
 def solutions(request, sid, problem_key):
     is_modal = request.is_ajax()
     if not request.user.is_authenticated:
@@ -1780,6 +1781,112 @@ def solutions(request, sid, problem_key):
             'stat': stat,
             'fields': ['time', 'status', 'language'],
         })
+
+
+@ratelimit(key='user', rate='20/m')
+def score_history(request, statistic_id):
+    is_modal = request.is_ajax()
+    qs = Statistics.objects.select_related('account__resource', 'contest')
+    qs = qs.filter(addition___score_history__isnull=False)
+    statistic = get_object_or_404(qs, pk=statistic_id)
+
+    score_history = statistic.addition['_score_history']
+    resource = statistic.account.resource
+    resource_score_history = get_item(resource, 'info.ratings.score_history', {})
+    vertical_lines = []
+    for hist in score_history:
+        hist['date'] = arrow.get(hist['timestamp']).isoformat()
+        hist['timestamp'] *= 1000
+        if hist.get('updated'):
+            vertical_lines.append(hist['timestamp'])
+    base_chart = {
+        'data': score_history,
+        'vertical_lines': vertical_lines,
+    }
+    if resource_stages := resource_score_history.get('stages'):
+        field = resource_stages['field']
+        prev = score_history[0][field]
+        strips = [{'name': prev, 'start': score_history[0]['timestamp']}]
+        for hist in score_history[1:]:
+            stage = hist[field]
+            if stage != prev:
+                strips[-1]['end'] = hist['timestamp']
+                strips.append({'name': stage, 'start': hist['timestamp']})
+            prev = stage
+        strips[-1]['end'] = score_history[-1]['timestamp']
+        if resource_colors := resource_stages.get('colors'):
+            for strip in strips:
+                strip['color'] = resource_colors.get(strip['name'])
+        base_chart['strips'] = strips
+
+        field_values = request.GET.getlist(field)
+        for strip in strips:
+            if strip['name'] in field_values:
+                if 'x_min' not in base_chart:
+                    base_chart['x_min'] = strip['start']
+                base_chart['x_max'] = strip['end']
+
+    template_name = 'score-history-modal.html' if is_modal else 'score-history.html'
+    context = {
+        'is_modal': is_modal,
+        'charts': resource_score_history['charts'],
+        'base_chart': base_chart,
+        'statistic': statistic,
+        'account': statistic.account,
+        'contest': statistic.contest,
+        'resource': resource,
+    }
+    return render(request, template_name, context)
+
+
+@ratelimit(key='user', rate='5/m')
+def score_histories(request, statistic_ids):
+    statistic_ids = statistic_ids.split(',')
+    is_modal = request.is_ajax()
+    qs = Statistics.objects.select_related('account__resource', 'contest')
+    qs = qs.filter(addition___score_history__isnull=False)
+    statistics = qs.filter(pk__in=statistic_ids)
+
+    statistic = statistics.first()
+    if not statistic:
+        return HttpResponseNotFound()
+    contest = statistic.contest
+    resource = statistic.account.resource
+    resource_score_history = get_item(resource, 'info.ratings.score_history', {})
+
+    order = contest.get_statistics_order()
+    statistics = statistics.order_by(*order)
+    statistics = statistics[:10]
+
+    field_values = None
+    if resource_stages := resource_score_history.get('stages'):
+        field = resource_stages['field']
+        field_values = request.GET.getlist(field)
+
+    base_chart = {'datas': {}, 'fields': []}
+    for statistic in statistics:
+        name = statistic.account.short_display(resource=resource)
+        if statistic.place:
+            name = f"{statistic.place}. {name}"
+        score_history = statistic.addition['_score_history']
+        for hist in score_history:
+            hist['date'] = arrow.get(hist['timestamp']).isoformat()
+            hist['timestamp'] *= 1000
+        if field_values:
+            score_history = [hist for hist in score_history if hist[field] in field_values]
+        base_chart['datas'][name] = score_history
+        base_chart['fields'].append(name)
+
+    template_name = 'score-history-modal.html' if is_modal else 'score-history.html'
+    context = {
+        'is_modal': is_modal,
+        'charts': resource_score_history['charts'],
+        'base_chart': base_chart,
+        'resource': resource,
+        'contest': contest,
+        'statistics': statistics,
+    }
+    return render(request, template_name, context)
 
 
 @login_required

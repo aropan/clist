@@ -71,8 +71,9 @@
     {% endwith %}
     {% endif %}
     var data = {
+      {% with x_value=chart.x_value|default:'bin' y_value=chart.y_value|default:'value' %}
       {% if chart.data %}
-      labels: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}"{{ hist.bin }}"{% endfor %}],
+      labels: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}"{{ hist|get_item:x_value }}"{% endfor %}],
       {% endif %}
       datasets: [
       {% if chart.fields %}
@@ -100,7 +101,11 @@
         {
           {% if chart.datas and field in chart.datas %}
           {% with datas=chart.datas|get_item:field %}
+            {% if datas.items %}
             data: [{% for x, y in datas.items %}{% if forloop.counter0 %},{% endif %}{'x': '{{ x }}', 'y': '{{ y }}'}{% endfor %}],
+            {% else %}
+            data: [{% for hist in datas %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist|get_item:x_value }}', 'y': '{{ hist|get_item:y_value }}'}{% endfor %}],
+            {% endif %}
           {% endwith %}
           {% else %}
             data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{% if field in hist %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:field }}'}{% endif %}{% endfor %}],
@@ -139,9 +144,7 @@
         {% endfor %}
       {% else %}
         {
-          {% with y_value=chart.y_value|default:'value' %}
-          data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist.bin }}', 'y': '{{ hist|get_item:y_value }}'}{% endfor %}],
-          {% endwith %}
+          data: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}{'x': '{{ hist|get_item:x_value }}', 'y': '{{ hist|get_item:y_value }}'}{% endfor %}],
           {% if chart.data and chart.data.0.bgcolor %}
           backgroundColor: [{% for hist in chart.data %}{% if forloop.counter0 %},{% endif %}'{{ hist.bgcolor }}'{% endfor %}],
           {% endif %}
@@ -172,6 +175,7 @@
           categoryPercentage: {{ chart.category_percentage|default:0.8 }},
         },
       {% endif %}
+      {% endwith %}
 
       ]
     }
@@ -225,7 +229,7 @@
           },
           legend: {
             display: {% if chart.fields %}true{% else %}false{% endif %},
-            position: '{{ chart.legend.position|default:"top" }}',
+            position: '{{ chart.legend_position|default:"top" }}',
             labels: {
               usePointStyle: true,
             },
@@ -284,6 +288,12 @@
             {% if chart.x_type %}
             type: '{{ chart.x_type }}',
             {% endif %}
+            {% if chart.x_min %}
+            min: {{ chart.x_min }},
+            {% endif %}
+            {% if chart.x_max %}
+            max: {{ chart.x_max }},
+            {% endif %}
 
             {% if chart.x_ticks_time_rounding %}
             ticks: {
@@ -319,6 +329,9 @@
                 return +value.toFixed(2)
               },
             },
+            {% if chart.y_reverse is not None %}
+            reverse: {{ chart.y_reverse|lower }},
+            {% endif %}
           },
           {% if chart.duplicate_y_axis %}
           y_right: {
@@ -329,6 +342,9 @@
               axis.min = axis.chart.scales.y.min
               axis.max = axis.chart.scales.y.max
             },
+            {% if chart.y_reverse is not None %}
+            reverse: {{ chart.y_reverse|lower }},
+            {% endif %}
           },
           {% endif %}
         },
@@ -339,6 +355,36 @@
           beforeDraw: function(chart) {
             var legends = chart.legend.legendItems;
             legends[0].fillStyle = 'rgba(0, 0, 0, 0.1)'
+          },
+        },
+        {% endif %}
+        {% if chart.strips or chart.vertical_lines %}
+        {
+          beforeDraw: function(chart) {
+            var x_axis = chart.scales["x"]
+            var y_axis = chart.scales["y"]
+            var ctx = chart.ctx
+            {% for strip in chart.strips %}
+            from = get_x_chart({{ strip.start }}, x_axis)
+            to = get_x_chart({{ strip.end }}, x_axis)
+            {% if strip.color %}
+              ctx.fillStyle = "{{ strip.color }}"
+              ctx.fillRect(from, y_axis.top, to - from, y_axis.height)
+            {% endif %}
+            {% endfor %}
+
+            {% if chart.vertical_lines %}
+            {% for x in chart.vertical_lines %}
+            x = get_x_chart({{ x }}, x_axis)
+            ctx.beginPath()
+            ctx.moveTo(x, y_axis.top)
+            ctx.lineTo(x, y_axis.bottom)
+            ctx.lineWidth = 2
+            ctx.strokeStyle = "{{ chart.vertical_lines_color }}"
+            ctx.stroke()
+            ctx.closePath()
+            {% endfor %}
+            {% endif %}
           },
         },
         {% endif %}
@@ -401,7 +447,7 @@
     var ctx = $('#chart_{{ chart.field }}_canvas')[0].getContext('2d');
     var chart = new Chart(ctx, config);
 
-    {% if chart.range_selection %}
+    {% if chart.range_selection or chart.with_range_selection %}
     add_selection_chart_range(
       'chart_{{ chart.field }}_canvas',
       chart,

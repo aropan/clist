@@ -102,7 +102,7 @@
                                 <li class="dropdown-header">User Settings</li>
                                 <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
                                 <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fas fa-info-circle"></i>&nbsp;Social</a></li>
-                                <li><a href="{% url 'coder:settings' 'accounts' %}"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
+                                <li><a href="{% url 'coder:settings' 'accounts' %}" class="authorized"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
                                 <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
                                 <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
                                 <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
@@ -113,8 +113,8 @@
                                 <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
                                 <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
                                 <li><a href="{% url 'ranking:make_versus' %}">{% icon_to 'versus' '' %}&nbsp;Versus</a></li>
-                                <li><a href="{% url 'ranking:virtual_start' %}">{% icon_to 'virtual_start' '' %}&nbsp;Virtual Start</a></li>
-                                <li><a href="{% url 'oauth2_provider:list' %}"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
+                                <li><a href="{% url 'ranking:virtual_start' %}" class="authorized">{% icon_to 'virtual_start' '' %}&nbsp;Virtual Start</a></li>
+                                <li><a href="{% url 'oauth2_provider:list' %}" class="authorized"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
                                 <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i>&nbsp;Atom&RSS</a></li>
                                 <li role="separator" class="divider"></li>
                                 <li class="dropdown-header">Support</li>

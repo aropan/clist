@@ -3,7 +3,13 @@
 
     $url = 'https://pythoncode.club/contests/rss';
     $rss = curlexec($url, NULL, array('no_header' => true));
+    libxml_use_internal_errors(true);
     $xml = new SimpleXMLElement($rss);
+    libxml_use_internal_errors(false);
+    if ($xml === false) {
+        trigger_error('Failed to parse XML', E_USER_WARNING);
+        return;
+    }
     foreach ($xml->channel->item as $item) {
         preg_match_all('#>(?P<key>[^:<]*):(?P<value>[^<\(]*)#', $item->description, $matches);
         $keys = array_map(function($time) { return str_replace(' ', '_', strtolower($time)); }, $matches['key']);

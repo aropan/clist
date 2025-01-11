@@ -117,7 +117,7 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None, more_statistics=None, **kwargs):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
-        region_suffix = Statistic.API_REGION_SUFFIX
+        region_suffix = Statistic.API_REGION_SUFFIX if self.contest.is_over() else ''
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(region_suffix=region_suffix, **self.__dict__)
 
         stop_fetch_standings = False

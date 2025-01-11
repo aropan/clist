@@ -4,18 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
 
+from logify.event_status import EventStatus
 from pyclist.models import BaseManager, BaseModel
-
-
-class EventStatus(models.TextChoices):
-    NONE = 'none', 'None'
-    COMPLETED = 'completed', 'Completed'
-    FAILED = 'failed', 'Failed'
-    IN_PROGRESS = 'in_progress', 'In Progress'
-    CANCELLED = 'cancelled', 'Cancelled'
-    SKIPPED = 'skipped', 'Skipped'
-    INTERRUPTED = 'interrupted', 'Interrupted'
-    WARNING = 'warning', 'Warning'
 
 
 class EventLogManager(BaseManager):
@@ -25,6 +15,11 @@ class EventLogManager(BaseManager):
 
     def get_queryset(self):
         return super().get_queryset().select_related('content_type').prefetch_related('related')
+
+
+class EnvironmentEventLogManager(EventLogManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(environment=settings.ENVIRONMENT)
 
 
 class EventLog(BaseModel):
@@ -39,6 +34,7 @@ class EventLog(BaseModel):
     environment = models.CharField(max_length=20, blank=True)
 
     objects = EventLogManager()
+    env_objects = EnvironmentEventLogManager()
 
     def __str__(self):
         return f'{self.related} EventLog#{self.id}'

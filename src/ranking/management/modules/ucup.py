@@ -58,51 +58,51 @@ class Statistic(BaseModule):
         if not self.standings_url:
             self.standings_url = self._detect_standings()
 
-        season = self.info.get('parse', {}).get('season')
         season_ratings = {}
-        if season:
-            stage = self.info.get('parse', {}).get('stage')
-            rating_url = urllib.parse.urljoin(self.url, f'/rating?season={season}')
-            rating_page = REQ.get(rating_url)
-            table = parsed_table.ParsedTable(rating_page)
-            for row in table:
-                rating_idx = None
-                total_rating = 0
-                season_rating = None
-                handle = None
-                found = False
-                for k, v in row.items():
-                    k = k.lower()
-                    if rating_idx is not None:
-                        season_rating = as_number(v.value, force=True)
-                        if season_rating:
-                            total_rating += season_rating
+        # season = self.info.get('parse', {}).get('season')
+        # if season:
+        #     stage = self.info.get('parse', {}).get('stage')
+        #     rating_url = urllib.parse.urljoin(self.url, f'/rating?season={season}')
+        #     rating_page = REQ.get(rating_url)
+        #     table = parsed_table.ParsedTable(rating_page)
+        #     for row in table:
+        #         rating_idx = None
+        #         total_rating = 0
+        #         season_rating = None
+        #         handle = None
+        #         found = False
+        #         for k, v in row.items():
+        #             k = k.lower()
+        #             if rating_idx is not None:
+        #                 season_rating = as_number(v.value, force=True)
+        #                 if season_rating:
+        #                     total_rating += season_rating
 
-                        rating_idx += 1
-                        href = v.header.node.xpath('.//a/@href')
-                        if not href and str(rating_idx) == stage:
-                            found = True
-                            break
-                        if href and self.standings_url.startswith(href[0]):
-                            found = True
-                            break
-                    elif 'team' in k:
-                        handle = v.value
-                    elif 'rating' in k:
-                        rating_idx = 0
-                if found and handle and season_rating:
-                    rating_data = {
-                        'total_rating': total_rating,
-                        'season_rating': season_rating,
-                    }
-                    handle = handle.strip()
-                    season_ratings[handle] = rating_data
+        #                 rating_idx += 1
+        #                 href = v.header.node.xpath('.//a/@href')
+        #                 if not href and str(rating_idx) == stage:
+        #                     found = True
+        #                     break
+        #                 if href and self.standings_url.startswith(href[0]):
+        #                     found = True
+        #                     break
+        #             elif 'team' in k:
+        #                 handle = v.value
+        #             elif 'rating' in k:
+        #                 rating_idx = 0
+        #         if found and handle and season_rating:
+        #             rating_data = {
+        #                 'total_rating': total_rating,
+        #                 'season_rating': season_rating,
+        #             }
+        #             handle = handle.strip()
+        #             season_ratings[handle] = rating_data
 
-                    team_name = extract_team_name(handle)
-                    if team_name in season_ratings:
-                        season_ratings[team_name] = None
-                    elif team_name:
-                        season_ratings[team_name] = rating_data
+        #             team_name = extract_team_name(handle)
+        #             if team_name in season_ratings:
+        #                 season_ratings[team_name] = None
+        #             elif team_name:
+        #                 season_ratings[team_name] = rating_data
 
         page = REQ.get(self.standings_url)
 

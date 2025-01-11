@@ -26,6 +26,7 @@ from clist.utils import update_account_by_coders
 from pyclist.indexes import ExpressionIndex, GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from true_coders.models import Coder, Party
+from utils.signals import update_n_field_on_change
 
 AVATAR_RELPATH_FIELD = 'avatar_relpath_'
 
@@ -359,20 +360,7 @@ def update_account_url(signal, instance, **kwargs):
 
 @receiver(m2m_changed, sender=Account.writer_set.through)
 def update_account_writer(signal, instance, action, reverse, pk_set, **kwargs):
-    when, action = action.split('_', 1)
-    if when != 'post':
-        return
-    if action == 'add':
-        delta = 1
-    elif action == 'remove':
-        delta = -1
-    else:
-        return
-
-    if reverse:
-        Account.objects.filter(pk=instance.pk).update(n_writers=F('n_writers') + delta)
-    elif pk_set:
-        Account.objects.filter(pk__in=pk_set).update(n_writers=F('n_writers') + delta)
+    update_n_field_on_change(**kwargs, field='n_writers')
 
 
 @receiver(m2m_changed, sender=Account.coders.through)

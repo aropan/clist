@@ -558,9 +558,10 @@ def redirect_login(request):
 @register.simple_tag
 def query_fields(request, *args, before='&'):
     updated = request.GET.copy()
-    for k in list(updated.keys()):
-        if k not in args:
-            updated.pop(k)
+    if args:
+        for k in list(updated.keys()):
+            if k not in args:
+                updated.pop(k)
     ret = updated.urlencode()
     if ret:
         ret = before + ret
@@ -1872,12 +1873,11 @@ def field_to_select_values(context):
 def field_to_select_collapse(context):
     if 'collapse' in context['data']:
         return context['data']['collapse']
-    if context['values']:
+    if context['values'] or context.get('noinputgroup'):
         return False
     if (
-        not context.get('noinputgroup') and
-        not context['data'].get('nogroupby') and
-        context['groupby'] == context['field']
+        not context['data'].get('nogroupby')
+        and context['groupby'] == context['field']
     ):
         return False
     return True
@@ -1913,4 +1913,15 @@ def ifand(value, arg):
 def html_unescape(value):
     value = html.unescape(value)
     value = value.replace('\xa0', ' ').strip()
+    return value
+
+
+@register.filter
+def deep_copy(value):
+    return deepcopy(value)
+
+
+@register.filter
+def update_dict(value, arg):
+    value.update(arg)
     return value

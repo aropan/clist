@@ -13,7 +13,7 @@
 {% if collapse %}
 <div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-select">
   <button class="btn{% if not nosmall %} btn-sm{% endif %} btn-default" onclick="show_field_to_select(event, this, '{{ field }}')">
-    {% icon_to data.icon|default:field capitalized_field|add:" selection" %}
+  {% icon_to data.icon|default:field capitalized_field|add:" selection" %}
   </button>
 </div>
 {% endif %}
@@ -51,6 +51,7 @@
   {% endif %}
 {% endif %}
 {% endwith %}
+
 <select{% if not noname %} name="{{ data.field_name|default:field }}"{% endif %} id="{{ field }}"{% if data.with_update_url %} onchange="update_urls_params({'{{ field }}': $(this).val()})"{% elif not data.nosubmit %} onchange="this.form.submit()"{% endif %}{% if not data.nomultiply and values %} multiple{% endif %}{% if disabled or data.disabled or collapse %} disabled{% endif %}>
   {% if data.options is not None %}
     {% if not data.noempty %}<option></option>{% endif %}
@@ -67,19 +68,22 @@
   {% else %}
     <option></option>
   {% endif %}
-  </select>
-  {% if data.extra_url %}
-  <div class="input-group-btn">
-    <a href="{{ data.extra_url }}" target="_blank" class="btn btn-default" rel="noopener noreferrer">
-      {% icon_to "extra_url" field|title|add:" extra url" %}
-    </a>
-  </div>
-  {% endif %}
-  {% if submit %}
-  <span class="input-group-btn">
-    <button class="btn btn-default" type="submit" name="action" value="{{ submit_value|default:submit }}"{% if not submit_enabled %} disabled{% endif %}>{{ submit|title }}</button>
-  </span>
-  {% endif %}
+</select>
+
+{% if data.extra_url %}
+<div class="input-group-btn">
+  <a href="{{ data.extra_url }}" target="_blank" class="btn btn-default" rel="noopener noreferrer">
+    {% icon_to "extra_url" field|title|add:" extra url" %}
+  </a>
+</div>
+{% endif %}
+
+{% if submit %}
+<span class="input-group-btn">
+  <button class="btn btn-default" type="submit" name="action" value="{{ submit_value|default:submit }}"{% if not submit_enabled %} disabled{% endif %}>{{ submit|title }}</button>
+</span>
+{% endif %}
+
 {% if not noinputgroup %}
 </div>
 {% endif %}

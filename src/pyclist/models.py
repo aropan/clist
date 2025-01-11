@@ -10,6 +10,7 @@ from django.db.models.lookups import LessThan
 from django.utils.timezone import now
 from sql_util.utils import Exists
 
+from logify.event_status import EventStatus
 from utils.timetools import parse_duration
 
 
@@ -80,6 +81,16 @@ class BaseQuerySet(models.QuerySet):
         ret = self.annotate(is_note=Exists(qs))
         ret = ret.annotate(note_text=Subquery(qs.values('text')[:1]))
         return ret
+
+    def annotate_active_executions(self):
+        EventLog = apps.get_model('logify.EventLog')
+        content_type = ContentType.objects.get_for_model(self.model)
+        qs = EventLog.env_objects.filter(
+            content_type=content_type,
+            object_id=OuterRef('pk'),
+            status=EventStatus.IN_PROGRESS,
+        )
+        return self.annotate(has_active_executions=Exists(qs))
 
     class Meta:
         abstract = True

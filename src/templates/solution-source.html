@@ -10,12 +10,6 @@
     var $copied = $(btn).html('{% icon_to "copied" %}')
     toggle_tooltip_object($copied.find('[title]'))
   }
-
-  function toggleFullscreenModal(btn) {
-    $(btn).toggleClass('active')
-    $(btn).closest('.modal').toggleClass('fullscreen')
-    $(btn).find('i').toggleClass('fa-compress-arrows-alt').toggleClass('fa-expand-arrows-alt')
-  }
 </script>
 
 {% if stat.language %}
@@ -74,8 +68,8 @@
 </div>
 
 {% if is_modal %}
-<div{% if is_modal %} class="modal-footer"{% endif %}>
-  <button id="toggle-fullscreen-modal" type="button" class="btn btn-default btn-sm" onClick="toggleFullscreenModal(this)">{% icon_to 'fullscreen' %}</button>
+<div class="modal-footer">
+  <button id="toggle-fullscreen-modal" type="button" class="btn btn-default btn-sm" onClick="toggle_modal_fullscreen(this)">{% icon_to 'fullscreen' %}</button>
   <a href="{{ request.path }}" target="_blank" rel="noopener" class="btn btn-default btn-sm">{% icon_to 'open_in_tab' %}</a>
   <button type="button" class="btn btn-default btn-sm" onClick="copySolutionToClipboard(this)">{% icon_to 'copy' %}</button>
   <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>

@@ -106,6 +106,14 @@
     </div>
     {% endif %}
 
+    {% if groupby == 'none' %}
+    {% if "_score_history" in contest.info.fields %}
+    <div class="input-group input-group-sm">
+      <a data-params="{% query_fields request before="?" %}" class="btn btn-default btn-sm" onClick="return show_score_histories(this, event)">{% icon_to "rating" "Score history" %}</a>
+    </div>
+    {% endif %}
+    {% endif %}
+
     <div class="input-group input-group-sm">
       <button id="toggle-fullscreen" class="btn btn-default btn-sm{% if fullscreen %} active{% endif %}" name="fullscreen"{% if not fullscreen %} value=""{% else %} value="off"{% endif %}>{% icon_to 'fullscreen' default='Fullscreen (F)' %}</button>
     </div>
