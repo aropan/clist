@@ -143,10 +143,12 @@ g   <span class="text-muted">&mdash;</span>
     <div class="note-text text-muted small">{% if problem.is_note %}{{ problem.note_text }}{% endif %}</div>
   </td>
   <td>
-    {% for tag in problem.tags.all %}
+    {% with sorted_tags=problem.tags.all|dictsort:"name" %}
+    {% for tag in sorted_tags %}
     {% ifchanged %}<span class="hidden-tag unevent-hidden-tag badge progress-bar-info{% if show_tags %} hidden{% endif %}">&nbsp;</span>{% endifchanged %}
     <a href="{% url_transform request tag=tag.id %}" class="tag badge progress-bar-info{% if not show_tags %} hidden{% endif %}">{{ tag.name }}</a>
     {% endfor %}
+    {% endwith %}
   </td>
 </tr>
 {% endfor %}
