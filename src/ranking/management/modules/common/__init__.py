@@ -13,7 +13,7 @@ import pytz
 from lazy_load import lz
 
 from utils import parsed_table  # noqa
-from utils.requester import FailOnGetResponse, ProxyLimitReached, requester  # noqa
+from utils.requester import requester
 
 
 def create_requester():
@@ -28,6 +28,23 @@ def create_requester():
 
 
 REQ = lz(create_requester)
+
+
+class CustomRequester:
+
+    def __init__(self, req, *args, **kwargs):
+        self._base_req = req
+        self._args = args
+        self._kwargs = kwargs
+
+    def __call__(self, func):
+
+        def wrapper(*args, **kwargs):
+            with self._base_req(*self._args, **self._kwargs) as req:
+                return func(*args, req=req, **kwargs)
+
+        return wrapper
+
 
 SPACE = ' '
 DOT = '.'
@@ -139,7 +156,7 @@ class BaseModule(object, metaclass=ABCMeta):
         return f'{urlinfo.scheme}://{urlinfo.netloc}/'
 
     @staticmethod
-    def update_submissions(account, resource):
+    def update_submissions(account, resource, **kwargs):
         raise NotImplementedError()
 
     @staticmethod

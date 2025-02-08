@@ -34,7 +34,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   function get_color(val, space='rgb') {
     for (var idx in colors) {
       var rating = colors[idx]
-      if (rating['low'] <= val[coloring_field] && val[coloring_field] <= rating['high']) {
+      if (rating['low'] <= val[coloring_field] && val[coloring_field] < rating['high']) {
         if (space == 'rgb') {
           return rating['hex_rgb']
         } else if (space == 'hsl') {
@@ -94,7 +94,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
 
           for (var i = 0; i < rating_colors.length; ++i) {
             var to = get_y_chart(rating_colors[i].low, y_axis)
-            var from = get_y_chart(rating_colors[i].high + 1, y_axis)
+            var from = get_y_chart(rating_colors[i].high, y_axis)
             ctx.fillStyle = hsl_to_color(rating_colors[i].hsl)
             ctx.fillRect(x_axis.left, from, x_axis.width, to - from)
           }

@@ -90,9 +90,10 @@ def make_beetween(column, value, start, end=None):
     return When(Q(**{column + '__gte': start, column + '__lt': end}), then=Value(value))
 
 
-def make_chart(qs, field, groupby=None, logger=NullLogger(), n_bins=42, cast=None, step=None, aggregations=None,
+def make_chart(qs, field, groupby=None, logger=NullLogger(), n_bins=None, cast=None, step=None, aggregations=None,
                bins=None, norm_value=None):
     context = {'title': title_field(field) + (f' (slice by {groupby})' if groupby else '')}
+    n_bins = n_bins or settings.CHART_N_BINS_DEFAULT
 
     if cast == 'int':
         cast = IntegerField()

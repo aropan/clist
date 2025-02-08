@@ -399,7 +399,10 @@ class Bot(telegram.Bot):
             yield from show_subscribed(method)
             return
 
-        subscription, created = Subscription.objects.get_or_create(coder=self.coder, contest=contest, method=method)
+        subscription, created = Subscription.objects.get_or_create(
+            coder=self.coder, contest=contest, method=method,
+            defaults={'with_statistics': True},
+        )
         if created:
             method_chat = f'telegram:{self.chat_id}'
             already_subscriptions = Subscription.objects.filter(Q(coder__isnull=False, coder=self.coder) |
@@ -718,7 +721,12 @@ class Bot(telegram.Bot):
         except Exception as e:
             self.logger.warning(f'message = {msg}')
             self.logger.error(f'Exception send message {e}')
-            if "can't parse entities" in str(e).lower():
+            error_message = str(e).lower()
+            if 'chat not found' in error_message:
+                delete_info = Chat.objects.filter(chat_id=chat_id).delete()
+                self.logger.warning(f'Chat {chat_id} not found. Deleted {delete_info}')
+                raise e
+            elif "can't parse entities" in error_message:
                 ret = self.sendMessage(**msg)
             else:
                 raise e

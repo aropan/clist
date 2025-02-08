@@ -56,6 +56,14 @@ table.center {
  * Row flex
  */
 
+.row-flex > div {
+  padding-right: 0px;
+}
+
+.row-flex {
+  padding-right: 15px;
+}
+
 @media (min-width: 768px) {
   .row-flex-sm {
     display: flex;
@@ -343,7 +351,7 @@ html {
 }
 
 .rating-prediction-label {
-  margin-left: -15px;
+  margin-left: -21.5px;
 }
 
 a.database-link {
@@ -440,13 +448,16 @@ a.database-link {
 }
 
 .inline-button {
+  white-space: nowrap;
   visibility: hidden;
   z-index: 1;
 }
 
 .absolute-button {
+  white-space: normal;
   position: absolute;
   margin-left: 5px;
+  z-index: 40;
 }
 
 
@@ -989,6 +1000,9 @@ a[data-toggle="tooltip"][disabled],
   width: 100% !important;
 }
 
+.form-inline .input-group>.select2-container--bootstrap {
+  display:inline-block;
+}
 
 /*
  * Table inner scroll
@@ -1095,4 +1109,14 @@ table.table-border-collapse-separate {
 
 .input-group .select2:not(:last-child) .select2-selection {
   border-right: 0px;
+}
+
+
+/*
+ * virtual start
+ */
+
+.virtual-start-period {
+  position: absolute;
+  margin: 2px;
 }

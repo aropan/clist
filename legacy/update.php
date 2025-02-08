@@ -184,7 +184,6 @@
     $updated_resources = array();
     foreach ($contests as $i => $contest)
     {
-        $updated_resources[$contest['rid']] = true;
         foreach (array('start_time', 'end_time') as $k) {
             if (isset($contest[$k]) && !is_numeric($contest[$k]) && $contest[$k]) {
                 if (!preg_match('/(?:[\-\+][0-9]+:[0-9]+|\s[A-Z]{3,}|Z|UTC\+[0-9]+)$/', $contest[$k]) and !empty($contest['timezone']) and strpos($contest[$k], $contest['timezone']) === false) {
@@ -326,6 +325,8 @@
 
         $duplicate = isset($contest['duplicate']) && $contest['duplicate'];
 
+        $updated_resources[$contest['rid']] = true;
+
         unset($contest['duration']);
         unset($contest['timezone']);
         unset($contest['rid']);
@@ -345,21 +346,20 @@
 
         if (isset($contest['old_key'])) {
             $old_key = $contest['old_key'];
-            unset($contest['old_key']);
-            if ($old_key) {
-                $key = $contest['key'];
-                $old_update = "$update and key = '${old_key}'";
-                if (!$db->query("UPDATE clist_contest SET key = '$key' WHERE $old_update", true)) {
-                    $db->query("DELETE FROM clist_contest WHERE $old_update", true);
-                }
+            $key = $contest['key'];
+            $old_update = "$update and key = '${old_key}'";
+            if (!$db->query("UPDATE clist_contest SET key = '$key' WHERE $old_update", true)) {
+                $db->query("DELETE FROM clist_contest WHERE $old_update", true);
             }
         }
+        unset($contest['old_key']);
+
         if (isset($contest['delete_key'])) {
             $delete_key = $contest['delete_key'];
-            unset($contest['delete_key']);
             $delete_update = "$update and key = '${delete_key}'";
             $db->query("DELETE FROM clist_contest WHERE $delete_update", true);
         }
+        unset($contest['delete_key']);
 
         $contest['is_auto_added'] = 1;
         $contest['auto_updated'] = date("Y-m-d H:i:s");
@@ -418,17 +418,17 @@
             }
 
             if (isset($auto_remove_started[$resource_id])) {
-                $time_filter = "auto_updated < now() - interval '2 hours' AND now() < end_time";
+                $time_filter = "auto_updated < now() - interval '3 hours' AND now() < end_time";
             } else {
-                $time_filter = "auto_updated < now() - interval '2 hours' AND now() < start_time";
+                $time_filter = "auto_updated < now() - interval '3 hours' AND now() < start_time";
             }
             $resources_filter .= "(resource_id = $resource_id AND $time_filter)";
         }
         $query = "is_auto_added = true AND ($resources_filter)";
         $to_be_removed = $db->select("clist_contest", "*", $query);
         if ($to_be_removed) {
-            $filename_log =  LOGREMOVEDDIR . date("Y-m-d_H-i-s", time()) . '.txt';
-            file_put_contents($filename_log, print_r($to_be_removed, true));
+            $log_name = LOGREMOVEDDIR . date("Y-m-d_H-i-s", time());
+            file_put_contents("$log_name-deleting.txt", print_r($to_be_removed, true));
 
             echo "<br><br><b><font color='red'>To be removed</font></b>:<br>\n";
             foreach ($to_be_removed as $contest) {
@@ -436,7 +436,14 @@
                     "{$contest['title']} [{$contest['key']}] <{$contest['url']}></span><br>\n";
             }
             if (!DEBUG) {
-                $db->delete("clist_contest", $query, array('ranking_stagecontest' => 'contest_id'));
+                $result = $db->delete("clist_contest", $query, array('ranking_stagecontest' => 'contest_id'));
+                $deleted = array();
+                while ($row = pg_fetch_array($result)) {
+                    $deleted[] = $row;
+                }
+                if (count($deleted)) {
+                    file_put_contents("$log_name-deleted.txt", print_r($deleted, true));
+                }
             }
         }
     }

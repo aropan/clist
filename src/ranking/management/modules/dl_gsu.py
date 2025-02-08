@@ -8,8 +8,8 @@ from urllib.parse import urljoin
 from lazy_load import lz
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException, FailOnGetResponse
 
 
 def insecure_requester():

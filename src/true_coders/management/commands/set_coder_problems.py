@@ -15,6 +15,7 @@ from ranking.models import Statistics
 from true_coders.models import Coder, CoderProblem
 from utils.attrdict import AttrDict
 from utils.logger import suppress_db_logging_context
+from utils.timetools import parse_datetime
 
 
 class Command(BaseCommand):
@@ -31,6 +32,7 @@ class Command(BaseCommand):
         parser.add_argument('-nv', '--no-virtual', action='store_true', help='exclude virtual coders')
         parser.add_argument('-nf', '--no-filled', action='store_true', help='exclude filled coders')
         parser.add_argument('-n', '--limit', type=int, help='number of coders')
+        parser.add_argument('--from-date', type=parse_datetime, help='statistics modified date')
 
     def log_queryset(self, name, qs, limit=20):
         total = qs.count()
@@ -87,25 +89,33 @@ class Command(BaseCommand):
         n_created = 0
         n_total = 0
         n_deleted = 0
-        for coder in tqdm(coders, total=coders.count(), desc='coders'):
-            with suppress_db_logging_context(), transaction.atomic():
+        with suppress_db_logging_context(), transaction.atomic():
+            for coder in tqdm(coders, total=coders.count(), desc='coders'):
                 def process_problem(problems, desc):
                     nonlocal n_created, n_total, n_deleted
 
-                    old_problem_ids = coder.verdicts.filter(problem__in=problems).values_list('id', flat=True)
-                    old_problem_ids = set(old_problem_ids)
+                    def get_problem_ids():
+                        return set(coder.verdicts.filter(problem__in=problems).values_list('id', flat=True))
+
+                    if not args.from_date:
+                        old_problem_ids = get_problem_ids()
 
                     problems = problems.select_related('resource')
                     problems = problems.prefetch_related('contests')
 
                     statistics = Statistics.objects.filter(account__coders=coder)
+                    if args.from_date:
+                        statistics = statistics.filter(modified__gte=args.from_date)
                     problems = problems.prefetch_related(Prefetch('contests__statistics_set', queryset=statistics))
-                    problems = problems.filter(contests__statistics__account__coders=coder)
+                    problems = problems.filter(contests__statistics__in=statistics)
+
+                    if args.from_date:
+                        old_problem_ids = get_problem_ids()
 
                     if args.contest:
                         problem_iter = problems
                     else:
-                        problem_iter = tqdm(problems, total=len(problems), desc=desc)
+                        problem_iter = tqdm(problems, total=len(problems), desc=desc, leave=False)
 
                     for problem in problem_iter:
                         solution = get_problem_solution(problem)
@@ -159,7 +169,7 @@ class Command(BaseCommand):
                 else:
                     coder_resources = resources.annotate(has_coder=Exists('account', filter=Q(coders=coder)))
                     coder_resources = coder_resources.filter(has_coder=True)
-                    for resource in tqdm(coder_resources, total=len(coder_resources), desc='resources'):
+                    for resource in tqdm(coder_resources, total=len(coder_resources), desc='resources', leave=False):
                         resource_problems = resource.problem_set.all()
                         process_problem(resource_problems, desc=f'{resource}')
             if update_need_set_coder_problems:

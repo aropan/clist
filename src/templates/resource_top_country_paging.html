@@ -16,8 +16,8 @@
       <a href="{% url_transform request country=code %}"><div class="flag flag-{{ code|lower }}"></div> {{ name }}</a>
     </td>
     <td>
-      {% coder_color_circle resource country_account.rating %}
-      <span class="{% coder_color_class resource country_account.rating %}">{{ country_account.rating }}</span>
+      {% coder_color_circle resource country_account.rating value_name='rating' %}
+      <span class="{% coder_color_class resource country_account.rating value_name='rating' %}">{{ country_account.rating }}</span>
     </td>
   </tr>
   {% endwith %}

@@ -63,7 +63,6 @@
             continue;
         }
 
-
         $times = preg_split('#[^0-9]*[–-][^0-9]*#', $time);
         if (count($times) == 1) {
             $start_time = $date . " " . $time;

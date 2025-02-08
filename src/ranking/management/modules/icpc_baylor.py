@@ -18,8 +18,8 @@ from submissions.models import Language, Verdict
 
 from clist.templatetags.extras import get_item
 from ranking.management.modules.codeforces import _get as codeforces_get
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from utils.strings import cut_prefix, list_string_iou, string_iou
 from utils.timetools import parse_duration
 

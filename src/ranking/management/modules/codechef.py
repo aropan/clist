@@ -21,11 +21,12 @@ from django.db.models import Q
 from first import first
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import as_number, get_item, is_improved_solution, slug
+from clist.templatetags.extras import as_number, get_item, is_improved_solution, is_solved, slug
 from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import LOG, REQ, BaseModule, CustomRequester, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
+from utils.mathutils import max_with_none
 from utils.timetools import parse_datetime
 
 
@@ -77,7 +78,6 @@ class Statistic(BaseModule):
             kwargs.pop('additional_attempts')
             return Statistic._get(*args, proxy=proxy, **kwargs)
         else:
-            kwargs.setdefault('n_attempts', 20)
             return proxy.get(*args, **kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
@@ -104,6 +104,8 @@ class Statistic(BaseModule):
         data = json.loads(page)
         if data['status'] != 'success':
             raise ExceptionParseStandings(json.dumps(data))
+
+        raw_info = data
 
         is_frozen = data.get('isRanklistFrozen')
         if 'child_contests' in data:
@@ -231,15 +233,13 @@ class Statistic(BaseModule):
                                 row['time'] = t
                                 break
 
-                        stats = (statistics or {}).get(handle, {})
-                        problems = row.setdefault('problems', stats.get('problems', {}))
+                        problems = row.setdefault('problems', get_item(statistics, (handle, 'problems'), {}))
                         clear_problems_fields(problems)
                         if problems_status:
                             solved, upsolved = 0, 0
                             for k, v in problems_status.items():
                                 score = v.pop('score')
-                                is_solved = False
-                                is_scored = False
+                                is_scored_score = False
 
                                 if ranking_type == '1' and 'penalty' in v and score == 1:
                                     penalty = v.pop('penalty')
@@ -249,7 +249,7 @@ class Statistic(BaseModule):
                                         v['result'] = f'-{penalty}'
                                 else:
                                     v['result'] = score
-                                    is_scored = True
+                                    is_scored_score = score > 0
                                     penalty = 0
 
                                 if score > 0:
@@ -257,9 +257,8 @@ class Statistic(BaseModule):
                                         upsolved += 1
                                     else:
                                         solved += 1
-                                        is_solved = True
 
-                                if is_solved and is_scored and k in problem_infos and score:
+                                if is_scored_score and k in problem_infos and score:
                                     problem_infos[k]['max_score'] = max(problem_infos[k].get('max_score', 0), score)
 
                                 if v.get('time'):
@@ -273,11 +272,7 @@ class Statistic(BaseModule):
 
                                 problem = problems.setdefault(k, {})
                                 if k in unscored_problems:
-                                    problem_upsolving = problem.setdefault('upsolving', {})
-                                    if not isinstance(problem_upsolving, dict):
-                                        problem_upsolving = {'result': problem_upsolving}
-                                        problem['upsolving'] = problem_upsolving
-                                    problem = problem_upsolving
+                                    problem = problem.setdefault('upsolving', {})
                                     if not is_improved_solution(v, problem):
                                         continue
                                 problem.update(v)
@@ -328,6 +323,7 @@ class Statistic(BaseModule):
             'problems': problems_info,
             'hidden_fields': list(hidden_fields),
             'options': options,
+            'raw_info': raw_info,
         }
 
         if is_frozen is not None:
@@ -359,9 +355,10 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
         with REQ.with_proxy(
+            n_limit=50,
             time_limit=10,
             filepath_proxies='sharedfiles/resource/codechef/proxies',
-            n_deferred=3,
+            n_deferred=5,
             inplace=False,
         ) as req:
             fetch_profle_page_func = partial(Statistic.fetch_profle_page, req=req)
@@ -491,31 +488,37 @@ class Statistic(BaseModule):
 
                 yield ret
 
+    @CustomRequester(REQ, inplace=False, proxy={
+        'n_limit': 30,
+        'time_limit': 5,
+        'filepath_proxies': 'sharedfiles/resource/codechef/proxies.submissions',
+        'n_deferred': 5,
+    })
     @transaction.atomic()
     @staticmethod
-    def update_submissions(account, resource):
-        submissions_info = deepcopy(account.info.setdefault('submissions_', {}))
+    def update_submissions(account, resource, **kwargs):
+        req = kwargs.pop('req')
+        submissions_info = deepcopy(account.submissions_info)
         submissions_info.setdefault('count', 0)
-        if 'last_submission_time' not in submissions_info:
-            submissions_info['count'] = 0
-            submissions_info['last_id'] = -1
-        last_id = submissions_info.setdefault('last_id', -1)
-        last_submission_time = submissions_info.setdefault('last_submission_time', -1)
-        new_last_id = last_id
-        new_last_submission_time = last_submission_time
+        last_submission_id = submissions_info.get('last_submission_id') or -1
+        last_submission_time = arrow.get(submissions_info.get('last_submission_time') or -1)
+        state = submissions_info.setdefault('state', {})
+        state.setdefault('last_submission_id', last_submission_id)
+        state.setdefault('last_submission_time', last_submission_time.timestamp())
 
         ret = defaultdict(int)
         seen = set()
         contests_cache = dict()
         stats_cache = dict()
 
-        @RateLimiter(max_calls=1, period=6)
         def fetch_submissions(page=0):
+            nonlocal max_page
             url = Statistic.SUBMISSIONS_URL_.format(user=account.key, page=page)
-            response = Statistic._get(url)
+            response = Statistic._get(url, proxy=req)
             data = json.loads(response)
             data['url'] = url
             data['page'] = page
+            max_page = data['max_page']
             return data
 
         def get_contest(key, short):
@@ -548,9 +551,8 @@ class Statistic(BaseModule):
             return contest
 
         def process_submission(data, current_url):
-            nonlocal new_last_id, new_last_submission_time
             problem_info = {}
-            submission_time = parse_datetime(data.pop('Time').value, timezone='+05:30')
+            submission_time = parse_datetime(data.pop('Time').value, tz='+05:30')
             problem_info['submission_time'] = submission_time.timestamp()
             solution = data.pop('Solution')
             href = first(solution.column.node.xpath('.//a/@href'))
@@ -570,18 +572,19 @@ class Statistic(BaseModule):
                 # FIXME: get full_score from contest problem info
                 problem_info['partial'] = problem_info['result'] < 100
             else:
-                problem_info['binary'] = True
-                problem_info['result'] = int(problem_info['verdict'] == 'AC')
+                binary = problem_info['verdict'] == 'AC'
+                problem_info['binary'] = binary
+                problem_info['result'] = int(binary)
 
             if 'id' in problem_info:
-                if last_id >= problem_info['id'] or problem_info['id'] in seen:
+                if last_submission_id >= problem_info['id'] or problem_info['id'] in seen:
                     return False
                 seen.add(problem_info['id'])
-                new_last_id = max(new_last_id, problem_info['id'])
+                state['last_submission_id'] = max(state['last_submission_id'], problem_info['id'])
 
-            if last_submission_time > (submission_time + timedelta(days=1)).timestamp():
+            if last_submission_time > submission_time + timedelta(days=1):
                 return False
-            new_last_submission_time = max(new_last_submission_time, problem_info['submission_time'])
+            state['last_submission_time'] = max(state['last_submission_time'], submission_time.timestamp())
 
             name = data.pop('Problem')
             short = name.value
@@ -598,37 +601,32 @@ class Statistic(BaseModule):
             if contest in stats_cache:
                 stat = stats_cache[contest]
             else:
-                stat, _ = create_upsolving_statistic(contest=contest, account=account)
+                stat, _ = create_upsolving_statistic(resource=resource, contest=contest, account=account)
                 stats_cache[contest] = stat
 
             problems = stat.addition.setdefault('problems', {})
             problem = problems.setdefault(short, {})
-            if not is_improved_solution(problem_info, problem):
+            if is_solved(problem) or problem.get('result') == problem_info.get('result'):
+                ret['n_already'] += 1
                 return
+
+            account.last_submission = max_with_none(account.last_submission, submission_time)
             upsolving = problem.setdefault('upsolving', {})
-
-            # previous version fix
-            if not isinstance(upsolving, dict) or 'submission_time' not in upsolving:
-                upsolving = {}
-
             if not is_improved_solution(problem_info, upsolving):
+                ret['n_not_improved'] += 1
                 return
-
-            if not account.last_submission or account.last_submission < submission_time:
-                account.last_submission = submission_time
 
             problem['upsolving'] = problem_info
             submissions_info['count'] += 1
             ret['n_updated'] += 1
-
             stat.save()
 
         def process_submissions(data):
-            nonlocal max_page
-            max_page = data['max_page']
             table = parsed_table.ParsedTable(data['content'])
             ret = False
+            n_rows = 0
             for r in table:
+                n_rows += 1
                 result = process_submission(r, data['url'])
                 if result is not False:
                     ret = True
@@ -636,30 +634,34 @@ class Statistic(BaseModule):
 
         def process_pagination():
             nonlocal max_page
-            last_page = -1
-            while max_page is None or last_page + 1 < max_page:
-                last_page += 1
-                data = fetch_submissions(last_page)
+            last_page = state.pop('last_page', 0)
+            progress_bar = None
+            while max_page is None or last_page < max_page:
+                try:
+                    data = fetch_submissions(last_page)
+                except (FailOnGetResponse, ProxyLimitReached):
+                    state['last_page'] = last_page
+                    break
+                if progress_bar is None:
+                    progress_bar = tqdm.tqdm(total=max_page - last_page)
+                progress_bar.update()
                 if not process_submissions(data):
                     break
-
-                with tqdm.tqdm(total=max_page - last_page - 1) as pbar:
-                    for data in map(fetch_submissions, range(last_page + 1, max_page)):
-                        result = process_submissions(data)
-                        last_page = data['page']
-                        pbar.update()
-                        if not result:
-                            return
+                last_page += 1
+            if progress_bar is not None:
+                progress_bar.close()
 
         max_page = None
         process_pagination()
 
-        submissions_info.update({
-            'last_id': new_last_id,
-            'last_submission_time': new_last_submission_time,
-        })
-        account.info['submissions_'] = submissions_info
-        account.save(update_fields=['info', 'last_submission'])
+        if 'last_page' not in state:
+            state['last_submission_time'] = arrow.get(state['last_submission_time']).isoformat()
+            submissions_info.update(submissions_info.pop('state'))
+        else:
+            ret['delay'] = timedelta(days=1)
+
+        account.submissions_info = submissions_info
+        account.save(update_fields=['submissions_info', 'last_submission'])
         return ret
 
     @staticmethod

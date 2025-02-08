@@ -133,6 +133,10 @@
       <a href="{{ external_url.url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' external_url.name %}</a>
       {% endfor %}
 
+      {% if contest.upsolving_url %}
+      <a href="{{ contest.upsolving_url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' 'upsolving' %}</a>
+      {% endif %}
+
       {% endif %}
 
       {% if user|has_update_statistics_permission:contest %}

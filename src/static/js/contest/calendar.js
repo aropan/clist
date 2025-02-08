@@ -25,6 +25,7 @@ $(function() {
     })
 
     function after_render() {
+        Cookies.set('calendar_view', calendar.view.type)
         stylize_button()
         $(window).trigger('resize')
     }
@@ -78,6 +79,7 @@ $(function() {
     }
 
     var calendar_el = document.getElementById('calendar')
+    var five_day_window_fix = 0
     calendar = new FullCalendar.Calendar(calendar_el, {
         views: calendar_views,
         initialView: calendar_view,
@@ -214,17 +216,23 @@ $(function() {
             }
 
             addition_info.prependTo(event_element)
+            five_day_window_fix = 3  // need to click 5days button two times to fix the view (three times for guarantee)
         },
         viewDidMount: function() {
-            Cookies.set('calendar_view', calendar.view.type)
             after_render()
         },
         datesSet: function() {
-            Cookies.set('calendar_view', calendar.view.type)
             after_render()
         },
         eventClick: function (data, event, view) {
             return true
+        },
+        eventsSet: function() {
+            after_render()
+            if (five_day_window_fix > 0 && calendar.view.type == 'fiveDayWindow') {
+                setTimeout(() => { $('.fc-fiveDayWindow-button').click() }, 1)
+                five_day_window_fix--;
+            }
         },
         loading: function(bool) {
             $('#loading').toggle(bool)

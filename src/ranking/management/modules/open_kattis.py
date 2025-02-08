@@ -13,7 +13,9 @@ from tqdm import tqdm
 
 from clist.models import Contest
 from clist.templatetags.extras import as_number, get_item, slug
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import FailOnGetResponse
+
 
 
 class Statistic(BaseModule):

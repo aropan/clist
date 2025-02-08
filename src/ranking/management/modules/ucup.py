@@ -11,8 +11,8 @@ import yaml
 from django.db.models import Q
 
 from clist.templatetags.extras import as_number, is_yes, slug
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from utils.strings import string_iou
 
 
@@ -44,7 +44,7 @@ class Statistic(BaseModule):
                 continue
             if code == 404:
                 break
-            match = re.search('<div[^>]*class="text-center"[^>]*>\s*<h1[^>]*>([^<]+)</h1>', page)
+            match = re.search(r'<div[^>]*class="text-center"[^>]*>\s*<h1[^>]*>([^<]+)</h1>', page)
             if not match:
                 continue
             title = match.group(1).strip()
@@ -220,6 +220,9 @@ class Statistic(BaseModule):
                     problem['result'] = f'?{n_attempts + 1}'
                 elif is_accepted:
                     problem['result'] = f'+{n_attempts}' if n_attempts else '+'
+                elif score > 0:
+                    problem['result'] = f'+{n_attempts}' if n_attempts else '+'
+                    problem['result_verdict'] = 'rejected'
                 else:
                     problem['result'] = f'-{n_attempts + 1}'
                 if time > 0:

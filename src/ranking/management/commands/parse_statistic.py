@@ -14,6 +14,7 @@ from math import isclose
 from random import shuffle
 
 import arrow
+import django_rq
 import humanize
 import tqdm as _tqdm
 from asgiref.sync import async_to_sync
@@ -30,17 +31,17 @@ from submissions.models import Language, Submission, Testing, Verdict
 
 from clist.models import Contest, Problem, Resource
 from clist.templatetags.extras import (as_number, canonize, get_item, get_number_from_str, get_problem_key,
-                                       get_problem_short, is_hidden, is_solved, normalize_field, time_in_seconds,
+                                       get_problem_short, get_result_score, get_statistic_stats, is_hidden,
+                                       is_scoring_result, is_solved, normalize_field, time_in_seconds,
                                        time_in_seconds_format)
-from clist.utils import create_contest_problem_discussions
-from clist.views import update_problems, update_writers
+from clist.utils import create_contest_problem_discussions, update_problems, update_writers
 from logify.models import EventLog, EventStatus
 from notification.models import NotificationMessage, Subscription
-from notification.utils import compose_message_by_problems, send_messages
+from notification.utils import compose_message_by_problems, compose_message_by_submissions, send_messages
 from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.parse_accounts_infos import rename_account
-from ranking.management.modules.common import REQ, UNCHANGED, ProxyLimitReached
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.common import REQ, UNCHANGED
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException, ProxyLimitReached
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from ranking.utils import account_update_contest_additions, update_stage
 from ranking.views import update_standings_socket
@@ -48,7 +49,9 @@ from true_coders.models import Coder
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.logger import suppress_db_logging_context
+from utils.mathutils import min_with_none
 from utils.timetools import parse_datetime
+from utils.tools import sum_data
 from utils.traceback_with_vars import colored_format_exc
 
 EPS = 1e-9
@@ -217,6 +220,7 @@ class Command(BaseCommand):
         parser.add_argument('--without-delete-statistics', action='store_true')
         parser.add_argument('--allow-delete-statistics', action='store_true')
         parser.add_argument('--clear-submissions-info', action='store_true')
+        parser.add_argument('--split-by-resource', action='store_true', help='Separately for each resource')
 
     def parse_statistic(
         self,
@@ -254,6 +258,7 @@ class Command(BaseCommand):
         without_delete_statistics=None,
         allow_delete_statistics=None,
         clear_submissions_info=None,
+        split_by_resource=None,
     ):
         channel_layer_handler = ChannelLayerHandler()
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%b-%d %H:%M:%S')
@@ -291,6 +296,7 @@ class Command(BaseCommand):
                     before_end_limit_query = (
                         Q(end_time__gt=now - F('resource__module__max_delay_after_end'))
                         | Q(statistic_timing=None)
+                        | Q(has_unlimited_statistics=True)
                     )
 
                     after_start_limit_query = Q(
@@ -366,6 +372,21 @@ class Command(BaseCommand):
         stages_ids = []
 
         resources = {contest.resource for contest in contests}
+        if split_by_resource:
+            queue = django_rq.get_queue('parse_statistics')
+            for resource in resources:
+                resource_host = resource.host.split('/')[0]
+                job_id = f'parse_statistics_{resource_host}'
+
+                job = queue.fetch_job(job_id)
+                if not job or job.is_finished or job.is_failed:
+                    kwargs = {'resources': [resource.host]}
+                    job = queue.enqueue(call_command, 'parse_statistic', **kwargs, job_id=job_id)
+                    self.logger.info(f'Added {resource} parse_statistics job to queue: job = {job}')
+                else:
+                    self.logger.info(f'{resource} parse_statistics job already in queue: job = {job}')
+            return
+
         if len(resources) == 1 and len(contests) > 3:
             resource_event_log = EventLog.objects.create(name='parse_statistic',
                                                          related=contests[0].resource,
@@ -439,12 +460,13 @@ class Command(BaseCommand):
                 is_fast_reparse = contest.parsed_time and now - contest.parsed_time < timedelta(minutes=5)
 
                 with_subscription = not without_subscriptions and not is_archive_contest and with_stats
+                with_upsolving_subscription = not without_subscriptions and not resource.has_upsolving
                 prefetch_subscribed_coders = Prefetch('coders', queryset=Coder.objects.filter(n_subscribers__gt=0),
                                                       to_attr='subscribed_coders')
                 subscription_top_n = None
                 subscription_first_ac = None
                 if with_subscription:
-                    subscriptions = Subscription.enabled.filter(
+                    subscriptions = Subscription.for_statistics.filter(
                         (Q(resource__isnull=True) | Q(resource=resource)) &
                         (Q(contest__isnull=True) | Q(contest=contest))
                     )
@@ -487,8 +509,8 @@ class Command(BaseCommand):
                             contest.submissions_info = {}
                             contest.save(update_fields=['submissions_info'])
                         standings = plugin.get_standings(users=copy.deepcopy(specific_users),
-                                                         statistics=statistics_by_key,
-                                                         more_statistics=more_statistics_by_key)
+                                                         statistics=copy.deepcopy(statistics_by_key),
+                                                         more_statistics=copy.deepcopy(more_statistics_by_key))
                         has_standings_result = bool(standings.get('result'))
 
                         if resource.has_upsolving:
@@ -561,6 +583,21 @@ class Command(BaseCommand):
                                     contest_log_counter['skip_not_solving'] += 1
                                     result.pop(member)
 
+                        if get_item(resource, 'info.standings.skip_country'):
+                            result = standings.setdefault('result', {})
+                            for row in result.values():
+                                if 'country' in row:
+                                    row['__country'] = row.pop('country')
+                                    contest_log_counter['skip_country'] += 1
+
+                        if get_item(resource, 'info.standings.skip_rating'):
+                            result = standings.setdefault('result', {})
+                            for row in result.values():
+                                for field in Resource.RATING_FIELDS:
+                                    if field in row:
+                                        row[f'__{field}'] = row.pop(field)
+                                        contest_log_counter['skip_rating'] += 1
+
                         for key, more_stat in more_statistics_by_key.items():
                             statistics_by_key[key].update(more_stat)
 
@@ -606,6 +643,20 @@ class Command(BaseCommand):
                         if canonize(standings_options) != canonize(contest_options):
                             contest.info['standings'] = standings_options
                             contest.save(update_fields=['info'])
+
+                    if raw_info := standings.pop('raw_info', None):
+                        contest_raw_info = copy.deepcopy(contest.raw_info)
+                        outdated_info = contest_raw_info.pop('_outdated', {})
+                        if raw_info != contest_raw_info:
+                            for k, v in raw_info.items():
+                                if v == contest_raw_info.get(k):
+                                    contest_raw_info.pop(k, None)
+                            outdated_info.update(contest_raw_info)
+                            contest_raw_info.update(raw_info)
+                            if outdated_info:
+                                contest_raw_info['_outdated'] = outdated_info
+                            contest.raw_info = contest_raw_info
+                            contest.save(update_fields=['raw_info'])
 
                     info_fields = standings.pop('info_fields', [])
                     info_fields += ['divisions_order', 'divisions_addition', 'advance', 'grouped_team', 'fields_values',
@@ -660,6 +711,9 @@ class Command(BaseCommand):
                     require_statistics_update = standings.pop('require_statistics_update', False)
                     if require_statistics_update:
                         contest.require_statistics_update()
+
+                    if standings_counters := standings.pop('counters', {}):
+                        contest_log_counter = sum_data(contest_log_counter, standings_counters)
 
                     parse_info = contest.info.get('parse', {})
                     resource_statistics = resource.info.get('statistics') or {}
@@ -731,10 +785,13 @@ class Command(BaseCommand):
                                     if r.get('division'):
                                         n_statistics[r.get('division')] += 1
                                     n_statistics['__total__'] += 1
-                                for k, v in problems.items():
-                                    if 'result' not in v:
-                                        continue
 
+                                default_full_score = (
+                                    contest.info.get('default_problem_full_score')
+                                    or resource_statistics.get('default_problem_full_score')
+                                )
+
+                                for k, v in problems.items():
                                     p = d_problems
                                     standings_p = standings_problems
                                     if standings_p and 'division' in standings_p:
@@ -744,36 +801,18 @@ class Command(BaseCommand):
                                         standings_p = standings_p.get(r['division'], [])
                                     p = p.setdefault(k, {})
 
-                                    result_str = str(v['result'])
-                                    is_accepted = result_str.startswith('+')
-                                    is_hidden_result = '?' in result_str
-                                    has_hidden |= is_hidden_result
-                                    is_score = result_str and result_str[0].isdigit()
-                                    result_num = as_number(v['result'], force=True)
+                                    has_result = 'result' in v
+                                    result_str = str(v.get('result'))
+                                    result_num = as_number(v.get('result'), force=True)
+                                    is_score = is_scoring_result(v)
 
-                                    if result_str and result_str[0] not in '+-?':
-                                        standings_kinds.discard('icpc')
-                                    if result_str and result_num is None:
-                                        standings_kinds.discard('scoring')
-
-                                    scored = is_accepted
-                                    try:
-                                        scored = scored or float(v['result']) > 0
-                                    except Exception:
-                                        pass
-
-                                    if scored:
-                                        total_problems_solving += 1 if is_accepted else result_num
-
-                                    default_full_score = (
-                                        contest.info.get('default_problem_full_score')
-                                        or resource_statistics.get('default_problem_full_score')
-                                    )
                                     if default_full_score and is_score:
                                         if default_full_score == 'max':
-                                            p['max_score'] = max(p.get('max_score', float('-inf')), result_num)
+                                            if result_num is not None:
+                                                p['max_score'] = max(p.get('max_score', float('-inf')), result_num)
                                         elif default_full_score == 'min':
-                                            p['min_score'] = min(p.get('min_score', float('inf')), result_num)
+                                            if result_num is not None:
+                                                p['min_score'] = min(p.get('min_score', float('inf')), result_num)
                                         else:
                                             if 'full_score' not in p:
                                                 for i in standings_p:
@@ -782,11 +821,33 @@ class Command(BaseCommand):
                                                         break
                                                 else:
                                                     p['full_score'] = default_full_score
-                                            if 'partial' not in v and p['full_score'] - result_num > EPS:
-                                                v['partial'] = True
-                                            if not v.get('partial'):
-                                                solved['solving'] += 1
-                                    ac = scored and not v.get('partial', False)
+                                            if has_result:
+                                                if 'partial' not in v and p['full_score'] - result_num > EPS:
+                                                    v['partial'] = True
+                                                if not v.get('partial'):
+                                                    solved['solving'] += 1
+                                            if u := v.get('upsolving'):
+                                                upsolving_num = as_number(u['result'], default=0)
+                                                if 'partial' not in u and p['full_score'] - upsolving_num > EPS:
+                                                    u['partial'] = True
+                                                if not u.get('partial'):
+                                                    solved.setdefault('upsolving', 0)
+                                                    solved['upsolving'] += 1
+
+                                    if 'result' not in v:
+                                        continue
+
+                                    is_hidden_result = is_hidden(v)
+                                    has_hidden |= is_hidden_result
+
+                                    if result_str and result_str[0] not in '+-?':
+                                        standings_kinds.discard('icpc')
+                                    if result_str and result_num is None:
+                                        standings_kinds.discard('scoring')
+
+                                    scored = get_result_score(result_str)
+                                    total_problems_solving += scored
+                                    ac = is_solved(v)
 
                                     if contest.info.get('with_last_submit_time') and scored:
                                         if '_last_submit_time' not in r or r['_last_submit_time'] < v['time']:
@@ -922,10 +983,15 @@ class Command(BaseCommand):
                                 previous_account = resource.account_set.filter(key=previous_member).first()
                                 if previous_account:
                                     account = rename_account(previous_account, account)
+                                    contest_log_counter['renamed_accounts'] += 1
 
                             result_submissions = r.pop('submissions', [])
                             if contest.has_submissions and not result_submissions:
                                 self.logger.warning(f'Not found submissions for account = {account}')
+
+                            result_upsolving_submissions = r.pop('upsolving_submissions', [])
+                            if result_upsolving_submissions:
+                                contest_log_counter['n_upsolving_submissions'] += len(result_upsolving_submissions)
 
                             def update_addition_fields():
                                 addition_fields = parse_info.get('addition_fields', [])
@@ -1170,13 +1236,23 @@ class Command(BaseCommand):
                                     else:
                                         v.pop('try_first_ac', None)
 
+                            def update_statistic_stats():
+                                problem_stats = get_statistic_stats(r)
+                                r.update(problem_stats)
+
                             def get_addition():
                                 place = r.pop('place', None)
                                 defaults = {
+                                    'resource': resource,
                                     'place': place,
                                     'place_as_int': place if place == UNCHANGED else get_number_from_str(place),
                                     'solving': r.pop('solving', 0),
-                                    'upsolving': r.pop('upsolving', 0),
+                                    'upsolving': r.pop('upsolving', None),
+                                    'total_solving': r.pop('total_solving', 0),
+                                    'n_solved': r.pop('n_solved', 0),
+                                    'n_upsolved': r.pop('n_upsolved', None),
+                                    'n_total_solved': r.pop('n_total_solved', 0),
+                                    'n_first_ac': r.pop('n_first_ac', 0),
                                     'penalty': as_number(r.get('penalty'), force=True),
                                     'skip_in_stats': skip_result,
                                     'advanced': bool(r.get('advanced')),
@@ -1540,7 +1616,7 @@ class Command(BaseCommand):
                                     & (Q(resource__isnull=True) | Q(resource=resource))
                                     & (Q(contest__isnull=True) | Q(contest=contest))
                                 )
-                                subscriptions = Subscription.enabled.filter(subscriptions_filter)
+                                subscriptions = Subscription.for_statistics.filter(subscriptions_filter)
                                 already_sent = set()
                                 for subscription in subscriptions:
                                     if subscription.notification_key in already_sent:
@@ -1555,6 +1631,37 @@ class Command(BaseCommand):
                                     subscription.send(message=message, contest=contest)
                                     contest_log_counter['statistics_subscription'] += 1
 
+                            def process_upsolving_subscriptions(submissions):
+                                if not submissions or not with_upsolving_subscription:
+                                    return
+                                subscribed_coders = getattr(account, 'subscribed_coders', None)
+                                if not account.n_subscribers and not subscribed_coders:
+                                    return
+
+                                subscriptions_filter = Q()
+                                if account.n_subscribers:
+                                    subscriptions_filter |= Q(accounts=account)
+                                if subscribed_coders:
+                                    subscriptions_filter |= Q(coders__in=subscribed_coders)
+                                subscriptions_filter = (
+                                    subscriptions_filter
+                                    & (Q(resource__isnull=True) | Q(resource=resource))
+                                    & (Q(contest__isnull=True) | Q(contest=contest))
+                                )
+                                upsolving_subscriptions = Subscription.for_upsolving.filter(subscriptions_filter)
+
+                                processed = set()
+                                for subscription in upsolving_subscriptions:
+                                    message = compose_message_by_submissions(
+                                        resource, account, submissions,
+                                        cache=processed,
+                                        subscription=subscription,
+                                    )
+                                    if not message:
+                                        continue
+                                    subscription.send(message=message)
+                                    contest_log_counter['statistics_subscription'] += 1
+
                             update_addition_fields()
                             update_account_time()
                             update_account_info()
@@ -1562,13 +1669,17 @@ class Command(BaseCommand):
                             update_problems_values(r)
                             if not specific_users:
                                 update_problems_first_ac()
+                            update_statistic_stats()
                             defaults, addition, try_calculate_time = get_addition()
 
-                            statistic, statistic_created = Statistics.objects.update_or_create(
+                            statistics_objects = Statistics.saved_objects
+                            statistics_objects = statistics_objects.select_related('account', 'contest', 'resource')
+                            statistic, statistic_created = statistics_objects.update_or_create(
                                 account=account,
                                 contest=contest,
                                 defaults=defaults,
                             )
+
                             n_statistics_total += 1
                             n_statistics_created += statistic_created
                             contest_log_counter['statistics_total'] += 1
@@ -1587,6 +1698,7 @@ class Command(BaseCommand):
                                 set_matched_coders_to_members(statistic)
 
                             process_subscriptions(statistic, updates)
+                            process_upsolving_subscriptions(result_upsolving_submissions)
 
                         if not specific_users:
                             for field, values in problems_values.items():
@@ -1606,12 +1718,23 @@ class Command(BaseCommand):
                                     fields.remove(rating_field)
                                     fields.append(rating_field)
 
-                            if statistics_to_delete and not without_delete_statistics:
+                            if (
+                                statistics_to_delete and
+                                not without_delete_statistics and
+                                (first_deleted := Statistics.objects.filter(pk__in=statistics_to_delete).first())
+                            ):
+                                self.logger.info(f'First deleted: {first_deleted}')
+                                prefix_size = 5
+                                prefix_deleted = list(statistics_to_delete)[:prefix_size]
+                                prefix_deleted = ', '.join(map(str, prefix_deleted))
+                                if len(statistics_to_delete) > prefix_size:
+                                    prefix_deleted += ', ...'
+                                self.logger.info(f'{len(statistics_to_delete)} statistics to delete: {prefix_deleted}')
+
                                 if is_archive_contest and not allow_delete_statistics:
-                                    raise ExceptionParseStandings('archive contest has statistics to delete')
-                                first = Statistics.objects.filter(pk__in=statistics_to_delete).first()
-                                if first:
-                                    self.logger.info(f'First deleted: {first}, account = {first.account}')
+                                    raise ExceptionParseStandings(
+                                        f'archive contest has {len(statistics_to_delete)} statistics to delete')
+
                                 delete_info = Statistics.objects.filter(pk__in=statistics_to_delete).delete()
                                 self.logger.info(f'Delete info: {delete_info}')
                                 progress_bar.set_postfix(deleted=str(delete_info))
@@ -1732,6 +1855,12 @@ class Command(BaseCommand):
                         if wait_rating and not has_statistics and results and 'days' in wait_rating:
                             timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
                         timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
+                        if contest.has_unlimited_statistics and contest.end_time < now:
+                            last_action_time = contest.submissions_info.get('last_upsolving_submission_time',
+                                                                            contest.end_time)
+                            last_action_time = arrow.get(last_action_time).datetime
+                            last_action_delta = max(now - last_action_time, timedelta(hours=1))
+                            timing_delta = min_with_none(timing_delta, last_action_delta)
                         if timing_delta is not None:
                             self.logger.info(f'Statistic timing delta = {timing_delta}')
                             contest.info['_timing_statistic_delta_seconds'] = timing_delta.total_seconds()
@@ -1823,6 +1952,7 @@ class Command(BaseCommand):
                 if with_reparse and isinstance(e, ExceptionParseStandings):
                     contest.statistics_update_done()
                 exception_error = str(e)
+                self.logger.warning(f'parse_statistic exception: {e}')
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 event_status = EventStatus.FAILED
@@ -1931,7 +2061,7 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         if args.resources:
-            resources = [Resource.objects.get(host__iregex=r) for r in args.resources]
+            resources = Resource.get(args.resources)
             contests = Contest.objects.filter(resource__module__resource__in=resources)
         else:
             has_module = Module.objects.filter(resource_id=OuterRef('resource__pk'))
@@ -2003,4 +2133,5 @@ class Command(BaseCommand):
             without_delete_statistics=args.without_delete_statistics,
             allow_delete_statistics=args.allow_delete_statistics,
             clear_submissions_info=args.clear_submissions_info,
+            split_by_resource=args.split_by_resource,
         )

@@ -15,7 +15,7 @@ from sql_util.utils import SubqueryCount
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number, get_item, get_problem_key, get_problem_short, is_solved
-from clist.views import update_problems
+from clist.utils import update_problems
 from logify.models import EventLog, EventStatus
 from utils.attrdict import AttrDict
 from utils.json_field import JSONF

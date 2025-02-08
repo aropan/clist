@@ -3,39 +3,47 @@
 
     $url = 'https://api.eolymp.com/spaces/00000000-0000-0000-0000-000000000000/graphql';
     $list_contests_query = <<<'EOD'
-query ListContests($first: Int, $after: String, $filters: JudgeContestFilter) {
-  contests(first: $first, after: $after, filters: $filters) {
-    nodes {
-      id
-      name
-      format
-      duration
-      startsAt
-      endsAt
-      scoring {
-        showScoreboard
-        attemptPenalty
-        freezingTime
-        allowUpsolving
-        tieBreaker
-      }
-      upsolve {
-        freeUpsolve
-        virtualUpsolve
-      }
+query  ListContests($first: Int,  $offset: Int, $filters: JudgeContestFilter)  {
+    contests(first: $first,  offset: $offset, filters: $filters)  {
+        nodes  {
+            id
+            name
+            format
+            duration
+            startsAt
+            endsAt
+            scoring  {
+                showScoreboard
+                attemptPenalty
+                freezingTime
+                allowUpsolving
+                tieBreaker
+            }
+            upsolve  {
+                freeUpsolve
+                virtualUpsolve
+            }
+            scoreboard  {
+                visibility
+                attemptPenalty
+                freezingTime
+                unfreezeDelay
+                tieBreaker
+                modes
+            }
+        }
+        pageInfo  {
+            hasNextPage
+        }
+        totalCount
     }
-    pageInfo {
-      hasNextPage
-      endCursor
-    }
-    totalCount
-  }
 }
 EOD;
 
-    $after = '0';
+    $count = 100;
+    $offset = 0;
     for (;;) {
-        $request_data  = json_encode(['query' => $list_contests_query, 'variables' => ['first' => 100, 'after' => $after]]);
+        $request_data  = json_encode(['query' => $list_contests_query, 'variables' => ['first' => $count, 'offset' => $offset]]);
         $data = curlexec($url, $request_data, ['json_output' => true]);
         if (!isset($data['data']['contests'])) {
             trigger_error('data = ' . json_encode($data), E_USER_WARNING);
@@ -60,6 +68,6 @@ EOD;
         if (!$data['pageInfo']['hasNextPage'] || !isset($_GET['parse_full_list'])) {
             break;
         }
-        $after = $data['pageInfo']['endCursor'];
+        $offset += $count;
     }
 ?>

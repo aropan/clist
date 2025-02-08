@@ -25,13 +25,13 @@
     {% if problem.time is not None %}
     <div title="{{ problem.time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ problem.time|timezone:timezone|naturalday }}</div>
     {% else %}
-    <span class="text-muted">&mdash;</span>
+g   <span class="text-muted">&mdash;</span>
     {% endif %}
   </td>
   <td class="problem-rating-column">
     {% if problem.rating is not None %}
-      {% coder_color_circle problem.resource problem.rating %}
-      <span class="{% coder_color_class problem.resource problem.rating %}">
+      {% coder_color_circle problem.resource problem.rating value_name='rating' %}
+      <span class="{% coder_color_class problem.resource problem.rating value_name value_name='rating' %}">
         {{ problem.rating }}
       </span>
     {% elif problem.has_rating %}

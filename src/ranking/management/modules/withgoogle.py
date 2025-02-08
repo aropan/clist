@@ -18,8 +18,8 @@ import tqdm
 from django.utils.timezone import now
 
 from clist.templatetags.extras import as_number, get_country_name, get_problem_key
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException, FailOnGetResponse
 
 
 class Statistic(BaseModule):

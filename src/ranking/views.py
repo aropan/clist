@@ -37,8 +37,7 @@ from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
 from pyclist.decorators import context_pagination, extra_context_without_pagination, inject_contest
 from pyclist.middleware import RedirectException
-from ranking.management.modules.common import FailOnGetResponse, ProxyLimitReached
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics, VirtualStart
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, ListGroup, Party
@@ -111,10 +110,9 @@ def standings_list(request, template='standings_list.html'):
     if with_submissions:
         contests = contests.filter(has_submissions=True)
 
-    resources = [r for r in request.GET.getlist('resource') if r]
+    resources = request.get_resources()
     if resources:
-        contests = contests.filter(resource_id__in=resources)
-        resources = list(Resource.objects.filter(pk__in=resources))
+        contests = contests.filter(resource__in=resources)
 
     more_fields = []
     if request.user.has_perm('clist.view_more_fields'):
@@ -883,18 +881,21 @@ def get_standings_fields(contest, division, with_detail, hidden_fields=None, hid
 
     division_addition_fields = inplace_division and divisions_order and division != divisions_order[0]
     addition_fields = division_addition.get('fields', contest_fields) if division_addition_fields else contest_fields
-    special_fields = ['problems', 'team_id', 'solved', 'hack', 'challenges', 'url', 'participant_type', 'division',
-                      'medal', 'raw_rating', 'medal_percentage']
+    special_fields = ['team_id', 'participant_type', 'division', 'medal', 'raw_rating', 'medal_percentage']
+    special_fields.extend(settings.ADDITION_HIDE_FIELDS_)
     if hidden_fields is None:
         hidden_fields = list(contest.info.get('hidden_fields', []))
-    hidden_fields_values = hidden_fields_values or set()
+    hidden_fields_values = hidden_fields_values or []
 
     predicted_fields = ['predicted_rating_change', 'predicted_new_rating', 'predicted_rating_perf']
     if contest.rating_prediction_hash:
         addition_fields = addition_fields + predicted_fields
         hidden_fields.extend(predicted_fields)
 
-    for k in addition_fields:
+    addition_fields.extend(settings.STANDINGS_STATISTIC_FIELDS)
+    hidden_fields.extend(settings.STANDINGS_STATISTIC_FIELDS)
+
+    for k in hidden_fields_values + addition_fields:
         is_private_k = k.startswith('_')
         if (
             k in fields
@@ -1303,11 +1304,9 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         params['countries'] = countries
 
     # add resource accounts info
-    resources = [r for r in request.GET.getlist('resource') if r]
+    resources = request.get_resources()
     if resources:
-        resources = list(Resource.objects.filter(pk__in=resources))
         params['resources'] = resources
-
         resource_coders = Coder.objects.prefetch_related(Prefetch(
             'account_set',
             to_attr='resource_accounts',
@@ -1391,7 +1390,8 @@ def standings(request, contest, other_contests=None, template='standings.html', 
             # statistics = statistics.annotate(chat_name=Subquery(subquery))
         elif field == 'list':
             if values:
-                groups = ListGroup.objects.filter(coder_list__uuid__in=values, name__isnull=False)
+                groups = ListGroup.objects.filter(coder_list__uuid__in=values, coder_list__custom_names=True,
+                                                  name__isnull=False)
                 groups = groups.filter(Q(values__account=OuterRef('account')) |
                                        Q(values__coder__account=OuterRef('account')))
                 statistics = statistics.annotate(value_instead_key=Subquery(groups.values('name')[:1]))
@@ -1939,7 +1939,7 @@ def get_versus_data(request, query, fields_to_select):
     else:
         date_from, date_to = None, None
 
-    resources = [r for r in request.GET.getlist('resource') if r]
+    resources = request.get_resources()
     if resources:
         base_filter &= Q(contest__resource__in=resources)
 
@@ -2119,12 +2119,10 @@ def versus(request, query):
         date_from, date_to = [arrow.get(x).datetime for x in daterange.split(' - ')]
         contests = contests.filter(start_time__gte=date_from, end_time__lte=date_to)
 
-    resources = [r for r in request.GET.getlist('resource') if r]
+    resources = request.get_resources()
     if resources:
-        resources = list(Resource.objects.filter(pk__in=resources))
         params['resources'] = resources
-        rids = set([r.pk for r in resources])
-        contests = contests.filter(resource_id__in=rids)
+        contests = contests.filter(resource__in=resources)
 
     # scoring by contests
     def cmp(a: tuple, b: tuple) -> bool:

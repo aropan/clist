@@ -5,9 +5,8 @@ import logging
 import operator
 import re
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-import arrow
 import django_rq
 import humanize
 import pytz
@@ -17,8 +16,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
-from django.db import IntegrityError, transaction
-from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, Max, OuterRef,
+from django.db import transaction
+from django.db.models import (BigIntegerField, BooleanField, Case, Count, F, FloatField, IntegerField, OuterRef,
                               Prefetch, Q, Subquery, Value, When)
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
@@ -27,7 +26,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
-from django.utils.timezone import make_aware
 from django.views.decorators.http import require_http_methods
 from django_countries import countries
 from django_ratelimit.core import get_usage
@@ -37,11 +35,12 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMax, SubquerySum
 from tastypie.models import ApiKey
 
 from clist.models import Contest, ContestSeries, ProblemTag, Promotion, Resource
-from clist.templatetags.extras import (accounts_split, allowed_redirect, as_number, asfloat, format_time, get_item,
-                                       get_problem_short, get_timezones, has_update_statistics_permission,
-                                       is_rating_prediction_field, is_yes, query_transform, quote_url, relative_url)
+from clist.templatetags.extras import (accounts_split, allowed_redirect, as_number, asfloat, format_time,
+                                       get_division_problems, get_item, get_problem_short, get_timezones,
+                                       has_update_statistics_permission, is_rating_prediction_field, is_yes,
+                                       query_transform, quote_url, relative_url)
 from clist.templatetags.extras import slug as slugify
-from clist.templatetags.extras import toint, url_transform
+from clist.templatetags.extras import url_transform
 from clist.utils import update_accounts_by_coders
 from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
@@ -50,11 +49,12 @@ from my_oauth.models import Service
 from notes.models import Note
 from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
-from notification.utils import compose_message_by_problems, send_messages
+from notification.utils import compose_message_by_problems, compose_message_by_submissions, send_messages
 from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
                             VirtualStart)
+from tg.bot import Bot
 from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListGroup, ListValue, Organization, Party
 from true_coders.utils import add_query_to_list, get_or_set_upsolving_filter
@@ -206,6 +206,7 @@ def get_profile_context(request, statistics, writers, resources):
         view_all_statistics_fields = request.user.has_perm('ranking.view_statistics_fields')
         fields_types = search_resource.statistics_fields.get('types', {})
         options = list(sorted(fields_types.keys()))
+        options += django_settings.STANDINGS_STATISTIC_FIELDS
         fields = request.GET.getlist('field')
         if view_all_statistics_fields:
             for field in fields:
@@ -335,10 +336,8 @@ def coders(request, template='coders.html'):
         coder_filter = CoderList.coders_filter(list_uuids, coder=coder, logger=request.logger)
         coders = coders.filter(coder_filter)
 
-    resources = request.GET.getlist('resource')
+    resources = request.get_resources()
     if resources:
-        resources = [r for r in resources if r]
-        resources = list(Resource.objects.filter(pk__in=resources))
         for r in resources:
             field = get_item(r.info, 'ratings.chartjs.coloring_field')
             if field:
@@ -707,7 +706,6 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         .annotate(name=F('contest__title'))
         .annotate(key=F('contest__key'))
         .annotate(kind=F('contest__kind'))
-        .annotate(resource=F('contest__resource'))
         .annotate(score=F('solving'))
         .annotate(solved=IntegerJSONF('addition__solved__solving'))
         .annotate(division=KeyTextTransform('division', 'addition'))
@@ -1254,6 +1252,7 @@ def change(request):
                 if len(shared_with) > 50:
                     return HttpResponseBadRequest("reached the limit number of shared with")
                 coder_list.shared_with_coders.set(shared_with)
+            coder_list.custom_names = is_yes(request.POST.get("custom_names"))
             coder_list.save()
         except Exception as e:
             logger.error(f'Error while adding/editing list: {e}')
@@ -1398,6 +1397,7 @@ def change(request):
                 coder_chat_id=coder_chat_id,
                 coder=coder,
                 method=method,
+                with_statistics=True,
             )
         elif name == "edit-subscription":
             pk = int(request.POST.get("id"))
@@ -1424,7 +1424,7 @@ def change(request):
         Subscription.objects.get(pk=pk, coder=coder).delete()
     elif name == "view-subscription":
         pk = int(request.POST.get("id", -1))
-        subscription = Subscription.objects.get(pk=pk, coder=coder)
+        subscription = Subscription.objects.annotate(locale=F('coder_list__locale')).get(pk=pk, coder=coder)
 
         if subscription.contest:
             contest = subscription.contest
@@ -1434,6 +1434,17 @@ def change(request):
             contest = None
 
         sent_statistics = set()
+
+        if django_settings.DEBUG:
+            bot = Bot()
+
+        def messaging(message, contest):
+            if django_settings.DEBUG:
+                if (chat := coder.chat) is None:
+                    return HttpResponseBadRequest('Coder has no chat')
+                bot.send_message(message, chat_id=chat.chat_id)
+            else:
+                subscription.send(message=message, contest=contest)
 
         def view_statistic_by_filter(query):
             statistics = Statistics.objects.filter(query, skip_in_stats=False)
@@ -1445,15 +1456,36 @@ def change(request):
                 if statistic.pk in sent_statistics:
                     continue
                 sent_statistics.add(statistic.pk)
-                view_contest = contest or statistic.contest
-                message = compose_message_by_problems(
-                    problem_shorts='all',
-                    statistic=statistic,
-                    previous_addition={},
-                    contest_or_problems=view_contest,
-                    subscription=subscription,
-                )
-                subscription.send(message=message, contest=view_contest)
+
+                if subscription.with_statistics:
+                    message = compose_message_by_problems(
+                        problem_shorts='all',
+                        statistic=statistic,
+                        previous_addition={},
+                        contest_or_problems=statistic.contest,
+                        subscription=subscription,
+                    )
+                    messaging(message, statistic.contest)
+                if subscription.with_upsolving:
+                    upsolving_submissions = []
+                    problems = statistic.addition.get('problems', {})
+                    for problem in get_division_problems(statistic.contest, statistic.addition):
+                        short = get_problem_short(problem)
+                        if not (upsolving_info := get_item(problems, (short, 'upsolving'))):
+                            continue
+                        upsolving_submissions.append({
+                            'contest': statistic.contest,
+                            'problem': problem,
+                            'info': upsolving_info,
+                        })
+                    if upsolving_submissions:
+                        message = compose_message_by_submissions(
+                            resource=statistic.contest.resource,
+                            account=statistic.account,
+                            submissions=upsolving_submissions,
+                            subscription=subscription,
+                        )
+                        messaging(message, statistic.contest)
 
         if subscription.top_n:
             view_statistic_by_filter(Statistics.top_n_filter(subscription.top_n))
@@ -1467,23 +1499,15 @@ def change(request):
         if sent_statistics:
             send_messages(coders=[coder.username])
     elif name == "first-name":
-        if not value:
-            return HttpResponseBadRequest("empty first name")
         user.first_name = value
         user.save(update_fields=['first_name'])
     elif name == "last-name":
-        if not value:
-            return HttpResponseBadRequest("empty last name")
         user.last_name = value
         user.save(update_fields=['last_name'])
     elif name == "first-name-native":
-        if not value:
-            return HttpResponseBadRequest("empty first name in native language")
         coder.first_name_native = value
         coder.save(update_fields=['first_name_native'])
     elif name == "last-name-native":
-        if not value:
-            return HttpResponseBadRequest("empty last name in native language")
         coder.last_name_native = value
         coder.save(update_fields=['last_name_native'])
     elif name == "add-account":
@@ -1844,7 +1868,7 @@ def search(request, **kwargs):
                 qs = qs.annotate(disabled=VirtualStart.contests_filter(request.user.coder))
             qs = qs.filter(start_time__lt=timezone.now(), stage__isnull=True, invisible=False)
         if resources := [r for r in request.GET.getlist('resources[]') if r]:
-            qs = qs.filter(resource__pk__in=resources)
+            qs = qs.filter(resource_id__in=resources)
         if resource_id := request.GET.get('resource'):
             qs = qs.filter(resource_id=resource_id)
         if no_stage := request.GET.get('no_stage'):
@@ -2362,7 +2386,7 @@ def view_list(request, uuid):
         existing_groups = set()
 
         def reset_group_id():
-            nonlocal group_id, group
+            nonlocal group_id, group, existing_groups
             if group is not None and not group.values.exists():
                 group.delete()
             group_id, group = None, None
@@ -2388,6 +2412,7 @@ def view_list(request, uuid):
                 request.logger.warning(f'Coder {log_value} has already been added')
                 return
             ListValue.objects.create(coder_list=coder_list, coder=c, group_id=get_group_id())
+            group.touch()
             request.logger.success(f'Added {log_value} coder to list')
 
         def add_account(a, log_value=None):
@@ -2400,6 +2425,7 @@ def view_list(request, uuid):
                 request.logger.warning(f'Account {log_value} has already been added')
                 return
             ListValue.objects.create(coder_list=coder_list, account=a, group_id=get_group_id())
+            group.touch()
             request.logger.success(f'Added {log_value} account to list')
 
         if request_post.get('coder'):
@@ -2448,7 +2474,7 @@ def view_list(request, uuid):
                             host, account = value.split(':', 1)
                             if host == 'NAME':
                                 if qs := coder_list.groups.filter(name=group_name):
-                                    existing_groups.add(qs)
+                                    existing_groups.update(qs)
                                 group_name = account
                                 continue
                             resources = list(Resource.objects.filter(Q(host=host) | Q(short_host=host)))
@@ -2494,6 +2520,7 @@ def view_list(request, uuid):
         elif value_id := request_post.get('delete_value_id'):
             list_value = get_object_or_404(coder_list.values, pk=value_id)
             list_group = list_value.group
+            list_group.touch()
             deleted, *_ = list_value.delete()
             if deleted:
                 if not list_group.values.exists():
@@ -2508,13 +2535,25 @@ def view_list(request, uuid):
         else:
             request.logger.warning('No action specified')
         reset_group_id()
-        return allowed_redirect(request.path)
+        return allowed_redirect(request.get_full_path())
 
     coder_list_groups = coder_list.related_groups
+    request_method = 'GET' if can_modify else 'EMPTY'
+
+    sort_fields = ['created', 'modified', 'name']
+    if sort_field := request.get_sort_field(options=sort_fields, method=request_method):
+        coder_list_groups = coder_list_groups.order_by(sort_field)
+    sort_field_select = {'options': sort_fields}
+
+    custom_fields = ['modified', 'created']
+    custom_field_select = {'options': custom_fields}
+    custom_field_select['values'] = request.get_filtered_list('field', options=custom_fields, method=request_method)
 
     context = {
         'coder_list': coder_list,
         'coder_list_groups': coder_list_groups,
+        'sort_field_select': sort_field_select,
+        'custom_field_select': custom_field_select,
         'can_modify': can_modify,
         'coder': coder,
     }
@@ -2637,22 +2676,17 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.filter(country__in=countries)
         params['countries'] = countries
 
-    resources = request.GET.getlist('resource')
-    resources = [r for r in resources if r]
+    resources = request.get_resources()
     if resources:
-        resources = Resource.objects.filter(pk__in=resources)
         accounts = accounts.filter(resource__in=resources)
         params['resources'] = resources
 
     list_uuids = [v for v in request.GET.getlist('list') if v]
     if list_uuids:
-        if list_uuids:
-            groups = ListGroup.objects.filter(coder_list__uuid__in=list_uuids, name__isnull=False)
-            groups = groups.filter(Q(values__account=OuterRef('pk')) |
-                                   Q(values__coder__account=OuterRef('pk')))
-            accounts = accounts.annotate(value_instead_key=Subquery(groups.values('name')[:1]))
         accounts_filter = CoderList.accounts_filter(list_uuids, coder=coder, logger=request.logger)
         accounts = accounts.filter(accounts_filter)
+        accounts_annotate = CoderList.accounts_annotate(list_uuids)
+        accounts = accounts.annotate(value_instead_key=accounts_annotate)
 
     # qualifiers
     filtered_stats = filter_contests_with_advanced_to_stats(request, params)
@@ -2686,8 +2720,10 @@ def accounts(request, template='accounts.html'):
         params['to_list'] = to_list
 
     context = {'params': params}
-    addition_table_fields = ('modified', 'updated', 'created', 'name', 'key', 'last_rating_activity')
-    table_fields = ('rating', 'resource_rank', 'n_contests', 'n_writers', 'last_activity') + addition_table_fields
+    addition_table_fields = ['n_writers', 'modified', 'updated', 'created', 'name', 'key',
+                             'last_rating_activity', 'last_submission']
+    addition_table_fields += django_settings.ACCOUNT_STATISTIC_FIELDS
+    table_fields = ['rating', 'resource_rank', 'n_contests', 'last_activity'] + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
     groupby = request.get_filtered_value('groupby', ['country', 'resource'])
@@ -2792,6 +2828,7 @@ def accounts(request, template='accounts.html'):
 
     context['accounts'] = accounts
     context['resources_custom_fields'] = custom_fields
+    context['with_account_ratings'] = not resources or any([r.ratings for r in resources])
     context['with_table_inner_scroll'] = not request.user_agent.is_mobile
 
     if coder and len(resources) == 1:

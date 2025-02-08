@@ -15,9 +15,7 @@ def index(request):
 def chats(request, template='chats.html'):
     chats = ExternalChat.objects.all()
 
-    resources = [r for r in request.GET.getlist('resource') if r]
-    if resources:
-        resources = list(Resource.objects.filter(pk__in=resources))
+    resources = request.get_resources()
 
     contests = [r for r in request.GET.getlist('contest') if r]
     if contests:

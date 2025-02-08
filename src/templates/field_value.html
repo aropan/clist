@@ -1,6 +1,6 @@
 {% with template_value=value|to_template_value %}
-{% if field in resource.RATING_FIELDS %}{% coder_color_circle resource value %}{% endif %}
-<span class="{% if value|get_type == 'bool' %} text-muted{% endif %}{% if field in resource.RATING_FIELDS %} {% coder_color_class resource value %}{% endif %}">
+{% if field in resource.RATING_FIELDS %}{% coder_color_circle resource value value_name='rating' %}{% endif %}
+<span class="{% if value|get_type == 'bool' %} text-muted{% endif %}{% if field in resource.RATING_FIELDS %} {% coder_color_class resource value value_name='rating' %}{% endif %}">
 {% if fields_to_select and field in fields_to_select and value not in fields_to_select|get_item:field and not fields_to_select|get_item:field|get_item:'nourl' %}
   <a class="field-to-select" href="{{ request.path }}?{% query_transform request field value|to_template_filter_value %}">
     {% if value is None %}&mdash;{% else %}{{ template_value }}{% endif %}
@@ -80,8 +80,12 @@
         {% for handle in value %}{% if forloop.counter0 %}<br/>{% endif %}{% if resource %}<a href="{% url 'coder:account' handle resource.host %}">{{ handle }}</a>{% else %}{{ handle }}{% endif %}{% endfor %}
       {% elif field == 'hints' and types|to_json == '["list"]' %}
         <ul>{% for hint in value %}<li>{{ hint }}</li>{% endfor %}</ul>
+      {% elif field in statistic_fields or field in account_fields %}
+        {{ value|scoreformat }}
       {% elif value|get_type == 'RelatedManager' %}
         {% for object in value.all %}{{ object }}{% endfor %}
+      {% elif value|get_type == 'datetime' %}
+        <span title="{{ value|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ value|timezone:timezone|naturalday }}</span>
       {% else %}
         {{ template_value }}
       {% endif %}

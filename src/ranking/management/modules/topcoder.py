@@ -596,18 +596,19 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
 
-        active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
+        # active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
+        members_api_url = 'https://api.topcoder.com/v5/members/'
         with REQ.with_proxy(
             time_limit=10,
             n_limit=20,
             filepath_proxies='sharedfiles/resource/topcoder/proxies',
-            connect=lambda req: req.get(active_algorithm_list_url, n_attempts=1),
+            connect=lambda req: req.get(members_api_url, n_attempts=1),
             attributes=dict(n_attempts=5),
         ) as req:
             page = req.proxer.get_connect_ret()
-            dd_active_algorithm = {}
-            for data in parse_xml(page, exc=ExceptionParseAccounts):
-                dd_active_algorithm[data.pop('handle')] = data
+            # dd_active_algorithm = {}
+            # for data in parse_xml(page, exc=ExceptionParseAccounts):
+            #     dd_active_algorithm[data.pop('handle')] = data
 
             def fetch_profile(user):
                 url = f'https://api.topcoder.com/v5/members/{quote(user)}'
@@ -640,26 +641,26 @@ class Statistic(BaseModule):
                         ret[dst] = val
                 if not ret.get('photoLink'):
                     ret.pop('photoLink', None)
-                if user in dd_active_algorithm:
-                    data = dd_active_algorithm[user]
-                    if 'alg_vol' in data:
-                        ret['volatility'] = toint(data['alg_vol'])
-                    if 'alg_rating' in data:
-                        ret['rating'] = toint(data['alg_rating'])
-                elif 'userId' in ret:
-                    url = f'https://www.topcoder.com/tc?module=BasicData&c=dd_rating_history&cr={ret["userId"]}'
-                    page = req.get(url)
-                    max_rating_order = -1
-                    ret['rating'], ret['volatility'], n_rating = None, None, 0
-                    for data in parse_xml(page, exc=ExceptionParseAccounts):
-                        n_rating += 1
-                        rating_order = as_number(data['rating_order'])
-                        if rating_order > max_rating_order:
-                            max_rating_order = rating_order
-                            ret['rating'] = as_number(data['new_rating'])
-                            ret['volatility'] = as_number(data['volatility'])
-                    if ret['rating'] == 0 and n_rating <= 3:
-                        ret['rating'], ret['volatility'] = None, None
+                # if user in dd_active_algorithm:
+                #     data = dd_active_algorithm[user]
+                #     if 'alg_vol' in data:
+                #         ret['volatility'] = toint(data['alg_vol'])
+                #     if 'alg_rating' in data:
+                #         ret['rating'] = toint(data['alg_rating'])
+                # if 'userId' in ret:
+                #     url = f'https://www.topcoder.com/tc?module=BasicData&c=dd_rating_history&cr={ret["userId"]}'
+                #     page = req.get(url)
+                #     max_rating_order = -1
+                #     ret['rating'], ret['volatility'], n_rating = None, None, 0
+                #     for data in parse_xml(page, exc=ExceptionParseAccounts):
+                #         n_rating += 1
+                #         rating_order = as_number(data['rating_order'])
+                #         if rating_order > max_rating_order:
+                #             max_rating_order = rating_order
+                #             ret['rating'] = as_number(data['new_rating'])
+                #             ret['volatility'] = as_number(data['volatility'])
+                #     if ret['rating'] == 0 and n_rating <= 3:
+                #         ret['rating'], ret['volatility'] = None, None
                 for rating in ret.get('ratingSummary', []):
                     if rating['name'].lower() == 'algorithm' and 'rating' not in ret:
                         ret['rating'] = rating['rating']

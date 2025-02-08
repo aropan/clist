@@ -59,10 +59,14 @@
         </td>
       </tr>
       {% endif %}
-      {% if subscription.with_custom_names %}
+      {% if subscription.with_custom_names or not subscription.with_statistics or subscription.with_upsolving %}
       <tr>
-        <td class="no-stretch key-column">Naming</td>
-        <td>{{ subscription.with_custom_names }}</td>
+        <td class="no-stretch key-column">Options</td>
+        <td>
+          {% if subscription.with_custom_names %}<span class="label label-success">Custom Names</span>{% endif %}
+          {% if not subscription.with_statistics %}<span class="label label-info">No Statistics</span>{% endif %}
+          {% if subscription.with_upsolving %}<span class="label label-success">Upsolving</span>{% endif %}
+        </td>
       </tr>
       {% endif %}
       {% if subscription.accounts.all %}

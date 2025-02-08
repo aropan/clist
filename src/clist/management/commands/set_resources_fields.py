@@ -5,7 +5,6 @@ from collections import defaultdict
 from logging import getLogger
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q
 from flatten_dict import flatten
 from flatten_dict.reducers import make_reducer
 from stringcolor import cs
@@ -193,13 +192,7 @@ class Command(BaseCommand):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        if args.resources:
-            filt = Q()
-            for r in args.resources:
-                filt |= Q(host__iregex=r)
-            resources = Resource.objects.filter(filt)
-        else:
-            resources = Resource.objects.all()
+        resources = Resource.get(args.resources) if args.resources else Resource.objects.all()
         self.logger.info(f'resources [{len(resources)}] = {[r.host for r in resources]}')
 
         if args.avg_rating:

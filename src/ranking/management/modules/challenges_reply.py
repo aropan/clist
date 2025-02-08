@@ -9,8 +9,8 @@ from urllib.parse import urlparse
 import pytz
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

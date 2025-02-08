@@ -60,7 +60,7 @@ class AccountAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return (
-            ['updated', 'n_contests', 'n_writers', 'n_subscribers',
+            ['updated', 'n_contests', 'n_writers', 'n_subscribers', 'n_listvalues',
              'last_activity', 'last_submission', 'last_rating_activity',
              'rating_update_time']
             + super().get_readonly_fields(request, obj)

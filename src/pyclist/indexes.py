@@ -80,3 +80,13 @@ class ExpressionIndex(models.Index):
         expression = expression.resolve_expression(query, allow_joins=False)
         sql, params = expression.as_sql(compiler, compiler.connection)
         return sql % params
+
+
+class DescNullsLastIndex(models.Index):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields_orders = [
+            (field, 'DESC NULLS LAST' if order == 'DESC' else order)
+            for field, order in self.fields_orders
+        ]

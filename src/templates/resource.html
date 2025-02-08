@@ -57,13 +57,13 @@
 
 {% include "filter_collapse.html" with include_filter="resource_filters.html" %}
 
-<div class="row row-flex-md">
+<div class="row row-flex row-flex-md">
     {% if top.exists %}
     <div class="col-md-6 col-lg-4">
         <h4>
             Top rating
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
-            <a href="{% url 'clist:resources_account_ratings' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Account ratings' %}</a>
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' 'list' %}">{% icon_to 'accounts' %}</a>
+            <a href="{% url 'clist:resources_account_ratings' %}{% query_fields request 'country' 'list' before='?' %}">{% icon_to 'top' 'Account ratings' %}</a>
             {% if resource.rating_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.rating_update_time %}</span>{% endif %}
         </h4>
         <div class="panel panel-default table-responsive">
@@ -206,7 +206,7 @@
     {% endif %}
 
     {% if has_country and country_distribution.exists %}
-    <div id="countries" class="col-md-6 col-lg-4">
+    <div id="countries" class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
         <h4>Country distribution</h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -241,84 +241,24 @@
     </div>
     {% endif %}
 
-    {% if most_participated.exists %}
-    <div class="col-md-6 col-lg-4">
-        <h4>
-            Most participated
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_contests&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
-        </h4>
-        <div class="panel panel-default table-responsive">
-            <table class="table table-hover table-condensed table-striped">
-                <tr>
-                    <th>N</th>
-                    <th>Handle</th>
-                    <th>Contests<br/>number</th>
-                </tr>
-                {% include 'resource_most_participated_paging.html' %}
-            </table>
-        </div>
-    </div>
-    {% endif %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=most_participated field="n_contests" title="Most participation" header="Contest number" paging="resource_most_participated_paging.html" %}
 
-    {% if last_activities.exists %}
-    <div class="col-md-6 col-lg-4">
-        <h4>
-            Last activity
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=last_activity&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
-        </h4>
-        <div class="panel panel-default table-responsive">
-            <table class="table table-hover table-condensed table-striped">
-                <tr>
-                    <th>N</th>
-                    <th>Handle</th>
-                    <th>Last<br/>activity</th>
-                </tr>
-                {% include 'resource_last_activity_paging.html' %}
-            </table>
-        </div>
-    </div>
-    {% endif %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=last_submissions field="last_submission" title="Most recent submission" header="Submission time" paging="resource_last_submission_paging.html" %}
 
-    {% if last_rating_activities.exists %}
-    <div class="col-md-6 col-lg-4">
-        <h4>
-            Rating activity
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=last_rating_activity&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
-        </h4>
-        <div class="panel panel-default table-responsive">
-            <table class="table table-hover table-condensed table-striped">
-                <tr>
-                    <th>N</th>
-                    <th>Handle</th>
-                    <th>Rating<br/>activity</th>
-                </tr>
-                {% include 'resource_last_rating_activity_paging.html' %}
-            </table>
-        </div>
-    </div>
-    {% endif %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=last_activities field="last_activity" title="Most recent participation" header="Last activity" paging="resource_last_activity_paging.html" %}
 
-    {% if most_writer.exists %}
-    <div class="col-md-6 col-lg-4">
-        <h4>
-            Most writer
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=n_writers&sort_order=desc{% query_fields request 'country' %}">{% icon_to 'accounts' %}</a>
-        </h4>
-        <div class="panel panel-default table-responsive">
-            <table class="table table-hover table-condensed table-striped">
-                <tr>
-                    <th>N</th>
-                    <th>Handle</th>
-                    <th>Writer<br/>number</th>
-                </tr>
-                {% include 'resource_most_writer_paging.html' %}
-            </table>
-        </div>
-    </div>
-    {% endif %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=last_rating_activities field="last_rating_activity" title="Most recent rating participation" header="Rating activity" paging="resource_last_rating_activity_paging.html" %}
+
+    {% include "resource_accounts_panel.html" with condition=True accounts=most_writer field="n_writers" title="Most writer" header="Writer number" paging="resource_most_writer_paging.html" %}
+
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_n_total_solved accounts=most_solved field="n_total_solved" title="Most solved problems" header="Total solved" paging="resource_most_solved_paging.html" %}
+
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_n_first_ac accounts=most_first_ac field="n_first_ac" title="Most first AC" header="First AC" paging="resource_most_first_ac_paging.html" %}
+
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_total_solving accounts=most_total_solving field="total_solving" title="Most points" header="Total points" paging="resource_most_total_solving_paging.html" %}
 
     {% if problems.exists %}
-    <div class="col-md-6 col-lg-4">
+    <div class="col-md-6 col-lg-4{% if mute_problems %} text-muted{% endif %}">
         <h4>
             Problems
             <a href="{% url 'clist:problems' %}?resource={{ resource.pk }}">{% icon_to 'problems' %}</a>
@@ -337,7 +277,7 @@
     {% endif %}
 
     {% if resource.has_problem_rating and problem_rating_chart %}
-    <div class="col-md-6 col-lg-4" id="problem-rating-chart">
+    <div class="col-md-6 col-lg-4{% if mute_problems %} text-muted{% endif %}" id="problem-rating-chart">
         <h4>
             Problem rating distribution
             <a href="{% url 'clist:problems' %}?resource={{ resource.pk }}&chart=rating"><i class="fas fa-chart-bar"></i></a>
@@ -348,7 +288,7 @@
 
     {% for name, data in contests.items %}
     {% if data.contests.exists %}
-    <div class="col-md-6 col-lg-4">
+    <div class="col-md-6 col-lg-4{% if mute_contests %} text-muted{% endif %}">
         <h4>
             {{ name|title }} contests
             {% if data.url %}<a href="{{ data.url }}"><i class="fas fa-list"></i></a>{% endif %}

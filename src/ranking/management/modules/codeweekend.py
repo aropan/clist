@@ -8,8 +8,8 @@ from urllib.parse import urljoin
 from django.utils import timezone
 
 from clist.templatetags.extras import as_number, get_item, slug
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

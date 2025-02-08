@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 date
+echo
 
 name=repack_database
 exec 200>/tmp/$name.lock
@@ -36,6 +37,8 @@ for table in $tables; do
   table_size=$($psql_command "SELECT pg_total_relation_size('public.$table');" | xargs)
   disk_free_size=$(df -B1 / | tail -1 | awk '{print $4}')
   threshold_size=$(echo "($disk_free_size * 0.8)/1" | bc | xargs)
+  echo
+  date
   echo "Table $table size: $(human_readable_size $table_size)"
   echo "Disk free: $(human_readable_size $disk_free_size), threshold size (80%): $(human_readable_size $threshold_size)"
   if [ $table_size -gt $threshold_size ]; then
@@ -60,3 +63,5 @@ for table in $tables; do
   total_saved=$(($total_saved + $table_size - $new_table_size))
 done
 echo "Total saved: $(human_readable_size $total_saved)"
+echo
+date

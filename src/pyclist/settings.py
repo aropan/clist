@@ -114,6 +114,7 @@ INSTALLED_APPS = (
     'fontawesomefree',
     'corsheaders',
     'submissions',
+    'modeltranslation',
 )
 
 MIDDLEWARE = (
@@ -215,12 +216,22 @@ RQ_QUEUES = {
     'system': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 100,
+        'DEFAULT_TIMEOUT': 60 * 2,  # 2 minutes
     },
     'default': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 1000,
+        'DEFAULT_TIMEOUT': 60 * 15,  # 15 minutes
+    },
+    'parse_statistics': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DEFAULT_TIMEOUT': 60 * 60 * 24,  # 24 hours
+    },
+    'parse_accounts': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DEFAULT_TIMEOUT': 60 * 60 * 6,  # 6 hours
     },
 }
 RQ_SHOW_ADMIN_LINK = True
@@ -456,6 +467,7 @@ COUNTRIES_OVERRIDE = {
     'CZ': {'names': ['Czech Republic', 'Czechia', 'Чехия']},
     'MK': {'names': ['Macedonia', 'North Macedonia', 'Македония']},
     'PS': {'names': ['Palestine', 'Palestine, State of', 'Палестина']},
+    'KP': {'names': ['North Korea', 'Democratic People\'s Republic of Korea', 'Korea, Democratic People\'s Republic of', 'КНДР', 'Северная Корея']},  # noqa
     'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея', 'Korea, Republic of', 'Korea']},
     'MO': {'names': ['Macao', 'Macau', 'Макао']},
     'US': {'names': ['United States of America', 'United States', 'America', 'Virgin Islands', 'UM', 'United States Minor Outlying Islands', 'Соединенные Штаты Америки', 'США']},  # noqa
@@ -470,6 +482,10 @@ COUNTRIES_OVERRIDE = {
     'RU': {'names': ['Russia', 'Россия', 'Russian Federation', 'Российская Федерация']},
     'SU': {'names': ['Soviet Union', 'Советский Союз']},
     'TR': {'names': ['Turkey', 'Türkiye', 'Турция']},
+    'IR': {'names': ['Iran', 'Islamic Republic of Iran', 'Iran, Islamic Republic of', 'Иран']},
+    'SY': {'names': ['Syria', 'Syrian Arab Republic', 'Сирия']},
+    'BO': {'names': ['Bolivia', 'Plurinational State of Bolivia', 'Bolivia, Plurinational State of', 'Боливия']},
+    'TW': {'names': ['Taiwan', 'Taiwan, Province of China', 'Тайвань']},
 }
 DISABLED_COUNTRIES = {'UM'}
 
@@ -602,6 +618,17 @@ CSP_SCRIPT_SRC += ('https://forms.yandex.ru', )
 # X-XSS-Protection
 SECURE_BROWSER_XSS_FILTER = True
 
+
+# MODELTRANSLATION
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
+MODELTRANSLATION_LANGUAGES = ('en', 'ru', )
+LOCALE_CHOICES = (
+    ('en', _('English')),
+    ('ru', _('Russian')),
+)
+LOCALE_DEFAULT = MODELTRANSLATION_DEFAULT_LANGUAGE
+
+
 # CONSTANTS
 VIEWMODE_ = 'list'
 OPEN_NEW_TAB_ = False
@@ -680,6 +707,7 @@ CODER_SUBSCRIPTION_TOP_N_LIMIT_ = 50
 
 ENABLE_GLOBAL_RATING_ = False
 CHART_N_BINS_LIMIT = 300
+CHART_N_BINS_DEFAULT = 40
 
 
 FONTAWESOME_ICONS_ = {
@@ -761,7 +789,8 @@ FONTAWESOME_ICONS_ = {
     'allreject': {'icon': '<i class="fa-fw far fa-times-circle rej"></i>', 'name': 'fa-times-circle',
                   'selected_class': 'far', 'unselected_class': 'far'},
     'status': '<i class="fa-fw far fa-lightbulb"></i>',
-    'n_participants': {'icon': '<i class="fa-fw fas fa-users"></i>', 'title': 'Number of participants', 'position': 'bottom'},
+    'n_participants': {'icon': '<i class="fa-fw fas fa-users"></i>', 'title': 'Number of participants',
+                       'position': 'bottom'},
     'n_problems': {'icon': '<i class="fa-fw fa-solid fa-list-check"></i>', 'title': 'Number of problems',
                    'position': 'bottom'},
     'series': '<i class="fa-fw fas fa-trophy"></i>',
@@ -846,6 +875,10 @@ STANDINGS_WITH_AUTORELOAD_DEFAULT = True
 STANDINGS_SMALL_N_STATISTICS = 1000
 STANDINGS_FREEZE_DURATION_FACTOR_DEFAULT = 0.2
 STANDINGS_UNSPECIFIED_PLACE = '-'
+STANDINGS_STATISTIC_FIELDS = ['upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved', 'n_first_ac']
+
+ACCOUNT_STATISTIC_FIELDS = ['solving', 'upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved',
+                            'n_first_ac']
 
 UPSOLVING_FILTER_DEFAULT = True
 

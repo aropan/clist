@@ -666,6 +666,7 @@ $(function() {
         access_level = $(this).attr('data-access-level') || ACCESS_LEVELS[0]['id']
         shared_with = JSON.parse($(this).attr('data-shared-with') || "[]")
         id = $(this).attr('data-id') || ''
+        custom_names = $(this).attr('data-custom-names') == 'true'
 
         const access_level_select_options = ACCESS_LEVELS.map(level => `
             <option value="${level.id}" ${level.id === access_level ? 'selected' : ''}>${level.text}</option>
@@ -680,13 +681,13 @@ $(function() {
             message: `
                 <form id="list-form">
                     <div class="form-group">
-                        <label class="control-label" for="textInput">Name:</label>
+                        <label class="control-label" for="textInput">Name</label>
                         <div><input id="list-name" type="text" class="form-control" value="` + escape_html(value) + `" required></div>
                         <small class="form-text text-muted">Required field</small>
                     </div>
 
                     <div class="form-group">
-                        <label class="control-label" for="selectInput">Access level:</label>
+                        <label class="control-label" for="selectInput">Access level</label>
                         <div><select id="list-access-level" class="form-control">` + access_level_select_options + `</select></div>
                     </div>
 
@@ -694,6 +695,11 @@ $(function() {
                         <label class="control-label" for="selectInput">Shared with:</label>
                         <div><select id="list-shared-with" class="form-control" multiple>` + shared_with_select_options + `</select></div>
                         <small class="form-text text-muted">Used only with restricted access level</small>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="control-label">Custom names</label>
+                      <input id="list-custom-names" class="hidden" type="checkbox" data-toggle="toggle" data-on="On" data-off="Off" data-onstyle="default" data-offstyle="default" data-size="normal" name="custom_names"` + (custom_names? " checked" : "") + `>
                     </div>
                 </form>
                 <script>
@@ -731,6 +737,7 @@ $(function() {
                                 value: $('#list-name').val(),
                                 access_level: $('#list-access-level').val(),
                                 shared_with: $('#list-shared-with').val(),
+                                custom_names: $('#list-custom-names').prop('checked'),
                                 id: id,
                             },
                             success: function(data) {
@@ -745,6 +752,9 @@ $(function() {
                     }
                 }
             }
+        }).on('shown.bs.modal', function() {
+            var $custom_names = $('#list-custom-names')
+            $custom_names.bootstrapToggle()
         })
     }
 

@@ -7,8 +7,8 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from flatten_dict import flatten
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

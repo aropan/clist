@@ -16,8 +16,8 @@ from sql_util.utils import Exists
 
 from clist.templatetags.extras import (as_number, get_problem_key, get_problem_name, get_problem_short, html_unescape,
                                        is_improved_solution, is_solved)
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from ranking.utils import create_upsolving_statistic
 
 
@@ -179,7 +179,8 @@ class Statistic(BaseModule):
                     elif f.startswith('fullname'):
                         a = v.column.node.xpath('.//a')[0]
                         r['member'] = re.search('profile/(?P<key>[^/]+)', a.attrib['href']).group('key')
-                        r['name'] = html.unescape(a.text).strip()
+                        if a.text:
+                            r['name'] = html.unescape(a.text).strip()
                         small = v.column.node.xpath('.//small')
                         if small and (text := small[0].text):
                             r['affiliation'] = html.unescape(text).strip()
@@ -342,7 +343,7 @@ class Statistic(BaseModule):
 
     @transaction.atomic()
     @staticmethod
-    def update_submissions(account, resource):
+    def update_submissions(account, resource, **kwargs):
         profile_url = resource.profile_url.format(account=account.key)
         attempts_url = profile_url.rstrip('/') + '/attempts'
 
@@ -367,7 +368,8 @@ class Statistic(BaseModule):
 
         def get_statistic(contest):
             if contest not in statistics_cache:
-                statistics_cache[contest], created = create_upsolving_statistic(contest=contest, account=account)
+                statistics_cache[contest], created = create_upsolving_statistic(
+                    resource=resource, contest=contest, account=account)
             else:
                 created = False
             return statistics_cache[contest], created

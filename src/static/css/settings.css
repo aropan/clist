@@ -140,7 +140,8 @@ form.editableform .has-error .editable-input .form-control:focus {
   max-width: 100%;
 }
 
-#subscription_form .form-group .toggle {
+#subscription_form .form-group .toggle,
+#list-form .form-group .toggle {
   display: block;
 }
 

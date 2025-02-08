@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
+import arrow
 import dateutil.parser
 import pytz
 from django.conf import settings
@@ -19,12 +20,16 @@ def parse_duration(value):
     return timedelta(seconds=seconds)
 
 
-def parse_datetime(value, timezone=None):
+def parse_datetime(value, tz=None) -> datetime | None:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return arrow.get(value).datetime
     if value.endswith('ago'):
         return now() - parse_duration(value[:-3].strip())
-    if timezone:
-        value += ' ' + timezone
-    return dateutil.parser.parse(value)
+    if tz:
+        value = f'{value} {tz}'
+    return dateutil.parser.parse(value).astimezone(tz=timezone.utc)
 
 
 def datetime_from_timestamp(timestamp):

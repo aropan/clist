@@ -99,6 +99,7 @@
     {% endif %}
   </td>
   {% endif %}
+  {% if with_account_ratings %}
   <td>
     {% if account.rating_update_time and account.rating_prediction.time and account.rating_update_time < account.rating_prediction.time or not account.rating_update_time and account.rating_prediction.time %}
       <span class="rating-prediction-label" title="{{ account.rating_prediction.new_rating }}" data-toggle="tooltip">{% icon_to "rating_prediction" False %}</span>
@@ -114,8 +115,8 @@
     {% endif %}
   </td>
   <td>{% if account.resource_rank %}{{ account.resource_rank }}{% else %}&mdash;{% endif %}</td>
+  {% endif %}
   <td>{{ account.n_contests }}</td>
-  <td>{{ account.n_writers }}</td>
   <td>
     {% if account.last_activity is not None %}
     <div title="{{ account.last_activity|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ account.last_activity|timezone:timezone|naturalday }}</div>

@@ -1,0 +1,22 @@
+<form class="form-inline inline" method="post" action="">
+{% csrf_token %}
+<div id="add-list-value" class="inline">
+  <span id="add-list-value-coder">
+  {% include "coder_filter.html" with nomultiply=True coder="coder" %}
+  <span class="or">or</span>
+  </span>
+  {% include "account_filter.html" with nomultiply=True account="account" %}
+  <span class="or">or</span>
+  <div class="form-group">
+    <textarea class="form-control" rows="1" name="raw" id="raw-value" placeholder="coder_1
+host_2:account_2,host_3:account_3
+..."></textarea>
+    <button class="btn btn-primary btn-sm" type="submit" id="raw-submit" disabled>Add</button>
+  </div>
+</div>
+</form>
+
+<form class="form-inline inline" method="get" action="">
+{% include "sort_select.html" with data=sort_field_select %}
+{% include "field_to_select.html" with field="field" data=custom_field_select|simple_select_data %}
+</form>

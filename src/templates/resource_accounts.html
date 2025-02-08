@@ -1,0 +1,34 @@
+{% coder_account_filter accounts primary_account row_number_field=field operator="__gt" as coder_accounts %}
+{% define name|add:"_page" as name_page %}
+{% lazy_paginate first_per_page,per_page accounts using name_page %}
+{% get_pages %}
+{% for account in accounts|chain:coder_accounts %}
+  <tr
+    {% if account.id in coder_accounts_ids %} class="info"{% endif %}
+    {% include "delete_on_duplicate_attrs.html" with name=name entry=account primary=primary_account %}
+  >
+    <td>
+      {% if account.delete_on_duplicate %}{{ account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}
+    </td>
+    <td>
+      {% include 'account_table_cell.html' with account=account resource=resource %}
+    </td>
+    <td>
+      {% with value=account|get_item:field %}
+      {% with type=value|get_type %}
+      {% if value is None %}
+        &mdash;
+      {% elif type == "datetime" %}
+        <span title="{{ value|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ value|timezone:timezone|naturalday }}<span>
+      {% elif type == "float" %}
+        {{ value|scorefixedformat:2 }}
+      {% else %}
+        {{ value }}
+      {% endif %}
+      {% endwith %}
+      {% endwith %}
+    </td>
+  </tr>
+{% endfor %}
+{% show_more_table %}
+<script>delete_on_duplicate()</script>

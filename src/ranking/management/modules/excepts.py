@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
+from utils.requester import FailOnGetResponse, ProxyLimitReached  # noqa
+
+
 class BaseException(Exception):
 
     def __init__(self, *args):

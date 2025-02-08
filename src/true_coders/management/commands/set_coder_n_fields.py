@@ -37,54 +37,23 @@ class Command(BaseCommand):
 
         total_coders = coders.count()
 
-        def set_n_accounts():
-            qs = coders.annotate(count=Count('account')).exclude(n_accounts=F('count'))
+        def set_n_field(count_annotation, count_field):
+            qs = coders.annotate(count=count_annotation).exclude(**{count_field: F('count')})
             total_updates = qs.count()
             if not total_updates:
                 return
             total_changes = 0
-            self.logger.info(f'Updating n_accounts for {total_updates} of {total_coders} coders')
-            with tqdm(total=total_updates, desc='set n_accounts for coders') as pbar:
+            self.logger.info(f'Updating {count_field} for {total_updates} of {total_coders} coders')
+            with tqdm(total=total_updates, desc='set {count_field} for coders') as pbar:
                 with transaction.atomic(), suppress_db_logging_context():
                     for coder in qs.iterator():
-                        total_changes += abs(coder.n_accounts - coder.count)
-                        coder.n_accounts = coder.count
-                        coder.save(update_fields=['n_accounts'])
+                        total_changes += abs(getattr(coder, count_field) - coder.count)
+                        setattr(coder, count_field, coder.count)
+                        coder.save(update_fields=[count_field])
                         pbar.update()
-            self.logger.info(f'Total average changes in n_accounts: {total_changes / total_updates:.2f}')
+            self.logger.info(f'Total average changes in {count_field}: {total_changes / total_updates:.2f}')
 
-        def set_n_contests():
-            qs = coders.annotate(count=Coalesce(Sum('account__n_contests'), Value(0))).exclude(n_contests=F('count'))
-            total_updates = qs.count()
-            if not total_updates:
-                return
-            total_changes = 0
-            self.logger.info(f'Updating n_contests for {total_updates} of {total_coders} coders')
-            with tqdm(total=total_updates, desc='set n_contests for coders') as pbar:
-                with transaction.atomic(), suppress_db_logging_context():
-                    for coder in qs.iterator():
-                        total_changes += abs(coder.n_contests - coder.count)
-                        coder.n_contests = coder.count
-                        coder.save(update_fields=['n_contests'])
-                        pbar.update()
-            self.logger.info(f'Total average changes in n_contests: {total_changes / total_updates:.2f}')
-
-        def set_n_subscribers():
-            qs = coders.annotate(count=Count('subscribers')).exclude(n_subscribers=F('count'))
-            total_updates = qs.count()
-            if not total_updates:
-                return
-            total_changes = 0
-            self.logger.info(f'Updating n_subscribers for {total_updates} of {total_coders} coders')
-            with tqdm(total=total_updates, desc='set n_subscribers for coders') as pbar:
-                with transaction.atomic(), suppress_db_logging_context():
-                    for coder in qs.iterator():
-                        total_changes += abs(coder.n_subscribers - coder.count)
-                        coder.n_subscribers = coder.count
-                        coder.save(update_fields=['n_subscribers'])
-                        pbar.update()
-            self.logger.info(f'Total average changes in n_subscribers: {total_changes / total_updates:.2f}')
-
-        set_n_accounts()
-        set_n_contests()
-        set_n_subscribers()
+        set_n_field(Count('account'), 'n_accounts')
+        set_n_field(Coalesce(Sum('account__n_contests'), Value(0)), 'n_contests')
+        set_n_field(Count('subscribers'), 'n_subscribers')
+        set_n_field(Count('listvalue'), 'n_listvalues')

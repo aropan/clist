@@ -7,9 +7,9 @@ from collections import OrderedDict, defaultdict
 import tqdm
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from ranking.management.modules.nerc_itmo_helper import parse_xml
 
 

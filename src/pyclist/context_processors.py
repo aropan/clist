@@ -16,6 +16,8 @@ def global_settings(request):
         'telegram_bot_name': settings.TELEGRAM_NAME,
         'unspecified_place': settings.STANDINGS_UNSPECIFIED_PLACE,
         'filter_field_suffix': settings.FILTER_FIELD_SUFFIX,
+        'statistic_fields': set(settings.STANDINGS_STATISTIC_FIELDS),
+        'account_fields': set(settings.ACCOUNT_STATISTIC_FIELDS),
     }
 
 

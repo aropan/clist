@@ -5,8 +5,8 @@ import html
 import re
 from urllib.parse import urljoin
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

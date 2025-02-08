@@ -122,7 +122,7 @@ class Command(BaseCommand):
                             update_fields.append(key)
                             setattr(matching, key, value)
                     if update_fields:
-                        matching.save(update_fields=update_fields + ['modified'])
+                        matching.save(update_fields=update_fields)
                         counter['update'] += 1
                     else:
                         counter['skip'] += 1

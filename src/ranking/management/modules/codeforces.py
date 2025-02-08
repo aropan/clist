@@ -4,7 +4,7 @@ import html
 import json
 import os
 import re
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import sha512
@@ -15,10 +15,11 @@ from urllib.parse import urlencode, urljoin, urlparse
 
 import pytz
 
-from clist.templatetags.extras import as_number, is_solved
+from clist.templatetags.extras import as_number, get_division_problems, get_problem_short, is_solved
 from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, FailOnGetResponse, parsed_table, utc_now
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, parsed_table, utc_now
+from ranking.management.modules.excepts import (ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse,
+                                                InitModuleException)
 from ranking.utils import create_upsolving_statistic
 from utils.aes import AESModeOfOperation
 
@@ -38,11 +39,8 @@ def api_query(
     key, secret = api_key
     params = dict(params)
 
-    params.update({
-        'time': int(time()),
-        'apiKey': key,
-        'lang': 'en',
-    })
+    params.update({'time': int(time()), 'apiKey': key})
+    params.setdefault('lang', 'en')
 
     url_encode = '&'.join(('%s=%s' % (k, v) for k, v in sorted(params.items())))
 
@@ -234,6 +232,9 @@ class Statistic(BaseModule):
         if not is_accepted and 'passedTestCount' in submission:
             info['test'] = submission['passedTestCount'] + 1
 
+        if with_binary:
+            info['binary'] = is_accepted
+
         party = submission['author']
         for member in party['members']:
             handle = member['handle']
@@ -253,11 +254,9 @@ class Statistic(BaseModule):
                 'submission_id' not in p or
                 p['submission_id'] > info['submission_id'] and is_accepted
             ):
-                p.update(info)
-                if with_binary:
-                    p['binary'] = is_accepted
                 if update_result:
-                    p['result'] = '+' if is_accepted else '-'
+                    info['result'] = '+' if is_accepted else '-'
+                p.update(info)
                 info['updated'] = True
             r = as_number(p.get('result'), force=True)
             p['partial'] = not is_accepted and p.get('partial', True) and r and r > 0
@@ -338,8 +337,17 @@ class Statistic(BaseModule):
                         d['code'] = match.group('code')
                         if self.cid not in d['code']:
                             d['_no_problem_url'] = True
-
                 problems_info[d['short']] = d
+
+            translation_params = {**params, 'lang': 'ru', 'count': 1}
+            translation_data = api_query(method='contest.standings', params=translation_params, api_key=self.api_key)
+            for p in translation_data['result']['problems']:
+                short = p['index']
+                if not (problem_info := problems_info.get(short)) or problem_info['name'] == p['name'] or not p['name']:
+                    continue
+                translation = problem_info.setdefault('translation', {})
+                translation = translation.setdefault('ru', {})
+                translation['name'] = p['name']
 
             grouped = any(
                 'teamId' in row['party'] and row['party']['participantType'] in participant_types
@@ -567,10 +575,9 @@ class Statistic(BaseModule):
             return not x.get('partial', False) and to_score(x.get('result', 0)) > 0
 
         for r in result.values():
+            upsolving_score = 0
             upsolving = 0
             solving = 0
-            upsolving_score = 0
-
             for a in r['problems'].values():
                 if 'upsolving' in a and to_solve(a['upsolving']) > to_solve(a):
                     upsolving_score += to_score(a['upsolving']['result'])
@@ -578,8 +585,7 @@ class Statistic(BaseModule):
                 else:
                     solving += to_solve(a)
             r.setdefault('solving', 0)
-            r['upsolving'] = upsolving_score
-            if abs(solving - r['solving']) > 1e-9 or abs(upsolving - r['upsolving']) > 1e-9:
+            if abs(solving - r['solving']) > 1e-9 or abs(upsolving - upsolving_score) > 1e-9:
                 r['solved'] = {
                     'solving': solving,
                     'upsolving': upsolving,
@@ -679,6 +685,9 @@ class Statistic(BaseModule):
 
         parse_russian_name = 'CODEFORCES_PARSE_RUSSIAN_NAME' in os.environ
         for data, user, orig in zip(infos, users, orig_users):
+            if data is None:
+                yield {'delete': True}
+                continue
             if data:
                 if data['handle'].lower() != user.lower():
                     raise ValueError(f'Do not match handle name for user = {user} and data = {data}')
@@ -707,7 +716,6 @@ class Statistic(BaseModule):
         if parse_russian_name:
             REQ.get(f'https://{SUBDOMAIN}codeforces.com/?locale=en')
 
-
     @staticmethod
     def get_source_code(contest, problem):
         if 'url' not in problem:
@@ -726,19 +734,24 @@ class Statistic(BaseModule):
         return ret
 
     @staticmethod
-    def update_submissions(account, resource):
+    def update_submissions(account, resource, with_submissions, pagination_size, **kwargs):
         info = deepcopy(account.info.setdefault('submissions_', {}))
         info.setdefault('count', 0)
         last_id = info.setdefault('last_id', -1)
 
         start = 1
         count = 10000 if last_id == -1 else 1000
+        if pagination_size:
+            count = min(count, pagination_size)
+
         stop = False
         first_submission = True
         stats_caches = {}
-        ret = {}
+        ret = defaultdict(int)
         while not stop:
             data = api_query(method='user.status', params={'handle': account.key, 'from': start, 'count': count})
+            if 'result' not in data:
+                raise ExceptionParseAccounts(data)
             submissions = data['result']
             if not submissions:
                 break
@@ -776,7 +789,7 @@ class Statistic(BaseModule):
                     contest = resource.contest_set.filter(key=contest_id).first()
                     if contest is None:
                         continue
-                    stat, created = create_upsolving_statistic(contest=contest, account=account)
+                    stat, created = create_upsolving_statistic(resource=resource, contest=contest, account=account)
                     stats_caches[contest_id] = contest, stat
 
                 if 'creationTimeSeconds' in submission:
@@ -792,12 +805,26 @@ class Statistic(BaseModule):
                         participant_types.append(participant_type)
 
                 result = {account.key: deepcopy(addition)}
-                submission_info = Statistic.process_submission(submission, result,
-                                                               upsolve=True, contest=contest, with_binary=True)
+                submission_info = Statistic.process_submission(
+                    submission, result, upsolve=True, contest=contest, with_binary=True)
+
+                if with_submissions:
+                    problem_short = submission['problem']['index']
+                    for problem in get_division_problems(contest, addition):
+                        if get_problem_short(problem) == problem_short:
+                            break
+                    else:
+                        raise ExceptionParseAccounts('Not found problem')
+
+                    ret.setdefault('submissions', []).append({
+                        'contest': contest,
+                        'problem': problem,
+                        'info': submission_info,
+                    })
+
                 if not submission_info.get('updated'):
                     continue
 
-                ret.setdefault('n_updated', 0)
                 ret['n_updated'] += 1
 
                 stat.addition = result[account.key]
@@ -810,5 +837,6 @@ class Statistic(BaseModule):
         account.info['submissions_'] = info
         account.save(update_fields=['info', 'last_submission'])
 
-        ret['n_contests'] = len(stats_caches)
+        if stats_caches:
+            ret['n_contests'] = len(stats_caches)
         return ret

@@ -5,7 +5,9 @@ import re
 from collections import OrderedDict
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import FailOnGetResponse
+
 
 
 class Statistic(BaseModule):

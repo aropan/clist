@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
         contests = Contest.objects
         if args.resources:
-            resources = [Resource.get(resource) for resource in args.resources]
+            resources = Resource.get(args.resources)
             contests = contests.filter(resource__in=resources)
 
         now = timezone.now()

@@ -6,9 +6,9 @@ from django.db import transaction
 from django.db.models import Q
 from tqdm import tqdm
 
-from ranking.models import Account
 from clist.models import Contest
-from clist.views import update_writers
+from clist.utils import update_writers
+from ranking.models import Account
 
 
 def main(host=None):

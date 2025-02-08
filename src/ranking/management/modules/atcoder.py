@@ -15,17 +15,33 @@ from datetime import timedelta
 import arrow
 from django.utils.timezone import now
 from first import first
+from lazy_load import lz
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
 from clist.templatetags.extras import as_number, get_problem_key, is_solved
 from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
 
 eps = 1e-9
 rate_limiter = RateLimiter(max_calls=4, period=1)
+
+
+def create_req():
+    req = REQ.duplicate()
+    req.set_proxy(
+        proxy=True,
+        time_limit=10,
+        n_limit=50,
+        dump_proxy_filepath='sharedfiles/resource/atcoder/proxy',
+        filepath_proxies='sharedfiles/resource/atcoder/proxies',
+    )
+    return req
+
+
+req = lz(create_req)
 
 
 class Statistic(BaseModule):
@@ -43,21 +59,20 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.cid = self.key
-        self._username = conf.ATCODER_HANDLE
-        self._password = conf.ATCODER_PASSWORD
         self._stop = None
         self._forbidden = None
         self._fetch_submissions_limit = 500
 
-    def _get(self, *args, **kwargs):
-        page = REQ.get(*args, **kwargs)
-        form = REQ.form(limit=2, selectors=['class="form-horizontal"'])
+    @staticmethod
+    def _get(*args, **kwargs):
+        page = req.get(*args, raise_codes={404}, **kwargs)
+        form = req.form(limit=2, page=page, selectors=['class="form-horizontal"'])
         if form:
             form['post'].update({
-                'username': self._username,
-                'password': self._password,
+                'username': conf.ATCODER_HANDLE,
+                'password': conf.ATCODER_PASSWORD,
             })
-            page = REQ.get(form['url'], post=form['post'])
+            page = req.get(form['url'], post=form['post'])
         return page
 
     def fetch_submissions(self, fuser=None, c_page=1):
@@ -84,6 +99,8 @@ class Statistic(BaseModule):
                         return
                     codes.add(e.code)
                     time.sleep(attempt)
+                except ProxyLimitReached:
+                    return
         else:
             if 403 in codes:
                 self._forbidden = True
@@ -163,30 +180,21 @@ class Statistic(BaseModule):
                             row['time'] = f'{seconds // 60}:{seconds % 60:02d}'
                         st = submissions_times.setdefault((user, task, upsolve), problem.get('submission_time'))
 
-                        has_same_desc = row.get('verdict') == problem.get('verdict')
-                        has_same_desc = has_same_desc and row.get('time') == problem.get('time')
-
                         if score > eps:
                             if (problem_score > score or (
                                 problem_score == score
                                 and 'submission_time' in problem
-                                and row['submission_time'] >= problem['submission_time']
-                                and has_same_desc
+                                and row['submission_time'] > problem['submission_time']
                             )):
                                 continue
                             row['result'] = score
                             problem.pop('submission_time', None)
-                        elif problem_score < eps and (not st or st < row['submission_time']):
+                        elif problem_score > eps:
+                            continue
+                        elif problem_score < eps and (not st or st < row['submission_time']) and upsolve:
                             problem['result'] = problem_score - 1
-                            row.pop('result', None)
-                        elif problem_score < eps and not has_same_desc:
-                            problem.pop('submission_time', None)
-                            row.pop('result', None)
 
                         if 'submission_time' in problem and row['submission_time'] <= problem['submission_time']:
-                            continue
-
-                        if problem_score > eps and problem_score > score:
                             continue
 
                         problem.update(row)
@@ -309,7 +317,7 @@ class Statistic(BaseModule):
             data = defaultdict(list)
             tasks = data.setdefault('TaskInfo', [])
             tasks_url = self.TASKS_URL_.format(self)
-            page = REQ.get(tasks_url)
+            page = self._get(tasks_url)
             table = parsed_table.ParsedTable(page)
             for r in table:
                 short = r['']
@@ -361,7 +369,7 @@ class Statistic(BaseModule):
 
         def get_problem_full_score(info):
             try:
-                page = REQ.get(info['url'])
+                page = self._get(info['url'])
                 match = re.search('<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>', page, re.I)  # noqa
                 if match:
                     info['full_score'] = int(match.group('score'))
@@ -378,7 +386,7 @@ class Statistic(BaseModule):
             executor.map(get_problem_full_score, task_info.values())
 
         if any('full_score' not in t for t in task_info.values()):
-            page = REQ.get(self.url)
+            page = self._get(self.url)
             for match in re.finditer('<table[^>]*>.*</table>', page, re.MULTILINE | re.DOTALL):
                 table = parsed_table.ParsedTable(match.group(0))
                 header = [c.value for c in table.header.columns]
@@ -613,7 +621,7 @@ class Statistic(BaseModule):
         def fetch_profile(user):
             url = resource.profile_url.format(account=user)
             try:
-                page = REQ.get(url)
+                page = Statistic._get(url)
             except FailOnGetResponse as e:
                 if isinstance(e.args[0], UnicodeEncodeError):
                     return None
@@ -680,15 +688,7 @@ class Statistic(BaseModule):
         if 'url' not in problem:
             raise ExceptionParseStandings('Not found url')
 
-        filepath_proxies = 'sharedfiles/resource/atcoder/proxies'
-        with REQ.with_proxy(
-            time_limit=5,
-            n_limit=30,
-            filepath_proxies=filepath_proxies,
-            connect=lambda req: req.get(problem['url']),
-        ) as req:
-            page = req.proxer.get_connect_ret()
-
+        page = Statistic._get(problem['url'])
         match = re.search('<pre[^>]*id="submission-code"[^>]*>(?P<source>[^<]*)</pre>', page)
         if not match:
             raise ExceptionParseStandings('Not found source code')
@@ -696,7 +696,7 @@ class Statistic(BaseModule):
         return {'solution': solution}
 
     @staticmethod
-    def update_submissions(account, resource):
+    def update_submissions(account, resource, **kwargs):
         info = deepcopy(account.info.setdefault('submissions_', {}))
         info.setdefault('count', 0)
         last_from_seconds = info.setdefault('last_from_seconds', -1)
@@ -731,7 +731,7 @@ class Statistic(BaseModule):
                     contest = resource.contest_set.filter(key=contest_id).first()
                     if contest is None:
                         continue
-                    stat, _ = create_upsolving_statistic(contest=contest, account=account)
+                    stat, _ = create_upsolving_statistic(resource=resource, contest=contest, account=account)
                     stats_caches[contest_id] = contest, stat
 
                 problem_id = submission.pop('problem_id')

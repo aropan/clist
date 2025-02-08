@@ -1,6 +1,13 @@
 <?php
     require_once dirname(__FILE__) . "/../../config.php";
 
+    $proxy_file = '/sharedfiles/resource/atcoder/proxy';
+    $proxy = file_exists($proxy_file)? json_decode(file_get_contents($proxy_file)) : false;
+    if ($proxy) {
+        echo " (proxy)";
+        curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
+    }
+
     $seen = array();
     foreach (array('?lang=en' => '', '?lang=ja' => '?lang=ja') as $query => $host) {
         $url = $URL . $query;
@@ -83,7 +90,39 @@
         }
     }
 
+    $year = date('Y');
+
+    $contest = array(
+        'start_time' => '01 Jan ' . $year,
+        'end_time' => '31 Dec ' . $year,
+        'title' => "AtCoder Race Ranking $year. Heuristic",
+        'key' => "atcoder-race-ranking-$year-heuristic",
+        'url' => $URL,
+        'info' => array('_inherit_stage' => true),
+        'host' => $HOST,
+        'timezone' => $TIMEZONE,
+        'rid' => $RID,
+    );
+    $contests[] = $contest;
+
+    $contest = array(
+        'start_time' => '01 Jan ' . $year,
+        'end_time' => '31 Dec ' . $year,
+        'title' => "AtCoder Race Ranking $year. Algorithm",
+        'key' => "atcoder-race-ranking-$year-algorithm",
+        'url' => $URL,
+        'info' => array('_inherit_stage' => true),
+        'host' => $HOST,
+        'timezone' => $TIMEZONE,
+        'rid' => $RID,
+    );
+    $contests[] = $contest;
+
     if ($RID === -1) {
         print_r($contests);
+    }
+
+    if ($proxy) {
+        curl_setopt($CID, CURLOPT_PROXY, null);
     }
 ?>

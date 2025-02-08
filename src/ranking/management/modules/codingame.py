@@ -24,13 +24,13 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):
 
-    def get_standings(self, users=None, statistics=None, more_statistics=None, **kwargs):
+    def get_standings(self, users=None, statistics=None, **kwargs):
         page = REQ.get(
             self.host + 'services/Challenge/findWorldCupByPublicId',
             post=f'["{self.key}"]',
@@ -470,8 +470,8 @@ class Statistic(BaseModule):
                 dates = [h['date'] for h in hist]
                 rating_data = []
                 prev_rating = None
-                n_x_axis = resource.info['ratings']['chartjs']['n_x_axis']
-                size = max(len(dates) // n_x_axis, 1)
+                n_bins = resource.info['ratings']['chartjs']['n_bins']
+                size = max(len(dates) // n_bins, 1)
                 for offset in range(0, len(dates), size):
                     chunk = list(range(offset, min(len(dates), offset + size)))
                     ratings = [hist[idx].get('points', 0) for idx in chunk]

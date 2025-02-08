@@ -8,7 +8,8 @@ from collections import OrderedDict
 from time import sleep
 from urllib.parse import urljoin
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import FailOnGetResponse
 from utils.timetools import parse_datetime
 
 
@@ -36,6 +37,7 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         parse_info = self.info.get('parse', {})
+        authors = parse_info.get('authors', [])
         is_rated = parse_info.get('isRated', False)
 
         api_problems_url = urljoin(self.url, f'/api/contests/{self.key}/problems')
@@ -157,6 +159,7 @@ class Statistic(BaseModule):
             'problems': list(problems_infos.values()),
             'hidden_fields': list(hidden_fields),
             'grouped_team': grouped_team,
+            'writers': [author['username'] for author in authors],
         }
         return standings
 
@@ -200,7 +203,7 @@ class Statistic(BaseModule):
                     yield {'skip': True}
                 continue
 
-            assert user == data['username']
+            assert user.lower() == data['username'].lower()
 
             ret = {'info': data}
 

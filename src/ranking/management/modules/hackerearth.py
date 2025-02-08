@@ -14,9 +14,9 @@ import tqdm
 from first import first
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

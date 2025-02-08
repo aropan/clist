@@ -3,20 +3,19 @@
 import collections
 import json
 from copy import deepcopy
-from functools import partial
 from urllib.parse import urljoin
 
 import dateutil.parser
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):
     STANDING_URL_FORMAT_ = '{0.url}/leaderboard'
     API_STANDINGS_URL_ = 'https://www.kaggle.com/api/i/competitions.LeaderboardService/GetLeaderboard'
-    API_PROFILE_URL_ = 'https://www.kaggle.com/api/i/users.ProfileService/GetProfile'
+    API_PROFILE_URL_ = 'https://www.kaggle.com/api/i/routing.RoutingService/GetPageDataByUrl'
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -30,7 +29,7 @@ class Statistic(BaseModule):
                 return {'action': 'delete'}
             raise e
 
-        xsrf_token = REQ.get_cookie('XSRF-TOKEN', domain_regex='kaggle')
+        xsrf_token = REQ.get_cookie('XSRF-TOKEN', domain_regex='kaggle.com')
 
         post = '{"competitionId":' + self.key + ',"leaderboardMode":"LEADERBOARD_MODE_DEFAULT"}'
         headers = {'content-type': 'application/json', 'x-xsrf-token': xsrf_token}
@@ -121,9 +120,6 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
 
         def fetch_profile(req, handle, raise_on_error=False):
-            connect_func = partial(fetch_profile, handle=handle, raise_on_error=True)
-            req.proxer.set_connect_func(connect_func)
-
             try:
                 xsrf_token = req.get_cookie('XSRF-TOKEN', domain_regex='kaggle.com')
                 headers = {
@@ -132,20 +128,18 @@ class Statistic(BaseModule):
                     'accept': 'application/json',
                 }
                 url = Statistic.API_PROFILE_URL_
-                post = '{"userName":' + json.dumps(handle) + '}'
-                data = req.get(url, headers=headers, post=post, return_json=True)
-            except FailOnGetResponse as e:
-                if e.code == 404:
-                    return None
-                if raise_on_error:
-                    raise e
-                ret = req.proxer.get_connect_ret()
-                if ret:
-                    return ret
+                post = '{"relativeUrl":' + json.dumps(f'/{handle}') + '}'
+                orig_data = req.get(url, headers=headers, post=post, raise_codes={404}, return_json=True)
+                data = orig_data.pop('userProfile')
+            except FailOnGetResponse:
                 return False
 
             data['followers'] = len(data.pop('usersFollowingMe', []))
             data['following'] = len(data.pop('usersIFollow', []))
+            if 'totalUsersFollowingMe' in data:
+                data['followers'] = data.pop('totalUsersFollowingMe')
+            if 'totalUsersIFollow' in data:
+                data['following'] = data.pop('totalUsersIFollow')
 
             name = data.pop('displayName')
             if name:
@@ -156,10 +150,11 @@ class Statistic(BaseModule):
             return data
 
         with REQ.with_proxy(
-            time_limit=2,
+            time_limit=4,
             n_limit=50,
             filepath_proxies='sharedfiles/resource/kaggle/proxies',
         ) as req:
+            req.get('https://www.kaggle.com/')
             for user in users:
                 data = fetch_profile(req, user)
                 if pbar:

@@ -810,8 +810,11 @@ function clear_url_parameters() {
     var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play', 'full_table', 'unfreezing'])
     var to_remove = new Set()
     var remove_sort = true
+    var sort_orders = new Array()
     for ([field, value] of url.searchParams.entries()) {
-      if (field.startsWith('sort') && field != 'sort_order') {
+      if (field == 'sort_order') {
+        sort_orders.push(value)
+      } else if (field.startsWith('sort')) {
         remove_sort = false
       }
       var disabled = disabled_fields.has(field) || field.startsWith('with_')
@@ -824,6 +827,9 @@ function clear_url_parameters() {
     remove_sort = remove_sort || [...to_remove].some((x) => x.startsWith('sort'))
     if (remove_sort) {
       to_remove.add('sort_order')
+    }
+    if (sort_orders.length > 1) {
+      update_urls_params({sort_order: sort_orders[sort_orders.length - 1]})
     }
     if (to_remove) {
       to_remove = [...to_remove].reduce((obj, key) => { obj[key] = undefined; return obj }, {})

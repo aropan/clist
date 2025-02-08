@@ -21,7 +21,7 @@ from django.utils.timezone import now
 from django_print_sql import print_sql_decorator
 from filelock import FileLock
 from requests.exceptions import ConnectionError
-from telegram.error import ChatMigrated, Unauthorized
+from telegram.error import BadRequest, ChatMigrated, Unauthorized
 from webpush import send_user_notification
 from webpush.utils import WebPushException
 
@@ -103,9 +103,12 @@ class Command(BaseCommand):
                 try:
                     response = self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
                     response = response.to_dict()
-                except Unauthorized as e:
-                    if 'bot was kicked from' in str(e) and delete_notification(e):
+                except (Unauthorized, BadRequest) as e:
+                    error_message = str(e).lower()
+                    to_delete = any(msg in error_message for msg in ['chat not found', 'bot was kicked from'])
+                    if to_delete and delete_notification(e):
                         return 'removed'
+                    raise e
                 except ChatMigrated as e:
                     new_chat_id = str(e).strip().split()[-1]
                     notification = kwargs['notification']

@@ -109,7 +109,7 @@
         {% endwith %}
       {% endifchanged %}
 
-        <tr class="contest {{ contest.state }}{% if contest.state == 'running' %} success{% elif contest.state == 'past' %} text-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
+        <tr class="contest {{ contest.state }}{% if contest.state == 'running' %} success{% elif contest.state == 'past' %} contest-muted{% endif %}{% if contest.sub_contest %} {{ group }} subcontest{% endif %}">
           <td class="start-time">
             {% with contest_time_field=time_field|add:"_time" %}
             <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest|get_item:contest_time_field|format_time:"%Y%m%dT%H%M" }}{% if time_field == "start" and contest.duration|less_24_hours %}&ah={{ contest.duration|hours }}&am={{ contest.duration|minutes }}{% endif %}&msg={{ contest.title|urlencode }}">
@@ -124,8 +124,8 @@
           {% endwith %}
           <td class="duration">
             {{ contest.hr_duration }}
-            {% if contest.is_coming and contest.with_virtual_start %}
-            <a class="text-muted small" href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}&msg={{ contest.title|urlencode }}" title="Window duration: {{ contest.full_duration|hr_timedelta }}<br>End time: {{ contest.end_time|timezone:timezone|format_time:time_format }}" data-toggle="tooltip" data-html="true">{% icon_to "period" %}</a>
+            {% if not contest.is_over and contest.with_virtual_start %}
+            <a class="text-muted small virtual-start-period" href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ contest.end_time|format_time:"%Y%m%dT%H%M" }}&msg={{ contest.title|urlencode }}" title="Window duration: {{ contest.full_duration|hr_timedelta }}<br>End time: {{ contest.end_time|timezone:timezone|format_time:time_format }}" data-toggle="tooltip" data-html="true">{% icon_to "period" "" %}</a>
             {% endif %}
           </td>
           {% for field in more_fields %}

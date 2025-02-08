@@ -80,6 +80,15 @@
     cursor: pointer;
 }
 
+.contest.contest-muted * {
+    color: #ccc;
+}
+
+.contest.contest-muted img {
+    opacity: 50%;
+    filter: grayscale(50%);
+}
+
 .contest.nofilter,
 .contest.subcontest {
     display: none;

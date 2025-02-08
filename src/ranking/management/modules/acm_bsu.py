@@ -8,8 +8,8 @@ from datetime import timedelta
 from django.utils.timezone import now
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import DOT, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
+from ranking.management.modules.common import DOT, REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException, FailOnGetResponse
 
 
 class Statistic(BaseModule):

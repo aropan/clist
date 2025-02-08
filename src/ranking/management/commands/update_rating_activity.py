@@ -18,11 +18,11 @@ from utils.timetools import parse_datetime
 
 
 class Command(BaseCommand):
-    help = 'Set account rank'
+    help = 'Update rating activity'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.logger = getLogger('ranking.set_account_rank')
+        self.logger = getLogger('ranking.update_rating_activity')
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='resources hosts')

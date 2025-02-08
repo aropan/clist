@@ -13,7 +13,7 @@ class CoderAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return (
-            ['n_accounts', 'n_contests', 'n_subscribers', 'last_activity']
+            ['n_accounts', 'n_contests', 'n_subscribers', 'n_listvalues', 'last_activity']
             + super().get_readonly_fields(request, obj)
         )
 
@@ -99,8 +99,8 @@ class OrganizationAdmin(BaseModelAdmin):
 
 @admin_register(CoderList)
 class CoderListAdmin(BaseModelAdmin):
-    list_display = ['name', 'owner', 'access_level', 'uuid']
-    list_filter = ['access_level']
+    list_display = ['name', 'owner', 'access_level', 'locale', 'uuid']
+    list_filter = ['access_level', 'locale']
     search_fields = ['name', 'owner__username', 'uuid']
 
     def get_readonly_fields(self, request, obj=None):

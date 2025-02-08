@@ -67,9 +67,9 @@
         return $ids;
     }
 
-    $headers = json_decode(file_get_contents('sharedfiles/resource/facebook/headers.json'));
+    $headers = json_decode(file_get_contents('/sharedfiles/resource/facebook/headers.json'));
     $headers = array_map(function($k, $v) { return "$k: $v"; }, array_keys((array)$headers), (array)$headers);
-    $cookie_file = 'sharedfiles/resource/facebook/cookies.txt';
+    $cookie_file = '/sharedfiles/resource/facebook/cookies.txt';
     $curlexec_params = array('http_header' => $headers, 'with_curl' => true, 'cookie_file' => $cookie_file);
 
     unset($year);

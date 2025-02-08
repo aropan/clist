@@ -16,8 +16,8 @@ from tqdm import tqdm
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number
 from notification.models import NotificationMessage
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseAccounts
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseAccounts, FailOnGetResponse
 from true_coders.models import Coder
 from utils.timetools import parse_duration
 

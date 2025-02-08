@@ -8,7 +8,9 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import FailOnGetResponse
+
 from ranking.management.modules.common.locator import Locator
 
 

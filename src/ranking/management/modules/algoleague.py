@@ -4,8 +4,8 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 from clist.templatetags.extras import get_item, normalize_field
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):
@@ -28,10 +28,13 @@ class Statistic(BaseModule):
             problem = {
                 'code': code,
                 'short': chr(ord('A') + problem_num),
-                'name': problem_data['name'],
                 'slug': slug,
                 'url': f'{strip_url}/problem/{slug}',
             }
+            if 'name' in problem_data:
+                problem['name'] = problem_data['name']
+            else:
+                problem['name'] = slug.replace('-', ' ').title()
             problems_infos[code] = problem
 
         page = 0

@@ -40,7 +40,7 @@ class EventLog(BaseModel):
         return f'{self.related} EventLog#{self.id}'
 
     def update(self, status=None, message=None, error=None):
-        update_fields = ['modified', 'elapsed']
+        update_fields = ['elapsed']
         if status is not None:
             self.status = status
             update_fields.append('status')

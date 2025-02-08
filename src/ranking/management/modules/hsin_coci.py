@@ -5,9 +5,8 @@ import urllib.parse
 from collections import OrderedDict
 from pprint import pprint  # noqa
 
-from clist.models import Resource
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, CustomRequester, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
 
@@ -24,29 +23,31 @@ class Statistic(BaseModule):
             raise InitModuleException('Not found year')
         self.year = int(match.group())
 
+    @CustomRequester(REQ, insecure=True)
     def get_standings(self, users=None, statistics=None, **kwargs):
+        req = kwargs.pop('req')
         ret = {}
         if 'archive' not in self.url:
-            page = REQ.get(self.url)
+            page = req.get(self.url)
             season = self.key.split()[0]
             match = re.search(f'<a[^>]*href="(?P<href>[^"]*)"[^>]*>[^/]*{season}<', page)
             if match:
-                self.url = urllib.parse.urljoin(REQ.last_url, match.group('href'))
+                self.url = urllib.parse.urljoin(req.last_url, match.group('href'))
                 self.standings_url = None
                 ret['action'] = ('url', self.url)
 
         if self.standings_url:
             standings_url = self.standings_url
         else:
-            page = REQ.get(self.url)
+            page = req.get(self.url)
             try:
                 contest = re.search(r'<td[^<]*>\s*<div[^>]*>%s</div>.*?</td>' % self.name, page, re.DOTALL).group()
                 standings_url = re.search(r'<a[^>]*href="(?P<href>[^"]*)"[^>]*>.*Result.*</a>', contest).group('href')
             except Exception:
                 raise ExceptionParseStandings('Not found result url')
 
-        page = REQ.get(standings_url)
-        standings_url = REQ.last_url
+        page = req.get(standings_url)
+        standings_url = req.last_url
 
         page = page.replace('&nbsp;', ' ')
         mapping = {
@@ -57,7 +58,7 @@ class Statistic(BaseModule):
         }
         table = parsed_table.ParsedTable(page, as_list=True, header_mapping=mapping, with_not_full_row=True)
 
-        resource = Resource.objects.get(host__regex='coci')
+        resource = self.contest.resource
 
         result = {}
         problems_info = OrderedDict()

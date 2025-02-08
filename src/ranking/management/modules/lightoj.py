@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import json
 import os
 import re
-import json
 import shlex
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from utils.timetools import parse_datetime
 from clist.templatetags.extras import get_item
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import FailOnGetResponse
+from utils.timetools import parse_datetime
 
 
 class Statistic(BaseModule):
@@ -118,8 +119,10 @@ class Statistic(BaseModule):
             try:
                 page = REQ.get(url)
             except FailOnGetResponse as e:
-                if e.code == 500:
+                if e.code == 404:
                     return None
+                if e.code == 500:
+                    return False
                 raise e
 
             match = re.search(
@@ -143,6 +146,9 @@ class Statistic(BaseModule):
             for param, value in zip(params, values):
                 raw_data = re.sub(r'(?<=\:|\[)' + param + r'(?=\,|\}|\])', f'"{value}"', raw_data)
 
+            # fix '["eng",k]'
+            raw_data = raw_data.replace(',k]', ']')
+
             data = json.loads(raw_data)
             kind = account.info['profile_url']['kind']
             data = data['data'][0][kind]
@@ -154,8 +160,11 @@ class Statistic(BaseModule):
                 if pbar:
                     pbar.update()
 
-                if data_kind is None:
-                    yield {'skip': True}
+                if not data_kind:
+                    if data_kind is None:
+                        yield {'delete': True}
+                    else:
+                        yield {'skip': True}
                     continue
 
                 data, kind = data_kind

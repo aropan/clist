@@ -88,13 +88,6 @@ def get_item_from_list(data, key, default=None):
     return [get_item(item, key, default) for item in data]
 
 
-def get_copy_item(*args, copy=False, **kwargs):
-    ret = get_item(*args, **kwargs)
-    if copy and ret is not None:
-        ret = deepcopy(ret)
-    return ret
-
-
 @register.simple_tag
 def set_item(data, key, value):
     data[key] = value
@@ -474,6 +467,18 @@ def get_problem_title(problem):
     return f'{short}. {name}' if short != name else name
 
 
+def get_problem_hash(contest, problem):
+    has_code, code = get_problem_field(problem, 'code')
+    if has_code:
+        return code
+    return (contest.id, get_problem_short(problem))
+
+
+def get_problem_url(problem):
+    has_url, url = get_problem_field(problem, 'url')
+    return url if has_url else None
+
+
 @register.simple_tag
 def get_problem_solution(problem):
     ret = {}
@@ -641,8 +646,8 @@ def get_new_rating_value(resource, value):
 
 
 @register.simple_tag
-def coder_color_class(resource, *values):
-    rating, *_ = resource.get_rating_color(values)
+def coder_color_class(resource, *values, value_name=None):
+    rating, *_ = resource.get_rating_color(values, value_name=value_name)
     if not rating:
         return ''
     return f'coder-color coder-{rating["color"]}'
@@ -701,10 +706,10 @@ def medal_percentage(medal, percent, info=None, size=16):
 
 
 @register.simple_tag
-def coder_color_circle(resource, *values, size=16, **kwargs):
+def coder_color_circle(resource, *values, size=16, value_name=None, **kwargs):
     Account = apps.get_model('ranking', 'Account')
     cleaned_values = [a.info if isinstance(a, Account) else a for a in values]
-    rating, value = resource.get_rating_color(cleaned_values)
+    rating, value = resource.get_rating_color(cleaned_values, value_name=value_name)
     if not rating:
         return ''
     color = rating['hex_rgb']
@@ -915,7 +920,9 @@ def next_time_to(obj, now):
 @register.filter
 def is_solved(value, with_upsolving=False):
     if isinstance(value, dict):
-        if with_upsolving and is_solved(value.get('upsolving')):
+        if result_verdict := value.get('result_verdict'):
+            return result_verdict == 'accepted'
+        if with_upsolving and 'upsolving' in value and is_solved(value['upsolving']):
             return True
         if value.get('partial'):
             return False
@@ -937,7 +944,9 @@ def is_solved(value, with_upsolving=False):
 @register.filter
 def is_reject(value, with_upsolving=False):
     if isinstance(value, dict):
-        if with_upsolving and is_reject(value.get('upsolving')):
+        if result_verdict := value.get('result_verdict'):
+            return result_verdict == 'rejected'
+        if with_upsolving and 'upsolving' in value and is_reject(value['upsolving']):
             return True
         if value.get('binary') is False:
             return True
@@ -958,13 +967,15 @@ def is_reject(value, with_upsolving=False):
 def is_upsolved(value):
     if not value:
         return False
-    return isinstance(value, dict) and is_solved(value.get('upsolving'))
+    return isinstance(value, dict) and 'upsolving' in value and is_solved(value['upsolving'])
 
 
 @register.filter
 def is_hidden(value, with_upsolving=False):
     if isinstance(value, dict):
-        if with_upsolving and is_hidden(value.get('upsolving')):
+        if result_verdict := value.get('result_verdict'):
+            return result_verdict == 'hidden'
+        if with_upsolving and 'upsolving' in value and is_hidden(value['upsolving']):
             return True
         value = value.get('result')
     return isinstance(value, str) and value.startswith('?')
@@ -978,7 +989,16 @@ def is_partial(value, with_upsolving=False):
         return False
     if not value or not isinstance(value, dict):
         return False
-    return value.get('partial') or with_upsolving and is_partial(value.get('upsolving'))
+    return value.get('partial') or with_upsolving and 'upsolving' in value and is_partial(value['upsolving'])
+
+
+def is_scoring_result(value):
+    if isinstance(value, dict):
+        if 'upsolving' in value and is_scoring_result(value['upsolving']):
+            return True
+        value = value.get('result')
+    value_str = str(value)
+    return value_str and value_str[0].isdigit()
 
 
 def normalized_result(value):
@@ -991,6 +1011,53 @@ def normalized_result(value):
     if str(value).startswith('?'):
         return '?'
     return as_number(value)
+
+
+def get_result_score(value):
+    if isinstance(value, dict):
+        value = value.get('result')
+    value_str = str(value)
+    if value_str.startswith('+'):
+        return 1
+    if value_str.startswith('-'):
+        return 0
+    if value_str.startswith('?'):
+        return 0
+    return as_number(value, default=0)
+
+
+def get_statistic_stats(addition, solving=None):
+    ret = {}
+    problems = addition.get('problems', {})
+    n_upsolving = 0
+    upsolving = 0
+    n_solved = 0
+    n_upsolved = 0
+    n_first_ac = 0
+    for k, v in problems.items():
+        if is_solved(v):
+            n_solved += 1
+        elif is_upsolved(v):
+            n_upsolved += 1
+        if v.get('first_ac'):
+            n_first_ac += 1
+        if (u := v.get('upsolving')):
+            u_score = get_result_score(u)
+            v_score = get_result_score(v)
+            upsolving += max(0, u_score - v_score)
+            n_upsolving += 1
+    if n_upsolving:
+        ret['upsolving'] = upsolving
+        ret['n_upsolved'] = n_upsolved
+    else:
+        ret.pop('upsolving', None)
+        ret.pop('n_upsolved', None)
+    ret['solving'] = as_number(solving if solving is not None else addition.get('solving'), default=0)
+    ret['total_solving'] = ret.get('solving', 0) + ret.get('upsolving', 0)
+    ret['n_solved'] = n_solved
+    ret['n_total_solved'] = n_solved + n_upsolved
+    ret['n_first_ac'] = n_first_ac
+    return ret
 
 
 def is_improved_solution(curr, prev, with_upsolving=False):
@@ -1155,11 +1222,11 @@ def normalize_field(k):
 
 
 @register.filter
-def scoreformat(value, with_shorten=True):
+def scoreformat(value, with_shorten=True, precision=-2):
     str_value = str(value)
     if not str_value or str_value[0] in ['+', '?']:
         return value
-    format_value = floatformat(value, -2)
+    format_value = floatformat(value, precision)
     str_value = format_value or str_value
     if with_shorten and len(str_value.split('.')[0]) > 7:
         try:
@@ -1170,6 +1237,11 @@ def scoreformat(value, with_shorten=True):
         except Exception:
             pass
     return format_value or value
+
+
+@register.filter
+def scorefixedformat(value, precision=-2, with_shorten=True):
+    return scoreformat(value, with_shorten=with_shorten, precision=precision)
 
 
 @register.filter
@@ -1649,8 +1721,23 @@ def admin_url(obj):
 
 
 @register.simple_tag
-def stat_has_failed_verdict(stat, small):
-    return small and not is_solved(stat) and stat.get('verdict') and not stat.get('binary') and not stat.get('icon')
+def stat_has_failed_verdict(stat):
+    return not is_solved(stat) and stat.get('verdict') and not stat.get('binary') and not stat.get('icon')
+
+
+@register.simple_tag
+def stat_verdict_class(stat, upsolving=False):
+    if is_solved(stat):
+        return 'upsolved' if upsolving else 'acc'
+    if is_upsolved(stat):
+        return 'upsolved'
+    if is_hidden(stat):
+        return 'hid'
+    if is_reject(stat):
+        return 'rej'
+    if is_partial(stat):
+        return 'par'
+    return ''
 
 
 @register.simple_tag

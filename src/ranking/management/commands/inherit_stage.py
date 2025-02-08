@@ -14,6 +14,7 @@ from django.db.models import Max, Min
 from clist.models import Contest
 from clist.templatetags.extras import slug
 from utils.attrdict import AttrDict
+from utils.strings import word_string_iou
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
@@ -41,11 +42,16 @@ class Command(BaseCommand):
                 contest = Contest.objects.get(pk=args.contest_id)
                 filtered_contests = contest.neighbors()
                 stage_contests = filtered_contests.filter(stage__isnull=False, start_time__lt=contest.start_time)
-                original_contest = stage_contests.order_by('-end_time').first()
-                if original_contest is None:
+                if not stage_contests.exists():
                     filtered_contests = contest.resource.contest_set.all()
                     stage_contests = filtered_contests.filter(stage__isnull=False, start_time__lt=contest.start_time)
-                    original_contest = stage_contests.order_by('-end_time').first()
+                max_iou = 0
+                original_contest = None
+                for stage_contest in stage_contests.order_by('-end_time'):
+                    iou = word_string_iou(stage_contest.title, contest.title)
+                    if iou > max_iou:
+                        max_iou = iou
+                        original_contest = stage_contest
                 created = False
             else:
                 original_contest = Contest.objects.get(stage__isnull=False, title__iregex=args.regex)

@@ -49,12 +49,7 @@ class Command(BaseCommand):
         now = timezone.now()
 
         if args.resources:
-            resource_filter = Q()
-            for resource in args.resources:
-                resource = Resource.get(resource)
-                if resource:
-                    resource_filter |= Q(pk=resource.pk)
-            resources = resources.filter(resource_filter)
+            resources = Resource.get(args.resources, queryset=resources)
 
         if not args.without_delay and not args.force and not args.resources:
             rank_update_delay = parse_duration(args.rank_update_delay)

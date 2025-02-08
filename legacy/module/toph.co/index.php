@@ -27,6 +27,7 @@
         $seen[$url] = true;
 
         $title = $match['title'];
+        $title = html_entity_decode($title, ENT_QUOTES);
 
         $page = curlexec($url);
         if (!preg_match('#(will start|started on) [^<]*<[^>]*(?:data-time|data-timestamp)=(?P<start_time>[0-9]+)[^>]*>(?:[^<]*<[^>]*>[^<]*</[^>]*>)*</[^>]*>[^<]*(will run|ran) for <[^>]*>(?P<duration>[^<]*)</#', $page, $match)) {
@@ -34,16 +35,21 @@
         }
 
         $path = explode('/', trim($url, '/'));
+        $key = end($path);
+
+        if (strpos($page, "collect your credential from the contest organizer") !== false) {
+            $title .= ' [private]';
+        }
 
         $contests[] = array(
             'start_time' => $match['start_time'],
             'duration' => $match['duration'],
-            'title' => html_entity_decode($title, ENT_QUOTES),
+            'title' => $title,
             'url' => $url,
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
-            'key' => end($path)
+            'key' => $key,
         );
     }
 

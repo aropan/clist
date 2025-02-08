@@ -1,4 +1,4 @@
-Django==5.1.4
+Django==5.1.5
 django-add-default-value==0.10.0
 django-autoslug==1.9.9
 django-brotli==0.2.1
@@ -17,6 +17,7 @@ django-ipware==7.0.1
 django-jsonify==0.3.0
 django-json-widget==2.0.1
 django-ltree-2==0.1.8
+django-modeltranslation==0.19.12
 django-oauth-toolkit==2.4.0
 django-phonenumber-field==7.3.0
 django-pivot==1.10.0

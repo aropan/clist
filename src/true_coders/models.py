@@ -9,17 +9,19 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.db import models
-from django.db.models import Case, Count, F, Q, When, signals
-from django.db.models.signals import post_delete, post_save
+from django.db.models import Case, Count, F, OuterRef, Q, Subquery, When, signals
+from django.db.models.signals import post_delete, post_init, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django_countries.fields import CountryField
+from guardian.shortcuts import get_objects_for_user
 from phonenumber_field.modelfields import PhoneNumberField
 from sql_util.utils import Exists, SubquerySum
 
 from clist.models import Contest, Problem, ProblemVerdict, Resource
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
+from utils.signals import update_foreign_key_n_field_on_change
 
 
 class Coder(BaseModel):
@@ -39,6 +41,7 @@ class Coder(BaseModel):
     n_accounts = models.IntegerField(default=0, db_index=True)
     n_contests = models.IntegerField(default=0, db_index=True)
     n_subscribers = models.IntegerField(default=0, db_index=True, blank=True)
+    n_listvalues = models.IntegerField(default=0, db_index=True, blank=True)
     tshirt_size = models.CharField(max_length=10, default=None, null=True, blank=True)
     is_virtual = models.BooleanField(default=False, db_index=True)
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
@@ -444,7 +447,9 @@ class CoderList(BaseModel):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
     access_level = models.CharField(max_length=10, choices=AccessLevel.choices, default=AccessLevel.PRIVATE)
     shared_with_coders = models.ManyToManyField(Coder, related_name='shared_list_set', blank=True)
-    with_names = models.BooleanField(default=False)
+    custom_names = models.BooleanField(default=False)
+    account_update_delay = models.DurationField(null=True, blank=True)
+    locale = models.CharField(max_length=5, choices=django_settings.LOCALE_CHOICES, null=True, blank=True)
 
     class Meta:
         permissions = (
@@ -461,7 +466,7 @@ class CoderList(BaseModel):
     def filter_for_coder(coder):
         qs = CoderList.objects
         condition = Q(access_level=AccessLevel.PUBLIC)
-        if coder is not None:
+        if coder:
             qs = qs.annotate(has_shared_with=Exists('shared_with_coders', filter=Q(coder=coder)))
             condition |= Q(owner=coder) | Q(access_level=AccessLevel.RESTRICTED, has_shared_with=True)
         return qs.filter(condition)
@@ -469,7 +474,17 @@ class CoderList(BaseModel):
     @staticmethod
     def filter_for_coder_and_uuids(coder, uuids, logger=None):
         qs = CoderList.filter_for_coder(coder=coder)
-        qs = qs.filter(Q(owner=coder) | Q(uuid__in=uuids))
+        active_filter = Q(owner=coder) | Q(uuid__in=uuids)
+        if coder:
+            managed = get_objects_for_user(
+                coder.user,
+                'true_coders.manage_coderlist',
+                CoderList,
+                accept_global_perms=False,
+                with_superuser=False,
+            )
+            active_filter |= Q(pk__in=managed)
+        qs = qs.filter(active_filter)
         used_uuids = set(map(str, qs.values_list('uuid', flat=True)))
         filtered_uuids = []
         for uuid in uuids:
@@ -496,6 +511,13 @@ class CoderList(BaseModel):
                 if v.account:
                     accounts.add(v.account.pk)
         return coders, accounts
+
+    @staticmethod
+    def accounts_annotate(uuids):
+        groups = ListGroup.objects.filter(coder_list__uuid__in=uuids, coder_list__custom_names=True, name__isnull=False)
+        groups = groups.filter(Q(values__account=OuterRef('pk')) | Q(values__coder__account=OuterRef('pk')))
+        annotation = Subquery(groups.values('name')[:1])
+        return annotation
 
     @staticmethod
     def accounts_filter(uuids, coder=None, logger=None):
@@ -592,8 +614,14 @@ class ListValue(BaseModel):
 
 
 @receiver([post_save, post_delete], sender=ListValue)
-def update_list(sender, instance, **kwargs):
+def update_list(instance, **kwargs):
     instance.coder_list.update_coders_or_accounts()
+
+
+@receiver([post_init, post_save, post_delete], sender=ListValue)
+def update_n_listvalues_field(**kwargs):
+    update_foreign_key_n_field_on_change(**kwargs, attr='account', field='n_listvalues')
+    update_foreign_key_n_field_on_change(**kwargs, attr='coder', field='n_listvalues')
 
 
 class ListProblem(BaseModel):

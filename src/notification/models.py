@@ -2,6 +2,7 @@ import re
 import traceback
 import uuid
 from datetime import timedelta
+from typing import Optional
 
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
@@ -11,6 +12,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import F, Q
 from django.db.models.signals import m2m_changed, pre_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -122,6 +124,16 @@ class EnabledSubscriptionManager(BaseManager):
         return super().get_queryset().filter(enable=True)
 
 
+class StatisticsSubscriptionManager(EnabledSubscriptionManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(with_statistics=True).annotate(locale=F('coder_list__locale'))
+
+
+class UpsolvingSubscriptionManager(EnabledSubscriptionManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(with_upsolving=True).annotate(locale=F('coder_list__locale'))
+
+
 class Subscription(TaskNotification):
     resource = models.ForeignKey(Resource, null=True, blank=True, default=None, on_delete=models.CASCADE)
     contest = models.ForeignKey(Contest, null=True, blank=True, default=None, on_delete=models.CASCADE)
@@ -135,6 +147,8 @@ class Subscription(TaskNotification):
     with_first_accepted = models.BooleanField(default=False)
     top_n = models.IntegerField(null=True, blank=True)
     with_custom_names = models.BooleanField(default=False)
+    with_statistics = models.BooleanField(default=True)
+    with_upsolving = models.BooleanField(default=False)
 
     tasks = GenericRelation(
         'Task',
@@ -145,12 +159,15 @@ class Subscription(TaskNotification):
 
     objects = BaseManager()
     enabled = EnabledSubscriptionManager()
+    for_statistics = StatisticsSubscriptionManager()
+    for_upsolving = UpsolvingSubscriptionManager()
 
     class Meta:
         indexes = [
             models.Index(fields=['contest']),
             models.Index(fields=['resource']),
-            models.Index(fields=['enable', 'resource', 'contest']),
+            models.Index(fields=['enable', 'resource', 'contest', 'with_statistics']),
+            models.Index(fields=['enable', 'resource', 'contest', 'with_upsolving']),
             models.Index(fields=['resource', 'contest']),
             models.Index(fields=['resource', 'contest', 'with_first_accepted']),
             models.Index(fields=['resource', 'contest', 'top_n']),
@@ -188,6 +205,19 @@ class Subscription(TaskNotification):
 
     def is_empty(self):
         return not (self.accounts.exists() or self.coders.exists() or self.with_first_accepted or self.top_n)
+
+    def with_coder_list_names(self) -> bool:
+        return self.with_custom_names and self.coder_list and self.coder_list.custom_names
+
+    def account_name(self, account) -> Optional[str]:
+        if self.with_coder_list_names():
+            groups = self.coder_list.groups.filter(name__isnull=False)
+            groups = groups.filter(Q(values__account=account) |
+                                   Q(values__coder__account=account))
+            group = groups.first()
+            if group:
+                return group.name
+        return None
 
 
 @receiver(m2m_changed, sender=Subscription.accounts.through)

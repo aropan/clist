@@ -1,35 +1,49 @@
 import re
+from collections import OrderedDict, defaultdict
 
+import arrow
 import django_rq
 import flag
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.db.models import Q
 from django.urls import reverse
+from django.utils import translation
 
-from clist.templatetags.extras import (as_number, get_division_problems, get_problem_name, get_problem_short, is_hidden,
-                                       is_partial, is_solved, md_escape, md_url, md_url_text, scoreformat,
-                                       solution_time_compare)
+from clist.templatetags.extras import (as_number, get_division_problems, get_problem_hash, get_problem_name,
+                                       get_problem_short, get_problem_title, get_problem_url, is_hidden, is_partial,
+                                       is_solved, md_escape, md_url, md_url_text, scoreformat, solution_time_compare)
+from utils.translation import localize_data
 
 
+def lazy_compose_message(func):
+
+    def wrapper(*args, subscription=None, general_message=None, cache=None, **kwargs):
+        if cache is not None and subscription is not None:
+            cache_key = subscription.notification_key
+            if cache_key in cache:
+                return
+            cache.add(cache_key)
+
+        with_subscription_names = subscription and subscription.with_coder_list_names
+        if general_message is not None and not with_subscription_names:
+            return general_message
+        locale = getattr(subscription, 'locale', None) or translation.get_language()
+        with translation.override(locale):
+            return func(*args, subscription=subscription, locale=locale, **kwargs)
+
+    return wrapper
+
+
+@lazy_compose_message
 def compose_message_by_problems(
     problem_shorts,
     statistic,
     previous_addition,
     contest_or_problems,
-    subscription=None,
-    general_message=None,
+    subscription,
+    locale,
 ):
-    with_subscription_names = (
-        subscription
-        and subscription.with_custom_names
-        and subscription.coder_list
-        and subscription.coder_list.with_names
-    )
-    if general_message is not None and not with_subscription_names:
-        return general_message
-
     problems = statistic.addition.get('problems', {})
     previous_problems = previous_addition.get('problems', {})
 
@@ -97,13 +111,8 @@ def compose_message_by_problems(
 
     standings_url = reverse('ranking:standings_by_id', args=[statistic.contest_id]) + f'?find_me={statistic.pk}'
     account_name = statistic.account_name
-    if with_subscription_names:
-        groups = subscription.coder_list.groups.filter(name__isnull=False)
-        groups = groups.filter(Q(values__account=statistic.account) |
-                               Q(values__coder__account=statistic.account))
-        group = groups.first()
-        if group:
-            account_name = group.name
+    if subscription and (name := subscription.account_name(statistic.account)):
+        account_name = name
     account_message = '[%s](%s)' % (md_url_text(account_name), md_url(standings_url))
     if statistic.account.country:
         account_message = flag.flag(statistic.account.country.code) + account_message
@@ -116,6 +125,89 @@ def compose_message_by_problems(
     message = f'{time_message} `{place_message}`. {account_message} {suffix_message} {problem_message}'.strip()
     message = re.sub(r'(\s)\s+', r'\1', message)
     return message
+
+
+@lazy_compose_message
+def compose_message_by_submissions(resource, account, submissions, subscription, locale) -> str | None:
+    contest_problems = OrderedDict()
+    for submission in submissions:
+        contest = submission['contest']
+        problem = submission['problem']
+        info = submission['info']
+        if subscription and subscription.contest_id and subscription.contest_id != contest.id:
+            continue
+        problem_key = get_problem_hash(contest, problem)
+        problems = contest_problems.setdefault(contest, OrderedDict())
+
+        if problem_key not in problems:
+            localize_data(problem, locale)
+            problems[problem_key] = {
+                'problem': problem,
+                'submissions': [],
+            }
+        problems[problem_key]['submissions'].append(info)
+    if not contest_problems:
+        return
+
+    account_name = account.short_display(resource=resource)
+    if subscription and (name := subscription.account_name(account)):
+        account_name = name
+    account_message = '[%s](%s)' % (md_url_text(account_name), md_url(account.url))
+    messages = [account_message]
+    limit = 5
+
+    def get_verdicts_message(verdicts):
+        return ', '.join([f'`{k}`x{v}' if v > 1 else f'`{k}`' for k, v in verdicts.items()])
+
+    def get_time_ago_message(submission):
+        if 'submission_time' in submission:
+            time = submission['submission_time']
+            time_ago = arrow.get(time).humanize(locale=locale)
+        else:
+            time_ago = str(submission['submission_id'])
+        if 'url' in submission:
+            time_ago = '[%s](%s)' % (md_url_text(time_ago), md_url(submission['url']))
+        return time_ago
+
+    more_verdicts = defaultdict(int)
+    more_problems = 0
+    more_contests = 0
+    index = 0
+    for contest, problems in contest_problems.items():
+        if index < limit:
+            messages.append(md_escape(contest.title))
+        else:
+            more_contests += 1
+        for problem_key, problem_submissions in problems.items():
+            index += 1
+            problem = problem_submissions['problem']
+            submissions = problem_submissions['submissions']
+            last_submission = submissions[0]
+
+            if index > limit:
+                for submission in submissions:
+                    more_verdicts[submission['verdict']] += 1
+                more_problems += 1
+                continue
+
+            verdicts = defaultdict(int)
+            for submission in submissions:
+                verdicts[submission['verdict']] += 1
+
+            problem_message = get_problem_title(problem)
+            if url := get_problem_url(problem):
+                problem_message = '[%s](%s)' % (md_url_text(problem_message), md_url(url))
+            else:
+                problem_message = '`%s`' % md_escape(problem_message)
+            problem_message = '%s = %s' % (problem_message, get_verdicts_message(verdicts))
+            problem_message = '%s. %s' % (problem_message, get_time_ago_message(last_submission))
+            messages.append(problem_message)
+
+    if more_contests or more_problems or more_verdicts:
+        messages.append('and %d more problems (%d contests) = %s' % (
+            more_problems, more_contests, get_verdicts_message(more_verdicts)))
+
+    return '\n'.join(messages)
 
 
 def send_messages(**kwargs):

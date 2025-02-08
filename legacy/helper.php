@@ -1,4 +1,6 @@
 <?php
+    require_once 'libs/SqlFormatter.php';
+
     if (!function_exists('http_parse_headers')) {
         function http_parse_headers($raw_headers) {
             $headers = [];
@@ -728,6 +730,10 @@
             $data[] = $row_data;
         }
         return $data;
+    }
+
+    function pretty_print_sql($sql) {
+        return SqlFormatter::format($sql, false);
     }
 
     function current_season_year() {

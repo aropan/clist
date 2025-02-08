@@ -9,8 +9,8 @@ from pprint import pprint
 from django.utils.timezone import now
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import InitModuleException
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import InitModuleException, FailOnGetResponse
 from ranking.management.modules.nerc_itmo_helper import parse_xml
 
 

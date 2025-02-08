@@ -1,183 +1,251 @@
 #!/usr/bin/env python
 
-import html
+import json
 import re
-import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from pprint import pprint
-from time import sleep
-from urllib.parse import urlparse
 
-import tqdm
-from first import first
 from ratelimiter import RateLimiter
 
-from ranking.management.modules import conf
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import InitModuleException
-
-
-def get(*args, **kwargs):
-    n_attempts = 5
-    for attempt in range(n_attempts):
-        try:
-            page = REQ.get(*args, **kwargs)
-            return page
-        except FailOnGetResponse as e:
-            if e.code == 503 and attempt + 1 < n_attempts:
-                LOG.warning(str(e))
-                sleep(attempt)
-                continue
-            raise e
+from clist.templatetags.extras import normalize_field
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
-
-    @staticmethod
-    def authorize():
-        page = get('https://www.eolymp.com/en/')
-        authorized = bool(re.search(r'>\s*logout\s*<', page, re.I))
-        if authorized:
-            return
-
-        post = {
-            'grant_type': 'password',
-            'username': conf.EOLYMP_USERNAME,
-            'password': conf.EOLYMP_PASSWORD,
-            'scope': 'cognito:user:read cognito:user:write cognito:role:read',
-        }
-        data = get('https://api.eolymp.com/oauth/token', post=post, return_json=True)
-
-        headers = {'Authorization': f'Bearer {data["access_token"]}'}
-        data = get('https://api.eolymp.com/oauth/userinfo', headers=headers, return_json=True)
-
-        signin_url = 'https://www.eolymp.com/en/login'
-        get(signin_url)
-        parse_result = urlparse(REQ.last_url)
-        post = dict(urllib.parse.parse_qsl(parse_result.query))
-
-        data = get('https://api.eolymp.com/oauth/authcode', post=post, headers=headers, return_json=True)
-        page = get(data['redirect_uri'])
-
-        authorized = bool(re.search(r'>\s*logout\s*<', page, re.I))
-        if not authorized:
-            raise InitModuleException('Not authorized')
+    API_URL = 'https://api.eolymp.com/spaces/00000000-0000-0000-0000-000000000000/graphql'
+    DEFAULT_PICTURE = 'https://static.eolymp.com'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if not self.standings_url:
-            self.standings_url = f'{self.url.rstrip("/")}/leaderboard'
-        self.authorize()
 
     def get_standings(self, users=None, statistics=None, **kwargs):
+        standings_url = self.url.rstrip('/') + '/scoreboard'
 
-        result = {}
+        problem_columns_query = '''
+query GetProblems($id: ID!) {
+  contest(id: $id) {
+    scoring  { showScoreboard attemptPenalty freezingTime allowUpsolving tieBreaker }
+    scoreboard(roundId: $id) { visibility columns { id type title } }
+  }
+}
+        '''
+        data = {'query': problem_columns_query, 'variables': {'id': self.key}}
+        data = REQ.get(self.API_URL, post=json.dumps(data), return_json=True)
+        for error in data.get('errors', []):
+            if 'code = Unauthenticated' in error['message']:
+                raise ExceptionParseStandings('Unauthorized access')
+            if 'code = NotFound' in error['message']:
+                raise ExceptionParseStandings('Contest not found')
+
+        scoring = data['data']['contest']['scoring']
+        scoreboard = data['data']['contest']['scoreboard']
+        if scoreboard['visibility'] != 'PUBLIC':
+            return {'action': 'skip', 'url': standings_url}
+        columns = scoreboard['columns']
         problems_info = OrderedDict()
+        for column in columns:
+            if column['type'] != 'PROBLEM_SCORE':
+                continue
+            problem = {
+                'code': column['id'],
+                'short': column['title'],
+            }
+            problems_info[problem['code']] = problem
 
-        try:
-            page = get(self.standings_url)
-        except FailOnGetResponse as e:
-            if e.code == 404:
-                return {'action': 'delete'}
-            raise e
-        match = re.findall('<a[^>]href="[^"]*page=[0-9]+"[^>]*>(?P<n_page>[0-9]+)</a>', page)
-        n_page = 1 if not match else int(match[-1])
-
-        @RateLimiter(max_calls=1, period=1)
-        def fetch_page(page_index):
-            url = self.standings_url
-            if page_index:
-                url += f'?page={page_index}'
-            n_attempts = 3
-            for attempt in range(n_attempts):
-                try:
-                    page = get(url)
-                    break
-                except FailOnGetResponse as e:
-                    if e.code == 503 and attempt + 1 < n_attempts:
-                        REQ.print(str(e))
-                        sleep(5)
-                        continue
-                    raise e
-
-            return page, url
-
-        place = 0
-        idx = 0
-        prev = None
-        with PoolExecutor(max_workers=4) as executor, tqdm.tqdm(total=n_page, desc='fetch pages') as pbar:
-            for page, url in executor.map(fetch_page, range(n_page)):
-                pbar.set_postfix(url=url)
-                pbar.update(1)
-
-                regex = '<table[^>]*>.*?</table>'
-                match = re.search(regex, page, re.DOTALL)
-                if not match:
+        scoreboard_query = '''
+query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
+  contest(id: $id) {
+    scoreboard(roundId: $id) {
+      rows(first: $first, offset: $offset) {
+        nodes {
+          member {
+            id
+            account {
+              ... on CommunityUser { nickname picture country { name } }
+              ... on CommunityTeam { name members { id account { ... on CommunityUser { nickname } } } }
+            }
+          }
+          values { columnId ... on ContestScoreboardProblemScore { score penalty attempts time percentage } }
+          rank rankLength score penalty tieBreaker unofficial disqualified medal
+        }
+        pageInfo {
+          hasNextPage
+        }
+      }
+    }
+  }
+}
+'''
+        offset = 0
+        result = {}
+        while True:
+            data = {'query': scoreboard_query, 'variables': {'id': self.key, 'first': 100, 'offset': offset}}
+            data = REQ.get(self.API_URL, post=json.dumps(data), return_json=True)
+            data = data['data']['contest']['scoreboard']['rows']
+            if not data:
+                raise ExceptionParseStandings('No scoreboard data')
+            for row in data['nodes']:
+                offset += 1
+                member = row.pop('member')
+                if member is None:
                     continue
-                html_table = match.group(0)
-                table = parsed_table.ParsedTable(html_table)
-                for r in table:
-                    idx += 1
-                    row = {}
-                    problems = row.setdefault('problems', {})
-                    for k, v in list(r.items()):
-                        k = k.split()[0]
-                        if k.lower() == 'score':
-                            solving, *a = v.value.split()
-                            row['solving'] = int(solving)
-                            if a:
-                                row['penalty'] = int(re.sub(r'[\(\)]', '', a[0]))
-                        elif len(k) == 1:
-                            if k not in problems_info:
-                                problems_info[k] = {'short': k}
-                                title = first(v.header.node.xpath('a[@title]/@title'))
-                                url = first(v.header.node.xpath('a[@href]/@href'))
-                                if title:
-                                    problems_info[k]['name'] = html.unescape(title)
-                                if url:
-                                    url = urllib.parse.urljoin(self.standings_url, url)
-                                    problems_info[k]['url'] = url
-                                    problem_page = get(url)
-                                    match = re.search(r'href="[^"]*/submit\?problem=(?P<code>[0-9]+)"', problem_page)
-                                    if match:
-                                        problems_info[k]['code'] = match.group('code')
+                member_id = member['id']
+                handle = member['account']['nickname']
+                r = result.setdefault(member_id, {'member': member_id})
+                info = r.setdefault('info', {})
+                r['name'] = handle
+                info['profile_url'] = {'account': handle}
+                country = member['account']['country']
+                if country:
+                    r['country'] = country['name']
+                picture = member['account']['picture']
+                if picture and picture != self.DEFAULT_PICTURE:
+                    info['picture'] = picture
+                r['place'] = row.pop('rank')
+                r['solving'] = row.pop('score')
+                r['unofficial'] = row.pop('unofficial')
+                r['disqualified'] = row.pop('disqualified')
+                if r['unofficial'] or r['disqualified']:
+                    r.pop('place')
+                    r['_no_update_n_contests'] = True
+                if scoring['attemptPenalty']:
+                    r['penalty'] = row.pop('penalty')
+                problems = r.setdefault('problems', {})
+                for values in row.pop('values'):
+                    code = values['columnId']
+                    if code not in problems_info:
+                        continue
+                    problem = problems.setdefault(problems_info[code]['short'], {})
+                    if self.contest.kind == 'IOI':
+                        problem['result'] = values['score']
+                        problem['attempts'] = values['attempts']
+                        if values['percentage'] and values['percentage'] != 1:
+                            problem['partial'] = True
+                    else:
+                        problem['result'] = '+' if values['score'] else '-'
+                        if values['attempts']:
+                            problem['result'] += str(values['attempts'])
+                    if values['time']:
+                        values['time_in_seconds'] = values['time']
+                        problem['time'] = self.to_time(values['time'] // 60, 2)
+                stats = (statistics or {}).get(member_id, {})
+                for field in 'new_rating', 'rating_change', 'old_rating', 'level':
+                    if field in stats and field not in r:
+                        r[field] = stats[field]
+            if not data['pageInfo']['hasNextPage']:
+                break
 
-                            if '-' in v.value or '+' in v.value:
-                                p = problems.setdefault(k, {})
-                                if ' ' in v.value:
-                                    point, time = v.value.split()
-                                    p['time'] = time
-                                else:
-                                    point = v.value
-                                if point == '+0':
-                                    point = '+'
-                                p['result'] = point
-                            elif v.value.isdigit():
-                                p = problems.setdefault(k, {})
-                                p['result'] = v.value
-                        elif k.lower() == 'user':
-                            row['member'] = v.value
-                        else:
-                            row[k] = v.value
-
-                    if 'penalty' not in row:
-                        solved = [p for p in list(problems.values()) if p['result'] == '100']
-                        row['solved'] = {'solving': len(solved)}
-
-                    curr = (row['solving'], row.get('penalty'))
-                    if prev is None or prev != curr:
-                        place = idx
-                        prev = curr
-                    row['place'] = place
-
-                    result[row['member']] = row
-
-        standings = {
+        return {
+            'url': standings_url,
             'result': result,
-            'url': self.standings_url,
+            'hidden_fields': ['unofficial', 'disqualified'],
             'problems': list(problems_info.values()),
         }
-        return standings
 
+    @staticmethod
+    def get_users_infos(users, resource, accounts, pbar=None):
 
+        @RateLimiter(max_calls=10, period=1)
+        def fetch_profile(user, account):
+            if account.info.get('is_team') or account.info.get('_no_profile_url'):
+                return False
+
+            info = {}
+            return_data = {'info': info}
+            if account.name:
+                member_id = account.key
+            else:
+                url = resource.profile_url.format(**account.dict_with_info())
+                page = REQ.get(url)
+                match = re.search(r'typename\\":\\"CommunityMember\\",\\"id\\":\\"(?P<id>[^"]+)\\"', page)
+                if not match:
+                    return False
+                member_id = match.group('id')
+                if member_id != account.key:
+                    return_data['rename'] = member_id
+
+            profile_query = '''
+query Profile($id: ID!) {
+  member(id: $id) {
+    picture displayName createdAt inactive unofficial rank rating level
+    stats {
+      streak problemsSolved submissionsTotal submissionsAccepted
+    }
+    account {
+      ... on CommunityUser {
+        nickname name country { name } city
+      }
+    }
+  }
+}
+            '''
+            data = {'query': profile_query, 'variables': {'id': member_id}}
+            data = REQ.get(Statistic.API_URL, post=json.dumps(data), return_json=True)
+            data = data['data']['member']
+            account_data = data.pop('account')
+            country = account_data.pop('country')
+            if country:
+                info['country'] = country['name']
+            info['name'] = account_data.pop('nickname')
+            if full_name := account_data.pop('name'):
+                info['full_name'] = full_name
+            picture = data.pop('picture')
+            if picture and picture != Statistic.DEFAULT_PICTURE:
+                info['picture'] = picture
+
+            data.update(data.pop('stats'))
+            data.update(account_data)
+            for field in ('rank', 'rating', 'level', 'city'):
+                if value := data.pop(field, None):
+                    info[field] = value
+            info['extra'] = {normalize_field(k): v for k, v in data.items()}
+            info['profile_url'] = {'account': info['name']}
+
+            perfomance_query = '''
+query Performance($id: ID!, $first: Int, $offset: Int) {
+  performance(memberId: $id, first: $first, offset: $offset) {
+    nodes { contestId value level }
+    pageInfo { hasNextPage }
+  }
+}
+            '''
+            offset = 0
+            rating_updates = {}
+            while True:
+                data = {'query': perfomance_query, 'variables': {'id': member_id, 'first': 100, 'offset': offset}}
+                data = REQ.get(Statistic.API_URL, post=json.dumps(data), return_json=True)
+                data = data['data']['performance']
+                prev_rating = None
+                for node in data['nodes']:
+                    offset += 1
+                    contest_id = node.pop('contestId')
+                    rating = node.pop('value')
+                    rating_update = rating_updates.setdefault(contest_id, {})
+                    rating_update['level'] = node.pop('level')
+                    rating_update['new_rating'] = rating
+                    if prev_rating is not None:
+                        rating_update['rating_change'] = rating - prev_rating
+                        rating_update['old_rating'] = prev_rating
+                    prev_rating = rating
+                if not data['pageInfo']['hasNextPage']:
+                    break
+            return_data['contest_addition_update_params'] = {
+                'update': rating_updates,
+                'by': 'key',
+                'clear_rating_change': True,
+            }
+
+            return return_data
+
+        with PoolExecutor(max_workers=8) as executor:
+            for data in executor.map(fetch_profile, users, accounts):
+                if pbar:
+                    pbar.update()
+                if not data:
+                    if data is None:
+                        yield {'delete': True}
+                    else:
+                        yield {'skip': True}
+                    continue
+                yield data

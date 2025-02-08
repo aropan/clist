@@ -21,8 +21,6 @@
       <a href="{{ contest.actual_url }}"{% if contest.is_over and not contest.n_statistics %} class="text-muted"{% endif %}>
         {{ contest.title }}
       </a>
-
-      {% include "contest_inline_buttons.html" with contest=contest %}
     </td>
   </tr>
 {% endfor %}

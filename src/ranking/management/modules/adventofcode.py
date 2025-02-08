@@ -32,7 +32,9 @@ class Statistic(BaseModule):
     @staticmethod
     def _get_problem_stats(year, day='[0-9]+'):
         url = Statistic.PROBLEM_YEAR_STATS_URL_FORMAT.format(year=year)
-        page = REQ.get(url)
+        page, code = REQ.get(url, ignore_codes={404}, return_code=True)
+        if code == 404:
+            return {}
         matches = re.finditer(rf'''
             <a[^>]*href="[^"]*{year}/day/[0-9]+"[^>]*>
             \s*(?P<day>{day})\s*

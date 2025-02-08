@@ -13,8 +13,8 @@ from ratelimiter import RateLimiter
 from tqdm import tqdm
 
 from clist.templatetags.extras import as_number, get_problem_key
-from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, FailOnGetResponse, utc_now
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, utc_now
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

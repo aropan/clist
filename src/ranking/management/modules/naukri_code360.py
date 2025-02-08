@@ -6,8 +6,8 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import get_item
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

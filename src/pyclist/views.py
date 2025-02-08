@@ -89,7 +89,8 @@ def update_context_by_source(request, context):
     y_agg_select = create_field_to_select(options=['avg', 'sum', 'max', 'min', 'count', 'percentile'], noempty=True)
     y_agg = request.get_filtered_value('y_agg', y_agg_select['options'], default_first=True)
     percentile = float(request.get_filtered_value('percentile') or 0.5)
-    selection_field_select = create_field_to_select(options=fields, multiply=True)
+    selection_field_values = request.get_filtered_list('selection', options=list(fields))
+    selection_field_select = create_field_to_select(options=fields, values=selection_field_values, multiply=True)
     sort_field_select = create_field_to_select(options=fields, rev_order=True)
 
     selection_field_selects = []

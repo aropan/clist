@@ -6,22 +6,27 @@ from datetime import timedelta
 from logging import getLogger
 
 import arrow
+import django_rq
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import Case, F, IntegerField, Q, Value, When
+from django.db.models import Case, F, IntegerField, Min, Q, Value, When
 from django.utils import timezone
 from tailslide import Percentile
 from tqdm import tqdm
 
 from clist.models import Resource
 from logify.models import EventLog, EventStatus
-from ranking.management.modules.excepts import ExceptionParseAccounts
+from notification.models import Subscription
+from notification.utils import compose_message_by_submissions, send_messages
+from ranking.management.modules.excepts import ExceptionParseAccounts, ProxyLimitReached
 from ranking.models import Account
 from ranking.utils import account_update_contest_additions, rename_account
 from true_coders.models import Coder, CoderList
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
+from utils.mathutils import min_with_none
+from utils.strings import sanitize_data
 from utils.traceback_with_vars import colored_format_exc
 
 
@@ -35,6 +40,34 @@ def add_dict_to_dict(src, dst):
             dst[k].update(v)
         else:
             dst[k] += v
+
+
+def get_subscriptions_with_upsolving(resource, account):
+    query = Q()
+    if account.n_subscribers:
+        query |= Q(accounts=account)
+    if account.has_coders and (coders := account.coders.filter(n_subscribers__gt=0)):
+        query |= Q(coders__in=coders)
+    if not query:
+        return
+    qs = Subscription.for_upsolving
+    qs = qs.filter(Q(resource__isnull=True) | Q(resource=resource))
+    qs = qs.filter(query)
+    return qs
+
+
+def get_coderlist_value(account, func, field):
+    query = Q()
+    if account.n_listvalues:
+        query |= Q(values__account=account)
+    if account.has_coders and (coders := account.coders.filter(n_listvalues__gt=0)):
+        query |= Q(values__coder__in=coders)
+    if not query:
+        return
+    qs = CoderList.objects.filter(**{f'{field}__isnull': False})
+    qs = qs.filter(query)
+    aggregation = qs.aggregate(field_value=func(field))
+    return aggregation['field_value']
 
 
 class Command(BaseCommand):
@@ -61,7 +94,7 @@ class Command(BaseCommand):
         parser.add_argument('--reset-upsolving', action='store_true', help='reset upsolving')
         parser.add_argument('--with-coders', action='store_true', help='with coders')
         parser.add_argument('--coder-list', type=str, help='account from coder list')
-
+        parser.add_argument('--split-by-resource', action='store_true', help='Separately for each resource')
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -71,11 +104,8 @@ class Command(BaseCommand):
         regular_update = not has_custom_params
 
         if args.resources:
-            resources = Resource.objects
-            filt = Q()
-            for r in args.resources:
-                filt |= Q(host__iregex=r)
-            resources = resources.filter(filt)
+            resources = Resource.get(args.resources)
+            args.split_by_resource = False
         else:
             resources = Resource.available_for_update_objects
             resources = resources.filter(has_accounts_infos_update=True)
@@ -85,6 +115,7 @@ class Command(BaseCommand):
         now = timezone.now()
         n_total_counter = defaultdict(int)
         n_resource = 0
+        active_resources = []
         for resource in resources:
             resource_info = resource.info.get('accounts', {})
             if resource_info.get('skip'):
@@ -165,10 +196,16 @@ class Command(BaseCommand):
                 if not accounts:
                     continue
 
-            event_log = EventLog.objects.create(name='parse_accounts_infos',
-                                                related=resource,
-                                                status=EventStatus.IN_PROGRESS,
-                                                message=f'{len(accounts)} of {total} accounts')
+            if args.split_by_resource:
+                active_resources.append(resource)
+                continue
+
+            event_log = EventLog.objects.create(
+                name='parse_accounts_infos',
+                related=resource,
+                status=EventStatus.IN_PROGRESS,
+                message=f'{len(accounts)} of {total} accounts',
+            )
             count = 0
             n_counter = defaultdict(int)
             update_submissions_info = {}
@@ -198,8 +235,7 @@ class Command(BaseCommand):
                             account, created = Account.objects.get_or_create(key=member, resource=resource)
                         else:
                             account.refresh_from_db()
-                        is_team = account.info.get('is_team', False)
-                        do_upsolve = resource.has_upsolving and account.has_coders and not is_team
+
                         n_accounts_to_update -= 1
                         with transaction.atomic():
                             if 'delta' in data or 'delta' in (data.get('info') or {}):
@@ -229,7 +265,6 @@ class Command(BaseCommand):
                                 continue
 
                             count += 1
-                            info = data['info']
 
                             params = data.pop('contest_addition_update_params', {})
                             contest_addition_update = data.pop('contest_addition_update', params.pop('update', {}))
@@ -247,7 +282,12 @@ class Command(BaseCommand):
                                 other, _ = Account.objects.get_or_create(resource=account.resource, key=data['rename'])
                                 n_counter['rename'] += 1
                                 pbar.set_postfix(rename=f'{n_counter["rename"]}: Rename {account} to {other}')
+                                seen.add(account.key)
                                 account = rename_account(account, other)
+                                account.updated = now
+                                account.save(update_fields=['updated'])
+                                seen.add(account.key)
+                                continue
 
                             coders = data.pop('coders', [])
                             if coders:
@@ -256,19 +296,53 @@ class Command(BaseCommand):
                                     .exclude(account=account)
                                 for c in qs:
                                     account.coders.add(c)
+                                    setattr(account, 'has_coders', True)
 
+                            upsolving_subscriptions = False
+                            do_upsolve = resource.has_upsolving and (
+                                (account.has_coders and not account.info.get('is_team')) or
+                                (upsolving_subscriptions := get_subscriptions_with_upsolving(resource, account))
+                            )
+                            upsolve_delay = None
                             if do_upsolve:
+                                pagination_size = None
+                                if account.last_submission:
+                                    pagination_size = (now - account.last_submission).days * 20
                                 if args.reset_upsolving:
                                     account.info.pop('submissions_', None)
                                     account.submissions_info = {}
-                                updated_info = resource.plugin.Statistic.update_submissions(account=account,
-                                                                                            resource=resource)
+                                    pagination_size = None
+
+                                updated_info = resource.plugin.Statistic.update_submissions(
+                                    account=account, resource=resource,
+                                    with_submissions=upsolving_subscriptions,
+                                    pagination_size=pagination_size,
+                                )
+                                account.refresh_from_db()
+                                upsolve_delay = updated_info.pop('delay', None)
+
+                                if upsolving_subscriptions and (submissions := updated_info.pop('submissions', [])):
+                                    already_sent = set()
+                                    for subscription in upsolving_subscriptions:
+                                        if subscription.notification_key in already_sent:
+                                            continue
+                                        already_sent.add(subscription.notification_key)
+
+                                        message = compose_message_by_submissions(
+                                            resource, account, submissions, subscription=subscription)
+                                        if not message:
+                                            continue
+                                        subscription.send(message=message)
+                                        updated_info['n_subscriptions'] += 1
+
                                 add_dict_to_dict(updated_info, update_submissions_info)
 
                                 coders = list(account.coders.values_list('username', flat=True))
                                 if coders and updated_info.get('n_updated'):
-                                    call_command('set_coder_problems', coders=coders, resources=[resource.host])
+                                    call_command('set_coder_problems', coders=coders, resources=[resource.host],
+                                                 from_date=(now - timedelta(days=1)).isoformat())
 
+                            info = data['info']
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])
                             if 'name' in info:
@@ -276,6 +350,8 @@ class Command(BaseCommand):
                                 account.name = name if name and name != account.key else None
                             delta = timedelta(**resource_info.get('delta', {'days': 365}))
                             delta = info.pop('delta', delta)
+                            delta = min_with_none(delta, upsolve_delay)
+                            updated_ceil = 'day'
 
                             extra = info.pop('extra', {})
                             if isinstance(extra, dict):
@@ -297,16 +373,25 @@ class Command(BaseCommand):
                                     outdated.pop(k, None)
                             info['outdated_'] = outdated
 
-                            account.info = info
+                            account.info = sanitize_data(info)
 
                             if do_upsolve and account.last_submission is not None:
-                                sumission_delta = max(now - account.last_submission, timedelta(hours=20))
-                                delta = min(delta, sumission_delta)
+                                elapsed = now - account.last_submission
+                                delta_multiplier = 2
+                                upsolving_delta = delta_multiplier * elapsed
+                                if elapsed < timedelta(days=1) < upsolving_delta:
+                                    upsolving_delta = timedelta(days=1) - elapsed
+                                upsolving_delta = max(upsolving_delta, timedelta(hours=2))
+                                delta = min(delta, upsolving_delta)
 
-                            account.updated = arrow.get(now + delta).ceil('day').datetime
+                            if update_delay := get_coderlist_value(account, Min, 'account_update_delay'):
+                                delta = min(delta, update_delay)
+                                updated_ceil = 'hour'
+
+                            account.updated = arrow.get(now + delta).ceil(updated_ceil).datetime
                             account.save()
                             seen.add(account.key)
-            except ExceptionParseAccounts as e:
+            except (ExceptionParseAccounts, ProxyLimitReached) as e:
                 event_status = EventStatus.WARNING
                 exception_error = str(e)
             except Exception as e:
@@ -342,6 +427,24 @@ class Command(BaseCommand):
             n_resource += 1
             n_counter['resource'] += 1
             add_dict_to_dict(n_counter, n_total_counter)
+
+            if update_submissions_info.get('n_subscriptions'):
+                send_messages()
+
+        if args.split_by_resource:
+            queue = django_rq.get_queue('parse_accounts')
+            for resource in active_resources:
+                resource_host = resource.host.split('/')[0]
+                job_id = f'parse_accounts_{resource_host}'
+
+                job = queue.fetch_job(job_id)
+                if not job or job.is_finished or job.is_failed:
+                    kwargs = {'resources': [resource.host]}
+                    job = queue.enqueue(call_command, 'parse_accounts_infos', **kwargs, job_id=job_id)
+                    self.logger.info(f'Added {resource} parse_accounts job to queue: job = {job}')
+                else:
+                    self.logger.info(f'{resource} parse_accounts job already in queue: job = {job}')
+            return
 
         total_update_submissions_info = n_total_counter.pop('update_submissions_info', {})
         self.logger.info(f'Total: {dict(n_total_counter)}')

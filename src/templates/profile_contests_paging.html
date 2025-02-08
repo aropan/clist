@@ -77,6 +77,8 @@
         {% if field|get_rating_predicition_field %}
         {% define field|get_rating_predicition_field as predicition_field %}
         {% define statistic.rating_prediction|get_item:predicition_field as value %}
+        {% elif field in statistic_fields %}
+        {% define statistic|get_item:field as value %}
         {% else %}
         {% define statistic.addition|get_item:field as value %}
         {% endif %}

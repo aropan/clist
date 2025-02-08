@@ -13,7 +13,7 @@ from sql_util.utils import Exists
 from tqdm import tqdm
 
 from clist.models import Contest, Problem, Resource
-from clist.views import update_problems
+from clist.utils import update_problems
 from utils.attrdict import AttrDict
 from utils.timetools import parse_duration
 

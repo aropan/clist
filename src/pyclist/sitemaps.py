@@ -52,7 +52,7 @@ class AccountsSitemap(BaseSitemap):
     limit = 1000
 
     def items(self):
-        return Statistics.objects.filter(place_as_int__lte=3).order_by('-created').select_related('account__resource')
+        return Statistics.objects.filter(place_as_int__lte=3).order_by('-created').select_related('account', 'resource')
 
     def priority(self, stat):
         return round(0.5 - 0.1 * (stat.place_as_int - 1) / 10 + (0.4 if 'medal' in stat.addition else 0.0), 2)
@@ -61,7 +61,7 @@ class AccountsSitemap(BaseSitemap):
         return stat.created
 
     def location(self, stat):
-        return reverse('coder:account', args=(stat.account.key, stat.account.resource.host))
+        return reverse('coder:account', args=(stat.account.key, stat.resource.host))
 
 
 class ResourcesSitemap(BaseSitemap):

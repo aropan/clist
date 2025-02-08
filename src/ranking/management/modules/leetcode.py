@@ -13,15 +13,15 @@ from datetime import datetime, timedelta
 from functools import lru_cache, partial
 from urllib.parse import urljoin
 
-import pytz
+import arrow
 import tqdm
 import yaml
 from django.db import transaction
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import as_number, get_copy_item, get_item, is_improved_solution
-from ranking.management.modules.common import LOG, REQ, BaseModule, FailOnGetResponse, ProxyLimitReached
-from ranking.management.modules.excepts import ExceptionParseStandings
+from clist.templatetags.extras import as_number, get_item, is_improved_solution, is_solved
+from ranking.management.modules.common import LOG, REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
 from utils.logger import suppress_db_logging_context
 from utils.mathutils import round_sig
@@ -244,8 +244,7 @@ class Statistic(BaseModule):
 
                             skip = False
                             solved = 0
-                            stats = get_item(statistics, member, {})
-                            problems = r.setdefault('problems', get_copy_item(stats, 'problems', {}))
+                            problems = r.setdefault('problems', get_item(statistics, (member, 'problems'), {}))
                             submitted_keys = set()
                             for k, s in submissions.items():
                                 short = problems_info[k]['short']
@@ -871,7 +870,7 @@ class Statistic(BaseModule):
 
     @transaction.atomic()
     @staticmethod
-    def update_submissions(account, resource):
+    def update_submissions(account, resource, **kwargs):
         info = deepcopy(account.info.setdefault('submissions_', {}))
         leetcode_session = account.info.get('variables_', {}).get('LEETCODE_SESSION', None)
         if leetcode_session:
@@ -930,7 +929,7 @@ class Statistic(BaseModule):
 
                 if 'question' in submission:
                     submission.update(submission.pop('question'))
-                submission_time = int(get_field('timestamp', 'submitTime'))
+                submission_timestamp = int(get_field('timestamp', 'submitTime'))
                 submission_id = get_field('id', 'submissionId')
                 if submission_id is None:
                     continue
@@ -968,6 +967,11 @@ class Statistic(BaseModule):
                 contest = next(iter(contests))
                 short = problem.short
 
+                submission_time = arrow.get(submission_timestamp).datetime
+                if submission_time < contest.end_time:
+                    ret['n_contest_submissions'] += 1
+                    continue
+
                 title = get_field('title')
                 if problem.name != title:
                     LOG.warning(f'Problem {problem} has wrong name: {title} vs {problem.name}')
@@ -983,13 +987,13 @@ class Statistic(BaseModule):
                     binary=is_accepted,
                     result='+' if is_accepted else '-',
                     submission_id=submission_id,
-                    submission_time=submission_time,
+                    submission_time=submission_timestamp,
                 )
 
-                stat, _ = create_upsolving_statistic(contest=contest, account=account)
+                stat, _ = create_upsolving_statistic(resource=resource, contest=contest, account=account)
                 problems = stat.addition.setdefault('problems', {})
                 problem = problems.setdefault(short, {})
-                if not is_improved_solution(submission, problem):
+                if not is_improved_solution(submission, problem) or is_solved(problem):
                     ret['n_already_solved'] += 1
                     continue
 
@@ -1002,7 +1006,6 @@ class Statistic(BaseModule):
                 ret['n_updated'] += 1
                 stat.save()
 
-                submission_time = datetime.fromtimestamp(submission_time).replace(tzinfo=pytz.utc)
                 if not account.last_submission or account.last_submission < submission_time:
                     account.last_submission = submission_time
                     save_account = True

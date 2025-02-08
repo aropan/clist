@@ -28,6 +28,12 @@ class BaseModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     modified = models.DateTimeField(auto_now=True, db_index=True)
 
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'modified' not in update_fields:
+            update_fields.append('modified')
+        return super().save(*args, **kwargs)
+
     def fetched_field(self, field) -> Optional[Any]:
         fields = field.split('__')
         obj = self
@@ -37,12 +43,25 @@ class BaseModel(models.Model):
             obj = getattr(obj, field)
         return obj
 
+    def has_field(self, field) -> bool:
+        *fields, key = field.split('__')
+        obj = self
+        for field in fields:
+            if field not in obj._state.fields_cache:
+                return False
+            obj = getattr(obj, field)
+        return key in obj.__dict__
+
     class Meta:
         abstract = True
 
     @property
     def channel_group_name(self):
         return f'{self.__class__.__name__.upper()}__{self.pk}'
+
+    def touch(self):
+        self.modified = now()
+        self.save(update_fields=['modified'])
 
 
 class BaseQuerySet(models.QuerySet):

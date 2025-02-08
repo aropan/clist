@@ -10,8 +10,8 @@ import dateutil.parser
 from ratelimiter import RateLimiter
 
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):
@@ -93,26 +93,40 @@ class Statistic(BaseModule):
                 page = REQ.get(url)
             except FailOnGetResponse as e:
                 if e.code == 404:
-                    return
-                if e.code == 308:
+                    return None
+                if e.code == 308 or e.code == 500:
                     return False
                 raise e
             match = re.search('"buildId":"(?P<buildid>[^"]*)"', page)
             buildid = match.group('buildid')
             url = Statistic.PROFILE_DATA_URL_FORMAT.format(buildid=buildid, handle=account.key)
-            data = REQ.get(url, return_json=True)
-            data = data['pageProps']
+            try:
+                orig_data = REQ.get(url, return_json=True)
+            except FailOnGetResponse as e:
+                if e.code == 308 or e.code == 500:
+                    return False
+                raise e
+            data = orig_data['pageProps']
+
+            if data.get('__N_REDIRECT_STATUS') == 307 and (redirect := data.get('__N_REDIRECT')):
+                if match := re.search('https://[^/]*geeksforgeeks.org/user/(?P<user>[^/]*)/?', redirect):
+                    return {'rename': match.group('user'), 'handle': account.key}
 
             info = {}
+            if 'userInfo' not in data:
+                return False
             info = data.pop('userInfo')
             info['handle'] = data.pop('userHandle')
 
             contest_data = data.pop('contestData')
-            user_contest_data = contest_data.pop('user_contest_data')
-            info.update(contest_data)
-            contest_data = user_contest_data.pop('contest_data')
-            info.update(user_contest_data)
-            info['contest_data'] = contest_data
+            if contest_data is None:
+                info['contest_data'] = []
+            else:
+                user_contest_data = contest_data.pop('user_contest_data')
+                info.update(contest_data)
+                contest_data = user_contest_data.pop('contest_data')
+                info.update(user_contest_data)
+                info['contest_data'] = contest_data
 
             return info
 
@@ -130,6 +144,10 @@ class Statistic(BaseModule):
                     continue
 
                 assert user == data.pop('handle')
+
+                if 'rename' in data:
+                    yield data
+                    continue
 
                 contest_addition_update = {}
                 for contest_data in data.pop('contest_data'):

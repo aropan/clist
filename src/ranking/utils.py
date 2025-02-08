@@ -26,7 +26,7 @@ from clist.templatetags.extras import add_prefix_to_problem_short, get_item, get
 from ranking.management.modules.common import LOG
 from ranking.models import Account, AccountRenaming, Statistics
 from utils.logger import suppress_db_logging_context
-from utils.mathutils import max_with_none
+from utils.mathutils import max_with_none, sum_with_none
 
 
 @transaction.atomic
@@ -48,12 +48,31 @@ def rename_account(old_account, new_account):
 
     n_contests = new_account.n_contests + old_account.n_contests
     n_writers = new_account.n_writers + old_account.n_writers
+    n_subscribers = new_account.n_subscribers + old_account.n_subscribers
+    n_listvalues = new_account.n_listvalues + old_account.n_listvalues
+    solving = new_account.solving + old_account.solving
+    upsolving = sum_with_none(new_account.upsolving, old_account.upsolving)
+    total_solving = new_account.total_solving + old_account.total_solving
+    n_solved = new_account.n_solved + old_account.n_solved
+    n_upsolved = sum_with_none(new_account.n_upsolved, old_account.n_upsolved)
+    n_total_solved = new_account.n_total_solved + old_account.n_total_solved
+    n_first_ac = new_account.n_first_ac + old_account.n_first_ac
+
     last_activity = max_with_none(old_account.last_activity, new_account.last_activity)
     last_submission = max_with_none(old_account.last_submission, new_account.last_submission)
     new_account = MergedModelInstance.create(new_account, [old_account])
     old_account.delete()
     new_account.n_contests = n_contests
     new_account.n_writers = n_writers
+    new_account.n_subscribers = n_subscribers
+    new_account.n_listvalues = n_listvalues
+    new_account.solving = solving
+    new_account.upsolving = upsolving
+    new_account.total_solving = total_solving
+    new_account.n_solved = n_solved
+    new_account.n_upsolved = n_upsolved
+    new_account.n_total_solved = n_total_solved
+    new_account.n_first_ac = n_first_ac
     new_account.last_activity = last_activity
     new_account.last_submission = last_submission
     new_account.save()
@@ -181,7 +200,7 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
         if len(contests) > 1:
             LOG.warning('Multiple contests with same key %s = %s', contest_key, contests)
             continue
-        defaults = {'skip_in_stats': False}
+        defaults = {'resource': account.resource, 'skip_in_stats': False}
         if '_rank_field' not in addition_update:
             defaults['place'] = rank
             defaults['place_as_int'] = rank
@@ -240,10 +259,15 @@ def account_update_contest_additions(
     renaming_contest_keys = set(contest_keys)
     while contest_keys:
         iteration += 1
+
+        conditions = (Q(**{f'contest__{field}__in': contest_keys}) for field in fields)
+        condition = functools.reduce(operator.__or__, conditions)
+
         if clear_rating_change:
-            qs_clear = base_qs.filter(Q(addition__rating_change__isnull=False) |
-                                      Q(addition__new_rating__isnull=False) |
-                                      Q(addition__rating__isnull=False))
+            qs_clear = base_qs.exclude(condition)
+            qs_clear = qs_clear.filter(Q(addition__rating_change__isnull=False) |
+                                       Q(addition__new_rating__isnull=False) |
+                                       Q(addition__rating__isnull=False))
             for s in qs_clear:
                 s.addition.pop('rating', None)
                 s.addition.pop('rating_change', None)
@@ -252,8 +276,6 @@ def account_update_contest_additions(
                 s.save(update_fields=['addition'])
             clear_rating_change = False
 
-        conditions = (Q(**{f'contest__{field}__in': contest_keys}) for field in fields)
-        condition = functools.reduce(operator.__or__, conditions)
         stat_qs = base_qs.filter(condition).select_related('contest')
 
         total = 0
@@ -335,14 +357,16 @@ def account_update_contest_additions(
         break
 
 
-def create_upsolving_statistic(contest, account):
+def create_upsolving_statistic(resource, contest, account):
     defaults = {
+        'resource': resource,
         'skip_in_stats': True,
         'addition': {'_no_update_n_contests': True},
     }
     if account.name:
         defaults['addition']['name'] = account.name
-    stat, created = Statistics.objects.get_or_create(contest=contest, account=account, defaults=defaults)
+    statistics_objects = Statistics.saved_objects.select_related('account', 'contest', 'resource')
+    stat, created = statistics_objects.get_or_create(contest=contest, account=account, defaults=defaults)
     if stat.skip_in_stats or stat.is_rated:
         return stat, created
 
@@ -379,7 +403,8 @@ def update_stage(self):
             spec_filter_params[field] = filter_params.pop(field)
     is_over = self.contest.end_time < timezone_now
 
-    contests = self.contest.resource.contest_set.filter(
+    resource = self.contest.resource
+    contests = resource.contest_set.filter(
         start_time__gte=self.contest.start_time,
         end_time__lte=self.contest.end_time,
         **filter_params,
@@ -401,6 +426,7 @@ def update_stage(self):
         stage.refresh_from_db()
 
     stage_placing = self.score_params.get('place')
+    duration_weighting = self.score_params.get('duration_weighting')
     n_best = self.score_params.get('n_best')
     fields = self.score_params.get('fields', [])
     scoring = self.score_params.get('scoring', {})
@@ -589,6 +615,8 @@ def update_stage(self):
                         raise NotImplementedError(f'scoring {scoring["name"]} is not implemented')
                 if score is None:
                     score = stat.solving
+                if duration_weighting and contest.duration < timedelta(**duration_weighting['duration']):
+                    score *= duration_weighting['factor']
 
                 if not detail_problems and not skip_problem_stat:
                     problems_infos[problem_info_key].setdefault('n_teams', 0)
@@ -947,6 +975,7 @@ def update_stage(self):
                 'addition': row,
                 'skip_in_stats': True,
                 'advanced': advanced,
+                'resource': resource,
             }
             if parsed_statistic:
                 defaults['place'] = None
@@ -962,11 +991,7 @@ def update_stage(self):
                 stat.advanced = defaults['advanced']
                 stat.save(update_fields=['addition', 'skip_in_stats', 'advanced'])
             else:
-                stat, created = Statistics.objects.update_or_create(
-                    account=account,
-                    contest=stage,
-                    defaults=defaults,
-                )
+                stat, created = Statistics.objects.update_or_create(account=account, contest=stage, defaults=defaults)
             pks.add(stat.pk)
 
             for k in stat.addition.keys():
@@ -1039,3 +1064,4 @@ def update_stage(self):
             if stage.is_rated is None:
                 stage.is_rated = False
         stage.save()
+        stage.statistics_update_done()

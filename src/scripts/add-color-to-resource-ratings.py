@@ -2,11 +2,14 @@
 
 import colorsys
 import re
+from copy import deepcopy
 from pprint import pprint
 
 import cssutils
+from stringcolor import cs
 
 from clist.models import Resource
+from utils.strings import print_diff
 
 
 def run(host=None, *args):
@@ -32,6 +35,7 @@ def run(host=None, *args):
     for resource in resources:
         if not resource.ratings:
             continue
+        orig_ratings = deepcopy(resource.ratings)
         to_save = False
         prev_rgb = None
         hsl = None
@@ -61,14 +65,14 @@ def run(host=None, *args):
         limit = None
         next_rating = resource.ratings[-1]
         for rating in reversed(resource.ratings[:-1]):
-            next_rating_value = next_rating['low'] - 1
+            next_rating_value = next_rating['low']
             if rating.get('high') != next_rating_value:
                 rating['high'] = next_rating_value
                 to_save = True
             if limit is None or rating['color'] != limit['color']:
                 limit = rating
             if 'high' in limit:
-                value = limit['high'] + 1
+                value = limit['high']
                 if rating.get('next') != value:
                     rating['next'] = value
                     to_save = True
@@ -84,5 +88,7 @@ def run(host=None, *args):
                 to_save = True
 
         if to_save:
-            pprint(resource.ratings)
+            print()
+            print(cs(resource.host, 'cyan'))
+            print_diff(orig_ratings, resource.ratings)
             resource.save(update_fields=['ratings'])

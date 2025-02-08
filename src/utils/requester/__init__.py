@@ -177,6 +177,11 @@ class Proxer():
                     proxy = self.get()
                     self.callback_new_proxy(proxy)
 
+    def dump_proxy(self):
+        if self.dump_proxy_filepath and self.proxy:
+            with open(self.dump_proxy_filepath, 'w') as fo:
+                json.dump(self.proxy, fo, indent=2)
+
     def save_data(self):
         with self.lock:
             self.check_proxy()
@@ -190,9 +195,7 @@ class Proxer():
             with open(self.file_name, 'w') as fo:
                 fo.write(j)
 
-            if self.dump_proxy_filepath and self.proxy:
-                with open(self.dump_proxy_filepath, 'w') as fo:
-                    json.dump(self.proxy, fo, indent=2)
+            self.dump_proxy()
 
     def is_slow_proxy(self):
         if self.proxy and self.proxy.get('_total_count', 0) > 9:
@@ -281,6 +284,8 @@ class Proxer():
             source = self.sources.setdefault(self.proxy['source'], {})
             source.setdefault(key, 0)
             source[key] += value
+            if source.get('_total_count') and source.get('_total_time'):
+                source['_avg_time'] = round(source['_total_time'] / source['_total_count'], 3)
 
     def ok(self, proxy, time_response=None):
         with self.lock:
@@ -289,6 +294,8 @@ class Proxer():
             self.proxy['_state'] += 1
             self.proxy['_total_success'] += 1
             self.update_value('_success', 1)
+            if self.proxy['_success'] == 1:
+                self.dump_proxy()
             if time_response:
                 delta_time = time_response.total_seconds() + time_response.microseconds / 1000000.
                 self.update_value('_total_count', 1)
@@ -297,10 +304,10 @@ class Proxer():
             self.print(f'ok, {time_response} with average {self.time_response()}')
             self.check_proxy()
 
-    def fail(self, proxy, force=False):
+    def fail(self, proxy, force=False) -> bool:
         with self.lock:
             if not self.proxy or proxy != self.proxy_address:
-                return
+                return False
             if force:
                 self.proxy['_state'] = 0
             else:
@@ -308,6 +315,7 @@ class Proxer():
             self.proxy['_total_fail'] += 1
             self.update_value('_fail', 1)
             self.check_proxy()
+            return True
 
     def time_response(self):
         if self.proxy and self.proxy.get('_total_count', 0):
@@ -346,7 +354,7 @@ class Proxer():
         connect=None,
         time_limit=LIMIT_TIME,
         n_limit=None,
-        n_deferred=1,
+        n_deferred=3,
         dump_proxy_filepath=None,
     ):
         self.logger = logger
@@ -604,9 +612,10 @@ class requester():
             if self.proxer:
                 self.proxer.connect(req=self, set_proxy=set_proxy)
 
-    def proxy_fail(self, proxy=None, force=False):
+    def proxy_fail(self, proxy=None, force=False) -> bool:
         if self.proxer:
-            self.proxer.fail(proxy=proxy or self.proxy, force=force)
+            return self.proxer.fail(proxy=proxy or self.proxy, force=force) and not self.proxer.without_new_proxy
+        return False
 
     def get(
         self,
@@ -626,6 +635,7 @@ class requester():
         return_code=False,
         force_json=False,
         ignore_codes=None,
+        raise_codes=None,
         n_attempts=None,
         additional_attempts=None,
         additional_delay=0,
@@ -758,10 +768,15 @@ class requester():
                         force_json = False
                         response = err
                         page = read_response(response)
+                    elif raise_codes and error_code in raise_codes:
+                        if self.proxer:
+                            self.proxer.ok(proxy=str(proxy), time_response=datetime.utcnow() - time_start)
+                        raise_fail(err, FailOnGetResponse(err))
                     else:
                         self.print(f'[error] code = {error_code}, response = {str(err)[:200]}')
                         self.error = err
-                        self.proxy_fail(proxy)
+                        proxy_failed = self.proxy_fail(proxy)
+
                         error_exception = FailOnGetResponse(err)
 
                         if additional_attempts and error_code in additional_attempts:
@@ -774,6 +789,8 @@ class requester():
                                 attempt -= 1
                                 with self.additional_lock:
                                     sleep(additional_delay)
+                        elif proxy_failed:
+                            attempt -= 1
 
                         attempt += 1
                         if attempt < n_attempts:
@@ -1050,7 +1067,7 @@ class requester():
             with lock.acquire(timeout=60):
                 self.cookiejar.save(self.cookie_filename, ignore_discard=True, ignore_expires=True)
 
-    def close(self):
+    def save(self):
         if self.proxer:
             self.proxer.save_data()
         self.save_cookie()
@@ -1062,35 +1079,45 @@ class requester():
         ret.init_opener()
         return ret
 
+    def set_attributes(self, **kwargs):
+        orig_attributes = {}
+        for field, value in kwargs.items():
+            orig_attributes[field] = getattr(self, field, None)
+            setattr(self, field, value)
+        setattr(self, 'orig_attributes', orig_attributes)
+
+    def restore_attributes(self):
+        orig_attributes = getattr(self, 'orig_attributes', None)
+        if orig_attributes:
+            for field, value in orig_attributes.items():
+                setattr(self, field, value)
+
     def with_proxy(self, inplace=True, attributes=None, **kwargs):
-        self.save_cookie()
+        return self(
+            inplace=inplace,
+            proxy=kwargs,
+            **(attributes or {}),
+        )
+
+    def __call__(self, inplace=True, proxy=None, **kwargs):
+        self.save()
         ret = self if inplace else copy.copy(self)
-
-        if attributes:
-            orig_attributes = {}
-            for field, value in attributes.items():
-                orig_attributes[field] = getattr(ret, field, None)
-                setattr(ret, field, value)
-            setattr(ret, 'orig_attributes', orig_attributes)
-
-        if not inplace:
-            ret.init_opener()
-        ret.set_proxy(proxy=True, **kwargs)
+        ret.set_attributes(**kwargs)
+        ret.init_opener()
+        if proxy is not None:
+            ret.set_proxy(True, **proxy)
         return ret
 
     def __enter__(self):
         return self
 
     def __exit__(self, *err):
-        orig_attributes = getattr(self, 'orig_attributes', None)
-        if orig_attributes:
-            for field, value in orig_attributes.items():
-                setattr(self, field, value)
-        self.close()
+        self.save()
+        self.restore_attributes()
         self.init_opener()
 
     def cleanup(self):
-        self.save_cookie()
+        self.save()
 
         if not isdir(self.dir_cache):
             return

@@ -24,26 +24,12 @@
 </h2>
 
 <div class="col-xl-10 col-xl-offset-1">
+  {% if can_modify %}
+  {% include "filter_collapse.html" with include_filter="coder_list_filters.html" %}
+  {% endif %}
+
   <form class="form-inline" method="post" action="">
-    {% if can_modify %}
-    {% csrf_token %}
-
-    <div id="add-list-value">
-      <span id="add-list-value-coder">
-      {% include "coder_filter.html" with nomultiply=True coder="coder" %}
-      <span class="or">or</span>
-      </span>
-      {% include "account_filter.html" with nomultiply=True account="account" %}
-      <span class="or">or</span>
-      <div class="form-group">
-        <textarea class="form-control" rows="1" name="raw" id="raw-value" placeholder="coder_1
-host_2:account_2,host_3:account_3
-..."></textarea>
-        <button class="btn btn-primary btn-sm" type="submit" id="raw-submit" disabled>Add</button>
-      </div>
-    </div>
-    {% endif %}
-
+    {% if can_modify %}{% csrf_token %}{% endif %}
     <div id="coder-list" class="panel panel-default table-responsive">
       <table class="table table-hover table-striped">
         <thead>
@@ -51,19 +37,15 @@ host_2:account_2,host_3:account_3
             <th class="no-stretch">#</th>
             <th class="no-stretch"><i class="fas fa-external-link-alt"></i></th>
             <th class="no-stretch">VS</th>
-            {% if coder_list.with_names %}
+            {% if coder_list.custom_names %}
             <th class="no-stretch">Name</th>
             {% endif %}
             <th class="value">
               Coder/Accounts
               <span class="small text-muted">({{ coder_list_groups|length }} of {{ coder_list_n_values_limit }})</span>
             </th>
-            {% for resource in params.resources %}
-            <th>
-              <a href="{% url 'clist:resource' resource.host %}">
-                <img data-toggle="tooltip" data-placement="bottom" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="24" height="24"/>
-              </a>
-            </th>
+            {% for field in custom_field_select.values %}
+            <th class="no-stretch">{{ field|title_field_div }}</th>
             {% endfor %}
           </tr>
         </thead>
@@ -83,7 +65,7 @@ host_2:account_2,host_3:account_3
               {% endif %}
               {% endif %}
             </td>
-            {% if coder_list.with_names %}
+            {% if coder_list.custom_names %}
             <td class="no-stretch">
               {% if can_modify %}
               <a class="edit-name" href="#" data-name="group-name" data-type="text" data-group-id="{{ group.id }}" data-value="{{ group.name|default:'' }}"></a>
@@ -117,6 +99,9 @@ host_2:account_2,host_3:account_3
                 {% endif %}
               </span>
             </td>
+            {% for field in custom_field_select.values %}
+            <td class="no-stretch">{% include "field_value.html" with value=group|get_item:field %}</td>
+            {% endfor %}
           </tr>
           {% endwith %}
           {% endwith %}

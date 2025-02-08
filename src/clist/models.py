@@ -23,6 +23,7 @@ from django.db import models, transaction
 from django.db.models import Case, F, Max, Q, When
 from django.db.models.expressions import Exists, OuterRef
 from django.db.models.functions import Cast, Ln
+from django.http import Http404
 from django.urls import reverse
 from django.utils.timezone import now as timezone_now
 from django_ltree.fields import PathField
@@ -120,6 +121,10 @@ class Resource(BaseModel):
     skip_for_contests_chart = models.BooleanField(default=False)
     problem_rating_predictor = models.JSONField(default=dict, blank=True)
     has_inherit_medals_to_related = models.BooleanField(default=False)
+    has_statistic_total_solving = models.BooleanField(null=True, blank=True)
+    has_statistic_n_total_solved = models.BooleanField(null=True, blank=True)
+    has_statistic_n_first_ac = models.BooleanField(null=True, blank=True)
+    has_account_last_submission = models.BooleanField(null=True, blank=True)
 
     RATING_FIELDS = (
         'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
@@ -151,19 +156,22 @@ class Resource(BaseModel):
         super().__init__(*args, **kwargs)
         self.__original_host = self.host
 
+    def label_name(self):
+        return self.short_host or self.host
+
     def href(self, host=None):
         return '{uri.scheme}://{host}/'.format(uri=urlparse(self.url), host=host or self.host)
 
-    def get_rating_color(self, value, ignore_old=False):
+    def get_rating_color(self, value, ignore_old=False, value_name=None):
         if self.ratings and (value or isinstance(value, (int, float))):
             if isinstance(value, (list, tuple)):
                 for v in value:
-                    ret = self.get_rating_color(v)
+                    ret = self.get_rating_color(v, value_name=value_name)
                     if ret[0]:
                         return ret
             elif isinstance(value, dict):
-                fields = get_item(self.info, 'ratings.chartjs.coloring_field')
-                fields = [fields] if fields else self.RATING_FIELDS
+                coloring_field = get_item(self.info, 'ratings.chartjs.coloring_field')
+                fields = [coloring_field] if coloring_field else self.RATING_FIELDS
                 for field in fields:
                     if ignore_old and field.lower().startswith('old'):
                         continue
@@ -178,9 +186,38 @@ class Resource(BaseModel):
             else:
                 if isinstance(value, str):
                     value = int(value)
-                for rating in self.ratings:
-                    if rating['low'] <= value < rating['high'] + rating.get('sign', 1):
-                        return rating, value
+                coloring_field = get_item(self.info, 'ratings.chartjs.coloring_field')
+                if coloring_field and value_name and value_name == 'rating':
+                    next_rating = None
+                    curr_rating = None
+                    for rating in self.ratings:
+                        if rating.get('min_rating') is None:
+                            continue
+                        if value < rating['min_rating']:
+                            if not next_rating or next_rating['min_rating'] > rating['min_rating']:
+                                next_rating = rating
+                            continue
+                        if not curr_rating or curr_rating['min_rating'] < rating['min_rating']:
+                            curr_rating = rating
+                    if not curr_rating:
+                        curr_rating = next_rating
+                        value = curr_rating['low']
+                    elif next_rating and 'next' in curr_rating and 'prev' in curr_rating:
+                        current_delta = value - curr_rating['min_rating']
+                        total_delta = next_rating['min_rating'] - curr_rating['min_rating']
+                        value = current_delta / total_delta
+                        value = curr_rating['prev'] + value * (curr_rating['next'] - curr_rating['prev'])
+                    else:
+                        value = curr_rating['low']
+                    if curr_rating and get_item(self.info, 'ratings.reverse_circle_percent'):
+                        value_prev = curr_rating.get('prev', curr_rating['low'])
+                        value_next = curr_rating.get('next', curr_rating['high'])
+                        value = value_prev + value_next - value
+                    return curr_rating, value
+                else:
+                    for rating in self.ratings:
+                        if rating['low'] <= value < rating['high']:
+                            return rating, value
         return None, None
 
     def save(self, *args, **kwargs):
@@ -329,11 +366,15 @@ class Resource(BaseModel):
     def with_multi_account(self):
         return self.has_multi_account
 
+    @property
+    def major_kinds(self):
+        return self.info.get('major_kinds', [])
+
     def is_major_kind(self, instance):
         if not instance:
             return True
         if isinstance(instance, str):
-            return instance in self.info.get('major_kinds', [])
+            return instance in self.major_kinds
         if isinstance(instance, Contest):
             return self.is_major_kind(instance.kind)
         if isinstance(instance, Iterable):
@@ -341,17 +382,24 @@ class Resource(BaseModel):
         raise ValueError(f'Invalid instance type = {type(instance)}')
 
     def major_contests(self):
-        major_kinds = self.info.get('major_kinds', [])
-        return self.contest_set.filter(Q(kind__in=major_kinds) | Q(kind__isnull=True) | Q(kind=''))
+        contest_filter = Q(kind__isnull=True) | Q(kind='')
+        if self.major_kinds:
+            contest_filter |= Q(kind__in=self.major_kinds)
+        return self.contest_set.filter(contest_filter).filter(stage__isnull=True)
 
     def rating_step(self):
+        n_bins = get_item(self.info, 'ratings.chartjs.n_bins')
+        if n_bins:
+            return n_bins, None
+
         prev = None
         step = 0
         for rating in self.ratings[:-1]:
             if prev is not None:
                 step = math.gcd(step, rating['next'] - prev)
             prev = rating['next']
-        return step
+
+        return settings.CHART_N_BINS_DEFAULT, step
 
     @property
     def accounts_fields_types(self):
@@ -420,22 +468,33 @@ class Resource(BaseModel):
         return self.contest_set.filter(parsed_time__isnull=False).order_by('-end_time').first()
 
     @staticmethod
-    def get(value: str | int | List[str | int]) -> Optional['Resource'] | List['Resource']:
+    def get(
+        value: str | int | List[str | int],
+        queryset: Optional[models.QuerySet['Resource']] = None,
+        raise_exception: Exception = Http404,
+    ) -> Optional['Resource'] | List['Resource']:
+        queryset = queryset or Resource.objects
         if isinstance(value, int) or isinstance(value, str) and value.isdigit():
-            return Resource.objects.filter(pk=value).first()
-        if isinstance(value, str):
-            return Resource.objects.filter(Q(host=value) | Q(short_host=value)).first()
-        if isinstance(value, list):
-            values = value
+            ret = queryset.filter(pk=value).first()
+        elif isinstance(value, str):
+            ret = queryset.filter(Q(host=value) | Q(short_host=value)).first()
+        elif isinstance(value, list):
+            values = [v for v in value if v]
             filters = Q()
             for value in values:
                 if isinstance(value, int) or isinstance(value, str) and value.isdigit():
                     filters |= Q(pk=value)
                 elif isinstance(value, str):
                     filters |= Q(host=value) | Q(short_host=value)
-            if filters:
-                return Resource.objects.filter(filters)
-        return None
+            ret = queryset.filter(filters) if filters else queryset.none()
+            if len(ret) != len(values) and raise_exception:
+                raise raise_exception(f'Found {len(ret)} resources for {len(values)} values = {values}')
+            return ret
+        else:
+            return None
+        if ret is None and raise_exception:
+            raise raise_exception(f'No resource found for value = {value}')
+        return ret
 
     @property
     def problems_fields_types(self):
@@ -498,6 +557,7 @@ class Contest(BaseModel):
     registration_url = models.CharField(max_length=2048, null=True, blank=True)
     calculate_time = models.BooleanField(default=False)
     info = models.JSONField(default=dict, blank=True)
+    raw_info = models.JSONField(default=dict, blank=True)
     submissions_info = models.JSONField(default=dict, blank=True)
     variables = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
@@ -520,6 +580,9 @@ class Contest(BaseModel):
     rating_prediction_timing = models.DateTimeField(default=None, null=True, blank=True)
     wait_for_successful_update_timing = models.DateTimeField(default=None, null=True, blank=True)
     statistics_update_required = models.BooleanField(default=False)
+    upsolving_url = models.CharField(max_length=255, default=None, null=True, blank=True)
+    upsolving_key = models.CharField(max_length=255, default=None, null=True, blank=True)
+    has_unlimited_statistics = models.BooleanField(default=None, null=True, blank=True)
 
     rating_prediction_fields = models.JSONField(default=dict, blank=True, null=True)
     has_fixed_rating_prediction_field = models.BooleanField(default=False, null=True, blank=True)
@@ -708,7 +771,7 @@ class Contest(BaseModel):
         if deep == 0:
             return
 
-        for match in re.finditer(rf'(?P<number>\b[0-9]+\b(?:[\W\S]\b[0-9]+\b)*)|(?P<letter>[A-Z]\b)|(?P<month>{Contest.month_regex()})', title):
+        for match in re.finditer(rf'(?P<number>\b[0-9]+\b(?:[\W\S]\b[0-9]+\b)*)|(?P<letter>[A-Z]\b)|(?P<month>{Contest.month_regex()})', title):  # noqa
             for delta in (-1, 1):
                 base_title = title
                 values = []

@@ -14,8 +14,8 @@
 
 {% include "filter_collapse.html" with include_filter="resources_country_rating_filters.html" %}
 
-<div id="resources-rating" class="row row-flex-sm">
-{% for resource in resources %}
+<div id="resources-rating" class="row row-flex row-flex-sm">
+  {% for resource in resources %}
   <div class="col-sm-6 col-md-4 col-lg-3">
     <div class="panel panel-default table-responsive">
         <table class="table table-hover table-condensed table-striped">
@@ -36,7 +36,7 @@
         </table>
     </div>
   </div>
-{% endfor %}
+  {% endfor %}
 </div>
 
 {% endblock %}

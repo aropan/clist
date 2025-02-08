@@ -10,8 +10,8 @@ from urllib.parse import urljoin
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):

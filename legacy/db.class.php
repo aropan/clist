@@ -1,4 +1,6 @@
 <?php
+    require_once "helper.php";
+
     $is_debug = true;
     class db
     {
@@ -31,14 +33,13 @@
         {
             global $is_debug;
             $this->result = pg_query($this->link, $sql);
-
             if (!$this->result && $is_debug && !$ignore_error)
             {
                 print "
                     <span style=\"color:#555555;font-size:12pt;font-family:'Arial';font-weight:bold;\">SQL query error:<br>&nbsp;&nbsp;&nbsp;Query: </span>
                     <span style=\"color:#000000;font-size:12pt;font-family:'Arial';\">" . $sql . "<br></span>
                 ";
-                exit(0);
+                exit(1);
             }
             return $this->result;
         }

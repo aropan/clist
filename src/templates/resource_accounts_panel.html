@@ -1,0 +1,18 @@
+{% if condition and accounts.first|get_item:field %}
+<div class="col-md-6 col-lg-4">
+    <h4>
+        {{ title }}
+        <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&field={{ field }}&sort_column={{ field }}&sort_order=desc{% query_fields request 'country' 'list' %}">{% icon_to 'accounts' %}</a>
+    </h4>
+    <div class="panel panel-default table-responsive">
+        <table class="table table-hover table-condensed table-striped">
+            <tr>
+                <th>N</th>
+                <th>Handle</th>
+                <th>{{ header|split|join:"<br/>" }}</th>
+            </tr>
+            {% include paging %}
+        </table>
+    </div>
+</div>
+{% endif %}

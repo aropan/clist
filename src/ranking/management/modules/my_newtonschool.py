@@ -8,7 +8,9 @@ from urllib.parse import urljoin
 
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule, FailOnGetResponse
+from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import FailOnGetResponse
+
 
 
 class Statistic(BaseModule):

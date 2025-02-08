@@ -43,6 +43,7 @@
             <div>Add to<br/>list <a href="#" onclick="invert_accounts(event, 'to_list_accounts')">{% icon_to 'invert' %}</a></div>
           </th>
           {% endif %}
+          {% if with_account_ratings %}
           <th>
             <div class="chart-column" data-field="rating"></div>
             <div>Rating</div>
@@ -53,15 +54,11 @@
             <div>Resource<br/>rank</div>
             <div class="sortable-column" data-column="resource_rank"></div>
           </th>
+          {% endif %}
           <th>
             <div class="chart-column" data-field="n_contests"></div>
             <div>Contests<br/>number</div>
             <div class="sortable-column" data-column="n_contests"></div>
-          </th>
-          <th>
-            <div class="chart-column" data-field="n_writers"></div>
-            <div>Authors<br/>number</div>
-            <div class="sortable-column" data-column="n_writers"></div>
           </th>
           <th>
             <div class="chart-column" data-field="last_activity"></div>
