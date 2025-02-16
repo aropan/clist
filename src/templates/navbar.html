@@ -36,15 +36,8 @@
                 <li><a href="{% url 'clist:problems' %}">Problems</a></li>
                 <li><a href="{% url 'coder:coders' %}">Coders</a></li>
                 <li><a href="{% url 'coder:accounts' %}">Accounts</a></li>
+                <li><a href="{% url 'donation:donate' %}">Donate</a></li>
 
-                <li class="dropdown-menu-hover">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Donate <span class="caret"></span></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="https://www.patreon.com/clist" rel="noopener noreferrer">{% icon_to "patreon" %}&nbsp;Patreon</a></li>
-                        <li><a href="https://ko-fi.com/clist" rel="noopener noreferrer">{% icon_to "kofi" %}&nbsp;Ko-fi</a></li>
-                        <li><a href="https://nowpayments.io/donation/clist" rel="noopener noreferrer">{% icon_to "crypto" %}&nbsp;Crypto</a></li>
-                    </ul>
-                </li>
                 {% block banner %}
                     {% for b in banners %}
                         {% if not b.template %}
@@ -74,8 +67,11 @@
                         <li><a href="{% url 'change_environment' %}" rel="noopener">{% icon_to 'dev' False %}</a></li>
                         <li><a href="{% url 'charts' %}">{% icon_to 'charts' False %}</a></li>
                         <li>
-                            <a href="{% if navbar_database_viewname %}{% url 'admin:'|concat:navbar_database_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
-                            {% icon_to 'database' navbar_database_viewname|default:'database'|title_field position='bottom' %}
+                            {% if navbar_admin_model %}
+                            {% define navbar_admin_model.admin_changelist_viewname as navbar_admin_viewname %}
+                            {% endif %}
+                            <a href="{% if navbar_admin_viewname %}{% url 'admin:'|concat:navbar_admin_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
+                            {% icon_to 'admin' navbar_admin_viewname|default:'admin'|title_field position='bottom' %}
                             </a>
                         </li>
                         {% endif %}

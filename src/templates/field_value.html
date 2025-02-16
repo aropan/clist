@@ -80,12 +80,14 @@
         {% for handle in value %}{% if forloop.counter0 %}<br/>{% endif %}{% if resource %}<a href="{% url 'coder:account' handle resource.host %}">{{ handle }}</a>{% else %}{{ handle }}{% endif %}{% endfor %}
       {% elif field == 'hints' and types|to_json == '["list"]' %}
         <ul>{% for hint in value %}<li>{{ hint }}</li>{% endfor %}</ul>
-      {% elif field in statistic_fields or field in account_fields %}
-        {{ value|scoreformat }}
       {% elif value|get_type == 'RelatedManager' %}
         {% for object in value.all %}{{ object }}{% endfor %}
       {% elif value|get_type == 'datetime' %}
         <span title="{{ value|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ value|timezone:timezone|naturalday }}</span>
+      {% elif value|get_type == 'float' and scorefixedformat %}
+        {{ value|scorefixedformat:scorefixedformat }}
+      {% elif field in statistic_fields or field in account_fields %}
+        {{ value|scoreformat }}
       {% else %}
         {{ template_value }}
       {% endif %}

@@ -1120,3 +1120,16 @@ table.table-border-collapse-separate {
   position: absolute;
   margin: 2px;
 }
+
+
+/*
+ * trimmed text
+ */
+
+.expandable-text {
+  display: none;
+}
+
+.expandable-click {
+  cursor: pointer;
+}

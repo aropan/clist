@@ -124,6 +124,7 @@ class Resource(BaseModel):
     has_statistic_total_solving = models.BooleanField(null=True, blank=True)
     has_statistic_n_total_solved = models.BooleanField(null=True, blank=True)
     has_statistic_n_first_ac = models.BooleanField(null=True, blank=True)
+    has_statistic_medal = models.BooleanField(null=True, blank=True)
     has_account_last_submission = models.BooleanField(null=True, blank=True)
 
     RATING_FIELDS = (
@@ -154,7 +155,8 @@ class Resource(BaseModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__original_host = self.host
+        self.__original_host = self.fetched_field('host')
+        self.__original_icon = self.fetched_field('icon')
 
     def label_name(self):
         return self.short_host or self.host
@@ -242,9 +244,13 @@ class Resource(BaseModel):
 
         super().save(*args, **kwargs)
 
-        if self.__original_host != self.host:
+        if self.__original_host and self.__original_host != self.host:
             self.__original_host = self.host
             self.update_account_urls()
+
+        if self.__original_icon and self.__original_icon != self.icon:
+            self.__original_icon = self.icon
+            self.update_icon_sizes()
 
     def update_account_urls(self):
         update_accounts_by_coders(self.account_set)
@@ -992,15 +998,19 @@ class Contest(BaseModel):
     def channel_update_statistics_group_name(self):
         return f'{self.channel_group_name}__update_statistics'
 
-    def require_statistics_update(self):
-        if not self.statistics_update_required:
-            self.statistics_update_required = True
-            self.save(update_fields=['statistics_update_required'])
+    def require_statistics_update(self) -> bool:
+        if self.statistics_update_required:
+            return False
+        self.statistics_update_required = True
+        self.save(update_fields=['statistics_update_required'])
+        return True
 
-    def require_problem_rating_update(self):
-        if not self.problem_rating_update_required:
-            self.problem_rating_update_required = True
-            self.save(update_fields=['problem_rating_update_required'])
+    def require_problem_rating_update(self) -> bool:
+        if self.problem_rating_update_required:
+            return False
+        self.problem_rating_update_required = True
+        self.save(update_fields=['problem_rating_update_required'])
+        return True
 
     def statistics_update_done(self):
         if self.statistics_update_required:

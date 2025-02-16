@@ -1,4 +1,4 @@
-{% coder_account_filter accounts primary_account row_number_field=field operator="__gt" as coder_accounts %}
+{% coder_account_filter accounts primary_account row_number_field=fields|default:field operator="__gt" as coder_accounts %}
 {% define name|add:"_page" as name_page %}
 {% lazy_paginate first_per_page,per_page accounts using name_page %}
 {% get_pages %}
@@ -13,21 +13,13 @@
     <td>
       {% include 'account_table_cell.html' with account=account resource=resource %}
     </td>
+    {% for field in fields|default:field|split:"," %}
     <td>
       {% with value=account|get_item:field %}
-      {% with type=value|get_type %}
-      {% if value is None %}
-        &mdash;
-      {% elif type == "datetime" %}
-        <span title="{{ value|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ value|timezone:timezone|naturalday }}<span>
-      {% elif type == "float" %}
-        {{ value|scorefixedformat:2 }}
-      {% else %}
-        {{ value }}
-      {% endif %}
-      {% endwith %}
+      {% include "field_value.html" with value=value scorefixedformat=2 %}
       {% endwith %}
     </td>
+    {% endfor %}
   </tr>
 {% endfor %}
 {% show_more_table %}

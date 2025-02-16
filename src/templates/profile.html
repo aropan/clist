@@ -144,19 +144,9 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
     </div>
     {% endif %}
 
-    {% if show_history_ratings and writers.exists %}
-    <div{% if not two_columns %} class="col-md-6"{% endif %}>
-      <h3>Writer</h3>
-      <div class="panel panel-default table-responsive">
-        <table id="writers" class="table table-hover table-condensed table-striped">
-          <tr>
-            <th class="date">Date</th>
-            <th class="event">Event</th>
-          </tr>
-          {% include 'profile_writers_paging.html' %}
-        </table>
-      </div>
-      <script>$('#writers').endlessPaginate({onCompleted: toggle_tooltip});</script>
+    {% if not without_accounts and writers.exists %}
+    <div{% if not two_columns and show_history_ratings %} class="col-md-6"{% endif %}>
+      {% include "profile_writers.html" %}
     </div>
     {% endif %}
   </div>
@@ -202,6 +192,12 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
   </div>
 
   <script>load_rating_history()</script>
+  {% endif %}
+
+  {% if without_accounts and writers.exists %}
+  <div class="col-xs-12">
+    {% include "profile_writers.html" %}
+  </div>
   {% endif %}
 
   <div class="col-xs-12">

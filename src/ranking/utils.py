@@ -24,22 +24,18 @@ from sql_util.utils import Exists
 
 from clist.templatetags.extras import add_prefix_to_problem_short, get_item, get_problem_short, slug
 from ranking.management.modules.common import LOG
-from ranking.models import Account, AccountRenaming, Statistics
+from ranking.models import Account, Statistics
 from utils.logger import suppress_db_logging_context
 from utils.mathutils import max_with_none, sum_with_none
 
 
 @transaction.atomic
 def rename_account(old_account, new_account):
-    AccountRenaming.objects.update_or_create(
-        resource=old_account.resource,
-        old_key=old_account.key,
-        defaults={'new_key': new_account.key},
-    )
-    AccountRenaming.objects.filter(
-        resource=old_account.resource,
-        old_key=new_account.key,
-    ).delete()
+    resource = old_account.resource
+
+    resource.accountrenaming_set.update_or_create(old_key=old_account.key, defaults={'new_key': new_account.key})
+    resource.accountrenaming_set.filter(new_key=old_account.key).update(new_key=new_account.key)
+    resource.accountrenaming_set.filter(old_key=new_account.key).delete()
 
     new_contests = new_account.statistics_set.filter(skip_in_stats=False).values('contest')
     old_account.statistics_set.filter(contest__in=new_contests).delete()

@@ -89,7 +89,8 @@ class Command(BaseCommand):
                 fields = ['pk', '_rank', field]
                 with_rank_percentile = coloring_field == 'rank_percentile'
                 if with_rank_percentile:
-                    base_qs = base_qs.annotate(_percentile=Cast((F('_rank') - 1), FloatField()) / (n_rating_accounts - 1))
+                    base_qs = base_qs.annotate(
+                        _percentile=Cast((F('_rank') - 1), FloatField()) / (n_rating_accounts - 1))
                     exclude.update({'_percentile': FloatJSONF('info__rank_percentile'),
                                     'info__rank_percentile__isnull': False})
                     fields.extend(['_percentile', 'info'])

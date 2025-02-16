@@ -21,7 +21,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.db.models import Value
+from django.db.models import Q, Value
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.template.base import Node
@@ -1026,7 +1026,8 @@ def get_result_score(value):
     return as_number(value, default=0)
 
 
-def get_statistic_stats(addition, solving=None):
+@register.simple_tag
+def get_statistic_stats(addition, solving=None, with_n_medal_field=False):
     ret = {}
     problems = addition.get('problems', {})
     n_upsolving = 0
@@ -1057,6 +1058,13 @@ def get_statistic_stats(addition, solving=None):
     ret['n_solved'] = n_solved
     ret['n_total_solved'] = n_solved + n_upsolved
     ret['n_first_ac'] = n_first_ac
+
+    if with_n_medal_field and (medal := addition.get('medal')):
+        if medal in ('gold', 'silver', 'bronze'):
+            ret['n_medals'] = 1
+            ret[f'n_{medal}'] = 1
+        else:
+            ret['n_other_medals'] = 1
     return ret
 
 
@@ -1408,11 +1416,24 @@ def filter_by_resource(coders, resource):
 def trim_to(value, length, raw_text=False):
     if not length or len(value) - 1 < length:
         return value
+
     half = length // 2
-    trimmed_value = value[:half].strip() + '…' + value[-half:].strip()
+    separator = '…'
+
+    prefix = half
+    while prefix > 0 and value[prefix - 1].isspace():
+        prefix -= 1
+    suffix = len(value) - half
+    while suffix < len(value) and value[suffix].isspace():
+        suffix += 1
+    prefix, middle, suffix = value[:prefix], value[prefix:suffix], value[suffix:]
+
     if raw_text:
-        return trimmed_value
-    ret = f'<span title="{html.escape(value)}" data-toggle="tooltip">{html.escape(trimmed_value)}</span>'
+        return f'{prefix}{separator}{suffix}'
+
+    prefix, middle, suffix = map(html.escape, (prefix, middle, suffix))
+    separator = f'<span class="expandable-text">{middle}</span><span class="expandable-click" onclick="return expand_trimmed_text(event, this)">{separator}</span>'  # noqa: E501
+    ret = f'<span title="{html.escape(value)}" data-toggle="tooltip">{prefix}{separator}{suffix}</span>'
     return mark_safe(ret)
 
 
@@ -1668,12 +1689,24 @@ def coder_account_filter(queryset, entity, row_number_field=None, operator=None)
         return []
     ret = queryset.filter(pk=entity.pk).annotate(delete_on_duplicate=Value(True))
     if row_number_field:
-        if hasattr(entity, row_number_field):
-            value = getattr(entity, row_number_field)
+        fields = row_number_field.split(',')
+        if all(hasattr(entity, field) for field in fields):
+            values = [getattr(entity, field) for field in fields]
         else:
-            value = queryset.filter(pk=entity.pk).values_list(row_number_field, flat=True).first()
-        if value is not None:
-            row_number = queryset.filter(**{row_number_field + operator: value}).count() + 1
+            values = queryset.filter(pk=entity.pk).values_list(fields, flat=True).first()
+
+        if any(value is not None for value in values):
+            combined_filter = Q()
+            fields_values = list(zip(fields, values))
+            for idx, (field, value) in enumerate(fields_values):
+                if value is None:
+                    condition = Q(**{f'{field}__isnull': False})
+                else:
+                    condition = Q(**{field + operator: value})
+                for field, value in fields_values[:idx]:
+                    condition &= Q(**{field: value})
+                combined_filter |= condition
+            row_number = queryset.filter(combined_filter).count() + 1
             ret = ret.annotate(row_number=Value(row_number))
     else:
         ret = ret.annotate(row_number=Value('—'))

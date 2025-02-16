@@ -23,11 +23,6 @@
     </span>
   </div>
 
-  {% if request.GET.sort_order %}
-  <input type="hidden" name="sort_column" value="{{ request.GET.sort_column }}"/>
-  <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}"/>
-  {% endif %}
-
   {% if request.GET.chart_column %}
   <input type="hidden" name="chart_column" value="{{ request.GET.chart_column }}"/>
   {% endif %}
@@ -47,6 +42,8 @@
   {% if custom_fields %}
   {% include "field_to_select.html" with field="field" data=custom_fields %}
   {% endif %}
+
+  {% include "sort_select.html" with field="sort_column" data=sort_select %}
 
   {% if request.user.is_authenticated %}
   {% if request.GET.add_account %}

@@ -237,6 +237,8 @@ class Statistic(BaseModule):
 
         party = submission['author']
         for member in party['members']:
+            if 'handle' not in member:
+                continue
             handle = member['handle']
             if handle not in result:
                 continue
@@ -372,13 +374,14 @@ class Statistic(BaseModule):
                     }]
 
                 for member in party['members']:
+                    if 'handle' not in member:
+                        continue
+
                     upsolve = party['participantType'] not in participant_types
-
                     handle = member['handle']
-
                     r = result.setdefault(handle, OrderedDict())
-
                     r['member'] = handle
+
                     if is_gym:
                         r['ghost'] = is_ghost
                     if 'room' in party:
@@ -478,11 +481,12 @@ class Statistic(BaseModule):
                                 if last != value:
                                     last = value
                                     place = idx
-                                if first_score is None:
-                                    first_score = score
-                                if score:
-                                    last_score = score
                                 r['place'] = place
+
+                        if first_score is None:
+                            first_score = score
+                        if score:
+                            last_score = score
 
                         r['solving'] = score
                         if contest_type == 'ICPC':
@@ -498,7 +502,7 @@ class Statistic(BaseModule):
         params.pop('showUnofficial')
         params.pop('count', None)
 
-        if not users:
+        if not users and self.contest.end_time < now and not is_gym:
             data = api_query(method='contest.ratingChanges', params=params, api_key=self.api_key)
             if data['status'] not in ['OK', 'FAILED']:
                 LOG.warning(f'Missing rating changes = {data}')
@@ -556,7 +560,7 @@ class Statistic(BaseModule):
             info = Statistic.process_submission(submission, result, upsolve, contest=self)
 
             has_accepted |= info['is_accepted']
-            if contest_type == 'IOI' and info['is_accepted']:
+            if contest_type == 'IOI' and info['is_accepted'] and 'points' in submission:
                 k = submission['problem']['index']
                 problems_info[k].setdefault('full_score', submission['points'])
 
@@ -605,6 +609,7 @@ class Statistic(BaseModule):
             and phase == 'FINISHED'
             and not has_accepted
             and all('full_score' not in problem for problem in problems_info.values())
+            and first_score is not None
         ):
             standings['default_problem_full_score'] = 'max' if first_score > last_score else 'min'
 

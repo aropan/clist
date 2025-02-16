@@ -354,35 +354,49 @@ def update_problems(contest, problems=None, force=False):
     return True
 
 
-def update_writers(contest, writers=None):
+def update_writers(contest, writers=None) -> bool | None:
     if writers is not None:
         if canonize(writers) == canonize(contest.info.get('writers')):
             return
         contest.info['writers'] = writers
         contest.save()
 
-    def get_re_writers(writers):
-        ret = '|'.join([re.escape(w) for w in writers])
-        ret = f'^({ret})$'
-        return ret
-
     writers = contest.info.get('writers', [])
     if not writers:
         contest.writers.clear()
         return
 
-    re_writers = get_re_writers(writers)
-    for writer in contest.writers.filter(~Q(key__iregex=re_writers)):
-        contest.writers.remove(writer)
-    already_writers = set(contest.writers.filter(key__iregex=re_writers).values_list('key', flat=True))
-    re_already_writers = re.compile(get_re_writers(already_writers))
+    resource = contest.resource
+    contest_writers = set(contest.writers.values_list('key', flat=True))
+    already_writers = set(writers) & contest_writers
 
-    Account = apps.get_model('ranking.Account')
+    def get_account(writer):
+        account = resource.account_set.filter(key=writer).first()
+        if account:
+            return account
+        return resource.account_set.filter(key__iexact=writer).order_by('-n_contests').first()
+
+    modified_writers = []
     for writer in writers:
-        if re_already_writers.match(writer):
+        if writer in already_writers:
+            modified_writers.append(writer)
             continue
 
-        account = Account.objects.filter(resource=contest.resource, key__iexact=writer).order_by('-n_contests').first()
+        account = get_account(writer)
+        if account is None and (renaming := resource.accountrenaming_set.filter(old_key__iexact=writer).first()):
+            writer = renaming.new_key
+            account = get_account(writer)
         if account is None:
-            account, created = Account.objects.get_or_create(resource=contest.resource, key=writer)
+            account, created = resource.account_set.get_or_create(key=writer)
         account.writer_set.add(contest)
+        modified_writers.append(account.key)
+
+    if delete_writers := contest_writers - set(modified_writers):
+        for account in contest.writers.filter(key__in=delete_writers):
+            contest.writers.remove(account)
+
+    if modified_writers == writers:
+        return False
+    contest.info['writers'] = modified_writers
+    contest.save(update_fields=['info'])
+    return True

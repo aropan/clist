@@ -744,4 +744,45 @@
         }
         return $year;
     }
+
+    function progress_bar($done, $total, $bar_length = 50)
+    {
+        static $start_time = null;
+        static $prev_done = 0;
+
+        if ($start_time === null || $done <= $prev_done) {
+            $start_time = microtime(true);
+        }
+        $prev_done = $done;
+
+        $progress_ratio = $total > 0 ? $done / $total : 0;
+        $progress_percent = round($progress_ratio * 100);
+        $filled_length = (int) round($progress_ratio * $bar_length);
+        $bar = str_repeat('=', $filled_length) . '>' . str_repeat(' ', max(0, $bar_length - $filled_length - 1));
+
+        $elapsed = microtime(true) - $start_time;
+        $estimated_total = $done > 0 ? ($elapsed / $done) * $total : 0;
+        $remaining = max(0, $estimated_total - $elapsed);
+
+        $elapsed_minutes = (int)($elapsed / 60);
+        $elapsed_seconds = (int)$elapsed % 60;
+        $remaining_minutes = (int)($remaining / 60);
+        $remaining_seconds = (int)$remaining % 60;
+
+        printf(
+            "\r[%s] %3d%% (%d/%d) | Elapsed: %02d:%02d | Remaining: %02d:%02d",
+            $bar,
+            $progress_percent,
+            $done,
+            $total,
+            $elapsed_minutes,
+            $elapsed_seconds,
+            $remaining_minutes,
+            $remaining_seconds
+        );
+
+        if ($done >= $total) {
+            echo PHP_EOL;
+        }
+    }
 ?>

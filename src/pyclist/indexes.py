@@ -72,7 +72,10 @@ class ExpressionIndex(models.Index):
         )
 
         compiler = model._meta.default_manager.all().query.get_compiler(connection=schema_editor.connection)
-        statement.parts['columns'] = ", ".join([self.compile_expression(e, compiler) for e in self.expressions])
+        statement.parts['columns'] = ", ".join(
+            "({})".format(self.compile_expression(e, compiler))
+            for e in self.expressions
+        )
         return statement
 
     def compile_expression(self, expression, compiler):

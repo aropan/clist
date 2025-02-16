@@ -997,3 +997,16 @@ function toggle_modal_fullscreen(btn) {
   $(btn).closest('.modal').toggleClass('fullscreen')
   $(btn).find('i').toggleClass('fa-compress-arrows-alt').toggleClass('fa-expand-arrows-alt')
 }
+
+
+/*
+ * Expand trimmer text
+ */
+
+function expand_trimmed_text(event, element) {
+  $(element).prev('.expandable-text').toggleClass('expandable-text')
+  $(element).remove()
+  $(window).trigger('resize')
+  event.preventDefault()
+  return false
+}

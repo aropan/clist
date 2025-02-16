@@ -127,26 +127,29 @@ def process_submission_problem(submission, upsolving, short, addition):
     return False
 
 
+def is_english_locale(page):
+    match = re.search('<a[^>]*class="[^"]*font-weight-bold[^"]*"[^>]*>(?P<locale>[^<]+)</a>', page)
+    return match.group('locale').lower().strip() == 'english'
+
+
+def set_locale():
+    return REQ.get('https://robocontest.uz/locale/en')
+
+
+def get_page(*args, **kwargs):
+    page, code = REQ.get(*args, return_code=True, **kwargs)
+    page = page if code == 200 else None
+    if page and not is_english_locale(page):
+        page = set_locale()
+        if not is_english_locale(page):
+            raise ExceptionParseStandings('Failed to set locale')
+    return page
+
+
 class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.url.rstrip('/') + '/results'
-
-        def is_english_locale(page):
-            match = re.search('<a[^>]*class="[^"]*font-weight-bold[^"]*"[^>]*>(?P<locale>[^<]+)</a>', page)
-            return match.group('locale').lower().strip() == 'english'
-
-        def set_locale():
-            return REQ.get(urljoin(standings_url, '/locale/en'))
-
-        def get_page(*args, **kwargs):
-            page, code = REQ.get(*args, return_code=True, **kwargs)
-            page = page if code == 200 else None
-            if page and not is_english_locale(page):
-                page = set_locale()
-                if not is_english_locale(page):
-                    raise ExceptionParseStandings('Failed to set locale')
-            return page
 
         problems_infos = OrderedDict()
         result = OrderedDict()
@@ -294,7 +297,7 @@ class Statistic(BaseModule):
         def fetch_profile(handle):
             url = resource.profile_url.format(account=handle)
             try:
-                page = REQ.get(url)
+                page = get_page(url)
             except FailOnGetResponse as e:
                 if e.code == 404:
                     return None

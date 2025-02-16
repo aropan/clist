@@ -605,7 +605,7 @@ class Statistic(BaseModule):
             connect=lambda req: req.get(members_api_url, n_attempts=1),
             attributes=dict(n_attempts=5),
         ) as req:
-            page = req.proxer.get_connect_ret()
+            # page = req.proxer.get_connect_ret()
             # dd_active_algorithm = {}
             # for data in parse_xml(page, exc=ExceptionParseAccounts):
             #     dd_active_algorithm[data.pop('handle')] = data
@@ -667,6 +667,7 @@ class Statistic(BaseModule):
                         ret['volatility'] = None
                 return ret
 
+            last_proxy = None
             with PoolExecutor(max_workers=4) as executor:
                 for user, data in zip(users, executor.map(fetch_profile, users)):
                     if not data:
@@ -677,10 +678,14 @@ class Statistic(BaseModule):
                         else:
                             raise ExceptionParseAccounts('Unknown error')
                         continue
+
+                    proxy_address = req.proxer.proxy_address
+                    if proxy_address and last_proxy != proxy_address:
+                        last_proxy = proxy_address
+                        save_proxy(req, Statistic.LEGACY_PROXY_PATH)
+
                     data['handle'] = data['handle'].strip()
                     assert user.lower() == data['handle'].lower()
                     if pbar:
                         pbar.update()
                     yield {'info': data}
-
-            save_proxy(req, Statistic.LEGACY_PROXY_PATH)

@@ -21,7 +21,7 @@ $(() => {
                 $.ajax({
                     type: 'POST',
                     data: {'action': 'reparse'},
-                    success: function(data) { location.reload() },
+                    success: function(data) { notify(data.message) },
                     error: log_ajax_error_callback,
                 })
             }

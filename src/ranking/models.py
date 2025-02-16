@@ -72,6 +72,11 @@ class Account(BaseModel):
     n_upsolved = models.IntegerField(default=None, null=True, blank=True)
     n_total_solved = models.IntegerField(default=0, blank=True)
     n_first_ac = models.IntegerField(default=0, blank=True)
+    n_gold = models.IntegerField(default=None, null=True, blank=True)
+    n_silver = models.IntegerField(default=None, null=True, blank=True)
+    n_bronze = models.IntegerField(default=None, null=True, blank=True)
+    n_medals = models.IntegerField(default=None, null=True, blank=True)
+    n_other_medals = models.IntegerField(default=None, null=True, blank=True)
 
     objects = BaseManager()
     priority_objects = PriorityAccountManager()
@@ -223,6 +228,7 @@ class Account(BaseModel):
             GistIndexTrgrmOps(fields=['key']),
             GistIndexTrgrmOps(fields=['name']),
             ExpressionIndex(expressions=[Upper('key')]),
+            ExpressionIndex(expressions=[F('resource'), Upper('key')]),
 
             DescNullsLastIndex(fields=['resource', 'rating']),
             DescNullsLastIndex(fields=['resource', '-rating']),
@@ -489,6 +495,7 @@ class Statistics(BaseModel):
     n_upsolved = models.IntegerField(default=None, null=True, blank=True)
     n_total_solved = models.IntegerField(default=0, blank=True)
     n_first_ac = models.IntegerField(default=0, blank=True)
+    medal = models.CharField(max_length=20, null=True, blank=True)
 
     class StatisticsManager(BaseManager):
         def get_queryset(self):
@@ -506,6 +513,16 @@ class Statistics(BaseModel):
 
     objects = BaseManager()
     saved_objects = StatisticsManager()
+
+    class Meta:
+        verbose_name_plural = 'Statistics'
+        unique_together = ('account', 'contest')
+
+        indexes = [
+            models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
+            models.Index(fields=['account', 'skip_in_stats']),
+            models.Index(fields=['-created'], condition=Q(place_as_int__lte=3), name='statistics_created_top3'),
+        ]
 
     @staticmethod
     def is_special_addition_field(field):
@@ -530,6 +547,9 @@ class Statistics(BaseModel):
             if 'new_rating' in rating_data and 'rating_change' in rating_data:
                 return rating_data['new_rating'] - rating_data['rating_change']
 
+    def get_medal(self) -> str | None:
+        return get_item(self, 'addition.medal')
+
     @property
     def is_rated(self):
         if self.skip_in_stats:
@@ -553,40 +573,33 @@ class Statistics(BaseModel):
     def first_ac_filter(cls):
         return Q(addition__problems__icontains='"first_ac": true')
 
-    def update_stats(self):
+    def update_stats(self) -> list[str]:
         problem_stats = get_statistic_stats(self.addition, solving=self.solving)
         update_fields = []
         for k, v in problem_stats.items():
             if getattr(self, k, None) != v:
                 setattr(self, k, v)
                 update_fields.append(k)
+        if (medal := self.get_medal()) != self.medal:
+            self.medal = medal
+            update_fields.append('medal')
         self.save(update_fields=update_fields)
-
-    class Meta:
-        verbose_name_plural = 'Statistics'
-        unique_together = ('account', 'contest')
-
-        indexes = [
-            models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
-            models.Index(fields=['account', 'skip_in_stats']),
-            models.Index(fields=['-created'], condition=Q(place_as_int__lte=3), name='statistics_created_top3'),
-        ]
+        return update_fields
 
 
 @receiver(post_init, sender=Statistics)
 def statistics_post_init(sender, instance, **kwargs):
-    instance._stats = get_statistic_stats(instance.addition, solving=instance.solving)
+    instance._stats = get_statistic_stats(instance.addition, solving=instance.solving, with_n_medal_field=True)
 
 
 @receiver(post_save, sender=Statistics)
 @receiver(post_delete, sender=Statistics)
 def update_account_from_statistic(signal, instance, **kwargs):
-
     if instance.resource.is_major_kind(instance.contest):
         if signal is post_delete:
             diff = {field: -value for field, value in instance._stats.items() if value}
         elif signal is post_save:
-            diff = get_statistic_stats(instance.addition, solving=instance.solving)
+            diff = get_statistic_stats(instance.addition, solving=instance.solving, with_n_medal_field=True)
             if not kwargs['created']:
                 for field, value in instance._stats.items():
                     diff[field] = (diff.get(field) or 0) - (value or 0)
@@ -600,7 +613,7 @@ def update_account_from_statistic(signal, instance, **kwargs):
             setattr(account, field, sum_with_none(getattr(account, field), value))
             updated_fields.append(field)
         if updated_fields:
-            account.save(update_fields=updated_fields)
+            instance.account.save(update_fields=updated_fields)
 
     if instance.skip_in_stats or kwargs.get('update_fields'):
         return

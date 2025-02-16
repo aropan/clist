@@ -59,6 +59,10 @@ class BaseModel(models.Model):
     def channel_group_name(self):
         return f'{self.__class__.__name__.upper()}__{self.pk}'
 
+    @classmethod
+    def admin_changelist_viewname(cls):
+        return f'{cls._meta.app_label}_{cls._meta.model_name}_changelist'
+
     def touch(self):
         self.modified = now()
         self.save(update_fields=['modified'])

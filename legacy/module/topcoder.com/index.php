@@ -299,7 +299,7 @@
                 }
                 $page = curlexec($url);
                 if (!preg_match_all('#(?:<td[^>]*>(?:[^<]*<a[^>]*href="(?P<url>[^"]*/stat[^"]*rd=(?P<rd>[0-9]+)[^"]*)"[^>]*>(?P<title>[^<]*)</a>[^<]*|(?P<date>[0-9]+\.[0-9]+\.[0-9]+))</td>[^<]*){2}#', $page, $matches, PREG_SET_ORDER)) {
-                    return;
+                    break;
                 }
                 foreach ($matches as $match) {
                     $key = get_algorithm_key($match['title']);

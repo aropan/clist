@@ -170,6 +170,7 @@ class BaseModule(object, metaclass=ABCMeta):
 
 def save_proxy(req, filepath):
     if req.proxer.proxy:
+        LOG.info(f'Saving proxy to {filepath}')
         with open(filepath, 'w') as fo:
             json.dump(req.proxer.proxy, fo, indent=2)
 

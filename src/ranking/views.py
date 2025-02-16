@@ -207,6 +207,7 @@ def standings_list(request, template='standings_list.html'):
         medal_scores_chart = None
 
     context = {
+        'navbar_admin_model': Contest,
         'stages': stages,
         'contests': contests,
         'timezone': get_timezone(request),
@@ -223,12 +224,15 @@ def standings_list(request, template='standings_list.html'):
     }
 
     action = request.POST.get('action')
-    if action == 'reparse' and request.user.has_perm('clist.change_contest'):
-        n_contests = 0
+    if action == 'reparse':
+        if not request.user.has_perm('clist.change_contest'):
+            return HttpResponseForbidden('Permission denied')
+        n_updated = 0
+        n_total = 0
         for contest in contests:
-            contest.require_statistics_update()
-            n_contests += 1
-        return JsonResponse({'status': 'ok', 'message': f'{n_contests} contests are marked for reparse.'})
+            n_updated += contest.require_statistics_update()
+            n_total += 1
+        return JsonResponse({'status': 'ok', 'message': f'Updated {n_updated} of {n_total} contests to reparse'})
 
     if get_group_list(request) and len(resources) != 1:
         running_contest_query = Q(end_time__gt=timezone.now())

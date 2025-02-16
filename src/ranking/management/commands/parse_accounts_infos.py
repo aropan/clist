@@ -26,7 +26,7 @@ from true_coders.models import Coder, CoderList
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.mathutils import min_with_none
-from utils.strings import sanitize_data
+from utils.strings import sanitize_data, sanitize_text
 from utils.traceback_with_vars import colored_format_exc
 
 
@@ -346,7 +346,7 @@ class Command(BaseCommand):
                             if info.get('country'):
                                 account.country = countrier.get(info['country'])
                             if 'name' in info:
-                                name = info['name']
+                                name = sanitize_text(info['name'])
                                 account.name = name if name and name != account.key else None
                             delta = timedelta(**resource_info.get('delta', {'days': 365}))
                             delta = info.pop('delta', delta)

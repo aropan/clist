@@ -21,9 +21,8 @@
                 if (isset($authors[$k])) {
                     continue;
                 }
-                if (preg_match_all('#<a[^>]*>(?P<name>.*?)</a>#', $match['authors'], $m)) {
-                    $names = array_map(function($n) { return strip_tags($n); }, $m['name']);
-                    $authors[$k] = $names;
+                if (preg_match_all('#<a[^>]*href="/profile/(?<handle>[^"]*)/?"[^>]*>(?P<name>.*?)</a>#', $match['authors'], $m)) {
+                    $authors[$k] = $m['handle'];
                 } else {
                     $authors[$k] = array();
                 }
@@ -40,6 +39,9 @@
                 }
             }
         }
+    }
+    if (!count($authors)) {
+        trigger_error('Authors not found', E_USER_WARNING);
     }
 
     $url = 'https://codeforces.com/api/contest.list?lang=en';

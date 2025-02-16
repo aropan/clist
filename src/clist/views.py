@@ -364,11 +364,11 @@ def resources(request):
     more_fields = more_fields and [f for f in request.GET.getlist('more') if f] or []
 
     context = {
+        'navbar_admin_model': Resource,
         'resources': resources,
         'params': {
             'more_fields': more_fields,
         },
-        'navbar_database_viewname': 'clist_resource_changelist',
     }
     return render(request, 'resources.html', context)
 
@@ -548,6 +548,7 @@ def resource_problem_rating_chart(resource):
     ('resource_most_solved_paging.html', 'most_solved_page'),
     ('resource_most_first_ac_paging.html', 'most_first_ac_page'),
     ('resource_most_total_solving_paging.html', 'most_total_solving_page'),
+    ('resource_most_medals_paging.html', 'most_medals_page'),
     ('resource_contests.html', 'past_page'),
     ('resource_contests.html', 'coming_page'),
     ('resource_contests.html', 'running_page'),
@@ -716,6 +717,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
             'icon': 'verification',
         }
 
+    medals_order = [F(f).desc(nulls_last=True) for f in ('n_gold', 'n_silver', 'n_bronze', 'n_other_medals')]
     context = {
         'resource': resource,
         'period_select': period_select,
@@ -768,6 +770,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
         'most_solved': accounts.order_by(F('n_total_solved').desc(nulls_last=True), 'id'),
         'most_first_ac': accounts.order_by(F('n_first_ac').desc(nulls_last=True), 'id'),
         'most_total_solving': accounts.order_by(F('total_solving').desc(nulls_last=True), 'id'),
+        'most_medals': accounts.order_by(*medals_order, 'id'),
         'problems': resource.problem_set.filter(url__isnull=False).order_by('-time', 'contest_id', 'index'),
     }
 
@@ -1137,6 +1140,7 @@ def problems(request, template='problems.html'):
         problems = problems.order_by(orderby)
 
     context = {
+        'navbar_admin_model': Problem,
         'problems': problems,
         'contest_problems': contest_problems,
         'coder': coder,
@@ -1162,12 +1166,11 @@ def problems(request, template='problems.html'):
         'selected_resource': selected_resource,
         'per_page': 50,
         'per_page_more': 200,
-        'navbar_database_viewname': 'clist_problem_changelist',
     }
 
     return template, context
 
 
 def promo_links(request, template='links.html'):
-    context = {'navbar_database_viewname': 'clist_promolink_changelist', 'links': PromoLink.enabled_objects.all()}
+    context = {'navbar_admin_model': PromoLink, 'links': PromoLink.enabled_objects.all()}
     return render(request, 'links.html', context)

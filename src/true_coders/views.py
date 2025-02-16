@@ -192,7 +192,7 @@ def get_profile_context(request, statistics, writers, resources):
     search_resource = resources[0] if len(resources) == 1 else None
 
     if search_resource:
-        writers = writers.filter(resource__host=search_resource)
+        writers = writers.filter(resource=search_resource)
     writers = writers.order_by('-end_time', '-id')
     writers = writers.annotate(has_statistics=Exists('statistics'))
 
@@ -404,6 +404,7 @@ def coders(request, template='coders.html'):
     coders = coders.order_by(*orderby)
 
     context.update({
+        'navbar_admin_model': Coder,
         'coders': coders,
         'primary_coder': coder,
         'params': params,
@@ -2719,17 +2720,16 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.annotate(to_list=Exists(to_list_accounts.filter(pk=OuterRef('pk'))))
         params['to_list'] = to_list
 
-    context = {'params': params}
+    context = {'navbar_admin_model': Account, 'params': params}
     addition_table_fields = ['n_writers', 'modified', 'updated', 'created', 'name', 'key',
                              'last_rating_activity', 'last_submission']
     addition_table_fields += django_settings.ACCOUNT_STATISTIC_FIELDS
-    table_fields = ['rating', 'resource_rank', 'n_contests', 'last_activity'] + addition_table_fields
+    fixed_fields = ['rating', 'resource_rank', 'n_contests', 'last_activity']
+    table_fields = fixed_fields + addition_table_fields
 
     chart_field = request.GET.get('chart_column')
     groupby = request.get_filtered_value('groupby', ['country', 'resource'])
     fields = request.GET.getlist('field')
-    orderby = request.GET.get('sort_column')
-    order = request.GET.get('sort_order') if orderby else None
 
     # custom fields
     custom_fields = set()
@@ -2740,11 +2740,11 @@ def accounts(request, template='accounts.html'):
                 continue
             v = set(v)
             field_type = None
-            if v == {'float'} or v == {'float', 'int'}:
-                field_type = 'float'
-            elif v == {'int'}:
+            if v <= {'bool', 'int'}:
                 field_type = 'int'
-            elif v == {'str'}:
+            elif v <= {'int', 'bool', 'float'}:
+                field_type = 'float'
+            elif v <= {'str'}:
                 field_type = 'str'
             else:
                 continue
@@ -2771,15 +2771,23 @@ def accounts(request, template='accounts.html'):
         context['chart'] = False
 
     # custom fields
-    options = custom_fields + list(addition_table_fields)
+    custom_options = custom_fields + list(addition_table_fields)
+    custom_values = [v for v in fields if v and v in custom_options]
     context['custom_fields'] = {
-        'values': [v for v in fields if v and v in options],
-        'options': options,
+        'values': custom_values,
+        'options': custom_options,
         'noajax': True,
         'nogroupby': True,
         'nourl': True,
     }
     context['fields_types'] = fields_types
+
+    # sort select
+    sort_options = fixed_fields + custom_values
+    orderby = request.get_filtered_list('sort_column', options=sort_options)
+    order = request.GET.get('sort_order') if orderby else None
+    sort_select = {'options': sort_options, 'rev_order': True, 'nomultiply': len(orderby) <= 1}
+    context['sort_select'] = sort_select
 
     skip_actions_columns = set()
     for field in list(custom_fields):
@@ -2792,7 +2800,7 @@ def accounts(request, template='accounts.html'):
         if field not in custom_fields:
             continue
         k = f'info__{field}'
-        if field == orderby or field == chart_field:
+        if field in orderby or field == chart_field:
             types = fields_types[field]
             if types == 'int':
                 accounts = accounts.annotate(**{k: Cast(JSONF(k), BigIntegerField())})
@@ -2802,21 +2810,22 @@ def accounts(request, template='accounts.html'):
             accounts = accounts.annotate(**{k: JSONF(k)})
 
     # ordering
-    if orderby == 'account':
-        orderby = 'key'
-    elif orderby in table_fields:
-        pass
-    elif orderby in custom_fields:
-        orderby = f'info__{orderby}'
-    elif params.get('advanced_filter'):
-        orderby = ['selected_time', 'selected_contest', 'selected_place']
-    elif orderby:
-        request.logger.error(f'Not found `{orderby}` column for sorting')
-        orderby = []
-    orderby = orderby if not orderby or isinstance(orderby, list) else [orderby]
+    order_fields = []
+    for order_field in orderby:
+        if order_field == 'account':
+            order_fields.append('key')
+        elif order_field in table_fields:
+            order_fields.append(order_field)
+        elif order_field in custom_fields:
+            order_fields.append(f'info__{order_field}')
+        elif order_field:
+            request.logger.error(f'Not found `{order_field}` column for sorting')
+    if params.get('advanced_filter'):
+        order_fields.extend(['selected_time', 'selected_contest', 'selected_place'])
+    orderby = order_fields if not order_fields or isinstance(order_fields, list) else [order_fields]
 
     if orderby:
-        context['row_number_field'] = orderby[0]
+        context['row_number_field'] = ','.join(orderby)
         context['row_number_operator'] = '__gt' if order == 'desc' else '__lt'
 
     if order in ['asc', 'desc']:

@@ -3,23 +3,25 @@
 {% block ogtitle %}{% block title %}Donate{% endblock %}{% endblock %}
 
 {% block content %}
-<div class="col-md-offset-4 col-md-4 col-xs-offset-3 col-xs-6">
-    <div class="panel panel-primary">
-        <div class="panel-heading">Donate</div>
-        <div class="panel-body">
-            <div class="custom-btn-group-justified btn-group">
-                <a class="btn btn-default active icon service-icon-btn">{% icon_to "patreon" %}</a>
-                <a href="https://www.patreon.com/clist" class="btn btn-default" rel="noopener noreferrer"><div class="text-left">Patreon</div></a>
-            </div>
-            <div class="custom-btn-group-justified btn-group">
-                <a class="btn btn-default active icon service-icon-btn">{% icon_to "kofi" %}</a>
-                <a href="https://ko-fi.com/clist" class="btn btn-default" rel="noopener noreferrer"><div class="text-left">Ko-fi</div></a>
-            </div>
-            <div class="custom-btn-group-justified btn-group">
-                <a class="btn btn-default active icon service-icon-btn">{% icon_to "crypto" %}</a>
-                <a href="https://nowpayments.io/donation/clist" class="btn btn-default" rel="noopener noreferrer"><div class="text-left">Crypto</div></a>
-            </div>
-        </div>
+<style>
+#sources img {
+  border-radius: 20%;
+}
+</style>
+
+<div id="sources" class="row">
+  <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3">
+    <h1>Donate</h1>
+    <div class="list-group lead">
+      {% for source in sources %}
+      <a href="{{ source.url }}" class="list-group-item">
+        <img src="{{ source.icon.url }}" alt="{{ source.name }}" class="icon service-icon-btn" height="30">
+        <span>{{ source.name }}</span>
+      </a>
+      {% empty %}
+      <div class="alert alert-info">No donation sources available.</div>
+      {% endfor %}
     </div>
+  </div>
 </div>
 {% endblock %}

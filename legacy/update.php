@@ -326,6 +326,7 @@
         $duplicate = isset($contest['duplicate']) && $contest['duplicate'];
 
         $updated_resources[$contest['rid']] = true;
+        $unchanged = isset($contest['unchanged'])? $contest['unchanged'] : array();
 
         unset($contest['duration']);
         unset($contest['timezone']);
@@ -334,13 +335,13 @@
         unset($contest['skip_check_time']);
         unset($contest['skip_update_key']);
         unset($contest['delete_after_end']);
+        unset($contest['unchanged']);
 
         $info = false;
         if (isset($contest['info'])) {
             $info = json_encode($contest['info'], JSON_HEX_APOS);
         }
         unset($contest['info']);
-
 
         $contest = $db->escapeArray($contest);
 
@@ -369,6 +370,9 @@
             $fields .= ",$field";
             $values .= ",'$value'";
             if ($contest['host'] == 'stats.ioinformatics.org' && $field == 'duration_in_secs') {
+                continue;
+            }
+            if ($unchanged && in_array($field, $unchanged)) {
                 continue;
             }
             $update .= ",$field='$value'";

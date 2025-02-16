@@ -1253,6 +1253,7 @@ class Command(BaseCommand):
                                     'n_upsolved': r.pop('n_upsolved', None),
                                     'n_total_solved': r.pop('n_total_solved', 0),
                                     'n_first_ac': r.pop('n_first_ac', 0),
+                                    'medal': r.get('medal'),
                                     'penalty': as_number(r.get('penalty'), force=True),
                                     'skip_in_stats': skip_result,
                                     'advanced': bool(r.get('advanced')),

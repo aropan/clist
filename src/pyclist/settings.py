@@ -115,6 +115,7 @@ INSTALLED_APPS = (
     'corsheaders',
     'submissions',
     'modeltranslation',
+    'donation',
 )
 
 MIDDLEWARE = (
@@ -440,7 +441,7 @@ LOGGING = {
         },
         'django.db.backends': {
             'handlers': ['db'],
-            'level': 'DEBUG',
+            'level': env('DJANGO_DB_LOG_LEVEL', default='INFO'),
             'propagate': False,
         },
         '': {
@@ -740,6 +741,7 @@ FONTAWESOME_ICONS_ = {
     'resource': '<i class="fa-fw fas fa-at"></i>',
     'field': '<i class="fa-fw fas fa-database"></i>',
     'database': '<i class="fa-fw fas fa-database"></i>',
+    'admin': '<i class="fa-solid fa-screwdriver-wrench"></i>',
     'find_me': '<i class="fa-fw fas fa-crosshairs"></i>',
     'search': '<i class="fa-fw fas fa-search"></i>',
     'detail_info': '<i class="fa-fw fas fa-info"></i>',
@@ -796,6 +798,7 @@ FONTAWESOME_ICONS_ = {
     'series': '<i class="fa-fw fas fa-trophy"></i>',
     'app': '<i class="fa-fw fas fa-desktop"></i>',
     'sort': '<i class="fa-fw fa-solid fa-sort"></i>',
+    'sort_column': '<i class="fa-fw fa-solid fa-sort"></i>',
     'sort-asc': '<i class="fa-fw fas fa-sort-amount-down-alt"></i>',
     'sort-desc': '<i class="fa-fw fas fa-sort-amount-down"></i>',
     'verification': '<i class="fa-fw far fa-check-circle"></i>',
@@ -860,6 +863,10 @@ FONTAWESOME_ICONS_ = {
     'vk': {'icon': '<i class="fa-fw fab fa-vk"></i>', 'title': None},
     'patreon': {'icon': '<i class="fa-fw fab fa-patreon"></i>', 'title': None},
     'yandex-contest': {'icon': '<i class="fa-fw fas fa-tools"></i>'},
+    'n_gold': '<span class="trophy trophy-detail gold-trophy"><i class="fas fa-trophy"></i></span>',
+    'n_silver': '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-trophy"></i></span>',
+    'n_bronze': '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
+    'sum': '&sum;',
 }
 
 
@@ -878,7 +885,7 @@ STANDINGS_UNSPECIFIED_PLACE = '-'
 STANDINGS_STATISTIC_FIELDS = ['upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved', 'n_first_ac']
 
 ACCOUNT_STATISTIC_FIELDS = ['solving', 'upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved',
-                            'n_first_ac']
+                            'n_first_ac', 'n_gold', 'n_silver', 'n_bronze', 'n_medals']
 
 UPSOLVING_FILTER_DEFAULT = True
 

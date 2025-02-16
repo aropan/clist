@@ -241,21 +241,23 @@
     </div>
     {% endif %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=most_participated field="n_contests" title="Most participation" header="Contest number" paging="resource_most_participated_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=most_participated field="n_contests" title="Most participations" header="Contests count" paging="resource_most_participated_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=last_submissions field="last_submission" title="Most recent submission" header="Submission time" paging="resource_last_submission_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=last_submissions field="last_submission" title="Most recent submissions" header="Submission time" paging="resource_last_submission_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=last_activities field="last_activity" title="Most recent participation" header="Last activity" paging="resource_last_activity_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=last_activities field="last_activity" title="Most recent activity" header="Last activity" paging="resource_last_activity_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=last_rating_activities field="last_rating_activity" title="Most recent rating participation" header="Rating activity" paging="resource_last_rating_activity_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=last_rating_activities field="last_rating_activity" title="Most recent rating activity" header="Rating activity" paging="resource_last_rating_activity_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=most_writer field="n_writers" title="Most writer" header="Writer number" paging="resource_most_writer_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=True accounts=most_writer field="n_writers" title="Most writers" header="Writers count" paging="resource_most_writer_paging.html" %}
 
     {% include "resource_accounts_panel.html" with condition=resource.has_statistic_n_total_solved accounts=most_solved field="n_total_solved" title="Most solved problems" header="Total solved" paging="resource_most_solved_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_n_first_ac accounts=most_first_ac field="n_first_ac" title="Most first AC" header="First AC" paging="resource_most_first_ac_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_n_first_ac accounts=most_first_ac field="n_first_ac" title="Most first accepted" header="First accepted" paging="resource_most_first_ac_paging.html" %}
 
     {% include "resource_accounts_panel.html" with condition=resource.has_statistic_total_solving accounts=most_total_solving field="total_solving" title="Most points" header="Total points" paging="resource_most_total_solving_paging.html" %}
+
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_medal accounts=most_medals field="n_medals" fields="n_gold,n_silver,n_bronze,n_medals" title="Most medals" header="n_gold,n_silver,n_bronze,sum" paging="resource_most_medals_paging.html" header_icon=True %}
 
     {% if problems.exists %}
     <div class="col-md-6 col-lg-4{% if mute_problems %} text-muted{% endif %}">
@@ -266,7 +268,7 @@
         <div class="panel panel-default table-responsive">
             <table class="problems table table-hover table-condensed table-striped">
                 <tr>
-                    <th>Date</th>
+                    <th class="no-stretch">Date</th>
                     {% if resource.has_problem_rating %}<th>Rating</th>{% endif %}
                     <th class="title">Name</th>
                 </tr>
@@ -296,11 +298,7 @@
         <div class="panel panel-default table-responsive">
             <table class="contests table table-hover table-condensed table-striped">
                 <tr>
-                    <th>
-                    {% with values=data.field|title|split:"_" %}
-                    {% for v in values %}{{ v }}<br/>{% endfor %}
-                    {% endwith %}
-                    </th>
+                    <th class="no-stretch">{% with values=data.field|title|split:"_" %}{% for v in values %}{{ v }}<br/>{% endfor %}{% endwith %}</th>
                     <th class="title">Contest</th>
                 </tr>
                 {% include 'resource_contests.html' with contests=contests contest_key=name %}
