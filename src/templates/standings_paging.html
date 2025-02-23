@@ -84,7 +84,7 @@ data-place="{{ place }}"
               {% for account in accounts %}
                 {% if forloop.counter0 %}|{% endif %}
                 <span class="{% coder_color_class resource account.info %}">
-                {% include "account_table_cell.html" with account=account addition=None resource=resource without_avatar=True without_country=True with_fixed_width=False %}
+                {% include "account_table_cell.html" with account=account addition=None resource=resource without_inline_url=True without_avatar=True without_country=True with_fixed_width=False %}
                 </span>
               {% endfor %}
             {% endif %}
@@ -205,7 +205,7 @@ data-place="{{ place }}"
 {% endif %}
 
 {% if with_table_inner_scroll %}
-<script>$(update_sticky)</script>
+<script>$(update_table_sticky)</script>
 {% endif %}
 
 {% if colored_by_group_score %}

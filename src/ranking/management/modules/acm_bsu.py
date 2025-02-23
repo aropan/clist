@@ -9,7 +9,7 @@ from django.utils.timezone import now
 
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import DOT, REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, InitModuleException
 
 
 class Statistic(BaseModule):
@@ -38,7 +38,6 @@ class Statistic(BaseModule):
         except StopIteration:
             raise ExceptionParseStandings('Not found table with standings')
         problems_info = collections.OrderedDict()
-        has_plus = False
         for r in table:
             row = collections.OrderedDict()
             problems = row.setdefault('problems', {})
@@ -52,23 +51,24 @@ class Statistic(BaseModule):
                 elif 'ir-column-place' in classes:
                     row['place'] = v.value
                 elif 'ir-column-penalty' in classes:
-                    row['penalty'] = int(v.value)
+                    row['penalty'] = as_number(re.sub(r'\s', '', v.value))
                 elif 'ir-problem-count' in classes or k in ioi_total_fields:
-                    row['solving'] = int(v.value)
+                    row['solving'] = as_number(re.sub(r'\s', '', v.value))
                 elif len(k.split()[0]) == 1:
                     letter = k.split()[0]
                     problems_info[letter] = {'short': letter}
                     if v.value == DOT:
                         continue
                     p = problems.setdefault(letter, {})
-                    values = v.value.replace('−', '-').split(' ')
-                    p['result'] = values[0]
-                    if p['result'].startswith('+'):
-                        has_plus = True
-                    elif not p['result'].startswith('-') and v.column.node.xpath('.//*[@class="ir-rejected"]'):
-                        p['partial'] = True
-                    if len(values) > 1:
-                        p['time'] = values[1]
+                    values = re.split(r'\s', v.value.replace('−', '-'))
+                    if values and values[0] and values[0][0] in '+-?':
+                        p['result'] = values[0]
+                        if len(values) > 1:
+                            p['time'] = values[1]
+                    else:
+                        p['result'] = as_number(''.join(values))
+                        if v.column.node.xpath('.//*[@class="ir-rejected"]'):
+                            p['partial'] = True
                 else:
                     row[k.lower()] = v.value
 
@@ -108,20 +108,6 @@ class Statistic(BaseModule):
                 continue
 
             result[member] = row
-
-        if not has_plus:
-            for row in result.values():
-                solved = 0
-                for p in row['problems'].values():
-                    if p.get('partial'):
-                        continue
-                    try:
-                        score = float(p['result'])
-                        if score > 0:
-                            solved += 1
-                    except Exception:
-                        pass
-                row['solved'] = {'solving': solved}
 
         hidden_fields = []
         fields_types = {}

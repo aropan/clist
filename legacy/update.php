@@ -182,6 +182,7 @@
 
     $last_resource = "";
     $updated_resources = array();
+    $skipped_resources = array();
     foreach ($contests as $i => $contest)
     {
         foreach (array('start_time', 'end_time') as $k) {
@@ -274,6 +275,25 @@
 
     echo "<br><br>Total number of contests: " . count($contests) . "<br>";
 
+    function is_locked_contest($resource_id, $contest_key) {
+        global $db;
+        $ctids = $db->select("clist_contest", "ctid::text AS ctid_txt", "resource_id = ${resource_id} AND key = '${contest_key}'");
+        foreach ($ctids as $row) {
+            $ctid = $row['ctid_txt'];
+            $ctid_txt = substr($ctid, 1, -1);
+            list($block, $offset) = explode(',', $ctid_txt);
+            $locks = $db->getArray("
+                SELECT * FROM pg_locks l
+                JOIN pg_class c ON c.oid = l.relation
+                WHERE c.relname = 'clist_contest' AND l.locktype = 'tuple' AND l.page = ${block} AND l.tuple = ${offset} AND l.granted = true
+            ");
+            if ($locks) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     foreach ($contests as $i => $contest)
     {
         //$timezone_offset = timezone_offset_get(new DateTimeZone($contest['timezone']), new DateTime("now"));
@@ -321,27 +341,28 @@
         $fields = "resource_id";
         $values = $contest['rid'];
         $update = "resource_id = " . $contest['rid'];
-        $contest_rid = $contest['rid'];
+        $contest_rid = $db->escapeString($contest['rid']);
+        unset($contest['rid']);
 
         $duplicate = isset($contest['duplicate']) && $contest['duplicate'];
 
-        $updated_resources[$contest['rid']] = true;
         $unchanged = isset($contest['unchanged'])? $contest['unchanged'] : array();
+        unset($contest['unchanged']);
+
+        $info = false;
+        $inherit_stage = false;
+        if (isset($contest['info'])) {
+            $inherit_stage = $contest['info']['_inherit_stage'] ?? false;
+            $info = json_encode($contest['info'], JSON_HEX_APOS);
+        }
+        unset($contest['info']);
 
         unset($contest['duration']);
         unset($contest['timezone']);
-        unset($contest['rid']);
         unset($contest['duplicate']);
         unset($contest['skip_check_time']);
         unset($contest['skip_update_key']);
         unset($contest['delete_after_end']);
-        unset($contest['unchanged']);
-
-        $info = false;
-        if (isset($contest['info'])) {
-            $info = json_encode($contest['info'], JSON_HEX_APOS);
-        }
-        unset($contest['info']);
 
         $contest = $db->escapeArray($contest);
 
@@ -393,12 +414,23 @@
         $now = date("Y-m-d H:i:s", time());
 
         $to_update = !DEBUG && (!isset($_GET['title']) || preg_match($_GET['title'], $contest['title']));
+
+        if (is_locked_contest($contest_rid, $contest['key'])) {
+            $to_update = false;
+        }
+
         if ($to_update) {
             if ($to_delete) {
                 $db->query("DELETE FROM clist_contest WHERE resource_id = ${contest_rid} and key = '${contest['key']}'", true);
             } else {
                 $db->query("INSERT INTO clist_contest ($fields) values ($values) ON CONFLICT (resource_id, key) DO UPDATE SET $update");
             }
+        } else {
+            $skipped_resources[$contest_rid][] = $contest['key'];
+        }
+
+        if (!$inherit_stage && $to_update) {
+            $updated_resources[$contest_rid] = true;
         }
 
         $resource_host = $resources_hosts[$contest_rid];
@@ -426,7 +458,15 @@
             } else {
                 $time_filter = "auto_updated < now() - interval '3 hours' AND now() < start_time";
             }
-            $resources_filter .= "(resource_id = $resource_id AND $time_filter)";
+            $resource_filter = "resource_id = $resource_id AND $time_filter";
+
+            $skipped_keys = $skipped_resources[$resource_id] ?? [];
+            if ($skipped_keys) {
+                $skipped_keys = "'" . implode("','", $skipped_keys) . "'";
+                $resource_filter .= " AND key NOT IN ($skipped_keys)";
+            }
+
+            $resources_filter .= "($resource_filter)";
         }
         $query = "is_auto_added = true AND ($resources_filter)";
         $to_be_removed = $db->select("clist_contest", "*", $query);

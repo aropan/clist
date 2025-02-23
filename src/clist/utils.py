@@ -19,13 +19,15 @@ from django_super_deduper.merge import MergedModelInstance
 from clist.templatetags.extras import canonize, get_problem_key, get_problem_name, get_problem_short
 
 
-def update_accounts_by_coders(accounts):
+def update_accounts_by_coders(accounts) -> int:
+    ret = 0
     accounts = accounts.prefetch_related('coders').select_related('resource')
     for account in accounts:
-        update_account_by_coders(account)
+        ret += update_account_by_coders(account)
+    return ret
 
 
-def update_account_by_coders(account):
+def update_account_by_coders(account) -> bool:
     url = False
     custom_countries = None
     for coder in account.coders.all():
@@ -61,6 +63,7 @@ def update_account_by_coders(account):
 
     if update_fields:
         account.save(update_fields=update_fields)
+    return bool(update_fields)
 
 
 @cache

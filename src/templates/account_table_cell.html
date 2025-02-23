@@ -1,3 +1,4 @@
+<span class="nowrap">
 {% if with_resource %}
   {% if with_fixed_width %}<div class="resource-width-fixed">{% endif %}
     {% if not without_url_transform and request %}<a href="{% url_transform request resource=resource.pk %}">{% endif %}
@@ -70,3 +71,4 @@
 {% endif %}
 </span>
 {% endif %}
+</span>

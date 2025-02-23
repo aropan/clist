@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import OuterRef, Subquery, Value
 from django.db.models.fields import Field
 from django.db.models.lookups import LessThan
+from django.urls import reverse
 from django.utils.timezone import now
 from sql_util.utils import Exists
 
@@ -62,6 +63,9 @@ class BaseModel(models.Model):
     @classmethod
     def admin_changelist_viewname(cls):
         return f'{cls._meta.app_label}_{cls._meta.model_name}_changelist'
+
+    def admin_change_url(self):
+        return reverse(f'admin:{self._meta.app_label}_{self._meta.model_name}_change', args=[self.pk])
 
     def touch(self):
         self.modified = now()

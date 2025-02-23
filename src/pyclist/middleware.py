@@ -8,6 +8,7 @@ from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.middleware import csrf
+from django.shortcuts import redirect
 from django.utils import timezone
 
 from clist.templatetags.extras import redirect_login
@@ -124,8 +125,10 @@ def UpdateCoderLastActivity(get_response):
 
 
 class RedirectException(Exception):
-    def __init__(self, redirect):
-        self.redirect = redirect
+    def __init__(self, target):
+        if isinstance(target, str):
+            target = redirect(target)
+        self.redirect = target
 
 
 class RedirectMiddleware:

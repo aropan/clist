@@ -1,0 +1,2 @@
+{% create_dict icon="participation" title="participation" field=participation|default:"participation" nosmall=nosmall nogroupby=True nosubmit=nosubmit nomultiply=True options="participant,upsolving,both,none"|split:"," noajax=True as data %}
+{% include "field_to_select.html" with data=data %}

@@ -2,22 +2,6 @@ function resize_window() {
   $(window).trigger('resize')
 }
 
-function update_sticky() {
-  $('tr.header-problems').css('top', $('tr.header-row:first').height())
-
-  var width = 0
-  var seen = []
-  $('tr .sticky-column').each(function() {
-    var column = $(this).attr('data-sticky-column')
-    if (seen[column]) {
-      return
-    }
-    seen[column] = true
-    $('tr .' + column).css('left', width)
-    width += $(this).outerWidth()
-  })
-}
-
 function reload_standings(delay) {
   var timestamp = ($.now() + delay) / 1000
   notify(`The page will be reloaded after <span class="countdown" data-timestamp="${timestamp}">${delay / 1000}</span>`, {type: 'info', duration: delay, escapeHTML: false})
@@ -1216,7 +1200,7 @@ function clear_extra_info_timeline() {
 
   $('.stat-cell .problem-cell:not(.accepted-switcher)').addClass('accepted-switcher').click(switcher_click)
 
-  update_sticky()
+  update_table_sticky()
 }
 
 function show_timeline() {
@@ -1350,9 +1334,9 @@ $(function() {
     url = url.replace(/\bt_[a-z]+=[^&]+&?/gi, '')
     url = url.replace(/\bunfreezing\b&?/gi, '')
     url = url.replace(/[\?&]$/, '')
-    url += (url.indexOf('?') == -1? '?' : '&') + 'timeline=' + duration_to_text(contest_duration * CURRENT_PERCENT)
+    url += (url.indexOf('?') == -1? '?' : '&') + 'timeline=' + encodeURIComponent(duration_to_text(contest_duration * CURRENT_PERCENT))
     const keys = ['duration', 'step', 'delay', 'freeze']
-    keys.forEach(function(k) { el = $('#timeline-' + k); url += '&t_' + k + '=' + el.val() })
+    keys.forEach(function(k) { el = $('#timeline-' + k); url += '&t_' + k + '=' + encodeURIComponent(el.val()) })
     if (unfreezing) {
       url += '&unfreezing'
     }

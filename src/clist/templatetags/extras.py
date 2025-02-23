@@ -2045,3 +2045,14 @@ def deep_copy(value):
 def update_dict(value, arg):
     value.update(arg)
     return value
+
+
+@register.simple_tag
+def img_resource_icon(resource, size, with_href=False):
+    pow2_size = max(32, 2 ** math.ceil(math.log2(size) + 1))
+    url = media_size(resource.icon, f'{pow2_size}x{pow2_size}')
+    html = f'<img src="{url}" width="{size}" height="{size}" alt="{resource.host}">'
+    if with_href:
+        attrs = f'href="{resource.href()}" title="{resource.host}"'
+        html = f'<a {attrs} target="_blank" rel="noopener noreferrer" data-toggle="tooltip">{html}</a>'
+    return mark_safe(html)

@@ -1,8 +1,10 @@
 import bisect
 import colorsys
 import copy
+import hashlib
 import re
 from collections import OrderedDict, defaultdict
+from datetime import timedelta
 from functools import reduce
 
 import arrow
@@ -38,13 +40,17 @@ from clist.views import get_group_list, get_timeformat, get_timezone
 from pyclist.decorators import context_pagination, extra_context_without_pagination, inject_contest
 from pyclist.middleware import RedirectException
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
-from ranking.models import Account, AccountRenaming, Module, Stage, Statistics, VirtualStart
+from ranking.models import (Account, AccountRenaming, Finalist, FinalistResourceInfo, Module, Stage, Statistics,
+                            VirtualStart)
+from ranking.utils import get_participation_contests
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, ListGroup, Party
 from true_coders.views import get_ratings_data
 from utils.chart import make_bins, make_histogram
 from utils.colors import get_n_colors
 from utils.json_field import JSONF
+from utils.mathutils import max_with_none, min_with_none
+from utils.rating import get_rating
 from utils.regex import get_iregex_filter
 
 
@@ -65,6 +71,8 @@ def standings_list(request, template='standings_list.html'):
     if request.user.is_authenticated:
         coder = request.user.coder
         all_standings = coder.settings.get('all_standings')
+    else:
+        coder = None
 
     switch = request.GET.get('switch')
     if bool(all_standings) == bool(switch) and switch != 'all' or switch == 'parsed':
@@ -78,6 +86,10 @@ def standings_list(request, template='standings_list.html'):
         contests = contests.filter(is_favorite=True)
     elif favorite_value == 'off':
         contests = contests.filter(is_favorite=False)
+
+    if participation := request.GET.get('participation'):
+        participation_operator, participation_contests = get_participation_contests(request, participation)
+        contests = getattr(contests, participation_operator)(pk__in=participation_contests)
 
     search = request.GET.get('search')
     if search is not None:
@@ -274,6 +286,7 @@ def _standings_highlight(contest, statistics, options):
         more_last_hl = None
         quotas = data_1st_u.get('quotas', {})
         more = options.get('more')
+        force_highlight = options.get('force_highlight')
         if more:
             more['n'] = 0
         for s in statistics:
@@ -339,6 +352,9 @@ def _standings_highlight(contest, statistics, options):
                     info['prefix'] = more['n_highlight_prefix']
                 if more['n'] == more['n_highlight']:
                     more_last_hl = info
+
+            if n_quota[k] <= quota and force_highlight and k in force_highlight:
+                info['highlight'] = True
     elif 'n_highlight' in options:
         if isinstance(options['n_highlight'], int):
             for idx, s in enumerate(statistics[:options['n_highlight']], 1):
@@ -2326,3 +2342,104 @@ def virtual_start(request, template='virtual_start.html'):
 
     context['virtual_starts'] = virtual_starts
     return template, context
+
+
+@inject_contest()
+def finalists(request, contest, template='finalists.html'):
+    finalists = contest.finalist_set.order_by('created')
+    finalist_resources = Resource.get(contest.finalists_info['resources'])
+    resources = request.get_resources()
+    resource_fields = finalist_resources
+    force = 'force' in request.GET and request.user.is_staff
+    update_delay = timedelta(days=1)
+    with_update = timezone.now() < contest.start_time
+
+    finalists = finalists.prefetch_related('finalistresourceinfo_set')
+
+    achievement_statistics = Statistics.objects
+    achievement_statistics = achievement_statistics.select_related('contest', 'resource', 'account')
+    achievement_statistics = achievement_statistics.order_by('-contest__end_time', 'place_as_int')
+    if resources:
+        achievement_statistics = achievement_statistics.filter(resource__in=resources)
+    finalists = finalists.prefetch_related(Prefetch('achievement_statistics', queryset=achievement_statistics))
+
+    for finalist in finalists:
+        accounts = finalist.accounts.all()
+        last_modified = max(a.modified for a in accounts)
+
+        accounts_filter = finalist.accounts.filter(coders=OuterRef('pk'))
+        coders = Coder.objects.annotate(has_finalist_account=SubqueryExists(accounts_filter))
+        coders = coders.filter(has_finalist_account=True)
+
+        accounts_filter = Q(pk__in={a.pk for a in accounts})
+        accounts_filter |= Q(coders__in=coders)
+
+        resource_infos = {}
+        for resource_info in finalist.finalistresourceinfo_set.all():
+            resource_infos[resource_info.resource_id] = resource_info
+
+        for resource in resource_fields:
+            if resource.id not in resource_infos:
+                resource_info, _ = FinalistResourceInfo.objects.get_or_create(finalist=finalist, resource=resource)
+                resource_infos[resource.id] = resource_info
+            else:
+                resource_info = resource_infos[resource.id]
+
+            if not with_update or resource_info.updated and last_modified < resource_info.updated + update_delay:
+                continue
+
+            rating_accounts = resource.account_set.filter(rating__isnull=False)
+            rating_accounts = rating_accounts.filter(accounts_filter)
+            ratings_data = rating_accounts.order_by('-rating').values('rating', 'key')
+            if not ratings_data:
+                continue
+
+            rating = round(get_rating([r['rating'] for r in ratings_data]))
+            if len(ratings_data) > 1:
+                rating_infos = []
+                for rating_data in ratings_data:
+                    ratings = [r['rating'] for r in ratings_data if r['key'] != rating_data['key']]
+                    rating_infos.append({'delta': rating - round(get_rating(ratings)), **rating_data})
+            else:
+                rating_infos = [dict(r) for r in ratings_data]
+
+            resource_info.ratings = rating_infos
+            resource_info.rating = rating
+            resource_info.updated = timezone.now()
+            resource_info.save()
+        setattr(finalist, 'resource_infos', resource_infos)
+
+        n_contests = [a.n_contests for a in accounts] + [c.n_contests for c in coders]
+        n_contests = tuple(sorted(n_contests))
+        achievement_hash = hashlib.md5(str(n_contests).encode()).hexdigest()
+        if force or with_update and finalist.achievement_hash != achievement_hash:
+            account_filter = Q(account__coders__in=coders) | Q(account__in=accounts)
+            statistics = Statistics.objects.filter(account_filter)
+            statistics = statistics.filter(medal__isnull=False)
+            statistics = statistics.filter(contest__series__isnull=False, contest__end_time__lt=contest.start_time)
+            statistics = statistics.order_by('-contest__end_time', 'place_as_int')
+            finalist.achievement_statistics.set(statistics)
+            finalist.achievement_hash = achievement_hash
+            finalist.achievement_updated = timezone.now()
+            finalist.save(update_fields=['achievement_hash', 'achievement_updated'])
+
+    ach_max_date, ach_min_date = None, None
+    for finalist in finalists:
+        for statistic in finalist.achievement_statistics.all():
+            ach_max_date = max_with_none(ach_max_date, statistic.contest.end_time)
+            ach_min_date = min_with_none(ach_min_date, statistic.contest.end_time)
+
+    context = {
+        'navbar_admin_model': Finalist,
+        'contest': contest,
+        'has_name': contest.finalists_info.get('has_name'),
+        'finalists': finalists,
+        'finalist_resources': finalist_resources,
+        'resource_fields': resource_fields,
+        'ach_max_date': ach_max_date,
+        'ach_min_date': ach_min_date,
+        'params': {
+            'resources': resources,
+        },
+    }
+    return render(request, template, context)

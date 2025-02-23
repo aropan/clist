@@ -10,10 +10,10 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import yaml
 from django.db.models import Q
 
-from clist.templatetags.extras import as_number, is_yes, slug
+from clist.templatetags.extras import as_number, get_item, is_yes, slug
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
-from utils.strings import string_iou
+from utils.strings import string_iou, strip_tags
 
 
 def extract_team_name(name):
@@ -54,60 +54,66 @@ class Statistic(BaseModule):
 
         raise ExceptionParseStandings('No standings url, not found title matching')
 
+    def _get_season_ratings(self):
+        ret = {}
+        season = get_item(self.info, 'parse.season')
+        if not season:
+            return ret
+        stage = get_item(self.info, 'parse.stage')
+        legacy_domain_url = 'https://ucup-legacy.qoj.ac/'
+        rating_url = urllib.parse.urljoin(legacy_domain_url, f'/rating?season={season}')
+        rating_page = REQ.get(rating_url)
+        table = parsed_table.ParsedTable(rating_page)
+        for row in table:
+            rating_idx = None
+            season_rating = None
+            handle = None
+            found = False
+            for k, v in row.items():
+                k = k.lower()
+                if rating_idx is not None:
+                    season_rating = as_number(v.value, force=True)
+                    rating_idx += 1
+                    href = v.header.node.xpath('.//a/@href')
+                    if not href and str(rating_idx) == stage:
+                        found = True
+                        break
+                    if href and self.standings_url.startswith(href[0]):
+                        found = True
+                        break
+                elif 'team' in k:
+                    handle = v.value
+                elif 'rating' in k:
+                    rating_idx = 0
+            if found and handle and season_rating:
+                rating_data = {'season_rating': season_rating}
+                handle = handle.strip()
+                ret[handle] = rating_data
+                team_name = extract_team_name(handle)
+                if team_name in ret:
+                    ret[team_name] = None
+                elif team_name:
+                    ret[team_name] = rating_data
+        return ret
+
     def get_standings(self, users=None, statistics=None, **kwargs):
         if not self.standings_url:
             self.standings_url = self._detect_standings()
 
-        season_ratings = {}
-        # season = self.info.get('parse', {}).get('season')
-        # if season:
-        #     stage = self.info.get('parse', {}).get('stage')
-        #     rating_url = urllib.parse.urljoin(self.url, f'/rating?season={season}')
-        #     rating_page = REQ.get(rating_url)
-        #     table = parsed_table.ParsedTable(rating_page)
-        #     for row in table:
-        #         rating_idx = None
-        #         total_rating = 0
-        #         season_rating = None
-        #         handle = None
-        #         found = False
-        #         for k, v in row.items():
-        #             k = k.lower()
-        #             if rating_idx is not None:
-        #                 season_rating = as_number(v.value, force=True)
-        #                 if season_rating:
-        #                     total_rating += season_rating
-
-        #                 rating_idx += 1
-        #                 href = v.header.node.xpath('.//a/@href')
-        #                 if not href and str(rating_idx) == stage:
-        #                     found = True
-        #                     break
-        #                 if href and self.standings_url.startswith(href[0]):
-        #                     found = True
-        #                     break
-        #             elif 'team' in k:
-        #                 handle = v.value
-        #             elif 'rating' in k:
-        #                 rating_idx = 0
-        #         if found and handle and season_rating:
-        #             rating_data = {
-        #                 'total_rating': total_rating,
-        #                 'season_rating': season_rating,
-        #             }
-        #             handle = handle.strip()
-        #             season_ratings[handle] = rating_data
-
-        #             team_name = extract_team_name(handle)
-        #             if team_name in season_ratings:
-        #                 season_ratings[team_name] = None
-        #             elif team_name:
-        #                 season_ratings[team_name] = rating_data
+        try:
+            season_ratings = self._get_season_ratings()
+        except FailOnGetResponse as e:
+            LOG.warn(f'Fail to get season ratings: {e}')
+            season_ratings = {}
 
         page = REQ.get(self.standings_url)
 
         entries = re.findall(r'^([a-z_]+)\s*=\s*(.*);\s*$', page, flags=re.MULTILINE)
         variables = {k: yaml.safe_load(v) for k, v in entries}
+
+        for key in ('contest_type', 'standings', 'score', 'problems'):
+            if key not in variables:
+                raise ExceptionParseStandings(f'Not found "{key}" in variables')
 
         if variables.get('contest_type') != 'ICPC':
             raise ExceptionParseStandings(f'Contest type should be "ICPC", found "{variables["contest_type"]}"')
@@ -125,11 +131,14 @@ class Statistic(BaseModule):
                 urllib.parse.urljoin(base_url, f'/problem/{problem_id}'),
             ):
                 try:
-                    problem_page = REQ.get(url)
+                    problem_page, response_code = REQ.get(url, return_code=True, ignore_codes={404})
+                    if response_code == 404:
+                        continue
                     problem_info['url'] = url
                     prefix = rf'(?:#\s*{problem_info["code"]}|{problem_info["short"]})'
-                    name = re.search(rf'<h1[^>]*>\s*{prefix}.([^<]+)</h1>', problem_page).group(1)
+                    name = re.search(rf'<h1[^>]*>\s*{prefix}.(.*?)</h1>', problem_page, re.DOTALL).group(1)
                     name = html.unescape(name).strip()
+                    name = strip_tags(name)
                     problem_info['name'] = name
                     break
                 except FailOnGetResponse as e:
@@ -150,6 +159,7 @@ class Statistic(BaseModule):
 
         result = {}
         handle_mapping = {}
+        hidden_fields = ['original_handle', 'affiliation', 'rating', 'standings_rating', 'out_of_competition']
         for standings_row in standings:
             solving, penalty, name, rank, rating = standings_row
             if isinstance(name, dict):
@@ -207,7 +217,7 @@ class Statistic(BaseModule):
                 **rating_data,
             )
 
-            statistics_problems = (statistics or {}).get(handle, {}).get('problems', {})
+            statistics_problems = get_item(statistics or {}, (handle, 'problems'), {})
             problems = row.setdefault('problems', statistics_problems)
             scoring = scoring.items() if isinstance(scoring, dict) else enumerate(scoring)
             for k, scoring_value in scoring:
@@ -237,6 +247,12 @@ class Statistic(BaseModule):
                 if handle not in result:
                     row['member'] = handle
                     result[handle] = copy.deepcopy(row)
+                else:
+                    for field, value in row.items():
+                        if field.startswith('stage_') and field not in result[handle]:
+                            result[handle][field] = value
+                            if field not in hidden_fields:
+                                hidden_fields.append(field)
 
         REQ.add_cookie('show_all_submissions', 'true')
         submission_url = urllib.parse.urljoin(self.standings_url.rstrip('/'), 'submissions/')
@@ -315,8 +331,7 @@ class Statistic(BaseModule):
             'url': self.standings_url,
             'result': result,
             'problems': problems_infos,
-            'hidden_fields': ['total_rating', 'original_handle', 'affiliation', 'rating', 'standings_rating',
-                              'out_of_competition'],
+            'hidden_fields': hidden_fields,
             '_submissions_info': submissions_info,
             'info_fields': ['_submissions_info'],
             'options': {'data': variables},
@@ -331,7 +346,7 @@ class Statistic(BaseModule):
                 return
             if not account.name:
                 return
-            match = re.search(r'^(?P<name>.*)\((?P<members>[^\)]*)\)$', account.name)
+            match = re.search(r'^(?P<name>.*)\((?P<members>[^\)]*)\)\)?$', account.name)
             if not match:
                 return
             name = match.group('name').strip()
@@ -356,7 +371,9 @@ class Statistic(BaseModule):
                 for team in qs.filter(cond):
                     counter[team] += member_weight
             total_weight = team_weight + max(len(members), 3) * member_weight
-            teams = [team for team, count in counter.items() if 2 * count > total_weight]
+            count_threshold = max(counter.values())
+            count_threshold = max(count_threshold, total_weight // 2 + 1)
+            teams = [team for team, count in counter.items() if count >= count_threshold]
 
             if len(teams) > 1:
                 season = account.get_last_season()
@@ -369,7 +386,7 @@ class Statistic(BaseModule):
                         diff.append(team)
                 teams = same or diff
                 if len(teams) > 1:
-                    LOG.warning(f'Found multiple teams = {teams} for {account}')
+                    LOG.warning(f'Found multiple teams = {teams} for {account}, counter = {counter}')
                     return
             if not teams:
                 return

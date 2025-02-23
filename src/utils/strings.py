@@ -105,6 +105,8 @@ def remove_unpaired_surrogates(text):
 
 
 def sanitize_text(text):
+    if not text:
+        return text
     text = re.sub(r'[\x00-\x1F\x7F]', '', text)
     text = remove_unpaired_surrogates(text)
     return text
@@ -121,3 +123,7 @@ def sanitize_data(data):
         return tuple(sanitize_data(x) for x in data)
     else:
         return data
+
+
+def strip_tags(html):
+    return BeautifulSoup(html, 'html.parser').get_text()

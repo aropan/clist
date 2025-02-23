@@ -17,7 +17,6 @@ from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import FailOnGetResponse
 
 
-
 class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None, **kwargs):

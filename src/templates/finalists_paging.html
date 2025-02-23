@@ -1,0 +1,53 @@
+{% for finalist in finalists %}
+<tr>
+  <td class="no-stretch">{{ forloop.counter }}</td>
+  {% if has_name %}
+  <td class="no-stretch name-column">
+    {{ finalist.name }}
+  </td>
+  {% endif %}
+  <td class="participant-column">
+    {% for account in finalist.accounts.all %}
+      {% include "account_table_cell.html" with resource=account.resource account=account without_inline_url=True %}
+    {% endfor %}
+  </td>
+  {% for resource in resource_fields %}
+  <td class="no-stretch">
+    {% with resource_info=finalist.resource_infos|get_item:resource.id %}
+
+    {% if resource_info.rating is not None %}
+      {% include "field_value.html" with value=resource_info.rating field="rating" resource=resource %}
+      <span title="{% for rating_info in resource_info.ratings %}{{ rating_info.key }}: {{ rating_info.rating }}{% if rating_info.delta %} (+{{ rating_info.delta }}){% endif %}<br/>{% endfor %}" data-toggle="tooltip" data-html="true">
+      ({{ resource_info.ratings|length }})
+      </span>
+    {% endif %}
+
+    {% endwith %}
+  </td>
+  {% endfor %}
+  <td>
+    <div class="timeline-container">
+    {% with total_delta=ach_max_date|subtract:ach_min_date|default:1 %}
+    {% for statistic in finalist.achievement_statistics.all %}
+    {% with current_delta=ach_max_date|subtract:statistic.contest.end_time %}
+    {% with timeline_percent=current_delta|divide:total_delta|multiply:100 %}
+    <a href="{% url "ranking:standings_by_id" statistic.contest.pk %}?find_me={{ statistic.pk }}" class="timeline-dot trophy {{ statistic.medal|lower }}-trophy-background" data-toggle="tooltip" data-placement="top" data-html="true" title="
+{% if statistic.place_as_int == 1 %}Winner{% else %}{{ statistic.medal|title }}{% endif %}<br/>
+{{ statistic.contest.title }}<br/>
+{{ statistic.contest.host }}<br/>
+Rank: {{ statistic.place_as_int }} of {{ statistic.contest.n_statistics }}<br/>
+{{ statistic.account_name }}<br/>
+{{ statistic.contest.end_time|naturalday }}
+" style="left: {{ timeline_percent }}%;"></a>
+    {% endwith %}
+    {% endwith %}
+    {% endfor %}
+    {% endwith %}
+    </div>
+  </td>
+</tr>
+{% endfor %}
+
+{% if scrollable_table %}
+<script>$(update_table_sticky)</script>
+{% endif %}

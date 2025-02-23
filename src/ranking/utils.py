@@ -12,6 +12,7 @@ from datetime import timedelta
 from pydoc import locate
 
 import tqdm
+from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
 from django.db import transaction
@@ -22,7 +23,8 @@ from django_print_sql import print_sql
 from django_super_deduper.merge import MergedModelInstance
 from sql_util.utils import Exists
 
-from clist.templatetags.extras import add_prefix_to_problem_short, get_item, get_problem_short, slug
+from clist.templatetags.extras import add_prefix_to_problem_short, get_item, get_problem_short, redirect_login, slug
+from pyclist.middleware import RedirectException
 from ranking.management.modules.common import LOG
 from ranking.models import Account, Statistics
 from utils.logger import suppress_db_logging_context
@@ -526,6 +528,7 @@ def update_stage(self):
     if exclude_statistics:
         statistics = statistics.exclude(**exclude_statistics)
     re_ranking = self.score_params.get('re_ranking')
+    update_statistics_fields = self.score_params.get('update_statistics_fields', [])
 
     account_keys = dict()
     problem_values = defaultdict(set)
@@ -540,6 +543,7 @@ def update_stage(self):
                 problem_short = get_problem_short(problems_infos[problem_info_key])
             pbar.set_postfix(contest=contest)
             stats = statistics.filter(contest_id=contest.pk)
+            stage_values = {}
 
             max_solving = 0
             n_effective = 0
@@ -589,6 +593,7 @@ def update_stage(self):
                     problems_infos[problem_info_key].setdefault('n_total', 0)
                     problems_infos[problem_info_key]['n_total'] += 1
                 rank = stat.place_as_int
+                stage_values['rank'] = rank
                 score = None
                 if stage_placing:
                     placing_scores = _get_placing(placing, stat)
@@ -596,15 +601,20 @@ def update_stage(self):
                     score = placing_scores.get(score_rank, placing_scores.get('default'))
                     if score is None:
                         continue
+                    stage_values['gp_score'] = score
                 if scoring:
                     if score is None:
                         score = 0
                     if scoring['name'] == 'general':
                         if rank is None:
                             continue
-                        solving_factor = stat.solving / max_solving
+                        score_factor = stat.solving / max_solving
                         rank_factor = (n_effective - rank + 1) / n_effective
-                        score += scoring['factor'] * solving_factor * rank_factor
+                        norm_score = scoring['factor'] * score_factor * rank_factor
+                        score += norm_score
+                        stage_values['score_factor'] = score_factor
+                        stage_values['rank_factor'] = rank_factor
+                        stage_values['norm_score'] = norm_score
                     elif scoring['name'] == 'field':
                         score += stat.addition.get(scoring['field'], 0)
                     else:
@@ -613,6 +623,30 @@ def update_stage(self):
                     score = stat.solving
                 if duration_weighting and contest.duration < timedelta(**duration_weighting['duration']):
                     score *= duration_weighting['factor']
+
+                stage_values['score'] = score
+
+                updated_addition = False
+                updated_contest_info = False
+                contest_fields = contest.info.setdefault('fields', [])
+                contest_hidden_fields = contest.info.setdefault('hidden_fields', [])
+                for field in update_statistics_fields:
+                    stage_value = stage_values.get(field)
+                    stat_field = f'stage_{field}'
+                    if stage is None and stat_field in stat.addition:
+                        stat.addition.pop(stat_field)
+                        updated_addition = True
+                    elif stage_value != stat.addition.get(stat_field):
+                        stat.addition[stat_field] = stage_value
+                        updated_addition = True
+                        if stat_field not in contest_fields:
+                            contest_fields.append(stat_field)
+                            contest_hidden_fields.append(stat_field)
+                            updated_contest_info = True
+                if updated_addition:
+                    stat.save(update_fields=['addition'])
+                if updated_contest_info:
+                    contest.save(update_fields=['info'])
 
                 if not detail_problems and not skip_problem_stat:
                     problems_infos[problem_info_key].setdefault('n_teams', 0)
@@ -1061,3 +1095,20 @@ def update_stage(self):
                 stage.is_rated = False
         stage.save()
         stage.statistics_update_done()
+
+
+def get_participation_contests(request, participation):
+    if participation not in {'participant', 'upsolving', 'both', 'none'}:
+        request.logger.warning(f'Invalid participation = {participation}')
+    if not request.user.is_authenticated:
+        raise RedirectException(redirect_login(request))
+    coder = request.as_coder or request.user.coder
+    statistics = Statistics.objects.filter(account__coders=coder)
+    if participation == 'participant':
+        statistics = statistics.filter(Q(skip_in_stats=False) | Q(contest__stage__isnull=False))
+    elif participation == 'upsolving':
+        statistics = statistics.filter(skip_in_stats=True)
+    operator = 'exclude' if participation == 'none' else 'filter'
+    Contest = apps.get_model('clist', 'Contest')
+    contests = Contest.objects.filter(statistics__in=statistics).distinct()
+    return operator, contests

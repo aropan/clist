@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}{{ contest.title }} - Finalists{% endblock %}{% endblock %}
+{% block description %}View finalists table for {{ contest.title }} from {{ contest.resource.host }}.{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+<link href="{% static_ts 'css/finalists.css' %}" rel="stylesheet">
+
+<script src="{% static_ts 'js/jquery.timeago.js' %}"></script>
+<script src="{% static_ts 'js/countdown.js' %}"></script>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="fullscreen-hidden">
+  {% with neighbors=contest.neighbors %}
+  <h3 id="standings-title" class="text-center">
+    {% if not other_contests and with_neighbors %}
+    {% for c in neighbors %}{% if c.end_time < contest.end_time %}{% include "standings_neighbors.html" with contest=c %}{% endif %}{% endfor %}
+    {% endif %}
+
+    <div>
+      Finalists of
+      <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="24" height="24"/></a>
+      <span id="standings-url"></span>
+      <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
+
+      {% with shown_kind=contest.shown_kind %}{% if shown_kind %}{% label_tag shown_kind %}{% endif %}{% endwith %}
+
+      {% if favorite_contests %}{% activity_action "fav" contest %}{% endif %}
+
+      <span title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">
+        <small>{{ contest.end_time|timezone:timezone|naturalday:'F j, Y' }}</small>
+      </span>
+
+      {% for stage in contest.stages.all %}
+        <a href="{% url 'ranking:standings' stage.contest.title|slug stage.contest.pk %}" class="badge progress-bar-info">{% icon_to "stage" stage.contest.title %}</a>
+      {% endfor %}
+
+      {% if contest.series_id %}
+        <a href="{% url 'ranking:standings_list' %}?series={{ contest.series.slug }}" class="badge progress-bar-info">{% icon_to "series" contest.series.name %}</a>
+      {% endif %}
+
+      {% if contest.has_submissions %}
+        <a onclick="open_submissions(this); return false" data-url="{% url 'submissions:submissions' contest.title|slug contest.pk %}" class="open-submissions badge progress-bar-info">{% icon_to "submissions" %}</a>
+      {% endif %}
+
+      {% if not other_contests %}
+
+      {% comment %} <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><span title="Show nearby" data-toggle="tooltip"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></span></a> {% endcomment %}
+
+      {% if contest.n_problems is not None %}
+      <a href="{% url 'clist:problems' %}?contest={{ contest.pk }}" class="badge progress-bar-info">{% icon_to 'problems' %}</a>
+      {% endif %}
+
+      {% if contest.n_statistics %}
+      <a href="{% url 'coder:accounts' %}?contest={{ contest.pk }}" class="badge progress-bar-info">{% icon_to 'participants' %}</a>
+      {% endif %}
+
+      {% call_method contest.merging_contests 'values_list' 'id' flat=True as merging_contests_ids %}
+      {% if merging_contests_ids %}
+      <a href="{% url 'ranking:standings_by_ids' merging_contests_ids|to_list|prepend:contest.id|join:"," %}" class="badge progress-bar-info">{% icon_to "merged_standings" %}</a>
+      {% endif %}
+
+      {% for external_url in contest.info.standings.external_urls %}
+      <a href="{{ external_url.url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' external_url.name %}</a>
+      {% endfor %}
+
+      {% if contest.upsolving_url %}
+      <a href="{{ contest.upsolving_url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' 'upsolving' %}</a>
+      {% endif %}
+
+      {% endif %}
+
+      {% if user|has_update_statistics_permission:contest %}
+      <a href="" id="update_statistics_btn" onclick="update_statistics(this); return false">
+        {% icon_to 'update' default='Update statistics' %}
+      </a>
+      <a href="" id="show_update_statistics_log_btn" onclick="show_update_statistics_log(this); return false" class="hidden">
+        {% icon_to 'log' default='Show log' %}
+      </a>
+      {% endif %}
+
+      {% include "contest_inline_buttons.html" with contest=contest with_stage=True virtual_start=virtual_start %}
+    </div>
+
+    {% if contest.related is not None %}
+    {% include "standings_neighbors.html" with contest=contest.related without_neighbors=True with_related=True %}
+    {% endif %}
+    {% for related in contest.related_set.all %}
+      {% include "standings_neighbors.html" with contest=related without_neighbors=True with_related=True %}
+    {% endfor %}
+
+    {% if other_contests %}
+    {% for c in other_contests %}{% include "standings_neighbors.html" with contest=c without_neighbors=True with_icon=True %}{% endfor %}
+    {% elif with_neighbors %}
+    {% for c in neighbors %}{% if not c.end_time < contest.end_time %}{% include "standings_neighbors.html" with contest=c %}{% endif %}{% endfor %}
+    {% endif %}
+  </h3>
+  {% endwith %}
+
+  <script>
+    function update_neighbors_standings_url_offset() {
+      $('.neighbors-standings-url').each(function(idx, el) {
+        var before_width = $(el).children('.neighbors-standings-url-before').width() || 0
+        $(el).offset({left: $('#standings-url').offset().left - before_width})
+        $(el).width($('#standings-title').width() - $(el).offset().left)
+      })
+    }
+    update_neighbors_standings_url_offset()
+    $(window).resize(update_neighbors_standings_url_offset)
+  </script>
+
+  {% if contest.is_running or contest.is_coming %}
+  <h4 class="text-center">
+    {% if contest.is_running %}Time remaining: {% elif contest.is_coming %}Time before the start: {% endif %}
+    <span class="timeleft countdown" data-countdown="{{ contest.next_time }}" title="{{ contest.next_time_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ contest.next_time|countdown }}</span>
+    {% with opening=contest.info|get_item:"_opening" %}
+    {% if opening %}
+      {% for o in opening %}
+      {% with otimedelta=o.date|timestamp_to_datetime|timezone:timezone|timedelta_with_now  %}
+      {% with oseconds=otimedelta.total_seconds %}
+      {% if oseconds > 0 %}
+      | {{ o.title }}: <span class="timeleft countdown" data-countdown="{{ oseconds }}" title="{{ o.date|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip">{{ oseconds|countdown }}</span>
+      {% endif %}
+      {% endwith %}
+      {% endwith %}
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+  </h4>
+  {% endif %}
+</div>
+
+
+<div>
+  {% include "filter_collapse.html" with include_filter="finalists_filters.html" %}
+
+  {% if finalists.exists %}
+    <div{% if scrollable_table %} id="table-inner-scroll"{% endif %} class="panel panel-default fullscreen-border{% if not scrollable_table %} table-responsive{% endif %} {{ browser_family }}">
+      <table class="finalists table table-border-collapse-separate table-hover table-condensed table-striped{% if not scrollable_table %} table-float-head{% endif %}">
+        <thead>
+          <tr>
+            <th class="no-stretch">N</th>
+            {% if has_name %}<th class="no-stretch name-column">Name</th>{% endif %}
+            <th class="participant-column">
+              Participant
+              {% for resource in finalist_resources %}
+              {% img_resource_icon resource 16 with_href=True %}
+              {% endfor %}
+            </th>
+            {% for resource in resource_fields %}
+            <th>
+              {% img_resource_icon resource 20 with_href=True %}
+            </th>
+            {% endfor %}
+            <th>Achievements</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% include "finalists_paging.html" %}
+        </tbody>
+      </table>
+    </div>
+    <script>configure_pagination({% if paginate_on_scroll %}true{% else %}false{% endif %});</script>
+  {% else %}
+  <div class="alert alert-info">No standings</div>
+  {% endif %}
+</div>
+
+<div class="modal" id="update-statistics-log">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="lead">
+          <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
+        </span>
+        <button id="modal-update-statistics-btn" class="btn btn-primary btn-sm pull-right" onclick="update_statistics(this); return false">
+          {% icon_to 'update' default='Update statistics' %}
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="update-statistics-progress" class="progress hidden">
+          <span id="update-statistics-progress-text"></span>
+          <div id="update-statistics-progress-bar" class="progress-bar progress-bar-success" style="width:0%"></div>
+        </div>
+        <pre id="update-statistics-log-output"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if scrollable_table %}
+<script>$(window).resize(update_table_sticky)</script>
+{% endif %}
+
+{% endblock %}

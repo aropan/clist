@@ -32,7 +32,7 @@
   <a href="{{ promotion.contest.actual_url }}" title="{{ promotion.contest.host }}" data-toggle="tooltip" target="_blank" rel="noopener noreferrer">{{ promotion.contest.title }}</a>
   {% if promotion.timer_message %}<span>{{ promotion.timer_message }}</span>{% endif %}
   <a href="https://www.timeanddate.com/worldclock/fixedtime.html?iso={{ promotion.target_time|format_time:"%Y%m%dT%H%M" }}" class="timeleft countdown" title="{{ promotion.target_time|timezone:timezone|format_time:time_format }}" data-toggle="tooltip" data-timestamp="{{ promotion.target_time.timestamp }}" target="_blank" rel="noopener noreferrer">{{ promotion.target_time|countdown }}</a>
-  <a id="skip-promotion" class="pull-right" data-promotion-id="{{ promotion.id }}">{% icon_to 'close' 'skip' %}</a>
+  <a id="skip-promotion" class="pull-right" data-promotion-id="{{ promotion.id }}">{% icon_to 'close' 'hide' %}</a>
 </div>
 {% endif %}
 

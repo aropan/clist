@@ -243,13 +243,13 @@
 
     {% include "resource_accounts_panel.html" with condition=True accounts=most_participated field="n_contests" title="Most participations" header="Contests count" paging="resource_most_participated_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=last_submissions field="last_submission" title="Most recent submissions" header="Submission time" paging="resource_last_submission_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=resource.has_account_last_submission accounts=last_submissions field="last_submission" title="Most recent submissions" header="Submission time" paging="resource_last_submission_paging.html" %}
 
     {% include "resource_accounts_panel.html" with condition=True accounts=last_activities field="last_activity" title="Most recent activity" header="Last activity" paging="resource_last_activity_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=last_rating_activities field="last_rating_activity" title="Most recent rating activity" header="Rating activity" paging="resource_last_rating_activity_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=resource.ratings accounts=last_rating_activities field="last_rating_activity" title="Most recent rating activity" header="Rating activity" paging="resource_last_rating_activity_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=True accounts=most_writer field="n_writers" title="Most writers" header="Writers count" paging="resource_most_writer_paging.html" %}
+    {% include "resource_accounts_panel.html" with condition=resource.has_account_n_writers accounts=most_writer field="n_writers" title="Most writers" header="Writers count" paging="resource_most_writer_paging.html" %}
 
     {% include "resource_accounts_panel.html" with condition=resource.has_statistic_n_total_solved accounts=most_solved field="n_total_solved" title="Most solved problems" header="Total solved" paging="resource_most_solved_paging.html" %}
 

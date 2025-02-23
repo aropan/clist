@@ -1,6 +1,7 @@
 import hashlib
 import os
 import re
+from typing import Optional
 from urllib.parse import quote, urljoin
 
 import magic
@@ -219,6 +220,16 @@ class Account(BaseModel):
         if self.has_field('info'):
             download_avatar_url(self)
         super().save(*args, **kwargs)
+
+    @staticmethod
+    def get(resource, key) -> Optional['Account']:
+        account = resource.account_set.filter(key=key).first()
+        if (
+            account is None and
+            (renaming := resource.accountrenaming_set.filter(old_key=key).first())
+        ):
+            account = resource.account_set.get(key=renaming.new_key)
+        return account
 
     class Meta:
         indexes = [
@@ -765,3 +776,43 @@ class ParseStatistics(BaseModel):
 
     def __str__(self):
         return f'ParseStatistics#{self.pk} contest#{self.contest_id}'
+
+
+class FinalistManager(BaseManager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('contest').prefetch_related('accounts__resource')
+
+
+class Finalist(BaseModel):
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    name = models.CharField(max_length=400, null=True, blank=True)
+    accounts = models.ManyToManyField(Account, blank=True)
+    info = models.JSONField(default=dict, blank=True)
+    achievement_statistics = models.ManyToManyField(Statistics, blank=True)
+    achievement_updated = models.DateTimeField(default=None, null=True, blank=True)
+    achievement_hash = models.CharField(max_length=32, null=True, blank=True)
+
+    objects = FinalistManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['contest', 'name'],
+                name='unique_finalist_name',
+                condition=Q(name__isnull=False),
+            ),
+        ]
+
+    def __str__(self):
+        return f'Finalist#{self.pk} contest#{self.contest_id}'
+
+
+class FinalistResourceInfo(BaseModel):
+    finalist = models.ForeignKey(Finalist, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=None, null=True, blank=True)
+    ratings = models.JSONField(default=list, blank=True)
+    updated = models.DateTimeField(default=None, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('finalist', 'resource')

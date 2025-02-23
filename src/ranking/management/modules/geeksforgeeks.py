@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import dateutil.parser
 from ratelimiter import RateLimiter
 
+from clist.templatetags.extras import as_number
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
@@ -157,8 +158,8 @@ class Statistic(BaseModule):
                     update['new_rating'] = contest_data.pop('display_rating')
                     update['_rank'] = contest_data.pop('rank')
 
-                if data.get('current_rating'):
-                    data['rating'] = data.pop('current_rating')
+                if (rating := as_number(data.get('current_rating'), force=True)) is not None:
+                    data['rating'] = rating
 
                 for k in list(data.keys()):
                     if isinstance(data[k], (dict, list, tuple)):

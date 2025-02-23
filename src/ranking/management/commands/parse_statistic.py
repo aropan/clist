@@ -41,7 +41,8 @@ from notification.utils import compose_message_by_problems, compose_message_by_s
 from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.parse_accounts_infos import rename_account
 from ranking.management.modules.common import REQ, UNCHANGED
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException, ProxyLimitReached
+from ranking.management.modules.excepts import (ExceptionParseStandings, FailOnGetResponse, InitModuleException,
+                                                ProxyLimitReached)
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from ranking.utils import account_update_contest_additions, update_stage
 from ranking.views import update_standings_socket
@@ -1159,6 +1160,11 @@ class Command(BaseCommand):
                                     account.info.update(account_info)
                                     account.save(update_fields=update_fields)
 
+                                if last_submission := r.pop('_last_submission', None):
+                                    if not account.last_submission or last_submission > account.last_submission:
+                                        account.last_submission = last_submission
+                                        account.save(update_fields=['last_submission'])
+
                             def update_stat_info():
                                 advance = contest.info.get('advance')
                                 if advance:
@@ -1957,6 +1963,8 @@ class Command(BaseCommand):
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 event_status = EventStatus.FAILED
+                if isinstance(e, FailOnGetResponse) and e.code in {403}:
+                    event_status = EventStatus.WARNING
                 exception_error = str(e)
                 error_counter[str(e)] += 1
                 self.logger.debug(colored_format_exc())

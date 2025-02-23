@@ -53,6 +53,8 @@
 
   {% if favorite_problems %}{% include "favorite_filter.html" %}{% endif %}
 
+  {% include "participation_filter.html" %}
+
   {% include "field_to_select.html" with field="status" data=status_select|simple_select_data %}
 
   {% include "field_to_select.html" with field="chart" data=chart_select|simple_select_data %}

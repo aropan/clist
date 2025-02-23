@@ -10,7 +10,7 @@ from django.core.management.commands import dumpdata
 from django.db.models import Avg, Count, F, FloatField, Max, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Cast
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -18,13 +18,14 @@ from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion, Resource
-from clist.templatetags.extras import (as_number, get_item, get_problem_key, get_timezone_offset, is_yes,
-                                       rating_from_probability, win_probability)
+from clist.templatetags.extras import (allowed_redirect, as_number, get_item, get_problem_key, get_timezone_offset,
+                                       is_yes, rating_from_probability, redirect_login, win_probability)
 from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
 from pyclist.decorators import context_pagination
 from ranking.models import Account, CountryAccount, Rating, Statistics
+from ranking.utils import get_participation_contests
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import TooManyBinsException, make_bins, make_chart
 from utils.json_field import JSONF
@@ -555,6 +556,7 @@ def resource_problem_rating_chart(resource):
     ('resource_problems_paging.html', 'problems_page'),
 ))
 def resource(request, resource, template='resource.html', extra_context=None):
+    page_template = extra_context.get('page_template')
     now = timezone.now()
     resource = Resource.get(resource)
     request.set_canonical(reverse('clist:resource', args=[resource.pk]))
@@ -575,7 +577,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
                 request.logger.success(f'Verification fields for {resource} updated = {verification_fields}')
                 resource.accounts_fields['verification_fields'] = verification_fields
                 resource.save(update_fields=['accounts_fields'])
-        return redirect(request.get_full_path())
+        return allowed_redirect(request.get_full_path())
 
     if request.user.is_authenticated:
         coder = request.as_coder or request.user.coder
@@ -659,7 +661,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
     resource_ratings = resource.ratings
     if not resource_ratings and resource.has_rating_history:
         resource_ratings = [{'low': float('-inf'), 'high': float('inf'), 'hex_rgb': '#999'}]
-    if resource_ratings:
+    if resource_ratings and not page_template:
         values = resource.account_set.aggregate(min_rating=Min('rating'), max_rating=Max('rating'))
         min_rating = values['min_rating']
         max_rating = values['max_rating']
@@ -718,6 +720,13 @@ def resource(request, resource, template='resource.html', extra_context=None):
         }
 
     medals_order = [F(f).desc(nulls_last=True) for f in ('n_gold', 'n_silver', 'n_bronze', 'n_other_medals')]
+
+    def get_ordered_account_by_nullable_field(field):
+        return accounts.order_by(F(field).desc(nulls_last=True), 'id').filter(**{f'{field}__isnull': False})
+
+    def get_ordered_account_by_number_field(field):
+        return accounts.order_by(F(field).desc(nulls_last=True), 'id').filter(**{f'{field}__gt': 0})
+
     context = {
         'resource': resource,
         'period_select': period_select,
@@ -761,20 +770,20 @@ def resource(request, resource, template='resource.html', extra_context=None):
         'params': params,
         'first_per_page': 10,
         'per_page': 50,
-        'last_submissions': accounts.order_by(F('last_submission').desc(nulls_last=True), 'id'),
-        'last_activities': accounts.order_by(F('last_activity').desc(nulls_last=True), 'id'),
-        'last_rating_activities': accounts.order_by(F('last_rating_activity').desc(nulls_last=True), 'id'),
-        'top': accounts.filter(rating__isnull=False).order_by('-rating', 'id'),
-        'most_participated': accounts.order_by(F('n_contests').desc(nulls_last=True), 'id'),
-        'most_writer': accounts.order_by(F('n_writers').desc(nulls_last=True), 'id'),
-        'most_solved': accounts.order_by(F('n_total_solved').desc(nulls_last=True), 'id'),
-        'most_first_ac': accounts.order_by(F('n_first_ac').desc(nulls_last=True), 'id'),
-        'most_total_solving': accounts.order_by(F('total_solving').desc(nulls_last=True), 'id'),
+        'last_submissions': get_ordered_account_by_nullable_field('last_submission'),
+        'last_activities': get_ordered_account_by_nullable_field('last_activity'),
+        'last_rating_activities': get_ordered_account_by_nullable_field('last_rating_activity'),
+        'top': get_ordered_account_by_nullable_field('rating'),
+        'most_participated': get_ordered_account_by_number_field('n_contests'),
+        'most_writer': get_ordered_account_by_number_field('n_writers'),
+        'most_solved': get_ordered_account_by_number_field('n_total_solved'),
+        'most_first_ac': get_ordered_account_by_number_field('n_first_ac'),
+        'most_total_solving': get_ordered_account_by_number_field('total_solving'),
         'most_medals': accounts.order_by(*medals_order, 'id'),
         'problems': resource.problem_set.filter(url__isnull=False).order_by('-time', 'contest_id', 'index'),
     }
 
-    if extra_context.get('page_template'):
+    if page_template:
         context.update(extra_context)
     elif resource.has_problem_rating:
         context['problem_rating_chart'] = resource_problem_rating_chart(resource)
@@ -848,11 +857,15 @@ def problems(request, template='problems.html'):
     favorite = request.GET.get('favorite')
     if favorite in ['on', 'off']:
         if not coder:
-            return redirect('auth:login')
+            return redirect_login(request)
         if favorite == 'on':
             problems = problems.filter(is_favorite=True)
         elif favorite == 'off':
             problems = problems.filter(is_favorite=False)
+
+    if participation := request.GET.get('participation'):
+        participation_operator, participation_contests = get_participation_contests(request, participation)
+        problems = getattr(problems, participation_operator)(contests__in=participation_contests)
 
     show_tags_value = str(request.GET.get('show_tags', '')).lower()
     if show_tags_value:
@@ -1078,7 +1091,7 @@ def problems(request, template='problems.html'):
     statuses = [s for s in request.GET.getlist('status') if s]
     if statuses:
         if not coder:
-            return redirect('auth:login')
+            return redirect_login(request)
 
         qs = CoderProblem.objects.filter(coder=coder, problem=OuterRef('pk'))
         problems = problems.annotate(is_solved_verdict=Exists(qs.filter(verdict=ProblemVerdict.SOLVED)))

@@ -18,7 +18,7 @@ def get_last_activity_weight(last_activity, base=None):
     return 0.9 ** n_activities
 
 
-def get_weighted_rating(wratings, target, threshold=0.95, cache=None):
+def get_weighted_rating(wratings, target, threshold=0.95, cache=None) -> float:
     left = 0
     right = 5000
 
@@ -59,6 +59,6 @@ def get_weighted_rating(wratings, target, threshold=0.95, cache=None):
     return rating
 
 
-def get_rating(ratings):
+def get_rating(ratings) -> float:
     wratings = [(1, r) for r in ratings]
     return get_weighted_rating(wratings, 0.5)

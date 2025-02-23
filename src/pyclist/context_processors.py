@@ -4,6 +4,7 @@ from utils.timetools import get_timeformat, get_timezone
 
 
 def global_settings(request):
+    groupby = request.GET.get('groupby')
     return {
         'vapid_public_key': settings.WEBPUSH_SETTINGS['VAPID_PUBLIC_KEY'],
         'main_host_url': settings.MAIN_HOST_URL_,
@@ -18,6 +19,8 @@ def global_settings(request):
         'filter_field_suffix': settings.FILTER_FIELD_SUFFIX,
         'statistic_fields': set(settings.STANDINGS_STATISTIC_FIELDS),
         'account_fields': set(settings.ACCOUNT_STATISTIC_FIELDS),
+        'scrollable_table': not request.user_agent.is_mobile and (not groupby or groupby == 'none'),
+        'browser_family': request.user_agent.browser.family.lower(),
     }
 
 

@@ -793,6 +793,7 @@ FONTAWESOME_ICONS_ = {
     'status': '<i class="fa-fw far fa-lightbulb"></i>',
     'n_participants': {'icon': '<i class="fa-fw fas fa-users"></i>', 'title': 'Number of participants',
                        'position': 'bottom'},
+    'participation': '<i class="fa-fw fas fa-user-check"></i>',
     'n_problems': {'icon': '<i class="fa-fw fa-solid fa-list-check"></i>', 'title': 'Number of problems',
                    'position': 'bottom'},
     'series': '<i class="fa-fw fas fa-trophy"></i>',

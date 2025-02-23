@@ -266,6 +266,7 @@ class Statistic(BaseModule):
                     'problem': problem_info,
                     'info': submission_info,
                 })
+                row['_last_submission'] = max_with_none(row.get('_last_submission'), submission_time)
                 counters['n_upsolving'] += 1
         if max_submission_time:
             submissions_info['last_upsolving_submission_time'] = max_submission_time.isoformat()

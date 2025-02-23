@@ -126,6 +126,7 @@ class Resource(BaseModel):
     has_statistic_n_first_ac = models.BooleanField(null=True, blank=True)
     has_statistic_medal = models.BooleanField(null=True, blank=True)
     has_account_last_submission = models.BooleanField(null=True, blank=True)
+    has_account_n_writers = models.BooleanField(null=True, blank=True)
 
     RATING_FIELDS = (
         'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
@@ -565,6 +566,7 @@ class Contest(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     raw_info = models.JSONField(default=dict, blank=True)
     submissions_info = models.JSONField(default=dict, blank=True)
+    finalists_info = models.JSONField(default=dict, blank=True)
     variables = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
@@ -1069,7 +1071,8 @@ class Contest(BaseModel):
             if not rank_n_medals[rank]:
                 raise ValueError('no medals left for the place')
             stat.addition['medal'] = rank_medals[rank]
-            stat.save(update_fields=['addition'])
+            stat.medal = rank_medals[rank]
+            stat.save(update_fields=['addition', 'medal'])
             rank_n_medals[rank] -= 1
 
         if any(rank_n_medals.values()):

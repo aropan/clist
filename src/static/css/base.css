@@ -557,6 +557,26 @@ canvas.rating_history {
   filter: drop-shadow(0px 0px 1px #888);
 }
 
+.gold-trophy-background {
+  background-color: #f9d923 !important;
+}
+
+.silver-trophy-background {
+  background-color: silver !important;
+}
+
+.bronze-trophy-background {
+  background-color: #c08e55 !important;
+}
+
+.honorable-trophy-background {
+  background-color: #d0e3f7 !important;
+}
+
+.diploma-trophy-background {
+  background-color: #d0e3f7 !important;
+}
+
 /*
  * vertical progress bar
  */
@@ -974,11 +994,11 @@ a[data-toggle="tooltip"][disabled],
 }
 
 #promotion {
-  margin-top: 0px;
+  margin-top: -20px;
   margin-bottom: 20px;
-  font-size: 20px;
-  border-radius: 5px;
-  padding: 5px;
+  font-size: 18px;
+  border-radius: 0px 0px 5px 5px;
+  padding: 2px;
 }
 
 #promotion a {
@@ -987,7 +1007,6 @@ a[data-toggle="tooltip"][disabled],
 
 #skip-promotion {
   padding-right: 5px;
-  font-size: 80%;
   cursor: pointer;
 }
 

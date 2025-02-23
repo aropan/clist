@@ -1010,3 +1010,23 @@ function expand_trimmed_text(event, element) {
   event.preventDefault()
   return false
 }
+
+/*
+ * Table sticky
+ */
+
+function update_table_sticky() {
+  $('tr.header-problems').css('top', $('tr.header-row:first').height())
+
+  var width = 0
+  var seen = []
+  $('tr .sticky-column').each(function() {
+    var column = $(this).attr('data-sticky-column')
+    if (seen[column]) {
+      return
+    }
+    seen[column] = true
+    $('tr .' + column).css('left', width)
+    width += $(this).outerWidth()
+  })
+}

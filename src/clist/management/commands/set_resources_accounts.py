@@ -13,6 +13,7 @@ from sql_util.utils import Exists, SubqueryCount
 from tqdm import tqdm
 
 from clist.models import Resource
+from clist.utils import update_accounts_by_coders
 from utils.attrdict import AttrDict
 from utils.mathutils import is_close
 
@@ -33,6 +34,7 @@ class Command(BaseCommand):
         parser.add_argument('--remove-empty', action='store_true', help='remove empty accounts')
         parser.add_argument('--update-statistic-stats', action='store_true',
                             help='update statistic stats')
+        parser.add_argument('--update-account-urls', action='store_true', help='update account urls')
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -187,6 +189,9 @@ class Command(BaseCommand):
                         has_writers=False,
                     )
                     counters['n_removed'], _ = qs.delete()
+
+                if args.update_account_urls:
+                    counters['n_urls'] = update_accounts_by_coders(accounts)
 
                 if table is None:
                     fields = ['host', 'time', 'n_accounts', 'n_changes']

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from django.utils.timezone import now
 from sql_util.utils import Exists
 
@@ -6,8 +7,8 @@ from clist.models import Contest
 from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import (Account, AccountMatching, AccountRenaming, AccountVerification, AutoRating, CountryAccount,
-                            Module, ParseStatistics, Rating, Stage, StageContest, Statistics, VerifiedAccount,
-                            VirtualStart)
+                            Finalist, FinalistResourceInfo, Module, ParseStatistics, Rating, Stage, StageContest,
+                            Statistics, VerifiedAccount, VirtualStart)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -227,3 +228,33 @@ class ParseStatisticsAdmin(BaseModelAdmin):
 
     def get_readonly_fields(self, *args, **kwargs):
         return ['parse_time'] + super().get_readonly_fields(*args, **kwargs)
+
+
+@admin_register(Finalist)
+class FinalistAdmin(BaseModelAdmin):
+    list_display = ['contest', 'name', 'get_accounts', 'modified']
+    search_fields = ['contest__title', 'name']
+    list_filter = [('contest', admin.RelatedOnlyFieldListFilter)]
+
+    def get_accounts(self, obj):
+        return format_html(''.join(
+            format_html('<div><a href="{}">{}</a></div>', account.admin_change_url(), account.key)
+            for account in obj.accounts.all()
+        ))
+    get_accounts.short_description = "Accounts"
+
+    def get_readonly_fields(self, *args, **kwargs):
+        return ['achievement_updated', 'achievement_hash'] + super().get_readonly_fields(*args, **kwargs)
+
+
+@admin_register(FinalistResourceInfo)
+class FinalistResourceInfoAdmin(BaseModelAdmin):
+    list_display = ['finalist', 'resource', 'rating', 'updated']
+    search_fields = ['finalist__name', 'resource__host']
+    list_filter = [
+        ('resource', admin.RelatedOnlyFieldListFilter),
+        ('finalist__contest', admin.RelatedOnlyFieldListFilter),
+    ]
+
+    def get_readonly_fields(self, *args, **kwargs):
+        return ['updated'] + super().get_readonly_fields(*args, **kwargs)
