@@ -1,4 +1,4 @@
-{% coder_account_filter accounts primary_account row_number_field=fields|default:field operator="__gt" as coder_accounts %}
+{% coder_account_filter accounts primary_account row_number_field=field operator="__gt" as coder_accounts %}
 {% define name|add:"_page" as name_page %}
 {% lazy_paginate first_per_page,per_page accounts using name_page %}
 {% get_pages %}
@@ -13,10 +13,12 @@
     <td>
       {% include 'account_table_cell.html' with account=account resource=resource %}
     </td>
-    {% for field in fields|default:field|split:"," %}
+    {% for field in field|split:"," %}
     <td>
       {% with value=account|get_item:field %}
+      {% if with_statistics_filter_url and value %}<a href="{{ account.url|url_with_params_separator }}search={{ statistics_filter_field }}:{{ statistics_filter_values|split:","|get_item:forloop.counter0 }}">{% endif %}
       {% include "field_value.html" with value=value scorefixedformat=2 %}
+      {% if with_statistics_filter_url and value %}</a>{% endif %}
       {% endwith %}
     </td>
     {% endfor %}

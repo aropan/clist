@@ -15,6 +15,8 @@
     {% define value as field_url %}
     {% elif field in selection_field_select.values and request.GET|get_list:field|length != 1 %}
     {% url_transform request field value as field_url %}
+    {% elif source == 'clist.Resource' and field == 'host' %}
+    {% url 'clist:resource' value as field_url %}
     {% else %}
     {% define False as field_url %}
     {% endif %}

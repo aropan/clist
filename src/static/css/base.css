@@ -276,6 +276,10 @@ html {
   color: #008000 !important;
 }
 
+.coder-lime {
+  color: #74C229 !important;
+}
+
 .coder-brown {
   color: #A52A2A !important;
 }
@@ -1069,6 +1073,25 @@ table.table-border-collapse-separate {
   border-collapse: separate;
 }
 
+table .sticky-left-column {
+  position: sticky;
+  position: -webkit-sticky;
+  left: 0;
+  z-index: 10;
+}
+
+table .sticky-right-column {
+  position: sticky;
+  position: -webkit-sticky;
+  right: 0;
+  z-index: 10;
+}
+
+tr:not(.info) .sticky-left-column,
+tr:not(.info) .sticky-right-column {
+  background: inherit;
+}
+
 /*
  * Blurred
  */
@@ -1151,4 +1174,13 @@ table.table-border-collapse-separate {
 
 .expandable-click {
   cursor: pointer;
+}
+
+
+/*
+ * Table scroll appearance
+ */
+
+table.table-scrolling .endless_container td {
+  text-align: left;
 }

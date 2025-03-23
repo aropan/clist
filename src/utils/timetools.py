@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import re
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+from urllib.parse import parse_qs, urlparse
 
 import arrow
 import dateutil.parser
@@ -20,15 +22,41 @@ def parse_duration(value):
     return timedelta(seconds=seconds)
 
 
+def parse_datetime_from_url(value, tz=timezone.utc):
+    value = value.replace('&amp;', '&')
+    parsed_url = urlparse(value)
+    qs = parse_qs(parsed_url.query)
+    args = {
+        name: int(qs.get(key, [None])[0])
+        for name, key in {
+            'year': 'year',
+            'month': 'month',
+            'day': 'day',
+            'hour': 'hour',
+            'minute': 'min',
+            'second': 'sec',
+        }.items()
+        if key in qs
+    }
+    if 'p1' in qs:
+        p1 = qs['p1'][0]
+        if p1 == '166':
+            tz = pytz.timezone('Europe/Moscow')
+    return tz.localize(datetime(**args))
+
+
 def parse_datetime(value, tz=None) -> datetime | None:
     if value is None:
         return None
     if isinstance(value, (int, float)):
         return arrow.get(value).datetime
+    if 'timeanddate.com' in value:
+        return parse_datetime_from_url(value)
     if value.endswith('ago'):
         return now() - parse_duration(value[:-3].strip())
     if tz:
         value = f'{value} {tz}'
+    value = re.sub(r'\bUTC\b\s*([+-][:0-9]+)(.*)', r'\2 \1', value, re.IGNORECASE)
     return dateutil.parser.parse(value).astimezone(tz=timezone.utc)
 
 

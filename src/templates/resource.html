@@ -84,7 +84,7 @@
         <h4>
             Rating distribution
             {% if primary_account %}
-            <span class="pull-right">{% include 'account_table_cell.html' with account=primary_account resource=resource %}</span>
+            <span class="pull-right">{% include 'account_table_cell.html' with account=primary_account resource=resource with_fixed_width=False %}</span>
             {% endif %}
         </h4>
         <span id="toggleLogScale">
@@ -205,28 +205,42 @@
     </script>
     {% endif %}
 
-    {% if has_country and country_distribution.exists %}
-    <div id="countries" class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
-        <h4>Country distribution</h4>
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_medal accounts=most_medals field="n_gold,n_silver,n_bronze,n_medals" title="Most medals" header="n_gold,n_silver,n_bronze,sum" paging="resource_most_medals_paging.html" header_icon=True %}
+
+    {% if has_country and resource.has_country_medal and country_medals.exists %}
+    <div class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
+        <h4>
+        Countries most medals
+        {% if perms.ranking.change_countryaccount %}
+        <a class="inline-button" href="{% url 'admin:ranking_countryaccount_changelist' %}?resource__id__exact={{ resource.pk }}&sort_by=-n_gold,-n_silver,-n_bronze">{% icon_to 'database' %}</a>
+        {% endif %}
+        {% if resource.country_rank_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.country_rank_update_time %}</span>{% endif %}
+        </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
                 <tr>
                     <th>N</th>
                     <th>Country</th>
-                    <th>Participants<br/>number</th>
+                    <th>{% icon_to "n_gold" %}</th>
+                    <th>{% icon_to "n_silver" %}</th>
+                    <th>{% icon_to "n_bronze" %}</th>
+                    <th>{% icon_to "sum" %}</th>
                 </tr>
-                {% include 'resource_country_paging.html' %}
+                {% include "resource_country_most_medals.html" %}
             </table>
         </div>
     </div>
     {% endif %}
 
-    {% if has_country and country_ratings.exists and resource.has_rating_history %}
-    <div id="country-ratings" class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
+    {% if has_country and resource.has_rating_history and country_ratings.exists %}
+    <div class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
         <h4>
-            Country rating
-            <a href="{% url 'clist:resources_country_ratings' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Country ratings' %}</a>
-            {% if resource.country_rank_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.country_rank_update_time %}</span>{% endif %}
+        Country rating
+        <a href="{% url 'clist:resources_country_ratings' %}{% query_fields request 'country' before='?' %}">{% icon_to 'top' 'Country ratings' %}</a>
+        {% if perms.ranking.change_countryaccount %}
+        <a class="inline-button" href="{% url 'admin:ranking_countryaccount_changelist' %}?resource__id__exact={{ resource.pk }}&sort_by=-rating">{% icon_to 'database' %}</a>
+        {% endif %}
+        {% if resource.country_rank_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.country_rank_update_time %}</span>{% endif %}
         </h4>
         <div class="panel panel-default table-responsive">
             <table class="table table-hover table-condensed table-striped">
@@ -235,11 +249,34 @@
                     <th>Country</th>
                     <th>Participants<br/>rating</th>
                 </tr>
-                {% include 'resource_top_country_paging.html' %}
+                {% include "resource_top_country_paging.html" %}
             </table>
         </div>
     </div>
     {% endif %}
+
+    {% if has_country and country_distribution.exists %}
+    <div class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
+        <h4>
+        Country distribution
+        {% if perms.ranking.change_countryaccount %}
+        <a class="inline-button" href="{% url 'admin:ranking_countryaccount_changelist' %}?resource__id__exact={{ resource.pk }}&sort_by=-n_accounts">{% icon_to 'database' %}</a>
+        {% endif %}
+        </h4>
+        <div class="panel panel-default table-responsive">
+            <table class="table table-hover table-condensed table-striped">
+                <tr>
+                    <th>N</th>
+                    <th>Country</th>
+                    <th>Participants<br/>number</th>
+                </tr>
+                {% include "resource_country_distribution_paging.html" %}
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_place accounts=most_places field="n_first_places,n_second_places,n_third_places,n_top_ten_places" title="Most top" header="T1,T2,T3,T10" paging="resource_most_places_paging.html" %}
 
     {% include "resource_accounts_panel.html" with condition=True accounts=most_participated field="n_contests" title="Most participations" header="Contests count" paging="resource_most_participated_paging.html" %}
 
@@ -257,8 +294,6 @@
 
     {% include "resource_accounts_panel.html" with condition=resource.has_statistic_total_solving accounts=most_total_solving field="total_solving" title="Most points" header="Total points" paging="resource_most_total_solving_paging.html" %}
 
-    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_medal accounts=most_medals field="n_medals" fields="n_gold,n_silver,n_bronze,n_medals" title="Most medals" header="n_gold,n_silver,n_bronze,sum" paging="resource_most_medals_paging.html" header_icon=True %}
-
     {% if problems.exists %}
     <div class="col-md-6 col-lg-4{% if mute_problems %} text-muted{% endif %}">
         <h4>
@@ -268,8 +303,8 @@
         <div class="panel panel-default table-responsive">
             <table class="problems table table-hover table-condensed table-striped">
                 <tr>
-                    <th class="no-stretch">Date</th>
-                    {% if resource.has_problem_rating %}<th>Rating</th>{% endif %}
+                    <th class="no-stretch sticky-left-column">Date</th>
+                    {% if resource.has_problem_rating %}<th class="no-stretch sticky-left-column">Rating</th>{% endif %}
                     <th class="title">Name</th>
                 </tr>
                 {% include 'resource_problems_paging.html' %}
@@ -298,7 +333,7 @@
         <div class="panel panel-default table-responsive">
             <table class="contests table table-hover table-condensed table-striped">
                 <tr>
-                    <th class="no-stretch">{% with values=data.field|title|split:"_" %}{% for v in values %}{{ v }}<br/>{% endfor %}{% endwith %}</th>
+                    <th class="no-stretch sticky-left-column">{{ data.field|title_field }}</th>
                     <th class="title">Contest</th>
                 </tr>
                 {% include 'resource_contests.html' with contests=contests contest_key=name %}
@@ -309,4 +344,6 @@
     {% endfor %}
 </div>
 
+<script>update_table_sticky()</script>
+<script>$(window).resize(update_table_sticky)</script>
 {% endblock %}

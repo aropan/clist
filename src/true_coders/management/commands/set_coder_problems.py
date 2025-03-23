@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from clist.models import Contest, ProblemVerdict, Resource
 from clist.templatetags.extras import get_problem_solution, is_hidden, is_partial, is_reject, is_solved
+from logify.models import EventLog, EventStatus
 from ranking.models import Statistics
 from true_coders.models import Coder, CoderProblem
 from utils.attrdict import AttrDict
@@ -69,6 +70,7 @@ class Command(BaseCommand):
                 coders = coders.filter(has_resource=True)
             update_need_set_coder_problems = False
 
+        event_log = None
         if args.contest:
             contest = Contest.objects.get(pk=args.contest)
             problems = contest.problem_set.all()
@@ -77,6 +79,11 @@ class Command(BaseCommand):
             self.log_queryset('contest problems', problems)
             self.log_queryset('contest coders', coders)
             update_need_set_coder_problems = False
+            event_log = EventLog.objects.create(
+                name='set_coder_problems',
+                related=contest,
+                status=EventStatus.IN_PROGRESS,
+            )
         else:
             problems = None
 
@@ -176,4 +183,7 @@ class Command(BaseCommand):
                 coder.settings.pop('need_set_coder_problems', None)
                 coder.save(update_fields=['settings'])
 
-        self.logger.info(f'n_created = {n_created}, n_deleted = {n_deleted}, n_total = {n_total}')
+        message = f'n_created = {n_created}, n_deleted = {n_deleted}, n_total = {n_total}'
+        if event_log:
+            event_log.update(status=EventStatus.COMPLETED, message=message)
+        self.logger.info(message)

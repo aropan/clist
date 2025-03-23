@@ -3,17 +3,20 @@
 from logging import getLogger
 
 from django.core.management.base import BaseCommand
-from django.db.models import Count, F, Q, Window
+from django.db import models
+from django.db.models import Case, Count, F, Q, When, Window
 from django.db.models.functions import Rank
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tqdm import tqdm
 
 from clist.models import Resource
+from clist.templatetags.extras import get_country_code, medal_as_n_medal_fields
 from logify.models import EventLog, EventStatus
 from logify.utils import failed_on_exception
 from ranking.models import CountryAccount
 from utils.attrdict import AttrDict
+from utils.json_field import CharJSONF
 from utils.logger import suppress_db_logging_context
 from utils.rating import get_last_activity_weight, get_n_contests_weight, get_weighted_rating
 from utils.timetools import parse_duration
@@ -24,7 +27,7 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.logger = getLogger('ranking.set_country_rank')
+        self.logger = getLogger('ranking.set_country_fields')
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='resources hosts')
@@ -55,8 +58,7 @@ class Command(BaseCommand):
             rank_update_delay = parse_duration(args.rank_update_delay)
             contest_update_delay = parse_duration(args.contest_update_delay)
             need_update = (
-                Q(country_rank_update_time__isnull=True) |
-                (
+                Q(country_rank_update_time__isnull=True) | (
                     Q(rank_update_time__isnull=False)
                     & Q(country_rank_update_time__lt=F('rank_update_time'))
                     & (Q(rating_update_time__isnull=False) & Q(rank_update_time__gt=F('rating_update_time')))
@@ -67,14 +69,22 @@ class Command(BaseCommand):
                 Q(country_rank_update_time__lt=now - rank_update_delay)
             )
             short_update = Q(rank_update_time__isnull=True) | Q(rank_update_time__lt=now - contest_update_delay)
-            resources = resources.filter(need_update & (long_update | short_update))
+            rating_update = need_update & (long_update | short_update)
+
+            medal_update = Q(country_rank_update_time__isnull=True) | (
+                Q(contest_update_time__isnull=False) &
+                Q(country_rank_update_time__lt=F('contest_update_time') + parse_duration('3 days')) &
+                Q(country_rank_update_time__lt=now - parse_duration('1 days'))
+            )
+
+            resources = resources.filter(rating_update | medal_update)
 
         self.log_queryset('resources', resources)
 
         resource_rank = Window(expression=Rank(), order_by=F('rating').desc())
 
         for resource in tqdm(resources, total=len(resources), desc='resources'):
-            event_log = EventLog.objects.create(name='set_country_rank',
+            event_log = EventLog.objects.create(name='set_country_fields',
                                                 related=resource, status=EventStatus.IN_PROGRESS)
             with failed_on_exception(event_log):
                 qs = resource.account_set.filter(country__isnull=False)
@@ -97,8 +107,33 @@ class Command(BaseCommand):
                     country_accounts = {c.country: c for c in country_accounts}
                     CountryAccount.objects.filter(resource=resource).exclude(country__in=country_accounts).delete()
 
-                last_rated_contest = resource.contest_set.filter(is_rated=True).order_by('-end_time').first()
-                if resource.has_country_rating and last_rated_contest:
+                def update_medal_fields():
+                    resource.countryaccount_set.all().update(n_gold=None, n_silver=None, n_bronze=None,
+                                                             n_medals=None, n_other_medals=None)
+
+                    qs = resource.statistics_set.filter(medal__isnull=False)
+                    qs = qs.annotate(country=Case(
+                        When(addition__country__gt='', then=CharJSONF('addition__country')),
+                        When(account__country__isnull=False, then=F('account__country')),
+                        default=None,
+                        output_field=models.CharField(),
+                    ))
+                    qs = qs.values('country', 'medal').annotate(count=Count('medal'))
+                    for row in qs:
+                        country_code = get_country_code(row['country'])
+                        country_account = resource.countryaccount_set.filter(country=country_code).first()
+                        if not country_account:
+                            self.logger.warning(f'country account not found for {row["country"]}')
+                            continue
+                        updated_fields = []
+                        for field in medal_as_n_medal_fields(row['medal']):
+                            value = getattr(country_account, field) or 0
+                            setattr(country_account, field, value + row['count'])
+                            updated_fields.append(field)
+                        if updated_fields:
+                            country_account.save(update_fields=updated_fields)
+
+                def update_rating_fields():
                     qs = resource.account_set.filter(rating__isnull=False, country__isnull=False,
                                                      last_rating_activity__isnull=False)
                     qs = qs.values('country', 'rating', 'n_contests', 'last_rating_activity')
@@ -135,6 +170,13 @@ class Command(BaseCommand):
                         country_accounts_update.append(country_account)
                     with suppress_db_logging_context():
                         CountryAccount.objects.bulk_update(country_accounts_update, ['resource_rank'])
+
+                if resource.has_country_medal:
+                    update_medal_fields()
+
+                last_rated_contest = resource.major_contests().filter(is_rated=True).order_by('-end_time').first()
+                if resource.has_country_rating and last_rated_contest:
+                    update_rating_fields()
                 else:
                     CountryAccount.objects.filter(resource=resource).update(rating=None, n_rating_accounts=0,
                                                                             raw_rating=None, resource_rank=None)

@@ -25,12 +25,16 @@
       <thead>
         <tr>
           <th class="problem-date-column">Date</th>
-          <th class="problem-rating-column">Rating</th>
-          <th class="problem-progress-column">Stats</th>
+          {% if 'rating' not in hidden_fields %}<th class="problem-rating-column">Rating</th>{% endif %}
+          {% if 'stats' not in hidden_fields %}<th class="problem-progress-column">Stats</th>{% endif %}
+
           {% if coder %}
+          {% if 'luck' not in hidden_fields %}
           <th class="problem-luck-column" title="Probability to solve problem<br>If the problem rating equals your rating then probability is 50%." data-html="true" data-toggle="tooltip" >Luck</th>
-          <th class="problem-result-column">Result</th>
           {% endif %}
+          {% if 'result' not in hidden_fields %}<th class="problem-result-column">Result</th>{% endif %}
+          {% endif %}
+
           {% for field in custom_fields %}
           <th class="problem-field-column problem-column-{{ field }}">{{ field|title_field_div }}</th>
           {% endfor %}

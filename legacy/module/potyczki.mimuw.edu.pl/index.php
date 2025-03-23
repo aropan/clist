@@ -126,6 +126,8 @@
             $contests[] = array(
                 'start_time' => $stage_start_time,
                 'end_time' => $stage_end_time,
+                'start_time_shift' => '-1 hour',
+                'end_time_shift' => '+1 day',
                 'title' => $name,
                 'url' => $HOST_URL,
                 'key' => slugify($name),

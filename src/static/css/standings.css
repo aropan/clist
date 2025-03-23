@@ -255,6 +255,15 @@ a.solution:hover span {
   text-align: left;
 }
 
+#neighbors-controls a {
+  margin: 0px 1px;
+  color: white;
+}
+
+#neighbors-controls a[disabled] {
+  color: #ccc;
+}
+
 .problem-progress {
   height: 7px;
   margin: 5px 0px;
@@ -453,4 +462,48 @@ table.standings.table-merge-problems th {
 
 .standings.intermediate .first-u-cell .small {
   display: none;
+}
+
+
+/*
+ * Single elimination tournament
+ */
+
+.elimination-tournament-bracket {
+  display: grid;
+  gap: 0.2em;
+  margin: 10px auto;
+  width: auto;
+}
+
+.elimination-tournament-match {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.1em;
+}
+
+.elimination-tournament-table {
+  text-align: center;
+  width: auto;
+  margin: 0 auto;
+}
+
+.elimination-tournament-table td {
+  padding: 0 1em;
+}
+
+
+.match-header {
+  font-weight: bold;
+  text-align: center;
+}
+
+.team-row {
+}
+
+.team-name {
+}
+
+.team-score {
 }

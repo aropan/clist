@@ -1040,6 +1040,9 @@ def standings(request, contest, other_contests=None, template='standings.html', 
 
     per_page = 50 if contests_ids else contest.standings_per_page
     per_page_more = per_page if find_me else 200
+    if is_yes(request.GET.get('full_table')) and request.user.has_perm('clist.view_full_table'):
+        per_page = contest.n_statistics
+        per_page_more = contest.n_statistics
 
     order = contest.get_statistics_order()
 
@@ -1196,6 +1199,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
 
     list_uuids = [v for v in request.GET.getlist('list') if v]
     coder_lists, list_uuids = CoderList.filter_for_coder_and_uuids(coder=coder, uuids=list_uuids, logger=request.logger)
+    add_to_list = bool(is_yes(request.GET.get('add_to_list')) and coder_lists)
     if coder_lists:
         options_values = {str(v.uuid): v.name for v in coder_lists}
         list_uuids = [uuid for uuid in list_uuids if uuid in options_values]
@@ -1235,7 +1239,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         else:
             timeline = None
     contest_timeline = contest.get_timeline_info()
-    enable_timeline = enable_timeline and contest_timeline
+    enable_timeline = enable_timeline and (contest_timeline or contest.is_stage())
 
     problems = get_standings_problems(contest, division)
     mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)
@@ -1309,17 +1313,19 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     # filter by country
     countries = request.GET.getlist('country')
     countries = set([c for c in countries if c])
-    if countries:
+    if has_country and countries:
         with_row_num = True
         cond = Q(account__country__in=countries)
         if 'None' in countries:
             cond |= Q(account__country__isnull=True)
-        if '_countries' in contest_fields:
-            for code in countries:
-                name = get_country_name(code)
-                if name:
-                    cond |= Q(addition___countries__icontains=name)
-
+        for code in countries:
+            name = get_country_name(code)
+            if not name:
+                continue
+            if '_countries' in contest_fields:
+                cond |= Q(addition___countries__icontains=name)
+            if 'country' in contest_fields:
+                cond |= Q(addition__country__icontains=name)
         statistics = statistics.filter(cond)
         params['countries'] = countries
 
@@ -1409,6 +1415,8 @@ def standings(request, contest, other_contests=None, template='standings.html', 
             # subquery = Chat.objects.filter(coder=OuterRef('account__coders'), is_group=False).values('name')[:1]
             # statistics = statistics.annotate(chat_name=Subquery(subquery))
         elif field == 'list':
+            if add_to_list:
+                continue
             if values:
                 groups = ListGroup.objects.filter(coder_list__uuid__in=values, coder_list__custom_names=True,
                                                   name__isnull=False)
@@ -1593,7 +1601,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
                 force_both_scroll = True
             paginate_on_scroll = False
         else:
-            request.logger.warning(f'Not found find = {find_me}')
+            request.logger.warning(f'Not found statistic = {find_me}')
     else:
         find_me_stat = None
 
@@ -1679,6 +1687,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         'merge_problems': merge_problems,
         'default_rowspan': mark_safe(' rowspan="2"') if merge_problems else '',
         'fields_to_select': fields_to_select,
+        'add_to_list': add_to_list,
         'truncatechars_name_problem': 10 * (2 if merge_problems else 1),
         'with_detail': with_detail,
         'with_solution': with_solution,
@@ -1693,7 +1702,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
         'timeformat': get_timeformat(request),
         'with_neighbors': request.GET.get('neighbors') == 'on',
         'without_neighbors_aligment': not inner_scroll or 'safari' in request.user_agent.browser.family.lower(),
-        'with_table_inner_scroll': inner_scroll and (not groupby or groupby == 'none') and not is_charts,
+        'with_table_inner_scroll': inner_scroll and (not groupby or groupby == 'none') and not is_charts and not contest.elimination_tournament_info,  # noqa
         'enable_timeline': enable_timeline,
         'contest_timeline': contest_timeline,
         'timeline': timeline,
@@ -1786,6 +1795,8 @@ def solutions(request, sid, problem_key):
                 return HttpResponseNotFound('Unable to obtain a solution')
             except ProxyLimitReached:
                 return HttpResponseNotFound('Proxy limit reached')
+            except RedirectException:
+                pass
         elif not stat.get('url'):
             return HttpResponseNotFound()
 

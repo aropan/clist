@@ -128,7 +128,7 @@ class Statistic(BaseModule):
 
                 if entity_type == 'teams':
                     team = entity['data']
-                    name = (team['affiliation'] or '').strip()
+                    name = (team.get('affiliation') or team.get('display_name') or '').strip()
                     if name in result_names:
                         members[team['id']] = result_names[name]['member']
                     elif not any(
@@ -152,6 +152,8 @@ class Statistic(BaseModule):
                                        solved=judgement_type['solved'])
 
         for problem in entities['problems'].values():
+            if 'short_name' not in problem:
+                problem['short_name'] = problem['label']
             short = problem['short_name']
             p_info = problems_info[short]
             p_info['time_limit'] = problem['time_limit']
@@ -204,9 +206,9 @@ class Statistic(BaseModule):
             judgement_type = entities['judgement-types'][judgement.pop('judgement_type_id')]
             submission['verdict'] = judgement_type['id']
 
-            submission['run_time'] = judgement.pop('max_run_time')
+            if 'max_run_time' in judgement:
+                submission['run_time'] = judgement.pop('max_run_time')
             submission['testing'] = judgement.pop('runs', [])
-            submission['valid'] = judgement.pop('valid')
 
             team_problem = (member, submission['problem_short'])
             if team_problem in teams_solved:
@@ -567,7 +569,7 @@ class Statistic(BaseModule):
                         last_place = row['place']
                     elif last_place:
                         row['place'] = last_place
-                    if is_ineligible or participant_type.lower() in {'companies'}:
+                    if is_ineligible or participant_type and participant_type.lower() in {'companies'}:
                         row.pop('place')
                         row.pop('medal')
                         for problem in problems.values():

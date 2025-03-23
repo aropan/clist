@@ -142,6 +142,11 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
       {% endif %}
       </div>
     </div>
+    {% elif not resources and not without_accounts %}
+    <div{% if not two_columns and show_history_ratings and writers.exists %} class="col-md-6"{% elif not two_columns %} class="col-xs-12"{% endif %}>
+      <h3>Accounts</h3>
+      <div class="alert alert-warning">No accounts{% if coder and request.user.is_authenticated and request.user.coder == coder %}. You can add your accounts <a href="{% url 'coder:settings' 'accounts' %}">here</a>.{% endif %}</div>
+    </div>
     {% endif %}
 
     {% if not without_accounts and writers.exists %}
@@ -247,7 +252,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
     </div>
     <script>$('#contests').endlessPaginate({onCompleted: toggle_tooltip});</script>
     {% else %}
-    <div class="alert alert-warning">Empty statistics</div>
+    <div class="alert alert-warning">No statistics</div>
     {% endif %}
   </div>
 </div>

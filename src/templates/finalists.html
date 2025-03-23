@@ -25,7 +25,8 @@
       Finalists of
       <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon|media_size:'32x32' }}" width="24" height="24"/></a>
       <span id="standings-url"></span>
-      <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
+      {% comment %} <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a> {% endcomment %}
+      <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}">{{ contest.title }}</a>
 
       {% with shown_kind=contest.shown_kind %}{% if shown_kind %}{% label_tag shown_kind %}{% endif %}{% endwith %}
 

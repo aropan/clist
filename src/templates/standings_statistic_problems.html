@@ -14,7 +14,7 @@
     {% else %}
     data-penalty="{% if relative_problem_time and stat.absolute_time %}{{ stat.absolute_time }}{% else %}{{ stat.time }}{% endif %}"
     {% endif %}
-    data-penalty-in-seconds="{{ stat.time_in_seconds }}"
+    data-penalty-in-seconds="{% if problem.time_in_seconds and contest.is_stage %}{{ problem.time_in_seconds }}{% else %}{{ stat.time_in_seconds }}{% endif %}"
     data-more-penalty="{{ stat.penalty }}"
     data-class="{% if '_class' in stat %}{{ stat|get_item:"_class" }}{% elif with_first and stat.first_ac_of_all %}first-ac-of-all{% elif with_first and stat.first_ac %}first-ac{% elif stat.max_score %}max-score{% endif %}"
     {% if statistic.virtual_start %}data-active-switcher="true"{% endif %}

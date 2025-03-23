@@ -1056,6 +1056,9 @@ class Statistic(BaseModule):
             id=as_number(question['questionFrontendId']),
             likes=as_number(question['likes']),
             dislikes=as_number(question['dislikes']),
+            has_text_editorial=question['hasSolution'],
+            has_video_editorial=question['hasVideoSolution'],
+            has_editorial=question['hasSolution'] or question['hasVideoSolution'],
         )
 
         if ret['likes'] or ret['dislikes']:
@@ -1085,7 +1088,7 @@ class Statistic(BaseModule):
         params = {
             'operationName': 'questionData',
             'variables': {'titleSlug': slug},
-            'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly likes dislikes stats } }',  # noqa: E501
+            'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly hasVideoSolution hasSolution likes dislikes stats } }',  # noqa: E501
         }
         page = Statistic._get(
             'https://leetcode.com/graphql',
@@ -1121,7 +1124,7 @@ class Statistic(BaseModule):
                         filters: $filters
                     ) {
                         total: totalNum
-                        questions: data { title titleSlug questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly likes dislikes stats categoryTitle }
+                        questions: data { title titleSlug questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly hasVideoSolution hasSolution likes dislikes stats categoryTitle }
                     }
                 }
                 """,  # noqa: E501

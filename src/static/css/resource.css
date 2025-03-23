@@ -4,6 +4,10 @@ table.table tr th {
   vertical-align: middle;
 }
 
+table.table.table-scrolling .text-align-left {
+  text-align: left;
+}
+
 #toggleLogScale {
   position: absolute;
   right: 15px;

@@ -30,6 +30,7 @@
     if (isset($session['roles'])) {
         foreach ($session['roles'] as $role) {
             $category = slugify($role['challengeCategory']);
+            $category = rtrim($category, '-standard');
             $keys[$category] = $role['challengeId'];
         }
     }
@@ -46,6 +47,7 @@
         }
         $category = $match['category'];
         $category = slugify($category);
+        $category = rtrim($category, '-standard');
 
         if (!preg_match('#<[^>]*class="[^"]*infobox[^"]*"[^>]*>Info(?:\s*<[^>]*>)*(?P<date>[^<]*)(?:\s*<[^>]*>)*(?P<time>[^<]*)#', $page, $match)) {
             continue;

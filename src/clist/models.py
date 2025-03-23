@@ -103,12 +103,14 @@ class Resource(BaseModel):
     has_problem_rating = models.BooleanField(default=False)
     has_problem_update = models.BooleanField(default=False)
     has_problem_archive = models.BooleanField(default=False)
+    has_problem_statistic = models.BooleanField(default=False)
     problem_archive_update_time = models.DateTimeField(null=True, blank=True)
     has_multi_account = models.BooleanField(default=False)
     has_accounts_infos_update = models.BooleanField(default=False)
     n_accounts_to_update = models.IntegerField(default=None, null=True, blank=True)
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
+    n_statistics = models.IntegerField(default=0)
     n_rating_accounts = models.IntegerField(default=None, null=True, blank=True)
     icon = models.CharField(max_length=255, null=True, blank=True)
     accounts_fields = models.JSONField(default=dict, blank=True)
@@ -125,8 +127,10 @@ class Resource(BaseModel):
     has_statistic_n_total_solved = models.BooleanField(null=True, blank=True)
     has_statistic_n_first_ac = models.BooleanField(null=True, blank=True)
     has_statistic_medal = models.BooleanField(null=True, blank=True)
+    has_statistic_place = models.BooleanField(null=True, blank=True)
     has_account_last_submission = models.BooleanField(null=True, blank=True)
     has_account_n_writers = models.BooleanField(null=True, blank=True)
+    has_country_medal = models.BooleanField(null=True, blank=True)
 
     RATING_FIELDS = (
         'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
@@ -136,6 +140,7 @@ class Resource(BaseModel):
         'rating_prediction_raw_rating',
         'native_rating',
     )
+    ALL_RATING_FIELDS = RATING_FIELDS + ('rating_change', )
 
     event_logs = GenericRelation('logify.EventLog', related_query_name='resource')
 
@@ -392,7 +397,7 @@ class Resource(BaseModel):
         contest_filter = Q(kind__isnull=True) | Q(kind='')
         if self.major_kinds:
             contest_filter |= Q(kind__in=self.major_kinds)
-        return self.contest_set.filter(contest_filter).filter(stage__isnull=True)
+        return self.contest_set.filter(contest_filter).filter(stage__isnull=True, invisible=False)
 
     def rating_step(self):
         n_bins = get_item(self.info, 'ratings.chartjs.n_bins')
@@ -567,6 +572,7 @@ class Contest(BaseModel):
     raw_info = models.JSONField(default=dict, blank=True)
     submissions_info = models.JSONField(default=dict, blank=True)
     finalists_info = models.JSONField(default=dict, blank=True)
+    elimination_tournament_info = models.JSONField(default=dict, blank=True)
     variables = models.JSONField(default=dict, blank=True)
     writers = models.ManyToManyField('ranking.Account', blank=True, related_name='writer_set')
     n_statistics = models.IntegerField(null=True, blank=True, db_index=True)
@@ -849,6 +855,16 @@ class Contest(BaseModel):
         else:
             qs = []
         return qs
+
+    def previous_standings_contest(self):
+        standings_contests = Contest.objects.filter(resource=self.resource_id, n_statistics__gt=0)
+        time_filter = Q(start_time__lt=self.start_time) | Q(start_time=self.start_time, id__lt=self.id)
+        return standings_contests.filter(time_filter).order_by('-start_time', '-id').first()
+
+    def next_standings_contest(self):
+        standings_contests = Contest.objects.filter(resource=self.resource_id, n_statistics__gt=0)
+        time_filter = Q(start_time__gt=self.start_time) | Q(start_time=self.start_time, id__gt=self.id)
+        return standings_contests.filter(time_filter).order_by('start_time', 'id').first()
 
     def get_timeline_info(self):
         ret = get_item(self.resource, 'info.standings.timeline', {})
@@ -1153,9 +1169,13 @@ class Problem(BaseModel):
     divisions = ArrayField(models.TextField(), default=list, blank=True, db_index=True)
     kinds = ArrayField(models.CharField(max_length=30), default=list, blank=True, db_index=True)
     n_attempts = models.IntegerField(default=None, null=True, blank=True)
+    attempt_rate = models.FloatField(default=None, null=True, blank=True)
     n_accepted = models.IntegerField(default=None, null=True, blank=True)
+    acceptance_rate = models.FloatField(default=None, null=True, blank=True)
     n_partial = models.IntegerField(default=None, null=True, blank=True)
+    partial_rate = models.FloatField(default=None, null=True, blank=True)
     n_hidden = models.IntegerField(default=None, null=True, blank=True)
+    hidden_rate = models.FloatField(default=None, null=True, blank=True)
     n_total = models.IntegerField(default=None, null=True, blank=True)
     n_accepted_submissions = models.IntegerField(default=None, null=True, blank=True)
     n_total_submissions = models.IntegerField(default=None, null=True, blank=True)
@@ -1303,7 +1323,8 @@ class Banner(BaseModel):
 
 class PromotionManager(models.Manager):
     def get_queryset(self):
-        qs = super().get_queryset().filter(contest__is_promoted=True, enable=True)
+        qs = super().get_queryset().filter(contest__is_promoted=True)
+        qs = qs.filter((Q(enable=True) | Q(enable=None)) if settings.DEBUG else Q(enable=True))
         qs = qs.annotate(target_time=Case(
             When(time_attribute='start_time', then=F('contest__start_time')),
             When(time_attribute='end_time', then=F('contest__end_time')),
@@ -1338,7 +1359,7 @@ class Promotion(BaseModel):
     def save(self, *args, **kwargs):
         ret = super().save(*args, **kwargs)
         contest = self.contest
-        contest.is_promoted = contest.promotion_set.filter(enable=True).exists()
+        contest.is_promoted = contest.promotion_set.exclude(enable=False).exists()
         contest.save(update_fields=['is_promoted'])
         return ret
 

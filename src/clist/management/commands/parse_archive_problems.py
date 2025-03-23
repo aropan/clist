@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 
-import operator
 from collections import defaultdict
 from copy import deepcopy
 from datetime import timedelta
-from functools import reduce
 from logging import getLogger
 
 from django.core.management.base import BaseCommand
@@ -39,8 +37,7 @@ class Command(BaseCommand):
         args = AttrDict(options)
 
         if args.resources:
-            filters = [Q(host__startswith=r) | Q(short_host=r) for r in args.resources]
-            resources = Resource.objects.filter(reduce(operator.or_, filters))
+            resources = Resource.get(args.resources)
         else:
             resources = Resource.available_for_update_objects.filter(has_problem_archive=True)
 

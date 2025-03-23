@@ -78,11 +78,9 @@ class Statistic(BaseModule):
                     next_page = p
             page = next_page
 
-            mapping = {'Użytkownik': 'User'}
             table = parsed_table.ParsedTable(
                 html=content,
                 xpath="//table[contains(@class,'table-ranking')]//tr",
-                header_mapping=mapping,
             )
             for r in table:
                 row = collections.OrderedDict()
@@ -91,12 +89,6 @@ class Statistic(BaseModule):
                 for k, v in list(r.items()):
                     if k == '#':
                         row['place'] = v.value
-                    elif k == 'User':
-                        row['name'] = v.value
-                        rid = v.row.node.xpath('@id')[0]
-                        match = re.match('^ranking_row_(?P<id>[0-9]+)$', rid)
-                        member = match.group('id')
-                        row['member'] = member
                     elif k in problems_infos and v.value:
                         problems[k] = {'result': v.value}
                         value = as_number(v.value)
@@ -104,6 +96,13 @@ class Statistic(BaseModule):
                         if 'submission--OK100' in v.attrs.get('class', ''):
                             problems_infos[k].setdefault('full_score', value)
                             full_scores.add(value)
+                    elif (
+                        (ids := v.row.node.xpath('@id')) and
+                        (match := re.match('^ranking_row_(?P<id>[0-9]+)$', ids[0])) and
+                        'member' not in row
+                    ):
+                        row['name'] = v.value
+                        row['member'] = match.group('id')
                 if not problems:
                     continue
                 result[row['member']] = row

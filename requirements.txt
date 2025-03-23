@@ -112,3 +112,4 @@ scikit-learn==1.5.1
 pandas==2.2.2
 beautifulsoup4==4.12.3
 markdown==3.7
+pylibmc==1.6.3

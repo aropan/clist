@@ -10,22 +10,19 @@
 {% define None as account_country_code %}
 {% if has_country and account %}
   <div class="flag-width-fixed">
-  {% if not team_id %}
+  {% define statistic.addition.country|get_country_code as code %}
+  {% if not code and members %}
+    {% get_country_from_members preload_statistics_data.accounts members as code %}
+  {% endif %}
+  {% if code %}
+    {% define code as account_country_code %}
+    {% define code|get_country_name as account_country_name %}
+    {% define code as account_country_flag %}
+  {% elif not team_id %}
     {% get_country_from_account account as country %}
     {% define country.name as account_country_name %}
     {% define country.code as account_country_code %}
     {% define country.flag_code as account_country_flag %}
-  {% endif %}
-  {% if not account_country_code %}
-    {% define statistic.addition.country|get_country_code as code %}
-    {% if not code and members %}
-      {% get_country_from_members preload_statistics_data.accounts members as code %}
-    {% endif %}
-    {% if code %}
-      {% define code as account_country_code %}
-      {% define code|get_country_name as account_country_name %}
-      {% define code as account_country_flag %}
-    {% endif %}
   {% endif %}
   {% if account_country_code %}
   <a href="{% url_transform request country=account_country_code %}" title="{{ account_country_name }}" data-toggle="tooltip"><div class="flag flag-{{ account_country_flag|lower }}"></div></a>
@@ -83,6 +80,14 @@
   {% endif %}
 
   {% if not without_addition_url %}
+
+  {% if add_to_list %}
+  {% for value in coder_list_select.values %}
+  {% with coder_list_select.options|get_item:value as name %}
+  <a href="" onclick="add_to_coder_list(this, event)" data-url="{% url "coder:list" value %}" data-uuid="{{ value }}" data-account="{{ account.pk }}">{% icon_to "to_list" title=name %}</a>
+  {% endwith %}
+  {% endfor %}
+  {% endif %}
 
   {% if statistic.addition.url %}
     <a href="{{ statistic.addition.url }}" class="external-link invisible" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>

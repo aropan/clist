@@ -99,21 +99,6 @@ $(() => $(".table-float-head").floatThead({
   },
 }))
 
-// Fixed transparent table header
-$(function() {
-  $('table th').each(function() {
-    var color = $(this).css('background-color')
-    if (color == 'rgba(0, 0, 0, 0)') {
-      $(this).parents().each(function() {
-        if (color == 'rgba(0, 0, 0, 0)') {
-          color = $(this).css('background-color')
-        }
-      })
-      $(this).css('background-color', color)
-    }
-  })
-})
-
 $(function() {
   $('.sortable-column').each(function() {
     var url = new URL(window.location.href)
@@ -241,6 +226,7 @@ function log_ajax_error(response, element = null) {
   var message;
   if (typeof response.responseJSON !== 'undefined') {
     if (response.responseJSON.redirect) {
+      message = 'Redirecting...'
       window.location.replace(response.responseJSON.redirect)
     } else {
       message = response.responseJSON.message
@@ -1015,6 +1001,66 @@ function expand_trimmed_text(event, element) {
  * Table sticky
  */
 
+function get_effective_background(element) {
+  let bg = window.getComputedStyle(element).backgroundColor
+  if ((bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') && element.parentElement) {
+    return get_effective_background(element.parentElement)
+  }
+  return bg
+}
+
+function update_table_sticky_side(side) {
+  var attr_width = 'sticky-' + side + '-width'
+  $('table').data(attr_width, 0)
+
+  var columns = $('tr:nth-child(1) th.sticky-' + side + '-column')
+  if (side == 'right') {
+    columns = $(columns.get().reverse())
+  }
+
+  columns.each(function() {
+    var table = $(this).closest('table')
+    var width = table.data(attr_width) || 0
+    var index_column = $(this).index()
+    var max_width = 0
+
+    var container = table.closest('.table-responsive')
+    var rows = container.find('tr:not(".endless_container")').find('td,th').filter(':nth-child(' + (index_column + 1) + ')')
+
+    rows.each(function() {
+      var cell = $(this)
+      max_width = Math.max(max_width, cell.outerWidth())
+      cell.addClass('sticky-' + side + '-column')
+      cell.css(side, width)
+      var tr = cell.parent()[0]
+      if (!tr.style.backgroundColor) {
+        var bg = get_effective_background(tr)
+        tr.style.backgroundColor = bg
+      }
+    })
+    table.data(attr_width, width + max_width)
+  })
+}
+
+function update_table_tr_hover() {
+  $('table.table-hover tr:not(.sticky-hovered):has(td)').addClass('sticky-hovered').hover(
+    function() {
+      var $el = $(this)
+      if (this.style.backgroundColor) {
+        $el.data('background-color', this.style.backgroundColor)
+        this.style.backgroundColor = ''
+      }
+    },
+    function() {
+      var $el = $(this)
+      if ($el.data('background-color')) {
+        this.style.backgroundColor = $el.data('background-color')
+        $el.data('background-color', '')
+      }
+    }
+  )
+}
+
 function update_table_sticky() {
   $('tr.header-problems').css('top', $('tr.header-row:first').height())
 
@@ -1029,4 +1075,85 @@ function update_table_sticky() {
     $('tr .' + column).css('left', width)
     width += $(this).outerWidth()
   })
+
+  update_table_sticky_side('left')
+  update_table_sticky_side('right')
+
+  update_table_tr_hover()
+}
+
+// Fixed transparent table header
+$(function() {
+  $('table tr').each(function() {
+    $(this).css('background-color', get_effective_background(this))
+  })
+  update_table_tr_hover()
+})
+
+
+/*
+ * Table scroll appearance
+ */
+
+
+function table_scroll_appearance() {
+  $('.table-responsive:has(table)').each(function() {
+    var container = $(this)
+    var table = container.find('table')
+    if (container.width() && this.scrollWidth && container.width() + 20 < this.scrollWidth) {
+      table.addClass('table-scrolling')
+      table.find('th[data-table-scrolling-class]').each(function() {
+        var new_class = $(this).attr('data-table-scrolling-class')
+        var table = $(this).closest('table')
+        var index_column = $(this).index()
+        table.find('tr').find('td,th').filter(':nth-child(' + (index_column + 1) + ')').addClass(new_class)
+      })
+    } else {
+      table.removeClass('table-scrolling')
+    }
+  })
+}
+
+$(() => {
+  $(window).resize(table_scroll_appearance)
+  table_scroll_appearance()
+})
+
+
+/*
+ * Add to coder list
+ */
+
+function add_to_coder_list(element, event) {
+  var $el = $(element)
+  var url = $el.data('url')
+  var uuid = $el.data('uuid')
+  var account = $el.data('account')
+
+  $el.find('i').toggleClass('fa-fade')
+
+  $.ajax({
+    type: 'POST',
+    url: url,
+    data: {
+      pk: coder_pk,
+      uuid: uuid,
+      account: account,
+    },
+    success: function(data) {
+      data['messages'].forEach(function(message) {
+        notify(message.message, message.level)
+      })
+    },
+    error: function(response) {
+      $el.effect('shake')
+      log_ajax_error(response)
+    },
+    complete: function(data) {
+      $el.find('i').toggleClass('fa-fade')
+    },
+  })
+
+  event.preventDefault()
+  return false
 }

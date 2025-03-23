@@ -61,7 +61,8 @@ class ContestAdmin(BaseModelAdmin):
         ['Secury information', {'fields': ['key']}],
         ['Addition information', {'fields': ['is_auto_added', 'auto_updated', 'n_statistics', 'has_hidden_results',
                                              'writers', 'calculate_time',
-                                             'info', 'raw_info', 'submissions_info', 'finalists_info', 'variables',
+                                             'info', 'raw_info', 'submissions_info', 'finalists_info',
+                                             'elimination_tournament_info', 'variables',
                                              'invisible', 'is_rated', 'is_promoted', 'with_medals',
                                              'related', 'merging_contests', 'series',
                                              'allow_updating_statistics_for_participants',
@@ -136,7 +137,7 @@ class ResourceAdmin(BaseModelAdmin):
 
     fieldsets = [
         [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'avatar_url', 'problem_url', 'icon',
-                           'n_accounts', 'n_contests']}],
+                           'n_accounts', 'n_contests', 'n_statistics']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'api_url', 'timezone', 'auto_remove_started',
                                           'has_inherit_medals_to_related']}],
         ['Calendar information', {'fields': ['color', 'uid']}],
@@ -146,18 +147,20 @@ class ResourceAdmin(BaseModelAdmin):
                                            'contest_update_time', 'country_rank_update_time',
                                            'ratings', 'rating_prediction',
                                            'has_statistic_total_solving', 'has_statistic_n_total_solved',
-                                           'has_statistic_n_first_ac', 'has_statistic_medal',
-                                           'has_account_n_writers', 'has_account_last_submission']}],
+                                           'has_statistic_n_first_ac', 'has_statistic_medal', 'has_statistic_place',
+                                           'has_account_n_writers', 'has_account_last_submission',
+                                           'has_country_medal']}],
         ['Account information', {'fields': ['has_accounts_infos_update', 'n_accounts_to_update', 'has_multi_account',
                                             'has_account_verification', 'has_standings_renamed_account',
                                             'skip_for_contests_chart', 'accounts_fields']}],
-        ['Problem information', {'fields': ['has_problem_rating', 'has_problem_update', 'has_problem_archive',
-                                            'problem_archive_update_time', 'has_upsolving', 'problems_fields',
+        ['Problem information', {'fields': ['has_problem_rating', 'has_problem_update', 'has_problem_statistic',
+                                            'has_problem_archive', 'problem_archive_update_time',
+                                            'has_upsolving', 'problems_fields',
                                             'problem_rating_predictor']}],
         ['Statistics information', {'fields': ['statistics_fields']}],
         ['Other information', {'fields': ['info']}],
     ]
-    list_display = ['host', 'short_host', 'enable', 'n_contests', 'n_accounts', 'modified',
+    list_display = ['host', 'short_host', 'enable', 'n_contests', 'n_accounts', 'n_statistics', 'modified',
                     '_has_rating', '_has_profile_url', '_has_problem_rating', '_has_accounts_infos_update',
                     '_has_multi_account', '_has_standings_renamed_account', '_has_upsolving', '_has_verification']
     search_fields = ['host', 'url']
@@ -216,7 +219,7 @@ class ResourceAdmin(BaseModelAdmin):
         return ret
 
     def get_readonly_fields(self, request, obj=None):
-        return ['n_accounts', 'n_contests'] + list(super().get_readonly_fields(request, obj))
+        return ['n_accounts', 'n_contests', 'n_statistics'] + list(super().get_readonly_fields(request, obj))
 
     class ModuleInline(admin.StackedInline):
         model = Module
@@ -247,7 +250,8 @@ class BannerAdmin(BaseModelAdmin):
 
 @admin_register(Promotion)
 class PromotionAdmin(BaseModelAdmin):
-    list_display = ['contest', 'timer_message', 'time_attribute', 'background']
+    list_display = ['contest', 'enable', 'timer_message', 'time_attribute', 'background']
+    list_filter = ['enable']
 
 
 @admin_register(PromoLink)

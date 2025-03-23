@@ -75,7 +75,7 @@ data-place="{{ place }}"
   " data-sticky-column="handle-cell">
     <div class="handle-cell-flex">
       <span>
-        {% include "standings_account.html" with account=statistic.account resource=contest.resource %}
+        {% include "standings_account.html" with account=statistic.account resource=contest.resource with_coder_list=add_to_list coder_list_select=fields_to_select.list %}
         {% for resource in params.resources %}
         <div class="small">
           {% with statistic.account.resource_coders|filter_by_resource:resource as accounts %}

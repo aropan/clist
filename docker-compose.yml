@@ -39,14 +39,14 @@ services:
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
       - db
+      - memcached
     secrets:
       - db_conf
       - sentry_conf
-    ports:
-      - ${CLIST_DEV_PORT:-10042}:10042
     restart: unless-stopped
   memcached:
     image: memcached
+    command: memcached -vv
     networks:
       - clist_network
     restart: unless-stopped
@@ -88,8 +88,6 @@ services:
     env_file:
       - ./.env.db
     shm_size: 4GB
-    ports:
-      - ${CLIST_DB_PORT:-5432}:5432
     restart: unless-stopped
   nginx:
     build:

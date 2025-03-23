@@ -22,6 +22,7 @@
 
   <script>configure_pagination()</script>
 
+  {% if submissions.exists %}
   <div id="submissions" class="panel panel-default table-responsive">
     <table class="table table-hover table-striped table-float-head">
       <thead>
@@ -44,6 +45,9 @@
       </tbody>
     </table>
   </div>
+  {% else %}
+  <div class="alert alert-warning text-center">No submissions found</div>
+  {% endif %}
 
 </div>
 

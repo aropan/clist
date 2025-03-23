@@ -92,11 +92,11 @@ def has_contest_perm(self, perm, contest):
     return self.user.has_perm(perm, contest.resource) or self.user.has_perm(perm, contest)
 
 
-def set_security_cookie(request, *args, **kwargs):
+def set_security_cookie(request, response, *args, **kwargs):
     kwargs.setdefault('secure', True)
     kwargs.setdefault('httponly', True)
     kwargs.setdefault('samesite', 'Strict')
-    request.set_cookie(*args, **kwargs)
+    response.set_cookie(*args, **kwargs)
 
 
 def CustomRequest(request):

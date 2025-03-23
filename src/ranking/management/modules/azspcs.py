@@ -82,7 +82,7 @@ class Statistic(BaseModule):
                         r_copy.update(member)
                         r_copy['_members'] = members
                         r_copy['location'] = location
-                        r_copy.pop('country')
+                        r_copy['info'] = {'country': r_copy.pop('country')}
                         result[member['member']] = r_copy
                 else:
                     user = contestant.column.node.xpath('.//*[@userid]')

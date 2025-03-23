@@ -106,10 +106,13 @@ class Statistic(BaseModule):
             LOG.warn(f'Fail to get season ratings: {e}')
             season_ratings = {}
 
-        page = REQ.get(self.standings_url)
+        standings_url = get_item(self.info, 'standings.alternative_url', self.standings_url)
+
+        page = REQ.get(standings_url)
 
         entries = re.findall(r'^([a-z_]+)\s*=\s*(.*);\s*$', page, flags=re.MULTILINE)
         variables = {k: yaml.safe_load(v) for k, v in entries}
+        variables.pop('my_name', None)
 
         for key in ('contest_type', 'standings', 'score', 'problems'):
             if key not in variables:
@@ -127,7 +130,7 @@ class Statistic(BaseModule):
             problem_id = str(problem_id)
             problem_info = {'short': short, 'code': problem_id}
             for url in (
-                urllib.parse.urljoin(self.standings_url.rstrip('/'), f'problem/{problem_id}'),
+                urllib.parse.urljoin(standings_url.rstrip('/'), f'problem/{problem_id}'),
                 urllib.parse.urljoin(base_url, f'/problem/{problem_id}'),
             ):
                 try:
@@ -155,7 +158,6 @@ class Statistic(BaseModule):
             problems_data = zip(problems_short, problems_id)
             for problem_info in executor.map(fetch_problem, problems_data):
                 problems_infos.append(problem_info)
-        variables.pop('my_name', None)
 
         result = {}
         handle_mapping = {}
@@ -176,7 +178,7 @@ class Statistic(BaseModule):
             for prefix, pattern in (
                 ('team-', r'^\$DOM_0*([0-9]+)$'),
                 ('team-', '^ucup-team0*([0-9]+)$'),
-                (f'{self.key}-team-', r'^\$DEFAULT_DAT_PREFIX_([0-9_]+)$'),
+                (f'{self.key}-team-', r'^\$DEFAULT_DAT_PREFIX_([A-Z0-9_]+)$'),
             ):
                 match = re.search(pattern, orig_handle)
                 if match:
@@ -240,7 +242,7 @@ class Statistic(BaseModule):
                     problem['time_in_seconds'] = time
                 if submission_id != -1:
                     problem['submission_id'] = submission_id
-                    problem['url'] = urllib.parse.urljoin(self.standings_url, f'/submission/{submission_id}')
+                    problem['url'] = urllib.parse.urljoin(standings_url, f'/submission/{submission_id}')
             result[handle] = row
         if statistics:
             for handle, row in statistics.items():
@@ -255,7 +257,7 @@ class Statistic(BaseModule):
                                 hidden_fields.append(field)
 
         REQ.add_cookie('show_all_submissions', 'true')
-        submission_url = urllib.parse.urljoin(self.standings_url.rstrip('/'), 'submissions/')
+        submission_url = urllib.parse.urljoin(standings_url.rstrip('/'), 'submissions/')
 
         seen_pages = {1}
         next_pages = []
@@ -298,7 +300,7 @@ class Statistic(BaseModule):
                 if upsolving:
                     if 'submission_id' not in problem or submission_id > problem['submission_id'] or is_accepted:
                         problem['submission_id'] = submission_id
-                        problem['url'] = urllib.parse.urljoin(self.standings_url, f'/submission/{submission_id}')
+                        problem['url'] = urllib.parse.urljoin(standings_url, f'/submission/{submission_id}')
                     if is_accepted:
                         problem['result'] = f'+{problem.get("attempts") or ""}'
                     else:
@@ -319,13 +321,14 @@ class Statistic(BaseModule):
                     seen_pages.add(page)
                     next_pages.append(page)
 
-        process_submission_page(1)
-        with PoolExecutor(max_workers=8) as executor:
-            while next_pages:
-                curr_pages = next_pages
-                next_pages = []
-                for _ in executor.map(process_submission_page, curr_pages):
-                    pass
+        if get_item(self.info, 'standings.parse_submissions', True):
+            process_submission_page(1)
+            with PoolExecutor(max_workers=8) as executor:
+                while next_pages:
+                    curr_pages = next_pages
+                    next_pages = []
+                    for _ in executor.map(process_submission_page, curr_pages):
+                        pass
 
         standings = {
             'url': self.standings_url,
@@ -346,7 +349,7 @@ class Statistic(BaseModule):
                 return
             if not account.name:
                 return
-            match = re.search(r'^(?P<name>.*)\((?P<members>[^\)]*)\)\)?$', account.name)
+            match = re.search(r'^(?P<name>.*)\((?P<members>(?:[^\(\)]*|\([^\(\)]*\))*)\)$', account.name)
             if not match:
                 return
             name = match.group('name').strip()
@@ -355,15 +358,17 @@ class Statistic(BaseModule):
             qs = resource.account_set.filter(key__startswith='team-')
             while name and not qs.filter(name__contains=name).exists() and ':' in name:
                 name = name.split(':', 1)[1].strip()
-            if not name or not (team_qs := qs.filter(name__contains=name)):
-                return
 
             counter = defaultdict(int)
             team_weight = 2
-            for team in team_qs:
-                counter[team] += team_weight
+            if name:
+                for team in qs.filter(name__contains=name):
+                    counter[team] += team_weight
             member_weight = 1
             for member in members:
+                match = re.search(r'^(?P<member>.+)\([^\)]*\)$', member)
+                if match:
+                    member = match.group('member').strip()
                 cond = Q(name__contains=member)
                 if ' ' in member:
                     rev = ' '.join(reversed(member.split(' ')))

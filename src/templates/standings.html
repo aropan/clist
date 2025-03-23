@@ -68,9 +68,13 @@
     var target_width = Math.max(...$(problem_selector).map(function() { return $(this).width() }), 0)
   {% endif  %}
     if ($('th.problem-cell.header-score').length) {
-      $('th.problem-cell.header-score').each(function () { $(this).css('max-width', $(this).attr('colspan') * target_width) })
+      $('th.problem-cell.header-score').each(function () {
+        $(this).css('max-width', $(this).attr('colspan') * target_width)
+      })
     }
-    $(problem_selector).each(function () { $(this).width(target_width); })
+    $(problem_selector).each(function () {
+      $(this).width(target_width)
+    })
 {% endif %}
 
 {% if not timeline %}
@@ -114,7 +118,17 @@
 
       {% if not other_contests %}
 
-      <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="badge progress-bar-info"><span title="Show nearby" data-toggle="tooltip"><i class="fas fa-{% if with_neighbors %}compress{% else %}expand{% endif %}-alt"></i></span></a>
+      <span id="neighbors-controls" class="badge progress-bar-info">
+        {% with prev=contest.previous_standings_contest %}<a{% if prev %} href="{% url "ranking:standings" prev.title|slug prev.pk %}?{% query_transform request %}"{% else %} disabled{% endif %}>{% icon_to 'left-arrow' prev.title %}</a>{% endwith %}
+
+        <a href="?{% query_transform request "neighbors" with_neighbors|yesno:",on" with_replace=True %}" class="{% if with_neighbors %} active{% endif %}">{% icon_to with_neighbors|yesno:'vertical-collapse,vertical-expand' with_neighbors|yesno:"Hide nearby,Show nearby" %}</a>
+
+        {% with next=contest.next_standings_contest %}<a{% if next %} href="{% url "ranking:standings" next.title|slug next.pk %}?{% query_transform request %}"{% else %} disabled{% endif %}>{% icon_to 'right-arrow' next.title %}</a>{% endwith %}
+      </span>
+
+      {% if contest.finalists_info %}
+      <a href="{% url 'ranking:finalists' contest.title|slug contest.pk %}" class="badge progress-bar-info">{% icon_to 'finalists' %}</a>
+      {% endif %}
 
       {% if contest.n_problems is not None %}
       <a href="{% url 'clist:problems' %}?contest={{ contest.pk }}" class="badge progress-bar-info">{% icon_to 'problems' %}</a>
@@ -212,6 +226,36 @@
 
 
 <div>
+  {% if contest.elimination_tournament_info.rounds %}
+  {% with final=contest.elimination_tournament_info.rounds|get_item:-1 %}
+  <div class="elimination-tournament-bracket" style="grid-template-columns: repeat({{ final.round }}, auto); grid-template-rows: repeat({{ final.n_rows }}, auto);">
+  {% endwith %}
+  {% for round in contest.elimination_tournament_info.rounds %}
+    <div class="elimination-tournament-match" style="grid-column: {{ round.round }}; grid-row: {{ round.index|subtract:1|multiply:round.n_rows|add:1 }} / span {{ round.n_rows }};">
+      {% if round.start_time and round.start_time|timestamp_to_datetime|is_coming %}
+      <div{% if timezone %} title="{{ round.start_time|timestamp_to_datetime|timezone:timezone|format_time:timeformat }}" data-placement="top" data-toggle="tooltip"{% endif %} class="match-header countdown" data-timestamp="{{ round.start_time }}">{{ round.start_time|timestamp_to_datetime|countdown }}</div>
+      {% endif %}
+      <table class="elimination-tournament-table table-bordered">
+        {% for member in round.members %}
+        <tr class="team-row">
+          <td class="team-name"><a href="{% url "coder:account" member contest.resource.host %}">{{ member }}</a></td>
+          {% if round.match %}
+          {% with match_result=round.match.result|get_item:member %}
+          <td class="team-score">
+            {% if round.match.url %}<a href="{{ round.match.url }}" target="_blank" rel="noopener">{% endif %}
+            <span class="{% if match_result.place|as_number == 1%}acc{% else %}rej{% endif %}">{{ match_result|get_item:"solving" }}</span>
+            {% if round.match.url %}</a>{% endif %}
+          </td>
+          {% endwith %}
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endfor %}
+  </div>
+  {% endif %}
+
   {% include "filter_collapse.html" with include_filter="standings_filters.html" %}
 
   {% if charts %}

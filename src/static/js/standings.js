@@ -302,9 +302,9 @@ function process_problem_cell(element, current_time, unfreeze_index, percentage_
     }
   } else if (problem_submissions) {
     visible = false
-  } else if (penalty) {
+  } else if (penalty || penalty_in_seconds) {
     var times = penalty.split(/[:\s]+/)
-    if (times.length in contest_timeline['time_factor']) {
+    if (contest_timeline['time_factor'] && times.length in contest_timeline['time_factor']) {
       var time = parse_factors_time(contest_timeline['time_factor'], penalty)
     } else if (penalty_in_seconds) {
       var time = parseFloat(penalty_in_seconds)

@@ -171,10 +171,7 @@ class Command(BaseCommand):
 
         resources = Resource.objects.all()
         if args.resources:
-            resource_filter = Q()
-            for r in args.resources:
-                resource_filter |= Q(host__iregex=r) | Q(short_host=r)
-            resources = resources.filter(resource_filter)
+            resources = Resource.get(args.resources)
             self.logger.info(f'resources = {[r.host for r in resources]}')
         else:
             resources = resources.filter(has_problem_rating=True)

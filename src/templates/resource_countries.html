@@ -1,0 +1,29 @@
+{% coder_account_filter countries primary_country row_number_field=field operator="__gt" as primary_countries %}
+{% define name|add:"_page" as name_page %}
+{% define name as duplicate_name %}
+{% lazy_paginate first_per_page,per_page countries using name_page %}
+{% get_pages %}
+{% for country_account in countries|chain:primary_countries %}
+  {% with name=country_account.country|get_country_name %}
+  {% with code=country_account.country|get_country_code %}
+  <tr
+    {% if code == coder.country or primary_country and code == primary_country.country %} class="info"{% endif %}
+    {% include "delete_on_duplicate_attrs.html" with name=duplicate_name entry=country_account primary=primary_country %}
+  >
+    <td>
+      {% if country_account.delete_on_duplicate %}{{ country_account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}
+    </td>
+    <td>
+      <a href="{% url_transform request country=code %}"><div class="flag flag-{{ code|lower }}"></div> {{ name }}</a>
+    </td>
+    {% for field in field|split:"," %}
+    <td>
+      {% include "field_value.html" with value=country_account|get_item:field scorefixedformat=2 %}
+    </td>
+    {% endfor %}
+  </tr>
+  {% endwith %}
+  {% endwith %}
+{% endfor %}
+{% show_more_table %}
+<script>delete_on_duplicate()</script>

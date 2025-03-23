@@ -64,7 +64,20 @@
 </{% if is_modal %}div{% else %}h4{% endif %}>
 
 <div{% if is_modal %} class="modal-body"{% endif %}>
+  {% if stat.solution %}
   <pre style="padding: 0px"><code class="{{ solution_syntax }}">{{ stat.solution }}</code></pre>
+  {% elif stat.url %}
+  <div class="alert alert-info" role="alert">
+    <strong>External Solution</strong>
+    <p>Click the link below to view the solution.</p>
+    <a href="{{ stat.url }}" target="_blank" rel="noopener noreferrer">{{ stat.url }}</a>
+  </div>
+  {% else %}
+  <div class="alert alert-warning" role="alert">
+    <strong>No Solution</strong>
+    <p>There is no information about the solution.</p>
+  </div>
+  {% endif %}
 </div>
 
 {% if is_modal %}

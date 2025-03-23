@@ -217,7 +217,7 @@
 
         if (isset($contest['duration']) && ($contest['duration'] || is_numeric($contest['duration'])))
         {
-            if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+)(?:hr|h))?(?:\s*(?<min>\d+)(?:min|m))?#', $contest['duration'], $match) && $match[0]) {
+            if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+(\.\d+)?)(?:hr|h|\s*hours?))?(?:\s*(?<min>\d+)(?:min|m))?#', $contest['duration'], $match) && $match[0]) {
                 foreach (array('d', 'hr', 'min') as $arg)
                     if (!isset($match[$arg]) || empty($match[$arg])) $match[$arg] = 0;
                 $contest['duration'] = (($match['d'] * 24 + $match['hr']) * 60 + $match['min']) * 60;
@@ -238,6 +238,9 @@
             if (isset($contest['start_time']) && empty($contest['end_time'])) $contest['end_time'] = $contest['start_time'] + $contest['duration'];
             if (empty($contest['start_time']) && isset($contest['end_time'])) $contest['start_time'] = $contest['end_time'] - $contest['duration'];
         }
+
+        if (isset($contest['end_time']) && isset($contest['end_time_shift'])) $contest['end_time'] += strtotime(pop_item($contest, 'end_time_shift'), 0);
+        if (isset($contest['start_time']) && isset($contest['start_time_shift'])) $contest['start_time'] += strtotime(pop_item($contest, 'start_time_shift'), 0);
 
         $contests[$i] = $contest;
     }

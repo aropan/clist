@@ -19,11 +19,13 @@ from django_super_deduper.merge import MergedModelInstance
 from clist.templatetags.extras import canonize, get_problem_key, get_problem_name, get_problem_short
 
 
-def update_accounts_by_coders(accounts) -> int:
+def update_accounts_by_coders(accounts, progress_bar=None) -> int:
     ret = 0
     accounts = accounts.prefetch_related('coders').select_related('resource')
     for account in accounts:
         ret += update_account_by_coders(account)
+        if progress_bar is not None:
+            progress_bar.update()
     return ret
 
 
@@ -245,6 +247,14 @@ def update_problems(contest, problems=None, force=False):
                     'end_time': max(contest.end_time, getattr(added_problem, 'end_time', contest.end_time)),
                     'skip_rating': skip_rating and getattr(added_problem, 'skip_rating', skip_rating),
                 }
+                for rate_field, value_field in (
+                    ('attempt_rate', 'n_attempts'),
+                    ('acceptance_rate', 'n_accepted'),
+                    ('partial_rate', 'n_partial'),
+                    ('hidden_rate', 'n_hidden'),
+                ):
+                    defaults[rate_field] = defaults[value_field] / defaults['n_total'] if defaults['n_total'] else None
+
                 if translation := info.pop('translation', None):
                     translation = {
                         f'{field}_{language}': value

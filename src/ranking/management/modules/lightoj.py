@@ -144,10 +144,7 @@ class Statistic(BaseModule):
             values = list(lexer)
 
             for param, value in zip(params, values):
-                raw_data = re.sub(r'(?<=\:|\[)' + param + r'(?=\,|\}|\])', f'"{value}"', raw_data)
-
-            # fix '["eng",k]'
-            raw_data = raw_data.replace(',k]', ']')
+                raw_data = re.sub(r'(?<=\:|\[|\,)' + param + r'(?=\,|\}|\])', f'"{value}"', raw_data)
 
             data = json.loads(raw_data)
             kind = account.info['profile_url']['kind']

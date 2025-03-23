@@ -55,9 +55,20 @@ def rename_account(old_account, new_account):
     n_upsolved = sum_with_none(new_account.n_upsolved, old_account.n_upsolved)
     n_total_solved = new_account.n_total_solved + old_account.n_total_solved
     n_first_ac = new_account.n_first_ac + old_account.n_first_ac
+    n_gold = sum_with_none(new_account.n_gold, old_account.n_gold)
+    n_silver = sum_with_none(new_account.n_silver, old_account.n_silver)
+    n_bronze = sum_with_none(new_account.n_bronze, old_account.n_bronze)
+    n_medals = sum_with_none(new_account.n_medals, old_account.n_medals)
+    n_other_medals = sum_with_none(new_account.n_other_medals, old_account.n_other_medals)
+    n_first_places = sum_with_none(new_account.n_first_places, old_account.n_first_places)
+    n_second_places = sum_with_none(new_account.n_second_places, old_account.n_second_places)
+    n_third_places = sum_with_none(new_account.n_third_places, old_account.n_third_places)
+    n_top_ten_places = sum_with_none(new_account.n_top_ten_places, old_account.n_top_ten_places)
+    n_places = sum_with_none(new_account.n_places, old_account.n_places)
 
     last_activity = max_with_none(old_account.last_activity, new_account.last_activity)
     last_submission = max_with_none(old_account.last_submission, new_account.last_submission)
+
     new_account = MergedModelInstance.create(new_account, [old_account])
     old_account.delete()
     new_account.n_contests = n_contests
@@ -71,9 +82,20 @@ def rename_account(old_account, new_account):
     new_account.n_upsolved = n_upsolved
     new_account.n_total_solved = n_total_solved
     new_account.n_first_ac = n_first_ac
+    new_account.n_gold = n_gold
+    new_account.n_silver = n_silver
+    new_account.n_bronze = n_bronze
+    new_account.n_medals = n_medals
+    new_account.n_other_medals = n_other_medals
+    new_account.n_first_places = n_first_places
+    new_account.n_second_places = n_second_places
+    new_account.n_third_places = n_third_places
+    new_account.n_top_ten_places = n_top_ten_places
+    new_account.n_places = n_places
     new_account.last_activity = last_activity
     new_account.last_submission = last_submission
     new_account.save()
+
     return new_account
 
 
@@ -210,8 +232,10 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
         if account.name:
             statistic.addition['name'] = account.name
         statistic.save(update_fields=['addition'])
-        if created:
-            ok = True
+        if created and contest.n_statistics is not None:
+            contest.n_statistics += 1
+            contest.save(update_fields=['n_statistics'])
+        ok |= created
         if group:
             filled_groups.add(group)
     for contest_key in missed_grouped_contest_keys:
@@ -473,6 +497,8 @@ def update_stage(self):
         if self.score_params.get('abbreviation_problem_name'):
             info['short'] = ''.join(re.findall(r'(\b[A-Z]|[0-9])', info.get('short', contest.title)))
 
+        info['time_in_seconds'] = int((contest.end_time - stage.start_time).total_seconds())
+
         problems = contest.info.get('problems', [])
         if not detail_problems:
             full_score = None
@@ -504,6 +530,7 @@ def update_stage(self):
                 add_prefix_to_problem_short(problem, f'{idx}.')
                 problem['group'] = info.get('short', info['name'])
                 problem['url'] = info['url']
+                problem['time_in_seconds'] = info['time_in_seconds']
                 problems_infos[get_problem_short(problem)] = problem
 
     exclude_advances = {}

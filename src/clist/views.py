@@ -538,8 +538,9 @@ def resource_problem_rating_chart(resource):
 
 
 @page_templates((
-    ('resource_country_paging.html', 'country_page'),
+    ('resource_country_most_medals.html', 'country_most_medals_page'),
     ('resource_top_country_paging.html', 'top_country_page'),
+    ('resource_country_distribution_paging.html', 'country_distribution_page'),
     ('resource_last_submission_paging.html', 'last_submission_page'),
     ('resource_last_activity_paging.html', 'last_activity_page'),
     ('resource_last_rating_activity_paging.html', 'last_rating_activity_page'),
@@ -550,6 +551,7 @@ def resource_problem_rating_chart(resource):
     ('resource_most_first_ac_paging.html', 'most_first_ac_page'),
     ('resource_most_total_solving_paging.html', 'most_total_solving_page'),
     ('resource_most_medals_paging.html', 'most_medals_page'),
+    ('resource_most_places_paging.html', 'most_places_page'),
     ('resource_contests.html', 'past_page'),
     ('resource_contests.html', 'coming_page'),
     ('resource_contests.html', 'running_page'),
@@ -720,12 +722,14 @@ def resource(request, resource, template='resource.html', extra_context=None):
         }
 
     medals_order = [F(f).desc(nulls_last=True) for f in ('n_gold', 'n_silver', 'n_bronze', 'n_other_medals')]
+    places_order = [F(f).desc(nulls_last=True) for f in ('n_first_places', 'n_second_places', 'n_third_places',
+                                                         'n_top_ten_places')]
 
-    def get_ordered_account_by_nullable_field(field):
-        return accounts.order_by(F(field).desc(nulls_last=True), 'id').filter(**{f'{field}__isnull': False})
+    def get_ordered_by_nullable_field(qs, field):
+        return qs.order_by(F(field).desc(nulls_last=True), 'id').filter(**{f'{field}__isnull': False})
 
-    def get_ordered_account_by_number_field(field):
-        return accounts.order_by(F(field).desc(nulls_last=True), 'id').filter(**{f'{field}__gt': 0})
+    def get_ordered_by_number_field(qs, field):
+        return qs.order_by(F(field).desc(nulls_last=True), 'id').filter(**{f'{field}__gt': 0})
 
     context = {
         'resource': resource,
@@ -736,10 +740,9 @@ def resource(request, resource, template='resource.html', extra_context=None):
         'primary_country': primary_country,
         'coder_accounts_ids': coder_accounts_ids,
         'accounts': resource.account_set.filter(coders__isnull=False).prefetch_related('coders').order_by('-modified'),
-        'country_distribution': country_accounts.order_by(F('n_accounts').desc(nulls_last=True), 'country'),
-        'country_ratings': (country_accounts
-                            .filter(rating__isnull=False)
-                            .order_by(F('rating').desc(nulls_last=True), 'country')),
+        'country_distribution': get_ordered_by_number_field(country_accounts, 'n_accounts'),
+        'country_ratings': get_ordered_by_nullable_field(country_accounts, 'rating'),
+        'country_medals': get_ordered_by_nullable_field(country_accounts, 'n_medals').order_by(*medals_order, 'id'),
         'rating': {
             'chart': rating_chart,
             'min': min_rating,
@@ -770,16 +773,17 @@ def resource(request, resource, template='resource.html', extra_context=None):
         'params': params,
         'first_per_page': 10,
         'per_page': 50,
-        'last_submissions': get_ordered_account_by_nullable_field('last_submission'),
-        'last_activities': get_ordered_account_by_nullable_field('last_activity'),
-        'last_rating_activities': get_ordered_account_by_nullable_field('last_rating_activity'),
-        'top': get_ordered_account_by_nullable_field('rating'),
-        'most_participated': get_ordered_account_by_number_field('n_contests'),
-        'most_writer': get_ordered_account_by_number_field('n_writers'),
-        'most_solved': get_ordered_account_by_number_field('n_total_solved'),
-        'most_first_ac': get_ordered_account_by_number_field('n_first_ac'),
-        'most_total_solving': get_ordered_account_by_number_field('total_solving'),
-        'most_medals': accounts.order_by(*medals_order, 'id'),
+        'last_submissions': get_ordered_by_nullable_field(accounts, 'last_submission'),
+        'last_activities': get_ordered_by_nullable_field(accounts, 'last_activity'),
+        'last_rating_activities': get_ordered_by_nullable_field(accounts, 'last_rating_activity'),
+        'top': get_ordered_by_nullable_field(accounts, 'rating'),
+        'most_participated': get_ordered_by_number_field(accounts, 'n_contests'),
+        'most_writer': get_ordered_by_number_field(accounts, 'n_writers'),
+        'most_solved': get_ordered_by_number_field(accounts, 'n_total_solved'),
+        'most_first_ac': get_ordered_by_number_field(accounts, 'n_first_ac'),
+        'most_total_solving': get_ordered_by_number_field(accounts, 'total_solving'),
+        'most_medals': get_ordered_by_nullable_field(accounts, 'n_medals').order_by(*medals_order, 'id'),
+        'most_places': get_ordered_by_nullable_field(accounts, 'n_places').order_by(*places_order, 'id'),
         'problems': resource.problem_set.filter(url__isnull=False).order_by('-time', 'contest_id', 'index'),
     }
 
@@ -973,7 +977,8 @@ def problems(request, template='problems.html'):
     custom_fields = [f for f in request.GET.getlist('field') if f]
     custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url', 'divisions', 'kinds',
                       'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_total',
-                      'n_accepted_submissions', 'n_total_submissions']
+                      'n_accepted_submissions', 'n_total_submissions',
+                      'attempt_rate', 'acceptance_rate', 'partial_rate', 'hidden_rate']
     custom_info_fields = set()
     if selected_resource:
         if selected_resource.has_problem_archive:
@@ -1152,10 +1157,23 @@ def problems(request, template='problems.html'):
         orderby = getattr(F(sort_field), sort_order)(nulls_last=True)
         problems = problems.order_by(orderby)
 
+    # hidden fields
+    hidden_fields = set()
+    if resources:
+        if not any(resource.has_problem_rating for resource in resources):
+            hidden_fields.add('rating')
+            hidden_fields.add('luck')
+        if not any(resource.has_problem_statistic for resource in resources):
+            hidden_fields.add('stats')
+            hidden_fields.add('result')
+
     context = {
         'navbar_admin_model': Problem,
+        'resources': resources,
         'problems': problems,
         'contest_problems': contest_problems,
+        'selected_resource': selected_resource,
+        'hidden_fields': hidden_fields,
         'coder': coder,
         'show_tags': show_tags,
         'params': {
@@ -1176,7 +1194,6 @@ def problems(request, template='problems.html'):
         'groupby_data': groupby_data,
         'groupby_fields': groupby_fields,
         'groupby_select_first_column': True,
-        'selected_resource': selected_resource,
         'per_page': 50,
         'per_page_more': 200,
     }

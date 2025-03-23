@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import html
 import json
 import os
 import re
@@ -15,17 +14,20 @@ from urllib.parse import urlencode, urljoin, urlparse
 
 import pytz
 
-from clist.templatetags.extras import as_number, get_division_problems, get_problem_short, is_solved
+from clist.templatetags.extras import as_number, get_division_problems, get_problem_short, is_solved, slug
+from pyclist.middleware import RedirectException
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, parsed_table, utc_now
 from ranking.management.modules.excepts import (ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse,
                                                 InitModuleException)
 from ranking.utils import create_upsolving_statistic
 from utils.aes import AESModeOfOperation
+from utils.strings import strip_tags
+from utils.timetools import parse_datetime
 
 API_KEYS = conf.CODEFORCES_API_KEYS
 DEFAULT_API_KEY = API_KEYS[API_KEYS['__default__']]
-SUBDOMAIN = 'mirror.'
+SUBDOMAIN = ''
 
 
 def api_query(
@@ -33,7 +35,7 @@ def api_query(
     params,
     api_key=DEFAULT_API_KEY,
     prev_time_queries={},
-    api_url_format=f'https://{SUBDOMAIN}codeforces.com/api/%s'
+    api_url_format='https://codeforces.com/api/%s',
 ):
     url = api_url_format % method
     key, secret = api_key
@@ -120,7 +122,8 @@ class Statistic(BaseModule):
         super().__init__(**kwargs)
 
         self.is_spectator_ranklist = self.standings_url and 'spectator/ranklist' in self.standings_url
-        if self.is_spectator_ranklist:
+        self.is_blitz_cup = 'blitz-cup' in self.key and self.standings_url and '/blog/entry/' in self.standings_url
+        if self.is_spectator_ranklist or self.is_blitz_cup:
             return
 
         cid = self.key
@@ -133,11 +136,15 @@ class Statistic(BaseModule):
             raise InitModuleException(f'Contest id {cid} should be number')
         self.cid = cid
 
-    def get_standings_from_html(self):
-        url = urljoin(self.standings_url, '?lang=en')
-        page = REQ.get(url)
+    def get_standings_from_html(self, url=None, with_exception=True):
+        url = urljoin(self.url, url or self.standings_url)
+        page = _get(urljoin(url, '?lang=en'))
         regex = '''<table[^>]*standings[^>]*>.*?</table>'''
         match = re.search(regex, page, re.DOTALL)
+        if not match:
+            if with_exception:
+                raise ExceptionParseStandings('Not found table')
+            return
         html_table = match.group(0)
         mapping = {
             '#': 'place',
@@ -155,10 +162,14 @@ class Statistic(BaseModule):
             row = {}
             problems = row.setdefault('problems', {})
             for k, v in r.items():
-                if len(k) == 1:
-                    problems_info.setdefault(k, {'short': k})
+                ks = k.split()
+                if len(ks[0]) == 1:
+                    short = ks[0]
+                    problems_info.setdefault(short, {'short': short})
+                    if len(ks) == 2 and (full_score := as_number(ks[1], force=True)):
+                        problems_info[short]['full_score'] = full_score
                     if v.value:
-                        p = problems.setdefault(k, {})
+                        p = problems.setdefault(short, {})
                         v = v.value
                         if ' ' in v:
                             v, p['time'] = v.split()
@@ -203,9 +214,14 @@ class Statistic(BaseModule):
 
         standings = {
             'result': result,
-            'url': self.standings_url,
+            'url': url,
             'problems': list(problems_info.values()),
         }
+
+        match = re.search('<span class="contest-status">([^<]*)</span>', page)
+        if match:
+            standings['status'] = slug(match.group(1))
+
         return standings
 
     @staticmethod
@@ -266,6 +282,157 @@ class Statistic(BaseModule):
         info['is_accepted'] = is_accepted
         return info
 
+    def get_blitz_cup_standings_from_html(self):
+        url = urljoin(self.standings_url, '?lang=ru')
+        page = _get(url)
+        content = re.search(r'<div[^>]*class="content"[^>]*>.*?</div>', page, re.DOTALL).group(0)
+        matches = re.finditer('<(?P<tag>li|h3)>(?P<content>.*?)</(?:li|h3)>', content)
+        result = {}
+        problem_infos = {}
+        member_rounds = defaultdict(list)
+        elimination_rounds = []
+        delay = None
+        now = utc_now()
+        for match in matches:
+            tag = match.group('tag')
+            if tag == 'h3':
+                contest_day = strip_tags(match.group('content'))
+                continue
+            match = match.group('content')
+            members = re.findall(r'<a[^>]*href="[^"]*profile/([^"]*)"[^>]*>', match)
+
+            winners_of = re.search(r'winners?\s*of\s*(\d+)\s*and\s*(\d+)', match, re.IGNORECASE)
+            if winners_of and len(members) < 2:
+                members = []
+                for winner_of in [winners_of.group(1), winners_of.group(2)]:
+                    winner_of = int(winner_of) - 1
+                    members.extend(elimination_rounds[winner_of]['advancing_members'])
+
+            if not members:
+                continue
+
+            if re.search(r'\brematch\b', match, re.IGNORECASE):
+                elimination_round = elimination_rounds.pop()
+                for member in elimination_round['advancing_members']:
+                    member_rounds[member].pop()
+                for member in elimination_round['members']:
+                    result[member]['problems'].pop(str(elimination_round['problem']), None)
+
+            if scoreboard := re.search(r'<a[^>]*href="(?P<url>[^"]*/spectator/ranklist/[^"]*)"[^>]*>', match):
+                scoreboard_url = scoreboard.group('url')
+                match_result = self.get_standings_from_html(scoreboard_url, with_exception=False)
+                scoreboard_url = urljoin(self.url, scoreboard_url)
+                scoreboard_status = (match_result or {}).get('status') or ''
+            else:
+                match_result = None
+                scoreboard_url = None
+
+            if contest_time_match := re.search(r'<a[^>]*class="contest-time"[^>]*href="(?P<url>[^"]*)"[^>]*>', match):
+                contest_time = parse_datetime(contest_time_match.group('url')).timestamp()
+            elif contest_time and (contest_time_match := re.search(r'[^;()]*UTC\s*[+-][^;()]*', match)):
+                contest_time = f'{str(self.start_time.year)} {contest_day} {contest_time_match.group()}'
+                contest_time = parse_datetime(contest_time).timestamp()
+            else:
+                contest_time = None
+            if contest_time and contest_time > now.timestamp():
+                if delay is None or contest_time - now.timestamp() < delay:
+                    delay = contest_time - now.timestamp()
+
+            advancing_members = members.copy()
+            for member in members:
+                row = result.setdefault(member, {'member': member})
+                problems = row.setdefault('problems', {})
+
+                short = str(len(problems) + 1)
+                if short not in problem_infos:
+                    problem_infos[short] = {'short': short}
+
+                problem = problems.setdefault(short, {'blitz_round': match_result})
+                if contest_time:
+                    problem['start_time'] = int(contest_time)
+                if scoreboard_url:
+                    problem['standings_url'] = scoreboard_url
+                if match_result:
+                    round_result = match_result['result'][member]
+                    score = str(round_result['solving'])
+                    for opponent in members:
+                        if opponent == member:
+                            continue
+                        opponent_result = match_result['result'][opponent]
+                        score = f'{score} : {opponent_result["solving"]}'
+                    if 'running' in scoreboard_status:
+                        problem['result'] = f'?{score}'
+                        delay = timedelta(minutes=5).total_seconds()
+                    else:
+                        problem['status'] = score
+                        problem['binary'] = as_number(round_result['place']) == 1
+                        problem['result'] = int(problem['binary'])
+                        if not problem['binary']:
+                            advancing_members.remove(member)
+                else:
+                    problem['result_verdict'] = 'hidden'
+
+            round_idx = len(elimination_rounds)
+            previous_rounds = []
+            for member in members:
+                if member not in member_rounds:
+                    continue
+                if (member_round := member_rounds[member][-1]) not in previous_rounds:
+                    previous_rounds.append(member_round)
+            elimination_round = {
+                'round': int(short),
+                'problem': short,
+                'members': members,
+                'match': match_result,
+                'previous': previous_rounds,
+                'start_time': contest_time,
+                'scoreboard_url': scoreboard_url,
+                'advancing_members': advancing_members,
+            }
+            elimination_rounds.append(elimination_round)
+            for member in advancing_members:
+                member_rounds[member].append(round_idx)
+
+        def bracket_dfs(elimination_round, indices):
+            for previous in elimination_round.pop('previous'):
+                bracket_dfs(elimination_rounds[previous], indices)
+            indices[elimination_round['round']] += 1
+            elimination_round['index'] = indices[elimination_round['round']]
+            elimination_round['n_rows'] = 2 ** (elimination_round['round'] - 1)
+        bracket_dfs(elimination_rounds[-1], defaultdict(int))
+        elimination_rounds.sort(key=lambda r: (r['round'], r['index']))
+
+        for row in result.values():
+            row['solving'] = sum(1 for p in row['problems'].values() if p.get('binary'))
+            row['order'] = (row['solving'], len(row['problems']))
+
+        last_score, last_rank = None, None
+        for rank, row in enumerate(sorted(result.values(), key=lambda x: x['order'], reverse=True), start=1):
+            score = row.pop('order')
+            if last_score != score:
+                last_score = score
+                last_rank = rank
+            row['place'] = last_rank
+
+        problems = list(problem_infos.values())
+        round_names = ['Final', 'Semifinal', 'Quarterfinal']
+        for index, problem in enumerate(reversed(problems), start=0):
+            problem['name'] = round_names[index] if index < len(round_names) else f'R{2 ** (index + 1)}'
+            problem['ignore'] = True
+
+        standings = {
+            'result': result,
+            'problems': problems,
+            'elimination_tournament_info': {
+                'rounds': elimination_rounds,
+            }
+        }
+        if delay is not None:
+            standings['timing_statistic_delta'] = timedelta(seconds=delay)
+            standings['force_timing_statistic_delta'] = True
+
+        return standings
+
     def get_standings(self, users=None, statistics=None, **kwargs):
         now = utc_now()
 
@@ -276,6 +443,9 @@ class Statistic(BaseModule):
 
         if self.is_spectator_ranklist:
             return self.get_standings_from_html()
+
+        if self.is_blitz_cup:
+            return self.get_blitz_cup_standings_from_html()
 
         contest_url = self.url.replace('contests', 'contest')
         standings_url = contest_url.rstrip('/') + '/standings'
@@ -725,18 +895,19 @@ class Statistic(BaseModule):
     def get_source_code(contest, problem):
         if 'url' not in problem:
             raise ExceptionParseStandings('Not found url')
-        page, last_url = _get(problem['url'], return_url=True)
-        if last_url != problem['url']:
-            raise ExceptionParseStandings('Not allowed to view source code')
-        result = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # noqa
-        if not result:
-            raise ExceptionParseStandings('Not found source code')
-        solution = html.unescape(result.group('source'))
-        ret = {'solution': solution}
-        for c in result.group('class').split():
-            if c.startswith('lang-'):
-                ret['lang_class'] = c
-        return ret
+        raise RedirectException()
+        # page, last_url = _get(problem['url'], return_url=True)
+        # if last_url != problem['url']:
+        #     raise ExceptionParseStandings('Not allowed to view source code')
+        # result = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # noqa
+        # if not result:
+        #     raise ExceptionParseStandings('Not found source code')
+        # solution = html.unescape(result.group('source'))
+        # ret = {'solution': solution}
+        # for c in result.group('class').split():
+        #     if c.startswith('lang-'):
+        #         ret['lang_class'] = c
+        # return ret
 
     @staticmethod
     def update_submissions(account, resource, with_submissions, pagination_size, **kwargs):

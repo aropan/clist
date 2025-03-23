@@ -1026,8 +1026,22 @@ def get_result_score(value):
     return as_number(value, default=0)
 
 
+def place_as_n_place_field(place):
+    if isinstance(place, str):
+        place = as_number(place, force=True)
+    if place and 1 <= place <= 10:
+        ret = {1: 'first', 2: 'second', 3: 'third'}.get(place, 'top_ten')
+        return f'n_{ret}_places'
+
+
+def medal_as_n_medal_fields(medal):
+    if medal in ('gold', 'silver', 'bronze'):
+        return [f'n_{medal}', 'n_medals']
+    return ['n_other_medals']
+
+
 @register.simple_tag
-def get_statistic_stats(addition, solving=None, with_n_medal_field=False):
+def get_statistic_stats(addition, solving=None, with_n_medal_field=False, with_n_place_field=False):
     ret = {}
     problems = addition.get('problems', {})
     n_upsolving = 0
@@ -1060,11 +1074,11 @@ def get_statistic_stats(addition, solving=None, with_n_medal_field=False):
     ret['n_first_ac'] = n_first_ac
 
     if with_n_medal_field and (medal := addition.get('medal')):
-        if medal in ('gold', 'silver', 'bronze'):
-            ret['n_medals'] = 1
-            ret[f'n_{medal}'] = 1
-        else:
-            ret['n_other_medals'] = 1
+        for field in medal_as_n_medal_fields(medal):
+            ret[field] = 1
+    if with_n_place_field and (n_place_field := place_as_n_place_field(with_n_place_field)):
+        ret[n_place_field] = 1
+        ret['n_places'] = 1
     return ret
 
 
@@ -1125,7 +1139,7 @@ def timestamp_to_datetime(value):
     try:
         if isinstance(value, str):
             value = float(value)
-        return datetime.fromtimestamp(value)
+        return datetime.fromtimestamp(value, tz=pytz.utc)
     except Exception:
         return None
 
@@ -1512,6 +1526,11 @@ def quote_url(url):
 
 
 @register.filter
+def url_with_params_separator(url):
+    return f'{url}{"&" if "?" in url else "?"}'
+
+
+@register.filter
 def negative(value):
     return not bool(value)
 
@@ -1565,7 +1584,7 @@ def sort_select_data(data):
 
 @register.filter
 def simple_select_data(data):
-    if data is None:
+    if data is None or data == '':
         return
     ret = {
         'noajax': True,

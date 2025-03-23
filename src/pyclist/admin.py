@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection, models, transaction
 from django.db.models.fields.related import RelatedField
+from django.shortcuts import redirect
 from django_json_widget.widgets import JSONEditorWidget
 from guardian.admin import GuardedModelAdmin
 
@@ -112,6 +113,21 @@ class BaseModelAdmin(GuardedModelAdmin):
                 condition |= models.Q(**{f'{field}__contains': search_term})
             queryset = queryset.filter(condition)
         return queryset, use_distinct
+
+    def changelist_view(self, request, *args, **kwargs):
+        if sort_by := request.GET.get('sort_by'):
+            params = request.GET.copy()
+            params.pop('sort_by')
+            display_fields = list(self.get_list_display(request))
+            field = sort_by.lstrip('-')
+            if field in display_fields:
+                index = display_fields.index(field) + 1
+                if sort_by.startswith('-'):
+                    index = -index
+                params['o'] = str(index)
+                request.GET = params
+                return redirect(f'{request.path}?{params.urlencode()}')
+        return super().changelist_view(request, *args, **kwargs)
 
     class Meta:
         abstract = True

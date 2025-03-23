@@ -1,16 +1,16 @@
-{% if condition and accounts.first|get_item:field %}
+{% if condition and accounts.exists %}
 <div class="col-md-6 col-lg-4">
     <h4>
         {{ title }}
-        <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}{% for field in fields|default:field|split:"," %}&field={{ field }}&sort_column={{ field }}{% endfor %}&sort_order=desc{% query_fields request 'country' 'list' %}">{% icon_to 'accounts' %}</a>
+        <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}{% for field in field|split:"," %}&field={{ field }}&sort_column={{ field }}{% endfor %}&sort_order=desc{% query_fields request 'country' 'list' %}">{% icon_to 'accounts' %}</a>
     </h4>
     <div class="panel panel-default table-responsive">
         <table class="table table-hover table-condensed table-striped">
             <tr>
-                <th>N</th>
-                <th>Handle</th>
+                <th class="sticky-left-column">N</th>
+                <th data-table-scrolling-class="text-align-left">Handle</th>
                 {% for header in header|split:"," %}
-                <th>{% if header_icon %}{% icon_to header %}{% else %}{{ header|split|join:"<br/>" }}{% endif %}</th>
+                <th class="sticky-right-column">{% if header_icon %}{% icon_to header %}{% else %}{{ header|split|join:"<br/>" }}{% endif %}</th>
                 {% endfor %}
             </tr>
             {% include paging %}

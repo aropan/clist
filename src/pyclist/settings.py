@@ -217,22 +217,22 @@ RQ_QUEUES = {
     'system': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 60 * 2,  # 2 minutes
+        'DEFAULT_TIMEOUT': 120,  # 2 minutes
     },
     'default': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 60 * 15,  # 15 minutes
+        'DEFAULT_TIMEOUT': 1800,  # 30 minutes
     },
     'parse_statistics': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 60 * 60 * 24,  # 24 hours
+        'DEFAULT_TIMEOUT': 86400,  # 24 hours
     },
     'parse_accounts': {
         'HOST': 'localhost',
         'PORT': 6379,
-        'DEFAULT_TIMEOUT': 60 * 60 * 6,  # 6 hours
+        'DEFAULT_TIMEOUT': 21600,  # 6 hours
     },
 }
 RQ_SHOW_ADMIN_LINK = True
@@ -260,8 +260,15 @@ DATABASES.update(DATABASES_)
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache',
         'LOCATION': 'memcached:11211',
+        'OPTIONS': {
+            'binary': True,
+            'behaviors': {
+                'tcp_nodelay': True,
+                'ketama': True,
+            },
+        },
     }
 }
 
@@ -399,7 +406,7 @@ LOGGING = {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
-            'backupCount': 2,
+            'backupCount': 5,
             'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
             'formatter': 'verbose',
             'delay': True,
@@ -470,7 +477,7 @@ COUNTRIES_OVERRIDE = {
     'PS': {'names': ['Palestine', 'Palestine, State of', 'Палестина']},
     'KP': {'names': ['North Korea', 'Democratic People\'s Republic of Korea', 'Korea, Democratic People\'s Republic of', 'КНДР', 'Северная Корея']},  # noqa
     'KR': {'names': ['South Korea', 'Republic of Korea', 'Южная Корея', 'Korea, Republic of', 'Korea']},
-    'MO': {'names': ['Macao', 'Macau', 'Макао']},
+    'MO': {'names': ['Macao', 'Macau', 'Макао', 'Macao, China']},
     'US': {'names': ['United States of America', 'United States', 'America', 'Virgin Islands', 'UM', 'United States Minor Outlying Islands', 'Соединенные Штаты Америки', 'США']},  # noqa
     'VN': {'names': ['Vietnam', 'Viet Nam', 'Вьетнам']},
     'GB': {'names': ['United Kingdom', 'United Kingdom of Great Britain', 'England', 'UK', 'Scotland', 'Northern Ireland', 'Wales', 'Великобритания', 'Англия', 'Шотландия']},  # noqa
@@ -487,6 +494,7 @@ COUNTRIES_OVERRIDE = {
     'SY': {'names': ['Syria', 'Syrian Arab Republic', 'Сирия']},
     'BO': {'names': ['Bolivia', 'Plurinational State of Bolivia', 'Bolivia, Plurinational State of', 'Боливия']},
     'TW': {'names': ['Taiwan', 'Taiwan, Province of China', 'Тайвань']},
+    'HK': {'names': ['Hong Kong', 'Hong Kong, China', 'Гонконг']},
 }
 DISABLED_COUNTRIES = {'UM'}
 
@@ -765,10 +773,15 @@ FONTAWESOME_ICONS_ = {
     'problems': '<i class="fa-fw fa-solid fa-list-check"></i>',
     'participants': '<i class="fa-fw fas fa-users"></i>',
     'submissions': '<i class="fa-fw fa-solid fa-bars"></i>',
+    'finalists': '<i class="fa-solid fa-user-group"></i>',
     'versus': '<i class="fa-fw fas fa-people-arrows"></i>',
     'last_activity': '<i class="fa-fw far fa-clock"></i>',
     'fullscreen': '<i class="fa-fw fas fa-expand-arrows-alt"></i>',
     'update': '<i class="fa-fw fas fa-sync"></i>',
+    'vertical-expand': '<i class="fa-solid fa-arrows-up-down"></i>',
+    'vertical-collapse': '<i class="fa-solid fa-xmark"></i>',
+    'left-arrow': '<i class="fa-solid fa-angle-left"></i>',
+    'right-arrow': '<i class="fa-solid fa-angle-right"></i>',
     'open_in_tab': '<i class="fa-fw fas fa-external-link-alt"></i>',
     'extra_url': '<i class="fa-fw fas fa-external-link-alt"></i>',
     'copy': '<i class="fa-fw far fa-copy"></i>',
@@ -886,7 +899,8 @@ STANDINGS_UNSPECIFIED_PLACE = '-'
 STANDINGS_STATISTIC_FIELDS = ['upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved', 'n_first_ac']
 
 ACCOUNT_STATISTIC_FIELDS = ['solving', 'upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved',
-                            'n_first_ac', 'n_gold', 'n_silver', 'n_bronze', 'n_medals']
+                            'n_first_ac', 'n_gold', 'n_silver', 'n_bronze', 'n_medals',
+                            'n_first_places', 'n_second_places', 'n_third_places', 'n_top_ten_places', 'n_places']
 
 UPSOLVING_FILTER_DEFAULT = True
 

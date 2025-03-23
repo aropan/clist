@@ -11,7 +11,7 @@ from django.urls import NoReverseMatch, reverse
 from django.utils.timezone import now
 from el_pagination.decorators import page_templates
 
-from clist.templatetags.extras import is_yes, timestamp_to_datetime
+from clist.templatetags.extras import allowed_redirect, is_yes, timestamp_to_datetime, url_transform
 from pyclist.decorators import context_pagination
 from utils.chart import make_chart
 from utils.timetools import parse_duration
@@ -239,6 +239,12 @@ def charts(request, template='charts.html'):
     }
 
     update_context_by_source(request, context)
+
+    if action := request.GET.get('action'):
+        if action == 'delete':
+            deleted_info = context['entities'].delete()
+            request.logger.info(f'Deleted: {deleted_info}')
+        return allowed_redirect(url_transform(request, action=None, with_remove=True))
 
     return template, context
 

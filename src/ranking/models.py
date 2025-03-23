@@ -78,6 +78,11 @@ class Account(BaseModel):
     n_bronze = models.IntegerField(default=None, null=True, blank=True)
     n_medals = models.IntegerField(default=None, null=True, blank=True)
     n_other_medals = models.IntegerField(default=None, null=True, blank=True)
+    n_first_places = models.IntegerField(default=None, null=True, blank=True)
+    n_second_places = models.IntegerField(default=None, null=True, blank=True)
+    n_third_places = models.IntegerField(default=None, null=True, blank=True)
+    n_top_ten_places = models.IntegerField(default=None, null=True, blank=True)
+    n_places = models.IntegerField(default=None, null=True, blank=True)
 
     objects = BaseManager()
     priority_objects = PriorityAccountManager()
@@ -293,6 +298,10 @@ class Account(BaseModel):
             DescNullsLastIndex(fields=['country', '-total_solving']),
             DescNullsLastIndex(fields=['country', '-n_total_solved']),
             DescNullsLastIndex(fields=['country', '-n_first_ac']),
+
+            DescNullsLastIndex(fields=['resource', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals']),
+            DescNullsLastIndex(fields=['resource', '-n_first_places', '-n_second_places', '-n_third_places',
+                                       '-n_top_ten_places']),
         ]
 
         unique_together = ('resource', 'key')
@@ -306,16 +315,22 @@ class CountryAccount(BaseModel):
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     resource_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     raw_rating = models.FloatField(default=None, null=True, blank=True, db_index=True)
+    n_gold = models.IntegerField(default=None, null=True, blank=True)
+    n_silver = models.IntegerField(default=None, null=True, blank=True)
+    n_bronze = models.IntegerField(default=None, null=True, blank=True)
+    n_medals = models.IntegerField(default=None, null=True, blank=True)
+    n_other_medals = models.IntegerField(default=None, null=True, blank=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=['resource', 'country']),
-            models.Index(fields=['resource', 'rating', 'country']),
-            models.Index(fields=['resource', '-rating', 'country']),
-            models.Index(fields=['resource', 'resource_rank', 'country']),
-            models.Index(fields=['resource', '-resource_rank', 'country']),
-            models.Index(fields=['resource', 'n_accounts', 'country']),
-            models.Index(fields=['resource', '-n_accounts', 'country']),
+            DescNullsLastIndex(fields=['resource', 'country']),
+            DescNullsLastIndex(fields=['resource', 'rating', 'country']),
+            DescNullsLastIndex(fields=['resource', '-rating', 'country']),
+            DescNullsLastIndex(fields=['resource', 'resource_rank', 'country']),
+            DescNullsLastIndex(fields=['resource', '-resource_rank', 'country']),
+            DescNullsLastIndex(fields=['resource', 'n_accounts', 'country']),
+            DescNullsLastIndex(fields=['resource', '-n_accounts', 'country']),
+            DescNullsLastIndex(fields=['resource', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals', 'country']),
         ]
 
         unique_together = ('resource', 'country')
@@ -598,9 +613,14 @@ class Statistics(BaseModel):
         return update_fields
 
 
+def _get_statistic_stats(instance):
+    return get_statistic_stats(instance.addition, solving=instance.solving,
+                               with_n_medal_field=True, with_n_place_field=instance.place_as_int)
+
+
 @receiver(post_init, sender=Statistics)
 def statistics_post_init(sender, instance, **kwargs):
-    instance._stats = get_statistic_stats(instance.addition, solving=instance.solving, with_n_medal_field=True)
+    instance._stats = _get_statistic_stats(instance)
 
 
 @receiver(post_save, sender=Statistics)
@@ -610,7 +630,7 @@ def update_account_from_statistic(signal, instance, **kwargs):
         if signal is post_delete:
             diff = {field: -value for field, value in instance._stats.items() if value}
         elif signal is post_save:
-            diff = get_statistic_stats(instance.addition, solving=instance.solving, with_n_medal_field=True)
+            diff = _get_statistic_stats(instance)
             if not kwargs['created']:
                 for field, value in instance._stats.items():
                     diff[field] = (diff.get(field) or 0) - (value or 0)

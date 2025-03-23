@@ -48,6 +48,10 @@
     <a class="btn btn-default btn-sm" href="{% filtered_admin_url model.admin_url field_selects=selection_field_selects %}" target="_blank">{% icon_to 'extra_url' %}</a>
   </div>
   {% endif %}
+
+  <div class="input-group{% if not nosmall %} input-group-sm{% endif %}">
+    <button type="submit" class="btn btn-default btn-sm confirm-action" data-confirm-class="btn-danger" data-action="Delete" name="action" value="delete">{% icon_to 'delete' %}</button>
+  </div>
 </form>
 
 <script>configure_pagination()</script>
@@ -61,13 +65,13 @@
   <table class="table table-hover table-striped table-float-head">
     <thead>
       <tr>
-        {% for field in fields  %}
-        <th>{{ field }}</th>
-        {% endfor %}
-      </tr>
-      <tr>
         {% for field in fields %}
-        <th class="text-muted small">{{ model.fields|get_item:field|get_item:'type' }}</th>
+        {% with model.fields|get_item:field|get_item:'type' as field_type %}
+        <th{% if entity_fields|length >= forloop.counter0 %} class="sticky-left-column"{% endif %}>
+          <div class="nowrap">{% if field_type == "BooleanField" %}{% trim_to field 5 %}{% else %}{{ field }}{% endif %}</div>
+          <div class="nowrap text-muted small">{% if field_type == "BooleanField" %}{% trim_to field_type 5 %}{% else %}{{ field_type }}{% endif %}</div>
+        </th>
+        {% endwith %}
         {% endfor %}
       </tr>
     </thead>
@@ -80,5 +84,7 @@
 {% elif model %}
 <div class="alert alert-warning">Not found entities</div>
 {% endif %}
+
+<script>update_table_sticky(); $(window).resize(update_table_sticky)</script>
 
 {% endblock %}

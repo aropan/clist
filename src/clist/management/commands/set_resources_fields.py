@@ -3,6 +3,7 @@
 
 from collections import defaultdict
 from logging import getLogger
+from math import isclose
 
 from django.core.management.base import BaseCommand
 from flatten_dict import flatten
@@ -157,7 +158,7 @@ def set_n_fields(resources, logger):
             resource.save(update_fields=update_fields)
 
 
-def set_avg_rating(resources, logger, default_min_n_participations=10):
+def set_avg_rating(resources, logger, default_min_n_participations=3):
     for resource in tqdm(resources.iterator(), total=resources.count()):
         ratings = []
         qs = resource.account_set.filter(rating__isnull=False)
@@ -169,8 +170,8 @@ def set_avg_rating(resources, logger, default_min_n_participations=10):
             ratings.append(rating['rating'])
         if ratings:
             avg_rating = sum(ratings) / len(ratings)
-            logger.info(f'{resource} avg_rating: {avg_rating:.3f} <- {resource.avg_rating:.3f}')
-            if resource.avg_rating:
+            logger.info(f'{resource} avg_rating by {len(ratings)} accounts: {avg_rating:.3f} <- {resource.avg_rating}')
+            if resource.avg_rating and not isclose(resource.avg_rating, avg_rating):
                 logger.info(f'{resource} avg_rating_diff: {resource.avg_rating - avg_rating}')
             resource.avg_rating = avg_rating
             resource.save(update_fields=['avg_rating'])

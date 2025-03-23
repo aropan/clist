@@ -192,9 +192,14 @@ class StageContestAdmin(BaseModelAdmin):
 
 @admin_register(CountryAccount)
 class CountryAccountAdmin(BaseModelAdmin):
-    list_display = ['resource', 'country', 'n_accounts', 'n_rating_accounts', 'rating', 'resource_rank', 'raw_rating']
+    list_display = ['resource', 'country', 'n_accounts', 'n_rating_accounts', 'rating', 'resource_rank', 'raw_rating',
+                    'n_gold', 'n_silver', 'n_bronze', 'n_medals', 'n_other_medals']
     search_fields = ['country']
-    list_filter = ['resource']
+    list_filter = [
+        ('resource__has_country_rating', admin.BooleanFieldListFilter),
+        ('resource__has_country_medal', admin.BooleanFieldListFilter),
+        ('resource', admin.RelatedOnlyFieldListFilter),
+    ]
 
 
 @admin_register(AccountMatching)

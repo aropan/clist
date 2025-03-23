@@ -13,6 +13,7 @@ from sql_util.utils import Exists, SubqueryCount
 from tqdm import tqdm
 
 from clist.models import Resource
+from clist.templatetags.extras import place_as_n_place_field
 from clist.utils import update_accounts_by_coders
 from utils.attrdict import AttrDict
 from utils.mathutils import is_close
@@ -27,7 +28,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
-        parser.add_argument('--sortby', default='n_changes', help='sort by field')
+        parser.add_argument('--orderby', help='sort resources by field')
+        parser.add_argument('--limit', type=int, help='limit resources')
+        parser.add_argument('--sortby', default='n_changes', help='sort table by field')
         parser.add_argument('--with-coders', action='store_true', help='update only coders')
         parser.add_argument('--with-list-values', action='store_true', help='update only list values')
         parser.add_argument('--skip-fix', action='store_true', help='skip_in_stats fix')
@@ -40,13 +43,20 @@ class Command(BaseCommand):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        resources = Resource.get(args.resources) if args.resources else Resource.objects.all()
+        resources = Resource.priority_objects.all()
+        if args.resources:
+            resources = Resource.get(args.resources, queryset=resources)
+        else:
+            resources = resources.filter(n_accounts__gt=0)
+        if args.orderby:
+            resources = resources.order_by(args.orderby)
+        if args.limit:
+            limit = args.limit if args.limit > 0 else resources.count() + args.limit
+            resources = resources[:limit]
         self.logger.info(f'resources [{len(resources)}] = {[r.host for r in resources]}')
 
-        total_resources = resources.count()
-
-        with tqdm(total=total_resources, desc='resources') as pbar_resource:
-            table = None
+        with tqdm(total=len(resources), desc='resources') as pbar_resource:
+            resources_data = []
             for resource in resources:
                 start_time = timezone.now()
 
@@ -56,7 +66,8 @@ class Command(BaseCommand):
                         'addition', 'last_activity', 'skip_in_stats',
                         'solving', 'upsolving', 'total_solving',
                         'n_solved', 'n_upsolved', 'n_total_solved',
-                        'n_first_ac', 'medal', 'contest__kind', 'contest__is_rated',
+                        'n_first_ac', 'medal', 'place_as_int',
+                        'contest__kind', 'contest__is_rated',
                     ]
                     for statistic in resource.statistics_set.select_related('contest').only(*only_fields):
                         statistic.update_stats()
@@ -66,6 +77,7 @@ class Command(BaseCommand):
                         ('has_statistic_n_first_ac', 'n_first_ac', '__gt', 0),
                         ('has_statistic_n_total_solved', 'n_total_solved', '__gt', 0),
                         ('has_statistic_medal', 'medal', '__isnull', False),
+                        ('has_statistic_place', 'place_as_int', '__isnull', False),
                     ):
                         if getattr(resource, has_field) is not None:
                             continue
@@ -89,6 +101,7 @@ class Command(BaseCommand):
                             qs.update(skip_in_stats=not value)
 
                 counters = defaultdict(int)
+                statistic_filter = Q(skip_in_stats=False, contest__stage__isnull=True, contest__invisible=False)
 
                 def set_n_field(count_annotation, count_field):
                     qs = accounts.annotate(count=count_annotation).exclude(**{count_field: F('count')})
@@ -110,7 +123,7 @@ class Command(BaseCommand):
                     statistics_with_medals = resource.statistics_set.filter(medal__isnull=False)
                     qs = accounts.prefetch_related(Prefetch('statistics_set', queryset=statistics_with_medals))
                     qs = qs.annotate(count=SubqueryCount('statistics', filter=Q(medal__isnull=False)))
-                    qs = qs.filter(Q(count__gt=0) | Q(n_medals__gt=0) | Q(n_other_medals__gt=0))
+                    qs = qs.filter(Q(count__gt=0) | Q(n_medals__isnull=False) | Q(n_other_medals__isnull=False))
                     counter = 0
                     with tqdm(desc='updating n_medals') as pbar:
                         for a in qs:
@@ -133,6 +146,35 @@ class Command(BaseCommand):
                             pbar.update()
                     self.logger.info(f'updated n_medals = {counter}')
                     counters['n_medals'] = counter
+
+                def set_n_place_field():
+                    place_filter = Q(place_as_int__gte=0, place_as_int__lte=10, contest__end_time__lt=timezone.now())
+                    place_filter = place_filter & statistic_filter
+                    statistics_with_places = resource.statistics_set.filter(place_filter)
+                    qs = accounts.prefetch_related(Prefetch('statistics_set', queryset=statistics_with_places))
+                    qs = qs.annotate(count=SubqueryCount('statistics', filter=place_filter))
+                    qs = qs.filter(Q(count__gt=0) | Q(n_places__isnull=False))
+                    counter = 0
+                    with tqdm(desc='updating n_places') as pbar:
+                        for a in qs:
+                            place_stats = defaultdict(int)
+                            for s in a.statistics_set.all():
+                                n_place_field = place_as_n_place_field(s.place_as_int)
+                                place_stats[n_place_field] += 1
+                                place_stats['n_places'] += 1
+                            updated_fields = []
+                            for field in ['n_first_places', 'n_second_places', 'n_third_places',
+                                          'n_top_ten_places', 'n_places']:
+                                value = place_stats.get(field)
+                                if not is_close(value, getattr(a, field)):
+                                    setattr(a, field, value)
+                                    updated_fields.append(field)
+                            if updated_fields:
+                                counter += 1
+                                a.save(update_fields=updated_fields)
+                            pbar.update()
+                    self.logger.info(f'updated n_places = {counter}')
+                    counters['n_places'] = counter
 
                 def set_sum_field(sum_annotations, annotation_filter, name):
                     fields = list(sum_annotations.keys())
@@ -157,7 +199,11 @@ class Command(BaseCommand):
                     self.logger.info(f'updated {name} = {counter}')
                     counters[name] = counter
 
-                set_n_field(SubqueryCount('statistics', filter=Q(skip_in_stats=False)), 'n_contests')
+                def set_account_url(accounts):
+                    with tqdm(total=accounts.count(), desc='updating account urls') as pbar:
+                        counters['n_urls'] = update_accounts_by_coders(accounts, progress_bar=pbar)
+
+                set_n_field(SubqueryCount('statistics', filter=statistic_filter), 'n_contests')
                 set_n_field(SubqueryCount('writer_set'), 'n_writers')
                 set_n_field(SubqueryCount('subscribers'), 'n_subscribers')
                 set_n_field(SubqueryCount('listvalue'), 'n_listvalues')
@@ -168,7 +214,7 @@ class Command(BaseCommand):
                     resource.has_statistic_n_total_solved
                 ):
                     statistic_fields_annotation = {field: f'statistics__{field}'
-                                                   for field in settings.ACCOUNT_STATISTIC_FIELDS}
+                                                   for field in ['solving'] + settings.STANDINGS_STATISTIC_FIELDS}
                     set_sum_field(
                         statistic_fields_annotation,
                         annotation_filter=Q(statistics__contest__in=resource.major_contests()),
@@ -177,6 +223,11 @@ class Command(BaseCommand):
 
                 if resource.has_statistic_medal:
                     set_n_medal_field()
+
+                if resource.has_statistic_place is not False:
+                    set_n_place_field()
+                    resource.has_statistic_place = True
+                    resource.save(update_fields=['has_statistic_place'])
 
                 if args.remove_empty:
                     qs = accounts.annotate(
@@ -191,12 +242,7 @@ class Command(BaseCommand):
                     counters['n_removed'], _ = qs.delete()
 
                 if args.update_account_urls:
-                    counters['n_urls'] = update_accounts_by_coders(accounts)
-
-                if table is None:
-                    fields = ['host', 'time', 'n_accounts', 'n_changes']
-                    fields += list(counters.keys())
-                    table = PrettyTable(field_names=fields, sortby=args.sortby)
+                    set_account_url(accounts)
 
                 n_changes = sum(counters.values())
 
@@ -208,12 +254,24 @@ class Command(BaseCommand):
                     n_changes=n_changes,
                 )
                 pbar_resource.update()
-                table.add_row([
-                    resource.host,
-                    delta_time,
-                    total_accounts,
-                    n_changes,
-                ] + list(counters.values()))
 
+                resource_data = {
+                    'host': resource.host,
+                    'time': delta_time,
+                    'n_accounts': total_accounts,
+                    'n_changes': n_changes,
+                    **counters,
+                }
+                resources_data.append(resource_data)
             pbar_resource.close()
+
+            fields = []
+            for resource_data in resources_data:
+                for field in resource_data.keys():
+                    if field not in fields:
+                        fields.append(field)
+
+            table = PrettyTable(field_names=fields, sortby=args.sortby)
+            for resource_data in resources_data:
+                table.add_row([resource_data.get(field, '') for field in fields])
             print(table)

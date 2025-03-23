@@ -15,7 +15,6 @@ from datetime import timedelta
 import arrow
 from django.utils.timezone import now
 from first import first
-from lazy_load import lz
 from ratelimiter import RateLimiter
 from tqdm import tqdm
 
@@ -24,13 +23,16 @@ from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
+from utils.lazy import LazyObject
 
 eps = 1e-9
 rate_limiter = RateLimiter(max_calls=4, period=1)
 
 
 def create_req():
-    req = REQ.duplicate()
+    req = REQ.duplicate(
+        cookie_filename='sharedfiles/resource/atcoder/cookies.txt',
+    )
     req.set_proxy(
         proxy=True,
         time_limit=10,
@@ -41,7 +43,7 @@ def create_req():
     return req
 
 
-req = lz(create_req)
+req = LazyObject(create_req)
 
 
 class Statistic(BaseModule):
@@ -62,6 +64,10 @@ class Statistic(BaseModule):
         self._stop = None
         self._forbidden = None
         self._fetch_submissions_limit = 500
+
+    def __del__(self):
+        if req.is_initialized:
+            req.__exit__()
 
     @staticmethod
     def _get(*args, **kwargs):

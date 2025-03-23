@@ -125,7 +125,7 @@ def UpdateCoderLastActivity(get_response):
 
 
 class RedirectException(Exception):
-    def __init__(self, target):
+    def __init__(self, target=None):
         if isinstance(target, str):
             target = redirect(target)
         self.redirect = target
@@ -140,8 +140,9 @@ class RedirectMiddleware:
         return self.get_response(request)
 
     def process_exception(self, request, exception):
-        if isinstance(exception, RedirectException):
+        if isinstance(exception, RedirectException) and exception.redirect is not None:
             return exception.redirect
+        return None
 
 
 def StatementTimeoutMiddleware(get_response):

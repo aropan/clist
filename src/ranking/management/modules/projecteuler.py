@@ -134,8 +134,8 @@ class Statistic(BaseModule):
             'keep_results_to_skip': True,
         }
 
-        if len(result) < 100 and 'No data available' not in page:
-            delta = timezone.now() - self.start_time
+        delta = timezone.now() - self.start_time
+        if len(result) < 100 and (result or delta < timedelta(days=365)):
             if delta < timedelta(days=1):
                 standings['timing_statistic_delta'] = timedelta(minutes=60)
             elif delta < timedelta(days=30):

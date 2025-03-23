@@ -124,6 +124,12 @@ def get_profile_context(request, statistics, writers, resources):
                     'func': lambda v: False if not v or v == 'any' else v,
                     'suff': lambda v: '__isnull' if v is False else '',
                 },
+                'stage': {'fields': ['contest__stage'], 'suff': '__isnull', 'func': lambda v: not is_yes(v)},
+                'place': {
+                    'fields': ['place'],
+                    'func': lambda v: [4, 5, 6, 7, 8, 9, 10] if v == 'T10' else v,
+                    'suff': lambda v: '__in' if isinstance(v, list) else '',
+                },
                 'cid': {'fields': ['contest_id'], 'func': lambda v: int(v)},
                 'rid': {'fields': ['contest__resource_id'], 'func': lambda v: int(v)},
             },
@@ -2535,6 +2541,9 @@ def view_list(request, uuid):
                 request.logger.warning('Nothing has been deleted')
         else:
             request.logger.warning('No action specified')
+        if request.is_ajax():
+            response_messages = [{'level': m.level_tag, 'message': m.message} for m in messages.get_messages(request)]
+            return JsonResponse({'status': 'ok', 'messages': response_messages})
         reset_group_id()
         return allowed_redirect(request.get_full_path())
 
@@ -2861,10 +2870,9 @@ def skip_promotion(request):
     if not promotion_id:
         return HttpResponseBadRequest('No promotion id')
     promotion = get_object_or_404(Promotion, pk=promotion_id)
-    if request.user.is_authenticated:
-        coder = request.user.coder
+    if request.user.is_authenticated and (coder := request.user.coder):
         coder.settings['skip_promotion_id'] = promotion.id
-        coder.save()
+        coder.save(update_fields=['settings'])
     response = HttpResponse('ok')
-    response.set_security_cookie('_skip_promotion_id', promotion.id)
+    request.set_security_cookie(response, '_skip_promotion_id', promotion.id)
     return response
