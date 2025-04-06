@@ -2,6 +2,7 @@
 
 
 from django.apps import apps
+from django.db import transaction
 
 
 def dictfetchall(cursor):
@@ -31,3 +32,19 @@ def find_app_by_table(table_name):
 
     # If still not found, return None
     return None
+
+
+class RollbackException(Exception):
+    pass
+
+
+def get_delete_info(queryset):
+    try:
+        with transaction.atomic():
+            _, delete_info = queryset.delete()
+            delete_info = [(k, v) for k, v in delete_info.items() if v]
+            delete_info.sort(key=lambda d: d[1], reverse=True)
+            raise RollbackException()
+    except RollbackException:
+        pass
+    return delete_info

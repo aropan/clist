@@ -58,7 +58,7 @@ RUN rm ipython_config.py
 
 FROM base as prod
 ENV DJANGO_ENV_FILE .env.prod
-RUN apt install -y cron redis-server
+RUN apt install -y cron redis-server logrotate
 
 COPY src/ $APPDIR/
 COPY legacy/api/ $APPDIR/legacy/api/
@@ -74,6 +74,9 @@ RUN mkdir /run/daphne
 COPY config/redis.conf /etc/redis/redis.conf
 
 COPY config/supervisord.conf /etc/supervisord.conf
+
+COPY config/logrotate.conf /etc/logrotate.d/clist
+RUN chmod 0644 /etc/logrotate.d/clist
 
 CMD supervisord -c /etc/supervisord.conf
 

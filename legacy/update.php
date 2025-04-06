@@ -70,6 +70,7 @@
             $TIMEZONE = $resource['timezone'];
             $INFO = json_decode($resource['info'], true);
             $API_URL = $resource['api_url'];
+            $PARSE_FULL_LIST = isset($_GET['parse_full_list']);
 
             include $resource['path'];
 
@@ -217,24 +218,7 @@
 
         if (isset($contest['duration']) && ($contest['duration'] || is_numeric($contest['duration'])))
         {
-            if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+(\.\d+)?)(?:hr|h|\s*hours?))?(?:\s*(?<min>\d+)(?:min|m))?#', $contest['duration'], $match) && $match[0]) {
-                foreach (array('d', 'hr', 'min') as $arg)
-                    if (!isset($match[$arg]) || empty($match[$arg])) $match[$arg] = 0;
-                $contest['duration'] = (($match['d'] * 24 + $match['hr']) * 60 + $match['min']) * 60;
-            }
-            else if (preg_match('#^(\d+)\.(\d+):(\d+):(\d+)$#', $contest['duration'], $match))
-                $contest['duration'] = (((int)$match[1] * 24 + (int)$match[2]) * 60 + (int)$match[3]) * 60 + (int)$match[4];
-            else if (preg_match('#^(\d+):(\d+):(\d+)$#', $contest['duration'], $match))
-                $contest['duration'] = ((int)$match[1] * 60 + (int)$match[2]) * 60 + (int)$match[3];
-            else if (preg_match('#^(\d+):(\d+)$#', $contest['duration'], $match))
-                $contest['duration'] = ((int)$match[1] * 60 + (int)$match[2]) * 60;
-            else if (preg_match('#^(\d+)$#', $contest['duration'], $match))
-                $contest['duration'] = (int)$match[1] * 60;
-            else {
-                $contest['duration'] = preg_replace('/^([0-9]+)d /', '\1 days ', $contest['duration']);
-                $contest['duration'] = strtotime("01.01.1970 " . $contest['duration'] . " +0000");
-            }
-
+            $contest['duration'] = parse_duration($contest['duration']);
             if (isset($contest['start_time']) && empty($contest['end_time'])) $contest['end_time'] = $contest['start_time'] + $contest['duration'];
             if (empty($contest['start_time']) && isset($contest['end_time'])) $contest['start_time'] = $contest['end_time'] - $contest['duration'];
         }

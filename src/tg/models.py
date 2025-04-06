@@ -20,6 +20,7 @@ class Chat(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True, related_name='chats')
     accounts = models.ManyToManyField(Account, blank=True, related_name='chats')
     settings = models.JSONField(default=dict, blank=True)
+    replying_rules = models.JSONField(default=dict, blank=True)
 
     discussions = GenericRelation(
         'clist.Discussion',

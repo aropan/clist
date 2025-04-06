@@ -715,12 +715,16 @@
             if ($cols->length == 0) {
                 continue;
             }
-            if ($cols->length != count($header)) {
-                continue;
+            if ($header) {
+                if ($cols->length != count($header)) {
+                    continue;
+                }
+                $row = array_combine($header, iterator_to_array($cols));
+            } else {
+                $row = iterator_to_array($cols);
             }
-            $headered_cols = array_combine($header, iterator_to_array($cols));
             $row_data = array();
-            foreach ($headered_cols as $field => $col) {
+            foreach ($row as $field => $col) {
                 $row_data[$field] = trim($col->nodeValue);
                 $a = $col->getElementsByTagName('a');
                 if ($a->length > 0) {
@@ -784,5 +788,30 @@
         if ($done >= $total) {
             echo PHP_EOL;
         }
+    }
+
+    function parse_duration($duration) {
+        if (empty($duration)) {
+            return $duration;
+        }
+        if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+(\.\d+)?)(?:hr|h|\s*hours?))?(?:\s*(?<min>\d+)(?:min|m))?#', $duration, $match) && $match[0]) {
+            foreach (array('d', 'hr', 'min') as $arg) {
+                if (!isset($match[$arg]) || empty($match[$arg])) $match[$arg] = 0;
+            }
+            $duration = (($match['d'] * 24 + $match['hr']) * 60 + $match['min']) * 60;
+        }
+        else if (preg_match('#^(\d+)\.(\d+):(\d+):(\d+)$#', $duration, $match))
+            $duration = (((int)$match[1] * 24 + (int)$match[2]) * 60 + (int)$match[3]) * 60 + (int)$match[4];
+        else if (preg_match('#^(\d+):(\d+):(\d+)$#', $duration, $match))
+            $duration = ((int)$match[1] * 60 + (int)$match[2]) * 60 + (int)$match[3];
+        else if (preg_match('#^(\d+):(\d+)$#', $duration, $match))
+            $duration = ((int)$match[1] * 60 + (int)$match[2]) * 60;
+        else if (preg_match('#^(\d+)$#', $duration, $match))
+            $duration = (int)$match[1] * 60;
+        else {
+            $duration = preg_replace('/^([0-9]+)d /', '\1 days ', $duration);
+            $duration = strtotime("01.01.1970 " . $duration . " +0000");
+        }
+        return $duration;
     }
 ?>

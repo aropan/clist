@@ -9,6 +9,14 @@
   {% endwith %}
 {% endif %}
 
+{% with field_op=field|add:"_op" %}
+{% with field_op_value=request.GET|get_item:field_op %}
+{% if field_op_value %}
+<input type="hidden" name="{{ field_op }}" value="{{ field_op_value }}">
+{% endif %}
+{% endwith %}
+{% endwith %}
+
 {% with capitalized_field=data.title|default:field|capitalize_field %}
 {% if collapse %}
 <div class="input-group{% if not nosmall %} input-group-sm{% endif %} field-to-select">

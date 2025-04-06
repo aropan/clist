@@ -1,4 +1,6 @@
 
+import functools
+import operator
 from copy import deepcopy
 from urllib.parse import urlparse
 
@@ -6,7 +8,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import F, Q
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.urls import NoReverseMatch, reverse
 from django.utils.timezone import now
 from el_pagination.decorators import page_templates
@@ -14,6 +16,7 @@ from el_pagination.decorators import page_templates
 from clist.templatetags.extras import allowed_redirect, is_yes, timestamp_to_datetime, url_transform
 from pyclist.decorators import context_pagination
 from utils.chart import make_chart
+from utils.db import get_delete_info
 from utils.timetools import parse_duration
 
 
@@ -111,7 +114,11 @@ def update_context_by_source(request, context):
         if field_type == 'BooleanField':
             values = [is_yes(v) for v in values]
         if values:
-            entity_filter = Q(**{f'{field}__in': values})
+            field_op = request.get_filtered_value(f'{field}_op', options=['eq', 'in'], default_first=True)
+            if field_op == 'eq':
+                entity_filter = Q(**{f'{field}__in': values})
+            elif field_op == 'in':
+                entity_filter = functools.reduce(operator.ior, (Q(**{f'{field}__contains': value}) for value in values))
             if 'None' in values:
                 entity_filter |= Q(**{f'{field}__isnull': True})
             entities = entities.filter(entity_filter)
@@ -241,7 +248,10 @@ def charts(request, template='charts.html'):
     update_context_by_source(request, context)
 
     if action := request.GET.get('action'):
-        if action == 'delete':
+        if action == 'pre-delete':
+            delete_info = get_delete_info(context['entities'])
+            return JsonResponse({'status': 'ok', 'data': delete_info})
+        elif action == 'delete':
             deleted_info = context['entities'].delete()
             request.logger.info(f'Deleted: {deleted_info}')
         return allowed_redirect(url_transform(request, action=None, with_remove=True))

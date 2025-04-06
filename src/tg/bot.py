@@ -4,6 +4,7 @@
 import argparse
 import json
 import logging
+import random
 import re
 import shlex
 from itertools import chain
@@ -72,24 +73,28 @@ class Bot(telegram.Bot):
         self.logger.setLevel(logging.DEBUG)
 
     @property
-    def chat(self):
+    def coder_chat(self):
         if not hasattr(self, 'chat_'):
             self.chat_ = Chat.objects.filter(chat_id=self.from_id).first()
         return self.chat_
 
     @property
-    def group(self):
+    def chat(self):
         if not hasattr(self, 'group_'):
-            if self.chat and self.chat.chat_id != self.chat_id:
+            if not self.coder_chat or self.coder_chat.chat_id != self.chat_id:
                 self.group_ = Chat.objects.filter(chat_id=self.chat_id, thread_id=self.thread_id).first()
             else:
                 self.group_ = False
         return self.group_
 
     @property
+    def current_chat(self):
+        return self.chat or self.coder_chat
+
+    @property
     def coder(self):
         if not hasattr(self, 'coder_'):
-            self.coder_ = self.chat.coder if self.chat else None
+            self.coder_ = self.coder_chat.coder if self.coder_chat else None
         return self.coder_
 
     def clear_cache(self):
@@ -153,13 +158,13 @@ class Bot(telegram.Bot):
             if isinstance(s, argparse._SubParsersAction)
             for choice, subparser in list(s.choices.items())
         ) + '.' + '\n\n' + '*You can also use command with --help for more information.*'
-        if self.chat and self.chat.chat_id == str(self.ADMIN_CHAT_ID):
+        if self.coder_chat and self.coder_chat.chat_id == str(self.ADMIN_CHAT_ID):
             yield self.get_commands()
 
     def list(self, args):
         if not getattr(args, 'ignore_filters', False):
-            if self.group:
-                filter_ = self.group.coder.get_contest_filter(self.group.chat_id)
+            if self.chat:
+                filter_ = self.chat.coder.get_contest_filter(self.chat.chat_id)
             else:
                 filter_ = self.coder.get_contest_filter('telegram') if self.coder else Q()
         else:
@@ -259,14 +264,14 @@ class Bot(telegram.Bot):
     def iamadmin(self, args):
         if not self.coder:
             return
-        if self.group is False:
+        if self.chat is False:
             msg = 'This command should be used in chat rooms.'
         else:
             admins = self.getChatAdministrators(self.chat_id)
             if not any(str(admin.user.id) == self.from_id for admin in admins):
-                msg = 'You are not admin in "%s" chat.' % self.message['chat']['title']
-            elif self.group is None:
-                title = self.message['chat']['title']
+                msg = 'You are not admin in "%s" chat.' % self.chat_title
+            elif self.chat is None:
+                title = self.chat_title
                 if self.thread_id:
                     title += f' # {self.thread_name}'
 
@@ -283,53 +288,53 @@ class Bot(telegram.Bot):
                 else:
                     msg = 'Hmmmm, problem with set new admin.'
             else:
-                msg = 'Group "%s" already has %s admin.' % (self.message['chat']['title'], self.group.coder.user)
+                msg = 'Group "%s" already has %s admin.' % (self.chat_title, self.chat.coder.user)
         yield msg
 
     def iamnotadmin(self, args):
         if not self.coder:
             return
-        if self.group is False:
+        if self.chat is False:
             msg = 'This command should be used in chat rooms.'
         else:
-            if self.group is None or self.group.coder != self.coder:
-                msg = '%s has unsuccessful attempt to lose admin.' % (self.coder.user)
+            if self.chat is None or self.chat.coder != self.coder:
+                msg = f'{self.coder.user} is not admin in "{self.chat_title}" chat.'
             else:
-                self.group.delete()
-                msg = '%s has successful attempt to lose admin.' % (self.coder.user)
+                self.chat.delete()
+                msg = f'{self.coder.user} is no longer admin for "{self.chat_title}" chat.'
                 self.group_ = None
         yield msg
 
     def join(self, args):
         if not self.coder:
             return
-        if self.group is None:
+        if self.chat is None:
             msg = 'Select admin before join.'
-        elif self.group is False:
+        elif self.chat is False:
             msg = 'This command should be used in chat rooms.'
-        elif self.group.coders.filter(pk=self.coder.pk).first():
-            msg = f'You are already joined "{self.group.title}".'
+        elif self.chat.coders.filter(pk=self.coder.pk).first():
+            msg = f'You are already joined "{self.chat.title}".'
         else:
-            self.group.coders.add(self.coder)
-            msg = f'You joined "{self.group.title}".'
+            self.chat.coders.add(self.coder)
+            msg = f'You joined "{self.chat.title}".'
         yield msg
 
     def leave(self, args):
         if not self.coder:
             return
-        if not self.group or not self.group.coders.filter(pk=self.coder.pk).first():
+        if not self.chat or not self.chat.coders.filter(pk=self.coder.pk).first():
             msg = 'Join telegram group before leave.'
         else:
-            self.group.coders.remove(self.coder)
-            msg = f'You left "{self.group.title}".'
+            self.chat.coders.remove(self.coder)
+            msg = f'You left "{self.chat.title}".'
         yield msg
 
     def unlink(self, args):
-        if not self.coder or self.group or not self.chat:
+        if not self.coder or self.chat or not self.coder_chat:
             yield 'Unsuitable moment.'
         else:
             yield 'Bye Bye.'
-            self.chat.delete()
+            self.coder_chat.delete()
             self.chat_ = False
 
     def subscribe(self, args):
@@ -369,11 +374,9 @@ class Bot(telegram.Bot):
                     yield from messaging(message)
                 yield aggregated_msg
 
-        if not self.is_private:
-            chat = self.group or self.chat
-            if not chat or chat.coder != self.coder:
-                yield 'Use /iamadmin before subscribe.'
-                return
+        if not self.is_private and (not self.current_chat or self.current_chat.coder != self.coder):
+            yield 'Use /iamadmin before subscribe.'
+            return
 
         method = 'telegram'
         if not self.coder or not self.is_private:
@@ -622,8 +625,17 @@ class Bot(telegram.Bot):
 
         return self.parser_
 
+    def delete_message_id(self, message_id):
+        try:
+            self.delete_message(self.chat_id, message_id)
+        except telegram.error.BadRequest:
+            pass
+
     def execute_command(self, raw_query):
         try:
+            if self.chat or self.chat_type in ['group', 'supergroup', 'channel']:
+                self.delete_message_id(self.message['message_id'])
+
             query = raw_query.replace("\u2014", "--")
             regex = '|'.join(
                 choice for s in self.parser._subparsers._actions
@@ -634,14 +646,14 @@ class Bot(telegram.Bot):
             query = re.sub(regex, r'\1', query)
             args = self.parser.parse_args(shlex.split(query))
             if args.command in ['/prev', '/next', '/repeat']:
-                if not self.chat or not self.chat.last_command:
+                if not self.coder_chat or not self.coder_chat.last_command:
                     yield 'Not found previous command'
                     return
                 c = args.command
                 dargs = vars(args)
-                dargs.update(self.chat.last_command)
+                dargs.update(self.coder_chat.last_command)
 
-                self.chat_id = dargs.pop('chat_id__', self.chat.chat_id)
+                self.chat_id = dargs.pop('chat_id__', self.coder_chat.chat_id)
                 if hasattr(self, 'group_'):
                     delattr(self, 'group_')
 
@@ -655,13 +667,14 @@ class Bot(telegram.Bot):
                         args.offset = args.offset + args.limit
 
             self.logger.info('args = %s' % args)
-            if self.chat:
+            if self.coder_chat:
                 dargs = vars(args)
                 dargs['chat_id__'] = self.chat_id
-                self.chat.last_command = dargs
-                self.chat.save(update_fields=['last_command'])
+                self.coder_chat.last_command = dargs
+                self.coder_chat.save(update_fields=['last_command'])
 
-            for msg in getattr(self, args.command[1:])(args):
+            command_attr = args.command[1:]
+            for msg in getattr(self, command_attr)(args):
                 paging = getattr(args, 'paging__', False)
                 if paging:
                     buttons = []
@@ -676,12 +689,6 @@ class Bot(telegram.Bot):
                     }
                 else:
                     yield msg
-
-            try:
-                if self.group or self.chat_type in ['group', 'supergroup', 'channel']:
-                    self.delete_message(self.message['chat']['id'], self.message['message_id'])
-            except telegram.error.BadRequest:
-                pass
         except (ArgumentParserError, ArgumentCommandError) as e:
             yield 'Could you please clarify:\n' + escape(str(e))
         except NeedHelpError as e:
@@ -690,7 +697,25 @@ class Bot(telegram.Bot):
             self.sendMessage(self.ADMIN_CHAT_ID, 'Query: %s\n\n%s' % (raw_query, format_exc()))
             yield 'Oops, I\'m having a little trouble:\n' + escape(str(e))
 
+    def process_message(self, text):
+        chat = self.current_chat
+        if not chat or not chat.replying_rules:
+            return
+        replicas = chat.replying_rules.get('replicas', [])
+        for r in replicas:
+            if re.match(r['message'], text, re.IGNORECASE):
+                if r.get('clear') and (message_ids := r.pop('_last_message_ids', None)):
+                    for message_id in message_ids:
+                        self.delete_message_id(message_id)
+                yield {'text': random.choice(r['responses']), 'reply_to': True, 'chat_id': self.chat_id}
+                message_ids = [self.message['message_id']]
+                if self.last_message:
+                    message_ids.append(self.last_message['message_id'])
+                r['_last_message_ids'] = message_ids
+                chat.save(update_fields=['replying_rules'])
+
     def send_message(self, msg, chat_id=None, reply_markup=None):
+        self.last_message = None
         if not isinstance(msg, dict):
             msg = {'text': msg}
         if not msg['text']:
@@ -698,19 +723,22 @@ class Bot(telegram.Bot):
         if len(msg['text']) > MAX_MESSAGE_LENGTH:
             msg['text'] = msg['text'][:MAX_MESSAGE_LENGTH - 3] + '...'
 
-        chat_id = chat_id or self.from_id
-        if ':' in chat_id:
-            chat_id, thread_id = chat_id.split(':', 1)
-            thread_id = as_number(thread_id)
-            if thread_id is not None:
-                msg['reply_to_message_id'] = thread_id
-        msg['chat_id'] = chat_id
+        if 'chat_id' not in msg:
+            chat_id = chat_id or self.from_id
+            if ':' in chat_id:
+                chat_id, thread_id = chat_id.split(':', 1)
+                thread_id = as_number(thread_id)
+                if thread_id is not None:
+                    msg['reply_to_message_id'] = thread_id
+            msg['chat_id'] = chat_id
 
         msg['disable_web_page_preview'] = True
         if reply_markup:
             msg['reply_markup'] = reply_markup
         if 'reply_markup' not in msg:
             msg['reply_markup'] = telegram.ReplyKeyboardRemove()
+        if 'reply_to' in msg and msg.pop('reply_to'):
+            msg['reply_to_message_id'] = self.message['message_id']
 
         chat_type = getattr(self, 'chat_type', None)
         if reply_markup is False or chat_type is None or chat_type in ['group', 'supergroup', 'channel']:
@@ -730,6 +758,7 @@ class Bot(telegram.Bot):
                 ret = self.sendMessage(**msg)
             else:
                 raise e
+        self.last_message = ret
         return ret
 
     def admin_message(self, msg):
@@ -766,18 +795,17 @@ class Bot(telegram.Bot):
                 return
 
             self.chat_id = str(self.message['chat']['id'])
+            self.chat_title = self.message['chat'].get('title')
             self.chat_type = self.message['chat'].get('type')
             self.is_private = self.chat_type == 'private'
 
-            if self.message.get('is_topic_message'):
-                thread = self.message.get('reply_to_message', {}).get('forum_topic_created')
-                if thread:
-                    self.thread_id = str(self.message['message_thread_id'])
-                    self.thread_name = thread['name']
+            self.thread_id = None
+            if self.message.get('is_topic_message') and (reply_to_message := self.message.get('reply_to_message')):
+                self.thread_id = str(reply_to_message.get('message_thread_id', '')) or None
+                if forum_topic := reply_to_message.get('forum_topic_created'):
+                    self.thread_name = forum_topic['name']
 
-            self.thread_id = str(self.message.get('message_thread_id', '')) or None
-
-            self.update_chat_info(self.chat, self.message)
+            self.update_chat_info(self.coder_chat, self.message)
 
             self.clear_cache()
 
@@ -787,12 +815,16 @@ class Bot(telegram.Bot):
                 text = self.message['text']
                 if text.startswith('/'):
                     has_command = True
-                    for msg in self.execute_command(text):
-                        self.send_message(msg)
-                        was_messaging = True
-            if not has_command and self.chat and self.chat.settings.get('_forwarding'):
+                    messages = self.execute_command(text)
+                else:
+                    messages = self.process_message(text)
+
+                for msg in messages:
+                    self.send_message(msg)
+                    was_messaging = True
+            if not has_command and self.coder_chat and self.coder_chat.settings.get('_forwarding'):
                 self.forwardMessage(
-                    chat_id=self.chat.settings.get('_forwarding'),
+                    chat_id=self.coder_chat.settings.get('_forwarding'),
                     from_chat_id=self.from_id,
                     message_id=self.message['message_id'],
                 )
@@ -800,9 +832,8 @@ class Bot(telegram.Bot):
             if self.coder and not was_messaging and self.coder.settings.get('telegram', {}).get('unauthorized', False):
                 self.coder.settings.setdefault('telegram', {})['unauthorized'] = False
                 self.coder.save(update_fields=['settings'])
-            chat = self.group or self.chat
-            if chat:
-                History.objects.create(chat=chat, message=data).save()
+            if self.current_chat:
+                History.objects.create(chat=self.current_chat, message=data).save()
         except Exception as e:
             self.logger.info('Exception incoming message:\n%s\n%s' % (format_exc(), raw_data))
             self.logger.error(f'Exception incoming message: {e}')

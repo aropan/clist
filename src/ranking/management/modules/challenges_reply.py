@@ -3,7 +3,9 @@
 import json
 import re
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
+from functools import partial
 from urllib.parse import urlparse
 
 import pytz
@@ -47,14 +49,9 @@ class Statistic(BaseModule):
         def to_time(value):
             return self.to_time(value / 1000 - self.start_time.timestamp(), num=3)
 
-        offset = 0
-        max_solving = 0
-        problems_max_score = {}
-        has_delta = False
-        has_members = False
-        while offset is not None:
+        def get_page(offset, per_page):
             url = ("/tamtamy/api/challenge-leaderboard-entry.json"
-                   f"?params.challengeId={self.key}&params.firstResult={offset}&params.numberOfResult=100")
+                   f"?params.challengeId={self.key}&params.firstResult={offset}&params.numberOfResult={per_page}")
             try:
                 data = get(url, cache=True)
                 if isinstance(data, str):
@@ -66,7 +63,19 @@ class Statistic(BaseModule):
                 if data.get(k):
                     raise ExceptionParseStandings(data[k])
 
-            offset = data['paginationInfo']['nextOffset']
+            return data
+
+        max_solving = 0
+        problems_max_score = {}
+        has_delta = False
+        has_members = False
+        stop = False
+
+        def process_page(data):
+            nonlocal max_solving, has_delta, has_members, stop
+            if stop:
+                return
+            n_processed = 0
             for r in data['list']:
                 row = {}
                 name = r['competitorName']
@@ -135,7 +144,7 @@ class Statistic(BaseModule):
                         p['partial'] = category['solvedCount'] < category['subchallengesCount']
 
                 if not row['solving'] and 'penalty' not in row and 'time' not in row and not problems:
-                    offset = None
+                    stop = True
                     break
 
                 if r.get('maxScoring') or not result:
@@ -146,6 +155,19 @@ class Statistic(BaseModule):
                     has_members = True
 
                 result[row['member']] = row
+                n_processed += 1
+            return n_processed
+
+        data = get_page(0, 1)
+        total = data['paginationInfo']['total']
+
+        with PoolExecutor(max_workers=8) as executor:
+            per_page = 10
+            get_page_func = partial(get_page, per_page=per_page)
+            offsets = range(0, total, per_page)
+            for data in executor.map(get_page_func, offsets):
+                if not process_page(data):
+                    break
 
         if has_delta:
             for row in result.values():

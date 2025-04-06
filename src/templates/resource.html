@@ -55,7 +55,9 @@
 
 <br/>
 
+{% if resource.n_accounts %}
 {% include "filter_collapse.html" with include_filter="resource_filters.html" %}
+{% endif %}
 
 <div class="row row-flex row-flex-md">
     {% if top.exists %}

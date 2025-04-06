@@ -49,9 +49,11 @@
   </div>
   {% endif %}
 
+  {% if entities is not None and entities.exists %}
   <div class="input-group{% if not nosmall %} input-group-sm{% endif %}">
-    <button type="submit" class="btn btn-default btn-sm confirm-action" data-confirm-class="btn-danger" data-action="Delete" name="action" value="delete">{% icon_to 'delete' %}</button>
+    <button type="submit" class="btn btn-default btn-sm confirm-action" data-confirm-class="btn-danger" data-pre-action="pre-delete" data-action="Delete" name="action" value="delete">{% icon_to 'delete' %}</button>
   </div>
+  {% endif %}
 </form>
 
 <script>configure_pagination()</script>

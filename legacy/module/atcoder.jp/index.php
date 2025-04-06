@@ -39,22 +39,6 @@
                 $n_contests += 1;
 
                 $title = $c['title'];
-                if (!empty($c['class'])) {
-                    $classes = explode(' ', $c['class']);
-                    foreach (
-                        array(
-                            array('class' => 'user-red', 'prefix' => 'AGC', 'name' => 'AtCoder Grand Contest'),
-                            array('class' => 'user-orange', 'prefix' => 'ARC', 'name' => 'AtCoder Regular Contest'),
-                            array('class' => 'user-blue', 'prefix' => 'ABC', 'name' => 'AtCoder Beginner Contest'),
-                            array('class' => 'user-green', 'prefix' => 'ABC', 'name' => 'AtCoder Beginner Contest'),
-                        ) as $t
-                    ) {
-                        if (in_array($t['class'], $classes) && stripos($title, $t['name']) === false) {
-                            $title = $t['prefix'] . ": " . $title;
-                            break;
-                        }
-                    }
-                }
 
                 $contest = array(
                     'start_time' => $c['start_time'],

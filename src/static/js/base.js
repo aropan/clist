@@ -167,6 +167,26 @@ function confirm_action() {
     var action = $(this).attr('data-action')
     var message = $(this).attr('data-message') || `Are you sure you want to ${(action || 'do this').toLowerCase()}?`
     var confirm_class = $(this).attr('data-confirm-class') || 'btn-primary'
+
+    message = $('<div>').html(message)
+
+    var pre_action = $(this).attr('data-pre-action')
+    if (pre_action) {
+      var action_info = $('<pre><i class="fas fa-circle-notch fa-spin"></i></pre>')
+      message.append(action_info)
+      var url = new URL(window.location.href)
+      url.searchParams.set('action', pre_action)
+      $.ajax({
+        type: 'GET',
+        url: url,
+        success: function(response) {
+          action_info.text(response.data)
+        },
+        error: log_ajax_error_callback,
+      })
+    }
+
+
     bootbox.confirm({
       size: 'small',
       message: message,
