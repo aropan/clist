@@ -1504,6 +1504,7 @@ $(function() {
 
 $(function() {
   const standings_socket = new WebSocket('wss://' + window.location.host + '/ws/contest/?pk=' + contest_pk)
+  var standings_socket_opened = false
   var n_messages = 0
 
   function clear_on_update_standings() {
@@ -1552,8 +1553,15 @@ $(function() {
     n_messages += 1
   }
 
+  standings_socket.onopen = function(e) {
+    standings_socket_opened = true
+  }
+
   standings_socket.onclose = function(e) {
-    if (n_messages || with_autoreload) {
+    if (!standings_socket_opened) {
+      $('.standings-auto-reload').prop('disabled', true)
+    }
+    if (standings_socket_opened && (n_messages || with_autoreload)) {
       setTimeout(() => {
         if (document.hidden) {
           return

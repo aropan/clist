@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import colorsys
+import logging
 import re
 from copy import deepcopy
-from pprint import pprint
 
 import cssutils
 from stringcolor import cs
@@ -13,6 +13,7 @@ from utils.strings import print_diff
 
 
 def run(host=None, *args):
+    cssutils.log.setLevel(logging.CRITICAL)
     sheet = cssutils.parseFile('static/css/base.css')
 
     selector_coloring = {}
@@ -31,6 +32,7 @@ def run(host=None, *args):
     resources = Resource.objects.all()
     if host:
         resources = resources.filter(host__regex=host)
+    print(f'Found {resources.count()} resources: {resources.values_list("host", flat=True)}')
 
     for resource in resources:
         if not resource.ratings:
@@ -69,7 +71,7 @@ def run(host=None, *args):
             if rating.get('high') != next_rating_value:
                 rating['high'] = next_rating_value
                 to_save = True
-            if limit is None or rating['color'] != limit['color']:
+            if limit is None or rating['hex_rgb'] != limit['hex_rgb']:
                 limit = rating
             if 'high' in limit:
                 value = limit['high']
@@ -80,7 +82,7 @@ def run(host=None, *args):
 
         limit = None
         for rating in resource.ratings[1:]:
-            if limit is None or rating['color'] != limit['color']:
+            if limit is None or rating['hex_rgb'] != limit['hex_rgb']:
                 limit = rating
             value = limit['low']
             if rating.get('prev') != value:
