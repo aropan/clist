@@ -4,7 +4,7 @@
 
         {% include "field_to_select.html" with field="period" data=period_select|simple_select_data %}
 
-        {% include 'coder_type_filter.html' %}
+        {% include 'coder_kind_filter.html' %}
 
         {% if rating.chart %}
         {% include 'range_filter.html' with name='rating' value_key=resource.host from=rating.min to=rating.max %}

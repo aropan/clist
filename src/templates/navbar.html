@@ -62,19 +62,20 @@
             <ul class="nav navbar-nav navbar-right">
                 {% get_notification_messages_badges user request.path as notification_messages_badges %}
                 <li>
-                    {% if user.is_authenticated %}
-                        {% if user.is_staff %}
-                        <li><a href="{% url 'change_environment' %}" rel="noopener">{% icon_to 'dev' False %}</a></li>
-                        <li><a href="{% url 'charts' %}">{% icon_to 'charts' False %}</a></li>
-                        <li>
-                            {% if navbar_admin_model %}
-                            {% define navbar_admin_model.admin_changelist_viewname as navbar_admin_viewname %}
-                            {% endif %}
-                            <a href="{% if navbar_admin_viewname %}{% url 'admin:'|concat:navbar_admin_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
-                            {% icon_to 'admin' navbar_admin_viewname|default:'admin'|title_field position='bottom' %}
-                            </a>
-                        </li>
+                    {% if user.is_staff %}
+                    <li><a href="{% url 'change_environment' %}" rel="noopener">{% icon_to 'dev' False %}</a></li>
+                    <li><a href="{% url 'charts' %}">{% icon_to 'charts' False %}</a></li>
+                    <li><a href="{% url 'silk:summary' %}">{% icon_to 'silk' False %}</a></li>
+                    <li>
+                        {% if navbar_admin_model %}
+                        {% define navbar_admin_model.admin_changelist_viewname as navbar_admin_viewname %}
                         {% endif %}
+                        <a href="{% if navbar_admin_viewname %}{% url 'admin:'|concat:navbar_admin_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
+                        {% icon_to 'admin' navbar_admin_viewname|default:'admin'|title_field position='bottom' %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.is_authenticated %}
                         <li><a href="{% url 'coder:profile' user.username %}">{{ user.username }}</a></li>
                     {% else %}
                         {% url 'auth:login' as login_url %}

@@ -591,7 +591,7 @@ def get_countries():
 
 
 def is_country_code(val):
-    return val is not None and len(val) == 2
+    return val is not None and str(val).upper() in countries.countries
 
 
 @register.filter

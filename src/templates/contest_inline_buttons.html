@@ -21,6 +21,10 @@
     <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:logify_eventlog_changelist' %}?q={{ contest.title }}" target="_blank">{% icon_to 'logify' "View logs" %}</button>
     {% endif %}
 
+    {% if perms.ranking.view_accountmatching and contest.set_matched_coders_to_members %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_accountmatching_changelist' %}?contest__id__exact={{ contest.pk }}" target="_blank">{% icon_to 'matching' "Account matching" %}</button>
+    {% endif %}
+
     <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.pk }}">{% icon_to 'copy' contest.pk %}</button>
     <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.title }}">{% icon_to 'copy' contest.title %}</button>
 

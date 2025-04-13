@@ -82,7 +82,7 @@ class FailOnGetResponse(BaseException):
     def response(self):
         if not hasattr(self, 'response_'):
             err = self.args[0]
-            self.response_ = read_response(err).decode() if hasattr(err, 'fp') else None
+            self.response_ = read_response(err).decode(errors='replace') if hasattr(err, 'fp') else None
         return self.response_
 
     def has_message(self, message):

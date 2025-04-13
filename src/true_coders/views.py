@@ -292,20 +292,9 @@ def coders(request, template='coders.html'):
         coders = coders.filter(Q(country__in=countries) | Q(filter_country=True))
         params['countries'] = countries
 
-    virtual = request.GET.get('virtual') or 'hide'
-    if virtual == 'hide':
-        coders = coders.filter(is_virtual=False)
-    elif virtual == 'only':
-        coders = coders.filter(is_virtual=True)
-    virtual_field = {
-        'values': [virtual],
-        'options': ['hide', 'show', 'only'],
-        'nomultiply': True,
-        'noajax': True,
-        'nogroupby': True,
-        'nourl': True,
-        'icon': 'ghost',
-    }
+    if coder_kind := request.GET.get('coder_kind'):
+        coders = Coder.apply_coder_kind(coders, coder_kind, logger=request.logger)
+        params['coder_kind'] = coder_kind
 
     chat_fields = None
     view_coder_chat = None
@@ -414,7 +403,6 @@ def coders(request, template='coders.html'):
         'coders': coders,
         'primary_coder': coder,
         'params': params,
-        'virtual_field': virtual_field,
         'chat_fields': chat_fields,
         'custom_fields': custom_fields,
         'view_coder_chat': view_coder_chat,
@@ -2261,7 +2249,7 @@ def party(request, slug, tab='ranking'):
                 standings = contests_standings[contest].setdefault(statistic.addition.get('division', '__none__'), [])
                 standings.append({
                     'solving': statistic.solving,
-                    'upsolving': statistic.upsolving,
+                    'upsolving': statistic.upsolving or 0,
                     'stat': statistic,
                     'coder': coder,
                 })
@@ -2300,7 +2288,7 @@ def party(request, slug, tab='ranking'):
 
                     solved = s.addition.get('solved', {})
                     d['solving'] = solved.get('solving', s.solving) + d.get('solving', 0)
-                    d['upsolving'] = solved.get('upsolving', s.upsolving) + d.get('upsolving', 0)
+                    d['upsolving'] = solved.get('upsolving', s.upsolving or 0) + d.get('upsolving', 0)
 
                 standings.extend(statistics)
 
@@ -2718,9 +2706,9 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.annotate(selected_contest=Subquery(subquery.values('contest_id')))
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
 
-    if coder_type := request.GET.get('coder_type'):
-        accounts = Account.apply_coder_type(accounts, coder_type, logger=request.logger)
-        params['coder_type'] = coder_type
+    if coder_kind := request.GET.get('coder_kind'):
+        accounts = Account.apply_coder_kind(accounts, coder_kind, logger=request.logger)
+        params['coder_kind'] = coder_kind
 
     to_list = request.GET.get('to_list')
     if to_list:

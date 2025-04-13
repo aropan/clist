@@ -116,6 +116,7 @@ INSTALLED_APPS = (
     'submissions',
     'modeltranslation',
     'donation',
+    'silk',
 )
 
 MIDDLEWARE = (
@@ -155,6 +156,7 @@ if DEBUG:
         'django_cprofile_middleware.middleware.ProfilerMiddleware',
     )
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 ROOT_URLCONF = 'pyclist.urls'
 
@@ -260,17 +262,17 @@ DATABASES.update(DATABASES_)
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache',
-        'LOCATION': 'memcached:11211',
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://redis:6379/1',
         'OPTIONS': {
-            'binary': True,
-            'behaviors': {
-                'tcp_nodelay': True,
-                'ketama': True,
-            },
-        },
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'IGNORE_EXCEPTIONS': True,
+        }
     }
 }
+
 
 USER_AGENTS_CACHE = 'default'
 
@@ -573,6 +575,21 @@ if DEBUG:
         'DISABLE_PANELS': DEBUG_TOOLBAR_DISABLE_PANELS,
     }
 
+
+# DJANGO SILK
+if DEBUG:
+    MIDDLEWARE += (
+        'silk.middleware.SilkyMiddleware',
+    )
+    SILKY_PYTHON_PROFILER = True
+    SILKY_AUTHENTICATION = True
+    SILKY_AUTHORISATION = True
+    SILKY_META = True
+
+    def SILKY_PERMISSIONS(user):
+        return user.is_authenticated and user.is_superuser
+
+
 # WEBPUSH
 WEBPUSH_SETTINGS = conf.WEBPUSH_SETTINGS
 
@@ -756,7 +773,7 @@ FONTAWESOME_ICONS_ = {
     'ghost': '<i class="fa-fw fs-fw fas fa-ghost"></i>',
     'top': '<i class="fa-fw fas fa-list-ol"></i>',
     'coders': '<i class="fa-fw fas fa-users"></i>',
-    'coder_type': '<i class="fa-fw fas fa-user-tag"></i>',
+    'coder_kind': '<i class="fa-fw fas fa-user-tag"></i>',
     'accounts': '<i class="fa-fw fa-regular fa-rectangle-list"></i>',
     'problems': '<i class="fa-fw fa-solid fa-list-check"></i>',
     'participants': '<i class="fa-fw fas fa-users"></i>',
@@ -869,6 +886,8 @@ FONTAWESOME_ICONS_ = {
     'n_silver': '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-trophy"></i></span>',
     'n_bronze': '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
     'sum': '&sum;',
+    'matching': '<i class="fa-solid fa-magnifying-glass"></i>',
+    'silk': '<i class="fa-solid fa-magnifying-glass-chart"></i>',
 }
 
 

@@ -14,6 +14,7 @@ from django.db.models.signals import post_delete, post_init, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django_countries.fields import CountryField
+from django_super_deduper.merge import MergedModelInstance
 from guardian.shortcuts import get_objects_for_user
 from phonenumber_field.modelfields import PhoneNumberField
 from sql_util.utils import Exists, SubquerySum
@@ -22,6 +23,7 @@ from clist.models import Contest, Problem, ProblemVerdict, Resource
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.signals import update_foreign_key_n_field_on_change
+from utils.strings import generate_secret
 
 
 class Coder(BaseModel):
@@ -227,7 +229,7 @@ class Coder(BaseModel):
                 virtual.account_set.clear()
                 NotificationMessage = apps.get_model('notification.NotificationMessage')
                 NotificationMessage.link_accounts(to=coder, accounts=accounts)
-                virtual.delete()
+                MergedModelInstance(primary_object=coder, keep_old=False, merge_field_values=False).merge(virtual)
             account.coders.clear()
 
         account.coders.add(coder)
@@ -274,6 +276,21 @@ class Coder(BaseModel):
         else:
             value = self.settings.get(field)
         return value
+
+    @staticmethod
+    def apply_coder_kind(queryset, coder_kind, logger=None):
+        if not coder_kind or coder_kind == 'all':
+            return queryset
+        if coder_kind == 'real':
+            return queryset.filter(is_virtual=False)
+        elif coder_kind == 'ghost' or coder_kind == 'virtual':
+            return queryset.filter(is_virtual=True)
+        elif coder_kind == 'none':
+            return queryset.none()
+        else:
+            if logger:
+                logger.warning(f'Unknown coder kind: {coder_kind}')
+            return queryset
 
 
 class CoderProblem(BaseModel):
@@ -331,7 +348,7 @@ class Party(BaseModel):
 
     def save(self, *args, **kwargs):
         if not self.secret_key:
-            self.secret_key = User.objects.make_random_password(length=20)
+            self.secret_key = generate_secret(length=20)
         return super(Party, self).save(*args, **kwargs)
 
     def __str__(self):

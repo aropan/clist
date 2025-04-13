@@ -1,0 +1,2 @@
+{% create_dict icon="coder_kind" title="coder_kind" field=coder_kind|default:"coder_kind" nosmall=nosmall nogroupby=groupby|iffalse nosubmit=nosubmit nomultiply=True values=params.coder_kinds options="real,virtual,none"|split:"," noajax=True as data %}
+{% include "field_to_select.html" with data=data %}

@@ -17,7 +17,7 @@ services:
       - ./logs/postgres/:/usr/src/clist/logs/postgres/
     depends_on:
       - db
-      - memcached
+      - redis
     secrets:
       - db_conf
       - sentry_conf
@@ -39,14 +39,13 @@ services:
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
     depends_on:
       - db
-      - memcached
+      - redis
     secrets:
       - db_conf
       - sentry_conf
     restart: unless-stopped
-  memcached:
-    image: memcached
-    command: memcached -vv
+  redis:
+    image: redis
     networks:
       - clist_network
     restart: unless-stopped

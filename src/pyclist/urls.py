@@ -45,6 +45,8 @@ urlpatterns = [
     re_path(r'^favicon/$', RedirectView.as_view(url=static('img/favicon/favicon-32x32.png')), name='favicon'),
 
     path('django-rq/', include('django_rq.urls')),
+
+    path('silk/', include('silk.urls', namespace='silk')),
 ]
 
 

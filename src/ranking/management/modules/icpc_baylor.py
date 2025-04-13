@@ -742,7 +742,7 @@ class Statistic(BaseModule):
                     if not problem['result'].startswith('+'):
                         continue
                     time = problem['time']
-                    if 'first_ac' not in p_info or time < p_info['_first_ac_time']:
+                    if '_first_ac_time' not in p_info or time < p_info['_first_ac_time']:
                         p_info['_first_ac_time'] = time
                     if first_ac_of_all is None or time < first_ac_of_all:
                         first_ac_of_all = time

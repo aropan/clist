@@ -61,7 +61,7 @@
     {% if account.url and not team_id or '_account_url' in statistic.addition %}</a>{% endif %}
 
     {% with addition_countries=statistic.addition|get_item:"_countries" %}
-    {% if not members and addition_countries %}
+    {% if not account_country_code and addition_countries %}
     {% for country_name in addition_countries %}
       {% with country_code=country_name|get_country_code %}
         {% if country_code %}

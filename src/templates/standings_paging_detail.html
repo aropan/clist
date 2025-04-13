@@ -23,27 +23,29 @@
 {% spaceless %}
 {% define small as upsolving_small %}
 <div class="nowrap">
-{% if 'status' in stat and 'time' in stat and stat.result is None and stat.extra_score is None and with_detail or 'status' in stat and 'time' in stat and not small %}
+{% if "status" in stat and "time" in stat and stat.result is None and stat.extra_score is None and with_detail or "status" in stat and "time" in stat and not small %}
   {% define None as upsolving_small %}
   <div>{% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}</div>
   <div>{{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}{% if stat.attempt %} ({{ stat.attempt }}){% endif %}</div>
-{% elif 'status' in stat and 'time' not in stat or 'status' in stat and stat.result|asfloat:0 <= 0 %}
+{% elif "status" in stat and "time" not in stat or "status" in stat and stat.result|asfloat:0 <= 0 %}
   {% if stat.status_tag and small %}<{{ stat.status_tag }}>{% endif %}{{ stat.status }}{% if stat.status_tag and small %}</{{ stat.status_tag }}>{% endif %}
 {% elif small and stat.delta_time and stat.time %}
   <a href="" onclick="toggle_hidden(this, event)" data-class="detail-alternative-time">
     <span class="detail-alternative-time hidden">{{ stat.delta_time }}</span>
     <span class="detail-alternative-time">{{ stat.time }}</span>
   </a>
-{% elif 'time' in stat %}
+{% elif "time" in stat %}
   <span>{{ stat.time }}{% if stat.penalty %}+{{ stat.penalty }}{% endif %}{% if stat.time_rank %} ({{ stat.time_rank }}){% endif %}{% if stat.attempt %} ({{ stat.attempt }}){% endif %}</span>
 {% elif has_failed_verdict and small %}
   <span>{{ stat.verdict }}{% if stat.test %}({{ stat.test }}){% endif %}</span>
 {% elif stat.virtual_start_ts %}
   <span class="countdown" data-timestamp-up="{{ stat.virtual_start_ts }}">{{ stat.virtual_start_ts|has_passed_since_timestamp|countdown }}</span>
+{% elif "best_score" in stat and stat.best_score %}
+  <small class="text-muted">{{ stat.best_score|scoreformat }}</small>
 {% else %}
   {% define False as upsolving_small %}
 {% endif %}
-{% if 'upsolving' in stat and upsolving_small is not None %}
+{% if "upsolving" in stat and upsolving_small is not None %}
   <{% if small %}span{% else %}div{% endif %}
   {% if upsolving_small %}
      class="{% stat_verdict_class stat.upsolving True %}"

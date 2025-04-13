@@ -9,7 +9,7 @@ from lazy_load import lz
 
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, InitModuleException
 
 
 def insecure_requester():
@@ -206,13 +206,14 @@ class Statistic(BaseModule):
             problems = row.setdefault('problems', {})
             pid = 0
             solving = 0
+            has_problem_result = False
             for k, v in r:
                 if k == 'Имя':
                     uid = get_uid(v)
                     if uid is None:
                         continue
                     row['member'] = uid
-                    row['name'] = v.column.node.xpath('a/text()')[0]
+                    row['name'] = str(v.column.node.xpath('a/text()')[0])
                     if uid.startswith('olymp'):
                         info = row.setdefault('info', {})
                         info['_no_profile_url'] = True
@@ -235,6 +236,7 @@ class Statistic(BaseModule):
                     if v.value:
                         p = problems.setdefault(k, {})
                         p['result'] = v.value
+                        has_problem_result = True
 
                         if v.value and v.value[0] not in ['-', '+']:
                             scoring = True
@@ -275,11 +277,15 @@ class Statistic(BaseModule):
                 continue
             result[row['member']] = row
 
-        additions = self.info.get('additions')
-        if additions:
+        self.complete_result(result)
+
+        if not has_problem_result:
+            problems_info.clear()
             for row in result.values():
-                if row['name'] in additions:
-                    row.update(additions[row['name']])
+                for k in row.get('problems', {}):
+                    if k not in problems_info:
+                        problems_info[k] = {'short': k}
+            has_problem_result |= bool(problems_info)
 
         last_solving = None
         last_rank = None
@@ -311,27 +317,11 @@ class Statistic(BaseModule):
                                 result[uid]['problems'][k]['partial'] = False
                                 problems_info[k]['full_score'] = result[uid]['problems'][k]['result']
 
-        for r in result.values():
-            solved = 0
-            for k, p in r['problems'].items():
-                if p.get('partial'):
-                    continue
-                score = p['result']
-                if score.startswith('+') or 'partial' in p and not p['partial']:
-                    solved += 1
-                else:
-                    try:
-                        score = float(score)
-                    except ValueError:
-                        continue
-                    if abs(max_score[k] - score) < 1e-9 and score > 0:
-                        solved += 1
-            r['solved'] = {'solving': solved}
-
         standings = {
             'result': result,
             'url': self.standings_url,
             'problems': list(problems_info.values()),
+            'hidden_fields': ['school', 'region'],
             'info_fields': ['_standings_data'],
         }
 
@@ -339,10 +329,13 @@ class Statistic(BaseModule):
             standings['series'] = self.info['series']
             if self.info['series'] == 'byio':
                 problems = self._get_byio_problems(self.start_time.year)
-                if len(problems) != len(standings['problems']):
+                if not has_problem_result:
+                    standings['problems'] = problems
+                elif len(problems) != len(standings['problems']):
                     raise ExceptionParseStandings('Not match problems count')
-                for p, p_info in zip(problems, standings['problems']):
-                    p_info.update(p)
+                else:
+                    for p, p_info in zip(problems, standings['problems']):
+                        p_info.update(p)
 
         if result and standings_data:
             standings['_standings_data'] = standings_data

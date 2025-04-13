@@ -5,7 +5,6 @@ from datetime import timedelta
 from typing import Optional
 
 from django.conf import settings as django_settings
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
@@ -24,7 +23,7 @@ from ranking.models import Account
 from tg.models import Chat as CoderChat
 from true_coders.models import Coder, CoderList
 from utils.signals import update_n_field_on_change, update_n_field_on_delete
-from utils.strings import markdown_to_html, markdown_to_text
+from utils.strings import generate_secret, markdown_to_html, markdown_to_text
 
 
 class TaskNotification(BaseModel):
@@ -105,7 +104,7 @@ class Notification(TaskNotification):
         if not self.id:
             self.last_time = timezone.now()
         if not self.secret:
-            self.secret = User.objects.make_random_password(length=50)
+            self.secret = generate_secret(length=50)
         super().save(*args, **kwargs)
 
     def get_delta(self):

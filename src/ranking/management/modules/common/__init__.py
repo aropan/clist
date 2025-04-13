@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import csv
 import json
 import logging
 import os
+import re
 import urllib.parse
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
@@ -12,6 +14,7 @@ from datetime import datetime, timedelta
 import pytz
 from lazy_load import lz
 
+from clist.templatetags.extras import as_number, get_item
 from utils import parsed_table  # noqa
 from utils.requester import requester
 
@@ -166,6 +169,58 @@ class BaseModule(object, metaclass=ABCMeta):
     @staticmethod
     def get_archive_problems(resource, **kwargs):
         raise NotImplementedError()
+
+    def complete_result(self, result):
+        additions = self.info.get('additions')
+        if additions:
+            for row in result.values():
+                if row['name'] in additions:
+                    row.update(additions[row['name']])
+
+        csv_data = get_item(self.info, 'standings._csv')
+        if csv_data:
+            csv_matching = csv_data['matching']
+            addition_data = {}
+            with open(csv_data['file'], 'r') as fo:
+                rows = csv.reader(fo, **csv_data.get('fmtparams', {}))
+                headers = next(rows)
+                for row in rows:
+                    row = dict(zip(headers, row))
+                    if field_mapping := csv_data.get('field_mapping'):
+                        field_types = csv_data.get('field_types', {})
+                        updated_row = {}
+                        for src, value in row.items():
+                            if src not in field_mapping:
+                                continue
+                            dst = field_mapping[src]
+                            path = dst.split('.')
+                            if path[0] in ['place', 'problems', 'solving']:
+                                value = as_number(value)
+                            elif not value:
+                                continue
+                            o = updated_row
+                            for k in path[:-1]:
+                                o = o.setdefault(k, {})
+                            k = path[-1]
+                            field_type = field_types.get(dst)
+                            if field_type == 'list':
+                                o.setdefault(k, []).append(value)
+                            else:
+                                o[k] = value
+                        row = updated_row
+                    matching_value = row[csv_matching['csv_field']]
+                    if 'csv_regex' in csv_matching:
+                        matching_value = re.match(csv_matching['csv_regex'], matching_value).group(1)
+                    addition_data[matching_value] = row
+
+            for row in result.values():
+                matching_value = row[csv_matching['result_field']]
+                if 'result_regex' in csv_matching:
+                    matching_value = re.match(csv_matching['result_regex'], matching_value).group(1)
+                if matching_value in addition_data:
+                    for k, v in addition_data[matching_value].items():
+                        if not row.get(k):
+                            row[k] = v
 
 
 def save_proxy(req, filepath):

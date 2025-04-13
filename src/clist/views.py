@@ -603,9 +603,9 @@ def resource(request, resource, template='resource.html', extra_context=None):
     accounts = Account.objects.filter(resource=resource)
     country_accounts = resource.countryaccount_set
 
-    if coder_type := request.GET.get('coder_type'):
-        accounts = Account.apply_coder_type(accounts, coder_type, logger=request.logger)
-        params['coder_type'] = coder_type
+    if coder_kind := request.GET.get('coder_kind'):
+        accounts = Account.apply_coder_kind(accounts, coder_kind, logger=request.logger)
+        params['coder_kind'] = coder_kind
 
     has_country = accounts.filter(country__isnull=False).exists()
     countries = request.GET.getlist('country')
@@ -702,9 +702,9 @@ def resource(request, resource, template='resource.html', extra_context=None):
                     val = row['coloring_field']
                 else:
                     val = int(row['rating'])
-                while val >= resource_ratings[idx]['high']:
+                while idx + 1 < len(resource_ratings[idx]) and val >= resource_ratings[idx]['high']:
                     idx += 1
-                while val < resource_ratings[idx]['low']:
+                while idx - 1 > 0 and val < resource_ratings[idx]['low']:
                     idx -= 1
                 row['hex_rgb'] = resource_ratings[idx]['hex_rgb']
     else:

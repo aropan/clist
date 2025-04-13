@@ -11,6 +11,8 @@ from django.db import transaction
 from django.db.models import Q
 
 from clist.models import Contest
+from logify.models import EventLog, EventStatus
+from logify.utils import failed_on_exception
 from notification.models import NotificationMessage
 from ranking.models import Account, AccountMatching, MatchingStatus, Statistics
 from true_coders.models import Coder
@@ -29,16 +31,14 @@ class Command(BaseCommand):
         parser.add_argument('--name-query', '-q', type=str, help='Name query')
         parser.add_argument('--link', '-l', action='store_true', help='Link accounts and coders')
 
-    def handle(self, *args, **options):
-        self.stdout.write(str(options))
-        args = AttrDict(options)
-
-        contest = Contest.objects.select_related('resource').get(pk=args.contest_id)
+    def process(self, args, contest):
         resource = contest.resource
         statistics = Statistics.objects.filter(contest_id=args.contest_id)
+        statistics = statistics.order_by(*contest.get_statistics_order())
         statistics = statistics.select_related('account')
         counter = defaultdict(int)
         for statistic in tqdm.tqdm(statistics, total=statistics.count(), desc='statistics'):
+            statistic_updated_fields = set()
             statistic_account = statistic.account
             members = statistic.addition.get('_members')
             if not members:
@@ -86,6 +86,7 @@ class Command(BaseCommand):
                     if not is_handle:
                         accounts_filter |= Q(name=name)
                     accounts = Account.objects.filter(accounts_filter)
+                    accounts = accounts.filter(Q(info__is_team__isnull=True) | Q(info__is_team=False))
                     n_accounts = accounts.count()
 
                     coders = Coder.objects.filter(account__in=accounts)
@@ -105,6 +106,10 @@ class Command(BaseCommand):
                     }
 
                     if coder is not None:
+                        if args.link and member.get('coder') != coder.username:
+                            counter['set_coder'] += 1
+                            member['coder'] = coder.username
+                            statistic_updated_fields.add('addition')
                         if not args.link:
                             counter['skip_link'] += 1
                         elif account.coders.filter(pk=coder.pk).exists():
@@ -126,6 +131,8 @@ class Command(BaseCommand):
                         counter['update'] += 1
                     else:
                         counter['skip'] += 1
+            if statistic_updated_fields:
+                statistic.save(update_fields=list(statistic_updated_fields))
 
         if args.link:
             contest.set_matched_coders_to_members = True
@@ -133,3 +140,17 @@ class Command(BaseCommand):
 
         for key, value in sorted(counter.items()):
             logger.info(f'{key}: {value}')
+
+        return dict(counter)
+
+    def handle(self, *args, **options):
+        self.stdout.write(str(options))
+        args = AttrDict(options)
+        contest = Contest.objects.select_related('resource').get(pk=args.contest_id)
+
+        event_log = EventLog.objects.create(name='link_accounts_and_coders',
+                                            related=contest,
+                                            status=EventStatus.IN_PROGRESS)
+        with failed_on_exception(event_log):
+            message = self.process(args, contest)
+        event_log.update_status(EventStatus.COMPLETED, message=message)

@@ -350,14 +350,19 @@
                   {% if problem.full_score %}
                     <div class="small" title="Full score" data-placement="bottom" data-toggle="tooltip">{{ problem.full_score|floatformat|default:problem.full_score }}</div>
                   {% endif %}
-                  {% if problem.first_ac_time %}
-                    <div class="small" title="First AC time" data-placement="bottom" data-toggle="tooltip">{{ problem.first_ac_time }}</div>
-                  {% endif %}
-                  {% if problem.max_score %}
-                    <div class="small" title="Max score" data-placement="bottom" data-toggle="tooltip">{{ problem.max_score|scoreformat }}</div>
-                  {% endif %}
-                  {% if problem.min_score %}
-                    <div class="small" title="Min score" data-placement="bottom" data-toggle="tooltip">{{ problem.min_score|scoreformat }}</div>
+                  {% if with_detail %}
+                    {% if problem.first_ac_time %}
+                      <div class="small text-muted" title="First AC time" data-placement="bottom" data-toggle="tooltip">{{ problem.first_ac_time }}</div>
+                    {% endif %}
+                    {% if problem.max_score %}
+                      <div class="small text-muted" title="Max score" data-placement="bottom" data-toggle="tooltip">{{ problem.max_score|scoreformat }}</div>
+                    {% endif %}
+                    {% if problem.min_score %}
+                      <div class="small text-muted" title="Min score" data-placement="bottom" data-toggle="tooltip">{{ problem.min_score|scoreformat }}</div>
+                    {% endif %}
+                    {% if problem.best_score %}
+                      <div class="small text-muted" title="Best score" data-placement="bottom" data-toggle="tooltip">{{ problem.best_score|scoreformat }}</div>
+                    {% endif %}
                   {% endif %}
                   {% if problem.subtext %}
                     <div

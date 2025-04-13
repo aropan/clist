@@ -1616,6 +1616,7 @@ class Command(BaseCommand):
                                     NotificationMessage.link_accounts(to=coder, accounts=[statistic.account])
 
                             def set_matched_coders_to_members(statistic):
+                                with_countries = not statistic.addition.get('_countries')
                                 to_update = False
                                 for member in statistic.addition.get('_members', []):
                                     if 'name' not in member or len(member) > 1:
@@ -1623,7 +1624,7 @@ class Command(BaseCommand):
                                     matched_coder_key = (member['name'], statistic.pk)
                                     if matched_coder_key in matched_coders:
                                         member['coder'], country = matched_coders[matched_coder_key]
-                                        if country:
+                                        if country and with_countries:
                                             statistic.addition.setdefault('_countries', []).append(country)
                                         to_update = True
                                 if to_update:

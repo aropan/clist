@@ -207,7 +207,10 @@ class AccountMatchingAdmin(BaseModelAdmin):
     list_display = ['name', 'status', 'coder', '_n_found_accounts', '_n_found_coders', '_n_different_coders',
                     'modified', 'statistic']
     search_fields = ['name', 'account__key', 'contest__title', 'resource__host', 'coder__username']
-    list_filter = ['status']
+    list_filter = [
+        'status',
+        ('contest', admin.RelatedOnlyFieldListFilter),
+    ]
 
     def _n_found_accounts(self, obj):
         return obj.n_found_accounts

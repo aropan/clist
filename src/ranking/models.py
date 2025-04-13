@@ -189,20 +189,20 @@ class Account(BaseModel):
         return reverse('coder:account', args=[self.key, self.resource.host])
 
     @staticmethod
-    def apply_coder_type(queryset, coder_type, logger=None):
-        if not coder_type or coder_type == 'all':
+    def apply_coder_kind(queryset, coder_kind, logger=None):
+        if not coder_kind or coder_kind == 'all':
             return queryset
-        if coder_type == 'real':
+        if coder_kind == 'real':
             coders = Coder.objects.filter(is_virtual=False, account=OuterRef('pk'))
-        elif coder_type == 'ghost' or coder_type == 'virtual':
+        elif coder_kind == 'ghost' or coder_kind == 'virtual':
             coders = Coder.objects.filter(is_virtual=True, account=OuterRef('pk'))
-        elif coder_type == 'none':
+        elif coder_kind == 'none':
             return queryset.filter(coders=None)
         else:
             if logger:
-                logger.warning(f'Unknown coder type: {coder_type}')
+                logger.warning(f'Unknown coder kind: {coder_kind}')
             return queryset
-        queryset = queryset.annotate(coder_types=Exists(coders)).filter(coder_types=True)
+        queryset = queryset.annotate(coder_kinds=Exists(coders)).filter(coder_kinds=True)
         return queryset
 
     def save(self, *args, **kwargs):
