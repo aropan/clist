@@ -119,17 +119,6 @@ services:
       - nginx
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 1d & wait $${!}; done;'"
     restart: unless-stopped
-  loggly:
-    build:
-      context: .
-      target: loggly
-    networks:
-      - clist_network
-    volumes:
-      - ./logs/:/logs/
-    secrets:
-      - loggly_token
-    restart: unless-stopped
   netdata:
     image: netdata/netdata:latest
     networks:
@@ -172,8 +161,6 @@ secrets:
     file: ./.env.db
   sentry_conf:
     file: ./.env.sentry
-  loggly_token:
-    file: ./config/loggly/.env.token
 
 volumes:
   postgres_data:

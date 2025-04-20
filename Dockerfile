@@ -81,14 +81,6 @@ RUN chmod 0644 /etc/logrotate.d/clist
 CMD supervisord -c /etc/supervisord.conf
 
 
-FROM ubuntu:latest as loggly
-RUN apt-get update && apt-get install -y rsyslog
-RUN sed -i '/imklog/s/^/# /g' /etc/rsyslog.conf
-COPY config/loggly/entrypoint.sh /entrypoint.sh
-COPY config/loggly/60-loggly.conf /etc/rsyslog.d/60-loggly.conf
-ENTRYPOINT /entrypoint.sh
-
-
 FROM nginx:stable-alpine as nginx
 # logrotate
 RUN apk add --no-cache logrotate

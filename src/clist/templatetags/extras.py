@@ -1553,15 +1553,6 @@ def media_size(path, size):
 
 
 @register.filter
-def allow_first(division_and_problem, stat):
-    division, problem = division_and_problem
-    if division != 'any' or not stat:
-        return True
-    first_ac_time = problem.get('first_ac', {}).get('time')
-    return first_ac_time and first_ac_time == stat.get('time')
-
-
-@register.filter
 def sort_select_data(data):
     ret = {
         'noajax': True,
@@ -2075,3 +2066,388 @@ def img_resource_icon(resource, size, with_href=False):
         attrs = f'href="{resource.href()}" title="{resource.host}"'
         html = f'<a {attrs} target="_blank" rel="noopener noreferrer" data-toggle="tooltip">{html}</a>'
     return mark_safe(html)
+
+
+def allow_first(division, problem, stat):
+    if division != 'any' or not stat:
+        return True
+    first_ac_time = problem.get('first_ac', {}).get('time')
+    return first_ac_time and first_ac_time == stat.get('time')
+
+
+def get_default_dict(data, default):
+    return defaultdict(lambda: default, data or {})
+
+
+@register.simple_tag(takes_context=True)
+def standings_statistic_problem_attributes(context):
+    contest = context['contest']
+    statistic = context['statistic']
+    my_stat = getattr(statistic, 'my_stat', None)
+    problem = get_default_dict(context['problem'], '')
+    key = get_problem_short(problem)
+    full_score = problem['full_score']
+    result = get_default_dict(context['stat'], '')
+    division = context.get('division')
+    with_first = allow_first(division, problem, result)
+
+    class_attr = 'problem-cell'
+    result_class = ''
+    if result:
+        class_attr += ' problem-cell-stat'
+        if '_class' in result:
+            result_class = f' {result["_class"]}'
+        elif with_first and result['first_ac_of_all']:
+            result_class = ' first-ac-of-all'
+        elif with_first and result['first_ac']:
+            result_class = ' first-ac'
+        elif result['max_score']:
+            result_class = ' max-score'
+        class_attr += f' {result_class}'
+
+        if key in context.get('hide_problems', []) and not my_stat:
+            class_attr += ' blurred-text'
+        if my_stat and context.get('with_solution'):
+            class_attr += ' drop-zone'
+
+    attrs = f'class="{class_attr}"'
+    if result:
+        score = f'{result["result"]}' if not full_score or is_solved(result) else f'{full_score}'
+        attrs += f' data-score="{score}"'
+        attrs += f' data-result="{result["result"]}"'
+        attrs += f' data-penalty="{result["time"]}"'
+
+        problem_sec = problem['time_in_seconds']
+        result_sec = result['time_in_seconds']
+        penalty_in_seconds = problem_sec if problem_sec and contest.is_stage else result_sec
+        attrs += f' data-penalty-in-seconds="{penalty_in_seconds}"'
+        attrs += f' data-more-penalty="{result["penalty"]}"'
+        attrs += f' data-class="{result_class}"'
+
+        if getattr(statistic, 'virtual_start', None):
+            attrs += ' data-active-switcher="true"'
+    attrs += f' data-problem-key="{key}"'
+    attrs += f' data-problem-full-score="{full_score}"'
+
+    return mark_safe(attrs)
+
+def format_optional(value, prefix='', suffix=''):
+    return f"{prefix}{html.escape(str(value))}{suffix}" if value is not None and value != '' else ''
+
+def format_score(value):
+    return scoreformat(value)
+
+def format_verdict(verdict, test):
+    return f"{html.escape(str(verdict))}{format_optional(test, '(', ')')}"
+
+def format_time_display(time, penalty, time_rank, attempt):
+    return f"{html.escape(str(time))}{format_optional(penalty, '+')}{format_optional(time_rank, ' (', ')')}{format_optional(attempt, ' (', ')')}"
+
+def format_status(status, status_tag, is_small):
+    escaped_status = html.escape(str(status))
+    if status_tag and is_small:
+        safe_tag = html.escape(str(status_tag))
+        return f"<{safe_tag}>{escaped_status}</{safe_tag}>"
+    return escaped_status
+
+def format_upsolving_icon(upsolving_stat):
+    icon_class = "check" if is_solved(upsolving_stat) else "times"
+    return f'<i class="fas fa-{icon_class}"></i>'
+
+@register.simple_tag(takes_context=True)
+def standings_statistic_problem_detail(context, small, stat=None):
+    upsolving_small = small
+    stat = get_default_dict(stat or context['stat'], '')
+    result_html = []
+    has_failed_verdict = stat_has_failed_verdict(stat)
+
+    if small:
+        result_html.append('<small class="text-muted">')
+    else:
+        subscores = stat['subscores']
+        if subscores:
+            result_html.append('<div>')
+            for i, subscore in enumerate(subscores):
+                if not isinstance(subscore, dict):
+                    continue
+                if i > 0:
+                    result_html.append('+')
+                subscore_cls = ''
+                if subscore.get('verdict'):
+                    subscore_cls = ' class="acc"' if subscore.get('result') else ' class="rej"'
+                result_html.append(f'<span{subscore_cls}>{html.escape(str(subscore.get("status", "")))}</span>')
+            result_html.append('</div>')
+        if has_failed_verdict:
+            result_html.append(f'<div class="rej">{format_verdict(stat["verdict"], stat["test"])}</div>')
+        if result_rank := stat['result_rank']:
+            result_html.append(f'<div>Rank: {html.escape(str(result_rank))}</div>')
+
+    result_html.append('<div class="nowrap">')
+
+    stat_status = stat['status']
+    stat_time = stat['time']
+    stat_result = stat['result']
+    stat_extra_score = stat['extra_score']
+    stat_penalty = stat['penalty']
+    stat_time_rank = stat['time_rank']
+    stat_attempt = stat['attempt']
+    stat_status_tag = stat['status_tag']
+    stat_delta_time = stat['delta_time']
+    stat_virtual_start_ts = stat['virtual_start_ts']
+    stat_best_score = stat['best_score']
+    stat_language = stat['language']
+    stat_upsolving = stat['upsolving']
+
+    without_score = not stat_result and not stat_extra_score
+    status_and_time_cond = (stat_status and stat_time) and (without_score and context.get('with_detail') or not small)
+    status_cond = stat_status and (not stat_time or is_reject(stat))
+    delta_time_cond = small and stat_delta_time and stat_time
+    time_cond = stat_time
+    failed_verdict_cond = has_failed_verdict and small
+    virtual_start_cond = stat_virtual_start_ts
+    best_score_cond = stat_best_score and stat_best_score
+
+    if status_and_time_cond:
+        upsolving_small = None
+        result_html.append(f'<div>{format_status(stat_status, stat_status_tag, small)}</div>')
+        result_html.append(f'<div>{format_time_display(stat_time, stat_penalty, stat_time_rank, stat_attempt)}</div>')
+    elif status_cond:
+        result_html.append(f'{format_status(stat_status, stat_status_tag, small)}')
+    elif delta_time_cond:
+        result_html.append('<a href="" onclick="toggle_hidden(this, event)" data-class="detail-alternative-time">')
+        result_html.append(f'<span class="detail-alternative-time hidden">{html.escape(str(stat_delta_time))}</span>')
+        result_html.append(f'<span class="detail-alternative-time">{html.escape(str(stat_time))}</span>')
+        result_html.append('</a>')
+    elif time_cond:
+        result_html.append(f'<span>{format_time_display(stat_time, stat_penalty, stat_time_rank, stat_attempt)}</span>')
+    elif failed_verdict_cond:
+        result_html.append(f'<span>{format_verdict(stat["verdict"], stat["test"])}</span>')
+    elif virtual_start_cond:
+        time_passed = has_passed_since_timestamp(stat_virtual_start_ts)
+        countdown_str = countdown(time_passed)
+        result_html.append(f'<span class="countdown" data-timestamp-up="{html.escape(str(stat_virtual_start_ts))}">{countdown_str}</span>')
+    elif best_score_cond:
+        result_html.append(f'<small class="text-muted">{format_score(stat_best_score)}</small>')
+    else:
+        upsolving_small = False
+
+    if upsolving_small is not None and isinstance(stat_upsolving, dict):
+        tag = "span" if small else "div"
+        result_html.append(f'<{tag}')
+        if upsolving_small:
+            result_html.append(f'class="{stat_verdict_class(stat_upsolving, True)}"')
+            result_html.append('data-toggle="tooltip"')
+            result_html.append('data-placement="top"')
+            result_html.append('data-html="true"')
+            result_html.append("title='Upsolving<br/>")
+        else:
+            result_html.append(f'>')
+
+        if stat_upsolving.get('binary') is not None:
+            result_html.append(format_upsolving_icon(stat_upsolving))
+        elif (upsolving_result := stat_upsolving.get('result')) is not None:
+            result_html.append(f'{format_score(upsolving_result)}')
+        if not is_solved(stat_upsolving) and (upsolving_verdict := stat_upsolving.get('verdict')):
+            result_html.append(f' {format_verdict(upsolving_verdict, stat_upsolving.get("test"))}')
+
+        if upsolving_small:
+            result_html.append("'>&#65290;")
+        result_html.append(f'</{tag}>')
+
+    if not small and stat_delta_time:
+        result_html.append(f'<div>{html.escape(str(stat_delta_time))}</div>')
+    if not small and stat_language:
+        result_html.append(f'<div class="language">{html.escape(str(stat_language))}</div>')
+
+    result_html.append('</div>')
+
+    if small:
+        result_html.append('</small>')
+
+    return mark_safe(" ".join(result_html))
+
+@register.simple_tag(takes_context=True)
+def standings_statistic_problem(context):
+    stat = get_default_dict(context['stat'], '')
+    if not stat:
+        return mark_safe('<div>&#183;</div>')
+
+    request = context['request']
+    statistic = context['statistic']
+    key = context['key']
+    my_stat = getattr(statistic, 'my_stat', None)
+    perms = context.get('perms')
+    contest = context.get('contest')
+    with_detail = context.get('with_detail')
+    with_admin_url = context.get('with_admin_url')
+    standings_options = context.get('standings_options')
+    fields_to_select = context.get('fields_to_select')
+    with_result_name = context.get('with_result_name')
+    languages = get_list(request.GET, 'languages')
+
+    is_upsolving = context.get('with_upsolving') and not is_solved(stat) and is_upsolved(stat)
+    if is_upsolving:
+        stat = get_default_dict(stat['upsolving'], '')
+
+    html_parts = []
+
+    html_parts.append('<div class="nowrap">')
+
+    div_classes = ["inline", "text-nowrap"]
+    if languages and stat['language'] not in languages and 'any' not in languages:
+        div_classes.append("text-muted")
+    elif stat.get('binary') is None and with_detail and stat.get('subscores'):
+        pass
+    elif is_solved(stat):
+        div_classes.append("text-muted small" if is_upsolving else "acc")
+    elif is_hidden(stat):
+        div_classes.append("hid")
+    elif is_reject(stat):
+        div_classes.append("rej")
+    elif is_partial(stat):
+        div_classes.append("par")
+
+    if statistic and getattr(statistic, 'virtual_start', None):
+        div_classes.append("vir")
+
+    html_parts.append(f'<div class="{" ".join(div_classes)}"')
+    if not with_detail:
+        if stat.get('status') or stat.get('time') or stat.get('upsolving') or stat.get('verdict') or stat.get('language'):
+            tooltip_title = standings_statistic_problem_detail(context, small=False, stat=stat)
+            tooltip_attrs = f' title=\'{tooltip_title}\' data-toggle="tooltip" data-placement="top" data-html="true"'
+            html_parts.append(tooltip_attrs)
+    html_parts.append('>')
+
+    has_alternative_result = context.get('has_alternative_result') 
+    if has_alternative_result :
+        alternative_result = get_item(stat, standings_options.get('alternative_result_field'), '&#183;')
+        html_parts.append('<a href="" onclick="toggle_hidden(this, event)" data-class="detail-alternative-result">')
+        html_parts.append(f'<span class="detail-alternative-result hidden">{html.escape(str(alternative_result))}</span>')
+        html_parts.append('<span class="detail-alternative-result">')
+
+    can_show_link = contest and (contest.is_over() or contest.is_stage()) or my_stat or stat.get('standings_url')
+    has_link_target = stat.get('url') or stat.get('solution') or stat.get('external_solution') or stat.get('standings_url')
+    if can_show_link and has_link_target:
+        if stat.get('standings_url'):
+            link_url = stat['standings_url']
+        elif stat.get('url'):
+            link_url = stat['url']
+        else:
+            link_url = reverse('ranking:solution', args=[statistic.pk, key])
+
+        html_parts.append(f'<a target="_blank" rel="noopener noreferrer"')
+        if not (contest and contest.is_stage()) and (stat.get('solution') or stat.get('external_solution')):
+            html_parts.append(f' class="solution"')
+            html_parts.append(f' onClick="viewSolution(this, event)"')
+            html_parts.append(f' data-url="{html.escape(link_url)}"')
+            link_url = reverse('ranking:solution', args=[statistic.pk, key])
+        html_parts.append(f' href="{html.escape(link_url)}"')
+        html_parts.append('>')
+
+    if stat.get('icon'):
+        icon_title = f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"' if stat.get('verdict') else ''
+        html_parts.append(f'<span{icon_title}>{mark_safe(stat["icon"])}</span>')
+    elif stat.get('binary') is not None:
+        icon_title = f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"' if stat.get('verdict') else ''
+        icon_class = "check" if is_solved(stat) else "times"
+        html_parts.append(f'<span{icon_title}><i class="fas fa-{icon_class}"></i></span>')
+    elif with_detail and stat.get('subscores'):
+        html_parts.append('<span>')
+        for i, subscore in enumerate(stat['subscores']):
+            if not isinstance(subscore, dict):
+                continue
+            if i > 0:
+                html_parts.append('+')
+            subscore_verdict = subscore.get('verdict')
+            subscore_title = f' title="{html.escape(str(subscore_verdict))}" data-toggle="tooltip"' if subscore_verdict else ''
+            subscore_class = "acc" if subscore.get('result') else "rej"
+            html_parts.append(f'<span{subscore_title} class="{subscore_class}">{html.escape(str(subscore.get("status", "")))}</span>')
+        html_parts.append('</span>')
+    elif normalized_result(stat.get('result')) in {'+', '?'}:
+        html_parts.append(f'<span>{html.escape(str(stat["result"]))}</span>')
+    elif stat.get('start_time') and (ctx_timezone := context.get('timezone')):
+        start_time_dt = timestamp_to_datetime(stat['start_time'])
+        title_attr = ''
+        if ctx_timezone and start_time_dt and (ctx_timeformat := context.get('timeformat')):
+            title_attr = f' title="{html.escape(format_time(timezone(start_time_dt, ctx_timezone), ctx_timeformat))}" data-placement="top" data-toggle="tooltip"'
+        countdown_val = countdown(start_time_dt) if start_time_dt else ''
+        html_parts.append(f'<span{title_attr} class="small countdown" data-timestamp="{stat["start_time"]}">{countdown_val}</span>')
+    elif display_val := (stat.get('result_name') if with_result_name and stat.get('result_name') else scoreformat(stat['result'])):
+        result_class = f' class="{stat["result_name_class"]}"' if with_result_name and stat.get('result_name_class') else ''
+        result_title = f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"' if stat.get('verdict') and 'time' in stat else ''
+        html_parts.append(f'<span{result_class}{result_title}>{display_val}</span>')
+
+    if with_detail and stat.get('result_rank'):
+        html_parts.append(f'<span class="text-muted small text-weight-normal"> ({html.escape(str(stat["result_rank"]))})</span>')
+
+    if can_show_link and has_link_target:
+        html_parts.append('</a>')
+
+    if has_alternative_result:
+        html_parts.append('</span></a>')
+
+    if stat.get('is_virtual'):
+        html_parts.append(f'<span class="is-virtual">{icon_to("is_virtual")}</span>')
+
+    html_parts.append('</div>')
+
+    if (extra_score_val := as_number(stat['extra_score'], force=True)) is not None:
+        extra_info_title = ''
+        if stat.get('extra_info'):
+                extra_info_html = "".join(f"{html.escape(str(info))}<br/>" for info in stat['extra_info'])
+                extra_info_title = f' data-toggle="tooltip" data-placement="top" data-html="true" title="{extra_info_html}"'
+        prefix = "+" if extra_score_val > 0 else ""
+        html_parts.append(f'<div class="inline"{extra_info_title}>{prefix}{scoreformat(extra_score_val)}</div>')
+
+    if with_detail:
+        if stat.get('penalty_score') is not None:
+            html_parts.append(f'<div class="inline">({html.escape(str(stat["penalty_score"]))})</div>')
+        elif stat.get('attempts') is not None:
+            html_parts.append(f'<div class="inline">({html.escape(str(stat["attempts"]))})</div>')
+
+    if with_admin_url and perms and perms['ranking']['change_statistics'] and statistic:
+        admin_change_url = reverse('admin:ranking_statistics_change', args=[statistic.pk])
+        html_parts.append(f'<a href="{admin_change_url}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>')
+
+    html_parts.append('</div>')
+
+    if with_detail or ('result' not in stat and 'extra_score' not in stat):
+        html_parts.append(standings_statistic_problem_detail(context, small=True, stat=stat))
+
+    languages = get_list(request.GET, 'languages')
+    if stat.get('language') and languages:
+        lang_class = "text-muted" if languages and stat['language'] not in languages and 'any' not in languages else ""
+        html_parts.append(f'<small class="{lang_class}"><div class="language">{html.escape(str(stat["language"]))}</div></small>')
+
+    verdicts = get_list(request.GET, 'verdicts')
+    if stat.get('verdict') and verdicts:
+        verdict_class = "text-muted" if verdicts and stat['verdict'] not in verdicts and 'any' not in verdicts else ""
+        html_parts.append(f'<small class="{verdict_class}"><div class="verdict">{html.escape(str(stat["verdict"]))}</div></small>')
+
+    if request.GET.get('ips') and fields_to_select.get('ips'):
+        html_parts.append(submission_info_field(stat, 'ip'))
+
+    return mark_safe(" ".join(html_parts))
+
+@register.simple_tag(takes_context=True)
+def standings_statistic_problems(context):
+    problems = context['problems']
+    addition = context['addition']
+    addition_problems = addition.get('problems', {})
+    tag = context['tag']
+
+    html_parts = []
+    for problem in problems:
+        key = get_problem_short(problem)
+        stat = addition_problems.get(key)
+        context['problem'] = problem
+        context['key'] = key
+        context['stat'] = stat
+        attributes = standings_statistic_problem_attributes(context)
+        content = standings_statistic_problem(context)
+        html_parts.append(f'<{tag} {attributes}>{content}</{tag}>')
+        del context['problem']
+        del context['key']
+        del context['stat']
+
+    return mark_safe("\n".join(html_parts))

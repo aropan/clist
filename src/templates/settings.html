@@ -258,8 +258,8 @@
                     {% if n.last_time %}check in <a class="label label-success" href="{{ n.last_time|get_timeanddate_href }}">{{ n.last_time|timezone:coder.timezone|format_time:"%d.%m %a %H:%M" }}</a>{% else %}<span class="label label-default">nothing</span>{% endif %}
                     </span>
                     <a href="#" data-id="{{ n.id }}" data-action="edit-notification" class="edit-notification btn btn-warning btn-sm"><i class="fas fa-pen"></i></a>
-                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$element.remove();" class="action-notification btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></a>
-                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$element.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" class="action-notification btn btn-primary btn-sm"><i class="fas fa-sync-alt"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="delete-notification" data-success="$element.remove();" data-message="Deleted notification" class="action-notification btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" data-id="{{ n.id }}" data-action="reset-notification" data-success="$element.find('.checkin').html('<span class=\'label label-warning\'>reload the page</span>')" data-message="Reset notification" class="action-notification btn btn-primary btn-sm"><i class="fas fa-sync-alt"></i></a>
                     {% if perms.notification.change_notification %}
                       <a href="{% url 'admin:notification_notification_change' n.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
                     {% endif %}

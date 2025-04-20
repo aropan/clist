@@ -252,7 +252,7 @@ class Statistic(BaseModule):
             problem_page = get_page(problem['url'], ignore_codes={403})
             if problem_page is None:
                 continue
-            match = re.search(r'<h[^>]*>\s*Task\s*#(?P<key>[^<]*)</h', problem_page)
+            match = re.search(r'<h[^>]*>\s*Task\s*#?(?P<key>[^<]*)</h', problem_page)
             problem['code'] = match.group('key').strip()
             archive_url = self.resource.problem_url.format(key=problem['code'])
             try:

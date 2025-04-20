@@ -53,8 +53,8 @@
     while ($url && !isset($seen[$url])) {
         $seen[$url] = true;
         $json = curlexec($url, NULL, array('json_output' => true));
-        if (!is_array($json['data'])) {
-            print_r($json);
+        if (!is_array($json) || !is_array($json['data'])) {
+            var_dump($json);
             trigger_error("Expected array ['data']", E_USER_WARNING);
         } else {
             foreach ($json['data'] as $c) {

@@ -1225,6 +1225,9 @@ $(function() {
                 data: data,
                 success: function(data) {
                     eval($this.attr('data-success'))
+                    if ($this.attr('data-message')) {
+                        notify($this.attr('data-message'), 'success')
+                    }
                     if (dialog) dialog.modal('hide')
                 },
                 error: (response) => log_ajax_error(response),

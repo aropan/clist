@@ -49,8 +49,8 @@ def random_string(length=40):
 
 
 def generate_secret(length=16):
-    return secrets.token_hex(length)
-
+    required_bytes = (length * 3 + 3) // 4
+    return secrets.token_urlsafe(nbytes=required_bytes)[:length]
 
 def generate_secret_64():
     return generate_secret(32)

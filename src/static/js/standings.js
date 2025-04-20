@@ -1677,7 +1677,7 @@ function open_submissions(btn) {
  * View solution
  */
 
-function viewSolution(a) {
+function viewSolution(a, e) {
   var href = $(a).attr('href')
   var solution_modal = $('#view-solution-modal')
   $('#view-solution-modal .modal-content').html('<div class="modal-body"><p><i class="fa fa-spin fa-circle-notch"></i> Loading...</p></div>')
@@ -1703,6 +1703,8 @@ function viewSolution(a) {
       $('#view-solution-modal').modal('hide')
     },
   })
+  e.preventDefault()
+  e.stopPropagation()
   return false
 }
 

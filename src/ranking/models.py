@@ -715,6 +715,16 @@ class VirtualStart(BaseModel):
         unique_together = ('coder', 'content_type', 'object_id')
         indexes = [models.Index(fields=['coder', 'content_type', 'object_id'])]
 
+    class VirtualStartStatistic:
+        def __init__(self, virtual_start):
+            self.id = f'virtualstart{virtual_start.pk}'
+            self.contest_id = virtual_start.object_id if virtual_start.content_type.model == 'contest' else None
+            self.place = virtual_start.addition.get('place')
+            self.solving = virtual_start.addition.get('solving')
+            self.addition = virtual_start.addition
+            self.virtual_start = True
+            self.virtual_start_pk = virtual_start.pk
+
     @classmethod
     def filter_by_content_type(cls, model_class, prefetch=True):
         content_type = ContentType.objects.get_for_model(model_class)
@@ -733,15 +743,7 @@ class VirtualStart(BaseModel):
         return self.finish_time is None or self.finish_time > timezone.now()
 
     def statistics(self):
-        return [{
-            'id': f'virtualstart{self.pk}',
-            'contest_id': self.object_id if self.content_type.model == 'contest' else None,
-            'place': self.addition.get('place'),
-            'solving': self.addition.get('solving'),
-            'addition': self.addition,
-            'virtual_start': True,
-            'virtual_start_pk': self.pk,
-        }]
+        return [self.VirtualStartStatistic(self)]
 
 
 class MatchingStatus(models.TextChoices):

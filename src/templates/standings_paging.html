@@ -174,7 +174,7 @@ data-place="{{ place }}"
   {% comment %}   {% include "standings_statistic_problems.html" %} {% endcomment %}
   {% comment %}   {% endcache %} {% endcomment %}
   {% comment %} {% endif %} {% endcomment %}
-  {% include "standings_statistic_problems.html" %}
+  {% standings_statistic_problems %}
 </tr>
 {% if statistic.my_stat and statistic.floating and rev %}{% include "standings_paging_previous.html" %}{% endif %}
 {% endwith %}
