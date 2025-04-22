@@ -214,6 +214,11 @@ CHANNEL_LAYERS = {
 }
 
 
+# Subdomain settings
+SESSION_COOKIE_DOMAIN = ".clist.by"
+SESSION_COOKIE_SECURE = True
+
+
 # django_rq
 RQ_QUEUES = {
     'system': {
@@ -656,7 +661,7 @@ FAVORITE_SETTINGS_ = {
 }
 DEFAULT_TIME_ZONE_ = 'UTC'
 CHANING_HOSTS_ = ['clist.by', 'dev.clist.by']
-ALLOWED_REDIRECT_HOSTS_ = {'clist.by', 'dev.clist.by'}
+ALLOWED_REDIRECT_HOSTS_ = {'clist.by', 'dev.clist.by', 'grafana.clist.by'}
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
 HTTPS_HOST_URL_ = 'https://' + HOST_
 MAIN_HOST_URL_ = 'https://clist.by'

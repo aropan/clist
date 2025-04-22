@@ -199,8 +199,8 @@
             $query = http_build_query($params);
             $url = "https://api.topcoder.com/v5/challenges/?" . $query;
             $data = curlexec($url, null, array("json_output" => 1));
-            if (empty($data)) {
-                continue;
+            if (!is_array($data) || empty($data) || !count($data)) {
+                break;
             }
             $stop = false;
             foreach ($data as $c) {
@@ -254,10 +254,7 @@
                     "key" => $key,
                 );
             }
-            if (!count($data) || $stop) {
-                break;
-            }
-            if (!$parse_full_list && $params['status'] == 'Completed') {
+            if ($stop || (!$parse_full_list && $params['status'] == 'Completed')) {
                 break;
             }
         }

@@ -166,8 +166,6 @@ def login(request):
     request.session.pop('token_url', None)
 
     redirect_url = request.GET.get('next')
-    if not redirect_url or not redirect_url.startswith('/'):
-        redirect_url = relative_url(request.META.get('HTTP_REFERER')) or reverse('clist:main')
     if request.user.is_authenticated:
         return allowed_redirect(redirect_url)
 

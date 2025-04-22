@@ -145,6 +145,43 @@ services:
     env_file:
       - ./.env.netdata
     restart: unless-stopped
+  loki:
+    image: grafana/loki:latest
+    networks:
+      - clist_network
+    command:
+      - "-config.file=/etc/loki/local-config.yaml"
+    volumes:
+      - ./config/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+      - loki_wal:/wal
+    restart: unless-stopped
+  promtail:
+    image: grafana/promtail:latest
+    networks:
+      - clist_network
+    command:
+      - "--config.file=/etc/promtail/promtail-config.yml"
+    volumes:
+      - ./config/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - ./logs/nginx/nginx:/var/log/nginx:ro
+      - promtail_positions:/var/promtail
+    depends_on:
+      - loki
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana:latest
+    networks:
+      - clist_network
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    env_file:
+      - ./.env.grafana
+    depends_on:
+      - loki
+      - promtail
+    restart: unless-stopped
 
 networks:
   clist_network:
@@ -223,3 +260,27 @@ volumes:
       type: none
       o: bind
       device: ./volumes/shared_files
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/grafana_data
+  loki_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/loki_data
+  loki_wal:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/loki_wal
+  promtail_positions:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/promtail_positions

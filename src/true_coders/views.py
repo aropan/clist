@@ -2864,3 +2864,13 @@ def skip_promotion(request):
     response = HttpResponse('ok')
     request.set_security_cookie(response, '_skip_promotion_id', promotion.id)
     return response
+
+
+def grafana_auth(request):
+    if not request.user.is_authenticated:
+        return HttpResponse(status=401)
+    if not request.user.has_perm('true_coders.can_grafana_auth'):
+        return HttpResponse(status=403)
+    response = HttpResponse(status=200)
+    response['Remote-User'] = request.user.username
+    return response
