@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   prod:
@@ -37,6 +37,8 @@ services:
       - shared_files:/usr/src/clist/sharedfiles/
       - ./logs/development:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
+    ports:
+      - 10042:10042
     depends_on:
       - db
       - memcached
