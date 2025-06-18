@@ -376,6 +376,8 @@ class Statistic(BaseModule):
                 for team in qs.filter(cond):
                     counter[team] += member_weight
             total_weight = team_weight + max(len(members), 3) * member_weight
+            if not counter:
+                return
             count_threshold = max(counter.values())
             count_threshold = max(count_threshold, total_weight // 2 + 1)
             teams = [team for team, count in counter.items() if count >= count_threshold]

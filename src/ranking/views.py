@@ -965,6 +965,7 @@ def get_advancing_contests(contest):
     return ret
 
 
+@ratelimit(key='user_or_ip', rate='150/h')
 @page_templates((
     ('standings_paging.html', 'standings_paging'),
     ('standings_groupby_paging.html', 'groupby_paging'),
@@ -972,6 +973,13 @@ def get_advancing_contests(contest):
 @inject_contest()
 def standings(request, contest, other_contests=None, template='standings.html', extra_context=None):
     context = {}
+    # Allow anonymous users to see the default standings page,
+    # but require authentication for request that includes query parameters.
+    if not request.user.is_authenticated:
+        params = {k for k, v in request.GET.items() if v}
+        exclude_params = {'fullscreen', 'autoreload', 'detail', 'timeline', 'charts', 'division', 'groupby', 'orderby'}
+        if params - exclude_params:
+            return redirect_login(request)
 
     contests_timelines = dict()
     contests_ids = dict()
@@ -1040,7 +1048,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
 
     per_page = 50 if contests_ids else contest.standings_per_page
     per_page_more = per_page if find_me else 200
-    if is_yes(request.GET.get('full_table')) and request.user.has_perm('clist.view_full_table'):
+    if is_yes(request.GET.get('fulltable')) and request.user.has_perm('clist.view_full_table'):
         per_page = contest.n_statistics
         per_page_more = contest.n_statistics
 
@@ -1760,6 +1768,7 @@ def standings(request, contest, other_contests=None, template='standings.html', 
     return render(request, template, context)
 
 
+@login_required
 @ratelimit(key='user', rate='20/m')
 def solutions(request, sid, problem_key):
     is_modal = request.is_ajax()

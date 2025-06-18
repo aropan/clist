@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from events.models import Participant
 from pyclist.admin import BaseModelAdmin, admin_register
-from true_coders.models import Coder, CoderList, CoderProblem, Filter, ListGroup, ListValue, Organization, Party
+from true_coders.models import Coder, CoderList, CoderProblem, Filter, ListGroup, ListValue, ListProblem, Organization, Party
 
 
 @admin_register(Coder)
@@ -113,7 +113,16 @@ class CoderListAdmin(BaseModelAdmin):
         show_change_link = True
         can_delete = False
         extra = 0
-    inlines = [ListGroupInline]
+
+    class ListProblemInline(admin.TabularInline):
+        model = ListProblem
+        fields = ['id', 'problem']
+        readonly_fields = ['problem', 'created', 'modified']
+        show_change_link = True
+        can_delete = False
+        extra = 0
+
+    inlines = [ListGroupInline, ListProblemInline]
 
 
 @admin_register(ListGroup)

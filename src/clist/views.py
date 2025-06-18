@@ -904,8 +904,6 @@ def problems(request, template='problems.html'):
         )
         problems = problems.filter(cond)
 
-    range_filter_values = {}
-
     resources = request.get_resources()
     if resources:
         problems = problems.filter(resource__in=resources)
@@ -933,6 +931,13 @@ def problems(request, template='problems.html'):
     else:
         selected_resource = None
 
+    list_uuids = request.get_filtered_list('list')
+    if list_uuids:
+        problems_coder_lists = CoderList.filter_for_coder(coder).filter(uuid__in=list_uuids)
+        problems = problems.annotate(has_coder_lists=Exists(problems_coder_lists.filter(problems__problem_id=OuterRef('pk'))))
+        problems = problems.filter(has_coder_lists=True)
+
+    range_filter_values = {}
     luck_from = as_number(request.GET.get('luck_from'), force=True)
     luck_to = as_number(request.GET.get('luck_to'), force=True)
     if luck_from is not None or luck_to is not None:

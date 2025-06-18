@@ -103,7 +103,7 @@ class ParsedTable(object):
         self.as_list = as_list
         self.with_duplicate_colspan = with_duplicate_colspan
         self.with_not_full_row = with_not_full_row
-        self.table = etree.HTML(html).xpath(xpath)
+        self.table = etree.fromstring(html, parser=etree.HTMLParser(remove_comments=True)).xpath(xpath)
         self.unnamed_fields = unnamed_fields
         self.unnamed_fields_idx = 0
         self.header_mapping = header_mapping

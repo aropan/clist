@@ -11,7 +11,6 @@ from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import FailOnGetResponse
 
 
-
 class Statistic(BaseModule):
 
     PROBLEM_URL_FORMAT_ = '/problem/{code}?contestId={cid}'
@@ -40,6 +39,9 @@ class Statistic(BaseModule):
         api_scoreboard_url_format = urljoin(self.url, Statistic.API_SCOREBOARD_URL_FORMAT_)
 
         contest_data = Statistic._get(api_contest_url, return_json=True)
+        if contest_data.get('code') == 404:
+            return {'action': 'delete'}
+
         contest_problems = get_item(contest_data, 'currentData.contestProblems')
         problems_infos = OrderedDict()
         if contest_problems:

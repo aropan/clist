@@ -22,7 +22,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q, Value
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect
 from django.template.base import Node
 from django.template.defaultfilters import floatformat, slugify, stringfilter
@@ -557,7 +557,10 @@ def allowed_redirect(url):
 
 def redirect_login(request):
     next_url = quote_url(request.get_full_path())
-    return allowed_redirect(reverse('auth:login') + f'?next={next_url}')
+    redirect_url = reverse('auth:login') + f'?next={next_url}'
+    if request.is_ajax():
+        return JsonResponse({'redirect': redirect_url}, status=401)
+    return allowed_redirect(redirect_url)
 
 
 @register.simple_tag

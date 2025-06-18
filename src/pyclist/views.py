@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from el_pagination.decorators import page_templates
 
 from clist.templatetags.extras import allowed_redirect, is_yes, timestamp_to_datetime, url_transform
-from pyclist.decorators import context_pagination
+from pyclist.decorators import context_pagination, extra_context_without_pagination
 from utils.chart import make_chart
 from utils.db import get_delete_info
 from utils.timetools import parse_duration
@@ -210,6 +210,7 @@ def update_context_by_source(request, context):
 @page_templates((
     ('charts_paging.html', 'entities_paging'),
 ))
+@extra_context_without_pagination('clist.view_full_table')
 @context_pagination()
 def charts(request, template='charts.html'):
     models = {}

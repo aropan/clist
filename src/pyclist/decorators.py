@@ -186,7 +186,7 @@ def extra_context_without_pagination(perm):
         def decorated(request, *args, **kwargs):
             if (
                 request.user.is_authenticated
-                and 'full_table' in request.GET
+                and 'fulltable' in request.GET
                 and request.user.has_perm(perm)
             ):
                 extra_context = kwargs.setdefault('extra_context', {})

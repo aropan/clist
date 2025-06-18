@@ -23,20 +23,20 @@ String.prototype.format = function (col) {
   return format(this, col);
 }
 
-$(function(){
+$(function () {
   if (window.location.hash != "") {
     $('a[href="' + window.location.hash + '"]').click()
   }
   var url = window.location.pathname
-  $('.nav a[href="'+url+'"]').parent().addClass('active')
+  $('.nav a[href="' + url + '"]').parent().addClass('active')
 });
 
 
 // https://github.com/gouch/to-title-case/blob/master/to-title-case.js
-String.prototype.toTitleCase = function(){
+String.prototype.toTitleCase = function () {
   var smallWords = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|vs?\.?|via)$/i;
 
-  return this.replace(/[A-Za-z0-9\u00C0-\u00FF]+[^\s-]*/g, function(match, index, title){
+  return this.replace(/[A-Za-z0-9\u00C0-\u00FF]+[^\s-]*/g, function (match, index, title) {
     if (index > 0 && index + match.length !== title.length &&
       match.search(smallWords) > -1 && title.charAt(index - 2) !== ":" &&
       (title.charAt(index + match.length) !== '-' || title.charAt(index - 1) === '-') &&
@@ -54,9 +54,9 @@ String.prototype.toTitleCase = function(){
 
 function toggle_tooltip_object(object) {
   if (typeof object === 'string') {
-    $('body').tooltip({selector: object, container: 'body', trigger: 'hover'})
+    $('body').tooltip({ selector: object, container: 'body', trigger: 'hover' })
   } else {
-    object.removeAttr('data-toggle').tooltip({container: 'body', trigger: 'hover'})
+    object.removeAttr('data-toggle').tooltip({ container: 'body', trigger: 'hover' })
   }
 }
 
@@ -94,13 +94,13 @@ function get_x_chart(value, x_axis) {
 
 $(() => $(".table-float-head").floatThead({
   zIndex: 999,
-  responsiveContainer: function($table){
+  responsiveContainer: function ($table) {
     return $table.closest(".table-responsive");
   },
 }))
 
-$(function() {
-  $('.sortable-column').each(function() {
+$(function () {
+  $('.sortable-column').each(function () {
     var url = new URL(window.location.href)
     var sort_column = url.searchParams.get('sort_column')
     var sort_order = url.searchParams.get('sort_order')
@@ -114,7 +114,7 @@ $(function() {
     var desc_url = url.href
 
     if (sort_column == column) {
-      var order = sort_order == 'asc'? 'up' : 'down'
+      var order = sort_order == 'asc' ? 'up' : 'down'
       $(this).append(`<a href="` + disable_url + `"><i class="sortable-column-order fas fa-chevron-` + order + `"></i></a>`)
     }
 
@@ -126,7 +126,7 @@ $(function() {
     }
   })
 
-  $('.chart-column').each(function() {
+  $('.chart-column').each(function () {
     var url = new URL(window.location.href)
     var field = this.getAttribute('data-field')
     url.searchParams.set('chart_column', field)
@@ -135,18 +135,18 @@ $(function() {
 })
 
 function inline_button() {
-  $('.reset-timing-statistic').removeClass('reset-timing-statistic').click(function(e) {
+  $('.reset-timing-statistic').removeClass('reset-timing-statistic').click(function (e) {
     e.preventDefault()
     var btn = $(this)
     $.post('/standings/action/', {
       action: 'reset_contest_statistic_timing', cid: btn.attr('data-contest-id')
-    }).done(function(data) {
+    }).done(function (data) {
       btn.attr('data-original-title', data.message).tooltip('show')
       notify(data.message, data.status)
     }).fail(log_ajax_error_callback)
   })
 
-  $('.database-href').removeClass('database-href').click(function(e) {
+  $('.database-href').removeClass('database-href').click(function (e) {
     var btn = $(this)
     window.open(btn.attr('data-href'), "_blank");
     return false
@@ -157,7 +157,7 @@ $(inline_button)
 
 
 function confirm_action() {
-  $('.confirm-action').removeClass('confirm-action').click(function(e) {
+  $('.confirm-action').removeClass('confirm-action').click(function (e) {
     var btn = $(this)
     if (btn.hasClass('confirmed')) {
       btn.removeClass('confirmed')
@@ -179,7 +179,7 @@ function confirm_action() {
       $.ajax({
         type: 'GET',
         url: url,
-        success: function(response) {
+        success: function (response) {
           action_info.text(response.data)
         },
         error: log_ajax_error_callback,
@@ -196,7 +196,7 @@ function confirm_action() {
           className: confirm_class,
         },
       },
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
           btn.addClass('confirmed')
           btn.click()
@@ -213,7 +213,7 @@ $(confirm_action)
   * https://github.com/chartjs/Chart.js/issues/1350#issuecomment-320265946
   */
 
-function beforePrint () {
+function beforePrint() {
   for (const id in Chart.instances) {
     Chart.instances[id].resize()
   }
@@ -273,7 +273,7 @@ function log_ajax_error_callback(response) {
 }
 
 
-;!(function ($) {
+; !(function ($) {
   $.fn.classes = function (callback) {
     var classes = [];
     $.each(this, function (i, v) {
@@ -297,9 +297,9 @@ function log_ajax_error_callback(response) {
 })(jQuery);
 
 
-$.fn.findWithSelf = function(selector) {
+$.fn.findWithSelf = function (selector) {
   var result = this.find(selector)
-  this.each(function() {
+  this.each(function () {
     if ($(this).is(selector)) {
       result = result.add($(this))
     }
@@ -336,13 +336,13 @@ function copyElementToClipboard(event, element) {
   el.attr('title', 'copied')
   el.tooltip('show')
   notify('Copied "' + text + '" to clipboard', 'success')
-  setTimeout(function() { el.attr('title', ''); el.tooltip('destroy'); }, 1000)
+  setTimeout(function () { el.attr('title', ''); el.tooltip('destroy'); }, 1000)
   return false
 }
 
 
-$(function() {
-  $('.copy-to-clipboard:not([onclick])').click(function(event) { copyElementToClipboard(event, this) })
+$(function () {
+  $('.copy-to-clipboard:not([onclick])').click(function (event) { copyElementToClipboard(event, this) })
 })
 
 function select2_ajax_conf(query, field, addition_params) {
@@ -376,11 +376,11 @@ function select2_ajax_conf(query, field, addition_params) {
 }
 
 // Resizer
-$(function() {
+$(function () {
   // Query the element
   const resizer = document.getElementById('drag_me');
-  const leftSide = resizer? resizer.previousElementSibling : null;
-  const rightSide = resizer? resizer.nextElementSibling : null;
+  const leftSide = resizer ? resizer.previousElementSibling : null;
+  const rightSide = resizer ? resizer.nextElementSibling : null;
 
   // The current position of mouse
   let drag_me_x = 0;
@@ -440,8 +440,8 @@ $(function() {
 })
 
 
-$(function() {
-  $('body').keyup(function(event) {
+$(function () {
+  $('body').keyup(function (event) {
     if ($(event.target).is('input')) {
       event.preventDefault()
     }
@@ -466,7 +466,7 @@ function toggle_hidden(element, event) {
   }
 }
 
-$(function() {
+$(function () {
   $('.database-link').each((_, e) => {
     var between = 10
     var offset = between
@@ -542,7 +542,7 @@ function note_action() {
 
   var $i = $el.find('i')
   var loading_spinner = null
-  var loading_timeout_id = setTimeout(function() {
+  var loading_timeout_id = setTimeout(function () {
     loading_spinner = $('<i class="fas fa-circle-notch fa-spin"></i>')
     $i.after(loading_spinner)
     $i.hide()
@@ -566,7 +566,7 @@ function note_action() {
       value: $textarea.val(),
       action: $el.attr('data-action'),
     },
-    success: function(data, _, xhr) {
+    success: function (data, _, xhr) {
       if (data['status'] == 'ok') {
         var value = data['state']
         if (value) {
@@ -581,10 +581,10 @@ function note_action() {
         log_ajax_error(xhr)
       }
     },
-    error: function(response) {
+    error: function (response) {
       log_ajax_error(response)
     },
-    complete: function(data) {
+    complete: function (data) {
       clearTimeout(loading_timeout_id)
       if (loading_spinner) {
         loading_spinner.remove()
@@ -599,7 +599,7 @@ function note_action() {
 function click_activity(event, el, callback) {
   event.preventDefault()
   var loading_spinner = null
-  var loading_timeout_id = setTimeout(function() {
+  var loading_timeout_id = setTimeout(function () {
     loading_spinner = $('<i class="fas fa-circle-notch fa-spin"></i>')
     $(el).after(loading_spinner)
     $(el).hide()
@@ -608,20 +608,20 @@ function click_activity(event, el, callback) {
     type: 'POST',
     url: change_url,
     data: {
-        pk: coder_pk,
-        name: 'activity',
-        content_type: $(el).attr('data-content-type'),
-        object_id: $(el).attr('data-object-id'),
-        activity_type: $(el).attr('data-activity-type'),
-        value: !$(el).hasClass('selected-activity'),
+      pk: coder_pk,
+      name: 'activity',
+      content_type: $(el).attr('data-content-type'),
+      object_id: $(el).attr('data-object-id'),
+      activity_type: $(el).attr('data-activity-type'),
+      value: !$(el).hasClass('selected-activity'),
     },
-    success: function(data, _, xhr) {
+    success: function (data, _, xhr) {
       if (data['status'] == 'ok') {
         var selector = ''
         selector += '[data-content-type="' + $(el).attr('data-content-type') + '"]'
         selector += '[data-object-id="' + $(el).attr('data-object-id') + '"]'
         selector += '[data-activity-type="' + $(el).attr('data-activity-type') + '"]'
-        $.find(selector).forEach(function(el) {
+        $.find(selector).forEach(function (el) {
           var $el = $(el)
           if (data['state']) {
             $el.removeClass($el.data('unselected-class'))
@@ -640,10 +640,10 @@ function click_activity(event, el, callback) {
         log_ajax_error(xhr)
       }
     },
-    error: function(response) {
+    error: function (response) {
       log_ajax_error(response)
     },
-    complete: function(data) {
+    complete: function (data) {
       clearTimeout(loading_timeout_id)
       if (loading_spinner) {
         loading_spinner.remove()
@@ -655,14 +655,14 @@ function click_activity(event, el, callback) {
 }
 
 function copy_attributes(src, dst, startswith = 'data-') {
-  $.each(src[0].attributes, function() {
+  $.each(src[0].attributes, function () {
     if (this.name.startsWith('data-')) {
       dst.attr(this.name, this.value)
     }
   })
 }
 
-$(function() {
+$(function () {
   $('#filter-collapse').on('shown.bs.collapse', () => { $(window).trigger('resize') })
   $('#filter-collapse').on('hidden.bs.collapse', () => { $(window).trigger('resize') })
 })
@@ -673,7 +673,7 @@ function delete_on_duplicate(with_starred = false) {
   var elements = $('[data-delete-on-duplicate]')
   var lasts = delete_on_duplicate_lasts
   var stops = {}
-  elements.each(function(index) {
+  elements.each(function (index) {
     if (!this.isConnected) {
       return;
     }
@@ -711,7 +711,7 @@ function delete_on_duplicate(with_starred = false) {
 
 function coders_select(id, submit) {
   $(id).select2({
-    dropdownAutoWidth : true,
+    dropdownAutoWidth: true,
     theme: 'bootstrap',
     placeholder: '',
     allowClear: true,
@@ -741,17 +741,17 @@ function coders_select(id, submit) {
       },
       cache: true,
     },
-  }).on('select2:unselecting', function() {
+  }).on('select2:unselecting', function () {
     if (submit) {
       $('button[name="action"][value="' + submit + '"]').prop('disabled', true)
     }
     $(this).data('unselecting', true)
-  }).on('select2:opening', function(e) {
+  }).on('select2:opening', function (e) {
     if ($(this).data('unselecting')) {
       $(this).removeData('unselecting')
       e.preventDefault()
     }
-  }).on('select2:selecting', function(e) {
+  }).on('select2:selecting', function (e) {
     if (submit) {
       $('button[name="action"][value="' + submit + '"]').prop('disabled', false)
     }
@@ -765,20 +765,26 @@ function escape_html(val) {
     return val
   }
   return val.replace(/&/g, '&amp;')  // First, escape ampersands
-            .replace(/"/g, '&quot;') // then double-quotes
-            .replace(/'/g, '&#39;')  // and single quotes
-            .replace(/</g, '&lt;')   // and less-than signs
-            .replace(/>/g, '&gt;');  // and greater-than signs
+    .replace(/"/g, '&quot;') // then double-quotes
+    .replace(/'/g, '&#39;')  // and single quotes
+    .replace(/</g, '&lt;')   // and less-than signs
+    .replace(/>/g, '&gt;');  // and greater-than signs
 }
 
 function configure_pagination(paginate_on_scroll = true) {
-  $.endlessPaginate({paginateOnScroll: paginate_on_scroll, onCompleted: function () {
-    toggle_tooltip()
-    inline_button()
-    confirm_action()
-    checkbox_mouseover_toggle()
-    $(window).trigger('resize')
-  }})
+  $.endlessPaginate({
+    paginateOnScroll: paginate_on_scroll,
+    onCompleted: function () {
+      toggle_tooltip()
+      inline_button()
+      confirm_action()
+      checkbox_mouseover_toggle()
+      $(window).trigger('resize')
+    },
+  })
+  $(document).off('ajaxError.endlessPaginate').on('ajaxError.endlessPaginate', function (_event, xhr, settings) {
+    log_ajax_error(xhr)
+  })
 }
 
 
@@ -789,17 +795,17 @@ function configure_pagination(paginate_on_scroll = true) {
 var mouse_is_down = false
 
 function checkbox_mouseover_toggle() {
-  $('input.mouseover-toggle[type="checkbox"]').removeClass('mouseover-toggle').mouseover(function() {
+  $('input.mouseover-toggle[type="checkbox"]').removeClass('mouseover-toggle').mouseover(function () {
     if (mouse_is_down) {
       $(this).prop('checked', !$(this).prop('checked'))
     }
   })
 }
 
-$(function() {
-  $(document).mousedown(function() {
+$(function () {
+  $(document).mousedown(function () {
     mouse_is_down = true
-  }).mouseup(function() {
+  }).mouseup(function () {
     mouse_is_down = false
   })
   checkbox_mouseover_toggle()
@@ -813,7 +819,7 @@ $(function() {
 function clear_url_parameters() {
   var url = new URL(window.location.href)
   if (url.searchParams.has('search') || url.searchParams.has('sort_order')) {
-    var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play', 'full_table', 'unfreezing'])
+    var disabled_fields = new Set(['timeline', 'charts', 'fullscreen', 'play', 'fulltable', 'unfreezing'])
     var to_remove = new Set()
     var remove_sort = true
     var sort_orders = new Array()
@@ -835,7 +841,7 @@ function clear_url_parameters() {
       to_remove.add('sort_order')
     }
     if (sort_orders.length > 1) {
-      update_urls_params({sort_order: sort_orders[sort_orders.length - 1]})
+      update_urls_params({ sort_order: sort_orders[sort_orders.length - 1] })
     }
     if (to_remove) {
       to_remove = [...to_remove].reduce((obj, key) => { obj[key] = undefined; return obj }, {})
@@ -856,7 +862,7 @@ function user_locale() {
 }
 
 function is_12_hour_clock() {
-  var time_format_options = {hour: 'numeric', minute: 'numeric'}
+  var time_format_options = { hour: 'numeric', minute: 'numeric' }
   var date_time_format = new Intl.DateTimeFormat(user_locale(), time_format_options)
   var time_parts = date_time_format.formatToParts(new Date())
   return time_parts.some(time_part => time_part.type === 'dayPeriod')
@@ -868,7 +874,7 @@ function is_12_hour_clock() {
  */
 
 $(() => {
-  $('[data-init="select2"]').select2({theme: 'bootstrap', dropdownAutoWidth: true})
+  $('[data-init="select2"]').select2({ theme: 'bootstrap', dropdownAutoWidth: true })
 
   $(document).on('select2:open', (e) => {
     const search_field = document.querySelector('.select2-container--open .select2-search__field')
@@ -920,12 +926,12 @@ function restarred() {
   var thead_height = $('#table-inner-scroll thead').height() || 0
   var offset_height = 0
   var total_count = 0
-  $(selector).each(function() {
+  $(selector).each(function () {
     total_height += $(this).height()
     total_count += 1
-  }).each(function(index) {
+  }).each(function (index) {
     var el = $(this)
-    var selection = $.browser.firefox? el.find('td') : el
+    var selection = $.browser.firefox ? el.find('td') : el
     selection.css({
       'top': offset_height + thead_height - index,
       'bottom': total_height - offset_height - el.height() - (total_count - index + 1),
@@ -940,7 +946,7 @@ function restarred() {
 
 Toastify.defaults.style = {}
 Toastify.defaults.position = 'right'
-Toastify.defaults.gravity= 'bottom'
+Toastify.defaults.gravity = 'bottom'
 Toastify.defaults.stopOnFocus = true
 Toastify.defaults.duration = 4000
 Toastify.defaults.escapeMarkup = true
@@ -953,7 +959,7 @@ function notify(message, type = 'success', duration = Toastify.defaults.duration
     duration = options.duration ?? duration
     escapeHTML = options.escapeHTML ?? escapeHTML
   }
-  type = {error: 'danger', warn: 'warning'}[type] || type
+  type = { error: 'danger', warn: 'warning' }[type] || type
   if (!['danger', 'warning', 'success', 'info'].includes(type)) {
     type = 'undefined'
   }
@@ -1038,7 +1044,7 @@ function update_table_sticky_side(side) {
     columns = $(columns.get().reverse())
   }
 
-  columns.each(function() {
+  columns.each(function () {
     var table = $(this).closest('table')
     var width = table.data(attr_width) || 0
     var index_column = $(this).index()
@@ -1047,7 +1053,7 @@ function update_table_sticky_side(side) {
     var container = table.closest('.table-responsive')
     var rows = container.find('tr:not(".endless_container")').find('td,th').filter(':nth-child(' + (index_column + 1) + ')')
 
-    rows.each(function() {
+    rows.each(function () {
       var cell = $(this)
       max_width = Math.max(max_width, cell.outerWidth())
       cell.addClass('sticky-' + side + '-column')
@@ -1064,14 +1070,14 @@ function update_table_sticky_side(side) {
 
 function update_table_tr_hover() {
   $('table.table-hover tr:not(.sticky-hovered):has(td)').addClass('sticky-hovered').hover(
-    function() {
+    function () {
       var $el = $(this)
       if (this.style.backgroundColor) {
         $el.data('background-color', this.style.backgroundColor)
         this.style.backgroundColor = ''
       }
     },
-    function() {
+    function () {
       var $el = $(this)
       if ($el.data('background-color')) {
         this.style.backgroundColor = $el.data('background-color')
@@ -1086,7 +1092,7 @@ function update_table_sticky() {
 
   var width = 0
   var seen = []
-  $('tr .sticky-column').each(function() {
+  $('tr .sticky-column').each(function () {
     var column = $(this).attr('data-sticky-column')
     if (seen[column]) {
       return
@@ -1103,8 +1109,8 @@ function update_table_sticky() {
 }
 
 // Fixed transparent table header
-$(function() {
-  $('table tr').each(function() {
+$(function () {
+  $('table tr').each(function () {
     $(this).css('background-color', get_effective_background(this))
   })
   update_table_tr_hover()
@@ -1117,12 +1123,12 @@ $(function() {
 
 
 function table_scroll_appearance() {
-  $('.table-responsive:has(table)').each(function() {
+  $('.table-responsive:has(table)').each(function () {
     var container = $(this)
     var table = container.find('table')
     if (container.width() && this.scrollWidth && container.width() + 20 < this.scrollWidth) {
       table.addClass('table-scrolling')
-      table.find('th[data-table-scrolling-class]').each(function() {
+      table.find('th[data-table-scrolling-class]').each(function () {
         var new_class = $(this).attr('data-table-scrolling-class')
         var table = $(this).closest('table')
         var index_column = $(this).index()
@@ -1160,16 +1166,16 @@ function add_to_coder_list(element, event) {
       uuid: uuid,
       account: account,
     },
-    success: function(data) {
-      data['messages'].forEach(function(message) {
+    success: function (data) {
+      data['messages'].forEach(function (message) {
         notify(message.message, message.level)
       })
     },
-    error: function(response) {
+    error: function (response) {
       $el.effect('shake')
       log_ajax_error(response)
     },
-    complete: function(data) {
+    complete: function (data) {
       $el.find('i').toggleClass('fa-fade')
     },
   })

@@ -1,0 +1,5 @@
+{% if perms.clist.view_full_table %}
+<div class="input-group input-group-sm">
+    <button class="btn btn-default btn-sm{% if "fulltable" in request.GET %} active{% endif %}" name="fulltable">{% icon_to 'fulltable' %}</button>
+</div>
+{% endif %}

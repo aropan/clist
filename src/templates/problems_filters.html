@@ -19,6 +19,10 @@
 
   {% include "contest_filter.html" with has_problems=True %}
 
+  {% if request.GET.list %}
+  {% include "list_filter.html" %}
+  {% endif %}
+
   {% include "tag_filter.html" %}
 
   {% include "field_to_select.html" with field="field" data=custom_fields_select|simple_select_data %}

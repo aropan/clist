@@ -54,6 +54,8 @@
     <button type="submit" class="btn btn-default btn-sm confirm-action" data-confirm-class="btn-danger" data-pre-action="pre-delete" data-action="Delete" name="action" value="delete">{% icon_to 'delete' %}</button>
   </div>
   {% endif %}
+
+  {% include "fulltable_filter.html" %}
 </form>
 
 <script>configure_pagination()</script>

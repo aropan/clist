@@ -1,5 +1,6 @@
-
+{% if not without_pagination %}
 {% lazy_paginate per_page,per_page_more entities using 'entities_paging' %}
+{% endif %}
 
 {% for entity in entities %}
 <tr>
@@ -47,4 +48,6 @@
 </tr>
 {% endfor %}
 
+{% if not without_pagination %}
 {% show_more_table %}
+{% endif %}

@@ -126,10 +126,8 @@
       <button href="#" class="standings-auto-reload btn btn-default btn-sm{% if with_autoreload%} hidden{% endif %}" data-value="on">{% icon_to "off" "Enable auto reload" %}</button>
     </div>
 
-    {% if perms.clist.view_full_table and contest.n_statistics <= 10000 %}
-    <div class="input-group input-group-sm">
-      <button class="btn btn-default btn-sm" name="full_table">{% icon_to 'full_table' %}</button>
-    </div>
+    {% if contest.n_statistics <= 10000 %}
+    {% include "fulltable_filter.html" %}
     {% endif %}
 
     {% include "field_to_input.html" with field="field_instead_key" default=request.GET|get_item:"field_instead_key" force_collapse=True %}

@@ -154,7 +154,6 @@ services:
     volumes:
       - ./config/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
-      - loki_wal:/wal
     restart: unless-stopped
   promtail:
     image: grafana/promtail:latest
@@ -272,12 +271,6 @@ volumes:
       type: none
       o: bind
       device: ./volumes/loki_data
-  loki_wal:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./volumes/loki_wal
   promtail_positions:
     driver: local
     driver_opts:
