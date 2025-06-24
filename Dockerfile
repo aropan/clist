@@ -1,4 +1,4 @@
-FROM python:3.10.11 as base
+FROM python:3.10.11 AS base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -45,7 +45,7 @@ ENV APPDIR=/usr/src/clist
 WORKDIR $APPDIR
 
 
-FROM base as dev
+FROM base AS dev
 ENV DJANGO_ENV_FILE .env.dev
 RUN apt install -y redis-server
 CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker system default parse_statistics parse_accounts" "*.py"; python manage.py runserver 0.0.0.0:10042'
@@ -56,7 +56,7 @@ RUN cat ipython_config.py >> ~/.ipython/profile_default/ipython_config.py
 RUN rm ipython_config.py
 
 
-FROM base as prod
+FROM base AS prod
 ENV DJANGO_ENV_FILE .env.prod
 RUN apt install -y cron redis-server logrotate
 
@@ -81,7 +81,7 @@ RUN chmod 0644 /etc/logrotate.d/clist
 CMD supervisord -c /etc/supervisord.conf
 
 
-FROM nginx:stable-alpine as nginx
+FROM nginx:stable-alpine AS nginx
 # logrotate
 RUN apk add --no-cache logrotate
 COPY config/nginx/logrotate.d/nginx /etc/logrotate.d/nginx
@@ -95,7 +95,7 @@ RUN crontab /etc/cron.d/nginx
 CMD crond && nginx -g "daemon off;"
 
 
-FROM postgres:14.3-alpine as postgres
+FROM postgres:14.3-alpine AS postgres
 # pg_repack
 RUN apk add --no-cache --virtual .build-deps \
         gcc \
