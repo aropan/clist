@@ -65,14 +65,13 @@
     usort($raw_contests, 'upsolving_priority_sort');
     $ids = array();
     foreach ($raw_contests as $raw_contest) {
-
         if (isset($ids[$raw_contest['key']])) {
             continue;
         }
         $ids[$raw_contest['key']] = true;
 
         $page = curlexec($raw_contest['url']);
-        preg_match_all('#<div[^>]*class="status__prop"[^>]*>[^<]*<div[^>]*>(?P<name>[^<]+)</div>[^<]*<div[^>]*>(?<value>[^<]*)<(?:time[^>]*timestamp[^:]*:(?P<ts>[0-9]+))?#', $page, $ms, PREG_SET_ORDER);
+        preg_match_all('#<div[^>]*class="status__prop"[^>]*>[^<]*<[^>]*>(?P<name>[^<]+)</[^>]*>[^<]*<[^>]*>(?<value>[^<]*)<(?:time[^>]*timestamp[^:]*:(?P<ts>[0-9]+))?#', $page, $ms, PREG_SET_ORDER);
         $values = array();
         foreach ($ms as $m) {
             $values[$m['name']] = $m;

@@ -238,8 +238,10 @@ class Account(BaseModel):
 
     class Meta:
         indexes = [
+            models.Index(fields=['resource']),
             models.Index(fields=['resource', 'name']),
             models.Index(fields=['resource', 'country']),
+            models.Index(fields=['resource', 'updated'], condition=Q(updated__isnull=False), name="account_updated"),
 
             GistIndexTrgrmOps(fields=['key']),
             GistIndexTrgrmOps(fields=['name']),

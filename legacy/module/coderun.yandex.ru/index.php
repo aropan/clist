@@ -25,14 +25,24 @@
     }
     $data = get_item($data, ['result']);
     $tracks = pop_item($data, ['tracks']);
+    $skip_stage = false;
     foreach ($tracks as $track) {
       $data['slug'] = $slug;
       $data['track'] = $track;
-      $title = $data['title'] . '. ' . $track['title'];
+
       $url = url_merge($HOST_URL, "/seasons/$slug/tracks/{$track['slug']}/");
       $start_time = $data['startDate'];
       $end_time = $data['endDate'];
-      $key = $slug . '/' . $track['slug'];
+
+      if (count($tracks) == 1 && $data['title'] == $track['title']) {
+        $skip_stage = true;
+        $title = $data['title'];
+        $key = $slug;
+      } else {
+        $title = $data['title'] . '. ' . $track['title'];
+        $key = $slug . '/' . $track['slug'];
+      }
+
       $contests[] = array(
         'start_time' => $start_time,
         'end_time' => $end_time,
@@ -46,7 +56,7 @@
       );
     }
 
-    if (empty($tracks)) {
+    if (empty($tracks) || $skip_stage) {
       continue;
     }
 

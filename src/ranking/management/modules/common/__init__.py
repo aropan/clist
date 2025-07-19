@@ -21,7 +21,7 @@ from utils.requester import requester
 
 def create_requester():
     req = requester(
-        cookie_filename='sharedfiles/cookies.txt',
+        cookie_filename=os.environ.get('REQUESTER_COOKIE_FILENAME', 'sharedfiles/cookies.txt'),
         proxy_filepath='sharedfiles/proxy',
     )
     req.caching = 'REQUESTER_CACHING' in os.environ

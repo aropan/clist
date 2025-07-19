@@ -48,7 +48,7 @@ WORKDIR $APPDIR
 FROM base AS dev
 ENV DJANGO_ENV_FILE .env.dev
 RUN apt install -y redis-server
-CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker system default parse_statistics parse_accounts" "*.py"; python manage.py runserver 0.0.0.0:10042'
+CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker system default parse_statistics parse_accounts" "**/*.py"; python manage.py runserver 0.0.0.0:10042'
 
 COPY config/ipython_config.py .
 RUN ipython profile create
@@ -98,17 +98,17 @@ CMD crond && nginx -g "daemon off;"
 FROM postgres:14.3-alpine AS postgres
 # pg_repack
 RUN apk add --no-cache --virtual .build-deps \
-        gcc \
-        g++ \
-        make \
-        musl-dev \
-        postgresql-dev \
-        git \
-        lz4-dev \
-        zlib-dev \
-        bash \
-        util-linux \
-        gawk
+    gcc \
+    g++ \
+    make \
+    musl-dev \
+    postgresql-dev \
+    git \
+    lz4-dev \
+    zlib-dev \
+    bash \
+    util-linux \
+    gawk
 RUN cd /tmp \
     && git clone --depth 1 --branch ver_1.5.1 https://github.com/reorg/pg_repack.git \
     && cd pg_repack \
@@ -126,5 +126,10 @@ RUN crontab /etc/cron.d/postgres
 # supervisord
 RUN apk add --no-cache supervisor
 COPY config/postgres/supervisord.conf /etc/supervisord.conf
+# postgresql.conf
+RUN mkdir -p /usr/src/clist/config/postgres
+COPY config/postgres/postgresql.conf /usr/src/clist/config/postgres/postgresql.conf
+RUN chown -R postgres:postgres /usr/src/clist/config/postgres
+RUN chmod 644 /usr/src/clist/config/postgres/postgresql.conf
 
 CMD supervisord -c /etc/supervisord.conf

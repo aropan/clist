@@ -100,6 +100,7 @@ def main():
     fill_template('.env.db')
     fill_template('.env.netdata', accept_default=True, allow_empty=True)
     fill_template('.env.sentry', accept_default=True, allow_empty=True)
+    fill_template('.env.grafana', accept_default=True, allow_empty=True)
     fill_template('src/.env.dev', accept_default=True)
     fill_template('src/.env.prod', accept_default=True)
     fill_template('src/pyclist/conf.py')

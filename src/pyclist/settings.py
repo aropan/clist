@@ -257,6 +257,8 @@ if not PYLINT_ENV:
         'PASSWORD': env('POSTGRES_PASSWORD'),
         'HOST': env('POSTGRES_HOST'),
         'PORT': env('POSTGRES_PORT'),
+        'CONN_MAX_AGE': 60,  # seconds
+        'CONN_HEALTH_CHECKS': True,
     })
 
 DATABASES = {

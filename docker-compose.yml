@@ -77,7 +77,8 @@ services:
       context: .
       target: postgres
     networks:
-      - clist_network
+      clist_network:
+        ipv4_address: 172.42.0.105
     volumes:
       - postgres_data:/var/lib/postgresql/data/
       - ./src/scripts/:/usr/src/clist/scripts/

@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Case, F, IntegerField, Min, Q, Value, When
 from django.utils import timezone
+from django_print_sql import print_sql_decorator
 from tailslide import Percentile
 from tqdm import tqdm
 
@@ -19,6 +20,7 @@ from clist.models import Resource
 from logify.models import EventLog, EventStatus
 from notification.models import Subscription
 from notification.utils import compose_message_by_submissions, send_messages
+from pyclist.decorators import analyze_db_queries
 from ranking.management.modules.excepts import ExceptionParseAccounts, ProxyLimitReached
 from ranking.models import Account
 from ranking.utils import account_update_contest_additions, rename_account
@@ -96,11 +98,13 @@ class Command(BaseCommand):
         parser.add_argument('--coder-list', type=str, help='account from coder list')
         parser.add_argument('--split-by-resource', action='store_true', help='Separately for each resource')
 
+    @print_sql_decorator(count_only=True)
+    @analyze_db_queries()
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        has_custom_params = args.resources or args.query or args.limit or args.all
+        has_custom_params = args.query or args.limit or args.all
         regular_update = not has_custom_params
 
         if args.resources:
@@ -169,7 +173,7 @@ class Command(BaseCommand):
                     accounts_filter = CoderList.accounts_filter(uuids=[args.coder_list])
                     accounts = accounts.filter(accounts_filter)
 
-                total = accounts.count()
+                total = accounts.count() if regular_update else resource.n_accounts
                 if not total:
                     continue
 

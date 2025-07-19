@@ -1,0 +1,6 @@
+line-length = 120
+extend-exclude = ["*/migrations"]
+
+[lint]
+select = ["E", "F"]
+ignore = ["I001"]

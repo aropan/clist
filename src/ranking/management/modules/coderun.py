@@ -41,8 +41,8 @@ class Statistic(BaseModule):
                 for row in data['data']:
                     problem_url = self.PROBLEM_URL_FORMAT_.format(season=season, track=track, problem=row['slug'])
                     problem_url = urljoin(self.host, problem_url)
-                    tags = row.pop('tags') or []
-                    tags.extend(row.pop('groupSlugs') or [])
+                    tags = row.pop('tags', None) or []
+                    tags.extend(row.pop('groupSlugs', None) or [])
                     if row.pop('isChallenge', None):
                         tags.append('challenge')
                     problem = {
@@ -61,6 +61,9 @@ class Statistic(BaseModule):
                             continue
                         if k not in problem:
                             problem[k] = v
+                    for src, dst in [("literal_difficulty", "difficulty")]:
+                        if problem.get(src) and dst not in problem:
+                            problem[dst] = problem.pop(src)
 
                     if 'starting_at' in problem and 'status' not in problem:
                         if problem['starting_at'] is None or now() > parse_datetime(problem['starting_at']):

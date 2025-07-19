@@ -46,6 +46,20 @@ def create_req():
 req = LazyObject(create_req)
 
 
+def post_save_req(func):
+
+    @functools.wraps(func)
+
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            return result
+        finally:
+            if req.is_initialized:
+                req.save()
+
+    return wrapper
+
 class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
     RESULTS_URL_ = '{0.url}/results'
@@ -67,7 +81,7 @@ class Statistic(BaseModule):
 
     def __del__(self):
         if req.is_initialized:
-            req.__exit__()
+            req.save()
 
     @staticmethod
     def _get(*args, **kwargs):
@@ -257,6 +271,7 @@ class Statistic(BaseModule):
                     submissions_info['last_submission_time'] = \
                         last_submission_time if last_page == self.DEFAULT_LAST_PAGE else last_page_st
 
+    @post_save_req
     def get_standings(self, users=None, statistics=None, **kwargs):
         result = {}
         standings_url = self.standings_url or self.STANDING_URL_.format(self)
@@ -612,6 +627,7 @@ class Statistic(BaseModule):
         return standings
 
     @staticmethod
+    @post_save_req
     def get_users_infos(users, resource, accounts, pbar=None):
 
         key_value_re = re.compile(
@@ -702,6 +718,7 @@ class Statistic(BaseModule):
         return {'solution': solution}
 
     @staticmethod
+    @post_save_req
     def update_submissions(account, resource, **kwargs):
         info = deepcopy(account.info.setdefault('submissions_', {}))
         info.setdefault('count', 0)

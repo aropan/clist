@@ -1,4 +1,3 @@
-
 import json
 import random
 import re
@@ -23,27 +22,27 @@ from django.urls import reverse
 from django.utils import timezone
 from flatten_dict import flatten
 
-from clist.templatetags.extras import allowed_redirect, as_number, relative_url
+from clist.templatetags.extras import allowed_redirect
 from my_oauth.models import Form, Service, Token
 from my_oauth.utils import access_token_from_response, refresh_acccess_token
 from true_coders.models import Coder
 
 
 def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
+    return "".join(random.choice(chars) for _ in range(size))
 
 
 def query(request, name):
     service = get_object_or_404(Service.objects, name=name)
     args = model_to_dict(service)
-    args['redirect_uri'] = settings.HTTPS_HOST_URL_ + reverse('auth:response', args=(name, ))
-    args['state'] = generate_state()
+    args["redirect_uri"] = settings.HTTPS_HOST_URL_ + reverse("auth:response", args=(name,))
+    args["state"] = generate_state()
     if service.code_args:
         args.update(json.loads(service.code_args % args))
-    if (code_args := request.session.pop('token_code_args', None)):
+    if code_args := request.session.pop("token_code_args", None):
         args.update(json.loads(code_args % args))
-    request.session['state'] = args['state']
-    url = re.sub('[\n\r]', '', service.code_uri % args)
+    request.session["state"] = args["state"]
+    url = re.sub("[\n\r]", "", service.code_uri % args)
     return redirect(url)
 
 
@@ -51,58 +50,57 @@ def query(request, name):
 def unlink(request, name):
     coder = request.user.coder
     if coder.token_set.count() < 2:
-        messages.error(request, 'Not enough services')
+        messages.error(request, "Not enough services")
     else:
         coder.token_set.filter(service__name=name).delete()
-    return allowed_redirect(reverse('coder:settings', kwargs={'tab': 'social'}))
+    return allowed_redirect(reverse("coder:settings", kwargs={"tab": "social"}))
 
 
 @login_required
 def refresh(request, name):
-    token = get_object_or_404(request.user.coder.token_set,
-                              service__name=name,
-                              service__refresh_token_uri__isnull=False)
+    token = get_object_or_404(
+        request.user.coder.token_set,
+        service__name=name,
+        service__refresh_token_uri__isnull=False,
+    )
     access_token = refresh_acccess_token(token)
-    request.session['token_url'] = reverse('coder:settings', kwargs={'tab': 'social'})
+    request.session["token_url"] = reverse("coder:settings", kwargs={"tab": "social"})
     ret = process_access_token(request, token.service, access_token)
-    request.logger.success(f'{token.service.title} token refreshed')
+    request.logger.success(f"{token.service.title} token refreshed")
     return ret
 
 
 def process_data(request, service, access_token, data):
     d = deepcopy(data)
     d.update(access_token)
-    d = flatten(d, reducer='underscore')
+    d = flatten(d, reducer="underscore")
 
     user_id = d.get(service.user_id_field, None)
     email = d.get(service.email_field, None)
-    redirect_url = request.session.pop('token_url', None)
+    redirect_url = request.session.pop("token_url", None)
     if not user_id:
-        raise Exception('User ID not found.')
+        raise Exception("User ID not found.")
     if not email and not redirect_url:
-        raise Exception('Email not found.')
+        raise Exception("Email not found.")
 
-    token, created = Token.objects.get_or_create(service=service, user_id=user_id)
+    token, _ = Token.objects.get_or_create(service=service, user_id=user_id)
     token.access_token = access_token
     token.data = data
     token.email = email
-    expires_in = as_number(d.get('expires_in'), force=True)
-    if expires_in:
-        token.expires_at = timezone.now() + timedelta(seconds=expires_in)
+    token.update_expires_at(d.get("expires_in"))
     token.save()
 
     if redirect_url:
-        token_id_field = request.session.pop('token_id_field', None)
+        token_id_field = request.session.pop("token_id_field", None)
         if token_id_field:
             request.session[token_id_field] = token.id
         return allowed_redirect(redirect_url)
 
-    request.session['token_id'] = token.id
-    return redirect('auth:signup')
+    request.session["token_id"] = token.id
+    return redirect("auth:signup")
 
 
 def process_access_token(request, service, access_token):
-
     if service.data_header:
         args = model_to_dict(service)
         args.update(access_token)
@@ -116,7 +114,7 @@ def process_access_token(request, service, access_token):
         response = requests.get(url, headers=headers)
 
         if response.status_code != requests.codes.ok:
-            raise Exception('Response status code not equal ok.')
+            raise Exception("Response status code not equal ok.")
 
         response = json.loads(response.text)
         while isinstance(response, list) or isinstance(response, dict) and len(response) == 1:
@@ -127,7 +125,7 @@ def process_access_token(request, service, access_token):
                     break
                 if not isinstance(d, dict):
                     continue
-                if d.get('primary') and not response.get('primary'):
+                if d.get("primary") and not response.get("primary"):
                     response = d
 
         data.update(response)
@@ -139,21 +137,21 @@ def response(request, name):
     service = get_object_or_404(Service.objects, name=name)
     state = request.session.get(service.state_field, None)
     try:
-        if state is None or state != request.GET.get('state'):
-            raise KeyError('Not found state')
-        del request.session['state']
+        if state is None or state != request.GET.get("state"):
+            raise KeyError("Not found state")
+        del request.session["state"]
         args = model_to_dict(service)
         get_args = list(request.GET.items())
         args.update(dict(get_args))
-        args['redirect_uri'] = settings.HTTPS_HOST_URL_ + reverse('auth:response', args=(name, ))
-        if 'code' not in args:
-            raise ValueError(f'Not found code. Received {get_args}')
+        args["redirect_uri"] = settings.HTTPS_HOST_URL_ + reverse("auth:response", args=(name,))
+        if "code" not in args:
+            raise ValueError(f"Not found code. Received {get_args}")
 
         if service.token_post:
             post = json.loads(service.token_post % args)
             response = requests.post(service.token_uri, data=post)
         else:
-            url = re.sub('[\n\r]', '', service.token_uri % args)
+            url = re.sub("[\n\r]", "", service.token_uri % args)
             response = requests.get(url)
         access_token = access_token_from_response(response)
         return process_access_token(request, service, access_token)
@@ -163,48 +161,48 @@ def response(request, name):
 
 
 def login(request):
-    request.session.pop('token_url', None)
+    request.session.pop("token_url", None)
 
-    redirect_url = request.GET.get('next')
+    redirect_url = request.GET.get("next")
     if request.user.is_authenticated:
         return allowed_redirect(redirect_url)
 
     session_durations = settings.SESSION_DURATIONS_
-    session_duration = request.POST.get('session_duration')
+    session_duration = request.POST.get("session_duration")
     if session_duration in session_durations:
-        request.session.set_expiry(session_durations[session_duration]['value'])
+        request.session.set_expiry(session_durations[session_duration]["value"])
 
-    services = Service.active_objects.annotate(n_tokens=Count('token')).order_by('-n_tokens')
+    services = Service.active_objects.annotate(n_tokens=Count("token")).order_by("-n_tokens")
     if not services:
-        action = request.POST.get('action')
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        if action == 'login':
+        action = request.POST.get("action")
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        if action == "login":
             user = auth.authenticate(request, username=username, password=password)
             if user is None:
-                return HttpResponseBadRequest('Authentication failed')
+                return HttpResponseBadRequest("Authentication failed")
             auth.login(request, user)
             return allowed_redirect(redirect_url)
 
-    request.session['next'] = redirect_url
-    service = request.POST.get('service')
+    request.session["next"] = redirect_url
+    service = request.POST.get("service")
     if service:
         return query(request, service)
 
     return render(
         request,
-        'login.html',
+        "login.html",
         {
-            'services': services,
-            'session_durations': session_durations,
+            "services": services,
+            "session_durations": session_durations,
         },
     )
 
 
-USERNAME_EMPTY_ERROR = 'Username can not be empty.'
-USERNAME_LONG_ERROR = '30 characters or fewer.'
-USERNAME_WRONG_ERROR = 'Username may contain alphanumeric, _, @, +, . and - characters.'
-USERNAME_EXIST_ERROR = 'User already exist.'
+USERNAME_EMPTY_ERROR = "Username can not be empty."
+USERNAME_LONG_ERROR = "30 characters or fewer."
+USERNAME_WRONG_ERROR = "Username may contain alphanumeric, _, @, +, . and - characters."
+USERNAME_EXIST_ERROR = "User already exist."
 
 
 def username_error(username):
@@ -212,7 +210,7 @@ def username_error(username):
         return USERNAME_EMPTY_ERROR
     elif len(username) > 30:
         return USERNAME_LONG_ERROR
-    elif not re.match(r'^[\-A-Za-z0-9_@\+\.]{1,30}$', username):
+    elif not re.match(r"^[\-A-Za-z0-9_@\+\.]{1,30}$", username):
         return USERNAME_WRONG_ERROR
     elif User.objects.filter(username__iexact=username).exists():
         return USERNAME_EXIST_ERROR
@@ -221,7 +219,7 @@ def username_error(username):
 
 def signup(request, action=None):
     context = {}
-    token_id = request.session.pop('token_id', None)
+    token_id = request.session.pop("token_id", None)
     if token_id:
         try:
             token = Token.objects.get(id=token_id)
@@ -239,7 +237,7 @@ def signup(request, action=None):
                 token.coder = user.coder
                 token.save()
         if user and user.is_active:
-            user.backend = 'django.contrib.auth.backends.ModelBackend'
+            user.backend = "django.contrib.auth.backends.ModelBackend"
             auth.login(request, user)
             return signup(request)
 
@@ -248,15 +246,15 @@ def signup(request, action=None):
             token.save()
             return signup(request)
 
-        request.session['token_id'] = token_id
+        request.session["token_id"] = token_id
 
         q_token = Q(email=token.email)
 
-        if request.POST and 'signup' in request.POST:
-            username = request.POST.get('username', None)
+        if request.POST and "signup" in request.POST:
+            username = request.POST.get("username", None)
             error = username_error(username)
             if error:
-                context['error'] = error
+                context["error"] = error
                 if error == USERNAME_EXIST_ERROR:
                     q_token = q_token | Q(coder__user__username__iexact=username)
             else:
@@ -267,7 +265,7 @@ def signup(request, action=None):
                 return signup(request)
 
         tokens = Token.objects.filter(q_token).filter(~Q(id=token_id))
-        context['tokens'] = tokens
+        context["tokens"] = tokens
 
         if tokens.count():
             if token.n_viewed_tokens >= settings.LIMIT_N_TOKENS_VIEW:
@@ -278,17 +276,17 @@ def signup(request, action=None):
                     token.n_viewed_tokens = 0
                     token.tokens_view_time = None
                 else:
-                    context['limit_tokens_view'] = True
+                    context["limit_tokens_view"] = True
             token.n_viewed_tokens += 1
             token.save()
 
-        context['token'] = token
+        context["token"] = token
     else:
         if request.user.is_authenticated:
-            return allowed_redirect(request.session.pop('next', reverse('clist:main')))
-        return redirect('auth:login')
+            return allowed_redirect(request.session.pop("next", reverse("clist:main")))
+        return redirect("auth:login")
 
-    return render(request, 'signup.html', context)
+    return render(request, "signup.html", context)
 
 
 def logout(request):
@@ -297,70 +295,69 @@ def logout(request):
     return redirect("/")
 
 
-@permission_required('my_oauth.view_services_dump_data')
+@permission_required("my_oauth.view_services_dump_data")
 def services_dumpdata(request):
     out = StringIO()
-    dumpdata.Command(stdout=out).run_from_argv([
-        'manage.py',
-        'dumpdata',
-        'my_oauth.service',
-        '--format', 'json'
-    ])
+    dumpdata.Command(stdout=out).run_from_argv(["manage.py", "dumpdata", "my_oauth.service", "--format", "json"])
     services = json.loads(out.getvalue())
     for service in services:
-        service['fields']['secret'] = None
-        service['fields']['app_id'] = None
+        service["fields"]["secret"] = None
+        service["fields"]["app_id"] = None
     return HttpResponse(json.dumps(services), content_type="application/json")
 
 
 def form(request, uuid):
     form = get_object_or_404(Form.objects, pk=uuid)
-    token_id = request.session.pop('form_token_id', None)
+    token_id = request.session.pop("form_token_id", None)
     token = Token.objects.filter(pk=token_id).first() if token_id else None
 
     if form.is_closed():
         token = None
         code = None
     elif token:
-        data = {k: quote(str(v)) for k, v in flatten(token.data, reducer='underscore').items()}
+        data = {k: quote(str(v)) for k, v in flatten(token.data, reducer="underscore").items()}
         code = form.code.format(**data)
     else:
         code = None
 
-    action = request.GET.get('action')
+    action = request.GET.get("action")
     if action:
         if form.is_closed():
-            return HttpResponseBadRequest('Form is closed')
-        form_url = reverse('auth:form', args=(uuid, ))
-        if action == 'login':
-            request.session['token_id_field'] = 'form_token_id'
-            request.session['token_url'] = form_url
-            request.session['token_code_args'] = form.service_code_args
-            return redirect(reverse('auth:query', args=(form.service.name, )))
-        elif action == 'logout':
-            request.session.pop('form_token_id', None)
-        elif action == 'register':
-            if request.headers.get('X-Secret') != form.secret:
-                return HttpResponseBadRequest('Unauthorized')
+            return HttpResponseBadRequest("Form is closed")
+        form_url = reverse("auth:form", args=(uuid,))
+        if action == "login":
+            request.session["token_id_field"] = "form_token_id"
+            request.session["token_url"] = form_url
+            request.session["token_code_args"] = form.service_code_args
+            return redirect(reverse("auth:query", args=(form.service.name,)))
+        elif action == "logout":
+            request.session.pop("form_token_id", None)
+        elif action == "register":
+            if request.headers.get("X-Secret") != form.secret:
+                return HttpResponseBadRequest("Unauthorized")
             register_url = form.register_url.format(**request.GET.dict())
             register_headers = form.register_headers.format(**request.headers)
             response = requests.post(register_url, headers=json.loads(register_headers))
             return JsonResponse(
                 {
-                    'status': 'ok',
-                    'code': response.status_code,
-                    'text': response.text,
+                    "status": "ok",
+                    "code": response.status_code,
+                    "text": response.text,
                 },
                 status=response.status_code,
             )
         else:
-            return HttpResponseBadRequest('Unknown action')
+            return HttpResponseBadRequest("Unknown action")
         return allowed_redirect(form_url)
 
-    return render(request, 'form.html', {
-        'form': form,
-        'code': code,
-        'token': token,
-        'nofavicon': True,
-        'nocounter': True,
-    })
+    return render(
+        request,
+        "form.html",
+        {
+            "form": form,
+            "code": code,
+            "token": token,
+            "nofavicon": True,
+            "nocounter": True,
+        },
+    )

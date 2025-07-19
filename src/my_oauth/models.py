@@ -1,9 +1,12 @@
 import re
 import uuid
+from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
 
+from clist.templatetags.extras import as_number
+from my_oauth.utils import refresh_acccess_token
 from pyclist.models import BaseManager, BaseModel
 from true_coders.models import Coder
 from utils.strings import generate_secret_64
@@ -25,8 +28,8 @@ class Service(BaseModel):
     token_post = models.TextField(blank=True)
     refresh_token_uri = models.TextField(null=True, blank=True)
     refresh_token_post = models.TextField(null=True, blank=True)
-    state_field = models.CharField(max_length=255, default='state')
-    email_field = models.CharField(max_length=255, default='email')
+    state_field = models.CharField(max_length=255, default="state")
+    email_field = models.CharField(max_length=255, default="email")
     user_id_field = models.CharField(max_length=255)
     data_uri = models.TextField()
     data_header = models.TextField(null=True, blank=True, default=None)
@@ -53,21 +56,42 @@ class Token(BaseModel):
     n_viewed_tokens = models.PositiveSmallIntegerField(default=0, blank=True)
 
     class Meta:
-        unique_together = ('service', 'user_id', )
+        unique_together = (
+            "service",
+            "user_id",
+        )
 
     def __str__(self):
         return "%s on %s" % (self.coder, self.service)
 
     def email_hint(self):
-        login, domain = self.email.split('@')
+        login, domain = self.email.split("@")
 
         def hint(s):
-            regex = '(?<!^).'
+            regex = "(?<!^)."
             if len(s) > 3:
-                regex += '(?!$)'
-            return re.sub(regex, '.', s)
+                regex += "(?!$)"
+            return re.sub(regex, ".", s)
 
-        return f'{hint(login)}@{hint(domain)}'
+        return f"{hint(login)}@{hint(domain)}"
+
+    def update_expires_at(self, expires_in, force: bool = False):
+        expires_in = as_number(expires_in, force=True)
+        if expires_in is None:
+            if force:
+                self.expires_at = None
+            return
+        expires_at = timezone.now() + timedelta(seconds=expires_in)
+        if self.expires_at == expires_at:
+            return
+        self.expires_at = expires_at
+
+    def get_access_token(self):
+        if self.expires_at and self.expires_at < timezone.now():
+            self.access_token.update(refresh_acccess_token(self))
+            self.update_expires_at(self.access_token.get("expires_in"), force=True)
+            self.save(update_fields=["access_token", "expires_at"])
+        return self.access_token["access_token"]
 
 
 class Form(BaseModel):

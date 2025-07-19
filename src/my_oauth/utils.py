@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import json
 from urllib.parse import parse_qsl
 
@@ -9,7 +7,7 @@ from django.forms.models import model_to_dict
 
 def access_token_from_response(response):
     if response.status_code != requests.codes.ok:
-        raise Exception('Response status code not equal ok.')
+        raise Exception("Response status code not equal ok.")
     try:
         access_token = json.loads(response.text)
     except Exception:

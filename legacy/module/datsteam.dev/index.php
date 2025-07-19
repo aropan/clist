@@ -5,6 +5,10 @@
     $page = curlexec($events_url);
     preg_match_all('#<div[^>]*class="support-ticket[^"]*"[^>]*data-id="(?P<id>[^"]*)"[^>]*data-url="(?P<url>[^"]*)".*?<h[^>]*class="ticket-title"[^>]*>(?P<title>[^<]*)</h.>#s', $page, $matches, PREG_SET_ORDER);
 
+    $parse_full_list = isset($_GET['parse_full_list']);
+    $current_time = time();
+    $n_ended = 0;
+
     foreach ($matches as $contest) {
         $title = trim($contest['title']);
         $url = url_merge($events_url, $contest['url']);
@@ -41,5 +45,15 @@
             'rid' => $RID,
             'timezone' => $TIMEZONE,
         );
+
+        $end_time = strtotime($info['event-start']);
+        if ($end_time && $end_time < $current_time && !$parse_full_list) {
+            $n_ended += 1;
+        } else {
+            $n_ended = 0;
+        }
+        if ($n_ended >= 2) {
+            break;
+        }
     }
 ?>

@@ -131,6 +131,9 @@ class Proxer():
             self._data['proxies'] = {}
             self.add(env_proxy)
 
+        if environ.get('REQUESTER_PROXY_CLEAR'):
+            self._data['proxies'] = {}
+
         for proxy in self.proxies.values():
             self.init_proxy(proxy)
 
@@ -544,7 +547,7 @@ class requester():
 
     def __init__(self,
                  proxy=environ.get('REQUESTER_PROXY'),
-                 cookie_filename=None,
+                 cookie_filename=environ.get('REQUESTER_COOKIE_FILENAME'),
                  caching=None,
                  user_agent=None,
                  headers=None,

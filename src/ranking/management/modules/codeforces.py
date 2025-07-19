@@ -790,11 +790,12 @@ class Statistic(BaseModule):
             standings['options'].setdefault('timeline', {}).update({'attempt_penalty': 10 * 60,
                                                                     'challenge_score': False})
 
-        if (
-            phase != 'FINISHED' and self.end_time + timedelta(hours=3) > now or
-            abs(self.end_time - now) < timedelta(minutes=15)
-        ):
+        if phase != 'FINISHED' and self.end_time + timedelta(hours=1) > now:
             standings['timing_statistic_delta'] = timedelta(minutes=5)
+        elif abs(self.end_time - now) < timedelta(minutes=15):
+            standings['timing_statistic_delta'] = timedelta(minutes=10)
+        elif phase == 'SYSTEM_TEST' and self.end_time + timedelta(hours=48) > now:
+            standings['timing_statistic_delta'] = timedelta(minutes=15)
 
         if grouped:
             standings['grouped_team'] = grouped
