@@ -29,20 +29,20 @@ from el_pagination.decorators import page_template, page_templates
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
-from clist.templatetags.extras import (
-    allowed_redirect, as_number, format_time, get_country_name, get_item, get_problem_short, get_problem_title,
-    get_standings_divisions_order, has_update_statistics_permission, is_ip_field, is_optional_yes, is_private_field,
-    is_reject, is_solved, is_yes, redirect_login, time_in_seconds, timestamp_to_datetime
-)
+from clist.templatetags.extras import (allowed_redirect, as_number, format_time, get_country_name, get_item,
+                                       get_problem_short, get_problem_title, get_standings_divisions_order,
+                                       has_update_statistics_permission, is_ip_field, is_optional_yes, is_private_field,
+                                       is_reject, is_solved, is_yes, redirect_login, time_in_seconds,
+                                       timestamp_to_datetime)
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
-from pyclist.decorators import context_pagination, extra_context_without_pagination, inject_contest
+from pyclist.decorators import (context_pagination, extra_context_without_pagination, inject_contest,
+                                pagination_login_required)
 from pyclist.middleware import RedirectException
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
-from ranking.models import (
-    Account, AccountRenaming, Finalist, FinalistResourceInfo, Module, Stage, Statistics, VirtualStart
-)
+from ranking.models import (Account, AccountRenaming, Finalist, FinalistResourceInfo, Module, Stage, Statistics,
+                            VirtualStart)
 from ranking.utils import get_participation_contests
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, ListGroup, Party
@@ -280,13 +280,11 @@ def standings_list(request, template="standings_list.html"):
             values.pop(-1)
         running_contests = running_contests_
 
-        context.update(
-            {
-                "grouped_running_contests": grouped_running_contests,
-                "running_contests": running_contests,
-                "contests": contests,
-            }
-        )
+        context.update({
+            "grouped_running_contests": grouped_running_contests,
+            "running_contests": running_contests,
+            "contests": contests,
+        })
 
     return template, context
 
@@ -352,18 +350,16 @@ def _standings_highlight(contest, statistics, options):
                 if n_quota[k] <= quota:
                     n_highlight += 1
 
-                info.update(
-                    {
-                        "n": n_highlight,
-                        "out_of_highlight": True,
-                        "t_solving": p_info["solving"] - solving,
-                        "t_penalty": (
-                            p_info["penalty"] - penalty - round((p_info["solving"] - solving) * contest_penalty_time)
-                            if penalty is not None
-                            else None
-                        ),
-                    }
-                )
+                info.update({
+                    "n": n_highlight,
+                    "out_of_highlight": True,
+                    "t_solving": p_info["solving"] - solving,
+                    "t_penalty": (
+                        p_info["penalty"] - penalty - round((p_info["solving"] - solving) * contest_penalty_time)
+                        if penalty is not None
+                        else None
+                    ),
+                })
             elif n_quota[k] <= quota:
                 n_highlight += 1
                 lasts[k] = s.id
@@ -377,9 +373,12 @@ def _standings_highlight(contest, statistics, options):
             elif more and more["n"] < more["n_highlight"]:
                 more["n"] += 1
                 lasts[k] = s.id
-                info.update(
-                    {"n": more["n"], "solving": solving, "penalty": penalty, "n_highlight": more["n_highlight"]}
-                )
+                info.update({
+                    "n": more["n"],
+                    "solving": solving,
+                    "penalty": penalty,
+                    "n_highlight": more["n_highlight"],
+                })
                 if "n_highlight_prefix" in more:
                     info["prefix"] = more["n_highlight_prefix"]
                 if more["n"] == more["n_highlight"]:
@@ -415,12 +414,10 @@ def _standings_highlight(contest, statistics, options):
                         ret.setdefault("statistics_ids", set()).add(s.id)
                         if param.get("all"):
                             counter["_last"] = last_score
-    ret.update(
-        {
-            "data_1st_u": data_1st_u,
-            "participants_info": participants_info,
-        }
-    )
+    ret.update({
+        "data_1st_u": data_1st_u,
+        "participants_info": participants_info,
+    })
     return ret
 
 
@@ -1014,24 +1011,15 @@ def get_advancing_contests(contest):
     return ret
 
 
-@ratelimit(key="user_or_ip", rate="150/h")
-@page_templates(
-    (
-        ("standings_paging.html", "standings_paging"),
-        ("standings_groupby_paging.html", "groupby_paging"),
-    )
-)
+@ratelimit(key="user_or_ip", rate="300/h")
+@page_templates((
+    ("standings_paging.html", "standings_paging"),
+    ("standings_groupby_paging.html", "groupby_paging"),
+))
 @inject_contest()
+@pagination_login_required
 def standings(request, contest, other_contests=None, template="standings.html", extra_context=None):
     context = {}
-    # Allow anonymous users to see the default standings page,
-    # but require authentication for request that includes query parameters.
-    if not request.user.is_authenticated:
-        params = {k for k, v in request.GET.items() if v}
-        exclude_params = {"fullscreen", "autoreload", "detail", "timeline", "charts", "division", "groupby", "orderby"}
-        if params - exclude_params:
-            return redirect_login(request)
-
     contests_timelines = dict()
     contests_ids = dict()
     if other_contests is not None:
@@ -1049,13 +1037,11 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             updated_orderby = []
         else:
             orderby_set = set()
-            unique_orderby = reversed(
-                [
-                    f
-                    for k, f in [(f.lstrip("-"), f) for f in reversed(orderby)]
-                    if k not in orderby_set and not orderby_set.add(k)
-                ]
-            )
+            unique_orderby = reversed([
+                f
+                for k, f in [(f.lstrip("-"), f) for f in reversed(orderby)]
+                if k not in orderby_set and not orderby_set.add(k)
+            ])
             updated_orderby = [f for f in unique_orderby if not f.startswith("--")]
 
         if updated_orderby != orderby:
@@ -1404,7 +1390,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             statistics = statistics.filter(solving=score)
         else:
             if search.startswith("regex:"):
-                search = search[search.index(":") + 1:]
+                search = search[search.index(":") + 1 :]
                 suffix = "__regex"
             else:
                 suffix = "__icontains"
@@ -1643,9 +1629,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         if "medal" in contest_fields:
             for medal in settings.ORDERED_MEDALS_:
                 n_medal = f"n_{medal}"
-                statistics = statistics.annotate(
-                    **{f"{n_medal}": Count(Case(When(addition__medal__iexact=medal, then=1)))}
-                )
+                statistics = statistics.annotate(**{
+                    f"{n_medal}": Count(Case(When(addition__medal__iexact=medal, then=1)))
+                })
 
         if contest.with_advance:
             statistics = statistics.annotate(n_advanced=Count(Case(When(advanced=True, then=1))))
@@ -1761,107 +1747,105 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             if not is_solved(my_stat_problems.get(short)):
                 hide_problems.add(short)
 
-    context.update(
-        {
-            "has_versus": has_versus,
-            "versus_data": versus_data,
-            "versus_statistic_id": versus_statistic_id,
-            "standings_options": options,
-            "has_alternative_result": with_detail and options.get("alternative_result_field"),
-            "mod_penalty": mod_penalty,
-            "freeze_duration": freeze_duration,
-            "t_freeze": t_freeze,
-            "colored_by_group_score": mod_penalty or options.get("colored_by_group_score"),
-            "contest": contest,
-            "division": division,
-            "contests_ids": contests_ids,
-            "other_contests": other_contests,
-            "contests_timelines": contests_timelines,
-            "statistics": statistics,
-            "my_statistics": my_statistics,
-            "virtual_start": virtual_start,
-            "virtual_start_statistics": virtual_start.statistics() if with_virtual_start else None,
-            "with_virtual_start": with_virtual_start,
-            "problems": problems,
-            "hide_problems": hide_problems,
-            "params": params,
-            "settings_standings_fields": settings.STANDINGS_FIELDS_,
-            "problem_user_solution_size_limit": settings.PROBLEM_USER_SOLUTION_SIZE_LIMIT,
-            "fields": fields,
-            "fields_types": fields_types,
-            "hidden_fields": hidden_fields,
-            "divisions_order": divisions_order,
-            "has_country": has_country,
-            "per_page": per_page,
-            "per_page_more": per_page_more,
-            "paginate_on_scroll": paginate_on_scroll,
-            "force_both_scroll": force_both_scroll,
-            "with_row_num": with_row_num,
-            "merge_problems": merge_problems,
-            "default_rowspan": mark_safe(' rowspan="2"') if merge_problems else "",
-            "fields_to_select": fields_to_select,
-            "add_to_list": add_to_list,
-            "truncatechars_name_problem": 10 * (2 if merge_problems else 1),
-            "with_detail": with_detail,
-            "with_solution": with_solution,
-            "with_autoreload": with_autoreload,
-            "groupby": groupby,
-            "pie_limit_rows_groupby": 50,
-            "labels_groupby": labels_groupby,
-            "num_rows_groupby": num_rows_groupby,
-            "map_colors_groupby": map_colors_groupby,
-            "advance": contest.info.get("advance"),
-            "timezone": get_timezone(request),
-            "timeformat": get_timeformat(request),
-            "with_neighbors": request.GET.get("neighbors") == "on",
-            "without_neighbors_aligment": not inner_scroll or "safari" in request.user_agent.browser.family.lower(),
-            "with_table_inner_scroll": inner_scroll
-            and (not groupby or groupby == "none")
-            and not is_charts
-            and not contest.elimination_tournament_info,  # noqa
-            "enable_timeline": enable_timeline,
-            "contest_timeline": contest_timeline,
-            "timeline": timeline,
-            "timeline_durations": [
-                ("100", "100 ms"),
-                ("500", "500 ms"),
-                ("1000", "1 sec"),
-                ("2000", "2 sec"),
-                ("4000", "4 sec"),
-            ],
-            "timeline_steps": [
-                ("0.001", "0.1%"),
-                ("0.005", "0.5%"),
-                ("0.01", "1%"),
-                ("0.05", "5%"),
-                ("0.1", "10%"),
-                ("0.2", "20%"),
-            ],
-            "timeline_delays": [
-                ("500", "500 ms"),
-                ("1000", "1 sec"),
-                ("2000", "2 sec"),
-                ("4000", "4 sec"),
-                ("10000", "10 sec"),
-            ],
-            "timeline_freeze": [
-                ("0", "0%"),
-                ("0.2", "20%"),
-                ("01:00:00", "1h"),
-                ("0.5", "50%"),
-                ("1.0", "100%"),
-            ],
-            "timeline_follow": [
-                ("1", "1 sec"),
-                ("10", "10 sec"),
-                ("60", "1 min"),
-                ("300", "5 min"),
-                ("0", "disable"),
-            ],
-            "groupby_data": statistics,
-            "groupby_fields": fields,
-        }
-    )
+    context.update({
+        "has_versus": has_versus,
+        "versus_data": versus_data,
+        "versus_statistic_id": versus_statistic_id,
+        "standings_options": options,
+        "has_alternative_result": with_detail and options.get("alternative_result_field"),
+        "mod_penalty": mod_penalty,
+        "freeze_duration": freeze_duration,
+        "t_freeze": t_freeze,
+        "colored_by_group_score": mod_penalty or options.get("colored_by_group_score"),
+        "contest": contest,
+        "division": division,
+        "contests_ids": contests_ids,
+        "other_contests": other_contests,
+        "contests_timelines": contests_timelines,
+        "statistics": statistics,
+        "my_statistics": my_statistics,
+        "virtual_start": virtual_start,
+        "virtual_start_statistics": virtual_start.statistics() if with_virtual_start else None,
+        "with_virtual_start": with_virtual_start,
+        "problems": problems,
+        "hide_problems": hide_problems,
+        "params": params,
+        "settings_standings_fields": settings.STANDINGS_FIELDS_,
+        "problem_user_solution_size_limit": settings.PROBLEM_USER_SOLUTION_SIZE_LIMIT,
+        "fields": fields,
+        "fields_types": fields_types,
+        "hidden_fields": hidden_fields,
+        "divisions_order": divisions_order,
+        "has_country": has_country,
+        "per_page": per_page,
+        "per_page_more": per_page_more,
+        "paginate_on_scroll": paginate_on_scroll,
+        "force_both_scroll": force_both_scroll,
+        "with_row_num": with_row_num,
+        "merge_problems": merge_problems,
+        "default_rowspan": mark_safe(' rowspan="2"') if merge_problems else "",
+        "fields_to_select": fields_to_select,
+        "add_to_list": add_to_list,
+        "truncatechars_name_problem": 10 * (2 if merge_problems else 1),
+        "with_detail": with_detail,
+        "with_solution": with_solution,
+        "with_autoreload": with_autoreload,
+        "groupby": groupby,
+        "pie_limit_rows_groupby": 50,
+        "labels_groupby": labels_groupby,
+        "num_rows_groupby": num_rows_groupby,
+        "map_colors_groupby": map_colors_groupby,
+        "advance": contest.info.get("advance"),
+        "timezone": get_timezone(request),
+        "timeformat": get_timeformat(request),
+        "with_neighbors": request.GET.get("neighbors") == "on",
+        "without_neighbors_aligment": not inner_scroll or "safari" in request.user_agent.browser.family.lower(),
+        "with_table_inner_scroll": inner_scroll
+        and (not groupby or groupby == "none")
+        and not is_charts
+        and not contest.elimination_tournament_info,  # noqa
+        "enable_timeline": enable_timeline,
+        "contest_timeline": contest_timeline,
+        "timeline": timeline,
+        "timeline_durations": [
+            ("100", "100 ms"),
+            ("500", "500 ms"),
+            ("1000", "1 sec"),
+            ("2000", "2 sec"),
+            ("4000", "4 sec"),
+        ],
+        "timeline_steps": [
+            ("0.001", "0.1%"),
+            ("0.005", "0.5%"),
+            ("0.01", "1%"),
+            ("0.05", "5%"),
+            ("0.1", "10%"),
+            ("0.2", "20%"),
+        ],
+        "timeline_delays": [
+            ("500", "500 ms"),
+            ("1000", "1 sec"),
+            ("2000", "2 sec"),
+            ("4000", "4 sec"),
+            ("10000", "10 sec"),
+        ],
+        "timeline_freeze": [
+            ("0", "0%"),
+            ("0.2", "20%"),
+            ("01:00:00", "1h"),
+            ("0.5", "50%"),
+            ("1.0", "100%"),
+        ],
+        "timeline_follow": [
+            ("1", "1 sec"),
+            ("10", "10 sec"),
+            ("60", "1 min"),
+            ("300", "5 min"),
+            ("0", "disable"),
+        ],
+        "groupby_data": statistics,
+        "groupby_fields": fields,
+    })
 
     context.update(n_highlight_context)
 
@@ -2171,14 +2155,12 @@ def get_versus_data(request, query, fields_to_select):
 
         ratings_data = get_ratings_data(request=request, statistics=qs, date_from=date_from, date_to=date_to)
 
-        infos.append(
-            {
-                "score": 0,
-                "contests": {s.contest_id: s for s in qs},
-                "divisions": {(s.contest_id, s.addition.get("division")) for s in qs},
-                "ratings": ratings_data,
-            }
-        )
+        infos.append({
+            "score": 0,
+            "contests": {s.contest_id: s for s in qs},
+            "divisions": {(s.contest_id, s.addition.get("division")) for s in qs},
+            "ratings": ratings_data,
+        })
         for s in qs:
             if s.addition.get("medal"):
                 medal_contests_ids.add(s.contest_id)
@@ -2206,7 +2188,7 @@ def versus(request, query):
         idx = int(request.GET.get("remove"))
         parts = query.split("/vs/")
         if 0 <= idx < len(parts):
-            parts = parts[:idx] + parts[idx + 1:]
+            parts = parts[:idx] + parts[idx + 1 :]
         query = "/vs/".join(parts)
         return redirect(reverse("ranking:versus", args=[query]))
 
@@ -2441,8 +2423,8 @@ def make_versus(request):
 @page_template("virtual_start_paging.html")
 @context_pagination()
 def virtual_start(request, template="virtual_start.html"):
-    coder = request.user.coder
-    context = {}
+    coder = request.as_coder or request.user.coder
+    context = {'navbar_admin_model': VirtualStart}
     params = context.setdefault("params", {})
     resource = request.GET.get("resource")
     virtual_starts = VirtualStart.filter_by_content_type(Contest).filter(coder=coder).order_by("-start_time")
@@ -2468,6 +2450,8 @@ def virtual_start(request, template="virtual_start.html"):
 
     action = request.GET.get("action")
     if action == "start":
+        if request.as_coder:
+            return HttpResponseForbidden("You cannot start virtual participation as another coder")
         return_redirect = allowed_redirect(url_transform(request, action=None, with_remove=True))
         if not contest:
             request.logger.error("No contest to start")
@@ -2524,8 +2508,9 @@ def finalists(request, contest, template="finalists.html"):
             else:
                 resource_info = resource_infos[resource.id]
 
-            if not with_update or resource_info.updated and last_modified < resource_info.updated + update_delay:
-                continue
+            if not force:
+                if not with_update or resource_info.updated and last_modified < resource_info.updated + update_delay:
+                    continue
 
             rating_accounts = resource.account_set.filter(rating__isnull=False)
             rating_accounts = rating_accounts.filter(accounts_filter)
@@ -2580,5 +2565,6 @@ def finalists(request, contest, template="finalists.html"):
         "params": {
             "resources": resources,
         },
+        "with_achievements": bool(ach_max_date),
     }
     return render(request, template, context)

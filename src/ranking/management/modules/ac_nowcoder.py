@@ -85,6 +85,9 @@ class Statistic(BaseModule):
                 res['is_team'] = row.pop('team')
                 hidden_fields.add('is_team')
 
+                info = res.setdefault('info', {})
+                info['is_team'] = res['is_team']
+
                 for k, v in row.items():
                     k = normalize_field(k)
                     if k not in res:

@@ -27,8 +27,8 @@
     </span>
   </td>
   <td>
-    {% if virtual_start.finish_time %}
-    <span title="{{ virtual_start.finish_time|timezone:timezone|naturalday }}" data-toggle="tooltip">{{ virtual_start.finish_time|timezone:timezone|format_time:timeformat }}</span>
+    {% if virtual_start.addition %}
+    <span>{{ virtual_start.addition.solving }}</span>
     {% else %}
     <span class="text-muted">&#183;</span>
     {% endif %}

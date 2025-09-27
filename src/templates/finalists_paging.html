@@ -17,14 +17,17 @@
 
     {% if resource_info.rating is not None %}
       {% include "field_value.html" with value=resource_info.rating field="rating" resource=resource %}
+      {% if has_name %}
       <span title="{% for rating_info in resource_info.ratings %}{{ rating_info.key }}: {{ rating_info.rating }}{% if rating_info.delta %} (+{{ rating_info.delta }}){% endif %}<br/>{% endfor %}" data-toggle="tooltip" data-html="true">
       ({{ resource_info.ratings|length }})
       </span>
+      {% endif %}
     {% endif %}
 
     {% endwith %}
   </td>
   {% endfor %}
+  {% if with_achievements %}
   <td>
     <div class="timeline-container">
     {% with total_delta=ach_max_date|subtract:ach_min_date|default:1 %}
@@ -45,6 +48,7 @@ Rank: {{ statistic.place_as_int }} of {{ statistic.contest.n_statistics }}<br/>
     {% endwith %}
     </div>
   </td>
+  {% endif %}
 </tr>
 {% endfor %}
 

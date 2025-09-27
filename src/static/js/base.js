@@ -1183,3 +1183,7 @@ function add_to_coder_list(element, event) {
   event.preventDefault()
   return false
 }
+
+function element_contains_class(element, class_name) {
+  return (' ' + element.className + ' ').indexOf(' ' + class_name + ' ') > -1;
+}

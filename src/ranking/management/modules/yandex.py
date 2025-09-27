@@ -2,6 +2,7 @@
 
 import html
 import os
+import random
 import re
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -120,15 +121,20 @@ class Statistic(BaseModule):
         run_ids = [run_id for run_id in run_ids if run_id not in already_processed]
         if max_run_id:
             run_ids = [run_id for run_id in run_ids if run_id <= max_run_id]
+        random.shuffle(run_ids)
 
         LOG.info(f"{len(run_ids)} submissions to fetch, already {len(already_processed)}, total {len(submissions)}")
 
         stop_fetch_submissions = False
         finish_time = timezone.now() + timedelta(minutes=10)
         rate_limiter = RateLimiter(max_calls=4, period=1)
+        n_success = 0
+        n_fail = 0
+        success_rate = 1
+        success_rate_alpha = 0.1
 
         def fetch_submissions(page):
-            nonlocal stop_fetch_submissions
+            nonlocal stop_fetch_submissions, n_success, n_fail, success_rate
             if stop_fetch_submissions:
                 return
             if timezone.now() > finish_time:
@@ -141,10 +147,15 @@ class Statistic(BaseModule):
                 url = f"{Statistic.YANDEX_API_URL}/contests/{self.key}/submissions/multiple?{run_ids_query}"
                 try:
                     submissions = REQ.get(url, headers=headers, return_json=True)
+                    n_success += 1
                     return submissions
                 except FailOnGetResponse as e:
-                    LOG.warning(f"Fail to get submission infos: {e}")
-                    stop_fetch_submissions = True
+                    n_fail += 1
+                    n_total = n_success + n_fail
+                    success_rate += (n_success / n_total - success_rate) * success_rate_alpha
+                    LOG.warning(f"Fail to get submission infos: {e}, url = {url}, success rate = {success_rate:.2%}")
+                    if n_total >= 10 and success_rate < 0.3:
+                        stop_fetch_submissions = True
 
         run_ids = list(set(run_ids))
         batch_size = 10
@@ -321,7 +332,7 @@ class Statistic(BaseModule):
                         name = participant["name"]
                         if name not in participant_names:
                             participant_names.add(name)
-                            login = participant["login"]
+                        if login := participant.get("login"):
                             if login not in name2logins[name]:
                                 name2logins[name].append(login)
                             login2name[login] = name
@@ -336,10 +347,10 @@ class Statistic(BaseModule):
                 name = participant["name"]
                 if name in participant_names:
                     continue
-                login = participant["login"]
-                if login not in name2logins[name]:
-                    name2logins[name].append(login)
-                login2name[login] = name
+                if login := participant.get("login"):
+                    if login not in name2logins[name]:
+                        name2logins[name].append(login)
+                    login2name[login] = name
         LOG.info(f"Found {len(name2logins)} participant names and {len(login2name)} participant logins")
         return name2logins
 

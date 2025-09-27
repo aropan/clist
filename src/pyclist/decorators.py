@@ -11,10 +11,11 @@ from django.db import connection
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
+from el_pagination.decorators import PAGE_LABEL, QS_KEY
 from stringcolor import bold, cs
 
 from clist.models import Contest
-from clist.templatetags.extras import slug, toint, trim_to
+from clist.templatetags.extras import redirect_login, slug, toint, trim_to
 from utils.strings import slug_string_iou
 
 logger = logging.getLogger(__name__)
@@ -148,14 +149,12 @@ def group_and_calculate_times(queries):
     total_times = []
     for key, queries in grouped.items():
         times = [float(q["time"]) for q in queries]
-        total_times.append(
-            {
-                "query": key,
-                "avg": np.mean(times),
-                "sum": np.sum(times),
-                "count": len(times),
-            }
-        )
+        total_times.append({
+            "query": key,
+            "avg": np.mean(times),
+            "sum": np.sum(times),
+            "count": len(times),
+        })
     return total_times
 
 
@@ -193,3 +192,36 @@ def extra_context_without_pagination(perm):
         return decorated
 
     return decorator
+
+
+def pagination_login_required(view):
+    @wraps(view)
+    def decorated(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            if (
+                QS_KEY in request.GET
+                or QS_KEY in request.POST
+                or PAGE_LABEL in request.GET
+                or PAGE_LABEL in request.POST
+            ):
+                return redirect_login(request)
+
+            n_non_empty = 0
+            for querydict in (request.GET, request.POST):
+                for _, values in querydict.lists():
+                    for value in values:
+                        if value:
+                            n_non_empty += 1
+                            if n_non_empty > 1:
+                                return redirect_login(request)
+
+            if (
+                not request.META.get("HTTP_REFERER") and
+                n_non_empty > 0 and
+                (not isinstance(contest := kwargs.get("contest"), Contest) or contest.is_over())
+            ):
+                return redirect_login(request)
+
+        return view(request, *args, **kwargs)
+
+    return decorated

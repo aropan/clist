@@ -486,16 +486,17 @@ def read_response(response):
         return buf.read()
 
 
-def curl_response(url, headers=None, cookie_file=None, curl_args=None):
-    args = ['curl', '-i', url, '-L', '--compressed']
+def curl_response(url, headers=None, cookie_file=None, curl_args=None, post=None):
+    args = ['curl', '--include', url, '--location', '--compressed']
     if cookie_file:
-        args.extend(['-b', cookie_file, '-c', cookie_file])
+        args.extend(['--cookie', cookie_file, '--cookie-jar', cookie_file])
     if curl_args:
         args.extend(shlex.split(curl_args))
     if headers:
         for k, v in headers.items():
-            args.extend(['-H', f'{k}: {v}'])
-
+            args.extend(['--header', f'{k}: {v}'])
+    if post:
+        args.extend(['--data-raw', post])
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
 
@@ -749,7 +750,7 @@ class requester():
 
                     if with_curl:
                         response = curl_response(url, headers=headers, cookie_file=curl_cookie_file,
-                                                 curl_args=curl_args)
+                                                 curl_args=curl_args, post=post_urlencoded if post else None)
                         if response.code != 200:
                             raise CurlFailedResponse(response)
                         last_url = url

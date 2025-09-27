@@ -4,7 +4,7 @@ function resize_window() {
 
 function reload_standings(delay) {
   var timestamp = ($.now() + delay) / 1000
-  notify(`The page will be reloaded after <span class="countdown" data-timestamp="${timestamp}">${delay / 1000}</span>`, {type: 'info', duration: delay, escapeHTML: false})
+  notify(`The page will be reloaded after <span class="countdown" data-timestamp="${timestamp}">${delay / 1000}</span>`, { type: 'info', duration: delay, escapeHTML: false })
   setTimeout(() => { location.reload() }, delay)
   countdown()
 }
@@ -12,7 +12,7 @@ function reload_standings(delay) {
 function color_by_group_score(attr = 'data-result') {
   var prev = null
   var idx = 0
-  $('table.standings tr[data-result]').each(function(e) {
+  $('table.standings tr[data-result]').each(function (e) {
     var node = $(this)
     node.removeClass('odd')
     node.removeClass('even')
@@ -24,12 +24,15 @@ function color_by_group_score(attr = 'data-result') {
         node.addClass('parity-border')
       }
     }
-    node.addClass(idx? 'odd' : 'even')
+    node.addClass(idx ? 'odd' : 'even')
     prev = result
   })
 }
 
 function get_row_place(r) {
+  if (element_contains_class(r, 'virtual-start-statistic')) {
+    return ''
+  }
   return r.getAttribute('data-place')
 }
 
@@ -49,24 +52,24 @@ function cmp_row(a, b) {
   var a_place = get_row_place(a)
   var b_place = get_row_place(b)
   if (a_place != b_place && (a_place == unspecified_place || b_place == unspecified_place)) {
-    return b_place == unspecified_place? -1 : 1;
+    return b_place == unspecified_place ? -1 : 1;
   }
   var a_score = get_row_score(a)
   var b_score = get_row_score(b)
   if (a_score != b_score) {
-    return a_score > b_score? -1 : 1
+    return a_score > b_score ? -1 : 1
   }
   if (!contest_timeline['no_penalty_time']) {
     var a_penalty = get_row_penalty(a)
     var b_penalty = get_row_penalty(b)
     if (a_penalty != b_penalty) {
-      return a_penalty < b_penalty? -1 : 1
+      return a_penalty < b_penalty ? -1 : 1
     }
   }
   var a_last = get_row_last(a)
   var b_last = get_row_last(b)
   if (a_last != b_last) {
-    return a_last < b_last? -1 : 1
+    return a_last < b_last ? -1 : 1
   }
   return 0
 }
@@ -98,7 +101,7 @@ var UNFREEZE_INDEX_UNDEF = -1
 var ERASE_SWITCHER_SELECTOR = '.stat-cell:not(.virtual-start-statistic) .problem-cell[data-result-switcher]'
 
 function freeze_percent() {
-  return freeze_duration? freeze_duration / contest_duration : 0
+  return freeze_duration ? freeze_duration / contest_duration : 0
 }
 
 function unfreeze_percent() {
@@ -232,7 +235,7 @@ function process_problem_cell(element, current_time, unfreeze_index, percentage_
 
   if (statistic_submissions) {
     problem_submissions = submissions[statistic_id][problem_key]
-    last_index = problem_submissions? problem_submissions.length - 1 : undefined
+    last_index = problem_submissions ? problem_submissions.length - 1 : undefined
     if (problem_submissions && unfreezing && problem_submissions[last_index][0] > unfreeze_duration()) {
       problem_submission = problem_submissions[last_index]
       is_final_submission = true
@@ -361,10 +364,10 @@ function process_problem_cell(element, current_time, unfreeze_index, percentage_
   }
 
   if (visible && is_solved_score) {
-    problem_status = stat.find('.par').length? 'info' : 'success'
+    problem_status = stat.find('.par').length ? 'info' : 'success'
 
     if (result && result.startsWith('+') && contest_timeline['penalty_more'] && !more_penalty) {
-      more_penalty = result == '+'? 0 : parseInt(result)
+      more_penalty = result == '+' ? 0 : parseInt(result)
     }
 
     if (score.startsWith('+')) {
@@ -372,8 +375,8 @@ function process_problem_cell(element, current_time, unfreeze_index, percentage_
         last = parseFloat(stat_cell.attr('data-last'))
         stat_cell.attr('data-last', Math.max(last, time))
         var attempt_penalty = contest_timeline['attempt_penalty']
-        attempt_penalty = attempt_penalty === undefined? 1200 : attempt_penalty
-        time += score == '+'? 0 : parseInt(score) * attempt_penalty
+        attempt_penalty = attempt_penalty === undefined ? 1200 : attempt_penalty
+        time += score == '+' ? 0 : parseInt(score) * attempt_penalty
       }
       score = 1
     } else {
@@ -486,7 +489,7 @@ function prepare_unfreeze() {
         var problem_key = $(e).attr('data-problem-key')
         var popularity = problems_popularity[problem_key]
 
-        penalty = has_empty_penalty? Infinity : penalty.split(/[:\s]+/).reduce((r, t) => { return r * 60 + parseFloat(t) })
+        penalty = has_empty_penalty ? Infinity : penalty.split(/[:\s]+/).reduce((r, t) => { return r * 60 + parseFloat(t) })
 
         if (!problem_cell || penalty < min_penalty || penalty == min_penalty && popularity > max_popularity) {
           problem_cell = e
@@ -501,7 +504,7 @@ function prepare_unfreeze() {
       var statistic_id = stat.attr('data-statistic-id')
       var problem_key = opening.attr('data-problem-key')
       UNFREEZE_OPENING.set(statistic_id + '_' + problem_key, UNFREEZE_SIZE)
-      UNFREEZE_ORDER.push({statistic_id, problem_key})
+      UNFREEZE_ORDER.push({ statistic_id, problem_key })
       UNFREEZE_SIZE += 1
 
       clear_data_stat_cell(stat_cell)
@@ -557,7 +560,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     percent_sign = Math.sign(percent - CURRENT_PERCENT)
     CURRENT_PERCENT = percent
   }
-  percentage_filled = with_virtual_start? percent >= 1 : percent >= contest_time_percentage
+  percentage_filled = with_virtual_start ? percent >= 1 : percent >= contest_time_percentage
   update_timeline_text(percent)
 
   var current_time, unfreeze_index, highlight_problem_duration
@@ -582,7 +585,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
 
   clear_starred_unfreezed()
   if (unfreeze_index != UNFREEZE_INDEX_UNDEF && scroll_to_element === null) {
-    var target_index = Math.floor(unfreeze_index) + (percent_sign < 0? 1 : 0)
+    var target_index = Math.floor(unfreeze_index) + (percent_sign < 0 ? 1 : 0)
     if (0 <= target_index && target_index < UNFREEZE_SIZE) {
       var statistic_id = UNFREEZE_ORDER[target_index].statistic_id
       var statistic_element = $('.stat-cell[data-statistic-id="' + statistic_id + '"]')
@@ -608,7 +611,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   var problem_progress_stats = {}
 
   if (!with_detail) {
-    $('.problem-cell').each(function() {
+    $('.problem-cell').each(function () {
       var text_muted = $(this).find('.text-muted')
       if (!text_muted.length) {
         return
@@ -625,14 +628,14 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   function process_problem_cell_callback(stat, visible, pvisible, problem_status) {
     stat = $(stat)
     var is_non_final = stat.attr('data-final') === 'false' || stat.hasClass('result-unfreeze')
-    var toggle_class = stat.attr('data-active-switcher')? '' : stat.attr('data-class')
+    var toggle_class = stat.attr('data-active-switcher') ? '' : stat.attr('data-class')
     var is_appearancing = (visible && !is_non_final) && pvisible === 'false'
     var is_disappearancing = (!visible || is_non_final) && pvisible !== 'false'
 
     if (toggle_class) {
       if (is_appearancing) {
         stat.addClass(toggle_class)
-        highlight_element(stat, 0, duration / 2, toggle_class, function() { return stat.attr('data-visible') !== 'false' }, 0.25)
+        highlight_element(stat, 0, duration / 2, toggle_class, function () { return stat.attr('data-visible') !== 'false' }, 0.25)
       }
       if (is_disappearancing) {
         stat.removeClass(toggle_class)
@@ -661,7 +664,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     }
     $e.data('current-solving', new_score)
     $e.find('.score-cell').text(new_score)
-    $e.css('z-index', current_score != new_score? '5' : '1')
+    $e.css('z-index', current_score != new_score ? '5' : '1')
 
     var penalty = parseFloat(e.getAttribute('data-penalty'))
 
@@ -680,14 +683,14 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     } else if (format == 2) {
       var ret = Math.floor(penalty / 60)
       var mod = penalty % 60
-      ret += ':' + (mod < 10? '0' : '') + mod
+      ret += ':' + (mod < 10 ? '0' : '') + mod
       penalty = ret
     } else if (format == 3) {
       var ret = Math.floor(penalty / 60 / 60)
       var mod = Math.floor(penalty / 60 % 60)
-      ret += ':' + (mod < 10? '0' : '') + mod
+      ret += ':' + (mod < 10 ? '0' : '') + mod
       var mod = penalty % 60
-      ret += ':' + (mod < 10? '0' : '') + mod
+      ret += ':' + (mod < 10 ? '0' : '') + mod
       penalty = ret
     } else {
       console.log('Unknown format:', format)
@@ -766,10 +769,10 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
         }
       }
       if (duration && changed_statuses.length) {
-        var problem_status = changed_statuses.length == 1? changed_statuses[0] : 'info'
+        var problem_status = changed_statuses.length == 1 ? changed_statuses[0] : 'info'
         var problem_status_class = 'progress-bar-' + problem_status
         var el = problem_cell.children().first()
-        el.addClass(problem_status_class, duration / 2, function() {
+        el.addClass(problem_status_class, duration / 2, function () {
           el.removeClass(problem_status_class, duration / 2)
         })
       }
@@ -778,7 +781,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   }
 
   var table_inner_scroll = $('#table-inner-scroll')
-  var scroll_object = table_inner_scroll.length? table_inner_scroll : $('html, body')
+  var scroll_object = table_inner_scroll.length ? table_inner_scroll : $('html, body')
   var table_top = $('table.standings').parent().offset().top
   var table_height = scroll_object.height()
   var thead_height = $('table.standings thead').height()
@@ -808,7 +811,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     last = r
 
     var $r = $(r)
-    var place_text = percentage_filled && standings_filtered? $r.attr('data-place') + ' (' + place + ')' : place;
+    var place_text = percentage_filled && standings_filtered ? $r.attr('data-place') + ' (' + place + ')' : place;
     if (get_row_place(r) == unspecified_place) {
       place_text = unspecified_place
     }
@@ -825,7 +828,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
       seen_first_u.set(first_u_key, (seen_first_u.get(first_u_key) || 0) + 1)
       var in_quota = seen_first_u.get(first_u_key) <= first_u_quota
       n_first_u += in_quota
-      var class_func = in_quota && (!n_highlight || n_first_u <= n_highlight)? 'removeClass' : 'addClass'
+      var class_func = in_quota && (!n_highlight || n_first_u <= n_highlight) ? 'removeClass' : 'addClass'
       first_u_cell[class_func]('out-of-quota')
       first_u_cell.attr('data-text', n_first_u)
     }
@@ -860,7 +863,7 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
     if (toggle_hidden_selector) {
       toggle_hidden_selector += ','
     }
-    toggle_hidden_selector += selector + (intermediate? ':not(.hidden)' : '.hidden')
+    toggle_hidden_selector += selector + (intermediate ? ':not(.hidden)' : '.hidden')
   })
   if (toggle_hidden_selector) {
     var toggle_hidden_elements = $(toggle_hidden_selector)
@@ -879,24 +882,24 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   restarred()
 
   TRANSFORM_TIMER_ID = setTimeout(() => {
-      var transform_duration = duration - delay_duration
+    var transform_duration = duration - delay_duration
 
-      rows.css('transition', 'transform ' + transform_duration + 'ms')
-      rows.each((i, r) => { $r = $(r); $r.css('transform', $r.attr('data-translate-y')) })
+    rows.css('transition', 'transform ' + transform_duration + 'ms')
+    rows.each((i, r) => { $r = $(r); $r.css('transform', $r.attr('data-translate-y')) })
 
-      $('table.standings tbody').html(rows)
-      color_by_group_score('data-score')
-      $('.accepted-switcher').click(switcher_click)
+    $('table.standings tbody').html(rows)
+    color_by_group_score('data-score')
+    $('.accepted-switcher').click(switcher_click)
 
-      bind_starring()
-      restarred()
+    bind_starring()
+    restarred()
 
-      clear_tooltip()
-      toggle_tooltip_object('table.standings [data-original-title]')
+    clear_tooltip()
+    toggle_tooltip_object('table.standings [data-original-title]')
 
-      scroll_to_find_me(transform_duration, 0, scroll_to_element)
-      rows.css('transform', '')
-    },
+    scroll_to_find_me(transform_duration, 0, scroll_to_element)
+    rows.css('transform', '')
+  },
     delay_duration,
   )
 
@@ -911,9 +914,9 @@ function highlight_element(el, after = 1000, duration = 500, before_toggle_class
   if (before_toggle_class) {
     el.removeClass(before_toggle_class)
   }
-  setTimeout(function() {
-    el.animate({'background-color': '#d0e3f7'}, duration * duration_ratio, function() {
-      el.animate({'background-color': color}, duration * (2 - duration_ratio), function() {
+  setTimeout(function () {
+    el.animate({ 'background-color': '#d0e3f7' }, duration * duration_ratio, function () {
+      el.animate({ 'background-color': color }, duration * (2 - duration_ratio), function () {
         el.css('background', '')
         if (callback === undefined || callback(el) !== false) {
           el.addClass(before_toggle_class)
@@ -985,14 +988,14 @@ function edit_active_switcher_click(event, element) {
     className: 'edit-active-switcher-bootbox',
   })
 
-  dialog.on('shown.bs.modal', function() {
+  dialog.on('shown.bs.modal', function () {
     var input = $('.bootbox-body input[name="result"]')
     input.focus()
     input[0].setSelectionRange(score.length, score.length)
   })
 
-  dialog.init(function() {
-    dialog.find('input').on('keypress', function(e) {
+  dialog.init(function () {
+    dialog.find('input').on('keypress', function (e) {
       if (e.which == 13) {
         e.preventDefault()
         dialog.find('.confirm-button').click()
@@ -1033,7 +1036,7 @@ function switcher_updated(stat) {
           penalty: tr.data('current-penalty'),
           solving: tr.data('current-solving'),
         },
-        success: function(data) { notify(data.message, data.status) },
+        success: function (data) { notify(data.message, data.status) },
         error: log_ajax_error_callback,
       })
     }
@@ -1051,7 +1054,7 @@ function update_score_penalty_result(type) {
   var result = stat.attr('data-result')
 
   if (stat.attr('data-problem-full-score') && contest_timeline['penalty_score_more'] && has_penalty(result)) {
-    score += ' ('  + parseInt(result) + ')'
+    score += ' (' + parseInt(result) + ')'
   }
   if (contest_timeline['penalty_more'] && score != result && has_penalty(result)) {
     penalty += result
@@ -1102,7 +1105,7 @@ function switcher_click(event) {
       var problem_cells = $('.stat-cell td:nth-of-type(' + (index + 1) + ')')
       var problem_results = problem_cells.map((_, e) => { return $(e).attr('data-result') })
       problem_results = problem_results.filter((_, r) => !!r)
-      result = problem_results.length? Math.min(...problem_results) : problem_cells.length
+      result = problem_results.length ? Math.min(...problem_results) : problem_cells.length
       result = Math.max(0, result - 1)
       result = result.toString()
     } else if (!result) {
@@ -1111,7 +1114,7 @@ function switcher_click(event) {
       result = '+' + result.substring(1)
     } else if (result.startsWith('?')) {
       result = result.substring(1)
-      result = '+' + (hidden_regex.exec(result)? eval(result) - 1 || '' : '')
+      result = '+' + (hidden_regex.exec(result) ? eval(result) - 1 || '' : '')
       penalty = parse_factors_time(contest_timeline['time_factor'], stat.attr('data-penalty')) || penalty
     }
 
@@ -1134,10 +1137,10 @@ function switcher_click(event) {
     var factors = contest_timeline['time_factor']
     if (factors) {
       var format = contest_timeline['penalty_format'] || 2
-      penalty = factors[format].map(function(val, idx) {
+      penalty = factors[format].map(function (val, idx) {
         var ret = Math.floor(penalty / val)
-        ret = idx? ret % (factors[format][idx - 1] / factors[format][idx]) : ret
-        ret = idx && ret < 10? '0' + ret : ret
+        ret = idx ? ret % (factors[format][idx - 1] / factors[format][idx]) : ret
+        ret = idx && ret < 10 ? '0' + ret : ret
         return ret
       }).join(':')
     }
@@ -1184,7 +1187,7 @@ function switcher_click(event) {
 }
 
 function clear_extra_info_timeline() {
-  $('table.standings tr > *').classes(function(c, e) {
+  $('table.standings tr > *').classes(function (c, e) {
     if ($(e).hasClass('problem-cell-stat')) {
       return
     }
@@ -1239,10 +1242,10 @@ function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500,
   var find_me_pos = el.offset()
   if (find_me_pos) {
     var table_inner_scroll = $('#table-inner-scroll')
-    var scroll_object = table_inner_scroll.length? table_inner_scroll : $('html, body')
+    var scroll_object = table_inner_scroll.length ? table_inner_scroll : $('html, body')
     var table_top = $('table.standings').parent().offset().top
     var table_offset = $('table.standings').offset().top
-    var screen_height = table_inner_scroll.length? table_inner_scroll.height() + 2 * table_offset : $(window).height()
+    var screen_height = table_inner_scroll.length ? table_inner_scroll.height() + 2 * table_offset : $(window).height()
 
     var element_top = parseInt(el.attr('data-scroll-top'))
     if (element_top) {
@@ -1257,10 +1260,10 @@ function scroll_to_find_me(scroll_animate_time = 1000, color_animate_time = 500,
 
     var target = element_top - screen_height / 2
     scroll_object.stop()
-    scroll_object.animate({scrollTop: target}, scroll_animate_time)
+    scroll_object.animate({ scrollTop: target }, scroll_animate_time)
 
     if (color_animate_time) {
-      $('.find-me-row td').each(function() {
+      $('.find-me-row td').each(function () {
         highlight_element($(this), scroll_animate_time, color_animate_time)
       })
     }
@@ -1273,10 +1276,10 @@ function update_trophy_font_size() {
   $('.handle-cell .trophy-detail').each((_, e) => { $(e).css("font-size", height) })
 }
 
-$(function() {
+$(function () {
   CURRENT_PERCENT = contest_time_percentage
 
-  $('#timeline').click(function(e) {
+  $('#timeline').click(function (e) {
     var percent = (e.pageX - $(this).offset().left) / $(this).width()
     if (TIMELINE_TIMER_ID) {
       $('#play-timeline').click()
@@ -1286,12 +1289,12 @@ $(function() {
 
   var $tooltip = $('#timeline-tooltip')
 
-  $('#timeline').mousemove(function(e) {
+  $('#timeline').mousemove(function (e) {
     var percent = (e.pageX - $(this).offset().left) / $(this).width()
     percent = Math.max(percent, 0)
     percent = Math.min(percent, 1)
 
-    $tooltip.css({'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() + 30})
+    $tooltip.css({ 'left': e.pageX - $tooltip.width() / 2 - 5, 'top': e.pageY - $tooltip.height() + 30 })
     $tooltip.show()
 
     if (unfreeze_is_active(percent)) {
@@ -1302,7 +1305,7 @@ $(function() {
     }
   })
 
-  $('#timeline').mouseout(function(e) {
+  $('#timeline').mouseout(function (e) {
     $tooltip.hide()
   })
 
@@ -1312,7 +1315,7 @@ $(function() {
     $play_timeline.find('i').toggleClass('fa-play').toggleClass('fa-pause')
   }
 
-  $play_timeline.click(function(e) {
+  $play_timeline.click(function (e) {
     e.preventDefault()
     toggle_play_timeline()
     if (TIMELINE_TIMER_ID) {
@@ -1327,16 +1330,16 @@ $(function() {
 
   $share_timeline = $('#share-timeline')
 
-  $share_timeline.click(function(e) {
+  $share_timeline.click(function (e) {
     e.preventDefault()
     url = window.location.href
     url = url.replace(/\btimeline=[^&]+&?/gi, '')
     url = url.replace(/\bt_[a-z]+=[^&]+&?/gi, '')
     url = url.replace(/\bunfreezing\b&?/gi, '')
     url = url.replace(/[\?&]$/, '')
-    url += (url.indexOf('?') == -1? '?' : '&') + 'timeline=' + encodeURIComponent(duration_to_text(contest_duration * CURRENT_PERCENT))
+    url += (url.indexOf('?') == -1 ? '?' : '&') + 'timeline=' + encodeURIComponent(duration_to_text(contest_duration * CURRENT_PERCENT))
     const keys = ['duration', 'step', 'delay', 'freeze']
-    keys.forEach(function(k) { el = $('#timeline-' + k); url += '&t_' + k + '=' + encodeURIComponent(el.val()) })
+    keys.forEach(function (k) { el = $('#timeline-' + k); url += '&t_' + k + '=' + encodeURIComponent(el.val()) })
     if (unfreezing) {
       url += '&unfreezing'
     }
@@ -1363,19 +1366,19 @@ $(function() {
         },
       },
     })
-    dialog.bind('shown.bs.modal', function() {
+    dialog.bind('shown.bs.modal', function () {
       $('#share-timeline-url').focus().val(url)
     })
   })
 
-  $('#timeline-delay').change(function() {
+  $('#timeline-delay').change(function () {
     if (TIMELINE_TIMER_ID) {
       clearInterval(TIMELINE_TIMER_ID)
       TIMELINE_TIMER_ID = setInterval(step_timeline, $(this).val())
     }
   })
 
-  $('body').keyup(function(event) {
+  $('body').keyup(function (event) {
     if (event.isDefaultPrevented()) {
       return
     }
@@ -1429,8 +1432,8 @@ function update_cookie_starring() {
   var stat = $(this).closest('.stat-cell')
   var statistic_id = stat.attr('data-statistic-id')
   var has_starred = stat.hasClass('starred')
-  var starred = Cookies.get('starred', {path: starred_cookie_path})
-  starred = !starred? Array() : starred.split(',')
+  var starred = Cookies.get('starred', { path: starred_cookie_path })
+  starred = !starred ? Array() : starred.split(',')
   var index = starred.indexOf(statistic_id)
   if (has_starred && index == -1) {
     starred.push(statistic_id)
@@ -1438,12 +1441,12 @@ function update_cookie_starring() {
     starred.splice(index, 1)
   }
   starred = starred.join(',')
-  Cookies.set('starred', starred, {expires: starred_cookie_expires, path: starred_cookie_path})
+  Cookies.set('starred', starred, { expires: starred_cookie_expires, path: starred_cookie_path })
   update_unstar_hidden()
 }
 
 function update_unstar_hidden() {
-  var starred = Cookies.get('starred', {path: starred_cookie_path})
+  var starred = Cookies.get('starred', { path: starred_cookie_path })
   if (starred) {
     $('#unstar').removeClass('hidden')
   } else {
@@ -1464,8 +1467,8 @@ function bind_starring() {
 function apply_starring() {
   bind_starring()
 
-  var starred = Cookies.get('starred', {path: starred_cookie_path})
-  starred = !starred? Array() : starred.split(',')
+  var starred = Cookies.get('starred', { path: starred_cookie_path })
+  starred = !starred ? Array() : starred.split(',')
   starred.forEach(element => {
     change_starring.call($('.stat-cell.' + element + ':not(".starred") .star'))
   })
@@ -1475,26 +1478,26 @@ function apply_starring() {
   update_unstar_hidden()
 }
 
-$(function() {
-  $('#unstar_unpin').click(function() {
+$(function () {
+  $('#unstar_unpin').click(function () {
     $('.stat-cell.starred .star').click()
-    Cookies.remove('starred', {path: starred_cookie_path})
+    Cookies.remove('starred', { path: starred_cookie_path })
     update_unstar_hidden()
   })
 
-  $('#unstar_submissions').click(function() {
-    var starred = Cookies.get('starred', {path: starred_cookie_path})
+  $('#unstar_submissions').click(function () {
+    var starred = Cookies.get('starred', { path: starred_cookie_path })
     var url = $(this).data('submissions-url')
     starred.split(',').forEach((element, index) => {
-      url += (index? '&' : '?') + 'statistic=' + element
+      url += (index ? '&' : '?') + 'statistic=' + element
     })
     $(this).data('url', url)
     open_submissions(this)
   })
 
-  var starred = Cookies.get('starred', {path: starred_cookie_path})
+  var starred = Cookies.get('starred', { path: starred_cookie_path })
   if (starred) {
-    Cookies.set('starred', starred, {expires: starred_cookie_expires, path: starred_cookie_path})
+    Cookies.set('starred', starred, { expires: starred_cookie_expires, path: starred_cookie_path })
   }
 })
 
@@ -1502,7 +1505,7 @@ $(function() {
  * Standings live
  */
 
-$(function() {
+$(function () {
   const standings_socket = new WebSocket('wss://' + window.location.host + '/ws/contest/?pk=' + contest_pk)
   var standings_socket_opened = false
   var n_messages = 0
@@ -1520,10 +1523,10 @@ $(function() {
     if (!tr.length) {
       return
     }
-    var n_rows_msg = data.n_total && tr.length != data.n_total? tr.length + ' of ' + data.n_total : tr.length
+    var n_rows_msg = data.n_total && tr.length != data.n_total ? tr.length + ' of ' + data.n_total : tr.length
     if (shown_timeline) {
       var standings = $('table.standings')
-      tr.each(function() {
+      tr.each(function () {
         var sid = $(this).attr('data-statistic-id')
         var orig = $('.' + sid)
         var replaced = orig.replaceWith(this).length
@@ -1543,7 +1546,7 @@ $(function() {
     }
   }
 
-  standings_socket.onmessage = function(e) {
+  standings_socket.onmessage = function (e) {
     const data = JSON.parse(e.data)
     if (data.type == 'standings') {
       update_standings(data)
@@ -1553,11 +1556,11 @@ $(function() {
     n_messages += 1
   }
 
-  standings_socket.onopen = function(e) {
+  standings_socket.onopen = function (e) {
     standings_socket_opened = true
   }
 
-  standings_socket.onclose = function(e) {
+  standings_socket.onclose = function (e) {
     if (!standings_socket_opened) {
       $('.standings-auto-reload').prop('disabled', true)
     }
@@ -1616,10 +1619,10 @@ function update_statistics(e) {
       id: contest_pk,
     },
     error: log_ajax_error_callback,
-    success: function() {
+    success: function () {
       notify('Queued update', 'success')
     },
-    complete: function(jqXHR, textStatus) {
+    complete: function (jqXHR, textStatus) {
       icon.removeClass('fa-spin')
       btn.attr('disabled', false)
       spin_update_statistics_modal_btn(textStatus == 'success')
@@ -1686,19 +1689,19 @@ function viewSolution(a, e) {
   $.ajax({
     url: href,
     type: 'get',
-    success: function(response) {
+    success: function (response) {
       $('#view-solution-modal .modal-content').html(response)
       if (solution_modal.hasClass('fullscreen')) {
-          $('#toggle-fullscreen-modal').click()
-          solution_modal.addClass('fullscreen')
+        $('#toggle-fullscreen-modal').click()
+        solution_modal.addClass('fullscreen')
       }
       document.querySelectorAll('pre code').forEach((block) => { hljs.highlightBlock(block) });
     },
-    error: function(response) {
+    error: function (response) {
       bootbox.alert({
-          title: response.responseText || response.statusText.toTitleCase(),
-          message: 'You can check <a href="' + $(a).attr('data-url') + '">here</a>.',
-          size: 'small'
+        title: response.responseText || response.statusText.toTitleCase(),
+        message: 'You can check <a href="' + $(a).attr('data-url') + '">here</a>.',
+        size: 'small'
       })
       $('#view-solution-modal').modal('hide')
     },
@@ -1712,7 +1715,7 @@ function viewSolution(a, e) {
  * Press escape
  */
 
-$(document).keydown(function(event) {
+$(document).keydown(function (event) {
   if (event.keyCode == 27) {
     $('#view-solution-modal').modal('hide')
     $('#update-statistics-log').modal('hide')
@@ -1730,7 +1733,7 @@ function click_finish_virtual_start(btn) {
   bootbox.confirm({
     size: 'small',
     message: 'Are you sure you want to finish virtual start?',
-    callback: function(result) {
+    callback: function (result) {
       if (!result) {
         return
       }
@@ -1743,7 +1746,7 @@ function click_finish_virtual_start(btn) {
           id: virtual_start_pk,
         },
         error: log_ajax_error_callback,
-        success: function() {
+        success: function () {
           finish_virtual_start()
           $(btn).remove()
         },
@@ -1784,7 +1787,7 @@ function update_contest_time_percentage_by_virtual_start() {
 }
 
 function visible_standings() {
-  $('.standings.invisible').removeClass('invisible').css({opacity: 0.0, visibility: "visible"}).animate({opacity: 1.0}, 1000);
+  $('.standings.invisible').removeClass('invisible').css({ opacity: 0.0, visibility: "visible" }).animate({ opacity: 1.0 }, 1000);
   highlight_element($('.find-me-row'))
 }
 
@@ -1805,7 +1808,7 @@ function change_follow_interval() {
 
 $(() => {
   if (with_virtual_start) {
-    $('.problem-cell[data-active-switcher="true"]').each(function() {
+    $('.problem-cell[data-active-switcher="true"]').each(function () {
       var stat = $(this)
       update_score_penalty_result.call(stat, 'switcher')
       stat.children('.hidden').remove()
@@ -1820,16 +1823,16 @@ $(() => {
     visible_standings()
   }
 
-  $('.standings-auto-reload').click(function(event) {
+  $('.standings-auto-reload').click(function (event) {
     event.preventDefault()
 
     var $btn = $(this)
     var autoreload_new_value = $btn.data('value')
-    update_urls_params({'autoreload': autoreload_new_value})
+    update_urls_params({ 'autoreload': autoreload_new_value })
 
     function success() {
-        $('.standings-auto-reload').toggleClass('hidden')
-        with_autoreload = !with_autoreload
+      $('.standings-auto-reload').toggleClass('hidden')
+      with_autoreload = !with_autoreload
     }
 
     if (coder_pk === undefined) {
@@ -1848,7 +1851,7 @@ $(() => {
       },
       error: log_ajax_error_callback,
       success: success,
-      complete: function() {
+      complete: function () {
         $btn.prop('disabled', false)
       },
     })
@@ -1907,10 +1910,10 @@ $(() => {
       processData: false,
       contentType: false,
       data: form_data,
-      beforeSend: function() { problem_cell.addClass('uploading') },
-      success: function(data) { notify(data.message, data.status), location.reload() },
+      beforeSend: function () { problem_cell.addClass('uploading') },
+      success: function (data) { notify(data.message, data.status), location.reload() },
       error: log_ajax_error_callback,
-      complete: function() { problem_cell.removeClass('uploading') },
+      complete: function () { problem_cell.removeClass('uploading') },
     })
   }
 });
@@ -1924,7 +1927,7 @@ function show_score_history(a, e) {
   $.ajax({
     url: $(a).attr('href'),
     type: 'get',
-    success: function(response) {
+    success: function (response) {
       var $response = $(response)
       var title = $response.filter('.modal-header').html()
       var body = $response.filter('.modal-body').html()
@@ -1946,7 +1949,7 @@ function show_score_history(a, e) {
 function show_score_histories(a, e) {
   var statistic_ids = ''
   var limit = 10
-  $('tr[data-statistic-id]').each(function() {
+  $('tr[data-statistic-id]').each(function () {
     if (limit-- <= 0) {
       return false
     }
@@ -1959,7 +1962,7 @@ function show_score_histories(a, e) {
   $.ajax({
     url: url,
     type: 'get',
-    success: function(response) {
+    success: function (response) {
       var $response = $(response)
       var title = $response.filter('.modal-header').html()
       var body = $response.filter('.modal-body').html()

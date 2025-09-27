@@ -63,6 +63,8 @@
 
   {% include "profile_list_filter.html" %}
 
+  {% include "profile_chat_filter.html" %}
+
   {% if perms.ranking.change_account %}
   <a href="{% url 'admin:ranking_account_change' account.id %}" class="database-link invisible" target="_blank" rel="noopener">{% icon_to 'database' 'Change account' %}</a>
   {% endif %}

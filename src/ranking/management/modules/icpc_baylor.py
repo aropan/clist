@@ -14,12 +14,11 @@ import coloredlogs
 from django.utils.timezone import now
 from lxml import etree
 
-from submissions.models import Language, Verdict
-
 from clist.templatetags.extras import get_item
 from ranking.management.modules.codeforces import _get as codeforces_get
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
+from submissions.models import Language, Verdict
 from utils.strings import cut_prefix, list_string_iou, string_iou
 from utils.timetools import parse_duration
 
@@ -435,7 +434,7 @@ class Statistic(BaseModule):
                 if is_icpc_api_standings_url:
                     page = re.sub(r'</table>\s*<table>\s*(<tr[^>]*>\s*<t[^>]*>)', r'\1', page, flags=re.I)
 
-                regex = '''(?:<table[^>]*(?:id=["']standings|class=["'][^"']*scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>'''  # noqa
+                regex = '''(?:<table[^>]*(?:id=["']standings|class=["'][^"']*scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>|<TABLE>.*?</TABLE>'''  # noqa
                 match = re.search(regex, page, re.DOTALL)
                 if match:
                     html_table = match.group(0)
@@ -478,6 +477,8 @@ class Statistic(BaseModule):
                                         v = v[:-len(ending)].strip()
                                     if f'{medal}-medal' in classes:
                                         row['medal'] = medal
+                            if not v:
+                                break
                             row['place'] = v
                         elif k in ('team', 'name', 'university'):
                             if isinstance(vs, list):
@@ -514,6 +515,7 @@ class Statistic(BaseModule):
                                 break
 
                             v = v.replace('\n', ' ')
+                            v = re.sub('^[0-9]+\s+', '', v)  # FIXME just remove number prefix
                             if 'cphof' in standings_url:
                                 member = vs.column.node.xpath('.//a/text()')[0].strip()
                                 row['member'] = f'{member} {season}'
@@ -546,11 +548,14 @@ class Statistic(BaseModule):
                             v = re.sub('-*', '', v)
                             v = re.sub(r'([0-9]+)/([0-9]+)', r'\1 \2', v)
                             v = v.strip()
+                            v = v.rstrip('/')
                             if not v or v == '0':
                                 continue
 
+                            class_attr = vs.column.attrs.get('class', '')
+
                             p = problems.setdefault(k, {})
-                            if '+' in v:
+                            if '+' in v or 'pending' in class_attr:
                                 v = v.replace(' ', '')
                                 p['result'] = f'?{v}'
                             elif ' ' in v:
@@ -559,7 +564,8 @@ class Statistic(BaseModule):
                                 p['time'] = time
 
                                 if (
-                                    'solvedfirst' in vs.column.attrs.get('class', '')
+                                    'solvedfirst' in class_attr
+                                    or 'firstYes' in class_attr
                                     or vs.column.node.xpath('.//*[contains(@class, "score_first")]')
                                 ):
                                     p['first_ac'] = True

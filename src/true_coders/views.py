@@ -50,14 +50,14 @@ from notes.models import Note
 from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
 from notification.utils import compose_message_by_problems, compose_message_by_submissions, send_messages
-from pyclist.decorators import context_pagination
+from pyclist.decorators import context_pagination, pagination_login_required
 from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
                             VirtualStart)
 from tg.bot import Bot
 from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListGroup, ListValue, Organization, Party
-from true_coders.utils import add_query_to_list, get_or_set_upsolving_filter
+from true_coders.utils import add_query_to_chat, add_query_to_list, get_or_set_upsolving_filter
 from utils.chart import make_chart
 from utils.json_field import JSONF, IntegerJSONF, JsonJSONF
 from utils.regex import get_icontains_filter, get_iregex_filter, verify_regex
@@ -490,6 +490,7 @@ def account_context(request, key, host):
     return context
 
 
+@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
     ('profile_writers_paging.html', 'writers_page'),
@@ -614,6 +615,10 @@ def _get_data_mixed_profile(request, query, is_team=False):
             writers_filter |= Q(writers=account)
             accounts_filter |= Q(pk=account.pk)
             profiles.append(account)
+
+    if chat_id := request.POST.get('chat'):
+        add_query_to_chat(request, chat_id=chat_id, profiles=profiles)
+
     if is_team and n_coder:
         accounts = list(team_accounts)
         statistics_filter = Q(account__in=accounts)
@@ -2610,6 +2615,7 @@ def filter_contests_with_advanced_to_stats(request, params):
     }
 
 
+@pagination_login_required
 @page_template('accounts_paging.html')
 @context_pagination()
 def accounts(request, template='accounts.html'):

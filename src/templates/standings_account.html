@@ -52,6 +52,8 @@
       <{{ account_tag }}>{% trim_to subnames.0 40 %}</{{ account_tag }}>
     {% elif statistic.addition.name and account.key|has_season:statistic.addition.name or members or statistic.addition.name and resource.info.standings.name_instead_key or statistic.addition.name and statistic.addition|get_item:"_name_instead_key" %}
       <{{ account_tag }}>{% trim_to statistic.addition.name 50 %}</{{ account_tag }}>
+    {% elif account.name and resource.info.standings.name_instead_key or account.name and statistic.addition|get_item:"_name_instead_key" %}
+      <{{ account_tag }}>{% trim_to account.name 50 %}</{{ account_tag }}>
     {% else %}
       <{{ account_tag }}{% if statistic.addition.name or account.name %} title="{{ statistic.addition.name|default:account.name }}" data-placement="top"{% endif %} data-toggle="tooltip">{{ account.key }}</{{ account_tag }}>
     {% endif %}
@@ -111,7 +113,9 @@
   <a href="{% url "ranking:score-history" statistic.id %}{% query_fields request before="?" %}" onClick="return show_score_history(this, event)" class="external-link invisible">{% icon_to "rating" "" %}</a>
   {% endif %}
 
+  {% if account %}
   {% profile_url account html_class="external-link invisible" %}
+  {% endif %}
 
   {% if not statistic.my_stat %}
     <a class="star external-link invisible">

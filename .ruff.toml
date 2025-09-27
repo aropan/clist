@@ -2,5 +2,9 @@ line-length = 120
 extend-exclude = ["*/migrations"]
 
 [lint]
+preview = true
 select = ["E", "F"]
-ignore = ["I001"]
+extend-ignore = ["I", "E203", "E402"]
+
+[format]
+preview = true

@@ -177,7 +177,11 @@ class Statistic(BaseModule):
             users = None
 
         if users:
-            team_data = self.info.get('_official_specific_team_data')
+            team_data = {}
+            team_data.update(self.info.get('_official_specific_team_data') or {})
+            teams = get_ranking_url('teams/')
+            for team, team_info in teams.items():
+                team_data[team] = {"country": team_info["name"]}
 
             def get_alpha_substring_multiset(value):
                 ret = Multiset()
@@ -209,15 +213,20 @@ class Statistic(BaseModule):
             def add_mapping(user, member, team):
                 user_mapping[user] = member
 
-                name_set = get_alpha_substring_multiset(rows[member])
-                name_set_hash = multiset_hash(name_set)
-                rows_sets.pop(name_set_hash)
+                if member in rows:
+                    name_set = get_alpha_substring_multiset(rows[member])
+                    name_set_hash = multiset_hash(name_set)
+                    rows_sets.pop(name_set_hash)
+                    rows.pop(member)
+
+                if team in team_data:
+                    result[member].update(team_data[team])
+
+                previous_member = f"{year}{user}"
+                if previous_member != member:
+                    result[member]["previous_member"] = previous_member
 
                 users.pop(user)
-                rows.pop(member)
-
-                if team_data and team in team_data:
-                    result[member].update(team_data[team])
 
             while users:
                 mapping = []
@@ -241,8 +250,16 @@ class Statistic(BaseModule):
                             max_iou = iou
                         if iou == max_iou:
                             mapping.append((user, member, info_team, name, info_name))
-                user, member, team, *_ = mapping[0]
-                add_mapping(user, member, team)
+                if mapping:
+                    user, member, team, *_ = mapping[0]
+                    add_mapping(user, member, team)
+                    continue
+                for user, info in list(users.items()):
+                    member = f"{year}{user}"
+                    info_name = info['f_name'] + ' ' + info['l_name']
+                    info_team = info['team']
+                    result[member] = {'member': member, 'name': info_name}
+                    add_mapping(user, member, info_team)
 
             contests = get_ranking_url('contests/')
             duration_in_secs = 0

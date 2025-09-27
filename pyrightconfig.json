@@ -1,9 +1,15 @@
 {
     "include": [
-        "src/",
+        "src"
     ],
     "exclude": [
         "migrations",
-        "__pycache__",
+        "__pycache__"
     ],
+    "typeCheckingMode": "off",
+    "reportMissingImports": "none",
+    "reportMissingModuleSource": "none",
+    "reportUndefinedVariable": "none",
+    "reportGeneralTypeIssues": "none",
+    "reportArgumentType": "none"
 }

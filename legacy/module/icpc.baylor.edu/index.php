@@ -23,7 +23,7 @@
     $year = $match['year'];
     $title = trim($match['title']);
 
-    if (!preg_match("#>hosted by\s+(?:the\s+)(?:[^,<]*,)?\s*(?P<where>[^<]*?)\s*<#i", $page, $match)) {
+    if (!preg_match("#>hosted by\s+(?:[^,<]*,|the\s+)*\s*(?P<where>[^<]*?)\s*<#i", $page, $match)) {
         trigger_error('Not found where', E_USER_WARNING);
         return;
     }
@@ -31,14 +31,20 @@
 
     $duration = '24 hours';
     $duration_in_secs = 5 * 60 * 60;
-    if (preg_match('#.*(?P<day><th[^>]*colspan[^>]*>\s*[a-z]+\s*(?P<date>[^<]*)&[^<]*'. $title . '[^<]*</th>.*?)<th[^>]*colspan[^>]*>#is', $page, $match)) {
-        $start_date = trim($match['date']) . ' ' . $year;
+    if (preg_match('#.*(?P<day><th[^>]*colspan[^>]*>\s*[a-z]+\s*(?P<date>[^<]*)[^<]*'. $title . '[^<]*</th>.*?)<th[^>]*colspan[^>]*>#is', $page, $match)) {
+        $start_date = trim(preg_replace('#[^a-z0-9]+#i', ' ', $match['date']));
+        if (!ends_with($start_date, $year)) {
+            $start_date .=  " $year";
+        }
         preg_match_all('#(?P<times>(?:<td[^>]*>[^<]*</td>\s*)+)<td[^>]*required[^>]*>#s', $match['day'], $matches, PREG_SET_ORDER);
         $opt = 1e9;
         $opt_start_time = false;
         foreach ($matches as $m) {
             $times = $m['times'];
-            if (preg_match_all('#<td[^>]*>(?P<time>[^<]+)</td>#', $times, $matches) && count($matches['time']) == 2) {
+            if (
+                (preg_match_all('#<td[^>]*>(?P<time>[^<]+)</td>#', $times, $matches) && count($matches['time']) == 2) ||
+                (preg_match_all('#(?P<time>[0-9]{2}:[0-9]{2})#', $times, $matches) && count($matches['time']) == 2)
+            ) {
                 list($start_time, $end_time) = $matches['time'];
                 $duration_time = strtotime($end_time) - strtotime($start_time);
                 $diff = abs($duration_time - $duration_in_secs);
@@ -59,7 +65,10 @@
         return;
     }
 
-    if ($where == 'AASTMT') {
+    if ($where == 'ADA University') {
+        $title .= '. Baku, Azerbaijan';
+        $timezone = 'Asia/Baku';
+    } else if ($where == 'AASTMT') {
         $title .= ". $where, Egypt";
         $timezone = 'Africa/Cairo';
         $start_date = str_replace($year, $year + 1, $start_date);

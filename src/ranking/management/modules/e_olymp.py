@@ -22,15 +22,16 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.url.rstrip('/') + '/scoreboard'
 
-        problem_columns_query = '''
-query GetProblems($id: ID!) {
-  contest(id: $id) {
+        contest_info_query = '''
+query GetContestInfo($id: ID!) {
+  contest(id: $id, extra: ["STAFF"]) {
     scoring  { showScoreboard attemptPenalty freezingTime allowUpsolving tieBreaker }
     scoreboard(roundId: $id) { visibility columns { id type title } }
+    staff { edges { node { id } role displayName } }
   }
 }
         '''
-        data = {'query': problem_columns_query, 'variables': {'id': self.key}}
+        data = {'query': contest_info_query, 'variables': {'id': self.key}}
         data = REQ.get(self.API_URL, post=json.dumps(data), return_json=True)
         for error in data.get('errors', []):
             if 'code = Unauthenticated' in error['message']:
@@ -40,7 +41,7 @@ query GetProblems($id: ID!) {
 
         scoring = data['data']['contest']['scoring']
         scoreboard = data['data']['contest']['scoreboard']
-        if scoreboard['visibility'] != 'PUBLIC':
+        if scoreboard['visibility'] not in {'PUBLIC', 'UNKNOWN_VISIBILITY'}:
             return {'action': 'skip', 'url': standings_url}
         columns = scoreboard['columns']
         problems_info = OrderedDict()
@@ -52,6 +53,10 @@ query GetProblems($id: ID!) {
                 'short': column['title'],
             }
             problems_info[problem['code']] = problem
+
+        writers = []
+        for staff in data['data']['contest']['staff']['edges']:
+            writers.append(staff['node']['id'])
 
         scoreboard_query = '''
 query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
@@ -129,19 +134,26 @@ query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
                     if values['time']:
                         values['time_in_seconds'] = values['time']
                         problem['time'] = self.to_time(values['time'] // 60, 2)
+                to_clear = not problems and r['solving'] == 0
                 stats = (statistics or {}).get(member_id, {})
                 for field in 'new_rating', 'rating_change', 'old_rating', 'level':
                     if field in stats and field not in r:
                         r[field] = stats[field]
+                        to_clear = False
+                if to_clear:
+                    result.pop(member_id)
             if not data['pageInfo']['hasNextPage']:
                 break
 
-        return {
+        standings = {
             'url': standings_url,
             'result': result,
             'hidden_fields': ['unofficial', 'disqualified'],
             'problems': list(problems_info.values()),
         }
+        if writers:
+            standings['writers'] = writers
+        return standings
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
@@ -154,6 +166,8 @@ query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
             info = {}
             return_data = {'info': info}
             if account.name:
+                member_id = account.key
+            elif re.match('^[a-z0-9]{26}$', account.key):
                 member_id = account.key
             else:
                 url = resource.profile_url.format(**account.dict_with_info())

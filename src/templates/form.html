@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block full_ogtitle %}{% block full_title %}{{ form.name|striptags }} - Form - CLIST{% endblock %}{% endblock %}
+{% block full_ogtitle %}{% block full_title %}{{ form.title|striptags }} - Form - CLIST{% endblock %}{% endblock %}
 {% block end-head %}<link href="{% static_ts 'css/form.css' %}" rel="stylesheet">{% endblock %}
 {% block favicon %}{% endblock %}
 {% block counter %}{% endblock %}
@@ -9,7 +9,7 @@
 <div class="container center-container">
   <div id="form" class="scroll-container">
     <h1>
-      {{ form.name|safe }}
+      {{ form.title|safe }}
     </h1>
     {% if form.is_coming %}
       <div class="alert alert-info">From will open in <a href="{{ form.start_time|get_timeanddate_href }}">{{ form.start_time|hr_timedelta }}<a></div>
@@ -20,11 +20,31 @@
       <div>
         <a class="btn btn-default" href="?action=logout">{% icon_to 'logout' '' %} Log out {{ token.email|default:token.data.login }}</a>
       </div>
-      <div class="panel panel-default iframe-panel">
-        <div class="panel-body">
-          {{ code|safe }}
-        </div>
-      </div>
+        {% if credential and credential.is_approved %}
+          <div class="credentials">
+            <table class="table table-credentials">
+              <tr>
+                <th>Login</th>
+                <td>{{ credential.login }}</td>
+                <td><span class="copy-to-clipboard" data-text="{{ credential.login }}">{% icon_to 'copy' '' %}</span></td>
+              </tr>
+              <tr>
+                <th>Password</th>
+                <td>{{ credential.password }}</td>
+                <td><span class="copy-to-clipboard" data-text="{{ credential.password }}">{% icon_to 'copy' '' %}</span></td>
+              </tr>
+            </table>
+          </div>
+          {% if form.approved_code %}
+            {{ form.approved_code|safe }}
+          {% endif %}
+        {% else %}
+          <div class="panel panel-default iframe-panel">
+            <div class="panel-body">
+              {{ code|safe }}
+            </div>
+          </div>
+        {% endif %}
       {% else %}
       <div>
         <a class="btn btn-default" href="?action=login">{% icon_to 'login' '' %} Log in with {{ form.service.title }}</a>

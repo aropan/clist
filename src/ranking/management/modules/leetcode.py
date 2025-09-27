@@ -75,7 +75,7 @@ class Statistic(BaseModule):
         return ret
 
     @staticmethod
-    def _get(*args, req=None, n_addition_attempts=20, **kwargs):
+    def _get(*args, req=None, n_addition_attempts=10, **kwargs):
         req = req or REQ
 
         headers = kwargs.setdefault('headers', {})
@@ -87,13 +87,14 @@ class Statistic(BaseModule):
             headers['Content-Type'] = 'application/json'
             headers['X-Requested-With'] = 'XMLHttpRequest'
 
-        kwargs['with_curl'] = req.proxer is None and 'post' not in kwargs
+        kwargs['with_curl'] = req.proxer is None
         kwargs['curl_args'] = get_curl_args()
         kwargs['curl_cookie_file'] = 'sharedfiles/resource/leetcode/cookies.txt'
         kwargs['with_referer'] = False
 
         additional_attempts = {code: {'count': n_addition_attempts} for code in [429, 403]}
-        return req.get(*args, **kwargs, additional_attempts=additional_attempts, additional_delay=5)
+        response = req.get(*args, **kwargs, additional_attempts=additional_attempts, additional_delay=5)
+        return response
 
     @staticmethod
     def _get_proxies_file(region):
@@ -805,6 +806,8 @@ class Statistic(BaseModule):
                 info.update(page.pop('ranking') or {})
                 if info.get('rating'):
                     info['rating'] = round(info['rating'])
+                if real_name := info.get('realName'):
+                    info['name'] = real_name
 
                 contest_addition_update_by = 'start_time'
                 for h in history:

@@ -7,7 +7,6 @@ name=repack_database
 exec 200>/tmp/$name.lock
 flock -n 200 || { echo "Script '$name' is already running"; exit 0; }
 
-
 function human_readable_size {
   local size=$1
   if [ $size -lt 0 ]; then
@@ -15,6 +14,24 @@ function human_readable_size {
     echo -n "-"
   fi
   numfmt --to=iec --format="%.2f" $size
+}
+
+function cleanup_repack_objects {
+  echo "Cleaning up repack temporary objects..."
+  psql -c "DROP EXTENSION IF EXISTS pg_repack CASCADE;"
+  psql -c "CREATE EXTENSION pg_repack;"
+}
+
+function run_with_retry {
+  local cmd="$1"
+  local description="$2"
+  echo "Running: $description"
+  if ! eval "$cmd"; then
+    echo "Failed: $description. Cleaning up..."
+    cleanup_repack_objects
+    echo "Retrying: $description"
+    eval "$cmd"
+  fi
 }
 
 table_filter=${1:-"."}
@@ -49,14 +66,12 @@ for table in $tables; do
       if [ $index_size -gt $threshold_size ]; then
         echo "Skipping index $index because it is too big, index size = $(human_readable_size $index_size)"
       else
-        pg_repack --index $index
+        run_with_retry "pg_repack --index $index" "Repacking index $index"
       fi
     done
   else
-    echo "Repacking (cluster) table $table"
-    pg_repack --table $table
-    echo "Repacking (vacuum full) table $table"
-    pg_repack --table $table --no-order
+    run_with_retry "pg_repack --table $table" "Repacking (cluster) table $table"
+    run_with_retry "pg_repack --table $table --no-order" "Repacking (vacuum full) table $table"
   fi
   new_table_size=$($psql_command "SELECT pg_total_relation_size('public.$table');" | xargs)
   echo "Table $table new size: $(human_readable_size $new_table_size), saved $(human_readable_size $(($table_size - $new_table_size)))"

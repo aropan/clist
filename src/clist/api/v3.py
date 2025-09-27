@@ -60,7 +60,7 @@ class CoderResource(BaseModelResource):
                 'responseClass': 'coder',
             }
         ]
-        ordering = ['n_accounts']
+        ordering = ['id', 'n_accounts']
 
     def me(self, request, *args, **kwargs):
         kwargs['me'] = True

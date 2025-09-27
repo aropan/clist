@@ -114,6 +114,10 @@ class Statistic(BaseModule):
                         row['penalty'] = int(r.pop('Time').value)
 
                     for k, v in r.items():
+                        v_name = v.header.node.xpath('@data-name')
+                        if 'rank' in v_name:
+                            row['place'] = v.value
+                            continue
                         k, *other = k.split()
                         if len(k) == 1:
                             full_score = None

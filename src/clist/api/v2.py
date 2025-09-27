@@ -72,13 +72,17 @@ class BaseModelResource(CommmonBaseModuelResource):
         ordering = getattr(ret.query, 'order_by', None)
         if ordering:
             new_ordering = []
+            has_id_field = False
             for field in ordering:
                 if field[0] == '-':
                     order = 'desc'
                     field = field[1:]
                 else:
                     order = 'asc'
+                has_id_field |= field == 'id'
                 new_ordering.append(getattr(F(field), order)(nulls_last=True))
+            if not has_id_field:
+                new_ordering.append('id')
             ret = ret.order_by(*new_ordering)
         return ret
 
@@ -290,7 +294,7 @@ class StatisticsResource(BaseModelResource):
             'new_rating': ['isnull'],
             'rating_change': ['isnull'],
         }
-        ordering = ['score', 'place', 'new_rating', 'rating_change', 'date']
+        ordering = ['id', 'score', 'place', 'new_rating', 'rating_change', 'date']
         detail_allowed_methods = []
 
     def build_filters(self, filters=None, *args, **kwargs):
@@ -455,7 +459,7 @@ class CoderResource(BaseModelResource):
                 'responseClass': 'coder',
             }
         ]
-        ordering = ['n_accounts']
+        ordering = ['id', 'n_accounts']
 
     def me(self, request, *args, **kwargs):
         kwargs['me'] = True

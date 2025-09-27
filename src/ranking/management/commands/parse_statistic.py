@@ -27,8 +27,6 @@ from django.db.models import Exists, F, Max, OuterRef, Prefetch, Q
 from django.utils.timezone import now as timezone_now
 from django_print_sql import print_sql_decorator
 
-from submissions.models import Language, Submission, Testing, Verdict
-
 from clist.models import Contest, Problem, Resource
 from clist.templatetags.extras import (as_number, canonize, get_item, get_number_from_str, get_problem_key,
                                        get_problem_short, get_result_score, get_statistic_stats, is_hidden,
@@ -46,6 +44,7 @@ from ranking.management.modules.excepts import (ExceptionParseStandings, FailOnG
 from ranking.models import Account, AccountRenaming, Module, Stage, Statistics
 from ranking.utils import account_update_contest_additions, update_stage
 from ranking.views import update_standings_socket
+from submissions.models import Language, Submission, Testing, Verdict
 from true_coders.models import Coder
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier

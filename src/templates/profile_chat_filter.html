@@ -1,0 +1,7 @@
+{% chat_data_field_to_select nomultiply=True as chat_data %}
+{% if chat_data and chat_data.options %}
+  <span id="profile_chat_filter" class="hidden">
+    {% include "field_to_select.html" with field="chat" data=chat_data nosmall=True %}
+  </span>
+  <a class="profile-chat-filter-open" onclick="$('#profile_chat_filter').removeClass('hidden'); $(this).remove(); $('.tooltip').tooltip('hide'); return false;">{% icon_to 'chat' %}</a>
+{% endif %}

@@ -4,7 +4,7 @@
     $url = 'https://api.eolymp.com/spaces/00000000-0000-0000-0000-000000000000/graphql';
     $list_contests_query = <<<'EOD'
 query  ListContests($first: Int,  $offset: Int, $filters: JudgeContestFilter)  {
-    contests(first: $first,  offset: $offset, filters: $filters)  {
+    contests(first: $first,  offset: $offset, filters: $filters, extra: ["STAFF"])  {
         nodes  {
             id
             name
@@ -30,6 +30,15 @@ query  ListContests($first: Int,  $offset: Int, $filters: JudgeContestFilter)  {
                 unfreezeDelay
                 tieBreaker
                 modes
+            }
+            staff {
+                edges {
+                    node {
+                        id
+                    }
+                    role
+                    displayName
+                }
             }
         }
         pageInfo  {

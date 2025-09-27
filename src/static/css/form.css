@@ -23,3 +23,26 @@
     padding: 50px 50px;
   }
 }
+
+.credentials {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.table-credentials {
+  width: auto;
+  display: inline-block;
+}
+
+.table-credentials th {
+  text-align: right;
+}
+
+.table-credentials td {
+  font-family: monospace;
+}
+
+.table-credentials tr {
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}

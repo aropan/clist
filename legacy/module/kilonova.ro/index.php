@@ -20,7 +20,7 @@
 
         $found = false;
         foreach ($matches as $c) {
-            preg_match_all('#<p>(?P<key>[^<]*)\s*:\s*(?:<span[^>]*>)?(?P<value>[^<]*)#', $c[0], $values, PREG_SET_ORDER);
+            preg_match_all('#<p>(?P<key>[^<]*)\s*:\s*(?:<span[^>]*>|<server-timestamp\s*timestamp=")?(?P<value>[^<"]*)#', $c[0], $values, PREG_SET_ORDER);
             foreach ($values as $v) {
                 $c[slugify($v['key'])] = trim($v['value']);
             }

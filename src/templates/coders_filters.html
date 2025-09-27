@@ -20,19 +20,19 @@
       </div>
 
       <span class="input-group-btn">
-        <button class="btn btn-default" type="submit">{% icon_to 'search' %}</button>
+        <button class="btn btn-default" type="submit">{% icon_to "search" %}</button>
       </span>
     </div>
 
-    {% include 'country_filter.html' with has_country=True %}
-    {% include 'resource_filter.html' %}
+    {% include "country_filter.html" with has_country=True %}
+    {% include "resource_filter.html" %}
 
-    {% include 'coder_kind_filter.html' %}
-    {% include "field_to_select.html" with field='chat' data=chat_fields %}
+    {% include "coder_kind_filter.html" %}
+    {% include "field_to_select.html" with field="chat" data=chat_fields %}
     {% include "list_filter.html" %}
-    {% include "field_to_select.html" with field='field' data=custom_fields %}
+    {% include "field_to_select.html" with field="field" data=custom_fields %}
 
-    {% include 'contest_filter.html' with has_statistics=True %}
+    {% include "contest_filter.html" with has_statistics=True %}
     {% if params.contests %}
     {% include "field_to_select.html" with field="advanced" data=params.advanced_filter %}
     {% endif %}

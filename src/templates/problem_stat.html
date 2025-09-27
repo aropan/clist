@@ -1,4 +1,4 @@
-{% if stat.url or problem_url %}<a href="{% if stat.url %}{{ stat.url }}{% else %}{{ problem_url }}{% endif %}">{% endif %}<span
+{% if stat.url or stat.upsolving.url or problem_url %}<a href="{% if stat.upsolving.url and not stat|is_solved %}{{ stat.upsolving.url }}{% elif stat.url %}{{ stat.url }}{% else %}{{ problem_url }}{% endif %}">{% endif %}<span
   data-toggle="tooltip" data-placement="top" data-html="true" title="
 <div>{{ short }}</div>
 {% if name != short %}
@@ -29,4 +29,4 @@
   class="badge progress-bar-{% if not stat %}default{% elif stat|is_solved %}success{% elif stat|is_hidden %}warning{% elif stat|is_partial or stat.upsolving|is_solved %}info{% else %}danger{% endif %}"
 >
 {{ short|truncatechars:10 }}
-</span>{% if stat.url or problem_url %}</a>{% endif %}
+</span>{% if stat.url or stat.upsolving.url or problem_url %}</a>{% endif %}

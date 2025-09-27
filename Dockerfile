@@ -32,9 +32,9 @@ RUN --mount=type=cache,target=/root/.cache/uv uv pip install -r requirements.txt
 RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.20.7" sh
 
 # Curl
-RUN wget https://github.com/stunnel/static-curl/releases/download/8.6.0-1/curl-linux-aarch64-8.6.0.tar.xz -O /tmp/curl.tar.xz && \
+RUN wget https://github.com/stunnel/static-curl/releases/download/8.16.0/curl-linux-aarch64-glibc-8.16.0.tar.xz -O /tmp/curl.tar.xz && \
     tar -xvf /tmp/curl.tar.xz -C /tmp && \
-    sha256sum /tmp/curl | grep -q "b42ad13ff77ea6baaacc2d560ace242ae449f8429ec47aa61ce3edd99879973c" && \
+    sha256sum /tmp/curl | grep -q "abb2f02bcdaf25515118d1517bef3e9339d65dc21f13dc9503eecf2fa1843efc" && \
     mv /tmp/curl /usr/local/bin/curl && \
     rm /tmp/curl.tar.xz
 

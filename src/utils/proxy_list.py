@@ -58,15 +58,18 @@ class ProxyList:
     @staticmethod
     def _get_proxy_from_json():
         urls = [
-            ('https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=https&proxy_format=ipport&format=json&timeout=500', 'proxies'),  # noqa
+            ('https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=https&proxy_format=ipport&format=json', 'proxies'),  # noqa
             ('https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc&protocols=http,https', 'data'),
         ]
         for url, key in urls:
             source = url.split('/')[2]
-            response = requests.get(url)
-            table = response.json()
-            table = table[key]
-
+            try:
+                response = requests.get(url)
+                table = response.json()
+                table = table[key]
+            except Exception as e:
+                logging.warning(f'Failed to get proxies from {url}: {e}')
+                continue
             for row in table:
                 yield Proxy(proxy=f'{row["ip"]}:{row["port"]}', source=source)
 

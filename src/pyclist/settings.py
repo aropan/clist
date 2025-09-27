@@ -117,6 +117,7 @@ INSTALLED_APPS = (
     'modeltranslation',
     'donation',
     'silk',
+    'import_export',
 )
 
 MIDDLEWARE = (
@@ -948,6 +949,9 @@ SHELL_PLUS_IMPORTS = [
     ('collections', 'defaultdict'),
     ('tqdm'),
 ]
+
+
+FORM_LOGOUT_DELAY_IN_MINUTES = 10
 
 
 # Sentry

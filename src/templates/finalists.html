@@ -148,16 +148,15 @@
             {% if has_name %}<th class="no-stretch name-column">Name</th>{% endif %}
             <th class="participant-column">
               Participant
-              {% for resource in finalist_resources %}
-              {% img_resource_icon resource 16 with_href=True %}
-              {% endfor %}
             </th>
             {% for resource in resource_fields %}
             <th>
               {% img_resource_icon resource 20 with_href=True %}
             </th>
             {% endfor %}
+            {% if with_achievements %}
             <th>Achievements</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>

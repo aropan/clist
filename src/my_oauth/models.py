@@ -62,7 +62,7 @@ class Token(BaseModel):
         )
 
     def __str__(self):
-        return "%s on %s" % (self.coder, self.service)
+        return f"{self.user_id} on {self.service} Token#{self.id}"
 
     def email_hint(self):
         login, domain = self.email.split("@")
@@ -97,17 +97,61 @@ class Token(BaseModel):
 class Form(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, default=None)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     code = models.TextField()
     service_code_args = models.TextField(blank=True)
     secret = models.CharField(max_length=64, default=generate_secret_64, blank=True, unique=True)
+    registration = models.BooleanField(default=False)
     register_url = models.URLField(null=True, blank=True)
     register_headers = models.TextField(null=True, blank=True)
+    grant_credentials = models.BooleanField(default=False)
+    approved_code = models.TextField(null=True, blank=True)
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.title:
+            self.title = self.name
+        if not self.secret:
+            self.secret = generate_secret_64()
+        super().save(*args, **kwargs)
 
     def is_coming(self):
         return self.start_time is not None and timezone.now() < self.start_time
 
     def is_closed(self):
         return self.end_time is not None and self.end_time < timezone.now()
+
+    def __str__(self):
+        return f"{self.name} Form#{self.id}"
+
+
+class Credential(BaseModel):
+
+    class State(models.IntegerChoices):
+        UNASSIGNED = 1, "Unassigned"
+        ASSIGNED = 2, "Assigned"
+        APPROVED = 3, "Approved"
+
+    form = models.ForeignKey(Form, on_delete=models.CASCADE)
+    login = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    state = models.PositiveSmallIntegerField(choices=State.choices, default=State.UNASSIGNED, db_index=True)
+    token = models.ForeignKey(Token, null=True, blank=True, on_delete=models.CASCADE)
+
+    def is_approved(self):
+        return self.state == self.State.APPROVED
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["form", "login"], name="unique_form_login"),
+            models.UniqueConstraint(
+                fields=["form", "token"],
+                condition=models.Q(token__isnull=False),
+                name="unique_form_token_not_null",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.login} Credential#{self.id}"

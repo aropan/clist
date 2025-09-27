@@ -1519,6 +1519,23 @@ def list_data_field_to_select(context, field='list', nomultiply=False):
     return ret
 
 
+@register.simple_tag(takes_context=True)
+def chat_data_field_to_select(context, field='chat', nomultiply=False, owned=True):
+    request = context['request']
+    coder = getattr(request.user, 'coder', None)
+    chats = coder.chat_set.all() if owned else coder.chats.all()
+    options_values = {c.chat_id: c.title for c in chats} if coder else {}
+    ret = {
+        'values': [v for v in request.GET.getlist(field) if v and v in options_values],
+        'options': options_values,
+        'noajax': True,
+        'nogroupby': True,
+        'nourl': True,
+        'nomultiply': nomultiply,
+    }
+    return ret
+
+
 def relative_url(url):
     urlinfo = urlparse(url)
     return urlinfo._replace(scheme='', netloc='').geturl()
@@ -2115,7 +2132,7 @@ def standings_statistic_problem_attributes(context):
 
     attrs = f'class="{class_attr}"'
     if result:
-        score = f'{result["result"]}' if not full_score or is_solved(result) else f'{full_score}'
+        score = f'{full_score}' if full_score and is_solved(result) else f'{result["result"]}'
         attrs += f' data-score="{score}"'
         attrs += f' data-result="{result["result"]}"'
         attrs += f' data-penalty="{result["time"]}"'
@@ -2134,17 +2151,22 @@ def standings_statistic_problem_attributes(context):
 
     return mark_safe(attrs)
 
+
 def format_optional(value, prefix='', suffix=''):
     return f"{prefix}{html.escape(str(value))}{suffix}" if value is not None and value != '' else ''
+
 
 def format_score(value):
     return scoreformat(value)
 
+
 def format_verdict(verdict, test):
     return f"{html.escape(str(verdict))}{format_optional(test, '(', ')')}"
 
+
 def format_time_display(time, penalty, time_rank, attempt):
     return f"{html.escape(str(time))}{format_optional(penalty, '+')}{format_optional(time_rank, ' (', ')')}{format_optional(attempt, ' (', ')')}"
+
 
 def format_status(status, status_tag, is_small):
     escaped_status = html.escape(str(status))
@@ -2153,9 +2175,11 @@ def format_status(status, status_tag, is_small):
         return f"<{safe_tag}>{escaped_status}</{safe_tag}>"
     return escaped_status
 
+
 def format_upsolving_icon(upsolving_stat):
     icon_class = "check" if is_solved(upsolving_stat) else "times"
     return f'<i class="fas fa-{icon_class}"></i>'
+
 
 @register.simple_tag(takes_context=True)
 def standings_statistic_problem_detail(context, small, stat=None):
@@ -2244,7 +2268,7 @@ def standings_statistic_problem_detail(context, small, stat=None):
             result_html.append('data-html="true"')
             result_html.append("title='Upsolving<br/>")
         else:
-            result_html.append(f'>')
+            result_html.append('>')
 
         if stat_upsolving.get('binary') is not None:
             result_html.append(format_upsolving_icon(stat_upsolving))
@@ -2268,6 +2292,7 @@ def standings_statistic_problem_detail(context, small, stat=None):
         result_html.append('</small>')
 
     return mark_safe(" ".join(result_html))
+
 
 @register.simple_tag(takes_context=True)
 def standings_statistic_problem(context):
@@ -2338,10 +2363,10 @@ def standings_statistic_problem(context):
         else:
             link_url = reverse('ranking:solution', args=[statistic.pk, key])
 
-        html_parts.append(f'<a target="_blank" rel="noopener noreferrer"')
+        html_parts.append('<a target="_blank" rel="noopener noreferrer"')
         if not (contest and contest.is_stage()) and (stat.get('solution') or stat.get('external_solution')):
-            html_parts.append(f' class="solution"')
-            html_parts.append(f' onClick="viewSolution(this, event)"')
+            html_parts.append(' class="solution"')
+            html_parts.append(' onClick="viewSolution(this, event)"')
             html_parts.append(f' data-url="{html.escape(link_url)}"')
             link_url = reverse('ranking:solution', args=[statistic.pk, key])
         html_parts.append(f' href="{html.escape(link_url)}"')
@@ -2431,6 +2456,7 @@ def standings_statistic_problem(context):
         html_parts.append(submission_info_field(stat, 'ip'))
 
     return mark_safe(" ".join(html_parts))
+
 
 @register.simple_tag(takes_context=True)
 def standings_statistic_problems(context):

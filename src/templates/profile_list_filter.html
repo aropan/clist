@@ -1,7 +1,7 @@
 {% list_data_field_to_select nomultiply=True as list_data %}
-{% if list_data %}
+{% if list_data and list_data.options %}
   <span id="profile_list_filter" class="hidden">
-    {% include "field_to_select.html" with field='list' data=list_data nosmall=True %}
+    {% include "field_to_select.html" with field="list" data=list_data nosmall=True %}
   </span>
   <a class="profile-list-filter-open" onclick="$('#profile_list_filter').removeClass('hidden'); $(this).remove(); $('.tooltip').tooltip('hide'); return false;">{% icon_to 'list' %}</a>
 {% endif %}

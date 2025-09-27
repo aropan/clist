@@ -23,7 +23,7 @@ from django.utils import timezone
 from flatten_dict import flatten
 
 from clist.templatetags.extras import allowed_redirect
-from my_oauth.models import Form, Service, Token
+from my_oauth.models import Credential, Form, Service, Token
 from my_oauth.utils import access_token_from_response, refresh_acccess_token
 from true_coders.models import Coder
 
@@ -91,9 +91,10 @@ def process_data(request, service, access_token, data):
     token.save()
 
     if redirect_url:
-        token_id_field = request.session.pop("token_id_field", None)
-        if token_id_field:
+        if token_id_field := request.session.pop("token_id_field", None):
             request.session[token_id_field] = token.id
+        if token_timestamp_field := request.session.pop("token_timestamp_field", None):
+            request.session[token_timestamp_field] = timezone.now().timestamp()
         return allowed_redirect(redirect_url)
 
     request.session["token_id"] = token.id
@@ -308,14 +309,30 @@ def services_dumpdata(request):
 
 def form(request, uuid):
     form = get_object_or_404(Form.objects, pk=uuid)
-    token_id = request.session.pop("form_token_id", None)
+
+    timestamp = request.session.get("form_token_timestamp", None)
+    logout_delay = timedelta(minutes=settings.FORM_LOGOUT_DELAY_IN_MINUTES)
+    if not timestamp or timezone.now().timestamp() - timestamp > logout_delay.total_seconds():
+        request.session.pop("form_token_id", None)
+    token_id = request.session.get("form_token_id")
     token = Token.objects.filter(pk=token_id).first() if token_id else None
+
+    credential = None
 
     if form.is_closed():
         token = None
         code = None
     elif token:
         data = {k: quote(str(v)) for k, v in flatten(token.data, reducer="underscore").items()}
+        if form.grant_credentials:
+            with transaction.atomic():
+                credential = Credential.objects.filter(form=form, token=token).first()
+                if not credential:
+                    credential = Credential.objects.filter(form=form, token__isnull=True).order_by('?').first()
+                    credential.token = token
+                    credential.state = Credential.State.ASSIGNED
+                    credential.save(update_fields=["token", "state"])
+            data['credential_login'] = credential.login
         code = form.code.format(**data)
     else:
         code = None
@@ -327,6 +344,7 @@ def form(request, uuid):
         form_url = reverse("auth:form", args=(uuid,))
         if action == "login":
             request.session["token_id_field"] = "form_token_id"
+            request.session["token_timestamp_field"] = "form_token_timestamp"
             request.session["token_url"] = form_url
             request.session["token_code_args"] = form.service_code_args
             return redirect(reverse("auth:query", args=(form.service.name,)))
@@ -335,17 +353,19 @@ def form(request, uuid):
         elif action == "register":
             if request.headers.get("X-Secret") != form.secret:
                 return HttpResponseBadRequest("Unauthorized")
-            register_url = form.register_url.format(**request.GET.dict())
-            register_headers = form.register_headers.format(**request.headers)
-            response = requests.post(register_url, headers=json.loads(register_headers))
-            return JsonResponse(
-                {
-                    "status": "ok",
-                    "code": response.status_code,
-                    "text": response.text,
-                },
-                status=response.status_code,
-            )
+            actions = []
+            if form.grant_credentials:
+                login = request.GET.get("login")
+                credential = Credential.objects.get(form=form, login=login)
+                credential.state = Credential.State.APPROVED
+                credential.save(update_fields=["state"])
+                actions.append({"name": "approve", "login": credential.login})
+            if form.registration:
+                register_url = form.register_url.format(**request.GET.dict())
+                register_headers = form.register_headers.format(**request.headers)
+                response = requests.post(register_url, headers=json.loads(register_headers))
+                actions.append({"name": "register", "code": response.status_code, "text": response.text})
+            return JsonResponse({"actions": actions})
         else:
             return HttpResponseBadRequest("Unknown action")
         return allowed_redirect(form_url)
@@ -357,6 +377,7 @@ def form(request, uuid):
             "form": form,
             "code": code,
             "token": token,
+            "credential": credential,
             "nofavicon": True,
             "nocounter": True,
         },

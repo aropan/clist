@@ -2,7 +2,8 @@ a {
   text-decoration: none !important;
 }
 
-a:hover, a:focus {
+a:hover,
+a:focus {
   text-decoration: none !important;
 }
 
@@ -56,7 +57,7 @@ table.center {
  * Row flex
  */
 
-.row-flex > div {
+.row-flex>div {
   padding-right: 0px;
 }
 
@@ -146,7 +147,8 @@ img.resource-icon {
   vertical-align: top;
 }
 
-.btn.active.service-icon-btn, .btn.active.service-icon-btn:hover {
+.btn.active.service-icon-btn,
+.btn.active.service-icon-btn:hover {
   width: 40px;
   cursor: default !important;
   color: #333;
@@ -155,7 +157,8 @@ img.resource-icon {
   border-color: #adadad;
 }
 
-.btn.service-token, .btn.service-token:hover {
+.btn.service-token,
+.btn.service-token:hover {
   cursor: default !important;
   color: #333;
   background-color: #fff;
@@ -236,9 +239,9 @@ html {
 }
 
 .coder-legend {
-  background: -webkit-gradient(linear,left bottom,left top,from(#b00),color-stop(50%,#b00),color-stop(51%,#000));
-  background: -webkit-linear-gradient(bottom,#b00,#b00 50%,#000 51%);
-  background: linear-gradient(0deg,#b00,#b00 50%,#000 51%);
+  background: -webkit-gradient(linear, left bottom, left top, from(#b00), color-stop(50%, #b00), color-stop(51%, #000));
+  background: -webkit-linear-gradient(bottom, #b00, #b00 50%, #000 51%);
+  background: linear-gradient(0deg, #b00, #b00 50%, #000 51%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: #FF0000 !important;
@@ -363,7 +366,7 @@ a.database-link {
   margin-left: 5px;
 }
 
-:hover > a.database-link {
+:hover>a.database-link {
   color: #337ab7;
   visibility: visible;
 }
@@ -406,7 +409,7 @@ a.database-link {
   visibility: hidden;
 }
 
-*:hover > .sortable-column a {
+*:hover>.sortable-column a {
   visibility: visible;
 }
 
@@ -426,7 +429,7 @@ a.database-link {
   visibility: hidden;
 }
 
-*:hover > .chart-column {
+*:hover>.chart-column {
   visibility: visible;
 }
 
@@ -447,7 +450,8 @@ a.database-link {
  * contest button
  */
 
-:hover > .inline-button, .inline-button:hover {
+:hover>.inline-button,
+.inline-button:hover {
   visibility: visible;
 }
 
@@ -525,7 +529,7 @@ canvas.rating_history {
   z-index: 0;
 }
 
-.resource_fields > div,
+.resource_fields>div,
 .resource_fields .select2-container,
 .resource_fields .select2-selection,
 .resource_fields .select2-selection span {
@@ -740,16 +744,21 @@ canvas.rating_history {
   color: #8be;
 }
 
-.activity.rej, .activity.sol, .activity.allreject, .activity.allsolved {
+.activity.rej,
+.activity.sol,
+.activity.allreject,
+.activity.allsolved {
   color: #bbb;
   font-size: 110%;
 }
 
-.activity.sol.selected-activity, .activity.allsolved.selected-activity {
+.activity.sol.selected-activity,
+.activity.allsolved.selected-activity {
   color: green;
 }
 
-.activity.rej.selected-activity, .activity.allreject.selected-activity {
+.activity.rej.selected-activity,
+.activity.allreject.selected-activity {
   color: red;
 }
 
@@ -824,9 +833,11 @@ textarea.note {
   #footer .navbar {
     display: block;
   }
+
   #footer ul li {
     display: block;
   }
+
   #footer .footer-divider {
     display: none;
   }
@@ -890,7 +901,7 @@ a[disabled] {
 
 @media (min-width: 768px) {
   #filter-toggle {
-    display:none
+    display: none
   }
 }
 
@@ -992,7 +1003,7 @@ a[data-toggle="tooltip"][disabled],
  * Promotoin
  */
 
-#promotion.dark-background > * {
+#promotion.dark-background>* {
   color: #eee;
   text-shadow: 0 0 5px #000;
 }
@@ -1024,7 +1035,7 @@ a[data-toggle="tooltip"][disabled],
 }
 
 .form-inline .input-group>.select2-container--bootstrap {
-  display:inline-block;
+  display: inline-block;
 }
 
 /*
@@ -1037,8 +1048,10 @@ a[data-toggle="tooltip"][disabled],
 
 #table-inner-scroll table thead tr,
 #table-inner-scroll:not(.firefox) table tr.starred,
-#table-inner-scroll.firefox table tr.starred td  /* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */
-{
+#table-inner-scroll.firefox table tr.starred td
+
+/* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */
+  {
   position: sticky;
   position: -webkit-sticky;
   top: 0;
@@ -1141,8 +1154,13 @@ tr:not(.info) .sticky-right-column {
 }
 
 @keyframes progress-animation {
-  from { width: 100% }
-  to { width: 0% }
+  from {
+    width: 100%
+  }
+
+  to {
+    width: 0%
+  }
 }
 
 /*

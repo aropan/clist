@@ -98,16 +98,11 @@ class Statistic(BaseModule):
                 if e.code == 308 or e.code == 500:
                     return False
                 raise e
-            match = re.search('"buildId":"(?P<buildid>[^"]*)"', page)
-            buildid = match.group('buildid')
-            url = Statistic.PROFILE_DATA_URL_FORMAT.format(buildid=buildid, handle=account.key)
-            try:
-                orig_data = REQ.get(url, return_json=True)
-            except FailOnGetResponse as e:
-                if e.code == 308 or e.code == 500:
-                    return False
-                raise e
-            data = orig_data['pageProps']
+            regex = '<script[^>]*id="__NEXT_DATA__"[^>]*type="application/json"[^>]*>(?P<data>[^<]*)</script>'
+            match = re.search(regex, page)
+            next_data = json.loads(match.group('data'))
+
+            data = next_data['props'].pop('pageProps')
 
             if data.get('__N_REDIRECT_STATUS') == 307 and (redirect := data.get('__N_REDIRECT')):
                 if match := re.search('https://[^/]*geeksforgeeks.org/user/(?P<user>[^/]*)/?', redirect):
@@ -118,6 +113,9 @@ class Statistic(BaseModule):
                 return False
             info = data.pop('userInfo')
             info['handle'] = data.pop('userHandle')
+
+            if info['handle'] != account.key:
+                return {'rename': info['handle'], 'handle': account.key}
 
             contest_data = data.pop('contestData')
             if contest_data is None:
